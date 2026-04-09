@@ -44,6 +44,7 @@ internal class EmbraceActionInterface(
      */
     internal fun recordSession(
         isBackgroundActivityEnabled: Boolean = true,
+        activityClass: Class<out Activity> = Activity::class.java,
         action: EmbraceActionInterface.() -> Unit = {},
     ): SessionPartTimestamps {
         val sessionAction: () -> Unit = {
@@ -52,7 +53,7 @@ internal class EmbraceActionInterface(
             // end session 30s later by entering background
             setup.getClock().tick(30000)
         }
-        val activityAndAction = listOf(Robolectric.buildActivity(Activity::class.java) to sessionAction)
+        val activityAndAction = listOf(Robolectric.buildActivity(activityClass) to sessionAction)
 
         return if (!appHasStarted) {
             appHasStarted = true
@@ -152,6 +153,7 @@ internal class EmbraceActionInterface(
             onForeground()
             resume()
             pause()
+
             if (startInBackground) {
                 stop()
                 appExecutionTimes.lastBackgroundTimeMs = clock.now()
@@ -175,7 +177,6 @@ internal class EmbraceActionInterface(
             activityController.start()
             setup.getClock().tick(LIFECYCLE_EVENT_GAP)
             activityController.resume()
-
             setup.getClock().tick(LIFECYCLE_EVENT_GAP)
 
             if (invokeManualEnd) {
@@ -191,6 +192,7 @@ internal class EmbraceActionInterface(
                 )
                 embrace.activityLoaded(activityController.get())
             }
+
             lastActivity?.stop()
 
             appExecutionTimes.firstActionTimeMs = clock.now()

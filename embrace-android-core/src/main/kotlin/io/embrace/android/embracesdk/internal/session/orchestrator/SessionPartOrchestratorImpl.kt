@@ -11,25 +11,25 @@ import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingSer
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
-import io.embrace.android.embracesdk.internal.session.id.SessionTracker
+import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 
-internal class SessionOrchestratorImpl(
+internal class SessionPartOrchestratorImpl(
     appStateTracker: AppStateTracker,
     private val payloadFactory: PayloadFactory,
     private val clock: Clock,
     private val configService: ConfigService,
-    private val sessionTracker: SessionTracker,
+    private val sessionTracker: SessionPartTracker,
     private val boundaryDelegate: OrchestratorBoundaryDelegate,
     private val payloadStore: PayloadStore?,
     private val payloadCachingService: PayloadCachingService?,
     instrumentationRegistry: InstrumentationRegistry,
     private val destination: TelemetryDestination,
     private val sessionSpanAttrPopulator: SessionSpanAttrPopulator,
-) : SessionOrchestrator {
+) : SessionPartOrchestrator {
 
     /**
      * Tracks whether the foreground phase comes from a cold start or not.
@@ -43,8 +43,8 @@ internal class SessionOrchestratorImpl(
 
     init {
         appStateTracker.addListener(this)
-        sessionTracker.addSessionEndListener(instrumentationRegistry)
-        sessionTracker.addSessionChangeListener(instrumentationRegistry)
+        sessionTracker.addSessionPartEndListener(instrumentationRegistry)
+        sessionTracker.addSessionPartChangeListener(instrumentationRegistry)
         EmbTrace.trace("start-first-session") { createInitialSession() }
     }
 

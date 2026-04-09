@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.internal.arch.datasource
 
 import androidx.annotation.CallSuper
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
-import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
-import io.embrace.android.embracesdk.internal.arch.SessionEndListener
+import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
+import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -18,7 +18,7 @@ abstract class StateDataSource<T : Any>(
     private val stateTypeFactory: (initialValue: T) -> SchemaType.State<T>,
     defaultValue: T,
     maxTransitions: Int = DEFAULT_MAX_TRANSITIONS,
-) : SessionEndListener, SessionChangeListener, DataSourceImpl(
+) : SessionPartEndListener, SessionPartChangeListener, DataSourceImpl(
     args = args,
     limitStrategy = UpToLimitStrategy { maxTransitions },
     instrumentationName = "${stateTypeFactory(defaultValue).stateName}_state_data_source"

@@ -34,7 +34,7 @@ class InstrumentationModuleImpl(
             workerThreadModule = workerThreadModule,
             store = coreModule.store,
             serializer = initModule.jsonSerializer,
-            sessionTracker = essentialServiceModule.sessionTracker,
+            sessionPartTracker = essentialServiceModule.sessionPartTracker,
             ordinalStore = coreModule.ordinalStore,
             userSessionPropertiesService = essentialServiceModule.userSessionPropertiesService,
             processIdentifier = openTelemetryModule.otelSdkConfig.processIdentifier,

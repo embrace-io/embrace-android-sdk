@@ -20,8 +20,8 @@ class InstrumentationRegistryImpl(
 
     override fun onPreSessionEnd() {
         dataSourceStates.toList()
-            .filter { it.dataSource is SessionEndListener }
-            .map { it.dataSource as SessionEndListener }
+            .filter { it.dataSource is SessionPartEndListener }
+            .map { it.dataSource as SessionPartEndListener }
             .forEach {
                 it.onPreSessionEnd()
             }
@@ -31,7 +31,7 @@ class InstrumentationRegistryImpl(
         dataSourceStates.toList().forEach {
             it.dataSource?.run {
                 resetDataCaptureLimits()
-                if (this is SessionChangeListener) {
+                if (this is SessionPartChangeListener) {
                     onPostSessionChange()
                 }
             }

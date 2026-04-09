@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal.logs
 
-import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
+import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 
 /**
  * Restricts the number of logs per session
  */
-interface LogLimitingService : SessionChangeListener {
+interface LogLimitingService : SessionPartChangeListener {
     /**
      * Get the current count of logs since the service was last reset
      */

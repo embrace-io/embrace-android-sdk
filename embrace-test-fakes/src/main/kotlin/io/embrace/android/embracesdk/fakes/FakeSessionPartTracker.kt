@@ -1,21 +1,21 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
-import io.embrace.android.embracesdk.internal.arch.SessionEndListener
+import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
+import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
-import io.embrace.android.embracesdk.internal.session.id.SessionTracker
+import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 
-class FakeSessionTracker : SessionTracker {
+class FakeSessionPartTracker : SessionPartTracker {
     var currentSession: SessionPartToken? = null
-    var sessionChangeListeners: MutableList<SessionChangeListener> = mutableListOf()
-    var sessionEndListeners: MutableList<SessionEndListener> = mutableListOf()
+    var sessionChangeListeners: MutableList<SessionPartChangeListener> = mutableListOf()
+    var sessionEndListeners: MutableList<SessionPartEndListener> = mutableListOf()
 
-    override fun addSessionChangeListener(listener: SessionChangeListener) {
+    override fun addSessionPartChangeListener(listener: SessionPartChangeListener) {
         sessionChangeListeners.add(listener)
     }
 
-    override fun addSessionEndListener(listener: SessionEndListener) {
+    override fun addSessionPartEndListener(listener: SessionPartEndListener) {
         sessionEndListeners.add(listener)
     }
 
@@ -27,7 +27,7 @@ class FakeSessionTracker : SessionTracker {
         postTransitionAppState: AppState,
     ): SessionPartToken? {
         currentSession = startSessionCallback()
-        sessionChangeListeners.forEach(SessionChangeListener::onPostSessionChange)
+        sessionChangeListeners.forEach(SessionPartChangeListener::onPostSessionChange)
 
         return currentSession
     }

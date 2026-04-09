@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.internal
 import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
-import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
-import io.embrace.android.embracesdk.internal.arch.SessionEndListener
+import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
+import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.session.id.SessionTracker
+import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
@@ -37,7 +37,7 @@ internal class InstrumentationArgsImpl(
     override val appStateTracker: AppStateTracker,
     override val telemetryService: TelemetryService,
     private val workerThreadModule: WorkerThreadModule,
-    private val sessionTracker: SessionTracker,
+    private val sessionPartTracker: SessionPartTracker,
     private val userSessionPropertiesService: UserSessionPropertiesService,
     crashMarkerFileProvider: () -> File,
 ) : InstrumentationArgs {
@@ -58,16 +58,16 @@ internal class InstrumentationArgsImpl(
         } as? T
     }
 
-    override fun sessionId(): String? = sessionTracker.getActiveSessionId()
+    override fun sessionId(): String? = sessionPartTracker.getActiveSessionId()
 
     override fun userSessionProperties(): Map<String, String> = userSessionPropertiesService.getProperties()
 
-    override fun registerSessionChangeListener(listener: SessionChangeListener) {
-        sessionTracker.addSessionChangeListener(listener)
+    override fun registerSessionPartChangeListener(listener: SessionPartChangeListener) {
+        sessionPartTracker.addSessionPartChangeListener(listener)
     }
 
-    override fun registerSessionEndListener(listener: SessionEndListener) {
-        sessionTracker.addSessionEndListener(listener)
+    override fun registerSessionPartEndListener(listener: SessionPartEndListener) {
+        sessionPartTracker.addSessionPartEndListener(listener)
     }
 
     @Suppress("UNCHECKED_CAST")

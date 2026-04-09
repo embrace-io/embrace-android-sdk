@@ -118,10 +118,10 @@ interface InstrumentationArgs {
     /**
      * Sets a listener that is invoked after a session changes.
      */
-    fun registerSessionChangeListener(listener: SessionChangeListener)
+    fun registerSessionPartChangeListener(listener: SessionPartChangeListener)
 
     /**
      * Sets a listener that is invoked before a session ends.
      */
-    fun registerSessionEndListener(listener: SessionEndListener)
+    fun registerSessionPartEndListener(listener: SessionPartEndListener)
 }

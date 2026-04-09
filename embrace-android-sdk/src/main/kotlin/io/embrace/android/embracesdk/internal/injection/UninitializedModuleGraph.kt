@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.injection
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
-import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartOrchestrator
 import io.embrace.android.embracesdk.internal.storage.StorageService
 
 internal class SdkDisabledException : IllegalStateException()
@@ -25,7 +25,7 @@ internal object UninitializedModuleGraph : ModuleGraph {
     override val logModule: LogModule get() = throwSdkNotInitialized()
     override val instrumentationModule: InstrumentationModule get() = throwSdkNotInitialized()
     override val featureModule: FeatureModule get() = throwSdkNotInitialized()
-    override val sessionOrchestrator: SessionOrchestrator get() = throwSdkNotInitialized()
+    override val sessionPartOrchestrator: SessionPartOrchestrator get() = throwSdkNotInitialized()
     override val payloadSourceModule: PayloadSourceModule get() = throwSdkNotInitialized()
 
     private fun throwSdkNotInitialized(): Nothing = error("SDK not initialized")

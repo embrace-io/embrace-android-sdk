@@ -4,12 +4,12 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.OrchestratorBoundaryDelegate
-import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
-import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestratorImpl
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartOrchestrator
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartOrchestratorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulatorImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 
-fun createSessionOrchestrator(
+fun createSessionPartOrchestrator(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
@@ -20,7 +20,7 @@ fun createSessionOrchestrator(
     payloadSourceModule: PayloadSourceModule,
     startupDurationProvider: () -> Long?,
     logModule: LogModule,
-): SessionOrchestrator {
+): SessionPartOrchestrator {
     val payloadMessageCollator = PayloadMessageCollatorImpl(
         EmbTrace.trace("sessionEnvelopeSource") { payloadSourceModule.sessionPartEnvelopeSource },
         coreModule.ordinalStore,
@@ -46,12 +46,12 @@ fun createSessionOrchestrator(
         payloadSourceModule.metadataService
     )
 
-    return SessionOrchestratorImpl(
+    return SessionPartOrchestratorImpl(
         essentialServiceModule.appStateTracker,
         EmbTrace.trace("payloadFactory") { payloadFactory },
         initModule.clock,
         configService,
-        essentialServiceModule.sessionTracker,
+        essentialServiceModule.sessionPartTracker,
         boundaryDelegate,
         deliveryModule?.payloadStore,
         deliveryModule?.payloadCachingService,

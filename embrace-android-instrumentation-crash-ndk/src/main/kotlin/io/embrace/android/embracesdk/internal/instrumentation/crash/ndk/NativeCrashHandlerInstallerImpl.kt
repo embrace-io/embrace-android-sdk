@@ -58,7 +58,7 @@ internal class NativeCrashHandlerInstallerImpl(
                     Runnable(::checkSignalHandlersOverwritten),
                     HANDLER_CHECK_DELAY_MS
                 )
-                args.registerSessionChangeListener {
+                args.registerSessionPartChangeListener {
                     delegate.onSessionChange(sanitizeSessionId(args.sessionId()), createNativeReportPath())
                 }
             }

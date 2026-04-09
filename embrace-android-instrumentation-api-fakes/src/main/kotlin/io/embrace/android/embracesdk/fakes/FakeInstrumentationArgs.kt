@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.fakes
 import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
-import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
-import io.embrace.android.embracesdk.internal.arch.SessionEndListener
+import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
+import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
@@ -30,8 +30,8 @@ class FakeInstrumentationArgs(
     val backgroundWorkerSupplier: (worker: Worker.Background) -> BackgroundWorker = { fakeBackgroundWorker() },
     val priorityWorkerSupplier: (worker: Worker.Priority) -> PriorityWorker<*> = { fakePriorityWorker<Any>() },
     val sessionIdSupplier: () -> String? = { null },
-    val sessionChangeListeners: MutableList<SessionChangeListener> = mutableListOf(),
-    val sessionEndListeners: MutableList<SessionEndListener> = mutableListOf(),
+    val sessionChangeListeners: MutableList<SessionPartChangeListener> = mutableListOf(),
+    val sessionEndListeners: MutableList<SessionPartEndListener> = mutableListOf(),
     val systemServiceSupplier: (name: String) -> Any? = { null },
 ) : InstrumentationArgs {
 
@@ -51,11 +51,11 @@ class FakeInstrumentationArgs(
 
     override val crashMarkerFile: File by lazy { File.createTempFile("crash_marker", "") }
 
-    override fun registerSessionChangeListener(listener: SessionChangeListener) {
+    override fun registerSessionPartChangeListener(listener: SessionPartChangeListener) {
         sessionChangeListeners.add(listener)
     }
 
-    override fun registerSessionEndListener(listener: SessionEndListener) {
+    override fun registerSessionPartEndListener(listener: SessionPartEndListener) {
         sessionEndListeners.add(listener)
     }
 }

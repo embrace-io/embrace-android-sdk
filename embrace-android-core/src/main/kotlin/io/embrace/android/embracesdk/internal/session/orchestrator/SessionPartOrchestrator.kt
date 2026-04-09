@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
  * Orchestrates the session and background activities in response to state changes and manual
  * requests to end sessions.
  */
-interface SessionOrchestrator : AppStateListener, CrashTeardownHandler {
+interface SessionPartOrchestrator : AppStateListener, CrashTeardownHandler {
 
     /**
      * Ends the current session (if any) manually. If [clearUserInfo] is true,

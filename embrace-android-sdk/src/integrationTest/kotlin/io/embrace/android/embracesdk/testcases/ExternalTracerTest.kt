@@ -21,7 +21,7 @@ import io.opentelemetry.kotlin.getTracer
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.tracing.Tracer
 import io.opentelemetry.kotlin.tracing.data.SpanData
-import io.opentelemetry.kotlin.tracing.data.StatusData
+import io.opentelemetry.kotlin.tracing.StatusData
 import io.opentelemetry.kotlin.tracing.recordException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -90,7 +90,7 @@ internal class ExternalTracerTest {
                     startTimeMs = clock.now()
                     val parentContext = embOpenTelemetry.context.storeSpan(embOpenTelemetry.context.root(), span)
                     val childSpan = embTracer.startSpan("child-span", parentContext)
-                    childSpan.status = StatusData.Error("oh no")
+                    childSpan.setStatus(StatusData.Error("oh no"))
                     val exception = RuntimeException("bah")
                     childSpan.recordException(exception) {
                         setStringAttribute("bad", "yes")

@@ -7,7 +7,7 @@ import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.logging.Logger
-import io.opentelemetry.kotlin.logging.model.SeverityNumber
+import io.opentelemetry.kotlin.logging.SeverityNumber
 import io.opentelemetry.kotlin.semconv.LogAttributes
 import java.util.concurrent.atomic.AtomicReference
 

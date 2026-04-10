@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
-import io.opentelemetry.kotlin.tracing.model.SpanContext
+import io.opentelemetry.kotlin.tracing.SpanContext
 
 data class EmbraceLinkData(
     val spanContext: SpanContext,

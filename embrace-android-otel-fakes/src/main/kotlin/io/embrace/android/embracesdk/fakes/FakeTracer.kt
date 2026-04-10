@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.fakes
 
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.tracing.Tracer
-import io.opentelemetry.kotlin.tracing.model.Span
-import io.opentelemetry.kotlin.tracing.model.SpanKind
-import io.opentelemetry.kotlin.tracing.model.SpanCreationAction
+import io.opentelemetry.kotlin.tracing.Span
+import io.opentelemetry.kotlin.tracing.SpanKind
+import io.opentelemetry.kotlin.tracing.SpanCreationAction
 
 class FakeTracer : Tracer {
 

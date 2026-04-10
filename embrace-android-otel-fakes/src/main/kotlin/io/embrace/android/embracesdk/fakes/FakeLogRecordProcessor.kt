@@ -15,7 +15,7 @@ class FakeLogRecordProcessor(
         log: ReadWriteLogRecord,
         context: Context,
     ) {
-        val body = log.body ?: ""
+        val body = log.body?.toString() ?: ""
         processedLogBodies.add(body)
         onEmitAction(log)
     }

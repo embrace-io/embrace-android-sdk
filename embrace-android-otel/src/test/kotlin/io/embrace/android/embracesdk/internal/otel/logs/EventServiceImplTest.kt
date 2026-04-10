@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
-import io.opentelemetry.kotlin.logging.model.SeverityNumber
+import io.opentelemetry.kotlin.logging.SeverityNumber
 import io.opentelemetry.kotlin.semconv.LogAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

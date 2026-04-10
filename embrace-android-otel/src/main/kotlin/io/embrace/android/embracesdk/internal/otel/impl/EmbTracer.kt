@@ -8,10 +8,10 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.opentelemetry.kotlin.Clock
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.context.Context
+import io.opentelemetry.kotlin.tracing.Span
+import io.opentelemetry.kotlin.tracing.SpanCreationAction
+import io.opentelemetry.kotlin.tracing.SpanKind
 import io.opentelemetry.kotlin.tracing.Tracer
-import io.opentelemetry.kotlin.tracing.model.Span
-import io.opentelemetry.kotlin.tracing.model.SpanCreationAction
-import io.opentelemetry.kotlin.tracing.model.SpanKind
 
 /**
  * Embrace-specific decorator that adds extra logic to OTel Tracing.

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.opentelemetry.kotlin.tracing.model.TraceState
+import io.opentelemetry.kotlin.tracing.TraceState
 
 class FakeTraceState(
     private val state: Map<String, String> = emptyMap(),

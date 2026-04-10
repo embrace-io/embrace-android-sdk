@@ -23,11 +23,11 @@ import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.getTracer
 import io.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.kotlin.logging.model.ReadableLogRecord
-import io.opentelemetry.kotlin.logging.model.SeverityNumber
+import io.opentelemetry.kotlin.logging.SeverityNumber
 import io.opentelemetry.kotlin.semconv.LogAttributes
 import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
-import io.opentelemetry.kotlin.tracing.model.SpanContext
+import io.opentelemetry.kotlin.tracing.SpanContext
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull

@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.opentelemetry.kotlin.tracing.model.SpanContext
-import io.opentelemetry.kotlin.tracing.model.TraceFlags
-import io.opentelemetry.kotlin.tracing.model.TraceState
+import io.opentelemetry.kotlin.tracing.SpanContext
+import io.opentelemetry.kotlin.tracing.TraceFlags
+import io.opentelemetry.kotlin.tracing.TraceState
 
 class FakeSpanContext : SpanContext {
     override val isRemote: Boolean = false

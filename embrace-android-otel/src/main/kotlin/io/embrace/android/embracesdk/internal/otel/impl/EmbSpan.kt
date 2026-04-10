@@ -6,12 +6,12 @@ import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.opentelemetry.kotlin.Clock
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.attributes.AttributesMutator
-import io.opentelemetry.kotlin.tracing.data.StatusData
-import io.opentelemetry.kotlin.tracing.model.Span
-import io.opentelemetry.kotlin.tracing.model.SpanContext
-import io.opentelemetry.kotlin.tracing.model.SpanCreationAction
+import io.opentelemetry.kotlin.tracing.Span
+import io.opentelemetry.kotlin.tracing.SpanContext
+import io.opentelemetry.kotlin.tracing.SpanCreationAction
+import io.opentelemetry.kotlin.tracing.SpanKind
+import io.opentelemetry.kotlin.tracing.StatusData
 import io.opentelemetry.kotlin.tracing.model.SpanEvent
-import io.opentelemetry.kotlin.tracing.model.SpanKind
 import io.opentelemetry.kotlin.tracing.model.SpanLink
 
 class EmbSpan(
@@ -77,33 +77,35 @@ class EmbSpan(
         impl.addLink(spanContext, container.attributes.mapValues { it.value.toString() })
     }
 
-    override val attributes: Map<String, Any>
+    val attributes: Map<String, Any>
         get() = impl.attributes()
 
-    override var name: String
+    val name: String
         get() = impl.name()
-        set(value) {
-            impl.updateName(value)
-        }
+
+    override fun setName(name: String) {
+        impl.updateName(name)
+    }
 
     override val parent: SpanContext
         get() = impl.parent?.spanContext ?: openTelemetry.spanContext.invalid
 
-    override val spanKind: SpanKind
+    val spanKind: SpanKind
         get() = impl.spanKind
 
-    override val startTimestamp: Long
+    val startTimestamp: Long
         get() = impl.getStartTimeMs() ?: 0
 
-    override var status: StatusData
+    val status: StatusData
         get() = impl.status
-        set(value) {
-            if (isRecording()) {
-                impl.status = value
-            }
-        }
 
-    override val events: List<SpanEvent>
+    override fun setStatus(status: StatusData) {
+        if (isRecording()) {
+            impl.status = status
+        }
+    }
+
+    val events: List<SpanEvent>
         get() = impl.events().map {
             EmbSpanEvent(
                 it.name ?: "",
@@ -112,7 +114,7 @@ class EmbSpan(
             )
         }
 
-    override val links: List<SpanLink>
+    val links: List<SpanLink>
         get() = impl.links().map {
             EmbLink(it.retrieveSpanContext(), it.attributes.toEmbAttributesMutator())
         }
@@ -131,6 +133,7 @@ class EmbSpan(
             spanId = checkNotNull(spanId),
             traceFlags = openTelemetry.traceFlags.default,
             traceState = openTelemetry.traceState.default,
+            isRemote = false,
         )
     }
 }

@@ -33,7 +33,7 @@ class WebViewUrlDataSource(
                     parsedUrl = url?.substring(0, queryOffset) ?: ""
                 }
             }
-            addSessionEvent(SchemaType.WebViewUrl(parsedUrl), clock.now())
+            addSessionPartEvent(SchemaType.WebViewUrl(parsedUrl), clock.now())
         }
     }
 }

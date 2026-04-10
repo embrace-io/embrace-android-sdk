@@ -28,7 +28,7 @@ internal class SessionPartOrchestratorImpl(
     private val payloadCachingService: PayloadCachingService?,
     instrumentationRegistry: InstrumentationRegistry,
     private val destination: TelemetryDestination,
-    private val sessionSpanAttrPopulator: SessionSpanAttrPopulator,
+    private val sessionSpanAttrPopulator: SessionPartSpanAttrPopulator,
 ) : SessionPartOrchestrator {
 
     /**
@@ -238,7 +238,7 @@ internal class SessionPartOrchestratorImpl(
 
     private fun updatePeriodicCacheAttrs() {
         val now = clock.now().millisToNanos()
-        destination.addSessionAttribute(EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO, now.toString())
-        destination.addSessionAttribute(EmbSessionAttributes.EMB_TERMINATED, true.toString())
+        destination.addSessionPartAttribute(EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO, now.toString())
+        destination.addSessionPartAttribute(EmbSessionAttributes.EMB_TERMINATED, true.toString())
     }
 }

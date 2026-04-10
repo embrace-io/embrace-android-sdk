@@ -42,7 +42,7 @@ class FakeDataSource(
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         captureTelemetry {
-            addSessionAttribute("orientation", newConfig.orientation.toString())
+            addSessionPartAttribute("orientation", newConfig.orientation.toString())
         }
     }
 

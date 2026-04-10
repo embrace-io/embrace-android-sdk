@@ -261,13 +261,13 @@ internal class TelemetryDestinationImplTest {
         currentSessionPartSpan.readySession()
         val current = checkNotNull(currentSessionPartSpan.current())
         val schemaType = SchemaType.Breadcrumb("Hi")
-        impl.addSessionEvent(schemaType, 5)
+        impl.addSessionPartEvent(schemaType, 5)
         verifyAndResetSessionUpdate()
 
         val event = (current as FakeEmbraceSdkSpan).events.single()
         assertEquals("emb-${schemaType.fixedObjectName}", event.name)
 
-        impl.removeSessionEvents(schemaType.telemetryType)
+        impl.removeSessionPartEvents(schemaType.telemetryType)
         assertTrue(currentSessionPartSpan.addedEvents.isEmpty())
         verifyAndResetSessionUpdate()
     }
@@ -276,11 +276,11 @@ internal class TelemetryDestinationImplTest {
     fun `test session span attributes`() {
         currentSessionPartSpan.readySession()
         val current = checkNotNull(currentSessionPartSpan.current())
-        impl.addSessionAttribute("foo", "bar")
+        impl.addSessionPartAttribute("foo", "bar")
         assertEquals("bar", current.attributes()["foo"])
         verifyAndResetSessionUpdate()
 
-        impl.removeSessionAttribute("foo")
+        impl.removeSessionPartAttribute("foo")
         assertNull(current.attributes()["foo"])
         verifyAndResetSessionUpdate()
     }

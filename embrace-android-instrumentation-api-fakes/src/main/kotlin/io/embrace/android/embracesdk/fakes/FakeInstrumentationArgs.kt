@@ -51,6 +51,8 @@ class FakeInstrumentationArgs(
 
     override val crashMarkerFile: File by lazy { File.createTempFile("crash_marker", "") }
 
+    override val navigationTrackingService = FakeNavigationTrackingService()
+
     override fun registerSessionPartChangeListener(listener: SessionPartChangeListener) {
         sessionChangeListeners.add(listener)
     }

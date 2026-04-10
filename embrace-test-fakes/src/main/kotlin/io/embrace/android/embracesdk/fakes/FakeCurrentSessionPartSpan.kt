@@ -4,14 +4,14 @@ import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import java.util.concurrent.atomic.AtomicInteger
 
-class FakeCurrentSessionSpan(
+class FakeCurrentSessionPartSpan(
     private val clock: FakeClock = FakeClock(),
-) : CurrentSessionSpan {
+) : CurrentSessionPartSpan {
     val addedEvents = mutableListOf<SpanEventData>()
     val attributes = mutableMapOf<String, String>()
     val stoppedSpans = mutableSetOf<String>()

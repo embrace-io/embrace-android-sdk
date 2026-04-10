@@ -94,7 +94,7 @@ class EssentialServiceModuleImpl(
             clock = initModule.clock,
             spanService = openTelemetryModule.spanService,
             eventService = openTelemetryModule.eventService,
-            currentSessionSpan = openTelemetryModule.currentSessionSpan,
+            currentSessionPartSpan = openTelemetryModule.currentSessionPartSpan,
         )
     }
 }

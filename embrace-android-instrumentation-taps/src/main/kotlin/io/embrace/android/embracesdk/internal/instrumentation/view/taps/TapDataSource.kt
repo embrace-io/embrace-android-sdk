@@ -58,6 +58,6 @@ class TapDataSource(
             val second = finalPoint.second.toInt().toFloat()
             first.toInt().toString() + "," + second.toInt()
         }
-        addSessionEvent(SchemaType.Tap(name, breadcrumbType.value, coords), clock.now())
+        addSessionPartEvent(SchemaType.Tap(name, breadcrumbType.value, coords), clock.now())
     }
 }

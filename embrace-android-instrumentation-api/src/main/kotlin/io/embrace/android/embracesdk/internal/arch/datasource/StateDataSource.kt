@@ -94,7 +94,7 @@ abstract class StateDataSource<T : Any>(
     private fun createSessionStateSpan(initialValue: T) {
         try {
             partStateToken.set(
-                args.destination.startSessionStateCapture(
+                args.destination.startSessionPartStateCapture(
                     state = stateTypeFactory(initialValue)
                 )
             )

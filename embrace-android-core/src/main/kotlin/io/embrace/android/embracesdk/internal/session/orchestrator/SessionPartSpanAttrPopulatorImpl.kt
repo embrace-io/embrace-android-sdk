@@ -9,48 +9,48 @@ import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import java.util.Locale
 
-internal class SessionSpanAttrPopulatorImpl(
+internal class SessionPartSpanAttrPopulatorImpl(
     private val destination: TelemetryDestination,
     private val startupDurationProvider: () -> Long?,
     private val logLimitingService: LogLimitingService,
     private val metadataService: MetadataService,
-) : SessionSpanAttrPopulator {
+) : SessionPartSpanAttrPopulator {
 
     override fun populateSessionSpanStartAttrs(session: SessionPartToken) {
         with(destination) {
-            addSessionAttribute(EmbSessionAttributes.EMB_COLD_START, session.isColdStart.toString())
-            addSessionAttribute(EmbSessionAttributes.EMB_SESSION_NUMBER, session.number.toString())
-            addSessionAttribute(EmbSessionAttributes.EMB_STATE, session.appState.name.lowercase(Locale.US))
-            addSessionAttribute(EmbSessionAttributes.EMB_CLEAN_EXIT, false.toString())
-            addSessionAttribute(EmbSessionAttributes.EMB_TERMINATED, true.toString())
+            addSessionPartAttribute(EmbSessionAttributes.EMB_COLD_START, session.isColdStart.toString())
+            addSessionPartAttribute(EmbSessionAttributes.EMB_SESSION_NUMBER, session.number.toString())
+            addSessionPartAttribute(EmbSessionAttributes.EMB_STATE, session.appState.name.lowercase(Locale.US))
+            addSessionPartAttribute(EmbSessionAttributes.EMB_CLEAN_EXIT, false.toString())
+            addSessionPartAttribute(EmbSessionAttributes.EMB_TERMINATED, true.toString())
 
             session.startType.toString().lowercase(Locale.US).let {
-                addSessionAttribute(EmbSessionAttributes.EMB_SESSION_START_TYPE, it)
+                addSessionPartAttribute(EmbSessionAttributes.EMB_SESSION_START_TYPE, it)
             }
         }
     }
 
     override fun populateSessionSpanEndAttrs(endType: LifeEventType?, crashId: String?, coldStart: Boolean) {
         with(destination) {
-            addSessionAttribute(EmbSessionAttributes.EMB_CLEAN_EXIT, true.toString())
-            addSessionAttribute(EmbSessionAttributes.EMB_TERMINATED, false.toString())
+            addSessionPartAttribute(EmbSessionAttributes.EMB_CLEAN_EXIT, true.toString())
+            addSessionPartAttribute(EmbSessionAttributes.EMB_TERMINATED, false.toString())
             crashId?.let {
-                addSessionAttribute(EmbSessionAttributes.EMB_CRASH_ID, crashId)
+                addSessionPartAttribute(EmbSessionAttributes.EMB_CRASH_ID, crashId)
             }
             endType?.toString()?.lowercase(Locale.US)?.let {
-                addSessionAttribute(EmbSessionAttributes.EMB_SESSION_END_TYPE, it)
+                addSessionPartAttribute(EmbSessionAttributes.EMB_SESSION_END_TYPE, it)
             }
             if (coldStart) {
                 startupDurationProvider()?.let { duration ->
-                    addSessionAttribute(EmbSessionAttributes.EMB_STARTUP_DURATION, duration.toString())
+                    addSessionPartAttribute(EmbSessionAttributes.EMB_STARTUP_DURATION, duration.toString())
                 }
             }
 
             val logCount = logLimitingService.getCount(LogSeverity.ERROR)
-            addSessionAttribute(EmbSessionAttributes.EMB_ERROR_LOG_COUNT, logCount.toString())
+            addSessionPartAttribute(EmbSessionAttributes.EMB_ERROR_LOG_COUNT, logCount.toString())
 
             metadataService.getDiskUsage()?.deviceDiskFree?.let { free ->
-                addSessionAttribute(EmbSessionAttributes.EMB_DISK_FREE_BYTES, free.toString())
+                addSessionPartAttribute(EmbSessionAttributes.EMB_DISK_FREE_BYTES, free.toString())
             }
         }
     }

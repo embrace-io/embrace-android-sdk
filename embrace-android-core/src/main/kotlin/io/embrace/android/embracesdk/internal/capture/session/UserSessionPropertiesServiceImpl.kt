@@ -41,7 +41,11 @@ internal class UserSessionPropertiesServiceImpl(
             truncatedValue
         }
 
-        val added = props.add(sanitizedKey, sanitizedValue, permanent)
+        val scope = when {
+            permanent -> PropertyScope.PERMANENT
+            else -> PropertyScope.USER_SESSION
+        }
+        val added = props.add(sanitizedKey, sanitizedValue, scope)
         if (added) {
             listener?.invoke(props.get())
         }
@@ -64,11 +68,11 @@ internal class UserSessionPropertiesServiceImpl(
     override fun getProperties(): Map<String, String> = props.get()
 
     override fun cleanupAfterSessionEnd() {
-        props.clear()
+        props.onNewUserSession()
     }
 
     override fun prepareForNewSession() {
-        props.addPermPropsToSessionSpan()
+        props.addPropsForNewSessionSpan()
     }
 
     override fun addChangeListener(listener: (Map<String, String>) -> Unit) {

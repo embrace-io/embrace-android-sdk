@@ -38,7 +38,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -214,7 +214,7 @@ internal class EmbraceSetupInterface(
 
     fun getSpanSink(): SpanSink = fakeInitModule.openTelemetryModule.spanSink
 
-    fun getCurrentSessionSpan(): CurrentSessionSpan = fakeInitModule.openTelemetryModule.currentSessionSpan
+    fun getCurrentSessionPartSpan(): CurrentSessionPartSpan = fakeInitModule.openTelemetryModule.currentSessionPartSpan
 
     fun getEmbLogger(): FakeInternalLogger = fakeInitModule.logger as FakeInternalLogger
 

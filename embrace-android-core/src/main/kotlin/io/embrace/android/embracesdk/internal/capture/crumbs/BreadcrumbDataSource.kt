@@ -20,7 +20,7 @@ class BreadcrumbDataSource(
     fun logCustom(message: String, timestamp: Long) {
         captureTelemetry(inputValidation = message::isNotEmpty) {
             val sanitizedMessage = ellipsizeBreadcrumbMessage(message)
-            addSessionEvent(SchemaType.Breadcrumb(sanitizedMessage ?: ""), timestamp)
+            addSessionPartEvent(SchemaType.Breadcrumb(sanitizedMessage ?: ""), timestamp)
         }
     }
 

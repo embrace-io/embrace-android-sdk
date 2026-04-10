@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.envelope.session
 
 import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
+import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -23,7 +23,7 @@ internal class SessionPartPayloadSourceImplTest {
 
     private lateinit var impl: SessionPartPayloadSourceImpl
     private lateinit var sink: SpanSinkImpl
-    private lateinit var currentSessionSpan: FakeCurrentSessionSpan
+    private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
     private lateinit var spanRepository: SpanRepository
     private lateinit var activeSpan: FakeEmbraceSdkSpan
     private val cacheSpan = EmbraceSpanData("", "", "", "cache-span", 0, 0)
@@ -33,17 +33,17 @@ internal class SessionPartPayloadSourceImplTest {
         sink = SpanSinkImpl().apply {
             storeCompletedSpans(listOf(cacheSpan))
         }
-        currentSessionSpan = FakeCurrentSessionSpan().apply {
+        currentSessionPartSpan = FakeCurrentSessionPartSpan().apply {
             initializeService(1000L)
         }
         activeSpan = FakeEmbraceSdkSpan.started()
         spanRepository = SpanRepository()
-        spanRepository.trackStartedSpan(checkNotNull(currentSessionSpan.sessionSpan))
+        spanRepository.trackStartedSpan(checkNotNull(currentSessionPartSpan.sessionSpan))
         spanRepository.trackStartedSpan(activeSpan)
         impl = SessionPartPayloadSourceImpl(
             mapOf("armeabi-v7a" to "my-symbols"),
             sink,
-            currentSessionSpan,
+            currentSessionPartSpan,
             spanRepository,
             FakeOtelPayloadMapper(),
             FakeAppStateTracker(),

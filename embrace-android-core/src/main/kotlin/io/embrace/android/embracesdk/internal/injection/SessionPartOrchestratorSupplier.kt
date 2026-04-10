@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.session.message.PayloadMessageColl
 import io.embrace.android.embracesdk.internal.session.orchestrator.OrchestratorBoundaryDelegate
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartOrchestrator
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartOrchestratorImpl
-import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulatorImpl
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSpanAttrPopulatorImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 
 fun createSessionPartOrchestrator(
@@ -24,7 +24,7 @@ fun createSessionPartOrchestrator(
     val payloadMessageCollator = PayloadMessageCollatorImpl(
         EmbTrace.trace("sessionEnvelopeSource") { payloadSourceModule.sessionPartEnvelopeSource },
         coreModule.ordinalStore,
-        openTelemetryModule.currentSessionSpan,
+        openTelemetryModule.currentSessionPartSpan,
     )
 
     val payloadFactory = PayloadFactoryImpl(
@@ -39,7 +39,7 @@ fun createSessionPartOrchestrator(
         essentialServiceModule.userSessionPropertiesService
     )
 
-    val sessionSpanAttrPopulator = SessionSpanAttrPopulatorImpl(
+    val sessionSpanAttrPopulator = SessionPartSpanAttrPopulatorImpl(
         essentialServiceModule.telemetryDestination,
         startupDurationProvider,
         logModule.logLimitingService,

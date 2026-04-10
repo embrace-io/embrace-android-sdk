@@ -61,7 +61,7 @@ internal class PublicApiTest {
                 recordSession {
                     assertEquals(
                         embrace.currentSessionId,
-                        testRule.setup.getCurrentSessionSpan().getSessionId()
+                        testRule.setup.getCurrentSessionPartSpan().getSessionId()
                     )
                     assertNotNull(embrace.currentSessionId)
                 }

@@ -61,13 +61,15 @@ internal class DeliveryConnectivityFeatureTest {
 
     @Test
     fun `stored and new payloads sent when connection restored`() {
-        val sessionMetadata = fakeSessionStoredTelemetryMetadata
-        val startMs = sessionMetadata.timestamp
-        val envelope = fakeSessionEnvelope(startMs = startMs)
+        var startMs: Long
         testRule.runTest(
             setupAction = {
+                startMs = fakeClock.now() - 1000L
                 fakeNetworkConnectivityService.connectivityStatus = ConnectivityStatus.None
-                payloadStorageService.addPayload(sessionMetadata, envelope)
+                payloadStorageService.addPayload(
+                    fakeSessionStoredTelemetryMetadata.copy(timestamp = startMs),
+                    fakeSessionEnvelope(startMs = startMs)
+                )
             },
             testCaseAction = {
                 recordSession()

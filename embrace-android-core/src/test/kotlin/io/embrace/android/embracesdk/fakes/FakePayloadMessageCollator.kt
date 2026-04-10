@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSn
 import java.util.concurrent.atomic.AtomicInteger
 
 class FakePayloadMessageCollator(
-    val currentSessionSpan: FakeCurrentSessionSpan = FakeCurrentSessionSpan(),
+    val currentSessionPartSpan: FakeCurrentSessionPartSpan = FakeCurrentSessionPartSpan(),
 ) : PayloadMessageCollator {
 
     val sessionCount: AtomicInteger = AtomicInteger(0)
@@ -28,7 +28,7 @@ class FakePayloadMessageCollator(
             }
         }
         SessionPartToken(
-            sessionId = currentSessionSpan.getSessionId(),
+            sessionId = currentSessionPartSpan.getSessionId(),
             startTime = startTime,
             isColdStart = coldStart,
             appState = appState,
@@ -45,7 +45,7 @@ class FakePayloadMessageCollator(
         params: FinalEnvelopeParams,
     ): Envelope<SessionPartPayload> {
         if (params.endType != SessionPartSnapshotType.PERIODIC_CACHE) {
-            currentSessionSpan.endSession(startNewSession = params.startNewSession)
+            currentSessionPartSpan.endSession(startNewSession = params.startNewSession)
         }
         return Envelope(data = SessionPartPayload())
     }

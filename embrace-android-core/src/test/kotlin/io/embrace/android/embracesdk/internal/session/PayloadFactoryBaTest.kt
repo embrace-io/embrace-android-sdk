@@ -25,7 +25,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
-import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -42,7 +42,7 @@ internal class PayloadFactoryBaTest {
     private lateinit var configService: FakeConfigService
     private lateinit var spanRepository: SpanRepository
     private lateinit var spanSink: SpanSink
-    private lateinit var currentSessionSpan: CurrentSessionSpan
+    private lateinit var currentSessionPartSpan: CurrentSessionPartSpan
     private lateinit var spanService: SpanService
     private lateinit var store: FakeOrdinalStore
     private lateinit var blockingExecutorService: BlockingScheduledExecutorService
@@ -58,7 +58,7 @@ internal class PayloadFactoryBaTest {
         val initModule = FakeInitModule(clock = clock)
         spanRepository = initModule.openTelemetryModule.spanRepository
         spanSink = initModule.openTelemetryModule.spanSink
-        currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
+        currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan
         spanService = initModule.openTelemetryModule.spanService
         configService = FakeConfigService(
             backgroundActivityBehavior = createBackgroundActivityBehavior(
@@ -114,7 +114,7 @@ internal class PayloadFactoryBaTest {
             partPayloadSource = SessionPartPayloadSourceImpl(
                 null,
                 spanSink,
-                currentSessionSpan,
+                currentSessionPartSpan,
                 spanRepository,
                 FakeOtelPayloadMapper(),
                 FakeAppStateTracker(),
@@ -125,7 +125,7 @@ internal class PayloadFactoryBaTest {
         val collator = PayloadMessageCollatorImpl(
             payloadSourceModule.sessionPartEnvelopeSource,
             store,
-            currentSessionSpan
+            currentSessionPartSpan
         )
         return PayloadFactoryImpl(collator, payloadSourceModule.logEnvelopeSource, configService, logger).apply {
             if (createInitialSession) {

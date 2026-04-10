@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
-import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulator
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSpanAttrPopulator
 
-class FakeSessionSpanAttrPopulator : SessionSpanAttrPopulator {
+class FakeSessionPartSpanAttrPopulator : SessionPartSpanAttrPopulator {
 
     override fun populateSessionSpanStartAttrs(session: SessionPartToken) {
     }

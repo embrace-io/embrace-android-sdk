@@ -25,22 +25,22 @@ interface TelemetryDestination {
      * Add a span event for the given [schemaType] to the session span. If [startTimeMs] is null, the
      * current time will be used. Returns true if the event was added, otherwise false.
      */
-    fun addSessionEvent(schemaType: SchemaType, startTimeMs: Long): Boolean
+    fun addSessionPartEvent(schemaType: SchemaType, startTimeMs: Long): Boolean
 
     /**
      * Remove all span events with the given [EmbType].
      */
-    fun removeSessionEvents(type: EmbType)
+    fun removeSessionPartEvents(type: EmbType)
 
     /**
      * Add the given key-value pair as an Attribute to the session span
      */
-    fun addSessionAttribute(key: String, value: String)
+    fun addSessionPartAttribute(key: String, value: String)
 
     /**
      * Remove the attribute with the given key
      */
-    fun removeSessionAttribute(key: String)
+    fun removeSessionPartAttribute(key: String)
 
     /**
      * Starts a new span with the given [schemaType] and [startTimeMs].
@@ -67,7 +67,7 @@ interface TelemetryDestination {
     /**
      * Start a recording the given [SchemaType.State] for the current session
      */
-    fun <T : Any> startSessionStateCapture(state: SchemaType.State<T>): SessionPartStateToken<T>
+    fun <T : Any> startSessionPartStateCapture(state: SchemaType.State<T>): SessionPartStateToken<T>
 
     /**
      * Records a span that has already completed.

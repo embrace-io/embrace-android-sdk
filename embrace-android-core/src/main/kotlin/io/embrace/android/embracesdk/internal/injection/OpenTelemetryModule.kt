@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
-import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 
 /**
@@ -35,7 +35,7 @@ interface OpenTelemetryModule {
     /**
      * Component that manages and provides access to the current session span
      */
-    val currentSessionSpan: CurrentSessionSpan
+    val currentSessionPartSpan: CurrentSessionPartSpan
 
     /**
      * Service to record spans

@@ -29,20 +29,20 @@ class FakeTelemetryDestination : TelemetryDestination {
         logEvents.add(FakeLogData(schemaType, severity, message))
     }
 
-    override fun addSessionEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {
+    override fun addSessionPartEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {
         addedEvents.add(FakeSessionEvent(schemaType, startTimeMs))
         return true
     }
 
-    override fun removeSessionEvents(type: EmbType) {
+    override fun removeSessionPartEvents(type: EmbType) {
         addedEvents.removeAll { it.schemaType.telemetryType.key == type.key }
     }
 
-    override fun addSessionAttribute(key: String, value: String) {
+    override fun addSessionPartAttribute(key: String, value: String) {
         attributes[key] = value
     }
 
-    override fun removeSessionAttribute(key: String) {
+    override fun removeSessionPartAttribute(key: String) {
         attributes.remove(key)
     }
 
@@ -121,7 +121,7 @@ class FakeTelemetryDestination : TelemetryDestination {
         createdSpans.add(token)
     }
 
-    override fun <T : Any> startSessionStateCapture(state: SchemaType.State<T>): SessionPartStateToken<T> = FakeSessionPartStateToken()
+    override fun <T : Any> startSessionPartStateCapture(state: SchemaType.State<T>): SessionPartStateToken<T> = FakeSessionPartStateToken()
 
     override var sessionUpdateAction: (() -> Unit)? = null
 

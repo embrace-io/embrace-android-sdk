@@ -19,7 +19,7 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 
-internal class SessionOrchestrationModuleImplTest {
+internal class SessionPartOrchestrationModuleImplTest {
 
     private val initModule = FakeInitModule()
     private val configService = FakeConfigService()

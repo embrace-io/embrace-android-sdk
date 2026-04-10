@@ -7,13 +7,15 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.session.UserSessionState.NO_ACTIVE_USER_SESSION
 import io.embrace.android.embracesdk.internal.session.UserSessionState.USER_SESSION_ACTIVE
 import io.embrace.android.embracesdk.internal.session.UserSessionState.USER_SESSION_TERMINATED
+import io.embrace.android.embracesdk.internal.store.Ordinal
+import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
-import java.util.concurrent.atomic.AtomicLong
 
 internal class UserSessionOrchestratorImpl(
     private val clock: Clock,
     configService: ConfigService,
+    private val ordinalStore: OrdinalStore,
 ) : UserSessionOrchestrator {
 
     private val lock = Any()
@@ -24,9 +26,6 @@ internal class UserSessionOrchestratorImpl(
 
     @Volatile
     private var metadata: UserSessionMetadata? = null
-
-    // TODO: future: persist the incremented ordinal
-    private val sessionCounter = AtomicLong(0L)
 
     private val maxDurationMs: Long = configService.sessionBehavior.getMaxSessionDurationMs()
     private val inactivityTimeoutMs: Long = configService.sessionBehavior.getSessionInactivityTimeoutMs()
@@ -64,7 +63,7 @@ internal class UserSessionOrchestratorImpl(
         metadata = UserSessionMetadata(
             startTimeMs = clock.now(),
             userSessionId = Uuid.getEmbUuid(),
-            userSessionNumber = sessionCounter.incrementAndGet(),
+            userSessionNumber = ordinalStore.incrementAndGet(Ordinal.USER_SESSION).toLong(),
             maxDurationMins = maxDurationMs / 60_000L,
             inactivityTimeoutMins = inactivityTimeoutMs / 60_000L,
         )

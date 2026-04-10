@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.session
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.behavior.FakeUserSessionBehavior
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.Assert.assertEquals
@@ -31,6 +32,7 @@ internal class UserSessionOrchestratorImplTest {
                     sessionInactivityTimeoutMs = inactivityMs,
                 ),
             ),
+            ordinalStore = FakeOrdinalStore(),
         )
     }
 
@@ -76,6 +78,37 @@ internal class UserSessionOrchestratorImplTest {
         assertEquals(2L, second.userSessionNumber)
         assertNotEquals(first.userSessionId, second.userSessionId)
         assertEquals(maxDurationMs - 1, second.startTimeMs)
+    }
+
+    @Test
+    fun `user session ordinal persistence`() {
+        val store = FakeOrdinalStore()
+        val first = UserSessionOrchestratorImpl(
+            clock = clock,
+            configService = FakeConfigService(
+                sessionBehavior = FakeUserSessionBehavior(
+                    maxSessionDurationMs = maxDurationMs,
+                    sessionInactivityTimeoutMs = inactivityMs,
+                ),
+            ),
+            ordinalStore = store,
+        )
+        first.onNewSessionPart()
+        assertEquals(1L, checkNotNull(first.currentUserSession()).userSessionNumber)
+
+        // create a new orchestrator sharing the same store
+        val second = UserSessionOrchestratorImpl(
+            clock = clock,
+            configService = FakeConfigService(
+                sessionBehavior = FakeUserSessionBehavior(
+                    maxSessionDurationMs = maxDurationMs,
+                    sessionInactivityTimeoutMs = inactivityMs,
+                ),
+            ),
+            ordinalStore = store,
+        )
+        second.onNewSessionPart()
+        assertEquals(2L, checkNotNull(second.currentUserSession()).userSessionNumber)
     }
 
     @Test

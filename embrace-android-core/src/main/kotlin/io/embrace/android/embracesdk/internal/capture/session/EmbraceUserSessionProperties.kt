@@ -6,63 +6,50 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
-import io.embrace.android.embracesdk.internal.utils.Provider
-import java.util.concurrent.atomic.AtomicReference
 
 internal class EmbraceUserSessionProperties(
     private val store: KeyValueStore,
-    private val configService: ConfigService,
+    configService: ConfigService,
     private val destination: TelemetryDestination,
     private val telemetryService: TelemetryService,
 ) {
-    private val temporary: MutableMap<String, String> = HashMap()
-    private val permanentPropertiesReference = AtomicReference(NOT_LOADED)
-    private val permanentPropertiesProvider: Provider<MutableMap<String, String>> = {
-        permanentSessionProperties?.let { HashMap(it) } ?: HashMap()
+    private data class PropertyEntry(val value: String, val scope: PropertyScope)
+
+    private val propertyLimit = configService.sessionBehavior.getMaxUserSessionProperties()
+
+    private val lock = Any()
+
+    private val properties: MutableMap<String, PropertyEntry> by lazy {
+        store.getStringMap(SESSION_PROPERTIES_KEY)?.mapValues {
+            PropertyEntry(it.value, PropertyScope.PERMANENT)
+        }?.toMutableMap() ?: mutableMapOf()
     }
 
-    private var permanentSessionProperties: Map<String, String>?
-        get() = store.getStringMap(SESSION_PROPERTIES_KEY)
-        set(value) = store.edit { putStringMap(SESSION_PROPERTIES_KEY, value) }
-
-    private fun permanentProperties(): MutableMap<String, String> {
-        if (permanentPropertiesReference.get() === NOT_LOADED) {
-            synchronized(permanentPropertiesReference) {
-                if (permanentPropertiesReference.get() === NOT_LOADED) {
-                    permanentPropertiesReference.set(permanentPropertiesProvider())
-                }
-            }
+    private fun persistPermanentProperties() {
+        store.edit {
+            putStringMap(
+                SESSION_PROPERTIES_KEY,
+                properties.entries
+                    .filter { it.value.scope == PropertyScope.PERMANENT }
+                    .associate { it.key to it.value.value }
+            )
         }
-
-        return permanentPropertiesReference.get()
     }
 
-    private fun haveKey(key: String): Boolean {
-        return permanentProperties().containsKey(key) || temporary.containsKey(key)
-    }
-
-    fun add(sanitizedKey: String, sanitizedValue: String, isPermanent: Boolean): Boolean {
-        synchronized(permanentPropertiesReference) {
-            val maxUserSessionProperties = configService.sessionBehavior.getMaxUserSessionProperties()
-            val totalCount = permanentProperties().size + temporary.size
-            if (totalCount > maxUserSessionProperties || totalCount == maxUserSessionProperties && !haveKey(sanitizedKey)) {
+    /**
+     * Adds a user session property, returning true if it was successfully added.
+     */
+    fun add(sanitizedKey: String, sanitizedValue: String, scope: PropertyScope): Boolean {
+        synchronized(lock) {
+            val totalCount = properties.size
+            if (totalCount > propertyLimit || totalCount == propertyLimit && !properties.containsKey(sanitizedKey)) {
                 telemetryService.trackAppliedLimit("session_property", AppliedLimitType.DROP)
                 return false
             }
-
-            // add to selected destination, deleting the key if it exists in the other destination
-            if (isPermanent) {
-                permanentProperties()[sanitizedKey] = sanitizedValue
-                temporary.remove(sanitizedKey)
-                permanentSessionProperties = snapshotPermanentProperties()
-            } else {
-                // only save the permanent values if the key existed in the permanent map
-                val newPermanent = permanentProperties()
-                if (newPermanent.remove(sanitizedKey) != null) {
-                    permanentPropertiesReference.set(newPermanent)
-                    permanentSessionProperties = snapshotPermanentProperties()
-                }
-                temporary[sanitizedKey] = sanitizedValue
+            val previousScope = properties[sanitizedKey]?.scope
+            properties[sanitizedKey] = PropertyEntry(sanitizedValue, scope)
+            if (scope == PropertyScope.PERMANENT || previousScope == PropertyScope.PERMANENT) {
+                persistPermanentProperties()
             }
             destination.addSessionPartAttribute(
                 sanitizedKey.toEmbraceAttributeName(),
@@ -72,50 +59,55 @@ internal class EmbraceUserSessionProperties(
         }
     }
 
+    /**
+     * Removes a user session property, returning true if it was removed.
+     */
     fun remove(sanitizedKey: String): Boolean {
-        synchronized(permanentPropertiesReference) {
-            var existed = false
-            if (temporary.remove(sanitizedKey) != null) {
-                existed = true
-            }
-
-            val newPermanent = permanentProperties()
-            if (newPermanent.remove(sanitizedKey) != null) {
-                permanentPropertiesReference.set(newPermanent)
-                permanentSessionProperties = snapshotPermanentProperties()
-                existed = true
+        synchronized(lock) {
+            val entry = properties.remove(sanitizedKey) ?: return false
+            if (entry.scope == PropertyScope.PERMANENT) {
+                persistPermanentProperties()
             }
             destination.removeSessionPartAttribute(sanitizedKey.toEmbraceAttributeName())
-            return existed
+            return true
         }
     }
 
-    fun get(): Map<String, String> = synchronized(permanentPropertiesReference) {
-        permanentProperties().plus(temporary)
+    /**
+     * Gets a Map representation of all current user session properties.
+     */
+    fun get(): Map<String, String> = synchronized(lock) {
+        properties.mapValues { it.value.value }
     }
 
-    fun clear() {
-        synchronized(permanentPropertiesReference) {
-            temporary.clear()
+    /**
+     * Notify that a new user session has occurred so that old user session properties can be cleared.
+     */
+    fun onNewUserSession() {
+        synchronized(lock) {
+            val iter = properties.iterator()
+            while (iter.hasNext()) {
+                if (iter.next().value.scope == PropertyScope.USER_SESSION) {
+                    iter.remove()
+                }
+            }
         }
     }
 
-    fun addPermPropsToSessionSpan() {
-        snapshotPermanentProperties().forEach {
-            destination.addSessionPartAttribute(
-                it.key.toEmbraceAttributeName(),
-                it.value
-            )
+    /**
+     * Adds all user session properties to the session span.
+     */
+    fun addPropsForNewSessionSpan() {
+        synchronized(lock) {
+            properties.forEach { (key, entry) ->
+                if (entry.scope != PropertyScope.USER_SESSION) {
+                    destination.addSessionPartAttribute(key.toEmbraceAttributeName(), entry.value)
+                }
+            }
         }
     }
-
-    private fun snapshotPermanentProperties() =
-        synchronized(permanentPropertiesReference) {
-            permanentProperties().toMap()
-        }
 
     private companion object {
-        private val NOT_LOADED = mutableMapOf<String, String>()
         private const val SESSION_PROPERTIES_KEY = "io.embrace.session.properties"
     }
 }

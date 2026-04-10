@@ -88,6 +88,16 @@ groups:
         brief: "The session ID associated with the AEI event."
         stability: development
         examples: ["abc123"]
+      - id: aei_user_session_id
+        type: string
+        brief: "The user session ID where the AEI occurred."
+        stability: development
+        examples: ["abc123"]
+      - id: aei_session_part_id
+        type: string
+        brief: "The session part ID where the AEI occurred."
+        stability: development
+        examples: ["abc123"]
       - id: session_id_error
         type: string
         brief: "Error message if the session ID could not be determined."

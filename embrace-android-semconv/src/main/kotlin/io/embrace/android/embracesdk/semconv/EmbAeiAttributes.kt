@@ -17,6 +17,18 @@ object EmbAeiAttributes {
     const val AEI_SESSION_ID: String = "aei_session_id"
 
     /**
+     * The session part ID where the AEI occurred.
+     */
+    @ExperimentalSemconv
+    const val AEI_SESSION_PART_ID: String = "aei_session_part_id"
+
+    /**
+     * The user session ID where the AEI occurred.
+     */
+    @ExperimentalSemconv
+    const val AEI_USER_SESSION_ID: String = "aei_user_session_id"
+
+    /**
      * A description of the application exit.
      */
     @ExperimentalSemconv

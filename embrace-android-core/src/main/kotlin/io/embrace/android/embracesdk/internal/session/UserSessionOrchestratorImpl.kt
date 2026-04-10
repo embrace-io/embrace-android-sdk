@@ -4,19 +4,24 @@ package io.embrace.android.embracesdk.internal.session
 
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.session.UserSessionState.NO_ACTIVE_USER_SESSION
 import io.embrace.android.embracesdk.internal.session.UserSessionState.USER_SESSION_ACTIVE
 import io.embrace.android.embracesdk.internal.session.UserSessionState.USER_SESSION_TERMINATED
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicLong
 
 internal class UserSessionOrchestratorImpl(
     private val clock: Clock,
     configService: ConfigService,
+    private val logger: InternalLogger,
 ) : UserSessionOrchestrator {
 
     private val lock = Any()
+    private val listeners = CopyOnWriteArrayList<UserSessionListener>()
 
     // TODO: future: support restoring user sessions that contain crashes in the middle, and setting initial state appropriately.
     @Volatile
@@ -57,6 +62,10 @@ internal class UserSessionOrchestratorImpl(
 
     override fun currentUserSession(): UserSessionMetadata? = metadata
 
+    override fun addListener(listener: UserSessionListener) {
+        listeners.add(listener)
+    }
+
     /**
      * Starts a new user session.
      */
@@ -69,6 +78,13 @@ internal class UserSessionOrchestratorImpl(
             inactivityTimeoutMins = inactivityTimeoutMs / 60_000L,
         )
         state = USER_SESSION_ACTIVE
+        listeners.forEach { listener ->
+            try {
+                listener.onNewUserSession()
+            } catch (ex: Exception) {
+                logger.trackInternalError(InternalErrorType.USER_SESSION_CALLBACK_FAIL, ex)
+            }
+        }
     }
 
     /**

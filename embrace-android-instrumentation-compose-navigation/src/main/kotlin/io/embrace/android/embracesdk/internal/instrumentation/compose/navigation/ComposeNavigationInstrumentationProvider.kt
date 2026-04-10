@@ -11,8 +11,8 @@ import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTracking
 class ComposeNavigationInstrumentationProvider : InstrumentationProvider {
 
     override fun register(args: InstrumentationArgs): DataSourceState<*>? {
-        val tracker = NavControllerTracker(args.navigationTrackingService, args.clock, args.logger)
-        args.navigationTrackingService.setTrackingInitListener(tracker)
+        args.navigationTrackingService.navigationTrackingInitListener =
+            NavControllerTracker(args.navigationTrackingService, args.clock, args.logger)
         return null
     }
 }

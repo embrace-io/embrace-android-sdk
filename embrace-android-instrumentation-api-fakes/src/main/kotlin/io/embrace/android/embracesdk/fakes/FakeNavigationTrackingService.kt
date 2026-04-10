@@ -5,12 +5,13 @@ import io.embrace.android.embracesdk.internal.arch.navigation.NavigationControll
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingInitListener
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
 
-class FakeNavigationTrackingService : NavigationTrackingService {
+class FakeNavigationTrackingService(
+    override var navigationTrackingInitListener: NavigationTrackingInitListener = FakeNavigationTrackingInitListener(),
+    override var navigationControllerEventListener: NavigationControllerEventListener = FakeNavigationControllerEventListener()
+) : NavigationTrackingService {
     val attachedCalls = mutableListOf<AttachedCall>()
     val destinationChangedCalls = mutableListOf<DestinationChangedCall>()
 
-    override fun setTrackingInitListener(listener: NavigationTrackingInitListener) {}
-    override fun setControllerEventListener(listener: NavigationControllerEventListener) {}
     override fun trackNavigation(activity: Activity, controller: Any?) {}
 
     override fun onControllerAttached(activity: Activity, timestampMs: Long) {

@@ -31,7 +31,7 @@ class NavigationStateDataSource(
 
     override fun onDataCaptureEnabled() {
         super.onDataCaptureEnabled()
-        args.navigationTrackingService.setControllerEventListener(this)
+        args.navigationTrackingService.navigationControllerEventListener = this
         args.application.registerActivityLifecycleCallbacks(activityNavigationTracker)
         args.appStateTracker.addListener(activityNavigationTracker)
     }

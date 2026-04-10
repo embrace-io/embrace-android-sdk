@@ -7,10 +7,10 @@ interface NavigationTrackingService : NavigationTrackingInitListener, Navigation
     /**
      * Register listener that receives events related to the initialization of components that control navigation
      */
-    fun setTrackingInitListener(listener: NavigationTrackingInitListener)
+    var navigationTrackingInitListener: NavigationTrackingInitListener
 
     /**
      * Register listener that receives events related to components that control navigation
      */
-    fun setControllerEventListener(listener: NavigationControllerEventListener)
+    var navigationControllerEventListener: NavigationControllerEventListener
 }

@@ -5,18 +5,10 @@ import io.embrace.android.embracesdk.internal.arch.navigation.NavigationControll
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingInitListener
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
 
-internal class NavigationTrackingServiceImpl : NavigationTrackingService {
-
-    private var navigationTrackingInitListener: NavigationTrackingInitListener = NoopNavigationTrackingInitListener
-    private var navigationControllerEventListener: NavigationControllerEventListener = NoopNavigationControllerEventListener
-
-    override fun setTrackingInitListener(listener: NavigationTrackingInitListener) {
-        navigationTrackingInitListener = listener
-    }
-
-    override fun setControllerEventListener(listener: NavigationControllerEventListener) {
-        navigationControllerEventListener = listener
-    }
+internal class NavigationTrackingServiceImpl(
+    override var navigationTrackingInitListener: NavigationTrackingInitListener = NoopNavigationTrackingInitListener,
+    override var navigationControllerEventListener: NavigationControllerEventListener = NoopNavigationControllerEventListener
+) : NavigationTrackingService {
 
     override fun trackNavigation(activity: Activity, controller: Any?) {
         navigationTrackingInitListener.trackNavigation(activity, controller)

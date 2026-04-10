@@ -31,7 +31,7 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
-import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
@@ -61,7 +61,7 @@ internal class UserSessionHandlerTest {
     private lateinit var worker: BackgroundWorker
     private lateinit var logger: InternalLogger
     private lateinit var spanRepository: SpanRepository
-    private lateinit var currentSessionSpan: CurrentSessionSpan
+    private lateinit var currentSessionPartSpan: CurrentSessionPartSpan
     private lateinit var userSessionPropertiesService: UserSessionPropertiesService
 
     @Before
@@ -81,11 +81,11 @@ internal class UserSessionHandlerTest {
         spanSink = initModule.openTelemetryModule.spanSink
         spanService = initModule.openTelemetryModule.spanService
         spanRepository = initModule.openTelemetryModule.spanRepository
-        currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
+        currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan
         val partPayloadSource = SessionPartPayloadSourceImpl(
             null,
             spanSink,
-            currentSessionSpan,
+            currentSessionPartSpan,
             spanRepository,
             FakeOtelPayloadMapper(),
             FakeAppStateTracker(),
@@ -102,7 +102,7 @@ internal class UserSessionHandlerTest {
                 payloadSource = partPayloadSource
             ),
             store,
-            currentSessionSpan
+            currentSessionPartSpan
         )
         payloadFactory = PayloadFactoryImpl(collator, payloadSourceModule.logEnvelopeSource, configService, logger)
     }

@@ -18,7 +18,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -32,7 +32,7 @@ class TelemetryDestinationImpl(
     private val clock: Clock,
     private val spanService: SpanService,
     private val eventService: EventService,
-    private val currentSessionSpan: CurrentSessionSpan,
+    private val currentSessionPartSpan: CurrentSessionPartSpan,
 ) : TelemetryDestination {
 
     override var sessionUpdateAction: (() -> Unit)? = null
@@ -126,7 +126,7 @@ class TelemetryDestinationImpl(
         }
     }
 
-    override fun <T : Any> startSessionStateCapture(state: SchemaType.State<T>): SessionPartStateToken<T> {
+    override fun <T : Any> startSessionPartStateCapture(state: SchemaType.State<T>): SessionPartStateToken<T> {
         val spanToken = startSpanCapture(
             schemaType = state,
             startTimeMs = clock.now(),
@@ -166,8 +166,8 @@ class TelemetryDestinationImpl(
         sessionUpdateAction?.invoke()
     }
 
-    override fun addSessionEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {
-        val currentSession = currentSessionSpan.current() ?: return false
+    override fun addSessionPartEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {
+        val currentSession = currentSessionPartSpan.current() ?: return false
         return currentSession.addSystemEvent(
             schemaType.fixedObjectName.toEmbraceObjectName(),
             startTimeMs,
@@ -177,20 +177,20 @@ class TelemetryDestinationImpl(
         }
     }
 
-    override fun removeSessionEvents(type: EmbType) {
-        val currentSession = currentSessionSpan.current() ?: return
+    override fun removeSessionPartEvents(type: EmbType) {
+        val currentSession = currentSessionPartSpan.current() ?: return
         currentSession.removeSystemEvents(type)
         sessionUpdateAction?.invoke()
     }
 
-    override fun addSessionAttribute(key: String, value: String) {
-        val currentSession = currentSessionSpan.current() ?: return
+    override fun addSessionPartAttribute(key: String, value: String) {
+        val currentSession = currentSessionPartSpan.current() ?: return
         currentSession.addSystemAttribute(key, value)
         sessionUpdateAction?.invoke()
     }
 
-    override fun removeSessionAttribute(key: String) {
-        val currentSession = currentSessionSpan.current() ?: return
+    override fun removeSessionPartAttribute(key: String) {
+        val currentSession = currentSessionPartSpan.current() ?: return
         currentSession.removeSystemAttribute(key)
         sessionUpdateAction?.invoke()
     }

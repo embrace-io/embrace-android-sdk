@@ -24,8 +24,8 @@ import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
-import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl.Companion.MAX_INTERNAL_SPANS_PER_SESSION
-import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl.Companion.MAX_NON_INTERNAL_SPANS_PER_SESSION
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl.Companion.MAX_INTERNAL_SPANS_PER_SESSION
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl.Companion.MAX_NON_INTERNAL_SPANS_PER_SESSION
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -41,13 +41,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-internal class CurrentSessionSpanImplTests {
+internal class CurrentSessionPartSpanImplTests {
 
     private lateinit var spanRepository: SpanRepository
     private lateinit var spanSink: SpanSink
     private lateinit var otelLimitsConfig: OtelLimitsConfig
     private lateinit var telemetryService: TelemetryService
-    private lateinit var currentSessionSpan: CurrentSessionSpanImpl
+    private lateinit var currentSessionPartSpan: CurrentSessionPartSpanImpl
     private lateinit var spanService: SpanService
     private lateinit var tracer: Tracer
     private lateinit var openTelemetry: OpenTelemetry
@@ -59,7 +59,7 @@ internal class CurrentSessionSpanImplTests {
         spanRepository = initModule.openTelemetryModule.spanRepository
         spanSink = initModule.openTelemetryModule.spanSink
         telemetryService = initModule.telemetryService
-        currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan as CurrentSessionSpanImpl
+        currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan as CurrentSessionPartSpanImpl
         tracer = initModule.openTelemetryModule.otelSdkWrapper.sdkTracer
         openTelemetry = initModule.openTelemetryModule.otelSdkWrapper.openTelemetryKotlin
         spanService = initModule.openTelemetryModule.spanService
@@ -69,38 +69,38 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `session span ready when initialized`() {
-        assertTrue(currentSessionSpan.initialized())
-        currentSessionSpan.assertSessionSpan()
+        assertTrue(currentSessionPartSpan.initialized())
+        currentSessionPartSpan.assertSessionSpan()
     }
 
     @Test
     fun `cannot create span before session is created`() {
-        val uninitialized = FakeInitModule(clock = clock).openTelemetryModule.currentSessionSpan
+        val uninitialized = FakeInitModule(clock = clock).openTelemetryModule.currentSessionPartSpan
         assertFalse(uninitialized.initialized())
         uninitialized.assertNoSessionSpan()
     }
 
     @Test
     fun `cannot create spans or add data to current span if no current span exists`() {
-        currentSessionSpan.endSession(startNewSession = false)
-        assertTrue(currentSessionSpan.initialized())
-        currentSessionSpan.assertNoSessionSpan()
+        currentSessionPartSpan.endSession(startNewSession = false)
+        assertTrue(currentSessionPartSpan.initialized())
+        currentSessionPartSpan.assertNoSessionSpan()
     }
 
     @Test
     fun `cannot create child if parent not started`() {
-        assertFalse(currentSessionSpan.canStartNewSpan(FakeEmbraceSdkSpan(), false))
+        assertFalse(currentSessionPartSpan.canStartNewSpan(FakeEmbraceSdkSpan(), false))
     }
 
     @Test
     fun `can create child if parent has stopped`() {
-        assertTrue(currentSessionSpan.canStartNewSpan(FakeEmbraceSdkSpan.stopped(), false))
+        assertTrue(currentSessionPartSpan.canStartNewSpan(FakeEmbraceSdkSpan.stopped(), false))
     }
 
     @Test
     fun `after ending session with app termination, spans cannot be recorded`() {
-        currentSessionSpan.endSession(true, AppTerminationCause.UserTermination)
-        assertFalse(currentSessionSpan.canStartNewSpan(null, true))
+        currentSessionPartSpan.endSession(true, AppTerminationCause.UserTermination)
+        assertFalse(currentSessionPartSpan.canStartNewSpan(null, true))
     }
 
     @Test
@@ -379,7 +379,7 @@ internal class CurrentSessionSpanImplTests {
         AppTerminationCause::class.sealedSubclasses.forEach {
             val cause = checkNotNull(it.objectInstance)
             val module = FakeInitModule(clock = clock)
-            val sessionSpan = module.openTelemetryModule.currentSessionSpan
+            val sessionSpan = module.openTelemetryModule.currentSessionPartSpan
             module.openTelemetryModule.spanService.initializeService(clock.now())
             val flushedSpans = sessionSpan.endSession(true, cause)
             assertEquals(1, flushedSpans.size)
@@ -408,7 +408,7 @@ internal class CurrentSessionSpanImplTests {
         clock.tick(500)
 
         val crashTimeMs = clock.now()
-        val flushedSpans = currentSessionSpan.endSession(true, AppTerminationCause.Crash).associateBy { it.name }
+        val flushedSpans = currentSessionPartSpan.endSession(true, AppTerminationCause.Crash).associateBy { it.name }
 
         assertEmbraceSpanData(
             span = flushedSpans["emb-session"]?.toEmbracePayload(),
@@ -440,8 +440,8 @@ internal class CurrentSessionSpanImplTests {
     @Test
     fun `new session started after ending has correct metadata`() {
         val originalSessionSpan = checkNotNull(spanRepository.getActiveSpans().single().snapshot())
-        val originalSessionId = currentSessionSpan.getSessionId()
-        currentSessionSpan.endSession(startNewSession = true)
+        val originalSessionId = currentSessionPartSpan.getSessionId()
+        currentSessionPartSpan.endSession(startNewSession = true)
         with(spanRepository.getActiveSpans().single()) {
             assertTrue(hasEmbraceAttribute(EmbType.Ux.Session))
             assertNotEquals(originalSessionSpan.spanId, spanId)
@@ -452,28 +452,28 @@ internal class CurrentSessionSpanImplTests {
     @Test
     fun `new session will only start if told to`() {
         assertNotNull(spanRepository.getActiveSpans().single())
-        currentSessionSpan.endSession(startNewSession = false)
+        currentSessionPartSpan.endSession(startNewSession = false)
         assertTrue(spanRepository.getActiveSpans().isEmpty())
     }
 
     @Test
     fun `calling readySession creates a session span if not present`() {
-        currentSessionSpan.endSession(startNewSession = false)
-        currentSessionSpan.assertNoSessionSpan()
-        assertTrue(currentSessionSpan.readySession())
-        currentSessionSpan.assertSessionSpan()
+        currentSessionPartSpan.endSession(startNewSession = false)
+        currentSessionPartSpan.assertNoSessionSpan()
+        assertTrue(currentSessionPartSpan.readySession())
+        currentSessionPartSpan.assertSessionSpan()
     }
 
     @Test
     fun `readySession will not replace existing session span`() {
         val originalSessionSpanId = spanRepository.getActiveSpans().single().spanId
-        assertTrue(currentSessionSpan.readySession())
+        assertTrue(currentSessionPartSpan.readySession())
         assertEquals(originalSessionSpanId, spanRepository.getActiveSpans().single().spanId)
     }
 
     @Test
     fun `readySession will return false if session span is not recording`() {
-        val sessionSpan = CurrentSessionSpanImpl(
+        val sessionSpan = CurrentSessionPartSpanImpl(
             openTelemetryClock = FakeOtelKotlinClock(),
             telemetryService = telemetryService,
             spanRepository = spanRepository,
@@ -497,7 +497,7 @@ internal class CurrentSessionSpanImplTests {
         val parentSpanId = checkNotNull(parentSpan.spanId)
         val parentSpanFromService = checkNotNull(spanRepository.getSpan(parentSpanId))
         assertTrue(parentSpanFromService.stop())
-        currentSessionSpan.endSession(startNewSession = true)
+        currentSessionPartSpan.endSession(startNewSession = true)
 
         // completed span not available after flush
         assertNull(spanRepository.getSpan(parentSpanId))
@@ -540,7 +540,7 @@ internal class CurrentSessionSpanImplTests {
     @Test
     fun `session ending will not create span link to its own session span`() {
         val sessionSpan = checkNotNull(spanRepository.getActiveSpans().single())
-        currentSessionSpan.endSession(startNewSession = true)
+        currentSessionPartSpan.endSession(startNewSession = true)
         val sessionSpanSnapshot = checkNotNull(sessionSpan.snapshot())
         assertEquals(0, sessionSpanSnapshot.links?.size)
     }
@@ -548,7 +548,7 @@ internal class CurrentSessionSpanImplTests {
     @Test
     fun `span stop callback will not create links for untracked span`() {
         val sessionSpan = checkNotNull(spanRepository.getActiveSpans().single())
-        currentSessionSpan.spanStopCallback(checkNotNull(FakeEmbraceSdkSpan.started().spanId))
+        currentSessionPartSpan.spanStopCallback(checkNotNull(FakeEmbraceSdkSpan.started().spanId))
 
         val sessionSpanSnapshot = checkNotNull(sessionSpan.snapshot())
         assertEquals(0, sessionSpanSnapshot.links?.size)
@@ -557,7 +557,7 @@ internal class CurrentSessionSpanImplTests {
     @Test
     fun `span stop callback will not create links if there's no active session`() {
         val span = spanService.startSpan("test").apply {
-            currentSessionSpan.endSession(false)
+            currentSessionPartSpan.endSession(false)
             stop()
         }
 
@@ -565,13 +565,13 @@ internal class CurrentSessionSpanImplTests {
         assertEquals(0, spanSnapshot.links?.size)
     }
 
-    private fun CurrentSessionSpan.assertNoSessionSpan() {
+    private fun CurrentSessionPartSpan.assertNoSessionSpan() {
         assertEquals("", getSessionId())
         assertFalse(canStartNewSpan(parent = null, internal = true))
         assertTrue(endSession(true).isEmpty())
     }
 
-    private fun CurrentSessionSpan.assertSessionSpan() {
+    private fun CurrentSessionPartSpan.assertSessionSpan() {
         assertTrue(getSessionId().isNotBlank())
         assertTrue(canStartNewSpan(parent = null, internal = true))
     }

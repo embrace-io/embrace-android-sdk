@@ -49,7 +49,7 @@ class PushNotificationDataSource(
     ) {
         captureTelemetry {
             val captureFcmPiiData = configService.breadcrumbBehavior.isFcmPiiDataCaptureEnabled()
-            addSessionEvent(
+            addSessionPartEvent(
                 SchemaType.PushNotification(
                     title = if (captureFcmPiiData) title else null,
                     type = type.type,

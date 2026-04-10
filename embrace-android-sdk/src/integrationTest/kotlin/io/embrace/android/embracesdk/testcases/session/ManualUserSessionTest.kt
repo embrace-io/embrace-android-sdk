@@ -15,7 +15,7 @@ import org.junit.runner.RunWith
  * Asserts that a manual session can be recorded.
  */
 @RunWith(AndroidJUnit4::class)
-internal class ManualSessionTest {
+internal class ManualUserSessionTest {
 
     @Rule
     @JvmField

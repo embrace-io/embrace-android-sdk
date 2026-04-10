@@ -51,7 +51,10 @@ internal class EmbraceUserSessionProperties(
             if (scope == PropertyScope.PERMANENT || previousScope == PropertyScope.PERMANENT) {
                 persistPermanentProperties()
             }
-            destination.addSessionAttribute(sanitizedKey.toEmbraceAttributeName(), sanitizedValue)
+            destination.addSessionPartAttribute(
+                sanitizedKey.toEmbraceAttributeName(),
+                sanitizedValue
+            )
             return true
         }
     }
@@ -65,7 +68,7 @@ internal class EmbraceUserSessionProperties(
             if (entry.scope == PropertyScope.PERMANENT) {
                 persistPermanentProperties()
             }
-            destination.removeSessionAttribute(sanitizedKey.toEmbraceAttributeName())
+            destination.removeSessionPartAttribute(sanitizedKey.toEmbraceAttributeName())
             return true
         }
     }
@@ -98,7 +101,7 @@ internal class EmbraceUserSessionProperties(
         synchronized(lock) {
             properties.forEach { (key, entry) ->
                 if (entry.scope != PropertyScope.USER_SESSION) {
-                    destination.addSessionAttribute(key.toEmbraceAttributeName(), entry.value)
+                    destination.addSessionPartAttribute(key.toEmbraceAttributeName(), entry.value)
                 }
             }
         }

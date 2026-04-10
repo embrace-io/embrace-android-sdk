@@ -20,7 +20,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
-import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.mockk.clearAllMocks
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
@@ -32,7 +32,7 @@ import org.junit.BeforeClass
 import org.junit.Test
 import java.util.concurrent.ExecutorService
 
-internal class PayloadFactorySessionTest {
+internal class PayloadFactorySessionPartTest {
 
     private lateinit var spanSink: SpanSink
     private lateinit var service: PayloadFactory
@@ -43,7 +43,7 @@ internal class PayloadFactorySessionTest {
     private lateinit var activityService: FakeAppStateTracker
     private lateinit var userService: UserService
     private lateinit var spanRepository: SpanRepository
-    private lateinit var currentSessionSpan: CurrentSessionSpan
+    private lateinit var currentSessionPartSpan: CurrentSessionPartSpan
     private lateinit var spanService: SpanService
     private lateinit var store: FakeOrdinalStore
     private lateinit var blockingExecutorService: BlockingScheduledExecutorService
@@ -78,7 +78,7 @@ internal class PayloadFactorySessionTest {
         userService = FakeUserService()
         val initModule = FakeInitModule(clock = clock)
         spanRepository = initModule.openTelemetryModule.spanRepository
-        currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
+        currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan
         spanService = initModule.openTelemetryModule.spanService
         blockingExecutorService = BlockingScheduledExecutorService(blockingMode = false)
     }
@@ -102,7 +102,7 @@ internal class PayloadFactorySessionTest {
         val collator = PayloadMessageCollatorImpl(
             payloadSourceModule.sessionPartEnvelopeSource,
             store,
-            currentSessionSpan
+            currentSessionPartSpan
         )
         service = PayloadFactoryImpl(collator, payloadSourceModule.logEnvelopeSource, FakeConfigService(), logger)
     }

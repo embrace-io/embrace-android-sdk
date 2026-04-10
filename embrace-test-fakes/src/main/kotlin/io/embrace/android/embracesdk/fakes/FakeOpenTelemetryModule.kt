@@ -13,11 +13,11 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
-import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 
 class FakeOpenTelemetryModule(
-    override val currentSessionSpan: CurrentSessionSpan = FakeCurrentSessionSpan(),
+    override val currentSessionPartSpan: CurrentSessionPartSpan = FakeCurrentSessionPartSpan(),
     override val spanSink: SpanSink = SpanSinkImpl(),
     override val logSink: LogSink = LogSinkImpl(),
     override val spanRepository: SpanRepository = SpanRepository(),

@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.injection.FakeUserSessionOrchestrationModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -20,24 +21,24 @@ import org.junit.runner.RunWith
 internal class UserSessionApiDelegateTest {
 
     private lateinit var delegate: UserSessionApiDelegate
-    private lateinit var orchestrator: FakeSessionPartOrchestrator
+    private lateinit var fakeModule: FakeUserSessionOrchestrationModule
     private lateinit var sdkCallChecker: SdkCallChecker
     private lateinit var userSessionPropertiesService: FakeUserSessionPropertiesService
     private lateinit var logger: FakeInternalLogger
 
     @Before
     fun setUp() {
+        fakeModule = FakeUserSessionOrchestrationModule()
         val moduleInitBootstrapper = ModuleInitBootstrapper(
             FakeInitModule(),
             essentialServiceModuleSupplier = { _, _, _, _, _, _, _ ->
                 FakeEssentialServiceModule()
             },
-            sessionPartOrchestratorSupplier = { _, _, _, _, _, _, _, _, _, _ ->
-                FakeSessionPartOrchestrator()
+            userSessionOrchestrationModuleSupplier = { _, _, _, _, _, _, _, _, _, _ ->
+                fakeModule
             }
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
-        orchestrator = moduleInitBootstrapper.sessionPartOrchestrator as FakeSessionPartOrchestrator
         userSessionPropertiesService =
             moduleInitBootstrapper.essentialServiceModule.userSessionPropertiesService as FakeUserSessionPropertiesService
         logger = FakeInternalLogger()
@@ -52,9 +53,9 @@ internal class UserSessionApiDelegateTest {
         sdkCallChecker.started.set(false)
         assertFalse(delegate.addSessionProperty("test", "value", false))
         assertFalse(delegate.removeSessionProperty("test"))
-        assertEquals(0, orchestrator.stateChangeCount)
+        assertEquals(0, (fakeModule.sessionPartOrchestrator as FakeSessionPartOrchestrator).stateChangeCount)
         delegate.endSession()
-        assertEquals(0, orchestrator.manualEndCount)
+        assertEquals(0, (fakeModule.sessionPartOrchestrator as FakeSessionPartOrchestrator).manualEndCount)
     }
 
     @Test
@@ -73,12 +74,12 @@ internal class UserSessionApiDelegateTest {
     @Test
     fun `end session`() {
         delegate.endSession()
-        assertEquals(1, orchestrator.manualEndCount)
+        assertEquals(1, (fakeModule.sessionPartOrchestrator as FakeSessionPartOrchestrator).manualEndCount)
     }
 
     @Test
     fun `end session clear user info`() {
         delegate.endSession(true)
-        assertEquals(1, orchestrator.manualEndCount)
+        assertEquals(1, (fakeModule.sessionPartOrchestrator as FakeSessionPartOrchestrator).manualEndCount)
     }
 }

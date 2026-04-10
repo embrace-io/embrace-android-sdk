@@ -2,13 +2,13 @@ package io.embrace.android.embracesdk.testcases.features
 
 import android.app.Activity
 import android.os.Build
+import androidx.navigation.NavController
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertStateTransition
-import io.embrace.android.embracesdk.assertions.findSpansOfType
-import io.embrace.android.embracesdk.fakes.NavControllerFragmentActivity
+import io.embrace.android.embracesdk.fakes.TestFragmentActivity
+import io.embrace.android.embracesdk.fakes.TestNavControllerActivity
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttributeValue
@@ -23,6 +23,7 @@ import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterfac
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.POST_ACTIVITY_ACTION_DWELL
 import io.embrace.android.embracesdk.testframework.actions.SessionPartTimestamps
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -60,10 +61,7 @@ internal class NavigationStateFeatureTest {
                 recordSession {}
             },
             assertAction = {
-                val navigationStateSpans = getSingleSessionEnvelope()
-                    .findSpansOfType(EmbType.State)
-                    .filter { it.name == "emb-state-screen-automatic" }
-                assertEquals(0, navigationStateSpans.size)
+                assertNull(getSingleSessionEnvelope().getNavigationStateSpan())
             },
         )
     }
@@ -81,10 +79,7 @@ internal class NavigationStateFeatureTest {
                 recordSession {}
             },
             assertAction = {
-                val navigationStateSpans = getSingleSessionEnvelope()
-                    .findSpansOfType(EmbType.State)
-                    .filter { it.name == "emb-state-screen-automatic" }
-                assertEquals(0, navigationStateSpans.size)
+                assertNull(getSingleSessionEnvelope().getNavigationStateSpan())
             },
         )
     }
@@ -125,7 +120,6 @@ internal class NavigationStateFeatureTest {
                 val stateSpan1 = checkNotNull(sessionPayloads[0].getNavigationStateSpan())
                 checkNotNull(firstSessionTimestamps)
                 stateSpan1.assertStateSpan(
-                    activityLoaded = false,
                     transitionTimesMs = foregroundTimes.map { it - LIFECYCLE_EVENT_GAP * 2 } + firstSessionTimestamps.lastBackgroundTimeMs,
                     newStateValues = loadedActivities.map { it.get().localClassName }
                 )
@@ -133,6 +127,7 @@ internal class NavigationStateFeatureTest {
                 val stateSpan2 = checkNotNull(sessionPayloads[1].getNavigationStateSpan())
                 checkNotNull(secondSessionTimestamps)
                 stateSpan2.assertStateSpan(
+                    stateUninitialized = false,
                     transitionTimesMs = listOf(secondSessionTimestamps.startTimeMs, secondSessionTimestamps.endTimeMs),
                     newStateValues = listOf(loadedActivities.last().get().localClassName)
                 )
@@ -182,25 +177,25 @@ internal class NavigationStateFeatureTest {
 
                 val baStateSpan1 = checkNotNull(baPayloads[0].getNavigationStateSpan())
                 baStateSpan1.assertStateSpan(
-                    activityLoaded = false,
                     isForeground = false
                 )
 
                 val sessionStateSpan1 = checkNotNull(sessionPayloads[0].getNavigationStateSpan())
                 checkNotNull(firstSessionTimestamps)
                 sessionStateSpan1.assertStateSpan(
-                    activityLoaded = false,
                     transitionTimesMs = foregroundTimes.map { it - LIFECYCLE_EVENT_GAP * 2 } + firstSessionTimestamps.lastBackgroundTimeMs,
                     newStateValues = loadedActivities.map { it.get().localClassName }
                 )
 
                 val baStateSpan2 = checkNotNull(baPayloads[1].getNavigationStateSpan())
                 baStateSpan2.assertStateSpan(
+                    stateUninitialized = false,
                     isForeground = false
                 )
 
                 val sessionStateSpan2 = checkNotNull(sessionPayloads[1].getNavigationStateSpan())
                 sessionStateSpan2.assertStateSpan(
+                    stateUninitialized = false,
                     transitionTimesMs = listOf(checkNotNull(secondSessionTimestamps).startTimeMs, secondSessionTimestamps.endTimeMs),
                     newStateValues = listOf(loadedActivities.last().get().localClassName)
                 )
@@ -209,7 +204,7 @@ internal class NavigationStateFeatureTest {
     }
 
     @Test
-    fun `NavController destinations recorded as state span`() {
+    fun `FragmentActivity navigation recorded as state span`() {
         val navRoutes = listOf("contacts", "about", "home")
         var timestamps: AppExecutionTimestamps? = null
 
@@ -217,11 +212,10 @@ internal class NavigationStateFeatureTest {
             instrumentedConfig = enabledConfig,
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
-                timestamps = simulateNavControllerNavigation(routes = navRoutes)
+                timestamps = simulateFragmentActivityNavigation(routes = navRoutes)
             },
             assertAction = {
                 val stateSpan = checkNotNull(getSingleSessionEnvelope().getNavigationStateSpan())
-                val events = checkNotNull(stateSpan.events)
                 checkNotNull(timestamps)
                 val eventTimes = mutableListOf(
                     timestamps.firstForegroundTimeMs,
@@ -231,25 +225,25 @@ internal class NavigationStateFeatureTest {
                     timestamps.lastBackgroundTimeMs,
                 )
                 val expectedRoutes = listOf("home") + navRoutes + listOf("Backgrounded")
-                assertEquals(expectedRoutes.size, events.size)
-                expectedRoutes.forEachIndexed { index, route ->
-                    events[index].assertStateTransition(
-                        timestampMs = eventTimes[index],
-                        newStateValue = route,
-                    )
-                }
+                stateSpan.assertStateSpan(
+                    transitionTimesMs = eventTimes,
+                    newStateValues = expectedRoutes
+                )
             },
         )
     }
 
     @Test
     fun `NavController destination restored when same Activity returns from background`() {
-        val navActivity = Robolectric.buildActivity(NavControllerFragmentActivity::class.java)
+        val navActivity = Robolectric.buildActivity(TestFragmentActivity::class.java)
         testRule.runTest(
             instrumentedConfig = enabledConfig,
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
-                simulateNavControllerNavigation(navActivity, listOf("about"))
+                simulateFragmentActivityNavigation(
+                    routes = listOf("about"),
+                    activityController = navActivity
+                )
                 simulateOpeningActivities(
                     addStartupActivity = false,
                     startInBackground = true,
@@ -261,17 +255,10 @@ internal class NavigationStateFeatureTest {
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
-                val firstSpan = checkNotNull(sessions[0].getNavigationStateSpan())
-                val firstStateValues = checkNotNull(firstSpan.events).map { event ->
-                    checkNotNull(event.attributes).first { it.key == "emb.state.new_value" }.data
-                }
-                assertEquals("about", firstStateValues[1])
-
-                val secondSpan = checkNotNull(sessions[1].getNavigationStateSpan())
-                val secondStateValues = checkNotNull(secondSpan.events).map { event ->
-                    checkNotNull(event.attributes).first { it.key == "emb.state.new_value" }.data
-                }
-                assertEquals("about", secondStateValues.first())
+                val stateSpan = checkNotNull(sessions[1].getNavigationStateSpan())
+                val events = checkNotNull(stateSpan.events)
+                val stateValue = checkNotNull(events.first().attributes).single { it.key == "emb.state.new_value" }.data
+                assertEquals("about", stateValue)
             },
         )
     }
@@ -280,7 +267,8 @@ internal class NavigationStateFeatureTest {
     fun `navigate from plain startup activity to NavController activity`() {
         var timestamps: AppExecutionTimestamps? = null
         val startupActivity = Robolectric.buildActivity(HomeActivity::class.java)
-        val navActivity = Robolectric.buildActivity(NavControllerFragmentActivity::class.java)
+        val navActivity = Robolectric.buildActivity(TestFragmentActivity::class.java)
+        var navigationTime: Long = 0
         testRule.runTest(
             instrumentedConfig = enabledConfig,
             persistedRemoteConfig = enabledRemoteConfig,
@@ -291,7 +279,7 @@ internal class NavigationStateFeatureTest {
                     activitiesAndActions = listOf(
                         startupActivity to {},
                         navActivity to {
-                            clock.tick(POST_ACTIVITY_ACTION_DWELL)
+                            navigationTime = clock.tick(POST_ACTIVITY_ACTION_DWELL)
                             navActivity.get().getNavController().navigate("about")
                         },
                     )
@@ -299,30 +287,69 @@ internal class NavigationStateFeatureTest {
             },
             assertAction = {
                 val stateSpan = checkNotNull(getSingleSessionEnvelope().getNavigationStateSpan())
-                val events = checkNotNull(stateSpan.events)
-                val stateValues = events.map { event ->
-                    checkNotNull(event.attributes).first { it.key == "emb.state.new_value" }.data
-                }
-                assertEquals(4, stateValues.size)
-                assertEquals(startupActivity.get().localClassName, stateValues[0])
-                assertEquals("home", stateValues[1])
-                assertEquals("about", stateValues[2])
-                assertEquals("Backgrounded", stateValues[3])
+                checkNotNull(timestamps)
+                stateSpan.assertStateSpan(
+                    transitionTimesMs = listOf(
+                        timestamps.firstForegroundTimeMs,
+                        navigationTime - POST_ACTIVITY_ACTION_DWELL - 2 * LIFECYCLE_EVENT_GAP,
+                        navigationTime,
+                        timestamps.lastBackgroundTimeMs
+                    ),
+                    newStateValues = listOf(
+                        startupActivity.get().localClassName,
+                        "home",
+                        "about",
+                        "Backgrounded"
+                    )
+                )
+            },
+        )
+    }
 
+    @Test
+    fun `navigation of NavController tracked using internal API creates state span`() {
+        var timestamps: AppExecutionTimestamps? = null
+        val activityController = Robolectric.buildActivity(TestNavControllerActivity::class.java)
+        val expectedStateValues = listOf("home", "contacts", "about", "Backgrounded")
+        testRule.runTest(
+            instrumentedConfig = enabledConfig,
+            persistedRemoteConfig = enabledRemoteConfig,
+            testCaseAction = {
+                timestamps = simulateNavControllerTrackingAndNavigation(
+                    routes = listOf("contacts", "about"),
+                    activityController = activityController,
+                    navControllerProvider = fun(activity: TestNavControllerActivity): NavController {
+                        return activity.getNavController()
+                    }
+                )
+            },
+            assertAction = {
+                val stateSpan = checkNotNull(getSingleSessionEnvelope().getNavigationStateSpan())
+                checkNotNull(timestamps)
+                val expectedTransitionTimes = listOf(
+                    timestamps.firstForegroundTimeMs,
+                    timestamps.firstForegroundTimeMs + POST_ACTIVITY_ACTION_DWELL + LIFECYCLE_EVENT_GAP * 2,
+                    timestamps.firstForegroundTimeMs + POST_ACTIVITY_ACTION_DWELL * 2 + LIFECYCLE_EVENT_GAP * 2,
+                    timestamps.lastBackgroundTimeMs,
+                )
+                stateSpan.assertStateSpan(
+                    transitionTimesMs = expectedTransitionTimes,
+                    newStateValues = expectedStateValues
+                )
             },
         )
     }
 
     private fun Span.assertStateSpan(
-        activityLoaded: Boolean = true,
+        stateUninitialized: Boolean = true,
         isForeground: Boolean = true,
         transitionTimesMs: List<Long> = listOf(),
         newStateValues: List<String> = listOf(),
     ) {
-        val startStateValue = if (activityLoaded) {
-            "Backgrounded"
-        } else {
+        val startStateValue = if (stateUninitialized) {
             "Initializing"
+        } else {
+            "Backgrounded"
         }
         assertTrue(hasEmbraceAttributeValue(EMB_STATE_INITIAL_VALUE, startStateValue))
 

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.testframework.actions
 
 import android.os.Build
+import android.os.Looper
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.testing.TestLifecycleOwner
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
@@ -43,6 +44,8 @@ import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import org.robolectric.Shadows
+import org.robolectric.shadows.ShadowLooper
 
 /**
  * Test harness for which an instance is generated each test run and provided to the test by the Rule
@@ -74,6 +77,9 @@ internal class EmbraceSetupInterface(
     } else {
         null
     }
+
+    val shadowMainLooper: ShadowLooper = Shadows.shadowOf(Looper.getMainLooper())
+    val unblockMainLooperOnNavigation: Boolean = threadBlockageWatchdogThread == null
 
     private val fakeInitModule: FakeInitModule = FakeInitModule(
         clock = fakeClock,

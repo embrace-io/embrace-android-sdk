@@ -11,8 +11,10 @@ class UserSessionBehaviorImpl(private val remote: RemoteConfig?) : UserSessionBe
     companion object {
         const val SESSION_PROPERTY_LIMIT: Int = 100
         const val SESSION_PROPERTY_MAX_LIMIT: Int = 200
-        private const val DEFAULT_MAX_SESSION_DURATION_MINUTES: Int = 24 * 60
-        private const val DEFAULT_INACTIVITY_TIMEOUT_MINUTES: Int = 30
+        private const val MAX_DURATION_MINUTES_DEFAULT: Int = 12 * 60
+        private const val MAX_DURATION_MINUTES_MAX: Int = 24 * 60
+        private const val INACTIVITY_TIMEOUT_MINUTES_DEFAULT: Int = 30
+        private const val INACTIVITY_TIMEOUT_MINUTES_MAX: Int = 24 * 60
         private const val MINUTES_TO_MS: Long = 60_000L
         private const val MIN_SESSION_MS: Long = 5_000L
     }
@@ -20,16 +22,16 @@ class UserSessionBehaviorImpl(private val remote: RemoteConfig?) : UserSessionBe
     private val maxSessionDurationMins by lazy {
         val override = remote?.userSession?.maxDurationMinutes
         when {
-            override != null && override > 0 -> override
-            else -> DEFAULT_MAX_SESSION_DURATION_MINUTES
+            override != null && override > 0 && override <= MAX_DURATION_MINUTES_MAX -> override
+            else -> MAX_DURATION_MINUTES_DEFAULT
         }
     }
 
     private val maxInactivityTimeoutMins by lazy {
         val override = remote?.userSession?.inactivityTimeoutMinutes
         when {
-            override != null && override > 0 -> override
-            else -> DEFAULT_INACTIVITY_TIMEOUT_MINUTES
+            override != null && override > 0 && override <= INACTIVITY_TIMEOUT_MINUTES_MAX -> override
+            else -> INACTIVITY_TIMEOUT_MINUTES_DEFAULT
         }
     }
 
@@ -47,7 +49,7 @@ class UserSessionBehaviorImpl(private val remote: RemoteConfig?) : UserSessionBe
     override fun getSessionInactivityTimeoutMs(): Long {
         val timeoutMs = when {
             maxInactivityTimeoutMins <= maxSessionDurationMins -> maxInactivityTimeoutMins
-            else -> DEFAULT_INACTIVITY_TIMEOUT_MINUTES
+            else -> INACTIVITY_TIMEOUT_MINUTES_DEFAULT
         }
         return timeoutMs * MINUTES_TO_MS
     }

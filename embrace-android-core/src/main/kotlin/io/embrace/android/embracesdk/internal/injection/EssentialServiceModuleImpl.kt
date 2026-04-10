@@ -6,6 +6,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.destination.TelemetryDestinationImpl
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.capture.connectivity.EmbraceNetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkCallbackConnectivityService
@@ -15,6 +16,7 @@ import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropert
 import io.embrace.android.embracesdk.internal.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.navigation.NavigationTrackingServiceImpl
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateTrackerImpl
@@ -37,6 +39,10 @@ class EssentialServiceModuleImpl(
             val lifecycleOwner = lifecycleOwnerProvider() ?: ProcessLifecycleOwner.get()
             AppStateTrackerImpl(initModule.logger, lifecycleOwner)
         }
+    }
+
+    override val navigationTrackingService: NavigationTrackingService by singleton {
+        NavigationTrackingServiceImpl()
     }
 
     override val userService: UserService by singleton {

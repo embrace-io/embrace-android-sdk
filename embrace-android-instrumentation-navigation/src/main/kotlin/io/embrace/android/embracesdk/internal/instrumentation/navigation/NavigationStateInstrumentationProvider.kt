@@ -12,11 +12,6 @@ class NavigationStateInstrumentationProvider :
     ) {
 
     override fun factoryProvider(args: InstrumentationArgs): () -> NavigationStateDataSource {
-        return {
-            NavigationStateDataSource(
-                args = args,
-                trackNav = runCatching { Class.forName("androidx.navigation.NavController") }.isSuccess
-            )
-        }
+        return { NavigationStateDataSource(args) }
     }
 }

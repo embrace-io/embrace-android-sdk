@@ -17,7 +17,7 @@ internal class NavigationStateDataSourceTest {
     @Before
     fun setUp() {
         args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
-        dataSource = NavigationStateDataSource(args, true)
+        dataSource = NavigationStateDataSource(args)
     }
 
     @Test

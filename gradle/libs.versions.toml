@@ -86,6 +86,7 @@ detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", 
 appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 androidx-navigation-fragment = { module = "androidx.navigation:navigation-fragment-ktx", version.ref = "navigation" }
 androidx-navigation-common = { module = "androidx.navigation:navigation-common-ktx", version.ref = "navigation" }
+androidx-navigation-testing = { module = "androidx.navigation:navigation-testing", version.ref = "navigation" }
 asm-util = { module = "org.ow2.asm:asm-util", version.ref = "asmUtil" }
 gradle-test-kit = { module = "dev.gradleplugins:gradle-test-kit", version.ref = "gradleTestKit" }
 zstd-jni = { module = "com.github.luben:zstd-jni", version.ref = "zstdJni" }

@@ -10,9 +10,9 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 data class UserSessionRemoteConfig(
 
-    @Json(name = "max_duration_minutes")
-    val maxDurationMinutes: Int? = null,
+    @Json(name = "max_duration_seconds")
+    val maxDurationSeconds: Int? = null,
 
-    @Json(name = "inactivity_timeout_minutes")
-    val inactivityTimeoutMinutes: Int? = null,
+    @Json(name = "inactivity_timeout_seconds")
+    val inactivityTimeoutSeconds: Int? = null,
 )

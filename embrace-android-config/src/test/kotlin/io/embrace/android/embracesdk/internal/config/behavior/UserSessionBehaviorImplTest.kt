@@ -16,8 +16,8 @@ internal class UserSessionBehaviorImplTest {
         maxUserSessionProperties = 57,
     )
 
-    private val defaultMaxDurationMs = 12 * 60 * 60_000L
-    private val defaultInactivityTimeoutMs = 30 * 60_000L
+    private val defaultMaxDurationMs = 12 * 3600 * 1_000L
+    private val defaultInactivityTimeoutMs = 30 * 60 * 1_000L
 
     @Test
     fun testDefaults() {
@@ -48,74 +48,86 @@ internal class UserSessionBehaviorImplTest {
 
     @Test
     fun `max session duration uses valid remote value`() {
-        val cfg = RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationMinutes = 720))
-        assertEquals(720 * 60_000L, createSessionBehavior(remoteCfg = cfg).getMaxSessionDurationMs())
+        val cfg = RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationSeconds = 43200))
+        assertEquals(43200 * 1_000L, createSessionBehavior(remoteCfg = cfg).getMaxSessionDurationMs())
     }
 
     @Test
     fun `max session duration defaults when remote value is zero`() {
-        val cfg = RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationMinutes = 0))
+        val cfg = RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationSeconds = 0))
         assertEquals(defaultMaxDurationMs, createSessionBehavior(remoteCfg = cfg).getMaxSessionDurationMs())
     }
 
     @Test
     fun `max session duration defaults when remote value is negative`() {
-        val cfg = RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationMinutes = -1))
+        val cfg = RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationSeconds = -1))
         assertEquals(defaultMaxDurationMs, createSessionBehavior(remoteCfg = cfg).getMaxSessionDurationMs())
+    }
+
+    @Test
+    fun `max session duration defaults when remote value is below 1 hour`() {
+        val cfg = RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationSeconds = 3599))
+        assertEquals(defaultMaxDurationMs, createSessionBehavior(remoteCfg = cfg).getMaxSessionDurationMs())
+    }
+
+    @Test
+    fun `max session duration is valid at exactly 1 hour`() {
+        val cfg = RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationSeconds = 3600))
+        assertEquals(3600 * 1_000L, createSessionBehavior(remoteCfg = cfg).getMaxSessionDurationMs())
     }
 
     @Test
     fun `inactivity timeout uses valid remote value`() {
         val cfg =
-            RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationMinutes = 1440, inactivityTimeoutMinutes = 20))
-        assertEquals(20 * 60_000L, createSessionBehavior(remoteCfg = cfg).getSessionInactivityTimeoutMs())
+            RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationSeconds = 86400, inactivityTimeoutSeconds = 1200))
+        assertEquals(1200 * 1_000L, createSessionBehavior(remoteCfg = cfg).getSessionInactivityTimeoutMs())
     }
 
     @Test
-    fun `inactivity timeout defaults when remote value is zero`() {
+    fun `inactivity timeout is valid when remote value is zero`() {
         val cfg =
-            RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationMinutes = 1440, inactivityTimeoutMinutes = 0))
-        assertEquals(defaultInactivityTimeoutMs, createSessionBehavior(remoteCfg = cfg).getSessionInactivityTimeoutMs())
+            RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationSeconds = 86400, inactivityTimeoutSeconds = 0))
+        assertEquals(0L, createSessionBehavior(remoteCfg = cfg).getSessionInactivityTimeoutMs())
     }
 
     @Test
     fun `inactivity timeout defaults when remote value is negative`() {
         val cfg =
-            RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationMinutes = 1440, inactivityTimeoutMinutes = -5))
+            RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationSeconds = 86400, inactivityTimeoutSeconds = -5))
         assertEquals(defaultInactivityTimeoutMs, createSessionBehavior(remoteCfg = cfg).getSessionInactivityTimeoutMs())
     }
 
     @Test
     fun `inactivity timeout defaults when it exceeds max duration`() {
         val cfg =
-            RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationMinutes = 20, inactivityTimeoutMinutes = 30))
+            RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationSeconds = 7200, inactivityTimeoutSeconds = 10800))
         assertEquals(defaultInactivityTimeoutMs, createSessionBehavior(remoteCfg = cfg).getSessionInactivityTimeoutMs())
     }
 
     @Test
     fun `inactivity timeout is valid when equal to max duration`() {
         val cfg =
-            RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationMinutes = 30, inactivityTimeoutMinutes = 30))
-        assertEquals(30 * 60_000L, createSessionBehavior(remoteCfg = cfg).getSessionInactivityTimeoutMs())
+            RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationSeconds = 7200, inactivityTimeoutSeconds = 7200))
+        assertEquals(7200 * 1_000L, createSessionBehavior(remoteCfg = cfg).getSessionInactivityTimeoutMs())
     }
 
     @Test
     fun `inactivity timeout defaults when max duration is invalid and configured timeout exceeds default max`() {
         val cfg =
-            RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationMinutes = 0, inactivityTimeoutMinutes = 2000))
+            RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationSeconds = 0, inactivityTimeoutSeconds = 120000))
         assertEquals(defaultMaxDurationMs, createSessionBehavior(remoteCfg = cfg).getMaxSessionDurationMs())
         assertEquals(defaultInactivityTimeoutMs, createSessionBehavior(remoteCfg = cfg).getSessionInactivityTimeoutMs())
     }
 
     @Test
     fun `max session duration is capped at 24h when remote value exceeds 24h`() {
-        val cfg = RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationMinutes = 2000))
+        val cfg = RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationSeconds = 200000))
         assertEquals(defaultMaxDurationMs, createSessionBehavior(remoteCfg = cfg).getMaxSessionDurationMs())
     }
 
     @Test
     fun `inactivity timeout is capped at 24h when remote value exceeds 24h`() {
-        val cfg = RemoteConfig(userSession = UserSessionRemoteConfig(inactivityTimeoutMinutes = 2000))
+        val cfg = RemoteConfig(userSession = UserSessionRemoteConfig(inactivityTimeoutSeconds = 200000))
         assertEquals(defaultInactivityTimeoutMs, createSessionBehavior(remoteCfg = cfg).getSessionInactivityTimeoutMs())
     }
 }

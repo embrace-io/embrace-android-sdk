@@ -10,6 +10,8 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
@@ -40,6 +42,7 @@ internal class SessionOrchestratorImpl(
     private val sessionSpanAttrPopulator: SessionPartSpanAttrPopulator,
     private val ordinalStore: OrdinalStore,
     private val metadataStore: UserSessionMetadataStore,
+    private val logger: InternalLogger,
 ) : SessionOrchestrator {
 
     /**
@@ -67,6 +70,16 @@ internal class SessionOrchestratorImpl(
         synchronized(lock) {
             val stored = metadataStore.load()
             userSessionState = when {
+                stored != null && clock.now() < stored.startTimeMs -> {
+                    logger.trackInternalError(
+                        InternalErrorType.CLOCK_BACKWARDS_SHIFT,
+                        IllegalStateException(
+                            "Clock shifted backwards from previous user session."
+                        )
+                    )
+                    metadataStore.clear()
+                    UserSessionState.NoActiveSession
+                }
                 stored != null && !isUserSessionOverMaxDuration(stored) -> {
                     UserSessionState.Active(stored)
                 }

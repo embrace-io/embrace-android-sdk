@@ -63,6 +63,7 @@ class UserSessionOrchestrationModuleImpl(
             sessionSpanAttrPopulator,
             coreModule.ordinalStore,
             UserSessionMetadataStore(coreModule.store),
+            initModule.logger,
         )
     }
 }

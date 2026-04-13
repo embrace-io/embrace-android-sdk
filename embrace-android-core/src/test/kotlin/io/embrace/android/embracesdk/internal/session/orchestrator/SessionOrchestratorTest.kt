@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
 import io.embrace.android.embracesdk.fakes.FakeDataSource
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeLogLimitingService
@@ -30,8 +31,7 @@ import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRe
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingServiceImpl
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
-import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
@@ -70,7 +70,7 @@ internal class SessionOrchestratorTest {
     private lateinit var sessionCacheExecutor: BlockingScheduledExecutorService
     private lateinit var instrumentationRegistry: InstrumentationRegistry
     private lateinit var fakeDataSource: FakeDataSource
-    private lateinit var logger: InternalLogger
+    private lateinit var logger: FakeInternalLogger
     private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
     private lateinit var destination: FakeTelemetryDestination
     private var orchestratorStartTimeMs: Long = 0
@@ -81,7 +81,7 @@ internal class SessionOrchestratorTest {
     @Before
     fun setUp() {
         clock = FakeClock()
-        logger = InternalLoggerImpl()
+        logger = FakeInternalLogger(throwOnInternalError = false)
         configService = FakeConfigService(
             backgroundActivityBehavior = createBackgroundActivityBehavior(
                 remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
@@ -657,6 +657,35 @@ internal class SessionOrchestratorTest {
         assertEquals(TimeUnit.MILLISECONDS.toSeconds(configInactivityMs), newSession.inactivityTimeoutSecs)
     }
 
+    @Test
+    fun `clock shifted backwards discards restored session`() {
+        configService = FakeConfigService(
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = maxDurationMs,
+                sessionInactivityTimeoutMs = inactivityMs,
+            )
+        )
+        val store = UserSessionMetadataStore(FakeKeyValueStore())
+        store.save(
+            UserSessionMetadata(
+                startTimeMs = clock.now() + 1_000L,
+                userSessionId = "future-id",
+                userSessionNumber = 5L,
+                maxDurationSecs = TimeUnit.MILLISECONDS.toSeconds(maxDurationMs),
+                inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
+            )
+        )
+
+        createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = store)
+
+        val session = checkNotNull(orchestrator.currentUserSession())
+        assertNotEquals("future-id", session.userSessionId)
+
+        val errors = logger.internalErrorMessages
+        assertEquals(1, errors.size)
+        assertEquals(InternalErrorType.CLOCK_BACKWARDS_SHIFT.toString(), errors[0].msg)
+    }
+
     private fun assertHeartbeatMatchesClock() {
         val attr = checkNotNull(destination.attributes[EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO])
         assertEquals(clock.now(), attr.toLong().nanosToMillis())
@@ -730,6 +759,7 @@ internal class SessionOrchestratorTest {
             ),
             ordinalStoreOverride ?: FakeOrdinalStore(),
             metadataStoreOverride ?: UserSessionMetadataStore(FakeKeyValueStore()),
+            logger,
         )
         orchestratorStartTimeMs = clock.now()
         userSessionPropertiesService.addProperty("key", "value", false)

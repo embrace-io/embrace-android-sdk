@@ -61,5 +61,6 @@ fun createSessionOrchestrator(
         sessionSpanAttrPopulator,
         coreModule.ordinalStore,
         UserSessionMetadataStore(coreModule.store),
+        initModule.logger,
     )
 }

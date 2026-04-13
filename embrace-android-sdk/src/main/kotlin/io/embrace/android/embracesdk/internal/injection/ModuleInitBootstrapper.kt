@@ -21,7 +21,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.Th
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageServiceSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
-import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartOrchestrator
 import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
 import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
 import io.embrace.android.embracesdk.internal.storage.StorageService
@@ -198,7 +197,7 @@ internal class ModuleInitBootstrapper(
             payloadSourceModule,
         )
     },
-    private val sessionPartOrchestratorSupplier: SessionPartOrchestratorSupplier = {
+    private val userSessionOrchestrationModuleSupplier: UserSessionOrchestrationModuleSupplier = {
             initModule: InitModule,
             openTelemetryModule: OpenTelemetryModule,
             coreModule: CoreModule,
@@ -210,7 +209,7 @@ internal class ModuleInitBootstrapper(
             startupDurationProvider: () -> Long?,
             logModule: LogModule,
         ->
-        createSessionPartOrchestrator(
+        UserSessionOrchestrationModuleImpl(
             initModule,
             openTelemetryModule,
             coreModule,
@@ -259,7 +258,7 @@ internal class ModuleInitBootstrapper(
     override val logModule: LogModule get() = delegate.logModule
     override val instrumentationModule: InstrumentationModule get() = delegate.instrumentationModule
     override val featureModule: FeatureModule get() = delegate.featureModule
-    override val sessionPartOrchestrator: SessionPartOrchestrator get() = delegate.sessionPartOrchestrator
+    override val userSessionOrchestrationModule: UserSessionOrchestrationModule get() = delegate.userSessionOrchestrationModule
     override val payloadSourceModule: PayloadSourceModule get() = delegate.payloadSourceModule
 
     /**
@@ -294,7 +293,7 @@ internal class ModuleInitBootstrapper(
                     deliveryModuleSupplier,
                     threadBlockageServiceSupplier,
                     logModuleSupplier,
-                    sessionPartOrchestratorSupplier,
+                    userSessionOrchestrationModuleSupplier,
                     payloadSourceModuleSupplier
                 )
                 return isInitialized()

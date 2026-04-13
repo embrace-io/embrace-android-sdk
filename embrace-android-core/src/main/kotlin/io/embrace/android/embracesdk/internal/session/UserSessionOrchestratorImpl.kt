@@ -6,61 +6,69 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
-import io.embrace.android.embracesdk.internal.session.UserSessionState.NO_ACTIVE_USER_SESSION
-import io.embrace.android.embracesdk.internal.session.UserSessionState.USER_SESSION_ACTIVE
-import io.embrace.android.embracesdk.internal.session.UserSessionState.USER_SESSION_TERMINATED
+import io.embrace.android.embracesdk.internal.store.Ordinal
+import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.atomic.AtomicLong
 
 internal class UserSessionOrchestratorImpl(
     private val clock: Clock,
     configService: ConfigService,
+    private val ordinalStore: OrdinalStore,
+    private val metadataStore: UserSessionMetadataStore,
     private val logger: InternalLogger,
 ) : UserSessionOrchestrator {
 
     private val lock = Any()
     private val listeners = CopyOnWriteArrayList<UserSessionListener>()
 
-    // TODO: future: support restoring user sessions that contain crashes in the middle, and setting initial state appropriately.
     @Volatile
-    private var state: UserSessionState = NO_ACTIVE_USER_SESSION
-
-    @Volatile
-    private var metadata: UserSessionMetadata? = null
-
-    // TODO: future: persist the incremented ordinal
-    private val sessionCounter = AtomicLong(0L)
+    private var state: UserSessionState = UserSessionState.Initializing
 
     private val maxDurationMs: Long = configService.sessionBehavior.getMaxSessionDurationMs()
     private val inactivityTimeoutMs: Long = configService.sessionBehavior.getSessionInactivityTimeoutMs()
 
-    override fun onNewSessionPart() {
+    init {
         synchronized(lock) {
-            if (state == USER_SESSION_ACTIVE) {
-                val current = checkNotNull(metadata)
-                if (clock.now() - current.startTimeMs >= maxDurationMs) {
-                    terminateSession()
-                    startNewSession()
-                }
-            } else {
-                startNewSession()
+            val stored = metadataStore.load()
+            state = when {
+                stored != null && !isOverMaxDurationLimit(stored) -> UserSessionState.Active(stored)
+                else -> UserSessionState.NoActiveSession
             }
         }
+    }
+
+    override fun onNewSessionPart() {
+        synchronized(lock) {
+            val current = state
+            if (current is UserSessionState.Active) {
+                if (isOverMaxDurationLimit(current.metadata)) {
+                    terminateSession()
+                    startNewUserSession()
+                }
+            } else {
+                startNewUserSession()
+            }
+        }
+    }
+
+    private fun isOverMaxDurationLimit(metadata: UserSessionMetadata): Boolean {
+        return clock.now() - metadata.startTimeMs >= maxDurationMs
     }
 
     // TODO: future: determine behavior when manual end called and app is in background.
     override fun onManualEnd() {
         synchronized(lock) {
-            if (state == USER_SESSION_ACTIVE) {
+            if (state is UserSessionState.Active) {
                 terminateSession()
             }
-            startNewSession()
+            startNewUserSession()
         }
     }
 
-    override fun currentUserSession(): UserSessionMetadata? = metadata
+    override fun currentUserSession(): UserSessionMetadata? =
+        (state as? UserSessionState.Active)?.metadata
 
     override fun addListener(listener: UserSessionListener) {
         listeners.add(listener)
@@ -69,15 +77,16 @@ internal class UserSessionOrchestratorImpl(
     /**
      * Starts a new user session.
      */
-    private fun startNewSession() {
-        metadata = UserSessionMetadata(
+    private fun startNewUserSession() {
+        val newMetadata = UserSessionMetadata(
             startTimeMs = clock.now(),
             userSessionId = Uuid.getEmbUuid(),
-            userSessionNumber = sessionCounter.incrementAndGet(),
+            userSessionNumber = ordinalStore.incrementAndGet(Ordinal.USER_SESSION).toLong(),
             maxDurationMins = maxDurationMs / 60_000L,
             inactivityTimeoutMins = inactivityTimeoutMs / 60_000L,
         )
-        state = USER_SESSION_ACTIVE
+        metadataStore.save(newMetadata)
+        state = UserSessionState.Active(newMetadata)
         listeners.forEach { listener ->
             try {
                 listener.onNewUserSession()
@@ -91,7 +100,7 @@ internal class UserSessionOrchestratorImpl(
      * Terminates the active user session.
      */
     private fun terminateSession() {
-        metadata = null
-        state = USER_SESSION_TERMINATED
+        metadataStore.clear()
+        state = UserSessionState.Terminated
     }
 }

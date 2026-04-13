@@ -3,20 +3,25 @@ package io.embrace.android.embracesdk.internal.session
 /**
  * Describes the possible states of a user session.
  */
-enum class UserSessionState {
+internal sealed class UserSessionState {
+
+    /**
+     * The orchestrator is loading initial state from the persistent store.
+     */
+    object Initializing : UserSessionState()
 
     /**
      * No user session is active and none has been created previously.
      */
-    NO_ACTIVE_USER_SESSION,
+    object NoActiveSession : UserSessionState()
 
     /**
-     * A user session is active.
+     * A user session is active. [metadata] is guaranteed to be present.
      */
-    USER_SESSION_ACTIVE,
+    data class Active(val metadata: UserSessionMetadata) : UserSessionState()
 
     /**
      * A user session was previously active but has now terminated.
      */
-    USER_SESSION_TERMINATED,
+    object Terminated : UserSessionState()
 }

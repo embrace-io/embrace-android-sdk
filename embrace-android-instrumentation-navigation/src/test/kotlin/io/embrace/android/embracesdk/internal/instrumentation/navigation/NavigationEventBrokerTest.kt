@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.internal.instrumentation.navigation.Navigat
 import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.ActivityResumed
 import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.ActivityStarted
 import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.Backgrounded
+import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.NavControllerAttached
+import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.NavControllerDestinationChanged
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -47,14 +49,13 @@ internal class NavigationEventBrokerTest {
         loadTimes.add(broker.submitAndTick(Backgrounded(clock.now())))
         loadTimes.add(broker.submitAndTick(ActivityStarted(profileActivity, clock.now())))
         broker.submitAndTick(ActivityResumed(profileActivity, clock.now()))
-        assertEquals(
+        assertStateTransitions(
             listOf(
-                Pair(loadTimes[0], homeActivity.localClassName),
-                Pair(loadTimes[1], settingsActivity.localClassName),
-                Pair(loadTimes[2], "Backgrounded"),
-                Pair(loadTimes[3], profileActivity.localClassName)
-            ),
-            states
+                homeActivity.localClassName,
+                settingsActivity.localClassName,
+                "Backgrounded",
+                profileActivity.localClassName
+            )
         )
     }
 
@@ -68,12 +69,11 @@ internal class NavigationEventBrokerTest {
         broker.submitAndTick(ActivityPaused(homeActivity, clock.now()))
         loadTimes.add(broker.submitAndTick(Backgrounded(clock.now())))
         broker.submitAndTick(Backgrounded(clock.now()))
-        assertEquals(
+        assertStateTransitions(
             listOf(
-                Pair(loadTimes[0], homeActivity.localClassName),
-                Pair(loadTimes[1], "Backgrounded"),
-            ),
-            states
+                homeActivity.localClassName,
+                "Backgrounded",
+            )
         )
     }
 
@@ -82,7 +82,7 @@ internal class NavigationEventBrokerTest {
         broker.submitAndTick(ActivityStarted(homeActivity, clock.now()))
         loadTimes.add(broker.submitAndTick(ActivityStarted(settingsActivity, clock.now())))
         broker.submitAndTick(ActivityResumed(settingsActivity, clock.now()))
-        assertEquals(Pair(loadTimes[0], settingsActivity.localClassName), states.single())
+        assertStateTransitions(listOf(settingsActivity.localClassName))
     }
 
     @Test
@@ -91,13 +91,7 @@ internal class NavigationEventBrokerTest {
         broker.submitAndTick(ActivityResumed(homeActivity, clock.now()))
         broker.submitAndTick(ActivityStarted(settingsActivity, clock.now()))
         loadTimes.add(broker.submitAndTick(ActivityResumed(settingsActivity, clock.now())))
-        assertEquals(
-            listOf(
-                Pair(loadTimes[0], homeActivity.localClassName),
-                Pair(loadTimes[1], settingsActivity.localClassName)
-            ),
-            states
-        )
+        assertStateTransitions(listOf(homeActivity.localClassName, settingsActivity.localClassName))
     }
 
     @Test
@@ -106,14 +100,81 @@ internal class NavigationEventBrokerTest {
         loadTimes.add(broker.submitAndTick(ActivityStarted(settingsActivity, clock.now())))
         broker.submitAndTick(ActivityResumed(settingsActivity, clock.now()))
         loadTimes.add(broker.submitAndTick(ActivityResumed(homeActivity, clock.now())))
-
-        assertEquals(
-            listOf(
-                Pair(loadTimes[0], settingsActivity.localClassName),
-                Pair(loadTimes[1], homeActivity.localClassName)
-            ),
-            states
+        assertStateTransitions(
+            listOf(settingsActivity.localClassName, homeActivity.localClassName)
         )
+    }
+
+    @Test
+    fun `activity resume does not emit state update for NavController activity on first start`() {
+        loadTimes.add(broker.simulateActivityStartWithNavController(homeActivity, "home"))
+        broker.submitAndTick(ActivityResumed(homeActivity, clock.now()))
+        assertStateTransitions(listOf("home"))
+    }
+
+    @Test
+    fun `NavController destination ignored if that activity is not visible when another activity becomes visible`() {
+        loadTimes.add(broker.simulateActivityStartWithNavController(homeActivity, "home"))
+        broker.submitAndTick(ActivityResumed(homeActivity, clock.now()))
+        broker.submitAndTick(ActivityPaused(homeActivity, clock.now()))
+        loadTimes.add(broker.submitAndTick(ActivityStarted(settingsActivity, clock.now())))
+        broker.submitAndTick(ActivityResumed(settingsActivity, clock.now()))
+        loadTimes.add(broker.submitAndTick(Backgrounded(clock.now())))
+        assertStateTransitions(listOf("home", settingsActivity.localClassName, "Backgrounded"))
+    }
+
+    @Test
+    fun `NavController destination change updates state with destination name`() {
+        loadTimes.add(broker.simulateActivityStartWithNavController(homeActivity, "home"))
+        broker.submitAndTick(ActivityResumed(homeActivity, clock.now()))
+        loadTimes.add(broker.submitAndTick(NavControllerDestinationChanged(homeActivity, "about", clock.now())))
+        loadTimes.add(broker.submitAndTick(Backgrounded(clock.now())))
+        assertStateTransitions(listOf("home", "about", "Backgrounded"))
+    }
+
+    @Test
+    fun `interleaved activity and NavController events from different activities results in compound state value`() {
+        loadTimes.add(broker.simulateActivityStartWithNavController(homeActivity, "home"))
+        broker.submitAndTick(ActivityResumed(homeActivity, clock.now()))
+        broker.submitAndTick(ActivityStarted(settingsActivity, clock.now()))
+        loadTimes.add(broker.submitAndTick(ActivityResumed(settingsActivity, clock.now())))
+        loadTimes.add(broker.submitAndTick(NavControllerDestinationChanged(homeActivity, "about", clock.now())))
+        assertStateTransitions(listOf("home", settingsActivity.localClassName, "about"))
+    }
+
+    @Test
+    fun `NavController activity returning from background re-emits last loaded destination`() {
+        loadTimes.add(broker.simulateActivityStartWithNavController(homeActivity, "home"))
+        broker.submitAndTick(ActivityResumed(homeActivity, clock.now()))
+        broker.submitAndTick(ActivityPaused(homeActivity, clock.now()))
+        loadTimes.add(broker.submitAndTick(Backgrounded(clock.now())))
+
+        loadTimes.add(broker.submitAndTick(ActivityStarted(homeActivity, clock.now())))
+        broker.submitAndTick(ActivityResumed(homeActivity, clock.now()))
+        loadTimes.add(broker.submitAndTick(NavControllerDestinationChanged(homeActivity, "settings", clock.now())))
+        broker.submitAndTick(ActivityPaused(homeActivity, clock.now()))
+        loadTimes.add(broker.submitAndTick(Backgrounded(clock.now())))
+
+        loadTimes.add(broker.submitAndTick(ActivityStarted(homeActivity, clock.now())))
+        broker.submitAndTick(ActivityResumed(homeActivity, clock.now()))
+
+        assertStateTransitions(listOf("home", "Backgrounded", "home", "settings", "Backgrounded", "settings"))
+    }
+
+    /**
+     * Simulates the event sequence produced by [ActivityNavigationTracker.handleActivityStarted]
+     * for an Activity with a NavController: Attached → DestinationChanged → ActivityStarted.
+     * Returns the timestamp of the DestinationChanged event (the screen load time).
+     */
+    private fun NavigationEventBroker.simulateActivityStartWithNavController(
+        activity: Activity,
+        destination: String,
+    ): Long {
+        submitAndTick(NavControllerAttached(activity, clock.now()))
+        val destinationChangeTime =
+            submitAndTick(NavControllerDestinationChanged(activity, destination, clock.now()))
+        submitAndTick(ActivityStarted(activity, clock.now()))
+        return destinationChangeTime
     }
 
     /**
@@ -125,6 +186,15 @@ internal class NavigationEventBrokerTest {
         onEvent(event)
         clock.tick()
         return eventTime
+    }
+
+    private fun assertStateTransitions(expectedStates: List<String>) {
+        val expectedTransitions = expectedStates.size
+        assertEquals(expectedTransitions, states.size)
+        (0..<expectedTransitions).forEach { i ->
+            assertEquals(loadTimes[i], states[i].first)
+            assertEquals(expectedStates[i], states[i].second)
+        }
     }
 
     private class HomeActivity : Activity()

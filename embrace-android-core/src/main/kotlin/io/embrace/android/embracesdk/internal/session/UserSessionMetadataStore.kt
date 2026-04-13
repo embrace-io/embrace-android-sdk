@@ -39,14 +39,14 @@ internal class UserSessionMetadataStore(private val store: KeyValueStore) {
         val id = attrs[EmbSessionAttributes.EMB_USER_SESSION_ID] ?: return null
         val startMs = attrs[EmbSessionAttributes.EMB_USER_SESSION_START_TS]?.toLongOrNull() ?: return null
         val number = attrs[EmbSessionAttributes.EMB_USER_SESSION_NUMBER]?.toLongOrNull() ?: return null
-        val maxDurationMins = attrs[EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_MINUTES]?.toLongOrNull() ?: return null
-        val inactivityTimeoutMins = attrs[EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_MINUTES]?.toLongOrNull() ?: return null
+        val maxDurationSecs = attrs[EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS]?.toLongOrNull() ?: return null
+        val inactivityTimeoutSecs = attrs[EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS]?.toLongOrNull() ?: return null
         return UserSessionMetadata(
             startTimeMs = startMs,
             userSessionId = id,
             userSessionNumber = number,
-            maxDurationMins = maxDurationMins,
-            inactivityTimeoutMins = inactivityTimeoutMins,
+            maxDurationSecs = maxDurationSecs,
+            inactivityTimeoutSecs = inactivityTimeoutSecs,
         )
     }
 }

@@ -496,16 +496,16 @@ groups:
         brief: "The reason the session part was terminated."
         stability: development
         examples: ["max_duration_reached", "inactivity", "manual"]
-      - id: emb.user_session_max_duration_minutes
+      - id: emb.user_session_max_duration_seconds
         type: string
-        brief: "The maximum session duration (in minutes) that the SDK was configured to use."
+        brief: "The maximum session duration (in seconds) that the SDK was configured to use."
         stability: development
-        examples: ["60", "120"]
-      - id: emb.user_session_inactivity_timeout_minutes
+        examples: ["3600", "7200"]
+      - id: emb.user_session_inactivity_timeout_seconds
         type: string
-        brief: "The inactivity timeout (in minutes) that the SDK was configured to use."
+        brief: "The inactivity timeout (in seconds) that the SDK was configured to use."
         stability: development
-        examples: ["5", "30"]
+        examples: ["300", "1800"]
 
   - id: emb.android
     type: attribute_group

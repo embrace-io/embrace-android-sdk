@@ -16,15 +16,15 @@ internal class UserSessionMetadataStoreTest {
         startTimeMs = 1000L,
         userSessionId = "test-uuid",
         userSessionNumber = 3L,
-        maxDurationMins = 60L,
-        inactivityTimeoutMins = 30L,
+        maxDurationSecs = 3600L,
+        inactivityTimeoutSecs = 1800L,
     )
     private val metadata2 = UserSessionMetadata(
         startTimeMs = 2000L,
         userSessionId = "test-uuid-2",
         userSessionNumber = 5L,
-        maxDurationMins = 120L,
-        inactivityTimeoutMins = 60L,
+        maxDurationSecs = 7200L,
+        inactivityTimeoutSecs = 3600L,
     )
 
     @Before
@@ -46,8 +46,8 @@ internal class UserSessionMetadataStoreTest {
         assertEquals(metadata.startTimeMs, loaded.startTimeMs)
         assertEquals(metadata.userSessionId, loaded.userSessionId)
         assertEquals(metadata.userSessionNumber, loaded.userSessionNumber)
-        assertEquals(metadata.maxDurationMins, loaded.maxDurationMins)
-        assertEquals(metadata.inactivityTimeoutMins, loaded.inactivityTimeoutMins)
+        assertEquals(metadata.maxDurationSecs, loaded.maxDurationSecs)
+        assertEquals(metadata.inactivityTimeoutSecs, loaded.inactivityTimeoutSecs)
     }
 
     @Test
@@ -59,8 +59,8 @@ internal class UserSessionMetadataStoreTest {
         assertEquals(metadata2.startTimeMs, loaded.startTimeMs)
         assertEquals(metadata2.userSessionId, loaded.userSessionId)
         assertEquals(metadata2.userSessionNumber, loaded.userSessionNumber)
-        assertEquals(metadata2.maxDurationMins, loaded.maxDurationMins)
-        assertEquals(metadata2.inactivityTimeoutMins, loaded.inactivityTimeoutMins)
+        assertEquals(metadata2.maxDurationSecs, loaded.maxDurationSecs)
+        assertEquals(metadata2.inactivityTimeoutSecs, loaded.inactivityTimeoutSecs)
     }
 
     @Test
@@ -104,7 +104,7 @@ internal class UserSessionMetadataStoreTest {
     fun `load returns null when max duration is missing`() {
         metadataStore.save(metadata)
         val stored = checkNotNull(kvStore.getStringMap("embrace.user_session")).toMutableMap()
-        stored.remove(EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_MINUTES)
+        stored.remove(EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS)
         kvStore.edit { putStringMap("embrace.user_session", stored) }
 
         assertNull(metadataStore.load())
@@ -114,7 +114,7 @@ internal class UserSessionMetadataStoreTest {
     fun `load returns null when inactivity timeout is missing`() {
         metadataStore.save(metadata)
         val stored = checkNotNull(kvStore.getStringMap("embrace.user_session")).toMutableMap()
-        stored.remove(EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_MINUTES)
+        stored.remove(EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS)
         kvStore.edit { putStringMap("embrace.user_session", stored) }
 
         assertNull(metadataStore.load())

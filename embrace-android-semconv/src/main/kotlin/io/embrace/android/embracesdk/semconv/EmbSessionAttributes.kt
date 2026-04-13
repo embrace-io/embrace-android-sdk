@@ -158,16 +158,16 @@ object EmbSessionAttributes {
     const val EMB_USER_SESSION_ID: String = "emb.user_session_id"
 
     /**
-     * The inactivity timeout (in minutes) that the SDK was configured to use.
+     * The inactivity timeout (in seconds) that the SDK was configured to use.
      */
     @ExperimentalSemconv
-    const val EMB_USER_SESSION_INACTIVITY_TIMEOUT_MINUTES: String = "emb.user_session_inactivity_timeout_minutes"
+    const val EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS: String = "emb.user_session_inactivity_timeout_seconds"
 
     /**
-     * The maximum session duration (in minutes) that the SDK was configured to use.
+     * The maximum session duration (in seconds) that the SDK was configured to use.
      */
     @ExperimentalSemconv
-    const val EMB_USER_SESSION_MAX_DURATION_MINUTES: String = "emb.user_session_max_duration_minutes"
+    const val EMB_USER_SESSION_MAX_DURATION_SECONDS: String = "emb.user_session_max_duration_seconds"
 
     /**
      * Incremental counter of sessions since SDK install.

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.internal.session.UserSessionListener
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.internal.session.UserSessionOrchestrator
 
@@ -18,4 +19,7 @@ class FakeUserSessionOrchestrator : UserSessionOrchestrator {
     }
 
     override fun currentUserSession(): UserSessionMetadata? = currentSession
+
+    override fun addListener(listener: UserSessionListener) {
+    }
 }

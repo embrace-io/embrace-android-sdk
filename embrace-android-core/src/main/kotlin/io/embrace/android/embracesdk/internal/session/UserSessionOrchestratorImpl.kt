@@ -4,19 +4,24 @@ package io.embrace.android.embracesdk.internal.session
 
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
+import java.util.concurrent.CopyOnWriteArrayList
 
 internal class UserSessionOrchestratorImpl(
     private val clock: Clock,
     configService: ConfigService,
     private val ordinalStore: OrdinalStore,
     private val metadataStore: UserSessionMetadataStore,
+    private val logger: InternalLogger,
 ) : UserSessionOrchestrator {
 
     private val lock = Any()
+    private val listeners = CopyOnWriteArrayList<UserSessionListener>()
 
     @Volatile
     private var state: UserSessionState = UserSessionState.Initializing
@@ -65,6 +70,10 @@ internal class UserSessionOrchestratorImpl(
     override fun currentUserSession(): UserSessionMetadata? =
         (state as? UserSessionState.Active)?.metadata
 
+    override fun addListener(listener: UserSessionListener) {
+        listeners.add(listener)
+    }
+
     /**
      * Starts a new user session.
      */
@@ -78,6 +87,13 @@ internal class UserSessionOrchestratorImpl(
         )
         metadataStore.save(newMetadata)
         state = UserSessionState.Active(newMetadata)
+        listeners.forEach { listener ->
+            try {
+                listener.onNewUserSession()
+            } catch (ex: Exception) {
+                logger.trackInternalError(InternalErrorType.USER_SESSION_CALLBACK_FAIL, ex)
+            }
+        }
     }
 
     /**

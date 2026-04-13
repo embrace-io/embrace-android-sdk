@@ -31,6 +31,7 @@ class UserSessionOrchestrationModuleImpl(
             configService = configService,
             ordinalStore = coreModule.ordinalStore,
             metadataStore = UserSessionMetadataStore(coreModule.store),
+            logger = initModule.logger,
         )
     }
 

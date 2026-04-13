@@ -2,14 +2,17 @@ package io.embrace.android.embracesdk.internal.session
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.behavior.FakeUserSessionBehavior
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.TimeUnit
@@ -17,6 +20,7 @@ import java.util.concurrent.TimeUnit
 internal class UserSessionOrchestratorImplTest {
 
     private lateinit var clock: FakeClock
+    private lateinit var logger: FakeInternalLogger
     private lateinit var metadataStore: UserSessionMetadataStore
     private lateinit var orchestrator: UserSessionOrchestratorImpl
 
@@ -26,6 +30,7 @@ internal class UserSessionOrchestratorImplTest {
     @Before
     fun setUp() {
         clock = FakeClock(currentTime = 0L)
+        logger = FakeInternalLogger(throwOnInternalError = false)
         metadataStore = UserSessionMetadataStore(FakeKeyValueStore())
         orchestrator = UserSessionOrchestratorImpl(
             clock = clock,
@@ -37,6 +42,7 @@ internal class UserSessionOrchestratorImplTest {
             ),
             ordinalStore = FakeOrdinalStore(),
             metadataStore = metadataStore,
+            logger = logger,
         )
     }
 
@@ -97,6 +103,7 @@ internal class UserSessionOrchestratorImplTest {
             ),
             ordinalStore = store,
             metadataStore = UserSessionMetadataStore(FakeKeyValueStore()),
+            logger = logger,
         )
         first.onNewSessionPart()
         assertEquals(1L, checkNotNull(first.currentUserSession()).userSessionNumber)
@@ -112,6 +119,7 @@ internal class UserSessionOrchestratorImplTest {
             ),
             ordinalStore = store,
             metadataStore = UserSessionMetadataStore(FakeKeyValueStore()),
+            logger = logger,
         )
         second.onNewSessionPart()
         assertEquals(2L, checkNotNull(second.currentUserSession()).userSessionNumber)
@@ -128,6 +136,80 @@ internal class UserSessionOrchestratorImplTest {
         assertEquals(session.userSessionNumber, attrs[EmbSessionAttributes.EMB_USER_SESSION_NUMBER])
         assertEquals(session.maxDurationMins, attrs[EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_MINUTES])
         assertEquals(session.inactivityTimeoutMins, attrs[EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_MINUTES])
+    }
+
+    @Test
+    fun `listener notified when new part creates user session`() {
+        var callCount = 0
+        orchestrator.addListener { callCount++ }
+
+        orchestrator.onNewSessionPart()
+
+        assertEquals(1, callCount)
+    }
+
+    @Test
+    fun `listener not notified when new part is within same user session`() {
+        var callCount = 0
+        orchestrator.addListener { callCount++ }
+
+        orchestrator.onNewSessionPart()
+        clock.tick(maxDurationMs - 1)
+        orchestrator.onNewSessionPart()
+
+        assertEquals(1, callCount)
+    }
+
+    @Test
+    fun `listener notified when max duration exceeded`() {
+        var callCount = 0
+        orchestrator.addListener { callCount++ }
+
+        orchestrator.onNewSessionPart()
+        clock.tick(maxDurationMs)
+        orchestrator.onNewSessionPart()
+
+        assertEquals(2, callCount)
+    }
+
+    @Test
+    fun `listener notified twice on manual end`() {
+        var callCount = 0
+        orchestrator.addListener { callCount++ }
+
+        orchestrator.onManualEnd()
+        orchestrator.onManualEnd()
+
+        assertEquals(2, callCount)
+    }
+
+    @Test
+    fun `multiple listeners all receive callback`() {
+        var firstCount = 0
+        var secondCount = 0
+        orchestrator.addListener { firstCount++ }
+        orchestrator.addListener { secondCount++ }
+
+        orchestrator.onNewSessionPart()
+
+        assertEquals(1, firstCount)
+        assertEquals(1, secondCount)
+    }
+
+    @Test
+    fun `throwing listener does not prevent subsequent invocations`() {
+        var subsequentCount = 0
+        orchestrator.addListener { throw RuntimeException("boom") }
+        orchestrator.addListener { subsequentCount++ }
+
+        orchestrator.onNewSessionPart()
+
+        assertEquals(1, subsequentCount)
+        assertTrue(logger.internalErrorMessages.isNotEmpty())
+        assertEquals(
+            InternalErrorType.USER_SESSION_CALLBACK_FAIL.name,
+            logger.internalErrorMessages.first().msg,
+        )
     }
 
     @Test
@@ -160,6 +242,7 @@ internal class UserSessionOrchestratorImplTest {
             ),
             ordinalStore = FakeOrdinalStore(),
             metadataStore = metadataStore,
+            logger = logger,
         )
 
         val session = checkNotNull(restored.currentUserSession())
@@ -195,6 +278,7 @@ internal class UserSessionOrchestratorImplTest {
             ),
             ordinalStore = FakeOrdinalStore(),
             metadataStore = metadataStore,
+            logger = logger,
         )
 
         // session is expired.

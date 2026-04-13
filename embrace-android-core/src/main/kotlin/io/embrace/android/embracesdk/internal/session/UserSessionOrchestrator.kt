@@ -19,4 +19,9 @@ interface UserSessionOrchestrator {
      * Retrieves metadata on the current user session, if any exists.
      */
     fun currentUserSession(): UserSessionMetadata?
+
+    /**
+     * Registers a listener to be notified when a new user session starts.
+     */
+    fun addListener(listener: UserSessionListener)
 }

@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.navigation
 import android.app.Activity
 
 /**
- * Typed events representing navigation-related signals from various sources
+ * Typed events representing navigation-related signals from various sources.
  */
 internal sealed class NavigationEvent(
     /**
@@ -60,7 +60,31 @@ internal sealed class NavigationEvent(
     )
 
     /**
-     * The app has backgrounded, i.e. it has no visible activities
+     * A NavController was found and a listener was attached for the given [Activity] instance.
+     */
+    class NavControllerAttached(
+        activity: Activity,
+        timestampMs: Long,
+    ) : NavigationEvent(
+        componentId = activity.getId(),
+        timestampMs = timestampMs,
+    )
+
+    /**
+     * A NavController reported a new destination for the given [Activity] instance.
+     */
+    class NavControllerDestinationChanged(
+        activity: Activity,
+        screenName: String,
+        timestampMs: Long,
+    ) : NavigationEvent(
+        name = screenName,
+        componentId = activity.getId(),
+        timestampMs = timestampMs,
+    )
+
+    /**
+     * The app has backgrounded, i.e. it has no visible activities.
      */
     class Backgrounded(
         timestampMs: Long,

@@ -40,6 +40,7 @@ class InstrumentationModuleImpl(
             processIdentifier = openTelemetryModule.otelSdkConfig.processIdentifier,
             crashMarkerFileProvider = { storageService.getFileForWrite("embrace_crash_marker") },
             appStateTracker = essentialServiceModule.appStateTracker,
+            navigationTrackingService = essentialServiceModule.navigationTrackingService,
             telemetryService = initModule.telemetryService,
         )
     }

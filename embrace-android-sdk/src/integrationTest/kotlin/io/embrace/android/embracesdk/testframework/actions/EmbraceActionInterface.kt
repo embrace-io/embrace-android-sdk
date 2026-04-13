@@ -4,6 +4,7 @@ import android.app.Activity
 import androidx.lifecycle.Lifecycle
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.NavControllerFragmentActivity
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectionType
@@ -213,6 +214,28 @@ internal class EmbraceActionInterface(
 
         return appExecutionTimes
     }
+
+    /**
+     * Simulates opening a [NavControllerFragmentActivity] and navigating through the given routes.
+     */
+    fun simulateNavControllerNavigation(
+        activityController: ActivityController<NavControllerFragmentActivity> =
+            Robolectric.buildActivity(NavControllerFragmentActivity::class.java),
+        routes: List<String>,
+    ): AppExecutionTimestamps =
+        simulateOpeningActivities(
+            addStartupActivity = false,
+            startInBackground = true,
+            activitiesAndActions = listOf(
+                activityController to {
+                    val navController = activityController.get().getNavController()
+                    routes.forEach { route ->
+                        clock.tick(POST_ACTIVITY_ACTION_DWELL)
+                        navController.navigate(route)
+                    }
+                },
+            )
+        )
 
     fun simulateJvmUncaughtException(exc: Throwable) {
         Thread.getDefaultUncaughtExceptionHandler()?.uncaughtException(Thread.currentThread(), exc)

@@ -40,10 +40,10 @@ internal class UserSessionOrchestratorImpl(
             if (current is UserSessionState.Active) {
                 if (isOverMaxDurationLimit(current.metadata)) {
                     terminateSession()
-                    startNewSession()
+                    startNewUserSession()
                 }
             } else {
-                startNewSession()
+                startNewUserSession()
             }
         }
     }
@@ -58,7 +58,7 @@ internal class UserSessionOrchestratorImpl(
             if (state is UserSessionState.Active) {
                 terminateSession()
             }
-            startNewSession()
+            startNewUserSession()
         }
     }
 
@@ -68,7 +68,7 @@ internal class UserSessionOrchestratorImpl(
     /**
      * Starts a new user session.
      */
-    private fun startNewSession() {
+    private fun startNewUserSession() {
         val newMetadata = UserSessionMetadata(
             startTimeMs = clock.now(),
             userSessionId = Uuid.getEmbUuid(),

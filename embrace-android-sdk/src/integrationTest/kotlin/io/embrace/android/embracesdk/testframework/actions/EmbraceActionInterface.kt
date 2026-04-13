@@ -5,6 +5,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavController
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.HasNavController
 import io.embrace.android.embracesdk.fakes.TestFragmentActivity
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
@@ -236,20 +237,16 @@ internal class EmbraceActionInterface(
     fun simulateFragmentActivityNavigation(
         routes: List<String>,
         activityController: ActivityController<TestFragmentActivity> = Robolectric.buildActivity(TestFragmentActivity::class.java),
-    ) = simulateNavControllerNavigation(routes, false, activityController) {
-        activityController.get().getNavController()
-    }
+    ) = simulateNavControllerNavigation(routes, false, activityController)
 
     /**
      * Simulates opening the given [Activity] and navigating through the destinations [routes] defined on the [NavController] provided by
-     * [navControllerProvider]. The provider will be called during the activity's onStart hook, so the initialization of the
-     * [NavController] by the activity needs to be done by then.
+     * the [HasNavController] interface. The [NavController] will be accessed during onStart, so its initialization has to be done by then.
      */
-    inline fun <reified T : Activity> simulateNavControllerTrackingAndNavigation(
+    inline fun <reified T> simulateNavControllerTrackingAndNavigation(
         routes: List<String>,
         activityController: ActivityController<T> = Robolectric.buildActivity(T::class.java),
-        crossinline navControllerProvider: (T) -> NavController,
-    ) = simulateNavControllerNavigation(routes, true, activityController, navControllerProvider)
+    ) where T : Activity, T : HasNavController = simulateNavControllerNavigation(routes, true, activityController)
 
     fun simulateJvmUncaughtException(exc: Throwable) {
         Thread.getDefaultUncaughtExceptionHandler()?.uncaughtException(Thread.currentThread(), exc)
@@ -264,18 +261,17 @@ internal class EmbraceActionInterface(
         return checkNotNull(registry.findByType(T::class))
     }
 
-    private inline fun <reified T : Activity> simulateNavControllerNavigation(
+    private inline fun <reified T> simulateNavControllerNavigation(
         routes: List<String>,
         registerNavController: Boolean,
         activityController: ActivityController<T>,
-        crossinline navControllerProvider: (T) -> NavController,
-    ): AppExecutionTimestamps =
+    ): AppExecutionTimestamps where T : Activity, T : HasNavController =
         simulateOpeningActivities(
             addStartupActivity = false,
             startInBackground = true,
             toBeRegisteredNavControllerProvider = {
                 if (registerNavController) {
-                    navControllerProvider(activityController.get())
+                    activityController.get().getNavController()
                 } else {
                     null
                 }
@@ -284,7 +280,7 @@ internal class EmbraceActionInterface(
                 activityController to {
                     routes.forEach { route ->
                         clock.tick(POST_ACTIVITY_ACTION_DWELL)
-                        navControllerProvider(activityController.get()).navigate(route)
+                        activityController.get().getNavController().navigate(route)
                     }
                 },
             )

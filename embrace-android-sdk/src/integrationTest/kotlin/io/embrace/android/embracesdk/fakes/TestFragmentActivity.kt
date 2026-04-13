@@ -9,7 +9,7 @@ import androidx.navigation.createGraph
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.fragment
 
-class TestFragmentActivity : FragmentActivity() {
+class TestFragmentActivity : HasNavController, FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val navHostFragment = NavHostFragment()
@@ -23,7 +23,7 @@ class TestFragmentActivity : FragmentActivity() {
         }
     }
 
-    fun getNavController(): NavController {
+    override fun getNavController(): NavController {
         val navHostFragment = supportFragmentManager.fragments
             .first { it is NavHostFragment } as NavHostFragment
         return navHostFragment.navController

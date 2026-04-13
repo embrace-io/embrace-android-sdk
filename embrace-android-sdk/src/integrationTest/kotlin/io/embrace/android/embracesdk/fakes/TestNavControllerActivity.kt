@@ -10,7 +10,7 @@ import androidx.navigation.testing.TestNavHostController
 /**
  * An [Activity] that creates a custom [NavController] on create and exposes it.
  */
-class TestNavControllerActivity : Activity() {
+class TestNavControllerActivity : HasNavController, Activity() {
     private lateinit var navController: TestNavHostController
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,5 +26,5 @@ class TestNavControllerActivity : Activity() {
         }
     }
 
-    fun getNavController(): NavController = navController
+    override fun getNavController(): NavController = navController
 }

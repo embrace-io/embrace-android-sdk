@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.testcases.features
 
 import android.app.Activity
 import android.os.Build
-import androidx.navigation.NavController
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertStateTransition
 import io.embrace.android.embracesdk.fakes.TestFragmentActivity
@@ -318,9 +317,6 @@ internal class NavigationStateFeatureTest {
                 timestamps = simulateNavControllerTrackingAndNavigation(
                     routes = listOf("contacts", "about"),
                     activityController = activityController,
-                    navControllerProvider = fun(activity: TestNavControllerActivity): NavController {
-                        return activity.getNavController()
-                    }
                 )
             },
             assertAction = {

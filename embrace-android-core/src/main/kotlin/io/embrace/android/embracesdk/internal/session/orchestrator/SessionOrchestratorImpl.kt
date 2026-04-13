@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalSemconv::class)
+
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
@@ -11,13 +13,20 @@ import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingSer
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
+import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
+import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
+import io.embrace.android.embracesdk.internal.session.UserSessionState
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
+import io.embrace.android.embracesdk.internal.store.Ordinal
+import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 
-internal class SessionPartOrchestratorImpl(
+internal class SessionOrchestratorImpl(
     appStateTracker: AppStateTracker,
     private val payloadFactory: PayloadFactory,
     private val clock: Clock,
@@ -29,7 +38,9 @@ internal class SessionPartOrchestratorImpl(
     instrumentationRegistry: InstrumentationRegistry,
     private val destination: TelemetryDestination,
     private val sessionSpanAttrPopulator: SessionPartSpanAttrPopulator,
-) : SessionPartOrchestrator {
+    private val ordinalStore: OrdinalStore,
+    private val metadataStore: UserSessionMetadataStore,
+) : SessionOrchestrator {
 
     /**
      * Tracks whether the foreground phase comes from a cold start or not.
@@ -40,12 +51,28 @@ internal class SessionPartOrchestratorImpl(
     private val lock = Any()
 
     private var state = appStateTracker.getAppState()
+    private val maxDurationMs: Long = configService.sessionBehavior.getMaxSessionDurationMs()
+    private val inactivityTimeoutMs: Long = configService.sessionBehavior.getSessionInactivityTimeoutMs()
+
+    @Volatile
+    private var userSessionState: UserSessionState = UserSessionState.Initializing
 
     init {
+        loadPersistedUserSession()
         appStateTracker.addListener(this)
         sessionTracker.addSessionPartEndListener(instrumentationRegistry)
         sessionTracker.addSessionPartChangeListener(instrumentationRegistry)
         EmbTrace.trace("start-first-session") { createInitialSession() }
+    }
+
+    private fun loadPersistedUserSession() {
+        synchronized(lock) {
+            val stored = metadataStore.load()
+            userSessionState = when {
+                stored != null && !isUserSessionOverMaxDuration(stored) -> UserSessionState.Active(stored)
+                else -> UserSessionState.NoActiveSession
+            }
+        }
     }
 
     private fun createInitialSession() {
@@ -130,6 +157,9 @@ internal class SessionPartOrchestratorImpl(
         }
     }
 
+    override fun currentUserSession(): UserSessionMetadata? =
+        (userSessionState as? UserSessionState.Active)?.metadata
+
     /**
      * This function is responsible for transitioning state from one session to another. This can
      * be summarised in 3 steps:
@@ -209,6 +239,13 @@ internal class SessionPartOrchestratorImpl(
                 boundaryDelegate.prepareForNewSession()
                 sessionSpanAttrPopulator.populateSessionSpanStartAttrs(newSession)
                 if (transitionType != TransitionType.CRASH) {
+                    // handle user session transition if needed
+                    if (transitionType == TransitionType.END_MANUAL) {
+                        handleUserSessionManualEnd()
+                    } else {
+                        handleNewSessionPart()
+                    }
+
                     // initiate periodic caching of the payload if a new session has started
                     EmbTrace.start("initiate-periodic-caching")
                     updatePeriodicCacheAttrs()
@@ -240,5 +277,53 @@ internal class SessionPartOrchestratorImpl(
         val now = clock.now().millisToNanos()
         destination.addSessionPartAttribute(EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO, now.toString())
         destination.addSessionPartAttribute(EmbSessionAttributes.EMB_TERMINATED, true.toString())
+    }
+
+    /**
+     * Called whenever a new session part is successfully created for a non-manual, non-crash
+     * transition. If the active user session has exceeded max duration, terminates it and starts
+     * a new one. If no user session is active, starts a new one. Otherwise keeps the current one.
+     */
+    private fun handleNewSessionPart() {
+        val current = userSessionState
+        if (current is UserSessionState.Active) {
+            if (isUserSessionOverMaxDuration(current.metadata)) {
+                terminateUserSession()
+                startNewUserSession()
+            }
+        } else {
+            startNewUserSession()
+        }
+    }
+
+    /**
+     * Called when the developer manually ends the session. Terminates any active user session,
+     * then always starts a new one.
+     */
+    private fun handleUserSessionManualEnd() {
+        if (userSessionState is UserSessionState.Active) {
+            terminateUserSession()
+        }
+        startNewUserSession()
+    }
+
+    private fun isUserSessionOverMaxDuration(metadata: UserSessionMetadata): Boolean =
+        clock.now() - metadata.startTimeMs >= maxDurationMs
+
+    private fun startNewUserSession() {
+        val newMetadata = UserSessionMetadata(
+            startTimeMs = clock.now(),
+            userSessionId = Uuid.getEmbUuid(),
+            userSessionNumber = ordinalStore.incrementAndGet(Ordinal.USER_SESSION).toLong(),
+            maxDurationMins = maxDurationMs / 60_000L,
+            inactivityTimeoutMins = inactivityTimeoutMs / 60_000L,
+        )
+        metadataStore.save(newMetadata)
+        userSessionState = UserSessionState.Active(newMetadata)
+    }
+
+    private fun terminateUserSession() {
+        metadataStore.clear()
+        userSessionState = UserSessionState.Terminated
     }
 }

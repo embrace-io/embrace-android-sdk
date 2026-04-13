@@ -110,7 +110,7 @@ internal class ModuleInitBootstrapperTest {
         val expected = listOf(
             moduleInitBootstrapper.threadBlockageService,
             moduleInitBootstrapper.logModule.logOrchestrator,
-            moduleInitBootstrapper.userSessionOrchestrationModule.sessionPartOrchestrator,
+            moduleInitBootstrapper.userSessionOrchestrationModule.sessionOrchestrator,
             moduleInitBootstrapper.featureModule.crashMarker,
             moduleInitBootstrapper.deliveryModule?.payloadStore
         )

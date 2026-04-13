@@ -44,7 +44,7 @@ internal fun ModuleGraph.postInit() {
     }
 
     essentialServiceModule.telemetryDestination.sessionUpdateAction =
-        userSessionOrchestrationModule.sessionPartOrchestrator::onSessionDataUpdate
+        userSessionOrchestrationModule.sessionOrchestrator::onSessionDataUpdate
     essentialServiceModule.telemetryDestination.currentStatesProvider =
         instrumentationModule.instrumentationRegistry::getCurrentStates
 }
@@ -104,7 +104,7 @@ internal fun ModuleGraph.postLoadInstrumentation() {
     registry.findByType(JvmCrashDataSource::class)?.apply {
         threadBlockageService?.let(::addCrashTeardownHandler)
         addCrashTeardownHandler(logModule.logOrchestrator)
-        addCrashTeardownHandler(userSessionOrchestrationModule.sessionPartOrchestrator)
+        addCrashTeardownHandler(userSessionOrchestrationModule.sessionOrchestrator)
         addCrashTeardownHandler(featureModule.crashMarker)
         deliveryModule?.payloadStore?.let(::addCrashTeardownHandler)
     }

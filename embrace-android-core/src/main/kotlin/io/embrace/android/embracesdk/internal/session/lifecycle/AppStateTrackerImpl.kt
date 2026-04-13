@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
-import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartOrchestrator
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
@@ -27,7 +27,7 @@ internal class AppStateTrackerImpl(
      */
     val listeners: CopyOnWriteArrayList<AppStateListener> = CopyOnWriteArrayList<AppStateListener>()
 
-    private var sessionOrchestrator: SessionPartOrchestrator? = null
+    private var sessionOrchestrator: SessionOrchestrator? = null
 
     /**
      * Returns if the app's in background or not.
@@ -109,7 +109,7 @@ internal class AppStateTrackerImpl(
 
     override fun addListener(listener: AppStateListener) {
         when (listener) {
-            is SessionPartOrchestrator -> sessionOrchestrator = listener
+            is SessionOrchestrator -> sessionOrchestrator = listener
             else -> listeners.addIfAbsent(listener)
         }
     }

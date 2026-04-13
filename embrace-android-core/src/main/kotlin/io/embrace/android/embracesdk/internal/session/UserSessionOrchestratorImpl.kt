@@ -52,10 +52,6 @@ internal class UserSessionOrchestratorImpl(
         return clock.now() - metadata.startTimeMs >= maxDurationMs
     }
 
-    private fun isOverMaxDurationLimit(metadata: UserSessionMetadata): Boolean {
-        return clock.now() - metadata.startTimeMs >= maxDurationMs
-    }
-
     // TODO: future: determine behavior when manual end called and app is in background.
     override fun onManualEnd() {
         synchronized(lock) {

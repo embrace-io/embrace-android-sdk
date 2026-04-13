@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 /**
  * Holds metadata about the user session.
  */
-internal class UserSessionMetadata(
+class UserSessionMetadata(
     val startTimeMs: Long,
     val userSessionId: String,
     val userSessionNumber: Long,

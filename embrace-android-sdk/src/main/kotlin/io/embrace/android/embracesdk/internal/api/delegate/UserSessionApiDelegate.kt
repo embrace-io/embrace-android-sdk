@@ -13,7 +13,10 @@ internal class UserSessionApiDelegate(
         bootstrapper.essentialServiceModule.userSessionPropertiesService
     }
     private val sessionOrchestrator by embraceImplInject(sdkCallChecker) {
-        bootstrapper.sessionPartOrchestrator
+        bootstrapper.userSessionOrchestrationModule.sessionPartOrchestrator
+    }
+    private val userSessionOrchestrator by embraceImplInject(sdkCallChecker) {
+        bootstrapper.userSessionOrchestrationModule.userSessionOrchestrator
     }
 
     /**

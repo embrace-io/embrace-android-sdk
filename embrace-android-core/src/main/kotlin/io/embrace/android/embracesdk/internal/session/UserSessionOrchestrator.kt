@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.session
 /**
  * Orchestrates changes in the user session.
  */
-internal interface UserSessionOrchestrator {
+interface UserSessionOrchestrator {
 
     /**
      * Invoked when a new session part is created.

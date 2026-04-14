@@ -54,8 +54,6 @@ internal class SessionOrchestratorImpl(
     private val lock = Any()
 
     private var state = appStateTracker.getAppState()
-    private val maxDurationMs: Long = configService.sessionBehavior.getMaxSessionDurationMs()
-    private val inactivityTimeoutMs: Long = configService.sessionBehavior.getSessionInactivityTimeoutMs()
 
     @Volatile
     private var userSessionState: UserSessionState = UserSessionState.Initializing
@@ -243,6 +241,16 @@ internal class SessionOrchestratorImpl(
                         boundaryDelegate.cleanupAfterSessionEnd(clearUserInfo)
                     }
 
+                    // transition the user session before creating the new session part so that
+                    // the user session is always ready
+                    if (transitionType != TransitionType.CRASH) {
+                        if (transitionType == TransitionType.END_MANUAL) {
+                            handleUserSessionManualEnd()
+                        } else {
+                            handleNewSessionPart()
+                        }
+                    }
+
                     // create the next session span if we should, and update the SDK state to reflect the transition
                     EmbTrace.trace("create-new-session") {
                         newSessionAction?.invoke()
@@ -259,13 +267,6 @@ internal class SessionOrchestratorImpl(
                 boundaryDelegate.prepareForNewSession()
                 sessionSpanAttrPopulator.populateSessionSpanStartAttrs(newSession)
                 if (transitionType != TransitionType.CRASH) {
-                    // handle user session transition if needed
-                    if (transitionType == TransitionType.END_MANUAL) {
-                        handleUserSessionManualEnd()
-                    } else {
-                        handleNewSessionPart()
-                    }
-
                     // initiate periodic caching of the payload if a new session has started
                     EmbTrace.start("initiate-periodic-caching")
                     updatePeriodicCacheAttrs()

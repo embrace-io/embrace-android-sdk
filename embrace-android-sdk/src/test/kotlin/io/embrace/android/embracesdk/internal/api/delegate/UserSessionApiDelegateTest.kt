@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -82,5 +83,19 @@ internal class UserSessionApiDelegateTest {
     fun `end session clear user info`() {
         delegate.endUserSession(true)
         assertEquals(1, (fakeModule.sessionOrchestrator as FakeSessionOrchestrator).manualEndCount)
+    }
+
+    @Test
+    fun `add user session listener when SDK started`() {
+        delegate.addUserSessionListener { }
+        assertEquals(1, (fakeModule.sessionOrchestrator as FakeSessionOrchestrator).userSessionListeners.size)
+    }
+
+    @Test
+    fun `add user session listener when SDK not started`() {
+        logger.throwOnInternalError = false
+        sdkCallChecker.started.set(false)
+        delegate.addUserSessionListener { }
+        assertTrue((fakeModule.sessionOrchestrator as FakeSessionOrchestrator).userSessionListeners.isEmpty())
     }
 }

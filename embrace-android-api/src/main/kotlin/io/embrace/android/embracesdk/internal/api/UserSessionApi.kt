@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.api
 
 import io.embrace.android.embracesdk.PropertyScope
+import io.embrace.android.embracesdk.UserSessionListener
 import io.embrace.android.embracesdk.annotation.InternalApi
 
 /**
@@ -43,4 +44,9 @@ public interface UserSessionApi {
      * @param clearUserInfo Pass in true to clear all user info set on this device.
      */
     public fun endUserSession(clearUserInfo: Boolean = false)
+
+    /**
+     * Registers a listener that is invoked for user session lifecycle events.
+     */
+    public fun addUserSessionListener(listener: UserSessionListener)
 }

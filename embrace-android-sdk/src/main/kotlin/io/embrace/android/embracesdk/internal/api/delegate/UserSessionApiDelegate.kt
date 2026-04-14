@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.PropertyScope
+import io.embrace.android.embracesdk.UserSessionListener
 import io.embrace.android.embracesdk.internal.api.UserSessionApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
@@ -50,6 +51,14 @@ internal class UserSessionApiDelegate(
     override fun endUserSession(clearUserInfo: Boolean) {
         if (sdkCallChecker.check("end_session")) {
             sessionOrchestrator?.endSessionWithManual(clearUserInfo)
+        }
+    }
+
+    override fun addUserSessionListener(listener: UserSessionListener) {
+        if (sdkCallChecker.check("add_user_session_listener")) {
+            sessionOrchestrator?.addUserSessionListener { event ->
+                listener.onSessionStateEvent(event)
+            }
         }
     }
 }

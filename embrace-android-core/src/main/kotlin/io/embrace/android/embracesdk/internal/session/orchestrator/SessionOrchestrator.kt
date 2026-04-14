@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
+import io.embrace.android.embracesdk.internal.session.UserSessionListener
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 
 /**
@@ -26,4 +27,9 @@ interface SessionOrchestrator : AppStateListener, CrashTeardownHandler {
      * Retrieves metadata on the current user session, if any exists.
      */
     fun currentUserSession(): UserSessionMetadata?
+
+    /**
+     * Registers a listener that is invoked for user session lifecycle events.
+     */
+    fun addUserSessionListener(listener: UserSessionListener)
 }

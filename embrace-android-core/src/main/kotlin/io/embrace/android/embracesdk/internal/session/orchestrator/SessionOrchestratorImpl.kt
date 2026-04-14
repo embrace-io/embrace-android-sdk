@@ -2,6 +2,7 @@
 
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
+import io.embrace.android.embracesdk.SessionStateEvent
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.state.AppState
@@ -15,6 +16,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
+import io.embrace.android.embracesdk.internal.session.UserSessionListener
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
 import io.embrace.android.embracesdk.internal.session.UserSessionState
@@ -27,6 +29,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
+import java.util.concurrent.CopyOnWriteArrayList
 
 internal class SessionOrchestratorImpl(
     appStateTracker: AppStateTracker,
@@ -52,6 +55,7 @@ internal class SessionOrchestratorImpl(
     private var coldStart = true
 
     private val lock = Any()
+    private val userSessionListeners = CopyOnWriteArrayList<UserSessionListener>()
 
     private var state = appStateTracker.getAppState()
 
@@ -85,6 +89,7 @@ internal class SessionOrchestratorImpl(
                     stored != null && !isUserSessionOverMaxDuration(stored) -> {
                         UserSessionState.Active(stored)
                     }
+
                     else -> UserSessionState.NoActiveSession
                 }
             } catch (e: Exception) {
@@ -182,6 +187,28 @@ internal class SessionOrchestratorImpl(
 
     override fun currentUserSession(): UserSessionMetadata? =
         (userSessionState as? UserSessionState.Active)?.metadata
+
+    override fun addUserSessionListener(listener: UserSessionListener) {
+        userSessionListeners.add(listener)
+        val state = userSessionState
+        if (state is UserSessionState.Active) {
+            try {
+                listener.onSessionStateEvent(SessionStateEvent.UserSessionActive(state.metadata.userSessionId))
+            } catch (e: Exception) {
+                logger.trackInternalError(InternalErrorType.USER_SESSION_CALLBACK_FAIL, e)
+            }
+        }
+    }
+
+    private fun notifyListeners(event: SessionStateEvent) {
+        userSessionListeners.forEach { listener ->
+            try {
+                listener.onSessionStateEvent(event)
+            } catch (e: Exception) {
+                logger.trackInternalError(InternalErrorType.USER_SESSION_CALLBACK_FAIL, e)
+            }
+        }
+    }
 
     /**
      * This function is responsible for transitioning state from one session to another. This can
@@ -315,7 +342,7 @@ internal class SessionOrchestratorImpl(
         val current = userSessionState
         if (current is UserSessionState.Active) {
             if (isUserSessionOverMaxDuration(current.metadata)) {
-                terminateUserSession()
+                terminateUserSession(current)
                 startNewUserSession(timestamp)
             }
         } else {
@@ -328,8 +355,9 @@ internal class SessionOrchestratorImpl(
      * then always starts a new one.
      */
     private fun handleUserSessionEnd(timestamp: Long) {
-        if (userSessionState is UserSessionState.Active) {
-            terminateUserSession()
+        val state = userSessionState
+        if (state is UserSessionState.Active) {
+            terminateUserSession(state)
         }
         startNewUserSession(timestamp)
     }
@@ -349,10 +377,12 @@ internal class SessionOrchestratorImpl(
         )
         metadataStore.save(newMetadata)
         userSessionState = UserSessionState.Active(newMetadata)
+        notifyListeners(SessionStateEvent.UserSessionActive(newMetadata.userSessionId))
     }
 
-    private fun terminateUserSession() {
+    private fun terminateUserSession(state: UserSessionState.Active) {
         metadataStore.clear()
         userSessionState = UserSessionState.Terminated
+        notifyListeners(SessionStateEvent.UserSessionEnded(state.metadata.userSessionId))
     }
 }

@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrches
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestratorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSpanAttrPopulatorImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.android.embracesdk.internal.worker.Worker
 
 fun createSessionOrchestrator(
     initModule: InitModule,
@@ -21,6 +22,7 @@ fun createSessionOrchestrator(
     payloadSourceModule: PayloadSourceModule,
     startupDurationProvider: () -> Long?,
     logModule: LogModule,
+    workerThreadModule: WorkerThreadModule,
 ): SessionOrchestrator {
     val payloadMessageCollator = PayloadMessageCollatorImpl(
         EmbTrace.trace("sessionEnvelopeSource") { payloadSourceModule.sessionPartEnvelopeSource },
@@ -62,5 +64,6 @@ fun createSessionOrchestrator(
         coreModule.ordinalStore,
         UserSessionMetadataStore(coreModule.store),
         initModule.logger,
+        workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
     )
 }

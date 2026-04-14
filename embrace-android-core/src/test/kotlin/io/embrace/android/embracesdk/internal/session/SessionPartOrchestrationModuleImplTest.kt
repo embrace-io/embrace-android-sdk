@@ -50,7 +50,8 @@ internal class SessionPartOrchestrationModuleImplTest {
             dataSourceModule,
             FakePayloadSourceModule(),
             { 0 },
-            FakeLogModule()
+            FakeLogModule(),
+            workerThreadModule,
         )
         assertNotNull(orchestrator)
     }
@@ -79,7 +80,8 @@ internal class SessionPartOrchestrationModuleImplTest {
             dataSourceModule,
             FakePayloadSourceModule(),
             { 0 },
-            FakeLogModule()
+            FakeLogModule(),
+            workerThreadModule,
         )
         assertNotNull(orchestrator)
     }

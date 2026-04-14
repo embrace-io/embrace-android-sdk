@@ -70,6 +70,7 @@ internal class SessionOrchestratorTest {
     private lateinit var sessionTracker: SessionPartTracker
     private lateinit var payloadCachingService: PayloadCachingService
     private lateinit var sessionCacheExecutor: BlockingScheduledExecutorService
+    private lateinit var inactivityWorkerExecutor: BlockingScheduledExecutorService
     private lateinit var instrumentationRegistry: InstrumentationRegistry
     private lateinit var fakeDataSource: FakeDataSource
     private lateinit var logger: FakeInternalLogger
@@ -715,6 +716,69 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
+    fun `exceeding inactivity timeout creates new user sessions`() {
+        configService = FakeConfigService(
+            backgroundActivityBehavior = createBackgroundActivityBehavior(
+                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
+            ),
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = maxDurationMs,
+                sessionInactivityTimeoutMs = inactivityMs,
+            )
+        )
+        createOrchestrator(AppState.FOREGROUND)
+
+        val firstSession = checkNotNull(orchestrator.currentUserSession())
+        assertEquals(1L, firstSession.userSessionNumber)
+
+        orchestrator.onBackground()
+
+        // 1. exceed inactivity timeout. create new bg session part + user session
+        clock.tick(inactivityMs)
+        inactivityWorkerExecutor.runCurrentlyBlocked()
+
+        val secondSession = checkNotNull(orchestrator.currentUserSession())
+        assertNotEquals(firstSession.userSessionId, secondSession.userSessionId)
+        assertEquals(2L, secondSession.userSessionNumber)
+
+        // foreground after inactivity timeout always creates a new user session
+        clock.tick(1000)
+        orchestrator.onForeground()
+
+        val thirdSession = checkNotNull(orchestrator.currentUserSession())
+        assertNotEquals(secondSession.userSessionId, thirdSession.userSessionId)
+        assertEquals(3L, thirdSession.userSessionNumber)
+    }
+
+    @Test
+    fun `inactivity timeout not exceeded keeps existing user session`() {
+        configService = FakeConfigService(
+            backgroundActivityBehavior = createBackgroundActivityBehavior(
+                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 0f))
+            ),
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = maxDurationMs,
+                sessionInactivityTimeoutMs = inactivityMs,
+            )
+        )
+        createOrchestrator(AppState.FOREGROUND)
+
+        val firstSession = checkNotNull(orchestrator.currentUserSession())
+        assertEquals(1L, firstSession.userSessionNumber)
+
+        orchestrator.onBackground()
+
+        // foreground before timer fires — timer is cancelled, same user session continues
+        clock.tick(inactivityMs - 1)
+        orchestrator.onForeground()
+        clock.tick(inactivityMs + 1)
+
+        val sessionAfterForeground = checkNotNull(orchestrator.currentUserSession())
+        assertEquals(firstSession.userSessionId, sessionAfterForeground.userSessionId)
+        assertEquals(1L, sessionAfterForeground.userSessionNumber)
+    }
+
+    @Test
     fun `user session start time matches initial session part start time`() {
         createOrchestrator(AppState.FOREGROUND)
         val userSession = checkNotNull(orchestrator.currentUserSession())
@@ -762,6 +826,7 @@ internal class SessionOrchestratorTest {
             logger = logger
         )
         sessionCacheExecutor = BlockingScheduledExecutorService(clock, true)
+        inactivityWorkerExecutor = BlockingScheduledExecutorService(clock, true)
         payloadCachingService = PayloadCachingServiceImpl(
             PeriodicSessionPartCacher(
                 BackgroundWorker(sessionCacheExecutor),
@@ -806,6 +871,7 @@ internal class SessionOrchestratorTest {
             ordinalStoreOverride ?: FakeOrdinalStore(),
             metadataStoreOverride ?: UserSessionMetadataStore(FakeKeyValueStore()),
             logger,
+            BackgroundWorker(inactivityWorkerExecutor),
         )
         orchestratorStartTimeMs = clock.now()
         userSessionPropertiesService.addProperty("key", "value", false)

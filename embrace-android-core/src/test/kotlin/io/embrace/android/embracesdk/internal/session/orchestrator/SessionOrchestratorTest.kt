@@ -40,6 +40,8 @@ import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionPar
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
+import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.Assert.assertEquals
@@ -503,6 +505,32 @@ internal class SessionOrchestratorTest {
         val session = checkNotNull(orchestrator.currentUserSession())
         assertEquals("restored-id", session.userSessionId)
         assertEquals(7L, session.userSessionNumber)
+    }
+
+    @Test
+    fun `exception in loadPersistedUserSession falls back to NoActiveSession`() {
+        configService = FakeConfigService(
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = maxDurationMs,
+                sessionInactivityTimeoutMs = inactivityMs,
+            )
+        )
+        val throwingStore = UserSessionMetadataStore(
+            object : KeyValueStore {
+                override fun getString(key: String): String? = null
+                override fun getInt(key: String): Int? = null
+                override fun getLong(key: String): Long? = null
+                override fun getBoolean(key: String, defaultValue: Boolean): Boolean = defaultValue
+                override fun getStringSet(key: String): Set<String>? = null
+                override fun getStringMap(key: String): Map<String, String> =
+                    error("simulated store failure")
+                override fun edit(action: KeyValueStoreEditor.() -> Unit) = FakeKeyValueStore().edit(action)
+                override fun incrementAndGet(key: String): Int = 0
+            }
+        )
+
+        createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = throwingStore)
+        assertNotNull(orchestrator.currentUserSession())
     }
 
     @Test

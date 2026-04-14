@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -35,6 +36,7 @@ internal class InstrumentationArgsImpl(
     override val ordinalStore: OrdinalStore,
     override val processIdentifier: String,
     override val appStateTracker: AppStateTracker,
+    override val navigationTrackingService: NavigationTrackingService,
     override val telemetryService: TelemetryService,
     private val workerThreadModule: WorkerThreadModule,
     private val sessionPartTracker: SessionPartTracker,

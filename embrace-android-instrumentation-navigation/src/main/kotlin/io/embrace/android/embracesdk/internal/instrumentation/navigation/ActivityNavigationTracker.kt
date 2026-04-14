@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Application
 import android.os.Build
 import android.os.Bundle
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
 import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.ActivityPaused
@@ -20,6 +21,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.navigation.Navigat
 internal class ActivityNavigationTracker(
     private val clock: Clock,
     private val onEvent: (NavigationEvent) -> Unit,
+    private val navigationTrackingService: NavigationTrackingService,
 ) : Application.ActivityLifecycleCallbacks, AppStateListener {
 
     private val usePrePostCallbacks = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
@@ -71,6 +73,7 @@ internal class ActivityNavigationTracker(
     override fun onForeground() {}
 
     private fun handleActivityStarted(activity: Activity) {
+        navigationTrackingService.trackNavigation(activity)
         onEvent(ActivityStarted(activity, clock.now()))
     }
 

@@ -67,10 +67,14 @@ internal class SessionOrchestratorImpl(
 
     private fun loadPersistedUserSession() {
         synchronized(lock) {
-            val stored = metadataStore.load()
-            userSessionState = when {
-                stored != null && !isUserSessionOverMaxDuration(stored) -> UserSessionState.Active(stored)
-                else -> UserSessionState.NoActiveSession
+            try {
+                val stored = metadataStore.load()
+                userSessionState = when {
+                    stored != null && !isUserSessionOverMaxDuration(stored) -> UserSessionState.Active(stored)
+                    else -> UserSessionState.NoActiveSession
+                }
+            } catch (e: Exception) {
+                userSessionState = UserSessionState.NoActiveSession
             }
         }
     }

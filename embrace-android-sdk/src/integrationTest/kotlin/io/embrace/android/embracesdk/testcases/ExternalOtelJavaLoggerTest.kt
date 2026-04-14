@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaLogRecordExporter
@@ -88,7 +89,7 @@ internal class ExternalOtelJavaLoggerTest {
                 clock.tick()
                 recordSession {
                     logTime = clock.now().millisToNanos()
-                    embrace.addUserSessionProperty("session-attr", "blah", true)
+                    embrace.addUserSessionProperty("session-attr", "blah", PropertyScope.PERMANENT)
                     otelLogger
                         .logRecordBuilder()
                         .setBody("test")
@@ -148,7 +149,7 @@ internal class ExternalOtelJavaLoggerTest {
                 observedTime = clock.now().millisToNanos()
                 clock.tick()
                 logTime = clock.now().millisToNanos()
-                embrace.addUserSessionProperty("bg-attr", "blah", true)
+                embrace.addUserSessionProperty("bg-attr", "blah", PropertyScope.PERMANENT)
                 sessionId = checkNotNull(embrace.currentUserSessionId)
                 val span = embOpenTelemetry.getTracer("").spanBuilder("my-span").startSpan()
                 val logContext = span.storeInContext(OtelJavaContext.root())

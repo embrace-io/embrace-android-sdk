@@ -25,6 +25,7 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.capture.session.PropertyScope
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
@@ -790,7 +791,7 @@ internal class SessionOrchestratorTest {
             logger,
         )
         orchestratorStartTimeMs = clock.now()
-        userSessionPropertiesService.addProperty("key", "value", false)
+        userSessionPropertiesService.addProperty("key", "value", PropertyScope.USER_SESSION)
     }
 
     private fun validateSession(

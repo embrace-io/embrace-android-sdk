@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
+import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.internal.session.getSessionProperty
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
@@ -47,7 +48,7 @@ internal class PeriodicPartCacheTest {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    embrace.addUserSessionProperty("Test", "Test", true)
+                    embrace.addUserSessionProperty("Test", "Test", PropertyScope.PERMANENT)
                     snapshot = returnIfConditionMet(
                         waitTimeMs = 10000,
                         desiredValueSupplier = { cacheStorageService.getLastCachedPart() },
@@ -57,7 +58,7 @@ internal class PeriodicPartCacheTest {
                         },
                         errorMessageSupplier = { "Timeout waiting for cached session" }
                     )
-                    embrace.addUserSessionProperty("Test", "Passed", true)
+                    embrace.addUserSessionProperty("Test", "Passed", PropertyScope.PERMANENT)
                 }
             },
             assertAction = {

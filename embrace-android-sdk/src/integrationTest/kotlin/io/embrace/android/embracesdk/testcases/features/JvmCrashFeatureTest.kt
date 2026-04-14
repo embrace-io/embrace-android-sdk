@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
+import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -54,7 +55,7 @@ internal class JvmCrashFeatureTest {
         testRule.runTest(
             testCaseAction = {
                 crashTimeMs = recordSession {
-                    embrace.addUserSessionProperty("foo", "bar", true)
+                    embrace.addUserSessionProperty("foo", "bar", PropertyScope.PERMANENT)
                     simulateJvmUncaughtException(testException)
                 }.actionTimeMs
             },

@@ -2,13 +2,11 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
-import io.embrace.android.embracesdk.internal.session.UserSessionOrchestrator
-import io.embrace.android.embracesdk.internal.session.UserSessionOrchestratorImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.OrchestratorBoundaryDelegate
-import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartOrchestrator
-import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartOrchestratorImpl
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestratorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSpanAttrPopulatorImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 
@@ -25,17 +23,7 @@ class UserSessionOrchestrationModuleImpl(
     logModule: LogModule,
 ) : UserSessionOrchestrationModule {
 
-    override val userSessionOrchestrator: UserSessionOrchestrator by singleton {
-        UserSessionOrchestratorImpl(
-            clock = initModule.clock,
-            configService = configService,
-            ordinalStore = coreModule.ordinalStore,
-            metadataStore = UserSessionMetadataStore(coreModule.store),
-            logger = initModule.logger,
-        )
-    }
-
-    override val sessionPartOrchestrator: SessionPartOrchestrator by singleton {
+    override val sessionOrchestrator: SessionOrchestrator by singleton {
         val payloadMessageCollator = PayloadMessageCollatorImpl(
             EmbTrace.trace("sessionEnvelopeSource") { payloadSourceModule.sessionPartEnvelopeSource },
             coreModule.ordinalStore,
@@ -61,7 +49,7 @@ class UserSessionOrchestrationModuleImpl(
             payloadSourceModule.metadataService
         )
 
-        SessionPartOrchestratorImpl(
+        SessionOrchestratorImpl(
             essentialServiceModule.appStateTracker,
             EmbTrace.trace("payloadFactory") { payloadFactory },
             initModule.clock,
@@ -72,7 +60,9 @@ class UserSessionOrchestrationModuleImpl(
             deliveryModule?.payloadCachingService,
             instrumentationModule.instrumentationRegistry,
             essentialServiceModule.telemetryDestination,
-            sessionSpanAttrPopulator
+            sessionSpanAttrPopulator,
+            coreModule.ordinalStore,
+            UserSessionMetadataStore(coreModule.store),
         )
     }
 }

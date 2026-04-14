@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.injection.InstrumentationModuleImpl
-import io.embrace.android.embracesdk.internal.injection.createSessionPartOrchestrator
+import io.embrace.android.embracesdk.internal.injection.createSessionOrchestrator
 import io.embrace.android.embracesdk.internal.worker.Worker
 import org.junit.Assert.assertNotNull
 import org.junit.Test
@@ -40,7 +40,7 @@ internal class SessionPartOrchestrationModuleImplTest {
             coreModule,
             FakeStorageService()
         )
-        val orchestrator = createSessionPartOrchestrator(
+        val orchestrator = createSessionOrchestrator(
             initModule,
             initModule.openTelemetryModule,
             coreModule,
@@ -69,7 +69,7 @@ internal class SessionPartOrchestrationModuleImplTest {
             FakeStorageService()
         )
 
-        val orchestrator = createSessionPartOrchestrator(
+        val orchestrator = createSessionOrchestrator(
             initModule,
             initModule.openTelemetryModule,
             coreModule,

@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.api.delegate
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
-import io.embrace.android.embracesdk.fakes.FakeSessionPartOrchestrator
+import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
@@ -53,9 +53,9 @@ internal class UserSessionApiDelegateTest {
         sdkCallChecker.started.set(false)
         assertFalse(delegate.addSessionProperty("test", "value", false))
         assertFalse(delegate.removeSessionProperty("test"))
-        assertEquals(0, (fakeModule.sessionPartOrchestrator as FakeSessionPartOrchestrator).stateChangeCount)
+        assertEquals(0, (fakeModule.sessionOrchestrator as FakeSessionOrchestrator).stateChangeCount)
         delegate.endSession()
-        assertEquals(0, (fakeModule.sessionPartOrchestrator as FakeSessionPartOrchestrator).manualEndCount)
+        assertEquals(0, (fakeModule.sessionOrchestrator as FakeSessionOrchestrator).manualEndCount)
     }
 
     @Test
@@ -74,12 +74,12 @@ internal class UserSessionApiDelegateTest {
     @Test
     fun `end session`() {
         delegate.endSession()
-        assertEquals(1, (fakeModule.sessionPartOrchestrator as FakeSessionPartOrchestrator).manualEndCount)
+        assertEquals(1, (fakeModule.sessionOrchestrator as FakeSessionOrchestrator).manualEndCount)
     }
 
     @Test
     fun `end session clear user info`() {
         delegate.endSession(true)
-        assertEquals(1, (fakeModule.sessionPartOrchestrator as FakeSessionPartOrchestrator).manualEndCount)
+        assertEquals(1, (fakeModule.sessionOrchestrator as FakeSessionOrchestrator).manualEndCount)
     }
 }

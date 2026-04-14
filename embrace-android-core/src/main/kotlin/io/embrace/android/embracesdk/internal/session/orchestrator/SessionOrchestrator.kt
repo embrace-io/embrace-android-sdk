@@ -2,12 +2,13 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
+import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 
 /**
  * Orchestrates the session and background activities in response to state changes and manual
  * requests to end sessions.
  */
-interface SessionPartOrchestrator : AppStateListener, CrashTeardownHandler {
+interface SessionOrchestrator : AppStateListener, CrashTeardownHandler {
 
     /**
      * Ends the current session (if any) manually. If [clearUserInfo] is true,
@@ -20,4 +21,9 @@ interface SessionPartOrchestrator : AppStateListener, CrashTeardownHandler {
      * should be updated if necessary.
      */
     fun onSessionDataUpdate()
+
+    /**
+     * Retrieves metadata on the current user session, if any exists.
+     */
+    fun currentUserSession(): UserSessionMetadata?
 }

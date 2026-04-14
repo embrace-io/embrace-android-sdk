@@ -7,9 +7,11 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
 import io.embrace.android.embracesdk.fakes.FakeDataSource
+import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeLogLimitingService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
+import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakePayloadMessageCollator
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
@@ -32,23 +34,30 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.session.LifeEventType
+import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
+import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionPartCacher
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
+import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RuntimeEnvironment
+import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
-internal class SessionPartOrchestratorTest {
+internal class SessionOrchestratorTest {
 
-    private lateinit var orchestrator: SessionPartOrchestratorImpl
+    private lateinit var orchestrator: SessionOrchestratorImpl
     private lateinit var payloadFactory: PayloadFactoryImpl
     private lateinit var payloadCollator: FakePayloadMessageCollator
     private lateinit var logEnvelopeSource: FakeLogEnvelopeSource
@@ -67,6 +76,9 @@ internal class SessionPartOrchestratorTest {
     private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
     private lateinit var destination: FakeTelemetryDestination
     private var orchestratorStartTimeMs: Long = 0
+
+    private val maxDurationMs = TimeUnit.MINUTES.toMillis(10)
+    private val inactivityMs = TimeUnit.MINUTES.toMillis(5)
 
     @Before
     fun setUp() {
@@ -375,12 +387,244 @@ internal class SessionPartOrchestratorTest {
         assertEquals("false", destination.attributes[EmbSessionAttributes.EMB_TERMINATED])
     }
 
+    @Test
+    fun `user session max duration boundary`() {
+        configService = FakeConfigService(
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = maxDurationMs,
+                sessionInactivityTimeoutMs = inactivityMs,
+            )
+        )
+        createOrchestrator(AppState.FOREGROUND)
+
+        val first = checkNotNull(orchestrator.currentUserSession())
+        assertEquals(1L, first.userSessionNumber)
+        assertEquals(TimeUnit.MILLISECONDS.toMinutes(maxDurationMs), first.maxDurationMins)
+        assertEquals(TimeUnit.MILLISECONDS.toMinutes(inactivityMs), first.inactivityTimeoutMins)
+        assertNotNull(first.userSessionId)
+
+        // within max duration — user session stays the same
+        clock.tick(maxDurationMs - 1)
+        orchestrator.onBackground()
+        orchestrator.onForeground()
+        val repeat = checkNotNull(orchestrator.currentUserSession())
+        assertEquals(first.userSessionId, repeat.userSessionId)
+
+        // at/past max duration — new user session starts
+        clock.tick(1)
+        orchestrator.onBackground()
+        orchestrator.onForeground()
+        val second = checkNotNull(orchestrator.currentUserSession())
+        assertNotEquals(first.userSessionId, second.userSessionId)
+        assertEquals(2L, second.userSessionNumber)
+    }
+
+    @Test
+    fun `user session manual end`() {
+        configService = FakeConfigService(
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = maxDurationMs,
+                sessionInactivityTimeoutMs = inactivityMs,
+            )
+        )
+        createOrchestrator(AppState.FOREGROUND)
+
+        val first = checkNotNull(orchestrator.currentUserSession())
+        assertEquals(1L, first.userSessionNumber)
+
+        // manual end always terminates and starts a new user session
+        clock.tick(10000)
+        orchestrator.endSessionWithManual(false)
+        val second = checkNotNull(orchestrator.currentUserSession())
+        assertEquals(2L, second.userSessionNumber)
+        assertNotEquals(first.userSessionId, second.userSessionId)
+    }
+
+    @Test
+    fun `user session ordinal persistence`() {
+        configService = FakeConfigService(
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = maxDurationMs,
+                sessionInactivityTimeoutMs = inactivityMs,
+            )
+        )
+        val sharedOrdinalStore = FakeOrdinalStore()
+
+        createOrchestrator(AppState.FOREGROUND, ordinalStoreOverride = sharedOrdinalStore)
+        assertEquals(1L, checkNotNull(orchestrator.currentUserSession()).userSessionNumber)
+
+        // New orchestrator with shared ordinal store but fresh metadata store
+        createOrchestrator(
+            AppState.FOREGROUND,
+            ordinalStoreOverride = sharedOrdinalStore,
+            metadataStoreOverride = UserSessionMetadataStore(FakeKeyValueStore()),
+        )
+        assertEquals(2L, checkNotNull(orchestrator.currentUserSession()).userSessionNumber)
+    }
+
+    @Test
+    fun `user session metadata attributes`() {
+        configService = FakeConfigService(
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = maxDurationMs,
+                sessionInactivityTimeoutMs = inactivityMs,
+            )
+        )
+        createOrchestrator(AppState.FOREGROUND)
+
+        val session = checkNotNull(orchestrator.currentUserSession())
+        val attrs = session.attributes
+        assertEquals(session.startTimeMs, attrs[EmbSessionAttributes.EMB_USER_SESSION_START_TS])
+        assertEquals(session.userSessionId, attrs[EmbSessionAttributes.EMB_USER_SESSION_ID])
+        assertEquals(session.userSessionNumber, attrs[EmbSessionAttributes.EMB_USER_SESSION_NUMBER])
+        assertEquals(session.maxDurationMins, attrs[EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_MINUTES])
+        assertEquals(session.inactivityTimeoutMins, attrs[EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_MINUTES])
+    }
+
+    @Test
+    fun `restores active session from metadata store`() {
+        configService = FakeConfigService(
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = maxDurationMs,
+                sessionInactivityTimeoutMs = inactivityMs,
+            )
+        )
+        val prePopulated = UserSessionMetadataStore(FakeKeyValueStore())
+        prePopulated.save(
+            UserSessionMetadata(
+                startTimeMs = clock.now(),
+                userSessionId = "restored-id",
+                userSessionNumber = 7L,
+                maxDurationMins = TimeUnit.MILLISECONDS.toMinutes(maxDurationMs),
+                inactivityTimeoutMins = TimeUnit.MILLISECONDS.toMinutes(inactivityMs),
+            )
+        )
+
+        createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = prePopulated)
+
+        val session = checkNotNull(orchestrator.currentUserSession())
+        assertEquals("restored-id", session.userSessionId)
+        assertEquals(7L, session.userSessionNumber)
+    }
+
+    @Test
+    fun `exception in loadPersistedUserSession falls back to NoActiveSession`() {
+        configService = FakeConfigService(
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = maxDurationMs,
+                sessionInactivityTimeoutMs = inactivityMs,
+            )
+        )
+        val throwingStore = UserSessionMetadataStore(
+            object : KeyValueStore {
+                override fun getString(key: String): String? = null
+                override fun getInt(key: String): Int? = null
+                override fun getLong(key: String): Long? = null
+                override fun getBoolean(key: String, defaultValue: Boolean): Boolean = defaultValue
+                override fun getStringSet(key: String): Set<String>? = null
+                override fun getStringMap(key: String): Map<String, String> =
+                    error("simulated store failure")
+                override fun edit(action: KeyValueStoreEditor.() -> Unit) = FakeKeyValueStore().edit(action)
+                override fun incrementAndGet(key: String): Int = 0
+            }
+        )
+
+        createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = throwingStore)
+        assertNotNull(orchestrator.currentUserSession())
+    }
+
+    @Test
+    fun `previous session beyond max duration from metadata store`() {
+        configService = FakeConfigService(
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = maxDurationMs,
+                sessionInactivityTimeoutMs = inactivityMs,
+            )
+        )
+        val expiredStore = UserSessionMetadataStore(FakeKeyValueStore())
+        expiredStore.save(
+            UserSessionMetadata(
+                startTimeMs = 0L,
+                userSessionId = "old-id",
+                userSessionNumber = 3L,
+                maxDurationMins = TimeUnit.MILLISECONDS.toMinutes(maxDurationMs),
+                inactivityTimeoutMins = TimeUnit.MILLISECONDS.toMinutes(inactivityMs),
+            )
+        )
+
+        clock.tick(maxDurationMs)
+        createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = expiredStore)
+
+        // Expired session is discarded; a fresh user session is created instead
+        val session = checkNotNull(orchestrator.currentUserSession())
+        assertNotEquals("old-id", session.userSessionId)
+    }
+
+    @Test
+    fun `session is persisted when started`() {
+        configService = FakeConfigService(
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = maxDurationMs,
+                sessionInactivityTimeoutMs = inactivityMs,
+            )
+        )
+        val freshStore = UserSessionMetadataStore(FakeKeyValueStore())
+        createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = freshStore)
+
+        val session = checkNotNull(orchestrator.currentUserSession())
+        val stored = checkNotNull(freshStore.load())
+        assertEquals(session.userSessionId, stored.userSessionId)
+        assertEquals(session.startTimeMs, stored.startTimeMs)
+        assertEquals(session.userSessionNumber, stored.userSessionNumber)
+    }
+
+    @Test
+    fun `store is overridden for new user session`() {
+        configService = FakeConfigService(
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = maxDurationMs,
+                sessionInactivityTimeoutMs = inactivityMs,
+            )
+        )
+        val sharedStore = UserSessionMetadataStore(FakeKeyValueStore())
+        createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = sharedStore)
+
+        val firstId = checkNotNull(orchestrator.currentUserSession()).userSessionId
+        clock.tick(10000)
+        orchestrator.endSessionWithManual(false)
+        val secondId = checkNotNull(orchestrator.currentUserSession()).userSessionId
+        assertNotEquals(firstId, secondId)
+
+        val stored = checkNotNull(sharedStore.load())
+        assertEquals(secondId, stored.userSessionId)
+    }
+
+    @Test
+    fun `crash does not advance user session`() {
+        configService = FakeConfigService(
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = maxDurationMs,
+                sessionInactivityTimeoutMs = inactivityMs,
+            )
+        )
+        createOrchestrator(AppState.FOREGROUND)
+
+        val initialId = checkNotNull(orchestrator.currentUserSession()).userSessionId
+        orchestrator.handleCrash("crash-id")
+        // crash does not produce a new session part, so user session is unchanged
+        assertEquals(initialId, orchestrator.currentUserSession()?.userSessionId)
+    }
+
     private fun assertHeartbeatMatchesClock() {
         val attr = checkNotNull(destination.attributes[EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO])
         assertEquals(clock.now(), attr.toLong().nanosToMillis())
     }
 
-    private fun createOrchestrator(state: AppState) {
+    private fun createOrchestrator(
+        state: AppState,
+        ordinalStoreOverride: FakeOrdinalStore? = null,
+        metadataStoreOverride: UserSessionMetadataStore? = null,
+    ) {
         store = FakePayloadStore()
         appStateTracker = FakeAppStateTracker(state)
         currentSessionPartSpan = FakeCurrentSessionPartSpan(clock).apply { initializeService(clock.now()) }
@@ -422,7 +666,7 @@ internal class SessionPartOrchestratorTest {
             )
         }
 
-        orchestrator = SessionPartOrchestratorImpl(
+        orchestrator = SessionOrchestratorImpl(
             appStateTracker,
             payloadFactory,
             clock,
@@ -441,7 +685,9 @@ internal class SessionPartOrchestratorTest {
                 { 0 },
                 FakeLogLimitingService(),
                 FakeMetadataService()
-            )
+            ),
+            ordinalStoreOverride ?: FakeOrdinalStore(),
+            metadataStoreOverride ?: UserSessionMetadataStore(FakeKeyValueStore()),
         )
         orchestratorStartTimeMs = clock.now()
         userSessionPropertiesService.addProperty("key", "value", false)

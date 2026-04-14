@@ -1,12 +1,14 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartOrchestrator
+import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 
-class FakeSessionPartOrchestrator : SessionPartOrchestrator {
+class FakeSessionOrchestrator : SessionOrchestrator {
 
     var crashId: String? = null
     var manualEndCount: Int = 0
     var stateChangeCount: Int = 0
+    var currentSession: UserSessionMetadata? = null
 
     override fun endSessionWithManual(clearUserInfo: Boolean) {
         manualEndCount++
@@ -25,4 +27,6 @@ class FakeSessionPartOrchestrator : SessionPartOrchestrator {
 
     override fun onForeground() {
     }
+
+    override fun currentUserSession(): UserSessionMetadata? = currentSession
 }

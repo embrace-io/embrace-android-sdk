@@ -399,8 +399,8 @@ internal class SessionOrchestratorTest {
 
         val first = checkNotNull(orchestrator.currentUserSession())
         assertEquals(1L, first.userSessionNumber)
-        assertEquals(TimeUnit.MILLISECONDS.toMinutes(maxDurationMs), first.maxDurationMins)
-        assertEquals(TimeUnit.MILLISECONDS.toMinutes(inactivityMs), first.inactivityTimeoutMins)
+        assertEquals(TimeUnit.MILLISECONDS.toSeconds(maxDurationMs), first.maxDurationSecs)
+        assertEquals(TimeUnit.MILLISECONDS.toSeconds(inactivityMs), first.inactivityTimeoutSecs)
         assertNotNull(first.userSessionId)
 
         // within max duration — user session stays the same
@@ -477,8 +477,8 @@ internal class SessionOrchestratorTest {
         assertEquals(session.startTimeMs, attrs[EmbSessionAttributes.EMB_USER_SESSION_START_TS])
         assertEquals(session.userSessionId, attrs[EmbSessionAttributes.EMB_USER_SESSION_ID])
         assertEquals(session.userSessionNumber, attrs[EmbSessionAttributes.EMB_USER_SESSION_NUMBER])
-        assertEquals(session.maxDurationMins, attrs[EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_MINUTES])
-        assertEquals(session.inactivityTimeoutMins, attrs[EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_MINUTES])
+        assertEquals(session.maxDurationSecs, attrs[EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS])
+        assertEquals(session.inactivityTimeoutSecs, attrs[EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS])
     }
 
     @Test
@@ -495,8 +495,8 @@ internal class SessionOrchestratorTest {
                 startTimeMs = clock.now(),
                 userSessionId = "restored-id",
                 userSessionNumber = 7L,
-                maxDurationMins = TimeUnit.MILLISECONDS.toMinutes(maxDurationMs),
-                inactivityTimeoutMins = TimeUnit.MILLISECONDS.toMinutes(inactivityMs),
+                maxDurationSecs = TimeUnit.MILLISECONDS.toSeconds(maxDurationMs),
+                inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
             )
         )
 
@@ -547,8 +547,8 @@ internal class SessionOrchestratorTest {
                 startTimeMs = 0L,
                 userSessionId = "old-id",
                 userSessionNumber = 3L,
-                maxDurationMins = TimeUnit.MILLISECONDS.toMinutes(maxDurationMs),
-                inactivityTimeoutMins = TimeUnit.MILLISECONDS.toMinutes(inactivityMs),
+                maxDurationSecs = TimeUnit.MILLISECONDS.toSeconds(maxDurationMs),
+                inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
             )
         )
 
@@ -613,6 +613,76 @@ internal class SessionOrchestratorTest {
         orchestrator.handleCrash("crash-id")
         // crash does not produce a new session part, so user session is unchanged
         assertEquals(initialId, orchestrator.currentUserSession()?.userSessionId)
+    }
+
+    @Test
+    fun `persisted session uses stored max duration`() {
+        val configMaxMs = TimeUnit.MINUTES.toMillis(5)
+        val persistedMaxSecs = TimeUnit.MINUTES.toSeconds(10)
+        configService = FakeConfigService(
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = configMaxMs,
+                sessionInactivityTimeoutMs = inactivityMs,
+            )
+        )
+        val persistedStore = UserSessionMetadataStore(FakeKeyValueStore())
+        persistedStore.save(
+            UserSessionMetadata(
+                startTimeMs = clock.now(),
+                userSessionId = "persisted-id",
+                userSessionNumber = 5L,
+                maxDurationSecs = persistedMaxSecs,
+                inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
+            )
+        )
+
+        createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = persistedStore)
+
+        // persisted 10-min duration used
+        assertEquals("persisted-id", checkNotNull(orchestrator.currentUserSession()).userSessionId)
+
+        // exceed duration
+        clock.tick(TimeUnit.MINUTES.toMillis(11))
+        orchestrator.onBackground()
+        orchestrator.onForeground()
+        val newSession = checkNotNull(orchestrator.currentUserSession())
+        assertNotEquals("persisted-id", newSession.userSessionId)
+    }
+
+    @Test
+    fun `persisted inactivity timeout is adopted and new session reverts to config`() {
+        val configInactivityMs = TimeUnit.MINUTES.toMillis(5)
+        val persistedInactivitySecs = TimeUnit.MINUTES.toSeconds(10)
+        configService = FakeConfigService(
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = maxDurationMs,
+                sessionInactivityTimeoutMs = configInactivityMs,
+            )
+        )
+        val persistedStore = UserSessionMetadataStore(FakeKeyValueStore())
+        persistedStore.save(
+            UserSessionMetadata(
+                startTimeMs = clock.now(),
+                userSessionId = "persisted-id",
+                userSessionNumber = 3L,
+                maxDurationSecs = TimeUnit.MILLISECONDS.toSeconds(maxDurationMs),
+                inactivityTimeoutSecs = persistedInactivitySecs,
+            )
+        )
+
+        createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = persistedStore)
+
+        // restored session retains persisted inactivity timeout
+        val restored = checkNotNull(orchestrator.currentUserSession())
+        assertEquals("persisted-id", restored.userSessionId)
+        assertEquals(persistedInactivitySecs, restored.inactivityTimeoutSecs)
+
+        // new session should use current config inactivity timeout
+        clock.tick(10000)
+        orchestrator.endSessionWithManual(false)
+        val newSession = checkNotNull(orchestrator.currentUserSession())
+        assertNotEquals("persisted-id", newSession.userSessionId)
+        assertEquals(TimeUnit.MILLISECONDS.toSeconds(configInactivityMs), newSession.inactivityTimeoutSecs)
     }
 
     private fun assertHeartbeatMatchesClock() {

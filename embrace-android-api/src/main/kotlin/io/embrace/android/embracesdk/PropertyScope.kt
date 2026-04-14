@@ -1,9 +1,9 @@
-package io.embrace.android.embracesdk.internal.capture.session
+package io.embrace.android.embracesdk
 
 /**
  * Defines the lifetime/persistence scope of a user session property.
  */
-enum class PropertyScope {
+public enum class PropertyScope {
 
     /**
      * Cleared when the current user session ends.

@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
@@ -51,7 +52,7 @@ internal class UserSessionApiDelegateTest {
     fun `cannot modify session properties when SDK is not enabled`() {
         logger.throwOnInternalError = false
         sdkCallChecker.started.set(false)
-        assertFalse(delegate.addUserSessionProperty("test", "value", false))
+        assertFalse(delegate.addUserSessionProperty("test", "value", PropertyScope.USER_SESSION))
         assertFalse(delegate.removeUserSessionProperty("test"))
         assertEquals(0, (fakeModule.sessionOrchestrator as FakeSessionOrchestrator).stateChangeCount)
         delegate.endUserSession()
@@ -60,13 +61,13 @@ internal class UserSessionApiDelegateTest {
 
     @Test
     fun `add session property`() {
-        delegate.addUserSessionProperty("test", "value", false)
+        delegate.addUserSessionProperty("test", "value", PropertyScope.USER_SESSION)
         assertEquals("value", userSessionPropertiesService.props["test"])
     }
 
     @Test
     fun `remove session property`() {
-        delegate.addUserSessionProperty("test", "value", false)
+        delegate.addUserSessionProperty("test", "value", PropertyScope.USER_SESSION)
         delegate.removeUserSessionProperty("test")
         assertNull(userSessionPropertiesService.props["test"])
     }

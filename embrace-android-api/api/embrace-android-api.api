@@ -8,6 +8,15 @@ public final class io/embrace/android/embracesdk/LastRunEndState : java/lang/Enu
 	public static fun values ()[Lio/embrace/android/embracesdk/LastRunEndState;
 }
 
+public final class io/embrace/android/embracesdk/PropertyScope : java/lang/Enum {
+	public static final field PERMANENT Lio/embrace/android/embracesdk/PropertyScope;
+	public static final field PROCESS Lio/embrace/android/embracesdk/PropertyScope;
+	public static final field USER_SESSION Lio/embrace/android/embracesdk/PropertyScope;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/PropertyScope;
+	public static fun values ()[Lio/embrace/android/embracesdk/PropertyScope;
+}
+
 public final class io/embrace/android/embracesdk/Severity : java/lang/Enum {
 	public static final field ERROR Lio/embrace/android/embracesdk/Severity;
 	public static final field INFO Lio/embrace/android/embracesdk/Severity;
@@ -124,7 +133,7 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/UserA
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/UserSessionApi {
-	public abstract fun addUserSessionProperty (Ljava/lang/String;Ljava/lang/String;Z)Z
+	public abstract fun addUserSessionProperty (Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/PropertyScope;)Z
 	public abstract fun endUserSession (Z)V
 	public abstract fun removeUserSessionProperty (Ljava/lang/String;)Z
 }

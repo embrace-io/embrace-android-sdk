@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.testcases.features
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.internal.logs.LogExceptionType
 import io.embrace.android.embracesdk.Severity
+import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.assertions.getOtelSeverity
@@ -433,7 +434,7 @@ internal class LogFeatureTest {
             testCaseAction = {
                 recordSession {
                     repeat(150) {
-                        embrace.addUserSessionProperty("session-prop$it", "val", true)
+                        embrace.addUserSessionProperty("session-prop$it", "val", PropertyScope.PERMANENT)
                     }
                     embrace.logMessage("test", Severity.INFO, props)
                 }
@@ -461,7 +462,7 @@ internal class LogFeatureTest {
             testCaseAction = {
                 recordSession {
                     repeat(maxCustomSessionProps + 1) {
-                        embrace.addUserSessionProperty("session-prop$it", "val", true)
+                        embrace.addUserSessionProperty("session-prop$it", "val", PropertyScope.PERMANENT)
                     }
                     embrace.logMessage("test", Severity.INFO)
                 }

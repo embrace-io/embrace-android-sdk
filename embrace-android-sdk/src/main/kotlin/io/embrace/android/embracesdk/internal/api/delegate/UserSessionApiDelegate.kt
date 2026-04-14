@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
+import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.internal.api.UserSessionApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
@@ -19,9 +20,14 @@ internal class UserSessionApiDelegate(
     /**
      * Adds a property to the current session.
      */
-    override fun addUserSessionProperty(key: String, value: String, permanent: Boolean): Boolean {
+    override fun addUserSessionProperty(key: String, value: String, scope: PropertyScope): Boolean {
         if (sdkCallChecker.check("add_session_property")) {
-            return userSessionPropertiesService?.addProperty(key, value, permanent) ?: false
+            val internalScope = when (scope) {
+                PropertyScope.USER_SESSION -> io.embrace.android.embracesdk.internal.capture.session.PropertyScope.USER_SESSION
+                PropertyScope.PROCESS -> io.embrace.android.embracesdk.internal.capture.session.PropertyScope.PROCESS
+                PropertyScope.PERMANENT -> io.embrace.android.embracesdk.internal.capture.session.PropertyScope.PERMANENT
+            }
+            return userSessionPropertiesService?.addProperty(key, value, internalScope) ?: false
         }
         return false
     }

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.api
 
+import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.annotation.InternalApi
 
 /**
@@ -9,14 +10,16 @@ import io.embrace.android.embracesdk.annotation.InternalApi
 public interface UserSessionApi {
 
     /**
-     * Adds a property to the current user session, overwriting any previous property set with the given key. If a permanent property
-     * already exists with the given name and a non-permanent one is to be added, the permanent one will be removed (and vice versa).
+     * Adds a property to the current user session, overwriting any previous property set with the given key. If a property already
+     * exists with the given name and a different scope, the existing property will be removed and replaced.
      *
      * @param key       The case-sensitive key to be used for this property. The maximum length for this is 128 characters. A key passed in
      * that exceeds the maximum length will be truncated.
      * @param value     The value associated with the given key. The maximum length for this is 1024 characters. A value passed in that
      * exceeds the maximum length will be truncated.
-     * @param permanent True if this property should be added to subsequent sessions going forward, persisting through app launches.
+     * @param scope     The lifetime scope of the property. Use [PropertyScope.USER_SESSION] for properties that are cleared
+     * at the end of the session, [PropertyScope.PROCESS] for properties that survive session boundaries but not process
+     * death, or [PropertyScope.PERMANENT] for properties that persist through app launches.
      *
      * @return True if the property was successfully added. Reasons this may fail include an invalid key or value, or if the
      * session has exceeded its total properties limit.
@@ -24,7 +27,7 @@ public interface UserSessionApi {
     public fun addUserSessionProperty(
         key: String,
         value: String,
-        permanent: Boolean,
+        scope: PropertyScope,
     ): Boolean
 
     /**

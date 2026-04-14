@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -155,11 +156,11 @@ internal class UserSessionPropertiesTest {
     }
 
     private fun SdkApi.addPermanentProperty(key: String) {
-        addUserSessionProperty(key, VALUE, true)
+        addUserSessionProperty(key, VALUE, PropertyScope.PERMANENT)
     }
 
     private fun SdkApi.addTemporaryProperty(key: String) {
-        addUserSessionProperty(key, VALUE, false)
+        addUserSessionProperty(key, VALUE, PropertyScope.USER_SESSION)
     }
 
     private fun Span.assertPropertyExistence(exist: List<String> = emptyList(), missing: List<String> = emptyList()) {

@@ -44,7 +44,7 @@ internal class UserSessionPropertiesServiceImplTest {
 
     @Test
     fun testAddSessionProp() {
-        service.addProperty("key", "value", false)
+        service.addProperty("key", "value", PropertyScope.USER_SESSION)
         val expected = mapOf("key" to "value")
         assertEquals(expected, propState)
         assertEquals(expected, service.getProperties())
@@ -57,7 +57,7 @@ internal class UserSessionPropertiesServiceImplTest {
 
     @Test
     fun testAddRedactedSessionProp() {
-        service.addProperty("password", "value", false)
+        service.addProperty("password", "value", PropertyScope.USER_SESSION)
         val expected = mapOf("password" to REDACTED_LABEL)
         assertEquals(expected, service.getProperties())
         assertEquals(1, destination.attributes.size)
@@ -69,21 +69,21 @@ internal class UserSessionPropertiesServiceImplTest {
     @Test
     fun `populate session span with all set properties`() {
         assertEquals(0, destination.attributes.size)
-        service.addProperty("temp", "value", false)
-        service.addProperty("perm", "value", true)
+        service.addProperty("temp", "value", PropertyScope.USER_SESSION)
+        service.addProperty("perm", "value", PropertyScope.PERMANENT)
         assertEquals(2, destination.attributes.size)
     }
 
     @Test
     fun addSessionPropertyInvalidKey() {
-        assertFalse(service.addProperty("", "value", false))
+        assertFalse(service.addProperty("", "value", PropertyScope.USER_SESSION))
         assertTrue(service.getProperties().isEmpty())
     }
 
     @Test
     fun addSessionPropertyKeyTooLong() {
         val longKey = "a".repeat(129)
-        assertTrue(service.addProperty(longKey, "value", false))
+        assertTrue(service.addProperty(longKey, "value", PropertyScope.USER_SESSION))
         assertEquals(1, service.getProperties().size.toLong())
         val key = "a".repeat(125) + "..."
         assertEquals("value", service.getProperties()[key])
@@ -97,7 +97,7 @@ internal class UserSessionPropertiesServiceImplTest {
     @Test
     fun addSessionPropertyValueTooLong() {
         val longValue = "a".repeat(1025)
-        assertTrue(service.addProperty("key", longValue, false))
+        assertTrue(service.addProperty("key", longValue, PropertyScope.USER_SESSION))
         assertEquals(1, service.getProperties().size.toLong())
         val value = "a".repeat(1021) + "..."
         assertEquals(value, service.getProperties()["key"])

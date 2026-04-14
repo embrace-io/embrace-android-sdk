@@ -32,7 +32,7 @@ internal class SessionPartBoundaryTest {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    embrace.addSessionProperty("foo", "bar", false)
+                    embrace.addUserSessionProperty("foo", "bar", false)
                 }
                 recordSession()
             },

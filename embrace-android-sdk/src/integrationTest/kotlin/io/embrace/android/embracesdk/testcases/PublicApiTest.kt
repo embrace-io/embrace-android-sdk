@@ -43,34 +43,34 @@ internal class PublicApiTest {
     }
 
     @Test
-    fun `getCurrentSessionId returns null when SDK is not started`() {
+    fun `getCurrentUserSessionId returns null when SDK is not started`() {
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             startSdk = false,
             testCaseAction = {
-                assertNull(embrace.currentSessionId)
+                assertNull(embrace.currentUserSessionId)
             }
         )
     }
 
     @Test
-    fun `getCurrentSessionId returns sessionId when SDK is started and foreground session is active`() {
+    fun `getCurrentUserSessionId returns sessionId when SDK is started and foreground session is active`() {
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
                     assertEquals(
-                        embrace.currentSessionId,
+                        embrace.currentUserSessionId,
                         testRule.setup.getCurrentSessionPartSpan().getSessionId()
                     )
-                    assertNotNull(embrace.currentSessionId)
+                    assertNotNull(embrace.currentUserSessionId)
                 }
             }
         )
     }
 
     @Test
-    fun `getCurrentSessionId returns sessionId when SDK is started and background session is active`() {
+    fun `getCurrentUserSessionId returns sessionId when SDK is started and background session is active`() {
         var foregroundSessionId: String? = null
         var backgroundSessionId: String? = null
         testRule.runTest(
@@ -78,9 +78,9 @@ internal class PublicApiTest {
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
-                    foregroundSessionId = embrace.currentSessionId
+                    foregroundSessionId = embrace.currentUserSessionId
                 }
-                backgroundSessionId = embrace.currentSessionId
+                backgroundSessionId = embrace.currentUserSessionId
             },
             assertAction = {
                 assertNotNull(backgroundSessionId)

@@ -407,14 +407,14 @@ internal class TracingApiTest {
                 val span1 = checkNotNull(embrace.createSpan("span1"))
                 val span2 = checkNotNull(embrace.createSpan("span2"))
                 recordSession {
-                    sessionId1 = checkNotNull(embrace.currentSessionId)
+                    sessionId1 = checkNotNull(embrace.currentUserSessionId)
                     span1.start()
                     span2.start()
                     span1.stop()
                 }
 
                 recordSession {
-                    sessionId2 = checkNotNull(embrace.currentSessionId)
+                    sessionId2 = checkNotNull(embrace.currentUserSessionId)
                     span2.stop()
                 }
             },

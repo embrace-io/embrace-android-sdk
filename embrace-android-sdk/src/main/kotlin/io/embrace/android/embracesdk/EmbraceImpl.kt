@@ -16,8 +16,8 @@ import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
 import io.embrace.android.embracesdk.internal.api.OTelApi
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.api.SdkStateApi
-import io.embrace.android.embracesdk.internal.api.SessionApi
 import io.embrace.android.embracesdk.internal.api.UserApi
+import io.embrace.android.embracesdk.internal.api.UserSessionApi
 import io.embrace.android.embracesdk.internal.api.ViewTrackingApi
 import io.embrace.android.embracesdk.internal.api.delegate.BreadcrumbApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.InstrumentationApiDelegate
@@ -79,7 +79,7 @@ internal class EmbraceImpl(
 ) : SdkApi,
     LogsApi by logsApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
-    SessionApi by sessionApiDelegate,
+    UserSessionApi by sessionApiDelegate,
     UserApi by userApiDelegate,
     TracingApi by bootstrapper.openTelemetryModule.embraceTracer,
     SdkStateApi by sdkStateApiDelegate,

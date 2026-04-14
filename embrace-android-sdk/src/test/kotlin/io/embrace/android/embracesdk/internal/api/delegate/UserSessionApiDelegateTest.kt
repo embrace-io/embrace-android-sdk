@@ -51,35 +51,35 @@ internal class UserSessionApiDelegateTest {
     fun `cannot modify session properties when SDK is not enabled`() {
         logger.throwOnInternalError = false
         sdkCallChecker.started.set(false)
-        assertFalse(delegate.addSessionProperty("test", "value", false))
-        assertFalse(delegate.removeSessionProperty("test"))
+        assertFalse(delegate.addUserSessionProperty("test", "value", false))
+        assertFalse(delegate.removeUserSessionProperty("test"))
         assertEquals(0, (fakeModule.sessionOrchestrator as FakeSessionOrchestrator).stateChangeCount)
-        delegate.endSession()
+        delegate.endUserSession()
         assertEquals(0, (fakeModule.sessionOrchestrator as FakeSessionOrchestrator).manualEndCount)
     }
 
     @Test
     fun `add session property`() {
-        delegate.addSessionProperty("test", "value", false)
+        delegate.addUserSessionProperty("test", "value", false)
         assertEquals("value", userSessionPropertiesService.props["test"])
     }
 
     @Test
     fun `remove session property`() {
-        delegate.addSessionProperty("test", "value", false)
-        delegate.removeSessionProperty("test")
+        delegate.addUserSessionProperty("test", "value", false)
+        delegate.removeUserSessionProperty("test")
         assertNull(userSessionPropertiesService.props["test"])
     }
 
     @Test
     fun `end session`() {
-        delegate.endSession()
+        delegate.endUserSession()
         assertEquals(1, (fakeModule.sessionOrchestrator as FakeSessionOrchestrator).manualEndCount)
     }
 
     @Test
     fun `end session clear user info`() {
-        delegate.endSession(true)
+        delegate.endUserSession(true)
         assertEquals(1, (fakeModule.sessionOrchestrator as FakeSessionOrchestrator).manualEndCount)
     }
 }

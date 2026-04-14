@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
-import io.embrace.android.embracesdk.internal.api.SessionApi
+import io.embrace.android.embracesdk.internal.api.UserSessionApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 
 internal class UserSessionApiDelegate(
     bootstrapper: ModuleInitBootstrapper,
     private val sdkCallChecker: SdkCallChecker,
-) : SessionApi {
+) : UserSessionApi {
 
     private val userSessionPropertiesService by embraceImplInject(sdkCallChecker) {
         bootstrapper.essentialServiceModule.userSessionPropertiesService
@@ -19,7 +19,7 @@ internal class UserSessionApiDelegate(
     /**
      * Adds a property to the current session.
      */
-    override fun addSessionProperty(key: String, value: String, permanent: Boolean): Boolean {
+    override fun addUserSessionProperty(key: String, value: String, permanent: Boolean): Boolean {
         if (sdkCallChecker.check("add_session_property")) {
             return userSessionPropertiesService?.addProperty(key, value, permanent) ?: false
         }
@@ -29,7 +29,7 @@ internal class UserSessionApiDelegate(
     /**
      * Removes a property from the current session.
      */
-    override fun removeSessionProperty(key: String): Boolean {
+    override fun removeUserSessionProperty(key: String): Boolean {
         if (sdkCallChecker.check("remove_session_property")) {
             return userSessionPropertiesService?.removeProperty(key) ?: false
         }
@@ -41,7 +41,7 @@ internal class UserSessionApiDelegate(
      *
      * Cleans all the user info on the device.
      */
-    override fun endSession(clearUserInfo: Boolean) {
+    override fun endUserSession(clearUserInfo: Boolean) {
         if (sdkCallChecker.check("end_session")) {
             sessionOrchestrator?.endSessionWithManual(clearUserInfo)
         }

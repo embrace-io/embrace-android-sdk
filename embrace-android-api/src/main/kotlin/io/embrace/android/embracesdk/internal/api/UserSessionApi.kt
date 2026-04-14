@@ -3,13 +3,13 @@ package io.embrace.android.embracesdk.internal.api
 import io.embrace.android.embracesdk.annotation.InternalApi
 
 /**
- * The public API that is used to interact with sessions.
+ * The public API that is used to interact with user sessions.
  */
 @InternalApi
-public interface SessionApi {
+public interface UserSessionApi {
 
     /**
-     * Adds a property to the current session, overwriting any previous property set with the given key. If a permanent property
+     * Adds a property to the current user session, overwriting any previous property set with the given key. If a permanent property
      * already exists with the given name and a non-permanent one is to be added, the permanent one will be removed (and vice versa).
      *
      * @param key       The case-sensitive key to be used for this property. The maximum length for this is 128 characters. A key passed in
@@ -21,23 +21,23 @@ public interface SessionApi {
      * @return True if the property was successfully added. Reasons this may fail include an invalid key or value, or if the
      * session has exceeded its total properties limit.
      */
-    public fun addSessionProperty(
+    public fun addUserSessionProperty(
         key: String,
         value: String,
         permanent: Boolean,
     ): Boolean
 
     /**
-     * Removes a property from the current session.
+     * Removes a property from the current user session.
      *
      * @return true if a property with that name had previously existed.
      */
-    public fun removeSessionProperty(key: String): Boolean
+    public fun removeUserSessionProperty(key: String): Boolean
 
     /**
-     * Ends the current session and starts a new one.
+     * Ends the current user session and starts a new one.
      *
      * @param clearUserInfo Pass in true to clear all user info set on this device.
      */
-    public fun endSession(clearUserInfo: Boolean = false)
+    public fun endUserSession(clearUserInfo: Boolean = false)
 }

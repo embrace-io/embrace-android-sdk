@@ -22,12 +22,12 @@ internal class ManualUserSessionTest {
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
     @Test
-    fun `calling endSession ends stateful session`() {
+    fun `calling endUserSession ends stateful session`() {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
                     clock.tick(10000) // enough to trigger new session
-                    embrace.endSession()
+                    embrace.endUserSession()
                 }
             },
             assertAction = {
@@ -46,13 +46,13 @@ internal class ManualUserSessionTest {
     }
 
     @Test
-    fun `calling endSession when session control enabled does not end sessions`() {
+    fun `calling endUserSession when session control enabled does not end sessions`() {
         testRule.runTest(
             persistedRemoteConfig = RemoteConfig(sessionConfig = SessionRemoteConfig(isEnabled = true)),
             testCaseAction = {
                 recordSession {
                     clock.tick(10000)
-                    embrace.endSession()
+                    embrace.endUserSession()
                 }
             },
             assertAction = {
@@ -63,13 +63,13 @@ internal class ManualUserSessionTest {
     }
 
     @Test
-    fun `calling endSession when state session is below 5s has no effect`() {
+    fun `calling endUserSession when state session is below 5s has no effect`() {
         testRule.runTest(
             persistedRemoteConfig = RemoteConfig(sessionConfig = SessionRemoteConfig(isEnabled = true)),
             testCaseAction = {
                 recordSession {
                     clock.tick(1000) // not enough to trigger new session
-                    embrace.endSession()
+                    embrace.endUserSession()
                 }
             },
             assertAction = {

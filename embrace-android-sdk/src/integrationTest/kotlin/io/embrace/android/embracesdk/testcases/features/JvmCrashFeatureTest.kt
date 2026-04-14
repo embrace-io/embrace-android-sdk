@@ -54,7 +54,7 @@ internal class JvmCrashFeatureTest {
         testRule.runTest(
             testCaseAction = {
                 crashTimeMs = recordSession {
-                    embrace.addSessionProperty("foo", "bar", true)
+                    embrace.addUserSessionProperty("foo", "bar", true)
                     simulateJvmUncaughtException(testException)
                 }.actionTimeMs
             },

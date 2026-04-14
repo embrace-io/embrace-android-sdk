@@ -30,7 +30,7 @@ internal class SdkStateApiDelegate(
             }
         }
 
-    override val currentSessionId: String?
+    override val currentUserSessionId: String?
         get() {
             val localSessionTracker = sessionPartTracker
             if (localSessionTracker != null && sdkCallChecker.check("get_current_session_id")) {

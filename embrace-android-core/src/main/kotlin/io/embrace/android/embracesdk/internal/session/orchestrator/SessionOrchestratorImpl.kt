@@ -54,6 +54,8 @@ internal class SessionOrchestratorImpl(
     private val lock = Any()
 
     private var state = appStateTracker.getAppState()
+    private val maxDurationMs: Long = configService.sessionBehavior.getMaxSessionDurationMs()
+    private val inactivityTimeoutMs: Long = configService.sessionBehavior.getSessionInactivityTimeoutMs()
 
     @Volatile
     private var userSessionState: UserSessionState = UserSessionState.Initializing
@@ -68,22 +70,27 @@ internal class SessionOrchestratorImpl(
 
     private fun loadPersistedUserSession() {
         synchronized(lock) {
-            val stored = metadataStore.load()
-            userSessionState = when {
-                stored != null && clock.now() < stored.startTimeMs -> {
-                    logger.trackInternalError(
-                        InternalErrorType.CLOCK_BACKWARDS_SHIFT,
-                        IllegalStateException(
-                            "Clock shifted backwards from previous user session."
+            try {
+                val stored = metadataStore.load()
+                userSessionState = when {
+                    stored != null && clock.now() < stored.startTimeMs -> {
+                        logger.trackInternalError(
+                            InternalErrorType.CLOCK_BACKWARDS_SHIFT,
+                            IllegalStateException(
+                                "Clock shifted backwards from previous user session."
+                            )
                         )
-                    )
-                    metadataStore.clear()
-                    UserSessionState.NoActiveSession
+                        metadataStore.clear()
+                        UserSessionState.NoActiveSession
+                    }
+
+                    stored != null && !isUserSessionOverMaxDuration(stored) -> {
+                        UserSessionState.Active(stored)
+                    }
+                    else -> UserSessionState.NoActiveSession
                 }
-                stored != null && !isUserSessionOverMaxDuration(stored) -> {
-                    UserSessionState.Active(stored)
-                }
-                else -> UserSessionState.NoActiveSession
+            } catch (e: Exception) {
+                userSessionState = UserSessionState.NoActiveSession
             }
         }
     }

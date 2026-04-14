@@ -34,6 +34,7 @@ dependencies {
     implementation(project(":embrace-android-instrumentation-crash-ndk"))
     implementation(project(":embrace-android-instrumentation-fcm"))
     implementation(project(":embrace-android-instrumentation-huc-lite"))
+    implementation(project(":embrace-android-instrumentation-compose-navigation"))
     implementation(project(":embrace-android-instrumentation-navigation"))
     implementation(project(":embrace-android-instrumentation-network-status"))
     implementation(project(":embrace-android-instrumentation-okhttp"))
@@ -77,6 +78,8 @@ dependencies {
     testImplementation(platform(libs.opentelemetry.bom))
     testImplementation(libs.opentelemetry.sdk)
     testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.navigation.fragment)
+    testImplementation(libs.androidx.navigation.common)
     testImplementation(libs.opentelemetry.kotlin.compat)
 
     lintChecks(project(":embrace-lint"))

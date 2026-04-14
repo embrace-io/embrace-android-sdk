@@ -10,6 +10,7 @@ class NavigationStateInstrumentationProvider :
             configService.autoDataCaptureBehavior.isNavigationStateCaptureEnabled()
         },
     ) {
+
     override fun factoryProvider(args: InstrumentationArgs): () -> NavigationStateDataSource {
         return { NavigationStateDataSource(args) }
     }

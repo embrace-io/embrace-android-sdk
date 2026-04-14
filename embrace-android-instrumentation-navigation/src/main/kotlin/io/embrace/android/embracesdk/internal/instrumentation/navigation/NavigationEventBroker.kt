@@ -13,7 +13,8 @@ internal class NavigationEventBroker(
 ) {
     private val lastEvent = AtomicReference<NavigationEvent?>(null)
     private val activityStartTimes = mutableMapOf<Int, Long>()
-    private val visibleActivities = mutableMapOf<Int, String>()
+    private val visibleScreens = mutableMapOf<Int, String>()
+    private val lastNavControllerDestinations = mutableMapOf<Int, String>()
 
     @UiThread
     fun onEvent(event: NavigationEvent) {
@@ -27,31 +28,78 @@ internal class NavigationEventBroker(
             }
             is NavigationEvent.ActivityResumed -> {
                 activityStartTimes.remove(event.componentId)?.let { startTime ->
-                    visibleActivities[event.componentId] = event.name
-                    var loadTime = startTime
-                    if (visibleActivities.values.size > 1) {
-                        loadTime = event.timestampMs
+                    // If the activity doesn't have a NavController, set the activity name as the activity's visible screen
+                    // and update the destination based on what screens are visible
+                    if (!lastNavControllerDestinations.contains(event.componentId)) {
+                        visibleScreens[event.componentId] = event.name
+                        calculateStateAndNotifyLoad(
+                            activityStartTime = startTime,
+                            eventTime = event.timestampMs,
+                            event = event
+                        )
+                    } else if (!visibleScreens.contains(event.componentId)) {
+                        // If the activity has a NavController but there isn't a screen visible, the app is emerging from the background.
+                        // So we make the last destination visible and notify about the screen load, using the start time as the event time.
+                        lastNavControllerDestinations[event.componentId]?.let { lastDest ->
+                            visibleScreens[event.componentId] = lastDest
+                            notifyLoad(
+                                event = event,
+                                loadTime = startTime,
+                                stateValue = lastDest
+                            )
+                        }
                     }
-                    notifyLoad(event, loadTime)
                 }
             }
             is NavigationEvent.ActivityPaused -> {
-                visibleActivities.remove(event.componentId)
+                visibleScreens.remove(event.componentId)
             }
-            is NavigationEvent.Backgrounded -> notifyLoad(event)
+            is NavigationEvent.NavControllerAttached -> {
+                lastNavControllerDestinations[event.componentId] = NAV_CONTROLLER_INIT
+            }
+            is NavigationEvent.NavControllerDestinationChanged -> {
+                lastNavControllerDestinations[event.componentId] = event.name
+                visibleScreens[event.componentId] = event.name
+                calculateStateAndNotifyLoad(
+                    eventTime = event.timestampMs,
+                    event = event
+                )
+            }
+            is NavigationEvent.Backgrounded -> {
+                notifyLoad(event)
+            }
         }
+    }
+
+    private fun calculateStateAndNotifyLoad(
+        activityStartTime: Long? = null,
+        eventTime: Long,
+        event: NavigationEvent,
+    ) {
+        var loadTime = activityStartTime ?: eventTime
+        if (visibleScreens.values.size > 1) {
+            loadTime = eventTime
+        }
+        notifyLoad(event, loadTime)
     }
 
     private fun notifyLoad(
         event: NavigationEvent,
         loadTime: Long = event.timestampMs,
+        stateValue: String = event.name,
     ) {
         val notify = lastEvent.getAndSet(event)?.let {
             it.componentId != event.componentId || it.name != event.name
         } ?: true
 
         if (notify) {
-            onScreenLoad(loadTime, event.name)
+            onScreenLoad(loadTime, stateValue)
         }
+    }
+
+    private companion object {
+        // A state where the NavController is attached but the default destination has not been loaded, which should be rare
+        // as a destination update to the default is fired synchronously as the controller attaches.
+        const val NAV_CONTROLLER_INIT = "NavController Initializing"
     }
 }

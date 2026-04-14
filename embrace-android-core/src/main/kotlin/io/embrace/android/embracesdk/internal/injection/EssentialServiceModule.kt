@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
@@ -13,6 +14,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
  */
 interface EssentialServiceModule {
     val appStateTracker: AppStateTracker
+    val navigationTrackingService: NavigationTrackingService
     val userService: UserService
     val networkConnectivityService: NetworkConnectivityService
     val sessionPartTracker: SessionPartTracker

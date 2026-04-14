@@ -35,7 +35,7 @@ jobs:
     timeout-minutes: 60
     strategy:
       matrix:
-        gradle-task: ['build', 'bundleReleaseExampleApp']
+        gradle-task: ['build', 'bundleReleaseExampleApp', 'test']
       fail-fast: false
     steps:
       - name: Free Disk Space (Ubuntu)

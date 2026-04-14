@@ -88,7 +88,7 @@ internal class ExternalOtelJavaLoggerTest {
                 clock.tick()
                 recordSession {
                     logTime = clock.now().millisToNanos()
-                    embrace.addSessionProperty("session-attr", "blah", true)
+                    embrace.addUserSessionProperty("session-attr", "blah", true)
                     otelLogger
                         .logRecordBuilder()
                         .setBody("test")
@@ -148,8 +148,8 @@ internal class ExternalOtelJavaLoggerTest {
                 observedTime = clock.now().millisToNanos()
                 clock.tick()
                 logTime = clock.now().millisToNanos()
-                embrace.addSessionProperty("bg-attr", "blah", true)
-                sessionId = checkNotNull(embrace.currentSessionId)
+                embrace.addUserSessionProperty("bg-attr", "blah", true)
+                sessionId = checkNotNull(embrace.currentUserSessionId)
                 val span = embOpenTelemetry.getTracer("").spanBuilder("my-span").startSpan()
                 val logContext = span.storeInContext(OtelJavaContext.root())
                 parentContext = span.spanContext

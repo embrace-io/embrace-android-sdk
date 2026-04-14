@@ -334,13 +334,13 @@ internal class NativeCrashFeatureTest {
             },
             testCaseAction = {
                 ioWorker.runCurrentlyBlocked()
-                jniDelegate.persistMetadata(embrace.currentSessionId, sessions, nativeSessionMetadata)
+                jniDelegate.persistMetadata(embrace.currentUserSessionId, sessions, nativeSessionMetadata)
                 recordSession {
-                    jniDelegate.persistMetadata(embrace.currentSessionId, sessions, nativeSessionMetadata)
+                    jniDelegate.persistMetadata(embrace.currentUserSessionId, sessions, nativeSessionMetadata)
                 }
-                jniDelegate.persistMetadata(embrace.currentSessionId, sessions, nativeSessionMetadata)
+                jniDelegate.persistMetadata(embrace.currentUserSessionId, sessions, nativeSessionMetadata)
                 recordSession {
-                    jniDelegate.persistMetadata(embrace.currentSessionId, sessions, nativeSessionMetadata)
+                    jniDelegate.persistMetadata(embrace.currentUserSessionId, sessions, nativeSessionMetadata)
                 }
             },
             assertAction = {

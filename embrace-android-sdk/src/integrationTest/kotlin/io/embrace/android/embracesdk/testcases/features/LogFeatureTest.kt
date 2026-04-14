@@ -433,7 +433,7 @@ internal class LogFeatureTest {
             testCaseAction = {
                 recordSession {
                     repeat(150) {
-                        embrace.addSessionProperty("session-prop$it", "val", true)
+                        embrace.addUserSessionProperty("session-prop$it", "val", true)
                     }
                     embrace.logMessage("test", Severity.INFO, props)
                 }
@@ -461,7 +461,7 @@ internal class LogFeatureTest {
             testCaseAction = {
                 recordSession {
                     repeat(maxCustomSessionProps + 1) {
-                        embrace.addSessionProperty("session-prop$it", "val", true)
+                        embrace.addUserSessionProperty("session-prop$it", "val", true)
                     }
                     embrace.logMessage("test", Severity.INFO)
                 }

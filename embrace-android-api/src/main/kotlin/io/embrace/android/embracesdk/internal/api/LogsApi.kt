@@ -118,7 +118,7 @@ public interface LogsApi {
     )
 
     /**
-     * Saves captured push notification information into session payload
+     * Saves captured push notification information into a user session
      *
      * @param title                    the title of the notification as a string (or null)
      * @param body                     the body of the notification as a string (or null)

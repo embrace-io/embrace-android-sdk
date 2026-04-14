@@ -96,7 +96,7 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/OTelA
 	public abstract fun setResourceAttribute (Ljava/lang/String;Ljava/lang/String;)V
 }
 
-public abstract interface class io/embrace/android/embracesdk/internal/api/SdkApi : io/embrace/android/embracesdk/internal/api/BreadcrumbApi, io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi, io/embrace/android/embracesdk/internal/api/InstrumentationApi, io/embrace/android/embracesdk/internal/api/LogsApi, io/embrace/android/embracesdk/internal/api/NetworkRequestApi, io/embrace/android/embracesdk/internal/api/OTelApi, io/embrace/android/embracesdk/internal/api/SdkStateApi, io/embrace/android/embracesdk/internal/api/SessionApi, io/embrace/android/embracesdk/internal/api/UserApi, io/embrace/android/embracesdk/spans/TracingApi {
+public abstract interface class io/embrace/android/embracesdk/internal/api/SdkApi : io/embrace/android/embracesdk/internal/api/BreadcrumbApi, io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi, io/embrace/android/embracesdk/internal/api/InstrumentationApi, io/embrace/android/embracesdk/internal/api/LogsApi, io/embrace/android/embracesdk/internal/api/NetworkRequestApi, io/embrace/android/embracesdk/internal/api/OTelApi, io/embrace/android/embracesdk/internal/api/SdkStateApi, io/embrace/android/embracesdk/internal/api/UserApi, io/embrace/android/embracesdk/internal/api/UserSessionApi, io/embrace/android/embracesdk/spans/TracingApi {
 }
 
 public final class io/embrace/android/embracesdk/internal/api/SdkApi$DefaultImpls {
@@ -105,20 +105,10 @@ public final class io/embrace/android/embracesdk/internal/api/SdkApi$DefaultImpl
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/SdkStateApi {
-	public abstract fun getCurrentSessionId ()Ljava/lang/String;
+	public abstract fun getCurrentUserSessionId ()Ljava/lang/String;
 	public abstract fun getDeviceId ()Ljava/lang/String;
 	public abstract fun getLastRunEndState ()Lio/embrace/android/embracesdk/LastRunEndState;
 	public abstract fun isStarted ()Z
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/api/SessionApi {
-	public abstract fun addSessionProperty (Ljava/lang/String;Ljava/lang/String;Z)Z
-	public abstract fun endSession (Z)V
-	public abstract fun removeSessionProperty (Ljava/lang/String;)Z
-}
-
-public final class io/embrace/android/embracesdk/internal/api/SessionApi$DefaultImpls {
-	public static synthetic fun endSession$default (Lio/embrace/android/embracesdk/internal/api/SessionApi;ZILjava/lang/Object;)V
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/UserApi {
@@ -131,6 +121,16 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/UserA
 	public abstract fun setUserEmail (Ljava/lang/String;)V
 	public abstract fun setUserIdentifier (Ljava/lang/String;)V
 	public abstract fun setUsername (Ljava/lang/String;)V
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/api/UserSessionApi {
+	public abstract fun addUserSessionProperty (Ljava/lang/String;Ljava/lang/String;Z)Z
+	public abstract fun endUserSession (Z)V
+	public abstract fun removeUserSessionProperty (Ljava/lang/String;)Z
+}
+
+public final class io/embrace/android/embracesdk/internal/api/UserSessionApi$DefaultImpls {
+	public static synthetic fun endUserSession$default (Lio/embrace/android/embracesdk/internal/api/UserSessionApi;ZILjava/lang/Object;)V
 }
 
 public final class io/embrace/android/embracesdk/internal/network/http/NetworkCaptureData {

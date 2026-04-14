@@ -47,7 +47,7 @@ internal class PeriodicPartCacheTest {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    embrace.addSessionProperty("Test", "Test", true)
+                    embrace.addUserSessionProperty("Test", "Test", true)
                     snapshot = returnIfConditionMet(
                         waitTimeMs = 10000,
                         desiredValueSupplier = { cacheStorageService.getLastCachedPart() },
@@ -57,7 +57,7 @@ internal class PeriodicPartCacheTest {
                         },
                         errorMessageSupplier = { "Timeout waiting for cached session" }
                     )
-                    embrace.addSessionProperty("Test", "Passed", true)
+                    embrace.addUserSessionProperty("Test", "Passed", true)
                 }
             },
             assertAction = {

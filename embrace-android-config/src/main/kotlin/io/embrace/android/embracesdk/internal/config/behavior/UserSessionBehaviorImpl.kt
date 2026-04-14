@@ -11,27 +11,28 @@ class UserSessionBehaviorImpl(private val remote: RemoteConfig?) : UserSessionBe
     companion object {
         const val SESSION_PROPERTY_LIMIT: Int = 100
         const val SESSION_PROPERTY_MAX_LIMIT: Int = 200
-        private const val MAX_DURATION_MINUTES_DEFAULT: Int = 12 * 60
-        private const val MAX_DURATION_MINUTES_MAX: Int = 24 * 60
-        private const val INACTIVITY_TIMEOUT_MINUTES_DEFAULT: Int = 30
-        private const val INACTIVITY_TIMEOUT_MINUTES_MAX: Int = 24 * 60
-        private const val MINUTES_TO_MS: Long = 60_000L
+        private const val MAX_DURATION_SECONDS_DEFAULT: Int = 12 * 60 * 60
+        private const val MAX_DURATION_SECONDS_MIN: Int = 1 * 60 * 60
+        private const val MAX_DURATION_SECONDS_MAX: Int = 24 * 60 * 60
+        private const val INACTIVITY_TIMEOUT_SECONDS_DEFAULT: Int = 30 * 60
+        private const val INACTIVITY_TIMEOUT_SECONDS_MAX: Int = 24 * 60 * 60
+        private const val INACTIVITY_TIMEOUT_SECONDS_MIN: Int = 0
         private const val MIN_SESSION_MS: Long = 5_000L
     }
 
-    private val maxSessionDurationMins by lazy {
-        val override = remote?.userSession?.maxDurationMinutes
+    private val maxSessionDurationSeconds by lazy {
+        val override = remote?.userSession?.maxDurationSeconds
         when {
-            override != null && override > 0 && override <= MAX_DURATION_MINUTES_MAX -> override
-            else -> MAX_DURATION_MINUTES_DEFAULT
+            override != null && override >= MAX_DURATION_SECONDS_MIN && override <= MAX_DURATION_SECONDS_MAX -> override
+            else -> MAX_DURATION_SECONDS_DEFAULT
         }
     }
 
-    private val maxInactivityTimeoutMins by lazy {
-        val override = remote?.userSession?.inactivityTimeoutMinutes
+    private val maxInactivityTimeoutSeconds by lazy {
+        val override = remote?.userSession?.inactivityTimeoutSeconds
         when {
-            override != null && override > 0 && override <= INACTIVITY_TIMEOUT_MINUTES_MAX -> override
-            else -> INACTIVITY_TIMEOUT_MINUTES_DEFAULT
+            override != null && override >= INACTIVITY_TIMEOUT_SECONDS_MIN && override <= INACTIVITY_TIMEOUT_SECONDS_MAX -> override
+            else -> INACTIVITY_TIMEOUT_SECONDS_DEFAULT
         }
     }
 
@@ -42,16 +43,14 @@ class UserSessionBehaviorImpl(private val remote: RemoteConfig?) : UserSessionBe
         SESSION_PROPERTY_MAX_LIMIT
     )
 
-    override fun getMaxSessionDurationMs(): Long {
-        return maxSessionDurationMins * MINUTES_TO_MS
-    }
+    override fun getMaxSessionDurationMs(): Long = maxSessionDurationSeconds * 1000L
 
     override fun getSessionInactivityTimeoutMs(): Long {
-        val timeoutMs = when {
-            maxInactivityTimeoutMins <= maxSessionDurationMins -> maxInactivityTimeoutMins
-            else -> INACTIVITY_TIMEOUT_MINUTES_DEFAULT
+        val timeoutSecs = when {
+            maxInactivityTimeoutSeconds <= maxSessionDurationSeconds -> maxInactivityTimeoutSeconds
+            else -> INACTIVITY_TIMEOUT_SECONDS_DEFAULT
         }
-        return timeoutMs * MINUTES_TO_MS
+        return timeoutSecs * 1000L
     }
 
     override fun getMinSessionDurationMs(): Long = MIN_SESSION_MS

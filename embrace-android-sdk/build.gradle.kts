@@ -80,6 +80,7 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.navigation.fragment)
     testImplementation(libs.androidx.navigation.common)
+    testImplementation(libs.androidx.navigation.testing)
     testImplementation(libs.opentelemetry.kotlin.compat)
 
     lintChecks(project(":embrace-lint"))

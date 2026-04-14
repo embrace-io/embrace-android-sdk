@@ -1,7 +1,6 @@
 package io.embrace.android.gradle.plugin.model
 
 import com.android.build.api.variant.Variant
-import io.embrace.android.gradle.plugin.util.UuidUtils
 import java.io.Serializable
 
 /**
@@ -14,7 +13,6 @@ data class AndroidCompactedVariantData(
     val isBuildTypeDebuggable: Boolean,
     val productFlavors: List<String>,
     val sourceMapPath: String,
-    val buildId: String = UuidUtils.generateEmbraceUuid()
 ) : Serializable {
 
     companion object {

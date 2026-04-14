@@ -51,6 +51,8 @@ internal class SessionOrchestratorImpl(
     private val lock = Any()
 
     private var state = appStateTracker.getAppState()
+    private val maxDurationMs: Long = configService.sessionBehavior.getMaxSessionDurationMs()
+    private val inactivityTimeoutMs: Long = configService.sessionBehavior.getSessionInactivityTimeoutMs()
 
     @Volatile
     private var userSessionState: UserSessionState = UserSessionState.Initializing
@@ -65,12 +67,14 @@ internal class SessionOrchestratorImpl(
 
     private fun loadPersistedUserSession() {
         synchronized(lock) {
-            val stored = metadataStore.load()
-            userSessionState = when {
-                stored != null && !isUserSessionOverMaxDuration(stored) -> {
-                    UserSessionState.Active(stored)
+            try {
+                val stored = metadataStore.load()
+                userSessionState = when {
+                    stored != null && !isUserSessionOverMaxDuration(stored) -> UserSessionState.Active(stored)
+                    else -> UserSessionState.NoActiveSession
                 }
-                else -> UserSessionState.NoActiveSession
+            } catch (e: Exception) {
+                userSessionState = UserSessionState.NoActiveSession
             }
         }
     }

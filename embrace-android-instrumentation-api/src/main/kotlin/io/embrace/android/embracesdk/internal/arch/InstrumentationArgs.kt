@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.arch
 import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -114,6 +115,11 @@ interface InstrumentationArgs {
      * Retrieves the crash marker file.
      */
     val crashMarkerFile: File
+
+    /**
+     * Service where navigation controllers and navigation event listeners can be registered
+     */
+    val navigationTrackingService: NavigationTrackingService
 
     /**
      * Sets a listener that is invoked after a session changes.

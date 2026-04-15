@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 
 enum class TransitionType {
-    INITIAL, END_MANUAL, ON_FOREGROUND, ON_BACKGROUND, CRASH, INACTIVITY_TIMEOUT, INACTIVITY_FOREGROUND;
+    INITIAL, END_MANUAL, ON_FOREGROUND, ON_BACKGROUND, CRASH, INACTIVITY_TIMEOUT, INACTIVITY_FOREGROUND, MAX_DURATION;
 
     fun endState(currentState: AppState): AppState = when (this) {
         ON_FOREGROUND, INACTIVITY_FOREGROUND -> AppState.FOREGROUND

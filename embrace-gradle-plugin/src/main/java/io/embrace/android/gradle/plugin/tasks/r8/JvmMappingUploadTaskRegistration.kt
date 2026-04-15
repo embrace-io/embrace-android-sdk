@@ -46,7 +46,8 @@ class JvmMappingUploadTaskRegistration : EmbraceTaskRegistration {
                         task,
                         fetchJvmMappingFile(task, variant),
                         behavior,
-                        variantConfigurationsListProperty
+                        variantConfigurationsListProperty,
+                        buildIdProvider,
                     )
                 }
             }
@@ -60,6 +61,7 @@ class JvmMappingUploadTaskRegistration : EmbraceTaskRegistration {
         mappingFile: Provider<File?>,
         behavior: PluginBehavior,
         variantConfigurationsListProperty: ListProperty<VariantConfig>,
+        buildIdProvider: Provider<String>,
     ): TaskProvider<MultipartUploadTask> {
         val anchorTaskWithoutVariant = anchorTask.name.replace(variant.name, "", true)
         val compressionTaskName = "${COMPRESS_TASK_NAME}For${anchorTaskWithoutVariant}OnVariant"
@@ -84,14 +86,16 @@ class JvmMappingUploadTaskRegistration : EmbraceTaskRegistration {
             variant
         ) { task ->
             val variantConfig = variantConfigurationsListProperty.get().first { it.variantName == variant.name }
+            // buildIdProvider is ValueSource-backed: Gradle re-evaluates it on every build even
+            // when the configuration cache is active, ensuring a fresh build ID each time.
             task.requestParams.set(
-                project.provider {
+                buildIdProvider.map { buildId ->
                     RequestParams(
                         appId = variantConfig.embraceConfig?.appId.orEmpty(),
                         apiToken = variantConfig.embraceConfig?.apiToken.orEmpty(),
                         endpoint = EmbraceEndpoint.PROGUARD,
                         fileName = FILE_NAME_MAPPING_TXT,
-                        buildId = variantConfig.buildId,
+                        buildId = buildId,
                         baseUrl = behavior.baseUrl,
                         failBuildOnUploadErrors = behavior.failBuildOnUploadErrors.get(),
                     )

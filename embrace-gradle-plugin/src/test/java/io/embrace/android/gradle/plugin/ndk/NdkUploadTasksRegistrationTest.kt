@@ -50,7 +50,7 @@ class NdkUploadTasksRegistrationTest {
         buildTypeName = "buildTypeName",
         isBuildTypeDebuggable = false,
         productFlavors = emptyList(),
-        sourceMapPath = "sourceMapPath"
+        sourceMapPath = "sourceMapPath",
     )
 
     private val mockVariant = mockk<Variant>(relaxed = true)
@@ -77,6 +77,7 @@ class NdkUploadTasksRegistrationTest {
             testAndroidCompactedVariantData,
             variantConfigurationsListProperty,
             testBehavior,
+            project.providers.provider { "test-build-id" },
         )
     }
 

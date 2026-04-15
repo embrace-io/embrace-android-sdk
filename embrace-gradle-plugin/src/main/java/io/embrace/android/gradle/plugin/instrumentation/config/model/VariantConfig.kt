@@ -27,14 +27,15 @@ data class VariantConfig(
          */
         fun from(
             embraceVariantConfig: EmbraceVariantConfig?,
-            androidVariantConfig: AndroidCompactedVariantData
+            androidVariantConfig: AndroidCompactedVariantData,
+            buildId: String? = null,
         ) =
             VariantConfig(
                 embraceConfig = embraceVariantConfig,
                 variantName = androidVariantConfig.name,
                 buildType = androidVariantConfig.buildTypeName,
                 buildFlavor = androidVariantConfig.flavorName,
-                buildId = androidVariantConfig.buildId,
+                buildId = buildId,
             )
     }
 }

@@ -3,7 +3,7 @@
 # Based on suggestion from https://robolectric.org/blog/2023/11/11/improving-android-all-downloading/
 # and https://github.com/utzcoz/robolectric-android-all-fetcher
 
-VERSIONS="15-robolectric-12650502"
+VERSIONS="15-robolectric-13954326"
 
 for version in $VERSIONS; do
   echo $(date): Fetching Robolectric ${version}

@@ -12,6 +12,7 @@ import io.embrace.android.gradle.plugin.tasks.registration.RegistrationParams
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskProvider
 import java.io.File
 
@@ -39,7 +40,8 @@ class Il2CppUploadTaskRegistration : EmbraceTaskRegistration {
                     task,
                     data,
                     variantConfigurationsListProperty,
-                    behavior
+                    behavior,
+                    buildIdProvider,
                 )
             }
         }
@@ -51,6 +53,7 @@ class Il2CppUploadTaskRegistration : EmbraceTaskRegistration {
         variant: AndroidCompactedVariantData,
         variantConfigurationsListProperty: ListProperty<VariantConfig>,
         behavior: PluginBehavior,
+        buildIdProvider: Provider<String>,
     ) {
         val il2cppSymbolsDir = File(project.rootDir, IL2CPP_SYMBOLS_DIR)
         val variantConfig = variantConfigurationsListProperty.get().first { it.variantName == variant.name }
@@ -69,6 +72,7 @@ class Il2CppUploadTaskRegistration : EmbraceTaskRegistration {
             lineNumberCompressionTaskProvider,
             variantConfig,
             behavior,
+            buildIdProvider,
         )
 
         val methodMapCompressionTaskProvider = configureFileCompressionTask(
@@ -86,6 +90,7 @@ class Il2CppUploadTaskRegistration : EmbraceTaskRegistration {
             methodMapCompressionTaskProvider,
             variantConfig,
             behavior,
+            buildIdProvider,
         )
     }
 
@@ -123,20 +128,23 @@ class Il2CppUploadTaskRegistration : EmbraceTaskRegistration {
         fileCompressionTask: TaskProvider<FileCompressionTask>,
         variantInfo: VariantConfig,
         behavior: PluginBehavior,
+        buildIdProvider: Provider<String>,
     ) {
         val uploadTask = project.registerTask(
             info.uploadTaskName,
             MultipartUploadTask::class.java,
             variant
         ) { task ->
+            // buildIdProvider is ValueSource-backed: Gradle re-evaluates it on every build even
+            // when the configuration cache is active, ensuring a fresh build ID each time.
             task.requestParams.set(
-                project.provider {
+                buildIdProvider.map { buildId ->
                     RequestParams(
                         appId = variantInfo.embraceConfig?.appId.orEmpty(),
                         apiToken = variantInfo.embraceConfig?.apiToken.orEmpty(),
                         endpoint = info.endpoint,
                         fileName = info.filename,
-                        buildId = variantInfo.buildId,
+                        buildId = buildId,
                         failBuildOnUploadErrors = behavior.failBuildOnUploadErrors.get(),
                         baseUrl = behavior.baseUrl,
                     )

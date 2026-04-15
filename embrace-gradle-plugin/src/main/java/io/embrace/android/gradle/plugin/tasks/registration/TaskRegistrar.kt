@@ -15,8 +15,10 @@ import io.embrace.android.gradle.plugin.tasks.il2cpp.Il2CppUploadTaskRegistratio
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTasksRegistration
 import io.embrace.android.gradle.plugin.tasks.r8.JvmMappingUploadTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.reactnative.GenerateRnSourcemapTaskRegistration
+import io.embrace.android.gradle.plugin.util.BuildIdValueSource
 import org.gradle.api.Project
 import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.Provider
 
 /**
  * Contains the logic for configuring tasks for each variant.
@@ -54,11 +56,15 @@ class TaskRegistrar(
     }
 
     private fun onVariant(variant: AndroidCompactedVariantData, ref: Variant) {
+        val buildIdProvider: Provider<String> = project.providers.of(BuildIdValueSource::class.java) {
+            it.parameters.getVariantName().set(variant.name)
+        }
+
         project.installDependenciesForVariant(variant.name, behavior)
 
-        setupVariantConfigurationListProperty(variant, variantConfigurationsListProperty)
+        setupVariantConfigurationListProperty(variant, variantConfigurationsListProperty, buildIdProvider)
 
-        val params = createRegistrationParams(variant, ref)
+        val params = createRegistrationParams(variant, ref, buildIdProvider)
 
         AsmTaskRegistration().register(params)
 
@@ -76,8 +82,12 @@ class TaskRegistrar(
             return
         }
 
+        val buildIdProvider: Provider<String> = project.providers.of(BuildIdValueSource::class.java) {
+            it.parameters.getVariantName().set(variant.name)
+        }
+
         GenerateRnSourcemapTaskRegistration().register(
-            createRegistrationParams(variant, ref)
+            createRegistrationParams(variant, ref, buildIdProvider)
         )
     }
 
@@ -86,13 +96,18 @@ class TaskRegistrar(
             !shouldRegisterUploadTasks(variant, variantConfigurationsListProperty)
     }
 
-    private fun createRegistrationParams(variant: AndroidCompactedVariantData, ref: Variant): RegistrationParams {
+    private fun createRegistrationParams(
+        variant: AndroidCompactedVariantData,
+        ref: Variant,
+        buildIdProvider: Provider<String>,
+    ): RegistrationParams {
         return RegistrationParams(
             project,
             ref,
             variant,
             variantConfigurationsListProperty,
             behavior,
+            buildIdProvider,
         )
     }
 
@@ -132,13 +147,16 @@ class TaskRegistrar(
     private fun setupVariantConfigurationListProperty(
         androidCompactedVariantData: AndroidCompactedVariantData,
         variantConfigurationsListProperty: ListProperty<VariantConfig>,
+        buildIdProvider: Provider<String>,
     ) {
         val embraceVariantConfiguration = embraceVariantConfigurationBuilder.buildVariantConfiguration(androidCompactedVariantData)
-        val fullVariantConfiguration = embraceVariantConfiguration.map {
-            VariantConfig.from(it, androidCompactedVariantData)
-        }.orElse(
-            VariantConfig.from(null, androidCompactedVariantData)
-        )
+        // buildIdProvider is ValueSource-backed: Gradle re-evaluates it on every build even when
+        // the configuration cache is active, ensuring a fresh build ID is used each time.
+        val fullVariantConfiguration = buildIdProvider.flatMap { buildId ->
+            embraceVariantConfiguration
+                .map { VariantConfig.from(it, androidCompactedVariantData, buildId) }
+                .orElse(VariantConfig.from(null, androidCompactedVariantData, buildId))
+        }
 
         // let's add configuration for current variant to our property
         variantConfigurationsListProperty.add(fullVariantConfiguration)

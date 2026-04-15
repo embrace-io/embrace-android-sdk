@@ -2,9 +2,11 @@ package io.embrace.android.embracesdk.testframework.actions
 
 import android.app.Activity
 import androidx.lifecycle.Lifecycle
+import androidx.navigation.NavController
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.NavControllerFragmentActivity
+import io.embrace.android.embracesdk.fakes.HasNavController
+import io.embrace.android.embracesdk.fakes.TestFragmentActivity
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectionType
@@ -91,11 +93,15 @@ internal class EmbraceActionInterface(
     }
 
     private fun onForeground() {
-        setup.fakeLifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_START)
+        invokeWithMainLooperUnblock {
+            setup.fakeLifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_START)
+        }
     }
 
     private fun onBackground() {
-        setup.fakeLifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
+        invokeWithMainLooperUnblock {
+            setup.fakeLifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
+        }
     }
 
     fun simulateConnectivityChange(status: ConnectivityStatus) {
@@ -132,12 +138,13 @@ internal class EmbraceActionInterface(
         }
     }
 
-    internal fun simulateOpeningActivities(
+    fun simulateOpeningActivities(
         addStartupActivity: Boolean = true,
         startInBackground: Boolean = false,
         endInBackground: Boolean = true,
         createFirstActivity: Boolean = true,
         invokeManualEnd: Boolean = false,
+        toBeRegisteredNavControllerProvider: () -> NavController? = { null },
         activitiesAndActions: List<Pair<ActivityController<*>, () -> Unit>> = listOf(
             Robolectric.buildActivity(Activity::class.java) to {},
         ),
@@ -148,15 +155,15 @@ internal class EmbraceActionInterface(
         } else {
             null
         }?.apply {
-            create()
-            start()
+            invokeWithMainLooperUnblock(::create)
+            invokeWithMainLooperUnblock(::start)
             appExecutionTimes.firstForegroundTimeMs = clock.now()
             onForeground()
-            resume()
-            pause()
+            invokeWithMainLooperUnblock(::resume)
+            invokeWithMainLooperUnblock(::pause)
 
             if (startInBackground) {
-                stop()
+                invokeWithMainLooperUnblock(::stop)
                 appExecutionTimes.lastBackgroundTimeMs = clock.now()
                 onBackground()
                 setup.getClock().tick(STARTUP_BACKGROUND_TIME)
@@ -166,7 +173,7 @@ internal class EmbraceActionInterface(
         }
         activitiesAndActions.forEachIndexed { index, (activityController, action) ->
             if (index != 0 || createFirstActivity) {
-                activityController.create()
+                invokeWithMainLooperUnblock(activityController::create)
                 setup.getClock().tick(LIFECYCLE_EVENT_GAP)
             }
             if (index == 0 && startInBackground) {
@@ -175,9 +182,14 @@ internal class EmbraceActionInterface(
                 }
                 onForeground()
             }
-            activityController.start()
+            invokeWithMainLooperUnblock(activityController::start)
+            toBeRegisteredNavControllerProvider()?.let {
+                invokeWithMainLooperUnblock {
+                    bootstrapper.essentialServiceModule.navigationTrackingService.trackNavigation(activityController.get(), it)
+                }
+            }
             setup.getClock().tick(LIFECYCLE_EVENT_GAP)
-            activityController.resume()
+            invokeWithMainLooperUnblock(activityController::resume)
             setup.getClock().tick(LIFECYCLE_EVENT_GAP)
 
             if (invokeManualEnd) {
@@ -194,13 +206,15 @@ internal class EmbraceActionInterface(
                 embrace.activityLoaded(activityController.get())
             }
 
-            lastActivity?.stop()
+            invokeWithMainLooperUnblock {
+                lastActivity?.stop()
+            }
 
             appExecutionTimes.firstActionTimeMs = clock.now()
             action()
 
             setup.getClock().tick(POST_ACTIVITY_ACTION_DWELL)
-            activityController.pause()
+            invokeWithMainLooperUnblock(activityController::pause)
             setup.getClock().tick(ACTIVITY_GAP)
             lastActivity = activityController
         }
@@ -208,7 +222,9 @@ internal class EmbraceActionInterface(
         if (endInBackground) {
             setup.getClock().tick()
             appExecutionTimes.lastBackgroundTimeMs = clock.now()
-            lastActivity?.stop()
+            invokeWithMainLooperUnblock {
+                lastActivity?.stop()
+            }
             onBackground()
         }
 
@@ -216,26 +232,21 @@ internal class EmbraceActionInterface(
     }
 
     /**
-     * Simulates opening a [NavControllerFragmentActivity] and navigating through the given routes.
+     * Simulates opening a [TestFragmentActivity] and navigating through the given routes. No explicit [NavController] tracking is done.
      */
-    fun simulateNavControllerNavigation(
-        activityController: ActivityController<NavControllerFragmentActivity> =
-            Robolectric.buildActivity(NavControllerFragmentActivity::class.java),
+    fun simulateFragmentActivityNavigation(
         routes: List<String>,
-    ): AppExecutionTimestamps =
-        simulateOpeningActivities(
-            addStartupActivity = false,
-            startInBackground = true,
-            activitiesAndActions = listOf(
-                activityController to {
-                    val navController = activityController.get().getNavController()
-                    routes.forEach { route ->
-                        clock.tick(POST_ACTIVITY_ACTION_DWELL)
-                        navController.navigate(route)
-                    }
-                },
-            )
-        )
+        activityController: ActivityController<TestFragmentActivity> = Robolectric.buildActivity(TestFragmentActivity::class.java),
+    ) = simulateNavControllerNavigation(routes, false, activityController)
+
+    /**
+     * Simulates opening the given [Activity] and navigating through the destinations [routes] defined on the [NavController] provided by
+     * the [HasNavController] interface. The [NavController] will be accessed during onStart, so its initialization has to be done by then.
+     */
+    inline fun <reified T> simulateNavControllerTrackingAndNavigation(
+        routes: List<String>,
+        activityController: ActivityController<T> = Robolectric.buildActivity(T::class.java),
+    ) where T : Activity, T : HasNavController = simulateNavControllerNavigation(routes, true, activityController)
 
     fun simulateJvmUncaughtException(exc: Throwable) {
         Thread.getDefaultUncaughtExceptionHandler()?.uncaughtException(Thread.currentThread(), exc)
@@ -248,6 +259,38 @@ internal class EmbraceActionInterface(
     inline fun <reified T : DataSource> findDataSource(): T {
         val registry = (bootstrapper.instrumentationModule.instrumentationRegistry as FakeInstrumentationRegistry)
         return checkNotNull(registry.findByType(T::class))
+    }
+
+    private inline fun <reified T> simulateNavControllerNavigation(
+        routes: List<String>,
+        registerNavController: Boolean,
+        activityController: ActivityController<T>,
+    ): AppExecutionTimestamps where T : Activity, T : HasNavController =
+        simulateOpeningActivities(
+            addStartupActivity = false,
+            startInBackground = true,
+            toBeRegisteredNavControllerProvider = {
+                if (registerNavController) {
+                    activityController.get().getNavController()
+                } else {
+                    null
+                }
+            },
+            activitiesAndActions = listOf(
+                activityController to {
+                    routes.forEach { route ->
+                        clock.tick(POST_ACTIVITY_ACTION_DWELL)
+                        activityController.get().getNavController().navigate(route)
+                    }
+                },
+            )
+        )
+
+    private fun invokeWithMainLooperUnblock(action: () -> Unit) {
+        action()
+        if (setup.unblockMainLooperOnNavigation) {
+            setup.shadowMainLooper.idle()
+        }
     }
 
     companion object {

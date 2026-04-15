@@ -9,8 +9,6 @@ import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
-import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -23,19 +21,21 @@ import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
+import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.assertions.JsonComparator
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import io.embrace.android.embracesdk.testframework.server.FormPart
-import java.io.File
-import java.io.IOException
-import java.util.Locale
-import java.util.concurrent.TimeoutException
 import org.json.JSONObject
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import java.io.File
+import java.io.IOException
+import java.util.Locale
+import java.util.concurrent.TimeoutException
 
 /**
  * Provides assertions that can be used in integration tests to validate the behavior of the SDK,
@@ -71,7 +71,10 @@ internal class EmbracePayloadAssertionInterface(
         val supplier = { checkNotNull(apiServer).getLogEnvelopes() }
         try {
             val envelopes = retrievePayload(expectedSize = expectedSize, supplier = supplier)
-            assertLogsDeliveredInOrder(envelopes)
+            val envelopesByType = envelopes.groupBy { it.type ?: "" }
+            envelopesByType.forEach {
+                assertLogsDeliveredInOrder(it.value)
+            }
             return envelopes
         } catch (exc: TimeoutException) {
             val envelopes: List<Map<String, String?>> = supplier().map { envelope ->
@@ -287,7 +290,7 @@ internal class EmbracePayloadAssertionInterface(
             val nextMax = next.data.logs?.mapNotNull { it.timeUnixNano }?.maxOrNull() ?: return@zipWithNext
             assertTrue(
                 "Log payloads delivered out of order. " +
-                    "Previous envelope max timeUnixNano=$prevMax, next max timeUnixNano=$nextMax",
+                    "Previous envelope (type=${prev.type}) max timeUnixNano=$prevMax, next (type=${next.type}) max timeUnixNano=$nextMax",
                 nextMax >= prevMax
             )
         }

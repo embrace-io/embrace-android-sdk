@@ -6,6 +6,7 @@ import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConf
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import org.gradle.api.Project
 import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.Provider
 
 class RegistrationParams(
     val project: Project,
@@ -13,4 +14,5 @@ class RegistrationParams(
     val data: AndroidCompactedVariantData,
     val variantConfigurationsListProperty: ListProperty<VariantConfig>,
     val behavior: PluginBehavior,
+    val buildIdProvider: Provider<String>,
 )

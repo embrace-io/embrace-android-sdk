@@ -1011,6 +1011,7 @@ internal class SessionOrchestratorTest {
                 userSessionNumber = 4L,
                 maxDurationSecs = TimeUnit.MILLISECONDS.toSeconds(maxDurationMs),
                 inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
+                partNumber = 1,
             )
         )
 

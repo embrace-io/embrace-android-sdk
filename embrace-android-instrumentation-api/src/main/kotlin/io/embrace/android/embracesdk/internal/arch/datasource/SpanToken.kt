@@ -44,7 +44,7 @@ interface SpanToken {
     fun setSystemAttribute(key: String, value: String)
 
     /**
-     * Add an event to the span
+     * Add a system event to the span
      */
-    fun addEvent(name: String, eventTimeMs: Long, attributes: Map<String, String>)
+    fun addSystemEvent(name: String, eventTimeMs: Long, attributes: Map<String, String>)
 }

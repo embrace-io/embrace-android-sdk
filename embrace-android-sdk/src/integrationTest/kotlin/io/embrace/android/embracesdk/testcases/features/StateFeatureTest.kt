@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.assertions.hasLinkToEmbraceSpan
 import io.embrace.android.embracesdk.fakes.TestStateDataSource
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
@@ -20,6 +19,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttributeValue
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.session.getStateSpan
+import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.LIFECYCLE_EVENT_GAP
@@ -177,23 +177,21 @@ internal class StateFeatureTest {
 
     @Test
     fun `max transitions`() {
-        val stateUpdates = listOf("foo", "bar", "baz", "bar", "baz")
-        var transitions: List<Pair<Long, String>> = listOf()
         testRule.runTest(
             persistedRemoteConfig = stateEnabledRemoteConfig,
             testCaseAction = {
                 recordSession {
-                    transitions = executeTransitions(stateUpdates)
+                    repeat(101) { i ->
+                        findDataSource<TestStateDataSource>().onStateChange(
+                            updateDetectedTimeMs = clock.tick(),
+                            newState = i.toString(),
+                        )
+                    }
                 }
             },
             assertAction = {
                 val stateSpan = checkNotNull(getSingleSessionEnvelope().getStateSpan("emb-state-test"))
-                with(checkNotNull(stateSpan.events)) {
-                    assertEquals(4, size)
-                    repeat(size) { i ->
-                        this[i].assertStateTransition(transitions[i].first, transitions[i].second)
-                    }
-                }
+                assertEquals(100, checkNotNull(stateSpan.events).size)
             }
         )
     }

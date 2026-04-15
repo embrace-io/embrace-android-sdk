@@ -10,7 +10,6 @@ class TestStateDataSource(
     args = args,
     stateTypeFactory = ::TestState,
     defaultValue = "UNKNOWN",
-    maxTransitions = 4,
 )
 
 class TestState(initialValue: String) : State<String>(initialValue, "test")

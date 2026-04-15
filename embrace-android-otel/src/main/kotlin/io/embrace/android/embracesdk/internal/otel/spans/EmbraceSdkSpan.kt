@@ -62,7 +62,7 @@ interface EmbraceSdkSpan : EmbraceSpan {
     fun removeSystemAttribute(key: String)
 
     /**
-     * Add a system event to the span that will subjected to a different maximum than typical span events.
+     * Add a system event to the span that will be subjected to a different maximum than typical span events.
      */
     fun addSystemEvent(
         name: String,

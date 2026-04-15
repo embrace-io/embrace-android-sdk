@@ -229,8 +229,8 @@ class TelemetryDestinationImpl(
 
         override fun setSystemAttribute(key: String, value: String) = span.setSystemAttribute(key, value)
 
-        override fun addEvent(name: String, eventTimeMs: Long, attributes: Map<String, String>) {
-            span.addEvent(
+        override fun addSystemEvent(name: String, eventTimeMs: Long, attributes: Map<String, String>) {
+            span.addSystemEvent(
                 name = name,
                 timestampMs = eventTimeMs,
                 attributes = attributes
@@ -251,7 +251,7 @@ class TelemetryDestinationImpl(
             if (!spanToken.isRecording()) {
                 return false
             }
-            spanToken.addEvent(
+            spanToken.addSystemEvent(
                 name = "transition",
                 eventTimeMs = updateDetectedTimeMs,
                 attributes = mutableMapOf(EmbStateTransitionAttributes.EMB_STATE_NEW_VALUE to newValue.toString())

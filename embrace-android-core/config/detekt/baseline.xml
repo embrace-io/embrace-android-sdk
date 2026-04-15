@@ -1,5 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <SmellBaseline>
   <ManuallySuppressedIssues/>
-  <CurrentIssues/>
+  <CurrentIssues>
+    <ID>ComplexCondition:SessionOrchestratorImpl.kt$SessionOrchestratorImpl$transitionType == TransitionType.END_MANUAL || transitionType == TransitionType.INACTIVITY_TIMEOUT || transitionType == TransitionType.INACTIVITY_FOREGROUND || transitionType == TransitionType.MAX_DURATION</ID>
+  </CurrentIssues>
 </SmellBaseline>

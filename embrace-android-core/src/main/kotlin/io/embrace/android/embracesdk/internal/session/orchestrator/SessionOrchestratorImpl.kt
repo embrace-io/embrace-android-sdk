@@ -29,6 +29,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import java.util.concurrent.TimeUnit
+import kotlin.math.max
 
 internal class SessionOrchestratorImpl(
     appStateTracker: AppStateTracker,
@@ -62,7 +63,10 @@ internal class SessionOrchestratorImpl(
     private var userSessionState: UserSessionState = UserSessionState.Initializing
 
     @Volatile
-    private var inactivityTimerState: InactivityTimerState? = null
+    private var inactivityTimerState: SessionTimerState? = null
+
+    @Volatile
+    private var maxDurationTimerState: SessionTimerState? = null
 
     init {
         loadPersistedUserSession()
@@ -89,6 +93,7 @@ internal class SessionOrchestratorImpl(
                     }
 
                     stored != null && !isUserSessionOverMaxDuration(stored) -> {
+                        scheduleMaxDurationTimeout(stored)
                         UserSessionState.Active(stored)
                     }
 
@@ -271,7 +276,8 @@ internal class SessionOrchestratorImpl(
                     if (transitionType != TransitionType.CRASH) {
                         if (transitionType == TransitionType.END_MANUAL ||
                             transitionType == TransitionType.INACTIVITY_TIMEOUT ||
-                            transitionType == TransitionType.INACTIVITY_FOREGROUND
+                            transitionType == TransitionType.INACTIVITY_FOREGROUND ||
+                            transitionType == TransitionType.MAX_DURATION
                         ) {
                             handleUserSessionEnd(timestamp)
                         } else {
@@ -318,13 +324,45 @@ internal class SessionOrchestratorImpl(
 
     private fun scheduleInactivityTimeout() {
         val metadata = (userSessionState as? UserSessionState.Active)?.metadata ?: return
-        inactivityTimerState = InactivityTimerState(
+        inactivityTimerState = SessionTimerState(
             backgroundWorker.schedule<Unit>(
                 ::onInactivityTimeout,
                 metadata.inactivityTimeoutSecs,
                 TimeUnit.SECONDS,
             )
         )
+    }
+
+    private fun scheduleMaxDurationTimeout(metadata: UserSessionMetadata) {
+        val remainingSecs = metadata.maxDurationSecs - ((clock.now() - metadata.startTimeMs) / 1_000L)
+        val delay = max(remainingSecs, 0)
+        maxDurationTimerState = SessionTimerState(
+            backgroundWorker.schedule<Unit>(
+                ::onMaxDurationTimeout,
+                delay,
+                TimeUnit.SECONDS,
+            )
+        )
+    }
+
+    private fun onMaxDurationTimeout() {
+        synchronized(lock) {
+            if (userSessionState !is UserSessionState.Active) {
+                return
+            }
+            val currentAppState = state
+            val timestamp = clock.now()
+            transitionState(
+                transitionType = TransitionType.MAX_DURATION,
+                timestamp = timestamp,
+                oldSessionAction = { initial: SessionPartToken ->
+                    payloadFactory.endPayloadWithState(currentAppState, timestamp, initial)
+                },
+                newSessionAction = {
+                    payloadFactory.startPayloadWithState(currentAppState, timestamp, false)
+                },
+            )
+        }
     }
 
     private fun onInactivityTimeout() {
@@ -413,9 +451,15 @@ internal class SessionOrchestratorImpl(
         )
         metadataStore.save(newMetadata)
         userSessionState = UserSessionState.Active(newMetadata)
+
+        if (state == AppState.FOREGROUND) {
+            scheduleMaxDurationTimeout(newMetadata)
+        }
     }
 
     private fun terminateUserSession() {
+        maxDurationTimerState?.cancel()
+        maxDurationTimerState = null
         metadataStore.clear()
         userSessionState = UserSessionState.Terminated
     }

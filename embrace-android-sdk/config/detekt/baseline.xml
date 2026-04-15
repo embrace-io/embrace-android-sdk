@@ -1,7 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <SmellBaseline>
   <ManuallySuppressedIssues/>
-  <CurrentIssues>
-    <ID>CyclomaticComplexMethod:LogsApiDelegate.kt$LogsApiDelegate$private fun sendLog( attributes: Map&lt;String, Any>, exceptionData: ExceptionData?, attachment: Attachment?, severity: Severity, dst: LogService, message: String, )</ID>
-  </CurrentIssues>
+  <CurrentIssues/>
 </SmellBaseline>

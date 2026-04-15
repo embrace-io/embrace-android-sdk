@@ -714,6 +714,24 @@ internal class SessionOrchestratorTest {
         assertEquals(InternalErrorType.CLOCK_BACKWARDS_SHIFT.toString(), errors[0].msg)
     }
 
+    @Test
+    fun `user session start time matches initial session part start time`() {
+        createOrchestrator(AppState.FOREGROUND)
+        val userSession = checkNotNull(orchestrator.currentUserSession())
+        val sessionPart = checkNotNull(sessionTracker.getActiveSession())
+        assertEquals(userSession.startTimeMs, sessionPart.startTime)
+    }
+
+    @Test
+    fun `user session start time matches session part start time after manual end`() {
+        createOrchestrator(AppState.FOREGROUND)
+        clock.tick(5000)
+        orchestrator.endSessionWithManual(false)
+        val userSession = checkNotNull(orchestrator.currentUserSession())
+        val sessionPart = checkNotNull(sessionTracker.getActiveSession())
+        assertEquals(userSession.startTimeMs, sessionPart.startTime)
+    }
+
     private fun assertHeartbeatMatchesClock() {
         val attr = checkNotNull(destination.attributes[EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO])
         assertEquals(clock.now(), attr.toLong().nanosToMillis())

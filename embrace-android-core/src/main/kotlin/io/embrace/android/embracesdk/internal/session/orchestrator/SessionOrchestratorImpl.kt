@@ -97,6 +97,7 @@ internal class SessionOrchestratorImpl(
         val timestamp = clock.now()
         transitionState(
             transitionType = TransitionType.INITIAL,
+            timestamp = timestamp,
             newSessionAction = {
                 payloadFactory.startPayloadWithState(state, timestamp, true)
             }
@@ -107,6 +108,7 @@ internal class SessionOrchestratorImpl(
         val timestamp = clock.now()
         transitionState(
             transitionType = TransitionType.ON_FOREGROUND,
+            timestamp = timestamp,
             oldSessionAction = { initial: SessionPartToken ->
                 payloadFactory.endPayloadWithState(AppState.BACKGROUND, timestamp, initial)
             },
@@ -124,6 +126,7 @@ internal class SessionOrchestratorImpl(
         val timestamp = clock.now()
         transitionState(
             transitionType = TransitionType.ON_BACKGROUND,
+            timestamp = timestamp,
             oldSessionAction = { initial: SessionPartToken ->
                 payloadFactory.endPayloadWithState(AppState.FOREGROUND, timestamp, initial)
             },
@@ -140,6 +143,7 @@ internal class SessionOrchestratorImpl(
         val timestamp = clock.now()
         transitionState(
             transitionType = TransitionType.END_MANUAL,
+            timestamp = timestamp,
             clearUserInfo = clearUserInfo,
             oldSessionAction = { initial: SessionPartToken ->
                 payloadFactory.endSessionWithManual(timestamp, initial)
@@ -162,6 +166,7 @@ internal class SessionOrchestratorImpl(
         val timestamp = clock.now()
         transitionState(
             transitionType = TransitionType.CRASH,
+            timestamp = timestamp,
             oldSessionAction = { initial: SessionPartToken ->
                 payloadFactory.endPayloadWithCrash(state, timestamp, initial, crashId)
             },
@@ -195,6 +200,7 @@ internal class SessionOrchestratorImpl(
      */
     private fun transitionState(
         transitionType: TransitionType,
+        timestamp: Long,
         oldSessionAction: ((initial: SessionPartToken) -> Envelope<SessionPartPayload>?)? = null,
         newSessionAction: (Provider<SessionPartToken?>)? = null,
         earlyTerminationCondition: () -> Boolean = { false },
@@ -245,9 +251,9 @@ internal class SessionOrchestratorImpl(
                     // the user session is always ready
                     if (transitionType != TransitionType.CRASH) {
                         if (transitionType == TransitionType.END_MANUAL) {
-                            handleUserSessionManualEnd()
+                            handleUserSessionEnd(timestamp)
                         } else {
-                            handleNewSessionPart()
+                            handleNewSessionPart(timestamp)
                         }
                     }
 
@@ -305,15 +311,15 @@ internal class SessionOrchestratorImpl(
      * transition. If the active user session has exceeded max duration, terminates it and starts
      * a new one. If no user session is active, starts a new one. Otherwise keeps the current one.
      */
-    private fun handleNewSessionPart() {
+    private fun handleNewSessionPart(timestamp: Long) {
         val current = userSessionState
         if (current is UserSessionState.Active) {
             if (isUserSessionOverMaxDuration(current.metadata)) {
                 terminateUserSession()
-                startNewUserSession()
+                startNewUserSession(timestamp)
             }
         } else {
-            startNewUserSession()
+            startNewUserSession(timestamp)
         }
     }
 
@@ -321,21 +327,21 @@ internal class SessionOrchestratorImpl(
      * Called when the developer manually ends the session. Terminates any active user session,
      * then always starts a new one.
      */
-    private fun handleUserSessionManualEnd() {
+    private fun handleUserSessionEnd(timestamp: Long) {
         if (userSessionState is UserSessionState.Active) {
             terminateUserSession()
         }
-        startNewUserSession()
+        startNewUserSession(timestamp)
     }
 
     private fun isUserSessionOverMaxDuration(metadata: UserSessionMetadata): Boolean =
         clock.now() - metadata.startTimeMs >= metadata.maxDurationSecs * 1_000L
 
-    private fun startNewUserSession() {
+    private fun startNewUserSession(startTimeMs: Long) {
         val maxDurationMs = configService.sessionBehavior.getMaxSessionDurationMs()
         val inactivityTimeoutMs = configService.sessionBehavior.getSessionInactivityTimeoutMs()
         val newMetadata = UserSessionMetadata(
-            startTimeMs = clock.now(),
+            startTimeMs = startTimeMs,
             userSessionId = Uuid.getEmbUuid(),
             userSessionNumber = ordinalStore.incrementAndGet(Ordinal.USER_SESSION).toLong(),
             maxDurationSecs = maxDurationMs / 1_000L,

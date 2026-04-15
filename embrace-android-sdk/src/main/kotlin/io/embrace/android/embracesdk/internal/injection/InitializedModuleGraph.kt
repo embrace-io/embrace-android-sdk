@@ -173,7 +173,8 @@ internal class InitializedModuleGraph(
             instrumentationModule,
             payloadSourceModule,
             dataCaptureServiceModule.startupService::getSdkStartupDuration,
-            logModule
+            logModule,
+            workerThreadModule,
         )
     }
 

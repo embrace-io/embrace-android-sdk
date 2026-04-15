@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.internal.session.UserSessionListener
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 
@@ -9,6 +10,7 @@ class FakeSessionOrchestrator : SessionOrchestrator {
     var manualEndCount: Int = 0
     var stateChangeCount: Int = 0
     var currentSession: UserSessionMetadata? = null
+    val userSessionListeners = mutableListOf<UserSessionListener>()
 
     override fun endSessionWithManual(clearUserInfo: Boolean) {
         manualEndCount++
@@ -29,4 +31,8 @@ class FakeSessionOrchestrator : SessionOrchestrator {
     }
 
     override fun currentUserSession(): UserSessionMetadata? = currentSession
+
+    override fun addUserSessionListener(listener: UserSessionListener) {
+        userSessionListeners.add(listener)
+    }
 }

@@ -399,6 +399,7 @@ internal class SessionOrchestratorTest {
 
         val first = checkNotNull(orchestrator.currentUserSession())
         assertEquals(1L, first.userSessionNumber)
+        assertEquals(1, first.partNumber)
         assertEquals(TimeUnit.MILLISECONDS.toSeconds(maxDurationMs), first.maxDurationSecs)
         assertEquals(TimeUnit.MILLISECONDS.toSeconds(inactivityMs), first.inactivityTimeoutSecs)
         assertNotNull(first.userSessionId)
@@ -409,6 +410,7 @@ internal class SessionOrchestratorTest {
         orchestrator.onForeground()
         val repeat = checkNotNull(orchestrator.currentUserSession())
         assertEquals(first.userSessionId, repeat.userSessionId)
+        assertEquals(3, repeat.partNumber)
 
         // at/past max duration — new user session starts
         clock.tick(1)
@@ -417,6 +419,7 @@ internal class SessionOrchestratorTest {
         val second = checkNotNull(orchestrator.currentUserSession())
         assertNotEquals(first.userSessionId, second.userSessionId)
         assertEquals(2L, second.userSessionNumber)
+        assertEquals(2, second.partNumber)
     }
 
     @Test
@@ -431,6 +434,7 @@ internal class SessionOrchestratorTest {
 
         val first = checkNotNull(orchestrator.currentUserSession())
         assertEquals(1L, first.userSessionNumber)
+        assertEquals(1, first.partNumber)
 
         // manual end always terminates and starts a new user session
         clock.tick(10000)
@@ -438,6 +442,31 @@ internal class SessionOrchestratorTest {
         val second = checkNotNull(orchestrator.currentUserSession())
         assertEquals(2L, second.userSessionNumber)
         assertNotEquals(first.userSessionId, second.userSessionId)
+        assertEquals(1, second.partNumber)
+    }
+
+    @Test
+    fun `part number increments within user session`() {
+        configService = FakeConfigService(
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = maxDurationMs,
+                sessionInactivityTimeoutMs = inactivityMs,
+            )
+        )
+        createOrchestrator(AppState.FOREGROUND)
+
+        assertEquals(1, checkNotNull(orchestrator.currentUserSession()).partNumber)
+
+        orchestrator.onBackground()
+        assertEquals(2, checkNotNull(orchestrator.currentUserSession()).partNumber)
+
+        orchestrator.onForeground()
+        assertEquals(3, checkNotNull(orchestrator.currentUserSession()).partNumber)
+
+        // new user session resets part number to 1
+        clock.tick(10000)
+        orchestrator.endSessionWithManual(false)
+        assertEquals(1, checkNotNull(orchestrator.currentUserSession()).partNumber)
     }
 
     @Test
@@ -497,6 +526,7 @@ internal class SessionOrchestratorTest {
                 userSessionNumber = 7L,
                 maxDurationSecs = TimeUnit.MILLISECONDS.toSeconds(maxDurationMs),
                 inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
+                partNumber = 1,
             )
         )
 
@@ -505,6 +535,7 @@ internal class SessionOrchestratorTest {
         val session = checkNotNull(orchestrator.currentUserSession())
         assertEquals("restored-id", session.userSessionId)
         assertEquals(7L, session.userSessionNumber)
+        assertEquals(2, session.partNumber)
     }
 
     @Test
@@ -549,6 +580,7 @@ internal class SessionOrchestratorTest {
                 userSessionNumber = 3L,
                 maxDurationSecs = TimeUnit.MILLISECONDS.toSeconds(maxDurationMs),
                 inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
+                partNumber = 1,
             )
         )
 
@@ -633,6 +665,7 @@ internal class SessionOrchestratorTest {
                 userSessionNumber = 5L,
                 maxDurationSecs = persistedMaxSecs,
                 inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
+                partNumber = 1,
             )
         )
 
@@ -667,6 +700,7 @@ internal class SessionOrchestratorTest {
                 userSessionNumber = 3L,
                 maxDurationSecs = TimeUnit.MILLISECONDS.toSeconds(maxDurationMs),
                 inactivityTimeoutSecs = persistedInactivitySecs,
+                partNumber = 1,
             )
         )
 
@@ -701,6 +735,7 @@ internal class SessionOrchestratorTest {
                 userSessionNumber = 5L,
                 maxDurationSecs = TimeUnit.MILLISECONDS.toSeconds(maxDurationMs),
                 inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
+                partNumber = 1,
             )
         )
 

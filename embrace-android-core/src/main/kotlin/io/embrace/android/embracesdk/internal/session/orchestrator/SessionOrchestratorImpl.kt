@@ -317,6 +317,12 @@ internal class SessionOrchestratorImpl(
             if (isUserSessionOverMaxDuration(current.metadata)) {
                 terminateUserSession()
                 startNewUserSession(timestamp)
+            } else {
+                val updatedMetadata = current.metadata.copy(
+                    partNumber = current.metadata.partNumber + 1,
+                )
+                metadataStore.save(updatedMetadata)
+                userSessionState = UserSessionState.Active(updatedMetadata)
             }
         } else {
             startNewUserSession(timestamp)
@@ -346,6 +352,7 @@ internal class SessionOrchestratorImpl(
             userSessionNumber = ordinalStore.incrementAndGet(Ordinal.USER_SESSION).toLong(),
             maxDurationSecs = maxDurationMs / 1_000L,
             inactivityTimeoutSecs = inactivityTimeoutMs / 1_000L,
+            partNumber = 1,
         )
         metadataStore.save(newMetadata)
         userSessionState = UserSessionState.Active(newMetadata)

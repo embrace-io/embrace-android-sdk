@@ -5,12 +5,13 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 /**
  * Holds metadata about the user session.
  */
-class UserSessionMetadata(
+data class UserSessionMetadata(
     val startTimeMs: Long,
     val userSessionId: String,
     val userSessionNumber: Long,
     val maxDurationSecs: Long,
     val inactivityTimeoutSecs: Long,
+    val partNumber: Int,
 ) {
     val attributes: Map<String, Any> = mapOf(
         EmbSessionAttributes.EMB_USER_SESSION_START_TS to startTimeMs,

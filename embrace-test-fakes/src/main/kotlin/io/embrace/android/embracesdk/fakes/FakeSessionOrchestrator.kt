@@ -12,7 +12,7 @@ class FakeSessionOrchestrator : SessionOrchestrator {
     var currentSession: UserSessionMetadata? = null
     val userSessionListeners = mutableListOf<UserSessionListener>()
 
-    override fun endSessionWithManual(clearUserInfo: Boolean) {
+    override fun endSessionWithManual() {
         manualEndCount++
     }
 

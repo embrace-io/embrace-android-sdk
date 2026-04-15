@@ -152,12 +152,8 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/UserA
 public abstract interface class io/embrace/android/embracesdk/internal/api/UserSessionApi {
 	public abstract fun addUserSessionListener (Lio/embrace/android/embracesdk/UserSessionListener;)V
 	public abstract fun addUserSessionProperty (Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/PropertyScope;)Z
-	public abstract fun endUserSession (Z)V
+	public abstract fun endUserSession ()V
 	public abstract fun removeUserSessionProperty (Ljava/lang/String;)Z
-}
-
-public final class io/embrace/android/embracesdk/internal/api/UserSessionApi$DefaultImpls {
-	public static synthetic fun endUserSession$default (Lio/embrace/android/embracesdk/internal/api/UserSessionApi;ZILjava/lang/Object;)V
 }
 
 public final class io/embrace/android/embracesdk/internal/network/http/NetworkCaptureData {

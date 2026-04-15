@@ -95,7 +95,7 @@ internal class SessionOrchestratorListenerTest {
 
         // manual end always starts a new user session
         clock.tick(10000)
-        orchestrator.endSessionWithManual(false)
+        orchestrator.endSessionWithManual()
         assertEquals(2, events.size)
 
         // foreground/background within max duration keeps same user session
@@ -132,7 +132,7 @@ internal class SessionOrchestratorListenerTest {
 
         // manual end terminates then creates a new session
         clock.tick(10000)
-        orchestrator.endSessionWithManual(false)
+        orchestrator.endSessionWithManual()
         assertEquals(1, events.size)
 
         // foreground/background within max duration
@@ -156,7 +156,7 @@ internal class SessionOrchestratorListenerTest {
         orchestrator.addUserSessionListener { event -> events.add(event) }
 
         clock.tick(10000)
-        orchestrator.endSessionWithManual(false)
+        orchestrator.endSessionWithManual()
 
         assertEquals(
             listOf(
@@ -179,7 +179,7 @@ internal class SessionOrchestratorListenerTest {
         orchestrator.addUserSessionListener { event -> events2.add(event) }
 
         clock.tick(10000)
-        orchestrator.endSessionWithManual(false)
+        orchestrator.endSessionWithManual()
         assertEquals(events1.map { it::class to it.userSessionId }, events2.map { it::class to it.userSessionId })
         assertTrue(events1.any { it is SessionStateEvent.UserSessionActive })
     }
@@ -203,7 +203,7 @@ internal class SessionOrchestratorListenerTest {
         orchestrator.addUserSessionListener { secondListenerInvoked = true }
 
         clock.tick(10000)
-        orchestrator.endSessionWithManual(false)
+        orchestrator.endSessionWithManual()
         assertTrue(secondListenerInvoked)
         assertTrue(logger.internalErrorMessages.any { it.msg == InternalErrorType.USER_SESSION_CALLBACK_FAIL.toString() })
     }
@@ -293,7 +293,6 @@ internal class SessionOrchestratorListenerTest {
             configService,
             sessionTracker,
             OrchestratorBoundaryDelegate(
-                userService,
                 userSessionPropertiesService
             ),
             store,

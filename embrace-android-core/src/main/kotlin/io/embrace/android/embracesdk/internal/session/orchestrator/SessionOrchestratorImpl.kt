@@ -144,12 +144,11 @@ internal class SessionOrchestratorImpl(
         )
     }
 
-    override fun endSessionWithManual(clearUserInfo: Boolean) {
+    override fun endSessionWithManual() {
         val timestamp = clock.now()
         transitionState(
             transitionType = TransitionType.END_MANUAL,
             timestamp = timestamp,
-            clearUserInfo = clearUserInfo,
             oldSessionAction = { initial: SessionPartToken ->
                 payloadFactory.endSessionWithManual(timestamp, initial)
             },
@@ -223,7 +222,6 @@ internal class SessionOrchestratorImpl(
      * The initial session object (if any) is passed as a parameter to allow building a full payload.
      * @param newSessionAction  The action that starts the new session or background activity (if any).
      * If a new session is created this must return a session object containing the initial state.
-     * @param clearUserInfo     Whether to clear user info when ending the session. Defaults to false
      */
     private fun transitionState(
         transitionType: TransitionType,
@@ -231,7 +229,6 @@ internal class SessionOrchestratorImpl(
         oldSessionAction: ((initial: SessionPartToken) -> Envelope<SessionPartPayload>?)? = null,
         newSessionAction: (Provider<SessionPartToken?>)? = null,
         earlyTerminationCondition: () -> Boolean = { false },
-        clearUserInfo: Boolean = false,
         crashId: String? = null,
     ) {
         // supplied business logic says that we can't perform a transition yet.
@@ -271,7 +268,7 @@ internal class SessionOrchestratorImpl(
                     // the previous session has fully ended at this point
                     // now, we can clear the SDK state and prepare for the next session
                     EmbTrace.trace("prepare-new-session") {
-                        boundaryDelegate.cleanupAfterSessionEnd(clearUserInfo)
+                        boundaryDelegate.cleanupAfterSessionEnd()
                     }
 
                     // transition the user session before creating the new session part so that

@@ -40,10 +40,8 @@ public interface UserSessionApi {
 
     /**
      * Ends the current user session and starts a new one.
-     *
-     * @param clearUserInfo Pass in true to clear all user info set on this device.
      */
-    public fun endUserSession(clearUserInfo: Boolean = false)
+    public fun endUserSession()
 
     /**
      * Registers a listener that is invoked for user session lifecycle events.

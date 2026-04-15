@@ -38,7 +38,6 @@ class UserSessionOrchestrationModuleImpl(
         )
 
         val boundaryDelegate = OrchestratorBoundaryDelegate(
-            essentialServiceModule.userService,
             essentialServiceModule.userSessionPropertiesService
         )
 

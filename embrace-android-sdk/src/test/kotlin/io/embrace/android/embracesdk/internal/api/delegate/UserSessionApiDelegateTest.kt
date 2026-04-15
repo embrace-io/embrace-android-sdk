@@ -80,12 +80,6 @@ internal class UserSessionApiDelegateTest {
     }
 
     @Test
-    fun `end session clear user info`() {
-        delegate.endUserSession(true)
-        assertEquals(1, (fakeModule.sessionOrchestrator as FakeSessionOrchestrator).manualEndCount)
-    }
-
-    @Test
     fun `add user session listener when SDK started`() {
         delegate.addUserSessionListener { }
         assertEquals(1, (fakeModule.sessionOrchestrator as FakeSessionOrchestrator).userSessionListeners.size)

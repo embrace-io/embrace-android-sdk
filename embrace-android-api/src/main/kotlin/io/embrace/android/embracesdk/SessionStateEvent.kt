@@ -17,6 +17,11 @@ public sealed class SessionStateEvent(
      * 1. When a new user session starts
      * 2. When an existing user session is restored in a new process
      * 3. When a listener is registered, if a user session is already active
+     *
+     * It's important to note that the same userSessionId value may be present in multiple, distinct events of
+     * [io.embrace.android.embracesdk.SessionStateEvent.UserSessionActive]. This API is primarily intended so that
+     * library consumers can perform operations when a user session is brought into memory, such as setting
+     * a user ID or user session properties.
      */
     public class UserSessionActive(userSessionId: String) : SessionStateEvent(userSessionId)
 

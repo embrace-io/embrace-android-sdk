@@ -208,6 +208,7 @@ internal class ModuleInitBootstrapper(
             payloadSourceModule: PayloadSourceModule,
             startupDurationProvider: () -> Long?,
             logModule: LogModule,
+            workerThreadModule: WorkerThreadModule,
         ->
         UserSessionOrchestrationModuleImpl(
             initModule,
@@ -219,7 +220,8 @@ internal class ModuleInitBootstrapper(
             instrumentationModule,
             payloadSourceModule,
             startupDurationProvider,
-            logModule
+            logModule,
+            workerThreadModule,
         )
     },
     private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier = {

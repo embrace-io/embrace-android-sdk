@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrches
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestratorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSpanAttrPopulatorImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.android.embracesdk.internal.worker.Worker
 
 class UserSessionOrchestrationModuleImpl(
     initModule: InitModule,
@@ -21,6 +22,7 @@ class UserSessionOrchestrationModuleImpl(
     payloadSourceModule: PayloadSourceModule,
     startupDurationProvider: () -> Long?,
     logModule: LogModule,
+    workerThreadModule: WorkerThreadModule,
 ) : UserSessionOrchestrationModule {
 
     override val sessionOrchestrator: SessionOrchestrator by singleton {
@@ -64,6 +66,7 @@ class UserSessionOrchestrationModuleImpl(
             coreModule.ordinalStore,
             UserSessionMetadataStore(coreModule.store),
             initModule.logger,
+            workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
         )
     }
 }

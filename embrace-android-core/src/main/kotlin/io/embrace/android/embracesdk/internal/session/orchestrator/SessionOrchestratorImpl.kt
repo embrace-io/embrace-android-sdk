@@ -25,8 +25,10 @@ import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
+import java.util.concurrent.TimeUnit
 
 internal class SessionOrchestratorImpl(
     appStateTracker: AppStateTracker,
@@ -43,6 +45,7 @@ internal class SessionOrchestratorImpl(
     private val ordinalStore: OrdinalStore,
     private val metadataStore: UserSessionMetadataStore,
     private val logger: InternalLogger,
+    private val backgroundWorker: BackgroundWorker,
 ) : SessionOrchestrator {
 
     /**
@@ -58,12 +61,15 @@ internal class SessionOrchestratorImpl(
     @Volatile
     private var userSessionState: UserSessionState = UserSessionState.Initializing
 
+    @Volatile
+    private var inactivityTimerState: InactivityTimerState? = null
+
     init {
         loadPersistedUserSession()
         appStateTracker.addListener(this)
         sessionTracker.addSessionPartEndListener(instrumentationRegistry)
         sessionTracker.addSessionPartChangeListener(instrumentationRegistry)
-        EmbTrace.trace("start-first-session") { createInitialSession() }
+        EmbTrace.trace("start-first-session") { createInitialSessionPart() }
     }
 
     private fun loadPersistedUserSession() {
@@ -85,6 +91,7 @@ internal class SessionOrchestratorImpl(
                     stored != null && !isUserSessionOverMaxDuration(stored) -> {
                         UserSessionState.Active(stored)
                     }
+
                     else -> UserSessionState.NoActiveSession
                 }
             } catch (e: Exception) {
@@ -93,7 +100,7 @@ internal class SessionOrchestratorImpl(
         }
     }
 
-    private fun createInitialSession() {
+    private fun createInitialSessionPart() {
         val timestamp = clock.now()
         transitionState(
             transitionType = TransitionType.INITIAL,
@@ -105,9 +112,20 @@ internal class SessionOrchestratorImpl(
     }
 
     override fun onForeground() {
+        val exceeded = synchronized(lock) {
+            inactivityTimerState?.cancel()
+            val exceeded = inactivityTimerState?.exceeded ?: false
+            inactivityTimerState = null
+            exceeded
+        }
+
         val timestamp = clock.now()
+
         transitionState(
-            transitionType = TransitionType.ON_FOREGROUND,
+            transitionType = when {
+                exceeded -> TransitionType.INACTIVITY_FOREGROUND
+                else -> TransitionType.ON_FOREGROUND
+            },
             timestamp = timestamp,
             oldSessionAction = { initial: SessionPartToken ->
                 payloadFactory.endPayloadWithState(AppState.BACKGROUND, timestamp, initial)
@@ -137,6 +155,7 @@ internal class SessionOrchestratorImpl(
                 return@transitionState shouldRunOnBackground(state)
             }
         )
+        scheduleInactivityTimeout()
     }
 
     override fun endSessionWithManual(clearUserInfo: Boolean) {
@@ -250,7 +269,10 @@ internal class SessionOrchestratorImpl(
                     // transition the user session before creating the new session part so that
                     // the user session is always ready
                     if (transitionType != TransitionType.CRASH) {
-                        if (transitionType == TransitionType.END_MANUAL) {
+                        if (transitionType == TransitionType.END_MANUAL ||
+                            transitionType == TransitionType.INACTIVITY_TIMEOUT ||
+                            transitionType == TransitionType.INACTIVITY_FOREGROUND
+                        ) {
                             handleUserSessionEnd(timestamp)
                         } else {
                             handleNewSessionPart(timestamp)
@@ -291,6 +313,41 @@ internal class SessionOrchestratorImpl(
             }
 
             EmbTrace.end()
+        }
+    }
+
+    private fun scheduleInactivityTimeout() {
+        val metadata = (userSessionState as? UserSessionState.Active)?.metadata ?: return
+        inactivityTimerState = InactivityTimerState(
+            backgroundWorker.schedule<Unit>(
+                ::onInactivityTimeout,
+                metadata.inactivityTimeoutSecs,
+                TimeUnit.SECONDS,
+            )
+        )
+    }
+
+    private fun onInactivityTimeout() {
+        synchronized(lock) {
+            if (state != AppState.BACKGROUND) {
+                return
+            }
+            inactivityTimerState?.exceeded = true
+
+            if (configService.backgroundActivityBehavior.isBackgroundActivityCaptureEnabled()) {
+                val timestamp = clock.now()
+                transitionState(
+                    transitionType = TransitionType.INACTIVITY_TIMEOUT,
+                    timestamp = timestamp,
+                    oldSessionAction = { initial: SessionPartToken ->
+                        payloadFactory.endPayloadWithState(AppState.BACKGROUND, timestamp, initial)
+                    },
+                    newSessionAction = {
+                        payloadFactory.startPayloadWithState(AppState.BACKGROUND, timestamp, false)
+                    },
+                    earlyTerminationCondition = { state != AppState.BACKGROUND },
+                )
+            }
         }
     }
 

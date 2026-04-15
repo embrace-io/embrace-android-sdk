@@ -84,10 +84,17 @@ internal class UserSessionBehaviorImplTest {
     }
 
     @Test
-    fun `inactivity timeout is valid when remote value is zero`() {
+    fun `inactivity timeout defaults when remote value is below minimum`() {
         val cfg =
             RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationSeconds = 86400, inactivityTimeoutSeconds = 0))
-        assertEquals(0L, createSessionBehavior(remoteCfg = cfg).getSessionInactivityTimeoutMs())
+        assertEquals(defaultInactivityTimeoutMs, createSessionBehavior(remoteCfg = cfg).getSessionInactivityTimeoutMs())
+    }
+
+    @Test
+    fun `inactivity timeout is valid when remote value equals minimum`() {
+        val cfg =
+            RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationSeconds = 86400, inactivityTimeoutSeconds = 30))
+        assertEquals(30 * 1_000L, createSessionBehavior(remoteCfg = cfg).getSessionInactivityTimeoutMs())
     }
 
     @Test

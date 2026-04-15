@@ -16,7 +16,7 @@ class UserSessionBehaviorImpl(private val remote: RemoteConfig?) : UserSessionBe
         private const val MAX_DURATION_SECONDS_MAX: Int = 24 * 60 * 60
         private const val INACTIVITY_TIMEOUT_SECONDS_DEFAULT: Int = 30 * 60
         private const val INACTIVITY_TIMEOUT_SECONDS_MAX: Int = 24 * 60 * 60
-        private const val INACTIVITY_TIMEOUT_SECONDS_MIN: Int = 0
+        private const val INACTIVITY_TIMEOUT_SECONDS_MIN: Int = 30
         private const val MIN_SESSION_MS: Long = 5_000L
     }
 

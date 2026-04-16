@@ -62,6 +62,10 @@ internal class NativeCrashDataSourceImplTest {
                 testNativeCrashData.sessionId,
                 attributes[SessionAttributes.SESSION_ID]
             )
+            assertEquals(
+                testNativeCrashData.userSessionId,
+                attributes[EmbSessionAttributes.EMB_USER_SESSION_ID]
+            )
             assertEquals("1", attributes[EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER])
             assertEquals(testNativeCrashData.crash, attributes[embNativeCrashException])
             val json = args.serializer.toJson(testNativeCrashData.symbols, Map::class.java)
@@ -122,6 +126,7 @@ internal class NativeCrashDataSourceImplTest {
     private val testNativeCrashData: NativeCrashData = NativeCrashData(
         nativeCrashId = "nativeCrashId",
         sessionId = "sessionId",
+        userSessionId = "userSessionId",
         timestamp = 1700000000000,
         crash = "base64binarystring",
         symbols = mapOf("key" to "value"),

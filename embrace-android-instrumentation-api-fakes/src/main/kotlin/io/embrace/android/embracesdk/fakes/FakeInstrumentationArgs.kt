@@ -30,6 +30,7 @@ class FakeInstrumentationArgs(
     val backgroundWorkerSupplier: (worker: Worker.Background) -> BackgroundWorker = { fakeBackgroundWorker() },
     val priorityWorkerSupplier: (worker: Worker.Priority) -> PriorityWorker<*> = { fakePriorityWorker<Any>() },
     val sessionIdSupplier: () -> String? = { null },
+    val userSessionIdSupplier: () -> String? = { null },
     val sessionChangeListeners: MutableList<SessionPartChangeListener> = mutableListOf(),
     val sessionEndListeners: MutableList<SessionPartEndListener> = mutableListOf(),
     val systemServiceSupplier: (name: String) -> Any? = { null },
@@ -46,6 +47,8 @@ class FakeInstrumentationArgs(
     override fun <T> systemService(name: String): T? = systemServiceSupplier(name) as? T
 
     override fun sessionId(): String? = sessionIdSupplier()
+
+    override fun userSessionId(): String? = userSessionIdSupplier()
 
     override fun userSessionProperties(): Map<String, String> = emptyMap()
 

@@ -6,7 +6,7 @@ interface JniDelegate {
         reportId: String?,
         devLogging: Boolean,
     )
-    fun onSessionChange(sessionId: String, reportPath: String)
+    fun onSessionChange(sessionId: String, userSessionId: String, reportPath: String)
     fun getCrashReport(path: String): String?
     fun checkForOverwrittenHandlers(): String?
     fun reinstallSignalHandlers(): Boolean

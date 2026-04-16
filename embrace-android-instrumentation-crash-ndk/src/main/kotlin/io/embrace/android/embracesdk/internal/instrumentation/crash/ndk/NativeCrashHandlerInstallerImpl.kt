@@ -51,6 +51,7 @@ internal class NativeCrashHandlerInstallerImpl(
             if (sharedObjectLoader.loadEmbraceNative()) {
                 delegate.onSessionChange(
                     sanitizeSessionId(args.sessionId()),
+                    sanitizeSessionId(args.userSessionId()),
                     createNativeReportPath()
                 )
                 mainThreadHandler.postAtFrontOfQueue { installSignals() }
@@ -59,7 +60,11 @@ internal class NativeCrashHandlerInstallerImpl(
                     HANDLER_CHECK_DELAY_MS
                 )
                 args.registerSessionPartChangeListener {
-                    delegate.onSessionChange(sanitizeSessionId(args.sessionId()), createNativeReportPath())
+                    delegate.onSessionChange(
+                        sanitizeSessionId(args.sessionId()),
+                        sanitizeSessionId(args.userSessionId()),
+                        createNativeReportPath()
+                    )
                 }
             }
         } catch (ex: Exception) {

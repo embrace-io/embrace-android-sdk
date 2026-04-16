@@ -47,7 +47,7 @@ internal class ModuleInitBootstrapperTest {
             InitModuleImpl(logger, clock),
             configServiceSupplier = { _, _, _, _ -> FakeConfigService() },
             coreModuleSupplier = { _, _ -> coreModule },
-            instrumentationModuleSupplier = { _, _, _, _, _, _, _ ->
+            instrumentationModuleSupplier = { _, _, _, _, _, _, _, _ ->
                 FakeInstrumentationModule(application, logger = logger).apply {
                     registry = instrumentationRegistry
                 }

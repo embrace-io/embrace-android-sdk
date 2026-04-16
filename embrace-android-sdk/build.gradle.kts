@@ -82,6 +82,8 @@ dependencies {
     testImplementation(libs.androidx.navigation.common)
     testImplementation(libs.androidx.navigation.testing)
     testImplementation(libs.opentelemetry.kotlin.compat)
+    testImplementation(libs.kotlinx.serialization.core)
+    add("kotlinCompilerPluginClasspath", libs.kotlin.serialization.compiler.plugin)
 
     lintChecks(project(":embrace-lint"))
 }

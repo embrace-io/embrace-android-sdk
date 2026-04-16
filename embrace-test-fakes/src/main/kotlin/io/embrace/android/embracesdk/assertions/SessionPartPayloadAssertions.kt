@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.assertions
 
-import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
@@ -9,6 +8,8 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
+import io.embrace.android.embracesdk.internal.session.getStateSpan
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 
 /**
  * Returns the Session Span
@@ -100,3 +101,5 @@ fun Envelope<SessionPartPayload>.findSpanSnapshotsOfType(telemetryType: EmbType)
 fun Envelope<SessionPartPayload>.hasSpanSnapshotsOfType(telemetryType: EmbType): Boolean {
     return findSpanSnapshotsOfType(telemetryType).isNotEmpty()
 }
+
+fun Envelope<SessionPartPayload>.getNavigationStateSpan() = getStateSpan("emb-state-screen-automatic")

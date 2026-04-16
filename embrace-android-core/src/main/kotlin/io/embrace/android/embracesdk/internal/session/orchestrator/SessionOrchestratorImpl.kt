@@ -274,7 +274,8 @@ internal class SessionOrchestratorImpl(
                 sessionSpanAttrPopulator.populateSessionSpanEndAttrs(
                     endType = transitionType.lifeEventType(state),
                     crashId = crashId,
-                    coldStart = endingSession.isColdStart
+                    coldStart = endingSession.isColdStart,
+                    endAttributes = transitionType.endAttributes,
                 )
             }
 

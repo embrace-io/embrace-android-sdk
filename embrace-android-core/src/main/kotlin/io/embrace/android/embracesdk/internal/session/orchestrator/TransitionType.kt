@@ -1,10 +1,23 @@
+@file:OptIn(ExperimentalSemconv::class)
+
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.session.LifeEventType
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 
 enum class TransitionType {
     INITIAL, END_MANUAL, ON_FOREGROUND, ON_BACKGROUND, CRASH, INACTIVITY_TIMEOUT, INACTIVITY_FOREGROUND, MAX_DURATION;
+
+    val endAttributes: Map<String, String> by lazy {
+        when (this) {
+            END_MANUAL, INACTIVITY_TIMEOUT, INACTIVITY_FOREGROUND, MAX_DURATION ->
+                mapOf(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART to "1")
+
+            else -> emptyMap()
+        }
+    }
 
     fun endState(currentState: AppState): AppState = when (this) {
         ON_FOREGROUND, INACTIVITY_FOREGROUND -> AppState.FOREGROUND

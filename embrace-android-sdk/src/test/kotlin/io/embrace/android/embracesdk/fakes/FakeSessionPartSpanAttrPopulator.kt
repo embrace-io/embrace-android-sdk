@@ -13,6 +13,7 @@ class FakeSessionPartSpanAttrPopulator : SessionPartSpanAttrPopulator {
         endType: LifeEventType?,
         crashId: String?,
         coldStart: Boolean,
+        endAttributes: Map<String, String>,
     ) {
     }
 }

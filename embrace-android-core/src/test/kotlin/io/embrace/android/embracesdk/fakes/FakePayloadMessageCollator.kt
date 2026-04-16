@@ -28,7 +28,7 @@ class FakePayloadMessageCollator(
             }
         }
         SessionPartToken(
-            sessionId = currentSessionPartSpan.getSessionId(),
+            sessionPartId = currentSessionPartSpan.getSessionId(),
             startTime = startTime,
             isColdStart = coldStart,
             appState = appState,

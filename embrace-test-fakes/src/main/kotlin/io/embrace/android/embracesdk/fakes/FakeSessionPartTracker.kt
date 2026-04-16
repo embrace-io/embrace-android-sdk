@@ -19,14 +19,14 @@ class FakeSessionPartTracker : SessionPartTracker {
         sessionEndListeners.add(listener)
     }
 
-    override fun getActiveSession(): SessionPartToken? = currentSession
+    override fun getActiveSessionPart(): SessionPartToken? = currentSession
 
-    override fun newActiveSession(
-        endSessionCallback: SessionPartToken.() -> Unit,
-        startSessionCallback: () -> SessionPartToken?,
+    override fun newActiveSessionPart(
+        endSessionPartCallback: SessionPartToken.() -> Unit,
+        startSessionPartCallback: () -> SessionPartToken?,
         postTransitionAppState: AppState,
     ): SessionPartToken? {
-        currentSession = startSessionCallback()
+        currentSession = startSessionPartCallback()
         sessionChangeListeners.forEach(SessionPartChangeListener::onPostSessionChange)
 
         return currentSession

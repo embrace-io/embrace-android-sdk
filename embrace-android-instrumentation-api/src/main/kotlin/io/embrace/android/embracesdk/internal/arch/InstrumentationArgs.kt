@@ -97,9 +97,9 @@ interface InstrumentationArgs {
     fun <T> systemService(name: String): T?
 
     /**
-     * Retrieves the current session ID, or null if there is no active session.
+     * Retrieves the current session part ID, or null if there is no active session part.
      */
-    fun sessionId(): String?
+    fun sessionPartId(): String?
 
     /**
      * Identifier that uniquely identifies the current process.

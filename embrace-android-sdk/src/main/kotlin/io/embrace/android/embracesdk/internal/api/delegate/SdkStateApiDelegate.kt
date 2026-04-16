@@ -34,7 +34,7 @@ internal class SdkStateApiDelegate(
         get() {
             val localSessionTracker = sessionPartTracker
             if (localSessionTracker != null && sdkCallChecker.check("get_current_session_id")) {
-                val sessionId = localSessionTracker.getActiveSessionId()
+                val sessionId = localSessionTracker.getActiveSessionPartId()
                 if (sessionId != null) {
                     return sessionId
                 }

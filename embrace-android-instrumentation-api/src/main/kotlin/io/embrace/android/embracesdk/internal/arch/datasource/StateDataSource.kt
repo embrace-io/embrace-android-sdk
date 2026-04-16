@@ -74,7 +74,7 @@ abstract class StateDataSource<T : Any>(
     @CallSuper
     override fun onDataCaptureEnabled() {
         // Create a new state span as soon as the data source is enabled if there's an active session
-        if (args.sessionId() != null) {
+        if (args.sessionPartId() != null) {
             createSessionStateSpan(currentState.get())
         }
     }

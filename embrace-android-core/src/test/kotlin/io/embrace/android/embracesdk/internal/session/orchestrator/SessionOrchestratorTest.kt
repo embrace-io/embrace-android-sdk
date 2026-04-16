@@ -16,7 +16,6 @@ import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakePayloadMessageCollator
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
-import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.behavior.FakeUserSessionBehavior
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
@@ -65,7 +64,6 @@ internal class SessionOrchestratorTest {
     private lateinit var appStateTracker: FakeAppStateTracker
     private lateinit var clock: FakeClock
     private lateinit var configService: FakeConfigService
-    private lateinit var userService: FakeUserService
     private lateinit var store: FakePayloadStore
     private lateinit var userSessionPropertiesService: UserSessionPropertiesService
     private lateinit var sessionTracker: SessionPartTracker
@@ -202,7 +200,7 @@ internal class SessionOrchestratorTest {
         clock.tick(10000)
         val endTimeMs = clock.now()
         val sessionSpan = currentSessionPartSpan.sessionSpan
-        orchestrator.endSessionWithManual(true)
+        orchestrator.endSessionWithManual()
         validateSession(
             sessionSpan = sessionSpan,
             endTimeMs = endTimeMs,
@@ -215,7 +213,7 @@ internal class SessionOrchestratorTest {
     fun `end session with manual in background`() {
         createOrchestrator(AppState.BACKGROUND)
         appStateTracker.state = AppState.BACKGROUND
-        orchestrator.endSessionWithManual(true)
+        orchestrator.endSessionWithManual()
         assertTrue(store.storedSessionPartPayloads.isEmpty())
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
     }
@@ -260,19 +258,9 @@ internal class SessionOrchestratorTest {
 
         clock.tick(10000)
         assertEquals(1, payloadCollator.sessionCount.get())
-        orchestrator.endSessionWithManual(false)
+        orchestrator.endSessionWithManual()
         assertEquals(1, payloadCollator.sessionCount.get())
         assertTrue(store.storedSessionPartPayloads.isEmpty())
-    }
-
-    @Test
-    fun `ending session manually clears user info`() {
-        configService = FakeConfigService()
-        createOrchestrator(AppState.FOREGROUND)
-        clock.tick(10000)
-
-        orchestrator.endSessionWithManual(true)
-        assertEquals(1, userService.clearedCount)
     }
 
     @Test
@@ -281,7 +269,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(AppState.FOREGROUND)
         clock.tick(10000)
         assertEquals(1, payloadCollator.sessionCount.get())
-        orchestrator.endSessionWithManual(true)
+        orchestrator.endSessionWithManual()
         assertEquals(2, payloadCollator.sessionCount.get())
         checkNotNull(store.storedSessionPartPayloads.last().first)
     }
@@ -292,7 +280,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(AppState.FOREGROUND)
         clock.tick(1000)
 
-        orchestrator.endSessionWithManual(true)
+        orchestrator.endSessionWithManual()
         assertEquals(1, payloadCollator.sessionCount.get())
         assertTrue(store.storedSessionPartPayloads.isEmpty())
     }
@@ -302,7 +290,7 @@ internal class SessionOrchestratorTest {
         configService = FakeConfigService()
         createOrchestrator(AppState.BACKGROUND)
         clock.tick(1000)
-        orchestrator.endSessionWithManual(true)
+        orchestrator.endSessionWithManual()
         assertEquals(0, payloadCollator.baCount.get())
     }
 
@@ -440,7 +428,7 @@ internal class SessionOrchestratorTest {
 
         // manual end always terminates and starts a new user session
         clock.tick(10000)
-        orchestrator.endSessionWithManual(false)
+        orchestrator.endSessionWithManual()
         val second = checkNotNull(orchestrator.currentUserSession())
         assertEquals(2L, second.userSessionNumber)
         assertNotEquals(first.userSessionId, second.userSessionId)
@@ -467,7 +455,7 @@ internal class SessionOrchestratorTest {
 
         // new user session resets part number to 1
         clock.tick(10000)
-        orchestrator.endSessionWithManual(false)
+        orchestrator.endSessionWithManual()
         assertEquals(1, checkNotNull(orchestrator.currentUserSession()).partNumber)
     }
 
@@ -557,6 +545,7 @@ internal class SessionOrchestratorTest {
                 override fun getStringSet(key: String): Set<String>? = null
                 override fun getStringMap(key: String): Map<String, String> =
                     error("simulated store failure")
+
                 override fun edit(action: KeyValueStoreEditor.() -> Unit) = FakeKeyValueStore().edit(action)
                 override fun incrementAndGet(key: String): Int = 0
             }
@@ -625,7 +614,7 @@ internal class SessionOrchestratorTest {
 
         val firstId = checkNotNull(orchestrator.currentUserSession()).userSessionId
         clock.tick(10000)
-        orchestrator.endSessionWithManual(false)
+        orchestrator.endSessionWithManual()
         val secondId = checkNotNull(orchestrator.currentUserSession()).userSessionId
         assertNotEquals(firstId, secondId)
 
@@ -715,7 +704,7 @@ internal class SessionOrchestratorTest {
 
         // new session should use current config inactivity timeout
         clock.tick(10000)
-        orchestrator.endSessionWithManual(false)
+        orchestrator.endSessionWithManual()
         val newSession = checkNotNull(orchestrator.currentUserSession())
         assertNotEquals("persisted-id", newSession.userSessionId)
         assertEquals(TimeUnit.MILLISECONDS.toSeconds(configInactivityMs), newSession.inactivityTimeoutSecs)
@@ -826,7 +815,7 @@ internal class SessionOrchestratorTest {
     fun `user session start time matches session part start time after manual end`() {
         createOrchestrator(AppState.FOREGROUND)
         clock.tick(5000)
-        orchestrator.endSessionWithManual(false)
+        orchestrator.endSessionWithManual()
         val userSession = checkNotNull(orchestrator.currentUserSession())
         val sessionPart = checkNotNull(sessionTracker.getActiveSession())
         assertEquals(userSession.startTimeMs, sessionPart.startTime)
@@ -856,7 +845,6 @@ internal class SessionOrchestratorTest {
             logger = logger
         )
         userSessionPropertiesService = FakeUserSessionPropertiesService()
-        userService = FakeUserService()
         sessionTracker = SessionPartTrackerImpl(
             activityManager = null,
             logger = logger
@@ -891,7 +879,6 @@ internal class SessionOrchestratorTest {
             configService,
             sessionTracker,
             OrchestratorBoundaryDelegate(
-                userService,
                 userSessionPropertiesService
             ),
             store,
@@ -976,7 +963,7 @@ internal class SessionOrchestratorTest {
 
         // manual end cancels the old timer and starts a new one
         clock.tick(10000)
-        orchestrator.endSessionWithManual(false)
+        orchestrator.endSessionWithManual()
         val second = checkNotNull(orchestrator.currentUserSession())
         assertEquals(2L, second.userSessionNumber)
 

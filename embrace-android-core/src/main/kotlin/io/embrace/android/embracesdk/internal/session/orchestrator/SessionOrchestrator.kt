@@ -12,10 +12,9 @@ import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 interface SessionOrchestrator : AppStateListener, CrashTeardownHandler {
 
     /**
-     * Ends the current session (if any) manually. If [clearUserInfo] is true,
-     * the user info will be cleared. This has no effect on background activities.
+     * Ends the current session (if any) manually. This has no effect on background activities.
      */
-    fun endSessionWithManual(clearUserInfo: Boolean)
+    fun endSessionWithManual()
 
     /**
      * Reports a change to the underlying data or metadata of the current session. This means cached data for the session is stale and

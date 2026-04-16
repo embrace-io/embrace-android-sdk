@@ -45,12 +45,10 @@ internal class UserSessionApiDelegate(
 
     /**
      * Ends the current session and starts a new one.
-     *
-     * Cleans all the user info on the device.
      */
-    override fun endUserSession(clearUserInfo: Boolean) {
+    override fun endUserSession() {
         if (sdkCallChecker.check("end_session")) {
-            sessionOrchestrator?.endSessionWithManual(clearUserInfo)
+            sessionOrchestrator?.endSessionWithManual()
         }
     }
 

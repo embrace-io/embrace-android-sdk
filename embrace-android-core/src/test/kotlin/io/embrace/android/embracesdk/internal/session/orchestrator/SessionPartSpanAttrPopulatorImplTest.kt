@@ -49,7 +49,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
 
     @Test
     fun `end attributes populated`() {
-        populator.populateSessionSpanEndAttrs(LifeEventType.STATE, "crashId", false)
+        populator.populateSessionSpanEndAttrs(LifeEventType.STATE, "crashId", false, emptyMap())
 
         val attrs = destination.attributes
         val expected = mapOf(
@@ -59,6 +59,27 @@ internal class SessionPartSpanAttrPopulatorImplTest {
             EmbSessionAttributes.EMB_SESSION_END_TYPE to "state",
             EmbSessionAttributes.EMB_ERROR_LOG_COUNT to "0",
             EmbSessionAttributes.EMB_DISK_FREE_BYTES to "500000000"
+        )
+        assertEquals(expected, attrs)
+    }
+
+    @Test
+    fun `end attributes - final session part`() {
+        populator.populateSessionSpanEndAttrs(
+            LifeEventType.STATE,
+            null,
+            false,
+            mapOf(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART to "1"),
+        )
+
+        val attrs = destination.attributes
+        val expected = mapOf(
+            EmbSessionAttributes.EMB_CLEAN_EXIT to "true",
+            EmbSessionAttributes.EMB_TERMINATED to "false",
+            EmbSessionAttributes.EMB_SESSION_END_TYPE to "state",
+            EmbSessionAttributes.EMB_ERROR_LOG_COUNT to "0",
+            EmbSessionAttributes.EMB_DISK_FREE_BYTES to "500000000",
+            EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART to "1",
         )
         assertEquals(expected, attrs)
     }

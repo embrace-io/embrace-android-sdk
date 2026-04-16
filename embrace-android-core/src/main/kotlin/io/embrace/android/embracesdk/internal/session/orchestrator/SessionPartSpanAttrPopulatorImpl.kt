@@ -30,7 +30,12 @@ internal class SessionPartSpanAttrPopulatorImpl(
         }
     }
 
-    override fun populateSessionSpanEndAttrs(endType: LifeEventType?, crashId: String?, coldStart: Boolean) {
+    override fun populateSessionSpanEndAttrs(
+        endType: LifeEventType?,
+        crashId: String?,
+        coldStart: Boolean,
+        endAttributes: Map<String, String>,
+    ) {
         with(destination) {
             addSessionPartAttribute(EmbSessionAttributes.EMB_CLEAN_EXIT, true.toString())
             addSessionPartAttribute(EmbSessionAttributes.EMB_TERMINATED, false.toString())
@@ -51,6 +56,10 @@ internal class SessionPartSpanAttrPopulatorImpl(
 
             metadataService.getDiskUsage()?.deviceDiskFree?.let { free ->
                 addSessionPartAttribute(EmbSessionAttributes.EMB_DISK_FREE_BYTES, free.toString())
+            }
+
+            endAttributes.forEach { (key, value) ->
+                addSessionPartAttribute(key, value)
             }
         }
     }

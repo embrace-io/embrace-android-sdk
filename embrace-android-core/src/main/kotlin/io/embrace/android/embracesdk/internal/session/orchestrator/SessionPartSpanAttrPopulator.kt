@@ -16,5 +16,10 @@ interface SessionPartSpanAttrPopulator {
     /**
      * Populates session span attributes at the end of the session.
      */
-    fun populateSessionSpanEndAttrs(endType: LifeEventType?, crashId: String?, coldStart: Boolean)
+    fun populateSessionSpanEndAttrs(
+        endType: LifeEventType?,
+        crashId: String?,
+        coldStart: Boolean,
+        endAttributes: Map<String, String>,
+    )
 }

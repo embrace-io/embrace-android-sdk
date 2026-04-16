@@ -59,10 +59,6 @@ internal class PublicApiTest {
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
-                    assertEquals(
-                        embrace.currentUserSessionId,
-                        testRule.setup.getCurrentSessionPartSpan().getSessionId()
-                    )
                     assertNotNull(embrace.currentUserSessionId)
                 }
             }

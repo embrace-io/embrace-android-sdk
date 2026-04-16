@@ -321,9 +321,10 @@ internal class SessionOrchestratorImpl(
             state = endAppState
 
             // update newly created session
-            if (newSession != null) {
+            val userSession = currentUserSession()
+            if (newSession != null && userSession != null) {
                 boundaryDelegate.prepareForNewSession()
-                sessionSpanAttrPopulator.populateSessionSpanStartAttrs(newSession)
+                sessionSpanAttrPopulator.populateSessionSpanStartAttrs(newSession, userSession)
                 if (transitionType != TransitionType.CRASH) {
                     // initiate periodic caching of the payload if a new session has started
                     EmbTrace.start("initiate-periodic-caching")

@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
+import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.hasSpanSnapshotsOfType
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -39,7 +40,7 @@ internal class BackgroundActivityTest {
             },
             assertAction = {
                 // filter out dupes from overwritten saves
-                val bgActivities = getSessionEnvelopes(2, AppState.BACKGROUND).distinctBy { it.getSessionId() }
+                val bgActivities = getSessionEnvelopes(2, AppState.BACKGROUND).distinctBy { it.getSessionPartId() }
                 assertEquals(2, bgActivities.size)
 
                 // verify first bg activity
@@ -56,7 +57,7 @@ internal class BackgroundActivityTest {
                 ))
 
                 // ID should be different for each
-                assertNotEquals(first.getSessionId(), second.getSessionId())
+                assertNotEquals(first.getSessionPartId(), second.getSessionPartId())
             }
         )
     }

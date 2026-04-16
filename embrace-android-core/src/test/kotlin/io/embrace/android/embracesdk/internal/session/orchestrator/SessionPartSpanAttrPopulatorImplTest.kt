@@ -3,11 +3,12 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 import io.embrace.android.embracesdk.fakes.FakeLogLimitingService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
-import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
+import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -15,13 +16,19 @@ import org.junit.Test
 internal class SessionPartSpanAttrPopulatorImplTest {
 
     private val zygote = SessionPartToken("id", 1, 5, AppState.FOREGROUND, false, LifeEventType.STATE)
-    private lateinit var userSessionPropertiesService: FakeUserSessionPropertiesService
+    private val userSession = UserSessionMetadata(
+        startTimeMs = 1000L,
+        userSessionId = "user-session-uuid",
+        userSessionNumber = 3L,
+        maxDurationSecs = 43200L,
+        inactivityTimeoutSecs = 1800L,
+        partNumber = 2,
+    )
     private lateinit var populator: SessionPartSpanAttrPopulatorImpl
     private lateinit var destination: FakeTelemetryDestination
 
     @Before
     fun setUp() {
-        userSessionPropertiesService = FakeUserSessionPropertiesService()
         destination = FakeTelemetryDestination()
         populator = SessionPartSpanAttrPopulatorImpl(
             destination,
@@ -32,19 +39,24 @@ internal class SessionPartSpanAttrPopulatorImplTest {
     }
 
     @Test
-    fun `start attributes populated`() {
-        populator.populateSessionSpanStartAttrs(zygote)
+    fun `start attributes populated with user session`() {
+        populator.populateSessionSpanStartAttrs(zygote, userSession)
 
         val attrs = destination.attributes
-        val expected = mapOf(
-            EmbSessionAttributes.EMB_COLD_START to "false",
-            EmbSessionAttributes.EMB_SESSION_NUMBER to "5",
-            EmbSessionAttributes.EMB_STATE to "foreground",
-            EmbSessionAttributes.EMB_CLEAN_EXIT to "false",
-            EmbSessionAttributes.EMB_TERMINATED to "true",
-            EmbSessionAttributes.EMB_SESSION_START_TYPE to "state"
-        )
-        assertEquals(expected, attrs)
+        assertEquals("false", attrs[EmbSessionAttributes.EMB_COLD_START])
+        assertEquals("5", attrs[EmbSessionAttributes.EMB_SESSION_NUMBER])
+        assertEquals("foreground", attrs[EmbSessionAttributes.EMB_STATE])
+        assertEquals("false", attrs[EmbSessionAttributes.EMB_CLEAN_EXIT])
+        assertEquals("true", attrs[EmbSessionAttributes.EMB_TERMINATED])
+        assertEquals("state", attrs[EmbSessionAttributes.EMB_SESSION_START_TYPE])
+        assertEquals("1000", attrs[EmbSessionAttributes.EMB_USER_SESSION_START_TS])
+        assertEquals("user-session-uuid", attrs[EmbSessionAttributes.EMB_USER_SESSION_ID])
+        assertEquals("3", attrs[EmbSessionAttributes.EMB_USER_SESSION_NUMBER])
+        assertEquals("43200", attrs[EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS])
+        assertEquals("1800", attrs[EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS])
+        assertEquals("2", attrs[EmbSessionAttributes.EMB_USER_SESSION_PART_NUMBER])
+        assertEquals("user-session-uuid", attrs[SessionAttributes.SESSION_ID])
+        assertEquals("id", attrs[EmbSessionAttributes.EMB_SESSION_PART_ID])
     }
 
     @Test

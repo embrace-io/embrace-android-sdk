@@ -103,7 +103,14 @@ internal class UserSessionApiTest {
 
         // Attributes that are unstable that we should not try to verify
         val ignoredAttributes = setOf(
-            EmbSessionAttributes.EMB_DISK_FREE_BYTES
+            EmbSessionAttributes.EMB_DISK_FREE_BYTES,
+            EmbSessionAttributes.EMB_SESSION_PART_ID,
+            EmbSessionAttributes.EMB_USER_SESSION_ID,
+            EmbSessionAttributes.EMB_USER_SESSION_NUMBER,
+            EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS,
+            EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS,
+            EmbSessionAttributes.EMB_USER_SESSION_PART_NUMBER,
+            EmbSessionAttributes.EMB_USER_SESSION_START_TS,
         ).plus(validateExistenceOnly)
     }
 }

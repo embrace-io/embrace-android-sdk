@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.delivery.storage
 
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -16,6 +17,7 @@ class CachedLogEnvelopeStoreImpl(
     worker: PriorityWorker<StoredTelemetryMetadata>,
     logger: InternalLogger,
     private val serializer: PlatformSerializer,
+    clock: Clock,
     storageLimit: Int = 100,
 ) : CachedLogEnvelopeStore {
 
@@ -23,6 +25,7 @@ class CachedLogEnvelopeStoreImpl(
         outputDir,
         worker,
         logger,
+        clock,
         storageLimit
     )
 

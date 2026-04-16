@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.delivery.storage
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.fakeEnvelopeMetadata
@@ -36,7 +37,8 @@ class CachedLogEnvelopeStoreImplTest {
             outputDir = lazy { outputDir },
             worker = PriorityWorker(executor),
             logger = logger,
-            serializer = serializer
+            serializer = serializer,
+            clock = FakeClock(),
         )
     }
 

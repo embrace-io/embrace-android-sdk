@@ -69,7 +69,10 @@ internal class SessionPartSpanAttrPopulatorImplTest {
             LifeEventType.STATE,
             null,
             false,
-            mapOf(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART to "1"),
+            mapOf(
+                EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART to "1",
+                EmbSessionAttributes.EMB_TERMINATION_REASON to EmbSessionAttributes.EmbTerminationReasonValues.MANUAL,
+            ),
         )
 
         val attrs = destination.attributes
@@ -80,6 +83,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
             EmbSessionAttributes.EMB_ERROR_LOG_COUNT to "0",
             EmbSessionAttributes.EMB_DISK_FREE_BYTES to "500000000",
             EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART to "1",
+            EmbSessionAttributes.EMB_TERMINATION_REASON to "manual",
         )
         assertEquals(expected, attrs)
     }

@@ -5,6 +5,7 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbTerminationReasonValues
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 
 enum class TransitionType {
@@ -12,9 +13,21 @@ enum class TransitionType {
 
     val endAttributes: Map<String, String> by lazy {
         when (this) {
-            END_MANUAL, INACTIVITY_TIMEOUT, INACTIVITY_FOREGROUND, MAX_DURATION ->
-                mapOf(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART to "1")
-
+            END_MANUAL ->
+                mapOf(
+                    EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART to "1",
+                    EmbSessionAttributes.EMB_TERMINATION_REASON to EmbTerminationReasonValues.MANUAL,
+                )
+            INACTIVITY_TIMEOUT, INACTIVITY_FOREGROUND ->
+                mapOf(
+                    EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART to "1",
+                    EmbSessionAttributes.EMB_TERMINATION_REASON to EmbTerminationReasonValues.INACTIVITY,
+                )
+            MAX_DURATION ->
+                mapOf(
+                    EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART to "1",
+                    EmbSessionAttributes.EMB_TERMINATION_REASON to EmbTerminationReasonValues.MAX_DURATION_REACHED,
+                )
             else -> emptyMap()
         }
     }

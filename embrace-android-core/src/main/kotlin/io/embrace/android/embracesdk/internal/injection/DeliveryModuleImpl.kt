@@ -72,7 +72,7 @@ class DeliveryModuleImpl(
         PayloadCachingServiceImpl(
             partCacher,
             initModule.clock,
-            essentialServiceModule.sessionPartTracker,
+            essentialServiceModule.sessionIdProvider,
             payloadStore,
             deliveryTracer
         )

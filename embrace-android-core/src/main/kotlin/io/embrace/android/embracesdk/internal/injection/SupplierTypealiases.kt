@@ -94,6 +94,7 @@ typealias UserSessionOrchestrationModuleSupplier = (
     payloadSourceModule: PayloadSourceModule,
     startupDurationProvider: () -> Long?,
     logModule: LogModule,
+    workerThreadModule: WorkerThreadModule,
 ) -> UserSessionOrchestrationModule
 
 typealias StorageServiceSupplier = (

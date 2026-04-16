@@ -36,7 +36,7 @@ internal class UserSessionApiDelegateTest {
             essentialServiceModuleSupplier = { _, _, _, _, _, _, _ ->
                 FakeEssentialServiceModule()
             },
-            userSessionOrchestrationModuleSupplier = { _, _, _, _, _, _, _, _, _, _ ->
+            userSessionOrchestrationModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _ ->
                 fakeModule
             }
         )

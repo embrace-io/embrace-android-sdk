@@ -34,7 +34,7 @@ internal class SessionPartSpanAttrPopulatorImpl(
             }
 
             // set a unique ID for this session part
-            addSessionPartAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, session.sessionId)
+            addSessionPartAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionPart.sessionPartId)
         }
     }
 

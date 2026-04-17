@@ -11,8 +11,8 @@ internal class TransitionTypeTest {
         val attrs = TransitionType.END_MANUAL.endAttributes
         assertEquals("1", attrs[EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART])
         assertEquals(
-            EmbSessionAttributes.EmbTerminationReasonValues.MANUAL,
-            attrs[EmbSessionAttributes.EMB_TERMINATION_REASON],
+            EmbSessionAttributes.EmbUserSessionTerminationReasonValues.MANUAL,
+            attrs[EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON],
         )
     }
 
@@ -21,8 +21,8 @@ internal class TransitionTypeTest {
         val attrs = TransitionType.INACTIVITY_TIMEOUT.endAttributes
         assertEquals("1", attrs[EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART])
         assertEquals(
-            EmbSessionAttributes.EmbTerminationReasonValues.INACTIVITY,
-            attrs[EmbSessionAttributes.EMB_TERMINATION_REASON],
+            EmbSessionAttributes.EmbUserSessionTerminationReasonValues.INACTIVITY,
+            attrs[EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON],
         )
     }
 
@@ -31,8 +31,8 @@ internal class TransitionTypeTest {
         val attrs = TransitionType.INACTIVITY_FOREGROUND.endAttributes
         assertEquals("1", attrs[EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART])
         assertEquals(
-            EmbSessionAttributes.EmbTerminationReasonValues.INACTIVITY,
-            attrs[EmbSessionAttributes.EMB_TERMINATION_REASON],
+            EmbSessionAttributes.EmbUserSessionTerminationReasonValues.INACTIVITY,
+            attrs[EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON],
         )
     }
 
@@ -41,8 +41,8 @@ internal class TransitionTypeTest {
         val attrs = TransitionType.MAX_DURATION.endAttributes
         assertEquals("1", attrs[EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART])
         assertEquals(
-            EmbSessionAttributes.EmbTerminationReasonValues.MAX_DURATION_REACHED,
-            attrs[EmbSessionAttributes.EMB_TERMINATION_REASON],
+            EmbSessionAttributes.EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED,
+            attrs[EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON],
         )
     }
 

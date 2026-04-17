@@ -182,7 +182,7 @@ internal class SessionOrchestratorImpl(
                 return@transitionState shouldEndManualSession(
                     configService,
                     clock,
-                    sessionTracker.getActiveSessionPart()?.startTime,
+                    currentUserSession()?.startTimeMs,
                     state
                 )
             }

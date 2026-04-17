@@ -287,6 +287,24 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
+    fun `rate limit of manual end`() {
+        configService = FakeConfigService()
+        createOrchestrator(AppState.FOREGROUND)
+
+        clock.tick(10000)
+        orchestrator.endSessionWithManual()
+        orchestrator.endSessionWithManual()
+        assertEquals(2, payloadCollator.sessionCount.get())
+
+        clock.tick(4000)
+        orchestrator.endSessionWithManual()
+
+        clock.tick(2000)
+        orchestrator.endSessionWithManual()
+        assertEquals(3, payloadCollator.sessionCount.get())
+    }
+
+    @Test
     fun `ending session manually when no session exists does not start a new session`() {
         configService = FakeConfigService()
         createOrchestrator(AppState.BACKGROUND)

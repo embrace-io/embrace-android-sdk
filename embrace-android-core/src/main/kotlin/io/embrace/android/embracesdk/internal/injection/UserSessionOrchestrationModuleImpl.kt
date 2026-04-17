@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
+import io.embrace.android.embracesdk.internal.session.id.SessionIdProvider
+import io.embrace.android.embracesdk.internal.session.id.SessionIdProviderImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.OrchestratorBoundaryDelegate
@@ -24,6 +26,13 @@ class UserSessionOrchestrationModuleImpl(
     logModule: LogModule,
     workerThreadModule: WorkerThreadModule,
 ) : UserSessionOrchestrationModule {
+
+    override val sessionIdProvider: SessionIdProvider by singleton {
+        SessionIdProviderImpl(
+            sessionOrchestrator,
+            essentialServiceModule.sessionPartTracker,
+        )
+    }
 
     override val sessionOrchestrator: SessionOrchestrator by singleton {
         val payloadMessageCollator = PayloadMessageCollatorImpl(

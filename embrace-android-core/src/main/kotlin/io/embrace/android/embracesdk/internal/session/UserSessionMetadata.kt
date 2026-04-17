@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.session
 
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.opentelemetry.kotlin.semconv.SessionAttributes
 
 /**
  * Holds metadata about the user session.
@@ -19,5 +20,7 @@ data class UserSessionMetadata(
         EmbSessionAttributes.EMB_USER_SESSION_NUMBER to userSessionNumber,
         EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS to maxDurationSecs,
         EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS to inactivityTimeoutSecs,
+        EmbSessionAttributes.EMB_USER_SESSION_PART_NUMBER to partNumber,
+        SessionAttributes.SESSION_ID to userSessionId,
     )
 }

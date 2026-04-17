@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.logs.LogLimitingService
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
+import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import java.util.Locale
 
@@ -16,17 +17,24 @@ internal class SessionPartSpanAttrPopulatorImpl(
     private val metadataService: MetadataService,
 ) : SessionPartSpanAttrPopulator {
 
-    override fun populateSessionSpanStartAttrs(session: SessionPartToken) {
+    override fun populateSessionSpanStartAttrs(sessionPart: SessionPartToken, userSession: UserSessionMetadata) {
         with(destination) {
-            addSessionPartAttribute(EmbSessionAttributes.EMB_COLD_START, session.isColdStart.toString())
-            addSessionPartAttribute(EmbSessionAttributes.EMB_SESSION_NUMBER, session.number.toString())
-            addSessionPartAttribute(EmbSessionAttributes.EMB_STATE, session.appState.name.lowercase(Locale.US))
+            addSessionPartAttribute(EmbSessionAttributes.EMB_COLD_START, sessionPart.isColdStart.toString())
+            addSessionPartAttribute(EmbSessionAttributes.EMB_SESSION_NUMBER, sessionPart.number.toString())
+            addSessionPartAttribute(EmbSessionAttributes.EMB_STATE, sessionPart.appState.name.lowercase(Locale.US))
             addSessionPartAttribute(EmbSessionAttributes.EMB_CLEAN_EXIT, false.toString())
             addSessionPartAttribute(EmbSessionAttributes.EMB_TERMINATED, true.toString())
 
-            session.startType.toString().lowercase(Locale.US).let {
+            sessionPart.startType.toString().lowercase(Locale.US).let {
                 addSessionPartAttribute(EmbSessionAttributes.EMB_SESSION_START_TYPE, it)
             }
+
+            userSession.attributes.forEach { (key, value) ->
+                addSessionPartAttribute(key, value.toString())
+            }
+
+            // set a unique ID for this session part
+            addSessionPartAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionPart.sessionPartId)
         }
     }
 

@@ -627,7 +627,7 @@ internal class SessionOrchestratorTest {
         )
 
         // simulate process restart after inactivity timeout
-        clock.tick(inactivityMs)
+        clock.tick(inactivityMs + 1)
         createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = store)
 
         val session = checkNotNull(orchestrator.currentUserSession())
@@ -860,7 +860,7 @@ internal class SessionOrchestratorTest {
 
         // foreground after the second session's own inactivity deadline has new user session
         orchestrator.onBackground()
-        clock.tick(inactivityMs)
+        clock.tick(inactivityMs + 1)
         orchestrator.onForeground()
 
         val thirdSession = checkNotNull(orchestrator.currentUserSession())
@@ -915,7 +915,7 @@ internal class SessionOrchestratorTest {
         orchestrator.onBackground()
 
         // deadline passes but the timer callback has NOT fired yet (simulates a race)
-        clock.tick(inactivityMs)
+        clock.tick(inactivityMs + 1)
 
         orchestrator.onForeground()
 

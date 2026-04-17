@@ -360,7 +360,7 @@ internal class NativeCrashFeatureTest {
         nativeSessionMetadata: MutableList<Pair<String?, String?>>,
     ) {
         sessions.add(currentSessionId ?: "null")
-        nativeSessionMetadata.add(Pair(sessionId, reportPath))
+        nativeSessionMetadata.add(Pair(userSessionId, reportPath))
     }
 
     private fun findMatchingSessionId(it: Envelope<LogPayload>, data: StoredNativeCrashData): Boolean {

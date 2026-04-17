@@ -53,7 +53,7 @@ internal class BackgroundActivityDisabledTest {
 
                 // Check what should and shouldn't be logged when there is no background activity and the app is in the background
                 assertTrue(embrace.isStarted)
-                assertTrue(embrace.currentUserSessionId.isNullOrBlank())
+                assertFalse(embrace.currentUserSessionId.isNullOrBlank())
                 assertTrue(embrace.deviceId.isNotBlank())
                 assertEquals(NoopEmbraceSdkSpan, embrace.startSpan("test"))
                 embrace.logError("error")

@@ -47,12 +47,6 @@ object EmbSessionAttributes {
     const val EMB_HEARTBEAT_TIME_UNIX_NANO: String = "emb.heartbeat_time_unix_nano"
 
     /**
-     * Set to 1 if this session part is the known final part (max duration reached or manual termination). Omitted otherwise.
-     */
-    @ExperimentalSemconv
-    const val EMB_IS_FINAL_SESSION: String = "emb.is_final_session"
-
-    /**
      * Set to 1 when the SDK knows for certain this is the final part of a session (max duration reached, inactivity timeout, or manual termination). Omitted when the value would be 0.
      */
     @ExperimentalSemconv
@@ -125,33 +119,6 @@ object EmbSessionAttributes {
     const val EMB_TERMINATED: String = "emb.terminated"
 
     /**
-     * The reason the session part was terminated.
-     */
-    @ExperimentalSemconv
-    const val EMB_TERMINATION_REASON: String = "emb.termination_reason"
-
-    object EmbTerminationReasonValues {
-
-        /**
-         * Session ended because the maximum session duration was reached.
-         */
-        @ExperimentalSemconv
-        const val MAX_DURATION_REACHED: String = "max_duration_reached"
-
-        /**
-         * Session ended due to inactivity timeout.
-         */
-        @ExperimentalSemconv
-        const val INACTIVITY: String = "inactivity"
-
-        /**
-         * Session ended by manual termination.
-         */
-        @ExperimentalSemconv
-        const val MANUAL: String = "manual"
-    }
-
-    /**
      * UUID identifying the session.
      */
     @ExperimentalSemconv
@@ -186,4 +153,31 @@ object EmbSessionAttributes {
      */
     @ExperimentalSemconv
     const val EMB_USER_SESSION_START_TS: String = "emb.user_session_start_ts"
+
+    /**
+     * The reason the session part was terminated.
+     */
+    @ExperimentalSemconv
+    const val EMB_USER_SESSION_TERMINATION_REASON: String = "emb.user_session_termination_reason"
+
+    object EmbUserSessionTerminationReasonValues {
+
+        /**
+         * Session ended because the maximum session duration was reached.
+         */
+        @ExperimentalSemconv
+        const val MAX_DURATION_REACHED: String = "max_duration_reached"
+
+        /**
+         * Session ended due to inactivity timeout.
+         */
+        @ExperimentalSemconv
+        const val INACTIVITY: String = "inactivity"
+
+        /**
+         * Session ended by manual termination.
+         */
+        @ExperimentalSemconv
+        const val MANUAL: String = "manual"
+    }
 }

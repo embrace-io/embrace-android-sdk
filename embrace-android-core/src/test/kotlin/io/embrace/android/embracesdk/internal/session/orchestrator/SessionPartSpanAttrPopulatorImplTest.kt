@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -84,7 +85,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
             false,
             mapOf(
                 EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART to "1",
-                EmbSessionAttributes.EMB_TERMINATION_REASON to EmbSessionAttributes.EmbTerminationReasonValues.MANUAL,
+                EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON to EmbUserSessionTerminationReasonValues.MANUAL,
             ),
         )
 
@@ -96,7 +97,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
             EmbSessionAttributes.EMB_ERROR_LOG_COUNT to "0",
             EmbSessionAttributes.EMB_DISK_FREE_BYTES to "500000000",
             EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART to "1",
-            EmbSessionAttributes.EMB_TERMINATION_REASON to "manual",
+            EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON to "manual",
         )
         assertEquals(expected, attrs)
     }

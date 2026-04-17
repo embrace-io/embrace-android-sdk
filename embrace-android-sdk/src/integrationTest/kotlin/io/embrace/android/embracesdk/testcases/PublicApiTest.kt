@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRe
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -80,7 +79,30 @@ internal class PublicApiTest {
             },
             assertAction = {
                 assertNotNull(backgroundSessionId)
-                assertNotEquals(foregroundSessionId, backgroundSessionId)
+                assertEquals(foregroundSessionId, backgroundSessionId)
+            }
+        )
+    }
+
+    @Test
+    fun `currentUserSessionId is stable across FG to BG to FG transition`() {
+        val ids = mutableListOf<String?>()
+        testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
+            testCaseAction = {
+                recordSession {
+                    ids.add(embrace.currentUserSessionId)
+                }
+                ids.add(embrace.currentUserSessionId)
+                recordSession {
+                    ids.add(embrace.currentUserSessionId)
+                }
+            },
+            assertAction = {
+                assertEquals(3, ids.size)
+                assertTrue(ids.all { it != null })
+                assertEquals(ids[0], ids[1])
+                assertEquals(ids[1], ids[2])
             }
         )
     }

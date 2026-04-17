@@ -78,7 +78,7 @@ internal class SdkStateApiDelegateTest {
 
     @Test
     fun getCurrentSessionId() {
-        sessionIdProvider.sessionPartId = "test"
+        sessionIdProvider.userSessionId = "test"
         assertEquals("test", delegate.currentUserSessionId)
     }
 

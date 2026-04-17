@@ -414,7 +414,7 @@ internal class SessionOrchestratorTest {
         assertNotNull(first.userSessionId)
 
         // within max duration — user session stays the same
-        clock.tick(maxDurationMs - 1)
+        clock.tick(maxDurationMs)
         orchestrator.onBackground()
         orchestrator.onForeground()
         val repeat = checkNotNull(orchestrator.currentUserSession())

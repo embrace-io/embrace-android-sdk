@@ -850,8 +850,17 @@ internal class SessionOrchestratorTest {
         assertNotEquals(firstSession.userSessionId, secondSession.userSessionId)
         assertEquals(2L, secondSession.userSessionNumber)
 
-        // foreground after inactivity timeout always creates a new user session
+        // foreground within the second session's inactivity window has same user session
         clock.tick(1000)
+        orchestrator.onForeground()
+
+        val sessionAfterFg = checkNotNull(orchestrator.currentUserSession())
+        assertEquals(secondSession.userSessionId, sessionAfterFg.userSessionId)
+        assertEquals(2L, sessionAfterFg.userSessionNumber)
+
+        // foreground after the second session's own inactivity deadline has new user session
+        orchestrator.onBackground()
+        clock.tick(inactivityMs + 1)
         orchestrator.onForeground()
 
         val thirdSession = checkNotNull(orchestrator.currentUserSession())
@@ -885,6 +894,34 @@ internal class SessionOrchestratorTest {
         val sessionAfterForeground = checkNotNull(orchestrator.currentUserSession())
         assertEquals(firstSession.userSessionId, sessionAfterForeground.userSessionId)
         assertEquals(1L, sessionAfterForeground.userSessionNumber)
+    }
+
+    @Test
+    fun `inactivity deadline elapsed before timer fires still creates new user session`() {
+        configService = FakeConfigService(
+            backgroundActivityBehavior = createBackgroundActivityBehavior(
+                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 0f))
+            ),
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = maxDurationMs,
+                sessionInactivityTimeoutMs = inactivityMs,
+            )
+        )
+        createOrchestrator(AppState.FOREGROUND)
+
+        val firstSession = checkNotNull(orchestrator.currentUserSession())
+        assertEquals(1L, firstSession.userSessionNumber)
+
+        orchestrator.onBackground()
+
+        // deadline passes but the timer callback has NOT fired yet (simulates a race)
+        clock.tick(inactivityMs + 1)
+
+        orchestrator.onForeground()
+
+        val secondSession = checkNotNull(orchestrator.currentUserSession())
+        assertNotEquals(firstSession.userSessionId, secondSession.userSessionId)
+        assertEquals(2L, secondSession.userSessionNumber)
     }
 
     @Test

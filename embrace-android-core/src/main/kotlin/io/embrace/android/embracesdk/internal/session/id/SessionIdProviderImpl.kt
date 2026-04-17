@@ -11,5 +11,5 @@ internal class SessionIdProviderImpl(
         sessionOrchestrator.currentUserSession()?.userSessionId
 
     override fun getCurrentSessionPartId(): String? =
-        sessionPartTracker.getActiveSession()?.sessionId
+        sessionPartTracker.getActiveSessionPart()?.sessionPartId
 }

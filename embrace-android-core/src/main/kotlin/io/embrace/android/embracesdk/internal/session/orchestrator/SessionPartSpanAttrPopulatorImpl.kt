@@ -17,15 +17,15 @@ internal class SessionPartSpanAttrPopulatorImpl(
     private val metadataService: MetadataService,
 ) : SessionPartSpanAttrPopulator {
 
-    override fun populateSessionSpanStartAttrs(session: SessionPartToken, userSession: UserSessionMetadata) {
+    override fun populateSessionSpanStartAttrs(sessionPart: SessionPartToken, userSession: UserSessionMetadata) {
         with(destination) {
-            addSessionPartAttribute(EmbSessionAttributes.EMB_COLD_START, session.isColdStart.toString())
-            addSessionPartAttribute(EmbSessionAttributes.EMB_SESSION_NUMBER, session.number.toString())
-            addSessionPartAttribute(EmbSessionAttributes.EMB_STATE, session.appState.name.lowercase(Locale.US))
+            addSessionPartAttribute(EmbSessionAttributes.EMB_COLD_START, sessionPart.isColdStart.toString())
+            addSessionPartAttribute(EmbSessionAttributes.EMB_SESSION_NUMBER, sessionPart.number.toString())
+            addSessionPartAttribute(EmbSessionAttributes.EMB_STATE, sessionPart.appState.name.lowercase(Locale.US))
             addSessionPartAttribute(EmbSessionAttributes.EMB_CLEAN_EXIT, false.toString())
             addSessionPartAttribute(EmbSessionAttributes.EMB_TERMINATED, true.toString())
 
-            session.startType.toString().lowercase(Locale.US).let {
+            sessionPart.startType.toString().lowercase(Locale.US).let {
                 addSessionPartAttribute(EmbSessionAttributes.EMB_SESSION_START_TYPE, it)
             }
 
@@ -34,7 +34,7 @@ internal class SessionPartSpanAttrPopulatorImpl(
             }
 
             // set a unique ID for this session part
-            addSessionPartAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, session.sessionId)
+            addSessionPartAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionPart.sessionPartId)
         }
     }
 

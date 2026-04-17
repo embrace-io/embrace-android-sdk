@@ -15,6 +15,7 @@ class InstrumentationModuleImpl(
     essentialServiceModule: EssentialServiceModule,
     coreModule: CoreModule,
     storageService: StorageService,
+    userSessionIdProvider: () -> String?,
 ) : InstrumentationModule {
 
     override val instrumentationRegistry: InstrumentationRegistry by singleton {
@@ -37,6 +38,7 @@ class InstrumentationModuleImpl(
             sessionPartTracker = essentialServiceModule.sessionPartTracker,
             ordinalStore = coreModule.ordinalStore,
             userSessionPropertiesService = essentialServiceModule.userSessionPropertiesService,
+            userSessionIdProvider = userSessionIdProvider,
             processIdentifier = openTelemetryModule.otelSdkConfig.processIdentifier,
             crashMarkerFileProvider = { storageService.getFileForWrite("embrace_crash_marker") },
             appStateTracker = essentialServiceModule.appStateTracker,

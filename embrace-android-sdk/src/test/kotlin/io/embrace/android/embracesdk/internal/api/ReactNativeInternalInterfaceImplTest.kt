@@ -49,7 +49,7 @@ internal class ReactNativeInternalInterfaceImplTest {
         context = ApplicationProvider.getApplicationContext()
         bootstrapper = ModuleInitBootstrapper(
             FakeInitModule(),
-            instrumentationModuleSupplier = { _, _, _, _, _, _, _ ->
+            instrumentationModuleSupplier = { _, _, _, _, _, _, _, _ ->
                 FakeInstrumentationModule(ApplicationProvider.getApplicationContext())
             }
         )

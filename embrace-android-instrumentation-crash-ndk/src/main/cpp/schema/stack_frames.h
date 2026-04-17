@@ -99,6 +99,7 @@ typedef struct {
     bool unhandled;
     int unhandled_count;
     char session_id[EMB_SESSION_ID_SIZE];
+    char user_session_id[EMB_SESSION_ID_SIZE];
     char report_id[EMB_REPORT_ID_SIZE];
     int64_t crash_ts;
     int64_t start_ts;

@@ -87,7 +87,7 @@ class EssentialServiceModuleImpl(
 
     override val sessionIdProvider: SessionIdProvider by singleton {
         object : SessionIdProvider {
-            override fun getCurrentSessionPartId(): String? = sessionPartTracker.getActiveSessionId()
+            override fun getCurrentSessionPartId(): String? = sessionPartTracker.getActiveSessionPartId()
             override fun getCurrentUserSessionId(): String? = null
         }
     }

@@ -275,7 +275,7 @@ internal class SessionOrchestratorListenerTest {
             ),
             clock,
             object : SessionIdProvider {
-                override fun getCurrentSessionPartId(): String? = sessionTracker.getActiveSessionId()
+                override fun getCurrentSessionPartId(): String? = sessionTracker.getActiveSessionPartId()
                 override fun getCurrentUserSessionId(): String? = null
             },
             store

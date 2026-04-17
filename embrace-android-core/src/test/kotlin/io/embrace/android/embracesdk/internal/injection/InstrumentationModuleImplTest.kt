@@ -28,6 +28,7 @@ internal class InstrumentationModuleImplTest {
             FakeEssentialServiceModule(),
             FakeCoreModule(),
             FakeStorageService(),
+            userSessionIdProvider = { null },
         )
         assertSame(module.instrumentationRegistry, module.instrumentationRegistry)
         assertNotNull(module.instrumentationRegistry)

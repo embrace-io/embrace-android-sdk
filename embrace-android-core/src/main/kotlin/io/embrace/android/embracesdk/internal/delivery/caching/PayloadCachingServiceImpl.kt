@@ -58,7 +58,7 @@ internal class PayloadCachingServiceImpl(
         deliveryTracer?.onSessionCache()
 
         EmbTrace.trace("on-session-cache") {
-            if (initial.sessionId != sessionIdProvider.getCurrentSessionPartId()) {
+            if (initial.sessionPartId != sessionIdProvider.getCurrentSessionPartId()) {
                 return null
             }
             return supplier(endAppState, clock.now(), initial)?.apply {

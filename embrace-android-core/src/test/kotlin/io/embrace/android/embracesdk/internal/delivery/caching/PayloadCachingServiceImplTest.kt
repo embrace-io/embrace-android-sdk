@@ -28,7 +28,7 @@ class PayloadCachingServiceImplTest {
     fun setUp() {
         executorService = BlockingScheduledExecutorService(FakeClock())
         val cacher = PeriodicSessionPartCacher(BackgroundWorker(executorService), FakeInternalLogger(), INTERVAL)
-        sessionIdProvider = FakeSessionIdProvider(sessionPartId = zygote.sessionId)
+        sessionIdProvider = FakeSessionIdProvider(sessionPartId = zygote.sessionPartId)
 
         service = PayloadCachingServiceImpl(
             cacher,

@@ -182,7 +182,7 @@ internal class SessionOrchestratorImpl(
                 return@transitionState shouldEndManualSession(
                     configService,
                     clock,
-                    sessionTracker.getActiveSession()?.startTime,
+                    sessionTracker.getActiveSessionPart()?.startTime,
                     state
                 )
             }
@@ -269,7 +269,7 @@ internal class SessionOrchestratorImpl(
             // first, disable any previous periodic caching so the job doesn't overwrite the to-be saved session
             payloadCachingService?.stopCaching()
 
-            val endingSession = sessionTracker.getActiveSession()
+            val endingSession = sessionTracker.getActiveSessionPart()
             if (endingSession != null) {
                 sessionSpanAttrPopulator.populateSessionSpanEndAttrs(
                     endType = transitionType.lifeEventType(state),
@@ -281,14 +281,14 @@ internal class SessionOrchestratorImpl(
 
             // calculate new session state
             val endAppState = transitionType.endState(state)
-            val newSession = sessionTracker.newActiveSession(
-                endSessionCallback = {
+            val newSession = sessionTracker.newActiveSessionPart(
+                endSessionPartCallback = {
                     // End the current session or background activity, if either exist.
                     EmbTrace.trace("end-current-session") {
                         processEndMessage(oldSessionAction?.invoke(this), transitionType)
                     }
                 },
-                startSessionCallback = {
+                startSessionPartCallback = {
                     // the previous session has fully ended at this point
                     // now, we can clear the SDK state and prepare for the next session
                     EmbTrace.trace("prepare-new-session") {

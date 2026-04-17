@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 
 internal class NativeCrashDataSourceImpl(
@@ -41,6 +42,14 @@ internal class NativeCrashDataSourceImpl(
                     value = nativeCrash.sessionId,
                     keepBlankishValues = false,
                 )
+
+                nativeCrash.userSessionId?.let {
+                    setAttribute(
+                        key = EmbSessionAttributes.EMB_USER_SESSION_ID,
+                        value = it,
+                        keepBlankishValues = false,
+                    )
+                }
 
                 metadata.forEach { attribute ->
                     setAttribute(attribute.key, attribute.value)

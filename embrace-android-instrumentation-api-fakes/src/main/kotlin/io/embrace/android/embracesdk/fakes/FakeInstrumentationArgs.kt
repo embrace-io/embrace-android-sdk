@@ -46,7 +46,7 @@ class FakeInstrumentationArgs(
     @Suppress("UNCHECKED_CAST")
     override fun <T> systemService(name: String): T? = systemServiceSupplier(name) as? T
 
-    override fun sessionId(): String? = sessionIdSupplier()
+    override fun sessionPartId(): String? = sessionIdSupplier()
 
     override fun userSessionId(): String? = userSessionIdSupplier()
 

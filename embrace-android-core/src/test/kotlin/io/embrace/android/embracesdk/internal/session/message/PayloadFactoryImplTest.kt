@@ -74,7 +74,7 @@ internal class PayloadFactoryImplTest {
     private fun verifyPayloadWithState(state: AppState, zygoteCreated: Boolean, startNewSession: Boolean) {
         val zygote = factory.startPayloadWithState(state, 0, false)
         if (zygoteCreated) {
-            assertTrue(checkNotNull(zygote).sessionId.isNotBlank())
+            assertTrue(checkNotNull(zygote).sessionPartId.isNotBlank())
             assertNotNull(factory.endPayloadWithState(state, 0, zygote))
             assertEquals(startNewSession, partPayloadSource.lastStartNewSession)
         } else {
@@ -84,7 +84,7 @@ internal class PayloadFactoryImplTest {
 
     private fun verifyPayloadWithManual() {
         val zygote = factory.startSessionWithManual(0)
-        assertTrue(zygote.sessionId.isNotBlank())
+        assertTrue(zygote.sessionPartId.isNotBlank())
         assertNotNull(factory.endSessionWithManual(0, zygote))
         assertEquals(true, partPayloadSource.lastStartNewSession)
     }

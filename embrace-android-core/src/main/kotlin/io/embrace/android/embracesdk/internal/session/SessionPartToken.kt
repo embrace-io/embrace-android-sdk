@@ -8,9 +8,9 @@ import io.embrace.android.embracesdk.internal.arch.state.AppState
 data class SessionPartToken(
 
     /**
-     * A unique ID which identifies the session.
+     * A unique ID which identifies the session part.
      */
-    val sessionId: String,
+    val sessionPartId: String,
 
     /**
      * The time that the session started.

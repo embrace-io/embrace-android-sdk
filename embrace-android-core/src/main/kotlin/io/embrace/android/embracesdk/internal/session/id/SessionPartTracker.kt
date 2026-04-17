@@ -8,26 +8,26 @@ import io.embrace.android.embracesdk.internal.session.SessionPartToken
 interface SessionPartTracker {
 
     /**
-     * Gets the currently active session, if present.
+     * Gets the currently active session part, if present.
      */
-    fun getActiveSession(): SessionPartToken?
+    fun getActiveSessionPart(): SessionPartToken?
 
     /**
-     * Gets the currently active session ID, if present.
+     * Gets the currently active session part ID, if present.
      */
-    fun getActiveSessionId(): String? = getActiveSession()?.sessionId
+    fun getActiveSessionPartId(): String? = getActiveSessionPart()?.sessionPartId
 
     /**
-     * End the existing active session, if one exists, and transition the SDK to a new one, if appropriate.
+     * End the existing active session part, if one exists, and transition the SDK to a new one, if appropriate.
      */
-    fun newActiveSession(
-        endSessionCallback: SessionPartToken.() -> Unit,
-        startSessionCallback: () -> SessionPartToken?,
+    fun newActiveSessionPart(
+        endSessionPartCallback: SessionPartToken.() -> Unit,
+        startSessionPartCallback: () -> SessionPartToken?,
         postTransitionAppState: AppState
     ): SessionPartToken?
 
     /**
-     * Adds a listener that will be called when the session ID changes, and with the initial session
+     * Adds a listener that will be called when the session part ID changes, and with the initial session
      * ID (if there is any).
      */
     fun addSessionPartChangeListener(listener: SessionPartChangeListener)

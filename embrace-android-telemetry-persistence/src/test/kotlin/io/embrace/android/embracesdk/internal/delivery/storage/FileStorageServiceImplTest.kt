@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.delivery.storage
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
@@ -19,12 +20,14 @@ class FileStorageServiceImplTest {
 
     private companion object {
         private const val DUMMY_CONTENT = "my file contents"
+        private const val MAX_AGE_MS = 10L
     }
 
     private lateinit var outputDir: File
     private lateinit var service: FileStorageService
     private lateinit var logger: FakeInternalLogger
     private lateinit var executor: BlockingScheduledExecutorService
+    private lateinit var clock: FakeClock
 
     @Before
     fun setUp() {
@@ -33,10 +36,13 @@ class FileStorageServiceImplTest {
         }
         logger = FakeInternalLogger(throwOnInternalError = false)
         executor = BlockingScheduledExecutorService()
+        clock = FakeClock()
         service = FileStorageServiceImpl(
             lazy { outputDir },
             PriorityWorker(executor),
-            logger
+            logger,
+            clock,
+            maxAgeMs = MAX_AGE_MS,
         )
     }
 
@@ -60,6 +66,69 @@ class FileStorageServiceImplTest {
     fun `load payload stream error`() {
         assertNull(service.loadPayloadAsStream(fakeSessionStoredTelemetryMetadata))
         checkNotNull(logger.internalErrorMessages.single())
+    }
+
+    @Test
+    fun `stale payloads are pruned on the next store call`() {
+        clock.setCurrentTime(100L)
+        val staleMetadata = StoredTelemetryMetadata(
+            timestamp = clock.now(),
+            uuid = "aaaaaaaa-0000-0000-0000-000000000001",
+            processIdentifier = "proc1",
+            envelopeType = SupportedEnvelopeType.SESSION,
+            complete = true,
+            payloadType = PayloadType.SESSION,
+        )
+        storeDummyFile(staleMetadata)
+        assertEquals(1, service.getStoredPayloads().size)
+
+        // payload removed
+        clock.setCurrentTime(115L)
+        val freshMetadata = StoredTelemetryMetadata(
+            timestamp = clock.now(),
+            uuid = "aaaaaaaa-0000-0000-0000-000000000002",
+            processIdentifier = "proc1",
+            envelopeType = SupportedEnvelopeType.SESSION,
+            complete = true,
+            payloadType = PayloadType.SESSION,
+        )
+        storeDummyFile(freshMetadata)
+
+        val remaining = service.getStoredPayloads().map { it.uuid }
+        assertEquals(1, remaining.size)
+        assertTrue(freshMetadata.uuid in remaining)
+        assertNull(service.loadPayloadAsStream(staleMetadata))
+    }
+
+    @Test
+    fun `payload at exactly the cutoff boundary is not pruned`() {
+        clock.setCurrentTime(100L)
+        val borderMetadata = StoredTelemetryMetadata(
+            timestamp = clock.now(),
+            uuid = "aaaaaaaa-0000-0000-0000-000000000001",
+            processIdentifier = "proc1",
+            envelopeType = SupportedEnvelopeType.SESSION,
+            complete = true,
+            payloadType = PayloadType.SESSION,
+        )
+        storeDummyFile(borderMetadata)
+
+        // payload not removed
+        clock.setCurrentTime(110L)
+        val anotherMetadata = StoredTelemetryMetadata(
+            timestamp = clock.now(),
+            uuid = "aaaaaaaa-0000-0000-0000-000000000002",
+            processIdentifier = "proc1",
+            envelopeType = SupportedEnvelopeType.SESSION,
+            complete = true,
+            payloadType = PayloadType.SESSION,
+        )
+        storeDummyFile(anotherMetadata)
+
+        val remaining = service.getStoredPayloads().map { it.uuid }
+        assertEquals(2, remaining.size)
+        assertTrue(borderMetadata.uuid in remaining)
+        assertTrue(anotherMetadata.uuid in remaining)
     }
 
     @Test

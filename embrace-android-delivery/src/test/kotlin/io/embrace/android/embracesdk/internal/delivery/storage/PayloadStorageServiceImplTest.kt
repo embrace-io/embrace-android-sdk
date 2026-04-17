@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.delivery.storage
 
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.BLOB
@@ -33,6 +34,7 @@ class PayloadStorageServiceImplTest {
     private lateinit var logger: FakeInternalLogger
     private lateinit var worker: PriorityWorker<StoredTelemetryMetadata>
     private lateinit var currentProcessId: String
+    private lateinit var clock: FakeClock
 
     @Before
     fun setUp() {
@@ -41,7 +43,8 @@ class PayloadStorageServiceImplTest {
         worker = PriorityWorker(BlockableExecutorService(false))
         logger = FakeInternalLogger(false)
         currentProcessId = PROCESS_ID
-        service = PayloadStorageServiceImpl(lazy { outputDir }, worker, { currentProcessId }, logger)
+        clock = FakeClock(0L)
+        service = PayloadStorageServiceImpl(lazy { outputDir }, worker, { currentProcessId }, logger, clock)
     }
 
     @Test
@@ -91,7 +94,7 @@ class PayloadStorageServiceImplTest {
     @Test
     fun `test objects pruned past limit`() {
         assertNull(outputDir.listFiles())
-        service = PayloadStorageServiceImpl(lazy { outputDir }, worker, { currentProcessId }, logger, null, 4)
+        service = PayloadStorageServiceImpl(lazy { outputDir }, worker, { currentProcessId }, logger, FakeClock(0L), null, 4)
 
         // exceed storage limit
         listOf(

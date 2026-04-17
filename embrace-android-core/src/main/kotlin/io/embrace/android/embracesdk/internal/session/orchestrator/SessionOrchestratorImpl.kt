@@ -96,7 +96,7 @@ internal class SessionOrchestratorImpl(
                         UserSessionState.NoActiveSession
                     }
 
-                    stored != null && !isUserSessionOverMaxDuration(stored) && !isUserSessionInactive(stored) -> {
+                    stored != null && !stored.isOverMaxDuration(clock) && !stored.isInactive(clock) -> {
                         scheduleMaxDurationTimeout(stored)
                         UserSessionState.Active(stored)
                     }
@@ -121,20 +121,24 @@ internal class SessionOrchestratorImpl(
     }
 
     override fun onForeground() {
-        val exceeded = synchronized(lock) {
+        val transitionType = synchronized(lock) {
             inactivityTimerState?.cancel()
-            val exceeded = inactivityTimerState?.exceeded ?: false
             inactivityTimerState = null
-            exceeded
+            val metadata = (userSessionState as? UserSessionState.Active)?.metadata
+
+            if (metadata?.isInactive(clock) == true) {
+                TransitionType.INACTIVITY_FOREGROUND
+            } else if (metadata?.isOverMaxDuration(clock) == true) {
+                TransitionType.MAX_DURATION
+            } else {
+                TransitionType.ON_FOREGROUND
+            }
         }
 
         val timestamp = clock.now()
 
         transitionState(
-            transitionType = when {
-                exceeded -> TransitionType.INACTIVITY_FOREGROUND
-                else -> TransitionType.ON_FOREGROUND
-            },
+            transitionType = transitionType,
             timestamp = timestamp,
             oldSessionAction = { initial: SessionPartToken ->
                 payloadFactory.endPayloadWithState(AppState.BACKGROUND, timestamp, initial)
@@ -395,8 +399,6 @@ internal class SessionOrchestratorImpl(
             if (state != AppState.BACKGROUND) {
                 return
             }
-            inactivityTimerState?.exceeded = true
-
             if (configService.backgroundActivityBehavior.isBackgroundActivityCaptureEnabled()) {
                 val timestamp = clock.now()
                 transitionState(
@@ -434,7 +436,7 @@ internal class SessionOrchestratorImpl(
     private fun handleNewSessionPart(timestamp: Long) {
         val current = userSessionState
         if (current is UserSessionState.Active) {
-            if (isUserSessionOverMaxDuration(current.metadata)) {
+            if (current.metadata.isOverMaxDuration(clock)) {
                 terminateUserSession(current)
                 startNewUserSession(timestamp)
             } else {
@@ -461,12 +463,6 @@ internal class SessionOrchestratorImpl(
         }
         startNewUserSession(timestamp)
     }
-
-    private fun isUserSessionOverMaxDuration(metadata: UserSessionMetadata): Boolean =
-        metadata.isOverMaxDuration(clock)
-
-    private fun isUserSessionInactive(metadata: UserSessionMetadata): Boolean =
-        metadata.isInactive(clock)
 
     private fun startNewUserSession(startTimeMs: Long) {
         val maxDurationMs = configService.sessionBehavior.getMaxSessionDurationMs()

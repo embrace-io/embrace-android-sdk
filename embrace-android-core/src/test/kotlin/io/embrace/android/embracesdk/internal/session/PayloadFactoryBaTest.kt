@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
 import io.embrace.android.embracesdk.fakes.FakeSessionPartTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
@@ -45,7 +44,6 @@ internal class PayloadFactoryBaTest {
     private lateinit var currentSessionPartSpan: CurrentSessionPartSpan
     private lateinit var spanService: SpanService
     private lateinit var blockingExecutorService: BlockingScheduledExecutorService
-    private lateinit var store: FakeOrdinalStore
 
     @Before
     fun init() {
@@ -65,7 +63,6 @@ internal class PayloadFactoryBaTest {
             )
         )
         blockingExecutorService = BlockingScheduledExecutorService(blockingMode = false)
-        store = FakeOrdinalStore()
     }
 
     @Test
@@ -124,7 +121,6 @@ internal class PayloadFactoryBaTest {
         )
         val collator = PayloadMessageCollatorImpl(
             payloadSourceModule.sessionPartEnvelopeSource,
-            store,
             currentSessionPartSpan
         )
         return PayloadFactoryImpl(collator, payloadSourceModule.logEnvelopeSource, configService, logger).apply {

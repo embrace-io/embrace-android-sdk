@@ -188,7 +188,7 @@ internal class JvmCrashFeatureTest {
             expectedProperties = emptyMap(),
             expectedEmbType = "sys.android.crash",
             expectedState = state,
-            hasSession = crashIdFromSession != null,
+            hasSession = true,
         )
 
         val exceptionInfo = LegacyExceptionInfo.ofThrowable(testException)

@@ -6,14 +6,12 @@ import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.store.Ordinal
-import io.embrace.android.embracesdk.internal.store.OrdinalStore
 
 /**
  * Generates a payload
  */
 internal class PayloadMessageCollatorImpl(
     private val sessionPartEnvelopeSource: SessionPartEnvelopeSource,
-    private val store: OrdinalStore,
     private val currentSessionPartSpan: CurrentSessionPartSpan,
 ) : PayloadMessageCollator {
 

@@ -38,7 +38,7 @@ internal class ExportedSpanValidator {
             "startEpochNanos" to startEpochNanos.toString(),
             "endEpochNanos" to endEpochNanos.toString(),
             "hasEnded" to hasEnded().toString(),
-            "totalAttributeCount" to totalAttributeCount.toString(),
+            "totalAttributeCount" to attrs.size.toString(),
             "attributes" to attrs,
             "totalRecordedEvents" to totalRecordedEvents.toString(),
             "events" to events,
@@ -47,7 +47,13 @@ internal class ExportedSpanValidator {
     }
 
     private fun OtelJavaSpanData.representAttributes(): Map<String, String> {
-        val ignoreList = listOf(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER, EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID, "session.id")
+        val ignoreList = listOf(
+            EmbSessionAttributes.EMB_PROCESS_IDENTIFIER,
+            EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID,
+            EmbSessionAttributes.EMB_SESSION_PART_ID,
+            EmbSessionAttributes.EMB_USER_SESSION_ID,
+            "session.id",
+        )
         val attrs: Map<String, String> = attributes.asMap().map {
             it.key.key to it.value.toString()
         }.toMap()

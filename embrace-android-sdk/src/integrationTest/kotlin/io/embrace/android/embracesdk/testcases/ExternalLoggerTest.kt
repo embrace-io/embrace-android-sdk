@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.testcases
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.getLastLog
-import io.embrace.android.embracesdk.assertions.getSessionPartId
+import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -104,7 +104,7 @@ internal class ExternalLoggerTest {
                 }
             },
             assertAction = {
-                val sessionId = getSingleSessionEnvelope().getSessionPartId()
+                val sessionId = getSingleSessionEnvelope().getSessionId()
                 exportedOTelLog = logExporter.exportedLogs.single()
                 with(exportedOTelLog) {
                     assertOTelLogRecord(
@@ -154,7 +154,7 @@ internal class ExternalLoggerTest {
                 clock.tick()
                 logTime = clock.now().millisToNanos()
                 embrace.addUserSessionProperty("bg-attr", "blah", PropertyScope.PERMANENT)
-                sessionId = checkNotNull(testRule.bootstrapper.userSessionOrchestrationModule.sessionIdProvider.getCurrentSessionPartId())
+                sessionId = checkNotNull(testRule.bootstrapper.userSessionOrchestrationModule.sessionIdProvider.getCurrentUserSessionId())
                 val span = embOpenTelemetry.getTracer("").startSpan("my-span")
                 parentContext = span.spanContext
                 embLogger.emit(

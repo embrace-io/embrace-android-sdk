@@ -854,6 +854,32 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
+    fun `clock shifted backwards during new session part terminates and restarts user session`() {
+        configService = FakeConfigService(
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = maxDurationMs,
+                sessionInactivityTimeoutMs = inactivityMs,
+            )
+        )
+        createOrchestrator(AppState.FOREGROUND)
+
+        val first = checkNotNull(orchestrator.currentUserSession())
+        assertEquals(1L, first.userSessionNumber)
+
+        clock.setCurrentTime(first.startTimeMs - 1_000L)
+        orchestrator.onBackground()
+
+        val second = checkNotNull(orchestrator.currentUserSession())
+        assertNotEquals(first.userSessionId, second.userSessionId)
+        assertEquals(2L, second.userSessionNumber)
+        assertEquals(1, second.partNumber)
+
+        val errors = logger.internalErrorMessages
+        assertEquals(1, errors.size)
+        assertEquals(InternalErrorType.CLOCK_BACKWARDS_SHIFT.toString(), errors[0].msg)
+    }
+
+    @Test
     fun `exceeding inactivity timeout creates new user sessions`() {
         configService = FakeConfigService(
             backgroundActivityBehavior = createBackgroundActivityBehavior(

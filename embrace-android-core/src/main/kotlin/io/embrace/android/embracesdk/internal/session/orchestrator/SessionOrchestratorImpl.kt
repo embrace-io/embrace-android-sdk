@@ -441,7 +441,14 @@ internal class SessionOrchestratorImpl(
     private fun handleNewSessionPart(timestamp: Long) {
         val current = userSessionState
         if (current is UserSessionState.Active) {
-            if (current.metadata.isOverMaxDuration(clock)) {
+            if (timestamp < current.metadata.startTimeMs) {
+                logger.trackInternalError(
+                    InternalErrorType.CLOCK_BACKWARDS_SHIFT,
+                    IllegalStateException("Clock shifted backwards from user session start time.")
+                )
+                terminateUserSession(current)
+                startNewUserSession(timestamp)
+            } else if (current.metadata.isOverMaxDuration(clock)) {
                 terminateUserSession(current)
                 startNewUserSession(timestamp)
             } else {

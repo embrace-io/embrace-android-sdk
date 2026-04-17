@@ -32,7 +32,6 @@ import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
-import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -44,7 +43,6 @@ internal class UserSessionHandlerTest {
     companion object {
         private val clock = FakeClock()
         private const val NOW = 123L
-        private var sessionNumber = 5
     }
 
     private val initial = fakeSessionPartToken().copy(startTime = NOW)
@@ -52,7 +50,6 @@ internal class UserSessionHandlerTest {
 
     private lateinit var spanSink: SpanSink
     private lateinit var spanService: SpanService
-    private lateinit var store: FakeOrdinalStore
     private lateinit var sessionTracker: FakeSessionPartTracker
     private lateinit var metadataService: FakeMetadataService
     private lateinit var configService: FakeConfigService
@@ -63,6 +60,7 @@ internal class UserSessionHandlerTest {
     private lateinit var spanRepository: SpanRepository
     private lateinit var currentSessionPartSpan: CurrentSessionPartSpan
     private lateinit var userSessionPropertiesService: UserSessionPropertiesService
+    private lateinit var store: FakeOrdinalStore
 
     @Before
     fun before() {
@@ -76,12 +74,12 @@ internal class UserSessionHandlerTest {
         configService = FakeConfigService(
             sessionBehavior = createSessionBehavior()
         )
-        store = FakeOrdinalStore()
         val initModule = FakeInitModule(clock = clock)
         spanSink = initModule.openTelemetryModule.spanSink
         spanService = initModule.openTelemetryModule.spanService
         spanRepository = initModule.openTelemetryModule.spanRepository
         currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan
+        store = FakeOrdinalStore()
         val partPayloadSource = SessionPartPayloadSourceImpl(
             null,
             spanSink,
@@ -105,17 +103,6 @@ internal class UserSessionHandlerTest {
             currentSessionPartSpan
         )
         payloadFactory = PayloadFactoryImpl(collator, payloadSourceModule.logEnvelopeSource, configService, logger)
-    }
-
-    @Test
-    fun `onSession started successfully with no preference service session number`() {
-        // return absent session number
-        sessionNumber = 0
-        // this is needed so session handler creates automatic session stopper
-
-        payloadFactory.startPayloadWithState(AppState.FOREGROUND, NOW, true)
-
-        assertEquals(2, store.incrementAndGet(Ordinal.SESSION))
     }
 
     @Test

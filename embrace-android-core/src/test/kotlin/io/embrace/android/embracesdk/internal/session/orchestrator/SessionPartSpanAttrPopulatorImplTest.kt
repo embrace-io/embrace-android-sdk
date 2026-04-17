@@ -16,7 +16,7 @@ import org.junit.Test
 
 internal class SessionPartSpanAttrPopulatorImplTest {
 
-    private val zygote = SessionPartToken("id", 1, 5, AppState.FOREGROUND, false, LifeEventType.STATE)
+    private val zygote = SessionPartToken("id", 1, AppState.FOREGROUND, false, LifeEventType.STATE, 5)
     private val userSession = UserSessionMetadata(
         startTimeMs = 1000L,
         userSessionId = "user-session-uuid",
@@ -46,7 +46,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
 
         val attrs = destination.attributes
         assertEquals("false", attrs[EmbSessionAttributes.EMB_COLD_START])
-        assertEquals("5", attrs[EmbSessionAttributes.EMB_SESSION_NUMBER])
+        assertEquals("5", attrs[EmbSessionAttributes.EMB_USER_SESSION_PART_NUMBER])
         assertEquals("foreground", attrs[EmbSessionAttributes.EMB_STATE])
         assertEquals("false", attrs[EmbSessionAttributes.EMB_CLEAN_EXIT])
         assertEquals("true", attrs[EmbSessionAttributes.EMB_TERMINATED])
@@ -56,7 +56,6 @@ internal class SessionPartSpanAttrPopulatorImplTest {
         assertEquals("3", attrs[EmbSessionAttributes.EMB_USER_SESSION_NUMBER])
         assertEquals("43200", attrs[EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS])
         assertEquals("1800", attrs[EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS])
-        assertEquals("2", attrs[EmbSessionAttributes.EMB_USER_SESSION_PART_NUMBER])
         assertEquals("user-session-uuid", attrs[SessionAttributes.SESSION_ID])
         assertEquals("id", attrs[EmbSessionAttributes.EMB_SESSION_PART_ID])
     }

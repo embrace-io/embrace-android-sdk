@@ -174,7 +174,6 @@ internal class BackgroundActivityDisabledTest {
                 sessionSpan1.assertExpectedSessionSpanAttributes(
                     startMs = session1StartMs,
                     endMs = session1EndMs,
-                    sessionNumber = 1,
                     sequenceId = 1,
                     coldStart = true,
                 )
@@ -182,7 +181,6 @@ internal class BackgroundActivityDisabledTest {
                 sessionSpan2.assertExpectedSessionSpanAttributes(
                     startMs = session2StartMs,
                     endMs = session2EndMs,
-                    sessionNumber = 2,
                     sequenceId = 10,
                     coldStart = false,
                 )
@@ -203,7 +201,6 @@ internal class BackgroundActivityDisabledTest {
     private fun Span.assertExpectedSessionSpanAttributes(
         startMs: Long,
         endMs: Long,
-        sessionNumber: Int,
         sequenceId: Int,
         coldStart: Boolean,
     ) {
@@ -211,7 +208,6 @@ internal class BackgroundActivityDisabledTest {
         assertEquals(endMs, endTimeNanos?.nanosToMillis())
         attributes?.assertMatches(
             mapOf(
-                EmbSessionAttributes.EMB_SESSION_NUMBER to sessionNumber,
                 EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID to sequenceId,
                 EmbSessionAttributes.EMB_COLD_START to coldStart,
                 EmbSessionAttributes.EMB_STATE to "foreground",

@@ -4,9 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
-import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.assertions.assertMatches
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -34,13 +32,8 @@ internal class ManualUserSessionTest {
                 val messages = getSessionEnvelopes(2)
                 val stateSession = messages[0] // started via state, ended manually
                 val manualSession = messages[1] // started manually, ended via state
-
-                stateSession.findSessionSpan().attributes?.assertMatches(mapOf(
-                    EmbSessionAttributes.EMB_SESSION_NUMBER to 1
-                ))
-                manualSession.findSessionSpan().attributes?.assertMatches(mapOf(
-                    EmbSessionAttributes.EMB_SESSION_NUMBER to 2
-                ))
+                checkNotNull(stateSession.findSessionSpan())
+                checkNotNull(manualSession.findSessionSpan())
             }
         )
     }
@@ -73,10 +66,7 @@ internal class ManualUserSessionTest {
                 }
             },
             assertAction = {
-                val message = getSingleSessionEnvelope()
-                message.findSessionSpan().attributes?.assertMatches(mapOf(
-                    EmbSessionAttributes.EMB_SESSION_NUMBER to 1
-                ))
+                checkNotNull(getSingleSessionEnvelope().findSessionSpan())
             }
         )
     }

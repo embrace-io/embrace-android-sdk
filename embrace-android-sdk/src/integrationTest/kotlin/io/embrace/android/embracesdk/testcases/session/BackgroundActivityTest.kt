@@ -1,12 +1,8 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.assertions.assertMatches
-import io.embrace.android.embracesdk.assertions.findSessionSpan
-import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.hasSpanSnapshotsOfType
-import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -43,21 +39,11 @@ internal class BackgroundActivityTest {
                 val bgActivities = getSessionEnvelopes(2, AppState.BACKGROUND).distinctBy { it.getSessionPartId() }
                 assertEquals(2, bgActivities.size)
 
-                // verify first bg activity
                 val first = bgActivities[0]
-                first.findSessionSpan().attributes?.assertMatches(mapOf(
-                    EmbSessionAttributes.EMB_SESSION_NUMBER to 1
-                ))
                 assertFalse(first.hasSpanSnapshotsOfType(EmbType.Ux.Session))
 
-                // verify second bg activity
-                val second = bgActivities[1]
-                second.findSessionSpan().attributes?.assertMatches(mapOf(
-                    EmbSessionAttributes.EMB_SESSION_NUMBER to 2
-                ))
-
                 // ID should be different for each
-                assertNotEquals(first.getSessionPartId(), second.getSessionPartId())
+                assertNotEquals(first.getSessionPartId(), bgActivities[1].getSessionPartId())
             }
         )
     }

@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
+import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 
 /**
@@ -24,7 +25,7 @@ internal class PayloadMessageCollatorImpl(
             isColdStart = coldStart,
             appState = appState,
             startType = startType,
-            number = getSessionNumber(store)
+            sessionPartNumber = store.incrementAndGet(Ordinal.USER_SESSION_PART),
         )
     }
 

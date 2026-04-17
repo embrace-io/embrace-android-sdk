@@ -106,7 +106,7 @@ internal class SessionOrchestratorListenerTest {
         assertEquals(2, events.size)
 
         // past max duration — new user session
-        clock.tick(maxDurationMs)
+        clock.tick(maxDurationMs + 1)
         orchestrator.onBackground()
         orchestrator.onForeground()
         assertEquals(3, events.size)
@@ -143,7 +143,7 @@ internal class SessionOrchestratorListenerTest {
         assertEquals(1, events.size)
 
         // past max duration — old session terminates
-        clock.tick(maxDurationMs)
+        clock.tick(maxDurationMs + 1)
         orchestrator.onBackground()
         orchestrator.onForeground()
         assertEquals(2, events.size)

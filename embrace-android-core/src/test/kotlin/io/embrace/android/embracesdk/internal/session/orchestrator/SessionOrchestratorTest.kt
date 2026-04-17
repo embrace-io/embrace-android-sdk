@@ -414,7 +414,7 @@ internal class SessionOrchestratorTest {
         assertNotNull(first.userSessionId)
 
         // within max duration — user session stays the same
-        clock.tick(maxDurationMs - 1)
+        clock.tick(maxDurationMs)
         orchestrator.onBackground()
         orchestrator.onForeground()
         val repeat = checkNotNull(orchestrator.currentUserSession())
@@ -627,7 +627,7 @@ internal class SessionOrchestratorTest {
         )
 
         // simulate process restart after inactivity timeout
-        clock.tick(inactivityMs)
+        clock.tick(inactivityMs + 1)
         createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = store)
 
         val session = checkNotNull(orchestrator.currentUserSession())

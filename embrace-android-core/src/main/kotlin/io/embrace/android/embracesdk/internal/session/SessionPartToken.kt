@@ -18,11 +18,6 @@ data class SessionPartToken(
     val startTime: Long,
 
     /**
-     * The ordinal of the session, starting from 1.
-     */
-    val number: Int,
-
-    /**
      * Process state for this session (foreground or background)
      */
     val appState: AppState,
@@ -36,4 +31,9 @@ data class SessionPartToken(
      * The type of start event that triggered this session.
      */
     val startType: LifeEventType,
+
+    /**
+     * Monotonic index of this part of the user session.
+     */
+    val sessionPartNumber: Int = 0,
 )

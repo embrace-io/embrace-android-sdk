@@ -74,7 +74,6 @@ internal class UserSessionApiTest {
                     EmbSessionAttributes.EMB_SESSION_START_TYPE to "state",
                     EmbSessionAttributes.EMB_TERMINATED to "false",
                     EmbSessionAttributes.EMB_SESSION_END_TYPE to "state",
-                    EmbSessionAttributes.EMB_SESSION_NUMBER to "1",
                     "emb.type" to "ux.session",
                     EmbSessionAttributes.EMB_ERROR_LOG_COUNT to "0",
                     "emb.usage.set_username" to "1",

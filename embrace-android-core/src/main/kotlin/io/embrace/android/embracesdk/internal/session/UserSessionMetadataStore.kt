@@ -10,6 +10,7 @@ internal class UserSessionMetadataStore(private val store: KeyValueStore) {
 
     private companion object {
         const val KEY_SESSION = "embrace.user_session"
+        const val KEY_LAST_ACTIVITY_TS = "emb.user_session_last_activity_ts"
     }
 
     /**
@@ -19,6 +20,7 @@ internal class UserSessionMetadataStore(private val store: KeyValueStore) {
         store.edit {
             val map = metadata.attributes.mapValues { it.value.toString() }.toMutableMap()
             map[EmbSessionAttributes.EMB_USER_SESSION_PART_NUMBER] = metadata.partNumber.toString()
+            map[KEY_LAST_ACTIVITY_TS] = metadata.lastActivityMs.toString()
             putStringMap(KEY_SESSION, map)
         }
     }
@@ -44,6 +46,7 @@ internal class UserSessionMetadataStore(private val store: KeyValueStore) {
         val maxDurationSecs = attrs[EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS]?.toLongOrNull() ?: return null
         val inactivityTimeoutSecs = attrs[EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS]?.toLongOrNull() ?: return null
         val partNumber = attrs[EmbSessionAttributes.EMB_USER_SESSION_PART_NUMBER]?.toIntOrNull() ?: return null
+        val lastActivityMs = attrs[KEY_LAST_ACTIVITY_TS]?.toLongOrNull() ?: return null
         return UserSessionMetadata(
             startTimeMs = startMs,
             userSessionId = id,
@@ -51,6 +54,7 @@ internal class UserSessionMetadataStore(private val store: KeyValueStore) {
             maxDurationSecs = maxDurationSecs,
             inactivityTimeoutSecs = inactivityTimeoutSecs,
             partNumber = partNumber,
+            lastActivityMs = lastActivityMs,
         )
     }
 }

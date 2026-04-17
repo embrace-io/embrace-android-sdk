@@ -23,6 +23,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
         maxDurationSecs = 43200L,
         inactivityTimeoutSecs = 1800L,
         partNumber = 2,
+        lastActivityMs = 1000L,
     )
     private lateinit var populator: SessionPartSpanAttrPopulatorImpl
     private lateinit var destination: FakeTelemetryDestination

@@ -218,7 +218,8 @@ internal class SessionOrchestratorListenerTest {
                 userSessionNumber = 7L,
                 maxDurationSecs = TimeUnit.MILLISECONDS.toSeconds(maxDurationMs),
                 inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
-                partNumber = 1
+                partNumber = 1,
+                lastActivityMs = clock.now(),
             )
         )
     }

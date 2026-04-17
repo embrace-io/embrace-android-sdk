@@ -96,7 +96,7 @@ internal class SessionOrchestratorImpl(
                         UserSessionState.NoActiveSession
                     }
 
-                    stored != null && !isUserSessionOverMaxDuration(stored) -> {
+                    stored != null && !isUserSessionOverMaxDuration(stored) && !isUserSessionInactive(stored) -> {
                         scheduleMaxDurationTimeout(stored)
                         UserSessionState.Active(stored)
                     }
@@ -440,6 +440,7 @@ internal class SessionOrchestratorImpl(
             } else {
                 val updatedMetadata = current.metadata.copy(
                     partNumber = current.metadata.partNumber + 1,
+                    lastActivityMs = timestamp,
                 )
                 metadataStore.save(updatedMetadata)
                 userSessionState = UserSessionState.Active(updatedMetadata)
@@ -464,6 +465,9 @@ internal class SessionOrchestratorImpl(
     private fun isUserSessionOverMaxDuration(metadata: UserSessionMetadata): Boolean =
         clock.now() - metadata.startTimeMs >= metadata.maxDurationSecs * 1_000L
 
+    private fun isUserSessionInactive(metadata: UserSessionMetadata): Boolean =
+        clock.now() - metadata.lastActivityMs >= metadata.inactivityTimeoutSecs * 1_000L
+
     private fun startNewUserSession(startTimeMs: Long) {
         val maxDurationMs = configService.sessionBehavior.getMaxSessionDurationMs()
         val inactivityTimeoutMs = configService.sessionBehavior.getSessionInactivityTimeoutMs()
@@ -474,6 +478,7 @@ internal class SessionOrchestratorImpl(
             maxDurationSecs = maxDurationMs / 1_000L,
             inactivityTimeoutSecs = inactivityTimeoutMs / 1_000L,
             partNumber = 1,
+            lastActivityMs = startTimeMs,
         )
         metadataStore.save(newMetadata)
         userSessionState = UserSessionState.Active(newMetadata)

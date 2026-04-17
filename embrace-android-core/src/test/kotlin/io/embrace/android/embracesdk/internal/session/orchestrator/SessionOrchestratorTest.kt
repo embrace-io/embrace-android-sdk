@@ -37,6 +37,7 @@ import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionPartCacher
+import io.embrace.android.embracesdk.internal.session.id.SessionIdProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
@@ -857,7 +858,10 @@ internal class SessionOrchestratorTest {
                 logger
             ),
             clock,
-            sessionTracker,
+            object : SessionIdProvider {
+                override fun getCurrentSessionPartId(): String? = sessionTracker.getActiveSessionPartId()
+                override fun getCurrentUserSessionId(): String? = null
+            },
             store
         )
         fakeDataSource = FakeDataSource(RuntimeEnvironment.getApplication())

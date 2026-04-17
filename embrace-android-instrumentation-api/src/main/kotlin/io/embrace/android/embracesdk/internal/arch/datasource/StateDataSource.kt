@@ -30,9 +30,14 @@ abstract class StateDataSource<T : Any>(
 
     /**
      * Notify that the state has changed at the given time to the given value, with the given number of transitions dropped by the
-     * since the last time this data source was notified of a state change.
+     * instrumentation since the last time this data source was notified of a state change.
      */
-    fun onStateChange(updateDetectedTimeMs: Long, newState: T, droppedTransitions: Int = 0) {
+    fun onStateChange(
+        newState: T,
+        transitionTimeMs: Long,
+        transitionAttributes: Map<String, String> = emptyMap(),
+        droppedTransitions: Int = 0,
+    ) {
         val oldState = currentState.getAndSet(newState)
         val currentStateToken = partStateToken.get()
         // Track the number of transitions dropped by instrumentation that didn't cause this to be invoked
@@ -47,9 +52,10 @@ abstract class StateDataSource<T : Any>(
             ) {
                 val droppedTransitions = unrecordedTransitions.getAndSet(noUnrecordedTransitions)
                 val transitionRecorded = currentStateToken.update(
-                    updateDetectedTimeMs = updateDetectedTimeMs,
                     newValue = newState,
-                    unrecordedTransitions = droppedTransitions
+                    transitionTimeMs = transitionTimeMs,
+                    transitionAttributes = transitionAttributes,
+                    unrecordedTransitions = droppedTransitions,
                 )
                 // If the transition was not recorded by the token, it means the associated session has ended.
                 // Add that transition as occurring outside of a session and also add back unrecorded transitions we tried to record.

@@ -6,11 +6,18 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 
 class FakeSessionPartStateToken<T>(
     val transitions: MutableList<Pair<Long, T>> = mutableListOf(),
+    val transitionAttributes: MutableList<Map<String, String>> = mutableListOf(),
     private val clock: Clock = FakeClock(),
 ) : SessionPartStateToken<T> {
     var endTimeMs = 0L
-    override fun update(updateDetectedTimeMs: Long, newValue: T, unrecordedTransitions: UnrecordedTransitions): Boolean {
-        transitions.add(Pair(updateDetectedTimeMs, newValue))
+    override fun update(
+        newValue: T,
+        transitionTimeMs: Long,
+        transitionAttributes: Map<String, String>,
+        unrecordedTransitions: UnrecordedTransitions,
+    ): Boolean {
+        transitions.add(Pair(transitionTimeMs, newValue))
+        this.transitionAttributes.add(transitionAttributes)
         return true
     }
 

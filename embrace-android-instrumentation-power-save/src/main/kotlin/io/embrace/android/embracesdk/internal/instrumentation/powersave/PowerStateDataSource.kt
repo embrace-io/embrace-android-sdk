@@ -40,6 +40,6 @@ class PowerStateDataSource(
         } else {
             PowerMode.NORMAL
         }
-        onStateChange(timestamp, newState)
+        onStateChange(newState, timestamp)
     }
 }

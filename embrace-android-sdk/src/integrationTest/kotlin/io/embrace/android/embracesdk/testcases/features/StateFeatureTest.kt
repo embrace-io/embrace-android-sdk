@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttributeValue
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
@@ -183,8 +184,8 @@ internal class StateFeatureTest {
                 recordSession {
                     repeat(101) { i ->
                         findDataSource<TestStateDataSource>().onStateChange(
-                            updateDetectedTimeMs = clock.tick(),
                             newState = i.toString(),
+                            transitionTimeMs = clock.tick(),
                         )
                     }
                 }
@@ -390,17 +391,129 @@ internal class StateFeatureTest {
         )
     }
 
+    @Test
+    fun `each transition event can have its set of attributes`() {
+        val attrsA = mapOf("testAttr" to "blah", "derp" to "1")
+        val attrsB = mapOf("testAttr" to "orf", "derp" to "2", "id" to "123")
+        val attrsC = mapOf("testAttr" to "barf", "derp" to "3")
+        val transitionAttributes = listOf(attrsA, attrsB, attrsC)
+        var transitions: List<Pair<Long, String>> = listOf()
+        testRule.runTest(
+            persistedRemoteConfig = stateEnabledRemoteConfig,
+            testCaseAction = {
+                recordSession {
+                    transitions = executeTransitions(
+                        updates = listOf("first", "second", "C"),
+                        transitionAttributes = transitionAttributes,
+                    )
+                }
+            },
+            assertAction = {
+                val events = checkNotNull(getSingleSessionEnvelope().getStateSpan("emb-state-test")?.events)
+                assertEquals(3, events.size)
+
+                // Each event carries exactly its own attrs, verified with all keys/values
+                repeat(events.size) { i ->
+                    events[i].assertStateTransition(
+                        timestampMs = transitions[i].first,
+                        newStateValue = transitions[i].second,
+                        transitionAttributes = transitionAttributes[i],
+                    )
+                }
+
+                assertTrue(!checkNotNull(events[0].attributes).hasEmbraceAttributeKey("id"))
+                assertTrue(!checkNotNull(events[2].attributes).hasEmbraceAttributeKey("id"))
+
+                assertTrue(checkNotNull(events[0].attributes).hasEmbraceAttributeValue("testAttr", "blah"))
+                assertTrue(checkNotNull(events[1].attributes).hasEmbraceAttributeValue("testAttr", "orf"))
+                assertTrue(checkNotNull(events[2].attributes).hasEmbraceAttributeValue("testAttr", "barf"))
+            }
+        )
+    }
+
+    @Test
+    fun `transition attributes cannot override built-in state attributes`() {
+        var transitions: List<Pair<Long, String>> = listOf()
+        testRule.runTest(
+            persistedRemoteConfig = stateEnabledRemoteConfig,
+            testCaseAction = {
+                recordSession {
+                    transitions = executeTransitions(
+                        updates = listOf("real"),
+                        transitionDrops = 3,
+                        transitionAttributes = listOf(
+                            mapOf(
+                                EmbStateTransitionAttributes.EMB_STATE_NEW_VALUE to "hacked",
+                                EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION to "99"
+                            )
+                        ),
+                    )
+                }
+            },
+            assertAction = {
+                val events = checkNotNull(getSingleSessionEnvelope().getStateSpan("emb-state-test")?.events)
+                events.single().assertStateTransition(
+                    timestampMs = transitions[0].first,
+                    newStateValue = "real",
+                    droppedByInstrumentation = 3,
+                )
+            }
+        )
+    }
+
+    @Test
+    fun `transition attributes discarded when transition dropped`() {
+        val attrsFirst = mapOf("foo" to "first")
+        val attrsSecond = mapOf("foo" to "second")
+        val attrsThird = mapOf("foo" to "third")
+        val timestamps = mutableListOf<Long>()
+        testRule.runTest(
+            persistedRemoteConfig = stateEnabledRemoteConfig,
+            testCaseAction = {
+                recordSession {
+                    val dataSource = findDataSource<TestStateDataSource>()
+                    timestamps.add(clock.tick(100L))
+                    dataSource.onStateChange("first", clock.now(), attrsFirst)
+                    timestamps.add(clock.tick(100L))
+                    // This is dropped so the attributes of the dropped transition are lost
+                    dataSource.onStateChange("first", clock.now(), attrsSecond)
+                    timestamps.add(clock.tick(100L))
+                    dataSource.onStateChange("second", clock.now(), attrsThird)
+                }
+            },
+            assertAction = {
+                val events = checkNotNull(getSingleSessionEnvelope().getStateSpan("emb-state-test")?.events)
+                assertEquals(2, events.size)
+
+                events[0].assertStateTransition(
+                    timestampMs = timestamps[0],
+                    newStateValue = "first",
+                    transitionAttributes = attrsFirst,
+                )
+                
+                events[1].assertStateTransition(
+                    timestampMs = timestamps[2],
+                    newStateValue = "second",
+                    droppedByInstrumentation = 1,
+                    transitionAttributes = attrsThird,
+                )
+            }
+        )
+    }
+
     private fun EmbraceActionInterface.executeTransitions(
         updates: List<String>,
         transitionDrops: Int = 0,
+        transitionAttributes: List<Map<String, String>> = emptyList(),
     ): List<Pair<Long, String>> {
         val transitions: MutableList<Pair<Long, String>> = mutableListOf()
         val dataSource = findDataSource<TestStateDataSource>()
         repeat(updates.size) { i ->
             transitions.add(Pair(clock.tick(100L), updates[i]))
             dataSource.onStateChange(
-                updateDetectedTimeMs = clock.now(),
                 newState = updates[i],
+                transitionTimeMs = clock.now(),
+                transitionAttributes = transitionAttributes.getOrNull(i) ?: emptyMap(),
                 droppedTransitions = transitionDrops,
             )
         }

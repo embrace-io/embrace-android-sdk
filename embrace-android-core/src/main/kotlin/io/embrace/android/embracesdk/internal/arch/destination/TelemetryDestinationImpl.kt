@@ -244,8 +244,9 @@ class TelemetryDestinationImpl(
         private val transitionCount = AtomicInteger(0)
 
         override fun update(
-            updateDetectedTimeMs: Long,
             newValue: T,
+            transitionTimeMs: Long,
+            transitionAttributes: Map<String, String>,
             unrecordedTransitions: UnrecordedTransitions,
         ): Boolean {
             if (!spanToken.isRecording()) {
@@ -253,9 +254,10 @@ class TelemetryDestinationImpl(
             }
             spanToken.addSystemEvent(
                 name = "transition",
-                eventTimeMs = updateDetectedTimeMs,
-                attributes = mutableMapOf(EmbStateTransitionAttributes.EMB_STATE_NEW_VALUE to newValue.toString())
+                eventTimeMs = transitionTimeMs,
+                attributes = transitionAttributes.toMutableMap()
                     .apply {
+                        put(EmbStateTransitionAttributes.EMB_STATE_NEW_VALUE, newValue.toString())
                         if (unrecordedTransitions.notInSession > 0) {
                             setEmbraceAttribute(EmbStateTransitionAttributes.EMB_STATE_NOT_IN_SESSION, unrecordedTransitions.notInSession)
                         }

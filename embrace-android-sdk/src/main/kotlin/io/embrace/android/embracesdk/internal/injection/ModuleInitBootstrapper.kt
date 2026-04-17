@@ -124,6 +124,7 @@ internal class ModuleInitBootstrapper(
             essentialServiceModule: EssentialServiceModule,
             coreModule: CoreModule,
             storageService: StorageService,
+            userSessionIdProvider: () -> String?,
         ->
         InstrumentationModuleImpl(
             initModule,
@@ -133,6 +134,7 @@ internal class ModuleInitBootstrapper(
             essentialServiceModule,
             coreModule,
             storageService,
+            userSessionIdProvider,
         )
     },
     private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = {

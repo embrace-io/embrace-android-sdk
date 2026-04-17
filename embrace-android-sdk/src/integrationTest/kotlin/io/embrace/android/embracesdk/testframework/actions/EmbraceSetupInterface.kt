@@ -161,6 +161,7 @@ internal class EmbraceSetupInterface(
                 essentialServiceModule,
                 coreModule,
                 storageModule,
+                userSessionIdProvider,
             ->
             val impl = InstrumentationModuleImpl(
                 initModule,
@@ -170,6 +171,7 @@ internal class EmbraceSetupInterface(
                 essentialServiceModule,
                 coreModule,
                 storageModule,
+                userSessionIdProvider,
             )
             object : InstrumentationModule {
                 override val instrumentationRegistry: InstrumentationRegistry = FakeInstrumentationRegistry(impl.instrumentationRegistry)

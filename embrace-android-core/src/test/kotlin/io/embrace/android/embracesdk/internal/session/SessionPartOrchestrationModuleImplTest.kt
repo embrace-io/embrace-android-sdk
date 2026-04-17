@@ -38,7 +38,8 @@ internal class SessionPartOrchestrationModuleImplTest {
             configService,
             FakeEssentialServiceModule(),
             coreModule,
-            FakeStorageService()
+            FakeStorageService(),
+            userSessionIdProvider = { null },
         )
         val orchestrator = createSessionOrchestrator(
             initModule,
@@ -67,7 +68,8 @@ internal class SessionPartOrchestrationModuleImplTest {
             configService,
             FakeEssentialServiceModule(),
             coreModule,
-            FakeStorageService()
+            FakeStorageService(),
+            userSessionIdProvider = { null },
         )
 
         val orchestrator = createSessionOrchestrator(

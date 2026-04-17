@@ -102,6 +102,11 @@ interface InstrumentationArgs {
     fun sessionPartId(): String?
 
     /**
+     * Retrieves the current user session ID, or null if there is no active user session.
+     */
+    fun userSessionId(): String?
+
+    /**
      * Identifier that uniquely identifies the current process.
      */
     val processIdentifier: String

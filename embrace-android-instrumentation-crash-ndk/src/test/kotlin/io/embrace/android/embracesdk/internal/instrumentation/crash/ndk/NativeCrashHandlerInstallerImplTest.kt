@@ -31,6 +31,7 @@ class NativeCrashHandlerInstallerImplTest {
     private lateinit var executorService: BlockingScheduledExecutorService
     private lateinit var outputDir: File
     private var sessionId: String? = null
+    private var userSessionId: String? = null
 
     @Before
     fun setUp() {
@@ -44,6 +45,7 @@ class NativeCrashHandlerInstallerImplTest {
         fakeDelegate = FakeJniDelegate()
         fakeMainThreadHandler = FakeMainThreadHandler()
         sessionId = null
+        userSessionId = null
         outputDir = Files.createTempDirectory("test").toFile()
         executorService = BlockingScheduledExecutorService(blockingMode = false)
 
@@ -53,6 +55,7 @@ class NativeCrashHandlerInstallerImplTest {
             logger = FakeInternalLogger(false),
             backgroundWorkerSupplier = { BackgroundWorker(executorService) },
             sessionIdSupplier = { sessionId },
+            userSessionIdSupplier = { userSessionId },
             processIdentifier = "pid"
         )
         nativeCrashHandlerInstaller = NativeCrashHandlerInstallerImpl(
@@ -80,6 +83,30 @@ class NativeCrashHandlerInstallerImplTest {
 
         assertTrue(fakeDelegate.signalHandlerInstalled)
         assertEquals("p1_1692201601000_sid_pid_true_native_v1.json", getFilename())
+    }
+
+    @Test
+    fun `session IDs are forwarded to native on install`() {
+        sessionId = "sid"
+        userSessionId = "usid"
+        nativeCrashHandlerInstaller.install()
+
+        assertEquals("sid", fakeDelegate.sessionId)
+        assertEquals("usid", fakeDelegate.userSessionId)
+    }
+
+    @Test
+    fun `session IDs are updated on session change`() {
+        nativeCrashHandlerInstaller.install()
+        executorService.runCurrentlyBlocked()
+        assertEquals("null", fakeDelegate.sessionId)
+        assertEquals("null", fakeDelegate.userSessionId)
+
+        sessionId = "sid2"
+        userSessionId = "usid2"
+        args.sessionChangeListeners.forEach { it.onPostSessionChange() }
+        assertEquals("sid2", fakeDelegate.sessionId)
+        assertEquals("usid2", fakeDelegate.userSessionId)
     }
 
     @Test

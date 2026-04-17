@@ -60,6 +60,7 @@ typealias InstrumentationModuleSupplier = (
     essentialServiceModule: EssentialServiceModule,
     coreModule: CoreModule,
     storageService: StorageService,
+    userSessionIdProvider: () -> String?,
 ) -> InstrumentationModule
 
 typealias LogModuleSupplier = (

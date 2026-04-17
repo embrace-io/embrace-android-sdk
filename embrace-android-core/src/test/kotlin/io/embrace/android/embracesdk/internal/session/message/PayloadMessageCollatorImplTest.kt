@@ -155,7 +155,7 @@ internal class PayloadMessageCollatorImplTest {
     }
 
     private fun SessionPartToken.verifyInitialFieldsPopulated() {
-        assertTrue("Session ID invalid: $this", sessionId.isNotBlank())
+        assertTrue("Session ID invalid: $this", sessionPartId.isNotBlank())
         assertEquals(5L, startTime)
     }
 }

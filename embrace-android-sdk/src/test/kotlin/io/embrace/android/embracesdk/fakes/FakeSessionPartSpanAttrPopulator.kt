@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSp
 
 class FakeSessionPartSpanAttrPopulator : SessionPartSpanAttrPopulator {
 
-    override fun populateSessionSpanStartAttrs(session: SessionPartToken, userSession: UserSessionMetadata) {
+    override fun populateSessionSpanStartAttrs(sessionPart: SessionPartToken, userSession: UserSessionMetadata) {
     }
 
     override fun populateSessionSpanEndAttrs(

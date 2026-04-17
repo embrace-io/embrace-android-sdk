@@ -29,27 +29,27 @@ internal class SessionPartTrackerImpl(
         sessionEndListeners.add(listener)
     }
 
-    override fun getActiveSession(): SessionPartToken? = activeSession
+    override fun getActiveSessionPart(): SessionPartToken? = activeSession
 
-    override fun newActiveSession(
-        endSessionCallback: SessionPartToken.() -> Unit,
-        startSessionCallback: () -> SessionPartToken?,
+    override fun newActiveSessionPart(
+        endSessionPartCallback: SessionPartToken.() -> Unit,
+        startSessionPartCallback: () -> SessionPartToken?,
         postTransitionAppState: AppState,
     ): SessionPartToken? {
         activeSession?.let { endingSession ->
             runCatching {
                 sessionEndListeners.forEach(SessionPartEndListener::onPreSessionEnd)
             }
-            endingSession.endSessionCallback()
+            endingSession.endSessionPartCallback()
         }
 
-        activeSession = startSessionCallback()
+        activeSession = startSessionPartCallback()
         runCatching {
             sessionChangeListeners.forEach(SessionPartChangeListener::onPostSessionChange)
         }
 
         if (postTransitionAppState == AppState.FOREGROUND) {
-            setSessionIdToProcessStateSummary(activeSession?.sessionId)
+            setSessionIdToProcessStateSummary(activeSession?.sessionPartId)
         }
 
         return activeSession

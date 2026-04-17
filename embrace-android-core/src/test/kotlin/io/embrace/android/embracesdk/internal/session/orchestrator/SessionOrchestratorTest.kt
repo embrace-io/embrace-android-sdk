@@ -97,7 +97,7 @@ internal class SessionOrchestratorTest {
         assertEquals(orchestrator, appStateTracker.listeners.single())
         assertEquals(0, payloadCollator.sessionCount.get())
         assertEquals(1, payloadCollator.baCount.get())
-        assertEquals(sessionTracker.getActiveSessionId(), currentSessionPartSpan.getSessionId())
+        assertEquals(sessionTracker.getActiveSessionPartId(), currentSessionPartSpan.getSessionId())
         assertTrue(store.storedSessionPartPayloads.isEmpty())
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
@@ -109,7 +109,7 @@ internal class SessionOrchestratorTest {
         assertEquals(orchestrator, appStateTracker.listeners.single())
         assertEquals(1, payloadCollator.sessionCount.get())
         assertEquals(0, payloadCollator.baCount.get())
-        assertEquals(sessionTracker.getActiveSessionId(), currentSessionPartSpan.getSessionId())
+        assertEquals(sessionTracker.getActiveSessionPartId(), currentSessionPartSpan.getSessionId())
         assertTrue(store.storedSessionPartPayloads.isEmpty())
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
@@ -807,7 +807,7 @@ internal class SessionOrchestratorTest {
     fun `user session start time matches initial session part start time`() {
         createOrchestrator(AppState.FOREGROUND)
         val userSession = checkNotNull(orchestrator.currentUserSession())
-        val sessionPart = checkNotNull(sessionTracker.getActiveSession())
+        val sessionPart = checkNotNull(sessionTracker.getActiveSessionPart())
         assertEquals(userSession.startTimeMs, sessionPart.startTime)
     }
 
@@ -817,7 +817,7 @@ internal class SessionOrchestratorTest {
         clock.tick(5000)
         orchestrator.endSessionWithManual()
         val userSession = checkNotNull(orchestrator.currentUserSession())
-        val sessionPart = checkNotNull(sessionTracker.getActiveSession())
+        val sessionPart = checkNotNull(sessionTracker.getActiveSessionPart())
         assertEquals(userSession.startTimeMs, sessionPart.startTime)
     }
 

@@ -30,9 +30,9 @@ class PayloadCachingServiceImplTest {
         val cacher = PeriodicSessionPartCacher(BackgroundWorker(executorService), FakeInternalLogger(), INTERVAL)
         sessionTracker = FakeSessionPartTracker()
 
-        sessionTracker.newActiveSession(
-            endSessionCallback = {},
-            startSessionCallback = { zygote },
+        sessionTracker.newActiveSessionPart(
+            endSessionPartCallback = {},
+            startSessionPartCallback = { zygote },
             postTransitionAppState = AppState.FOREGROUND
         )
 
@@ -54,9 +54,9 @@ class PayloadCachingServiceImplTest {
 
     @Test
     fun `session id mismatch does not cache`() {
-        sessionTracker.newActiveSession(
-            endSessionCallback = {},
-            startSessionCallback = { fakeSessionPartToken().copy(sessionId = "someOtherId") },
+        sessionTracker.newActiveSessionPart(
+            endSessionPartCallback = {},
+            startSessionPartCallback = { fakeSessionPartToken().copy(sessionPartId = "someOtherId") },
             postTransitionAppState = AppState.FOREGROUND
         )
         var count = 0

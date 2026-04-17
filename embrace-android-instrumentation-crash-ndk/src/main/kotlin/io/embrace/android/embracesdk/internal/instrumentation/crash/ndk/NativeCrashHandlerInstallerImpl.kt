@@ -50,7 +50,7 @@ internal class NativeCrashHandlerInstallerImpl(
         try {
             if (sharedObjectLoader.loadEmbraceNative()) {
                 delegate.onSessionChange(
-                    sanitizeSessionId(args.sessionId()),
+                    sanitizeSessionId(args.sessionPartId()),
                     createNativeReportPath()
                 )
                 mainThreadHandler.postAtFrontOfQueue { installSignals() }
@@ -59,7 +59,7 @@ internal class NativeCrashHandlerInstallerImpl(
                     HANDLER_CHECK_DELAY_MS
                 )
                 args.registerSessionPartChangeListener {
-                    delegate.onSessionChange(sanitizeSessionId(args.sessionId()), createNativeReportPath())
+                    delegate.onSessionChange(sanitizeSessionId(args.sessionPartId()), createNativeReportPath())
                 }
             }
         } catch (ex: Exception) {
@@ -106,7 +106,7 @@ internal class NativeCrashHandlerInstallerImpl(
     private fun createNativeReportPath(): String {
         val metadata = StoredTelemetryMetadata(
             timestamp = clock.now(),
-            uuid = sanitizeSessionId(args.sessionId()),
+            uuid = sanitizeSessionId(args.sessionPartId()),
             processIdentifier = processIdentifier,
             envelopeType = SupportedEnvelopeType.CRASH,
             payloadType = PayloadType.NATIVE_CRASH,

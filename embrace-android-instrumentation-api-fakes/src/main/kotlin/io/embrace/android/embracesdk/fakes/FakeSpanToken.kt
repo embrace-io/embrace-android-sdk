@@ -46,7 +46,7 @@ class FakeSpanToken(
 
     override fun asW3cTraceparent(): String = hashCode().toString()
 
-    override fun addEvent(
+    override fun addSystemEvent(
         name: String,
         eventTimeMs: Long,
         attributes: Map<String, String>,

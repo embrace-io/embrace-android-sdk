@@ -183,12 +183,12 @@ internal class AeiFeatureTest {
 
     @Test
     fun `aei limit exceeded`() {
-        val timestamps = 0..100L
-        val aeis = timestamps.map { anr.copy(timestamp = it) }.map(TestAeiData::toAeiObject)
         val expectedSize = 64
 
         testRule.runTest(
             setupAction = {
+                val timestamps = 0..100L
+                val aeis = timestamps.map { anr.copy(timestamp = it + fakeClock.now()) }.map(TestAeiData::toAeiObject)
                 setupFakeAeiData(aeis)
             },
             testCaseAction = {

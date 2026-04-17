@@ -90,6 +90,7 @@ class DeliveryModuleImpl(
                 dataPersistenceWorker,
                 processIdProvider,
                 initModule.logger,
+                initModule.clock,
                 deliveryTracer
             )
         }
@@ -107,6 +108,7 @@ class DeliveryModuleImpl(
                 dataPersistenceWorker,
                 processIdProvider,
                 initModule.logger,
+                initModule.clock,
                 deliveryTracer
             )
         }
@@ -122,7 +124,8 @@ class DeliveryModuleImpl(
             outputDir = location,
             worker = dataPersistenceWorker,
             logger = initModule.logger,
-            serializer = initModule.jsonSerializer
+            serializer = initModule.jsonSerializer,
+            clock = initModule.clock,
         )
     }
 

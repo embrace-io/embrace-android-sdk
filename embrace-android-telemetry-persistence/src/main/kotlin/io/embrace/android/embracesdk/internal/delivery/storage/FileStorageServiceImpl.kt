@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.delivery.storage
 
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
@@ -14,8 +15,14 @@ class FileStorageServiceImpl(
     outputDir: Lazy<File>,
     private val worker: PriorityWorker<StoredTelemetryMetadata>,
     private val logger: InternalLogger,
+    private val clock: Clock,
     private val storageLimit: Int = 500,
+    private val maxAgeMs: Long = DEFAULT_MAX_AGE_MS,
 ) : FileStorageService {
+
+    private companion object {
+        const val DEFAULT_MAX_AGE_MS = 7L * 24L * 60L * 60L * 1_000L
+    }
 
     private val payloadDir by lazy {
         outputDir.value.apply { mkdirs() }
@@ -45,7 +52,11 @@ class FileStorageServiceImpl(
         metadata: StoredTelemetryMetadata,
         action: SerializationAction,
     ) {
-        if (pruneStorage(metadata)) {
+        if (pruneStorage(
+                newPayload = metadata,
+                cutoffMs = clock.now() - maxAgeMs
+            )
+        ) {
             return
         }
 
@@ -101,12 +112,26 @@ class FileStorageServiceImpl(
         return storedFiles.toList()
     }
 
-    private fun pruneStorage(metadata: StoredTelemetryMetadata): Boolean {
+    /**
+     * When [cutoffMs] > 0 all payloads whose timestamp is strictly less than [cutoffMs] are
+     * removed.  When [newPayload] is non-null the count-based limit
+     * is then enforced and the return value indicates whether [newPayload]
+     * itself was not written to disk.
+     */
+    private fun pruneStorage(newPayload: StoredTelemetryMetadata?, cutoffMs: Long = 0L): Boolean {
+        // remove old payloads created before the cutoff
+        if (cutoffMs > 0L) {
+            storedFiles.filter { it.timestamp < cutoffMs }.forEach(::processDelete)
+        }
+
+        newPayload ?: return false
+
+        // remove payloads by count
         val count = storedFiles.size
         if (count < storageLimit) {
             return false
         }
-        val input = storedFiles.plus(metadata)
+        val input = storedFiles.plus(newPayload)
         val removalCount = input.size - storageLimit
         if (removalCount < 0) {
             return false
@@ -120,7 +145,7 @@ class FileStorageServiceImpl(
         logger.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, RuntimeException("Pruned payload storage"))
 
         // notify the caller whether the new payload should be dropped
-        val shouldNotPersist = removals.contains(metadata)
+        val shouldNotPersist = removals.contains(newPayload)
         return shouldNotPersist
     }
 

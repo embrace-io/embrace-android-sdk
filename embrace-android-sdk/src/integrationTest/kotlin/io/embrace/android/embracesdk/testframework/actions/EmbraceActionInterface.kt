@@ -6,7 +6,7 @@ import androidx.navigation.NavController
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.HasNavController
-import io.embrace.android.embracesdk.fakes.TestFragmentActivity
+import io.embrace.android.embracesdk.fakes.TestNavHostFragmentActivity
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectionType
@@ -232,11 +232,12 @@ internal class EmbraceActionInterface(
     }
 
     /**
-     * Simulates opening a [TestFragmentActivity] and navigating through the given routes. No explicit [NavController] tracking is done.
+     * Simulates opening a [TestNavHostFragmentActivity] and navigating through the given routes.
+     * The tracking of the underlying [NavController] is handled automatically by the SDK. No explicit [NavController] tracking is done
      */
-    fun simulateFragmentActivityNavigation(
+    inline fun <reified T : TestNavHostFragmentActivity> simulateNavHostFragmentActivityNavigation(
         routes: List<String>,
-        activityController: ActivityController<TestFragmentActivity> = Robolectric.buildActivity(TestFragmentActivity::class.java),
+        activityController: ActivityController<T> = Robolectric.buildActivity(T::class.java),
     ) = simulateNavControllerNavigation(routes, false, activityController)
 
     /**
@@ -245,7 +246,7 @@ internal class EmbraceActionInterface(
      */
     inline fun <reified T> simulateNavControllerTrackingAndNavigation(
         routes: List<String>,
-        activityController: ActivityController<T> = Robolectric.buildActivity(T::class.java),
+        activityController: ActivityController<T>,
     ) where T : Activity, T : HasNavController = simulateNavControllerNavigation(routes, true, activityController)
 
     fun simulateJvmUncaughtException(exc: Throwable) {

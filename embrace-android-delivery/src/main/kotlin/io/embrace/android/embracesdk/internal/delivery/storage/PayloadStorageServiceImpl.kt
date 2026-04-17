@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.delivery.storage
 
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.storedTelemetryComparator
@@ -19,6 +20,7 @@ class PayloadStorageServiceImpl(
     worker: PriorityWorker<StoredTelemetryMetadata>,
     private val processIdProvider: () -> String,
     logger: InternalLogger,
+    clock: Clock,
     private val deliveryTracer: DeliveryTracer? = null,
     storageLimit: Int = 500,
 ) : PayloadStorageService {
@@ -27,6 +29,7 @@ class PayloadStorageServiceImpl(
         outputDir,
         worker,
         logger,
+        clock,
         storageLimit
     )
 

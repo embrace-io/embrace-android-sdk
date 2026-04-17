@@ -28,6 +28,7 @@ internal class NativeCrashProcessorImpl(
         outputDir,
         worker,
         logger,
+        args.clock,
     )
 
     override fun getLatestNativeCrash(): NativeCrashData? {

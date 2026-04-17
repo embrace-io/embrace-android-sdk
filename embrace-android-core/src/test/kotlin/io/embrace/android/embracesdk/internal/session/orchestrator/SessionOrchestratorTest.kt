@@ -276,14 +276,14 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
-    fun `ending session manually below time threshold fails`() {
+    fun `first manual end always succeeds regardless of time since session start`() {
         configService = FakeConfigService()
         createOrchestrator(AppState.FOREGROUND)
         clock.tick(1000)
 
         orchestrator.endSessionWithManual()
-        assertEquals(1, payloadCollator.sessionCount.get())
-        assertTrue(store.storedSessionPartPayloads.isEmpty())
+        assertEquals(2, payloadCollator.sessionCount.get())
+        checkNotNull(store.storedSessionPartPayloads.last().first)
     }
 
     @Test
@@ -302,6 +302,35 @@ internal class SessionOrchestratorTest {
         clock.tick(2000)
         orchestrator.endSessionWithManual()
         assertEquals(3, payloadCollator.sessionCount.get())
+    }
+
+    @Test
+    fun `cool-off window is measured from last manual end`() {
+        val maxDuration = 2000L
+        configService = FakeConfigService(
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = maxDuration,
+                sessionInactivityTimeoutMs = inactivityMs,
+            )
+        )
+        createOrchestrator(AppState.FOREGROUND)
+
+        // first manual end
+        clock.tick(10000)
+        orchestrator.endSessionWithManual()
+        val sessionAfterManualEnd = checkNotNull(orchestrator.currentUserSession())
+
+        // max duration exceeded
+        clock.tick(maxDuration)
+        inactivityWorkerExecutor.runCurrentlyBlocked()
+        val sessionAfterRollover = checkNotNull(orchestrator.currentUserSession())
+        assertNotEquals(sessionAfterManualEnd.userSessionId, sessionAfterRollover.userSessionId)
+
+        // 5001ms since last manual end should be allowed
+        clock.tick(3001)
+        orchestrator.endSessionWithManual()
+        val sessionAfterSecondManual = checkNotNull(orchestrator.currentUserSession())
+        assertNotEquals(sessionAfterRollover.userSessionId, sessionAfterSecondManual.userSessionId)
     }
 
     @Test

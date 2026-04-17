@@ -67,6 +67,9 @@ internal class SessionOrchestratorImpl(
     private var userSessionState: UserSessionState = UserSessionState.Initializing
 
     @Volatile
+    private var lastManualEndMs: Long? = null
+
+    @Volatile
     private var inactivityTimerState: SessionTimerState? = null
 
     @Volatile
@@ -180,6 +183,7 @@ internal class SessionOrchestratorImpl(
                 payloadFactory.endSessionWithManual(timestamp, initial)
             },
             newSessionAction = {
+                lastManualEndMs = timestamp
                 payloadFactory.startSessionWithManual(timestamp)
             },
             earlyTerminationCondition = {
@@ -187,6 +191,7 @@ internal class SessionOrchestratorImpl(
                     configService,
                     clock,
                     currentUserSession()?.startTimeMs,
+                    lastManualEndMs,
                     state
                 )
             }

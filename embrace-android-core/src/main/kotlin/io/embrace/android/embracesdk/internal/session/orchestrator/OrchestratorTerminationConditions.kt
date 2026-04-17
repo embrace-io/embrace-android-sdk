@@ -8,13 +8,16 @@ internal fun shouldEndManualSession(
     configService: ConfigService,
     clock: Clock,
     userSessionStartTimeMs: Long?,
+    lastManualEndMs: Long?,
     state: AppState,
 ): Boolean {
     if (state == AppState.BACKGROUND || configService.sessionBehavior.isSessionControlEnabled() || userSessionStartTimeMs == null) {
         return true
     }
-
-    val delta = clock.now() - userSessionStartTimeMs
+    if (lastManualEndMs == null) {
+        return false
+    }
+    val delta = clock.now() - lastManualEndMs
     return delta < configService.sessionBehavior.getMinSessionDurationMs()
 }
 

@@ -536,6 +536,7 @@ internal class SessionOrchestratorTest {
                 maxDurationSecs = TimeUnit.MILLISECONDS.toSeconds(maxDurationMs),
                 inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
                 partNumber = 1,
+                lastActivityMs = clock.now(),
             )
         )
 
@@ -591,6 +592,7 @@ internal class SessionOrchestratorTest {
                 maxDurationSecs = TimeUnit.MILLISECONDS.toSeconds(maxDurationMs),
                 inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
                 partNumber = 1,
+                lastActivityMs = 0L,
             )
         )
 
@@ -600,6 +602,66 @@ internal class SessionOrchestratorTest {
         // Expired session is discarded; a fresh user session is created instead
         val session = checkNotNull(orchestrator.currentUserSession())
         assertNotEquals("old-id", session.userSessionId)
+    }
+
+    @Test
+    fun `process killed in background after inactivity timeout - new user session on restart`() {
+        configService = FakeConfigService(
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = maxDurationMs,
+                sessionInactivityTimeoutMs = inactivityMs,
+            )
+        )
+        val store = UserSessionMetadataStore(FakeKeyValueStore())
+        val backgroundTime = clock.now()
+        store.save(
+            UserSessionMetadata(
+                startTimeMs = backgroundTime,
+                userSessionId = "bg-killed-id",
+                userSessionNumber = 2L,
+                maxDurationSecs = TimeUnit.MILLISECONDS.toSeconds(maxDurationMs),
+                inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
+                partNumber = 2,
+                lastActivityMs = backgroundTime,
+            )
+        )
+
+        // simulate process restart after inactivity timeout
+        clock.tick(inactivityMs)
+        createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = store)
+
+        val session = checkNotNull(orchestrator.currentUserSession())
+        assertNotEquals("bg-killed-id", session.userSessionId)
+    }
+
+    @Test
+    fun `process killed in background before inactivity timeout - session is restored`() {
+        configService = FakeConfigService(
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = maxDurationMs,
+                sessionInactivityTimeoutMs = inactivityMs,
+            )
+        )
+        val store = UserSessionMetadataStore(FakeKeyValueStore())
+        val backgroundTime = clock.now()
+        store.save(
+            UserSessionMetadata(
+                startTimeMs = backgroundTime,
+                userSessionId = "bg-killed-id",
+                userSessionNumber = 2L,
+                maxDurationSecs = TimeUnit.MILLISECONDS.toSeconds(maxDurationMs),
+                inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
+                partNumber = 2,
+                lastActivityMs = backgroundTime,
+            )
+        )
+
+        // simulate process restart before inactivity timeout
+        clock.tick(inactivityMs - 1)
+        createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = store)
+
+        val session = checkNotNull(orchestrator.currentUserSession())
+        assertEquals("bg-killed-id", session.userSessionId)
     }
 
     @Test
@@ -676,6 +738,7 @@ internal class SessionOrchestratorTest {
                 maxDurationSecs = persistedMaxSecs,
                 inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
                 partNumber = 1,
+                lastActivityMs = clock.now(),
             )
         )
 
@@ -711,6 +774,7 @@ internal class SessionOrchestratorTest {
                 maxDurationSecs = TimeUnit.MILLISECONDS.toSeconds(maxDurationMs),
                 inactivityTimeoutSecs = persistedInactivitySecs,
                 partNumber = 1,
+                lastActivityMs = clock.now(),
             )
         )
 
@@ -746,6 +810,7 @@ internal class SessionOrchestratorTest {
                 maxDurationSecs = TimeUnit.MILLISECONDS.toSeconds(maxDurationMs),
                 inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
                 partNumber = 1,
+                lastActivityMs = clock.now() + 1_000L,
             )
         )
 
@@ -1022,6 +1087,7 @@ internal class SessionOrchestratorTest {
                 maxDurationSecs = TimeUnit.MILLISECONDS.toSeconds(maxDurationMs),
                 inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
                 partNumber = 1,
+                lastActivityMs = clock.now(),
             )
         )
 

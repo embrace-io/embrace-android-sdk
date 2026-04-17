@@ -19,6 +19,7 @@ internal class UserSessionMetadataStoreTest {
         maxDurationSecs = 3600L,
         inactivityTimeoutSecs = 1800L,
         partNumber = 1,
+        lastActivityMs = 5000L,
     )
     private val metadata2 = UserSessionMetadata(
         startTimeMs = 2000L,
@@ -27,6 +28,7 @@ internal class UserSessionMetadataStoreTest {
         maxDurationSecs = 7200L,
         inactivityTimeoutSecs = 3600L,
         partNumber = 2,
+        lastActivityMs = 9000L,
     )
 
     @Before
@@ -51,6 +53,7 @@ internal class UserSessionMetadataStoreTest {
         assertEquals(metadata.maxDurationSecs, loaded.maxDurationSecs)
         assertEquals(metadata.inactivityTimeoutSecs, loaded.inactivityTimeoutSecs)
         assertEquals(metadata.partNumber, loaded.partNumber)
+        assertEquals(metadata.lastActivityMs, loaded.lastActivityMs)
     }
 
     @Test
@@ -65,6 +68,7 @@ internal class UserSessionMetadataStoreTest {
         assertEquals(metadata2.maxDurationSecs, loaded.maxDurationSecs)
         assertEquals(metadata2.inactivityTimeoutSecs, loaded.inactivityTimeoutSecs)
         assertEquals(metadata2.partNumber, loaded.partNumber)
+        assertEquals(metadata2.lastActivityMs, loaded.lastActivityMs)
     }
 
     @Test

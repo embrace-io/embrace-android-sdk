@@ -13,6 +13,7 @@ data class UserSessionMetadata(
     val maxDurationSecs: Long,
     val inactivityTimeoutSecs: Long,
     val partNumber: Int,
+    val lastActivityMs: Long,
 ) {
     val attributes: Map<String, Any> = mapOf(
         EmbSessionAttributes.EMB_USER_SESSION_START_TS to startTimeMs,

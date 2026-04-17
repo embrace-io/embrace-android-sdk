@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session
 
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 
@@ -15,6 +16,12 @@ data class UserSessionMetadata(
     val partNumber: Int,
     val lastActivityMs: Long,
 ) {
+    fun isOverMaxDuration(clock: Clock): Boolean =
+        clock.now() - startTimeMs >= maxDurationSecs * 1_000L
+
+    fun isInactive(clock: Clock): Boolean =
+        clock.now() - lastActivityMs >= inactivityTimeoutSecs * 1_000L
+
     val attributes: Map<String, Any> = mapOf(
         EmbSessionAttributes.EMB_USER_SESSION_START_TS to startTimeMs,
         EmbSessionAttributes.EMB_USER_SESSION_ID to userSessionId,

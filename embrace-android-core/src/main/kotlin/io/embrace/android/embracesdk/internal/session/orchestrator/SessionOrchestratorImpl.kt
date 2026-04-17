@@ -463,10 +463,10 @@ internal class SessionOrchestratorImpl(
     }
 
     private fun isUserSessionOverMaxDuration(metadata: UserSessionMetadata): Boolean =
-        clock.now() - metadata.startTimeMs >= metadata.maxDurationSecs * 1_000L
+        metadata.isOverMaxDuration(clock)
 
     private fun isUserSessionInactive(metadata: UserSessionMetadata): Boolean =
-        clock.now() - metadata.lastActivityMs >= metadata.inactivityTimeoutSecs * 1_000L
+        metadata.isInactive(clock)
 
     private fun startNewUserSession(startTimeMs: Long) {
         val maxDurationMs = configService.sessionBehavior.getMaxSessionDurationMs()

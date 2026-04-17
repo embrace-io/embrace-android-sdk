@@ -75,7 +75,7 @@ internal class SdkStateApiDelegateTest {
 
     @Test
     fun getCurrentSessionId() {
-        sessionPartTracker.currentSession = fakeSessionPartToken().copy(sessionId = "test")
+        sessionPartTracker.currentSession = fakeSessionPartToken().copy(sessionPartId = "test")
         assertEquals("test", delegate.currentUserSessionId)
     }
 

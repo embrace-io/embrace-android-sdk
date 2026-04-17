@@ -185,9 +185,9 @@ private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, St
     return {
         mutableMapOf<String, String>().apply {
             var sessionState: AppState? = null
-            essentialServiceModule.sessionPartTracker.getActiveSession()?.let { session ->
-                if (session.sessionId.isNotBlank()) {
-                    put(SessionAttributes.SESSION_ID, session.sessionId)
+            essentialServiceModule.sessionPartTracker.getActiveSessionPart()?.let { session ->
+                if (session.sessionPartId.isNotBlank()) {
+                    put(SessionAttributes.SESSION_ID, session.sessionPartId)
                 }
                 sessionState = session.appState
             }

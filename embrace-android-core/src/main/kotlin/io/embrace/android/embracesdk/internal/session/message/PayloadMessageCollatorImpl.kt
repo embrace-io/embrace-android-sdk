@@ -19,7 +19,7 @@ internal class PayloadMessageCollatorImpl(
     override fun buildInitialPart(params: InitialEnvelopeParams): SessionPartToken = with(params) {
         currentSessionPartSpan.readySession()
         SessionPartToken(
-            sessionId = currentSessionPartSpan.getSessionId(),
+            sessionPartId = currentSessionPartSpan.getSessionId(),
             startTime = startTime,
             isColdStart = coldStart,
             appState = appState,

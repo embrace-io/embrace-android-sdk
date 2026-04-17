@@ -60,7 +60,7 @@ internal class InstrumentationArgsImpl(
         } as? T
     }
 
-    override fun sessionId(): String? = sessionPartTracker.getActiveSessionId()
+    override fun sessionPartId(): String? = sessionPartTracker.getActiveSessionPartId()
 
     override fun userSessionProperties(): Map<String, String> = userSessionPropertiesService.getProperties()
 

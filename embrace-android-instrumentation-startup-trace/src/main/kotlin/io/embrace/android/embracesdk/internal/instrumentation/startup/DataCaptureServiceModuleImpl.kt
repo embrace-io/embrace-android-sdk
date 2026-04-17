@@ -4,7 +4,6 @@ import android.app.Application
 import android.os.SystemClock
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.UiLoadDataListener
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.UiLoadTraceEmitter
@@ -27,7 +26,7 @@ class DataCaptureServiceModuleImpl(
     }
 
     override val appStartupDataCollector: AppStartupDataCollector by lazy {
-        val deviceStartTimeMs = (clock.now().millisToNanos() - SystemClock.elapsedRealtimeNanos()).millisToNanos()
+        val deviceStartTimeMs = clock.now() - SystemClock.elapsedRealtime()
 
         AppStartupTraceEmitter(
             clock = clock,

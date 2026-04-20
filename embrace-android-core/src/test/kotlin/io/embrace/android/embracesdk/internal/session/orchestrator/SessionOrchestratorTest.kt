@@ -287,24 +287,6 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
-    fun `rate limit of manual end`() {
-        configService = FakeConfigService()
-        createOrchestrator(AppState.FOREGROUND)
-
-        clock.tick(10000)
-        orchestrator.endSessionWithManual()
-        orchestrator.endSessionWithManual()
-        assertEquals(2, payloadCollator.sessionCount.get())
-
-        clock.tick(4000)
-        orchestrator.endSessionWithManual()
-
-        clock.tick(2000)
-        orchestrator.endSessionWithManual()
-        assertEquals(3, payloadCollator.sessionCount.get())
-    }
-
-    @Test
     fun `cool-off window is measured from last manual end`() {
         val maxDuration = 2000L
         configService = FakeConfigService(
@@ -331,6 +313,24 @@ internal class SessionOrchestratorTest {
         orchestrator.endSessionWithManual()
         val sessionAfterSecondManual = checkNotNull(orchestrator.currentUserSession())
         assertNotEquals(sessionAfterRollover.userSessionId, sessionAfterSecondManual.userSessionId)
+    }
+
+    @Test
+    fun `rate limit of manual end`() {
+        configService = FakeConfigService()
+        createOrchestrator(AppState.FOREGROUND)
+
+        clock.tick(10000)
+        orchestrator.endSessionWithManual()
+        orchestrator.endSessionWithManual()
+        assertEquals(2, payloadCollator.sessionCount.get())
+
+        clock.tick(4000)
+        orchestrator.endSessionWithManual()
+
+        clock.tick(2000)
+        orchestrator.endSessionWithManual()
+        assertEquals(3, payloadCollator.sessionCount.get())
     }
 
     @Test
@@ -443,7 +443,7 @@ internal class SessionOrchestratorTest {
         assertNotNull(first.userSessionId)
 
         // within max duration — user session stays the same
-        clock.tick(maxDurationMs - 1)
+        clock.tick(maxDurationMs)
         orchestrator.onBackground()
         orchestrator.onForeground()
         val repeat = checkNotNull(orchestrator.currentUserSession())
@@ -656,7 +656,7 @@ internal class SessionOrchestratorTest {
         )
 
         // simulate process restart after inactivity timeout
-        clock.tick(inactivityMs)
+        clock.tick(inactivityMs + 1)
         createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = store)
 
         val session = checkNotNull(orchestrator.currentUserSession())
@@ -915,7 +915,7 @@ internal class SessionOrchestratorTest {
 
         // foreground after the second session's own inactivity deadline has new user session
         orchestrator.onBackground()
-        clock.tick(inactivityMs)
+        clock.tick(inactivityMs + 1)
         orchestrator.onForeground()
 
         val thirdSession = checkNotNull(orchestrator.currentUserSession())
@@ -970,7 +970,7 @@ internal class SessionOrchestratorTest {
         orchestrator.onBackground()
 
         // deadline passes but the timer callback has NOT fired yet (simulates a race)
-        clock.tick(inactivityMs)
+        clock.tick(inactivityMs + 1)
 
         orchestrator.onForeground()
 

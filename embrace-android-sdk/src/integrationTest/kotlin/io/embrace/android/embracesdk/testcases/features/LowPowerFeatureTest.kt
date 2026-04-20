@@ -91,7 +91,6 @@ internal class LowPowerFeatureTest {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
-                    stateCaptureEnabled = true,
                     bgActivityCapture = false,
                     powerSaveCapture = true
                 )
@@ -139,7 +138,6 @@ internal class LowPowerFeatureTest {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
-                    stateCaptureEnabled = true,
                     powerSaveCapture = false
                 )
             ),

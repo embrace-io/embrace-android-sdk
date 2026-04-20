@@ -4,10 +4,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.toMap
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.semconv.EmbTelemetryAttributes
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.semconv.EmbTelemetryAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
@@ -32,7 +32,12 @@ internal class UserSessionApiTest {
         var startTime: Long = -1
 
         testRule.runTest(
-            instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(diskUsageCapture = false, bgActivityCapture = true)),
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(
+                    diskUsageCapture = false,
+                    bgActivityCapture = true
+                )
+            ),
             testCaseAction = {
                 startTime = recordSession {
                     embrace.setUserIdentifier("some id")
@@ -80,7 +85,7 @@ internal class UserSessionApiTest {
                     "emb.usage.set_username" to "1",
                     "emb.usage.set_user_email" to "1",
                     "emb.usage.set_user_identifier" to "1",
-                    EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID to "5",
+                    EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID to "9",
                     EmbSessionAttributes.EMB_STARTUP_DURATION to "0"
                 ).toSortedMap()
 

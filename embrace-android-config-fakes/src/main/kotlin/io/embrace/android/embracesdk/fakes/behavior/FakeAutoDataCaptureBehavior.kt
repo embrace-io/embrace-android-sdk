@@ -15,7 +15,7 @@ class FakeAutoDataCaptureBehavior(
     private val uiLoadTracingEnabled: Boolean = true,
     private val uiLoadTracingTraceAll: Boolean = true,
     private val endStartupWithAppReady: Boolean = false,
-    private val enableStateCapture: Boolean = false,
+    private val enableStateCapture: Boolean = true,
     private val networkCallbackConnectivityServiceEnabled: Boolean = false,
     private val navigationStateCaptureEnabled: Boolean = true,
 ) : AutoDataCaptureBehavior {

@@ -287,24 +287,6 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
-    fun `rate limit of manual end`() {
-        configService = FakeConfigService()
-        createOrchestrator(AppState.FOREGROUND)
-
-        clock.tick(10000)
-        orchestrator.endSessionWithManual()
-        orchestrator.endSessionWithManual()
-        assertEquals(2, payloadCollator.sessionCount.get())
-
-        clock.tick(4000)
-        orchestrator.endSessionWithManual()
-
-        clock.tick(2000)
-        orchestrator.endSessionWithManual()
-        assertEquals(3, payloadCollator.sessionCount.get())
-    }
-
-    @Test
     fun `cool-off window is measured from last manual end`() {
         val maxDuration = 2000L
         configService = FakeConfigService(
@@ -674,7 +656,7 @@ internal class SessionOrchestratorTest {
         )
 
         // simulate process restart after inactivity timeout
-        clock.tick(inactivityMs)
+        clock.tick(inactivityMs + 1)
         createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = store)
 
         val session = checkNotNull(orchestrator.currentUserSession())

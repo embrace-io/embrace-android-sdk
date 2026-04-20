@@ -17,10 +17,10 @@ data class UserSessionMetadata(
     val lastActivityMs: Long,
 ) {
     fun isOverMaxDuration(clock: Clock): Boolean =
-        clock.now() - startTimeMs >= maxDurationSecs * 1_000L
+        clock.now() - startTimeMs > maxDurationSecs * 1_000L
 
     fun isInactive(clock: Clock): Boolean =
-        clock.now() - lastActivityMs >= inactivityTimeoutSecs * 1_000L
+        clock.now() - lastActivityMs > inactivityTimeoutSecs * 1_000L
 
     val attributes: Map<String, Any> = mapOf(
         EmbSessionAttributes.EMB_USER_SESSION_START_TS to startTimeMs,

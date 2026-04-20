@@ -332,6 +332,9 @@ internal class SessionOrchestratorImpl(
             // update newly created session
             val userSession = currentUserSession()
             if (newSession != null && userSession != null) {
+                if (endAppState == AppState.FOREGROUND) {
+                    sessionTracker.setProcessStateSummary(newSession.sessionPartId, userSession.userSessionId)
+                }
                 boundaryDelegate.prepareForNewSession()
                 sessionSpanAttrPopulator.populateSessionSpanStartAttrs(newSession, userSession)
                 if (transitionType != TransitionType.CRASH) {

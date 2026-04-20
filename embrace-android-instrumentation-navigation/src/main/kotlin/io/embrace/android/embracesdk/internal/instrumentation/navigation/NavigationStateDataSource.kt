@@ -49,7 +49,7 @@ class NavigationStateDataSource(
     }
 
     fun onScreenLoad(loadTimeMs: Long, screenName: String) {
-        onStateChange(loadTimeMs, Screen(name = screenName))
+        onStateChange(newState = Screen(name = screenName), transitionTimeMs = loadTimeMs)
     }
 
     companion object {

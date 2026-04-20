@@ -16,7 +16,7 @@ class NetworkStateDataSource(
     maxTransitions = MAX_CAPTURED_NETWORK_STATE_TRANSITIONS,
 ) {
     override fun onNetworkConnectivityStatusChanged(status: ConnectivityStatus) {
-        onStateChange(clock.now(), status.toState())
+        onStateChange(status.toState(), clock.now())
     }
 
     private fun ConnectivityStatus.toState(): Status =

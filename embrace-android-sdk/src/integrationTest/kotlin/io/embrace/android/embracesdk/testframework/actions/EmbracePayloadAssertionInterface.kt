@@ -26,6 +26,7 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.assertions.JsonComparator
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import io.embrace.android.embracesdk.testframework.server.FormPart
+import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.json.JSONObject
 import org.junit.Assert
 import org.junit.Assert.assertEquals
@@ -254,9 +255,8 @@ internal class EmbracePayloadAssertionInterface(
         )
         assertNotNull(attrs.findAttributeValue("log.record.uid"))
         assertNotNull(attrs.findAttributeValue(EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER))
-        if (crashData.partEnvelope != null) {
-            assertEquals(crashData.partEnvelope.getSessionId(), attrs.findAttributeValue("session.id"))
-        }
+        assertEquals(crashData.nativeCrash.sessionPartId, attrs.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID))
+        assertEquals(crashData.nativeCrash.userSessionId, attrs.findAttributeValue(SessionAttributes.SESSION_ID))
         assertNativeCrashDoesNotExist(crashData)
     }
 

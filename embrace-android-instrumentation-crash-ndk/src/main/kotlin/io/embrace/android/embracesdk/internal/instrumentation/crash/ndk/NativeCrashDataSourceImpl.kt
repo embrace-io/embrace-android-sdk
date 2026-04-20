@@ -38,15 +38,20 @@ internal class NativeCrashDataSourceImpl(
             val nativeCrashNumber = args.ordinalStore.incrementAndGet(Ordinal.NATIVE_CRASH)
             val crashAttributes = TelemetryAttributes().apply {
                 setAttribute(
-                    key = SessionAttributes.SESSION_ID,
-                    value = nativeCrash.sessionId,
+                    key = EmbSessionAttributes.EMB_SESSION_PART_ID,
+                    value = nativeCrash.sessionPartId,
                     keepBlankishValues = false,
                 )
 
-                nativeCrash.userSessionId?.let {
+                nativeCrash.userSessionId?.let { userSessionId ->
+                    setAttribute(
+                        key = SessionAttributes.SESSION_ID,
+                        value = userSessionId,
+                        keepBlankishValues = false,
+                    )
                     setAttribute(
                         key = EmbSessionAttributes.EMB_USER_SESSION_ID,
-                        value = it,
+                        value = userSessionId,
                         keepBlankishValues = false,
                     )
                 }

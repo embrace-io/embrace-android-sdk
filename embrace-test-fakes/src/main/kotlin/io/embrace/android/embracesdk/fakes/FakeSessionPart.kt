@@ -12,10 +12,10 @@ import io.embrace.android.embracesdk.internal.arch.state.AppState
 fun fakeSessionPartToken(): SessionPartToken = SessionPartToken(
     sessionPartId = "fakeSessionId",
     startTime = 160000000000L,
-    number = 1,
     appState = AppState.FOREGROUND,
     isColdStart = true,
-    startType = LifeEventType.STATE
+    startType = LifeEventType.STATE,
+    sessionPartNumber = 1,
 )
 
 fun fakeSessionEnvelope(

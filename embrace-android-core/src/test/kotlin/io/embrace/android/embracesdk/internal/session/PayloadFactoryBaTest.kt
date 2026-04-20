@@ -44,8 +44,8 @@ internal class PayloadFactoryBaTest {
     private lateinit var spanSink: SpanSink
     private lateinit var currentSessionPartSpan: CurrentSessionPartSpan
     private lateinit var spanService: SpanService
-    private lateinit var store: FakeOrdinalStore
     private lateinit var blockingExecutorService: BlockingScheduledExecutorService
+    private lateinit var store: FakeOrdinalStore
 
     @Before
     fun init() {
@@ -53,7 +53,6 @@ internal class PayloadFactoryBaTest {
         metadataService = FakeMetadataService()
         sessionTracker = FakeSessionPartTracker()
         activityService = FakeAppStateTracker(AppState.BACKGROUND)
-        store = FakeOrdinalStore()
         userService = FakeUserService()
         val initModule = FakeInitModule(clock = clock)
         spanRepository = initModule.openTelemetryModule.spanRepository
@@ -66,6 +65,7 @@ internal class PayloadFactoryBaTest {
             )
         )
         blockingExecutorService = BlockingScheduledExecutorService(blockingMode = false)
+        store = FakeOrdinalStore()
     }
 
     @Test

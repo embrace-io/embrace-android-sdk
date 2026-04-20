@@ -5,6 +5,10 @@ class OrdinalStoreImpl(
 ) : OrdinalStore {
 
     override fun incrementAndGet(ordinal: Ordinal): Int {
-        return impl.incrementAndGet(ordinal.key)
+        val sanitizedOrdinal = when (ordinal) {
+            Ordinal.USER_SESSION -> Ordinal.SESSION
+            else -> ordinal
+        }
+        return impl.incrementAndGet(sanitizedOrdinal.key)
     }
 }

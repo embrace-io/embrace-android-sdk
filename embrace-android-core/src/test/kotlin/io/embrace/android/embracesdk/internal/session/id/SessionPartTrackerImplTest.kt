@@ -36,7 +36,6 @@ internal class SessionPartTrackerImplTest {
         val anotherSession = SessionPartToken(
             sessionPartId = "fake",
             startTime = 11L,
-            number = 3,
             appState = AppState.BACKGROUND,
             isColdStart = false,
             startType = LifeEventType.MANUAL

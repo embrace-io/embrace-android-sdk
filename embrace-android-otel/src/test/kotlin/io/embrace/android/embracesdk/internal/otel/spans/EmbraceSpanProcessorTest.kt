@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class EmbraceSpanProcessorTest {
@@ -27,5 +28,18 @@ class EmbraceSpanProcessorTest {
 
         processor.onEnd(span)
         assertEquals(span, spanExporter.exportedSpans.single())
+    }
+
+    @Test
+    fun `user session id not set when session part id is absent`() {
+        val spanExporter = FakeSpanExporter()
+        val provider = FakeSessionIdProvider(userSessionId = "user-sid", sessionPartId = null)
+        val processor = EmbraceSpanProcessor({ provider }, "pid", spanExporter)
+        val span = FakeReadWriteSpan()
+        processor.onStart(span, NoopOpenTelemetry.context.implicit())
+
+        assertNull(span.attributes[EmbSessionAttributes.EMB_SESSION_PART_ID])
+        assertNull(span.attributes[SessionAttributes.SESSION_ID])
+        assertNull(span.attributes[EmbSessionAttributes.EMB_USER_SESSION_ID])
     }
 }

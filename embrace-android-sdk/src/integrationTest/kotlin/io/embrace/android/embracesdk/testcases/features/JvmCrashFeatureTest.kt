@@ -106,6 +106,7 @@ internal class JvmCrashFeatureTest {
                 getSingleLogEnvelope().getLastLog().assertCrash(
                     crashIdFromSession = null,
                     crashTimeMs = crashTimeMs,
+                    hasSession = false,
                 )
             }
         )
@@ -176,6 +177,7 @@ internal class JvmCrashFeatureTest {
         crashIdFromSession: String?,
         state: String = "background",
         crashTimeMs: Long,
+        hasSession: Boolean = true,
     ) {
         assertOtelLogReceived(
             logReceived = this,
@@ -188,7 +190,7 @@ internal class JvmCrashFeatureTest {
             expectedProperties = emptyMap(),
             expectedEmbType = "sys.android.crash",
             expectedState = state,
-            hasSession = true,
+            hasSession = hasSession,
         )
 
         val exceptionInfo = LegacyExceptionInfo.ofThrowable(testException)

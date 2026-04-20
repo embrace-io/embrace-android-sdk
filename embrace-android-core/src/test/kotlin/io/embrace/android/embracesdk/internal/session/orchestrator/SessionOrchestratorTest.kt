@@ -334,6 +334,24 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
+    fun `rate limit of manual end`() {
+        configService = FakeConfigService()
+        createOrchestrator(AppState.FOREGROUND)
+
+        clock.tick(10000)
+        orchestrator.endSessionWithManual()
+        orchestrator.endSessionWithManual()
+        assertEquals(2, payloadCollator.sessionCount.get())
+
+        clock.tick(4000)
+        orchestrator.endSessionWithManual()
+
+        clock.tick(2000)
+        orchestrator.endSessionWithManual()
+        assertEquals(3, payloadCollator.sessionCount.get())
+    }
+
+    @Test
     fun `ending session manually when no session exists does not start a new session`() {
         configService = FakeConfigService()
         createOrchestrator(AppState.BACKGROUND)
@@ -443,7 +461,7 @@ internal class SessionOrchestratorTest {
         assertNotNull(first.userSessionId)
 
         // within max duration — user session stays the same
-        clock.tick(maxDurationMs - 1)
+        clock.tick(maxDurationMs)
         orchestrator.onBackground()
         orchestrator.onForeground()
         val repeat = checkNotNull(orchestrator.currentUserSession())
@@ -889,7 +907,7 @@ internal class SessionOrchestratorTest {
 
         // foreground after the second session's own inactivity deadline has new user session
         orchestrator.onBackground()
-        clock.tick(inactivityMs)
+        clock.tick(inactivityMs + 1)
         orchestrator.onForeground()
 
         val thirdSession = checkNotNull(orchestrator.currentUserSession())
@@ -944,7 +962,7 @@ internal class SessionOrchestratorTest {
         orchestrator.onBackground()
 
         // deadline passes but the timer callback has NOT fired yet (simulates a race)
-        clock.tick(inactivityMs)
+        clock.tick(inactivityMs + 1)
 
         orchestrator.onForeground()
 

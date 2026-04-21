@@ -43,7 +43,10 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.robolectric.Shadows
 import org.robolectric.shadows.ShadowLooper
 
@@ -215,6 +218,37 @@ internal class EmbraceSetupInterface(
         getStore().edit {
             putStringMap(
                 "io.embrace.session.properties", properties
+            )
+        }
+    }
+
+    /**
+     * Persist a fake user session before the SDK starts, simulating a store
+     * from a previous process.
+     */
+    @OptIn(ExperimentalSemconv::class)
+    fun persistUserSession(
+        sessionId: String,
+        startMs: Long,
+        lastActivityMs: Long,
+        sessionNumber: Int = 1,
+        partNumber: Int = 1,
+        maxDurationSeconds: Long = 43200,
+        inactivityTimeoutSeconds: Long = 1800,
+    ) {
+        getStore().edit {
+            putStringMap(
+                "embrace.user_session",
+                mapOf(
+                    EmbSessionAttributes.EMB_USER_SESSION_ID to sessionId,
+                    EmbSessionAttributes.EMB_USER_SESSION_START_TS to startMs.toString(),
+                    EmbSessionAttributes.EMB_USER_SESSION_NUMBER to sessionNumber.toString(),
+                    EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS to maxDurationSeconds.toString(),
+                    EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS to inactivityTimeoutSeconds.toString(),
+                    SessionAttributes.SESSION_ID to sessionId,
+                    EmbSessionAttributes.EMB_USER_SESSION_PART_NUMBER to partNumber.toString(),
+                    "emb.user_session_last_activity_ts" to lastActivityMs.toString(),
+                )
             )
         }
     }

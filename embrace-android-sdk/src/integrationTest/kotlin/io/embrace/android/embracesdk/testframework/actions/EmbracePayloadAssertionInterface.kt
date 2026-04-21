@@ -109,13 +109,17 @@ internal class EmbracePayloadAssertionInterface(
 
     /**
      * Returns a list of sessions that were completed by the SDK.
+     *
+     * Set [assertOrdering] to false when the test deliberately produces sessions with
+     * out-of-order start times (e.g. clock-backwards anomaly tests).
      */
     internal fun getSessionEnvelopes(
         expectedSize: Int,
         state: AppState = AppState.FOREGROUND,
         waitTimeMs: Int = WAIT_TIME_MS,
+        assertOrdering: Boolean = true,
     ): List<Envelope<SessionPartPayload>> {
-        return retrieveSessionEnvelopes(expectedSize, state, waitTimeMs)
+        return retrieveSessionEnvelopes(expectedSize, state, waitTimeMs, assertOrdering)
     }
 
     /**
@@ -126,7 +130,7 @@ internal class EmbracePayloadAssertionInterface(
     ): Envelope<SessionPartPayload> = getSessionEnvelopes(1, state).single()
 
     private fun retrieveSessionEnvelopes(
-        expectedSize: Int, appState: AppState, waitTimeMs: Int,
+        expectedSize: Int, appState: AppState, waitTimeMs: Int, assertOrdering: Boolean,
     ): List<Envelope<SessionPartPayload>> {
         val supplier = {
             checkNotNull(apiServer).getSessionEnvelopes()
@@ -134,7 +138,7 @@ internal class EmbracePayloadAssertionInterface(
         }
         try {
             val envelopes = retrievePayload(expectedSize, waitTimeMs, supplier)
-            assertSessionsDeliveredInOrder(envelopes)
+            if (assertOrdering) assertSessionsDeliveredInOrder(envelopes)
             return envelopes
         } catch (exc: TimeoutException) {
             val envelopes = checkNotNull(apiServer).getSessionEnvelopes()

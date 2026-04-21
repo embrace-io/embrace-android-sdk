@@ -12,7 +12,7 @@ fun ReadableLogRecord.toEmbracePayload(): Log {
         timeUnixNano = timestamp,
         severityNumber = severityNumber?.ordinal,
         severityText = severityText,
-        body = body,
+        body = body?.toString(),
         attributes = attributes.map { (key, value) -> Attribute(key, value.toString()) }
     )
 }

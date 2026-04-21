@@ -11,9 +11,9 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.context.ContextKey
-import io.opentelemetry.kotlin.tracing.data.StatusData
-import io.opentelemetry.kotlin.tracing.model.SpanContext
-import io.opentelemetry.kotlin.tracing.model.SpanKind
+import io.opentelemetry.kotlin.tracing.SpanContext
+import io.opentelemetry.kotlin.tracing.SpanKind
+import io.opentelemetry.kotlin.tracing.StatusData
 
 /**
  * An [EmbraceSpan] that has additional functionality to be used internally by the SDK
@@ -131,7 +131,7 @@ fun getOrCreateSpanKey(openTelemetry: OpenTelemetry): ContextKey<EmbraceSdkSpan>
     if (embraceSpanContextKey == null) {
         synchronized(lock) {
             if (embraceSpanContextKey == null) {
-                embraceSpanContextKey = openTelemetry.context.root().createKey("embrace-span-key")
+                embraceSpanContextKey = openTelemetry.context.createKey("embrace-span-key")
             }
         }
     }

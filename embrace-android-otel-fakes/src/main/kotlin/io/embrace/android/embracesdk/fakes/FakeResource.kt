@@ -8,4 +8,5 @@ internal class FakeResource(
     override val schemaUrl: String? = null,
 ) : Resource {
     override fun asNewResource(action: MutableResource.() -> Unit): Resource = this
+    override fun merge(other: Resource): Resource = this
 }

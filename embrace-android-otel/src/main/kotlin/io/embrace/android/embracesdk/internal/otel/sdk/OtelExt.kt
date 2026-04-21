@@ -6,10 +6,10 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
+import io.opentelemetry.kotlin.tracing.Span
 import io.opentelemetry.kotlin.tracing.data.SpanData
 import io.opentelemetry.kotlin.tracing.data.SpanEventData
 import io.opentelemetry.kotlin.tracing.data.SpanLinkData
-import io.opentelemetry.kotlin.tracing.model.Span
 
 fun Span.setEmbraceAttribute(embraceAttribute: EmbraceAttribute) =
     setStringAttribute(embraceAttribute.key, embraceAttribute.value)

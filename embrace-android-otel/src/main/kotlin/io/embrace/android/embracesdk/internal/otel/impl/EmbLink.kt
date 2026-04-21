@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.opentelemetry.kotlin.attributes.AttributesMutator
-import io.opentelemetry.kotlin.tracing.model.SpanContext
+import io.opentelemetry.kotlin.tracing.SpanContext
 import io.opentelemetry.kotlin.tracing.model.SpanLink
 
 internal class EmbLink(

@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.otel.logs.EventService
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.logging.Logger
-import io.opentelemetry.kotlin.logging.model.SeverityNumber
+import io.opentelemetry.kotlin.logging.SeverityNumber
 
 class EmbLogger(
     private val impl: Logger,
@@ -17,19 +17,20 @@ class EmbLogger(
     ): Boolean = impl.enabled(context, severityNumber, eventName)
 
     override fun emit(
-        body: String?,
+        body: Any?,
         eventName: String?,
         timestamp: Long?,
         observedTimestamp: Long?,
         context: Context?,
         severityNumber: SeverityNumber?,
         severityText: String?,
+        exception: Throwable?,
         attributes: (AttributesMutator.() -> Unit)?,
     ) {
         eventService.log(
             impl = impl,
             eventName = eventName,
-            body = body,
+            body = body?.toString(),
             timestamp = timestamp,
             observedTimestamp = observedTimestamp,
             context = context,

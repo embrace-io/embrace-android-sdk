@@ -38,7 +38,7 @@ internal class AutoDataCaptureBehaviorImplTest {
             assertTrue(isUiLoadTracingTraceAll())
             assertTrue(isThermalStatusCaptureEnabled())
             assertFalse(isEndStartupWithAppReadyEnabled())
-            assertFalse(isStateCaptureEnabled())
+            assertTrue(isStateCaptureEnabled())
             assertFalse(isNetworkCallbackConnectivityServiceEnabled())
             assertTrue(isNavigationStateCaptureEnabled())
         }
@@ -130,23 +130,10 @@ internal class AutoDataCaptureBehaviorImplTest {
     }
 
     @Test
-    fun `enable state capture`() {
-        val behavior = createBehavior(
-            localUiLoadTracingEnabled = true,
-            localUiLoadTracingTraceAllEnabled = true,
-            stateCaptureEnabled = true,
-            remote = remote
-        )
-
-        assertTrue(behavior.isStateCaptureEnabled())
-    }
-
-    @Test
     fun `enable state capture remotely`() {
         val behavior = createBehavior(
             localUiLoadTracingEnabled = true,
             localUiLoadTracingTraceAllEnabled = true,
-            stateCaptureEnabled = false,
             remote = remote.copy(pctStateCaptureEnabledV2 = 100.0f)
         )
 
@@ -158,7 +145,6 @@ internal class AutoDataCaptureBehaviorImplTest {
         val behavior = createBehavior(
             localUiLoadTracingEnabled = true,
             localUiLoadTracingTraceAllEnabled = true,
-            stateCaptureEnabled = true,
             remote = remote.copy(pctStateCaptureEnabledV2 = 0.0f)
         )
 
@@ -189,13 +175,6 @@ internal class AutoDataCaptureBehaviorImplTest {
     }
 
     @Test
-    fun `navigation state capture enabled by default when remote pct is null`() {
-        assertTrue(
-            createBehavior(remote = RemoteConfig()).isNavigationStateCaptureEnabled()
-        )
-    }
-
-    @Test
     fun `navigation state capture enabled when pct is 100`() {
         assertTrue(
             createBehavior(
@@ -216,7 +195,6 @@ internal class AutoDataCaptureBehaviorImplTest {
     private fun createBehavior(
         localUiLoadTracingEnabled: Boolean = true,
         localUiLoadTracingTraceAllEnabled: Boolean = true,
-        stateCaptureEnabled: Boolean = false,
         remote: RemoteConfig,
     ) = AutoDataCaptureBehaviorImpl(
         thresholdCheck = BehaviorThresholdCheck { FAKE_DEVICE_ID },
@@ -224,7 +202,6 @@ internal class AutoDataCaptureBehaviorImplTest {
             enabledFeatures = FakeEnabledFeatureConfig(
                 uiLoadTracingTraceAll = localUiLoadTracingTraceAllEnabled,
                 uiLoadTracingEnabled = localUiLoadTracingEnabled,
-                stateCaptureEnabled = stateCaptureEnabled,
             )
         ),
         remote = remote

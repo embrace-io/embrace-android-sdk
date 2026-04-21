@@ -104,7 +104,7 @@ data class RemoteConfig(
     @Json(name = "pct_network_callback_connectivity_service_enabled")
     val pctNetworkCallbackConnectivityServiceEnabled: Float? = null,
 
-    @Json(name = "pct_navigation_state_capture_enabled")
+    @Json(name = "pct_screen_tracking_enabled")
     val pctNavigationStateCaptureEnabled: Float? = null,
 
     @Json(name = "user_session")

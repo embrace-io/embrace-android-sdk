@@ -16,6 +16,8 @@ class AutoDataCaptureBehaviorImpl(
     private companion object {
         const val THERMAL_STATUS_ENABLED_DEFAULT = true
         const val UI_LOAD_REMOTE_ENABLED_DEFAULT = true
+        const val STATE_CAPTURE_ENABLED_DEFAULT = true
+        const val NAVIGATION_STATE_CAPTURE_ENABLED_DEFAULT = true
     }
 
     private val local = local.enabledFeatures
@@ -47,11 +49,11 @@ class AutoDataCaptureBehaviorImpl(
 
     override fun isEndStartupWithAppReadyEnabled(): Boolean = local.isEndStartupWithAppReadyEnabled()
     override fun isStateCaptureEnabled(): Boolean =
-        thresholdCheck.isBehaviorEnabled(remote?.pctStateCaptureEnabledV2) ?: local.isStateCaptureEnabled()
+        thresholdCheck.isBehaviorEnabled(remote?.pctStateCaptureEnabledV2) ?: STATE_CAPTURE_ENABLED_DEFAULT
 
     override fun isNetworkCallbackConnectivityServiceEnabled(): Boolean =
         thresholdCheck.isBehaviorEnabled(remote?.pctNetworkCallbackConnectivityServiceEnabled) ?: false
 
     override fun isNavigationStateCaptureEnabled(): Boolean =
-        thresholdCheck.isBehaviorEnabled(remote?.pctNavigationStateCaptureEnabled) ?: true
+        thresholdCheck.isBehaviorEnabled(remote?.pctNavigationStateCaptureEnabled) ?: NAVIGATION_STATE_CAPTURE_ENABLED_DEFAULT
 }

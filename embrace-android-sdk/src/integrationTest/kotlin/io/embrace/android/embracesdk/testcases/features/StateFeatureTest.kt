@@ -39,67 +39,23 @@ internal class StateFeatureTest {
 
     val stateEnabledRemoteConfig = RemoteConfig(pctStateCaptureEnabledV2 = 100.0f)
     val stateDisabledRemoteConfig = RemoteConfig(pctStateCaptureEnabledV2 = 0.0f)
-    val stateEnabledLocalConfig = FakeInstrumentedConfig(
-        enabledFeatures = FakeEnabledFeatureConfig(
-            stateCaptureEnabled = true
-        )
-    )
-    val stateDisabledLocalConfig = FakeInstrumentedConfig(
-        enabledFeatures = FakeEnabledFeatureConfig(
-            stateCaptureEnabled = false
-        )
-    )
 
     @Test
-    fun `state feature off by default`() {
-        var throwable: Throwable? = null
+    fun `state feature on by default`() {
         testRule.runTest(
             testCaseAction = {
-                try {
-                    findDataSource<TestStateDataSource>()
-                } catch (e: IllegalStateException) {
-                    throwable = e
-                }
-                recordSession {}
+                recordSession()
             },
             assertAction = {
-                val message = getSingleSessionEnvelope()
-                assertEquals(0, message.findSpansOfType(EmbType.State).size)
-                assertTrue(throwable is IllegalStateException)
+                assertTrue(getSingleSessionEnvelope().findSpansOfType(EmbType.State).isNotEmpty())
             }
         )
     }
 
     @Test
-    fun `state feature off if disabled by local config`() {
+    fun `state feature off if disabled by remote config `() {
         var throwable: Throwable? = null
         testRule.runTest(
-            instrumentedConfig = FakeInstrumentedConfig(
-                enabledFeatures = FakeEnabledFeatureConfig(
-                    stateCaptureEnabled = false
-                )
-            ),
-            testCaseAction = {
-                try {
-                    findDataSource<TestStateDataSource>()
-                } catch (e: IllegalStateException) {
-                    throwable = e
-                }
-                recordSession {}
-            },
-            assertAction = {
-                val message = getSingleSessionEnvelope()
-                assertEquals(0, message.findSpansOfType(EmbType.State).size)
-                assertTrue(throwable is IllegalStateException)
-            }
-        )
-    }
-
-    @Test
-    fun `state feature off if disabled by remote config even if enabled local config`() {
-        var throwable: Throwable? = null
-        testRule.runTest(
-            instrumentedConfig = stateEnabledLocalConfig,
             persistedRemoteConfig = stateDisabledRemoteConfig,
             testCaseAction = {
                 try {
@@ -113,20 +69,6 @@ internal class StateFeatureTest {
                 val message = getSingleSessionEnvelope()
                 assertEquals(0, message.findSpansOfType(EmbType.State).size)
                 assertTrue(throwable is IllegalStateException)
-            }
-        )
-    }
-
-    @Test
-    fun `state feature on if enabled by remote config even if disabled by local config`() {
-        testRule.runTest(
-            instrumentedConfig = stateDisabledLocalConfig,
-            persistedRemoteConfig = stateEnabledRemoteConfig,
-            testCaseAction = {
-                recordSession {}
-            },
-            assertAction = {
-                assertTrue(getSingleSessionEnvelope().findSpansOfType(EmbType.State).isNotEmpty())
             }
         )
     }
@@ -490,7 +432,7 @@ internal class StateFeatureTest {
                     newStateValue = "first",
                     transitionAttributes = attrsFirst,
                 )
-                
+
                 events[1].assertStateTransition(
                     timestampMs = timestamps[2],
                     newStateValue = "second",

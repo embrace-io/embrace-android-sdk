@@ -17,7 +17,6 @@ import io.embrace.android.embracesdk.internal.otel.logs.LogRequest
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -97,10 +96,10 @@ internal class LogEnvelopeSourceImplTest {
     fun `check native crash envelope`() {
         val crashPayload = LogPayload(logs = listOf(nativeCrashLog))
         val crashLogAttributes = checkNotNull(nativeCrashLog.attributes)
-        val expectedSessionId = crashLogAttributes.findAttributeValue(SessionAttributes.SESSION_ID)
+        val expectedSessionId = crashLogAttributes.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID)
         val expectedProcessIdentifier = crashLogAttributes.findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER)
         val cachedCrashEnvelopeMetadata = createNativeCrashEnvelopeMetadata(
-            sessionId = expectedSessionId,
+            sessionPartId = expectedSessionId,
             processIdentifier = expectedProcessIdentifier,
         )
         logSource.singleLogPayloadsSource = listOf(

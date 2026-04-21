@@ -69,7 +69,7 @@ internal class PayloadResurrectionServiceImpl(
         val nativeCrashService = nativeCrashServiceProvider()
         val undeliveredPayloads = cacheStorageService.getUndeliveredPayloads()
         val payloadsToResurrect = undeliveredPayloads.filterNot { it.isCrashEnvelope() }
-        val nativeCrashes = nativeCrashService?.getNativeCrashes()?.associateBy { it.sessionId } ?: emptyMap()
+        val nativeCrashes = nativeCrashService?.getNativeCrashes()?.associateBy { it.sessionPartId } ?: emptyMap()
         val processedCrashes = mutableSetOf<NativeCrashData>()
 
         payloadsToResurrect.forEach { payload ->
@@ -126,7 +126,7 @@ internal class PayloadResurrectionServiceImpl(
                     if (resource != null && metadata != null) {
                         cachedLogEnvelopeStore.create(
                             storedTelemetryMetadata = createNativeCrashEnvelopeMetadata(
-                                sessionId = nativeCrash.sessionId
+                                sessionPartId = nativeCrash.sessionPartId
                             ),
                             resource = resource,
                             metadata = metadata
@@ -180,7 +180,7 @@ internal class PayloadResurrectionServiceImpl(
                 val nativeCrash = if (nativeCrashService != null && sessionId != null) {
                     nativeCrashProvider(sessionId)?.apply {
                         val nativeCrashEnvelopeMetadata = createNativeCrashEnvelopeMetadata(
-                            sessionId = sessionId,
+                            sessionPartId = sessionId,
                             processIdentifier = processIdentifier
                         )
 
@@ -269,7 +269,7 @@ internal class PayloadResurrectionServiceImpl(
      * Attach crash data to the existing session span in the payload if it exists
      */
     private fun Span.attachCrashToSession(nativeCrashData: NativeCrashData): Span {
-        return if (attributes?.findAttributeValue(SessionAttributes.SESSION_ID) == nativeCrashData.sessionId) {
+        return if (attributes?.findAttributeValue(SessionAttributes.SESSION_ID) == nativeCrashData.sessionPartId) {
             copy(
                 attributes = attributes?.plus(
                     Attribute(

@@ -111,5 +111,5 @@ data class RemoteConfig(
     val userSession: UserSessionRemoteConfig? = null,
 
     @Json(name = "test_err")
-    val testErr: Boolean? = null,
+    val testErr2: Boolean? = null,
 )

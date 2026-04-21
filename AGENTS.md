@@ -301,6 +301,7 @@ From `CONTRIBUTING.md`:
 - Lint suppression must be done in code with explanation
 - Commits should be reasonably small (<500 lines diff) with proper messages
 - PR template has `Goal` and `Testing` sections
+- Verify changes with `./gradlew build -x embrace-gradle-plugin-integration-tests:test`
 
 ---
 

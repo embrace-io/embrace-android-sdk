@@ -36,4 +36,10 @@ interface SessionPartTracker {
      * Adds a listener that will be called when the active session ends. This will be called prior to the session ending.
      */
     fun addSessionPartEndListener(listener: SessionPartEndListener)
+
+    /**
+     * Persists both the session part ID and user session ID into the process state summary so
+     * that AEI logs can recover them after a process death.
+     */
+    fun setProcessStateSummary(sessionPartId: String, userSessionId: String)
 }

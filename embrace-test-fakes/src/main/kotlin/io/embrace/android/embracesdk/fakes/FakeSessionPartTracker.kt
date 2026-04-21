@@ -31,4 +31,6 @@ class FakeSessionPartTracker : SessionPartTracker {
 
         return currentSession
     }
+
+    override fun setProcessStateSummary(sessionPartId: String, userSessionId: String) {}
 }

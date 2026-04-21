@@ -27,6 +27,7 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -312,7 +313,7 @@ internal class AeiFeatureTest {
             attributes?.assertMatches(
                 mapOf<String, Any?>(
                     EmbAeiAttributes.TIMESTAMP to timestamp,
-                    EmbAeiAttributes.AEI_SESSION_ID to sessionId,
+                    EmbAeiAttributes.AEI_SESSION_PART_ID to sessionId,
                     EmbAeiAttributes.SESSION_ID_ERROR to sessionIdError,
                     EmbAeiAttributes.TRACE_STATUS to traceStatus,
                     EmbAeiAttributes.PROCESS_IMPORTANCE to importance,

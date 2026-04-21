@@ -115,7 +115,7 @@ sealed class SchemaType(
     }
 
     class AeiLog(
-        sessionId: String?,
+        sessionPartId: String?,
         sessionIdError: String?,
         importance: Int?,
         pss: Long?,
@@ -127,9 +127,11 @@ sealed class SchemaType(
         traceStatus: String?,
         crashNumber: Int?,
         aeiNumber: Int?,
+        userSessionId: String?,
     ) : SchemaType(EmbType.System.Exit) {
         override val schemaAttributes: Map<String, String> = mapOf(
-            EmbAeiAttributes.AEI_SESSION_ID to sessionId,
+            EmbAeiAttributes.AEI_SESSION_PART_ID to sessionPartId,
+            EmbAeiAttributes.AEI_USER_SESSION_ID to userSessionId,
             EmbAeiAttributes.SESSION_ID_ERROR to sessionIdError,
             EmbAeiAttributes.PROCESS_IMPORTANCE to importance.toString(),
             EmbAeiAttributes.PSS to pss.toString(),

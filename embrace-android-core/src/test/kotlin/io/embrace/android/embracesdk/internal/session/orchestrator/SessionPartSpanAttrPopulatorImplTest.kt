@@ -46,7 +46,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
 
         val attrs = destination.attributes
         assertEquals("false", attrs[EmbSessionAttributes.EMB_COLD_START])
-        assertEquals("5", attrs[EmbSessionAttributes.EMB_USER_SESSION_PART_NUMBER])
+        assertEquals("2", attrs[EmbSessionAttributes.EMB_USER_SESSION_PART_NUMBER])
         assertEquals("foreground", attrs[EmbSessionAttributes.EMB_STATE])
         assertEquals("false", attrs[EmbSessionAttributes.EMB_CLEAN_EXIT])
         assertEquals("true", attrs[EmbSessionAttributes.EMB_TERMINATED])

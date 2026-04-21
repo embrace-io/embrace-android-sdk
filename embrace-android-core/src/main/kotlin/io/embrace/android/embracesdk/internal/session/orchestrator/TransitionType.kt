@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSession
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 
 enum class TransitionType {
-    INITIAL, END_MANUAL, ON_FOREGROUND, ON_BACKGROUND, CRASH, INACTIVITY_TIMEOUT, INACTIVITY_FOREGROUND, MAX_DURATION;
+    INITIAL, END_MANUAL, ON_FOREGROUND, ON_BACKGROUND, CRASH, INACTIVITY_TIMEOUT, INACTIVITY_FOREGROUND, MAX_DURATION, MAX_DURATION_FOREGROUND;
 
     val endAttributes: Map<String, String> by lazy {
         when (this) {
@@ -25,7 +25,7 @@ enum class TransitionType {
                     EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON to EmbUserSessionTerminationReasonValues.INACTIVITY,
                 )
 
-            MAX_DURATION ->
+            MAX_DURATION, MAX_DURATION_FOREGROUND ->
                 mapOf(
                     EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART to "1",
                     EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON to EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED,
@@ -36,7 +36,7 @@ enum class TransitionType {
     }
 
     fun endState(currentState: AppState): AppState = when (this) {
-        ON_FOREGROUND, INACTIVITY_FOREGROUND -> AppState.FOREGROUND
+        ON_FOREGROUND, INACTIVITY_FOREGROUND, MAX_DURATION_FOREGROUND -> AppState.FOREGROUND
         ON_BACKGROUND, INACTIVITY_TIMEOUT -> AppState.BACKGROUND
         else -> currentState
     }

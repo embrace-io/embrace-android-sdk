@@ -132,7 +132,7 @@ internal class SessionOrchestratorImpl(
             if (metadata?.isInactive(clock) == true) {
                 TransitionType.INACTIVITY_FOREGROUND
             } else if (metadata?.isOverMaxDuration(clock) == true) {
-                TransitionType.MAX_DURATION
+                TransitionType.MAX_DURATION_FOREGROUND
             } else {
                 TransitionType.ON_FOREGROUND
             }
@@ -310,7 +310,8 @@ internal class SessionOrchestratorImpl(
                         if (transitionType == TransitionType.END_MANUAL ||
                             transitionType == TransitionType.INACTIVITY_TIMEOUT ||
                             transitionType == TransitionType.INACTIVITY_FOREGROUND ||
-                            transitionType == TransitionType.MAX_DURATION
+                            transitionType == TransitionType.MAX_DURATION ||
+                            transitionType == TransitionType.MAX_DURATION_FOREGROUND
                         ) {
                             handleUserSessionEnd(timestamp)
                         } else {
@@ -332,11 +333,16 @@ internal class SessionOrchestratorImpl(
             // update newly created session
             val userSession = currentUserSession()
             if (newSession != null && userSession != null) {
+                incrementPartNumber()
+                val updatedUserSession = checkNotNull(currentUserSession())
                 if (endAppState == AppState.FOREGROUND) {
-                    sessionTracker.setProcessStateSummary(newSession.sessionPartId, userSession.userSessionId)
+                    sessionTracker.setProcessStateSummary(newSession.sessionPartId, updatedUserSession.userSessionId)
+                    if (maxDurationTimerState == null) {
+                        scheduleMaxDurationTimeout(updatedUserSession)
+                    }
                 }
                 boundaryDelegate.prepareForNewSession()
-                sessionSpanAttrPopulator.populateSessionSpanStartAttrs(newSession, userSession)
+                sessionSpanAttrPopulator.populateSessionSpanStartAttrs(newSession, updatedUserSession)
                 if (transitionType != TransitionType.CRASH) {
                     // initiate periodic caching of the payload if a new session has started
                     EmbTrace.start("initiate-periodic-caching")
@@ -455,10 +461,7 @@ internal class SessionOrchestratorImpl(
                 terminateUserSession(current)
                 startNewUserSession(timestamp)
             } else {
-                val updatedMetadata = current.metadata.copy(
-                    partNumber = current.metadata.partNumber + 1,
-                    lastActivityMs = timestamp,
-                )
+                val updatedMetadata = current.metadata.copy(lastActivityMs = timestamp)
                 metadataStore.save(updatedMetadata)
                 userSessionState = UserSessionState.Active(updatedMetadata)
             }
@@ -488,7 +491,7 @@ internal class SessionOrchestratorImpl(
             userSessionNumber = ordinalStore.incrementAndGet(Ordinal.USER_SESSION).toLong(),
             maxDurationSecs = maxDurationMs / 1_000L,
             inactivityTimeoutSecs = inactivityTimeoutMs / 1_000L,
-            partNumber = 1,
+            partNumber = 0,
             lastActivityMs = startTimeMs,
         )
         metadataStore.save(newMetadata)
@@ -506,5 +509,12 @@ internal class SessionOrchestratorImpl(
         metadataStore.clear()
         userSessionState = UserSessionState.Terminated
         notifyListeners(SessionStateEvent.UserSessionEnded(state.metadata.userSessionId))
+    }
+
+    private fun incrementPartNumber() {
+        val current = userSessionState as? UserSessionState.Active ?: return
+        val updatedMetadata = current.metadata.copy(partNumber = current.metadata.partNumber + 1)
+        metadataStore.save(updatedMetadata)
+        userSessionState = UserSessionState.Active(updatedMetadata)
     }
 }

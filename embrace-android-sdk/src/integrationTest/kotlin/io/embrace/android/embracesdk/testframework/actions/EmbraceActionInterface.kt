@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.testframework.actions
 
 import android.app.Activity
 import androidx.lifecycle.Lifecycle
-import androidx.navigation.NavController
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.HasNavController
@@ -144,7 +143,7 @@ internal class EmbraceActionInterface(
         endInBackground: Boolean = true,
         createFirstActivity: Boolean = true,
         invokeManualEnd: Boolean = false,
-        toBeRegisteredNavControllerProvider: () -> NavController? = { null },
+        postOnStart: (Activity) -> Unit = {},
         activitiesAndActions: List<Pair<ActivityController<*>, () -> Unit>> = listOf(
             Robolectric.buildActivity(Activity::class.java) to {},
         ),
@@ -183,11 +182,7 @@ internal class EmbraceActionInterface(
                 onForeground()
             }
             invokeWithMainLooperUnblock(activityController::start)
-            toBeRegisteredNavControllerProvider()?.let {
-                invokeWithMainLooperUnblock {
-                    bootstrapper.essentialServiceModule.navigationTrackingService.trackNavigation(activityController.get(), it)
-                }
-            }
+            invokeWithMainLooperUnblock { postOnStart(activityController.get()) }
             setup.getClock().tick(LIFECYCLE_EVENT_GAP)
             invokeWithMainLooperUnblock(activityController::resume)
             setup.getClock().tick(LIFECYCLE_EVENT_GAP)
@@ -233,21 +228,25 @@ internal class EmbraceActionInterface(
 
     /**
      * Simulates opening a [TestNavHostFragmentActivity] and navigating through the given routes.
-     * The tracking of the underlying [NavController] is handled automatically by the SDK. No explicit [NavController] tracking is done
+     * The tracking of the navigation will be handled automatically by the SDK.
      */
     inline fun <reified T : TestNavHostFragmentActivity> simulateNavHostFragmentActivityNavigation(
         routes: List<String>,
         activityController: ActivityController<T> = Robolectric.buildActivity(T::class.java),
-    ) = simulateNavControllerNavigation(routes, false, activityController)
+    ) = simulateNavControllerNavigation(routes, activityController)
 
     /**
-     * Simulates opening the given [Activity] and navigating through the destinations [routes] defined on the [NavController] provided by
-     * the [HasNavController] interface. The [NavController] will be accessed during onStart, so its initialization has to be done by then.
+     * Simulates opening the given [Activity] and navigating through the given destinations using the NavController provided
+     * by the [HasNavController] interface. The public API for tracking NavControllers will be called after
+     * onStart to register the given NavControlle for navigation tracking.
      */
     inline fun <reified T> simulateNavControllerTrackingAndNavigation(
         routes: List<String>,
         activityController: ActivityController<T>,
-    ) where T : Activity, T : HasNavController = simulateNavControllerNavigation(routes, true, activityController)
+    ): AppExecutionTimestamps where T : Activity, T : HasNavController =
+        simulateNavControllerNavigation(routes, activityController) { activity ->
+            embrace.observeNavigation(activity, activityController.get().getNavController())
+        }
 
     fun simulateJvmUncaughtException(exc: Throwable) {
         Thread.getDefaultUncaughtExceptionHandler()?.uncaughtException(Thread.currentThread(), exc)
@@ -264,19 +263,13 @@ internal class EmbraceActionInterface(
 
     private inline fun <reified T> simulateNavControllerNavigation(
         routes: List<String>,
-        registerNavController: Boolean,
         activityController: ActivityController<T>,
+        crossinline postStart: (Activity) -> Unit = {},
     ): AppExecutionTimestamps where T : Activity, T : HasNavController =
         simulateOpeningActivities(
             addStartupActivity = false,
             startInBackground = true,
-            toBeRegisteredNavControllerProvider = {
-                if (registerNavController) {
-                    activityController.get().getNavController()
-                } else {
-                    null
-                }
-            },
+            postOnStart = { activity -> postStart(activity) },
             activitiesAndActions = listOf(
                 activityController to {
                     routes.forEach { route ->

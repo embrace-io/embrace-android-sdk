@@ -276,7 +276,7 @@ internal class NavigationStateFeatureTest {
     }
 
     @Test
-    fun `navigation of NavController tracked using internal API creates state span`() {
+    fun `navigation of NavController tracked using public observeNavigation API creates state span`() {
         var timestamps: AppExecutionTimestamps? = null
         val activityController = Robolectric.buildActivity(TestNavControllerActivity::class.java)
         val expectedStateValues = listOf("home", "contacts", "about", "Backgrounded")

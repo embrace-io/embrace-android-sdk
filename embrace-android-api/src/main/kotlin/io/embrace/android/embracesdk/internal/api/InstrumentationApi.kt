@@ -86,7 +86,7 @@ public interface InstrumentationApi {
     )
 
     /**
-     * Add a completed child span to the app startup trace with the given  attributes and span events.
+     * Add a completed child span to the app startup trace with the given attributes and span events.
      * Specify an [ErrorCode] if the span didn't complete successfully.
      */
     public fun addStartupTraceChildSpan(
@@ -97,4 +97,12 @@ public interface InstrumentationApi {
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     )
+
+    /**
+     * Observe navigation within the given [Activity] that is controlled by the given [navigationController].
+     *
+     * [navigationController] is intentionally typeless so the SDK can introspect about its capabilities and do the required
+     * wiring in order to observe and track navigation
+     */
+    public fun observeNavigation(activity: Activity, navigationController: Any)
 }

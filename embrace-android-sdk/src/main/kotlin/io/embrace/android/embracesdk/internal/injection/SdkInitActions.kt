@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.injection
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
-import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStateDataSource
@@ -186,21 +185,17 @@ internal fun ModuleGraph.setupMetadataProvider() {
 private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, String>> {
     return {
         mutableMapOf<String, String>().apply {
-            var sessionState: AppState? = null
-            essentialServiceModule.sessionPartTracker.getActiveSessionPart()?.let { session ->
-                if (session.sessionPartId.isNotBlank()) {
-                    put(EmbSessionAttributes.EMB_SESSION_PART_ID, session.sessionPartId)
-                    userSessionOrchestrationModule.sessionIdProvider.getCurrentUserSessionId()
-                        ?.takeIf { it.isNotBlank() }
-                        ?.let { userSessionId ->
-                            put(SessionAttributes.SESSION_ID, userSessionId)
-                            put(EmbSessionAttributes.EMB_USER_SESSION_ID, userSessionId)
-                        }
-                }
-                sessionState = session.appState
+            val sessionPart = essentialServiceModule.sessionPartTracker.getActiveSessionPart()
+            val sessionState = sessionPart?.appState ?: essentialServiceModule.appStateTracker.getAppState()
+            val sessionIdProvider = userSessionOrchestrationModule.sessionIdProvider
+            val userSessionId = sessionIdProvider.getCurrentUserSessionId()
+
+            put(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionIdProvider.getCurrentSessionPartId())
+            if (sessionPart != null && userSessionId.isNotBlank()) {
+                put(EmbSessionAttributes.EMB_USER_SESSION_ID, userSessionId)
+                put(SessionAttributes.SESSION_ID, userSessionId)
             }
-            val state = sessionState ?: essentialServiceModule.appStateTracker.getAppState()
-            put(EmbSessionAttributes.EMB_STATE, state.description)
+            put(EmbSessionAttributes.EMB_STATE, sessionState.description)
             putAll(
                 essentialServiceModule.userSessionPropertiesService
                     .getProperties()

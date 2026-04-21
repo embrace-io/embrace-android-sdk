@@ -77,6 +77,7 @@ internal class InitializedModuleGraph(
             workerThreadModule,
             { null },
             { null },
+            { userSessionOrchestrationModule.sessionOrchestrator },
         )
     }
 

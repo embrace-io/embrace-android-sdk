@@ -33,7 +33,7 @@ internal class UserSessionApiDelegateTest {
         fakeModule = FakeUserSessionOrchestrationModule()
         val moduleInitBootstrapper = ModuleInitBootstrapper(
             FakeInitModule(),
-            essentialServiceModuleSupplier = { _, _, _, _, _, _, _ ->
+            essentialServiceModuleSupplier = { _, _, _, _, _, _, _, _ ->
                 FakeEssentialServiceModule()
             },
             userSessionOrchestrationModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _ ->

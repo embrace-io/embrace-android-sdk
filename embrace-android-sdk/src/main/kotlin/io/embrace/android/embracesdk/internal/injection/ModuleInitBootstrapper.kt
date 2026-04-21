@@ -94,6 +94,7 @@ internal class ModuleInitBootstrapper(
             workerThreadModule: WorkerThreadModule,
             lifecycleOwnerProvider: Provider<LifecycleOwner?>,
             networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
+            sessionOrchestratorProvider,
         ->
         EssentialServiceModuleImpl(
             initModule,
@@ -103,6 +104,7 @@ internal class ModuleInitBootstrapper(
             workerThreadModule,
             lifecycleOwnerProvider,
             networkConnectivityServiceProvider,
+            sessionOrchestratorProvider,
         )
     },
     private val featureModuleSupplier: FeatureModuleSupplier = {

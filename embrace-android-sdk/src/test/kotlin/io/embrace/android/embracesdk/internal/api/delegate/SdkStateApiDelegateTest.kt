@@ -40,7 +40,7 @@ internal class SdkStateApiDelegateTest {
             configServiceSupplier = { _, _, _, _ ->
                 configService
             },
-            essentialServiceModuleSupplier = { _, _, _, _, _, _, _ ->
+            essentialServiceModuleSupplier = { _, _, _, _, _, _, _, _ ->
                 FakeEssentialServiceModule()
             },
             logModuleSupplier = { _, _, _, _, _, _, _ ->

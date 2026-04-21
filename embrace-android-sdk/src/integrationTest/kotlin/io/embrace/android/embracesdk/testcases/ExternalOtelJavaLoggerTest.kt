@@ -150,7 +150,7 @@ internal class ExternalOtelJavaLoggerTest {
                 clock.tick()
                 logTime = clock.now().millisToNanos()
                 embrace.addUserSessionProperty("bg-attr", "blah", PropertyScope.PERMANENT)
-                sessionId = checkNotNull(testRule.bootstrapper.userSessionOrchestrationModule.sessionIdProvider.getCurrentUserSessionId())
+                sessionId = testRule.bootstrapper.userSessionOrchestrationModule.sessionIdProvider.getCurrentUserSessionId()
                 val span = embOpenTelemetry.getTracer("").spanBuilder("my-span").startSpan()
                 val logContext = span.storeInContext(OtelJavaContext.root())
                 parentContext = span.spanContext

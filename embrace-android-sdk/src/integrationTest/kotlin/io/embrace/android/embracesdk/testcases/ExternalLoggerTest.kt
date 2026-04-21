@@ -154,7 +154,7 @@ internal class ExternalLoggerTest {
                 clock.tick()
                 logTime = clock.now().millisToNanos()
                 embrace.addUserSessionProperty("bg-attr", "blah", PropertyScope.PERMANENT)
-                sessionId = checkNotNull(testRule.bootstrapper.userSessionOrchestrationModule.sessionIdProvider.getCurrentUserSessionId())
+                sessionId = testRule.bootstrapper.userSessionOrchestrationModule.sessionIdProvider.getCurrentUserSessionId()
                 val span = embOpenTelemetry.getTracer("").startSpan("my-span")
                 parentContext = span.spanContext
                 embLogger.emit(

@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Test
 
 class EmbraceSpanProcessorTest {
@@ -31,15 +30,28 @@ class EmbraceSpanProcessorTest {
     }
 
     @Test
-    fun `user session id not set when session part id is absent`() {
+    fun `empty string set for session attributes when ids are absent`() {
         val spanExporter = FakeSpanExporter()
-        val provider = FakeSessionIdProvider(userSessionId = "user-sid", sessionPartId = null)
+        val provider = FakeSessionIdProvider(userSessionId = "", sessionPartId = "")
         val processor = EmbraceSpanProcessor({ provider }, "pid", spanExporter)
         val span = FakeReadWriteSpan()
         processor.onStart(span, NoopOpenTelemetry.context.implicit())
 
-        assertNull(span.attributes[EmbSessionAttributes.EMB_SESSION_PART_ID])
-        assertNull(span.attributes[SessionAttributes.SESSION_ID])
-        assertNull(span.attributes[EmbSessionAttributes.EMB_USER_SESSION_ID])
+        assertEquals("", span.attributes[EmbSessionAttributes.EMB_SESSION_PART_ID])
+        assertEquals("", span.attributes[EmbSessionAttributes.EMB_USER_SESSION_ID])
+        assertEquals("", span.attributes[SessionAttributes.SESSION_ID])
+    }
+
+    @Test
+    fun `empty string set for user session id when only session part id is absent`() {
+        val spanExporter = FakeSpanExporter()
+        val provider = FakeSessionIdProvider(userSessionId = "", sessionPartId = "part-sid")
+        val processor = EmbraceSpanProcessor({ provider }, "pid", spanExporter)
+        val span = FakeReadWriteSpan()
+        processor.onStart(span, NoopOpenTelemetry.context.implicit())
+
+        assertEquals("part-sid", span.attributes[EmbSessionAttributes.EMB_SESSION_PART_ID])
+        assertEquals("", span.attributes[EmbSessionAttributes.EMB_USER_SESSION_ID])
+        assertEquals("", span.attributes[SessionAttributes.SESSION_ID])
     }
 }

@@ -81,7 +81,7 @@ internal class BackgroundActivityDisabledTest {
                             EmbSessionAttributes.EMB_STATE to "background"
                         )
                     )
-                    assertNull(attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
+                    assertFalse(attributes?.findAttributeValue(SessionAttributes.SESSION_ID).isNullOrBlank())
                 }
                 with(logs[1]) {
                     assertEquals("info", body)
@@ -90,7 +90,7 @@ internal class BackgroundActivityDisabledTest {
                             EmbSessionAttributes.EMB_STATE to "background"
                         )
                     )
-                    assertNull(attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
+                    assertFalse(attributes?.findAttributeValue(SessionAttributes.SESSION_ID).isNullOrBlank())
                 }
                 with(logs[2]) {
                     assertEquals("warning", body)

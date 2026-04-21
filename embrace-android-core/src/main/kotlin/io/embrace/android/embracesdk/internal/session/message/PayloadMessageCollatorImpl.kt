@@ -13,8 +13,8 @@ import io.embrace.android.embracesdk.internal.store.OrdinalStore
  */
 internal class PayloadMessageCollatorImpl(
     private val sessionPartEnvelopeSource: SessionPartEnvelopeSource,
-    private val store: OrdinalStore,
     private val currentSessionPartSpan: CurrentSessionPartSpan,
+    private val store: OrdinalStore,
 ) : PayloadMessageCollator {
 
     override fun buildInitialPart(params: InitialEnvelopeParams): SessionPartToken = with(params) {

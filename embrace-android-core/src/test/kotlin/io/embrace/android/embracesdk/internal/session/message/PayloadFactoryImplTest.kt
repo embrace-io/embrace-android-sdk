@@ -33,9 +33,9 @@ internal class PayloadFactoryImplTest {
             partPayloadSource = partPayloadSource
         )
         val collator = PayloadMessageCollatorImpl(
-            store = FakeOrdinalStore(),
+            sessionPartEnvelopeSource = payloadSourceModule.sessionPartEnvelopeSource,
             currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan,
-            sessionPartEnvelopeSource = payloadSourceModule.sessionPartEnvelopeSource
+            store = FakeOrdinalStore(),
         )
         factory = PayloadFactoryImpl(
             payloadMessageCollator = collator,

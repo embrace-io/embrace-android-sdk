@@ -43,9 +43,9 @@ internal class PayloadMessageCollatorImplTest {
         )
         currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan
         collator = PayloadMessageCollatorImpl(
-            store = FakeOrdinalStore(),
+            sessionPartEnvelopeSource = sessionPartEnvelopeSource,
             currentSessionPartSpan = currentSessionPartSpan,
-            sessionPartEnvelopeSource = sessionPartEnvelopeSource
+            store = FakeOrdinalStore(),
         )
     }
 

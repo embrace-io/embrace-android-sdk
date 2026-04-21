@@ -101,8 +101,8 @@ internal class PayloadFactorySessionPartTest {
         val logger = InternalLoggerImpl()
         val collator = PayloadMessageCollatorImpl(
             payloadSourceModule.sessionPartEnvelopeSource,
+            currentSessionPartSpan,
             store,
-            currentSessionPartSpan
         )
         service = PayloadFactoryImpl(collator, payloadSourceModule.logEnvelopeSource, FakeConfigService(), logger)
     }

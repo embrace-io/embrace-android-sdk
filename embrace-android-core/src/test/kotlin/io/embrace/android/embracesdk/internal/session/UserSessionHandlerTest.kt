@@ -99,8 +99,8 @@ internal class UserSessionHandlerTest {
                 resourceSource = FakeEnvelopeResourceSource(),
                 payloadSource = partPayloadSource
             ),
+            currentSessionPartSpan,
             store,
-            currentSessionPartSpan
         )
         payloadFactory = PayloadFactoryImpl(collator, payloadSourceModule.logEnvelopeSource, configService, logger)
     }

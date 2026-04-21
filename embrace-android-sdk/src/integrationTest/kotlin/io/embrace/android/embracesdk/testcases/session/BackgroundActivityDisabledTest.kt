@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.assertions.findEventsOfType
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getLogsOfType
 import io.embrace.android.embracesdk.assertions.getSessionId
-import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
@@ -82,7 +81,7 @@ internal class BackgroundActivityDisabledTest {
                             EmbSessionAttributes.EMB_STATE to "background"
                         )
                     )
-                    assertNull(attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
+                    assertFalse(attributes?.findAttributeValue(SessionAttributes.SESSION_ID).isNullOrBlank())
                 }
                 with(logs[1]) {
                     assertEquals("info", body)
@@ -91,14 +90,14 @@ internal class BackgroundActivityDisabledTest {
                             EmbSessionAttributes.EMB_STATE to "background"
                         )
                     )
-                    assertNull(attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
+                    assertFalse(attributes?.findAttributeValue(SessionAttributes.SESSION_ID).isNullOrBlank())
                 }
                 with(logs[2]) {
                     assertEquals("warning", body)
                     attributes?.assertMatches(
                         mapOf(
                             EmbSessionAttributes.EMB_STATE to "foreground",
-                            SessionAttributes.SESSION_ID to sessions[1].getSessionPartId()
+                            SessionAttributes.SESSION_ID to sessions[1].getSessionId()
                         )
                     )
                 }
@@ -109,7 +108,7 @@ internal class BackgroundActivityDisabledTest {
                     attributes?.assertMatches(
                         mapOf(
                             EmbSessionAttributes.EMB_STATE to "foreground",
-                            SessionAttributes.SESSION_ID to secondSession.getSessionPartId()
+                            SessionAttributes.SESSION_ID to secondSession.getSessionId()
                         )
                     )
                 }

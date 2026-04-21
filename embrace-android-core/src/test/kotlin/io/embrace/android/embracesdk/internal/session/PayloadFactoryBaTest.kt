@@ -124,8 +124,8 @@ internal class PayloadFactoryBaTest {
         )
         val collator = PayloadMessageCollatorImpl(
             payloadSourceModule.sessionPartEnvelopeSource,
+            currentSessionPartSpan,
             store,
-            currentSessionPartSpan
         )
         return PayloadFactoryImpl(collator, payloadSourceModule.logEnvelopeSource, configService, logger).apply {
             if (createInitialSession) {

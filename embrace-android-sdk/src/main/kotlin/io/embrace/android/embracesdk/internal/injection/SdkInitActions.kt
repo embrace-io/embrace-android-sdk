@@ -191,10 +191,8 @@ private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, St
             val userSessionId = sessionIdProvider.getCurrentUserSessionId()
 
             put(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionIdProvider.getCurrentSessionPartId())
-            if (sessionPart != null && userSessionId.isNotBlank()) {
-                put(EmbSessionAttributes.EMB_USER_SESSION_ID, userSessionId)
-                put(SessionAttributes.SESSION_ID, userSessionId)
-            }
+            put(EmbSessionAttributes.EMB_USER_SESSION_ID, userSessionId)
+            put(SessionAttributes.SESSION_ID, userSessionId)
             put(EmbSessionAttributes.EMB_STATE, sessionState.description)
             putAll(
                 essentialServiceModule.userSessionPropertiesService

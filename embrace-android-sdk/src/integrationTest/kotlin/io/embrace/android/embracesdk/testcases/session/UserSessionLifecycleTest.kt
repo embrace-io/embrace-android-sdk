@@ -120,7 +120,10 @@ internal class UserSessionLifecycleTest {
 
                 assertNotEquals(fgSessions[0].getUserSessionId(), fgSessions[1].getUserSessionId())
                 assertEquals("1", bgSessions[1].findSessionSpan().attributes?.findAttributeValue(EMB_IS_FINAL_SESSION_PART))
-                assertEquals(INACTIVITY, bgSessions[1].findSessionSpan().attributes?.findAttributeValue(EMB_USER_SESSION_TERMINATION_REASON))
+                assertEquals(
+                    INACTIVITY,
+                    bgSessions[1].findSessionSpan().attributes?.findAttributeValue(EMB_USER_SESSION_TERMINATION_REASON)
+                )
                 assertNull(bgSessions[0].findSessionSpan().attributes?.findAttributeValue(EMB_IS_FINAL_SESSION_PART))
                 assertNull(fgSessions[0].findSessionSpan().attributes?.findAttributeValue(EMB_IS_FINAL_SESSION_PART))
                 assertNull(fgSessions[0].findSessionSpan().attributes?.findAttributeValue(EMB_USER_SESSION_TERMINATION_REASON))
@@ -284,5 +287,4 @@ internal class UserSessionLifecycleTest {
             }
         )
     }
-
 }

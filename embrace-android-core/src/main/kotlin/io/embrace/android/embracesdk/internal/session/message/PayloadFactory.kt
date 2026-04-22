@@ -14,7 +14,12 @@ interface PayloadFactory {
     /**
      * Starts a session in response to a state event.
      */
-    fun startPayloadWithState(state: AppState, timestamp: Long, coldStart: Boolean): SessionPartToken?
+    fun startPayloadWithState(
+        state: AppState,
+        timestamp: Long,
+        coldStart: Boolean,
+        partNumber: Int
+    ): SessionPartToken?
 
     /**
      * Ends a session in response to a state event.
@@ -43,7 +48,7 @@ interface PayloadFactory {
     /**
      * Starts a session manually.
      */
-    fun startSessionWithManual(timestamp: Long): SessionPartToken
+    fun startSessionWithManual(timestamp: Long, partNumber: Int): SessionPartToken
 
     /**
      * Ends a session manually.

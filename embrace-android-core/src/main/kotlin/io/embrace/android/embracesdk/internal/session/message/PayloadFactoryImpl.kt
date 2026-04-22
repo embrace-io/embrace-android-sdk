@@ -18,10 +18,10 @@ internal class PayloadFactoryImpl(
     private val logger: InternalLogger,
 ) : PayloadFactory {
 
-    override fun startPayloadWithState(state: AppState, timestamp: Long, coldStart: Boolean): SessionPartToken? =
+    override fun startPayloadWithState(state: AppState, timestamp: Long, coldStart: Boolean, partNumber: Int): SessionPartToken? =
         when (state) {
-            AppState.FOREGROUND -> startSessionWithState(timestamp, coldStart)
-            AppState.BACKGROUND -> startBackgroundActivityWithState(timestamp, coldStart)
+            AppState.FOREGROUND -> startSessionWithState(timestamp, coldStart, partNumber)
+            AppState.BACKGROUND -> startBackgroundActivityWithState(timestamp, coldStart, partNumber)
         }
 
     override fun endPayloadWithState(
@@ -54,13 +54,14 @@ internal class PayloadFactoryImpl(
             AppState.BACKGROUND -> snapshotBackgroundActivity(initial)
         }
 
-    override fun startSessionWithManual(timestamp: Long): SessionPartToken {
+    override fun startSessionWithManual(timestamp: Long, partNumber: Int): SessionPartToken {
         return payloadMessageCollator.buildInitialPart(
             InitialEnvelopeParams(
                 false,
                 LifeEventType.MANUAL,
                 timestamp,
-                AppState.FOREGROUND
+                AppState.FOREGROUND,
+                partNumber,
             )
         )
     }
@@ -80,18 +81,19 @@ internal class PayloadFactoryImpl(
         return logEnvelopeSource.getEmptySingleLogEnvelope()
     }
 
-    private fun startSessionWithState(timestamp: Long, coldStart: Boolean): SessionPartToken {
+    private fun startSessionWithState(timestamp: Long, coldStart: Boolean, partNumber: Int): SessionPartToken {
         return payloadMessageCollator.buildInitialPart(
             InitialEnvelopeParams(
                 coldStart,
                 LifeEventType.STATE,
                 timestamp,
-                AppState.FOREGROUND
+                AppState.FOREGROUND,
+                partNumber,
             )
         )
     }
 
-    private fun startBackgroundActivityWithState(timestamp: Long, coldStart: Boolean): SessionPartToken? {
+    private fun startBackgroundActivityWithState(timestamp: Long, coldStart: Boolean, partNumber: Int): SessionPartToken? {
         if (!isBackgroundActivityEnabled()) {
             return null
         }
@@ -107,7 +109,8 @@ internal class PayloadFactoryImpl(
                 coldStart = coldStart,
                 startType = LifeEventType.BKGND_STATE,
                 startTime = time,
-                AppState.BACKGROUND
+                AppState.BACKGROUND,
+                partNumber,
             )
         )
     }

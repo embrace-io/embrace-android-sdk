@@ -11,4 +11,5 @@ class InitialEnvelopeParams(
     val startType: LifeEventType,
     val startTime: Long,
     val appState: AppState,
+    val partNumber: Int,
 )

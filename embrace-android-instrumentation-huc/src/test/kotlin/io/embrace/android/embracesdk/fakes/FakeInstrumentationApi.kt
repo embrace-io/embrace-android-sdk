@@ -42,4 +42,7 @@ class FakeInstrumentationApi(
         errorCode: ErrorCode?,
     ) {
     }
+
+    override fun observeNavigation(activity: Activity, navigationController: Any) {
+    }
 }

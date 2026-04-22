@@ -106,7 +106,6 @@ internal class JvmCrashFeatureTest {
                 getSingleLogEnvelope().getLastLog().assertCrash(
                     crashIdFromSession = null,
                     crashTimeMs = crashTimeMs,
-                    hasSession = false,
                 )
             }
         )

@@ -19,7 +19,6 @@ import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -81,7 +80,8 @@ internal class BackgroundActivityDisabledTest {
                             EmbSessionAttributes.EMB_STATE to "background"
                         )
                     )
-                    assertNull(attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
+                    val sid = attributes?.findAttributeValue(SessionAttributes.SESSION_ID)
+                    assertFalse(sid.isNullOrBlank())
                 }
                 with(logs[1]) {
                     assertEquals("info", body)
@@ -90,7 +90,7 @@ internal class BackgroundActivityDisabledTest {
                             EmbSessionAttributes.EMB_STATE to "background"
                         )
                     )
-                    assertNull(attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
+                    assertFalse(attributes?.findAttributeValue(SessionAttributes.SESSION_ID).isNullOrBlank())
                 }
                 with(logs[2]) {
                     assertEquals("warning", body)

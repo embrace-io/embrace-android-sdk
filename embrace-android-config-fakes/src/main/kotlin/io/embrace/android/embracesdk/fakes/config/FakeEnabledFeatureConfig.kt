@@ -31,7 +31,6 @@ class FakeEnabledFeatureConfig(
     private val uiLoadTracingTraceAll: Boolean = base.isUiLoadTracingTraceAll(),
     private val endStartupWithAppReady: Boolean = base.isEndStartupWithAppReadyEnabled(),
     private val otelKotlinSdkEnabled: Boolean = base.isOtelKotlinSdkEnabled(),
-    private val stateCaptureEnabled: Boolean = base.isStateCaptureEnabled(),
 ) : EnabledFeatureConfig {
 
     override fun isActivityBreadcrumbCaptureEnabled(): Boolean = activityBreadcrumbCapture
@@ -58,5 +57,4 @@ class FakeEnabledFeatureConfig(
     override fun isUiLoadTracingTraceAll(): Boolean = uiLoadTracingTraceAll
     override fun isEndStartupWithAppReadyEnabled(): Boolean = endStartupWithAppReady
     override fun isOtelKotlinSdkEnabled(): Boolean = otelKotlinSdkEnabled
-    override fun isStateCaptureEnabled(): Boolean = stateCaptureEnabled
 }

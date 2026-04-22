@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.opentelemetry.kotlin.semconv.SessionAttributes
-import io.opentelemetry.kotlin.tracing.model.SpanContext
+import io.opentelemetry.kotlin.tracing.SpanContext
 import org.junit.Assert.assertTrue
 
 fun Link.validatePreviousSessionLink(

@@ -28,10 +28,10 @@ import io.opentelemetry.kotlin.Clock
 import io.opentelemetry.kotlin.attributes.setAttributes
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
-import io.opentelemetry.kotlin.tracing.data.StatusData
-import io.opentelemetry.kotlin.tracing.model.Span
-import io.opentelemetry.kotlin.tracing.model.SpanContext
-import io.opentelemetry.kotlin.tracing.model.SpanKind
+import io.opentelemetry.kotlin.tracing.Span
+import io.opentelemetry.kotlin.tracing.SpanContext
+import io.opentelemetry.kotlin.tracing.SpanKind
+import io.opentelemetry.kotlin.tracing.StatusData
 import java.util.Queue
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -86,12 +86,17 @@ private class EmbraceSpanImpl(
         set(name) {
             field = validateName(name)
         }
+
+    @Volatile
+    private var currentStatus: StatusData = StatusData.Unset
+
     override var status: StatusData
-        get() = startedSpan.get()?.status ?: StatusData.Unset
+        get() = currentStatus
         set(value) {
             startedSpan.get()?.let { sdkSpan ->
                 synchronized(startedSpan) {
-                    sdkSpan.status = value
+                    sdkSpan.setStatus(value)
+                    currentStatus = value
                     spanRepository.notifySpanUpdate()
                 }
             }
@@ -152,7 +157,7 @@ private class EmbraceSpanImpl(
                 }
 
                 spanRepository.trackStartedSpan(this)
-                newSpan.name = spanName
+                newSpan.setName(spanName)
 
                 spanStartTimeMs = attemptedStartTimeMs
                 spanRepository.notifySpanUpdate()
@@ -295,7 +300,7 @@ private class EmbraceSpanImpl(
             synchronized(startedSpan) {
                 if (!spanStarted() || isRecording) {
                     spanName = newName
-                    startedSpan.get()?.name = spanName
+                    startedSpan.get()?.setName(spanName)
                     spanRepository.notifySpanUpdate()
                     return true
                 }
@@ -371,7 +376,7 @@ private class EmbraceSpanImpl(
     }
 
     override val spanKind: SpanKind
-        get() = startedSpan.get()?.spanKind ?: SpanKind.INTERNAL
+        get() = otelSpanStartArgs.spanKind ?: SpanKind.INTERNAL
 
     override fun events(): List<SpanEvent> {
         val redactedCustomEvents = customEvents.mapNotNull {

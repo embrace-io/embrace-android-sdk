@@ -10,8 +10,6 @@ import io.embrace.android.embracesdk.fakes.DialogNavHostFragmentActivity
 import io.embrace.android.embracesdk.fakes.FqcnRouteActivityNavHost
 import io.embrace.android.embracesdk.fakes.NestedGraphNavHostFragmentActivity
 import io.embrace.android.embracesdk.fakes.SerializableRouteNavHostFragmentActivity
-import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
-import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.AppExecutionTimestamps
@@ -30,20 +28,12 @@ internal class NavigationComplexDestinationAndRouteTest {
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
-    private val enabledConfig = FakeInstrumentedConfig(
-        enabledFeatures = FakeEnabledFeatureConfig(
-            stateCaptureEnabled = true,
-            bgActivityCapture = false,
-        ),
-    )
-
     private val enabledRemoteConfig = RemoteConfig(pctNavigationStateCaptureEnabled = 100.0f)
 
     @Test
     fun `routes with argument templates use the template not the resolved value`() {
         var timestamps: AppExecutionTimestamps? = null
         testRule.runTest(
-            instrumentedConfig = enabledConfig,
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
                 timestamps = simulateNavHostFragmentActivityNavigation<ArgTemplateNavHostFragmentActivity>(
@@ -71,7 +61,6 @@ internal class NavigationComplexDestinationAndRouteTest {
     fun `dialog destinations tracked like fragment destinations`() {
         var timestamps: AppExecutionTimestamps? = null
         testRule.runTest(
-            instrumentedConfig = enabledConfig,
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
                 timestamps = simulateNavHostFragmentActivityNavigation<DialogNavHostFragmentActivity>(
@@ -97,7 +86,6 @@ internal class NavigationComplexDestinationAndRouteTest {
     fun `nested graph destinations use inner destination route`() {
         var timestamps: AppExecutionTimestamps? = null
         testRule.runTest(
-            instrumentedConfig = enabledConfig,
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
                 timestamps = simulateNavHostFragmentActivityNavigation<NestedGraphNavHostFragmentActivity>(
@@ -124,7 +112,6 @@ internal class NavigationComplexDestinationAndRouteTest {
     fun `back navigation triggers destination change`() {
         var timestamps: AppExecutionTimestamps? = null
         testRule.runTest(
-            instrumentedConfig = enabledConfig,
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
                 val activityController = Robolectric.buildActivity(BasicNavHostFragmentActivity::class.java)
@@ -169,7 +156,6 @@ internal class NavigationComplexDestinationAndRouteTest {
     fun `Serializable routes with SerialName use the serial name template not resolved args`() {
         var timestamps: AppExecutionTimestamps? = null
         testRule.runTest(
-            instrumentedConfig = enabledConfig,
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
                 val activityController = Robolectric.buildActivity(SerializableRouteNavHostFragmentActivity::class.java)
@@ -205,7 +191,6 @@ internal class NavigationComplexDestinationAndRouteTest {
     fun `Serializable routes without SerialName use fully qualified class name with template not resolved as state value`() {
         var timestamps: AppExecutionTimestamps? = null
         testRule.runTest(
-            instrumentedConfig = enabledConfig,
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
                 val activityController = Robolectric.buildActivity(FqcnRouteActivityNavHost::class.java)

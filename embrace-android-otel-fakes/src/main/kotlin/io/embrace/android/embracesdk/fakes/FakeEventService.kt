@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.logging.Logger
-import io.opentelemetry.kotlin.logging.model.SeverityNumber
+import io.opentelemetry.kotlin.logging.SeverityNumber
 
 class FakeEventService : EventService {
     val eventData: MutableList<FakeEventData> = mutableListOf()

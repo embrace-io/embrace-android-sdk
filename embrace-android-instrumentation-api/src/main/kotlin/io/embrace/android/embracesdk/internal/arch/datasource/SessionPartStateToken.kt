@@ -16,9 +16,10 @@ interface SessionPartStateToken<T> {
      * avoid including into the timestamp the delay between when the transition happened to when instrumentation recorded it.
      */
     fun update(
-        updateDetectedTimeMs: Long,
         newValue: T,
-        unrecordedTransitions: UnrecordedTransitions = noUnrecordedTransitions
+        transitionTimeMs: Long,
+        transitionAttributes: Map<String, String> = emptyMap(),
+        unrecordedTransitions: UnrecordedTransitions = noUnrecordedTransitions,
     ): Boolean
 
     /**

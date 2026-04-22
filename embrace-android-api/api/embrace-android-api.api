@@ -254,10 +254,10 @@ public abstract interface class io/embrace/android/embracesdk/spans/EmbraceSpan 
 	public abstract fun addAttribute (Ljava/lang/String;Ljava/lang/String;)Z
 	public abstract fun addEvent (Ljava/lang/String;Ljava/lang/Long;Ljava/util/Map;)Z
 	public abstract fun addLink (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;)Z
-	public abstract fun addLink (Lio/opentelemetry/kotlin/tracing/model/SpanContext;Ljava/util/Map;)Z
+	public abstract fun addLink (Lio/opentelemetry/kotlin/tracing/SpanContext;Ljava/util/Map;)Z
 	public abstract fun getAutoTerminationMode ()Lio/embrace/android/embracesdk/spans/AutoTerminationMode;
 	public abstract fun getParent ()Lio/embrace/android/embracesdk/spans/EmbraceSpan;
-	public abstract fun getSpanContext ()Lio/opentelemetry/kotlin/tracing/model/SpanContext;
+	public abstract fun getSpanContext ()Lio/opentelemetry/kotlin/tracing/SpanContext;
 	public abstract fun getSpanId ()Ljava/lang/String;
 	public abstract fun getTraceId ()Ljava/lang/String;
 	public abstract fun isRecording ()Z
@@ -271,7 +271,7 @@ public final class io/embrace/android/embracesdk/spans/EmbraceSpan$DefaultImpls 
 	public static synthetic fun addEvent$default (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/String;Ljava/lang/Long;Ljava/util/Map;ILjava/lang/Object;)Z
 	public static fun addLink (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;)Z
 	public static synthetic fun addLink$default (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;ILjava/lang/Object;)Z
-	public static synthetic fun addLink$default (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/opentelemetry/kotlin/tracing/model/SpanContext;Ljava/util/Map;ILjava/lang/Object;)Z
+	public static synthetic fun addLink$default (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/opentelemetry/kotlin/tracing/SpanContext;Ljava/util/Map;ILjava/lang/Object;)Z
 	public static synthetic fun recordException$default (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/Throwable;Ljava/util/Map;ILjava/lang/Object;)Z
 	public static synthetic fun start$default (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/Long;ILjava/lang/Object;)Z
 	public static synthetic fun stop$default (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/ErrorCode;Ljava/lang/Long;ILjava/lang/Object;)Z

@@ -1,28 +1,38 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.opentelemetry.kotlin.attributes.AttributesMutator
-import io.opentelemetry.kotlin.tracing.data.StatusData
+import io.opentelemetry.kotlin.tracing.StatusData
 import io.opentelemetry.kotlin.tracing.model.SpanLink
-import io.opentelemetry.kotlin.tracing.model.Span
-import io.opentelemetry.kotlin.tracing.model.SpanContext
+import io.opentelemetry.kotlin.tracing.Span
+import io.opentelemetry.kotlin.tracing.SpanContext
 import io.opentelemetry.kotlin.tracing.model.SpanEvent
-import io.opentelemetry.kotlin.tracing.model.SpanKind
+import io.opentelemetry.kotlin.tracing.SpanKind
 
 class FakeSpan(
-    override var name: String = "",
+    name: String = "",
     override val parent: SpanContext = FakeSpanContext(),
     override val spanContext: SpanContext = FakeSpanContext(),
-    override val spanKind: SpanKind = SpanKind.INTERNAL,
-    override val startTimestamp: Long = -1,
-    override var status: StatusData = StatusData.Unset,
-    override val links: List<SpanLink> = emptyList(),
-    override val events: List<SpanEvent> = emptyList(),
+    val spanKind: SpanKind = SpanKind.INTERNAL,
+    val startTimestamp: Long = -1,
+    status: StatusData = StatusData.Unset,
+    val links: List<SpanLink> = emptyList(),
+    val events: List<SpanEvent> = emptyList(),
     var recording: Boolean = true,
 ) : Span {
 
+    private var nameImpl: String = name
+    private var statusImpl: StatusData = status
+
+    val name: String get() = nameImpl
+    val status: StatusData get() = statusImpl
+
     var attrs: MutableMap<String, String> = mutableMapOf()
 
-    override val attributes: Map<String, Any> = attrs
+    val attributes: Map<String, Any> = attrs
+
+    override fun setName(name: String) { nameImpl = name }
+
+    override fun setStatus(status: StatusData) { statusImpl = status }
 
     override fun addEvent(name: String, timestamp: Long?, attributes: (AttributesMutator.() -> Unit)?) {
     }

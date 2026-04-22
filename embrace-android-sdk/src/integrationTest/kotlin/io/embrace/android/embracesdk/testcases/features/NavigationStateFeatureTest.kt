@@ -32,24 +32,13 @@ internal class NavigationStateFeatureTest {
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
-    private val enabledConfig = FakeInstrumentedConfig(
-        enabledFeatures = FakeEnabledFeatureConfig(
-            stateCaptureEnabled = true,
-            bgActivityCapture = false,
-        ),
-    )
-
+    private val disabledRemoteConfig = RemoteConfig(pctNavigationStateCaptureEnabled = 0.0f)
     private val enabledRemoteConfig = RemoteConfig(pctNavigationStateCaptureEnabled = 100.0f)
 
     @Test
-    fun `navigation state feature disabled when state capture flag off`() {
+    fun `navigation state feature disabled when navigation flag off`() {
         testRule.runTest(
-            instrumentedConfig = FakeInstrumentedConfig(
-                enabledFeatures = FakeEnabledFeatureConfig(
-                    stateCaptureEnabled = false,
-                ),
-            ),
-            persistedRemoteConfig = enabledRemoteConfig,
+            persistedRemoteConfig = disabledRemoteConfig,
             testCaseAction = {
                 recordSession {}
             },
@@ -60,14 +49,9 @@ internal class NavigationStateFeatureTest {
     }
 
     @Test
-    fun `navigation state feature disabled when navigation flag off`() {
+    fun `navigation state feature disabled when state feature flag is off`() {
         testRule.runTest(
-            instrumentedConfig = FakeInstrumentedConfig(
-                enabledFeatures = FakeEnabledFeatureConfig(
-                    stateCaptureEnabled = true,
-                ),
-            ),
-            persistedRemoteConfig = RemoteConfig(pctNavigationStateCaptureEnabled = 0.0f),
+            persistedRemoteConfig = enabledRemoteConfig.copy(pctStateCaptureEnabledV2 = 0.0f),
             testCaseAction = {
                 recordSession {}
             },
@@ -88,7 +72,6 @@ internal class NavigationStateFeatureTest {
             Robolectric.buildActivity(ProfileActivity::class.java)
         )
         testRule.runTest(
-            instrumentedConfig = enabledConfig,
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
                 firstSessionTimestamps = simulateOpeningActivities(
@@ -141,7 +124,6 @@ internal class NavigationStateFeatureTest {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
-                    stateCaptureEnabled = true,
                     bgActivityCapture = true
                 )
             ),
@@ -199,7 +181,6 @@ internal class NavigationStateFeatureTest {
         var timestamps: AppExecutionTimestamps? = null
 
         testRule.runTest(
-            instrumentedConfig = enabledConfig,
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
                 timestamps = simulateNavHostFragmentActivityNavigation<BasicNavHostFragmentActivity>(routes = navRoutes)
@@ -227,7 +208,6 @@ internal class NavigationStateFeatureTest {
     fun `NavController destination restored when same Activity returns from background`() {
         val navActivity = Robolectric.buildActivity(BasicNavHostFragmentActivity::class.java)
         testRule.runTest(
-            instrumentedConfig = enabledConfig,
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
                 simulateNavHostFragmentActivityNavigation(
@@ -260,7 +240,6 @@ internal class NavigationStateFeatureTest {
         val navActivity = Robolectric.buildActivity(BasicNavHostFragmentActivity::class.java)
         var navigationTime: Long = 0
         testRule.runTest(
-            instrumentedConfig = enabledConfig,
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
                 timestamps = simulateOpeningActivities(
@@ -302,7 +281,6 @@ internal class NavigationStateFeatureTest {
         val activityController = Robolectric.buildActivity(TestNavControllerActivity::class.java)
         val expectedStateValues = listOf("home", "contacts", "about", "Backgrounded")
         testRule.runTest(
-            instrumentedConfig = enabledConfig,
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
                 timestamps = simulateNavControllerTrackingAndNavigation(
@@ -330,7 +308,6 @@ internal class NavigationStateFeatureTest {
     @Test
     fun `transitions capped at limit`() {
         testRule.runTest(
-            instrumentedConfig = enabledConfig,
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
                 val activityController = Robolectric.buildActivity(BasicNavHostFragmentActivity::class.java)

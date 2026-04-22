@@ -27,10 +27,10 @@ import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.factory.toHexString
 import io.opentelemetry.kotlin.semconv.SessionAttributes
-import io.opentelemetry.kotlin.tracing.data.StatusData
-import io.opentelemetry.kotlin.tracing.model.Span
-import io.opentelemetry.kotlin.tracing.model.SpanContext
-import io.opentelemetry.kotlin.tracing.model.SpanKind
+import io.opentelemetry.kotlin.tracing.StatusData
+import io.opentelemetry.kotlin.tracing.Span
+import io.opentelemetry.kotlin.tracing.SpanContext
+import io.opentelemetry.kotlin.tracing.SpanKind
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.random.Random
 
@@ -86,6 +86,7 @@ class FakeEmbraceSdkSpan(
             spanId = Random.nextBytes(8).toHexString(),
             traceFlags = openTelemetry.traceFlags.default,
             traceState = openTelemetry.traceState.default,
+            isRemote = false,
         ),
         startTimestamp = timestampMs.millisToNanos(),
         parent = parentContext.getEmbraceSpan(openTelemetry)?.spanContext

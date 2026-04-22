@@ -6,13 +6,13 @@ import io.embrace.android.embracesdk.assertions.findEventsOfType
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getLogsOfType
 import io.embrace.android.embracesdk.assertions.getSessionId
-import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.opentelemetry.kotlin.semconv.SessionAttributes
@@ -180,7 +180,7 @@ internal class BackgroundActivityDisabledTest {
                 sessionSpan2.assertExpectedSessionSpanAttributes(
                     startMs = session2StartMs,
                     endMs = session2EndMs,
-                    sequenceId = 10,
+                    sequenceId = 14,
                     coldStart = false,
                 )
 

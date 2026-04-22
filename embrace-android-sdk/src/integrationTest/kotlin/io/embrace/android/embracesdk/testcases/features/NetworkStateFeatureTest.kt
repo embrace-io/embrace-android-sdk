@@ -4,7 +4,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertStateTransition
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NetworkState.Status
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectionType
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
@@ -12,6 +11,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStateDataSource
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.session.getStateSpan
+import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.LIFECYCLE_EVENT_GAP
 import org.junit.Assert.assertEquals
@@ -35,8 +35,6 @@ internal class NetworkStateFeatureTest {
 
     private val networkStateEnabledConfig = FakeInstrumentedConfig(
         enabledFeatures = FakeEnabledFeatureConfig(
-            stateCaptureEnabled = true,
-            bgActivityCapture = false,
             networkConnectivityCapture = true
         )
     )
@@ -150,7 +148,6 @@ internal class NetworkStateFeatureTest {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
-                    stateCaptureEnabled = true,
                     networkConnectivityCapture = false
                 )
             ),

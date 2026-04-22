@@ -55,7 +55,6 @@ internal class NativeCrashFeatureTest {
     private val config = FakeInstrumentedConfig(
         enabledFeatures = FakeEnabledFeatureConfig(
             nativeCrashCapture = true,
-            stateCaptureEnabled = true
         ),
         symbols = createNativeSymbolsForCurrentArch(fakeSymbols)
     )
@@ -63,7 +62,6 @@ internal class NativeCrashFeatureTest {
     private val disabledConfig = FakeInstrumentedConfig(
         enabledFeatures = FakeEnabledFeatureConfig(
             nativeCrashCapture = false,
-            stateCaptureEnabled = true
         )
     )
 

@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.opentelemetry.kotlin.Clock
-import io.opentelemetry.kotlin.tracing.data.StatusData
+import io.opentelemetry.kotlin.tracing.StatusData
 import io.opentelemetry.kotlin.tracing.recordException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -67,7 +67,7 @@ internal class EmbSpanTest {
     @Test
     fun `set error status before end`() {
         with(embSpan) {
-            status = StatusData.Error("error")
+            setStatus(StatusData.Error("error"))
             end()
         }
         with(fakeEmbraceSpan) {
@@ -80,7 +80,7 @@ internal class EmbSpanTest {
     fun `status can only be set on a span that is recording`() {
         with(embSpan) {
             end()
-            status = StatusData.Error("error")
+            setStatus(StatusData.Error("error"))
             end()
         }
 
@@ -127,7 +127,7 @@ internal class EmbSpanTest {
     @Test
     fun `span name update`() {
         with(embSpan) {
-            name = "new-name"
+            setName("new-name")
             assertEquals("new-name", fakeEmbraceSpan.name)
         }
     }

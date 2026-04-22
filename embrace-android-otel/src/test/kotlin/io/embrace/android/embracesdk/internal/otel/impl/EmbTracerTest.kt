@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.opentelemetry.kotlin.NoopOpenTelemetry
-import io.opentelemetry.kotlin.tracing.model.SpanKind
+import io.opentelemetry.kotlin.tracing.SpanKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before

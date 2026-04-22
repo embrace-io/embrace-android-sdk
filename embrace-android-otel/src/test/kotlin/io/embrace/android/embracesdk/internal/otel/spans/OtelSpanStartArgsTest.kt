@@ -11,9 +11,10 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
 import io.opentelemetry.kotlin.Clock
 import io.opentelemetry.kotlin.getTracer
+import io.opentelemetry.kotlin.tracing.Span
+import io.opentelemetry.kotlin.tracing.SpanKind
 import io.opentelemetry.kotlin.tracing.Tracer
-import io.opentelemetry.kotlin.tracing.model.Span
-import io.opentelemetry.kotlin.tracing.model.SpanKind
+import io.opentelemetry.kotlin.tracing.model.ReadableSpan
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -30,7 +31,7 @@ internal class OtelSpanStartArgsTest {
     fun setup() {
         clock = FakeClock()
         otelClock = FakeOtelKotlinClock(clock)
-        tracer = createSdkOtelInstance(clock = otelClock, useKotlinSdk = false).getTracer("test-tracer")
+        tracer = createSdkOtelInstance(clock = otelClock, useKotlinSdk = true).getTracer("test-tracer")
     }
 
     @Test
@@ -64,7 +65,8 @@ internal class OtelSpanStartArgsTest {
     @Test
     fun `add parent after initial creation`() {
         val parent = tracer.startSpan("parent")
-        val ctx = fakeOpenTelemetry(false).context.storeSpan(fakeOpenTelemetry().context.root(), parent)
+        val otel = fakeOpenTelemetry(true)
+        val ctx = otel.context.storeSpan(otel.context.root(), parent)
         val args = OtelSpanStartArgs(
             name = "test",
             type = EmbType.Performance.Default,
@@ -72,9 +74,9 @@ internal class OtelSpanStartArgsTest {
             private = false,
             tracer = tracer,
             parentCtx = ctx,
-            openTelemetry = fakeOpenTelemetry()
+            openTelemetry = otel
         )
-        val spanContext = fakeOpenTelemetry(false).span.fromContext(args.parentContext).spanContext
+        val spanContext = otel.span.fromContext(args.parentContext).spanContext
         assertEquals(parent.spanContext.traceId, spanContext.traceId)
 
         val startTime = otelClock.now()
@@ -155,8 +157,9 @@ internal class OtelSpanStartArgsTest {
         expectedSpanKind: SpanKind = SpanKind.INTERNAL,
         expectedStartTimeMs: Long,
     ) {
-        assertEquals(expectedName, name)
-        assertEquals(expectedSpanKind, spanKind)
-        assertEquals(expectedStartTimeMs.millisToNanos(), startTimestamp)
+        val data = (this as ReadableSpan).toSpanData()
+        assertEquals(expectedName, data.name)
+        assertEquals(expectedSpanKind, data.spanKind)
+        assertEquals(expectedStartTimeMs.millisToNanos(), data.startTimestamp)
     }
 }

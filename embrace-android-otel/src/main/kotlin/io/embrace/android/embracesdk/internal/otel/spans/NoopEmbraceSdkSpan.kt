@@ -10,9 +10,9 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.context.Context
-import io.opentelemetry.kotlin.tracing.data.StatusData
-import io.opentelemetry.kotlin.tracing.model.SpanContext
-import io.opentelemetry.kotlin.tracing.model.SpanKind
+import io.opentelemetry.kotlin.tracing.SpanContext
+import io.opentelemetry.kotlin.tracing.SpanKind
+import io.opentelemetry.kotlin.tracing.StatusData
 
 object NoopEmbraceSdkSpan : EmbraceSdkSpan {
 

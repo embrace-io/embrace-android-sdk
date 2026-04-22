@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
-import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -16,6 +15,7 @@ import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.toStringMap
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceOtelExportAssertionInterface
@@ -24,11 +24,11 @@ import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.getTracer
 import io.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.kotlin.logging.model.ReadableLogRecord
-import io.opentelemetry.kotlin.logging.model.SeverityNumber
+import io.opentelemetry.kotlin.logging.SeverityNumber
 import io.opentelemetry.kotlin.semconv.LogAttributes
 import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
-import io.opentelemetry.kotlin.tracing.model.SpanContext
+import io.opentelemetry.kotlin.tracing.SpanContext
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -49,7 +49,6 @@ internal class ExternalLoggerTest {
     private val instrumentedConfig = FakeInstrumentedConfig(
         enabledFeatures = FakeEnabledFeatureConfig(
             bgActivityCapture = true,
-            stateCaptureEnabled = true
         ),
         project = FakeProjectConfig(
             appId = "abcde",

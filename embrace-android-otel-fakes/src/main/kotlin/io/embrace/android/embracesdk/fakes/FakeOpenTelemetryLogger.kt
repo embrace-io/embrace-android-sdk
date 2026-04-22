@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.logging.Logger
-import io.opentelemetry.kotlin.logging.model.SeverityNumber
+import io.opentelemetry.kotlin.logging.SeverityNumber
 
 class FakeOpenTelemetryLogger : Logger {
 
@@ -16,18 +16,19 @@ class FakeOpenTelemetryLogger : Logger {
     ): Boolean = true
 
     override fun emit(
-        body: String?,
+        body: Any?,
         eventName: String?,
         timestamp: Long?,
         observedTimestamp: Long?,
         context: Context?,
         severityNumber: SeverityNumber?,
         severityText: String?,
+        exception: Throwable?,
         attributes: (AttributesMutator.() -> Unit)?,
     ) {
         processTelemetry(
             eventName = eventName,
-            body = body,
+            body = body?.toString(),
             timestamp = timestamp,
             observedTimestamp = observedTimestamp,
             context = context,

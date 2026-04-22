@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.fakes.FakeOtelJavaLogRecordExporter
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
-import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -18,6 +17,7 @@ import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.toStringMap
 import io.embrace.android.embracesdk.otel.java.addJavaLogRecordExporter
 import io.embrace.android.embracesdk.otel.java.getJavaOpenTelemetry
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInterface
@@ -50,7 +50,6 @@ internal class ExternalOtelJavaLoggerTest {
     private val instrumentedConfig = FakeInstrumentedConfig(
         enabledFeatures = FakeEnabledFeatureConfig(
             bgActivityCapture = true,
-            stateCaptureEnabled = true
         ),
         project = FakeProjectConfig(
             appId = "abcde",

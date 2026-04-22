@@ -20,9 +20,15 @@ class VariantConfigValidatorTest {
     }
 
     @Test
-    fun `fail if apiToken length is not valid`() {
+    fun `fail if apiToken length is too short`() {
         val configuration = getVariantConfiguration(appId = "abcde", apiToken = "asdf")
-        assertValidationFailure(configuration, "api_token must contain exactly")
+        assertValidationFailure(configuration, "api_token must contain at least 32 characters.")
+    }
+
+    @Test
+    fun `apiTokens longer than 32 characters is fine`() {
+        val configuration = getVariantConfiguration(appId = "abcde", apiToken = "a".repeat(50))
+        VariantConfigurationValidator.validate(configuration)
     }
 
     private fun getVariantConfiguration(

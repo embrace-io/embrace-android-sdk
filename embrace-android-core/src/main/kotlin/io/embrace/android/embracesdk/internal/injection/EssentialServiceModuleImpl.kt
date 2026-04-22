@@ -18,9 +18,11 @@ import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.navigation.NavigationTrackingServiceImpl
 import io.embrace.android.embracesdk.internal.session.id.SessionIdProvider
+import io.embrace.android.embracesdk.internal.session.id.SessionIdProviderImpl
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateTrackerImpl
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -33,6 +35,7 @@ class EssentialServiceModuleImpl(
     workerThreadModule: WorkerThreadModule,
     lifecycleOwnerProvider: Provider<LifecycleOwner?>,
     networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
+    private val sessionOrchestratorProvider: Provider<SessionOrchestrator>,
 ) : EssentialServiceModule {
 
     override val appStateTracker: AppStateTracker by singleton {
@@ -86,10 +89,7 @@ class EssentialServiceModuleImpl(
     }
 
     override val sessionIdProvider: SessionIdProvider by singleton {
-        object : SessionIdProvider {
-            override fun getCurrentSessionPartId(): String? = sessionPartTracker.getActiveSessionPartId()
-            override fun getCurrentUserSessionId(): String? = null
-        }
+        SessionIdProviderImpl(sessionOrchestratorProvider, sessionPartTracker)
     }
 
     override val userSessionPropertiesService: UserSessionPropertiesService by singleton {

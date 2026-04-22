@@ -85,7 +85,8 @@ internal class NativeCrashDataSourceImplTest {
         nativeCrashDataSource.sendNativeCrash(
             nativeCrash = NativeCrashData(
                 nativeCrashId = "nativeCrashId",
-                sessionPartId = "null",
+                sessionPartId = "",
+                userSessionId = "",
                 timestamp = 1700000000000,
                 crash = null,
                 symbols = null,
@@ -98,9 +99,9 @@ internal class NativeCrashDataSourceImplTest {
             val attributes = schemaType.attributes()
             assertEquals(EmbType.System.NativeCrash, schemaType.telemetryType)
             assertEquals("1", attributes[EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER])
-            assertNull(attributes[EmbSessionAttributes.EMB_SESSION_PART_ID])
-            assertNull(attributes[SessionAttributes.SESSION_ID])
-            assertNull(attributes[EmbSessionAttributes.EMB_USER_SESSION_ID])
+            assertEquals("", attributes[EmbSessionAttributes.EMB_SESSION_PART_ID])
+            assertEquals("", attributes[SessionAttributes.SESSION_ID])
+            assertEquals("", attributes[EmbSessionAttributes.EMB_USER_SESSION_ID])
             assertNull(attributes[embNativeCrashException])
             assertNull(attributes[embNativeCrashSymbols])
         }
@@ -112,6 +113,7 @@ internal class NativeCrashDataSourceImplTest {
             nativeCrash = NativeCrashData(
                 nativeCrashId = "nativeCrashId",
                 sessionPartId = "",
+                userSessionId = "",
                 timestamp = 1700000000000,
                 crash = "",
                 symbols = emptyMap(),
@@ -124,9 +126,9 @@ internal class NativeCrashDataSourceImplTest {
             val attributes = schemaType.attributes()
             assertEquals(EmbType.System.NativeCrash, schemaType.telemetryType)
             assertEquals("1", attributes[EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER])
-            assertNull(attributes[EmbSessionAttributes.EMB_SESSION_PART_ID])
-            assertNull(attributes[SessionAttributes.SESSION_ID])
-            assertNull(attributes[EmbSessionAttributes.EMB_USER_SESSION_ID])
+            assertEquals("", attributes[EmbSessionAttributes.EMB_SESSION_PART_ID])
+            assertEquals("", attributes[SessionAttributes.SESSION_ID])
+            assertEquals("", attributes[EmbSessionAttributes.EMB_USER_SESSION_ID])
             assertNull(attributes[EmbSessionAttributes.EMB_STATE])
             assertNull(attributes[embNativeCrashException])
             assertNull(attributes[embNativeCrashSymbols])

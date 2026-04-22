@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.semconv.EmbAeiAttributes
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll
+import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -104,6 +105,8 @@ internal class AeiDataSourceImplTest {
         val attrs = getAeiLogAttrs()
         assertEquals(TIMESTAMP.toString(), attrs[EmbAeiAttributes.TIMESTAMP])
         assertEquals(SESSION_ID, attrs[EmbAeiAttributes.AEI_SESSION_PART_ID])
+        assertEquals(USER_SESSION_ID, attrs[EmbAeiAttributes.AEI_USER_SESSION_ID])
+        assertEquals(USER_SESSION_ID, attrs[SessionAttributes.SESSION_ID])
         assertEquals(IMPORTANCE.toString(), attrs[EmbAeiAttributes.PROCESS_IMPORTANCE])
         assertEquals(PSS.toString(), attrs[EmbAeiAttributes.PSS])
         assertEquals(RSS.toString(), attrs[EmbAeiAttributes.RSS])
@@ -222,6 +225,7 @@ internal class AeiDataSourceImplTest {
         val attrs = getAeiLogAttrs()
         assertEquals(SESSION_ID, attrs[EmbAeiAttributes.AEI_SESSION_PART_ID])
         assertEquals(USER_SESSION_ID, attrs[EmbAeiAttributes.AEI_USER_SESSION_ID])
+        assertEquals(USER_SESSION_ID, attrs[SessionAttributes.SESSION_ID])
     }
 
     @Test
@@ -236,6 +240,7 @@ internal class AeiDataSourceImplTest {
         val attrs = getAeiLogAttrs()
         assertEquals(SESSION_ID, attrs[EmbAeiAttributes.AEI_SESSION_PART_ID])
         assertNull(attrs[EmbAeiAttributes.AEI_USER_SESSION_ID])
+        assertNull(attrs[SessionAttributes.SESSION_ID])
     }
 
     @Test

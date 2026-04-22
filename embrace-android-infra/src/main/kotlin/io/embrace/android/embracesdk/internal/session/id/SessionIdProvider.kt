@@ -8,10 +8,10 @@ interface SessionIdProvider {
     /**
      * Returns the ID of the current user session.
      */
-    fun getCurrentUserSessionId(): String?
+    fun getCurrentUserSessionId(): String
 
     /**
      * Returns the ID of the current session part.
      */
-    fun getCurrentSessionPartId(): String?
+    fun getCurrentSessionPartId(): String
 }

@@ -121,7 +121,7 @@ internal class EmbraceSetupInterface(
             )
             DecoratedConfigService(impl)
         },
-        essentialServiceModuleSupplier = { initModule, configService, openTelemetryModule, coreModule, workerThreadModule, _, _ ->
+        essentialServiceModuleSupplier = { initModule, configService, openTelemetryModule, coreModule, workerThreadModule, _, _, sessionOrchestratorProvider ->
             EssentialServiceModuleImpl(
                 initModule = initModule,
                 configService = configService,
@@ -130,6 +130,7 @@ internal class EmbraceSetupInterface(
                 workerThreadModule = workerThreadModule,
                 lifecycleOwnerProvider = { fakeLifecycleOwner },
                 networkConnectivityServiceProvider = { fakeNetworkConnectivityService },
+                sessionOrchestratorProvider = sessionOrchestratorProvider,
             )
         },
         deliveryModuleSupplier = { configService, initModule, otelModule, workerThreadModule, coreModule, essentialServiceModule, _, _, _, _ ->

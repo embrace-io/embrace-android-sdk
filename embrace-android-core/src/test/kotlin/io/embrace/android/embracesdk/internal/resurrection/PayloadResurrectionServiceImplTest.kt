@@ -497,6 +497,7 @@ class PayloadResurrectionServiceImplTest {
     ) = NativeCrashData(
         nativeCrashId = nativeCrashId,
         sessionPartId = sessionId,
+        userSessionId = "",
         timestamp = 0L,
         crash = null,
         symbols = null,

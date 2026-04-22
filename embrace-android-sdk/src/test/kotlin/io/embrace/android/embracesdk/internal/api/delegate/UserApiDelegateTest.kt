@@ -27,7 +27,7 @@ internal class UserApiDelegateTest {
     fun setUp() {
         val moduleInitBootstrapper = ModuleInitBootstrapper(
             FakeInitModule(),
-            essentialServiceModuleSupplier = { _, _, _, _, _, _, _ ->
+            essentialServiceModuleSupplier = { _, _, _, _, _, _, _, _ ->
                 FakeEssentialServiceModule().apply {
                     fakeUserService = userService as FakeUserService
                 }

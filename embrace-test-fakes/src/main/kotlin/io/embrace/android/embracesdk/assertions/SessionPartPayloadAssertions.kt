@@ -30,6 +30,15 @@ fun Envelope<SessionPartPayload>.getSessionId(): String {
 }
 
 /**
+ * Return the user session ID from the emb.user_session_id attribute in the session span.
+ */
+fun Envelope<SessionPartPayload>.getUserSessionId(): String {
+    return checkNotNull(findSessionSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID)) {
+        "No user session id found in session payload"
+    }
+}
+
+/**
  * Return the session part ID from the session span in the payload. Unique per session part.
  */
 fun Envelope<SessionPartPayload>.getSessionPartId(): String {

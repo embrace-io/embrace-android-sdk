@@ -8,6 +8,15 @@ pluginManagement {
             }
         }
         mavenCentral()
+        maven {
+            name = "centralManualTesting"
+            url = uri("<path-to-bundle>")
+            content {
+                includeGroup("io.embrace")
+                includeGroup("io.embrace.gradle")
+            }
+        }
+
         mavenLocal()
         gradlePluginPortal()
     }
@@ -17,6 +26,14 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven {
+            name = "centralManualTesting"
+            url = uri("<path-to-bundle>")
+            content {
+                includeGroup("io.embrace")
+                includeGroup("io.embrace.gradle")
+            }
+        }
         mavenLocal()
     }
 }

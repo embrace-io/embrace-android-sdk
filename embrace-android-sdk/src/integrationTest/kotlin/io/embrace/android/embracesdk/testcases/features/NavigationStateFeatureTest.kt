@@ -6,7 +6,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertNavigationStateSpan
 import io.embrace.android.embracesdk.assertions.getNavigationStateSpan
 import io.embrace.android.embracesdk.fakes.BasicNavHostFragmentActivity
+import io.embrace.android.embracesdk.fakes.ComposeNavHostActivity
 import io.embrace.android.embracesdk.fakes.TestNavControllerActivity
+import io.embrace.android.embracesdk.fakes.WrappedContextComposeNavHostActivity
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.state.AppState
@@ -184,7 +186,7 @@ internal class NavigationStateFeatureTest {
         testRule.runTest(
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
-                timestamps = simulateNavHostFragmentActivityNavigation(
+                timestamps = simulateNavControllerActivityNavigation(
                     routes = navRoutes,
                     activityController = activityController,
                 )
@@ -200,7 +202,7 @@ internal class NavigationStateFeatureTest {
                     timestamps.firstActionTimeMs + POST_ACTIVITY_ACTION_DWELL * 3,
                     timestamps.lastBackgroundTimeMs,
                 )
-                val expectedStateValues = listOf(activityController.get().localClassName, "home") + navRoutes + listOf("Backgrounded")
+                val expectedStateValues = listOf(activityController.get().localClassName, "home") + navRoutes
                 stateSpan.assertNavigationStateSpan(
                     transitionTimesMs = eventTimes,
                     newStateValues = expectedStateValues
@@ -215,7 +217,7 @@ internal class NavigationStateFeatureTest {
         testRule.runTest(
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
-                simulateNavHostFragmentActivityNavigation(
+                simulateNavControllerActivityNavigation(
                     routes = listOf("about"),
                     activityController = navActivity
                 )
@@ -275,8 +277,69 @@ internal class NavigationStateFeatureTest {
                         navActivity.get().localClassName,
                         "home",
                         "about",
-                        "Backgrounded"
                     )
+                )
+            },
+        )
+    }
+
+    @Test
+    fun `rememberObservedNavController registers created NavController and creates state span`() {
+        var timestamps: AppExecutionTimestamps? = null
+        val activityController = Robolectric.buildActivity(ComposeNavHostActivity::class.java)
+        val expectedStateValues = listOf(activityController.get().localClassName, "home", "contacts", "about")
+        testRule.runTest(
+            persistedRemoteConfig = enabledRemoteConfig,
+            testCaseAction = {
+                timestamps = simulateNavControllerActivityNavigation<ComposeNavHostActivity>(
+                    routes = listOf("contacts", "about"),
+                    activityController = activityController,
+                )
+            },
+            assertAction = {
+                val stateSpan = checkNotNull(getSingleSessionEnvelope().getNavigationStateSpan())
+                checkNotNull(timestamps)
+                val eventTimes = mutableListOf(
+                    timestamps.firstForegroundTimeMs,
+                    timestamps.firstActionTimeMs,
+                    timestamps.firstActionTimeMs + POST_ACTIVITY_ACTION_DWELL,
+                    timestamps.firstActionTimeMs + POST_ACTIVITY_ACTION_DWELL * 2,
+                    timestamps.lastBackgroundTimeMs,
+                )
+                stateSpan.assertNavigationStateSpan(
+                    transitionTimesMs = eventTimes,
+                    newStateValues = expectedStateValues
+                )
+            },
+        )
+    }
+
+    @Test
+    fun `rememberObservedNavController finds Activity associated with NavController through wrapped LocalContext`() {
+        var timestamps: AppExecutionTimestamps? = null
+        val activityController = Robolectric.buildActivity(WrappedContextComposeNavHostActivity::class.java)
+        val expectedStateValues = listOf(activityController.get().localClassName, "home", "about", "contacts")
+        testRule.runTest(
+            persistedRemoteConfig = enabledRemoteConfig,
+            testCaseAction = {
+                timestamps = simulateNavControllerActivityNavigation<WrappedContextComposeNavHostActivity>(
+                    routes = listOf("about", "contacts"),
+                    activityController = activityController,
+                )
+            },
+            assertAction = {
+                val stateSpan = checkNotNull(getSingleSessionEnvelope().getNavigationStateSpan())
+                checkNotNull(timestamps)
+                val eventTimes = mutableListOf(
+                    timestamps.firstForegroundTimeMs,
+                    timestamps.firstActionTimeMs,
+                    timestamps.firstActionTimeMs + POST_ACTIVITY_ACTION_DWELL,
+                    timestamps.firstActionTimeMs + POST_ACTIVITY_ACTION_DWELL * 2,
+                    timestamps.lastBackgroundTimeMs,
+                )
+                stateSpan.assertNavigationStateSpan(
+                    transitionTimesMs = eventTimes,
+                    newStateValues = expectedStateValues
                 )
             },
         )
@@ -286,7 +349,7 @@ internal class NavigationStateFeatureTest {
     fun `navigation of NavController tracked using public observeNavigation API creates state span`() {
         var timestamps: AppExecutionTimestamps? = null
         val activityController = Robolectric.buildActivity(TestNavControllerActivity::class.java)
-        val expectedStateValues = listOf(activityController.get().localClassName, "home", "contacts", "about", "Backgrounded")
+        val expectedStateValues = listOf(activityController.get().localClassName, "home", "contacts", "about")
         testRule.runTest(
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {

@@ -1,0 +1,4 @@
+public final class io/embrace/android/embracesdk/internal/instrumentation/compose/navigation/NavigationTrackersKt {
+	public static final fun rememberObservedNavController ([Landroidx/navigation/Navigator;Landroidx/compose/runtime/Composer;I)Landroidx/navigation/NavHostController;
+}
+

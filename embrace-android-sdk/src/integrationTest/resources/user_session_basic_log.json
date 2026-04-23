@@ -1,0 +1,52 @@
+{
+  "logs": [
+    {
+      "time_unix_nano": 169220160030000000,
+      "severity_number": 9,
+      "severity_text": "INFO",
+      "body": "Hi",
+      "attributes": [
+        {
+          "key": "emb.session_part_id",
+          "value": "A8BAF9242FCC7BE7020B7F533060E8EF"
+        },
+        {
+          "key": "emb.state",
+          "value": "foreground"
+        },
+        {
+          "key": "emb.state.network",
+          "value": "unverified"
+        },
+        {
+          "key": "emb.state.power",
+          "value": "normal"
+        },
+        {
+          "key": "emb.state.screen-automatic",
+          "value": "android.app.Activity"
+        },
+        {
+          "key": "emb.state.test",
+          "value": "UNKNOWN"
+        },
+        {
+          "key": "emb.type",
+          "value": "sys.log"
+        },
+        {
+          "key": "emb.user_session_id",
+          "value": "88D9EEC83BEF469DB111DAAF5D87FF09"
+        },
+        {
+          "key": "log.record.uid",
+          "value": "7B5F0C5B857952974FCD15B728F47289"
+        },
+        {
+          "key": "session.id",
+          "value": "88D9EEC83BEF469DB111DAAF5D87FF09"
+        }
+      ]
+    }
+  ]
+}

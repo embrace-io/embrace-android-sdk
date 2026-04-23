@@ -2,7 +2,7 @@ package io.embrace.android.gradle.plugin.config.variant
 
 import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
 
-private const val API_TOKEN_LENGTH = 32
+private const val API_TOKEN_MIN_LENGTH = 32
 private const val APP_ID_LENGTH = 5
 
 /**
@@ -36,8 +36,8 @@ internal object VariantConfigurationValidator {
      */
     private fun validateApiToken(configuration: EmbraceVariantConfig) {
         if (!configuration.apiToken.isNullOrEmpty()) {
-            require(configuration.apiToken.length == API_TOKEN_LENGTH) {
-                "api_token must contain exactly $API_TOKEN_LENGTH characters."
+            require(configuration.apiToken.length >= API_TOKEN_MIN_LENGTH) {
+                "api_token must contain at least $API_TOKEN_MIN_LENGTH characters."
             }
         }
     }

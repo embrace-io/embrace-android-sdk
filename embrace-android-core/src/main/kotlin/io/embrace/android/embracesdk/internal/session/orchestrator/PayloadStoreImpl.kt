@@ -15,13 +15,13 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
-import io.embrace.android.embracesdk.internal.utils.Uuid
+import io.embrace.android.embracesdk.internal.utils.UuidSource
 
 internal class PayloadStoreImpl(
     private val intakeService: IntakeService,
     private val clock: Clock,
     private val processIdProvider: () -> String,
-    private val uuidProvider: () -> String = { Uuid.getEmbUuid() },
+    private val uuidSource: UuidSource,
 ) : PayloadStore {
 
     override fun storeSessionPartPayload(
@@ -111,7 +111,7 @@ internal class PayloadStoreImpl(
     ): StoredTelemetryMetadata {
         return StoredTelemetryMetadata(
             clock.now(),
-            uuidProvider(),
+            uuidSource.createUuid(),
             processIdProvider(),
             type,
             complete,

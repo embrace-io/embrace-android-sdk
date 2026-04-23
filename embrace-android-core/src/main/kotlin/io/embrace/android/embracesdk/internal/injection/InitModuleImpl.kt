@@ -12,6 +12,8 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.EmbraceTelemetryService
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.android.embracesdk.internal.utils.UuidSource
+import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import java.util.concurrent.TimeUnit
@@ -20,6 +22,7 @@ class InitModuleImpl(
     override val logger: InternalLogger = InternalLoggerImpl(),
     override val clock: Clock = NormalizedIntervalClock(logger = logger),
     override val systemInfo: SystemInfo = SystemInfo(),
+    override val uuidSource: UuidSource = UuidSourceImpl(),
 ) : InitModule {
 
     override val telemetryService: TelemetryService by singleton {

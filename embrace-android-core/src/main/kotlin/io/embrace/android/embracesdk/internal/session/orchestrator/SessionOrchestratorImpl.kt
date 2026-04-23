@@ -26,7 +26,7 @@ import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.utils.Uuid
+import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
@@ -50,6 +50,7 @@ internal class SessionOrchestratorImpl(
     private val metadataStore: UserSessionMetadataStore,
     private val logger: InternalLogger,
     private val backgroundWorker: BackgroundWorker,
+    private val uuidSource: UuidSource,
 ) : SessionOrchestrator {
 
     /**
@@ -484,7 +485,7 @@ internal class SessionOrchestratorImpl(
         val inactivityTimeoutMs = configService.sessionBehavior.getSessionInactivityTimeoutMs()
         val newMetadata = UserSessionMetadata(
             startTimeMs = startTimeMs,
-            userSessionId = Uuid.getEmbUuid(),
+            userSessionId = uuidSource.createUuid(),
             userSessionNumber = ordinalStore.incrementAndGet(Ordinal.USER_SESSION).toLong(),
             maxDurationSecs = maxDurationMs / 1_000L,
             inactivityTimeoutSecs = inactivityTimeoutMs / 1_000L,

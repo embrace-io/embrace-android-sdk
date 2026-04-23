@@ -16,7 +16,10 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.utils.UuidSource
+import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
 import okhttp3.OkHttpClient
+import kotlin.random.Random
 
 internal class TelemetryDestinationHarness {
 
@@ -42,6 +45,7 @@ internal class TelemetryDestinationHarness {
         override val telemetryService: TelemetryService = NoopTelemetryService
         override val logger: InternalLogger = InternalLoggerImpl()
         override val systemInfo: SystemInfo = SystemInfo()
+        override val uuidSource: UuidSource = UuidSourceImpl(Random(0))
         override val jsonSerializer: PlatformSerializer = EmbraceSerializer()
         override val instrumentedConfig: InstrumentedConfig = InstrumentedConfigImpl
         override val okHttpClient: OkHttpClient = OkHttpClient()

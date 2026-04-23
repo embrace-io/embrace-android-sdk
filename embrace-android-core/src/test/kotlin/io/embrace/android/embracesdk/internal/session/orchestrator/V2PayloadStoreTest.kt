@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeIntakeService
 import io.embrace.android.embracesdk.fakes.FakePayloadIntake
+import io.embrace.android.embracesdk.fakes.FakeUuidSource
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System
@@ -26,7 +27,7 @@ class V2PayloadStoreTest {
     @Before
     fun setUp() {
         intakeService = FakeIntakeService()
-        store = PayloadStoreImpl(intakeService, FakeClock(), { "fakeProcessId" }) { "fakeuuid" }
+        store = PayloadStoreImpl(intakeService, FakeClock(), { "fakeProcessId" }, FakeUuidSource())
     }
 
     @Test

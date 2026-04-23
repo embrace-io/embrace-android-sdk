@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -33,6 +34,7 @@ internal class InstrumentationArgsImpl(
     override val application: Application,
     override val store: KeyValueStore,
     override val serializer: PlatformSerializer,
+    override val uuidSource: UuidSource,
     override val ordinalStore: OrdinalStore,
     override val processIdentifier: String,
     override val appStateTracker: AppStateTracker,

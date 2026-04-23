@@ -27,6 +27,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl.Companion.MAX_INTERNAL_SPANS_PER_SESSION
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl.Companion.MAX_NON_INTERNAL_SPANS_PER_SESSION
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.OpenTelemetry
@@ -40,6 +41,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import kotlin.random.Random
 
 internal class CurrentSessionPartSpanImplTests {
 
@@ -480,7 +482,8 @@ internal class CurrentSessionPartSpanImplTests {
             spanSink = spanSink,
             embraceSpanFactorySupplier = { FakeEmbraceSpanFactory() },
             tracerSupplier = { FakeTracer() },
-            openTelemetrySupplier = ::openTelemetry
+            openTelemetrySupplier = ::openTelemetry,
+            uuidSource = UuidSourceImpl(Random(0)),
         )
         assertFalse(sessionSpan.readySession())
     }

@@ -35,6 +35,7 @@ class InstrumentationModuleImpl(
             workerThreadModule = workerThreadModule,
             store = coreModule.store,
             serializer = initModule.jsonSerializer,
+            uuidSource = initModule.uuidSource,
             sessionPartTracker = essentialServiceModule.sessionPartTracker,
             ordinalStore = coreModule.ordinalStore,
             userSessionPropertiesService = essentialServiceModule.userSessionPropertiesService,

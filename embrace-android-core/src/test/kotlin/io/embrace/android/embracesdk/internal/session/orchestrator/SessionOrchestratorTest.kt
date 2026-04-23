@@ -43,6 +43,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
+import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.Assert.assertEquals
@@ -54,6 +55,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RuntimeEnvironment
 import java.util.concurrent.TimeUnit
+import kotlin.random.Random
 
 @RunWith(AndroidJUnit4::class)
 internal class SessionOrchestratorTest {
@@ -1074,6 +1076,7 @@ internal class SessionOrchestratorTest {
             metadataStoreOverride ?: UserSessionMetadataStore(FakeKeyValueStore()),
             logger,
             BackgroundWorker(inactivityWorkerExecutor),
+            UuidSourceImpl(Random(0)),
         )
         orchestratorStartTimeMs = clock.now()
         userSessionPropertiesService.addProperty("key", "value", PropertyScope.USER_SESSION)

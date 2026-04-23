@@ -34,7 +34,6 @@ class UserSessionOrchestrationModuleImpl(
         val payloadMessageCollator = PayloadMessageCollatorImpl(
             EmbTrace.trace("sessionEnvelopeSource") { payloadSourceModule.sessionPartEnvelopeSource },
             openTelemetryModule.currentSessionPartSpan,
-            coreModule.ordinalStore,
         )
 
         val payloadFactory = PayloadFactoryImpl(

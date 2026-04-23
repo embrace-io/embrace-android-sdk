@@ -118,7 +118,7 @@ internal class SessionOrchestratorImpl(
             transitionType = TransitionType.INITIAL,
             timestamp = timestamp,
             newSessionAction = {
-                payloadFactory.startPayloadWithState(state, timestamp, true)
+                payloadFactory.startPayloadWithState(state, timestamp, true, incrementPartNumber())
             }
         )
     }
@@ -147,7 +147,7 @@ internal class SessionOrchestratorImpl(
                 payloadFactory.endPayloadWithState(AppState.BACKGROUND, timestamp, initial)
             },
             newSessionAction = {
-                payloadFactory.startPayloadWithState(AppState.FOREGROUND, timestamp, coldStart)
+                payloadFactory.startPayloadWithState(AppState.FOREGROUND, timestamp, coldStart, incrementPartNumber())
             },
             earlyTerminationCondition = {
                 return@transitionState shouldRunOnForeground(state)
@@ -165,7 +165,7 @@ internal class SessionOrchestratorImpl(
                 payloadFactory.endPayloadWithState(AppState.FOREGROUND, timestamp, initial)
             },
             newSessionAction = {
-                payloadFactory.startPayloadWithState(AppState.BACKGROUND, timestamp, false)
+                payloadFactory.startPayloadWithState(AppState.BACKGROUND, timestamp, false, incrementPartNumber())
             },
             earlyTerminationCondition = {
                 return@transitionState shouldRunOnBackground(state)
@@ -184,7 +184,7 @@ internal class SessionOrchestratorImpl(
             },
             newSessionAction = {
                 lastManualEndMs = timestamp
-                payloadFactory.startSessionWithManual(timestamp)
+                payloadFactory.startSessionWithManual(timestamp, incrementPartNumber())
             },
             earlyTerminationCondition = {
                 return@transitionState shouldEndManualSession(
@@ -332,6 +332,11 @@ internal class SessionOrchestratorImpl(
             // update newly created session
             val userSession = currentUserSession()
             if (newSession != null && userSession != null) {
+                // persist partNumber to handle user session restoration in new process
+                val updatedUserSession = userSession.copy(partNumber = newSession.sessionPartNumber)
+                metadataStore.save(updatedUserSession)
+                userSessionState = UserSessionState.Active(updatedUserSession)
+
                 if (endAppState == AppState.FOREGROUND) {
                     sessionTracker.setProcessStateSummary(newSession.sessionPartId, userSession.userSessionId)
                 }
@@ -396,7 +401,7 @@ internal class SessionOrchestratorImpl(
                     payloadFactory.endPayloadWithState(currentAppState, timestamp, initial)
                 },
                 newSessionAction = {
-                    payloadFactory.startPayloadWithState(currentAppState, timestamp, false)
+                    payloadFactory.startPayloadWithState(currentAppState, timestamp, false, incrementPartNumber())
                 },
             )
         }
@@ -416,13 +421,20 @@ internal class SessionOrchestratorImpl(
                         payloadFactory.endPayloadWithState(AppState.BACKGROUND, timestamp, initial)
                     },
                     newSessionAction = {
-                        payloadFactory.startPayloadWithState(AppState.BACKGROUND, timestamp, false)
+                        payloadFactory.startPayloadWithState(
+                            AppState.BACKGROUND,
+                            timestamp,
+                            false,
+                            incrementPartNumber()
+                        )
                     },
                     earlyTerminationCondition = { state != AppState.BACKGROUND },
                 )
             }
         }
     }
+
+    private fun incrementPartNumber(): Int = (currentUserSession()?.partNumber ?: 0) + 1
 
     private fun processEndMessage(envelope: Envelope<SessionPartPayload>?, transitionType: TransitionType) {
         envelope?.let {
@@ -455,10 +467,7 @@ internal class SessionOrchestratorImpl(
                 terminateUserSession(current)
                 startNewUserSession(timestamp)
             } else {
-                val updatedMetadata = current.metadata.copy(
-                    partNumber = current.metadata.partNumber + 1,
-                    lastActivityMs = timestamp,
-                )
+                val updatedMetadata = current.metadata.copy(lastActivityMs = timestamp)
                 metadataStore.save(updatedMetadata)
                 userSessionState = UserSessionState.Active(updatedMetadata)
             }
@@ -488,7 +497,7 @@ internal class SessionOrchestratorImpl(
             userSessionNumber = ordinalStore.incrementAndGet(Ordinal.USER_SESSION).toLong(),
             maxDurationSecs = maxDurationMs / 1_000L,
             inactivityTimeoutSecs = inactivityTimeoutMs / 1_000L,
-            partNumber = 1,
+            partNumber = 0,
             lastActivityMs = startTimeMs,
         )
         metadataStore.save(newMetadata)

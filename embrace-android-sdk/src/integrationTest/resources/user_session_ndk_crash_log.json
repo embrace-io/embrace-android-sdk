@@ -1,0 +1,40 @@
+{
+  "logs": [
+    {
+      "time_unix_nano": 169220160030000000,
+      "severity_number": 17,
+      "severity_text": "ERROR",
+      "body": "",
+      "attributes": [
+        {
+          "key": "emb.android.crash_number",
+          "value": "1"
+        },
+        {
+          "key": "emb.private.send_mode",
+          "value": "DEFER"
+        },
+        {
+          "key": "emb.session_part_id",
+          "value": "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d"
+        },
+        {
+          "key": "emb.type",
+          "value": "sys.android.native_crash"
+        },
+        {
+          "key": "emb.user_session_id",
+          "value": "2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e"
+        },
+        {
+          "key": "log.record.uid",
+          "value": "__EMBRACE_TEST_IGNORE__"
+        },
+        {
+          "key": "session.id",
+          "value": "2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e"
+        }
+      ]
+    }
+  ]
+}

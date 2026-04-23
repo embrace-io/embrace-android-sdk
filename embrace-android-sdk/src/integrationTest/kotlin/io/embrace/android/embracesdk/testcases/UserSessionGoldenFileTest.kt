@@ -1,6 +1,11 @@
 package io.embrace.android.embracesdk.testcases
 
+import android.app.ApplicationExitInfo
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.TestAeiData
+import io.embrace.android.embracesdk.fakes.setupFakeAeiData
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
+import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.assertions.assertLogPayloadMatchesGoldenFile
 import io.embrace.android.embracesdk.testframework.assertions.assertSessionSpanMatchesGoldenFile
@@ -19,23 +24,11 @@ internal class UserSessionGoldenFileTest {
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
+    /**
+     * Asserts that sessions and logs can be associated via user session IDs.
+     */
     @Test
-    fun `session span matches golden file for basic session`() {
-        testRule.runTest(
-            testCaseAction = {
-                recordSession()
-            },
-            assertAction = {
-                assertSessionSpanMatchesGoldenFile(
-                    getSingleSessionEnvelope(),
-                    "user_session_basic_span.json",
-                )
-            }
-        )
-    }
-
-    @Test
-    fun `log payload matches golden file for basic info log`() {
+    fun `basic session span and log payload association`() {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
@@ -47,7 +40,129 @@ internal class UserSessionGoldenFileTest {
                     getSingleLogEnvelope(),
                     "user_session_basic_log.json",
                 )
+                assertSessionSpanMatchesGoldenFile(
+                    getSingleSessionEnvelope(),
+                    "user_session_basic_span.json",
+                )
             }
         )
     }
+
+    /**
+     * Asserts that sessions and JVM crashes can be associated via user session IDs.
+     */
+    @Test
+    fun `JVM crash association`() {
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    simulateJvmUncaughtException(RuntimeException("boom"))
+                }
+            },
+            assertAction = {
+                assertSessionSpanMatchesGoldenFile(
+                    getSingleSessionEnvelope(),
+                    "user_session_jvm_crash_span.json",
+                )
+                assertLogPayloadMatchesGoldenFile(
+                    getSingleLogEnvelope(),
+                    "user_session_jvm_crash_log.json",
+                )
+            }
+        )
+    }
+
+    /**
+     * Asserts that sessions and NDK crashes can be associated via user session IDs.
+     */
+    @Test
+    fun `NDK crash association`() {
+        val sessionPartId = "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d"
+        val userSessionId = "2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e"
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    val nativeCrash = NativeCrashData(
+                        nativeCrashId = "test-crash-report-id",
+                        sessionPartId = sessionPartId,
+                        userSessionId = userSessionId,
+                        timestamp = clock.now(),
+                        crash = null,
+                        symbols = null,
+                    )
+                    findDataSource<NativeCrashDataSource>().sendNativeCrash(
+                        nativeCrash = nativeCrash,
+                        userSessionProperties = emptyMap(),
+                        metadata = emptyMap(),
+                    )
+                }
+            },
+            assertAction = {
+                assertLogPayloadMatchesGoldenFile(
+                    getSingleLogEnvelope(),
+                    "user_session_ndk_crash_log.json",
+                )
+            }
+        )
+    }
+
+
+    /**
+     * Asserts that sessions and AEI can be associated via user session IDs.
+     */
+    @Test
+    fun `AEI association`() {
+        val sessionPartId = "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d"
+        val userSessionId = "2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e"
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    val nativeCrash = NativeCrashData(
+                        nativeCrashId = "test-crash-report-id",
+                        sessionPartId = sessionPartId,
+                        userSessionId = userSessionId,
+                        timestamp = clock.now(),
+                        crash = null,
+                        symbols = null,
+                    )
+                    findDataSource<NativeCrashDataSource>().sendNativeCrash(
+                        nativeCrash = nativeCrash,
+                        userSessionProperties = emptyMap(),
+                        metadata = emptyMap(),
+                    )
+                }
+            },
+            assertAction = {
+                assertLogPayloadMatchesGoldenFile(
+                    getSingleLogEnvelope(),
+                    "user_session_ndk_crash_log.json",
+                )
+            }
+        )
+    }
+
+    @Test
+    fun `anr exit`() {
+        testRule.runTest(
+            setupAction = {
+                val anr = TestAeiData(
+                    ApplicationExitInfo.REASON_ANR,
+                    0,
+                    "aei",
+                    "user input dispatch timed out",
+                )
+                setupFakeAeiData(listOf(anr.toAeiObject()))
+            },
+            testCaseAction = {
+                recordSession()
+            },
+            assertAction = {
+                assertLogPayloadMatchesGoldenFile(
+                    getSingleLogEnvelope(),
+                    "user_session_aei_log.json",
+                )
+            }
+        )
+    }
+
 }

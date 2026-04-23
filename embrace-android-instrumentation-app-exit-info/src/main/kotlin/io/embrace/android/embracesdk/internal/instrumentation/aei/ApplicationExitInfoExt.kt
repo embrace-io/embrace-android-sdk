@@ -30,7 +30,10 @@ internal fun ApplicationExitInfo.constructAeiObject(
     return AppExitInfoData(
         sessionPartId = parsed.sessionPartId,
         userSessionId = parsed.userSessionId,
-        sessionIdError = getSessionIdValidationError(parsed.sessionPartId),
+        sessionIdError = when {
+            parsed.valid || summary.isEmpty() || summary.matches(SESSION_ID_PATTERN) -> ""
+            else -> "invalid session ID: $summary"
+        },
         importance = importance,
         pss = pss,
         reason = reason,
@@ -86,11 +89,6 @@ private fun ApplicationExitInfo.isNdkProtobufFile(versionChecker: VersionChecker
     return versionChecker.isAtLeast(VERSION_CODES.S) && reason == ApplicationExitInfo.REASON_CRASH_NATIVE
 }
 
-private fun getSessionIdValidationError(sid: String): String = when {
-    sid.isEmpty() || sid.matches(SESSION_ID_PATTERN) -> ""
-    else -> "invalid session ID: $sid"
-}
-
 /**
  * Parses the processStateSummary string. If it has the combined format
  * `{sessionPartId}_{userSessionId}` (both 32-char hex IDs delimited by `_`), both are
@@ -104,6 +102,6 @@ internal fun parseProcessStateSummary(summary: String): ProcessStateSummary {
             userSessionId = summary.substring(SESSION_ID_LENGTH + 1),
         )
     } else {
-        ProcessStateSummary(sessionPartId = summary, userSessionId = null)
+        ProcessStateSummary(sessionPartId = "", userSessionId = "")
     }
 }

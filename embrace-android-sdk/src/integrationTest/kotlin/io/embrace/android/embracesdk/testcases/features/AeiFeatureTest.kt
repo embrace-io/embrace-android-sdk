@@ -2,10 +2,7 @@
 
 package io.embrace.android.embracesdk.testcases.features
 
-import android.app.ActivityManager
-import android.app.Application
 import android.app.ApplicationExitInfo
-import android.content.Context
 import android.os.Build
 import android.preference.PreferenceManager
 import androidx.test.core.app.ApplicationProvider
@@ -14,8 +11,10 @@ import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.assertions.getLogsOfType
+import io.embrace.android.embracesdk.fakes.TestAeiData
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.fakes.setupFakeAeiData
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.AppExitInfoConfig
@@ -24,50 +23,17 @@ import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.semconv.EmbAeiAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.mockk.every
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowActivityManager
 
 @Config(sdk = [Build.VERSION_CODES.R], shadows = [ShadowActivityManager::class])
 @RunWith(AndroidJUnit4::class)
 internal class AeiFeatureTest {
-
-    private data class TestAeiData(
-        val reason: Int,
-        val status: Int,
-        val description: String,
-        val trace: String? = null,
-        val timestamp: Long = 15000000000L,
-        val pid: Int = 6952,
-        val pss: Long = 1509123409L,
-        val rss: Long = 1123409L,
-        val importance: Int = 100,
-        val sessionId: String? = "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d",
-        val sessionIdError: String? = "",
-        val traceStatus: String? = null,
-    ) {
-
-        fun toAeiObject() = mockk<ApplicationExitInfo>(relaxed = true) {
-            every { timestamp } returns this@TestAeiData.timestamp
-            every { pid } returns this@TestAeiData.pid
-            every { processStateSummary } returns this@TestAeiData.sessionId?.toByteArray()
-            every { importance } returns this@TestAeiData.importance
-            every { pss } returns this@TestAeiData.pss
-            every { rss } returns this@TestAeiData.rss
-            every { reason } returns this@TestAeiData.reason
-            every { status } returns this@TestAeiData.status
-            every { description } returns this@TestAeiData.description
-            every { traceInputStream } returns this@TestAeiData.trace?.byteInputStream()
-        }
-    }
 
     @Rule
     @JvmField
@@ -250,7 +216,7 @@ internal class AeiFeatureTest {
 
     @Test
     fun `empty session ID in processStateSummary`() {
-        val obj = anr.copy(sessionId = "")
+        val obj = anr.copy(processStateSummary = "")
         testRule.runTest(
             setupAction = {
                 setupFakeAeiData(listOf(obj.toAeiObject()))
@@ -267,7 +233,7 @@ internal class AeiFeatureTest {
 
     @Test
     fun `invalid session ID in processStateSummary`() {
-        val obj = anr.copy(sessionId = "invalid", sessionIdError = "invalid session ID: invalid")
+        val obj = anr.copy(processStateSummary = "invalid", sessionIdError = "invalid session ID: invalid")
         testRule.runTest(
             setupAction = {
                 setupFakeAeiData(listOf(obj.toAeiObject()))
@@ -310,10 +276,13 @@ internal class AeiFeatureTest {
         aeiNumber: String = "null",
     ) {
         with(expected) {
+            val sessionPartId = processStateSummary?.parseProcessStateSummary(0)
+            val userSessionId = processStateSummary?.parseProcessStateSummary(1)
             attributes?.assertMatches(
-                mapOf<String, Any?>(
+                mapOf(
                     EmbAeiAttributes.TIMESTAMP to timestamp,
-                    EmbAeiAttributes.AEI_SESSION_PART_ID to sessionId,
+                    EmbAeiAttributes.AEI_SESSION_PART_ID to sessionPartId,
+                    EmbAeiAttributes.AEI_USER_SESSION_ID to userSessionId,
                     EmbAeiAttributes.SESSION_ID_ERROR to sessionIdError,
                     EmbAeiAttributes.TRACE_STATUS to traceStatus,
                     EmbAeiAttributes.PROCESS_IMPORTANCE to importance,
@@ -331,11 +300,14 @@ internal class AeiFeatureTest {
         }
     }
 
-    private fun setupFakeAeiData(data: List<ApplicationExitInfo>) {
-        val ctx = ApplicationProvider.getApplicationContext<Application>()
-        val am = ctx.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        val shadowActivityManager: ShadowActivityManager = Shadows.shadowOf(am)
-        data.forEach(shadowActivityManager::addApplicationExitInfo)
+    private fun String.parseProcessStateSummary(k: Int): String {
+        return runCatching {
+            if (isNotEmpty() && length == 65) {
+                split("_")[k]
+            } else {
+                ""
+            }
+        }.getOrDefault("")
     }
 
     @Suppress("DEPRECATION")

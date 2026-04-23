@@ -73,12 +73,14 @@ internal class ActivityNavigationTracker(
     override fun onForeground() {}
 
     private fun handleActivityStarted(activity: Activity) {
-        navigationTrackingService.trackNavigation(activity)
         onEvent(ActivityStarted(activity, clock.now()))
     }
 
     private fun handleActivityResumed(activity: Activity) {
         onEvent(ActivityResumed(activity, clock.now()))
+
+        // Add NavController tracking after the resume event is fired to mimic how the rememberNavController Composable will do it.
+        navigationTrackingService.trackNavigation(activity)
     }
 
     private fun handleActivityPaused(activity: Activity) {

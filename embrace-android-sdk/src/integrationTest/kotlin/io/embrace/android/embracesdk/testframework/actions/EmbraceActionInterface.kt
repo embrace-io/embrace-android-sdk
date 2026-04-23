@@ -143,7 +143,7 @@ internal class EmbraceActionInterface(
         endInBackground: Boolean = true,
         createFirstActivity: Boolean = true,
         invokeManualEnd: Boolean = false,
-        postOnStart: (Activity) -> Unit = {},
+        postOnResume: (Activity) -> Unit = {},
         activitiesAndActions: List<Pair<ActivityController<*>, () -> Unit>> = listOf(
             Robolectric.buildActivity(Activity::class.java) to {},
         ),
@@ -182,9 +182,9 @@ internal class EmbraceActionInterface(
                 onForeground()
             }
             invokeWithMainLooperUnblock(activityController::start)
-            invokeWithMainLooperUnblock { postOnStart(activityController.get()) }
             setup.getClock().tick(LIFECYCLE_EVENT_GAP)
             invokeWithMainLooperUnblock(activityController::resume)
+            invokeWithMainLooperUnblock { postOnResume(activityController.get()) }
             setup.getClock().tick(LIFECYCLE_EVENT_GAP)
 
             if (invokeManualEnd) {
@@ -237,8 +237,8 @@ internal class EmbraceActionInterface(
 
     /**
      * Simulates opening the given [Activity] and navigating through the given destinations using the NavController provided
-     * by the [HasNavController] interface. The public API for tracking NavControllers will be called after
-     * onStart to register the given NavControlle for navigation tracking.
+     * by the [HasNavController] interface. The public API for tracking NavControllers will be called after onResume
+     * to register the given NavController for navigation tracking.
      */
     inline fun <reified T> simulateNavControllerTrackingAndNavigation(
         routes: List<String>,
@@ -264,12 +264,12 @@ internal class EmbraceActionInterface(
     private inline fun <reified T> simulateNavControllerNavigation(
         routes: List<String>,
         activityController: ActivityController<T>,
-        crossinline postStart: (Activity) -> Unit = {},
+        crossinline postResume: (Activity) -> Unit = {},
     ): AppExecutionTimestamps where T : Activity, T : HasNavController =
         simulateOpeningActivities(
             addStartupActivity = false,
             startInBackground = true,
-            postOnStart = { activity -> postStart(activity) },
+            postOnResume = { activity -> postResume(activity) },
             activitiesAndActions = listOf(
                 activityController to {
                     routes.forEach { route ->

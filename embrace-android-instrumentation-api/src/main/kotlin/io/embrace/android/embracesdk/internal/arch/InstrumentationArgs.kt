@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -73,6 +74,8 @@ interface InstrumentationArgs {
      * A serializer that can be used to serialize and deserialize data.
      */
     val serializer: PlatformSerializer
+
+    val uuidSource: UuidSource
 
     /**
      * Persists ordinals that are cross-cutting concerns across the SDK, such as session number

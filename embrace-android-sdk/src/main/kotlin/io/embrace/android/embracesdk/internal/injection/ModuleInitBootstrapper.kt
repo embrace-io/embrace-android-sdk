@@ -67,6 +67,7 @@ internal class ModuleInitBootstrapper(
                 store = coreModule.store,
                 abis = Build.SUPPORTED_ABIS,
                 logger = initModule.logger,
+                uuidSource = initModule.uuidSource,
             )
         }
     },

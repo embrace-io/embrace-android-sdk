@@ -132,6 +132,7 @@ class OpenTelemetryModuleImpl(
             tracerSupplier = { otelSdkWrapper.sdkTracer },
             openTelemetrySupplier = { otelSdkWrapper.openTelemetryKotlin },
             embraceSpanFactorySupplier = { embraceSpanFactory },
+            uuidSource = initModule.uuidSource,
         ).also {
             internalSpanStopCallback = it::spanStopCallback
         }
@@ -157,7 +158,8 @@ class OpenTelemetryModuleImpl(
 
     override val eventService: EventService by lazy {
         EventServiceImpl(
-            sdkLoggerProvider = { otelSdkWrapper.sdkLogger }
+            sdkLoggerProvider = { otelSdkWrapper.sdkLogger },
+            uuidSource = initModule.uuidSource,
         )
     }
 

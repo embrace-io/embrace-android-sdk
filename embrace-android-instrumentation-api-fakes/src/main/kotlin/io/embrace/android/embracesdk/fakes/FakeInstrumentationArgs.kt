@@ -9,10 +9,13 @@ import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.utils.UuidSource
+import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.io.File
+import kotlin.random.Random
 
 class FakeInstrumentationArgs(
     override val application: Application,
@@ -23,6 +26,7 @@ class FakeInstrumentationArgs(
     override val clock: FakeClock = FakeClock(),
     override val store: FakeKeyValueStore = FakeKeyValueStore(),
     override val serializer: PlatformSerializer = TestPlatformSerializer(),
+    override val uuidSource: UuidSource = UuidSourceImpl(Random(0)),
     override val ordinalStore: OrdinalStore = FakeOrdinalStore(),
     override val processIdentifier: String = "fake-process-id",
     override val appStateTracker: AppStateTracker = FakeAppStateTracker(),

@@ -41,6 +41,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
+import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -49,6 +50,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RuntimeEnvironment
 import java.util.concurrent.TimeUnit
+import kotlin.random.Random
 
 @RunWith(AndroidJUnit4::class)
 internal class SessionOrchestratorListenerTest {
@@ -315,7 +317,8 @@ internal class SessionOrchestratorListenerTest {
             ordinalStoreOverride ?: FakeOrdinalStore(),
             metadataStoreOverride ?: UserSessionMetadataStore(FakeKeyValueStore()),
             logger,
-            fakeBackgroundWorker()
+            fakeBackgroundWorker(),
+            UuidSourceImpl(Random(0)),
         )
         orchestratorStartTimeMs = clock.now()
         userSessionPropertiesService.addProperty("key", "value", PropertyScope.USER_SESSION)

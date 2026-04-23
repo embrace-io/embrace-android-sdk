@@ -41,12 +41,14 @@ import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
-import io.embrace.android.embracesdk.internal.utils.Uuid
+import io.embrace.android.embracesdk.internal.utils.UuidSource
+import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.opentelemetry.kotlin.semconv.SessionAttributes
+import kotlin.random.Random
 import org.robolectric.Shadows
 import org.robolectric.shadows.ShadowLooper
 
@@ -60,7 +62,8 @@ internal class EmbraceSetupInterface(
     ignoredInternalErrors: List<InternalErrorType> = listOf(),
     val fakeClock: FakeClock = FakeClock(currentTime = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS),
 ) {
-    private val processIdentifier: String = Uuid.getEmbUuid()
+    private val uuidSource: UuidSource = UuidSourceImpl(Random(0))
+    private val processIdentifier: String = uuidSource.createUuid()
 
     val fakeNetworkConnectivityService = FakeNetworkConnectivityService()
     val fakeJniDelegate = FakeJniDelegate().also {
@@ -87,6 +90,7 @@ internal class EmbraceSetupInterface(
     private val fakeInitModule: FakeInitModule = FakeInitModule(
         clock = fakeClock,
         logger = FakeInternalLogger(ignoredErrors = ignoredInternalErrors),
+        uuidSource = uuidSource,
     )
 
     private val workerThreadModule: WorkerThreadModule = initWorkerThreadModule(
@@ -121,6 +125,7 @@ internal class EmbraceSetupInterface(
                 store = coreModule.store,
                 abis = Build.SUPPORTED_ABIS,
                 logger = initModule.logger,
+                uuidSource = initModule.uuidSource,
             )
             DecoratedConfigService(impl)
         },

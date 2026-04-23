@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.utils.Uuid
+import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.Clock
@@ -32,6 +32,7 @@ internal class CurrentSessionPartSpanImpl(
     private val tracerSupplier: Provider<Tracer>,
     private val openTelemetrySupplier: Provider<OpenTelemetry>,
     private val embraceSpanFactorySupplier: Provider<EmbraceSpanFactory>,
+    private val uuidSource: UuidSource,
 ) : CurrentSessionPartSpan {
 
     /**
@@ -196,7 +197,7 @@ internal class CurrentSessionPartSpanImpl(
             )
         ).apply {
             start(startTimeMs = startTimeMs)
-            setSystemAttribute(SessionAttributes.SESSION_ID, Uuid.getEmbUuid())
+            setSystemAttribute(SessionAttributes.SESSION_ID, uuidSource.createUuid())
             val previousSessionSpan = lastSessionSpan.get()
             previousSessionSpan?.spanContext?.let {
                 val prevSessionId = previousSessionSpan.getSystemAttribute(SessionAttributes.SESSION_ID) ?: ""

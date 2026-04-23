@@ -13,12 +13,13 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakeUserSessionOrchestrationModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.internal.utils.Uuid
+import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.random.Random
 
 @RunWith(AndroidJUnit4::class)
 internal class SdkStateApiDelegateTest {
@@ -33,7 +34,7 @@ internal class SdkStateApiDelegateTest {
     @Before
     fun setUp() {
         logService = FakeLogService()
-        configService = FakeConfigService(deviceId = Uuid.getEmbUuid())
+        configService = FakeConfigService(deviceId = UuidSourceImpl(Random(0)).createUuid())
         sessionIdProvider = FakeSessionIdProvider()
         val moduleInitBootstrapper = ModuleInitBootstrapper(
             FakeInitModule(),

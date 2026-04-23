@@ -70,6 +70,7 @@ class UserSessionOrchestrationModuleImpl(
             UserSessionMetadataStore(coreModule.store),
             initModule.logger,
             workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
+            initModule.uuidSource,
         )
     }
 }

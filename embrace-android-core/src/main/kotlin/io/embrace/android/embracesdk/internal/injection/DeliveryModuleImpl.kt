@@ -42,7 +42,7 @@ class DeliveryModuleImpl(
     private val processIdProvider = { otelModule.otelSdkConfig.processIdentifier }
 
     override val payloadStore: PayloadStore by singleton {
-        PayloadStoreImpl(intakeService, initModule.clock, processIdProvider)
+        PayloadStoreImpl(intakeService, initModule.clock, processIdProvider, initModule.uuidSource)
     }
 
     private val dataPersistenceWorker: PriorityWorker<StoredTelemetryMetadata> by singleton {

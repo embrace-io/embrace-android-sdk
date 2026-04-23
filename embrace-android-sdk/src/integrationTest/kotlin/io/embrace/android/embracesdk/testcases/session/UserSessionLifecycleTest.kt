@@ -287,4 +287,5 @@ internal class UserSessionLifecycleTest {
             }
         )
     }
+
 }

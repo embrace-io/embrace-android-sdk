@@ -228,12 +228,12 @@ internal class EmbraceActionInterface(
 
     /**
      * Simulates opening a [TestNavHostFragmentActivity] and navigating through the given routes.
-     * The tracking of the navigation will be handled automatically by the SDK.
+     * No explicit NavController tracking will be done by the test.
      */
-    inline fun <reified T : TestNavHostFragmentActivity> simulateNavHostFragmentActivityNavigation(
+    inline fun <reified T> simulateNavControllerActivityNavigation(
         routes: List<String>,
         activityController: ActivityController<T> = Robolectric.buildActivity(T::class.java),
-    ) = simulateNavControllerNavigation(routes, activityController)
+    ) where T : Activity, T : HasNavController = simulateNavControllerNavigation(routes, activityController)
 
     /**
      * Simulates opening the given [Activity] and navigating through the given destinations using the NavController provided
@@ -272,6 +272,7 @@ internal class EmbraceActionInterface(
             postOnResume = { activity -> postResume(activity) },
             activitiesAndActions = listOf(
                 activityController to {
+                    activityController.visible()
                     routes.forEach { route ->
                         clock.tick(POST_ACTIVITY_ACTION_DWELL)
                         activityController.get().getNavController().navigate(route)

@@ -38,7 +38,7 @@ internal class NavigationComplexDestinationAndRouteTest {
         testRule.runTest(
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
-                timestamps = simulateNavHostFragmentActivityNavigation(
+                timestamps = simulateNavControllerActivityNavigation(
                     routes = listOf("profile/123", "order/456/details"),
                     activityController = activityController,
                 )
@@ -73,7 +73,7 @@ internal class NavigationComplexDestinationAndRouteTest {
         testRule.runTest(
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
-                timestamps = simulateNavHostFragmentActivityNavigation(
+                timestamps = simulateNavControllerActivityNavigation(
                     routes = listOf("confirm_dialog"),
                     activityController = activityController,
                 )
@@ -101,7 +101,7 @@ internal class NavigationComplexDestinationAndRouteTest {
         testRule.runTest(
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
-                timestamps = simulateNavHostFragmentActivityNavigation(
+                timestamps = simulateNavControllerActivityNavigation(
                     routes = listOf("general"),
                     activityController = activityController,
                 )

@@ -55,6 +55,7 @@ kover = { module = "org.jetbrains.kotlinx:kover-gradle-plugin", version.ref = "k
 agp = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlinGradlePlugin" }
 kotlin-serialization-compiler-plugin = { module = "org.jetbrains.kotlin:kotlin-serialization-compiler-plugin-embeddable", version.ref = "kotlinGradlePlugin" }
+kotlin-compose-compiler-plugin = { module = "org.jetbrains.kotlin:kotlin-compose-compiler-plugin-embeddable", version.ref = "kotlinGradlePlugin" }
 lifecycle-runtime = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
 lifecycle-compiler = { group = "androidx.lifecycle", name = "lifecycle-compiler", version.ref = "lifecycle" }
 lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycle" }
@@ -77,6 +78,7 @@ okhttp = { group = "com.squareup.okhttp3", name = "okhttp" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging", version.ref = "firebase" }
 compose = { group = "androidx.compose.ui", name = "ui", version.ref = "compose" }
+compose-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "compose" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 androidx-test-core = { module = "androidx.test:core", version.ref = "androidxTest" }
@@ -88,6 +90,7 @@ detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", 
 appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 androidx-navigation-fragment = { module = "androidx.navigation:navigation-fragment-ktx", version.ref = "navigation" }
 androidx-navigation-common = { module = "androidx.navigation:navigation-common-ktx", version.ref = "navigation" }
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation" }
 androidx-navigation-testing = { module = "androidx.navigation:navigation-testing", version.ref = "navigation" }
 asm-util = { module = "org.ow2.asm:asm-util", version.ref = "asmUtil" }
 gradle-test-kit = { module = "dev.gradleplugins:gradle-test-kit", version.ref = "gradleTestKit" }
@@ -115,5 +118,6 @@ dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildconfig" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlinGradlePlugin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlinGradlePlugin" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "koverGradlePlugin" }
 benchmark = { id = "androidx.benchmark", version.ref = "androidxBenchmark" }

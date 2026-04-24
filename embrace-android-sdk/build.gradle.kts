@@ -1,5 +1,6 @@
 plugins {
     id("embrace-public-api-conventions")
+    id("embrace-test-kotlin-compiler-conventions")
     id("com.google.devtools.ksp")
 }
 
@@ -79,11 +80,10 @@ dependencies {
     testImplementation(libs.opentelemetry.sdk)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.navigation.fragment)
-    testImplementation(libs.androidx.navigation.common)
+    testImplementation(libs.androidx.navigation.compose)
     testImplementation(libs.androidx.navigation.testing)
     testImplementation(libs.opentelemetry.kotlin.compat)
     testImplementation(libs.kotlinx.serialization.core)
-    add("kotlinCompilerPluginClasspath", libs.kotlin.serialization.compiler.plugin)
 
     lintChecks(project(":embrace-lint"))
 }

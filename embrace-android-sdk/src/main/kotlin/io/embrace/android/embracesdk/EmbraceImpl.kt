@@ -165,20 +165,23 @@ internal class EmbraceImpl(
      * Shuts down the Embrace SDK.
      */
     fun stop() {
+        sdkCallChecker.started.set(false)
         bootstrapper.stop()
     }
 
     override fun disable() {
         if (sdkCallChecker.started.get()) {
             bootstrapper.openTelemetryModule.otelSdkConfig.disableDataExport()
+            val rootDir = bootstrapper.coreModule.context.filesDir
+            val fallbackDir = bootstrapper.coreModule.context.cacheDir
             stop()
             Executors.newSingleThreadExecutor().execute {
                 runCatching {
                     StorageLocation.entries.map {
                         it.asFile(
-                            logger = logger,
-                            rootDirSupplier = { bootstrapper.coreModule.context.filesDir },
-                            fallbackDirSupplier = { bootstrapper.coreModule.context.cacheDir }
+                            logger = null,
+                            rootDirSupplier = { rootDir },
+                            fallbackDirSupplier = { fallbackDir }
                         ).value
                     }.forEach {
                         it.deleteRecursively()

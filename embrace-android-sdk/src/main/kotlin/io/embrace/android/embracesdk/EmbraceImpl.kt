@@ -165,6 +165,7 @@ internal class EmbraceImpl(
      * Shuts down the Embrace SDK.
      */
     fun stop() {
+        sdkCallChecker.started.set(false)
         bootstrapper.stop()
     }
 

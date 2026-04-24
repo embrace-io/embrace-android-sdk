@@ -8,14 +8,14 @@ import java.io.File
  * Get the directory as a [File] object
  */
 fun StorageLocation.asFile(
-    logger: InternalLogger,
+    logger: InternalLogger?,
     rootDirSupplier: () -> File,
     fallbackDirSupplier: () -> File,
 ): Lazy<File> = lazy {
     try {
         File(rootDirSupplier(), dir).apply(File::mkdirs)
     } catch (exc: Throwable) {
-        logger.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, exc)
+        logger?.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, exc)
         File(fallbackDirSupplier(), dir).apply(File::mkdirs)
     }
 }

@@ -50,6 +50,7 @@ internal class DisableSdkFeatureTest {
     fun `disabling SDK stops data export`() {
         testRule.runTest(
             setupAction = {
+                getEmbLogger().throwOnInternalError = false
                 // create some dummy values in embrace directories to see if they get deleted
                 embraceDirs.forEach {
                     File(it, TEST_FILE_NAME).writeText(DUMMY_CONTENT)
@@ -60,16 +61,16 @@ internal class DisableSdkFeatureTest {
                     assertEquals(DUMMY_CONTENT, File(it, TEST_FILE_NAME).readText())
                 }
                 recordSession {
-                    embrace.startSpan(SPAN_1)?.stop()
+                    embrace.startSpan(SPAN_1).stop()
                     embrace.logInfo(LOG_1)
-                    embrace.startSpan(SPAN_2)?.stop()
+                    embrace.startSpan(SPAN_2).stop()
                     embrace.logInfo(LOG_2)
 
                     // disable SDK at this point
                     embrace.disable()
 
                     // log some more data
-                    embrace.startSpan(SPAN_3)?.stop()
+                    embrace.startSpan(SPAN_3).stop()
                     embrace.logInfo(LOG_3)
                 }
             },
@@ -101,6 +102,47 @@ internal class DisableSdkFeatureTest {
                 }
                 assertEquals(listOf(LOG_1, LOG_2), logData.map { it.bodyValue?.value })
             }
+        )
+    }
+
+    @Test
+    fun `calling public methods is safe after SDK disabling`() {
+        lateinit var logger: FakeInternalLogger
+        testRule.runTest(
+            setupAction = {
+                logger = getEmbLogger().apply {
+                    throwOnInternalError = false
+                }
+            },
+            testCaseAction = {
+                recordSession {
+                    embrace.disable()
+                    embrace.startSpan(SPAN_3).stop()
+                    embrace.addBreadcrumb("foo")
+                    embrace.logInfo(LOG_1)
+                }
+                recordSession {
+                    embrace.addBreadcrumb("foo")
+                    embrace.logInfo(LOG_1)
+                }
+            },
+            assertAction = {
+                returnIfConditionMet(
+                    desiredValueSupplier = { true },
+                    dataProvider = {
+                        embraceDirs.all {
+                            !File(it, TEST_FILE_NAME).exists()
+                        }
+                    },
+                    condition = { true },
+                )
+
+                assertEquals(0, getLogEnvelopes(0).size)
+                assertEquals(0, getSessionEnvelopes(0).size)
+                assertEquals(4, logger.sdkNotInitializedMessages.size)
+                assertEquals(2, logger.sdkNotInitializedMessages.filter { it.msg == "add_breadcrumb" }.size)
+                assertEquals(2, logger.sdkNotInitializedMessages.filter { it.msg == "log_message" }.size)
+            },
         )
     }
 }

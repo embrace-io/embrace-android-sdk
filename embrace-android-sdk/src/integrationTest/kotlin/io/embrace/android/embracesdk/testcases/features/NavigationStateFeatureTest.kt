@@ -179,26 +179,31 @@ internal class NavigationStateFeatureTest {
     fun `FragmentActivity navigation recorded as state span`() {
         val navRoutes = listOf("contacts", "about", "home")
         var timestamps: AppExecutionTimestamps? = null
+        val activityController = Robolectric.buildActivity(BasicNavHostFragmentActivity::class.java)
 
         testRule.runTest(
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
-                timestamps = simulateNavHostFragmentActivityNavigation<BasicNavHostFragmentActivity>(routes = navRoutes)
+                timestamps = simulateNavHostFragmentActivityNavigation(
+                    routes = navRoutes,
+                    activityController = activityController,
+                )
             },
             assertAction = {
                 val stateSpan = checkNotNull(getSingleSessionEnvelope().getNavigationStateSpan())
                 checkNotNull(timestamps)
                 val eventTimes = mutableListOf(
                     timestamps.firstForegroundTimeMs,
+                    timestamps.firstForegroundTimeMs + LIFECYCLE_EVENT_GAP,
                     timestamps.firstActionTimeMs + POST_ACTIVITY_ACTION_DWELL,
                     timestamps.firstActionTimeMs + POST_ACTIVITY_ACTION_DWELL * 2,
                     timestamps.firstActionTimeMs + POST_ACTIVITY_ACTION_DWELL * 3,
                     timestamps.lastBackgroundTimeMs,
                 )
-                val expectedRoutes = listOf("home") + navRoutes + listOf("Backgrounded")
+                val expectedStateValues = listOf(activityController.get().localClassName, "home") + navRoutes + listOf("Backgrounded")
                 stateSpan.assertNavigationStateSpan(
                     transitionTimesMs = eventTimes,
-                    newStateValues = expectedRoutes
+                    newStateValues = expectedStateValues
                 )
             },
         )
@@ -261,11 +266,13 @@ internal class NavigationStateFeatureTest {
                     transitionTimesMs = listOf(
                         timestamps.firstForegroundTimeMs,
                         navigationTime - POST_ACTIVITY_ACTION_DWELL - 2 * LIFECYCLE_EVENT_GAP,
+                        navigationTime - POST_ACTIVITY_ACTION_DWELL - LIFECYCLE_EVENT_GAP,
                         navigationTime,
                         timestamps.lastBackgroundTimeMs
                     ),
                     newStateValues = listOf(
                         startupActivity.get().localClassName,
+                        navActivity.get().localClassName,
                         "home",
                         "about",
                         "Backgrounded"
@@ -279,7 +286,7 @@ internal class NavigationStateFeatureTest {
     fun `navigation of NavController tracked using public observeNavigation API creates state span`() {
         var timestamps: AppExecutionTimestamps? = null
         val activityController = Robolectric.buildActivity(TestNavControllerActivity::class.java)
-        val expectedStateValues = listOf("home", "contacts", "about", "Backgrounded")
+        val expectedStateValues = listOf(activityController.get().localClassName, "home", "contacts", "about", "Backgrounded")
         testRule.runTest(
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
@@ -293,6 +300,7 @@ internal class NavigationStateFeatureTest {
                 checkNotNull(timestamps)
                 val expectedTransitionTimes = listOf(
                     timestamps.firstForegroundTimeMs,
+                    timestamps.firstForegroundTimeMs + LIFECYCLE_EVENT_GAP,
                     timestamps.firstForegroundTimeMs + POST_ACTIVITY_ACTION_DWELL + LIFECYCLE_EVENT_GAP * 2,
                     timestamps.firstForegroundTimeMs + POST_ACTIVITY_ACTION_DWELL * 2 + LIFECYCLE_EVENT_GAP * 2,
                     timestamps.lastBackgroundTimeMs,

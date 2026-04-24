@@ -56,7 +56,7 @@ import org.robolectric.shadows.ShadowLooper
  * Test harness for which an instance is generated each test run and provided to the test by the Rule
  */
 internal class EmbraceSetupInterface(
-    workerToFake: Worker.Background? = null,
+    workersToFake: List<Worker.Background> = emptyList(),
     private val threadBlockageWatchdogThread: Thread? = null,
     fakeStorageLayer: Boolean = false,
     ignoredInternalErrors: List<InternalErrorType> = listOf(),
@@ -95,7 +95,7 @@ internal class EmbraceSetupInterface(
 
     private val workerThreadModule: WorkerThreadModule = initWorkerThreadModule(
         fakeInitModule = fakeInitModule,
-        workerToFake = workerToFake,
+        workersToFake = workersToFake,
         threadBlockageWatchdogThread = threadBlockageWatchdogThread
     )
 
@@ -266,22 +266,23 @@ internal class EmbraceSetupInterface(
 
     fun getEmbLogger(): FakeInternalLogger = fakeInitModule.logger as FakeInternalLogger
 
-    fun getFakedWorkerExecutor(): BlockingScheduledExecutorService = (workerThreadModule as FakeWorkerThreadModule).executor
+    fun getFakedWorkerExecutor(worker: Worker.Background): BlockingScheduledExecutorService =
+        (workerThreadModule as FakeWorkerThreadModule).executorFor(worker)
 
     fun getStore(): KeyValueStore = coreModule.store
 
     private companion object {
         fun initWorkerThreadModule(
             fakeInitModule: FakeInitModule,
-            workerToFake: Worker.Background?,
+            workersToFake: List<Worker.Background>,
             threadBlockageWatchdogThread: Thread?,
         ): WorkerThreadModule =
-            if (workerToFake == null) {
+            if (workersToFake.isEmpty()) {
                 WorkerThreadModuleImpl()
             } else {
                 FakeWorkerThreadModule(
                     fakeInitModule = fakeInitModule,
-                    testWorker = workerToFake,
+                    testWorkers = workersToFake,
                     threadBlockageMonitoringThread = threadBlockageWatchdogThread
                 )
             }

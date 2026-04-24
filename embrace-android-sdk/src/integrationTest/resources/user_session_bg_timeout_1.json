@@ -1,0 +1,93 @@
+{
+  "trace_id": "__EMBRACE_TEST_IGNORE__",
+  "span_id": "__EMBRACE_TEST_IGNORE__",
+  "parent_span_id": "0000000000000000",
+  "name": "emb-session",
+  "start_time_unix_nano": 169220160000000000,
+  "end_time_unix_nano": 169220160010000000,
+  "status": "Unset",
+  "events": [],
+  "attributes": [
+    {
+      "key": "emb.clean_exit",
+      "value": "true"
+    },
+    {
+      "key": "emb.cold_start",
+      "value": "true"
+    },
+    {
+      "key": "emb.disk_free_bytes",
+      "value": "0"
+    },
+    {
+      "key": "emb.error_log_count",
+      "value": "0"
+    },
+    {
+      "key": "emb.heartbeat_time_unix_nano",
+      "value": "__EMBRACE_TEST_IGNORE__"
+    },
+    {
+      "key": "emb.is_emulator",
+      "value": "__EMBRACE_TEST_IGNORE__"
+    },
+    {
+      "key": "emb.kotlin_on_classpath",
+      "value": "__EMBRACE_TEST_IGNORE__"
+    },
+    {
+      "key": "emb.okhttp3",
+      "value": "__EMBRACE_TEST_IGNORE__"
+    },
+    {
+      "key": "emb.okhttp3_on_classpath",
+      "value": "__EMBRACE_TEST_IGNORE__"
+    },
+    {
+      "key": "emb.private.sequence_id",
+      "value": "1"
+    },
+    {
+      "key": "emb.process_identifier",
+      "value": "__EMBRACE_TEST_IGNORE__"
+    },
+    {
+      "key": "emb.session_end_type",
+      "value": "bkgnd_state"
+    },
+    {
+      "key": "emb.session_part_id",
+      "value": ""
+    },
+    {
+      "key": "emb.session_start_type",
+      "value": "bkgnd_state"
+    },
+    {
+      "key": "emb.startup_duration",
+      "value": "0"
+    },
+    {
+      "key": "emb.state",
+      "value": "background"
+    },
+    {
+      "key": "emb.terminated",
+      "value": "false"
+    },
+    {
+      "key": "emb.type",
+      "value": "ux.session"
+    },
+    {
+      "key": "emb.user_session_id",
+      "value": ""
+    },
+    {
+      "key": "session.id",
+      "value": ""
+    }
+  ],
+  "links": "__EMBRACE_TEST_IGNORE__"
+}

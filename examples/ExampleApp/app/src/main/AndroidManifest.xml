@@ -42,6 +42,12 @@
             android:name=".ui.examples.bytecode.BytecodeFcmPushNotificationActivity"
             android:theme="@style/Theme.ExampleApp" />
         <activity
+            android:name=".MainFragmentActivity"
+            android:theme="@style/Theme.ExampleApp" />
+        <activity
+            android:name=".ComplexDestinationActivity"
+            android:theme="@style/Theme.ExampleApp" />
+        <activity
             android:name=".TracingApiActivity"
             android:exported="true">
             <intent-filter>

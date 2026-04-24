@@ -63,9 +63,7 @@ internal object JsonComparator {
                     if (expectedElement == IGNORE_VALUE) {
                         continue
                     }
-                    if (expectedElement != observedElement) {
-                        mismatches.add("[$subPath] Expected value '$expectedElement', observed value '$observedElement'")
-                    }
+                    compareJsonValue(expectedElement, observedElement, mismatches, subPath)
                 }
             }
         } else if (expectedValue != observedValue) {
@@ -79,30 +77,8 @@ internal object JsonComparator {
         mismatches: MutableList<String>,
     ) {
         observed.keys().forEach { observedKey ->
-            val expectedValue = expected.opt(observedKey)
-            if (expectedValue == null) {
+            if (!expected.has(observedKey)) {
                 mismatches.add("[$observedKey] Key exists in observed JSON but not in expected JSON.")
-            } else if (expectedValue is JSONObject && observed.get(observedKey) is JSONObject) {
-                mismatches.addAll(
-                    compare(
-                        expectedValue,
-                        observed.getJSONObject(observedKey),
-                        observedKey
-                    )
-                )
-            } else if (expectedValue is JSONArray && observed.get(observedKey) is JSONArray) {
-                for (i in 0 until (observed.get(observedKey) as JSONArray).length()) {
-                    val observedElement = (observed.get(observedKey) as JSONArray).opt(i)
-                    if (observedElement is JSONObject) {
-                        mismatches.addAll(
-                            compare(
-                                expectedValue.getJSONObject(0),
-                                observedElement,
-                                "$observedKey[$i]"
-                            )
-                        )
-                    }
-                }
             }
         }
     }

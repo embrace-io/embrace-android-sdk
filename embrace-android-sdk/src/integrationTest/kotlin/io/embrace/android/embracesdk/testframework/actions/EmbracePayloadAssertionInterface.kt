@@ -51,7 +51,7 @@ internal class EmbracePayloadAssertionInterface(
         private const val WAIT_TIME_MS = 10000
     }
 
-    private val serializer by lazy { bootstrapper.initModule.jsonSerializer }
+    internal val serializer by lazy { bootstrapper.initModule.jsonSerializer }
     private val deliveryTracer by lazy {
         checkNotNull(bootstrapper.deliveryModule?.deliveryTracer)
     }

@@ -2,10 +2,26 @@
   "logs": [
     {
       "time_unix_nano": 169220160030000000,
-      "severity_number": 9,
-      "severity_text": "INFO",
-      "body": "Hi",
+      "severity_number": 17,
+      "severity_text": "ERROR",
+      "body": "",
       "attributes": [
+        {
+          "key": "emb.android.crash.exception_cause",
+          "value": "__EMBRACE_TEST_IGNORE__"
+        },
+        {
+          "key": "emb.android.crash_number",
+          "value": "1"
+        },
+        {
+          "key": "emb.android.threads",
+          "value": "__EMBRACE_TEST_IGNORE__"
+        },
+        {
+          "key": "emb.private.send_mode",
+          "value": "DEFER"
+        },
         {
           "key": "emb.session_part_id",
           "value": "A8BAF9242FCC7BE7020B7F533060E8EF"
@@ -32,11 +48,23 @@
         },
         {
           "key": "emb.type",
-          "value": "sys.log"
+          "value": "sys.android.crash"
         },
         {
           "key": "emb.user_session_id",
           "value": "88D9EEC83BEF469DB111DAAF5D87FF09"
+        },
+        {
+          "key": "exception.message",
+          "value": "boom"
+        },
+        {
+          "key": "exception.stacktrace",
+          "value": "__EMBRACE_TEST_IGNORE__"
+        },
+        {
+          "key": "exception.type",
+          "value": "java.lang.RuntimeException"
         },
         {
           "key": "log.record.uid",

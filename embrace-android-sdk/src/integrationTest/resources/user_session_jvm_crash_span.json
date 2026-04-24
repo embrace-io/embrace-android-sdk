@@ -4,8 +4,8 @@
   "parent_span_id": "0000000000000000",
   "name": "emb-session",
   "start_time_unix_nano": 169220160000000000,
-  "end_time_unix_nano": 169220200131000000,
-  "status": "Unset",
+  "end_time_unix_nano": 169220160030000000,
+  "status": "Error",
   "events": [],
   "attributes": [
     {
@@ -17,8 +17,16 @@
       "value": "true"
     },
     {
+      "key": "emb.crash_id",
+      "value": "__EMBRACE_TEST_IGNORE__"
+    },
+    {
       "key": "emb.disk_free_bytes",
-      "value": "0"
+      "value": "__EMBRACE_TEST_IGNORE__"
+    },
+    {
+      "key": "emb.error_code",
+      "value": "failure"
     },
     {
       "key": "emb.error_log_count",
@@ -66,7 +74,7 @@
     },
     {
       "key": "emb.startup_duration",
-      "value": "0"
+      "value": "__EMBRACE_TEST_IGNORE__"
     },
     {
       "key": "emb.state",
@@ -77,12 +85,12 @@
       "value": "false"
     },
     {
-      "key": "emb.type",
-      "value": "ux.session"
+      "key": "emb.termination_cause",
+      "value": "crash"
     },
     {
-      "key": "emb.usage.log_message",
-      "value": "1"
+      "key": "emb.type",
+      "value": "ux.session"
     },
     {
       "key": "emb.user_session_id",

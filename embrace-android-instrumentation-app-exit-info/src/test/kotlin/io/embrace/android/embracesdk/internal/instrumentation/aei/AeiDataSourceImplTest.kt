@@ -210,7 +210,7 @@ internal class AeiDataSourceImplTest {
 
         // then the invalid session ID message should be added to the sessionIdError
         assertEquals("invalid session ID: $invalidSessionId", attrs[EmbAeiAttributes.SESSION_ID_ERROR])
-        assertEquals(invalidSessionId, attrs[EmbAeiAttributes.AEI_SESSION_PART_ID])
+        assertEquals("", attrs[EmbAeiAttributes.AEI_SESSION_PART_ID])
     }
 
     @Test
@@ -238,9 +238,9 @@ internal class AeiDataSourceImplTest {
         startApplicationExitInfoService()
 
         val attrs = getAeiLogAttrs()
-        assertEquals(SESSION_ID, attrs[EmbAeiAttributes.AEI_SESSION_PART_ID])
-        assertNull(attrs[EmbAeiAttributes.AEI_USER_SESSION_ID])
-        assertNull(attrs[SessionAttributes.SESSION_ID])
+        assertEquals("", attrs[EmbAeiAttributes.AEI_SESSION_PART_ID])
+        assertEquals("", attrs[EmbAeiAttributes.AEI_USER_SESSION_ID])
+        assertEquals("", attrs[SessionAttributes.SESSION_ID])
     }
 
     @Test

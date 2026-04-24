@@ -430,6 +430,9 @@ internal class SessionOrchestratorTest {
     @Test
     fun `user session max duration boundary`() {
         configService = FakeConfigService(
+            backgroundActivityBehavior = createBackgroundActivityBehavior(
+                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
+            ),
             sessionBehavior = FakeUserSessionBehavior(
                 maxSessionDurationMs = maxDurationMs,
                 sessionInactivityTimeoutMs = inactivityMs,
@@ -488,6 +491,9 @@ internal class SessionOrchestratorTest {
     @Test
     fun `part number increments within user session`() {
         configService = FakeConfigService(
+            backgroundActivityBehavior = createBackgroundActivityBehavior(
+                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
+            ),
             sessionBehavior = FakeUserSessionBehavior(
                 maxSessionDurationMs = maxDurationMs,
                 sessionInactivityTimeoutMs = inactivityMs,
@@ -858,6 +864,9 @@ internal class SessionOrchestratorTest {
     @Test
     fun `clock shifted backwards during new session part terminates and restarts user session`() {
         configService = FakeConfigService(
+            backgroundActivityBehavior = createBackgroundActivityBehavior(
+                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
+            ),
             sessionBehavior = FakeUserSessionBehavior(
                 maxSessionDurationMs = maxDurationMs,
                 sessionInactivityTimeoutMs = inactivityMs,

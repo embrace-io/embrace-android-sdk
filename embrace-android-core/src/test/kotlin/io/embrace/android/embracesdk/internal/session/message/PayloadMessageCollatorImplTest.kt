@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.session.message
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
-import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakeSessionPartPayloadSource
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.state.AppState
@@ -45,7 +44,6 @@ internal class PayloadMessageCollatorImplTest {
         collator = PayloadMessageCollatorImpl(
             sessionPartEnvelopeSource = sessionPartEnvelopeSource,
             currentSessionPartSpan = currentSessionPartSpan,
-            store = FakeOrdinalStore(),
         )
     }
 
@@ -56,7 +54,8 @@ internal class PayloadMessageCollatorImplTest {
                 false,
                 LifeEventType.BKGND_STATE,
                 5,
-                AppState.BACKGROUND
+                AppState.BACKGROUND,
+                1
             )
         )
         msg.verifyInitialFieldsPopulated()
@@ -69,7 +68,8 @@ internal class PayloadMessageCollatorImplTest {
                 false,
                 LifeEventType.STATE,
                 5,
-                AppState.FOREGROUND
+                AppState.FOREGROUND,
+                1
             )
         )
         msg.verifyInitialFieldsPopulated()
@@ -83,7 +83,8 @@ internal class PayloadMessageCollatorImplTest {
                 false,
                 LifeEventType.BKGND_STATE,
                 5,
-                AppState.BACKGROUND
+                AppState.BACKGROUND,
+                1
             )
         )
         startMsg.verifyInitialFieldsPopulated()
@@ -109,7 +110,8 @@ internal class PayloadMessageCollatorImplTest {
                 false,
                 LifeEventType.STATE,
                 5,
-                AppState.FOREGROUND
+                AppState.FOREGROUND,
+                1
             )
         )
         startMsg.verifyInitialFieldsPopulated()
@@ -138,7 +140,8 @@ internal class PayloadMessageCollatorImplTest {
                             coldStart = startupTemperature,
                             startType = lifeEventType,
                             startTime = 5L,
-                            appState = previousState
+                            appState = previousState,
+                            partNumber = 1
                         )
                     ).verifyInitialFieldsPopulated()
                 }

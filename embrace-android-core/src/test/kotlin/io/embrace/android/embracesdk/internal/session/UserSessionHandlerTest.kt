@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
 import io.embrace.android.embracesdk.fakes.FakeSessionPartTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
@@ -60,7 +59,6 @@ internal class UserSessionHandlerTest {
     private lateinit var spanRepository: SpanRepository
     private lateinit var currentSessionPartSpan: CurrentSessionPartSpan
     private lateinit var userSessionPropertiesService: UserSessionPropertiesService
-    private lateinit var store: FakeOrdinalStore
 
     @Before
     fun before() {
@@ -79,7 +77,6 @@ internal class UserSessionHandlerTest {
         spanService = initModule.openTelemetryModule.spanService
         spanRepository = initModule.openTelemetryModule.spanRepository
         currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan
-        store = FakeOrdinalStore()
         val partPayloadSource = SessionPartPayloadSourceImpl(
             null,
             spanSink,
@@ -100,7 +97,6 @@ internal class UserSessionHandlerTest {
                 payloadSource = partPayloadSource
             ),
             currentSessionPartSpan,
-            store,
         )
         payloadFactory = PayloadFactoryImpl(collator, payloadSourceModule.logEnvelopeSource, configService, logger)
     }
@@ -183,7 +179,8 @@ internal class UserSessionHandlerTest {
             payloadFactory.startPayloadWithState(
                 AppState.FOREGROUND,
                 NOW,
-                true
+                true,
+                1
             )
         )
     }

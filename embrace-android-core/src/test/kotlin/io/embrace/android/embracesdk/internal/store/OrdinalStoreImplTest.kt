@@ -18,7 +18,7 @@ class OrdinalStoreImplTest {
 
     @Test
     fun `test ordinal numbers are saved`() {
-        Ordinal.entries.filter { it != Ordinal.USER_SESSION && it != Ordinal.USER_SESSION_PART }.forEach { ordinal ->
+        Ordinal.entries.filter { it != Ordinal.USER_SESSION }.forEach { ordinal ->
             repeat(4) { k ->
                 assertEquals(k + 1, store.incrementAndGet(ordinal))
             }

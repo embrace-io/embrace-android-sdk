@@ -170,6 +170,7 @@ internal class EmbraceImpl(
 
     override fun disable() {
         if (sdkCallChecker.started.get()) {
+            val ctx = bootstrapper.coreModule.context
             bootstrapper.openTelemetryModule.otelSdkConfig.disableDataExport()
             stop()
             Executors.newSingleThreadExecutor().execute {
@@ -177,8 +178,8 @@ internal class EmbraceImpl(
                     StorageLocation.entries.map {
                         it.asFile(
                             logger = logger,
-                            rootDirSupplier = { bootstrapper.coreModule.context.filesDir },
-                            fallbackDirSupplier = { bootstrapper.coreModule.context.cacheDir }
+                            rootDirSupplier = { ctx.filesDir },
+                            fallbackDirSupplier = { ctx.cacheDir }
                         ).value
                     }.forEach {
                         it.deleteRecursively()

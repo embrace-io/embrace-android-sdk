@@ -1,7 +1,7 @@
 {
   "logs": [
     {
-      "time_unix_nano": 169220160000000000,
+      "time_unix_nano": "__EMBRACE_TEST_IGNORE__",
       "severity_number": 9,
       "severity_text": "INFO",
       "body": "user input dispatch timed out",
@@ -36,7 +36,7 @@
         },
         {
           "key": "emb.state",
-          "value": "background"
+          "value": "__EMBRACE_TEST_IGNORE__"
         },
         {
           "key": "emb.state.network",

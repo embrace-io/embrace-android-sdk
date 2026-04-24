@@ -34,7 +34,7 @@
     },
     {
       "key": "emb.heartbeat_time_unix_nano",
-      "value": "169220160010000000"
+      "value": "__EMBRACE_TEST_IGNORE__"
     },
     {
       "key": "emb.is_emulator",

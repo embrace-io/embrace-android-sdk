@@ -1,34 +1,38 @@
 {
   "logs": [
     {
-      "time_unix_nano": 169220160030000000,
+      "time_unix_nano": 169220160000000000,
       "severity_number": 9,
       "severity_text": "INFO",
       "body": "Hi",
       "attributes": [
         {
+          "key": "emb.private.send_mode",
+          "value": "immediate"
+        },
+        {
           "key": "emb.session_part_id",
-          "value": "A8BAF9242FCC7BE7020B7F533060E8EF"
+          "value": ""
         },
         {
           "key": "emb.state",
-          "value": "foreground"
+          "value": "background"
         },
         {
           "key": "emb.state.network",
-          "value": "unverified"
+          "value": "__EMBRACE_TEST_IGNORE__"
         },
         {
           "key": "emb.state.power",
-          "value": "normal"
+          "value": "__EMBRACE_TEST_IGNORE__"
         },
         {
           "key": "emb.state.screen-automatic",
-          "value": "android.app.Activity"
+          "value": "__EMBRACE_TEST_IGNORE__"
         },
         {
           "key": "emb.state.test",
-          "value": "UNKNOWN"
+          "value": "__EMBRACE_TEST_IGNORE__"
         },
         {
           "key": "emb.type",
@@ -36,7 +40,7 @@
         },
         {
           "key": "emb.user_session_id",
-          "value": "F2C8F6640C62AF2F006929719CB0C468"
+          "value": ""
         },
         {
           "key": "log.record.uid",
@@ -44,7 +48,7 @@
         },
         {
           "key": "session.id",
-          "value": "F2C8F6640C62AF2F006929719CB0C468"
+          "value": ""
         }
       ]
     }

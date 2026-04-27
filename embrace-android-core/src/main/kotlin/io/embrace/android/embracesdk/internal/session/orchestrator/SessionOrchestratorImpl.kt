@@ -307,28 +307,7 @@ internal class SessionOrchestratorImpl(
 
                     // transition the user session before creating the new session part so that
                     // the user session is always ready
-                    if (transitionType != TransitionType.CRASH) {
-                        if (transitionType == TransitionType.END_MANUAL ||
-                            transitionType == TransitionType.INACTIVITY_TIMEOUT ||
-                            transitionType == TransitionType.INACTIVITY_FOREGROUND ||
-                            transitionType == TransitionType.MAX_DURATION
-                        ) {
-                            handleUserSessionEnd(timestamp)
-                        } else {
-                            handleNewSessionPart(timestamp)
-                            when (endAppState) {
-                                AppState.FOREGROUND -> if (maxDurationTimerState == null) {
-                                    (userSessionState as? UserSessionState.Active)?.metadata?.let {
-                                        scheduleMaxDurationTimeout(it)
-                                    }
-                                }
-                                AppState.BACKGROUND -> {
-                                    maxDurationTimerState?.cancel()
-                                    maxDurationTimerState = null
-                                }
-                            }
-                        }
-                    }
+                    transitionUserSession(transitionType, endAppState, timestamp)
 
                     // create the next session span if we should, and update the SDK state to reflect the transition
                     EmbTrace.trace("create-new-session") {
@@ -343,14 +322,16 @@ internal class SessionOrchestratorImpl(
 
             // update newly created session
             val userSession = currentUserSession()
-            if (newSession != null && userSession != null) {
-                // persist partNumber to handle user session restoration in new process
-                val updatedUserSession = userSession.copy(partNumber = newSession.sessionPartNumber)
-                metadataStore.save(updatedUserSession)
-                userSessionState = UserSessionState.Active(updatedUserSession)
+            if (newSession != null) {
+                if (userSession != null) {
+                    // persist partNumber to handle user session restoration in new process
+                    val updatedUserSession = userSession.copy(partNumber = newSession.sessionPartNumber)
+                    metadataStore.save(updatedUserSession)
+                    userSessionState = UserSessionState.Active(updatedUserSession)
 
-                if (endAppState == AppState.FOREGROUND) {
-                    sessionTracker.setProcessStateSummary(newSession.sessionPartId, userSession.userSessionId)
+                    if (endAppState == AppState.FOREGROUND) {
+                        sessionTracker.setProcessStateSummary(newSession.sessionPartId, userSession.userSessionId)
+                    }
                 }
                 boundaryDelegate.prepareForNewSession()
                 sessionSpanAttrPopulator.populateSessionSpanStartAttrs(newSession, userSession)
@@ -458,6 +439,41 @@ internal class SessionOrchestratorImpl(
         val now = clock.now().millisToNanos()
         destination.addSessionPartAttribute(EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO, now.toString())
         destination.addSessionPartAttribute(EmbSessionAttributes.EMB_TERMINATED, true.toString())
+    }
+
+    /**
+     * Decides what to do with the user session at the start of a session-part transition.
+     * Crashes leave the user session untouched. INITIAL with state=BACKGROUND defers user-session
+     * creation to the first foreground entry — the first user session of a process must originate
+     * from a foreground transition.
+     */
+    private fun transitionUserSession(transitionType: TransitionType, endAppState: AppState, timestamp: Long) {
+        when {
+            transitionType == TransitionType.CRASH -> {}
+
+            transitionType == TransitionType.END_MANUAL ||
+                transitionType == TransitionType.INACTIVITY_TIMEOUT ||
+                transitionType == TransitionType.INACTIVITY_FOREGROUND ||
+                transitionType == TransitionType.MAX_DURATION ->
+                handleUserSessionEnd(timestamp)
+
+            transitionType == TransitionType.INITIAL && state == AppState.BACKGROUND -> {}
+
+            else -> {
+                handleNewSessionPart(timestamp)
+                when (endAppState) {
+                    AppState.FOREGROUND -> if (maxDurationTimerState == null) {
+                        (userSessionState as? UserSessionState.Active)?.metadata?.let {
+                            scheduleMaxDurationTimeout(it)
+                        }
+                    }
+                    AppState.BACKGROUND -> {
+                        maxDurationTimerState?.cancel()
+                        maxDurationTimerState = null
+                    }
+                }
+            }
+        }
     }
 
     /**

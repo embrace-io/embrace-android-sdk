@@ -4,6 +4,8 @@ import android.app.ApplicationExitInfo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.TestAeiData
 import io.embrace.android.embracesdk.fakes.setupFakeAeiData
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.UserSessionRemoteConfig
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -165,4 +167,52 @@ internal class UserSessionGoldenFileTest {
         )
     }
 
+    /**
+     * Asserts that a user session can have multiple session parts.
+     */
+    @Test
+    fun `user session with multiple parts`() {
+        testRule.runTest(
+            testCaseAction = {
+                recordSession()
+                recordSession()
+            },
+            assertAction = {
+                val sessions = getSessionEnvelopes(2)
+                assertSessionSpanMatchesGoldenFile(
+                    sessions[0],
+                    "user_session_part_1.json",
+                )
+                assertSessionSpanMatchesGoldenFile(
+                    sessions[1],
+                    "user_session_part_2.json",
+                )
+            }
+        )
+    }
+
+    /**
+     * Non-default values for emb.user_session_max_duration_seconds and emb.user_session_inactivity_timeout_seconds
+     * are serialized in the payload.
+     */
+    @Test
+    fun `session span reflects configured max duration and inactivity timeout`() {
+        testRule.runTest(
+            persistedRemoteConfig = RemoteConfig(
+                userSession = UserSessionRemoteConfig(
+                    maxDurationSeconds = 7200,
+                    inactivityTimeoutSeconds = 600,
+                ),
+            ),
+            testCaseAction = {
+                recordSession()
+            },
+            assertAction = {
+                assertSessionSpanMatchesGoldenFile(
+                    getSingleSessionEnvelope(),
+                    "user_session_custom_timeouts.json",
+                )
+            }
+        )
+    }
 }

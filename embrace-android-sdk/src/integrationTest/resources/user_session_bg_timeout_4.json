@@ -1,0 +1,117 @@
+{
+  "trace_id": "__EMBRACE_TEST_IGNORE__",
+  "span_id": "__EMBRACE_TEST_IGNORE__",
+  "parent_span_id": "0000000000000000",
+  "name": "emb-session",
+  "start_time_unix_nano": 169222000132000000,
+  "end_time_unix_nano": 169351600142000000,
+  "status": "Unset",
+  "events": [],
+  "attributes": [
+    {
+      "key": "emb.clean_exit",
+      "value": "true"
+    },
+    {
+      "key": "emb.cold_start",
+      "value": "false"
+    },
+    {
+      "key": "emb.disk_free_bytes",
+      "value": "0"
+    },
+    {
+      "key": "emb.error_log_count",
+      "value": "0"
+    },
+    {
+      "key": "emb.heartbeat_time_unix_nano",
+      "value": "__EMBRACE_TEST_IGNORE__"
+    },
+    {
+      "key": "emb.is_emulator",
+      "value": "__EMBRACE_TEST_IGNORE__"
+    },
+    {
+      "key": "emb.is_final_session_part",
+      "value": "1"
+    },
+    {
+      "key": "emb.kotlin_on_classpath",
+      "value": "__EMBRACE_TEST_IGNORE__"
+    },
+    {
+      "key": "emb.okhttp3",
+      "value": "__EMBRACE_TEST_IGNORE__"
+    },
+    {
+      "key": "emb.okhttp3_on_classpath",
+      "value": "__EMBRACE_TEST_IGNORE__"
+    },
+    {
+      "key": "emb.private.sequence_id",
+      "value": "23"
+    },
+    {
+      "key": "emb.process_identifier",
+      "value": "__EMBRACE_TEST_IGNORE__"
+    },
+    {
+      "key": "emb.session_end_type",
+      "value": "bkgnd_state"
+    },
+    {
+      "key": "emb.session_part_id",
+      "value": "C9E71E028E271A762AFF30971EB34E7B"
+    },
+    {
+      "key": "emb.session_start_type",
+      "value": "bkgnd_state"
+    },
+    {
+      "key": "emb.state",
+      "value": "background"
+    },
+    {
+      "key": "emb.terminated",
+      "value": "false"
+    },
+    {
+      "key": "emb.type",
+      "value": "ux.session"
+    },
+    {
+      "key": "emb.user_session_id",
+      "value": "84F40527489CF9DD41C64223374EC887"
+    },
+    {
+      "key": "emb.user_session_inactivity_timeout_seconds",
+      "value": "1800"
+    },
+    {
+      "key": "emb.user_session_max_duration_seconds",
+      "value": "43200"
+    },
+    {
+      "key": "emb.user_session_number",
+      "value": "2"
+    },
+    {
+      "key": "emb.user_session_part_number",
+      "value": "1"
+    },
+    {
+      "key": "emb.user_session_start_ts",
+      "value": "169222000132"
+    },
+    {
+      "key": "emb.user_session_termination_reason",
+      "value": "inactivity"
+    },
+    {
+      "key": "session.id",
+      "value": "84F40527489CF9DD41C64223374EC887"
+    }
+  ],
+  "links": "__EMBRACE_TEST_IGNORE__"
+}

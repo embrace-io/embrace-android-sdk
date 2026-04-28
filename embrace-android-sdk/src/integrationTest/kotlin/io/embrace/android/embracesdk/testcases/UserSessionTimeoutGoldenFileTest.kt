@@ -22,8 +22,8 @@ internal class UserSessionTimeoutGoldenFileTest {
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
-        EmbraceSetupInterface(workerToFake = Worker.Background.NonIoRegWorker).also {
-            it.getFakedWorkerExecutor().blockingMode = false
+        EmbraceSetupInterface(workersToFake = listOf(Worker.Background.NonIoRegWorker)).also {
+            it.getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).blockingMode = false
         }
     }
 
@@ -39,7 +39,7 @@ internal class UserSessionTimeoutGoldenFileTest {
                 recordSession {
                     val behavior = testRule.bootstrapper.configService.sessionBehavior
                     clock.tick(behavior.getMaxSessionDurationMs() + 1)
-                    testRule.setup.getFakedWorkerExecutor().runCurrentlyBlocked()
+                    testRule.setup.getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).runCurrentlyBlocked()
                 }
             },
             assertAction = {

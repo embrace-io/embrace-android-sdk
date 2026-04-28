@@ -402,28 +402,27 @@ internal class SessionOrchestratorImpl(
 
     private fun onInactivityTimeout() {
         synchronized(lock) {
-            if (state != AppState.BACKGROUND) {
-                return
-            }
-            if (configService.backgroundActivityBehavior.isBackgroundActivityCaptureEnabled()) {
-                val timestamp = clock.now()
-                transitionState(
-                    transitionType = TransitionType.INACTIVITY_TIMEOUT,
-                    timestamp = timestamp,
-                    oldSessionAction = { initial: SessionPartToken ->
-                        payloadFactory.endPayloadWithState(AppState.BACKGROUND, timestamp, initial)
-                    },
-                    newSessionAction = {
+            val timestamp = clock.now()
+            transitionState(
+                transitionType = TransitionType.INACTIVITY_TIMEOUT,
+                timestamp = timestamp,
+                oldSessionAction = { initial: SessionPartToken ->
+                    payloadFactory.endPayloadWithState(AppState.BACKGROUND, timestamp, initial)
+                },
+                newSessionAction = {
+                    if (configService.backgroundActivityBehavior.isBackgroundActivityCaptureEnabled()) {
                         payloadFactory.startPayloadWithState(
                             AppState.BACKGROUND,
                             timestamp,
                             false,
                             incrementPartNumber()
                         )
-                    },
-                    earlyTerminationCondition = { state != AppState.BACKGROUND },
-                )
-            }
+                    } else {
+                        null
+                    }
+                },
+                earlyTerminationCondition = { state != AppState.BACKGROUND },
+            )
         }
     }
 

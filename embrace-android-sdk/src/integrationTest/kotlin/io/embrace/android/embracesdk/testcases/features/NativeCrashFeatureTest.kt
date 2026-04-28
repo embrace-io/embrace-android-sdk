@@ -117,10 +117,10 @@ internal class NativeCrashFeatureTest {
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
         EmbraceSetupInterface(
             fakeStorageLayer = true,
-            workerToFake = Worker.Background.IoRegWorker,
+            workersToFake = listOf(Worker.Background.IoRegWorker),
         ).apply {
             getEmbLogger().throwOnInternalError = false
-            getFakedWorkerExecutor().blockingMode = false
+            getFakedWorkerExecutor(Worker.Background.IoRegWorker).blockingMode = false
         }
     }
 
@@ -328,7 +328,7 @@ internal class NativeCrashFeatureTest {
             ),
             setupAction = {
                 jniDelegate = fakeJniDelegate
-                ioWorker = getFakedWorkerExecutor()
+                ioWorker = getFakedWorkerExecutor(Worker.Background.IoRegWorker)
                 ioWorker.blockingMode = true
             },
             testCaseAction = {

@@ -24,7 +24,7 @@ internal class UserSessionManualEndGoldenFileTest {
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
-        EmbraceSetupInterface(workerToFake = Worker.Background.PeriodicCacheWorker)
+        EmbraceSetupInterface(workersToFake = listOf(Worker.Background.PeriodicCacheWorker))
     }
 
     /**

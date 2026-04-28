@@ -2,12 +2,14 @@ package io.embrace.android.embracesdk.testcases
 
 import android.app.ApplicationExitInfo
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.TestAeiData
 import io.embrace.android.embracesdk.fakes.setupFakeAeiData
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.UserSessionRemoteConfig
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.assertions.assertLogPayloadMatchesGoldenFile
 import io.embrace.android.embracesdk.testframework.assertions.assertSessionSpanMatchesGoldenFile
@@ -45,6 +47,24 @@ internal class UserSessionGoldenFileTest {
                 assertSessionSpanMatchesGoldenFile(
                     getSingleSessionEnvelope(),
                     "user_session_basic_span.json",
+                )
+            }
+        )
+    }
+
+    /**
+     * Asserts that a log without a user session contains empty attributes for the user session ID and session part ID.
+     */
+    @Test
+    fun `log without user session`() {
+        testRule.runTest(
+            testCaseAction = {
+                embrace.logMessage("Hi", Severity.INFO, mapOf(EmbSessionAttributes.EMB_PRIVATE_SEND_MODE to "immediate"))
+            },
+            assertAction = {
+                assertLogPayloadMatchesGoldenFile(
+                    getSingleLogEnvelope(),
+                    "log_without_user_session.json",
                 )
             }
         )

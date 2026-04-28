@@ -89,6 +89,7 @@ internal class JvmCrashFeatureTest {
                 getSingleLogEnvelope().getLastLog().assertCrash(
                     crashIdFromSession = ba.getCrashedId(),
                     crashTimeMs = crashTimeMs,
+                    hasSession = false,
                 )
             }
         )
@@ -106,6 +107,7 @@ internal class JvmCrashFeatureTest {
                 getSingleLogEnvelope().getLastLog().assertCrash(
                     crashIdFromSession = null,
                     crashTimeMs = crashTimeMs,
+                    hasSession = false,
                 )
             }
         )

@@ -10,13 +10,18 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.UserSessionRemoteConfig
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_SESSION_PART_ID
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_ID
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_NUMBER
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_PART_NUMBER
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_START_TS
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues.INACTIVITY
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues.MANUAL
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
@@ -40,9 +45,19 @@ internal class UserSessionLifecycleTest {
             assertAction = {
                 val bgSession = getSingleSessionEnvelope(AppState.BACKGROUND)
                 val fgSession = getSingleSessionEnvelope(AppState.FOREGROUND)
-                assertEquals(bgSession.getUserSessionId(), fgSession.getUserSessionId())
 
+                val bgSessionSpan = bgSession.findSessionSpan()
+                val bgAttrs = bgSessionSpan.attributes
+                assertEquals("", bgAttrs?.findAttributeValue(EMB_USER_SESSION_ID))
+                assertEquals("", bgAttrs?.findAttributeValue(EMB_SESSION_PART_ID))
+                assertNull(bgAttrs?.findAttributeValue(EMB_USER_SESSION_NUMBER))
+                assertNull(bgAttrs?.findAttributeValue(EMB_USER_SESSION_PART_NUMBER))
+                assertNull(bgAttrs?.findAttributeValue(EMB_USER_SESSION_START_TS))
+
+                // entering foreground creates the first user session
                 val fgSessionSpan = fgSession.findSessionSpan()
+                assertNotNull(fgSession.getUserSessionId())
+                assertEquals(fgSession.getUserSessionId(), fgSession.getSessionId())
                 assertEquals("1", fgSessionSpan.attributes?.findAttributeValue(EMB_USER_SESSION_NUMBER))
                 assertNull(fgSessionSpan.attributes?.findAttributeValue(EMB_IS_FINAL_SESSION_PART))
                 assertNull(fgSessionSpan.attributes?.findAttributeValue(EMB_USER_SESSION_TERMINATION_REASON))
@@ -280,7 +295,8 @@ internal class UserSessionLifecycleTest {
                 val secondSession = sessions[1].findSessionSpan()
 
                 assertNotEquals(sessions[0].getUserSessionId(), sessions[1].getUserSessionId())
-                assertEquals("1", firstBg.attributes?.findAttributeValue(EMB_USER_SESSION_NUMBER))
+                // cold-start background session ends before any user session exists
+                assertNull(firstBg.attributes?.findAttributeValue(EMB_USER_SESSION_NUMBER))
                 assertEquals("1", firstSession.attributes?.findAttributeValue(EMB_USER_SESSION_NUMBER))
                 assertEquals("1", secondBg.attributes?.findAttributeValue(EMB_USER_SESSION_NUMBER))
                 assertEquals("2", secondSession.attributes?.findAttributeValue(EMB_USER_SESSION_NUMBER))

@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Test
 
@@ -58,6 +59,27 @@ internal class SessionPartSpanAttrPopulatorImplTest {
         assertEquals("1800", attrs[EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS])
         assertEquals("user-session-uuid", attrs[SessionAttributes.SESSION_ID])
         assertEquals("id", attrs[EmbSessionAttributes.EMB_SESSION_PART_ID])
+    }
+
+    @Test
+    fun `start attributes populated without user session`() {
+        populator.populateSessionSpanStartAttrs(zygote, userSession = null)
+
+        val attrs = destination.attributes
+        assertEquals("false", attrs[EmbSessionAttributes.EMB_COLD_START])
+        assertEquals("foreground", attrs[EmbSessionAttributes.EMB_STATE])
+        assertEquals("false", attrs[EmbSessionAttributes.EMB_CLEAN_EXIT])
+        assertEquals("true", attrs[EmbSessionAttributes.EMB_TERMINATED])
+        assertEquals("state", attrs[EmbSessionAttributes.EMB_SESSION_START_TYPE])
+        assertEquals("", attrs[EmbSessionAttributes.EMB_SESSION_PART_ID])
+        assertEquals("", attrs[EmbSessionAttributes.EMB_USER_SESSION_ID])
+        assertEquals("", attrs[SessionAttributes.SESSION_ID])
+
+        assertFalse(attrs.containsKey(EmbSessionAttributes.EMB_USER_SESSION_PART_NUMBER))
+        assertFalse(attrs.containsKey(EmbSessionAttributes.EMB_USER_SESSION_NUMBER))
+        assertFalse(attrs.containsKey(EmbSessionAttributes.EMB_USER_SESSION_START_TS))
+        assertFalse(attrs.containsKey(EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS))
+        assertFalse(attrs.containsKey(EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS))
     }
 
     @Test

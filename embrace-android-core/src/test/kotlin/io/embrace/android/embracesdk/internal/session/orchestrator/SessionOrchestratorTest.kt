@@ -49,6 +49,7 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -104,6 +105,8 @@ internal class SessionOrchestratorTest {
         assertTrue(store.storedSessionPartPayloads.isEmpty())
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
+        // starting in bg produces no user session.
+        assertNull(orchestrator.currentUserSession())
     }
 
     @Test
@@ -116,6 +119,8 @@ internal class SessionOrchestratorTest {
         assertTrue(store.storedSessionPartPayloads.isEmpty())
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
+        // starting in fg produces user session
+        assertNotNull(orchestrator.currentUserSession())
     }
 
     @Test
@@ -124,6 +129,7 @@ internal class SessionOrchestratorTest {
         clock.tick()
         val foregroundTime = clock.now()
         val sessionSpan = currentSessionPartSpan.sessionSpan
+        assertNull(orchestrator.currentUserSession())
         orchestrator.onForeground()
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
         validateSession(
@@ -132,6 +138,7 @@ internal class SessionOrchestratorTest {
             endType = LifeEventType.BKGND_STATE
         )
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
+        assertNotNull(orchestrator.currentUserSession())
     }
 
     @Test
@@ -1116,7 +1123,7 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
-    fun `max duration timeout does not create new session in background`() {
+    fun `max duration timer not scheduled when starting in background`() {
         configService = FakeConfigService(
             backgroundActivityBehavior = createBackgroundActivityBehavior(
                 remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
@@ -1127,16 +1134,11 @@ internal class SessionOrchestratorTest {
             )
         )
         createOrchestrator(AppState.BACKGROUND)
-
-        val first = checkNotNull(orchestrator.currentUserSession())
-        assertEquals(1L, first.userSessionNumber)
+        assertNull(orchestrator.currentUserSession())
 
         clock.tick(maxDurationMs * 2)
         inactivityWorkerExecutor.runCurrentlyBlocked()
-
-        val current = checkNotNull(orchestrator.currentUserSession())
-        assertEquals(1L, current.userSessionNumber)
-        assertEquals(first.userSessionId, current.userSessionId)
+        assertNull(orchestrator.currentUserSession())
     }
 
     @Test

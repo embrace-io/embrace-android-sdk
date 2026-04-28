@@ -81,6 +81,7 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Instr
 	public abstract fun addStartupTraceChildSpan (Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/ErrorCode;)V
 	public abstract fun appReady ()V
 	public abstract fun getSdkCurrentTimeMs ()J
+	public abstract fun observeNavigation (Landroid/app/Activity;Ljava/lang/Object;)V
 }
 
 public final class io/embrace/android/embracesdk/internal/api/InstrumentationApi$DefaultImpls {

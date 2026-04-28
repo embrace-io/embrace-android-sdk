@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.fakes.SerializableRouteNavHostFragmentActiv
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.AppExecutionTimestamps
+import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.LIFECYCLE_EVENT_GAP
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.POST_ACTIVITY_ACTION_DWELL
 import org.junit.Rule
 import org.junit.Test
@@ -33,11 +34,13 @@ internal class NavigationComplexDestinationAndRouteTest {
     @Test
     fun `routes with argument templates use the template not the resolved value`() {
         var timestamps: AppExecutionTimestamps? = null
+        val activityController = Robolectric.buildActivity(ArgTemplateNavHostFragmentActivity::class.java)
         testRule.runTest(
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
-                timestamps = simulateNavHostFragmentActivityNavigation<ArgTemplateNavHostFragmentActivity>(
-                    routes = listOf("profile/123", "order/456/details")
+                timestamps = simulateNavControllerActivityNavigation(
+                    routes = listOf("profile/123", "order/456/details"),
+                    activityController = activityController,
                 )
             },
             assertAction = {
@@ -47,11 +50,17 @@ internal class NavigationComplexDestinationAndRouteTest {
                 stateSpan.assertNavigationStateSpan(
                     transitionTimesMs = listOf(
                         timestamps.firstForegroundTimeMs,
+                        timestamps.firstForegroundTimeMs + LIFECYCLE_EVENT_GAP,
                         timestamps.firstActionTimeMs + POST_ACTIVITY_ACTION_DWELL,
                         timestamps.firstActionTimeMs + POST_ACTIVITY_ACTION_DWELL * 2,
                         timestamps.lastBackgroundTimeMs,
                     ),
-                    newStateValues = listOf("home", "profile/{userId}", "order/{orderId}/details"),
+                    newStateValues = listOf(
+                        activityController.get().localClassName,
+                        "home",
+                        "profile/{userId}",
+                        "order/{orderId}/details",
+                    ),
                 )
             },
         )
@@ -60,11 +69,13 @@ internal class NavigationComplexDestinationAndRouteTest {
     @Test
     fun `dialog destinations tracked like fragment destinations`() {
         var timestamps: AppExecutionTimestamps? = null
+        val activityController = Robolectric.buildActivity(DialogNavHostFragmentActivity::class.java)
         testRule.runTest(
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
-                timestamps = simulateNavHostFragmentActivityNavigation<DialogNavHostFragmentActivity>(
-                    routes = listOf("confirm_dialog")
+                timestamps = simulateNavControllerActivityNavigation(
+                    routes = listOf("confirm_dialog"),
+                    activityController = activityController,
                 )
             },
             assertAction = {
@@ -73,10 +84,11 @@ internal class NavigationComplexDestinationAndRouteTest {
                 stateSpan.assertNavigationStateSpan(
                     transitionTimesMs = listOf(
                         timestamps.firstForegroundTimeMs,
+                        timestamps.firstForegroundTimeMs + LIFECYCLE_EVENT_GAP,
                         timestamps.firstActionTimeMs + POST_ACTIVITY_ACTION_DWELL,
                         timestamps.lastBackgroundTimeMs,
                     ),
-                    newStateValues = listOf("home", "confirm_dialog"),
+                    newStateValues = listOf(activityController.get().localClassName, "home", "confirm_dialog"),
                 )
             },
         )
@@ -85,11 +97,13 @@ internal class NavigationComplexDestinationAndRouteTest {
     @Test
     fun `nested graph destinations use inner destination route`() {
         var timestamps: AppExecutionTimestamps? = null
+        val activityController = Robolectric.buildActivity(NestedGraphNavHostFragmentActivity::class.java)
         testRule.runTest(
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
-                timestamps = simulateNavHostFragmentActivityNavigation<NestedGraphNavHostFragmentActivity>(
-                    routes = listOf("general")
+                timestamps = simulateNavControllerActivityNavigation(
+                    routes = listOf("general"),
+                    activityController = activityController,
                 )
             },
             assertAction = {
@@ -99,10 +113,11 @@ internal class NavigationComplexDestinationAndRouteTest {
                 stateSpan.assertNavigationStateSpan(
                     transitionTimesMs = listOf(
                         timestamps.firstForegroundTimeMs,
+                        timestamps.firstForegroundTimeMs + LIFECYCLE_EVENT_GAP,
                         timestamps.firstActionTimeMs + POST_ACTIVITY_ACTION_DWELL,
                         timestamps.lastBackgroundTimeMs,
                     ),
-                    newStateValues = listOf("home", "general"),
+                    newStateValues = listOf(activityController.get().localClassName, "home", "general"),
                 )
             },
         )
@@ -111,10 +126,10 @@ internal class NavigationComplexDestinationAndRouteTest {
     @Test
     fun `back navigation triggers destination change`() {
         var timestamps: AppExecutionTimestamps? = null
+        val activityController = Robolectric.buildActivity(BasicNavHostFragmentActivity::class.java)
         testRule.runTest(
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
-                val activityController = Robolectric.buildActivity(BasicNavHostFragmentActivity::class.java)
                 timestamps = simulateOpeningActivities(
                     addStartupActivity = false,
                     startInBackground = true,
@@ -139,6 +154,7 @@ internal class NavigationComplexDestinationAndRouteTest {
                 stateSpan.assertNavigationStateSpan(
                     transitionTimesMs = listOf(
                         timestamps.firstForegroundTimeMs,
+                        timestamps.firstForegroundTimeMs + LIFECYCLE_EVENT_GAP,
                         timestamps.firstActionTimeMs + POST_ACTIVITY_ACTION_DWELL,
                         timestamps.firstActionTimeMs + POST_ACTIVITY_ACTION_DWELL * 2,
                         timestamps.firstActionTimeMs + POST_ACTIVITY_ACTION_DWELL * 3,
@@ -146,7 +162,14 @@ internal class NavigationComplexDestinationAndRouteTest {
                         timestamps.lastBackgroundTimeMs,
                     ),
                     // state should update to the previous destination when the nav stack is popped
-                    newStateValues = listOf("home", "about", "contacts", "about", "home"),
+                    newStateValues = listOf(
+                        activityController.get().localClassName,
+                        "home",
+                        "about",
+                        "contacts",
+                        "about",
+                        "home",
+                    ),
                 )
             },
         )
@@ -155,10 +178,10 @@ internal class NavigationComplexDestinationAndRouteTest {
     @Test
     fun `Serializable routes with SerialName use the serial name template not resolved args`() {
         var timestamps: AppExecutionTimestamps? = null
+        val activityController = Robolectric.buildActivity(SerializableRouteNavHostFragmentActivity::class.java)
         testRule.runTest(
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
-                val activityController = Robolectric.buildActivity(SerializableRouteNavHostFragmentActivity::class.java)
                 timestamps = simulateOpeningActivities(
                     addStartupActivity = false,
                     startInBackground = true,
@@ -178,10 +201,11 @@ internal class NavigationComplexDestinationAndRouteTest {
                 stateSpan.assertNavigationStateSpan(
                     transitionTimesMs = listOf(
                         timestamps.firstForegroundTimeMs,
+                        timestamps.firstForegroundTimeMs + LIFECYCLE_EVENT_GAP,
                         timestamps.firstActionTimeMs + POST_ACTIVITY_ACTION_DWELL,
                         timestamps.lastBackgroundTimeMs,
                     ),
-                    newStateValues = listOf("home", "profile/{userId}"),
+                    newStateValues = listOf(activityController.get().localClassName, "home", "profile/{userId}"),
                 )
             },
         )
@@ -190,10 +214,10 @@ internal class NavigationComplexDestinationAndRouteTest {
     @Test
     fun `Serializable routes without SerialName use fully qualified class name with template not resolved as state value`() {
         var timestamps: AppExecutionTimestamps? = null
+        val activityController = Robolectric.buildActivity(FqcnRouteActivityNavHost::class.java)
         testRule.runTest(
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
-                val activityController = Robolectric.buildActivity(FqcnRouteActivityNavHost::class.java)
                 timestamps = simulateOpeningActivities(
                     addStartupActivity = false,
                     startInBackground = true,
@@ -215,10 +239,11 @@ internal class NavigationComplexDestinationAndRouteTest {
                 stateSpan.assertNavigationStateSpan(
                     transitionTimesMs = listOf(
                         timestamps.firstForegroundTimeMs,
+                        timestamps.firstForegroundTimeMs + LIFECYCLE_EVENT_GAP,
                         timestamps.firstActionTimeMs + POST_ACTIVITY_ACTION_DWELL,
                         timestamps.lastBackgroundTimeMs,
                     ),
-                    newStateValues = listOf(fqcnHome, fqcnDetail),
+                    newStateValues = listOf(activityController.get().localClassName, fqcnHome, fqcnDetail),
                 )
             },
         )

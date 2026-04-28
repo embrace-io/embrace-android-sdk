@@ -316,6 +316,17 @@ internal class SessionOrchestratorImpl(
                             handleUserSessionEnd(timestamp)
                         } else {
                             handleNewSessionPart(timestamp)
+                            when (endAppState) {
+                                AppState.FOREGROUND -> if (maxDurationTimerState == null) {
+                                    (userSessionState as? UserSessionState.Active)?.metadata?.let {
+                                        scheduleMaxDurationTimeout(it)
+                                    }
+                                }
+                                AppState.BACKGROUND -> {
+                                    maxDurationTimerState?.cancel()
+                                    maxDurationTimerState = null
+                                }
+                            }
                         }
                     }
 

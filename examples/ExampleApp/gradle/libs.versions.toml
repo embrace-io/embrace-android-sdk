@@ -8,7 +8,7 @@ espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.13.0"
 composeBom = "2026.04.01"
-embrace = "8.3.1"
+embrace = "8.4.0-SNAPSHOT"
 navigationCompose = "2.9.8"
 okhttp = "5.3.2"
 otel = "1.61.0"
@@ -53,6 +53,7 @@ embrace-android-delivery = { group = "io.embrace", name = "embrace-android-deliv
 embrace-android-okhttp = { group = "io.embrace", name = "embrace-android-instrumentation-okhttp", version.ref = "embrace" }
 embrace-android-network-common = { group = "io.embrace", name = "embrace-android-instrumentation-network-common", version.ref = "embrace" }
 embrace-android-instrumentation-api = { group = "io.embrace", name = "embrace-android-instrumentation-api", version.ref = "embrace" }
+embrace-android-instrumentation-compose-navigation = { group = "io.embrace", name = "embrace-android-instrumentation-compose-navigation", version.ref = "embrace" }
 
 embrace-android-otel-java = { group = "io.embrace", name = "embrace-android-otel-java", version.ref = "embrace" }
 androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }

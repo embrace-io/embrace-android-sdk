@@ -91,6 +91,7 @@ dependencies {
     implementation(libs.opentelemetry.sdk)
     implementation(libs.firebase.messaging)
     implementation(libs.embrace.android.otel.java)
+    implementation(libs.embrace.android.instrumentation.compose.navigation)
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 
     // uncomment to enable debugging through source contained in those modules

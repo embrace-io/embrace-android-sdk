@@ -77,6 +77,8 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.navigation.fragment)
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.navigation3.ui)
     implementation(libs.kotlinx.serialization.core)
     add("kotlinCompilerPluginClasspath", libs.kotlin.serialization.compiler.plugin)
     implementation(platform(libs.androidx.compose.bom))
@@ -91,6 +93,7 @@ dependencies {
     implementation(libs.opentelemetry.sdk)
     implementation(libs.firebase.messaging)
     implementation(libs.embrace.android.otel.java)
+//    implementation(libs.embrace.android.instrumentation.androidx.navigation)
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 
     // uncomment to enable debugging through source contained in those modules

@@ -48,6 +48,12 @@
             android:name=".ComplexDestinationActivity"
             android:theme="@style/Theme.ExampleApp" />
         <activity
+            android:name=".ObservedNavControllerActivity"
+            android:theme="@style/Theme.ExampleApp" />
+        <activity
+            android:name=".ObservedBackStackActivity"
+            android:theme="@style/Theme.ExampleApp" />
+        <activity
             android:name=".TracingApiActivity"
             android:exported="true">
             <intent-filter>

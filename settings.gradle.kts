@@ -15,7 +15,7 @@ include(
     ":embrace-android-semconv",
     ":embrace-android-instrumentation-anr",
     ":embrace-android-instrumentation-app-exit-info",
-    ":embrace-android-instrumentation-compose-navigation",
+    ":embrace-android-instrumentation-androidx-navigation",
     ":embrace-android-instrumentation-compose-tap",
     ":embrace-android-instrumentation-crash-jvm",
     ":embrace-android-instrumentation-crash-ndk",

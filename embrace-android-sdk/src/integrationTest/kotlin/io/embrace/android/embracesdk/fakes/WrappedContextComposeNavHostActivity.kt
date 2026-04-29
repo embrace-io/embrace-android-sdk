@@ -11,7 +11,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import io.embrace.android.embracesdk.instrumentation.navigation.rememberObservedNavController
+import io.embrace.android.embracesdk.instrumentation.androidx.navigation.rememberObservedNavController
 
 class WrappedContextComposeNavHostActivity : ComponentActivity(), HasNavController {
 

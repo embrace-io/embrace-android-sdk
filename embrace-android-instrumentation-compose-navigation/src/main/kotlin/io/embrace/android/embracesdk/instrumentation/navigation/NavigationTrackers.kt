@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.instrumentation.compose.navigation
+package io.embrace.android.embracesdk.instrumentation.navigation
 
 import android.app.Activity
 import android.content.Context
@@ -10,12 +10,12 @@ import androidx.navigation.NavDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.Navigator
 import androidx.navigation.compose.rememberNavController
+import io.embrace.android.embracesdk.internal.instrumentation.compose.navigation.trackNavigation
 
 /**
- * Wrapper for [androidx.navigation.compose.rememberNavController] that registers the returned [NavHostController] with the
- * Embrace SDK so navigations are observed.
+ * Wrapper for [rememberNavController] that registers the returned [NavHostController] with the Embrace SDK so navigations are observed.
  *
- * Simply replace uses of [rememberNavController] with this Composable to get this functionality.
+ * Replace uses of [rememberNavController] with this Composable to enable the functionality.
  */
 @Composable
 public fun rememberObservedNavController(

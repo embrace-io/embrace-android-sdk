@@ -5,9 +5,13 @@ import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertNavigationStateSpan
 import io.embrace.android.embracesdk.assertions.getNavigationStateSpan
+import io.embrace.android.embracesdk.fakes.ActivityFindNavControllerActivity
 import io.embrace.android.embracesdk.fakes.BasicNavHostFragmentActivity
 import io.embrace.android.embracesdk.fakes.ComposeNavHostActivity
+import io.embrace.android.embracesdk.fakes.FragmentFindNavControllerActivity
+import io.embrace.android.embracesdk.fakes.HasNavController
 import io.embrace.android.embracesdk.fakes.TestNavControllerActivity
+import io.embrace.android.embracesdk.fakes.ViewFindNavControllerActivity
 import io.embrace.android.embracesdk.fakes.WrappedContextComposeNavHostActivity
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -15,6 +19,7 @@ import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.AppExecutionTimestamps
+import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.LIFECYCLE_EVENT_GAP
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.POST_ACTIVITY_ACTION_DWELL
 import io.embrace.android.embracesdk.testframework.actions.SessionPartTimestamps
@@ -24,6 +29,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
+import org.robolectric.android.controller.ActivityController
 import org.robolectric.annotation.Config
 
 @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
@@ -179,36 +185,12 @@ internal class NavigationStateFeatureTest {
 
     @Test
     fun `FragmentActivity navigation recorded as state span`() {
-        val navRoutes = listOf("contacts", "about", "home")
-        var timestamps: AppExecutionTimestamps? = null
-        val activityController = Robolectric.buildActivity(BasicNavHostFragmentActivity::class.java)
-
-        testRule.runTest(
-            persistedRemoteConfig = enabledRemoteConfig,
-            testCaseAction = {
-                timestamps = simulateNavControllerActivityNavigation(
-                    routes = navRoutes,
-                    activityController = activityController,
-                )
-            },
-            assertAction = {
-                val stateSpan = checkNotNull(getSingleSessionEnvelope().getNavigationStateSpan())
-                checkNotNull(timestamps)
-                val eventTimes = mutableListOf(
-                    timestamps.firstForegroundTimeMs,
-                    timestamps.firstForegroundTimeMs + LIFECYCLE_EVENT_GAP,
-                    timestamps.firstActionTimeMs + POST_ACTIVITY_ACTION_DWELL,
-                    timestamps.firstActionTimeMs + POST_ACTIVITY_ACTION_DWELL * 2,
-                    timestamps.firstActionTimeMs + POST_ACTIVITY_ACTION_DWELL * 3,
-                    timestamps.lastBackgroundTimeMs,
-                )
-                val expectedStateValues = listOf(activityController.get().localClassName, "home") + navRoutes
-                stateSpan.assertNavigationStateSpan(
-                    transitionTimesMs = eventTimes,
-                    newStateValues = expectedStateValues
-                )
-            },
-        )
+        runNavStateTest<BasicNavHostFragmentActivity>(
+            defaultDestination = "home",
+            routes = listOf("contacts", "about"),
+        ) { routes, controller ->
+            simulateNavControllerActivityNavigation(routes, controller)
+        }
     }
 
     @Test
@@ -285,93 +267,89 @@ internal class NavigationStateFeatureTest {
 
     @Test
     fun `rememberObservedNavController registers created NavController and creates state span`() {
-        var timestamps: AppExecutionTimestamps? = null
-        val activityController = Robolectric.buildActivity(ComposeNavHostActivity::class.java)
-        val expectedStateValues = listOf(activityController.get().localClassName, "home", "contacts", "about")
-        testRule.runTest(
-            persistedRemoteConfig = enabledRemoteConfig,
-            testCaseAction = {
-                timestamps = simulateNavControllerActivityNavigation<ComposeNavHostActivity>(
-                    routes = listOf("contacts", "about"),
-                    activityController = activityController,
-                )
-            },
-            assertAction = {
-                val stateSpan = checkNotNull(getSingleSessionEnvelope().getNavigationStateSpan())
-                checkNotNull(timestamps)
-                val eventTimes = mutableListOf(
-                    timestamps.firstForegroundTimeMs,
-                    timestamps.firstActionTimeMs,
-                    timestamps.firstActionTimeMs + POST_ACTIVITY_ACTION_DWELL,
-                    timestamps.firstActionTimeMs + POST_ACTIVITY_ACTION_DWELL * 2,
-                    timestamps.lastBackgroundTimeMs,
-                )
-                stateSpan.assertNavigationStateSpan(
-                    transitionTimesMs = eventTimes,
-                    newStateValues = expectedStateValues
-                )
-            },
-        )
+        runNavStateTest<ComposeNavHostActivity>(
+            defaultDestination = "home",
+            routes = listOf("contacts", "about"),
+            timing = NavRegistrationTiming.AT_COMPOSITION,
+        ) { routes, controller ->
+            simulateNavControllerActivityNavigation(routes, controller)
+        }
     }
 
     @Test
     fun `rememberObservedNavController finds Activity associated with NavController through wrapped LocalContext`() {
-        var timestamps: AppExecutionTimestamps? = null
-        val activityController = Robolectric.buildActivity(WrappedContextComposeNavHostActivity::class.java)
-        val expectedStateValues = listOf(activityController.get().localClassName, "home", "about", "contacts")
-        testRule.runTest(
-            persistedRemoteConfig = enabledRemoteConfig,
-            testCaseAction = {
-                timestamps = simulateNavControllerActivityNavigation<WrappedContextComposeNavHostActivity>(
-                    routes = listOf("about", "contacts"),
-                    activityController = activityController,
-                )
-            },
-            assertAction = {
-                val stateSpan = checkNotNull(getSingleSessionEnvelope().getNavigationStateSpan())
-                checkNotNull(timestamps)
-                val eventTimes = mutableListOf(
-                    timestamps.firstForegroundTimeMs,
-                    timestamps.firstActionTimeMs,
-                    timestamps.firstActionTimeMs + POST_ACTIVITY_ACTION_DWELL,
-                    timestamps.firstActionTimeMs + POST_ACTIVITY_ACTION_DWELL * 2,
-                    timestamps.lastBackgroundTimeMs,
-                )
-                stateSpan.assertNavigationStateSpan(
-                    transitionTimesMs = eventTimes,
-                    newStateValues = expectedStateValues
-                )
-            },
-        )
+        runNavStateTest<WrappedContextComposeNavHostActivity>(
+            defaultDestination = "home",
+            routes = listOf("contacts", "about"),
+            timing = NavRegistrationTiming.AT_COMPOSITION,
+        ) { routes, controller ->
+            simulateNavControllerActivityNavigation(routes, controller)
+        }
     }
 
     @Test
     fun `navigation of NavController tracked using public observeNavigation API creates state span`() {
+        runNavStateTest<TestNavControllerActivity>(
+            defaultDestination = "home",
+            routes = listOf("contacts", "about"),
+        ) { routes, controller ->
+            simulateNavControllerTrackingAndNavigation(routes, controller)
+        }
+    }
+
+    @Test
+    fun `observeNavigation works when NavController retrieved via findNavController on View`() {
+        runNavStateTest<ViewFindNavControllerActivity>(
+            defaultDestination = "home",
+            routes = listOf("contacts", "about"),
+        ) { routes, controller ->
+            simulateNavControllerTrackingAndNavigation(routes, controller)
+        }
+    }
+
+    @Test
+    fun `observeNavigation works when NavController retrieved via findNavController on Activity`() {
+        runNavStateTest<ActivityFindNavControllerActivity>(
+            defaultDestination = "home",
+            routes = listOf("contacts", "about"),
+        ) { routes, controller ->
+            simulateNavControllerTrackingAndNavigation(routes, controller)
+        }
+    }
+
+    @Test
+    fun `observeNavigation works when NavController retrieved from destination Fragment via findNavController`() {
+        runNavStateTest<FragmentFindNavControllerActivity>(
+            defaultDestination = "home",
+            routes = listOf("contacts", "about"),
+        ) { routes, controller ->
+            controller.get().fragmentResumeCallback = { activity, navController ->
+                embrace.observeNavigation(activity, navController)
+            }
+            simulateNavControllerActivityNavigation(routes, controller)
+        }
+    }
+
+    @Test
+    fun `navController not auto detected if Activity view hierarchy is not the expected structure`() {
         var timestamps: AppExecutionTimestamps? = null
-        val activityController = Robolectric.buildActivity(TestNavControllerActivity::class.java)
-        val expectedStateValues = listOf(activityController.get().localClassName, "home", "contacts", "about")
+        val navActivity = Robolectric.buildActivity(FragmentFindNavControllerActivity::class.java)
         testRule.runTest(
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
-                timestamps = simulateNavControllerTrackingAndNavigation(
-                    routes = listOf("contacts", "about"),
-                    activityController = activityController,
+                timestamps = simulateNavControllerActivityNavigation(
+                    routes = listOf("home", "contacts", "about"),
+                    activityController = navActivity
                 )
             },
             assertAction = {
                 val stateSpan = checkNotNull(getSingleSessionEnvelope().getNavigationStateSpan())
-                checkNotNull(timestamps)
-                val expectedTransitionTimes = listOf(
-                    timestamps.firstForegroundTimeMs,
-                    timestamps.firstForegroundTimeMs + LIFECYCLE_EVENT_GAP,
-                    timestamps.firstForegroundTimeMs + POST_ACTIVITY_ACTION_DWELL + LIFECYCLE_EVENT_GAP * 2,
-                    timestamps.firstForegroundTimeMs + POST_ACTIVITY_ACTION_DWELL * 2 + LIFECYCLE_EVENT_GAP * 2,
-                    timestamps.lastBackgroundTimeMs,
-                )
-                stateSpan.assertNavigationStateSpan(
-                    transitionTimesMs = expectedTransitionTimes,
-                    newStateValues = expectedStateValues
-                )
+                with(checkNotNull(timestamps)) {
+                    stateSpan.assertNavigationStateSpan(
+                        transitionTimesMs = listOf(firstForegroundTimeMs, lastBackgroundTimeMs),
+                        newStateValues = listOf(navActivity.get().localClassName),
+                    )
+                }
             },
         )
     }
@@ -408,6 +386,55 @@ internal class NavigationStateFeatureTest {
                 assertEquals(1000, events.size)
             },
         )
+    }
+
+    private inline fun <reified T> runNavStateTest(
+        defaultDestination: String,
+        routes: List<String>,
+        timing: NavRegistrationTiming = NavRegistrationTiming.AT_RESUME,
+        crossinline navAction: EmbraceActionInterface.(List<String>, ActivityController<T>) -> AppExecutionTimestamps,
+    ) where T : Activity, T : HasNavController {
+        var timestamps: AppExecutionTimestamps? = null
+        val activityController = Robolectric.buildActivity(T::class.java)
+        val expectedStateValues = listOf(activityController.get().localClassName, defaultDestination) + routes
+        testRule.runTest(
+            persistedRemoteConfig = enabledRemoteConfig,
+            testCaseAction = {
+                timestamps = navAction(routes, activityController)
+            },
+            assertAction = {
+                val stateSpan = checkNotNull(getSingleSessionEnvelope().getNavigationStateSpan())
+                with(checkNotNull(timestamps)) {
+                    val defaultDestChangeTime = when (timing) {
+                        NavRegistrationTiming.AT_RESUME -> firstForegroundTimeMs + LIFECYCLE_EVENT_GAP
+                        NavRegistrationTiming.AT_COMPOSITION -> firstActionTimeMs
+                    }
+                    val navTimes = routes.indices.map { i ->
+                        firstActionTimeMs + POST_ACTIVITY_ACTION_DWELL * (i + 1)
+                    }
+                    stateSpan.assertNavigationStateSpan(
+                        transitionTimesMs = listOf(firstForegroundTimeMs, defaultDestChangeTime) + navTimes + lastBackgroundTimeMs,
+                        newStateValues = expectedStateValues,
+                    )
+                }
+            },
+        )
+    }
+
+    /**
+     * Enum that indicates when the NavController tracking is done during a test. Used to determine the time to use to validate the
+     * state change caused by the default destination being loaded.
+     */
+    private enum class NavRegistrationTiming {
+        /**
+         * NavController tracking happens during the invocation of the Activity's onResume callback.
+         */
+        AT_RESUME,
+
+        /**
+         * NavController tracking happens after during the composition stage, i.e. after onResume is complete.
+         */
+        AT_COMPOSITION,
     }
 
     class HomeActivity : Activity()

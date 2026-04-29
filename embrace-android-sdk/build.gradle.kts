@@ -72,7 +72,7 @@ dependencies {
     testImplementation(project(":embrace-android-instrumentation-api-fakes"))
     testImplementation(project(":embrace-android-otel-fakes"))
     testImplementation(project(":embrace-android-instrumentation-huc"))
-    testImplementation(project(":embrace-android-instrumentation-compose-navigation"))
+    testImplementation(project(":embrace-android-instrumentation-androidx-navigation"))
     testImplementation(platform(libs.okhttp.bom))
     testImplementation(libs.mockwebserver)
     testImplementation(libs.mockk)

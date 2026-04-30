@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.exampleapp.ui.examples
 
 import androidx.compose.foundation.layout.Spacer

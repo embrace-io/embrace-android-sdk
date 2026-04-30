@@ -1,9 +1,11 @@
 package io.embrace.android.embracesdk.testframework.actions
 
 import android.app.Activity
+import androidx.compose.runtime.snapshots.Snapshot.Companion.sendApplyNotifications
 import androidx.lifecycle.Lifecycle
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.HasBackStack
 import io.embrace.android.embracesdk.fakes.HasNavController
 import io.embrace.android.embracesdk.fakes.TestNavHostFragmentActivity
 import io.embrace.android.embracesdk.internal.api.SdkApi
@@ -247,6 +249,26 @@ internal class EmbraceActionInterface(
         simulateNavControllerNavigation(routes, activityController) { activity ->
             embrace.observeNavigation(activity, activityController.get().getNavController())
         }
+
+    inline fun <reified T> simulateBackStackNavigation(
+        routes: List<Any>,
+        activityController: ActivityController<T> = Robolectric.buildActivity(T::class.java),
+    ): AppExecutionTimestamps where T : Activity, T : HasBackStack =
+        simulateOpeningActivities(
+            addStartupActivity = false,
+            startInBackground = true,
+            activitiesAndActions = listOf(
+                activityController to {
+                    activityController.visible()
+                    sendApplyNotifications()
+                    routes.forEach { route ->
+                        clock.tick(POST_ACTIVITY_ACTION_DWELL)
+                        activityController.get().getBackStack().add(route)
+                        sendApplyNotifications()
+                    }
+                },
+            )
+        )
 
     fun simulateJvmUncaughtException(exc: Throwable) {
         Thread.getDefaultUncaughtExceptionHandler()?.uncaughtException(Thread.currentThread(), exc)

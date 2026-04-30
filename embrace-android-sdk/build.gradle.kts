@@ -82,6 +82,8 @@ dependencies {
     testImplementation(libs.androidx.navigation.fragment)
     testImplementation(libs.androidx.navigation.compose)
     testImplementation(libs.androidx.navigation.testing)
+    testImplementation(libs.androidx.navigation3.runtime)
+    testImplementation(libs.androidx.navigation3.ui)
     testImplementation(libs.opentelemetry.kotlin.compat)
     testImplementation(libs.kotlinx.serialization.core)
 

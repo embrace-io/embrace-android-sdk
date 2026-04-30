@@ -5,8 +5,10 @@ import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.fragment.NavHostFragment
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationControllerEventListener
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingInitListener
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
+import io.embrace.android.embracesdk.internal.arch.navigation.getId
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
@@ -16,7 +18,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
  * Implements [NavigationTrackingInitListener] so it can be registered with [NavigationTrackingService] tracking events.
  */
 internal class NavControllerTracker(
-    private val navigationTrackingService: NavigationTrackingService,
+    private val navigationControllerEventListener: NavigationControllerEventListener,
     private val clock: Clock,
     private val logger: InternalLogger,
 ) : NavigationTrackingInitListener {
@@ -25,7 +27,7 @@ internal class NavControllerTracker(
 
     override fun trackNavigation(activity: Activity, controller: Any?) {
         runCatching {
-            val activityId = System.identityHashCode(activity)
+            val activityId = activity.getId()
             if (trackAttemptStatus[activityId] != true) {
                 synchronized(trackAttemptStatus) {
                     if (controller == null && trackAttemptStatus.put(activityId, false) == null) {
@@ -41,11 +43,12 @@ internal class NavControllerTracker(
     }
 
     private fun NavController.trackForActivity(activity: Activity) {
-        navigationTrackingService.onControllerAttached(activity, clock.now())
+        val activityId = activity.getId()
+        navigationControllerEventListener.onControllerAttached(activity, clock.now())
         addOnDestinationChangedListener { _, destination, _ ->
-            navigationTrackingService.onDestinationChange(activity, extractScreenName(destination), clock.now())
+            navigationControllerEventListener.onDestinationChange(activity, extractScreenName(destination), clock.now())
         }
-        trackAttemptStatus[System.identityHashCode(activity)] = true
+        trackAttemptStatus[activityId] = true
     }
 
     private fun findNavController(activity: Activity): NavController? {

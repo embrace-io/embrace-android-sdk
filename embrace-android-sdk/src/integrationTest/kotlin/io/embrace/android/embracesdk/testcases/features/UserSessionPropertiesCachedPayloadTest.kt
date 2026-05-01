@@ -15,10 +15,8 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.getSessionProperty
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule.Companion.DEFAULT_SDK_START_TIME_MS
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import org.junit.Assert.assertNotNull
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -96,30 +94,6 @@ internal class UserSessionPropertiesCachedPayloadTest {
         )
     }
 
-    @Ignore("Bug: user session scoped properties don't persist across app instances")
-    @Test
-    fun `user-session-scoped property does not survive an expired user-session boundary across processes`() {
-        val oldUserSessionId = USER_SESSION_ID_A
-        val sessionStartMs = DEFAULT_SDK_START_TIME_MS - DEFAULT_INACTIVITY_TIMEOUT_MS - 60_000L
-
-        testRule.runTest(
-            setupAction = {
-                persistUserSession(
-                    sessionId = oldUserSessionId,
-                    startMs = sessionStartMs,
-                    lastActivityMs = DEFAULT_SDK_START_TIME_MS - DEFAULT_INACTIVITY_TIMEOUT_MS - 1L,
-                )
-                // TODO: add persisted user session property
-            },
-            testCaseAction = {
-                recordSession()
-            },
-            assertAction = {
-                // TODO: assert user session property
-            },
-        )
-    }
-
     private fun FakePayloadStorageService.getLastCachedPart(): Envelope<SessionPartPayload>? =
         storedPayloadMetadata()
             .filter { it.payloadType == PayloadType.SESSION }
@@ -139,7 +113,5 @@ internal class UserSessionPropertiesCachedPayloadTest {
         const val EXISTING_KEY = "existing"
         const val PERM_KEY = "perm"
         const val VALUE = "value"
-        const val USER_SESSION_ID_A = "aabbccdd11223344aabbccdd11223344"
-        const val DEFAULT_INACTIVITY_TIMEOUT_MS = 1_800L * 1_000L
     }
 }

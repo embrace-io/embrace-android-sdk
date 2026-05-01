@@ -48,6 +48,18 @@ fun Envelope<SessionPartPayload>.getSessionPartId(): String {
 }
 
 /**
+ * Return the value of the `emb.user_session_termination_reason` attribute on the session span
+ */
+fun Envelope<SessionPartPayload>.getUserSessionTerminationReason(): String? =
+    findSessionSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON)
+
+/**
+ * Whether the `emb.is_final_session_part` attribute is present (and set to "1") on the session
+ */
+fun Envelope<SessionPartPayload>.isFinalSessionPart(): Boolean =
+    findSessionSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART) == "1"
+
+/**
  * Return the session start time in milliseconds from the session span in the payload
  */
 fun Envelope<SessionPartPayload>.getStartTime(): Long {

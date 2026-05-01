@@ -4,25 +4,27 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
+import io.embrace.android.embracesdk.assertions.getUserSessionTerminationReason
+import io.embrace.android.embracesdk.assertions.isFinalSessionPart
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.UserSessionRemoteConfig
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
-import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_SESSION_PART_ID
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_ID
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_NUMBER
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_PART_NUMBER
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_START_TS
-import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues.INACTIVITY
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues.MANUAL
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -59,8 +61,8 @@ internal class UserSessionLifecycleTest {
                 assertNotNull(fgSession.getUserSessionId())
                 assertEquals(fgSession.getUserSessionId(), fgSession.getSessionId())
                 assertEquals("1", fgSessionSpan.attributes?.findAttributeValue(EMB_USER_SESSION_NUMBER))
-                assertNull(fgSessionSpan.attributes?.findAttributeValue(EMB_IS_FINAL_SESSION_PART))
-                assertNull(fgSessionSpan.attributes?.findAttributeValue(EMB_USER_SESSION_TERMINATION_REASON))
+                assertFalse(fgSession.isFinalSessionPart())
+                assertNull(fgSession.getUserSessionTerminationReason())
             }
         )
     }
@@ -76,14 +78,12 @@ internal class UserSessionLifecycleTest {
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
-                val firstSessionSpan = sessions[0].findSessionSpan()
-                val secondSessionSpan = sessions[1].findSessionSpan()
 
                 assertNotEquals(sessions[0].getUserSessionId(), sessions[1].getUserSessionId())
-                assertEquals("1", firstSessionSpan.attributes?.findAttributeValue(EMB_IS_FINAL_SESSION_PART))
-                assertEquals(MANUAL, firstSessionSpan.attributes?.findAttributeValue(EMB_USER_SESSION_TERMINATION_REASON))
-                assertNull(secondSessionSpan.attributes?.findAttributeValue(EMB_IS_FINAL_SESSION_PART))
-                assertNull(secondSessionSpan.attributes?.findAttributeValue(EMB_USER_SESSION_TERMINATION_REASON))
+                assertTrue(sessions[0].isFinalSessionPart())
+                assertEquals(MANUAL, sessions[0].getUserSessionTerminationReason())
+                assertFalse(sessions[1].isFinalSessionPart())
+                assertNull(sessions[1].getUserSessionTerminationReason())
             }
         )
     }
@@ -102,16 +102,14 @@ internal class UserSessionLifecycleTest {
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
-                val firstSessionSpan = sessions[0].findSessionSpan()
-                val secondSessionSpan = sessions[1].findSessionSpan()
 
                 assertNotEquals(sessions[0].getUserSessionId(), sessions[1].getUserSessionId())
 
                 // session orchestrator cannot be sure of final session reason, so does not set it
-                assertNull(firstSessionSpan.attributes?.findAttributeValue(EMB_IS_FINAL_SESSION_PART))
-                assertNull(firstSessionSpan.attributes?.findAttributeValue(EMB_USER_SESSION_TERMINATION_REASON))
-                assertNull(secondSessionSpan.attributes?.findAttributeValue(EMB_IS_FINAL_SESSION_PART))
-                assertNull(secondSessionSpan.attributes?.findAttributeValue(EMB_USER_SESSION_TERMINATION_REASON))
+                assertFalse(sessions[0].isFinalSessionPart())
+                assertNull(sessions[0].getUserSessionTerminationReason())
+                assertFalse(sessions[1].isFinalSessionPart())
+                assertNull(sessions[1].getUserSessionTerminationReason())
             }
         )
     }
@@ -134,16 +132,13 @@ internal class UserSessionLifecycleTest {
                 val bgSessions = getSessionEnvelopes(2, AppState.BACKGROUND)
 
                 assertNotEquals(fgSessions[0].getUserSessionId(), fgSessions[1].getUserSessionId())
-                assertEquals("1", bgSessions[1].findSessionSpan().attributes?.findAttributeValue(EMB_IS_FINAL_SESSION_PART))
-                assertEquals(
-                    INACTIVITY,
-                    bgSessions[1].findSessionSpan().attributes?.findAttributeValue(EMB_USER_SESSION_TERMINATION_REASON)
-                )
-                assertNull(bgSessions[0].findSessionSpan().attributes?.findAttributeValue(EMB_IS_FINAL_SESSION_PART))
-                assertNull(fgSessions[0].findSessionSpan().attributes?.findAttributeValue(EMB_IS_FINAL_SESSION_PART))
-                assertNull(fgSessions[0].findSessionSpan().attributes?.findAttributeValue(EMB_USER_SESSION_TERMINATION_REASON))
-                assertNull(fgSessions[1].findSessionSpan().attributes?.findAttributeValue(EMB_IS_FINAL_SESSION_PART))
-                assertNull(fgSessions[1].findSessionSpan().attributes?.findAttributeValue(EMB_USER_SESSION_TERMINATION_REASON))
+                assertTrue(bgSessions[1].isFinalSessionPart())
+                assertEquals(INACTIVITY, bgSessions[1].getUserSessionTerminationReason())
+                assertFalse(bgSessions[0].isFinalSessionPart())
+                assertFalse(fgSessions[0].isFinalSessionPart())
+                assertNull(fgSessions[0].getUserSessionTerminationReason())
+                assertFalse(fgSessions[1].isFinalSessionPart())
+                assertNull(fgSessions[1].getUserSessionTerminationReason())
             }
         )
     }
@@ -162,14 +157,12 @@ internal class UserSessionLifecycleTest {
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
-                val firstSessionSpan = sessions[0].findSessionSpan()
-                val secondSessionSpan = sessions[1].findSessionSpan()
 
                 assertEquals(sessions[0].getUserSessionId(), sessions[1].getUserSessionId())
-                assertNull(firstSessionSpan.attributes?.findAttributeValue(EMB_IS_FINAL_SESSION_PART))
-                assertNull(firstSessionSpan.attributes?.findAttributeValue(EMB_USER_SESSION_TERMINATION_REASON))
-                assertNull(secondSessionSpan.attributes?.findAttributeValue(EMB_IS_FINAL_SESSION_PART))
-                assertNull(secondSessionSpan.attributes?.findAttributeValue(EMB_USER_SESSION_TERMINATION_REASON))
+                assertFalse(sessions[0].isFinalSessionPart())
+                assertNull(sessions[0].getUserSessionTerminationReason())
+                assertFalse(sessions[1].isFinalSessionPart())
+                assertNull(sessions[1].getUserSessionTerminationReason())
             }
         )
     }
@@ -189,14 +182,12 @@ internal class UserSessionLifecycleTest {
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(2, AppState.FOREGROUND)
-                val firstSessionSpan = sessions[0].findSessionSpan()
-                val secondSessionSpan = sessions[1].findSessionSpan()
 
                 assertEquals(sessions[0].getUserSessionId(), sessions[1].getUserSessionId())
-                assertNull(firstSessionSpan.attributes?.findAttributeValue(EMB_IS_FINAL_SESSION_PART))
-                assertNull(firstSessionSpan.attributes?.findAttributeValue(EMB_USER_SESSION_TERMINATION_REASON))
-                assertNull(secondSessionSpan.attributes?.findAttributeValue(EMB_IS_FINAL_SESSION_PART))
-                assertNull(secondSessionSpan.attributes?.findAttributeValue(EMB_USER_SESSION_TERMINATION_REASON))
+                assertFalse(sessions[0].isFinalSessionPart())
+                assertNull(sessions[0].getUserSessionTerminationReason())
+                assertFalse(sessions[1].isFinalSessionPart())
+                assertNull(sessions[1].getUserSessionTerminationReason())
             }
         )
     }
@@ -213,11 +204,10 @@ internal class UserSessionLifecycleTest {
             testCaseAction = { recordSession() },
             assertAction = {
                 val session = getSingleSessionEnvelope()
-                val sessionSpan = session.findSessionSpan()
                 assertEquals(persistedId, session.getUserSessionId())
                 assertEquals(persistedId, session.getSessionId())
-                assertNull(sessionSpan.attributes?.findAttributeValue(EMB_IS_FINAL_SESSION_PART))
-                assertNull(sessionSpan.attributes?.findAttributeValue(EMB_USER_SESSION_TERMINATION_REASON))
+                assertFalse(session.isFinalSessionPart())
+                assertNull(session.getUserSessionTerminationReason())
             }
         )
     }
@@ -236,11 +226,10 @@ internal class UserSessionLifecycleTest {
             testCaseAction = { recordSession() },
             assertAction = {
                 val session = getSingleSessionEnvelope()
-                val sessionSpan = session.findSessionSpan()
                 assertNotEquals(persistedId, session.getUserSessionId())
                 assertNotEquals(persistedId, session.getSessionId())
-                assertNull(sessionSpan.attributes?.findAttributeValue(EMB_IS_FINAL_SESSION_PART))
-                assertNull(sessionSpan.attributes?.findAttributeValue(EMB_USER_SESSION_TERMINATION_REASON))
+                assertFalse(session.isFinalSessionPart())
+                assertNull(session.getUserSessionTerminationReason())
             }
         )
     }
@@ -260,11 +249,10 @@ internal class UserSessionLifecycleTest {
             testCaseAction = { recordSession() },
             assertAction = {
                 val session = getSingleSessionEnvelope()
-                val sessionSpan = session.findSessionSpan()
                 assertNotEquals(persistedId, session.getUserSessionId())
                 assertNotEquals(persistedId, session.getSessionId())
-                assertNull(sessionSpan.attributes?.findAttributeValue(EMB_IS_FINAL_SESSION_PART))
-                assertNull(sessionSpan.attributes?.findAttributeValue(EMB_USER_SESSION_TERMINATION_REASON))
+                assertFalse(session.isFinalSessionPart())
+                assertNull(session.getUserSessionTerminationReason())
             }
         )
     }
@@ -303,5 +291,4 @@ internal class UserSessionLifecycleTest {
             }
         )
     }
-
 }

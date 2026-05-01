@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterfac
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -95,6 +96,22 @@ internal class UserSessionPropertiesTest {
                     )
                 )
             }
+        )
+    }
+
+    @Ignore("user session scoped properties don't persist across app instances")
+    @Test
+    fun `user-session-scoped property does not survive an expired user-session boundary across processes`() {
+        testRule.runTest(
+            setupAction = {
+                // TODO: persist session scoped property
+            },
+            testCaseAction = {
+                recordSession()
+            },
+            assertAction = {
+                // TODO: verify session scoped property in session span
+            },
         )
     }
 

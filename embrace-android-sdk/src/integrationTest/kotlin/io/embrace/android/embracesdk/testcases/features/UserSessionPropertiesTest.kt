@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -94,36 +94,6 @@ internal class UserSessionPropertiesTest {
                         EXISTING_KEY_1, EXISTING_KEY_2, PERM_KEY, PERM_KEY_3, TEMP_KEY, TEMP_KEY_2, TEMP_KEY_3
                     )
                 )
-            }
-        )
-    }
-
-    @Test
-    fun `session properties are persisted in cached payloads`() {
-        testRule.runTest(
-            setupAction = {
-                setupDefaultPermanentSessionProperties()
-            },
-            testCaseAction = {
-                addAndRemoveProperties()
-            },
-            assertAction = {
-                // TODO: rewrite this after v2 delivery layer changes merged
-            }
-        )
-    }
-
-    @Test
-    fun `session properties are persisted in cached payloads when bg activities are disabled`() {
-        testRule.runTest(
-            setupAction = {
-                setupDefaultPermanentSessionProperties()
-            },
-            testCaseAction = {
-                addAndRemoveProperties()
-            },
-            assertAction = {
-                // TODO: rewrite this after v2 delivery layer changes merged
             }
         )
     }

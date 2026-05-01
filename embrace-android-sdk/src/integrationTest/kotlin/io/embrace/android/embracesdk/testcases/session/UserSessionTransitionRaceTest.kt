@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.opentelemetry.kotlin.semconv.SessionAttributes.SESSION_ID
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -62,7 +63,7 @@ internal class UserSessionTransitionRaceTest {
                 assertNotEquals(oldUserSessionId, newUserSessionId)
 
                 val log = getSingleLogEnvelope().getLastLog()
-                val logSessionId = log.attributes?.findAttributeValue("session.id")
+                val logSessionId = log.attributes?.findAttributeValue(SESSION_ID)
                 assertEquals(newUserSessionId, logSessionId)
             },
         )
@@ -102,7 +103,7 @@ internal class UserSessionTransitionRaceTest {
                 assertNotEquals(oldUserSessionId, newUserSessionId)
 
                 val log = getSingleLogEnvelope().getLastLog()
-                val logSessionId = log.attributes?.findAttributeValue("session.id")
+                val logSessionId = log.attributes?.findAttributeValue(SESSION_ID)
                 assertEquals(oldUserSessionId, logSessionId)
                 assertTrue(checkNotNull(log.timeUnixNano) <= checkNotNull(sessionSpanFromOldPart.endTimeNanos))
             },
@@ -132,7 +133,7 @@ internal class UserSessionTransitionRaceTest {
                 assertNotEquals(u1, u2)
 
                 val log = getSingleLogEnvelope().getLastLog()
-                val logSessionId = log.attributes?.findAttributeValue("session.id")
+                val logSessionId = log.attributes?.findAttributeValue(SESSION_ID)
                 assertEquals(u2,logSessionId)
             },
         )

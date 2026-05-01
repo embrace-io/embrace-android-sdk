@@ -31,6 +31,7 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule.Compan
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.actions.StoredNativeCrashData
 import io.embrace.android.embracesdk.testframework.actions.createStoredNativeCrashData
+import io.opentelemetry.kotlin.semconv.SessionAttributes.SESSION_ID
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
@@ -152,9 +153,9 @@ internal class UserSessionResurrectionTransitionTest {
 
                 val crashLog = getSingleLogEnvelope().getLastLog()
                 val crashAttrs = checkNotNull(crashLog.attributes)
-                assertEquals(oldUserSessionId, crashAttrs.findAttributeValue("session.id"))
+                assertEquals(oldUserSessionId, crashAttrs.findAttributeValue(SESSION_ID))
                 assertEquals(sessionPartId, crashAttrs.findAttributeValue("emb.session_part_id"))
-                assertNotEquals(live.getUserSessionId(), crashAttrs.findAttributeValue("session.id"))
+                assertNotEquals(live.getUserSessionId(), crashAttrs.findAttributeValue(SESSION_ID))
             },
         )
     }
@@ -218,7 +219,7 @@ internal class UserSessionResurrectionTransitionTest {
             assertAction = {
                 val crashLog = getSingleLogEnvelope().getLogOfType(EmbType.System.NativeCrash)
                 val attrs = checkNotNull(crashLog.attributes)
-                assertEquals(justEndedUserSessionId, attrs.findAttributeValue("session.id"))
+                assertEquals(justEndedUserSessionId, attrs.findAttributeValue(SESSION_ID))
                 assertEquals(sessionPartId, attrs.findAttributeValue("emb.session_part_id"))
 
                 val live = getSingleSessionEnvelope()
@@ -249,7 +250,7 @@ internal class UserSessionResurrectionTransitionTest {
             assertAction = {
                 val crashLog = getSingleLogEnvelope().getLogOfType(EmbType.System.NativeCrash)
                 val attrs = checkNotNull(crashLog.attributes)
-                assertEquals("", attrs.findAttributeValue("session.id"))
+                assertEquals("", attrs.findAttributeValue(SESSION_ID))
                 assertEquals("", attrs.findAttributeValue("emb.session_part_id"))
             },
         )

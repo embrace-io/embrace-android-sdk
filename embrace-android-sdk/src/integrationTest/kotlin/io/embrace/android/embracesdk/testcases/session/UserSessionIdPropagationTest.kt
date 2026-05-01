@@ -33,7 +33,6 @@ import io.mockk.mockk
 import io.opentelemetry.kotlin.semconv.SessionAttributes.SESSION_ID
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -246,23 +245,6 @@ internal class UserSessionIdPropagationTest {
                 val logAttrs = log.attributes.toStringMap()
                 assertEquals(sessionPartId, logAttrs[AEI_SESSION_PART_ID])
                 assertEquals(userSessionId, logAttrs[AEI_USER_SESSION_ID])
-            },
-        )
-    }
-
-
-    @Ignore("missing: span link to session ended-in should include user session id as well")
-    @Test
-    fun `span stop queued before endUserSession but processed after carries the post-end user-session-id on its EndSession link`() {
-        testRule.runTest(
-            testCaseAction = {
-                recordSession {
-                    embrace.startSpan("my-span")
-                    embrace.endUserSession()
-                }
-            },
-            assertAction = {
-                // TODO: assert span link contains user session ID
             },
         )
     }

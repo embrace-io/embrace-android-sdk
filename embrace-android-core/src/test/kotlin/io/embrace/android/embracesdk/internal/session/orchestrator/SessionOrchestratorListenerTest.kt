@@ -39,6 +39,7 @@ import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionPartCacher
 import io.embrace.android.embracesdk.internal.session.id.SessionIdProvider
+import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
@@ -279,6 +280,8 @@ internal class SessionOrchestratorListenerTest {
             object : SessionIdProvider {
                 override fun getCurrentSessionPartId(): String = sessionTracker.getActiveSessionPartId() ?: ""
                 override fun getCurrentUserSessionId(): String = ""
+                override fun getActiveSessionIds(): SessionIdsSnapshot =
+                    SessionIdsSnapshot(userSessionId = "", sessionPartId = sessionTracker.getActiveSessionPartId() ?: "")
             },
             store
         )
@@ -318,7 +321,9 @@ internal class SessionOrchestratorListenerTest {
             logger,
             fakeBackgroundWorker(),
             TestUuidSource(),
-        )
+        ).apply {
+            start()
+        }
         orchestratorStartTimeMs = clock.now()
         userSessionPropertiesService.addProperty("key", "value", PropertyScope.USER_SESSION)
     }

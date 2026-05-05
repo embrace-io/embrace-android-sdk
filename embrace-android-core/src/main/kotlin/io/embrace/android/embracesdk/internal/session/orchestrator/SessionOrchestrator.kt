@@ -12,6 +12,11 @@ import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 interface SessionOrchestrator : AppStateListener, CrashTeardownHandler {
 
     /**
+     * Start the orchestrator after all dependencies have finished initialization
+     */
+    fun start()
+
+    /**
      * Ends the current session (if any) manually. This has no effect on background activities.
      */
     fun endSessionWithManual()

@@ -48,9 +48,9 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.opentelemetry.kotlin.semconv.SessionAttributes
-import kotlin.random.Random
 import org.robolectric.Shadows
 import org.robolectric.shadows.ShadowLooper
+import kotlin.random.Random
 
 /**
  * Test harness for which an instance is generated each test run and provided to the test by the Rule
@@ -171,6 +171,7 @@ internal class EmbraceSetupInterface(
                 coreModule,
                 storageModule,
                 userSessionIdProvider,
+                activeSessionIdsProvider,
             ->
             val impl = InstrumentationModuleImpl(
                 initModule,
@@ -181,6 +182,7 @@ internal class EmbraceSetupInterface(
                 coreModule,
                 storageModule,
                 userSessionIdProvider,
+                activeSessionIdsProvider,
             )
             object : InstrumentationModule {
                 override val instrumentationRegistry: InstrumentationRegistry = FakeInstrumentationRegistry(impl.instrumentationRegistry)

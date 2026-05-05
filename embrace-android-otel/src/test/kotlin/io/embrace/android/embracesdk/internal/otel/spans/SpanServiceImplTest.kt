@@ -6,10 +6,10 @@ import io.embrace.android.embracesdk.assertions.assertIsPrivateSpan
 import io.embrace.android.embracesdk.assertions.assertIsType
 import io.embrace.android.embracesdk.assertions.assertIsTypePerformance
 import io.embrace.android.embracesdk.assertions.assertNotPrivateSpan
+import io.embrace.android.embracesdk.fakes.FakeActiveSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
-import io.embrace.android.embracesdk.fakes.FakeSessionIdProvider
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.TestConstants.TESTS_DEFAULT_USE_KOTLIN_SDK
@@ -35,6 +35,7 @@ import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
+import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -623,7 +624,9 @@ internal class SpanServiceImplTest {
             appVersion = "1.0.0",
             packageName = "com.test.app",
             systemInfo = SystemInfo(),
-            sessionIdProvider = { FakeSessionIdProvider(userSessionId = "fake-session-id") },
+            activeSessionIdsProvider = {
+                FakeActiveSessionIdsProvider(SessionIdsSnapshot(userSessionId = "fake-session-id", sessionPartId = ""))
+            },
             processIdentifierProvider = { "fake-pid" }
         )
         val otelSdkWrapper = OtelSdkWrapper(

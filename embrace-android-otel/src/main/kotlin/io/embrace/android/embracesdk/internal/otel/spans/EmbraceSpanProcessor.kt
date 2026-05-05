@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
-import io.embrace.android.embracesdk.internal.session.id.SessionIdProvider
+import io.embrace.android.embracesdk.internal.session.id.ActiveSessionIdsProvider
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.export.OperationResultCode
@@ -13,7 +13,7 @@ import kotlinx.coroutines.runBlocking
 import java.util.concurrent.atomic.AtomicLong
 
 class EmbraceSpanProcessor(
-    private val sessionIdProvider: () -> SessionIdProvider?,
+    private val activeSessionIdsProvider: () -> ActiveSessionIdsProvider?,
     private val processIdentifier: String,
     private val spanExporter: SpanExporter,
 ) : SpanProcessor {
@@ -23,12 +23,11 @@ class EmbraceSpanProcessor(
     override fun onStart(span: ReadWriteSpan, parentContext: Context) {
         span.setStringAttribute(EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID, counter.getAndIncrement().toString())
         span.setStringAttribute(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER, processIdentifier)
-        sessionIdProvider()?.let { provider ->
-            val sessionPartId = provider.getCurrentSessionPartId()
-            val userSessionId = provider.getCurrentUserSessionId()
-            span.setStringAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionPartId)
-            span.setStringAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, userSessionId)
-            span.setStringAttribute(SessionAttributes.SESSION_ID, userSessionId)
+        activeSessionIdsProvider()?.let { provider ->
+            val ids = provider.getActiveSessionIds()
+            span.setStringAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, ids.sessionPartId)
+            span.setStringAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, ids.userSessionId)
+            span.setStringAttribute(SessionAttributes.SESSION_ID, ids.userSessionId)
         }
     }
 

@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.IdGenerator
 import io.embrace.android.embracesdk.internal.otel.spans.DefaultSpanExporter
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanProcessor
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
-import io.embrace.android.embracesdk.internal.session.id.SessionIdProvider
+import io.embrace.android.embracesdk.internal.session.id.ActiveSessionIdsProvider
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
@@ -30,7 +30,7 @@ class OtelSdkConfig(
     val appVersion: String,
     val packageName: String,
     private val systemInfo: SystemInfo,
-    private val sessionIdProvider: () -> SessionIdProvider? = { null },
+    private val activeSessionIdsProvider: () -> ActiveSessionIdsProvider? = { null },
     private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId,
 ) {
 
@@ -86,7 +86,7 @@ class OtelSdkConfig(
     }
     val spanProcessor: SpanProcessor by lazy {
         EmbraceSpanProcessor(
-            sessionIdProvider,
+            activeSessionIdsProvider,
             processIdentifier,
             spanExporter
         )

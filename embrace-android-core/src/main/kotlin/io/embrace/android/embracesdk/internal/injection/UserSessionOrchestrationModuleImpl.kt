@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
+import io.embrace.android.embracesdk.internal.session.id.ActiveSessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionIdProvider
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
@@ -16,7 +17,7 @@ class UserSessionOrchestrationModuleImpl(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
-    essentialServiceModule: EssentialServiceModule,
+    private val essentialServiceModule: EssentialServiceModule,
     configService: ConfigService,
     deliveryModule: DeliveryModule?,
     instrumentationModule: InstrumentationModule,
@@ -26,9 +27,11 @@ class UserSessionOrchestrationModuleImpl(
     workerThreadModule: WorkerThreadModule,
 ) : UserSessionOrchestrationModule {
 
-    override val sessionIdProvider: SessionIdProvider by singleton {
-        essentialServiceModule.sessionIdProvider
-    }
+    override val sessionIdProvider: SessionIdProvider
+        get() = essentialServiceModule.sessionIdProvider
+
+    override val activeSessionIdsProvider: ActiveSessionIdsProvider
+        get() = essentialServiceModule.activeSessionIdsProvider
 
     override val sessionOrchestrator: SessionOrchestrator by singleton {
         val payloadMessageCollator = PayloadMessageCollatorImpl(

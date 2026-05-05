@@ -47,7 +47,7 @@ internal fun ModuleGraph.postInit() {
     essentialServiceModule.telemetryDestination.currentStatesProvider =
         instrumentationModule.instrumentationRegistry::getCurrentStates
 
-    openTelemetryModule.setSessionIdProvider(userSessionOrchestrationModule.sessionIdProvider)
+    openTelemetryModule.setActiveSessionIdsProvider(userSessionOrchestrationModule.activeSessionIdsProvider)
 }
 
 /**

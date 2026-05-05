@@ -22,9 +22,10 @@ internal class SessionIdProviderImplTest {
     }
 
     @Test
-    fun `returns empty string when no active user session`() {
+    fun `returns empty strings when no active user session or session part`() {
         assertEquals("", provider.getCurrentSessionPartId())
         assertEquals("", provider.getCurrentUserSessionId())
+        assertEquals(SessionIdsSnapshot(userSessionId = "", sessionPartId = ""), provider.getActiveSessionIds())
     }
 
     @Test
@@ -34,7 +35,7 @@ internal class SessionIdProviderImplTest {
     }
 
     @Test
-    fun `returns user session id when active user session exists`() {
+    fun `getCurrentUserSessionId returns the orchestrator's active user session id`() {
         sessionOrchestrator.currentSession = UserSessionMetadata(
             startTimeMs = 1000L,
             userSessionId = "user-session-uuid",
@@ -45,5 +46,23 @@ internal class SessionIdProviderImplTest {
             lastActivityMs = 1000L,
         )
         assertEquals("user-session-uuid", provider.getCurrentUserSessionId())
+    }
+
+    @Test
+    fun `getActiveSessionIds falls back to the orchestrator's user session id when no active session part`() {
+        sessionPartTracker.currentSession = null
+        sessionOrchestrator.currentSession = UserSessionMetadata(
+            startTimeMs = 1000L,
+            userSessionId = "user-session-uuid",
+            userSessionNumber = 1L,
+            maxDurationSecs = 3600L,
+            inactivityTimeoutSecs = 300L,
+            partNumber = 1,
+            lastActivityMs = 1000L,
+        )
+        assertEquals(
+            SessionIdsSnapshot(userSessionId = "user-session-uuid", sessionPartId = ""),
+            provider.getActiveSessionIds(),
+        )
     }
 }

@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
-import io.embrace.android.embracesdk.internal.session.id.SessionIdProvider
+import io.embrace.android.embracesdk.internal.session.id.ActiveSessionIdsProvider
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 
@@ -73,7 +73,7 @@ interface OpenTelemetryModule {
     )
 
     /**
-     * Wire in the session ID provider used to enrich spans and logs.
+     * Provide the session-related IDs to be stamped on OTel signals
      */
-    fun setSessionIdProvider(sessionIdProvider: SessionIdProvider)
+    fun setActiveSessionIdsProvider(activeSessionIdsProvider: ActiveSessionIdsProvider)
 }

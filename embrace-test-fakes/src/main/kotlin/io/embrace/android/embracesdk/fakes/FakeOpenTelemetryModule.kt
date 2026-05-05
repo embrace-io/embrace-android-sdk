@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
-import io.embrace.android.embracesdk.internal.session.id.SessionIdProvider
+import io.embrace.android.embracesdk.internal.session.id.ActiveSessionIdsProvider
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.logs.EventService
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
@@ -59,7 +59,7 @@ class FakeOpenTelemetryModule(
         // no-op
     }
 
-    override fun setSessionIdProvider(sessionIdProvider: SessionIdProvider) {
+    override fun setActiveSessionIdsProvider(activeSessionIdsProvider: ActiveSessionIdsProvider) {
         // no-op
     }
 }

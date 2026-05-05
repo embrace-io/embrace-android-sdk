@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.navigation.NavigationTrackingServiceImpl
+import io.embrace.android.embracesdk.internal.session.id.ActiveSessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionIdProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionIdProviderImpl
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
@@ -88,7 +89,13 @@ class EssentialServiceModuleImpl(
         )
     }
 
-    override val sessionIdProvider: SessionIdProvider by singleton {
+    override val sessionIdProvider: SessionIdProvider
+        get() = sessionIdProviderImpl
+
+    override val activeSessionIdsProvider: ActiveSessionIdsProvider
+        get() = sessionIdProviderImpl
+
+    private val sessionIdProviderImpl: SessionIdProviderImpl by singleton {
         SessionIdProviderImpl(sessionOrchestratorProvider, sessionPartTracker)
     }
 

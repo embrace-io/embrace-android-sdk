@@ -20,7 +20,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
-import io.embrace.android.embracesdk.internal.session.id.SessionIdProvider
+import io.embrace.android.embracesdk.internal.session.id.ActiveSessionIdsProvider
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
@@ -35,7 +35,7 @@ class OpenTelemetryModuleImpl(
 
     private val processIdentifierProvider: () -> String by lazy { IdGenerator.Companion::generateLaunchInstanceId }
 
-    private var storedSessionIdProvider: SessionIdProvider? = null
+    private var storedActiveSessionIdsProvider: ActiveSessionIdsProvider? = null
 
     private var otelBehavior: OtelBehavior? = null
 
@@ -56,7 +56,7 @@ class OpenTelemetryModuleImpl(
             appVersion = initModule.instrumentedConfig.project.getVersionName() ?: "UNKNOWN",
             packageName = initModule.instrumentedConfig.project.getPackageName() ?: "UNKNOWN",
             systemInfo = initModule.systemInfo,
-            sessionIdProvider = { storedSessionIdProvider },
+            activeSessionIdsProvider = { storedActiveSessionIdsProvider },
             processIdentifierProvider = processIdentifierProvider,
         )
     }
@@ -91,8 +91,8 @@ class OpenTelemetryModuleImpl(
         setupOtelBehavior(otelBehavior)
     }
 
-    override fun setSessionIdProvider(sessionIdProvider: SessionIdProvider) {
-        storedSessionIdProvider = sessionIdProvider
+    override fun setActiveSessionIdsProvider(activeSessionIdsProvider: ActiveSessionIdsProvider) {
+        storedActiveSessionIdsProvider = activeSessionIdsProvider
     }
 
     private fun setupOtelBehavior(otelBehavior: OtelBehavior) {

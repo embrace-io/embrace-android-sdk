@@ -31,7 +31,7 @@ internal class EmbraceImplFieldDelegate<T>(
     private val value: T by lazy(LazyThreadSafetyMode.PUBLICATION, provider)
 
     override fun getValue(thisRef: Any?, property: KProperty<*>): T? = when {
-        startedCheck() -> value
+        startedCheck() -> runCatching { value }.getOrNull()
         else -> null // not started yet - don't resolve anything.
     }
 }

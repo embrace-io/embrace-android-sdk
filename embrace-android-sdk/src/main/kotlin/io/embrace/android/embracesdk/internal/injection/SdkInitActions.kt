@@ -191,12 +191,11 @@ private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, St
         mutableMapOf<String, String>().apply {
             val sessionPart = essentialServiceModule.sessionPartTracker.getActiveSessionPart()
             val sessionState = sessionPart?.appState ?: essentialServiceModule.appStateTracker.getAppState()
-            val userSessionId = sessionPart?.userSessionId ?: userSessionOrchestrationModule.sessionIdProvider.getCurrentUserSessionId()
-            val sessionPartId = sessionPart?.sessionPartId ?: ""
+            val sessionIds = userSessionOrchestrationModule.sessionIdProvider.getActiveSessionIds()
 
-            put(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionPartId)
-            put(EmbSessionAttributes.EMB_USER_SESSION_ID, userSessionId)
-            put(SessionAttributes.SESSION_ID, userSessionId)
+            put(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionIds.sessionPartId)
+            put(EmbSessionAttributes.EMB_USER_SESSION_ID, sessionIds.userSessionId)
+            put(SessionAttributes.SESSION_ID, sessionIds.userSessionId)
             put(EmbSessionAttributes.EMB_STATE, sessionState.description)
             putAll(
                 essentialServiceModule.userSessionPropertiesService

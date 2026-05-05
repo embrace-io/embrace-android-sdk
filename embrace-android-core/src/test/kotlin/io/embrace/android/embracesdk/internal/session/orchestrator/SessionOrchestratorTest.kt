@@ -1093,7 +1093,9 @@ internal class SessionOrchestratorTest {
             logger,
             BackgroundWorker(inactivityWorkerExecutor),
             UuidSourceImpl(Random(0)),
-        )
+        ).apply {
+            start()
+        }
         orchestratorStartTimeMs = clock.now()
         userSessionPropertiesService.addProperty("key", "value", PropertyScope.USER_SESSION)
     }

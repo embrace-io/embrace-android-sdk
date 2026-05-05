@@ -31,7 +31,7 @@ internal class SessionIdProviderImplTest {
     @Test
     fun `returns session part id when active session part exists`() {
         sessionPartTracker.currentSession = fakeSessionPartToken()
-        assertEquals("fakeSessionId", provider.getCurrentSessionPartId())
+        assertEquals("fakeSessionPartId", provider.getCurrentSessionPartId())
     }
 
     @Test
@@ -46,6 +46,13 @@ internal class SessionIdProviderImplTest {
             lastActivityMs = 1000L,
         )
         assertEquals("user-session-uuid", provider.getCurrentUserSessionId())
+    }
+
+    @Test
+    fun `getActiveSessionIds returns IDs from current session`() {
+        val token = fakeSessionPartToken()
+        sessionPartTracker.currentSession = token
+        assertEquals(SessionIdsSnapshot(token.userSessionId, token.sessionPartId), provider.getActiveSessionIds())
     }
 
     @Test

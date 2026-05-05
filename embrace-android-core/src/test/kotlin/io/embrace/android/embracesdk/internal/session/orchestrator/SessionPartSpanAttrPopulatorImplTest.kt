@@ -17,7 +17,15 @@ import org.junit.Test
 
 internal class SessionPartSpanAttrPopulatorImplTest {
 
-    private val zygote = SessionPartToken("id", 1, AppState.FOREGROUND, false, LifeEventType.STATE, 5)
+    private val zygote = SessionPartToken(
+        sessionPartId = "id",
+        userSessionId = "fake-user-session-id",
+        startTime = 1,
+        appState = AppState.FOREGROUND,
+        isColdStart = false,
+        startType = LifeEventType.STATE,
+        sessionPartNumber = 5
+    )
     private val userSession = UserSessionMetadata(
         startTimeMs = 1000L,
         userSessionId = "user-session-uuid",

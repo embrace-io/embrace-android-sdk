@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
+import io.embrace.android.embracesdk.fakes.FakeSessionIdProvider
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
@@ -18,17 +19,18 @@ internal class InstrumentationModuleImplTest {
     fun `test default behavior`() {
         val fakeInitModule = FakeInitModule()
         val module = InstrumentationModuleImpl(
-            fakeInitModule,
-            FakeOpenTelemetryModule(),
-            FakeWorkerThreadModule(
+            initModule = fakeInitModule,
+            openTelemetryModule = FakeOpenTelemetryModule(),
+            workerThreadModule = FakeWorkerThreadModule(
                 fakeInitModule = fakeInitModule,
                 testWorkers = listOf(Worker.Background.NonIoRegWorker)
             ),
-            FakeConfigService(),
-            FakeEssentialServiceModule(),
-            FakeCoreModule(),
-            FakeStorageService(),
+            configService = FakeConfigService(),
+            essentialServiceModule = FakeEssentialServiceModule(),
+            coreModule = FakeCoreModule(),
+            storageService = FakeStorageService(),
             userSessionIdProvider = { null },
+            activeSessionIdsProvider = { FakeSessionIdProvider().getActiveSessionIds() },
         )
         assertSame(module.instrumentationRegistry, module.instrumentationRegistry)
         assertNotNull(module.instrumentationRegistry)

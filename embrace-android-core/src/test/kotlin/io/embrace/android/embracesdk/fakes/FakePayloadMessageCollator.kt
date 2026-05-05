@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class FakePayloadMessageCollator(
     val currentSessionPartSpan: FakeCurrentSessionPartSpan = FakeCurrentSessionPartSpan(),
+    var userSessionId: String = ""
 ) : PayloadMessageCollator {
 
     val sessionCount: AtomicInteger = AtomicInteger(0)
@@ -24,6 +25,7 @@ class FakePayloadMessageCollator(
         }
         SessionPartToken(
             sessionPartId = currentSessionPartSpan.getSessionId(),
+            userSessionId = userSessionId,
             startTime = startTime,
             isColdStart = coldStart,
             appState = appState,

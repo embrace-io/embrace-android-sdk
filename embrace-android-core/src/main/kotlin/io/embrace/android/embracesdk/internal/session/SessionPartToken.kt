@@ -13,6 +13,12 @@ data class SessionPartToken(
     val sessionPartId: String,
 
     /**
+     * The ID of the user session this part is associated with.
+     * Stored as part of this token so it can wholly represent the SDK's current session state by itself.
+     */
+    val userSessionId: String,
+
+    /**
      * The time that the session started.
      */
     val startTime: Long,

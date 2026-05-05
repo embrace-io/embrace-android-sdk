@@ -21,8 +21,8 @@ import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
@@ -358,7 +358,12 @@ internal class NativeCrashFeatureTest {
         sessions: MutableList<String?>,
         nativeSessionMetadata: MutableList<Pair<String?, String?>>,
     ) {
-        sessions.add(currentSessionId ?: "null")
+        val userSessionId = if (currentSessionId.isNullOrBlank()) {
+            "null"
+        } else {
+            currentSessionId
+        }
+        sessions.add(userSessionId)
         nativeSessionMetadata.add(Pair(userSessionId, reportPath))
     }
 

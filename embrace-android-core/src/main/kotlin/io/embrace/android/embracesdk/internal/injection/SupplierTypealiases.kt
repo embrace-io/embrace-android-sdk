@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
+import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.storage.StorageService
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -63,6 +64,7 @@ typealias InstrumentationModuleSupplier = (
     coreModule: CoreModule,
     storageService: StorageService,
     userSessionIdProvider: () -> String?,
+    activeSessionIdsProvider: () -> SessionIdsSnapshot,
 ) -> InstrumentationModule
 
 typealias LogModuleSupplier = (

@@ -48,7 +48,7 @@ interface PayloadFactory {
     /**
      * Starts a session manually.
      */
-    fun startSessionWithManual(timestamp: Long, partNumber: Int): SessionPartToken
+    fun startSessionWithManual(state: AppState, timestamp: Long, partNumber: Int): SessionPartToken?
 
     /**
      * Ends a session manually.

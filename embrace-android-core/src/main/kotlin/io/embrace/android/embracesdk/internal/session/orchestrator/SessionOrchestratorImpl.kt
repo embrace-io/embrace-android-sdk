@@ -185,7 +185,7 @@ internal class SessionOrchestratorImpl(
             },
             newSessionAction = {
                 lastManualEndMs = timestamp
-                payloadFactory.startSessionWithManual(timestamp, incrementPartNumber())
+                payloadFactory.startSessionWithManual(state, timestamp, incrementPartNumber())
             },
             earlyTerminationCondition = {
                 return@transitionState shouldEndManualSession(
@@ -193,7 +193,6 @@ internal class SessionOrchestratorImpl(
                     clock,
                     currentUserSession()?.startTimeMs,
                     lastManualEndMs,
-                    state
                 )
             }
         )

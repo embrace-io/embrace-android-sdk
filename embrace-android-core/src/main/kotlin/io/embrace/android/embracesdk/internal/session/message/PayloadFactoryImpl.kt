@@ -54,14 +54,21 @@ internal class PayloadFactoryImpl(
             AppState.BACKGROUND -> snapshotBackgroundActivity(initial)
         }
 
-    override fun startSessionWithManual(timestamp: Long, partNumber: Int): SessionPartToken {
+    override fun startSessionWithManual(state: AppState, timestamp: Long, partNumber: Int): SessionPartToken? {
+        if (state == AppState.BACKGROUND && !isBackgroundActivityEnabled()) {
+            return null
+        }
+        val startType = when (state) {
+            AppState.FOREGROUND -> LifeEventType.MANUAL
+            AppState.BACKGROUND -> LifeEventType.BKGND_MANUAL
+        }
         return payloadMessageCollator.buildInitialPart(
             InitialEnvelopeParams(
-                false,
-                LifeEventType.MANUAL,
-                timestamp,
-                AppState.FOREGROUND,
-                partNumber,
+                coldStart = false,
+                startType = startType,
+                startTime = timestamp,
+                appState = state,
+                partNumber = partNumber,
             )
         )
     }

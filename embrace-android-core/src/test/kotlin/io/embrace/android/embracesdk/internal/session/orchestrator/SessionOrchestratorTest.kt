@@ -220,12 +220,29 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
-    fun `end session with manual in background`() {
-        createOrchestrator(AppState.BACKGROUND)
-        appStateTracker.state = AppState.BACKGROUND
+    fun `end session with manual in background rotates user session and stores payload`() {
+        configService = FakeConfigService(
+            backgroundActivityBehavior = createBackgroundActivityBehavior(
+                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
+            ),
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = maxDurationMs,
+                sessionInactivityTimeoutMs = inactivityMs,
+            )
+        )
+        createOrchestrator(AppState.FOREGROUND)
+        val firstUserSession = checkNotNull(orchestrator.currentUserSession())
+
+        clock.tick(1000)
+        orchestrator.onBackground()
+        val storedBefore = store.storedSessionPartPayloads.size
+
+        clock.tick(10000)
         orchestrator.endSessionWithManual()
-        assertTrue(store.storedSessionPartPayloads.isEmpty())
-        assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
+
+        assertEquals(storedBefore + 1, store.storedSessionPartPayloads.size)
+        val secondUserSession = checkNotNull(orchestrator.currentUserSession())
+        assertNotEquals(firstUserSession.userSessionId, secondUserSession.userSessionId)
     }
 
     @Test

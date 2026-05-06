@@ -9,9 +9,8 @@ internal fun shouldEndManualSession(
     clock: Clock,
     userSessionStartTimeMs: Long?,
     lastManualEndMs: Long?,
-    state: AppState,
 ): Boolean {
-    if (state == AppState.BACKGROUND || configService.sessionBehavior.isSessionControlEnabled() || userSessionStartTimeMs == null) {
+    if (configService.sessionBehavior.isSessionControlEnabled() || userSessionStartTimeMs == null) {
         return true
     }
     if (lastManualEndMs == null) {

@@ -94,9 +94,9 @@ class FakePayloadFactory : PayloadFactory {
         return checkNotNull(activeSession)
     }
 
-    override fun startSessionWithManual(timestamp: Long, partNumber: Int): SessionPartToken {
+    override fun startSessionWithManual(state: AppState, timestamp: Long, partNumber: Int): SessionPartToken {
         manualSessionStartCount++
-        activeSession = fakeSessionPartToken()
+        activeSession = fakeSessionPartToken().copy(appState = state)
         return checkNotNull(activeSession)
     }
 

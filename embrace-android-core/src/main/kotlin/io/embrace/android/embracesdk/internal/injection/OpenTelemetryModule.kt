@@ -73,7 +73,7 @@ interface OpenTelemetryModule {
     )
 
     /**
-     * Wire in the session ID provider used to enrich spans and logs.
+     * Provide the session-related IDs to be stamped on OTel signals
      */
     fun setSessionIdProvider(sessionIdProvider: SessionIdProvider)
 }

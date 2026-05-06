@@ -81,6 +81,9 @@ internal class SessionOrchestratorImpl(
         appStateTracker.addListener(this)
         sessionTracker.addSessionPartEndListener(instrumentationRegistry)
         sessionTracker.addSessionPartChangeListener(instrumentationRegistry)
+    }
+
+    override fun start() {
         EmbTrace.trace("start-first-session") { createInitialSessionPart() }
     }
 
@@ -119,7 +122,12 @@ internal class SessionOrchestratorImpl(
             transitionType = TransitionType.INITIAL,
             timestamp = timestamp,
             newSessionAction = {
-                payloadFactory.startPayloadWithState(state, timestamp, true, incrementPartNumber())
+                payloadFactory.startPayloadWithState(
+                    state = state,
+                    timestamp = timestamp,
+                    coldStart = true,
+                    partNumber = incrementPartNumber(),
+                )
             }
         )
     }
@@ -148,7 +156,12 @@ internal class SessionOrchestratorImpl(
                 payloadFactory.endPayloadWithState(AppState.BACKGROUND, timestamp, initial)
             },
             newSessionAction = {
-                payloadFactory.startPayloadWithState(AppState.FOREGROUND, timestamp, coldStart, incrementPartNumber())
+                payloadFactory.startPayloadWithState(
+                    state = AppState.FOREGROUND,
+                    timestamp = timestamp,
+                    coldStart = coldStart,
+                    partNumber = incrementPartNumber(),
+                )
             },
             earlyTerminationCondition = {
                 return@transitionState shouldRunOnForeground(state)
@@ -166,7 +179,12 @@ internal class SessionOrchestratorImpl(
                 payloadFactory.endPayloadWithState(AppState.FOREGROUND, timestamp, initial)
             },
             newSessionAction = {
-                payloadFactory.startPayloadWithState(AppState.BACKGROUND, timestamp, false, incrementPartNumber())
+                payloadFactory.startPayloadWithState(
+                    state = AppState.BACKGROUND,
+                    timestamp = timestamp,
+                    coldStart = false,
+                    partNumber = incrementPartNumber(),
+                )
             },
             earlyTerminationCondition = {
                 return@transitionState shouldRunOnBackground(state)
@@ -393,7 +411,12 @@ internal class SessionOrchestratorImpl(
                     payloadFactory.endPayloadWithState(currentAppState, timestamp, initial)
                 },
                 newSessionAction = {
-                    payloadFactory.startPayloadWithState(currentAppState, timestamp, false, incrementPartNumber())
+                    payloadFactory.startPayloadWithState(
+                        state = currentAppState,
+                        timestamp = timestamp,
+                        coldStart = false,
+                        partNumber = incrementPartNumber(),
+                    )
                 },
             )
         }
@@ -411,10 +434,10 @@ internal class SessionOrchestratorImpl(
                 newSessionAction = {
                     if (configService.backgroundActivityBehavior.isBackgroundActivityCaptureEnabled()) {
                         payloadFactory.startPayloadWithState(
-                            AppState.BACKGROUND,
-                            timestamp,
-                            false,
-                            incrementPartNumber()
+                            state = AppState.BACKGROUND,
+                            timestamp = timestamp,
+                            coldStart = false,
+                            partNumber = incrementPartNumber(),
                         )
                     } else {
                         null

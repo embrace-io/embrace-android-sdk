@@ -9,8 +9,13 @@ class FakeSessionOrchestrator : SessionOrchestrator {
     var crashId: String? = null
     var manualEndCount: Int = 0
     var stateChangeCount: Int = 0
+    var startCount: Int = 0
     var currentSession: UserSessionMetadata? = null
     val userSessionListeners = mutableListOf<UserSessionListener>()
+
+    override fun start() {
+        startCount++
+    }
 
     override fun endSessionWithManual() {
         manualEndCount++

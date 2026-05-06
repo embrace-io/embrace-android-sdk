@@ -58,7 +58,7 @@
     },
     {
       "key": "emb.session_part_id",
-      "value": "DEDE25A1FF7636BECE534AC929EC9954"
+      "value": "__EMBRACE_TEST_IGNORE__"
     },
     {
       "key": "emb.session_start_type",
@@ -78,7 +78,7 @@
     },
     {
       "key": "emb.user_session_id",
-      "value": "A00A29846EF12234693E299E207EB882"
+      "value": "__EMBRACE_TEST_IGNORE__"
     },
     {
       "key": "emb.user_session_inactivity_timeout_seconds",
@@ -102,7 +102,7 @@
     },
     {
       "key": "session.id",
-      "value": "A00A29846EF12234693E299E207EB882"
+      "value": "__EMBRACE_TEST_IGNORE__"
     }
   ],
   "links": "__EMBRACE_TEST_IGNORE__"

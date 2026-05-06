@@ -24,7 +24,7 @@
         },
         {
           "key": "emb.session_part_id",
-          "value": "A8BAF9242FCC7BE7020B7F533060E8EF"
+          "value": "__EMBRACE_TEST_IGNORE__"
         },
         {
           "key": "emb.state",
@@ -52,7 +52,7 @@
         },
         {
           "key": "emb.user_session_id",
-          "value": "F2C8F6640C62AF2F006929719CB0C468"
+          "value": "__EMBRACE_TEST_IGNORE__"
         },
         {
           "key": "exception.message",
@@ -72,7 +72,7 @@
         },
         {
           "key": "session.id",
-          "value": "F2C8F6640C62AF2F006929719CB0C468"
+          "value": "__EMBRACE_TEST_IGNORE__"
         }
       ]
     }

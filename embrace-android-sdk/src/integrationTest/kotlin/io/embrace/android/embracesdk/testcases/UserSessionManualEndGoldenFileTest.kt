@@ -4,7 +4,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.assertions.assertDistinctUserSessions
 import io.embrace.android.embracesdk.testframework.assertions.assertSessionSpanMatchesGoldenFile
+import io.embrace.android.embracesdk.testframework.assertions.extractSessionIds
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -41,14 +43,9 @@ internal class UserSessionManualEndGoldenFileTest {
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
-                assertSessionSpanMatchesGoldenFile(
-                    sessions[0],
-                    "user_session_manual_end_1.json",
-                )
-                assertSessionSpanMatchesGoldenFile(
-                    sessions[1],
-                    "user_session_manual_end_2.json",
-                )
+                assertSessionSpanMatchesGoldenFile(sessions[0], "user_session_manual_end_1.json")
+                assertSessionSpanMatchesGoldenFile(sessions[1], "user_session_manual_end_2.json")
+                assertDistinctUserSessions(sessions[0].extractSessionIds(), sessions[1].extractSessionIds())
             }
         )
     }

@@ -11,8 +11,13 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCr
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.android.embracesdk.testframework.assertions.assertActiveUserSession
 import io.embrace.android.embracesdk.testframework.assertions.assertLogPayloadMatchesGoldenFile
+import io.embrace.android.embracesdk.testframework.assertions.assertPartsOfSameUserSession
 import io.embrace.android.embracesdk.testframework.assertions.assertSessionSpanMatchesGoldenFile
+import io.embrace.android.embracesdk.testframework.assertions.extractSessionIds
+import io.embrace.android.embracesdk.testframework.assertions.extractSingleLogSessionIds
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -40,14 +45,11 @@ internal class UserSessionGoldenFileTest {
                 }
             },
             assertAction = {
-                assertLogPayloadMatchesGoldenFile(
-                    getSingleLogEnvelope(),
-                    "user_session_basic_log.json",
-                )
-                assertSessionSpanMatchesGoldenFile(
-                    getSingleSessionEnvelope(),
-                    "user_session_basic_span.json",
-                )
+                val log = getSingleLogEnvelope()
+                val session = getSingleSessionEnvelope()
+                assertLogPayloadMatchesGoldenFile(log, "user_session_basic_log.json")
+                assertSessionSpanMatchesGoldenFile(session, "user_session_basic_span.json")
+                assertEquals(session.extractSessionIds(), log.extractSingleLogSessionIds())
             }
         )
     }
@@ -82,14 +84,11 @@ internal class UserSessionGoldenFileTest {
                 }
             },
             assertAction = {
-                assertSessionSpanMatchesGoldenFile(
-                    getSingleSessionEnvelope(),
-                    "user_session_jvm_crash_span.json",
-                )
-                assertLogPayloadMatchesGoldenFile(
-                    getSingleLogEnvelope(),
-                    "user_session_jvm_crash_log.json",
-                )
+                val session = getSingleSessionEnvelope()
+                val log = getSingleLogEnvelope()
+                assertSessionSpanMatchesGoldenFile(session, "user_session_jvm_crash_span.json")
+                assertLogPayloadMatchesGoldenFile(log, "user_session_jvm_crash_log.json")
+                assertEquals(session.extractSessionIds(), log.extractSingleLogSessionIds())
             }
         )
     }
@@ -199,14 +198,9 @@ internal class UserSessionGoldenFileTest {
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
-                assertSessionSpanMatchesGoldenFile(
-                    sessions[0],
-                    "user_session_part_1.json",
-                )
-                assertSessionSpanMatchesGoldenFile(
-                    sessions[1],
-                    "user_session_part_2.json",
-                )
+                assertSessionSpanMatchesGoldenFile(sessions[0], "user_session_part_1.json")
+                assertSessionSpanMatchesGoldenFile(sessions[1], "user_session_part_2.json")
+                assertPartsOfSameUserSession(sessions[0].extractSessionIds(), sessions[1].extractSessionIds())
             }
         )
     }
@@ -228,10 +222,9 @@ internal class UserSessionGoldenFileTest {
                 recordSession()
             },
             assertAction = {
-                assertSessionSpanMatchesGoldenFile(
-                    getSingleSessionEnvelope(),
-                    "user_session_custom_timeouts.json",
-                )
+                val session = getSingleSessionEnvelope()
+                assertSessionSpanMatchesGoldenFile(session, "user_session_custom_timeouts.json")
+                session.extractSessionIds().assertActiveUserSession()
             }
         )
     }

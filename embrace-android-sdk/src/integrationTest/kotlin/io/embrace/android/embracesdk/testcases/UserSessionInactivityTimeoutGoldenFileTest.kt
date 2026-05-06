@@ -7,7 +7,12 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.assertions.assertActiveUserSession
+import io.embrace.android.embracesdk.testframework.assertions.assertDistinctUserSessions
+import io.embrace.android.embracesdk.testframework.assertions.assertNoActiveUserSession
+import io.embrace.android.embracesdk.testframework.assertions.assertPartsOfSameUserSession
 import io.embrace.android.embracesdk.testframework.assertions.assertSessionSpanMatchesGoldenFile
+import io.embrace.android.embracesdk.testframework.assertions.extractSessionIds
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -72,26 +77,26 @@ internal class UserSessionInactivityTimeoutGoldenFileTest {
                 val sessions = getSessionEnvelopes(2, AppState.FOREGROUND)
                 val bgs = getSessionEnvelopes(3, AppState.BACKGROUND)
 
-                assertSessionSpanMatchesGoldenFile(
-                    bgs[0],
-                    "user_session_bg_timeout_1.json",
-                )
-                assertSessionSpanMatchesGoldenFile(
-                    sessions[0],
-                    "user_session_bg_timeout_2.json",
-                )
-                assertSessionSpanMatchesGoldenFile(
-                    bgs[1],
-                    "user_session_bg_timeout_3.json",
-                )
-                assertSessionSpanMatchesGoldenFile(
-                    bgs[2],
-                    "user_session_bg_timeout_4.json",
-                )
-                assertSessionSpanMatchesGoldenFile(
-                    sessions[1],
-                    "user_session_bg_timeout_5.json",
-                )
+                assertSessionSpanMatchesGoldenFile(bgs[0], "user_session_bg_timeout_1.json")
+                assertSessionSpanMatchesGoldenFile(sessions[0], "user_session_bg_timeout_2.json")
+                assertSessionSpanMatchesGoldenFile(bgs[1], "user_session_bg_timeout_3.json")
+                assertSessionSpanMatchesGoldenFile(bgs[2], "user_session_bg_timeout_4.json")
+                assertSessionSpanMatchesGoldenFile(sessions[1], "user_session_bg_timeout_5.json")
+
+                val initialBg = bgs[0].extractSessionIds()
+                initialBg.assertNoActiveUserSession()
+
+                val firstSession = sessions[0].extractSessionIds()
+                val firstSessionBg = bgs[1].extractSessionIds()
+                assertPartsOfSameUserSession(firstSession, firstSessionBg)
+
+                val postTimeoutBg = bgs[2].extractSessionIds()
+                postTimeoutBg.assertActiveUserSession()
+                assertDistinctUserSessions(firstSession, postTimeoutBg)
+
+                val secondSession = sessions[1].extractSessionIds()
+                secondSession.assertActiveUserSession()
+                assertDistinctUserSessions(postTimeoutBg, secondSession)
             }
         )
     }

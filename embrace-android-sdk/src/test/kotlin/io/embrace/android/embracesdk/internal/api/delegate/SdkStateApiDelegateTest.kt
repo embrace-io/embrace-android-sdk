@@ -8,18 +8,17 @@ import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdProvider
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakeUserSessionOrchestrationModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import kotlin.random.Random
 
 @RunWith(AndroidJUnit4::class)
 internal class SdkStateApiDelegateTest {
@@ -34,7 +33,7 @@ internal class SdkStateApiDelegateTest {
     @Before
     fun setUp() {
         logService = FakeLogService()
-        configService = FakeConfigService(deviceId = UuidSourceImpl(Random(0)).createUuid())
+        configService = FakeConfigService(deviceId = TestUuidSource().createUuid())
         sessionIdProvider = FakeSessionIdProvider()
         val moduleInitBootstrapper = ModuleInitBootstrapper(
             FakeInitModule(),

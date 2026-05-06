@@ -58,7 +58,7 @@
     },
     {
       "key": "emb.session_part_id",
-      "value": "__EMBRACE_TEST_IGNORE__"
+      "value": "__EMBRACE_TEST_SESSION_PART_ID__"
     },
     {
       "key": "emb.session_start_type",
@@ -78,7 +78,7 @@
     },
     {
       "key": "emb.user_session_id",
-      "value": "__EMBRACE_TEST_IGNORE__"
+      "value": "__EMBRACE_TEST_USER_SESSION_ID__"
     },
     {
       "key": "emb.user_session_inactivity_timeout_seconds",
@@ -102,7 +102,7 @@
     },
     {
       "key": "session.id",
-      "value": "__EMBRACE_TEST_IGNORE__"
+      "value": "__EMBRACE_TEST_USER_SESSION_ID__"
     }
   ],
   "links": "__EMBRACE_TEST_IGNORE__"

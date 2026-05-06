@@ -4,9 +4,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import io.embrace.android.embracesdk.testframework.assertions.assertDistinctUserSessions
-import io.embrace.android.embracesdk.testframework.assertions.assertSessionSpanMatchesGoldenFile
-import io.embrace.android.embracesdk.testframework.assertions.extractSessionIds
+import io.embrace.android.embracesdk.testframework.assertions.SessionPartDiff
+import io.embrace.android.embracesdk.testframework.assertions.UserSessionDiff
+import io.embrace.android.embracesdk.testframework.assertions.assertPayloadsMatchGoldenFiles
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -46,9 +46,10 @@ internal class UserSessionTimeoutGoldenFileTest {
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
-                assertSessionSpanMatchesGoldenFile(sessions[0], "user_session_max_duration_1.json")
-                assertSessionSpanMatchesGoldenFile(sessions[1], "user_session_max_duration_2.json")
-                assertDistinctUserSessions(sessions[0].extractSessionIds(), sessions[1].extractSessionIds())
+                assertPayloadsMatchGoldenFiles(
+                    UserSessionDiff(SessionPartDiff(sessions[0], "user_session_max_duration_1.json")),
+                    UserSessionDiff(SessionPartDiff(sessions[1], "user_session_max_duration_2.json")),
+                )
             }
         )
     }

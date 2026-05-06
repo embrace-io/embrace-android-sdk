@@ -16,7 +16,7 @@
         },
         {
           "key": "emb.session_part_id",
-          "value": "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d"
+          "value": "__EMBRACE_TEST_SESSION_PART_ID__"
         },
         {
           "key": "emb.type",
@@ -24,7 +24,7 @@
         },
         {
           "key": "emb.user_session_id",
-          "value": "2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e"
+          "value": "__EMBRACE_TEST_USER_SESSION_ID__"
         },
         {
           "key": "log.record.uid",
@@ -32,7 +32,7 @@
         },
         {
           "key": "session.id",
-          "value": "2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e"
+          "value": "__EMBRACE_TEST_USER_SESSION_ID__"
         }
       ]
     }

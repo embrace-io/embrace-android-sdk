@@ -72,7 +72,7 @@ dependencies {
     testImplementation(project(":embrace-android-instrumentation-api-fakes"))
     testImplementation(project(":embrace-android-otel-fakes"))
     testImplementation(project(":embrace-android-instrumentation-huc"))
-    testImplementation(project(":embrace-android-instrumentation-compose-navigation"))
+    testImplementation(project(":embrace-android-instrumentation-androidx-navigation"))
     testImplementation(platform(libs.okhttp.bom))
     testImplementation(libs.mockwebserver)
     testImplementation(libs.mockk)
@@ -82,6 +82,8 @@ dependencies {
     testImplementation(libs.androidx.navigation.fragment)
     testImplementation(libs.androidx.navigation.compose)
     testImplementation(libs.androidx.navigation.testing)
+    testImplementation(libs.androidx.navigation3.runtime)
+    testImplementation(libs.androidx.navigation3.ui)
     testImplementation(libs.opentelemetry.kotlin.compat)
     testImplementation(libs.kotlinx.serialization.core)
 

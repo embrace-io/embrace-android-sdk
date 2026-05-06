@@ -1,0 +1,12 @@
+public final class io/embrace/android/embracesdk/instrumentation/androidx/navigation/NavigationTrackersKt {
+	public static final fun rememberObservedBackStack ([Ljava/lang/Object;Landroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/snapshots/SnapshotStateList;
+	public static final fun rememberObservedNavController ([Landroidx/navigation/Navigator;Landroidx/compose/runtime/Composer;I)Landroidx/navigation/NavHostController;
+}
+
+public final class io/embrace/android/embracesdk/instrumentation/androidx/navigation/internal/AndroidxNavigationInstrumentationProvider : io/embrace/android/embracesdk/internal/arch/InstrumentationProvider {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun getPriority ()I
+	public fun register (Lio/embrace/android/embracesdk/internal/arch/InstrumentationArgs;)Lio/embrace/android/embracesdk/internal/arch/datasource/DataSourceState;
+}
+

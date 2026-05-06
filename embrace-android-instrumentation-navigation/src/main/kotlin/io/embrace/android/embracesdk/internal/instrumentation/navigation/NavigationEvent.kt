@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.navigation
 
 import android.app.Activity
+import io.embrace.android.embracesdk.internal.arch.navigation.getId
 
 /**
  * Typed events representing navigation-related signals from various sources.
@@ -113,5 +114,3 @@ internal sealed class NavigationEvent(
         return result
     }
 }
-
-internal fun Activity.getId(): Int = System.identityHashCode(this)

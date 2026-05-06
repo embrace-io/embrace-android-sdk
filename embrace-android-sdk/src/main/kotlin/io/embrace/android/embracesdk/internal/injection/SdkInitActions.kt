@@ -171,7 +171,8 @@ internal fun ModuleGraph.markSdkInitComplete() {
     )
     end()
     val appId = configService.appId
-    val startMsg = "Embrace SDK version ${BuildConfig.VERSION_NAME} started" + appId?.run { " for appId = $this" }
+    val startMsg = "Embrace SDK version ${BuildConfig.VERSION_NAME} started" +
+        (appId?.let { " for appId = $it" } ?: " without an app ID")
     initModule.logger.logInfo(startMsg)
 }
 

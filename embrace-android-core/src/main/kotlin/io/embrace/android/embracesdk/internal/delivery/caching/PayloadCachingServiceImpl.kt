@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionPartCacher
-import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
+import io.embrace.android.embracesdk.internal.session.id.SessionIdProvider
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import java.util.concurrent.atomic.AtomicBoolean
@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 internal class PayloadCachingServiceImpl(
     private val partCacher: PeriodicSessionPartCacher,
     private val clock: Clock,
-    private val sessionPartTracker: SessionPartTracker,
+    private val sessionIdProvider: SessionIdProvider,
     private val payloadStore: PayloadStore,
     private val deliveryTracer: DeliveryTracer? = null,
 ) : PayloadCachingService {
@@ -58,7 +58,7 @@ internal class PayloadCachingServiceImpl(
         deliveryTracer?.onSessionCache()
 
         EmbTrace.trace("on-session-cache") {
-            if (initial.sessionId != sessionPartTracker.getActiveSessionId()) {
+            if (initial.sessionPartId != sessionIdProvider.getCurrentSessionPartId()) {
                 return null
             }
             return supplier(endAppState, clock.now(), initial)?.apply {

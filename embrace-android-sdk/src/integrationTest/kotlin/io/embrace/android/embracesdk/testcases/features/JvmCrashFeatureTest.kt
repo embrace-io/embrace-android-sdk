@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
+import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -54,7 +55,7 @@ internal class JvmCrashFeatureTest {
         testRule.runTest(
             testCaseAction = {
                 crashTimeMs = recordSession {
-                    embrace.addSessionProperty("foo", "bar", true)
+                    embrace.addUserSessionProperty("foo", "bar", PropertyScope.PERMANENT)
                     simulateJvmUncaughtException(testException)
                 }.actionTimeMs
             },
@@ -88,6 +89,7 @@ internal class JvmCrashFeatureTest {
                 getSingleLogEnvelope().getLastLog().assertCrash(
                     crashIdFromSession = ba.getCrashedId(),
                     crashTimeMs = crashTimeMs,
+                    hasSession = false,
                 )
             }
         )
@@ -105,6 +107,7 @@ internal class JvmCrashFeatureTest {
                 getSingleLogEnvelope().getLastLog().assertCrash(
                     crashIdFromSession = null,
                     crashTimeMs = crashTimeMs,
+                    hasSession = false,
                 )
             }
         )
@@ -175,6 +178,7 @@ internal class JvmCrashFeatureTest {
         crashIdFromSession: String?,
         state: String = "background",
         crashTimeMs: Long,
+        hasSession: Boolean = true,
     ) {
         assertOtelLogReceived(
             logReceived = this,
@@ -187,7 +191,7 @@ internal class JvmCrashFeatureTest {
             expectedProperties = emptyMap(),
             expectedEmbType = "sys.android.crash",
             expectedState = state,
-            hasSession = crashIdFromSession != null,
+            hasSession = hasSession,
         )
 
         val exceptionInfo = LegacyExceptionInfo.ofThrowable(testException)

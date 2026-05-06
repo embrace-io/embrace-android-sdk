@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.injection
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
-import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStateDataSource
@@ -47,6 +46,8 @@ internal fun ModuleGraph.postInit() {
         userSessionOrchestrationModule.sessionOrchestrator::onSessionDataUpdate
     essentialServiceModule.telemetryDestination.currentStatesProvider =
         instrumentationModule.instrumentationRegistry::getCurrentStates
+
+    openTelemetryModule.setSessionIdProvider(userSessionOrchestrationModule.sessionIdProvider)
 }
 
 /**
@@ -185,15 +186,15 @@ internal fun ModuleGraph.setupMetadataProvider() {
 private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, String>> {
     return {
         mutableMapOf<String, String>().apply {
-            var sessionState: AppState? = null
-            essentialServiceModule.sessionPartTracker.getActiveSession()?.let { session ->
-                if (session.sessionId.isNotBlank()) {
-                    put(SessionAttributes.SESSION_ID, session.sessionId)
-                }
-                sessionState = session.appState
-            }
-            val state = sessionState ?: essentialServiceModule.appStateTracker.getAppState()
-            put(EmbSessionAttributes.EMB_STATE, state.description)
+            val sessionPart = essentialServiceModule.sessionPartTracker.getActiveSessionPart()
+            val sessionState = sessionPart?.appState ?: essentialServiceModule.appStateTracker.getAppState()
+            val sessionIdProvider = userSessionOrchestrationModule.sessionIdProvider
+            val userSessionId = sessionIdProvider.getCurrentUserSessionId()
+
+            put(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionIdProvider.getCurrentSessionPartId())
+            put(EmbSessionAttributes.EMB_USER_SESSION_ID, userSessionId)
+            put(SessionAttributes.SESSION_ID, userSessionId)
+            put(EmbSessionAttributes.EMB_STATE, sessionState.description)
             putAll(
                 essentialServiceModule.userSessionPropertiesService
                     .getProperties()

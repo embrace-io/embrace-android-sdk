@@ -12,6 +12,9 @@ import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.utils.UuidSource
+import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
+import kotlin.random.Random
 
 class FakeInitModule(
     clock: Clock = FakeClock(),
@@ -22,10 +25,12 @@ class FakeInitModule(
         deviceModel = "Phake Phone Phive"
     ),
     private val fakeTelemetryService: TelemetryService? = null,
+    override val uuidSource: UuidSource = UuidSourceImpl(Random(0)),
     private val initModule: InitModule = InitModuleImpl(
         logger = logger,
         clock = clock,
-        systemInfo = systemInfo
+        systemInfo = systemInfo,
+        uuidSource = uuidSource,
     ),
     override var instrumentedConfig: InstrumentedConfig = FakeInstrumentedConfig(),
 ) : InitModule by initModule {

@@ -24,6 +24,7 @@ class FakePayloadFactory : PayloadFactory {
         state: AppState,
         timestamp: Long,
         coldStart: Boolean,
+        partNumber: Int,
     ): SessionPartToken {
         return when (state) {
             AppState.FOREGROUND -> startSessionWithState(timestamp)
@@ -93,9 +94,9 @@ class FakePayloadFactory : PayloadFactory {
         return checkNotNull(activeSession)
     }
 
-    override fun startSessionWithManual(timestamp: Long): SessionPartToken {
+    override fun startSessionWithManual(state: AppState, timestamp: Long, partNumber: Int): SessionPartToken {
         manualSessionStartCount++
-        activeSession = fakeSessionPartToken()
+        activeSession = fakeSessionPartToken().copy(appState = state)
         return checkNotNull(activeSession)
     }
 

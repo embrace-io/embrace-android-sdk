@@ -41,9 +41,14 @@ import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
-import io.embrace.android.embracesdk.internal.utils.Uuid
+import io.embrace.android.embracesdk.internal.utils.UuidSource
+import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.opentelemetry.kotlin.semconv.SessionAttributes
+import kotlin.random.Random
 import org.robolectric.Shadows
 import org.robolectric.shadows.ShadowLooper
 
@@ -51,13 +56,14 @@ import org.robolectric.shadows.ShadowLooper
  * Test harness for which an instance is generated each test run and provided to the test by the Rule
  */
 internal class EmbraceSetupInterface(
-    workerToFake: Worker.Background? = null,
+    workersToFake: List<Worker.Background> = emptyList(),
     private val threadBlockageWatchdogThread: Thread? = null,
     fakeStorageLayer: Boolean = false,
     ignoredInternalErrors: List<InternalErrorType> = listOf(),
     val fakeClock: FakeClock = FakeClock(currentTime = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS),
 ) {
-    private val processIdentifier: String = Uuid.getEmbUuid()
+    private val uuidSource: UuidSource = UuidSourceImpl(Random(0))
+    private val processIdentifier: String = uuidSource.createUuid()
 
     val fakeNetworkConnectivityService = FakeNetworkConnectivityService()
     val fakeJniDelegate = FakeJniDelegate().also {
@@ -84,11 +90,12 @@ internal class EmbraceSetupInterface(
     private val fakeInitModule: FakeInitModule = FakeInitModule(
         clock = fakeClock,
         logger = FakeInternalLogger(ignoredErrors = ignoredInternalErrors),
+        uuidSource = uuidSource,
     )
 
     private val workerThreadModule: WorkerThreadModule = initWorkerThreadModule(
         fakeInitModule = fakeInitModule,
-        workerToFake = workerToFake,
+        workersToFake = workersToFake,
         threadBlockageWatchdogThread = threadBlockageWatchdogThread
     )
 
@@ -118,10 +125,11 @@ internal class EmbraceSetupInterface(
                 store = coreModule.store,
                 abis = Build.SUPPORTED_ABIS,
                 logger = initModule.logger,
+                uuidSource = initModule.uuidSource,
             )
             DecoratedConfigService(impl)
         },
-        essentialServiceModuleSupplier = { initModule, configService, openTelemetryModule, coreModule, workerThreadModule, _, _ ->
+        essentialServiceModuleSupplier = { initModule, configService, openTelemetryModule, coreModule, workerThreadModule, _, _, sessionOrchestratorProvider ->
             EssentialServiceModuleImpl(
                 initModule = initModule,
                 configService = configService,
@@ -130,6 +138,7 @@ internal class EmbraceSetupInterface(
                 workerThreadModule = workerThreadModule,
                 lifecycleOwnerProvider = { fakeLifecycleOwner },
                 networkConnectivityServiceProvider = { fakeNetworkConnectivityService },
+                sessionOrchestratorProvider = sessionOrchestratorProvider,
             )
         },
         deliveryModuleSupplier = { configService, initModule, otelModule, workerThreadModule, coreModule, essentialServiceModule, _, _, _, _ ->
@@ -161,6 +170,7 @@ internal class EmbraceSetupInterface(
                 essentialServiceModule,
                 coreModule,
                 storageModule,
+                userSessionIdProvider,
             ->
             val impl = InstrumentationModuleImpl(
                 initModule,
@@ -170,6 +180,7 @@ internal class EmbraceSetupInterface(
                 essentialServiceModule,
                 coreModule,
                 storageModule,
+                userSessionIdProvider,
             )
             object : InstrumentationModule {
                 override val instrumentationRegistry: InstrumentationRegistry = FakeInstrumentationRegistry(impl.instrumentationRegistry)
@@ -216,6 +227,37 @@ internal class EmbraceSetupInterface(
         }
     }
 
+    /**
+     * Persist a fake user session before the SDK starts, simulating a store
+     * from a previous process.
+     */
+    @OptIn(ExperimentalSemconv::class)
+    fun persistUserSession(
+        sessionId: String,
+        startMs: Long,
+        lastActivityMs: Long,
+        sessionNumber: Int = 1,
+        partNumber: Int = 1,
+        maxDurationSeconds: Long = 43200,
+        inactivityTimeoutSeconds: Long = 1800,
+    ) {
+        getStore().edit {
+            putStringMap(
+                "embrace.user_session",
+                mapOf(
+                    EmbSessionAttributes.EMB_USER_SESSION_ID to sessionId,
+                    EmbSessionAttributes.EMB_USER_SESSION_START_TS to startMs.toString(),
+                    EmbSessionAttributes.EMB_USER_SESSION_NUMBER to sessionNumber.toString(),
+                    EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS to maxDurationSeconds.toString(),
+                    EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS to inactivityTimeoutSeconds.toString(),
+                    SessionAttributes.SESSION_ID to sessionId,
+                    EmbSessionAttributes.EMB_USER_SESSION_PART_NUMBER to partNumber.toString(),
+                    "emb.user_session_last_activity_ts" to lastActivityMs.toString(),
+                )
+            )
+        }
+    }
+
     fun getClock(): FakeClock = fakeClock
 
     fun getSpanSink(): SpanSink = fakeInitModule.openTelemetryModule.spanSink
@@ -224,22 +266,23 @@ internal class EmbraceSetupInterface(
 
     fun getEmbLogger(): FakeInternalLogger = fakeInitModule.logger as FakeInternalLogger
 
-    fun getFakedWorkerExecutor(): BlockingScheduledExecutorService = (workerThreadModule as FakeWorkerThreadModule).executor
+    fun getFakedWorkerExecutor(worker: Worker.Background): BlockingScheduledExecutorService =
+        (workerThreadModule as FakeWorkerThreadModule).executorFor(worker)
 
     fun getStore(): KeyValueStore = coreModule.store
 
     private companion object {
         fun initWorkerThreadModule(
             fakeInitModule: FakeInitModule,
-            workerToFake: Worker.Background?,
+            workersToFake: List<Worker.Background>,
             threadBlockageWatchdogThread: Thread?,
         ): WorkerThreadModule =
-            if (workerToFake == null) {
+            if (workersToFake.isEmpty()) {
                 WorkerThreadModuleImpl()
             } else {
                 FakeWorkerThreadModule(
                     fakeInitModule = fakeInitModule,
-                    testWorker = workerToFake,
+                    testWorkers = workersToFake,
                     threadBlockageMonitoringThread = threadBlockageWatchdogThread
                 )
             }

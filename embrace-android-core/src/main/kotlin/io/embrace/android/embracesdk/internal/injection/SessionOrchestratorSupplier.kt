@@ -26,7 +26,6 @@ fun createSessionOrchestrator(
 ): SessionOrchestrator {
     val payloadMessageCollator = PayloadMessageCollatorImpl(
         EmbTrace.trace("sessionEnvelopeSource") { payloadSourceModule.sessionPartEnvelopeSource },
-        coreModule.ordinalStore,
         openTelemetryModule.currentSessionPartSpan,
     )
 
@@ -38,7 +37,6 @@ fun createSessionOrchestrator(
     )
 
     val boundaryDelegate = OrchestratorBoundaryDelegate(
-        essentialServiceModule.userService,
         essentialServiceModule.userSessionPropertiesService
     )
 
@@ -65,5 +63,6 @@ fun createSessionOrchestrator(
         UserSessionMetadataStore(coreModule.store),
         initModule.logger,
         workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
+        initModule.uuidSource,
     )
 }

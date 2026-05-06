@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -137,29 +138,29 @@ internal class UserSessionPropertiesTest {
         )
 
     private fun EmbraceActionInterface.addAndRemoveProperties() {
-        embrace.removeSessionProperty(EXISTING_KEY_1)
+        embrace.removeUserSessionProperty(EXISTING_KEY_1)
         embrace.addPermanentProperty(PERM_KEY)
         embrace.addTemporaryProperty(TEMP_KEY)
         recordSession {
             embrace.addPermanentProperty(PERM_KEY_2)
             embrace.addTemporaryProperty(TEMP_KEY_2)
-            embrace.removeSessionProperty(EXISTING_KEY_2)
+            embrace.removeUserSessionProperty(EXISTING_KEY_2)
         }
-        embrace.removeSessionProperty(PERM_KEY)
+        embrace.removeUserSessionProperty(PERM_KEY)
         embrace.addPermanentProperty(PERM_KEY_3)
         embrace.addTemporaryProperty(TEMP_KEY_3)
-        embrace.removeSessionProperty(PERM_KEY_3)
-        embrace.removeSessionProperty(TEMP_KEY_3)
+        embrace.removeUserSessionProperty(PERM_KEY_3)
+        embrace.removeUserSessionProperty(TEMP_KEY_3)
         recordSession()
         recordSession()
     }
 
     private fun SdkApi.addPermanentProperty(key: String) {
-        addSessionProperty(key, VALUE, true)
+        addUserSessionProperty(key, VALUE, PropertyScope.PERMANENT)
     }
 
     private fun SdkApi.addTemporaryProperty(key: String) {
-        addSessionProperty(key, VALUE, false)
+        addUserSessionProperty(key, VALUE, PropertyScope.USER_SESSION)
     }
 
     private fun Span.assertPropertyExistence(exist: List<String> = emptyList(), missing: List<String> = emptyList()) {

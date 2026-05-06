@@ -1,0 +1,80 @@
+{
+  "logs": [
+    {
+      "time_unix_nano": 169220160030000000,
+      "severity_number": 17,
+      "severity_text": "ERROR",
+      "body": "",
+      "attributes": [
+        {
+          "key": "emb.android.crash.exception_cause",
+          "value": "__EMBRACE_TEST_IGNORE__"
+        },
+        {
+          "key": "emb.android.crash_number",
+          "value": "1"
+        },
+        {
+          "key": "emb.android.threads",
+          "value": "__EMBRACE_TEST_IGNORE__"
+        },
+        {
+          "key": "emb.private.send_mode",
+          "value": "DEFER"
+        },
+        {
+          "key": "emb.session_part_id",
+          "value": "A8BAF9242FCC7BE7020B7F533060E8EF"
+        },
+        {
+          "key": "emb.state",
+          "value": "foreground"
+        },
+        {
+          "key": "emb.state.network",
+          "value": "unverified"
+        },
+        {
+          "key": "emb.state.power",
+          "value": "normal"
+        },
+        {
+          "key": "emb.state.screen-automatic",
+          "value": "android.app.Activity"
+        },
+        {
+          "key": "emb.state.test",
+          "value": "UNKNOWN"
+        },
+        {
+          "key": "emb.type",
+          "value": "sys.android.crash"
+        },
+        {
+          "key": "emb.user_session_id",
+          "value": "F2C8F6640C62AF2F006929719CB0C468"
+        },
+        {
+          "key": "exception.message",
+          "value": "boom"
+        },
+        {
+          "key": "exception.stacktrace",
+          "value": "__EMBRACE_TEST_IGNORE__"
+        },
+        {
+          "key": "exception.type",
+          "value": "java.lang.RuntimeException"
+        },
+        {
+          "key": "log.record.uid",
+          "value": "__EMBRACE_TEST_IGNORE__"
+        },
+        {
+          "key": "session.id",
+          "value": "F2C8F6640C62AF2F006929719CB0C468"
+        }
+      ]
+    }
+  ]
+}

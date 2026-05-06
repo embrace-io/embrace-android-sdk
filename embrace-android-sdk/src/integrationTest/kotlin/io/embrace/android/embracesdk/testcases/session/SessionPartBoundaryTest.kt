@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.internal.session.getSessionProperty
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -32,7 +33,7 @@ internal class SessionPartBoundaryTest {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    embrace.addSessionProperty("foo", "bar", false)
+                    embrace.addUserSessionProperty("foo", "bar", PropertyScope.USER_SESSION)
                 }
                 recordSession()
             },

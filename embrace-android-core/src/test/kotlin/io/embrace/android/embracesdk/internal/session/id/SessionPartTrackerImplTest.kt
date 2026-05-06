@@ -20,44 +20,43 @@ internal class SessionPartTrackerImplTest {
 
     @Test
     fun `active session tracking`() {
-        assertNull(tracker.getActiveSession())
-        assertNull(tracker.getActiveSessionId())
+        assertNull(tracker.getActiveSessionPart())
+        assertNull(tracker.getActiveSessionPartId())
 
         val newSession = fakeSessionPartToken()
-        tracker.newActiveSession(
-            endSessionCallback = {},
-            startSessionCallback = { newSession },
+        tracker.newActiveSessionPart(
+            endSessionPartCallback = {},
+            startSessionPartCallback = { newSession },
             postTransitionAppState = AppState.FOREGROUND
         )
 
-        assertEquals(newSession, tracker.getActiveSession())
-        assertEquals(newSession.sessionId, tracker.getActiveSessionId())
+        assertEquals(newSession, tracker.getActiveSessionPart())
+        assertEquals(newSession.sessionPartId, tracker.getActiveSessionPartId())
 
         val anotherSession = SessionPartToken(
-            sessionId = "fake",
+            sessionPartId = "fake",
             startTime = 11L,
-            number = 3,
             appState = AppState.BACKGROUND,
             isColdStart = false,
             startType = LifeEventType.MANUAL
         )
-        tracker.newActiveSession(
-            endSessionCallback = {},
-            startSessionCallback = { anotherSession },
+        tracker.newActiveSessionPart(
+            endSessionPartCallback = {},
+            startSessionPartCallback = { anotherSession },
             postTransitionAppState = AppState.BACKGROUND
         )
 
-        assertEquals(anotherSession, tracker.getActiveSession())
-        assertEquals(anotherSession.sessionId, tracker.getActiveSessionId())
+        assertEquals(anotherSession, tracker.getActiveSessionPart())
+        assertEquals(anotherSession.sessionPartId, tracker.getActiveSessionPartId())
 
-        tracker.newActiveSession(
-            endSessionCallback = {},
-            startSessionCallback = { null },
+        tracker.newActiveSessionPart(
+            endSessionPartCallback = {},
+            startSessionPartCallback = { null },
             postTransitionAppState = AppState.FOREGROUND
         )
 
-        assertNull(tracker.getActiveSession())
-        assertNull(tracker.getActiveSessionId())
+        assertNull(tracker.getActiveSessionPart())
+        assertNull(tracker.getActiveSessionPartId())
     }
 
     @Test
@@ -72,11 +71,11 @@ internal class SessionPartTrackerImplTest {
         }
 
         repeat(newSessions.size) { i ->
-            tracker.newActiveSession(
-                endSessionCallback = {
+            tracker.newActiveSessionPart(
+                endSessionPartCallback = {
                     callbackInvocations.add("end-session")
                 },
-                startSessionCallback = {
+                startSessionPartCallback = {
                     callbackInvocations.add("new-session")
                     newSessions[i]
                 },

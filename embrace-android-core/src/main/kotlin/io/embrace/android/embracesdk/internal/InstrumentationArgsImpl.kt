@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -33,6 +34,7 @@ internal class InstrumentationArgsImpl(
     override val application: Application,
     override val store: KeyValueStore,
     override val serializer: PlatformSerializer,
+    override val uuidSource: UuidSource,
     override val ordinalStore: OrdinalStore,
     override val processIdentifier: String,
     override val appStateTracker: AppStateTracker,
@@ -41,6 +43,7 @@ internal class InstrumentationArgsImpl(
     private val workerThreadModule: WorkerThreadModule,
     private val sessionPartTracker: SessionPartTracker,
     private val userSessionPropertiesService: UserSessionPropertiesService,
+    private val userSessionIdProvider: () -> String?,
     crashMarkerFileProvider: () -> File,
 ) : InstrumentationArgs {
 
@@ -60,7 +63,9 @@ internal class InstrumentationArgsImpl(
         } as? T
     }
 
-    override fun sessionId(): String? = sessionPartTracker.getActiveSessionId()
+    override fun sessionPartId(): String? = sessionPartTracker.getActiveSessionPartId()
+
+    override fun userSessionId(): String? = userSessionIdProvider()
 
     override fun userSessionProperties(): Map<String, String> = userSessionPropertiesService.getProperties()
 

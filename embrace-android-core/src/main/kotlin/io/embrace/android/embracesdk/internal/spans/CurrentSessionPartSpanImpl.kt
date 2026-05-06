@@ -13,7 +13,8 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.utils.Uuid
+import io.embrace.android.embracesdk.internal.utils.UuidSource
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.Clock
@@ -32,6 +33,7 @@ internal class CurrentSessionPartSpanImpl(
     private val tracerSupplier: Provider<Tracer>,
     private val openTelemetrySupplier: Provider<OpenTelemetry>,
     private val embraceSpanFactorySupplier: Provider<EmbraceSpanFactory>,
+    private val uuidSource: UuidSource,
 ) : CurrentSessionPartSpan {
 
     /**
@@ -101,11 +103,13 @@ internal class CurrentSessionPartSpanImpl(
         val spanToStop = spanRepository.getSpan(spanId)
 
         if (currentSessionPartSpan != spanToStop) {
+            val sessionIds = currentSessionPartSpan?.userSessionIdAttrs() ?: emptyMap()
+
             spanToStop?.spanContext?.let { spanToStopContext ->
                 if (currentSessionPartSpan != null) {
-                    currentSessionPartSpan.addSystemLink(spanToStopContext, LinkType.EndedIn)
+                    currentSessionPartSpan.addSystemLink(spanToStopContext, LinkType.EndedIn, sessionIds)
                     if (spanToStop.hasEmbraceAttribute(EmbType.State)) {
-                        currentSessionPartSpan.addSystemLink(spanToStopContext, LinkType.State)
+                        currentSessionPartSpan.addSystemLink(spanToStopContext, LinkType.State, sessionIds)
                     }
                 }
             }
@@ -116,7 +120,7 @@ internal class CurrentSessionPartSpanImpl(
                     spanToStop?.addSystemLink(
                         linkedSpanContext = sessionSpanContext,
                         type = LinkType.EndSession,
-                        attributes = mapOf(SessionAttributes.SESSION_ID to sessionId)
+                        attributes = mapOf(SessionAttributes.SESSION_ID to sessionId) + sessionIds
                     )
                 }
             }
@@ -196,20 +200,30 @@ internal class CurrentSessionPartSpanImpl(
             )
         ).apply {
             start(startTimeMs = startTimeMs)
-            setSystemAttribute(SessionAttributes.SESSION_ID, Uuid.getEmbUuid())
+            setSystemAttribute(SessionAttributes.SESSION_ID, uuidSource.createUuid())
             val previousSessionSpan = lastSessionSpan.get()
             previousSessionSpan?.spanContext?.let {
                 val prevSessionId = previousSessionSpan.getSystemAttribute(SessionAttributes.SESSION_ID) ?: ""
                 addSystemLink(
                     linkedSpanContext = it,
                     type = LinkType.PreviousSession,
-                    attributes = mapOf(SessionAttributes.SESSION_ID to prevSessionId)
+                    attributes = mapOf(SessionAttributes.SESSION_ID to prevSessionId) +
+                        previousSessionSpan.userSessionIdAttrs()
                 )
             }
         }
     }
 
     private fun sessionSpanReady() = sessionSpan.get()?.isRecording ?: false
+
+    private fun EmbraceSdkSpan.userSessionIdAttrs(): Map<String, String> = buildMap {
+        getSystemAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID)?.let {
+            put(EmbSessionAttributes.EMB_USER_SESSION_ID, it)
+        }
+        getSystemAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID)?.let {
+            put(EmbSessionAttributes.EMB_SESSION_PART_ID, it)
+        }
+    }
 
     companion object {
         const val MAX_INTERNAL_SPANS_PER_SESSION: Int = 5000

@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.assertions.assertIsTypePerformance
 import io.embrace.android.embracesdk.assertions.findCustomLinks
 import io.embrace.android.embracesdk.assertions.findSpanByName
 import io.embrace.android.embracesdk.assertions.getSessionId
+import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.hasLinkToEmbraceSpan
 import io.embrace.android.embracesdk.assertions.isLinkedToSpanContext
 import io.embrace.android.embracesdk.assertions.validateLinkToSpan
@@ -400,40 +401,41 @@ internal class TracingApiTest {
 
     @Test
     fun `correct session id populated in spans`() {
-        var sessionId1 = ""
-        var sessionId2 = ""
         testRule.runTest(
             testCaseAction = {
                 val span1 = checkNotNull(embrace.createSpan("span1"))
                 val span2 = checkNotNull(embrace.createSpan("span2"))
                 recordSession {
-                    sessionId1 = checkNotNull(embrace.currentSessionId)
                     span1.start()
                     span2.start()
                     span1.stop()
                 }
 
                 recordSession {
-                    sessionId2 = checkNotNull(embrace.currentSessionId)
                     span2.stop()
                 }
             },
             assertAction = {
-                assertNotEquals(sessionId1, sessionId2)
-
                 val sessions = getSessionEnvelopes(2)
+                // Different session parts have unique part IDs
+                assertNotEquals(sessions.first().getSessionPartId(), sessions.last().getSessionPartId())
+
                 val span1 = sessions.first().findSpanByName("span1")
                 val span2 = sessions.last().findSpanByName("span2")
 
-                assertEquals(sessionId1, span1.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
-                assertEquals(sessionId1, span2.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
-
+                // Both spans were started during session1, so they carry session1's user session ID
+                val session1Id = sessions.first().getSessionId()
+                assertEquals(session1Id, span1.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
+                assertEquals(session1Id, span2.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
             },
             otelExportAssertion = {
+                // Get the session ID from a session span exported via OTel
+                val sessionSpan = awaitSpansWithType(2, EmbType.Ux.Session).first().toEmbraceSpanData().toEmbracePayload()
+                val expectedSessionId = checkNotNull(sessionSpan.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
                 val span1 = awaitSpans(1) { it.name == "span1" }.single().toEmbraceSpanData().toEmbracePayload()
                 val span2 = awaitSpans(1) { it.name == "span2" }.single().toEmbraceSpanData().toEmbracePayload()
-                assertEquals(sessionId1, span1.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
-                assertEquals(sessionId1, span2.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
+                assertEquals(expectedSessionId, span1.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
+                assertEquals(expectedSessionId, span2.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
             }
         )
     }

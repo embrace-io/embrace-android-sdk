@@ -457,11 +457,6 @@ groups:
         brief: "Session start timestamp (milliseconds since epoch)."
         stability: development
         examples: ["1617983000000"]
-      - id: emb.is_final_session
-        type: string
-        brief: "Set to 1 if this session part is the known final part (max duration reached or manual termination). Omitted otherwise."
-        stability: development
-        examples: ["1"]
       - id: emb.session_part_id
         type: string
         brief: "UUID identifying the session part."
@@ -477,7 +472,7 @@ groups:
         brief: "Set to 1 when the SDK knows for certain this is the final part of a session (max duration reached, inactivity timeout, or manual termination). Omitted when the value would be 0."
         stability: development
         examples: ["1"]
-      - id: emb.termination_reason
+      - id: emb.user_session_termination_reason
         type:
           allow_custom_values: false
           members:

@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
@@ -116,10 +117,10 @@ internal class NativeCrashFeatureTest {
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
         EmbraceSetupInterface(
             fakeStorageLayer = true,
-            workerToFake = Worker.Background.IoRegWorker,
+            workersToFake = listOf(Worker.Background.IoRegWorker),
         ).apply {
             getEmbLogger().throwOnInternalError = false
-            getFakedWorkerExecutor().blockingMode = false
+            getFakedWorkerExecutor(Worker.Background.IoRegWorker).blockingMode = false
         }
     }
 
@@ -229,11 +230,11 @@ internal class NativeCrashFeatureTest {
                 assertNativeCrashSent(log2, crashData2, fakeSymbols)
 
                 // sessions updated to include crash IDs
-                val session1 = sessionEnvelopes.single { it.getSessionId() == crashData.nativeCrash.sessionId }
+                val session1 = sessionEnvelopes.single { it.getSessionId() == crashData.nativeCrash.sessionPartId }
                 session1.assertDeadPartResurrected(crashData)
 
                 // sessions updated to include crash IDs
-                val session2 = sessionEnvelopes.single { it.getSessionId() == crashData2.nativeCrash.sessionId }
+                val session2 = sessionEnvelopes.single { it.getSessionId() == crashData2.nativeCrash.sessionPartId }
                 session2.assertDeadPartResurrected(crashData2)
             }
         )
@@ -327,18 +328,18 @@ internal class NativeCrashFeatureTest {
             ),
             setupAction = {
                 jniDelegate = fakeJniDelegate
-                ioWorker = getFakedWorkerExecutor()
+                ioWorker = getFakedWorkerExecutor(Worker.Background.IoRegWorker)
                 ioWorker.blockingMode = true
             },
             testCaseAction = {
                 ioWorker.runCurrentlyBlocked()
-                jniDelegate.persistMetadata(embrace.currentSessionId, sessions, nativeSessionMetadata)
+                jniDelegate.persistMetadata(embrace.currentUserSessionId, sessions, nativeSessionMetadata)
                 recordSession {
-                    jniDelegate.persistMetadata(embrace.currentSessionId, sessions, nativeSessionMetadata)
+                    jniDelegate.persistMetadata(embrace.currentUserSessionId, sessions, nativeSessionMetadata)
                 }
-                jniDelegate.persistMetadata(embrace.currentSessionId, sessions, nativeSessionMetadata)
+                jniDelegate.persistMetadata(embrace.currentUserSessionId, sessions, nativeSessionMetadata)
                 recordSession {
-                    jniDelegate.persistMetadata(embrace.currentSessionId, sessions, nativeSessionMetadata)
+                    jniDelegate.persistMetadata(embrace.currentUserSessionId, sessions, nativeSessionMetadata)
                 }
             },
             assertAction = {
@@ -358,11 +359,11 @@ internal class NativeCrashFeatureTest {
         nativeSessionMetadata: MutableList<Pair<String?, String?>>,
     ) {
         sessions.add(currentSessionId ?: "null")
-        nativeSessionMetadata.add(Pair(sessionId, reportPath))
+        nativeSessionMetadata.add(Pair(userSessionId, reportPath))
     }
 
     private fun findMatchingSessionId(it: Envelope<LogPayload>, data: StoredNativeCrashData): Boolean {
-        return it.getLogOfType(EmbType.System.NativeCrash).attributes?.findAttributeValue("session.id") == data.nativeCrash.sessionId
+        return it.getLogOfType(EmbType.System.NativeCrash).attributes?.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID) == data.nativeCrash.sessionPartId
     }
 
     private fun EmbracePayloadAssertionInterface.assertNoNativeCrashSent(

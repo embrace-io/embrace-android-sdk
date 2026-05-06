@@ -7,14 +7,16 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 internal fun shouldEndManualSession(
     configService: ConfigService,
     clock: Clock,
-    activeSessionStartTime: Long?,
-    state: AppState,
+    userSessionStartTimeMs: Long?,
+    lastManualEndMs: Long?,
 ): Boolean {
-    if (state == AppState.BACKGROUND || configService.sessionBehavior.isSessionControlEnabled() || activeSessionStartTime == null) {
+    if (configService.sessionBehavior.isSessionControlEnabled() || userSessionStartTimeMs == null) {
         return true
     }
-
-    val delta = clock.now() - activeSessionStartTime
+    if (lastManualEndMs == null) {
+        return false
+    }
+    val delta = clock.now() - lastManualEndMs
     return delta < configService.sessionBehavior.getMinSessionDurationMs()
 }
 

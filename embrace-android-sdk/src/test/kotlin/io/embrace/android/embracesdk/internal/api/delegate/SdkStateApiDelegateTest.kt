@@ -6,19 +6,20 @@ import io.embrace.android.embracesdk.LastRunEndState
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeLogService
-import io.embrace.android.embracesdk.fakes.FakeSessionPartTracker
+import io.embrace.android.embracesdk.fakes.FakeSessionIdProvider
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
-import io.embrace.android.embracesdk.fakes.fakeSessionPartToken
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
+import io.embrace.android.embracesdk.fakes.injection.FakeUserSessionOrchestrationModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.internal.utils.Uuid
+import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.random.Random
 
 @RunWith(AndroidJUnit4::class)
 internal class SdkStateApiDelegateTest {
@@ -26,28 +27,31 @@ internal class SdkStateApiDelegateTest {
     private lateinit var delegate: SdkStateApiDelegate
     private lateinit var logService: FakeLogService
     private lateinit var configService: FakeConfigService
-    private lateinit var sessionPartTracker: FakeSessionPartTracker
+    private lateinit var sessionIdProvider: FakeSessionIdProvider
     private lateinit var sdkCallChecker: SdkCallChecker
     private lateinit var logger: FakeInternalLogger
 
     @Before
     fun setUp() {
         logService = FakeLogService()
-        configService = FakeConfigService(deviceId = Uuid.getEmbUuid())
+        configService = FakeConfigService(deviceId = UuidSourceImpl(Random(0)).createUuid())
+        sessionIdProvider = FakeSessionIdProvider()
         val moduleInitBootstrapper = ModuleInitBootstrapper(
             FakeInitModule(),
             configServiceSupplier = { _, _, _, _ ->
                 configService
             },
-            essentialServiceModuleSupplier = { _, _, _, _, _, _, _ ->
+            essentialServiceModuleSupplier = { _, _, _, _, _, _, _, _ ->
                 FakeEssentialServiceModule()
             },
             logModuleSupplier = { _, _, _, _, _, _, _ ->
                 FakeLogModule(logService = logService)
             },
+            userSessionOrchestrationModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _ ->
+                FakeUserSessionOrchestrationModule(sessionIdProvider = sessionIdProvider)
+            },
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
-        sessionPartTracker = moduleInitBootstrapper.essentialServiceModule.sessionPartTracker as FakeSessionPartTracker
         logger = FakeInternalLogger()
         sdkCallChecker = SdkCallChecker(logger, FakeTelemetryService())
         sdkCallChecker.started.set(true)
@@ -75,8 +79,8 @@ internal class SdkStateApiDelegateTest {
 
     @Test
     fun getCurrentSessionId() {
-        sessionPartTracker.currentSession = fakeSessionPartToken().copy(sessionId = "test")
-        assertEquals("test", delegate.currentSessionId)
+        sessionIdProvider.userSessionId = "test"
+        assertEquals("test", delegate.currentUserSessionId)
     }
 
     @Test

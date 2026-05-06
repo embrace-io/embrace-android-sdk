@@ -18,22 +18,17 @@ class FakePayloadMessageCollator(
     val baCount: AtomicInteger = AtomicInteger(0)
 
     override fun buildInitialPart(params: InitialEnvelopeParams): SessionPartToken = with(params) {
-        val sessionNumber = when (appState) {
-            AppState.FOREGROUND -> {
-                sessionCount.incrementAndGet()
-            }
-
-            AppState.BACKGROUND -> {
-                baCount.incrementAndGet()
-            }
+        when (appState) {
+            AppState.FOREGROUND -> sessionCount.incrementAndGet()
+            AppState.BACKGROUND -> baCount.incrementAndGet()
         }
         SessionPartToken(
-            sessionId = currentSessionPartSpan.getSessionId(),
+            sessionPartId = currentSessionPartSpan.getSessionId(),
             startTime = startTime,
             isColdStart = coldStart,
             appState = appState,
             startType = startType,
-            number = sessionNumber,
+            sessionPartNumber = partNumber,
         )
     }
 

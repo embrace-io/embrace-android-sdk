@@ -22,12 +22,13 @@ internal class InstrumentationModuleImplTest {
             FakeOpenTelemetryModule(),
             FakeWorkerThreadModule(
                 fakeInitModule = fakeInitModule,
-                testWorker = Worker.Background.NonIoRegWorker
+                testWorkers = listOf(Worker.Background.NonIoRegWorker)
             ),
             FakeConfigService(),
             FakeEssentialServiceModule(),
             FakeCoreModule(),
             FakeStorageService(),
+            userSessionIdProvider = { null },
         )
         assertSame(module.instrumentationRegistry, module.instrumentationRegistry)
         assertNotNull(module.instrumentationRegistry)

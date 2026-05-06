@@ -19,7 +19,6 @@ import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -52,7 +51,7 @@ internal class BackgroundActivityDisabledTest {
 
                 // Check what should and shouldn't be logged when there is no background activity and the app is in the background
                 assertTrue(embrace.isStarted)
-                assertTrue(embrace.currentSessionId.isNullOrBlank())
+                assertFalse(embrace.currentUserSessionId.isNullOrBlank())
                 assertTrue(embrace.deviceId.isNotBlank())
                 assertEquals(NoopEmbraceSdkSpan, embrace.startSpan("test"))
                 embrace.logError("error")
@@ -63,7 +62,7 @@ internal class BackgroundActivityDisabledTest {
                 embrace.logInfo("info")
 
                 recordSession {
-                    assertFalse(embrace.currentSessionId.isNullOrBlank())
+                    assertFalse(embrace.currentUserSessionId.isNullOrBlank())
                     embrace.addBreadcrumb("logged")
                     embrace.logWarning("warning")
                     embrace.logError("sent-after-session")
@@ -81,7 +80,8 @@ internal class BackgroundActivityDisabledTest {
                             EmbSessionAttributes.EMB_STATE to "background"
                         )
                     )
-                    assertNull(attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
+                    val sid = attributes?.findAttributeValue(SessionAttributes.SESSION_ID)
+                    assertFalse(sid.isNullOrBlank())
                 }
                 with(logs[1]) {
                     assertEquals("info", body)
@@ -90,7 +90,7 @@ internal class BackgroundActivityDisabledTest {
                             EmbSessionAttributes.EMB_STATE to "background"
                         )
                     )
-                    assertNull(attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
+                    assertFalse(attributes?.findAttributeValue(SessionAttributes.SESSION_ID).isNullOrBlank())
                 }
                 with(logs[2]) {
                     assertEquals("warning", body)
@@ -173,7 +173,6 @@ internal class BackgroundActivityDisabledTest {
                 sessionSpan1.assertExpectedSessionSpanAttributes(
                     startMs = session1StartMs,
                     endMs = session1EndMs,
-                    sessionNumber = 1,
                     sequenceId = 1,
                     coldStart = true,
                 )
@@ -181,14 +180,13 @@ internal class BackgroundActivityDisabledTest {
                 sessionSpan2.assertExpectedSessionSpanAttributes(
                     startMs = session2StartMs,
                     endMs = session2EndMs,
-                    sessionNumber = 2,
                     sequenceId = 14,
                     coldStart = false,
                 )
 
                 assertNotEquals(
-                    sessionSpan1.attributes?.findAttributeValue(SessionAttributes.SESSION_ID),
-                    sessionSpan2.attributes?.findAttributeValue(SessionAttributes.SESSION_ID)
+                    sessionSpan1.attributes?.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID),
+                    sessionSpan2.attributes?.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID)
                 )
 
                 assertEquals(
@@ -202,7 +200,6 @@ internal class BackgroundActivityDisabledTest {
     private fun Span.assertExpectedSessionSpanAttributes(
         startMs: Long,
         endMs: Long,
-        sessionNumber: Int,
         sequenceId: Int,
         coldStart: Boolean,
     ) {
@@ -210,7 +207,6 @@ internal class BackgroundActivityDisabledTest {
         assertEquals(endMs, endTimeNanos?.nanosToMillis())
         attributes?.assertMatches(
             mapOf(
-                EmbSessionAttributes.EMB_SESSION_NUMBER to sessionNumber,
                 EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID to sequenceId,
                 EmbSessionAttributes.EMB_COLD_START to coldStart,
                 EmbSessionAttributes.EMB_STATE to "foreground",

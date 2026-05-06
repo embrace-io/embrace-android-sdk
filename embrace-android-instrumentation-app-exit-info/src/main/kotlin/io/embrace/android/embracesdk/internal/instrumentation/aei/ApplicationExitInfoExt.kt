@@ -11,6 +11,7 @@ import java.io.IOException
 import java.util.regex.Pattern
 
 private val SESSION_ID_PATTERN by lazy { Pattern.compile("^[0-9a-fA-F]{32}\$").toRegex() }
+private const val SESSION_ID_LENGTH = 32
 
 /**
  * Constructs an [io.embrace.android.embracesdk.internal.payload.AppExitInfoData] object from an [ApplicationExitInfo] object. The trace
@@ -23,11 +24,16 @@ internal fun ApplicationExitInfo.constructAeiObject(
     charLimit: Int,
 ): AppExitInfoData? {
     val result = readAeiTrace(versionChecker, charLimit) ?: return null
-    val sessionId = String(processStateSummary ?: ByteArray(0))
+    val summary = String(processStateSummary ?: ByteArray(0))
+    val parsed = parseProcessStateSummary(summary)
 
     return AppExitInfoData(
-        sessionId = sessionId,
-        sessionIdError = getSessionIdValidationError(sessionId),
+        sessionPartId = parsed.sessionPartId,
+        userSessionId = parsed.userSessionId,
+        sessionIdError = when {
+            parsed.valid || summary.isEmpty() || summary.matches(SESSION_ID_PATTERN) -> ""
+            else -> "invalid session ID: $summary"
+        },
         importance = importance,
         pss = pss,
         reason = reason,
@@ -83,7 +89,19 @@ private fun ApplicationExitInfo.isNdkProtobufFile(versionChecker: VersionChecker
     return versionChecker.isAtLeast(VERSION_CODES.S) && reason == ApplicationExitInfo.REASON_CRASH_NATIVE
 }
 
-private fun getSessionIdValidationError(sid: String): String = when {
-    sid.isEmpty() || sid.matches(SESSION_ID_PATTERN) -> ""
-    else -> "invalid session ID: $sid"
+/**
+ * Parses the processStateSummary string. If it has the combined format
+ * `{sessionPartId}_{userSessionId}` (both 32-char hex IDs delimited by `_`), both are
+ * returned. Otherwise the entire string is treated as the session part ID with no user session ID.
+ */
+internal fun parseProcessStateSummary(summary: String): ProcessStateSummary {
+    val expectedLength = SESSION_ID_LENGTH * 2 + 1
+    return if (summary.length == expectedLength && summary[SESSION_ID_LENGTH] == '_') {
+        ProcessStateSummary(
+            sessionPartId = summary.substring(0, SESSION_ID_LENGTH),
+            userSessionId = summary.substring(SESSION_ID_LENGTH + 1),
+        )
+    } else {
+        ProcessStateSummary(sessionPartId = "", userSessionId = "")
+    }
 }

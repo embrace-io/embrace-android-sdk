@@ -7,13 +7,14 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun addLoadTraceChildSpan (Landroid/app/Activity;Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/ErrorCode;)V
 	public fun addLogRecordExporter (Lio/opentelemetry/kotlin/logging/export/LogRecordExporter;)V
 	public fun addLogRecordProcessor (Lio/opentelemetry/kotlin/logging/export/LogRecordProcessor;)V
-	public fun addSessionProperty (Ljava/lang/String;Ljava/lang/String;Z)Z
 	public fun addSpanExporter (Lio/opentelemetry/kotlin/tracing/export/SpanExporter;)V
 	public fun addSpanProcessor (Lio/opentelemetry/kotlin/tracing/export/SpanProcessor;)V
 	public fun addStartupTraceAttribute (Ljava/lang/String;Ljava/lang/String;)V
 	public fun addStartupTraceChildSpan (Ljava/lang/String;JJ)V
 	public fun addStartupTraceChildSpan (Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/ErrorCode;)V
 	public fun addUserPersona (Ljava/lang/String;)V
+	public fun addUserSessionListener (Lio/embrace/android/embracesdk/UserSessionListener;)V
+	public fun addUserSessionProperty (Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/PropertyScope;)Z
 	public fun appReady ()V
 	public fun applicationInitEnd ()V
 	public fun applicationInitStart ()V
@@ -24,10 +25,10 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun clearUsername ()V
 	public fun createSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun disable ()V
-	public fun endSession (Z)V
+	public fun endUserSession ()V
 	public fun endView (Ljava/lang/String;)Z
 	public fun generateW3cTraceparent ()Ljava/lang/String;
-	public fun getCurrentSessionId ()Ljava/lang/String;
+	public fun getCurrentUserSessionId ()Ljava/lang/String;
 	public fun getDeviceId ()Ljava/lang/String;
 	public static final fun getInstance ()Lio/embrace/android/embracesdk/Embrace;
 	public fun getLastRunEndState ()Lio/embrace/android/embracesdk/LastRunEndState;
@@ -48,7 +49,7 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;Ljava/util/List;)Z
 	public fun recordNetworkRequest (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
 	public fun recordSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
-	public fun removeSessionProperty (Ljava/lang/String;)Z
+	public fun removeUserSessionProperty (Ljava/lang/String;)Z
 	public fun setResourceAttribute (Ljava/lang/String;Ljava/lang/String;)V
 	public fun setUserEmail (Ljava/lang/String;)V
 	public fun setUserIdentifier (Ljava/lang/String;)V

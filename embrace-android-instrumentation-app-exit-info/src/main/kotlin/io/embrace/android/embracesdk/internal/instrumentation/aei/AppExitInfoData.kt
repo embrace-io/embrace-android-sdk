@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.internal.instrumentation.aei
 
 internal data class AppExitInfoData(
-    val sessionId: String?,
+    val sessionPartId: String?,
+
+    val userSessionId: String?,
 
     val sessionIdError: String?,
 

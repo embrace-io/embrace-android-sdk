@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.semconv.EmbAeiAttributes
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll
+import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -32,6 +33,8 @@ private const val STATUS = 1
 private const val DESCRIPTION = "testDescription"
 private const val TRACE = "testInputStream"
 private const val SESSION_ID = "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d"
+private const val USER_SESSION_ID = "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"
+private const val PROCESS_SUMMARY_STATE = "${SESSION_ID}_$USER_SESSION_ID"
 
 internal class AeiDataSourceImplTest {
 
@@ -50,7 +53,7 @@ internal class AeiDataSourceImplTest {
     private val mockAppExitInfo = mockk<ApplicationExitInfo>(relaxed = true) {
         every { timestamp } returns TIMESTAMP
         every { pid } returns PID
-        every { processStateSummary } returns SESSION_ID.toByteArray()
+        every { processStateSummary } returns PROCESS_SUMMARY_STATE.toByteArray()
         every { importance } returns IMPORTANCE
         every { pss } returns PSS
         every { reason } returns REASON
@@ -101,7 +104,9 @@ internal class AeiDataSourceImplTest {
         // when getCapturedData is called
         val attrs = getAeiLogAttrs()
         assertEquals(TIMESTAMP.toString(), attrs[EmbAeiAttributes.TIMESTAMP])
-        assertEquals(SESSION_ID, attrs[EmbAeiAttributes.AEI_SESSION_ID])
+        assertEquals(SESSION_ID, attrs[EmbAeiAttributes.AEI_SESSION_PART_ID])
+        assertEquals(USER_SESSION_ID, attrs[EmbAeiAttributes.AEI_USER_SESSION_ID])
+        assertEquals(USER_SESSION_ID, attrs[SessionAttributes.SESSION_ID])
         assertEquals(IMPORTANCE.toString(), attrs[EmbAeiAttributes.PROCESS_IMPORTANCE])
         assertEquals(PSS.toString(), attrs[EmbAeiAttributes.PSS])
         assertEquals(RSS.toString(), attrs[EmbAeiAttributes.RSS])
@@ -205,7 +210,37 @@ internal class AeiDataSourceImplTest {
 
         // then the invalid session ID message should be added to the sessionIdError
         assertEquals("invalid session ID: $invalidSessionId", attrs[EmbAeiAttributes.SESSION_ID_ERROR])
-        assertEquals(invalidSessionId, attrs[EmbAeiAttributes.AEI_SESSION_ID])
+        assertEquals("", attrs[EmbAeiAttributes.AEI_SESSION_PART_ID])
+    }
+
+    @Test
+    fun `aei_user_session_id is set when processStateSummary contains combined ids`() {
+        every { mockAppExitInfo.processStateSummary } returns "${SESSION_ID}_${USER_SESSION_ID}".toByteArray()
+        every {
+            mockActivityManager.getHistoricalProcessExitReasons(any(), any(), any())
+        } returns listOf(mockAppExitInfo)
+
+        startApplicationExitInfoService()
+
+        val attrs = getAeiLogAttrs()
+        assertEquals(SESSION_ID, attrs[EmbAeiAttributes.AEI_SESSION_PART_ID])
+        assertEquals(USER_SESSION_ID, attrs[EmbAeiAttributes.AEI_USER_SESSION_ID])
+        assertEquals(USER_SESSION_ID, attrs[SessionAttributes.SESSION_ID])
+    }
+
+    @Test
+    fun `aei_user_session_id is absent when processStateSummary contains only part id`() {
+        every { mockAppExitInfo.processStateSummary } returns SESSION_ID.toByteArray()
+        every {
+            mockActivityManager.getHistoricalProcessExitReasons(any(), any(), any())
+        } returns listOf(mockAppExitInfo)
+
+        startApplicationExitInfoService()
+
+        val attrs = getAeiLogAttrs()
+        assertEquals("", attrs[EmbAeiAttributes.AEI_SESSION_PART_ID])
+        assertEquals("", attrs[EmbAeiAttributes.AEI_USER_SESSION_ID])
+        assertEquals("", attrs[SessionAttributes.SESSION_ID])
     }
 
     @Test

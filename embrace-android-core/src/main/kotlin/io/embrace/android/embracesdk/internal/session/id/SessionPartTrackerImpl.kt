@@ -29,46 +29,34 @@ internal class SessionPartTrackerImpl(
         sessionEndListeners.add(listener)
     }
 
-    override fun getActiveSession(): SessionPartToken? = activeSession
+    override fun getActiveSessionPart(): SessionPartToken? = activeSession
 
-    override fun newActiveSession(
-        endSessionCallback: SessionPartToken.() -> Unit,
-        startSessionCallback: () -> SessionPartToken?,
+    override fun newActiveSessionPart(
+        endSessionPartCallback: SessionPartToken.() -> Unit,
+        startSessionPartCallback: () -> SessionPartToken?,
         postTransitionAppState: AppState,
     ): SessionPartToken? {
         activeSession?.let { endingSession ->
             runCatching {
                 sessionEndListeners.forEach(SessionPartEndListener::onPreSessionEnd)
             }
-            endingSession.endSessionCallback()
+            endingSession.endSessionPartCallback()
         }
 
-        activeSession = startSessionCallback()
+        activeSession = startSessionPartCallback()
         runCatching {
             sessionChangeListeners.forEach(SessionPartChangeListener::onPostSessionChange)
-        }
-
-        if (postTransitionAppState == AppState.FOREGROUND) {
-            setSessionIdToProcessStateSummary(activeSession?.sessionId)
         }
 
         return activeSession
     }
 
-    /**
-     * On android 11+, we use ActivityManager#setProcessStateSummary to store sessionId
-     * Then, this information will be included in the record of ApplicationExitInfo on the death of the current calling process
-     *
-     * @param sessionId current session id
-     */
-    private fun setSessionIdToProcessStateSummary(sessionId: String?) {
+    override fun setProcessStateSummary(sessionPartId: String, userSessionId: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if (sessionId != null) {
-                try {
-                    activityManager?.setProcessStateSummary(sessionId.toByteArray())
-                } catch (e: Throwable) {
-                    logger.trackInternalError(InternalErrorType.PROCESS_STATE_SUMMARY_FAIL, e)
-                }
+            try {
+                activityManager?.setProcessStateSummary("${sessionPartId}_$userSessionId".toByteArray())
+            } catch (e: Throwable) {
+                logger.trackInternalError(InternalErrorType.PROCESS_STATE_SUMMARY_FAIL, e)
             }
         }
     }

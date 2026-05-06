@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
+import io.embrace.android.embracesdk.internal.session.id.SessionIdProvider
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.OrchestratorBoundaryDelegate
@@ -25,10 +26,13 @@ class UserSessionOrchestrationModuleImpl(
     workerThreadModule: WorkerThreadModule,
 ) : UserSessionOrchestrationModule {
 
+    override val sessionIdProvider: SessionIdProvider by singleton {
+        essentialServiceModule.sessionIdProvider
+    }
+
     override val sessionOrchestrator: SessionOrchestrator by singleton {
         val payloadMessageCollator = PayloadMessageCollatorImpl(
             EmbTrace.trace("sessionEnvelopeSource") { payloadSourceModule.sessionPartEnvelopeSource },
-            coreModule.ordinalStore,
             openTelemetryModule.currentSessionPartSpan,
         )
 
@@ -40,7 +44,6 @@ class UserSessionOrchestrationModuleImpl(
         )
 
         val boundaryDelegate = OrchestratorBoundaryDelegate(
-            essentialServiceModule.userService,
             essentialServiceModule.userSessionPropertiesService
         )
 
@@ -67,6 +70,7 @@ class UserSessionOrchestrationModuleImpl(
             UserSessionMetadataStore(coreModule.store),
             initModule.logger,
             workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
+            initModule.uuidSource,
         )
     }
 }

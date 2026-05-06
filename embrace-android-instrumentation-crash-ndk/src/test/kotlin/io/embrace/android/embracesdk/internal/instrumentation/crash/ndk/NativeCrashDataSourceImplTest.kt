@@ -59,8 +59,16 @@ internal class NativeCrashDataSourceImplTest {
             assertEquals("value", attributes[sessionPropertyName])
             assertEquals("background", attributes[EmbSessionAttributes.EMB_STATE])
             assertEquals(
-                testNativeCrashData.sessionId,
+                testNativeCrashData.sessionPartId,
+                attributes[EmbSessionAttributes.EMB_SESSION_PART_ID]
+            )
+            assertEquals(
+                testNativeCrashData.userSessionId,
                 attributes[SessionAttributes.SESSION_ID]
+            )
+            assertEquals(
+                testNativeCrashData.userSessionId,
+                attributes[EmbSessionAttributes.EMB_USER_SESSION_ID]
             )
             assertEquals("1", attributes[EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER])
             assertEquals(testNativeCrashData.crash, attributes[embNativeCrashException])
@@ -77,7 +85,8 @@ internal class NativeCrashDataSourceImplTest {
         nativeCrashDataSource.sendNativeCrash(
             nativeCrash = NativeCrashData(
                 nativeCrashId = "nativeCrashId",
-                sessionId = "null",
+                sessionPartId = "",
+                userSessionId = "",
                 timestamp = 1700000000000,
                 crash = null,
                 symbols = null,
@@ -90,6 +99,9 @@ internal class NativeCrashDataSourceImplTest {
             val attributes = schemaType.attributes()
             assertEquals(EmbType.System.NativeCrash, schemaType.telemetryType)
             assertEquals("1", attributes[EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER])
+            assertEquals("", attributes[EmbSessionAttributes.EMB_SESSION_PART_ID])
+            assertEquals("", attributes[SessionAttributes.SESSION_ID])
+            assertEquals("", attributes[EmbSessionAttributes.EMB_USER_SESSION_ID])
             assertNull(attributes[embNativeCrashException])
             assertNull(attributes[embNativeCrashSymbols])
         }
@@ -100,7 +112,8 @@ internal class NativeCrashDataSourceImplTest {
         nativeCrashDataSource.sendNativeCrash(
             nativeCrash = NativeCrashData(
                 nativeCrashId = "nativeCrashId",
-                sessionId = "",
+                sessionPartId = "",
+                userSessionId = "",
                 timestamp = 1700000000000,
                 crash = "",
                 symbols = emptyMap(),
@@ -113,6 +126,9 @@ internal class NativeCrashDataSourceImplTest {
             val attributes = schemaType.attributes()
             assertEquals(EmbType.System.NativeCrash, schemaType.telemetryType)
             assertEquals("1", attributes[EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER])
+            assertEquals("", attributes[EmbSessionAttributes.EMB_SESSION_PART_ID])
+            assertEquals("", attributes[SessionAttributes.SESSION_ID])
+            assertEquals("", attributes[EmbSessionAttributes.EMB_USER_SESSION_ID])
             assertNull(attributes[EmbSessionAttributes.EMB_STATE])
             assertNull(attributes[embNativeCrashException])
             assertNull(attributes[embNativeCrashSymbols])
@@ -121,7 +137,8 @@ internal class NativeCrashDataSourceImplTest {
 
     private val testNativeCrashData: NativeCrashData = NativeCrashData(
         nativeCrashId = "nativeCrashId",
-        sessionId = "sessionId",
+        sessionPartId = "sessionId",
+        userSessionId = "userSessionId",
         timestamp = 1700000000000,
         crash = "base64binarystring",
         symbols = mapOf("key" to "value"),

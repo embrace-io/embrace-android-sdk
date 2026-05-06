@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
@@ -13,6 +14,7 @@ import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -31,7 +33,7 @@ internal class UserSessionApiDelegateTest {
         fakeModule = FakeUserSessionOrchestrationModule()
         val moduleInitBootstrapper = ModuleInitBootstrapper(
             FakeInitModule(),
-            essentialServiceModuleSupplier = { _, _, _, _, _, _, _ ->
+            essentialServiceModuleSupplier = { _, _, _, _, _, _, _, _ ->
                 FakeEssentialServiceModule()
             },
             userSessionOrchestrationModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _ ->
@@ -51,35 +53,43 @@ internal class UserSessionApiDelegateTest {
     fun `cannot modify session properties when SDK is not enabled`() {
         logger.throwOnInternalError = false
         sdkCallChecker.started.set(false)
-        assertFalse(delegate.addSessionProperty("test", "value", false))
-        assertFalse(delegate.removeSessionProperty("test"))
+        assertFalse(delegate.addUserSessionProperty("test", "value", PropertyScope.USER_SESSION))
+        assertFalse(delegate.removeUserSessionProperty("test"))
         assertEquals(0, (fakeModule.sessionOrchestrator as FakeSessionOrchestrator).stateChangeCount)
-        delegate.endSession()
+        delegate.endUserSession()
         assertEquals(0, (fakeModule.sessionOrchestrator as FakeSessionOrchestrator).manualEndCount)
     }
 
     @Test
     fun `add session property`() {
-        delegate.addSessionProperty("test", "value", false)
+        delegate.addUserSessionProperty("test", "value", PropertyScope.USER_SESSION)
         assertEquals("value", userSessionPropertiesService.props["test"])
     }
 
     @Test
     fun `remove session property`() {
-        delegate.addSessionProperty("test", "value", false)
-        delegate.removeSessionProperty("test")
+        delegate.addUserSessionProperty("test", "value", PropertyScope.USER_SESSION)
+        delegate.removeUserSessionProperty("test")
         assertNull(userSessionPropertiesService.props["test"])
     }
 
     @Test
     fun `end session`() {
-        delegate.endSession()
+        delegate.endUserSession()
         assertEquals(1, (fakeModule.sessionOrchestrator as FakeSessionOrchestrator).manualEndCount)
     }
 
     @Test
-    fun `end session clear user info`() {
-        delegate.endSession(true)
-        assertEquals(1, (fakeModule.sessionOrchestrator as FakeSessionOrchestrator).manualEndCount)
+    fun `add user session listener when SDK started`() {
+        delegate.addUserSessionListener { }
+        assertEquals(1, (fakeModule.sessionOrchestrator as FakeSessionOrchestrator).userSessionListeners.size)
+    }
+
+    @Test
+    fun `add user session listener when SDK not started`() {
+        logger.throwOnInternalError = false
+        sdkCallChecker.started.set(false)
+        delegate.addUserSessionListener { }
+        assertTrue((fakeModule.sessionOrchestrator as FakeSessionOrchestrator).userSessionListeners.isEmpty())
     }
 }

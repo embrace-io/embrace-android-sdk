@@ -1,0 +1,125 @@
+{
+  "trace_id": "__EMBRACE_TEST_IGNORE__",
+  "span_id": "__EMBRACE_TEST_IGNORE__",
+  "parent_span_id": "0000000000000000",
+  "name": "emb-session",
+  "start_time_unix_nano": 169220160000000000,
+  "end_time_unix_nano": 169220160030000000,
+  "status": "Error",
+  "events": [],
+  "attributes": [
+    {
+      "key": "emb.clean_exit",
+      "value": "true"
+    },
+    {
+      "key": "emb.cold_start",
+      "value": "true"
+    },
+    {
+      "key": "emb.crash_id",
+      "value": "__EMBRACE_TEST_IGNORE__"
+    },
+    {
+      "key": "emb.disk_free_bytes",
+      "value": "__EMBRACE_TEST_IGNORE__"
+    },
+    {
+      "key": "emb.error_code",
+      "value": "failure"
+    },
+    {
+      "key": "emb.error_log_count",
+      "value": "0"
+    },
+    {
+      "key": "emb.heartbeat_time_unix_nano",
+      "value": "__EMBRACE_TEST_IGNORE__"
+    },
+    {
+      "key": "emb.is_emulator",
+      "value": "__EMBRACE_TEST_IGNORE__"
+    },
+    {
+      "key": "emb.kotlin_on_classpath",
+      "value": "__EMBRACE_TEST_IGNORE__"
+    },
+    {
+      "key": "emb.okhttp3",
+      "value": "__EMBRACE_TEST_IGNORE__"
+    },
+    {
+      "key": "emb.okhttp3_on_classpath",
+      "value": "__EMBRACE_TEST_IGNORE__"
+    },
+    {
+      "key": "emb.private.sequence_id",
+      "value": "1"
+    },
+    {
+      "key": "emb.process_identifier",
+      "value": "__EMBRACE_TEST_IGNORE__"
+    },
+    {
+      "key": "emb.session_end_type",
+      "value": "state"
+    },
+    {
+      "key": "emb.session_part_id",
+      "value": "A8BAF9242FCC7BE7020B7F533060E8EF"
+    },
+    {
+      "key": "emb.session_start_type",
+      "value": "state"
+    },
+    {
+      "key": "emb.startup_duration",
+      "value": "__EMBRACE_TEST_IGNORE__"
+    },
+    {
+      "key": "emb.state",
+      "value": "foreground"
+    },
+    {
+      "key": "emb.terminated",
+      "value": "false"
+    },
+    {
+      "key": "emb.termination_cause",
+      "value": "crash"
+    },
+    {
+      "key": "emb.type",
+      "value": "ux.session"
+    },
+    {
+      "key": "emb.user_session_id",
+      "value": "F2C8F6640C62AF2F006929719CB0C468"
+    },
+    {
+      "key": "emb.user_session_inactivity_timeout_seconds",
+      "value": "1800"
+    },
+    {
+      "key": "emb.user_session_max_duration_seconds",
+      "value": "43200"
+    },
+    {
+      "key": "emb.user_session_number",
+      "value": "1"
+    },
+    {
+      "key": "emb.user_session_part_number",
+      "value": "1"
+    },
+    {
+      "key": "emb.user_session_start_ts",
+      "value": "169220160010"
+    },
+    {
+      "key": "session.id",
+      "value": "F2C8F6640C62AF2F006929719CB0C468"
+    }
+  ],
+  "links": "__EMBRACE_TEST_IGNORE__"
+}

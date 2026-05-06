@@ -8,19 +8,14 @@ import io.embrace.android.embracesdk.internal.arch.state.AppState
 data class SessionPartToken(
 
     /**
-     * A unique ID which identifies the session.
+     * A unique ID which identifies the session part.
      */
-    val sessionId: String,
+    val sessionPartId: String,
 
     /**
      * The time that the session started.
      */
     val startTime: Long,
-
-    /**
-     * The ordinal of the session, starting from 1.
-     */
-    val number: Int,
 
     /**
      * Process state for this session (foreground or background)
@@ -36,4 +31,9 @@ data class SessionPartToken(
      * The type of start event that triggered this session.
      */
     val startType: LifeEventType,
+
+    /**
+     * Monotonic index of this part of the user session.
+     */
+    val sessionPartNumber: Int = 0,
 )

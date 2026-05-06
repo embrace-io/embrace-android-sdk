@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.otel.logs
 
 import io.embrace.android.embracesdk.internal.otel.impl.EmbAttributesMutator
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.utils.Uuid
+import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.context.Context
@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 class EventServiceImpl(
     private val sdkLoggerProvider: Provider<Logger>,
+    private val uuidSource: UuidSource,
 ) : EventService {
     private val noopLogger = NoopOpenTelemetry.loggerProvider.getLogger("noop")
     private val sdkLoggerRef: AtomicReference<Logger> = AtomicReference(noopLogger)
@@ -40,7 +41,7 @@ class EventServiceImpl(
         val container = EmbAttributesMutator()
         eventAttributes?.invoke(container)
         if (!container.attributes.containsKey(LogAttributes.LOG_RECORD_UID)) {
-            container.setStringAttribute(LogAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
+            container.setStringAttribute(LogAttributes.LOG_RECORD_UID, uuidSource.createUuid())
         }
         if (addCurrentMetadata) {
             getCurrentMetadata().forEach { (k, v) -> container.setStringAttribute(k, v) }

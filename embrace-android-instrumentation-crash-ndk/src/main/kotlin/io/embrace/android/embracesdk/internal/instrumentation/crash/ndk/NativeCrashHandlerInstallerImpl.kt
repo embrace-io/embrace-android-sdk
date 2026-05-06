@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniD
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.io.File
@@ -24,7 +23,7 @@ internal class NativeCrashHandlerInstallerImpl(
     private val delegate: JniDelegate,
     private val mainThreadHandler: MainThreadHandler,
     private val outputDir: Lazy<File>,
-    private val reportId: String = Uuid.getEmbUuid(),
+    private val reportId: String = args.uuidSource.createUuid(),
     private val devLogging: Boolean = false,
 ) : NativeCrashHandlerInstaller {
 
@@ -50,7 +49,8 @@ internal class NativeCrashHandlerInstallerImpl(
         try {
             if (sharedObjectLoader.loadEmbraceNative()) {
                 delegate.onSessionChange(
-                    sanitizeSessionId(args.sessionId()),
+                    sanitizeSessionId(args.sessionPartId()),
+                    sanitizeSessionId(args.userSessionId()),
                     createNativeReportPath()
                 )
                 mainThreadHandler.postAtFrontOfQueue { installSignals() }
@@ -59,7 +59,11 @@ internal class NativeCrashHandlerInstallerImpl(
                     HANDLER_CHECK_DELAY_MS
                 )
                 args.registerSessionPartChangeListener {
-                    delegate.onSessionChange(sanitizeSessionId(args.sessionId()), createNativeReportPath())
+                    delegate.onSessionChange(
+                        sanitizeSessionId(args.sessionPartId()),
+                        sanitizeSessionId(args.userSessionId()),
+                        createNativeReportPath()
+                    )
                 }
             }
         } catch (ex: Exception) {
@@ -106,7 +110,7 @@ internal class NativeCrashHandlerInstallerImpl(
     private fun createNativeReportPath(): String {
         val metadata = StoredTelemetryMetadata(
             timestamp = clock.now(),
-            uuid = sanitizeSessionId(args.sessionId()),
+            uuid = sanitizeSessionId(args.sessionPartId()),
             processIdentifier = processIdentifier,
             envelopeType = SupportedEnvelopeType.CRASH,
             payloadType = PayloadType.NATIVE_CRASH,

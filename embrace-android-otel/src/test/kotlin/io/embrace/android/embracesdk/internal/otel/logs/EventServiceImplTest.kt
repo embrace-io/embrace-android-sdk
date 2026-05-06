@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
+import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
 import io.opentelemetry.kotlin.logging.SeverityNumber
 import io.opentelemetry.kotlin.semconv.LogAttributes
 import org.junit.Assert.assertEquals
@@ -9,6 +10,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import kotlin.random.Random
 
 class EventServiceImplTest {
     val sessionAttributeName = "session-attr"
@@ -19,7 +21,8 @@ class EventServiceImplTest {
     fun setup() {
         sdkLogger = FakeOpenTelemetryLogger()
         impl = EventServiceImpl(
-            sdkLoggerProvider = { sdkLogger }
+            sdkLoggerProvider = { sdkLogger },
+            uuidSource = UuidSourceImpl(Random(0)),
         )
         impl.initializeService(100L)
         impl.setMetadataProvider { mapOf(sessionAttributeName to "foo") }
@@ -28,7 +31,8 @@ class EventServiceImplTest {
     @Test
     fun `event service needs initialization`() {
         val notInitializedLogger = EventServiceImpl(
-            sdkLoggerProvider = { sdkLogger }
+            sdkLoggerProvider = { sdkLogger },
+            uuidSource = UuidSourceImpl(Random(0)),
         )
         assertFalse(notInitializedLogger.initialized())
         notInitializedLogger.log(

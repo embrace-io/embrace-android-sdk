@@ -51,7 +51,7 @@ class CachedLogEnvelopeStoreImplTest {
         )
 
         val anotherCrashMetadata = createNativeCrashEnvelopeMetadata(
-            sessionId = "another-session",
+            sessionPartId = "another-session",
             processIdentifier = "another-process"
         )
 
@@ -69,7 +69,7 @@ class CachedLogEnvelopeStoreImplTest {
 
     companion object {
         val fakeNativeCrashEnvelope = createNativeCrashEnvelopeMetadata(
-            sessionId = "old-session-id",
+            sessionPartId = "old-session-id",
             processIdentifier = "old-process-id"
         )
     }

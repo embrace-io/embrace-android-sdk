@@ -67,6 +67,7 @@ internal class ModuleInitBootstrapper(
                 store = coreModule.store,
                 abis = Build.SUPPORTED_ABIS,
                 logger = initModule.logger,
+                uuidSource = initModule.uuidSource,
             )
         }
     },
@@ -94,6 +95,7 @@ internal class ModuleInitBootstrapper(
             workerThreadModule: WorkerThreadModule,
             lifecycleOwnerProvider: Provider<LifecycleOwner?>,
             networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
+            sessionOrchestratorProvider,
         ->
         EssentialServiceModuleImpl(
             initModule,
@@ -103,6 +105,7 @@ internal class ModuleInitBootstrapper(
             workerThreadModule,
             lifecycleOwnerProvider,
             networkConnectivityServiceProvider,
+            sessionOrchestratorProvider,
         )
     },
     private val featureModuleSupplier: FeatureModuleSupplier = {
@@ -124,6 +127,7 @@ internal class ModuleInitBootstrapper(
             essentialServiceModule: EssentialServiceModule,
             coreModule: CoreModule,
             storageService: StorageService,
+            userSessionIdProvider: () -> String?,
         ->
         InstrumentationModuleImpl(
             initModule,
@@ -133,6 +137,7 @@ internal class ModuleInitBootstrapper(
             essentialServiceModule,
             coreModule,
             storageService,
+            userSessionIdProvider,
         )
     },
     private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = {

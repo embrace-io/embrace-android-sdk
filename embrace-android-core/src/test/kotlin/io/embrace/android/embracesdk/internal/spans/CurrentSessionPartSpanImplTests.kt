@@ -28,6 +28,7 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl.C
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl.Companion.MAX_NON_INTERNAL_SPANS_PER_SESSION
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.OpenTelemetry
@@ -452,6 +453,28 @@ internal class CurrentSessionPartSpanImplTests {
     }
 
     @Test
+    fun `previous session link includes user session and session part ids when set`() {
+        val originalSessionSpan = checkNotNull(spanRepository.getActiveSpans().single())
+        val originalUserSessionId = "previous-user-session"
+        val originalSessionPartId = "previous-session-part"
+        originalSessionSpan.setSystemAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, originalUserSessionId)
+        originalSessionSpan.setSystemAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, originalSessionPartId)
+        val originalSessionId = currentSessionPartSpan.getSessionId()
+        val originalSnapshot = checkNotNull(originalSessionSpan.snapshot())
+
+        currentSessionPartSpan.endSession(startNewSession = true)
+
+        with(spanRepository.getActiveSpans().single()) {
+            checkNotNull(snapshot()?.links?.single()).validatePreviousSessionLink(
+                previousSessionSpan = originalSnapshot,
+                previousSessionId = originalSessionId,
+                previousUserSessionId = originalUserSessionId,
+                previousSessionPartId = originalSessionPartId,
+            )
+        }
+    }
+
+    @Test
     fun `new session will only start if told to`() {
         assertNotNull(spanRepository.getActiveSpans().single())
         currentSessionPartSpan.endSession(startNewSession = false)
@@ -525,6 +548,10 @@ internal class CurrentSessionPartSpanImplTests {
     fun `span stop callback creates the correct span links`() {
         val sessionSpan = checkNotNull(spanRepository.getActiveSpans().single())
         val sessionId = checkNotNull(sessionSpan.getSystemAttribute(SessionAttributes.SESSION_ID))
+        val userSessionId = "user-session-uuid"
+        val sessionPartId = "session-part-uuid"
+        sessionSpan.setSystemAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, userSessionId)
+        sessionSpan.setSystemAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionPartId)
         val span = spanService.startSpan("test").apply {
             stop()
         }
@@ -532,12 +559,20 @@ internal class CurrentSessionPartSpanImplTests {
         val spanSnapshot = checkNotNull(span.snapshot())
         val sessionSpanSnapshot = checkNotNull(sessionSpan.snapshot())
 
+        val expectedSessionIds = mapOf(
+            EmbSessionAttributes.EMB_USER_SESSION_ID to userSessionId,
+            EmbSessionAttributes.EMB_SESSION_PART_ID to sessionPartId,
+        )
         checkNotNull(spanSnapshot.links).single().validateSystemLink(
             linkedSpan = sessionSpanSnapshot,
             type = LinkType.EndSession,
-            expectedAttributes = mapOf(SessionAttributes.SESSION_ID to sessionId)
+            expectedAttributes = mapOf(SessionAttributes.SESSION_ID to sessionId) + expectedSessionIds
         )
-        checkNotNull(sessionSpanSnapshot.links).single().validateSystemLink(spanSnapshot, LinkType.EndedIn)
+        checkNotNull(sessionSpanSnapshot.links).single().validateSystemLink(
+            linkedSpan = spanSnapshot,
+            type = LinkType.EndedIn,
+            expectedAttributes = expectedSessionIds,
+        )
     }
 
     @Test

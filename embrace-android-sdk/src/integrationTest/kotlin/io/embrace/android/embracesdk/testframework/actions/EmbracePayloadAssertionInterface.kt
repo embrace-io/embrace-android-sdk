@@ -23,20 +23,23 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
-import io.embrace.android.embracesdk.testframework.assertions.JsonComparator
+import io.embrace.android.embracesdk.testframework.assertions.JsonComparator.compare
+import io.embrace.android.embracesdk.testframework.assertions.Placeholder
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import io.embrace.android.embracesdk.testframework.server.FormPart
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.json.JSONObject
-import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import java.io.File
 import java.io.IOException
 import java.util.Locale
 import java.util.concurrent.TimeoutException
+import kotlin.reflect.javaType
+import kotlin.reflect.typeOf
 
 /**
  * Provides assertions that can be used in integration tests to validate the behavior of the SDK,
@@ -306,25 +309,30 @@ internal class EmbracePayloadAssertionInterface(
      * Validates a payload against a golden file in the test resources. If the payload does not match
      * the golden file, the assertion fails.
      */
-    internal fun <T> validatePayloadAgainstGoldenFile(
+    @OptIn(ExperimentalStdlibApi::class)
+    internal inline fun <reified T : Any> validatePayloadAgainstGoldenFile(
         payload: T,
         goldenFileName: String,
+        placeholders: Map<Placeholder, String> = emptyMap(),
     ) {
         try {
             val observedJson = serializer.toJson(
                 payload,
-                Envelope.sessionEnvelopeType
+                typeOf<T>().javaType
             )
-            val expectedJson = ResourceReader.readResourceAsText(goldenFileName)
-            val result = JsonComparator.compare(JSONObject(expectedJson), JSONObject(observedJson))
-
+            val expectedJson = placeholders.entries.fold(
+                ResourceReader.readResourceAsText(goldenFileName)
+            ) { json, (placeholder, value) ->
+                json.replace(placeholder.token, value)
+            }
+            val result = compare(JSONObject(expectedJson), JSONObject(observedJson))
             if (result.isNotEmpty()) {
                 val msg by lazy {
                     "Request payload differed from expected JSON '$goldenFileName' due to following " +
                         "reasons: ${result.joinToString("; ")}\n" +
                         "Dump of full JSON: $observedJson"
                 }
-                Assert.fail(msg)
+                fail(msg)
             }
         } catch (e: IOException) {
             throw IllegalStateException("Failed to validate request against golden file.", e)

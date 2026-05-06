@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
+import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.behavior.FakeUserSessionBehavior
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
@@ -41,7 +42,6 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
-import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -50,7 +50,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RuntimeEnvironment
 import java.util.concurrent.TimeUnit
-import kotlin.random.Random
 
 @RunWith(AndroidJUnit4::class)
 internal class SessionOrchestratorListenerTest {
@@ -318,7 +317,7 @@ internal class SessionOrchestratorListenerTest {
             metadataStoreOverride ?: UserSessionMetadataStore(FakeKeyValueStore()),
             logger,
             fakeBackgroundWorker(),
-            UuidSourceImpl(Random(0)),
+            TestUuidSource(),
         )
         orchestratorStartTimeMs = clock.now()
         userSessionPropertiesService.addProperty("key", "value", PropertyScope.USER_SESSION)

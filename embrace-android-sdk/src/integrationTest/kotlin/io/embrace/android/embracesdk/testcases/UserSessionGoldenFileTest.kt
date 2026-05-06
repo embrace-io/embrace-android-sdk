@@ -11,8 +11,11 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCr
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.android.embracesdk.testframework.assertions.LogDiff
+import io.embrace.android.embracesdk.testframework.assertions.SessionPartDiff
+import io.embrace.android.embracesdk.testframework.assertions.UserSessionDiff
 import io.embrace.android.embracesdk.testframework.assertions.assertLogPayloadMatchesGoldenFile
-import io.embrace.android.embracesdk.testframework.assertions.assertSessionSpanMatchesGoldenFile
+import io.embrace.android.embracesdk.testframework.assertions.assertPayloadsMatchGoldenFiles
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -40,13 +43,14 @@ internal class UserSessionGoldenFileTest {
                 }
             },
             assertAction = {
-                assertLogPayloadMatchesGoldenFile(
-                    getSingleLogEnvelope(),
-                    "user_session_basic_log.json",
-                )
-                assertSessionSpanMatchesGoldenFile(
-                    getSingleSessionEnvelope(),
-                    "user_session_basic_span.json",
+                assertPayloadsMatchGoldenFiles(
+                    UserSessionDiff(
+                        SessionPartDiff(
+                            envelope = getSingleSessionEnvelope(),
+                            goldenFile = "user_session_basic_span.json",
+                            logs = listOf(LogDiff(getSingleLogEnvelope(), "user_session_basic_log.json")),
+                        ),
+                    ),
                 )
             }
         )
@@ -62,9 +66,10 @@ internal class UserSessionGoldenFileTest {
                 embrace.logMessage("Hi", Severity.INFO, mapOf(EmbSessionAttributes.EMB_PRIVATE_SEND_MODE to "immediate"))
             },
             assertAction = {
-                assertLogPayloadMatchesGoldenFile(
-                    getSingleLogEnvelope(),
-                    "log_without_user_session.json",
+                assertPayloadsMatchGoldenFiles(
+                    logsWithNoUserSession = listOf(
+                        LogDiff(getSingleLogEnvelope(), "log_without_user_session.json"),
+                    ),
                 )
             }
         )
@@ -82,13 +87,14 @@ internal class UserSessionGoldenFileTest {
                 }
             },
             assertAction = {
-                assertSessionSpanMatchesGoldenFile(
-                    getSingleSessionEnvelope(),
-                    "user_session_jvm_crash_span.json",
-                )
-                assertLogPayloadMatchesGoldenFile(
-                    getSingleLogEnvelope(),
-                    "user_session_jvm_crash_log.json",
+                assertPayloadsMatchGoldenFiles(
+                    UserSessionDiff(
+                        SessionPartDiff(
+                            envelope = getSingleSessionEnvelope(),
+                            goldenFile = "user_session_jvm_crash_span.json",
+                            logs = listOf(LogDiff(getSingleLogEnvelope(), "user_session_jvm_crash_log.json")),
+                        ),
+                    ),
                 )
             }
         )
@@ -121,8 +127,10 @@ internal class UserSessionGoldenFileTest {
             },
             assertAction = {
                 assertLogPayloadMatchesGoldenFile(
-                    getSingleLogEnvelope(),
-                    "user_session_ndk_crash_log.json",
+                    envelope = getSingleLogEnvelope(),
+                    expectedUserSessionId = userSessionId,
+                    expectedSessionPartId = sessionPartId,
+                    goldenFile = "user_session_ndk_crash_log.json",
                 )
             }
         )
@@ -156,8 +164,10 @@ internal class UserSessionGoldenFileTest {
             },
             assertAction = {
                 assertLogPayloadMatchesGoldenFile(
-                    getSingleLogEnvelope(),
-                    "user_session_ndk_crash_log.json",
+                    envelope = getSingleLogEnvelope(),
+                    expectedUserSessionId = userSessionId,
+                    expectedSessionPartId = sessionPartId,
+                    goldenFile = "user_session_ndk_crash_log.json",
                 )
             }
         )
@@ -179,9 +189,10 @@ internal class UserSessionGoldenFileTest {
                 recordSession()
             },
             assertAction = {
-                assertLogPayloadMatchesGoldenFile(
-                    getSingleLogEnvelope(),
-                    "user_session_aei_log.json",
+                assertPayloadsMatchGoldenFiles(
+                    logsWithNoUserSession = listOf(
+                        LogDiff(getSingleLogEnvelope(), "user_session_aei_log.json"),
+                    ),
                 )
             }
         )
@@ -199,13 +210,11 @@ internal class UserSessionGoldenFileTest {
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
-                assertSessionSpanMatchesGoldenFile(
-                    sessions[0],
-                    "user_session_part_1.json",
-                )
-                assertSessionSpanMatchesGoldenFile(
-                    sessions[1],
-                    "user_session_part_2.json",
+                assertPayloadsMatchGoldenFiles(
+                    UserSessionDiff(
+                        SessionPartDiff(sessions[0], "user_session_part_1.json"),
+                        SessionPartDiff(sessions[1], "user_session_part_2.json"),
+                    ),
                 )
             }
         )
@@ -228,9 +237,10 @@ internal class UserSessionGoldenFileTest {
                 recordSession()
             },
             assertAction = {
-                assertSessionSpanMatchesGoldenFile(
-                    getSingleSessionEnvelope(),
-                    "user_session_custom_timeouts.json",
+                assertPayloadsMatchGoldenFiles(
+                    UserSessionDiff(
+                        SessionPartDiff(getSingleSessionEnvelope(), "user_session_custom_timeouts.json"),
+                    ),
                 )
             }
         )

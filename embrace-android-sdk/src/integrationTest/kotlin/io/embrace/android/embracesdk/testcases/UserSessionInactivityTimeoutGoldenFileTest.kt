@@ -7,7 +7,9 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import io.embrace.android.embracesdk.testframework.assertions.assertSessionSpanMatchesGoldenFile
+import io.embrace.android.embracesdk.testframework.assertions.SessionPartDiff
+import io.embrace.android.embracesdk.testframework.assertions.UserSessionDiff
+import io.embrace.android.embracesdk.testframework.assertions.assertPayloadsMatchGoldenFiles
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -19,11 +21,6 @@ import org.junit.runner.RunWith
  * blockingMode = false so that immediate tasks still execute synchronously while the
  * scheduled timer can be fired explicitly via runCurrentlyBlocked() inside the test
  * action.
- *
- * Also fakes [Worker.Background.PeriodicCacheWorker] so that the cache snapshot job
- * queues without auto-firing — otherwise it consumes UUIDs from the seeded
- * [kotlin.random.Random] on a background thread, making post-startup IDs in the golden
- * files non-deterministic across runs.
  */
 @RunWith(AndroidJUnit4::class)
 internal class UserSessionInactivityTimeoutGoldenFileTest {
@@ -32,10 +29,7 @@ internal class UserSessionInactivityTimeoutGoldenFileTest {
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
         EmbraceSetupInterface(
-            workersToFake = listOf(
-                Worker.Background.NonIoRegWorker,
-                Worker.Background.PeriodicCacheWorker,
-            ),
+            workersToFake = listOf(Worker.Background.NonIoRegWorker),
         ).also {
             it.getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).blockingMode = false
         }
@@ -69,28 +63,23 @@ internal class UserSessionInactivityTimeoutGoldenFileTest {
                 recordSession()
             },
             assertAction = {
-                val sessions = getSessionEnvelopes(2, AppState.FOREGROUND)
-                val bgs = getSessionEnvelopes(3, AppState.BACKGROUND)
+                val sessionPartEnvelopes = getSessionEnvelopes(2, AppState.FOREGROUND)
+                val bgPartEnvelopes = getSessionEnvelopes(3, AppState.BACKGROUND)
 
-                assertSessionSpanMatchesGoldenFile(
-                    bgs[0],
-                    "user_session_bg_timeout_1.json",
-                )
-                assertSessionSpanMatchesGoldenFile(
-                    sessions[0],
-                    "user_session_bg_timeout_2.json",
-                )
-                assertSessionSpanMatchesGoldenFile(
-                    bgs[1],
-                    "user_session_bg_timeout_3.json",
-                )
-                assertSessionSpanMatchesGoldenFile(
-                    bgs[2],
-                    "user_session_bg_timeout_4.json",
-                )
-                assertSessionSpanMatchesGoldenFile(
-                    sessions[1],
-                    "user_session_bg_timeout_5.json",
+                assertPayloadsMatchGoldenFiles(
+                    UserSessionDiff(
+                        SessionPartDiff(sessionPartEnvelopes[0], "user_session_bg_timeout_2.json"),
+                        SessionPartDiff(bgPartEnvelopes[1], "user_session_bg_timeout_3.json"),
+                    ),
+                    UserSessionDiff(
+                        SessionPartDiff(bgPartEnvelopes[2], "user_session_bg_timeout_4.json")
+                    ),
+                    UserSessionDiff(
+                        SessionPartDiff(sessionPartEnvelopes[1], "user_session_bg_timeout_5.json")
+                    ),
+                    partsWithNoUserSession = listOf(
+                        SessionPartDiff(bgPartEnvelopes[0], "user_session_bg_timeout_1.json")
+                    ),
                 )
             }
         )

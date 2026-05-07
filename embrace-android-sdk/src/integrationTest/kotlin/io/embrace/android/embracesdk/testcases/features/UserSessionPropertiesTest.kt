@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterfac
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -98,33 +99,19 @@ internal class UserSessionPropertiesTest {
         )
     }
 
+    @Ignore("user session scoped properties don't persist across app instances")
     @Test
-    fun `session properties are persisted in cached payloads`() {
+    fun `user-session-scoped property does not survive an expired user-session boundary across processes`() {
         testRule.runTest(
             setupAction = {
-                setupDefaultPermanentSessionProperties()
+                // TODO: persist session scoped property
             },
             testCaseAction = {
-                addAndRemoveProperties()
+                recordSession()
             },
             assertAction = {
-                // TODO: rewrite this after v2 delivery layer changes merged
-            }
-        )
-    }
-
-    @Test
-    fun `session properties are persisted in cached payloads when bg activities are disabled`() {
-        testRule.runTest(
-            setupAction = {
-                setupDefaultPermanentSessionProperties()
+                // TODO: verify session scoped property in session span
             },
-            testCaseAction = {
-                addAndRemoveProperties()
-            },
-            assertAction = {
-                // TODO: rewrite this after v2 delivery layer changes merged
-            }
         )
     }
 

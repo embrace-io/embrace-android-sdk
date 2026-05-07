@@ -9,8 +9,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import io.embrace.android.embracesdk.instrumentation.androidx.navigation.rememberObservedNavController
 import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.ecommerce.ui.EcommerceCartUi
 import io.embrace.android.exampleapp.paradigms.ecommerce.ui.EcommerceCategoriesUi
@@ -27,7 +27,7 @@ class EcommerceNavComposeActivity : ComponentActivity() {
                 val graph = appGraph()
                 val sampleData = graph.sampleData
                 val cartStore = graph.cartStore
-                val navController = rememberNavController()
+                val navController = rememberObservedNavController()
                 NavHost(
                     navController = navController,
                     startDestination = EcommerceRoute.Categories,

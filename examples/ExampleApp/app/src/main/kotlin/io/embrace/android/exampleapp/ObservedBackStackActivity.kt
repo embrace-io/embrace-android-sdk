@@ -12,14 +12,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.NavDisplay
+import io.embrace.android.embracesdk.instrumentation.androidx.navigation.rememberObservedBackStack
 import io.embrace.android.exampleapp.ui.theme.ExampleAppTheme
 
 class ObservedBackStackActivity : ComponentActivity() {
@@ -28,7 +27,7 @@ class ObservedBackStackActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ExampleAppTheme {
-                val backStack = remember { mutableStateListOf<Screen>(Screen.Home) }
+                val backStack = rememberObservedBackStack<Screen>(Screen.Home)
                 NavDisplay(
                     backStack = backStack,
                     onBack = { backStack.removeLastOrNull() },

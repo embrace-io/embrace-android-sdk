@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import io.embrace.android.embracesdk.instrumentation.androidx.navigation.rememberObservedNavController
 import io.embrace.android.exampleapp.ui.theme.ExampleAppTheme
 
 class ObservedNavControllerActivity : ComponentActivity() {
@@ -26,7 +26,7 @@ class ObservedNavControllerActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ExampleAppTheme {
-                val navController = rememberNavController()
+                val navController = rememberObservedNavController()
                 NavHost(navController = navController, startDestination = "nav-controller-home") {
                     composable("nav-controller-home") { ScreenContent("Home", navController) }
                     composable("nav-controller-about") { ScreenContent("About", navController) }

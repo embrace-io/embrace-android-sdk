@@ -62,6 +62,69 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".paradigms.social.a2a.SocialA2ATimelineActivity"
+            android:theme="@style/Theme.ExampleApp" />
+        <activity
+            android:name=".paradigms.social.a2a.SocialA2APostDetailActivity"
+            android:theme="@style/Theme.ExampleApp" />
+        <activity
+            android:name=".paradigms.social.a2a.SocialA2AProfileActivity"
+            android:theme="@style/Theme.ExampleApp" />
+        <activity
+            android:name=".paradigms.social.a2a.SocialA2AComposeActivity"
+            android:theme="@style/Theme.ExampleApp" />
+        <activity
+            android:name=".paradigms.social.fragments.SocialFragmentsActivity"
+            android:theme="@style/Theme.ExampleApp" />
+        <activity
+            android:name=".paradigms.social.navcompose.SocialNavComposeActivity"
+            android:theme="@style/Theme.ExampleApp" />
+        <activity
+            android:name=".paradigms.social.nav3.SocialNav3Activity"
+            android:theme="@style/Theme.ExampleApp" />
+
+        <activity
+            android:name=".paradigms.news.a2a.NewsA2ASectionsActivity"
+            android:theme="@style/Theme.ExampleApp" />
+        <activity
+            android:name=".paradigms.news.a2a.NewsA2AArticleListActivity"
+            android:theme="@style/Theme.ExampleApp" />
+        <activity
+            android:name=".paradigms.news.a2a.NewsA2AArticleDetailActivity"
+            android:theme="@style/Theme.ExampleApp" />
+        <activity
+            android:name=".paradigms.news.fragments.NewsFragmentsActivity"
+            android:theme="@style/Theme.ExampleApp" />
+        <activity
+            android:name=".paradigms.news.navcompose.NewsNavComposeActivity"
+            android:theme="@style/Theme.ExampleApp" />
+        <activity
+            android:name=".paradigms.news.nav3.NewsNav3Activity"
+            android:theme="@style/Theme.ExampleApp" />
+
+        <activity
+            android:name=".paradigms.ecommerce.a2a.EcommerceA2ACategoriesActivity"
+            android:theme="@style/Theme.ExampleApp" />
+        <activity
+            android:name=".paradigms.ecommerce.a2a.EcommerceA2AProductListActivity"
+            android:theme="@style/Theme.ExampleApp" />
+        <activity
+            android:name=".paradigms.ecommerce.a2a.EcommerceA2AProductDetailActivity"
+            android:theme="@style/Theme.ExampleApp" />
+        <activity
+            android:name=".paradigms.ecommerce.a2a.EcommerceA2ACartActivity"
+            android:theme="@style/Theme.ExampleApp" />
+        <activity
+            android:name=".paradigms.ecommerce.fragments.EcommerceFragmentsActivity"
+            android:theme="@style/Theme.ExampleApp" />
+        <activity
+            android:name=".paradigms.ecommerce.navcompose.EcommerceNavComposeActivity"
+            android:theme="@style/Theme.ExampleApp" />
+        <activity
+            android:name=".paradigms.ecommerce.nav3.EcommerceNav3Activity"
+            android:theme="@style/Theme.ExampleApp" />
+
         <service android:name=".ui.examples.bytecode.ExamplePushNotificationService" />
     </application>
 

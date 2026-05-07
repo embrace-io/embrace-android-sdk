@@ -1,24 +1,21 @@
 package io.embrace.android.exampleapp.ui
 
 import androidx.compose.runtime.Composable
+import io.embrace.android.exampleapp.paradigms.ParadigmHubContent
 import io.embrace.android.exampleapp.ui.examples.AddBreadcrumbExample
 import io.embrace.android.exampleapp.ui.examples.AnrDetectionExample
-import io.embrace.android.exampleapp.ui.examples.ComplexFragmentNavigationExample
-import io.embrace.android.exampleapp.ui.examples.ComposeFragmentNavigationExample
-import io.embrace.android.exampleapp.ui.examples.ObservedBackStackExample
-import io.embrace.android.exampleapp.ui.examples.ObservedNavControllerExample
-import io.embrace.android.exampleapp.ui.examples.bytecode.BytecodeInstrumentationExample
 import io.embrace.android.exampleapp.ui.examples.EndSessionExample
 import io.embrace.android.exampleapp.ui.examples.JvmCrashExample
 import io.embrace.android.exampleapp.ui.examples.LogMessageAttachmentsExample
-import io.embrace.android.exampleapp.ui.examples.NdkCrashExample
 import io.embrace.android.exampleapp.ui.examples.LogMessageExample
+import io.embrace.android.exampleapp.ui.examples.NdkCrashExample
 import io.embrace.android.exampleapp.ui.examples.NetworkRequestExample
 import io.embrace.android.exampleapp.ui.examples.SdkStateApiExample
-import io.embrace.android.exampleapp.ui.examples.UserSessionPropertiesExample
 import io.embrace.android.exampleapp.ui.examples.TracingApiExample
 import io.embrace.android.exampleapp.ui.examples.UserExample
+import io.embrace.android.exampleapp.ui.examples.UserSessionPropertiesExample
 import io.embrace.android.exampleapp.ui.examples.ViewTrackingExample
+import io.embrace.android.exampleapp.ui.examples.bytecode.BytecodeInstrumentationExample
 
 @Composable
 fun ExampleContent(example: CodeExample) {
@@ -37,9 +34,6 @@ fun ExampleContent(example: CodeExample) {
         CodeExample.NDK_CRASH -> NdkCrashExample()
         CodeExample.ANR_DETECTION -> AnrDetectionExample()
         CodeExample.BYTECODE_INSTRUMENTATION_SAMPLES -> BytecodeInstrumentationExample()
-        CodeExample.FRAGMENT_NAVIGATION -> ComposeFragmentNavigationExample()
-        CodeExample.COMPLEX_FRAGMENT_NAVIGATION -> ComplexFragmentNavigationExample()
-        CodeExample.OBSERVED_NAV_CONTROLLER -> ObservedNavControllerExample()
-        CodeExample.OBSERVED_BACK_STACK -> ObservedBackStackExample()
+        CodeExample.NAV_PARADIGMS -> ParadigmHubContent()
     }
 }

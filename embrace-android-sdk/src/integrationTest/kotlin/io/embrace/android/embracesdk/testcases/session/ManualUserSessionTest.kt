@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertNotEquals
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -75,7 +74,6 @@ internal class ManualUserSessionTest {
         )
     }
 
-    @Ignore("you should be able to end a user session in the background if background activity is enabled")
     @Test
     fun `endUserSession from background should end user session when the background activity feature is enabled`() {
         testRule.runTest(

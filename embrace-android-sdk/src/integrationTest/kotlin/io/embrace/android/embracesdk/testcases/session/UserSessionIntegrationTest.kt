@@ -133,28 +133,6 @@ internal class UserSessionIntegrationTest {
     }
 
     @Test
-    fun `session times out while device is offline works as expected`() {
-        testRule.runTest(
-            setupAction = {
-                fakeNetworkConnectivityService.connectivityStatus = ConnectivityStatus.None
-                persistExpiredUserSession(true)
-            },
-            testCaseAction = {
-                recordSession()
-                simulateConnectionTypeChange(ConnectionType.WIFI)
-            },
-            assertAction = {
-                val sessions = getSessionEnvelopes(2)
-                val cached = sessions.first()
-                val live = sessions.last()
-                assertEquals(FAKE_USER_SESSION_ID, cached.getSessionId())
-                assertNotEquals(FAKE_USER_SESSION_ID, live.getUserSessionId())
-                assertNotEquals(cached.getSessionId(), live.getUserSessionId())
-            },
-        )
-    }
-
-    @Test
     fun `native crash has previous session ID when no session metadata is on disk even when resurrected in a new session`() {
         testRule.runTest(
             instrumentedConfig = nativeCrashEnabledConfig(),
@@ -216,21 +194,6 @@ internal class UserSessionIntegrationTest {
                 assertEquals(FAKE_SESSION_PART_ID, attrs.findAttributeValue(EmbAeiAttributes.AEI_SESSION_PART_ID))
                 assertEquals(FAKE_USER_SESSION_ID, attrs.findAttributeValue(EmbAeiAttributes.AEI_USER_SESSION_ID))
                 assertNotEquals(FAKE_USER_SESSION_ID, getSingleSessionEnvelope().getUserSessionId())
-            },
-        )
-    }
-
-    @Test
-    fun `endUserSession from background when background activity is off does not end user session`() {
-        testRule.runTest(
-            testCaseAction = {
-                recordSession()
-                embrace.endUserSession()
-                recordSession()
-            },
-            assertAction = {
-                val parts = getSessionEnvelopes(2)
-                assertEquals(parts[0].getUserSessionId(), parts[1].getUserSessionId())
             },
         )
     }

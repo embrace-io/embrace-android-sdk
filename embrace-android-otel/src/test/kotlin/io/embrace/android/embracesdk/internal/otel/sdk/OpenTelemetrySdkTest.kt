@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.FakeSpanService
+import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.logs.EventServiceImpl
@@ -14,13 +15,11 @@ import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
 import io.opentelemetry.kotlin.logging.Logger
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
-import kotlin.random.Random
 
 internal class OpenTelemetrySdkTest {
 
@@ -147,7 +146,7 @@ internal class OpenTelemetrySdkTest {
             otelClock = FakeOtelKotlinClock(FakeClock()),
             configuration = configuration,
             spanService = FakeSpanService(),
-            eventService = EventServiceImpl(sdkLoggerSupplier, UuidSourceImpl(Random(0))),
+            eventService = EventServiceImpl(sdkLoggerSupplier, TestUuidSource()),
             useKotlinSdk = false,
         )
     }

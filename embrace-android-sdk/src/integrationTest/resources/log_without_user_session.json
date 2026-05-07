@@ -12,7 +12,7 @@
         },
         {
           "key": "emb.session_part_id",
-          "value": ""
+          "value": "__EMBRACE_TEST_SESSION_PART_ID__"
         },
         {
           "key": "emb.state",
@@ -40,7 +40,7 @@
         },
         {
           "key": "emb.user_session_id",
-          "value": ""
+          "value": "__EMBRACE_TEST_USER_SESSION_ID__"
         },
         {
           "key": "log.record.uid",
@@ -48,7 +48,7 @@
         },
         {
           "key": "session.id",
-          "value": ""
+          "value": "__EMBRACE_TEST_USER_SESSION_ID__"
         }
       ]
     }

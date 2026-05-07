@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSpanFactory
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeTracer
+import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
@@ -27,7 +28,6 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl.Companion.MAX_INTERNAL_SPANS_PER_SESSION
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl.Companion.MAX_NON_INTERNAL_SPANS_PER_SESSION
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
-import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -42,7 +42,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import kotlin.random.Random
 
 internal class CurrentSessionPartSpanImplTests {
 
@@ -506,7 +505,7 @@ internal class CurrentSessionPartSpanImplTests {
             embraceSpanFactorySupplier = { FakeEmbraceSpanFactory() },
             tracerSupplier = { FakeTracer() },
             openTelemetrySupplier = ::openTelemetry,
-            uuidSource = UuidSourceImpl(Random(0)),
+            uuidSource = TestUuidSource(),
         )
         assertFalse(sessionSpan.readySession())
     }

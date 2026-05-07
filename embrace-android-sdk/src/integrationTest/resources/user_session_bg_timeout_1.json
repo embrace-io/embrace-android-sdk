@@ -58,7 +58,7 @@
     },
     {
       "key": "emb.session_part_id",
-      "value": ""
+      "value": "__EMBRACE_TEST_SESSION_PART_ID__"
     },
     {
       "key": "emb.session_start_type",
@@ -82,11 +82,11 @@
     },
     {
       "key": "emb.user_session_id",
-      "value": ""
+      "value": "__EMBRACE_TEST_USER_SESSION_ID__"
     },
     {
       "key": "session.id",
-      "value": ""
+      "value": "__EMBRACE_TEST_USER_SESSION_ID__"
     }
   ],
   "links": "__EMBRACE_TEST_IGNORE__"

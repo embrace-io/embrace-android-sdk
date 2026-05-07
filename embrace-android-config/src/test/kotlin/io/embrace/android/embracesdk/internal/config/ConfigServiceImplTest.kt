@@ -2,13 +2,13 @@ package io.embrace.android.embracesdk.internal.config
 
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
+import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
 import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -17,7 +17,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.nio.file.Files
-import kotlin.random.Random
 
 internal class ConfigServiceImplTest {
 
@@ -122,6 +121,6 @@ internal class ConfigServiceImplTest {
         filesDir = Files.createTempDirectory("tmp").toFile(),
         logger = FakeInternalLogger(),
         hasConfiguredOtlpExport = hasConfiguredExporters,
-        uuidSource = UuidSourceImpl(Random(0)),
+        uuidSource = TestUuidSource(),
     )
 }

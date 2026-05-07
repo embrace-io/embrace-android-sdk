@@ -2,11 +2,11 @@ package io.embrace.android.embracesdk.internal.config
 
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
+import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.config.FakeBase64SharedObjectFilesMap
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.payload.NativeSymbols
-import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
 import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -14,7 +14,6 @@ import org.junit.Test
 import java.nio.file.Files
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
-import kotlin.random.Random
 
 class NativeSymbolTest {
 
@@ -85,7 +84,7 @@ class NativeSymbolTest {
             filesDir = Files.createTempDirectory("tmp").toFile(),
             logger = FakeInternalLogger(),
             hasConfiguredOtlpExport = { false },
-            uuidSource = UuidSourceImpl(Random(0)),
+            uuidSource = TestUuidSource(),
         )
     }
 }

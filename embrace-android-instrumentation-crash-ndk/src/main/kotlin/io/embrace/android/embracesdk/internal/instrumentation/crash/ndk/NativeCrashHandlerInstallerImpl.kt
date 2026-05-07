@@ -48,30 +48,35 @@ internal class NativeCrashHandlerInstallerImpl(
     private fun startNativeCrashMonitoring() {
         try {
             if (sharedObjectLoader.loadEmbraceNative()) {
-                delegate.onSessionChange(
-                    sanitizeSessionId(args.sessionPartId()),
-                    sanitizeSessionId(args.userSessionId()),
-                    createNativeReportPath()
-                )
+                updateSessionIds()
                 mainThreadHandler.postAtFrontOfQueue { installSignals() }
                 mainThreadHandler.postDelayed(
                     Runnable(::checkSignalHandlersOverwritten),
                     HANDLER_CHECK_DELAY_MS
                 )
-                args.registerSessionPartChangeListener {
-                    delegate.onSessionChange(
-                        sanitizeSessionId(args.sessionPartId()),
-                        sanitizeSessionId(args.userSessionId()),
-                        createNativeReportPath()
-                    )
-                }
+                args.registerSessionPartChangeListener { updateSessionIds() }
             }
         } catch (ex: Exception) {
             logger.trackInternalError(InternalErrorType.NATIVE_HANDLER_INSTALL_FAIL, ex)
         }
     }
 
-    private fun sanitizeSessionId(sid: String?) = sid ?: "null"
+    private fun updateSessionIds() {
+        val ids = args.activeSessionIds()
+        val sessionPartId = sanitizeSessionId(ids.sessionPartId)
+        delegate.onSessionChange(
+            sessionPartId,
+            sanitizeSessionId(ids.userSessionId),
+            createNativeReportPath(sessionPartId)
+        )
+    }
+
+    private fun sanitizeSessionId(sid: String?) =
+        if (sid.isNullOrBlank()) {
+            "null"
+        } else {
+            sid
+        }
 
     private fun checkSignalHandlersOverwritten() {
         if (configService.autoDataCaptureBehavior.is3rdPartySigHandlerDetectionEnabled()) {
@@ -107,10 +112,10 @@ internal class NativeCrashHandlerInstallerImpl(
         }
     }
 
-    private fun createNativeReportPath(): String {
+    private fun createNativeReportPath(sanitizedSessionPartId: String): String {
         val metadata = StoredTelemetryMetadata(
             timestamp = clock.now(),
-            uuid = sanitizeSessionId(args.sessionPartId()),
+            uuid = sanitizedSessionPartId,
             processIdentifier = processIdentifier,
             envelopeType = SupportedEnvelopeType.CRASH,
             payloadType = PayloadType.NATIVE_CRASH,

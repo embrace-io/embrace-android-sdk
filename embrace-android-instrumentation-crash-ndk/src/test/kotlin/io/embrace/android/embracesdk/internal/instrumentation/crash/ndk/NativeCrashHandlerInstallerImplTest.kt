@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.FakeMainThreadHandler
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -56,6 +57,12 @@ class NativeCrashHandlerInstallerImplTest {
             backgroundWorkerSupplier = { BackgroundWorker(executorService) },
             sessionIdSupplier = { sessionId },
             userSessionIdSupplier = { userSessionId },
+            activeSessionIdsSupplier = {
+                SessionIdsSnapshot(
+                    userSessionId = userSessionId.orEmpty(),
+                    sessionPartId = sessionId.orEmpty()
+                )
+            },
             processIdentifier = "pid"
         )
         nativeCrashHandlerInstaller = NativeCrashHandlerInstallerImpl(

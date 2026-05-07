@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.session.message
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
+import io.embrace.android.embracesdk.fakes.FakeSessionIdProvider
 import io.embrace.android.embracesdk.fakes.FakeSessionPartPayloadSource
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.state.AppState
@@ -44,6 +45,7 @@ internal class PayloadMessageCollatorImplTest {
         collator = PayloadMessageCollatorImpl(
             sessionPartEnvelopeSource = sessionPartEnvelopeSource,
             currentSessionPartSpan = currentSessionPartSpan,
+            sessionIdProvider = FakeSessionIdProvider(),
         )
     }
 
@@ -137,11 +139,11 @@ internal class PayloadMessageCollatorImplTest {
                 AppState.entries.forEach { previousState ->
                     collator.buildInitialPart(
                         InitialEnvelopeParams(
-                            coldStart = startupTemperature,
-                            startType = lifeEventType,
-                            startTime = 5L,
-                            appState = previousState,
-                            partNumber = 1
+                            startupTemperature,
+                            lifeEventType,
+                            5L,
+                            previousState,
+                            1
                         )
                     ).verifyInitialFieldsPopulated()
                 }

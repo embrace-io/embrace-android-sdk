@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
@@ -44,6 +45,7 @@ internal class InstrumentationArgsImpl(
     private val sessionPartTracker: SessionPartTracker,
     private val userSessionPropertiesService: UserSessionPropertiesService,
     private val userSessionIdProvider: () -> String?,
+    private val activeSessionIdsProvider: () -> SessionIdsSnapshot,
     crashMarkerFileProvider: () -> File,
 ) : InstrumentationArgs {
 
@@ -66,6 +68,8 @@ internal class InstrumentationArgsImpl(
     override fun sessionPartId(): String? = sessionPartTracker.getActiveSessionPartId()
 
     override fun userSessionId(): String? = userSessionIdProvider()
+
+    override fun activeSessionIds(): SessionIdsSnapshot = activeSessionIdsProvider()
 
     override fun userSessionProperties(): Map<String, String> = userSessionPropertiesService.getProperties()
 

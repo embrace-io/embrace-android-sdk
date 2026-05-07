@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 
 /**
- * Holds the parameters & logic needed to create an initial session object.
+ * Holds the parameters & logic needed to create an initial session part envelope object.
  */
 class InitialEnvelopeParams(
     val coldStart: Boolean,

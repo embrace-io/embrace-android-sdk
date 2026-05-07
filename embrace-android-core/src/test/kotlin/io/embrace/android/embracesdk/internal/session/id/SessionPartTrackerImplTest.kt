@@ -35,6 +35,7 @@ internal class SessionPartTrackerImplTest {
 
         val anotherSession = SessionPartToken(
             sessionPartId = "fake",
+            userSessionId = "fake-user-session-id",
             startTime = 11L,
             appState = AppState.BACKGROUND,
             isColdStart = false,

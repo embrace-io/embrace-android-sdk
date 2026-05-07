@@ -18,7 +18,7 @@ interface PayloadFactory {
         state: AppState,
         timestamp: Long,
         coldStart: Boolean,
-        partNumber: Int
+        partNumber: Int,
     ): SessionPartToken?
 
     /**

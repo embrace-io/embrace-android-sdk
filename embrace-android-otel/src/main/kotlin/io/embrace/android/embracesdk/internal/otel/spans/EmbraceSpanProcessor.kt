@@ -24,11 +24,10 @@ class EmbraceSpanProcessor(
         span.setStringAttribute(EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID, counter.getAndIncrement().toString())
         span.setStringAttribute(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER, processIdentifier)
         sessionIdProvider()?.let { provider ->
-            val sessionPartId = provider.getCurrentSessionPartId()
-            val userSessionId = provider.getCurrentUserSessionId()
-            span.setStringAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionPartId)
-            span.setStringAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, userSessionId)
-            span.setStringAttribute(SessionAttributes.SESSION_ID, userSessionId)
+            val ids = provider.getActiveSessionIds()
+            span.setStringAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, ids.sessionPartId)
+            span.setStringAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, ids.userSessionId)
+            span.setStringAttribute(SessionAttributes.SESSION_ID, ids.userSessionId)
         }
     }
 

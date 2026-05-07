@@ -1,16 +1,17 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.fixtures.testSpan
+import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
-import io.embrace.android.embracesdk.internal.arch.state.AppState
 
 fun fakeSessionPartToken(): SessionPartToken = SessionPartToken(
-    sessionPartId = "fakeSessionId",
+    sessionPartId = "fakeSessionPartId",
+    userSessionId = "fakeUserSessionId",
     startTime = 160000000000L,
     appState = AppState.FOREGROUND,
     isColdStart = true,
@@ -19,7 +20,7 @@ fun fakeSessionPartToken(): SessionPartToken = SessionPartToken(
 )
 
 fun fakeSessionEnvelope(
-    sessionId: String = "fakeSessionId",
+    sessionId: String = "fakeSessionPartId",
     startMs: Long = 160000000000L,
     endMs: Long = 161000400000L,
     sessionProperties: Map<String, String>? = null,

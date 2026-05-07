@@ -12,4 +12,15 @@ internal class SessionIdProviderImpl(
 
     override fun getCurrentSessionPartId(): String =
         sessionPartTracker.getActiveSessionPart()?.sessionPartId ?: ""
+
+    override fun getActiveSessionIds(): SessionIdsSnapshot =
+        sessionPartTracker.getActiveSessionPart()?.let {
+            SessionIdsSnapshot(
+                userSessionId = it.userSessionId,
+                sessionPartId = it.sessionPartId,
+            )
+        } ?: SessionIdsSnapshot(
+            userSessionId = sessionOrchestratorProvider()?.currentUserSession()?.userSessionId.orEmpty(),
+            sessionPartId = "",
+        )
 }

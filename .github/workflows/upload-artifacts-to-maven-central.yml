@@ -57,7 +57,7 @@ jobs:
 
       - name: Publish to Maven Central
         run: |
-          ./gradlew publishToMavenCentral --no-configuration-cache --stacktrace
+          ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache --stacktrace
 
       - name: Publish git tag
         env:

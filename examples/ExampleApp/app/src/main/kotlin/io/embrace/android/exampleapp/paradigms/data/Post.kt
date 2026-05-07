@@ -1,5 +1,8 @@
 package io.embrace.android.exampleapp.paradigms.data
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class Post(
     val id: String,
     val authorHandle: String,
@@ -16,6 +19,7 @@ data class Post(
     val hashtags: List<String> = emptyList(),
 )
 
+@Serializable
 data class PostAuthor(
     val handle: String,
     val displayName: String,

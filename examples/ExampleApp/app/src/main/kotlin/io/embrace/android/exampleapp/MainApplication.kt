@@ -5,6 +5,7 @@ import android.app.Application
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.otel.java.addJavaLogRecordExporter
 import io.embrace.android.embracesdk.otel.java.addJavaSpanExporter
+import io.embrace.android.exampleapp.paradigms.data.SampleData
 import java.net.URL
 import java.net.URLStreamHandler
 import java.net.URLStreamHandlerFactory
@@ -22,6 +23,9 @@ class MainApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
+        // wire SampleData to assets; lazy reads parse JSON on first paradigm-screen open
+        SampleData.init(this)
 
         // preinstall an existing URLStreamFactory to ensure the wrapping factor for instrumentation works
         val error = installFakeURLStreamHandlerFactory()

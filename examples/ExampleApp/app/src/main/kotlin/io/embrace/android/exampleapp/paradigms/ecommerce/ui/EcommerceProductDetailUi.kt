@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import io.embrace.android.exampleapp.paradigms.data.Product
+import io.embrace.android.exampleapp.paradigms.data.Specification
 import io.embrace.android.exampleapp.paradigms.ui.ImageItem
 import io.embrace.android.exampleapp.ui.appBarColors
 import kotlinx.coroutines.launch
@@ -252,7 +253,7 @@ private fun BulletList(bullets: List<String>) {
 }
 
 @Composable
-private fun SpecificationsTable(specifications: List<Pair<String, String>>) {
+private fun SpecificationsTable(specifications: List<Specification>) {
     Text(text = "Specifications", style = MaterialTheme.typography.titleSmall)
     Spacer(modifier = Modifier.height(6.dp))
     Surface(

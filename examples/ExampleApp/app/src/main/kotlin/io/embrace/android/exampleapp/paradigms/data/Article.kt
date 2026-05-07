@@ -1,5 +1,8 @@
 package io.embrace.android.exampleapp.paradigms.data
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class Article(
     val id: String,
     val sectionId: String,
@@ -17,6 +20,7 @@ data class Article(
     val pullQuote: String? = null,
 )
 
+@Serializable
 data class NewsSection(
     val id: String,
     val title: String,

@@ -60,7 +60,7 @@ internal class UserSessionPartNumberTest {
         val lastActivityMs = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS - 100L
         testRule.runTest(
             setupAction = {
-                persistUserSession(sessionId = persistedId, startMs = startMs, lastActivityMs = lastActivityMs, partNumber = 2)
+                persistUserSession(userSessionId = persistedId, startMs = startMs, lastActivityMs = lastActivityMs, partNumber = 2)
             },
             testCaseAction = { recordSession() },
             assertAction = {
@@ -79,7 +79,7 @@ internal class UserSessionPartNumberTest {
         val lastActivityMs = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS - defaultInactivityMs - 1L
         testRule.runTest(
             setupAction = {
-                persistUserSession(sessionId = persistedId, startMs = startMs, lastActivityMs = lastActivityMs, partNumber = 5)
+                persistUserSession(userSessionId = persistedId, startMs = startMs, lastActivityMs = lastActivityMs, partNumber = 5)
             },
             testCaseAction = { recordSession() },
             assertAction = {

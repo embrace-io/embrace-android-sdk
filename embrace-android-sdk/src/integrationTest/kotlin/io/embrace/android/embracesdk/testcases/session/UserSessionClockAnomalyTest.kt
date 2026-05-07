@@ -54,7 +54,7 @@ internal class UserSessionClockAnomalyTest {
             setupAction = {
                 val futureStartMs = testRule.bootstrapper.initModule.clock.now() + 100_000L
                 persistUserSession(
-                    sessionId = sessionId,
+                    userSessionId = sessionId,
                     startMs = futureStartMs,
                     lastActivityMs = futureStartMs,
                 )

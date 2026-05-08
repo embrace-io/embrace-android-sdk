@@ -7,6 +7,7 @@ import io.embrace.android.exampleapp.paradigms.data.ImageSource
 import io.embrace.android.exampleapp.paradigms.data.MediaRef
 import io.embrace.android.exampleapp.paradigms.data.Post
 import io.embrace.android.exampleapp.paradigms.data.PostAuthor
+import io.embrace.android.exampleapp.paradigms.data.VideoSource
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -130,13 +131,7 @@ class BlueskyApi(
         val replyCount = obj["replyCount"]?.jsonPrimitive?.intOrNull ?: 0
         val repostCount = obj["repostCount"]?.jsonPrimitive?.intOrNull ?: 0
         val indexedAt = obj["indexedAt"]?.stringValue().orEmpty()
-        val imageUrls = extractImageUrls(obj["embed"]?.jsonObject)
-        val media: List<MediaRef> = imageUrls.mapIndexed { idx, url ->
-            MediaRef.Image(
-                id = "bsky_${cid}_$idx",
-                source = ImageSource.Remote(url = url, aspectRatio = 4f / 3f),
-            )
-        }
+        val media = extractMedia(cid = cid, embed = obj["embed"]?.jsonObject)
         return Post(
             id = "bsky_$cid",
             authorHandle = handle,
@@ -151,26 +146,51 @@ class BlueskyApi(
         )
     }
 
-    private fun extractImageUrls(embed: JsonObject?): List<String> {
+    /**
+     * Returns image and video [MediaRef]s from a Bluesky embed view.
+     *
+     * Handles three shapes:
+     *  - `app.bsky.embed.images#view` — image-only post
+     *  - `app.bsky.embed.video#view` — single video (HLS playlist URL in `playlist` field)
+     *  - `app.bsky.embed.recordWithMedia#view` — quote-post with attached media; recurses into the
+     *    inner `media` object
+     */
+    private fun extractMedia(cid: String, embed: JsonObject?): List<MediaRef> {
         if (embed == null) return emptyList()
         val type = embed["\$type"]?.stringValue()
         return when (type) {
-            "app.bsky.embed.images#view" -> readFullsizeArray(embed["images"]?.jsonArray)
+            "app.bsky.embed.images#view" -> imagesFromView(cid, embed["images"]?.jsonArray)
+            "app.bsky.embed.video#view" -> listOfNotNull(videoFromView(cid, embed))
             "app.bsky.embed.recordWithMedia#view" -> {
                 val media = embed["media"]?.jsonObject ?: return emptyList()
-                if (media["\$type"]?.stringValue() == "app.bsky.embed.images#view") {
-                    readFullsizeArray(media["images"]?.jsonArray)
-                } else {
-                    emptyList()
-                }
+                extractMedia(cid, media)
             }
             else -> emptyList()
         }
     }
 
-    private fun readFullsizeArray(array: JsonArray?): List<String> {
+    private fun imagesFromView(cid: String, array: JsonArray?): List<MediaRef> {
         if (array == null) return emptyList()
-        return array.mapNotNull { el -> el.jsonObject["fullsize"]?.stringValue() }
+        return array.mapIndexedNotNull { idx, el ->
+            val url = el.jsonObject["fullsize"]?.stringValue() ?: return@mapIndexedNotNull null
+            MediaRef.Image(
+                id = "bsky_${cid}_$idx",
+                source = ImageSource.Remote(url = url, aspectRatio = 4f / 3f),
+            )
+        }
+    }
+
+    private fun videoFromView(cid: String, embed: JsonObject): MediaRef.Video? {
+        val playlist = embed["playlist"]?.stringValue() ?: return null
+        val aspect = embed["aspectRatio"]?.jsonObject?.let { ar ->
+            val w = ar["width"]?.jsonPrimitive?.intOrNull ?: 0
+            val h = ar["height"]?.jsonPrimitive?.intOrNull ?: 0
+            if (w > 0 && h > 0) w.toFloat() / h.toFloat() else 16f / 9f
+        } ?: 16f / 9f
+        return MediaRef.Video(
+            id = "bsky_${cid}_video",
+            source = VideoSource.Remote(url = playlist, aspectRatio = aspect),
+        )
     }
 
     private fun relativeTimeLabel(iso: String): String {

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -34,6 +35,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -41,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import io.embrace.android.exampleapp.di.appGraph
+import io.embrace.android.exampleapp.paradigms.data.MediaRef
 import io.embrace.android.exampleapp.paradigms.social.ui.PostRow
 import io.embrace.android.exampleapp.ui.appBarColors
 
@@ -63,6 +66,27 @@ fun BlueskyFeedTimelineUi(
     val isFetching by store.isFetching.collectAsState()
     val fetchError by store.error.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val lazyState = rememberLazyListState()
+    /**
+     * The id of the topmost post that contains a video AND is at least 50% visible. Drives
+     * autoplay: only one video plays at a time, others stay paused.
+     */
+    val activeVideoPostId: String? by remember(posts) {
+        derivedStateOf {
+            val viewportTop = lazyState.layoutInfo.viewportStartOffset
+            val viewportBottom = lazyState.layoutInfo.viewportEndOffset
+            lazyState.layoutInfo.visibleItemsInfo.firstNotNullOfOrNull { info ->
+                val key = info.key as? String ?: return@firstNotNullOfOrNull null
+                val post = posts.firstOrNull { it.id == key } ?: return@firstNotNullOfOrNull null
+                if (post.media.none { it is MediaRef.Video }) return@firstNotNullOfOrNull null
+                val itemTop = info.offset
+                val itemBottom = info.offset + info.size
+                val visible = (minOf(itemBottom, viewportBottom) - maxOf(itemTop, viewportTop))
+                    .coerceAtLeast(0)
+                if (info.size > 0 && visible * 2 >= info.size) post.id else null
+            }
+        }
+    }
     LaunchedEffect(fetchError) {
         if (fetchError != null) {
             snackbarHostState.showSnackbar("Bluesky fetch failed: $fetchError")
@@ -96,6 +120,7 @@ fun BlueskyFeedTimelineUi(
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
+                state = lazyState,
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 item(key = "fetch_card") {
@@ -116,6 +141,7 @@ fun BlueskyFeedTimelineUi(
                             post = post,
                             onPostClick = onPostClick,
                             onAuthorClick = onAuthorClick,
+                            isActiveVideoSlot = post.id == activeVideoPostId,
                         )
                     }
                 }

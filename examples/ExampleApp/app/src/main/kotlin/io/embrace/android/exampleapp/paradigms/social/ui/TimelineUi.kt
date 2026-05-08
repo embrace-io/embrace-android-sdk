@@ -158,6 +158,7 @@ internal fun PostRow(
     post: Post,
     onPostClick: (String) -> Unit,
     onAuthorClick: (String) -> Unit,
+    isActiveVideoSlot: Boolean = false,
 ) {
     Card(
         modifier = Modifier
@@ -204,7 +205,10 @@ internal fun PostRow(
                     )
                     if (post.media.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(8.dp))
-                        MediaGallery(media = post.media)
+                        MediaGallery(
+                            media = post.media,
+                            autoplayVideo = isActiveVideoSlot,
+                        )
                     }
                     if (post.mentions.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(6.dp))
@@ -257,12 +261,16 @@ private fun PostHeaderRow(
 }
 
 @Composable
-private fun MediaGallery(media: List<MediaRef>) {
+private fun MediaGallery(
+    media: List<MediaRef>,
+    autoplayVideo: Boolean = false,
+) {
     when {
         media.size == 1 -> {
             MediaItem(
                 media = media.first(),
                 modifier = Modifier.fillMaxWidth(),
+                autoplay = autoplayVideo,
             )
         }
         media.size == 2 -> {
@@ -272,7 +280,7 @@ private fun MediaGallery(media: List<MediaRef>) {
             ) {
                 media.forEach { item ->
                     Box(modifier = Modifier.weight(1f)) {
-                        MediaItem(media = item)
+                        MediaItem(media = item, autoplay = autoplayVideo)
                     }
                 }
             }
@@ -282,6 +290,7 @@ private fun MediaGallery(media: List<MediaRef>) {
                 MediaItem(
                     media = media.first(),
                     modifier = Modifier.fillMaxWidth(),
+                    autoplay = autoplayVideo,
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -289,7 +298,7 @@ private fun MediaGallery(media: List<MediaRef>) {
                 ) {
                     media.drop(1).take(3).forEach { item ->
                         Box(modifier = Modifier.weight(1f)) {
-                            MediaItem(media = item)
+                            MediaItem(media = item, autoplay = autoplayVideo)
                         }
                     }
                 }

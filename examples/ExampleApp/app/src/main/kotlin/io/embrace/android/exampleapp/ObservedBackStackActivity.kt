@@ -28,7 +28,6 @@ class ObservedBackStackActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ExampleAppTheme {
-//                val backStack = rememberObservedBackStack<Screen>(Screen.Home)
                 val backStack = remember { mutableStateListOf<Screen>(Screen.Home) }
                 NavDisplay(
                     backStack = backStack,

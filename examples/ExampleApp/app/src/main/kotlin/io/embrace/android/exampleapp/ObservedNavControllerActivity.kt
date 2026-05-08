@@ -26,7 +26,6 @@ class ObservedNavControllerActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ExampleAppTheme {
-//                val navController = rememberObservedNavController()
                 val navController = rememberNavController()
                 NavHost(navController = navController, startDestination = "nav-controller-home") {
                     composable("nav-controller-home") { ScreenContent("Home", navController) }

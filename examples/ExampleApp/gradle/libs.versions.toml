@@ -54,7 +54,6 @@ embrace-android-delivery = { group = "io.embrace", name = "embrace-android-deliv
 embrace-android-okhttp = { group = "io.embrace", name = "embrace-android-instrumentation-okhttp", version.ref = "embrace" }
 embrace-android-network-common = { group = "io.embrace", name = "embrace-android-instrumentation-network-common", version.ref = "embrace" }
 embrace-android-instrumentation-api = { group = "io.embrace", name = "embrace-android-instrumentation-api", version.ref = "embrace" }
-embrace-android-instrumentation-androidx-navigation = { group = "io.embrace", name = "embrace-android-instrumentation-androidx-navigation", version.ref = "embrace" }
 androidx-navigation3-runtime = { group = "androidx.navigation3", name = "navigation3-runtime", version.ref = "navigation3" }
 androidx-navigation3-ui = { group = "androidx.navigation3", name = "navigation3-ui", version.ref = "navigation3" }
 

@@ -35,7 +35,7 @@ class SocialNav3Activity : ComponentActivity() {
                             is SocialNav3Keys.Timeline -> NavEntry(key) {
                                 TimelineUi(
                                     title = "Home (Nav3)",
-                                    posts = SampleData.posts,
+                                    staticPosts = SampleData.posts,
                                     onPostClick = { id ->
                                         backStack.add(SocialNav3Keys.PostDetails(id))
                                     },

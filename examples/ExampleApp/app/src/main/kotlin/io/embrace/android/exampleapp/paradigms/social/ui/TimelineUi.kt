@@ -36,11 +36,16 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,6 +54,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import io.embrace.android.exampleapp.paradigms.data.MediaRef
 import io.embrace.android.exampleapp.paradigms.data.Post
+import io.embrace.android.exampleapp.paradigms.social.data.DynamicPostsStore
 import io.embrace.android.exampleapp.paradigms.ui.MediaItem
 import io.embrace.android.exampleapp.paradigms.ui.ProceduralImage
 import io.embrace.android.exampleapp.ui.appBarColors
@@ -57,7 +63,7 @@ import io.embrace.android.exampleapp.ui.appBarColors
 @Composable
 fun TimelineUi(
     title: String,
-    posts: List<Post>,
+    staticPosts: List<Post>,
     onPostClick: (postId: String) -> Unit,
     onAuthorClick: (handle: String) -> Unit,
     onCompose: () -> Unit,
@@ -65,9 +71,17 @@ fun TimelineUi(
     postedBody: String? = null,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+    val dynamicPosts by DynamicPostsStore.posts.collectAsState()
+    val isFetching by DynamicPostsStore.isFetching.collectAsState()
+    val fetchError by DynamicPostsStore.error.collectAsState()
     LaunchedEffect(postedBody) {
         if (postedBody != null) {
             snackbarHostState.showSnackbar("Posted: $postedBody")
+        }
+    }
+    LaunchedEffect(fetchError) {
+        if (fetchError != null) {
+            snackbarHostState.showSnackbar("Bluesky fetch failed: $fetchError")
         }
     }
     Scaffold(
@@ -100,15 +114,86 @@ fun TimelineUi(
             modifier = Modifier.fillMaxSize().padding(padding),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            item(key = "trending_card") {
-                TrendingCard()
+            item(key = "bluesky_card") {
+                BlueskyFetchCard(
+                    dynamicCount = dynamicPosts.size,
+                    isFetching = isFetching,
+                    onFetch = { DynamicPostsStore.fetch() },
+                    onClear = { DynamicPostsStore.clear() },
+                )
             }
-            items(items = posts, key = { it.id }) { post ->
+            items(items = dynamicPosts, key = { "dyn_${it.id}" }) { post ->
                 PostRow(
                     post = post,
                     onPostClick = onPostClick,
                     onAuthorClick = onAuthorClick,
                 )
+            }
+            item(key = "trending_card") {
+                TrendingCard()
+            }
+            items(items = staticPosts, key = { it.id }) { post ->
+                PostRow(
+                    post = post,
+                    onPostClick = onPostClick,
+                    onAuthorClick = onAuthorClick,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BlueskyFetchCard(
+    dynamicCount: Int,
+    isFetching: Boolean,
+    onFetch: () -> Unit,
+    onClear: () -> Unit,
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(text = "Bluesky live feed", style = MaterialTheme.typography.titleSmall)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = if (dynamicCount == 0) {
+                    "No fetched posts yet. Tap to pull 10 from a public Bluesky feed."
+                } else {
+                    "$dynamicCount fetched post${if (dynamicCount == 1) "" else "s"} cached."
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Button(
+                    onClick = onFetch,
+                    enabled = !isFetching,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    if (isFetching) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+                    Text(text = if (isFetching) "Fetching…" else "Fetch 10 from Bluesky")
+                }
+                if (dynamicCount > 0) {
+                    OutlinedButton(onClick = onClear, enabled = !isFetching) {
+                        Text("Clear")
+                    }
+                }
             }
         }
     }

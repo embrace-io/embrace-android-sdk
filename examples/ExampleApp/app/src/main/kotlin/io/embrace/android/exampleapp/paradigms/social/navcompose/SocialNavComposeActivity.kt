@@ -36,7 +36,7 @@ class SocialNavComposeActivity : ComponentActivity() {
                             .collectAsState()
                         TimelineUi(
                             title = "Home (Nav-Compose)",
-                            posts = SampleData.posts,
+                            staticPosts = SampleData.posts,
                             onPostClick = { id ->
                                 navController.navigate(SocialRoute.PostDetail(id))
                             },

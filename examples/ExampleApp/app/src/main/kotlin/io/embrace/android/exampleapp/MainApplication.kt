@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.otel.java.addJavaLogRecordExporter
 import io.embrace.android.embracesdk.otel.java.addJavaSpanExporter
 import io.embrace.android.exampleapp.paradigms.data.SampleData
+import io.embrace.android.exampleapp.paradigms.social.data.DynamicPostsStore
 import java.net.URL
 import java.net.URLStreamHandler
 import java.net.URLStreamHandlerFactory
@@ -26,6 +27,8 @@ class MainApplication : Application() {
 
         // wire SampleData to assets; lazy reads parse JSON on first paradigm-screen open
         SampleData.init(this)
+        // load any cached Bluesky posts from disk (cacheDir/social/dynamic_posts.json)
+        DynamicPostsStore.init(this)
 
         // preinstall an existing URLStreamFactory to ensure the wrapping factor for instrumentation works
         val error = installFakeURLStreamHandlerFactory()

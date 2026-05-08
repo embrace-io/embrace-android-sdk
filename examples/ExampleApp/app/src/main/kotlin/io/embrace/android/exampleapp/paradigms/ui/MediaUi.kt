@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import io.embrace.android.exampleapp.paradigms.data.ImageSource
 import io.embrace.android.exampleapp.paradigms.data.MediaRef
 import io.embrace.android.exampleapp.paradigms.data.VideoSource
@@ -73,10 +74,14 @@ fun ImageItem(
                 .fillMaxWidth()
                 .aspectRatioIfPositive(source.aspectRatio),
         )
-        is ImageSource.Remote -> RemoteImagePlaceholder(
-            url = source.url,
-            aspectRatio = source.aspectRatio,
-            modifier = modifier,
+        is ImageSource.Remote -> AsyncImage(
+            model = source.url,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = modifier
+                .fillMaxWidth()
+                .aspectRatioIfPositive(source.aspectRatio)
+                .clip(RoundedCornerShape(12.dp)),
         )
     }
 }
@@ -256,28 +261,6 @@ fun ProceduralVideo(
                 style = MaterialTheme.typography.labelSmall,
             )
         }
-    }
-}
-
-@Composable
-private fun RemoteImagePlaceholder(
-    url: String,
-    aspectRatio: Float,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .aspectRatioIfPositive(aspectRatio)
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = "remote: $url",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 

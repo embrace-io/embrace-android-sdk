@@ -89,6 +89,7 @@ dependencies {
     implementation(libs.androidx.material)
     implementation(libs.androidx.material.icons)
     implementation(libs.okhttp)
+    implementation(libs.coil.compose)
     implementation(platform(libs.opentelemetry.bom))
     implementation(libs.opentelemetry.api)
     implementation(libs.opentelemetry.sdk)

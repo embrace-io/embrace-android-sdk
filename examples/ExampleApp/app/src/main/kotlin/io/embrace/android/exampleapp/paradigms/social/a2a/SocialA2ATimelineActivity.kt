@@ -32,7 +32,7 @@ class SocialA2ATimelineActivity : ComponentActivity() {
             ExampleAppTheme {
                 TimelineUi(
                     title = "Home (A2A)",
-                    posts = SampleData.posts,
+                    staticPosts = SampleData.posts,
                     onPostClick = { id ->
                         startActivity(SocialA2APostDetailActivity.newIntent(this, id))
                     },

@@ -14,7 +14,7 @@ import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
 import io.embrace.android.exampleapp.paradigms.data.SampleData
 import io.embrace.android.exampleapp.paradigms.social.ui.ComposePostUi
-import io.embrace.android.exampleapp.paradigms.social.ui.ProfileUi
+import io.embrace.android.exampleapp.paradigms.social.ui.ProfileScreen
 import io.embrace.android.exampleapp.paradigms.social.ui.TimelineUi
 import io.embrace.android.exampleapp.paradigms.social.ui.PostDetailUi
 import io.embrace.android.exampleapp.ui.theme.ExampleAppTheme
@@ -61,20 +61,13 @@ class SocialNav3Activity : ComponentActivity() {
                                 }
                             }
                             is SocialNav3Keys.Profile -> NavEntry(key) {
-                                val author = SampleData.author(key.handle)
-                                if (author == null) {
-                                    backStack.removeLastOrNull()
-                                } else {
-                                    val authorPosts = SampleData.posts.filter { it.authorHandle == author.handle }
-                                    ProfileUi(
-                                        author = author,
-                                        authorPosts = authorPosts,
-                                        onPostClick = { id ->
-                                            backStack.add(SocialNav3Keys.PostDetails(id))
-                                        },
-                                        onBack = { backStack.removeLastOrNull() },
-                                    )
-                                }
+                                ProfileScreen(
+                                    handle = key.handle,
+                                    onPostClick = { id ->
+                                        backStack.add(SocialNav3Keys.PostDetails(id))
+                                    },
+                                    onBack = { backStack.removeLastOrNull() },
+                                )
                             }
                             is SocialNav3Keys.Compose -> NavEntry(key) {
                                 ComposePostUi(

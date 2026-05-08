@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import io.embrace.android.exampleapp.paradigms.ParadigmHubContent
 import io.embrace.android.exampleapp.ui.examples.AddBreadcrumbExample
 import io.embrace.android.exampleapp.ui.examples.AnrDetectionExample
+import io.embrace.android.exampleapp.ui.examples.BlueskyFeedExample
 import io.embrace.android.exampleapp.ui.examples.EndSessionExample
 import io.embrace.android.exampleapp.ui.examples.JvmCrashExample
 import io.embrace.android.exampleapp.ui.examples.LogMessageAttachmentsExample
@@ -35,5 +36,6 @@ fun ExampleContent(example: CodeExample) {
         CodeExample.ANR_DETECTION -> AnrDetectionExample()
         CodeExample.BYTECODE_INSTRUMENTATION_SAMPLES -> BytecodeInstrumentationExample()
         CodeExample.NAV_PARADIGMS -> ParadigmHubContent()
+        CodeExample.BLUESKY_FEED -> BlueskyFeedExample()
     }
 }

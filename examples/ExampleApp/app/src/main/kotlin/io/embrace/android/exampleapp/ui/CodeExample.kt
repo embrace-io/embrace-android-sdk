@@ -4,6 +4,7 @@ enum class CodeExample(
     val desc: String,
 ) {
     NAV_PARADIGMS("Navigation Paradigms"),
+    BLUESKY_FEED("Bluesky Live Feed"),
     JVM_CRASH("JVM Uncaught Exception"),
     NDK_CRASH("NDK crash"),
     ANR_DETECTION("ANR detection"),

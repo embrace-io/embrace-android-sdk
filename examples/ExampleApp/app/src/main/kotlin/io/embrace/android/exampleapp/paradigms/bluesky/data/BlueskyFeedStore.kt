@@ -20,12 +20,12 @@ import kotlinx.serialization.json.Json
 import java.io.File
 
 /**
- * Holds a list of [Post]s fetched from Bluesky. Persists to `cacheDir/social/dynamic_posts.json`
- * using the same JSON shape as the bundled `assets/sample/posts.json`. Survives process death;
- * the OS may evict the cache directory under disk pressure (acceptable).
+ * Holds per-feed [Post]s fetched from Bluesky. Each [BlueskyPinnedFeed] is persisted to its own
+ * `cacheDir/social/feed_<slug>.json` and tracks its own cursor / fetching / error state. Fetching
+ * one tab does not affect the others.
  *
- * Owns its own coroutine scope so a `fetch()` triggered from the UI completes (and writes to
- * disk) even if the user navigates away mid-request.
+ * Owns its own coroutine scope so fetches triggered from the UI complete (and write to disk) even
+ * if the user navigates away mid-request.
  */
 @SingleIn(AppScope::class)
 @Inject
@@ -36,98 +36,109 @@ class BlueskyFeedStore(
 ) {
 
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private val mutex = Mutex()
 
-    private val backing = MutableStateFlow<List<Post>>(emptyList())
-    val posts: StateFlow<List<Post>> = backing.asStateFlow()
+    private class FeedState(val feed: BlueskyPinnedFeed, cacheRoot: File) {
+        val mutex = Mutex()
+        val posts = MutableStateFlow<List<Post>>(emptyList())
+        val fetching = MutableStateFlow(false)
+        val error = MutableStateFlow<String?>(null)
+        val file: File = File(cacheRoot, "feed_${feed.slug}.json")
 
-    private val fetching = MutableStateFlow(false)
-    val isFetching: StateFlow<Boolean> = fetching.asStateFlow()
-
-    private val errorState = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = errorState.asStateFlow()
-
-    private val storeFile: File by lazy {
-        File(File(context.applicationContext.cacheDir, "social"), "dynamic_posts.json")
+        @Volatile var cursor: String? = null
+        @Volatile var diskLoaded: Boolean = false
     }
 
-    @Volatile
-    private var cursor: String? = null
+    private val cacheRoot: File by lazy {
+        File(context.applicationContext.cacheDir, "social")
+    }
 
-    @Volatile
-    private var diskLoaded: Boolean = false
+    private val states: Map<BlueskyPinnedFeed, FeedState> = BlueskyPinnedFeed.entries
+        .associateWith { FeedState(it, cacheRoot) }
+
+    fun posts(feed: BlueskyPinnedFeed): StateFlow<List<Post>> = state(feed).posts.asStateFlow()
+    fun isFetching(feed: BlueskyPinnedFeed): StateFlow<Boolean> = state(feed).fetching.asStateFlow()
+    fun error(feed: BlueskyPinnedFeed): StateFlow<String?> = state(feed).error.asStateFlow()
+
+    /** Look up a cached post by id across every feed; used for cross-tab navigation. */
+    fun findPostById(postId: String): Post? =
+        states.values.firstNotNullOfOrNull { st -> st.posts.value.firstOrNull { it.id == postId } }
+
+    private fun state(feed: BlueskyPinnedFeed): FeedState =
+        states.getValue(feed)
 
     /**
-     * Eagerly load the cached file from disk. Safe to call multiple times — only the first
-     * call performs work. Typically invoked from `Application.onCreate` so the timeline opens
-     * with cached posts already in memory.
+     * Eagerly load all cached feed files from disk. Safe to call multiple times — each feed only
+     * loads on the first call. Typically invoked from `Application.onCreate`.
      */
     fun loadFromDisk() {
-        if (diskLoaded) return
-        diskLoaded = true
-        scope.launch {
-            val loaded = readFromDisk()
-            backing.value = loaded
+        states.values.forEach { st ->
+            if (st.diskLoaded) return@forEach
+            st.diskLoaded = true
+            scope.launch {
+                st.posts.value = readFromDisk(st.file)
+            }
         }
     }
 
-    /** Trigger a network fetch. Idempotent: a no-op if already fetching. */
-    fun fetch(limit: Int = 30) {
-        if (fetching.value) return
+    /** Trigger a network fetch for [feed]. Idempotent: a no-op if [feed] is already fetching. */
+    fun fetch(feed: BlueskyPinnedFeed, limit: Int = 30) {
+        val st = state(feed)
+        if (st.fetching.value) return
         scope.launch {
-            mutex.withLock { fetchInternal(limit) }
+            st.mutex.withLock { fetchInternal(st, limit) }
         }
     }
 
-    /** Wipe in-memory state and delete the cache file. */
-    fun clear() {
+    /** Wipe in-memory state and delete the cache file for [feed]. */
+    fun clear(feed: BlueskyPinnedFeed) {
+        val st = state(feed)
         scope.launch {
-            mutex.withLock {
-                backing.value = emptyList()
-                errorState.value = null
-                cursor = null
+            st.mutex.withLock {
+                st.posts.value = emptyList()
+                st.error.value = null
+                st.cursor = null
                 withContext(Dispatchers.IO) {
-                    storeFile.takeIf { it.exists() }?.delete()
+                    st.file.takeIf { it.exists() }?.delete()
                 }
             }
         }
     }
 
-    private suspend fun fetchInternal(limit: Int) {
-        fetching.value = true
-        errorState.value = null
+    private suspend fun fetchInternal(st: FeedState, limit: Int) {
+        st.fetching.value = true
+        st.error.value = null
         try {
             val result = withContext(Dispatchers.IO) {
-                blueskyApi.fetchFeed(limit = limit, cursor = cursor)
+                blueskyApi.fetchFeed(feedUri = st.feed.feedUri, limit = limit, cursor = st.cursor)
             }
-            cursor = result.nextCursor
-            val existing = backing.value
+            st.cursor = result.nextCursor
+            val existing = st.posts.value
             val deduped = result.posts.filter { fresh -> existing.none { it.id == fresh.id } }
             val merged = deduped + existing
-            backing.value = merged
-            withContext(Dispatchers.IO) { writeToDisk(merged) }
+            st.posts.value = merged
+            withContext(Dispatchers.IO) { writeToDisk(st.file, merged) }
         } catch (e: Exception) {
-            errorState.value = e.message?.takeIf { it.isNotBlank() } ?: "Fetch failed"
+            st.error.value = e.message?.takeIf { it.isNotBlank() } ?: "Fetch failed"
         } finally {
-            fetching.value = false
+            st.fetching.value = false
         }
     }
 
-    private fun readFromDisk(): List<Post> {
-        if (!storeFile.exists() || storeFile.length() == 0L) return emptyList()
+    private fun readFromDisk(file: File): List<Post> {
+        if (!file.exists() || file.length() == 0L) return emptyList()
         return try {
-            val text = storeFile.readText()
+            val text = file.readText()
             json.decodeFromString(ListSerializer(Post.serializer()), text)
         } catch (e: Exception) {
             // Malformed file (e.g., truncated by OS cache eviction). Drop it and start fresh.
-            runCatching { storeFile.delete() }
+            runCatching { file.delete() }
             emptyList()
         }
     }
 
-    private fun writeToDisk(posts: List<Post>) {
-        storeFile.parentFile?.mkdirs()
+    private fun writeToDisk(file: File, posts: List<Post>) {
+        file.parentFile?.mkdirs()
         val text = json.encodeToString(ListSerializer(Post.serializer()), posts)
-        storeFile.writeText(text)
+        file.writeText(text)
     }
 }

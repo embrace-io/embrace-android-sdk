@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -46,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.embrace.android.exampleapp.paradigms.data.ImageSource
 import io.embrace.android.exampleapp.paradigms.data.MediaRef
@@ -195,7 +197,7 @@ internal fun PostRow(
                         .clickable { onAuthorClick(post.authorHandle) },
                 )
                 Spacer(modifier = Modifier.width(12.dp))
-                Column(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.weight(1f)) {
                     PostHeaderRow(post = post, onAuthorClick = onAuthorClick)
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
@@ -235,28 +237,48 @@ private fun PostHeaderRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onAuthorClick(post.authorHandle) },
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(text = post.authorDisplayName, style = MaterialTheme.typography.titleSmall)
-        if (post.isVerified) {
-            Spacer(modifier = Modifier.width(2.dp))
-            Icon(
-                imageVector = Icons.Filled.CheckCircle,
-                contentDescription = "Verified",
-                tint = Color(0xFF1DA1F2),
-                modifier = Modifier.size(14.dp),
+        // Display name + handle. FlowRow keeps them on one line when they fit,
+        // otherwise the handle wraps to a new line under the display name.
+        FlowRow(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = post.authorDisplayName,
+                    style = MaterialTheme.typography.titleSmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (post.isVerified) {
+                    Spacer(modifier = Modifier.width(2.dp))
+                    Icon(
+                        imageVector = Icons.Filled.CheckCircle,
+                        contentDescription = "Verified",
+                        tint = Color(0xFF1DA1F2),
+                        modifier = Modifier.size(14.dp),
+                    )
+                }
+            }
+            Text(
+                text = "@${post.authorHandle}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
-        Text(
-            text = " @${post.authorHandle}",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            text = " · ${post.timestampLabel}",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        if (post.timestampLabel.isNotEmpty()) {
+            Text(
+                text = post.timestampLabel,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+            )
+        }
     }
 }
 

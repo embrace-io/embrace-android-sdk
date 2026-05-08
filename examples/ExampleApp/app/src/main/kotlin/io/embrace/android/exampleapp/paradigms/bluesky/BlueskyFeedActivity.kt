@@ -48,8 +48,7 @@ class BlueskyFeedActivity : ComponentActivity() {
                                 )
                             }
                             is BlueskyFeedKey.PostDetail -> NavEntry(key) {
-                                val post = graph.blueskyFeedStore.posts.value
-                                    .firstOrNull { it.id == key.postId }
+                                val post = graph.blueskyFeedStore.findPostById(key.postId)
                                     ?: graph.profileResolver.cachedPost(key.postId)
                                 if (post == null) {
                                     backStack.removeLastOrNull()

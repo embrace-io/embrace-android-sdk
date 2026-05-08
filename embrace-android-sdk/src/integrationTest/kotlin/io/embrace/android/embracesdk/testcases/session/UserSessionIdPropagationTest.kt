@@ -14,31 +14,48 @@ import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.assertions.getLogsOfType
+import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.assertions.toMap
+import io.embrace.android.embracesdk.fakes.TestAeiData
+import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.fakes.setupFakeAeiData
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.UserSessionRemoteConfig
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
+import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.toStringMap
+import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbAeiAttributes.AEI_SESSION_PART_ID
 import io.embrace.android.embracesdk.semconv.EmbAeiAttributes.AEI_USER_SESSION_ID
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_SESSION_PART_ID
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_ID
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule.Companion.DEFAULT_DEAD_SESSION_PART_ID
+import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule.Companion.DEFAULT_EXPIRED_USER_SESSION_ID
+import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule.Companion.DEFAULT_SDK_START_TIME_MS
+import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.mockk.every
 import io.mockk.mockk
 import io.opentelemetry.kotlin.semconv.SessionAttributes.SESSION_ID
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowActivityManager
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * Asserts that user session ID and session part IDs propagate to logs and spans.
@@ -50,7 +67,14 @@ internal class UserSessionIdPropagationTest {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+        EmbraceSetupInterface(
+            fakeStorageLayer = true,
+            workersToFake = listOf(Worker.Background.LogMessageWorker),
+        ).apply {
+            getFakedWorkerExecutor(Worker.Background.LogMessageWorker).blockingMode = false
+        }
+    }
 
     @Test
     fun `session span carries the user session id and session part id`() {
@@ -84,7 +108,10 @@ internal class UserSessionIdPropagationTest {
     fun `log emitted within active user session carries the user session id and session part id`() {
         testRule.runTest(
             testCaseAction = {
-                recordSession { embrace.logMessage("test", Severity.INFO) }
+                recordSession {
+                    embrace.logMessage("test", Severity.INFO)
+                    flushLogBatch()
+                }
             },
             assertAction = {
                 val sessionIds = getSingleSessionEnvelope().assertSessionIds()
@@ -249,9 +276,158 @@ internal class UserSessionIdPropagationTest {
         )
     }
 
+    @Test
+    @Config(sdk = [Build.VERSION_CODES.R], shadows = [ShadowActivityManager::class])
+    fun `AEI payload carries old user session id when persisted session expired between app instances`() {
+        val processStateSummary = "${DEFAULT_DEAD_SESSION_PART_ID}_${DEFAULT_EXPIRED_USER_SESSION_ID}"
+        val nativeAei = TestAeiData(
+            reason = ApplicationExitInfo.REASON_CRASH_NATIVE,
+            status = 6,
+            description = "ndkCrash",
+            trace = "someNdkCrashDetails",
+            processStateSummary = processStateSummary,
+        )
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(nativeCrashCapture = true),
+            ),
+            setupAction = {
+                persistExpiredUserSession(
+                    sdkStartTimeMs = DEFAULT_SDK_START_TIME_MS,
+                    userSessionId = DEFAULT_EXPIRED_USER_SESSION_ID,
+                )
+                setupFakeAeiData(listOf(nativeAei.toAeiObject()))
+            },
+            testCaseAction = {
+                flushLogBatch()
+                recordSession()
+            },
+            assertAction = {
+                val attrs = checkNotNull(getSingleLogEnvelope().getLastLog().attributes)
+                assertEquals(DEFAULT_DEAD_SESSION_PART_ID, attrs.findAttributeValue(AEI_SESSION_PART_ID))
+                assertEquals(DEFAULT_EXPIRED_USER_SESSION_ID, attrs.findAttributeValue(AEI_USER_SESSION_ID))
+                assertNotEquals(DEFAULT_EXPIRED_USER_SESSION_ID, getSingleSessionEnvelope().getUserSessionId())
+            },
+        )
+    }
+
+    @Test
+    fun `log call invoked before user session reaches max duration but processed after is attributed to the new user session`() {
+        val maxDurationSeconds = 300
+        val maxDurationMs = maxDurationSeconds * 1_000L
+        testRule.runTest(
+            // Set inactivity timeout to max duration so the timer doesn't prematurely end teh session
+            persistedRemoteConfig = RemoteConfig(
+                userSession = UserSessionRemoteConfig(
+                    maxDurationSeconds = maxDurationSeconds,
+                    inactivityTimeoutSeconds = maxDurationSeconds
+                ),
+            ),
+            testCaseAction = {
+                recordSession()
+                val latch = CountDownLatch(1)
+                val job = Thread {
+                    embrace.logInfo("late-log")
+                    latch.countDown()
+                }
+                clock.tick(maxDurationMs + 1L)
+                recordSession {
+                    job.start()
+                    latch.await(1, TimeUnit.SECONDS)
+                    flushLogBatch()
+                }
+            },
+            assertAction = {
+                val sessions = getSessionEnvelopes(2)
+                val oldUserSessionId = sessions[0].getUserSessionId()
+                val newUserSessionId = sessions[1].getUserSessionId()
+                assertNotEquals(oldUserSessionId, newUserSessionId)
+
+                val logSessionId = getSingleLogEnvelope().getLastLog().attributes?.findAttributeValue(SESSION_ID)
+                assertEquals(newUserSessionId, logSessionId)
+            },
+        )
+    }
+
+    @Test
+    fun `log call invoked after user session reaches max duration but processed before is attributed to the old user session`() {
+        val maxDurationSeconds = 300
+        val maxDurationMs = maxDurationSeconds * 1_000L
+        testRule.runTest(
+            persistedRemoteConfig = RemoteConfig(
+                // Set inactivity timeout to max duration so the timer doesn't prematurely end teh session
+                userSession = UserSessionRemoteConfig(
+                    maxDurationSeconds = maxDurationSeconds,
+                    inactivityTimeoutSeconds = maxDurationSeconds
+                ),
+            ),
+            testCaseAction = {
+                val latch = CountDownLatch(1)
+                val job = Thread {
+                    embrace.logInfo("late-log")
+                    latch.countDown()
+                }
+                recordSession {
+                    clock.tick(maxDurationMs + 1L)
+                    job.start()
+                    latch.await(1, TimeUnit.SECONDS)
+                    flushLogBatch()
+                }
+                clock.tick(maxDurationMs + 1L)
+                recordSession()
+            },
+            assertAction = {
+                val sessions = getSessionEnvelopes(2)
+                val sessionSpanFromOldPart = checkNotNull(sessions[0].getSessionSpan())
+                val oldUserSessionId = sessions[0].getUserSessionId()
+                val newUserSessionId = sessions[1].getUserSessionId()
+                assertNotEquals(oldUserSessionId, newUserSessionId)
+
+                val log = getSingleLogEnvelope().getLastLog()
+                val logSessionId = log.attributes?.findAttributeValue(SESSION_ID)
+                assertEquals(oldUserSessionId, logSessionId)
+                assertTrue(checkNotNull(log.timeUnixNano) <= checkNotNull(sessionSpanFromOldPart.endTimeNanos))
+            },
+        )
+    }
+
+    @Test
+    fun `log queued before endUserSession but processed after is attributed to the post-end user session`() {
+        testRule.runTest(
+            testCaseAction = {
+                val latch = CountDownLatch(1)
+                val job = Thread {
+                    embrace.logInfo("late-log")
+                    latch.countDown()
+                }
+                recordSession {
+                    clock.tick(10_000L)
+                    embrace.endUserSession()
+                    job.start()
+                    latch.await(1, TimeUnit.SECONDS)
+                    flushLogBatch()
+                }
+            },
+            assertAction = {
+                val sessions = getSessionEnvelopes(2)
+                val oldUserSessionId = sessions[0].getUserSessionId()
+                val newUserSessionId = sessions[1].getUserSessionId()
+                assertNotEquals(oldUserSessionId, newUserSessionId)
+
+                val logSessionId = getSingleLogEnvelope().getLastLog().attributes?.findAttributeValue(SESSION_ID)
+                assertEquals(newUserSessionId, logSessionId)
+            },
+        )
+    }
+
     private fun Envelope<SessionPartPayload>.assertSessionIds(): SessionIds =
         checkNotNull(findSessionSpan().attributes).toMap().assertSessionIds()
 
     private fun Log.assertSessionIds(): SessionIds =
         checkNotNull(attributes).toMap().assertSessionIds()
+
+    private fun EmbraceActionInterface.flushLogBatch() {
+        clock.tick(2000L)
+        testRule.setup.getFakedWorkerExecutor(Worker.Background.LogMessageWorker).runCurrentlyBlocked()
+    }
 }

@@ -11,12 +11,14 @@ import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
-import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
+import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.fakes.fakeIncompleteSessionEnvelope
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
+import io.embrace.android.embracesdk.fixtures.fakeCachedSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.config.BuildInfo
@@ -50,6 +52,7 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.robolectric.Shadows
 import org.robolectric.shadows.ShadowLooper
+import kotlin.time.Duration.Companion.seconds
 import kotlin.random.Random
 
 /**
@@ -235,29 +238,63 @@ internal class EmbraceSetupInterface(
      */
     @OptIn(ExperimentalSemconv::class)
     fun persistUserSession(
-        sessionId: String,
+        userSessionId: String,
         startMs: Long,
         lastActivityMs: Long,
         sessionNumber: Int = 1,
         partNumber: Int = 1,
-        maxDurationSeconds: Long = 43200,
-        inactivityTimeoutSeconds: Long = 1800,
+        maxDurationSeconds: Int = 43200,
+        inactivityTimeoutSeconds: Int = 1800,
     ) {
         getStore().edit {
             putStringMap(
                 "embrace.user_session",
                 mapOf(
-                    EmbSessionAttributes.EMB_USER_SESSION_ID to sessionId,
+                    EmbSessionAttributes.EMB_USER_SESSION_ID to userSessionId,
                     EmbSessionAttributes.EMB_USER_SESSION_START_TS to startMs.toString(),
                     EmbSessionAttributes.EMB_USER_SESSION_NUMBER to sessionNumber.toString(),
                     EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS to maxDurationSeconds.toString(),
                     EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS to inactivityTimeoutSeconds.toString(),
-                    SessionAttributes.SESSION_ID to sessionId,
+                    SessionAttributes.SESSION_ID to userSessionId,
                     EmbSessionAttributes.EMB_USER_SESSION_PART_NUMBER to partNumber.toString(),
                     "emb.user_session_last_activity_ts" to lastActivityMs.toString(),
                 )
             )
         }
+    }
+
+    fun persistExpiredUserSession(
+        sdkStartTimeMs: Long,
+        userSessionId: String,
+        maxDurationSeconds: Int = 43200,
+        inactivityTimeoutSeconds: Int = 1800,
+        cacheIncompletePartPayload: Boolean = false,
+    ): Long {
+        val userSessionStartTimeMs: Long = sdkStartTimeMs - maxDurationSeconds.seconds.inWholeMilliseconds - 60_000
+        val lastActivityMs: Long = userSessionStartTimeMs + inactivityTimeoutSeconds.seconds.inWholeMilliseconds - 10_000
+        persistUserSession(
+            userSessionId = userSessionId,
+            startMs = userSessionStartTimeMs,
+            lastActivityMs = lastActivityMs,
+            maxDurationSeconds = maxDurationSeconds,
+            inactivityTimeoutSeconds = inactivityTimeoutSeconds
+        )
+        if (cacheIncompletePartPayload) {
+            val metadata = fakeCachedSessionStoredTelemetryMetadata.copy(timestamp = userSessionStartTimeMs)
+            checkNotNull(fakeCacheStorageService) {
+                "Fake storage layer not initialized"
+            }.addPayload(
+                metadata = metadata,
+                data = fakeIncompleteSessionEnvelope(
+                    sessionId = userSessionId,
+                    startMs = metadata.timestamp,
+                    lastHeartbeatTimeMs = metadata.timestamp + 1_000L,
+                    processIdentifier = metadata.processIdentifier
+                )
+            )
+        }
+
+        return userSessionStartTimeMs
     }
 
     fun getClock(): FakeClock = fakeClock
@@ -290,7 +327,7 @@ internal class EmbraceSetupInterface(
             }
     }
 
-    private class DecoratedConfigService(private val impl: ConfigService): ConfigService by impl {
+    private class DecoratedConfigService(private val impl: ConfigService) : ConfigService by impl {
         override val buildInfo: BuildInfo = BuildInfo(
             "fakeBuildId",
             "fakeBuildType",

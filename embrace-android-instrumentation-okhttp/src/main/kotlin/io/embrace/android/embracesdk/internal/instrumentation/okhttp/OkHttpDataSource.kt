@@ -117,6 +117,7 @@ internal class OkHttpDataSource(
                     errorType = cause?.javaClass?.canonicalName ?: UNKNOWN_EXCEPTION,
                     errorMessage = cause?.message ?: UNKNOWN_MESSAGE,
                     traceId = request.header(CUSTOM_TRACE_ID_HEADER_NAME),
+                    userAgent = request.header(USER_AGENT_HEADER_NAME),
                 )
             )
         } finally {
@@ -207,6 +208,7 @@ internal class OkHttpDataSource(
         statusCode = statusCode,
         traceId = traceId,
         w3cTraceparent = w3cTraceparent,
+        userAgent = userAgent,
         body = networkCaptureData
     )
 
@@ -224,6 +226,7 @@ internal class OkHttpDataSource(
         bytesReceived = contentLength,
         statusCode = response.code,
         traceId = request.header(CUSTOM_TRACE_ID_HEADER_NAME),
+        userAgent = request.header(USER_AGENT_HEADER_NAME),
     )
 
     private fun ResponseBody.decompressResponseBody(
@@ -383,6 +386,7 @@ internal class OkHttpDataSource(
         private const val UNKNOWN_MESSAGE =
             "An error occurred during the execution of this network request"
         private const val ENCODING_GZIP = "gzip"
+        private const val USER_AGENT_HEADER_NAME = "User-Agent"
         private const val CONTENT_LENGTH_HEADER_NAME = "Content-Length"
         private const val CONTENT_ENCODING_HEADER_NAME = "Content-Encoding"
         private const val CONTENT_TYPE_HEADER_NAME = "Content-Type"

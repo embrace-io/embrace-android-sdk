@@ -19,6 +19,7 @@ import io.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.HttpAttributes
 import io.opentelemetry.kotlin.semconv.UrlAttributes
+import io.opentelemetry.kotlin.semconv.UserAgentAttributes
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -126,6 +127,7 @@ class NetworkRequestDataSourceImpl(
         HttpAttributes.HTTP_RESPONSE_STATUS_CODE to request.statusCode,
         HttpAttributes.HTTP_REQUEST_BODY_SIZE to request.bytesSent,
         HttpAttributes.HTTP_RESPONSE_BODY_SIZE to request.bytesReceived,
+        UserAgentAttributes.USER_AGENT_ORIGINAL to request.userAgent,
         ErrorAttributes.ERROR_TYPE to request.errorType,
         ExceptionAttributes.EXCEPTION_MESSAGE to request.errorMessage,
         EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT to request.w3cTraceparent,
@@ -144,6 +146,7 @@ class NetworkRequestDataSourceImpl(
         HttpAttributes.HTTP_RESPONSE_BODY_SIZE to endData.bytesReceived,
         ErrorAttributes.ERROR_TYPE to endData.errorType,
         ExceptionAttributes.EXCEPTION_MESSAGE to endData.errorMessage,
+        UserAgentAttributes.USER_AGENT_ORIGINAL to endData.userAgent,
         EmbNetworkRequestAttributes.EMB_TRACE_ID to getValidTraceId(endData.traceId),
     ).toNonNullMap().mapValues { it.value.toString() }
 

@@ -12,6 +12,7 @@ class HttpNetworkRequest(
     val errorMessage: String? = null,
     val traceId: String? = null,
     val w3cTraceparent: String? = null,
+    val userAgent: String? = null,
     val body: HttpRequestBody? = null,
 ) {
     class HttpRequestBody(

@@ -11,4 +11,5 @@ data class RequestEndData(
     val errorType: String? = null,
     val errorMessage: String? = null,
     val traceId: String? = null,
+    val userAgent: String? = null,
 )

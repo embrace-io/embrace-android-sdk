@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
+import io.opentelemetry.kotlin.semconv.UserAgentAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -41,6 +42,7 @@ internal class NetworkRequestDataSourceTest {
             startTime = 400,
             endTime = 500,
             statusCode = 203,
+            userAgent = "Test User Agent"
         )
         harness.dataSource.recordNetworkRequest(
             HttpNetworkRequest(
@@ -49,7 +51,8 @@ internal class NetworkRequestDataSourceTest {
                 startTime = 600L,
                 endTime = 650L,
                 errorType = "RuntimeException",
-                errorMessage = ""
+                errorMessage = "",
+                userAgent = "Test User Agent"
             )
         )
 
@@ -86,13 +89,19 @@ internal class NetworkRequestDataSourceTest {
             expectedName = expectedSpanName,
             expectedStartTimeMs = 400L,
             expectedEndTimeMs = 500L,
+            expectedAttributes = mapOf(
+                UserAgentAttributes.USER_AGENT_ORIGINAL to "Test User Agent",
+            ),
         )
         harness.assertNetworkRequest(
             spanToken = requestSpans["www.example5.com"],
             expectedName = expectedSpanName,
             expectedStartTimeMs = 600L,
             expectedEndTimeMs = 650L,
-            expectedErrorCode = ErrorCodeAttribute.Failure
+            expectedErrorCode = ErrorCodeAttribute.Failure,
+            expectedAttributes = mapOf(
+                UserAgentAttributes.USER_AGENT_ORIGINAL to "Test User Agent",
+            ),
         )
     }
 
@@ -146,6 +155,7 @@ internal class NetworkRequestDataSourceTest {
         startTime: Long = 100,
         endTime: Long = 200,
         statusCode: Int = 200,
+        userAgent: String? = null,
         body: HttpNetworkRequest.HttpRequestBody? = null,
     ) {
         harness.dataSource.recordNetworkRequest(
@@ -157,6 +167,7 @@ internal class NetworkRequestDataSourceTest {
                 bytesSent = 100L,
                 bytesReceived = 1000L,
                 statusCode = statusCode,
+                userAgent = userAgent,
                 body = body
             )
         )

@@ -16,6 +16,7 @@ private const val RESPONSE_CODE = 304
 private const val TRACE_ID = "trace-id"
 private const val ERR_TYPE = "err_type"
 private const val ERR_MSG = "err_msg"
+private const val USER_AGENT = "okhttp/4.12.0"
 private val httpMethod = HttpMethod.GET
 private val traceParent = DefaultTraceparentGenerator.generateW3cTraceparent()
 
@@ -93,6 +94,40 @@ internal class EmbraceNetworkRequestTest {
     }
 
     @Test
+    fun testFromCompletedRequest5() {
+        val request = EmbraceNetworkRequest.fromCompletedRequest(
+            URL,
+            httpMethod,
+            START_TIME,
+            END_TIME,
+            BYTES_SENT,
+            BYTES_RECEIVED,
+            RESPONSE_CODE,
+            userAgent = USER_AGENT
+        )
+        verifyDefaultCompletedRequest(request)
+        assertEquals(USER_AGENT, request.userAgent)
+    }
+
+    @Test
+    fun testFromCompletedRequest6() {
+        val captureData = NetworkCaptureData(mapOf("user-agent" to USER_AGENT), null, null, null, null)
+        val request = EmbraceNetworkRequest.fromCompletedRequest(
+            URL,
+            httpMethod,
+            START_TIME,
+            END_TIME,
+            BYTES_SENT,
+            BYTES_RECEIVED,
+            RESPONSE_CODE,
+            networkCaptureData = captureData
+        )
+        verifyDefaultCompletedRequest(request)
+        assertEquals(USER_AGENT, request.userAgent)
+        assertEquals(captureData, request.networkCaptureData)
+    }
+
+    @Test
     fun testFromIncompleteRequest1() {
         val request = EmbraceNetworkRequest.fromIncompleteRequest(
             URL,
@@ -157,6 +192,21 @@ internal class EmbraceNetworkRequestTest {
         assertEquals(TRACE_ID, request.traceId)
         assertEquals(traceParent, request.w3cTraceparent)
         assertEquals(captureData, request.networkCaptureData)
+    }
+
+    @Test
+    fun testFromIncompleteRequest5() {
+        val request = EmbraceNetworkRequest.fromIncompleteRequest(
+            URL,
+            httpMethod,
+            START_TIME,
+            END_TIME,
+            ERR_TYPE,
+            ERR_MSG,
+            userAgent = USER_AGENT
+        )
+        verifyDefaultIncompleteRequest(request)
+        assertEquals(USER_AGENT, request.userAgent)
     }
 
     private fun verifyDefaultCompletedRequest(request: EmbraceNetworkRequest) {

@@ -65,6 +65,11 @@ public class EmbraceNetworkRequest private constructor(
     public val w3cTraceparent: String?,
 
     /**
+     * Optional user agent to report for the request
+     */
+    public val userAgent: String?,
+
+    /**
      * Network capture data for the request.
      */
     public val networkCaptureData: NetworkCaptureData?,
@@ -82,20 +87,69 @@ public class EmbraceNetworkRequest private constructor(
         get() = bytesSent ?: 0
 
     public companion object {
+        /**
+         * Construct a new [EmbraceNetworkRequest] instance where a HTTP response was returned.
+         * If no response was returned, use [.fromIncompleteRequest] instead.
+         *
+         * @param url                the URL of the request.
+         * @param httpMethod         the HTTP method of the request.
+         * @param startTime          the start time of the request.
+         * @param endTime            the end time of the request.
+         * @param bytesSent          the number of bytes sent.
+         * @param bytesReceived      the number of bytes received.
+         * @param statusCode         the status code of the response.
+         * @param traceId            the trace ID of the request, used for distributed tracing.
+         * @param w3cTraceparent     the W3C-compliant traceparent of the network call.
+         * @param userAgent          the user agent of the request.
+         * @param networkCaptureData network capture data for the request.
+         * @return a new [EmbraceNetworkRequest] instance.
+         */
+        @JvmStatic
+        public fun fromCompletedRequest(
+            url: String,
+            httpMethod: HttpMethod,
+            startTime: Long,
+            endTime: Long,
+            bytesSent: Long,
+            bytesReceived: Long,
+            statusCode: Int,
+            traceId: String? = null,
+            w3cTraceparent: String? = null,
+            userAgent: String? = null,
+            networkCaptureData: NetworkCaptureData? = null,
+        ): EmbraceNetworkRequest {
+            return EmbraceNetworkRequest(
+                url,
+                httpMethod.asString(),
+                startTime,
+                endTime,
+                bytesSent,
+                bytesReceived,
+                statusCode,
+                null,
+                null,
+                traceId,
+                w3cTraceparent,
+                userAgent,
+                networkCaptureData
+            )
+        }
 
         /**
          * Construct a new [EmbraceNetworkRequest] instance where a HTTP response was returned.
          * If no response was returned, use [.fromIncompleteRequest]
          * instead.
          *
-         * @param url           the URL of the request.
-         * @param httpMethod    the HTTP method of the request.
-         * @param startTime     the start time of the request.
-         * @param endTime       the end time of the request.
-         * @param bytesSent     the number of bytes sent.
-         * @param bytesReceived the number of bytes received.
-         * @param statusCode    the status code of the response.
-         * @param traceId       the trace ID of the request, used for distributed tracing.
+         * @param url                the URL of the request.
+         * @param httpMethod         the HTTP method of the request.
+         * @param startTime          the start time of the request.
+         * @param endTime            the end time of the request.
+         * @param bytesSent          the number of bytes sent.
+         * @param bytesReceived      the number of bytes received.
+         * @param statusCode         the status code of the response.
+         * @param traceId            the trace ID of the request, used for distributed tracing.
+         * @param networkCaptureData network capture data for the request. If the request headers
+         *                           include a User-Agent, it will be used to populate userAgent.
          * @return a new [EmbraceNetworkRequest] instance.
          */
         @JvmStatic
@@ -112,18 +166,63 @@ public class EmbraceNetworkRequest private constructor(
             w3cTraceparent: String? = null,
             networkCaptureData: NetworkCaptureData? = null,
         ): EmbraceNetworkRequest {
+            return fromCompletedRequest(
+                url = url,
+                httpMethod = httpMethod,
+                startTime = startTime,
+                endTime = endTime,
+                bytesSent = bytesSent,
+                bytesReceived = bytesReceived,
+                statusCode = statusCode,
+                traceId = traceId,
+                w3cTraceparent = w3cTraceparent,
+                userAgent = networkCaptureData?.userAgent,
+                networkCaptureData = networkCaptureData
+            )
+        }
+
+        /**
+         * Construct a new [EmbraceNetworkRequest] instance where a HTTP response was not returned.
+         * If a response was returned, use [.fromCompletedRequest] instead.
+         *
+         * @param url                the URL of the request.
+         * @param httpMethod         the HTTP method of the request.
+         * @param startTime          the start time of the request.
+         * @param endTime            the end time of the request.
+         * @param errorType          the error type that occurred.
+         * @param errorMessage       the error message.
+         * @param traceId            the trace ID of the request, used for distributed tracing.
+         * @param w3cTraceparent     the W3C-compliant traceparent of the network call.
+         * @param userAgent          the user agent of the request.
+         * @param networkCaptureData network capture data for the request.
+         * @return a new [EmbraceNetworkRequest] instance.
+         */
+        @JvmStatic
+        public fun fromIncompleteRequest(
+            url: String,
+            httpMethod: HttpMethod,
+            startTime: Long,
+            endTime: Long,
+            errorType: String,
+            errorMessage: String,
+            traceId: String? = null,
+            w3cTraceparent: String? = null,
+            userAgent: String? = null,
+            networkCaptureData: NetworkCaptureData? = null,
+        ): EmbraceNetworkRequest {
             return EmbraceNetworkRequest(
                 url,
                 httpMethod.asString(),
                 startTime,
                 endTime,
-                bytesSent,
-                bytesReceived,
-                statusCode,
                 null,
                 null,
+                null,
+                errorType,
+                errorMessage,
                 traceId,
                 w3cTraceparent,
+                userAgent,
                 networkCaptureData
             )
         }
@@ -154,22 +253,27 @@ public class EmbraceNetworkRequest private constructor(
             w3cTraceparent: String? = null,
             networkCaptureData: NetworkCaptureData? = null,
         ): EmbraceNetworkRequest {
-            return EmbraceNetworkRequest(
-                url,
-                httpMethod.asString(),
-                startTime,
-                endTime,
-                null,
-                null,
-                null,
-                errorType,
-                errorMessage,
-                traceId,
-                w3cTraceparent,
-                networkCaptureData
+            return fromIncompleteRequest(
+                url = url,
+                httpMethod = httpMethod,
+                startTime = startTime,
+                endTime = endTime,
+                errorType = errorType,
+                errorMessage = errorMessage,
+                traceId = traceId,
+                w3cTraceparent = w3cTraceparent,
+                userAgent = networkCaptureData?.userAgent,
+                networkCaptureData = networkCaptureData
             )
         }
 
         internal fun HttpMethod.asString(): String = name.uppercase(Locale.getDefault())
+        internal val NetworkCaptureData.userAgent: String?
+            get() =
+                requestHeaders?.let { requestHeaders ->
+                    requestHeaders["user-agent"]
+                        ?: requestHeaders["User-Agent"]
+                        ?: requestHeaders.entries.find { (name, _) -> name.contentEquals("user-agent", true) }?.value
+                }
     }
 }

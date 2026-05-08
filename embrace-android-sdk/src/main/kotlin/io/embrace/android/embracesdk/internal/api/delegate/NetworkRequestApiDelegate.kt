@@ -57,6 +57,7 @@ internal class NetworkRequestApiDelegate(
             errorMessage = errorMessage,
             traceId = traceId,
             w3cTraceparent = w3cTraceparent,
+            userAgent = userAgent,
             body = networkCaptureData?.let { data ->
                 HttpNetworkRequest.HttpRequestBody(
                     requestHeaders = data.requestHeaders,

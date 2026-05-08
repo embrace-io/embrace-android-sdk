@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
@@ -75,6 +76,9 @@ fun BlueskyFeedTimelineUi(
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { feeds.size })
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    // Hoisted per-feed LazyListStates: survive page disposal in the pager and let the outer
+    // composable scroll the active feed back to the top when its tab is re-tapped.
+    val lazyStates = feeds.associateWith { rememberLazyListState() }
 
     val currentFeed = feeds[pagerState.currentPage]
     val currentError by store.error(currentFeed).collectAsState()
@@ -106,7 +110,14 @@ fun BlueskyFeedTimelineUi(
                         Tab(
                             selected = idx == pagerState.currentPage,
                             onClick = {
-                                coroutineScope.launch { pagerState.animateScrollToPage(idx) }
+                                coroutineScope.launch {
+                                    if (idx == pagerState.currentPage) {
+                                        // Re-tapping the active tab scrolls the feed to the top.
+                                        lazyStates.getValue(feed).animateScrollToItem(0)
+                                    } else {
+                                        pagerState.animateScrollToPage(idx)
+                                    }
+                                }
                             },
                             text = { Text(feed.label) },
                         )
@@ -122,9 +133,11 @@ fun BlueskyFeedTimelineUi(
                 .fillMaxSize()
                 .padding(padding),
         ) { page ->
+            val feed = feeds[page]
             FeedPage(
-                feed = feeds[page],
+                feed = feed,
                 store = store,
+                lazyState = lazyStates.getValue(feed),
                 autoplayEnabled = pagerState.settledPage == page,
                 onPostClick = onPostClick,
                 onAuthorClick = onAuthorClick,
@@ -138,13 +151,33 @@ fun BlueskyFeedTimelineUi(
 private fun FeedPage(
     feed: BlueskyPinnedFeed,
     store: BlueskyFeedStore,
+    lazyState: LazyListState,
     autoplayEnabled: Boolean,
     onPostClick: (postId: String) -> Unit,
     onAuthorClick: (handle: String) -> Unit,
 ) {
     val posts by store.posts(feed).collectAsState()
     val isFetching by store.isFetching(feed).collectAsState()
-    val lazyState = rememberLazyListState()
+    val anyFetching by store.anyFetching.collectAsState()
+    /**
+     * Trigger a paginate-older fetch when the user scrolls within 5 items of the end. Gated on
+     * the store's global lock so we don't pile up requests while a load is in flight. When the
+     * global lock releases this re-fires (the [anyFetching] key flips), letting the user keep
+     * paginating if they're still near the bottom.
+     */
+    val shouldLoadMore by remember(posts) {
+        derivedStateOf {
+            if (posts.isEmpty()) return@derivedStateOf false
+            val lastVisible = lazyState.layoutInfo.visibleItemsInfo.lastOrNull()
+                ?: return@derivedStateOf false
+            lastVisible.index >= lazyState.layoutInfo.totalItemsCount - 5
+        }
+    }
+    LaunchedEffect(shouldLoadMore, anyFetching) {
+        if (shouldLoadMore && !anyFetching) {
+            store.fetch(feed)
+        }
+    }
     /**
      * The id of the topmost post on this page that contains a video AND is at least 50% visible.
      * Disabled when [autoplayEnabled] is false (i.e. this page isn't the settled pager page) so
@@ -200,8 +233,28 @@ private fun FeedPage(
                         isActiveVideoSlot = post.id == activeVideoPostId,
                     )
                 }
+                if (isFetching) {
+                    item(key = "loading_more_${feed.slug}") {
+                        LoadingMoreFooter()
+                    }
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun LoadingMoreFooter() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(20.dp),
+            strokeWidth = 2.dp,
+        )
     }
 }
 

@@ -37,6 +37,11 @@ class BlueskyFeedStore(
 
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
+    /** Guards all network fetches across every feed — only one load runs at a time. */
+    private val globalFetchMutex = Mutex()
+    private val anyFetchingFlow = MutableStateFlow(false)
+    val anyFetching: StateFlow<Boolean> = anyFetchingFlow.asStateFlow()
+
     private class FeedState(val feed: BlueskyPinnedFeed, cacheRoot: File) {
         val mutex = Mutex()
         val posts = MutableStateFlow<List<Post>>(emptyList())
@@ -80,12 +85,21 @@ class BlueskyFeedStore(
         }
     }
 
-    /** Trigger a network fetch for [feed]. Idempotent: a no-op if [feed] is already fetching. */
+    /**
+     * Trigger a network fetch for [feed]. No-op if any feed is currently fetching: only one load
+     * runs at a time, regardless of which tab triggered it.
+     */
     fun fetch(feed: BlueskyPinnedFeed, limit: Int = 30) {
         val st = state(feed)
-        if (st.fetching.value) return
         scope.launch {
-            st.mutex.withLock { fetchInternal(st, limit) }
+            if (!globalFetchMutex.tryLock()) return@launch
+            anyFetchingFlow.value = true
+            try {
+                st.mutex.withLock { fetchInternal(st, limit) }
+            } finally {
+                anyFetchingFlow.value = false
+                globalFetchMutex.unlock()
+            }
         }
     }
 
@@ -113,8 +127,9 @@ class BlueskyFeedStore(
             }
             st.cursor = result.nextCursor
             val existing = st.posts.value
+            // Cursor walks newest → oldest, so append the new (older) batch to the end.
             val deduped = result.posts.filter { fresh -> existing.none { it.id == fresh.id } }
-            val merged = deduped + existing
+            val merged = existing + deduped
             st.posts.value = merged
             withContext(Dispatchers.IO) { writeToDisk(st.file, merged) }
         } catch (e: Exception) {

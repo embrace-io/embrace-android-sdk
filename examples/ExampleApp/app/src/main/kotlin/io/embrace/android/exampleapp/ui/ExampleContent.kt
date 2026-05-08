@@ -5,6 +5,8 @@ import io.embrace.android.exampleapp.ui.examples.AddBreadcrumbExample
 import io.embrace.android.exampleapp.ui.examples.AnrDetectionExample
 import io.embrace.android.exampleapp.ui.examples.ComplexFragmentNavigationExample
 import io.embrace.android.exampleapp.ui.examples.ComposeFragmentNavigationExample
+import io.embrace.android.exampleapp.ui.examples.ObservedBackStackExample
+import io.embrace.android.exampleapp.ui.examples.ObservedNavControllerExample
 import io.embrace.android.exampleapp.ui.examples.bytecode.BytecodeInstrumentationExample
 import io.embrace.android.exampleapp.ui.examples.EndSessionExample
 import io.embrace.android.exampleapp.ui.examples.JvmCrashExample
@@ -37,5 +39,7 @@ fun ExampleContent(example: CodeExample) {
         CodeExample.BYTECODE_INSTRUMENTATION_SAMPLES -> BytecodeInstrumentationExample()
         CodeExample.FRAGMENT_NAVIGATION -> ComposeFragmentNavigationExample()
         CodeExample.COMPLEX_FRAGMENT_NAVIGATION -> ComplexFragmentNavigationExample()
+        CodeExample.OBSERVED_NAV_CONTROLLER -> ObservedNavControllerExample()
+        CodeExample.OBSERVED_BACK_STACK -> ObservedBackStackExample()
     }
 }

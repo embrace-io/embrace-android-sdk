@@ -77,6 +77,8 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.navigation.fragment)
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.navigation3.ui)
     implementation(libs.kotlinx.serialization.core)
     add("kotlinCompilerPluginClasspath", libs.kotlin.serialization.compiler.plugin)
     implementation(platform(libs.androidx.compose.bom))

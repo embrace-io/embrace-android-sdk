@@ -61,7 +61,7 @@ object BlueskyFeedStore {
     }
 
     /** Trigger a network fetch. Idempotent: a no-op if already fetching. */
-    fun fetch(limit: Int = 10) {
+    fun fetch(limit: Int = 30) {
         if (fetching.value) return
         scope.launch {
             mutex.withLock { fetchInternal(limit) }

@@ -2,6 +2,8 @@ package io.embrace.android.exampleapp
 
 import android.annotation.SuppressLint
 import android.app.Application
+import coil.ImageLoader
+import coil.ImageLoaderFactory
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.otel.java.addJavaLogRecordExporter
 import io.embrace.android.embracesdk.otel.java.addJavaSpanExporter
@@ -11,7 +13,18 @@ import java.net.URL
 import java.net.URLStreamHandler
 import java.net.URLStreamHandlerFactory
 
-class MainApplication : Application() {
+class MainApplication : Application(), ImageLoaderFactory {
+
+    /**
+     * Coil reads this on first [ImageLoader] access. Wires Coil to the shared
+     * [AppHttpClient.instance] so image fetches go through the same Embrace-instrumented client
+     * (with the parallel-fetch cap) as the rest of the app's network traffic.
+     */
+    override fun newImageLoader(): ImageLoader =
+        ImageLoader.Builder(this)
+            .okHttpClient { AppHttpClient.instance }
+            .build()
+
 
     companion object {
         init {

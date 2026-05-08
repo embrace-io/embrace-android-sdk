@@ -30,6 +30,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -85,29 +86,37 @@ fun BlueskyFeedTimelineUi(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) { Snackbar(it) } },
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+        PullToRefreshBox(
+            isRefreshing = isFetching,
+            onRefresh = { BlueskyFeedStore.fetch() },
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
         ) {
-            item(key = "fetch_card") {
-                FetchCard(
-                    count = posts.size,
-                    isFetching = isFetching,
-                    onFetch = { BlueskyFeedStore.fetch() },
-                    onClear = { BlueskyFeedStore.clear() },
-                )
-            }
-            if (posts.isEmpty()) {
-                item(key = "empty_state") {
-                    EmptyState()
-                }
-            } else {
-                items(items = posts, key = { it.id }) { post ->
-                    PostRow(
-                        post = post,
-                        onPostClick = onPostClick,
-                        onAuthorClick = onAuthorClick,
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                item(key = "fetch_card") {
+                    FetchCard(
+                        count = posts.size,
+                        isFetching = isFetching,
+                        onFetch = { BlueskyFeedStore.fetch() },
+                        onClear = { BlueskyFeedStore.clear() },
                     )
+                }
+                if (posts.isEmpty()) {
+                    item(key = "empty_state") {
+                        EmptyState()
+                    }
+                } else {
+                    items(items = posts, key = { it.id }) { post ->
+                        PostRow(
+                            post = post,
+                            onPostClick = onPostClick,
+                            onAuthorClick = onAuthorClick,
+                        )
+                    }
                 }
             }
         }
@@ -135,7 +144,7 @@ private fun FetchCard(
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = if (count == 0) {
-                    "No posts cached yet. Tap to pull 10 from the public \"What's Hot\" feed."
+                    "No posts cached yet. Pull to refresh, or tap below to pull 30 from the public \"What's Hot\" feed."
                 } else {
                     "$count post${if (count == 1) "" else "s"} cached. Successive fetches paginate the feed."
                 },
@@ -161,7 +170,7 @@ private fun FetchCard(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                     }
-                    Text(text = if (isFetching) "Fetching…" else "Fetch 10 from Bluesky")
+                    Text(text = if (isFetching) "Fetching…" else "Fetch 30 from Bluesky")
                 }
                 if (count > 0) {
                     OutlinedButton(onClick = onClear, enabled = !isFetching) {

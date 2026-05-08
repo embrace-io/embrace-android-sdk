@@ -14,12 +14,11 @@ import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import io.embrace.android.exampleapp.AppHttpClient
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
 import java.time.Instant
-import java.util.concurrent.TimeUnit
 
 /**
  * Minimal client for Bluesky's public AppView. No auth required.
@@ -43,12 +42,8 @@ internal object BlueskyApi {
     private const val FEED_URI =
         "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot"
 
-    private val httpClient: OkHttpClient by lazy {
-        OkHttpClient.Builder()
-            .connectTimeout(15, TimeUnit.SECONDS)
-            .readTimeout(15, TimeUnit.SECONDS)
-            .build()
-    }
+    private val httpClient
+        get() = AppHttpClient.instance
 
     private val json: Json = Json { ignoreUnknownKeys = true }
 

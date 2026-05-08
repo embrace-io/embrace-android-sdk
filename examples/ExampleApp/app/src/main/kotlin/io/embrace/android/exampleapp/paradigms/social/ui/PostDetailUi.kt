@@ -33,7 +33,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import io.embrace.android.exampleapp.paradigms.data.Post
-import io.embrace.android.exampleapp.paradigms.data.SampleData
+import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.ui.MediaItem
 import io.embrace.android.exampleapp.ui.appBarColors
 
@@ -44,8 +44,9 @@ fun PostDetailUi(
     onAuthorClick: (handle: String) -> Unit,
     onBack: () -> Unit,
 ) {
+    val sampleData = appGraph().sampleData
     val replies = remember(post.id) {
-        SampleData.posts
+        sampleData.posts
             .filter { it.id != post.id && it.authorHandle != post.authorHandle }
             .shuffled(kotlin.random.Random(post.id.hashCode().toLong()))
             .take(8)

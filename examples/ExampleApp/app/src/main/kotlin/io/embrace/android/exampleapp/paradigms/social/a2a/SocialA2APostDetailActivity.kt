@@ -6,7 +6,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import io.embrace.android.exampleapp.paradigms.data.SampleData
+import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.social.ui.PostDetailUi
 import io.embrace.android.exampleapp.ui.theme.ExampleAppTheme
 
@@ -14,8 +14,9 @@ class SocialA2APostDetailActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val sampleData = appGraph().sampleData
         val postId = intent.getStringExtra(EXTRA_POST_ID)
-        val post = postId?.let(SampleData::post)
+        val post = postId?.let(sampleData::post)
         if (post == null) {
             Toast.makeText(this, "Unknown post", Toast.LENGTH_SHORT).show()
             finish()

@@ -40,7 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import io.embrace.android.exampleapp.paradigms.bluesky.data.BlueskyFeedStore
+import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.social.ui.PostRow
 import io.embrace.android.exampleapp.ui.appBarColors
 
@@ -58,9 +58,10 @@ fun BlueskyFeedTimelineUi(
     onAuthorClick: (handle: String) -> Unit,
     onBack: () -> Unit,
 ) {
-    val posts by BlueskyFeedStore.posts.collectAsState()
-    val isFetching by BlueskyFeedStore.isFetching.collectAsState()
-    val fetchError by BlueskyFeedStore.error.collectAsState()
+    val store = appGraph().blueskyFeedStore
+    val posts by store.posts.collectAsState()
+    val isFetching by store.isFetching.collectAsState()
+    val fetchError by store.error.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(fetchError) {
         if (fetchError != null) {
@@ -88,7 +89,7 @@ fun BlueskyFeedTimelineUi(
     ) { padding ->
         PullToRefreshBox(
             isRefreshing = isFetching,
-            onRefresh = { BlueskyFeedStore.fetch() },
+            onRefresh = { store.fetch() },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
@@ -101,8 +102,8 @@ fun BlueskyFeedTimelineUi(
                     FetchCard(
                         count = posts.size,
                         isFetching = isFetching,
-                        onFetch = { BlueskyFeedStore.fetch() },
-                        onClear = { BlueskyFeedStore.clear() },
+                        onFetch = { store.fetch() },
+                        onClear = { store.clear() },
                     )
                 }
                 if (posts.isEmpty()) {

@@ -11,8 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import io.embrace.android.exampleapp.paradigms.data.SampleData
-import io.embrace.android.exampleapp.paradigms.ecommerce.EcommerceCartStore
+import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.ecommerce.ui.EcommerceCartUi
 import io.embrace.android.exampleapp.paradigms.ecommerce.ui.EcommerceCategoriesUi
 import io.embrace.android.exampleapp.paradigms.ecommerce.ui.EcommerceProductDetailUi
@@ -25,6 +24,9 @@ class EcommerceNavComposeActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ExampleAppTheme {
+                val graph = appGraph()
+                val sampleData = graph.sampleData
+                val cartStore = graph.cartStore
                 val navController = rememberNavController()
                 NavHost(
                     navController = navController,
@@ -37,11 +39,11 @@ class EcommerceNavComposeActivity : ComponentActivity() {
                             .collectAsState()
                         EcommerceCategoriesUi(
                             title = "Categories (Nav-Compose)",
-                            categories = SampleData.productCategories,
+                            categories = sampleData.productCategories,
                             onCategoryClick = { id ->
                                 navController.navigate(EcommerceRoute.ProductList(id))
                             },
-                            cartItemCount = EcommerceCartStore.itemCount,
+                            cartItemCount = cartStore.itemCount,
                             onCartClick = {
                                 navController.navigate(EcommerceRoute.Cart)
                             },
@@ -50,13 +52,13 @@ class EcommerceNavComposeActivity : ComponentActivity() {
                     }
                     composable<EcommerceRoute.ProductList> { entry ->
                         val route: EcommerceRoute.ProductList = entry.toRoute()
-                        val category = SampleData.category(route.categoryId)
+                        val category = sampleData.category(route.categoryId)
                         if (category == null) {
                             navController.popBackStack()
                         } else {
                             EcommerceProductListUi(
                                 categoryTitle = category.title,
-                                products = SampleData.productsIn(category.id),
+                                products = sampleData.productsIn(category.id),
                                 onProductClick = { id ->
                                     navController.navigate(EcommerceRoute.ProductDetail(id))
                                 },
@@ -66,25 +68,25 @@ class EcommerceNavComposeActivity : ComponentActivity() {
                     }
                     composable<EcommerceRoute.ProductDetail> { entry ->
                         val route: EcommerceRoute.ProductDetail = entry.toRoute()
-                        val product = SampleData.product(route.productId)
+                        val product = sampleData.product(route.productId)
                         if (product == null) {
                             navController.popBackStack()
                         } else {
                             EcommerceProductDetailUi(
                                 product = product,
                                 onBack = { navController.popBackStack() },
-                                onAddToCart = { EcommerceCartStore.add(product) },
+                                onAddToCart = { cartStore.add(product) },
                             )
                         }
                     }
                     composable<EcommerceRoute.Cart> {
                         EcommerceCartUi(
-                            items = EcommerceCartStore.items,
-                            totalCents = EcommerceCartStore.totalCents,
-                            onRemove = { id -> EcommerceCartStore.remove(id) },
+                            items = cartStore.items,
+                            totalCents = cartStore.totalCents,
+                            onRemove = { id -> cartStore.remove(id) },
                             onPlaceOrder = {
-                                val total = EcommerceCartStore.totalCents
-                                EcommerceCartStore.clear()
+                                val total = cartStore.totalCents
+                                cartStore.clear()
                                 navController.previousBackStackEntry
                                     ?.savedStateHandle
                                     ?.set(SAVED_STATE_ORDER_PLACED_TOTAL_CENTS, total)

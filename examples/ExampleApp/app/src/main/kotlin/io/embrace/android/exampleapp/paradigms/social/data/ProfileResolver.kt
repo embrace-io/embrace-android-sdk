@@ -6,6 +6,9 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
+import io.embrace.android.exampleapp.di.AppScope
 import io.embrace.android.exampleapp.paradigms.bluesky.data.BlueskyApi
 import io.embrace.android.exampleapp.paradigms.data.Post
 import io.embrace.android.exampleapp.paradigms.data.PostAuthor
@@ -23,7 +26,12 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * Cache lives only for the process lifetime — profiles re-fetch after app restart.
  */
-object ProfileResolver {
+@SingleIn(AppScope::class)
+@Inject
+class ProfileResolver(
+    private val blueskyApi: BlueskyApi,
+    private val sampleData: SampleData,
+) {
 
     sealed interface Result {
         data object Loading : Result
@@ -47,16 +55,16 @@ object ProfileResolver {
     }
 
     private suspend fun resolve(handle: String): Result {
-        SampleData.author(handle)?.let { author ->
-            val posts = SampleData.posts.filter { it.authorHandle == handle }
+        sampleData.author(handle)?.let { author ->
+            val posts = sampleData.posts.filter { it.authorHandle == handle }
             return Result.Loaded(author, posts)
         }
         cache[handle]?.let { return it }
         return try {
             val (author, posts) = withContext(Dispatchers.IO) {
                 coroutineScope {
-                    val profileDeferred = async { BlueskyApi.getProfile(handle) }
-                    val feedDeferred = async { BlueskyApi.getAuthorFeed(handle, limit = 30) }
+                    val profileDeferred = async { blueskyApi.getProfile(handle) }
+                    val feedDeferred = async { blueskyApi.getAuthorFeed(handle, limit = 30) }
                     val results = awaitAll(profileDeferred, feedDeferred)
                     @Suppress("UNCHECKED_CAST")
                     (results[0] as PostAuthor) to (results[1] as List<Post>)

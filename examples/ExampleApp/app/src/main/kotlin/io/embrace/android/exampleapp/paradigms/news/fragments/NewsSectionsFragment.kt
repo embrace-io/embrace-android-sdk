@@ -8,7 +8,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import io.embrace.android.exampleapp.paradigms.data.SampleData
+import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.news.ui.NewsSectionsUi
 import io.embrace.android.exampleapp.ui.theme.ExampleAppTheme
 
@@ -22,14 +22,15 @@ class NewsSectionsFragment : Fragment() {
         setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         setContent {
             ExampleAppTheme {
+                val sampleData = appGraph().sampleData
                 NewsSectionsUi(
                     title = "Sections (Fragments)",
-                    sections = SampleData.newsSections,
+                    sections = sampleData.newsSections,
                     onSectionClick = { id ->
                         findNavController().navigate("section/$id")
                     },
                     onDeeplinkRandom = {
-                        val article = SampleData.articles.random()
+                        val article = sampleData.articles.random()
                         val navController = findNavController()
                         navController.navigate("section/${article.sectionId}")
                         navController.navigate("article/${article.id}")

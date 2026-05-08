@@ -1,5 +1,8 @@
 package io.embrace.android.exampleapp.paradigms.bluesky.data
 
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
+import io.embrace.android.exampleapp.di.AppScope
 import io.embrace.android.exampleapp.paradigms.data.ImageSource
 import io.embrace.android.exampleapp.paradigms.data.MediaRef
 import io.embrace.android.exampleapp.paradigms.data.Post
@@ -14,8 +17,8 @@ import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import io.embrace.android.exampleapp.AppHttpClient
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
 import java.time.Instant
@@ -26,30 +29,39 @@ import java.time.Instant
  * Calls `app.bsky.feed.getFeed` against the public "What's Hot" feed and maps each post into our
  * local [Post] model. Image embeds become [MediaRef.Image] with [ImageSource.Remote] (Coil
  * downloads + caches them on render); video embeds are dropped for simplicity.
- *
- * The CDN that fronts `public.api.bsky.app` 403s `searchPosts` for unauthenticated callers, but
- * `getFeed` against a public feed generator is allowed. The caller passes the previous response's
- * `cursor` so successive fetches paginate deeper into the feed rather than refetching the same
- * top-of-list.
  */
-internal object BlueskyApi {
-
-    private const val BASE_URL = "https://public.api.bsky.app/xrpc/app.bsky.feed.getFeed"
-    private const val PROFILE_URL = "https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile"
-    private const val AUTHOR_FEED_URL = "https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed"
-
-    /** "What's Hot" feed generator — public, accessible without auth. */
-    private const val FEED_URI =
-        "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot"
-
-    private val httpClient
-        get() = AppHttpClient.instance
-
-    private val json: Json = Json { ignoreUnknownKeys = true }
+@SingleIn(AppScope::class)
+@Inject
+class BlueskyApi(
+    private val httpClient: OkHttpClient,
+    private val json: Json,
+) {
 
     data class FetchResult(val posts: List<Post>, val nextCursor: String?)
 
-    /** Public profile lookup by handle or DID. No auth required. */
+    @Throws(IOException::class)
+    fun fetchFeed(limit: Int = 10, cursor: String? = null): FetchResult {
+        val url = BASE_URL.toHttpUrl().newBuilder()
+            .addQueryParameter("feed", FEED_URI)
+            .addQueryParameter("limit", limit.coerceIn(1, 100).toString())
+            .apply { if (!cursor.isNullOrEmpty()) addQueryParameter("cursor", cursor) }
+            .build()
+        httpClient.newCall(Request.Builder().url(url).get().build()).execute().use { res ->
+            if (!res.isSuccessful) {
+                throw IOException("Bluesky responded HTTP ${res.code}")
+            }
+            val root = json.parseToJsonElement(res.body.string()).jsonObject
+            val feedArray = root["feed"]?.jsonArray ?: return FetchResult(emptyList(), null)
+            val nextCursor = root["cursor"]?.stringValue()
+            val posts = feedArray.mapNotNull { item ->
+                val postObj = item.jsonObject["post"]?.jsonObject ?: return@mapNotNull null
+                mapPost(postObj)
+            }
+            return FetchResult(posts, nextCursor)
+        }
+    }
+
+    /** Public profile lookup by handle or DID. */
     @Throws(IOException::class)
     fun getProfile(actor: String): PostAuthor {
         val url = PROFILE_URL.toHttpUrl().newBuilder()
@@ -87,7 +99,7 @@ internal object BlueskyApi {
         }
     }
 
-    /** Public author-feed lookup by handle or DID. No auth required. */
+    /** Public author-feed lookup by handle or DID. */
     @Throws(IOException::class)
     fun getAuthorFeed(actor: String, limit: Int = 30): List<Post> {
         val url = AUTHOR_FEED_URL.toHttpUrl().newBuilder()
@@ -107,50 +119,11 @@ internal object BlueskyApi {
         }
     }
 
-    private fun formatJoinedLabel(iso: String): String {
-        if (iso.isEmpty()) return ""
-        return try {
-            val ts = Instant.parse(iso).atZone(java.time.ZoneId.systemDefault())
-            val month = ts.month.getDisplayName(
-                java.time.format.TextStyle.SHORT,
-                java.util.Locale.getDefault(),
-            )
-            "Joined $month ${ts.year}"
-        } catch (e: Exception) {
-            ""
-        }
-    }
-
-    @Throws(IOException::class)
-    fun fetchFeed(limit: Int = 10, cursor: String? = null): FetchResult {
-        val url = BASE_URL.toHttpUrl().newBuilder()
-            .addQueryParameter("feed", FEED_URI)
-            .addQueryParameter("limit", limit.coerceIn(1, 100).toString())
-            .apply { if (!cursor.isNullOrEmpty()) addQueryParameter("cursor", cursor) }
-            .build()
-        val response = httpClient.newCall(Request.Builder().url(url).get().build()).execute()
-        response.use { res ->
-            if (!res.isSuccessful) {
-                throw IOException("Bluesky responded HTTP ${res.code}")
-            }
-            val body = res.body.string()
-            val root = json.parseToJsonElement(body).jsonObject
-            val feedArray = root["feed"]?.jsonArray ?: return FetchResult(emptyList(), null)
-            val nextCursor = root["cursor"]?.stringValue()
-            val posts = feedArray.mapNotNull { item ->
-                val postObj = item.jsonObject["post"]?.jsonObject ?: return@mapNotNull null
-                mapPost(postObj)
-            }
-            return FetchResult(posts, nextCursor)
-        }
-    }
-
     private fun mapPost(obj: JsonObject): Post? {
         val cid = obj["cid"]?.stringValue() ?: return null
         val author = obj["author"]?.jsonObject ?: return null
         val handle = author["handle"]?.stringValue() ?: return null
         val displayName = author["displayName"]?.stringValue() ?: handle
-        val avatarUrl = author["avatar"]?.stringValue()
         val record = obj["record"]?.jsonObject ?: return null
         val text = record["text"]?.stringValue().orEmpty()
         val likeCount = obj["likeCount"]?.jsonPrimitive?.intOrNull ?: 0
@@ -164,7 +137,6 @@ internal object BlueskyApi {
                 source = ImageSource.Remote(url = url, aspectRatio = 4f / 3f),
             )
         }
-        val authorAvatar = avatarUrl?.let { ImageSource.Remote(url = it, aspectRatio = 1f) }
         return Post(
             id = "bsky_$cid",
             authorHandle = handle,
@@ -176,7 +148,6 @@ internal object BlueskyApi {
             media = media,
             timestampLabel = relativeTimeLabel(indexedAt),
             isVerified = false,
-            authorAvatar = authorAvatar,
         )
     }
 
@@ -218,9 +189,32 @@ internal object BlueskyApi {
         }
     }
 
+    private fun formatJoinedLabel(iso: String): String {
+        if (iso.isEmpty()) return ""
+        return try {
+            val ts = Instant.parse(iso).atZone(java.time.ZoneId.systemDefault())
+            val month = ts.month.getDisplayName(
+                java.time.format.TextStyle.SHORT,
+                java.util.Locale.getDefault(),
+            )
+            "Joined $month ${ts.year}"
+        } catch (e: Exception) {
+            ""
+        }
+    }
+
     private fun JsonElement.stringValue(): String? {
         val prim = this as? JsonPrimitive ?: return null
         if (prim is JsonNull) return null
         return if (prim.isString) prim.content else null
+    }
+
+    private companion object {
+        const val BASE_URL = "https://public.api.bsky.app/xrpc/app.bsky.feed.getFeed"
+        const val PROFILE_URL = "https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile"
+        const val AUTHOR_FEED_URL = "https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed"
+
+        const val FEED_URI =
+            "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot"
     }
 }

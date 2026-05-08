@@ -12,7 +12,7 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import androidx.navigation.fragment.findNavController
-import io.embrace.android.exampleapp.paradigms.data.SampleData
+import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.social.ui.TimelineUi
 import io.embrace.android.exampleapp.ui.theme.ExampleAppTheme
 
@@ -35,9 +35,10 @@ class TimelineFragment : Fragment() {
         setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         setContent {
             ExampleAppTheme {
+                val sampleData = appGraph().sampleData
                 TimelineUi(
                     title = "Home (Fragments)",
-                    posts = SampleData.posts,
+                    posts = sampleData.posts,
                     onPostClick = { id ->
                         findNavController().navigate("post/$id")
                     },

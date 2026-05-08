@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.social.data.ProfileResolver
 import io.embrace.android.exampleapp.ui.appBarColors
 
@@ -37,7 +38,7 @@ fun ProfileScreen(
     onPostClick: (postId: String) -> Unit,
     onBack: () -> Unit,
 ) {
-    val state by ProfileResolver.rememberProfileState(handle)
+    val state by appGraph().profileResolver.rememberProfileState(handle)
     when (val current = state) {
         ProfileResolver.Result.Loading -> ProfileLoadingScaffold(handle = handle, onBack = onBack)
         is ProfileResolver.Result.Error -> ProfileErrorScaffold(

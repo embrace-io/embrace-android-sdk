@@ -1,6 +1,9 @@
 package io.embrace.android.exampleapp.paradigms.bluesky.data
 
 import android.content.Context
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
+import io.embrace.android.exampleapp.di.AppScope
 import io.embrace.android.exampleapp.paradigms.data.Post
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -24,14 +27,13 @@ import java.io.File
  * Owns its own coroutine scope so a `fetch()` triggered from the UI completes (and writes to
  * disk) even if the user navigates away mid-request.
  */
-object BlueskyFeedStore {
-
-    private val json: Json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = false
-        classDiscriminator = "type"
-        explicitNulls = false
-    }
+@SingleIn(AppScope::class)
+@Inject
+class BlueskyFeedStore(
+    private val context: Context,
+    private val blueskyApi: BlueskyApi,
+    private val json: Json,
+) {
 
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val mutex = Mutex()
@@ -45,15 +47,24 @@ object BlueskyFeedStore {
     private val errorState = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = errorState.asStateFlow()
 
-    private var storeFile: File? = null
+    private val storeFile: File by lazy {
+        File(File(context.applicationContext.cacheDir, "social"), "dynamic_posts.json")
+    }
 
     @Volatile
     private var cursor: String? = null
 
-    fun init(context: Context) {
-        if (storeFile != null) return
-        val dir = File(context.applicationContext.cacheDir, "social")
-        storeFile = File(dir, "dynamic_posts.json")
+    @Volatile
+    private var diskLoaded: Boolean = false
+
+    /**
+     * Eagerly load the cached file from disk. Safe to call multiple times — only the first
+     * call performs work. Typically invoked from `Application.onCreate` so the timeline opens
+     * with cached posts already in memory.
+     */
+    fun loadFromDisk() {
+        if (diskLoaded) return
+        diskLoaded = true
         scope.launch {
             val loaded = readFromDisk()
             backing.value = loaded
@@ -76,18 +87,10 @@ object BlueskyFeedStore {
                 errorState.value = null
                 cursor = null
                 withContext(Dispatchers.IO) {
-                    storeFile?.takeIf { it.exists() }?.delete()
+                    storeFile.takeIf { it.exists() }?.delete()
                 }
             }
         }
-    }
-
-    /** Synchronous version for the rare caller (e.g., a "Clear" UI button that wants instant feedback). */
-    fun clearSync() {
-        backing.value = emptyList()
-        errorState.value = null
-        cursor = null
-        runCatching { storeFile?.takeIf { it.exists() }?.delete() }
     }
 
     private suspend fun fetchInternal(limit: Int) {
@@ -95,7 +98,7 @@ object BlueskyFeedStore {
         errorState.value = null
         try {
             val result = withContext(Dispatchers.IO) {
-                BlueskyApi.fetchFeed(limit = limit, cursor = cursor)
+                blueskyApi.fetchFeed(limit = limit, cursor = cursor)
             }
             cursor = result.nextCursor
             val existing = backing.value
@@ -111,22 +114,20 @@ object BlueskyFeedStore {
     }
 
     private fun readFromDisk(): List<Post> {
-        val file = storeFile ?: return emptyList()
-        if (!file.exists() || file.length() == 0L) return emptyList()
+        if (!storeFile.exists() || storeFile.length() == 0L) return emptyList()
         return try {
-            val text = file.readText()
+            val text = storeFile.readText()
             json.decodeFromString(ListSerializer(Post.serializer()), text)
         } catch (e: Exception) {
             // Malformed file (e.g., truncated by OS cache eviction). Drop it and start fresh.
-            runCatching { file.delete() }
+            runCatching { storeFile.delete() }
             emptyList()
         }
     }
 
     private fun writeToDisk(posts: List<Post>) {
-        val file = storeFile ?: return
-        file.parentFile?.mkdirs()
+        storeFile.parentFile?.mkdirs()
         val text = json.encodeToString(ListSerializer(Post.serializer()), posts)
-        file.writeText(text)
+        storeFile.writeText(text)
     }
 }

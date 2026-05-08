@@ -18,6 +18,7 @@ uiautomator = "2.3.0"
 kotlinxSerialization = "1.11.0"
 benchmarkMacroJunit4 = "1.4.1"
 coil = "2.7.0"
+metro = "1.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -69,4 +70,5 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 embrace = { id = "io.embrace.gradle", version.ref = "embrace" }
 android-test = { id = "com.android.test", version.ref = "agp" }
+metro = { id = "dev.zacsweers.metro", version.ref = "metro" }
 

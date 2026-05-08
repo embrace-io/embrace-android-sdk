@@ -6,8 +6,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import io.embrace.android.exampleapp.paradigms.data.SampleData
-import io.embrace.android.exampleapp.paradigms.ecommerce.EcommerceCartStore
+import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.ecommerce.ui.EcommerceProductDetailUi
 import io.embrace.android.exampleapp.ui.theme.ExampleAppTheme
 
@@ -15,8 +14,11 @@ class EcommerceA2AProductDetailActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val graph = appGraph()
+        val sampleData = graph.sampleData
+        val cartStore = graph.cartStore
         val productId = intent.getStringExtra(EXTRA_PRODUCT_ID)
-        val product = productId?.let(SampleData::product)
+        val product = productId?.let(sampleData::product)
         if (product == null) {
             Toast.makeText(this, "Unknown product", Toast.LENGTH_SHORT).show()
             finish()
@@ -27,7 +29,7 @@ class EcommerceA2AProductDetailActivity : ComponentActivity() {
                 EcommerceProductDetailUi(
                     product = product,
                     onBack = { finish() },
-                    onAddToCart = { EcommerceCartStore.add(product) },
+                    onAddToCart = { cartStore.add(product) },
                 )
             }
         }

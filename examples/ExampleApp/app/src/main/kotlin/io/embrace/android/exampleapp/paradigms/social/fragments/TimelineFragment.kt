@@ -37,7 +37,7 @@ class TimelineFragment : Fragment() {
             ExampleAppTheme {
                 TimelineUi(
                     title = "Home (Fragments)",
-                    staticPosts = SampleData.posts,
+                    posts = SampleData.posts,
                     onPostClick = { id ->
                         findNavController().navigate("post/$id")
                     },

@@ -173,6 +173,7 @@ for i in range(240):
         "id": f"p{i}",
         "authorHandle": author["handle"],
         "authorDisplayName": author["displayName"],
+        "authorAvatar": author["avatar"],
         "body": body,
         "likeCount": 10 + rng.randint(0, 44999),
         "replyCount": rng.randint(0, 899),

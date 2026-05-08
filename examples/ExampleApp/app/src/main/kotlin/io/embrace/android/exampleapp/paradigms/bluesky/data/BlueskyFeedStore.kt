@@ -1,4 +1,4 @@
-package io.embrace.android.exampleapp.paradigms.social.data
+package io.embrace.android.exampleapp.paradigms.bluesky.data
 
 import android.content.Context
 import io.embrace.android.exampleapp.paradigms.data.Post
@@ -24,7 +24,7 @@ import java.io.File
  * Owns its own coroutine scope so a `fetch()` triggered from the UI completes (and writes to
  * disk) even if the user navigates away mid-request.
  */
-object DynamicPostsStore {
+object BlueskyFeedStore {
 
     private val json: Json = Json {
         ignoreUnknownKeys = true

@@ -120,7 +120,8 @@ private fun ProfileHeader(author: PostAuthor) {
                     .clip(CircleShape),
             ) {
                 Avatar(
-                    seed = author.handle.hashCode().toLong(),
+                    avatar = author.avatar,
+                    fallbackSeed = author.handle.hashCode().toLong(),
                     modifier = Modifier.fillMaxSize(),
                 )
             }

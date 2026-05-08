@@ -1,8 +1,9 @@
-package io.embrace.android.exampleapp.paradigms.social.data
+package io.embrace.android.exampleapp.paradigms.bluesky.data
 
 import io.embrace.android.exampleapp.paradigms.data.ImageSource
 import io.embrace.android.exampleapp.paradigms.data.MediaRef
 import io.embrace.android.exampleapp.paradigms.data.Post
+import io.embrace.android.exampleapp.paradigms.data.PostAuthor
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -35,6 +36,8 @@ import java.util.concurrent.TimeUnit
 internal object BlueskyApi {
 
     private const val BASE_URL = "https://public.api.bsky.app/xrpc/app.bsky.feed.getFeed"
+    private const val PROFILE_URL = "https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile"
+    private const val AUTHOR_FEED_URL = "https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed"
 
     /** "What's Hot" feed generator — public, accessible without auth. */
     private const val FEED_URI =
@@ -50,6 +53,78 @@ internal object BlueskyApi {
     private val json: Json = Json { ignoreUnknownKeys = true }
 
     data class FetchResult(val posts: List<Post>, val nextCursor: String?)
+
+    /** Public profile lookup by handle or DID. No auth required. */
+    @Throws(IOException::class)
+    fun getProfile(actor: String): PostAuthor {
+        val url = PROFILE_URL.toHttpUrl().newBuilder()
+            .addQueryParameter("actor", actor)
+            .build()
+        httpClient.newCall(Request.Builder().url(url).get().build()).execute().use { res ->
+            if (!res.isSuccessful) {
+                throw IOException("Bluesky profile responded HTTP ${res.code}")
+            }
+            val obj = json.parseToJsonElement(res.body.string()).jsonObject
+            val handle = obj["handle"]?.stringValue() ?: actor
+            val displayName = obj["displayName"]?.stringValue() ?: handle
+            val description = obj["description"]?.stringValue().orEmpty()
+            val followersCount = obj["followersCount"]?.jsonPrimitive?.intOrNull ?: 0
+            val followsCount = obj["followsCount"]?.jsonPrimitive?.intOrNull ?: 0
+            val avatar = obj["avatar"]?.stringValue()?.let {
+                ImageSource.Remote(url = it, aspectRatio = 1f)
+            }
+            val banner = obj["banner"]?.stringValue()?.let {
+                ImageSource.Remote(url = it, aspectRatio = 3f)
+            }
+            val createdAt = obj["createdAt"]?.stringValue().orEmpty()
+            return PostAuthor(
+                handle = handle,
+                displayName = displayName,
+                bio = description,
+                followerCount = followersCount,
+                followingCount = followsCount,
+                avatar = avatar,
+                coverImage = banner,
+                location = "",
+                joinedLabel = formatJoinedLabel(createdAt),
+                isVerified = false,
+            )
+        }
+    }
+
+    /** Public author-feed lookup by handle or DID. No auth required. */
+    @Throws(IOException::class)
+    fun getAuthorFeed(actor: String, limit: Int = 30): List<Post> {
+        val url = AUTHOR_FEED_URL.toHttpUrl().newBuilder()
+            .addQueryParameter("actor", actor)
+            .addQueryParameter("limit", limit.coerceIn(1, 100).toString())
+            .build()
+        httpClient.newCall(Request.Builder().url(url).get().build()).execute().use { res ->
+            if (!res.isSuccessful) {
+                throw IOException("Bluesky authorFeed responded HTTP ${res.code}")
+            }
+            val root = json.parseToJsonElement(res.body.string()).jsonObject
+            val feedArray = root["feed"]?.jsonArray ?: return emptyList()
+            return feedArray.mapNotNull { item ->
+                val postObj = item.jsonObject["post"]?.jsonObject ?: return@mapNotNull null
+                mapPost(postObj)
+            }
+        }
+    }
+
+    private fun formatJoinedLabel(iso: String): String {
+        if (iso.isEmpty()) return ""
+        return try {
+            val ts = Instant.parse(iso).atZone(java.time.ZoneId.systemDefault())
+            val month = ts.month.getDisplayName(
+                java.time.format.TextStyle.SHORT,
+                java.util.Locale.getDefault(),
+            )
+            "Joined $month ${ts.year}"
+        } catch (e: Exception) {
+            ""
+        }
+    }
 
     @Throws(IOException::class)
     fun fetchFeed(limit: Int = 10, cursor: String? = null): FetchResult {
@@ -80,6 +155,7 @@ internal object BlueskyApi {
         val author = obj["author"]?.jsonObject ?: return null
         val handle = author["handle"]?.stringValue() ?: return null
         val displayName = author["displayName"]?.stringValue() ?: handle
+        val avatarUrl = author["avatar"]?.stringValue()
         val record = obj["record"]?.jsonObject ?: return null
         val text = record["text"]?.stringValue().orEmpty()
         val likeCount = obj["likeCount"]?.jsonPrimitive?.intOrNull ?: 0
@@ -93,6 +169,7 @@ internal object BlueskyApi {
                 source = ImageSource.Remote(url = url, aspectRatio = 4f / 3f),
             )
         }
+        val authorAvatar = avatarUrl?.let { ImageSource.Remote(url = it, aspectRatio = 1f) }
         return Post(
             id = "bsky_$cid",
             authorHandle = handle,
@@ -104,6 +181,7 @@ internal object BlueskyApi {
             media = media,
             timestampLabel = relativeTimeLabel(indexedAt),
             isVerified = false,
+            authorAvatar = authorAvatar,
         )
     }
 

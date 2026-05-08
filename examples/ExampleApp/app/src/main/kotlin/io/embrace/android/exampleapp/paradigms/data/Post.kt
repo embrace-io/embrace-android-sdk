@@ -17,6 +17,7 @@ data class Post(
     val isVerified: Boolean = false,
     val mentions: List<String> = emptyList(),
     val hashtags: List<String> = emptyList(),
+    val authorAvatar: ImageSource? = null,
 )
 
 @Serializable

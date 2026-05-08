@@ -99,7 +99,8 @@ private fun PostDetailHeader(post: Post, onAuthorClick: (String) -> Unit) {
     Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Avatar(
-                seed = post.authorHandle.hashCode().toLong(),
+                avatar = post.authorAvatar,
+                fallbackSeed = post.authorHandle.hashCode().toLong(),
                 modifier = Modifier
                     .size(56.dp)
                     .clip(CircleShape)

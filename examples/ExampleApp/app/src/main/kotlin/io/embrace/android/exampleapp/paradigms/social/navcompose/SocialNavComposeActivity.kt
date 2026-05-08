@@ -13,7 +13,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import io.embrace.android.exampleapp.paradigms.data.SampleData
 import io.embrace.android.exampleapp.paradigms.social.ui.ComposePostUi
-import io.embrace.android.exampleapp.paradigms.social.ui.ProfileUi
+import io.embrace.android.exampleapp.paradigms.social.ui.ProfileScreen
 import io.embrace.android.exampleapp.paradigms.social.ui.TimelineUi
 import io.embrace.android.exampleapp.paradigms.social.ui.PostDetailUi
 import io.embrace.android.exampleapp.ui.theme.ExampleAppTheme
@@ -36,7 +36,7 @@ class SocialNavComposeActivity : ComponentActivity() {
                             .collectAsState()
                         TimelineUi(
                             title = "Home (Nav-Compose)",
-                            staticPosts = SampleData.posts,
+                            posts = SampleData.posts,
                             onPostClick = { id ->
                                 navController.navigate(SocialRoute.PostDetail(id))
                             },
@@ -66,20 +66,13 @@ class SocialNavComposeActivity : ComponentActivity() {
                     }
                     composable<SocialRoute.Profile> { entry ->
                         val route: SocialRoute.Profile = entry.toRoute()
-                        val author = SampleData.author(route.handle)
-                        if (author == null) {
-                            navController.popBackStack()
-                        } else {
-                            val authorPosts = SampleData.posts.filter { it.authorHandle == author.handle }
-                            ProfileUi(
-                                author = author,
-                                authorPosts = authorPosts,
-                                onPostClick = { id ->
-                                    navController.navigate(SocialRoute.PostDetail(id))
-                                },
-                                onBack = { navController.popBackStack() },
-                            )
-                        }
+                        ProfileScreen(
+                            handle = route.handle,
+                            onPostClick = { id ->
+                                navController.navigate(SocialRoute.PostDetail(id))
+                            },
+                            onBack = { navController.popBackStack() },
+                        )
                     }
                     composable<SocialRoute.Compose> {
                         ComposePostUi(

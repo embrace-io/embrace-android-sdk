@@ -1,0 +1,105 @@
+package io.embrace.android.exampleapp.paradigms.ecommerce.navcompose
+
+import android.content.Context
+import android.content.Intent
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import io.embrace.android.exampleapp.paradigms.data.SampleData
+import io.embrace.android.exampleapp.paradigms.ecommerce.EcommerceCartStore
+import io.embrace.android.exampleapp.paradigms.ecommerce.ui.EcommerceCartUi
+import io.embrace.android.exampleapp.paradigms.ecommerce.ui.EcommerceCategoriesUi
+import io.embrace.android.exampleapp.paradigms.ecommerce.ui.EcommerceProductDetailUi
+import io.embrace.android.exampleapp.paradigms.ecommerce.ui.EcommerceProductListUi
+import io.embrace.android.exampleapp.ui.theme.ExampleAppTheme
+
+class EcommerceNavComposeActivity : ComponentActivity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            ExampleAppTheme {
+                val navController = rememberNavController()
+                NavHost(
+                    navController = navController,
+                    startDestination = EcommerceRoute.Categories,
+                ) {
+                    composable<EcommerceRoute.Categories> { entry ->
+                        val savedHandle = entry.savedStateHandle
+                        val orderPlacedTotal by savedHandle
+                            .getStateFlow<Long?>(SAVED_STATE_ORDER_PLACED_TOTAL_CENTS, null)
+                            .collectAsState()
+                        EcommerceCategoriesUi(
+                            title = "Categories (Nav-Compose)",
+                            categories = SampleData.productCategories,
+                            onCategoryClick = { id ->
+                                navController.navigate(EcommerceRoute.ProductList(id))
+                            },
+                            cartItemCount = EcommerceCartStore.itemCount,
+                            onCartClick = {
+                                navController.navigate(EcommerceRoute.Cart)
+                            },
+                            orderPlacedTotalCents = orderPlacedTotal,
+                        )
+                    }
+                    composable<EcommerceRoute.ProductList> { entry ->
+                        val route: EcommerceRoute.ProductList = entry.toRoute()
+                        val category = SampleData.category(route.categoryId)
+                        if (category == null) {
+                            navController.popBackStack()
+                        } else {
+                            EcommerceProductListUi(
+                                categoryTitle = category.title,
+                                products = SampleData.productsIn(category.id),
+                                onProductClick = { id ->
+                                    navController.navigate(EcommerceRoute.ProductDetail(id))
+                                },
+                                onBack = { navController.popBackStack() },
+                            )
+                        }
+                    }
+                    composable<EcommerceRoute.ProductDetail> { entry ->
+                        val route: EcommerceRoute.ProductDetail = entry.toRoute()
+                        val product = SampleData.product(route.productId)
+                        if (product == null) {
+                            navController.popBackStack()
+                        } else {
+                            EcommerceProductDetailUi(
+                                product = product,
+                                onBack = { navController.popBackStack() },
+                                onAddToCart = { EcommerceCartStore.add(product) },
+                            )
+                        }
+                    }
+                    composable<EcommerceRoute.Cart> {
+                        EcommerceCartUi(
+                            items = EcommerceCartStore.items,
+                            totalCents = EcommerceCartStore.totalCents,
+                            onRemove = { id -> EcommerceCartStore.remove(id) },
+                            onPlaceOrder = {
+                                val total = EcommerceCartStore.totalCents
+                                EcommerceCartStore.clear()
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set(SAVED_STATE_ORDER_PLACED_TOTAL_CENTS, total)
+                                navController.popBackStack()
+                            },
+                            onBack = { navController.popBackStack() },
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    companion object {
+        fun newIntent(context: Context): Intent =
+            Intent(context, EcommerceNavComposeActivity::class.java)
+    }
+}

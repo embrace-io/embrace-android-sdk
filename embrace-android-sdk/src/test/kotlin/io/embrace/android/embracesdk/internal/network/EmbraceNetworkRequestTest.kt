@@ -110,24 +110,6 @@ internal class EmbraceNetworkRequestTest {
     }
 
     @Test
-    fun testFromCompletedRequest6() {
-        val captureData = NetworkCaptureData(mapOf("user-agent" to USER_AGENT), null, null, null, null)
-        val request = EmbraceNetworkRequest.fromCompletedRequest(
-            URL,
-            httpMethod,
-            START_TIME,
-            END_TIME,
-            BYTES_SENT,
-            BYTES_RECEIVED,
-            RESPONSE_CODE,
-            networkCaptureData = captureData
-        )
-        verifyDefaultCompletedRequest(request)
-        assertEquals(USER_AGENT, request.userAgent)
-        assertEquals(captureData, request.networkCaptureData)
-    }
-
-    @Test
     fun testFromIncompleteRequest1() {
         val request = EmbraceNetworkRequest.fromIncompleteRequest(
             URL,

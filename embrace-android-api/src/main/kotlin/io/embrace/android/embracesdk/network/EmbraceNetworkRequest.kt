@@ -148,8 +148,7 @@ public class EmbraceNetworkRequest private constructor(
          * @param bytesReceived      the number of bytes received.
          * @param statusCode         the status code of the response.
          * @param traceId            the trace ID of the request, used for distributed tracing.
-         * @param networkCaptureData network capture data for the request. If the request headers
-         *                           include a User-Agent, it will be used to populate userAgent.
+         * @param networkCaptureData network capture data for the request.
          * @return a new [EmbraceNetworkRequest] instance.
          */
         @JvmStatic
@@ -176,7 +175,7 @@ public class EmbraceNetworkRequest private constructor(
                 statusCode = statusCode,
                 traceId = traceId,
                 w3cTraceparent = w3cTraceparent,
-                userAgent = networkCaptureData?.userAgent,
+                userAgent = null,
                 networkCaptureData = networkCaptureData
             )
         }
@@ -262,18 +261,11 @@ public class EmbraceNetworkRequest private constructor(
                 errorMessage = errorMessage,
                 traceId = traceId,
                 w3cTraceparent = w3cTraceparent,
-                userAgent = networkCaptureData?.userAgent,
+                userAgent = null,
                 networkCaptureData = networkCaptureData
             )
         }
 
         internal fun HttpMethod.asString(): String = name.uppercase(Locale.getDefault())
-        internal val NetworkCaptureData.userAgent: String?
-            get() =
-                requestHeaders?.let { requestHeaders ->
-                    requestHeaders["user-agent"]
-                        ?: requestHeaders["User-Agent"]
-                        ?: requestHeaders.entries.find { (name, _) -> name.contentEquals("user-agent", true) }?.value
-                }
     }
 }

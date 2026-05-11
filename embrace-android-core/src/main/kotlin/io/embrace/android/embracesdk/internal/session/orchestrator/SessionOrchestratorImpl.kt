@@ -126,7 +126,8 @@ internal class SessionOrchestratorImpl(
                     state = state,
                     timestamp = timestamp,
                     coldStart = true,
-                    partNumber = incrementPartNumber(),
+                    userSessionPartIndex = ::incrementPartIndex,
+                    sessionPartNumber = ::incrementSessionPartNumber,
                 )
             }
         )
@@ -160,7 +161,8 @@ internal class SessionOrchestratorImpl(
                     state = AppState.FOREGROUND,
                     timestamp = timestamp,
                     coldStart = coldStart,
-                    partNumber = incrementPartNumber(),
+                    userSessionPartIndex = ::incrementPartIndex,
+                    sessionPartNumber = ::incrementSessionPartNumber,
                 )
             },
             earlyTerminationCondition = {
@@ -183,7 +185,8 @@ internal class SessionOrchestratorImpl(
                     state = AppState.BACKGROUND,
                     timestamp = timestamp,
                     coldStart = false,
-                    partNumber = incrementPartNumber(),
+                    userSessionPartIndex = ::incrementPartIndex,
+                    sessionPartNumber = ::incrementSessionPartNumber,
                 )
             },
             earlyTerminationCondition = {
@@ -203,7 +206,12 @@ internal class SessionOrchestratorImpl(
             },
             newSessionAction = {
                 lastManualEndMs = timestamp
-                payloadFactory.startSessionWithManual(state, timestamp, incrementPartNumber())
+                payloadFactory.startSessionWithManual(
+                    state = state,
+                    timestamp = timestamp,
+                    userSessionPartIndex = ::incrementPartIndex,
+                    sessionPartNumber = ::incrementSessionPartNumber,
+                )
             },
             earlyTerminationCondition = {
                 return@transitionState shouldEndManualSession(
@@ -341,8 +349,8 @@ internal class SessionOrchestratorImpl(
             val userSession = currentUserSession()
             if (newSession != null) {
                 if (userSession != null) {
-                    // persist partNumber to handle user session restoration in new process
-                    val updatedUserSession = userSession.copy(partNumber = newSession.sessionPartNumber)
+                    // persist partIndex to handle user session restoration in new process
+                    val updatedUserSession = userSession.copy(partIndex = newSession.userSessionPartIndex)
                     metadataStore.save(updatedUserSession)
                     userSessionState = UserSessionState.Active(updatedUserSession)
 
@@ -415,7 +423,8 @@ internal class SessionOrchestratorImpl(
                         state = currentAppState,
                         timestamp = timestamp,
                         coldStart = false,
-                        partNumber = incrementPartNumber(),
+                        userSessionPartIndex = ::incrementPartIndex,
+                        sessionPartNumber = ::incrementSessionPartNumber,
                     )
                 },
             )
@@ -437,7 +446,8 @@ internal class SessionOrchestratorImpl(
                             state = AppState.BACKGROUND,
                             timestamp = timestamp,
                             coldStart = false,
-                            partNumber = incrementPartNumber(),
+                            userSessionPartIndex = ::incrementPartIndex,
+                            sessionPartNumber = ::incrementSessionPartNumber,
                         )
                     } else {
                         null
@@ -448,7 +458,13 @@ internal class SessionOrchestratorImpl(
         }
     }
 
-    private fun incrementPartNumber(): Int = (currentUserSession()?.partNumber ?: 0) + 1
+    private fun incrementPartIndex(): Int = (currentUserSession()?.partIndex ?: 0) + 1
+
+    private fun incrementSessionPartNumber(): Int {
+        return ordinalStore.incrementAndGet(Ordinal.SESSION_PART) {
+            currentUserSession()?.userSessionNumber?.toInt() ?: 1
+        }
+    }
 
     private fun processEndMessage(envelope: Envelope<SessionPartPayload>?, transitionType: TransitionType) {
         envelope?.let {
@@ -540,13 +556,14 @@ internal class SessionOrchestratorImpl(
     private fun startNewUserSession(startTimeMs: Long) {
         val maxDurationMs = configService.sessionBehavior.getMaxSessionDurationMs()
         val inactivityTimeoutMs = configService.sessionBehavior.getSessionInactivityTimeoutMs()
+        val userSessionNumber = ordinalStore.incrementAndGet(Ordinal.USER_SESSION).toLong()
         val newMetadata = UserSessionMetadata(
             startTimeMs = startTimeMs,
             userSessionId = uuidSource.createUuid(),
-            userSessionNumber = ordinalStore.incrementAndGet(Ordinal.USER_SESSION).toLong(),
+            userSessionNumber = userSessionNumber,
             maxDurationSecs = maxDurationMs / 1_000L,
             inactivityTimeoutSecs = inactivityTimeoutMs / 1_000L,
-            partNumber = 0,
+            partIndex = 0,
             lastActivityMs = startTimeMs,
         )
         metadataStore.save(newMetadata)

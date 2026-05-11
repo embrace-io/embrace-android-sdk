@@ -16,6 +16,7 @@ fun fakeSessionPartToken(): SessionPartToken = SessionPartToken(
     appState = AppState.FOREGROUND,
     isColdStart = true,
     startType = LifeEventType.STATE,
+    userSessionPartIndex = 1,
     sessionPartNumber = 1,
 )
 

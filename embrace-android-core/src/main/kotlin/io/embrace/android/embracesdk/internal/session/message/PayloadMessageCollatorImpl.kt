@@ -25,7 +25,8 @@ internal class PayloadMessageCollatorImpl(
             appState = appState,
             isColdStart = coldStart,
             startType = startType,
-            sessionPartNumber = partNumber,
+            userSessionPartIndex = userSessionPartIndex,
+            sessionPartNumber = sessionPartNumber,
         )
     }
 

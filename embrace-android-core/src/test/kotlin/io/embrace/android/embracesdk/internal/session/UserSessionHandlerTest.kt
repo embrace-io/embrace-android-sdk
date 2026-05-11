@@ -182,7 +182,8 @@ internal class UserSessionHandlerTest {
                 AppState.FOREGROUND,
                 NOW,
                 true,
-                1
+                { 1 },
+                { 1 },
             )
         )
     }

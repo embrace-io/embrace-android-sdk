@@ -89,6 +89,12 @@ object EmbSessionAttributes {
     const val EMB_SESSION_PART_ID: String = "emb.session_part_id"
 
     /**
+     * Monotonically incrementing counter of session parts since SDK install. Seeded from emb.session_number when first created; increments by 1 on each new session part. Never resets across process or session boundaries.
+     */
+    @ExperimentalSemconv
+    const val EMB_SESSION_PART_NUMBER: String = "emb.session_part_number"
+
+    /**
      * The session start type.
      */
     @ExperimentalSemconv
@@ -146,7 +152,7 @@ object EmbSessionAttributes {
      * The index of the part within the session. 1-indexed, matching the behavior of session_number.
      */
     @ExperimentalSemconv
-    const val EMB_USER_SESSION_PART_NUMBER: String = "emb.user_session_part_number"
+    const val EMB_USER_SESSION_PART_INDEX: String = "emb.user_session_part_index"
 
     /**
      * Session start timestamp (milliseconds since epoch).

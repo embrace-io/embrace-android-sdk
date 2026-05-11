@@ -18,7 +18,7 @@ internal class UserSessionMetadataStoreTest {
         userSessionNumber = 3L,
         maxDurationSecs = 3600L,
         inactivityTimeoutSecs = 1800L,
-        partNumber = 1,
+        partIndex = 1,
         lastActivityMs = 5000L,
     )
     private val metadata2 = UserSessionMetadata(
@@ -27,7 +27,7 @@ internal class UserSessionMetadataStoreTest {
         userSessionNumber = 5L,
         maxDurationSecs = 7200L,
         inactivityTimeoutSecs = 3600L,
-        partNumber = 2,
+        partIndex = 2,
         lastActivityMs = 9000L,
     )
 
@@ -52,7 +52,7 @@ internal class UserSessionMetadataStoreTest {
         assertEquals(metadata.userSessionNumber, loaded.userSessionNumber)
         assertEquals(metadata.maxDurationSecs, loaded.maxDurationSecs)
         assertEquals(metadata.inactivityTimeoutSecs, loaded.inactivityTimeoutSecs)
-        assertEquals(metadata.partNumber, loaded.partNumber)
+        assertEquals(metadata.partIndex, loaded.partIndex)
         assertEquals(metadata.lastActivityMs, loaded.lastActivityMs)
     }
 
@@ -67,7 +67,7 @@ internal class UserSessionMetadataStoreTest {
         assertEquals(metadata2.userSessionNumber, loaded.userSessionNumber)
         assertEquals(metadata2.maxDurationSecs, loaded.maxDurationSecs)
         assertEquals(metadata2.inactivityTimeoutSecs, loaded.inactivityTimeoutSecs)
-        assertEquals(metadata2.partNumber, loaded.partNumber)
+        assertEquals(metadata2.partIndex, loaded.partIndex)
         assertEquals(metadata2.lastActivityMs, loaded.lastActivityMs)
     }
 
@@ -129,10 +129,10 @@ internal class UserSessionMetadataStoreTest {
     }
 
     @Test
-    fun `load returns null when part number is missing`() {
+    fun `load returns null when part index is missing`() {
         metadataStore.save(metadata)
         val stored = checkNotNull(kvStore.getStringMap("embrace.user_session")).toMutableMap()
-        stored.remove(EmbSessionAttributes.EMB_USER_SESSION_PART_NUMBER)
+        stored.remove(EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX)
         kvStore.edit { putStringMap("embrace.user_session", stored) }
 
         assertNull(metadataStore.load())

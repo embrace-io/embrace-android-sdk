@@ -41,5 +41,10 @@ data class SessionPartToken(
     /**
      * Monotonic index of this part of the user session.
      */
+    val userSessionPartIndex: Int = 0,
+
+    /**
+     * Monotonic index of all session parts ever created on this device
+     */
     val sessionPartNumber: Int = 0,
 )

@@ -242,7 +242,7 @@ internal class EmbraceSetupInterface(
         startMs: Long,
         lastActivityMs: Long,
         sessionNumber: Int = 1,
-        partNumber: Int = 1,
+        partIndex: Int = 1,
         maxDurationSeconds: Int = 43200,
         inactivityTimeoutSeconds: Int = 1800,
     ) {
@@ -256,7 +256,7 @@ internal class EmbraceSetupInterface(
                     EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS to maxDurationSeconds.toString(),
                     EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS to inactivityTimeoutSeconds.toString(),
                     SessionAttributes.SESSION_ID to userSessionId,
-                    EmbSessionAttributes.EMB_USER_SESSION_PART_NUMBER to partNumber.toString(),
+                    EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX to partIndex.toString(),
                     "emb.user_session_last_activity_ts" to lastActivityMs.toString(),
                 )
             )

@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Attribute
@@ -20,9 +19,10 @@ fun Span.hasEmbraceAttributeValue(key: String, value: Any): Boolean {
 }
 
 fun Span.toFailedSpan(endTimeMs: Long): Span {
+    val isSessionSpan = hasEmbraceAttribute(EmbType.Ux.Session)
     val newAttributes = mutableMapOf<String, String>().apply {
         setEmbraceAttribute(ErrorCodeAttribute.Failure)
-        if (hasEmbraceAttribute(EmbType.Ux.Session)) {
+        if (isSessionSpan) {
             setEmbraceAttribute(AppTerminationCause.Crash)
         }
     }

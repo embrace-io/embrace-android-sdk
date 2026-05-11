@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
+import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.SerializationAction
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -16,6 +17,7 @@ import java.io.InputStream
 import java.util.Collections
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 
 class FakePayloadStorageService(
@@ -110,5 +112,17 @@ class FakePayloadStorageService(
         cachedPayloads.remove(metadata)
         deleteCount.getAndIncrement()
         callback()
+    }
+
+    fun getPersistedCrashLog(
+        payloadType: PayloadType = PayloadType.JVM_CRASH,
+    ): Envelope<LogPayload> {
+        val metadata = storedPayloadMetadata().single {
+            it.payloadType == payloadType && it.complete
+        }
+        return serializer.fromJson(
+            GZIPInputStream(loadPayloadAsStream(metadata)),
+            checkNotNull(SupportedEnvelopeType.CRASH.serializedType)
+        )
     }
 }

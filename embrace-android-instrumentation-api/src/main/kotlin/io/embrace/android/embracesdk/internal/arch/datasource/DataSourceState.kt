@@ -25,7 +25,9 @@ class DataSourceState<T : DataSource>(
 
     var dataSource: T? = when {
         configGate() -> factoryRef.value?.apply {
-            onDataCaptureEnabled()
+            if (initializeOnCreation) {
+                onDataCaptureEnabled()
+            }
         }
         else -> null
     }

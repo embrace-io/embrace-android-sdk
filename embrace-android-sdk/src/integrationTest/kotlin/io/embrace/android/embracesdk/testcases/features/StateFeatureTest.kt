@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.assertions.assertStateTransition
 import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.assertions.getLogs
 import io.embrace.android.embracesdk.assertions.hasLinkToEmbraceSpan
+import io.embrace.android.embracesdk.fakes.LazyInitDataSource
 import io.embrace.android.embracesdk.fakes.TestStateDataSource
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -12,6 +13,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
@@ -25,6 +27,7 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.LIFECYCLE_EVENT_GAP
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -439,6 +442,31 @@ internal class StateFeatureTest {
                     droppedByInstrumentation = 1,
                     transitionAttributes = attrsThird,
                 )
+            }
+        )
+    }
+
+    @Test
+    fun `lazy init state data sources generate state span at time of first use`() {
+        var initTime = 0L
+        testRule.runTest(
+            testCaseAction = {
+                recordSession()
+                recordSession {
+                    clock.tick()
+                    initTime = clock.now()
+                    findDataSource<LazyInitDataSource>().onStateChange("initialized", initTime)
+                }
+            },
+            assertAction = {
+                val sessionParts = getSessionEnvelopes(2)
+                assertNull(sessionParts[0].getStateSpan("emb-state-lazy-init"))
+
+                with(checkNotNull(sessionParts[1].getStateSpan("emb-state-lazy-init"))) {
+                    assertEquals(initTime.millisToNanos(), startTimeNanos)
+                    val firstTransition = checkNotNull(events).first()
+                    firstTransition.assertStateTransition(initTime, "initialized")
+                }
             }
         )
     }

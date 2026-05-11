@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestinati
 
 class FakeDataSource(
     private val ctx: Context,
+    override val initializeOnCreation: Boolean = true
 ) : DataSource, ComponentCallbacks2, SessionPartEndListener, SessionPartChangeListener {
 
     override val instrumentationName: String = "fake_data_source"

@@ -16,6 +16,7 @@ class FakeTelemetryDestination : TelemetryDestination {
     val addedEvents = mutableListOf<FakeSessionEvent>()
     val attributes = mutableMapOf<String, String>()
     val createdSpans: MutableList<FakeSpanToken> = mutableListOf()
+    val createdStateTokens: MutableList<FakeSessionPartStateToken<*>> = mutableListOf()
     fun completedSpans(): List<FakeSpanToken> = createdSpans.filterNot(FakeSpanToken::isRecording)
 
     override fun addLog(
@@ -121,7 +122,11 @@ class FakeTelemetryDestination : TelemetryDestination {
         createdSpans.add(token)
     }
 
-    override fun <T : Any> startSessionPartStateCapture(state: SchemaType.State<T>): SessionPartStateToken<T> = FakeSessionPartStateToken()
+    override fun <T : Any> startSessionPartStateCapture(state: SchemaType.State<T>): SessionPartStateToken<T> {
+        val token = FakeSessionPartStateToken<T>()
+        createdStateTokens.add(token)
+        return token
+    }
 
     override var sessionUpdateAction: (() -> Unit)? = null
 

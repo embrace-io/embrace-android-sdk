@@ -17,6 +17,13 @@ interface DataSource {
     val instrumentationName: String
 
     /**
+     * Whether [onDataCaptureEnabled] should be invoked automatically when this data source is created by [DataSourceState].
+     * Defaults to true. For data sources where this is false, it will happen at a later time at the discretion of the data source.
+     */
+    val initializeOnCreation: Boolean
+        get() = true
+
+    /**
      * Enables data capture. This should include registering any listeners, and resetting
      * any state (if applicable).
      *

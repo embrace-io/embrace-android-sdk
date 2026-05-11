@@ -1235,6 +1235,223 @@ internal class SessionOrchestratorTest {
         assertNotEquals("restored-id", newSession.userSessionId)
     }
 
+    @Test
+    fun `max duration timer fires while backgrounded and rotates user session`() {
+        configService = bgCaptureEnabledConfig()
+        createOrchestrator(AppState.FOREGROUND)
+
+        val first = checkNotNull(orchestrator.currentUserSession())
+        val storedBefore = store.storedSessionPartPayloads.size
+
+        // Background well before max duration, then sit in BG past max duration without coming back to FG.
+        clock.tick(1_000)
+        orchestrator.onBackground()
+
+        clock.tick(maxDurationMs)
+        inactivityWorkerExecutor.runCurrentlyBlocked()
+
+        val second = checkNotNull(orchestrator.currentUserSession())
+        assertNotEquals(first.userSessionId, second.userSessionId)
+        assertEquals(2L, second.userSessionNumber)
+        assertEquals(1, second.partNumber)
+
+        // The session part created by the BG max-duration rotation must remain BG.
+        val activePart = checkNotNull(sessionTracker.getActiveSessionPart())
+        assertEquals(AppState.BACKGROUND, activePart.appState)
+
+        // Two extra parts are persisted: end of FG session at onBackground, and end of BG session at max-duration.
+        assertEquals(storedBefore + 2, store.storedSessionPartPayloads.size)
+    }
+
+    @Test
+    fun `max duration timer fires in background but does not create stranded part when capture disabled`() {
+        configService = FakeConfigService(
+            backgroundActivityBehavior = createBackgroundActivityBehavior(),
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = maxDurationMs,
+                sessionInactivityTimeoutMs = maxDurationMs * 4,
+            )
+        )
+        createOrchestrator(AppState.FOREGROUND)
+        val first = checkNotNull(orchestrator.currentUserSession())
+        val baCountBefore = payloadCollator.baCount.get()
+
+        clock.tick(1_000)
+        orchestrator.onBackground()
+
+        clock.tick(maxDurationMs)
+        inactivityWorkerExecutor.runCurrentlyBlocked()
+
+        // The user session must still rotate: max-duration is a hard limit independent of capture config.
+        val second = checkNotNull(orchestrator.currentUserSession())
+        assertNotEquals(first.userSessionId, second.userSessionId)
+        assertEquals(2L, second.userSessionNumber)
+
+        // No new BG session-part was created — capture is disabled, so the rotation produced no payload.
+        assertEquals(baCountBefore, payloadCollator.baCount.get())
+        assertNull(sessionTracker.getActiveSessionPart())
+    }
+
+    @Test
+    fun `max duration timer not cancelled when transitioning to background`() {
+        // Long inactivity so it can't fire before the max-duration timer and confound the result.
+        configService = FakeConfigService(
+            backgroundActivityBehavior = createBackgroundActivityBehavior(
+                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
+            ),
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = maxDurationMs,
+                sessionInactivityTimeoutMs = maxDurationMs * 4,
+            )
+        )
+        createOrchestrator(AppState.FOREGROUND)
+
+        val first = checkNotNull(orchestrator.currentUserSession())
+
+        clock.tick(maxDurationMs / 2)
+        orchestrator.onBackground()
+
+        // advance past the max duration
+        clock.tick(maxDurationMs / 2 + 1)
+        inactivityWorkerExecutor.runCurrentlyBlocked()
+
+        val second = checkNotNull(orchestrator.currentUserSession())
+        assertNotEquals(first.userSessionId, second.userSessionId)
+        assertEquals(2L, second.userSessionNumber)
+    }
+
+    @Test
+    fun `max duration timer not rescheduled when foregrounding before it has fired`() {
+        configService = bgCaptureEnabledConfig()
+        createOrchestrator(AppState.FOREGROUND)
+
+        val first = checkNotNull(orchestrator.currentUserSession())
+
+        // Multiple FG/BG transitions before max duration must NOT re-schedule the timer.
+        // A leaked timer would fire twice and rotate the user session prematurely.
+        repeat(3) {
+            clock.tick(maxDurationMs / 8)
+            orchestrator.onBackground()
+            clock.tick(maxDurationMs / 8)
+            orchestrator.onForeground()
+        }
+
+        // Now advance past the original max-duration deadline and let the timer fire.
+        clock.tick(maxDurationMs)
+        inactivityWorkerExecutor.runCurrentlyBlocked()
+
+        val second = checkNotNull(orchestrator.currentUserSession())
+        assertNotEquals(first.userSessionId, second.userSessionId)
+        // Exactly one rotation: number 2, not 3+.
+        assertEquals(2L, second.userSessionNumber)
+    }
+
+    @Test
+    fun `max duration timer not scheduled for user session started in background`() {
+        configService = bgCaptureEnabledConfig()
+        createOrchestrator(AppState.FOREGROUND)
+
+        // trigger inactivity timeout to create new user session
+        orchestrator.onBackground()
+        clock.tick(inactivityMs + 1)
+        inactivityWorkerExecutor.runCurrentlyBlocked()
+
+        val rotatedInBg = checkNotNull(orchestrator.currentUserSession())
+        assertEquals(2L, rotatedInBg.userSessionNumber)
+        assertEquals(1, rotatedInBg.partNumber)
+
+        // tick past max duration threshold
+        clock.tick(maxDurationMs * 2)
+        inactivityWorkerExecutor.runCurrentlyBlocked()
+
+        val current = checkNotNull(orchestrator.currentUserSession())
+        assertEquals(rotatedInBg.userSessionId, current.userSessionId)
+        assertEquals(2L, current.userSessionNumber)
+    }
+
+    @Test
+    fun `stale inactivity timer does not terminate user session rotated by max duration in BG`() {
+        // Inactivity > max duration ensures the max-duration timer fires first in BG. The
+        // inactivity timer scheduled by the previous user session's onBackground is then a stale
+        // anchor on a terminated session — if it later fires, it would incorrectly terminate the
+        // new session created by the max-duration rotation.
+        configService = FakeConfigService(
+            backgroundActivityBehavior = createBackgroundActivityBehavior(
+                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
+            ),
+            sessionBehavior = FakeUserSessionBehavior(
+                maxSessionDurationMs = maxDurationMs,
+                sessionInactivityTimeoutMs = maxDurationMs * 2,
+            )
+        )
+        createOrchestrator(AppState.FOREGROUND)
+        val first = checkNotNull(orchestrator.currentUserSession())
+
+        // Background halfway through max duration — schedules inactivity at T0 + maxDuration/2 + 2*maxDuration.
+        clock.tick(maxDurationMs / 2)
+        orchestrator.onBackground()
+
+        // Advance just past max-duration; it fires in BG and rotates the user session.
+        clock.tick(maxDurationMs / 2 + 1)
+        inactivityWorkerExecutor.runCurrentlyBlocked()
+
+        val rotated = checkNotNull(orchestrator.currentUserSession())
+        assertNotEquals(first.userSessionId, rotated.userSessionId)
+        assertEquals(2L, rotated.userSessionNumber)
+
+        // Advance past the original inactivity-fire time. If the stale timer survived termination,
+        // it would fire here and terminate the freshly-rotated session.
+        clock.tick(maxDurationMs * 2)
+        inactivityWorkerExecutor.runCurrentlyBlocked()
+
+        val current = checkNotNull(orchestrator.currentUserSession())
+        assertEquals(rotated.userSessionId, current.userSessionId)
+        assertEquals(2L, current.userSessionNumber)
+    }
+
+    @Test
+    fun `inactivity timer scheduled near end of FG session does not rotate BG session created by max duration`() {
+        // Reproduces the screenshot scenario: inactivity < max-duration, user is FG for most of the session,
+        // briefly backgrounds shortly before max-duration. Max-duration then fires in BG and rotates the user
+        // session. The inactivity timer scheduled by the late onBackground anchors on the to-be-terminated
+        // session — if it survives, it incorrectly rotates the freshly-created BG session.
+        configService = bgCaptureEnabledConfig()
+        createOrchestrator(AppState.FOREGROUND)
+        val first = checkNotNull(orchestrator.currentUserSession())
+
+        // Stay FG until just before max-duration, then background.
+        val bgGapMs = inactivityMs / 4
+        clock.tick(maxDurationMs - bgGapMs)
+        orchestrator.onBackground()
+
+        // Advance to max-duration; it fires in BG and rotates the user session.
+        clock.tick(bgGapMs + 1)
+        inactivityWorkerExecutor.runCurrentlyBlocked()
+
+        val rotated = checkNotNull(orchestrator.currentUserSession())
+        assertNotEquals(first.userSessionId, rotated.userSessionId)
+        assertEquals(2L, rotated.userSessionNumber)
+
+        // Advance well past where the stale inactivity timer would have fired. A leaked timer would
+        // rotate the BG session a second time and bump userSessionNumber to 3.
+        clock.tick(inactivityMs * 2)
+        inactivityWorkerExecutor.runCurrentlyBlocked()
+
+        val current = checkNotNull(orchestrator.currentUserSession())
+        assertEquals(rotated.userSessionId, current.userSessionId)
+        assertEquals(2L, current.userSessionNumber)
+    }
+
+    private fun bgCaptureEnabledConfig() = FakeConfigService(
+        backgroundActivityBehavior = createBackgroundActivityBehavior(
+            remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
+        ),
+        sessionBehavior = FakeUserSessionBehavior(
+            maxSessionDurationMs = maxDurationMs,
+            sessionInactivityTimeoutMs = inactivityMs,
+        )
+    )
+
     private fun validateSession(
         sessionSpan: EmbraceSdkSpan?,
         endTimeMs: Long,

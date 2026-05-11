@@ -2,10 +2,15 @@ package io.embrace.android.exampleapp.paradigms.ecommerce
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
+import io.embrace.android.exampleapp.di.AppScope
 import io.embrace.android.exampleapp.paradigms.data.CartLine
 import io.embrace.android.exampleapp.paradigms.data.Product
 
-object EcommerceCartStore {
+@SingleIn(AppScope::class)
+@Inject
+class EcommerceCartStore {
 
     private val backing: SnapshotStateList<CartLine> = mutableStateListOf()
 

@@ -12,8 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
-import io.embrace.android.exampleapp.paradigms.data.SampleData
-import io.embrace.android.exampleapp.paradigms.ecommerce.EcommerceCartStore
+import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.ecommerce.ui.EcommerceCartUi
 import io.embrace.android.exampleapp.paradigms.ecommerce.ui.EcommerceCategoriesUi
 import io.embrace.android.exampleapp.paradigms.ecommerce.ui.EcommerceProductDetailUi
@@ -26,6 +25,9 @@ class EcommerceNav3Activity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ExampleAppTheme {
+                val graph = appGraph()
+                val sampleData = graph.sampleData
+                val cartStore = graph.cartStore
                 val backStack = remember { mutableStateListOf<EcommerceNav3Key>(EcommerceNav3Key.Categories) }
                 var orderPlacedTotalCents by remember { mutableStateOf<Long?>(null) }
                 NavDisplay(
@@ -36,23 +38,23 @@ class EcommerceNav3Activity : ComponentActivity() {
                             is EcommerceNav3Key.Categories -> NavEntry(key) {
                                 EcommerceCategoriesUi(
                                     title = "Categories (Nav3)",
-                                    categories = SampleData.productCategories,
+                                    categories = sampleData.productCategories,
                                     onCategoryClick = { id ->
                                         backStack.add(EcommerceNav3Key.ProductList(id))
                                     },
-                                    cartItemCount = EcommerceCartStore.itemCount,
+                                    cartItemCount = cartStore.itemCount,
                                     onCartClick = { backStack.add(EcommerceNav3Key.Cart) },
                                     orderPlacedTotalCents = orderPlacedTotalCents,
                                 )
                             }
                             is EcommerceNav3Key.ProductList -> NavEntry(key) {
-                                val category = SampleData.category(key.categoryId)
+                                val category = sampleData.category(key.categoryId)
                                 if (category == null) {
                                     backStack.removeLastOrNull()
                                 } else {
                                     EcommerceProductListUi(
                                         categoryTitle = category.title,
-                                        products = SampleData.productsIn(category.id),
+                                        products = sampleData.productsIn(category.id),
                                         onProductClick = { id ->
                                             backStack.add(EcommerceNav3Key.ProductDetail(id))
                                         },
@@ -61,25 +63,25 @@ class EcommerceNav3Activity : ComponentActivity() {
                                 }
                             }
                             is EcommerceNav3Key.ProductDetail -> NavEntry(key) {
-                                val product = SampleData.product(key.productId)
+                                val product = sampleData.product(key.productId)
                                 if (product == null) {
                                     backStack.removeLastOrNull()
                                 } else {
                                     EcommerceProductDetailUi(
                                         product = product,
                                         onBack = { backStack.removeLastOrNull() },
-                                        onAddToCart = { EcommerceCartStore.add(product) },
+                                        onAddToCart = { cartStore.add(product) },
                                     )
                                 }
                             }
                             is EcommerceNav3Key.Cart -> NavEntry(key) {
                                 EcommerceCartUi(
-                                    items = EcommerceCartStore.items,
-                                    totalCents = EcommerceCartStore.totalCents,
-                                    onRemove = { id -> EcommerceCartStore.remove(id) },
+                                    items = cartStore.items,
+                                    totalCents = cartStore.totalCents,
+                                    onRemove = { id -> cartStore.remove(id) },
                                     onPlaceOrder = {
-                                        orderPlacedTotalCents = EcommerceCartStore.totalCents
-                                        EcommerceCartStore.clear()
+                                        orderPlacedTotalCents = cartStore.totalCents
+                                        cartStore.clear()
                                         backStack.removeLastOrNull()
                                     },
                                     onBack = { backStack.removeLastOrNull() },

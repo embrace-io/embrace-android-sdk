@@ -8,8 +8,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import io.embrace.android.exampleapp.paradigms.data.SampleData
-import io.embrace.android.exampleapp.paradigms.ecommerce.EcommerceCartStore
+import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.ecommerce.ui.EcommerceProductDetailUi
 import io.embrace.android.exampleapp.ui.theme.ExampleAppTheme
 
@@ -20,8 +19,11 @@ class EcommerceProductDetailFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
+        val graph = requireContext().appGraph()
+        val sampleData = graph.sampleData
+        val cartStore = graph.cartStore
         val productId = arguments?.getString(EcommerceFragmentsActivity.ARG_PRODUCT_ID)
-        val product = productId?.let(SampleData::product)
+        val product = productId?.let(sampleData::product)
         if (product == null) {
             findNavController().popBackStack()
             return ComposeView(requireContext())
@@ -33,7 +35,7 @@ class EcommerceProductDetailFragment : Fragment() {
                     EcommerceProductDetailUi(
                         product = product,
                         onBack = { findNavController().popBackStack() },
-                        onAddToCart = { EcommerceCartStore.add(product) },
+                        onAddToCart = { cartStore.add(product) },
                     )
                 }
             }

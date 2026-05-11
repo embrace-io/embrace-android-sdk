@@ -9,7 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import io.embrace.android.exampleapp.paradigms.data.SampleData
+import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.news.ui.NewsArticleDetailUi
 import io.embrace.android.exampleapp.paradigms.news.ui.NewsArticleListUi
 import io.embrace.android.exampleapp.paradigms.news.ui.NewsSectionsUi
@@ -21,6 +21,7 @@ class NewsNavComposeActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ExampleAppTheme {
+                val sampleData = appGraph().sampleData
                 val navController = rememberNavController()
                 NavHost(
                     navController = navController,
@@ -29,12 +30,12 @@ class NewsNavComposeActivity : ComponentActivity() {
                     composable<NewsRoute.Sections> {
                         NewsSectionsUi(
                             title = "Sections (Nav-Compose)",
-                            sections = SampleData.newsSections,
+                            sections = sampleData.newsSections,
                             onSectionClick = { id ->
                                 navController.navigate(NewsRoute.ArticleList(id))
                             },
                             onDeeplinkRandom = {
-                                val article = SampleData.articles.random()
+                                val article = sampleData.articles.random()
                                 navController.navigate(NewsRoute.ArticleList(article.sectionId))
                                 navController.navigate(NewsRoute.ArticleDetail(article.id))
                             },
@@ -42,13 +43,13 @@ class NewsNavComposeActivity : ComponentActivity() {
                     }
                     composable<NewsRoute.ArticleList> { entry ->
                         val route: NewsRoute.ArticleList = entry.toRoute()
-                        val section = SampleData.section(route.sectionId)
+                        val section = sampleData.section(route.sectionId)
                         if (section == null) {
                             navController.popBackStack()
                         } else {
                             NewsArticleListUi(
                                 sectionTitle = section.title,
-                                articles = SampleData.articlesIn(section.id),
+                                articles = sampleData.articlesIn(section.id),
                                 onArticleClick = { id ->
                                     navController.navigate(NewsRoute.ArticleDetail(id))
                                 },
@@ -58,7 +59,7 @@ class NewsNavComposeActivity : ComponentActivity() {
                     }
                     composable<NewsRoute.ArticleDetail> { entry ->
                         val route: NewsRoute.ArticleDetail = entry.toRoute()
-                        val article = SampleData.article(route.articleId)
+                        val article = sampleData.article(route.articleId)
                         if (article == null) {
                             navController.popBackStack()
                         } else {

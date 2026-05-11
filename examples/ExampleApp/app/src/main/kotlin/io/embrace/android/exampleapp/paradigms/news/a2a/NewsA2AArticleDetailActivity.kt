@@ -6,7 +6,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import io.embrace.android.exampleapp.paradigms.data.SampleData
+import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.news.ui.NewsArticleDetailUi
 import io.embrace.android.exampleapp.ui.theme.ExampleAppTheme
 
@@ -14,8 +14,9 @@ class NewsA2AArticleDetailActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val sampleData = appGraph().sampleData
         val articleId = intent.getStringExtra(EXTRA_ARTICLE_ID)
-        val article = articleId?.let(SampleData::article)
+        val article = articleId?.let(sampleData::article)
         if (article == null) {
             Toast.makeText(this, "Unknown article", Toast.LENGTH_SHORT).show()
             finish()

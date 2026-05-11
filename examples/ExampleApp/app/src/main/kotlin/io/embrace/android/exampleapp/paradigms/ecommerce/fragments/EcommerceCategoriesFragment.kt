@@ -12,8 +12,7 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import androidx.navigation.fragment.findNavController
-import io.embrace.android.exampleapp.paradigms.data.SampleData
-import io.embrace.android.exampleapp.paradigms.ecommerce.EcommerceCartStore
+import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.ecommerce.ui.EcommerceCategoriesUi
 import io.embrace.android.exampleapp.ui.theme.ExampleAppTheme
 
@@ -41,13 +40,16 @@ class EcommerceCategoriesFragment : Fragment() {
         setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         setContent {
             ExampleAppTheme {
+                val graph = appGraph()
+                val sampleData = graph.sampleData
+                val cartStore = graph.cartStore
                 EcommerceCategoriesUi(
                     title = "Categories (Fragments)",
-                    categories = SampleData.productCategories,
+                    categories = sampleData.productCategories,
                     onCategoryClick = { id ->
                         findNavController().navigate("category/$id")
                     },
-                    cartItemCount = EcommerceCartStore.itemCount,
+                    cartItemCount = cartStore.itemCount,
                     onCartClick = {
                         findNavController().navigate(EcommerceFragmentsActivity.ROUTE_CART)
                     },

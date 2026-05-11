@@ -9,9 +9,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
-import io.embrace.android.exampleapp.paradigms.bluesky.data.BlueskyFeedStore
+import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.bluesky.ui.BlueskyFeedTimelineUi
-import io.embrace.android.exampleapp.paradigms.social.data.ProfileResolver
 import io.embrace.android.exampleapp.paradigms.social.ui.PostDetailUi
 import io.embrace.android.exampleapp.paradigms.social.ui.ProfileScreen
 import io.embrace.android.exampleapp.ui.theme.ExampleAppTheme
@@ -28,6 +27,7 @@ class BlueskyFeedActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ExampleAppTheme {
+                val graph = appGraph()
                 val backStack = remember {
                     mutableStateListOf<BlueskyFeedKey>(BlueskyFeedKey.Timeline)
                 }
@@ -48,9 +48,8 @@ class BlueskyFeedActivity : ComponentActivity() {
                                 )
                             }
                             is BlueskyFeedKey.PostDetail -> NavEntry(key) {
-                                val post = BlueskyFeedStore.posts.value
-                                    .firstOrNull { it.id == key.postId }
-                                    ?: ProfileResolver.cachedPost(key.postId)
+                                val post = graph.blueskyFeedStore.findPostById(key.postId)
+                                    ?: graph.profileResolver.cachedPost(key.postId)
                                 if (post == null) {
                                     backStack.removeLastOrNull()
                                 } else {

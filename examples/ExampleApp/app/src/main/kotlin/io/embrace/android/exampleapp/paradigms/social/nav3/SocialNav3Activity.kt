@@ -12,7 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
-import io.embrace.android.exampleapp.paradigms.data.SampleData
+import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.social.ui.ComposePostUi
 import io.embrace.android.exampleapp.paradigms.social.ui.ProfileScreen
 import io.embrace.android.exampleapp.paradigms.social.ui.TimelineUi
@@ -25,6 +25,7 @@ class SocialNav3Activity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ExampleAppTheme {
+                val sampleData = appGraph().sampleData
                 val backStack = remember { mutableStateListOf<SocialNav3Keys>(SocialNav3Keys.Timeline) }
                 var postedBody by remember { mutableStateOf<String?>(null) }
                 NavDisplay(
@@ -35,7 +36,7 @@ class SocialNav3Activity : ComponentActivity() {
                             is SocialNav3Keys.Timeline -> NavEntry(key) {
                                 TimelineUi(
                                     title = "Home (Nav3)",
-                                    posts = SampleData.posts,
+                                    posts = sampleData.posts,
                                     onPostClick = { id ->
                                         backStack.add(SocialNav3Keys.PostDetails(id))
                                     },
@@ -47,7 +48,7 @@ class SocialNav3Activity : ComponentActivity() {
                                 )
                             }
                             is SocialNav3Keys.PostDetails -> NavEntry(key) {
-                                val post = SampleData.post(key.postId)
+                                val post = sampleData.post(key.postId)
                                 if (post == null) {
                                     backStack.removeLastOrNull()
                                 } else {

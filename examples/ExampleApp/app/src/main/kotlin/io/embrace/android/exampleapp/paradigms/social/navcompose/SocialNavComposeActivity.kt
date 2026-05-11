@@ -11,7 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import io.embrace.android.exampleapp.paradigms.data.SampleData
+import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.social.ui.ComposePostUi
 import io.embrace.android.exampleapp.paradigms.social.ui.ProfileScreen
 import io.embrace.android.exampleapp.paradigms.social.ui.TimelineUi
@@ -24,6 +24,7 @@ class SocialNavComposeActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ExampleAppTheme {
+                val sampleData = appGraph().sampleData
                 val navController = rememberNavController()
                 NavHost(
                     navController = navController,
@@ -36,7 +37,7 @@ class SocialNavComposeActivity : ComponentActivity() {
                             .collectAsState()
                         TimelineUi(
                             title = "Home (Nav-Compose)",
-                            posts = SampleData.posts,
+                            posts = sampleData.posts,
                             onPostClick = { id ->
                                 navController.navigate(SocialRoute.PostDetail(id))
                             },
@@ -51,7 +52,7 @@ class SocialNavComposeActivity : ComponentActivity() {
                     }
                     composable<SocialRoute.PostDetail> { entry ->
                         val route: SocialRoute.PostDetail = entry.toRoute()
-                        val post = SampleData.post(route.postId)
+                        val post = sampleData.post(route.postId)
                         if (post == null) {
                             navController.popBackStack()
                         } else {

@@ -10,8 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import io.embrace.android.exampleapp.paradigms.data.SampleData
-import io.embrace.android.exampleapp.paradigms.ecommerce.EcommerceCartStore
+import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.ecommerce.ui.EcommerceCategoriesUi
 import io.embrace.android.exampleapp.ui.theme.ExampleAppTheme
 
@@ -33,13 +32,16 @@ class EcommerceA2ACategoriesActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ExampleAppTheme {
+                val graph = appGraph()
+                val sampleData = graph.sampleData
+                val cartStore = graph.cartStore
                 EcommerceCategoriesUi(
                     title = "Categories (A2A)",
-                    categories = SampleData.productCategories,
+                    categories = sampleData.productCategories,
                     onCategoryClick = { id ->
                         startActivity(EcommerceA2AProductListActivity.newIntent(this, id))
                     },
-                    cartItemCount = EcommerceCartStore.itemCount,
+                    cartItemCount = cartStore.itemCount,
                     onCartClick = {
                         cartLauncher.launch(EcommerceA2ACartActivity.newIntent(this))
                     },

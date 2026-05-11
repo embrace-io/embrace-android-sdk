@@ -9,7 +9,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
-import io.embrace.android.exampleapp.paradigms.data.SampleData
+import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.news.ui.NewsArticleDetailUi
 import io.embrace.android.exampleapp.paradigms.news.ui.NewsArticleListUi
 import io.embrace.android.exampleapp.paradigms.news.ui.NewsSectionsUi
@@ -21,6 +21,7 @@ class NewsNav3Activity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ExampleAppTheme {
+                val sampleData = appGraph().sampleData
                 val backStack = remember { mutableStateListOf<NewsNav3Key>(NewsNav3Key.Sections) }
                 NavDisplay(
                     backStack = backStack,
@@ -30,12 +31,12 @@ class NewsNav3Activity : ComponentActivity() {
                             is NewsNav3Key.Sections -> NavEntry(key) {
                                 NewsSectionsUi(
                                     title = "Sections (Nav3)",
-                                    sections = SampleData.newsSections,
+                                    sections = sampleData.newsSections,
                                     onSectionClick = { id ->
                                         backStack.add(NewsNav3Key.ArticleList(id))
                                     },
                                     onDeeplinkRandom = {
-                                        val article = SampleData.articles.random()
+                                        val article = sampleData.articles.random()
                                         backStack.addAll(
                                             listOf(
                                                 NewsNav3Key.ArticleList(article.sectionId),
@@ -46,13 +47,13 @@ class NewsNav3Activity : ComponentActivity() {
                                 )
                             }
                             is NewsNav3Key.ArticleList -> NavEntry(key) {
-                                val section = SampleData.section(key.sectionId)
+                                val section = sampleData.section(key.sectionId)
                                 if (section == null) {
                                     backStack.removeLastOrNull()
                                 } else {
                                     NewsArticleListUi(
                                         sectionTitle = section.title,
-                                        articles = SampleData.articlesIn(section.id),
+                                        articles = sampleData.articlesIn(section.id),
                                         onArticleClick = { id ->
                                             backStack.add(NewsNav3Key.ArticleDetail(id))
                                         },
@@ -61,7 +62,7 @@ class NewsNav3Activity : ComponentActivity() {
                                 }
                             }
                             is NewsNav3Key.ArticleDetail -> NavEntry(key) {
-                                val article = SampleData.article(key.articleId)
+                                val article = sampleData.article(key.articleId)
                                 if (article == null) {
                                     backStack.removeLastOrNull()
                                 } else {

@@ -6,7 +6,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import io.embrace.android.exampleapp.paradigms.ecommerce.EcommerceCartStore
+import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.ecommerce.ui.EcommerceCartUi
 import io.embrace.android.exampleapp.ui.theme.ExampleAppTheme
 
@@ -16,13 +16,14 @@ class EcommerceA2ACartActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ExampleAppTheme {
+                val cartStore = appGraph().cartStore
                 EcommerceCartUi(
-                    items = EcommerceCartStore.items,
-                    totalCents = EcommerceCartStore.totalCents,
-                    onRemove = { id -> EcommerceCartStore.remove(id) },
+                    items = cartStore.items,
+                    totalCents = cartStore.totalCents,
+                    onRemove = { id -> cartStore.remove(id) },
                     onPlaceOrder = {
-                        val total = EcommerceCartStore.totalCents
-                        EcommerceCartStore.clear()
+                        val total = cartStore.totalCents
+                        cartStore.clear()
                         setResult(
                             Activity.RESULT_OK,
                             Intent().putExtra(EXTRA_ORDER_TOTAL_CENTS, total),

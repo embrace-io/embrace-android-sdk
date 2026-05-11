@@ -105,4 +105,16 @@ public interface InstrumentationApi {
      * wiring in order to observe and track navigation
      */
     public fun observeNavigation(activity: Activity, navigationController: Any)
+
+    /**
+     * Record the given [screen] has been loaded. Calling this does not affect automatic navigation tracking instrumentation.
+     */
+    public fun screenLoaded(screen: String): Unit = screenLoaded(screen, emptyMap())
+
+    /**
+     * Record the given [screen] has been loaded. Calling this does not affect automatic navigation tracking instrumentation.
+     *
+     * Optionally pass in [eventAttributes] to be recorded with the screen loading event.
+     */
+    public fun screenLoaded(screen: String, eventAttributes: Map<String, String>)
 }

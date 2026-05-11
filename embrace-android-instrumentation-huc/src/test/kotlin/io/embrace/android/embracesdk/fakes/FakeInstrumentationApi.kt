@@ -45,4 +45,7 @@ class FakeInstrumentationApi(
 
     override fun observeNavigation(activity: Activity, navigationController: Any) {
     }
+
+    override fun screenLoaded(screen: String, eventAttributes: Map<String, String>) {
+    }
 }

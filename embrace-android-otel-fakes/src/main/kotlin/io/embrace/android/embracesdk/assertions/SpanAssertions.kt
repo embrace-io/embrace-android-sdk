@@ -61,37 +61,34 @@ fun Span.assertNavigationStateSpan(
     stateUninitialized: Boolean = true,
     transitionTimesMs: List<Long> = listOf(),
     newStateValues: List<String> = listOf(),
-) = assertStateSpan(
-    startStateValue = if (stateUninitialized) {
+)  {
+    val startStateValue = if (stateUninitialized) {
         "Initializing"
     } else {
         "Backgrounded"
-    },
-    transitionTimesMs = transitionTimesMs,
-    newStateValues = newStateValues
-)
+    }
+    assertStateSpan(
+        initialValue = startStateValue,
+        transitionTimesMs = transitionTimesMs,
+        newStateValues = newStateValues + "Backgrounded",
+    )
+}
 
 /**
- * Validates a state span's initial value attribute and all transition events.
+ * Validate that a state span has the given initial value and transition times with the associated state values
  */
 fun Span.assertStateSpan(
-    startStateValue: String,
+    initialValue: String,
     transitionTimesMs: List<Long> = listOf(),
     newStateValues: List<String> = listOf(),
 ) {
-    assertTrue(hasEmbraceAttributeValue(EMB_STATE_INITIAL_VALUE, startStateValue))
+    assertTrue(hasEmbraceAttributeValue(EMB_STATE_INITIAL_VALUE, initialValue))
     with(checkNotNull(events)) {
         assertEquals(transitionTimesMs.size, size)
-        if (isNotEmpty()) {
-            (0..<transitionTimesMs.size - 1).forEach {
-                this[it].assertStateTransition(
-                    timestampMs = transitionTimesMs[it],
-                    newStateValue = newStateValues[it],
-                )
-            }
-            last().assertStateTransition(
-                timestampMs = transitionTimesMs.last(),
-                newStateValue = "Backgrounded",
+        transitionTimesMs.indices.forEach {
+            this[it].assertStateTransition(
+                timestampMs = transitionTimesMs[it],
+                newStateValue = newStateValues[it],
             )
         }
     }

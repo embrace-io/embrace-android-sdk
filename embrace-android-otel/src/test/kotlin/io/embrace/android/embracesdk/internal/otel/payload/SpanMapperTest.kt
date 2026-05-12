@@ -5,16 +5,9 @@ import io.embrace.android.embracesdk.assertions.assertIsTypePerformance
 import io.embrace.android.embracesdk.assertions.assertNotPrivateSpan
 import io.embrace.android.embracesdk.assertions.assertSuccessful
 import io.embrace.android.embracesdk.fakes.FakeSpanData
-import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
-import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
-import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
-import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.spans.toFailedSpan
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
-import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.toEmbraceSpanData
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -71,21 +64,5 @@ internal class SpanMapperTest {
         checkNotNull(snapshot.attributes).forEach {
             assertEquals(attributesOfFailedSpan[it.key], it.data)
         }
-    }
-
-    private fun Span.toFailedSpan(endTimeMs: Long): Span {
-        val newAttributes = mutableMapOf<String, String>().apply {
-            setEmbraceAttribute(ErrorCodeAttribute.Failure)
-            if (hasEmbraceAttribute(EmbType.Ux.Session)) {
-                setEmbraceAttribute(AppTerminationCause.Crash)
-            }
-        }
-
-        return copy(
-            endTimeNanos = endTimeMs.millisToNanos(),
-            parentSpanId = parentSpanId ?: OtelIds.INVALID_SPAN_ID,
-            status = Span.Status.ERROR,
-            attributes = newAttributes.map { Attribute(it.key, it.value) }.plus(attributes ?: emptyList())
-        )
     }
 }

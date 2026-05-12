@@ -24,6 +24,7 @@ import io.embrace.android.embracesdk.fakes.fakeLaterEnvelopeResource
 import io.embrace.android.embracesdk.fixtures.fakeCachedSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.attrs.isEmbraceAttributeName
+import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
@@ -138,7 +139,8 @@ class PayloadResurrectionServiceImplTest {
             expectedParentId = OtelIds.INVALID_SPAN_ID,
             expectedErrorCode = ErrorCode.FAILURE,
             expectedCustomAttributes = mapOf(
-                EmbType.Ux.Session.asPair()
+                EmbType.Ux.Session.asPair(),
+                AppTerminationCause.Crash.asPair(),
             )
         )
     }

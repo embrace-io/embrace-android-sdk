@@ -10,7 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import io.embrace.android.exampleapp.paradigms.data.SampleData
+import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.social.ui.TimelineUi
 import io.embrace.android.exampleapp.ui.theme.ExampleAppTheme
 
@@ -30,9 +30,10 @@ class SocialA2ATimelineActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ExampleAppTheme {
+                val sampleData = appGraph().sampleData
                 TimelineUi(
                     title = "Home (A2A)",
-                    posts = SampleData.posts,
+                    posts = sampleData.posts,
                     onPostClick = { id ->
                         startActivity(SocialA2APostDetailActivity.newIntent(this, id))
                     },

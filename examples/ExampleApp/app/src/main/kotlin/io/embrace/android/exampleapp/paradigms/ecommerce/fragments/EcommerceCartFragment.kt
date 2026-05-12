@@ -9,7 +9,7 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResult
 import androidx.navigation.fragment.findNavController
-import io.embrace.android.exampleapp.paradigms.ecommerce.EcommerceCartStore
+import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.ecommerce.ui.EcommerceCartUi
 import io.embrace.android.exampleapp.ui.theme.ExampleAppTheme
 
@@ -23,13 +23,14 @@ class EcommerceCartFragment : Fragment() {
         setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         setContent {
             ExampleAppTheme {
+                val cartStore = appGraph().cartStore
                 EcommerceCartUi(
-                    items = EcommerceCartStore.items,
-                    totalCents = EcommerceCartStore.totalCents,
-                    onRemove = { id -> EcommerceCartStore.remove(id) },
+                    items = cartStore.items,
+                    totalCents = cartStore.totalCents,
+                    onRemove = { id -> cartStore.remove(id) },
                     onPlaceOrder = {
-                        val total = EcommerceCartStore.totalCents
-                        EcommerceCartStore.clear()
+                        val total = cartStore.totalCents
+                        cartStore.clear()
                         val result = Bundle().apply {
                             putLong(EcommerceFragmentsActivity.FRAGMENT_RESULT_KEY_TOTAL_CENTS, total)
                         }

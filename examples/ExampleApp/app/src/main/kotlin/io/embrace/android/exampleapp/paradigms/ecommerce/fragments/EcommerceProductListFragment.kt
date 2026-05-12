@@ -8,7 +8,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import io.embrace.android.exampleapp.paradigms.data.SampleData
+import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.ecommerce.ui.EcommerceProductListUi
 import io.embrace.android.exampleapp.ui.theme.ExampleAppTheme
 
@@ -19,13 +19,14 @@ class EcommerceProductListFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
+        val sampleData = requireContext().appGraph().sampleData
         val categoryId = arguments?.getString(EcommerceFragmentsActivity.ARG_CATEGORY_ID)
-        val category = categoryId?.let(SampleData::category)
+        val category = categoryId?.let(sampleData::category)
         if (category == null) {
             findNavController().popBackStack()
             return ComposeView(requireContext())
         }
-        val products = SampleData.productsIn(category.id)
+        val products = sampleData.productsIn(category.id)
         return ComposeView(requireContext()).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {

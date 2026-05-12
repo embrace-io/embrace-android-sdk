@@ -40,7 +40,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import io.embrace.android.exampleapp.paradigms.data.Article
-import io.embrace.android.exampleapp.paradigms.data.SampleData
+import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.ui.ImageItem
 import io.embrace.android.exampleapp.ui.appBarColors
 
@@ -50,8 +50,9 @@ fun NewsArticleDetailUi(
     article: Article,
     onBack: () -> Unit,
 ) {
+    val sampleData = appGraph().sampleData
     val related = remember(article.id) {
-        SampleData.articles
+        sampleData.articles
             .filter { it.id != article.id && it.sectionId == article.sectionId }
             .shuffled(kotlin.random.Random(article.id.hashCode().toLong()))
             .take(4)

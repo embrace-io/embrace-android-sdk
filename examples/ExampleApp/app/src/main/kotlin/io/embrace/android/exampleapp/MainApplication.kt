@@ -4,11 +4,11 @@ import android.annotation.SuppressLint
 import android.app.Application
 import coil.ImageLoader
 import coil.ImageLoaderFactory
+import dev.zacsweers.metro.createGraphFactory
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.otel.java.addJavaLogRecordExporter
 import io.embrace.android.embracesdk.otel.java.addJavaSpanExporter
-import io.embrace.android.exampleapp.paradigms.bluesky.data.BlueskyFeedStore
-import io.embrace.android.exampleapp.paradigms.data.SampleData
+import io.embrace.android.exampleapp.di.AppGraph
 import java.net.URL
 import java.net.URLStreamHandler
 import java.net.URLStreamHandlerFactory
@@ -16,15 +16,14 @@ import java.net.URLStreamHandlerFactory
 class MainApplication : Application(), ImageLoaderFactory {
 
     /**
-     * Coil reads this on first [ImageLoader] access. Wires Coil to the shared
-     * [AppHttpClient.instance] so image fetches go through the same Embrace-instrumented client
-     * (with the parallel-fetch cap) as the rest of the app's network traffic.
+     * Application-scoped Metro graph. Built once in [onCreate] and exposed for activities,
+     * fragments, and Compose code (via `appGraph()`) to resolve dependencies through.
      */
-    override fun newImageLoader(): ImageLoader =
-        ImageLoader.Builder(this)
-            .okHttpClient { AppHttpClient.instance }
-            .build()
+    lateinit var graph: AppGraph
+        private set
 
+    /** Coil reads this on first [ImageLoader] access; we delegate to the graph-provided one. */
+    override fun newImageLoader(): ImageLoader = graph.imageLoader
 
     companion object {
         init {
@@ -38,10 +37,11 @@ class MainApplication : Application(), ImageLoaderFactory {
     override fun onCreate() {
         super.onCreate()
 
-        // wire SampleData to assets; lazy reads parse JSON on first paradigm-screen open
-        SampleData.init(this)
+        // build the application-scoped DI graph; subsequent code resolves through it
+        graph = createGraphFactory<AppGraph.Factory>().create(this)
+
         // load any cached Bluesky posts from disk (cacheDir/social/dynamic_posts.json)
-        BlueskyFeedStore.init(this)
+        graph.blueskyFeedStore.loadFromDisk()
 
         // preinstall an existing URLStreamFactory to ensure the wrapping factor for instrumentation works
         val error = installFakeURLStreamHandlerFactory()

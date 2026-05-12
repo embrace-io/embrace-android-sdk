@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.embrace)
+    alias(libs.plugins.metro)
 }
 
 embrace {
@@ -90,6 +91,9 @@ dependencies {
     implementation(libs.androidx.material.icons)
     implementation(libs.okhttp)
     implementation(libs.coil.compose)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.exoplayer.hls)
+    implementation(libs.androidx.media3.ui)
     implementation(platform(libs.opentelemetry.bom))
     implementation(libs.opentelemetry.api)
     implementation(libs.opentelemetry.sdk)

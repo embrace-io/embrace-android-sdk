@@ -6,7 +6,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.core.app.TaskStackBuilder
-import io.embrace.android.exampleapp.paradigms.data.SampleData
+import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.news.ui.NewsSectionsUi
 import io.embrace.android.exampleapp.ui.theme.ExampleAppTheme
 
@@ -16,14 +16,15 @@ class NewsA2ASectionsActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ExampleAppTheme {
+                val sampleData = appGraph().sampleData
                 NewsSectionsUi(
                     title = "Sections (A2A)",
-                    sections = SampleData.newsSections,
+                    sections = sampleData.newsSections,
                     onSectionClick = { id ->
                         startActivity(NewsA2AArticleListActivity.newIntent(this, id))
                     },
                     onDeeplinkRandom = {
-                        val article = SampleData.articles.random()
+                        val article = sampleData.articles.random()
                         TaskStackBuilder.create(this)
                             .addNextIntent(newIntent(this))
                             .addNextIntent(NewsA2AArticleListActivity.newIntent(this, article.sectionId))

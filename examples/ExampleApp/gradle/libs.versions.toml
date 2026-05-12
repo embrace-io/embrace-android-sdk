@@ -18,6 +18,8 @@ uiautomator = "2.3.0"
 kotlinxSerialization = "1.11.0"
 benchmarkMacroJunit4 = "1.4.1"
 coil = "2.7.0"
+metro = "1.0.0"
+media3 = "1.10.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -63,10 +65,14 @@ embrace-android-otel-java = { group = "io.embrace", name = "embrace-android-otel
 androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
 androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmarkMacroJunit4" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coil" }
+androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" }
+androidx-media3-exoplayer-hls = { module = "androidx.media3:media3-exoplayer-hls", version.ref = "media3" }
+androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 embrace = { id = "io.embrace.gradle", version.ref = "embrace" }
 android-test = { id = "com.android.test", version.ref = "agp" }
+metro = { id = "dev.zacsweers.metro", version.ref = "metro" }
 

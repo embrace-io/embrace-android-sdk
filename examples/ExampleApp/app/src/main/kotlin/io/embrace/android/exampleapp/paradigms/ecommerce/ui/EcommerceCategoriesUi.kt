@@ -30,7 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import io.embrace.android.exampleapp.paradigms.data.ProductCategory
-import io.embrace.android.exampleapp.paradigms.data.SampleData
+import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.ui.appBarColors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,6 +43,7 @@ fun EcommerceCategoriesUi(
     onCartClick: (() -> Unit)? = null,
     orderPlacedTotalCents: Long? = null,
 ) {
+    val sampleData = appGraph().sampleData
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(orderPlacedTotalCents) {
         if (orderPlacedTotalCents != null) {
@@ -87,7 +88,7 @@ fun EcommerceCategoriesUi(
                 ) {
                     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)) {
                         Text(text = category.title, style = MaterialTheme.typography.titleMedium)
-                        val count = SampleData.productsIn(category.id).size
+                        val count = sampleData.productsIn(category.id).size
                         Text(
                             text = "$count items",
                             style = MaterialTheme.typography.labelMedium,

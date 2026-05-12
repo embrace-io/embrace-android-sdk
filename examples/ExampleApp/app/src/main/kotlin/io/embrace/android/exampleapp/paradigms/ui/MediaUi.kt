@@ -32,9 +32,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.media3.common.MediaItem as Media3MediaItem
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import io.embrace.android.exampleapp.paradigms.data.ImageSource
 import io.embrace.android.exampleapp.paradigms.data.MediaRef
@@ -48,10 +58,15 @@ import kotlin.random.Random
 fun MediaItem(
     media: MediaRef,
     modifier: Modifier = Modifier,
+    autoplay: Boolean = false,
 ) {
     when (media) {
         is MediaRef.Image -> ImageItem(source = media.source, modifier = modifier)
-        is MediaRef.Video -> VideoItem(source = media.source, modifier = modifier)
+        is MediaRef.Video -> VideoItem(
+            source = media.source,
+            modifier = modifier,
+            autoplay = autoplay,
+        )
     }
 }
 
@@ -90,6 +105,7 @@ fun ImageItem(
 fun VideoItem(
     source: VideoSource,
     modifier: Modifier = Modifier,
+    autoplay: Boolean = false,
 ) {
     when (source) {
         is VideoSource.Procedural -> ProceduralVideo(
@@ -102,9 +118,10 @@ fun VideoItem(
             aspectRatio = source.aspectRatio,
             modifier = modifier,
         )
-        is VideoSource.Remote -> RemoteVideoPlaceholder(
-            label = source.url,
+        is VideoSource.Remote -> RemoteVideoPlayer(
+            url = source.url,
             aspectRatio = source.aspectRatio,
+            autoplay = autoplay,
             modifier = modifier,
         )
     }
@@ -262,6 +279,55 @@ fun ProceduralVideo(
             )
         }
     }
+}
+
+/**
+ * Backed by Media3 [ExoPlayer]. Plays muted on a single-track loop when [autoplay] is true,
+ * otherwise stays paused. The player is `remember`-scoped to this composable, so scrolling the
+ * item out of the LazyColumn disposes it; a `DisposableEffect` releases the underlying codec /
+ * network resources. HLS URLs (Bluesky's `playlist.m3u8`) are auto-detected by
+ * `DefaultMediaSourceFactory` because `media3-exoplayer-hls` is on the classpath.
+ */
+@OptIn(UnstableApi::class)
+@Composable
+private fun RemoteVideoPlayer(
+    url: String,
+    aspectRatio: Float,
+    autoplay: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val player = remember(url) {
+        ExoPlayer.Builder(context).build().apply {
+            setMediaItem(Media3MediaItem.fromUri(url))
+            volume = 0f
+            repeatMode = Player.REPEAT_MODE_ONE
+            prepare()
+        }
+    }
+    DisposableEffect(player) {
+        onDispose { player.release() }
+    }
+    LaunchedEffect(autoplay) {
+        player.playWhenReady = autoplay
+        if (!autoplay) {
+            player.pause()
+        }
+    }
+    AndroidView(
+        modifier = modifier
+            .fillMaxWidth()
+            .aspectRatioIfPositive(aspectRatio)
+            .clip(RoundedCornerShape(12.dp)),
+        factory = { ctx ->
+            PlayerView(ctx).apply {
+                this.player = player
+                useController = false
+                setShutterBackgroundColor(android.graphics.Color.BLACK)
+                resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+            }
+        },
+    )
 }
 
 @Composable

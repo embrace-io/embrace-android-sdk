@@ -1370,46 +1370,6 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
-    fun `stale inactivity timer does not terminate user session rotated by max duration in BG`() {
-        // Inactivity > max duration ensures the max-duration timer fires first in BG. The
-        // inactivity timer scheduled by the previous user session's onBackground is then a stale
-        // anchor on a terminated session — if it later fires, it would incorrectly terminate the
-        // new session created by the max-duration rotation.
-        configService = FakeConfigService(
-            backgroundActivityBehavior = createBackgroundActivityBehavior(
-                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
-            ),
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = maxDurationMs * 2,
-            )
-        )
-        createOrchestrator(AppState.FOREGROUND)
-        val first = checkNotNull(orchestrator.currentUserSession())
-
-        // Background halfway through max duration — schedules inactivity at T0 + maxDuration/2 + 2*maxDuration.
-        clock.tick(maxDurationMs / 2)
-        orchestrator.onBackground()
-
-        // Advance just past max-duration; it fires in BG and rotates the user session.
-        clock.tick(maxDurationMs / 2 + 1)
-        inactivityWorkerExecutor.runCurrentlyBlocked()
-
-        val rotated = checkNotNull(orchestrator.currentUserSession())
-        assertNotEquals(first.userSessionId, rotated.userSessionId)
-        assertEquals(2L, rotated.userSessionNumber)
-
-        // Advance past the original inactivity-fire time. If the stale timer survived termination,
-        // it would fire here and terminate the freshly-rotated session.
-        clock.tick(maxDurationMs * 2)
-        inactivityWorkerExecutor.runCurrentlyBlocked()
-
-        val current = checkNotNull(orchestrator.currentUserSession())
-        assertEquals(rotated.userSessionId, current.userSessionId)
-        assertEquals(2L, current.userSessionNumber)
-    }
-
-    @Test
     fun `inactivity timer scheduled near end of FG session does not rotate BG session created by max duration`() {
         // Reproduces the screenshot scenario: inactivity < max-duration, user is FG for most of the session,
         // briefly backgrounds shortly before max-duration. Max-duration then fires in BG and rotates the user

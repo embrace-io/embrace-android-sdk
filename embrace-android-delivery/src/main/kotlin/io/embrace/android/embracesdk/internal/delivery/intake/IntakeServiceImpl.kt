@@ -41,7 +41,7 @@ class IntakeServiceImpl(
         deliveryTracer?.onTake(metadata)
 
         // allow persistence (required for session payload etc) but disallow scheduling any more HTTP requests
-        if (metadata.complete && metadata.isCrashPayload()) {
+        if (metadata.complete && metadata.isCrashTerminatingProcess()) {
             schedulingService.shutdown()
             processIntake(intake, metadata, staleEntry)
             return worker.submit(metadata) {
@@ -106,7 +106,7 @@ class IntakeServiceImpl(
 
             if (metadata.complete) {
                 deliveryTracer?.onPayloadIntake(metadata)
-                if (!metadata.isCrashPayload()) {
+                if (!metadata.isCrashTerminatingProcess()) {
                     schedulingService.onPayloadIntake()
                 }
             } else if (!cacheableEnvelopeTypes.contains(metadata.envelopeType)) {
@@ -124,7 +124,7 @@ class IntakeServiceImpl(
         }
     }
 
-    private fun StoredTelemetryMetadata.isCrashPayload(): Boolean =
+    private fun StoredTelemetryMetadata.isCrashTerminatingProcess(): Boolean =
         payloadType == PayloadType.JVM_CRASH || payloadType == PayloadType.REACT_NATIVE_CRASH
 
     private companion object {

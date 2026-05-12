@@ -42,7 +42,7 @@ internal class SessionIdProviderImplTest {
             userSessionNumber = 1L,
             maxDurationSecs = 3600L,
             inactivityTimeoutSecs = 300L,
-            partNumber = 1,
+            partIndex = 1,
             lastActivityMs = 1000L,
         )
         assertEquals("user-session-uuid", provider.getCurrentUserSessionId())
@@ -58,7 +58,7 @@ internal class SessionIdProviderImplTest {
             userSessionNumber = 2,
             maxDurationSecs = 3600L,
             inactivityTimeoutSecs = 300L,
-            partNumber = token.sessionPartNumber + 1,
+            partIndex = token.userSessionPartIndex + 1,
             lastActivityMs = token.startTime + 10_000L,
         )
         assertEquals(SessionIdsSnapshot(token.userSessionId, token.sessionPartId), provider.getActiveSessionIds())
@@ -73,7 +73,7 @@ internal class SessionIdProviderImplTest {
             userSessionNumber = 1L,
             maxDurationSecs = 3600L,
             inactivityTimeoutSecs = 300L,
-            partNumber = 1,
+            partIndex = 1,
             lastActivityMs = 1000L,
         )
         assertEquals(

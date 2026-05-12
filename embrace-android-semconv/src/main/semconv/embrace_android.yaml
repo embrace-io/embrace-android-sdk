@@ -462,7 +462,12 @@ groups:
         brief: "UUID identifying the session part."
         stability: development
         examples: ["3a1c2b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"]
-      - id: emb.user_session_part_number
+      - id: emb.session_part_number
+        type: string
+        brief: "Monotonically incrementing counter of session parts since SDK install. Seeded from emb.session_number when first created; increments by 1 on each new session part. Never resets across process or session boundaries."
+        stability: development
+        examples: ["1", "2", "42"]
+      - id: emb.user_session_part_index
         type: string
         brief: "The index of the part within the session. 1-indexed, matching the behavior of session_number."
         stability: development

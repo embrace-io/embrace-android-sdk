@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.toStringMap
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_NUMBER
-import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_PART_NUMBER
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_START_TS
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -53,7 +53,7 @@ internal class UserSessionIdKeysTest {
     private fun assertFirstSessionSpanAttributes(attrs: Map<String, String>) {
         attrs.assertSessionIds()
         assertEquals("1", attrs[EMB_USER_SESSION_NUMBER])
-        assertEquals("1", attrs[EMB_USER_SESSION_PART_NUMBER])
+        assertEquals("1", attrs[EMB_USER_SESSION_PART_INDEX])
         assertFalse(attrs[EMB_USER_SESSION_START_TS].isNullOrBlank())
         assertFalse(attrs[EMB_USER_SESSION_MAX_DURATION_SECONDS].isNullOrBlank())
         assertFalse(attrs[EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS].isNullOrBlank())
@@ -81,7 +81,7 @@ internal class UserSessionIdKeysTest {
     private fun assertLogSessionAttributes(attrs: Map<String, String?>) {
         attrs.assertSessionIds()
         assertNull(attrs[EMB_USER_SESSION_NUMBER])
-        assertNull(attrs[EMB_USER_SESSION_PART_NUMBER])
+        assertNull(attrs[EMB_USER_SESSION_PART_INDEX])
         assertNull(attrs[EMB_USER_SESSION_START_TS])
         assertNull(attrs[EMB_USER_SESSION_MAX_DURATION_SECONDS])
         assertNull(attrs[EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS])

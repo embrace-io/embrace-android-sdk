@@ -30,7 +30,8 @@ class FakePayloadMessageCollator(
             isColdStart = coldStart,
             appState = appState,
             startType = startType,
-            sessionPartNumber = partNumber,
+            userSessionPartIndex = userSessionPartIndex,
+            sessionPartNumber = sessionPartNumber,
         )
     }
 

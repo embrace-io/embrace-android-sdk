@@ -22,11 +22,12 @@ internal class PayloadFactoryImpl(
         state: AppState,
         timestamp: Long,
         coldStart: Boolean,
-        partNumber: Int,
+        userSessionPartIndex: () -> Int,
+        sessionPartNumber: () -> Int,
     ): SessionPartToken? =
         when (state) {
-            AppState.FOREGROUND -> startSessionWithState(timestamp, coldStart, partNumber)
-            AppState.BACKGROUND -> startBackgroundActivityWithState(timestamp, coldStart, partNumber)
+            AppState.FOREGROUND -> startSessionWithState(timestamp, coldStart, userSessionPartIndex, sessionPartNumber)
+            AppState.BACKGROUND -> startBackgroundActivityWithState(timestamp, coldStart, userSessionPartIndex, sessionPartNumber)
         }
 
     override fun endPayloadWithState(
@@ -59,7 +60,12 @@ internal class PayloadFactoryImpl(
             AppState.BACKGROUND -> snapshotBackgroundActivity(initial)
         }
 
-    override fun startSessionWithManual(state: AppState, timestamp: Long, partNumber: Int): SessionPartToken? {
+    override fun startSessionWithManual(
+        state: AppState,
+        timestamp: Long,
+        userSessionPartIndex: () -> Int,
+        sessionPartNumber: () -> Int,
+    ): SessionPartToken? {
         if (state == AppState.BACKGROUND && !isBackgroundActivityEnabled()) {
             return null
         }
@@ -73,7 +79,8 @@ internal class PayloadFactoryImpl(
                 startType = startType,
                 startTime = timestamp,
                 appState = state,
-                partNumber = partNumber,
+                userSessionPartIndex = userSessionPartIndex(),
+                sessionPartNumber = sessionPartNumber(),
             )
         )
     }
@@ -96,7 +103,8 @@ internal class PayloadFactoryImpl(
     private fun startSessionWithState(
         timestamp: Long,
         coldStart: Boolean,
-        partNumber: Int,
+        userSessionPartIndex: () -> Int,
+        sessionPartNumber: () -> Int,
     ): SessionPartToken {
         return payloadMessageCollator.buildInitialPart(
             InitialEnvelopeParams(
@@ -104,7 +112,8 @@ internal class PayloadFactoryImpl(
                 startType = LifeEventType.STATE,
                 startTime = timestamp,
                 appState = AppState.FOREGROUND,
-                partNumber = partNumber,
+                userSessionPartIndex = userSessionPartIndex(),
+                sessionPartNumber = sessionPartNumber(),
             )
         )
     }
@@ -112,7 +121,8 @@ internal class PayloadFactoryImpl(
     private fun startBackgroundActivityWithState(
         timestamp: Long,
         coldStart: Boolean,
-        partNumber: Int,
+        userSessionPartIndex: () -> Int,
+        sessionPartNumber: () -> Int,
     ): SessionPartToken? {
         if (!isBackgroundActivityEnabled()) {
             return null
@@ -130,7 +140,8 @@ internal class PayloadFactoryImpl(
                 startType = LifeEventType.BKGND_STATE,
                 startTime = time,
                 appState = AppState.BACKGROUND,
-                partNumber = partNumber,
+                userSessionPartIndex = userSessionPartIndex(),
+                sessionPartNumber = sessionPartNumber(),
             )
         )
     }

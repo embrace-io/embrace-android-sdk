@@ -18,7 +18,7 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_SESSION_PART_ID
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_ID
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_NUMBER
-import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_PART_NUMBER
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_START_TS
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues.INACTIVITY
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues.MANUAL
@@ -66,7 +66,7 @@ internal class UserSessionLifecycleTest {
                 assertEquals("", bgAttrs?.findAttributeValue(EMB_USER_SESSION_ID))
                 assertEquals("", bgAttrs?.findAttributeValue(EMB_SESSION_PART_ID))
                 assertNull(bgAttrs?.findAttributeValue(EMB_USER_SESSION_NUMBER))
-                assertNull(bgAttrs?.findAttributeValue(EMB_USER_SESSION_PART_NUMBER))
+                assertNull(bgAttrs?.findAttributeValue(EMB_USER_SESSION_PART_INDEX))
                 assertNull(bgAttrs?.findAttributeValue(EMB_USER_SESSION_START_TS))
 
                 // entering foreground creates the first user session

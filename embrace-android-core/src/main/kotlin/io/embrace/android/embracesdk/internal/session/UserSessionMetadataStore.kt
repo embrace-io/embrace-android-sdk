@@ -19,7 +19,7 @@ internal class UserSessionMetadataStore(private val store: KeyValueStore) {
     fun save(metadata: UserSessionMetadata) {
         store.edit {
             val map = metadata.attributes.mapValues { it.value.toString() }.toMutableMap()
-            map[EmbSessionAttributes.EMB_USER_SESSION_PART_NUMBER] = metadata.partNumber.toString()
+            map[EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX] = metadata.partIndex.toString()
             map[KEY_LAST_ACTIVITY_TS] = metadata.lastActivityMs.toString()
             putStringMap(KEY_SESSION, map)
         }
@@ -45,7 +45,7 @@ internal class UserSessionMetadataStore(private val store: KeyValueStore) {
         val number = attrs[EmbSessionAttributes.EMB_USER_SESSION_NUMBER]?.toLongOrNull() ?: return null
         val maxDurationSecs = attrs[EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS]?.toLongOrNull() ?: return null
         val inactivityTimeoutSecs = attrs[EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS]?.toLongOrNull() ?: return null
-        val partNumber = attrs[EmbSessionAttributes.EMB_USER_SESSION_PART_NUMBER]?.toIntOrNull() ?: return null
+        val partIndex = attrs[EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX]?.toIntOrNull() ?: return null
         val lastActivityMs = attrs[KEY_LAST_ACTIVITY_TS]?.toLongOrNull() ?: return null
         return UserSessionMetadata(
             startTimeMs = startMs,
@@ -53,7 +53,7 @@ internal class UserSessionMetadataStore(private val store: KeyValueStore) {
             userSessionNumber = number,
             maxDurationSecs = maxDurationSecs,
             inactivityTimeoutSecs = inactivityTimeoutSecs,
-            partNumber = partNumber,
+            partIndex = partIndex,
             lastActivityMs = lastActivityMs,
         )
     }

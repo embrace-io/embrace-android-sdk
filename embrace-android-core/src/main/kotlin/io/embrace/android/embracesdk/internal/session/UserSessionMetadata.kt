@@ -13,7 +13,7 @@ data class UserSessionMetadata(
     val userSessionNumber: Long,
     val maxDurationSecs: Long,
     val inactivityTimeoutSecs: Long,
-    val partNumber: Int,
+    val partIndex: Int,
     val lastActivityMs: Long,
 ) {
     fun isOverMaxDuration(clock: Clock): Boolean =

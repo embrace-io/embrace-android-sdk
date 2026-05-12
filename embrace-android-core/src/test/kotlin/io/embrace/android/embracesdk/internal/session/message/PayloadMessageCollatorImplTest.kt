@@ -57,7 +57,8 @@ internal class PayloadMessageCollatorImplTest {
                 LifeEventType.BKGND_STATE,
                 5,
                 AppState.BACKGROUND,
-                1
+                1,
+                1,
             )
         )
         msg.verifyInitialFieldsPopulated()
@@ -71,7 +72,8 @@ internal class PayloadMessageCollatorImplTest {
                 LifeEventType.STATE,
                 5,
                 AppState.FOREGROUND,
-                1
+                1,
+                1,
             )
         )
         msg.verifyInitialFieldsPopulated()
@@ -86,7 +88,8 @@ internal class PayloadMessageCollatorImplTest {
                 LifeEventType.BKGND_STATE,
                 5,
                 AppState.BACKGROUND,
-                1
+                1,
+                1,
             )
         )
         startMsg.verifyInitialFieldsPopulated()
@@ -113,7 +116,8 @@ internal class PayloadMessageCollatorImplTest {
                 LifeEventType.STATE,
                 5,
                 AppState.FOREGROUND,
-                1
+                1,
+                1,
             )
         )
         startMsg.verifyInitialFieldsPopulated()
@@ -143,7 +147,8 @@ internal class PayloadMessageCollatorImplTest {
                             lifeEventType,
                             5L,
                             previousState,
-                            1
+                            1,
+                            1,
                         )
                     ).verifyInitialFieldsPopulated()
                 }

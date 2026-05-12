@@ -24,7 +24,8 @@ internal class SessionPartSpanAttrPopulatorImplTest {
         appState = AppState.FOREGROUND,
         isColdStart = false,
         startType = LifeEventType.STATE,
-        sessionPartNumber = 5
+        userSessionPartIndex = 5,
+        sessionPartNumber = 12,
     )
     private val userSession = UserSessionMetadata(
         startTimeMs = 1000L,
@@ -32,7 +33,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
         userSessionNumber = 3L,
         maxDurationSecs = 43200L,
         inactivityTimeoutSecs = 1800L,
-        partNumber = 2,
+        partIndex = 2,
         lastActivityMs = 1000L,
     )
     private lateinit var populator: SessionPartSpanAttrPopulatorImpl
@@ -55,7 +56,8 @@ internal class SessionPartSpanAttrPopulatorImplTest {
 
         val attrs = destination.attributes
         assertEquals("false", attrs[EmbSessionAttributes.EMB_COLD_START])
-        assertEquals("5", attrs[EmbSessionAttributes.EMB_USER_SESSION_PART_NUMBER])
+        assertEquals("5", attrs[EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX])
+        assertEquals("12", attrs[EmbSessionAttributes.EMB_SESSION_PART_NUMBER])
         assertEquals("foreground", attrs[EmbSessionAttributes.EMB_STATE])
         assertEquals("false", attrs[EmbSessionAttributes.EMB_CLEAN_EXIT])
         assertEquals("true", attrs[EmbSessionAttributes.EMB_TERMINATED])
@@ -75,6 +77,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
 
         val attrs = destination.attributes
         assertEquals("false", attrs[EmbSessionAttributes.EMB_COLD_START])
+        assertEquals("12", attrs[EmbSessionAttributes.EMB_SESSION_PART_NUMBER])
         assertEquals("foreground", attrs[EmbSessionAttributes.EMB_STATE])
         assertEquals("false", attrs[EmbSessionAttributes.EMB_CLEAN_EXIT])
         assertEquals("true", attrs[EmbSessionAttributes.EMB_TERMINATED])
@@ -83,7 +86,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
         assertEquals("", attrs[EmbSessionAttributes.EMB_USER_SESSION_ID])
         assertEquals("", attrs[SessionAttributes.SESSION_ID])
 
-        assertFalse(attrs.containsKey(EmbSessionAttributes.EMB_USER_SESSION_PART_NUMBER))
+        assertFalse(attrs.containsKey(EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX))
         assertFalse(attrs.containsKey(EmbSessionAttributes.EMB_USER_SESSION_NUMBER))
         assertFalse(attrs.containsKey(EmbSessionAttributes.EMB_USER_SESSION_START_TS))
         assertFalse(attrs.containsKey(EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS))

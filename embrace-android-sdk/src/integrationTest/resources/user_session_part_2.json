@@ -60,6 +60,11 @@
       "key": "emb.session_part_id",
       "value": "__EMBRACE_TEST_SESSION_PART_ID__"
     },
+
+    {
+      "key": "emb.session_part_number",
+      "value": "2"
+    },
     {
       "key": "emb.session_start_type",
       "value": "state"
@@ -93,7 +98,7 @@
       "value": "1"
     },
     {
-      "key": "emb.user_session_part_number",
+      "key": "emb.user_session_part_index",
       "value": "2"
     },
     {

@@ -127,7 +127,7 @@ internal class PayloadFactoryBaTest {
         )
         return PayloadFactoryImpl(collator, payloadSourceModule.logEnvelopeSource, configService, logger).apply {
             if (createInitialSession) {
-                startPayloadWithState(AppState.BACKGROUND, clock.now(), true, 1)
+                startPayloadWithState(AppState.BACKGROUND, clock.now(), true, { 1 }, { 1 })
             }
         }
     }

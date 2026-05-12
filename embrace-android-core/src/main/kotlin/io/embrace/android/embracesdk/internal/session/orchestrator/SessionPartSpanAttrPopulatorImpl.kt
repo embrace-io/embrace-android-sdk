@@ -29,9 +29,10 @@ internal class SessionPartSpanAttrPopulatorImpl(
                 addSessionPartAttribute(EmbSessionAttributes.EMB_SESSION_START_TYPE, it)
             }
 
+            addSessionPartAttribute(EmbSessionAttributes.EMB_SESSION_PART_NUMBER, sessionPart.sessionPartNumber.toString())
             if (userSession != null) {
                 addSessionPartAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionPart.sessionPartId)
-                addSessionPartAttribute(EmbSessionAttributes.EMB_USER_SESSION_PART_NUMBER, sessionPart.sessionPartNumber.toString())
+                addSessionPartAttribute(EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX, sessionPart.userSessionPartIndex.toString())
                 userSession.attributes.forEach { (key, value) ->
                     addSessionPartAttribute(key, value.toString())
                 }

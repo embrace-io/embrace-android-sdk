@@ -193,7 +193,6 @@ internal class SessionOrchestratorImpl(
                 return@transitionState shouldRunOnBackground(state)
             }
         )
-        scheduleInactivityTimeout()
     }
 
     override fun endSessionWithManual() {
@@ -383,6 +382,7 @@ internal class SessionOrchestratorImpl(
     }
 
     private fun scheduleInactivityTimeout() {
+        inactivityTimerState?.cancel()
         val metadata = (userSessionState as? UserSessionState.Active)?.metadata ?: return
         inactivityTimerState = SessionTimerState(
             backgroundWorker.schedule<Unit>(
@@ -394,6 +394,7 @@ internal class SessionOrchestratorImpl(
     }
 
     private fun scheduleMaxDurationTimeout(metadata: UserSessionMetadata) {
+        maxDurationTimerState?.cancel()
         val remainingSecs = metadata.maxDurationSecs - ((clock.now() - metadata.startTimeMs) / 1_000L)
         val delay = max(remainingSecs, 0)
         maxDurationTimerState = SessionTimerState(
@@ -412,6 +413,8 @@ internal class SessionOrchestratorImpl(
             }
             val currentAppState = state
             val timestamp = clock.now()
+            val captureNextPart = currentAppState != AppState.BACKGROUND ||
+                configService.backgroundActivityBehavior.isBackgroundActivityCaptureEnabled()
             transitionState(
                 transitionType = TransitionType.MAX_DURATION,
                 timestamp = timestamp,
@@ -419,13 +422,17 @@ internal class SessionOrchestratorImpl(
                     payloadFactory.endPayloadWithState(currentAppState, timestamp, initial)
                 },
                 newSessionAction = {
-                    payloadFactory.startPayloadWithState(
-                        state = currentAppState,
-                        timestamp = timestamp,
-                        coldStart = false,
-                        userSessionPartIndex = ::incrementPartIndex,
-                        sessionPartNumber = ::incrementSessionPartNumber,
-                    )
+                    if (captureNextPart) {
+                        payloadFactory.startPayloadWithState(
+                            state = currentAppState,
+                            timestamp = timestamp,
+                            coldStart = false,
+                            userSessionPartIndex = ::incrementPartIndex,
+                            sessionPartNumber = ::incrementSessionPartNumber,
+                        )
+                    } else {
+                        null
+                    }
                 },
             )
         }
@@ -498,16 +505,12 @@ internal class SessionOrchestratorImpl(
 
             else -> {
                 handleNewSessionPart(timestamp)
-                when (endAppState) {
-                    AppState.FOREGROUND -> if (maxDurationTimerState == null) {
-                        (userSessionState as? UserSessionState.Active)?.metadata?.let {
-                            scheduleMaxDurationTimeout(it)
-                        }
+                if (endAppState == AppState.FOREGROUND && maxDurationTimerState == null) {
+                    (userSessionState as? UserSessionState.Active)?.metadata?.let {
+                        scheduleMaxDurationTimeout(it)
                     }
-                    AppState.BACKGROUND -> {
-                        maxDurationTimerState?.cancel()
-                        maxDurationTimerState = null
-                    }
+                } else if (endAppState == AppState.BACKGROUND) {
+                    scheduleInactivityTimeout()
                 }
             }
         }
@@ -578,6 +581,8 @@ internal class SessionOrchestratorImpl(
     private fun terminateUserSession(state: UserSessionState.Active) {
         maxDurationTimerState?.cancel()
         maxDurationTimerState = null
+        inactivityTimerState?.cancel()
+        inactivityTimerState = null
         metadataStore.clear()
         userSessionState = UserSessionState.Terminated
         notifyListeners(SessionStateEvent.UserSessionEnded(state.metadata.userSessionId))

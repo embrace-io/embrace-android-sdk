@@ -1,19 +1,28 @@
 package io.embrace.android.embracesdk.fakes
 
+import android.app.Application
 import android.content.ComponentCallbacks2
 import android.content.Context
 import android.content.res.Configuration
 import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
-import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 
 class FakeDataSource(
-    private val ctx: Context,
-    override val initializeOnCreation: Boolean = true
-) : DataSource, ComponentCallbacks2, SessionPartEndListener, SessionPartChangeListener {
+    application: Application,
+    override val enableOnCreate: Boolean = true,
+) : DataSourceImpl(
+    args = FakeInstrumentationArgs(application),
+    limitStrategy = NoopLimitStrategy,
+    instrumentationName = "fake_data_source",
+),
+    ComponentCallbacks2,
+    SessionPartEndListener,
+    SessionPartChangeListener {
 
-    override val instrumentationName: String = "fake_data_source"
+    private val ctx: Context = application
 
     var enableDataCaptureCount: Int = 0
     var disableDataCaptureCount: Int = 0

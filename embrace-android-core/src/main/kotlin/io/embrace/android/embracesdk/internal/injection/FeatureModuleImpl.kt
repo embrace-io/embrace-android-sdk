@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbDataSource
-import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSourceImpl
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarker
@@ -26,8 +25,8 @@ class FeatureModuleImpl(
         }
     }
 
-    override val internalErrorDataSource: DataSourceState<InternalErrorDataSource> by singleton {
-        DataSourceState<InternalErrorDataSource>(
+    override val internalErrorDataSource: DataSourceState<InternalErrorDataSourceImpl> by singleton {
+        DataSourceState(
             factory = {
                 InternalErrorDataSourceImpl(instrumentationModule.instrumentationArgs)
             },

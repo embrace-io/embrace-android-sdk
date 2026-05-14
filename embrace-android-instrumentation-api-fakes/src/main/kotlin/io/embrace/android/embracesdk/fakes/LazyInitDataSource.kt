@@ -11,7 +11,7 @@ class LazyInitDataSource(
     stateTypeFactory = ::LazyInitState,
     defaultValue = "UNKNOWN",
 ) {
-    override val initializeOnCreation: Boolean = false
+    override val enableOnCreate: Boolean = false
 }
 
 class LazyInitState(initialValue: String) : State<String>(initialValue, "lazy-init")

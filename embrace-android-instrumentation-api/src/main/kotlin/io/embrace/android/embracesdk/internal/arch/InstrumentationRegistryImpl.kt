@@ -48,8 +48,7 @@ class InstrumentationRegistryImpl(
             val obj = it.dataSource
             obj != null && clazz.isInstance(obj)
         }
-        val state = element as? DataSourceState<T>
-        return state?.dataSource
+        return element?.dataSource as? T
     }
 
     /**

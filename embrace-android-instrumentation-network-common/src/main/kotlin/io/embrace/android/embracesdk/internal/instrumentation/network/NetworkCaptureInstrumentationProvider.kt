@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 
+@Volatile
 private var networkCaptureDataSource: NetworkCaptureDataSource? = null
 
 fun retrieveNetworkCaptureDataSource(): NetworkCaptureDataSource? {
@@ -14,8 +15,9 @@ class NetworkCaptureInstrumentationProvider : InstrumentationProvider {
     override fun register(args: InstrumentationArgs): DataSourceState<*>? {
         return DataSourceState(
             factory = {
-                networkCaptureDataSource = NetworkCaptureDataSourceImpl(args)
-                networkCaptureDataSource
+                val impl = NetworkCaptureDataSourceImpl(args)
+                networkCaptureDataSource = impl
+                impl
             }
         )
     }

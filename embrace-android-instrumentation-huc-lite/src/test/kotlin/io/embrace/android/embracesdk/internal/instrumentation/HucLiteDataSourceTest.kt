@@ -152,7 +152,7 @@ class HucLiteDataSourceTest {
 
     @Test
     fun `initialization with no previous factory works correctly`() {
-        hucLiteDataSource.onDataCaptureEnabled()
+        hucLiteDataSource.enable()
         assertTrue(factoryField is InstrumentedUrlStreamHandlerFactory)
         assertEquals(1, staticFactorySetAttempts)
         attemptToSetURLStreamHandlerFactory(FakeURLStreamHandlerFactory())
@@ -162,14 +162,14 @@ class HucLiteDataSourceTest {
     @Test
     fun `initialization with existing factory works correctly`() {
         factoryField = FakeURLStreamHandlerFactory()
-        hucLiteDataSource.onDataCaptureEnabled()
+        hucLiteDataSource.enable()
         assertTrue(factoryField is DelegatingInstrumentedURLStreamHandlerFactory)
     }
 
     @Test
     fun `initialization via data source only happens once`() {
-        hucLiteDataSource.onDataCaptureEnabled()
-        hucLiteDataSource.onDataCaptureEnabled()
+        hucLiteDataSource.enable()
+        hucLiteDataSource.enable()
         assertEquals(1, staticFactorySetAttempts)
     }
 

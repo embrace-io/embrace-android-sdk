@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -28,7 +27,6 @@ abstract class StateDataSource<T : Any>(
     private val currentState: AtomicReference<T> = AtomicReference(defaultValue)
     private val partStateToken: AtomicReference<SessionPartStateToken<T>?> = AtomicReference()
     private val unrecordedTransitions = AtomicReference(noUnrecordedTransitions)
-    private val initialized = AtomicBoolean(initializeOnCreation)
 
     /**
      * Notify that the state has changed at the given time to the given value, with the given number of transitions dropped by the
@@ -40,8 +38,8 @@ abstract class StateDataSource<T : Any>(
         transitionAttributes: Map<String, String> = emptyMap(),
         droppedTransitions: Int = 0,
     ) {
-        if (!initialized.getAndSet(true)) {
-            onDataCaptureEnabled()
+        if (!isEnabled()) {
+            enable()
         }
 
         val oldState = currentState.getAndSet(newState)
@@ -85,17 +83,14 @@ abstract class StateDataSource<T : Any>(
 
     @CallSuper
     override fun onDataCaptureEnabled() {
-        if (initialized.get()) {
-            // Create a new state span as soon as the data source is enabled if there's an active session
-            if (args.sessionId() != null) {
-                createSessionStateSpan(currentState.get())
-            }
+        if (args.sessionId() != null) {
+            createSessionStateSpan(currentState.get())
         }
     }
 
     @CallSuper
     override fun onPreSessionEnd() {
-        if (initialized.get()) {
+        if (isEnabled()) {
             partStateToken.getAndSet(null)?.apply {
                 end(unrecordedTransitions.get())
             }
@@ -104,7 +99,7 @@ abstract class StateDataSource<T : Any>(
 
     @CallSuper
     override fun onPostSessionChange() {
-        if (initialized.get()) {
+        if (isEnabled()) {
             createSessionStateSpan(currentState.get())
         }
     }

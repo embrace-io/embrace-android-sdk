@@ -50,10 +50,10 @@ internal class DataSourceStateTest {
     }
 
     @Test
-    fun `enable config method datasource not invoked if initializeOnCreation is false`() {
+    fun `enable config method datasource not invoked if enableOnCreate is false`() {
         val source = FakeDataSource(
-            ctx = RuntimeEnvironment.getApplication(),
-            initializeOnCreation = false
+            application = RuntimeEnvironment.getApplication(),
+            enableOnCreate = false,
         )
         DataSourceState(
             factory = { source },

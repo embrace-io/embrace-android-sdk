@@ -1,13 +1,22 @@
 package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 
-internal class CrashHandlerDataSource : JvmCrashDataSource {
-    override val instrumentationName: String = "crash_handler_data_source"
+internal class CrashHandlerDataSource(
+    args: InstrumentationArgs,
+) : JvmCrashDataSource,
+    DataSourceImpl(
+        args = args,
+        limitStrategy = NoopLimitStrategy,
+        instrumentationName = "crash_handler_data_source",
+    ) {
 
     val handlers = mutableListOf<CrashTeardownHandler>()
 
@@ -19,15 +28,6 @@ internal class CrashHandlerDataSource : JvmCrashDataSource {
     }
 
     override var telemetryModifier: ((TelemetryAttributes) -> SchemaType)? = null
-
-    override fun onDataCaptureEnabled() {
-    }
-
-    override fun onDataCaptureDisabled() {
-    }
-
-    override fun resetDataCaptureLimits() {
-    }
 
     override fun <T> captureTelemetry(
         inputValidation: () -> Boolean,

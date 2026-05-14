@@ -208,7 +208,8 @@ internal class NetworkRequestDataSourceStatefulApiTest {
             callId = request1,
             url = url,
             endTime = 1150L,
-            userAgent = "Testing User Agent",
+            userAgentName = "okhttp",
+            userAgentVersion = "4.12.0",
         )
 
         val spans = harness.getNetworkSpans().sortedBy { it.startTimeMs }
@@ -219,7 +220,8 @@ internal class NetworkRequestDataSourceStatefulApiTest {
             expectedStartTimeMs = 10,
             expectedEndTimeMs = 1150,
             expectedAttributes = mapOf(
-                UserAgentAttributes.USER_AGENT_ORIGINAL to "Testing User Agent",
+                UserAgentAttributes.USER_AGENT_NAME to "okhttp",
+                UserAgentAttributes.USER_AGENT_VERSION to "4.12.0",
             ),
         )
         harness.assertNetworkRequest(
@@ -287,7 +289,8 @@ internal class NetworkRequestDataSourceStatefulApiTest {
         errorType: String? = null,
         errorMessage: String? = null,
         traceId: String? = "fake-trace-id",
-        userAgent: String? = null,
+        userAgentName: String? = null,
+        userAgentVersion: String? = null,
     ) {
         harness.dataSource.endRequest(
             RequestEndData(
@@ -301,7 +304,8 @@ internal class NetworkRequestDataSourceStatefulApiTest {
                 errorType = errorType,
                 errorMessage = errorMessage,
                 traceId = traceId,
-                userAgent = userAgent,
+                userAgentName = userAgentName,
+                userAgentVersion = userAgentVersion,
             )
         )
     }

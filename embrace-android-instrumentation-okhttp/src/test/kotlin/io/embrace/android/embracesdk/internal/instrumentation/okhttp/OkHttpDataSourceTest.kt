@@ -23,6 +23,7 @@ import io.opentelemetry.kotlin.semconv.HttpAttributes
 import io.opentelemetry.kotlin.semconv.UrlAttributes
 import io.opentelemetry.kotlin.semconv.UserAgentAttributes
 import okhttp3.Headers
+import okhttp3.OkHttp
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -60,7 +61,7 @@ internal class OkHttpDataSourceTest {
         private const val RESPONSE_BODY_GZIPPED_SIZE = 43
         private const val RESPONSE_HEADER_VALUE = "responseHeaderVal"
         private const val TRACEPARENT_HEADER = "traceparent"
-        private const val USER_AGENT = "okhttp/4.12.0"
+        private const val OKHTTP_USER_AGENT_NAME = "okhttp"
         private const val ENCODING_GZIP = "gzip"
         private const val CONTENT_LENGTH_HEADER_NAME = "Content-Length"
         private const val CONTENT_ENCODING_HEADER_NAME = "Content-Encoding"
@@ -447,7 +448,6 @@ internal class OkHttpDataSourceTest {
             httpMethod = "POST",
             requestSize = REQUEST_BODY_SIZE,
             responseBody = RESPONSE_BODY,
-            userAgent = USER_AGENT,
             systemClockTimes = runAndGetResponseTimes(::runPostRequest)
         )
     }
@@ -460,7 +460,6 @@ internal class OkHttpDataSourceTest {
             path = DEFAULT_PATH,
             httpStatus = 200,
             httpMethod = "GET",
-            userAgent = USER_AGENT,
             requestSize = 0,
             responseBodySize = expectedResponseBodySize,
             responseBody = null,
@@ -499,7 +498,6 @@ internal class OkHttpDataSourceTest {
         errorMessage: String? = null,
         traceId: String? = null,
         w3cTraceparent: String? = null,
-        userAgent: String? = null,
         responseBody: String?,
         systemClockTimes: SystemClockTimes,
     ) {
@@ -524,7 +522,8 @@ internal class OkHttpDataSourceTest {
             assertEquals(errorType, attrs[ErrorAttributes.ERROR_TYPE])
             assertEquals(errorMessage, attrs[ExceptionAttributes.EXCEPTION_MESSAGE])
             assertEquals(w3cTraceparent, attrs[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
-            assertEquals(userAgent, attrs[UserAgentAttributes.USER_AGENT_ORIGINAL])
+            assertEquals(OKHTTP_USER_AGENT_NAME, attrs[UserAgentAttributes.USER_AGENT_NAME])
+            assertEquals(OkHttp.VERSION, attrs[UserAgentAttributes.USER_AGENT_VERSION])
             assertEquals(getValidTraceId(traceId), attrs[EmbNetworkRequestAttributes.EMB_TRACE_ID])
 
             if (responseBody != null) {

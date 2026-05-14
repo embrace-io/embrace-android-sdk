@@ -33,7 +33,6 @@ internal class InternalNetworkApiImpl(
                 errorMessage = embraceNetworkRequest.errorMessage,
                 traceId = embraceNetworkRequest.traceId,
                 w3cTraceparent = embraceNetworkRequest.w3cTraceparent,
-                userAgent = embraceNetworkRequest.userAgent,
                 body = HttpNetworkRequest.HttpRequestBody(
                     requestHeaders = body?.requestHeaders,
                     requestQueryParams = body?.requestQueryParams,

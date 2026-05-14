@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation
 
 import android.annotation.SuppressLint
+import android.os.Build
 import io.embrace.android.embracesdk.instrumentation.huclite.DelegatingInstrumentedURLStreamHandlerFactory
 import io.embrace.android.embracesdk.instrumentation.huclite.HucLitePathOverrideRequest
 import io.embrace.android.embracesdk.instrumentation.huclite.InstrumentedUrlStreamHandlerFactory
@@ -147,7 +148,6 @@ class HucLiteDataSource(
 
         private val methodProvider = { connection.requestMethod }
         private val pathProvider = { connection.url.path }
-        private val userAgentProvider: () -> String? = { connection.getRequestProperty("User-Agent") }
         private val startTimeMs = AtomicLong(INVALID_START_TIME)
         private val requestRecorded = AtomicBoolean(false)
 
@@ -167,13 +167,11 @@ class HucLiteDataSource(
                     null
                 }
                 val method = methodProvider()
-                val userAgent = userAgentProvider()
                 val networkRequestSchemaType = SchemaType.NetworkRequest(
                     completedRequestAttributes(
                         url = telemetryUrlProvider(),
                         httpMethod = method,
                         responseCode = responseCode,
-                        userAgent = userAgent
                     )
                 )
                 telemetryDestination.recordCompletedSpan(
@@ -191,12 +189,10 @@ class HucLiteDataSource(
             recordRequest(telemetryUrlProvider) {
                 val errorTimeMs = clock.now()
                 val method = methodProvider()
-                val userAgent = userAgentProvider()
                 val networkRequestSchemaType = SchemaType.NetworkRequest(
                     incompleteRequestAttributes(
                         url = telemetryUrlProvider(),
                         httpMethod = method,
-                        userAgent = userAgent,
                         errorType = t::class.java.canonicalName ?: t::class.java.simpleName,
                         errorMessage = t.message ?: "Unexpected error"
                     )
@@ -216,18 +212,17 @@ class HucLiteDataSource(
             url: String,
             httpMethod: String,
             responseCode: Int,
-            userAgent: String?,
         ): Map<String, String> = mapOf(
             UrlAttributes.URL_FULL to url,
             HttpAttributes.HTTP_REQUEST_METHOD to httpMethod,
             HttpAttributes.HTTP_RESPONSE_STATUS_CODE to responseCode,
-            UserAgentAttributes.USER_AGENT_ORIGINAL to userAgent,
+            UserAgentAttributes.USER_AGENT_NAME to HUC_USER_AGENT_NAME,
+            UserAgentAttributes.USER_AGENT_VERSION to Build.VERSION.SDK_INT.toString(),
         ).toNonNullMap().mapValues { it.value.toString() }
 
         private fun incompleteRequestAttributes(
             url: String,
             httpMethod: String,
-            userAgent: String?,
             errorType: String,
             errorMessage: String,
         ): Map<String, String> = mapOf(
@@ -235,7 +230,8 @@ class HucLiteDataSource(
             HttpAttributes.HTTP_REQUEST_METHOD to httpMethod,
             ErrorAttributes.ERROR_TYPE to errorType,
             ExceptionAttributes.EXCEPTION_MESSAGE to errorMessage,
-            UserAgentAttributes.USER_AGENT_ORIGINAL to userAgent,
+            UserAgentAttributes.USER_AGENT_NAME to HUC_USER_AGENT_NAME,
+            UserAgentAttributes.USER_AGENT_VERSION to Build.VERSION.SDK_INT.toString(),
         ).toNonNullMap().mapValues { it.value }
 
         private fun getValidStartTime(): Long =
@@ -266,6 +262,7 @@ class HucLiteDataSource(
 
         private companion object {
             const val INVALID_START_TIME = -1L
+            const val HUC_USER_AGENT_NAME = "HttpURLConnection"
         }
     }
 

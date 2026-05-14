@@ -160,17 +160,15 @@ public final class io/embrace/android/embracesdk/internal/network/http/NetworkCa
 
 public final class io/embrace/android/embracesdk/network/EmbraceNetworkRequest {
 	public static final field Companion Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest$Companion;
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/Long;Ljava/lang/Long;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/Long;Ljava/lang/Long;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public static final fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJI)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
 	public static final fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJILjava/lang/String;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
 	public static final fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJILjava/lang/String;Ljava/lang/String;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
 	public static final fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJILjava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
-	public static final fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
 	public static final fun fromIncompleteRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLjava/lang/String;Ljava/lang/String;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
 	public static final fun fromIncompleteRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
 	public static final fun fromIncompleteRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
 	public static final fun fromIncompleteRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
-	public static final fun fromIncompleteRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
 	public final fun getBytesIn ()J
 	public final fun getBytesOut ()J
 	public final fun getBytesReceived ()Ljava/lang/Long;
@@ -185,7 +183,6 @@ public final class io/embrace/android/embracesdk/network/EmbraceNetworkRequest {
 	public final fun getStartTime ()J
 	public final fun getTraceId ()Ljava/lang/String;
 	public final fun getUrl ()Ljava/lang/String;
-	public final fun getUserAgent ()Ljava/lang/String;
 	public final fun getW3cTraceparent ()Ljava/lang/String;
 }
 
@@ -194,16 +191,12 @@ public final class io/embrace/android/embracesdk/network/EmbraceNetworkRequest$C
 	public final fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJILjava/lang/String;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
 	public final fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJILjava/lang/String;Ljava/lang/String;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
 	public final fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJILjava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
-	public final fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
 	public static synthetic fun fromCompletedRequest$default (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest$Companion;Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJILjava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;ILjava/lang/Object;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
-	public static synthetic fun fromCompletedRequest$default (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest$Companion;Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;ILjava/lang/Object;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
 	public final fun fromIncompleteRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLjava/lang/String;Ljava/lang/String;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
 	public final fun fromIncompleteRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
 	public final fun fromIncompleteRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
 	public final fun fromIncompleteRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
-	public final fun fromIncompleteRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
 	public static synthetic fun fromIncompleteRequest$default (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest$Companion;Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;ILjava/lang/Object;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
-	public static synthetic fun fromIncompleteRequest$default (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest$Companion;Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;ILjava/lang/Object;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
 }
 
 public final class io/embrace/android/embracesdk/network/http/HttpMethod : java/lang/Enum {

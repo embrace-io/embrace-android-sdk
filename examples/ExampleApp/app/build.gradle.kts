@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.embrace)
+    alias(libs.plugins.metro)
 }
 
 embrace {
@@ -77,7 +78,10 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.navigation.fragment)
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.navigation3.ui)
     implementation(libs.kotlinx.serialization.core)
+    implementation(libs.kotlinx.serialization.json)
     add("kotlinCompilerPluginClasspath", libs.kotlin.serialization.compiler.plugin)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
@@ -86,6 +90,10 @@ dependencies {
     implementation(libs.androidx.material)
     implementation(libs.androidx.material.icons)
     implementation(libs.okhttp)
+    implementation(libs.coil.compose)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.exoplayer.hls)
+    implementation(libs.androidx.media3.ui)
     implementation(platform(libs.opentelemetry.bom))
     implementation(libs.opentelemetry.api)
     implementation(libs.opentelemetry.sdk)

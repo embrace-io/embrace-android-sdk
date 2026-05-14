@@ -37,3 +37,13 @@ jobs:
     with:
       rc_version: ${{ inputs.rc_version }}
     secrets: inherit
+
+  publish-api-docs:
+    name: Publish API docs and record SDK version
+    permissions:
+      contents: write
+    needs: upload-artifacts-to-sonatype
+    uses: ./.github/workflows/publish-api-docs.yml # zizmor: ignore[secrets-inherit]
+    with:
+      rc_version: ${{ inputs.rc_version }}
+    secrets: inherit

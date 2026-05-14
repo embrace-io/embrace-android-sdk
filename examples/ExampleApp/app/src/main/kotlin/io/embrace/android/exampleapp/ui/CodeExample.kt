@@ -3,6 +3,8 @@ package io.embrace.android.exampleapp.ui
 enum class CodeExample(
     val desc: String,
 ) {
+    NAV_PARADIGMS("Navigation Paradigms"),
+    BLUESKY_FEED("Bluesky Live Feed"),
     JVM_CRASH("JVM Uncaught Exception"),
     NDK_CRASH("NDK crash"),
     ANR_DETECTION("ANR detection"),
@@ -16,9 +18,7 @@ enum class CodeExample(
     ALTER_USER("Alter User"),
     VIEW_TRACKING("View Tracking"),
     SDK_STATE_API("SDK State API"),
-    BYTECODE_INSTRUMENTATION_SAMPLES("Bytecode Instrumentation"),
-    FRAGMENT_NAVIGATION("Compose Fragment Navigation"),
-    COMPLEX_FRAGMENT_NAVIGATION("Complex Fragment Navigation");
+    BYTECODE_INSTRUMENTATION_SAMPLES("Bytecode Instrumentation");
 
     val route: String = name.lowercase()
 }

@@ -266,12 +266,18 @@ internal class UserSessionIdPropagationTest {
                 val logAttrs = checkNotNull(getSingleLogEnvelope().getLogOfType(EmbType.System.Exit).attributes)
                 assertEquals(sessionPartId, logAttrs.findAttributeValue(AEI_SESSION_PART_ID))
                 assertEquals(userSessionId, logAttrs.findAttributeValue(AEI_USER_SESSION_ID))
+                assertEquals("", logAttrs.findAttributeValue(EMB_SESSION_PART_ID))
+                assertEquals("", logAttrs.findAttributeValue(EMB_USER_SESSION_ID))
+                assertEquals("", logAttrs.findAttributeValue(SESSION_ID))
             },
             otelExportAssertion = {
                 val log = awaitLogs(1) { it.attributes.toStringMap().containsKey(EmbType.System.Exit.key) }.single()
                 val logAttrs = log.attributes.toStringMap()
                 assertEquals(sessionPartId, logAttrs[AEI_SESSION_PART_ID])
                 assertEquals(userSessionId, logAttrs[AEI_USER_SESSION_ID])
+                assertEquals("", logAttrs[EMB_SESSION_PART_ID])
+                assertEquals("", logAttrs[EMB_USER_SESSION_ID])
+                assertEquals("", logAttrs[SESSION_ID])
             },
         )
     }

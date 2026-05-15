@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.semconv.EmbAeiAttributes
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll
@@ -106,7 +107,9 @@ internal class AeiDataSourceImplTest {
         assertEquals(TIMESTAMP.toString(), attrs[EmbAeiAttributes.TIMESTAMP])
         assertEquals(SESSION_ID, attrs[EmbAeiAttributes.AEI_SESSION_PART_ID])
         assertEquals(USER_SESSION_ID, attrs[EmbAeiAttributes.AEI_USER_SESSION_ID])
-        assertEquals(USER_SESSION_ID, attrs[SessionAttributes.SESSION_ID])
+        assertEquals("", attrs[EmbSessionAttributes.EMB_SESSION_PART_ID])
+        assertEquals("", attrs[EmbSessionAttributes.EMB_USER_SESSION_ID])
+        assertEquals("", attrs[SessionAttributes.SESSION_ID])
         assertEquals(IMPORTANCE.toString(), attrs[EmbAeiAttributes.PROCESS_IMPORTANCE])
         assertEquals(PSS.toString(), attrs[EmbAeiAttributes.PSS])
         assertEquals(RSS.toString(), attrs[EmbAeiAttributes.RSS])
@@ -225,7 +228,9 @@ internal class AeiDataSourceImplTest {
         val attrs = getAeiLogAttrs()
         assertEquals(SESSION_ID, attrs[EmbAeiAttributes.AEI_SESSION_PART_ID])
         assertEquals(USER_SESSION_ID, attrs[EmbAeiAttributes.AEI_USER_SESSION_ID])
-        assertEquals(USER_SESSION_ID, attrs[SessionAttributes.SESSION_ID])
+        assertEquals("", attrs[EmbSessionAttributes.EMB_SESSION_PART_ID])
+        assertEquals("", attrs[EmbSessionAttributes.EMB_USER_SESSION_ID])
+        assertEquals("", attrs[SessionAttributes.SESSION_ID])
     }
 
     @Test

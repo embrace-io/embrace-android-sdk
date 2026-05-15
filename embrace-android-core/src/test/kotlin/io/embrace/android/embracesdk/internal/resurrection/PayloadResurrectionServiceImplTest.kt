@@ -21,7 +21,13 @@ import io.embrace.android.embracesdk.fakes.fakeEnvelopeResource
 import io.embrace.android.embracesdk.fakes.fakeIncompleteSessionEnvelope
 import io.embrace.android.embracesdk.fakes.fakeLaterEnvelopeMetadata
 import io.embrace.android.embracesdk.fakes.fakeLaterEnvelopeResource
+import io.embrace.android.embracesdk.fixtures.FAKE_SESSION_PART_ID
+import io.embrace.android.embracesdk.fixtures.FAKE_SESSION_PART_ID_2
+import io.embrace.android.embracesdk.fixtures.FAKE_USER_SESSION_ID
+import io.embrace.android.embracesdk.fixtures.FAKE_USER_SESSION_ID_2
 import io.embrace.android.embracesdk.fixtures.fakeCachedSessionStoredTelemetryMetadata
+import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
+import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata2
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.attrs.isEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
@@ -90,6 +96,7 @@ class PayloadResurrectionServiceImplTest {
                 serializer,
                 PriorityWorker(intakeExecutor),
             ),
+            payloadStorageService = payloadStorageService,
             cacheStorageService = cacheStorageService,
             cachedLogEnvelopeStore = cachedLogEnvelopeStore,
             logger = logger,
@@ -160,6 +167,96 @@ class PayloadResurrectionServiceImplTest {
     }
 
     @Test
+    fun `cached session is skipped if payloadStorageService has payload with same session id`() {
+        // simulate a race where a complete session payload _and_ cached session payload are both on disk
+        payloadStorageService.addPayload(
+            metadata = fakeSessionStoredTelemetryMetadata,
+            data = deadSessionEnvelope
+        )
+        cacheStorageService.addPayload(
+            metadata = sessionMetadata,
+            data = deadSessionEnvelope
+        )
+        assertEquals(1, payloadStorageService.storedPayloadCount())
+        assertEquals(1, cacheStorageService.storedPayloadCount())
+
+        resurrectInBackground()
+
+        val stored = payloadStorageService.storedPayloadMetadata().single()
+        assertEquals(fakeSessionStoredTelemetryMetadata, stored)
+        assertEquals(0, cacheStorageService.storedPayloadCount())
+    }
+
+    @Test
+    fun `duplicate session snapshots only send the most recent one`() {
+        val earlierMeta = sessionMetadata.copy(
+            timestamp = sessionMetadata.timestamp - 5_000L,
+            uuid = "earlier-uuid"
+        )
+        val earlierEnvelope = fakeIncompleteSessionEnvelope(
+            startMs = earlierMeta.timestamp,
+            lastHeartbeatTimeMs = earlierMeta.timestamp + 100L
+        )
+        cacheStorageService.addPayload(metadata = earlierMeta, data = earlierEnvelope)
+        cacheStorageService.addPayload(metadata = sessionMetadata, data = deadSessionEnvelope)
+
+        resurrectInBackground()
+
+        val stored = payloadStorageService.storedPayloadMetadata().single()
+        assertEquals(sessionMetadata.copy(complete = true), stored)
+        assertEquals(0, cacheStorageService.storedPayloadCount())
+    }
+
+    @Test
+    fun `legacy session snapshot with empty session IDs bypasses dedup and is resurrected`() {
+        // simulate a payload that uses v1 filename encoding
+        val legacyMeta = sessionMetadata.copy(userSessionId = "", sessionPartId = "")
+        cacheStorageService.addPayload(metadata = legacyMeta, data = deadSessionEnvelope)
+
+        resurrectInBackground()
+
+        val stored = payloadStorageService.storedPayloadMetadata().single()
+        assertEquals(legacyMeta.copy(complete = true), stored)
+        assertEquals(0, cacheStorageService.storedPayloadCount())
+    }
+
+    @Test
+    fun `dedupe does not affect unrelated sessions`() {
+        payloadStorageService.addPayload(
+            metadata = fakeSessionStoredTelemetryMetadata,
+            data = deadSessionEnvelope
+        )
+        cacheStorageService.addPayload(
+            metadata = sessionMetadata,
+            data = deadSessionEnvelope
+        )
+
+        // Session B is only in the cache — should be resurrected normally.
+        val sessionBMeta = fakeSessionStoredTelemetryMetadata2.copy(complete = false)
+        val sessionBEnvelope = fakeIncompleteSessionEnvelope(
+            sessionId = "session-b",
+            startMs = sessionBMeta.timestamp,
+            lastHeartbeatTimeMs = sessionBMeta.timestamp + 1000L
+        )
+        cacheStorageService.addPayload(metadata = sessionBMeta, data = sessionBEnvelope)
+
+        resurrectInBackground()
+
+        val storedKeys = payloadStorageService.storedPayloadMetadata()
+            .map { it.userSessionId to it.sessionPartId }
+            .toSet()
+        assertEquals(
+            setOf(
+                FAKE_USER_SESSION_ID to FAKE_SESSION_PART_ID,
+                FAKE_USER_SESSION_ID_2 to FAKE_SESSION_PART_ID_2,
+            ),
+            storedKeys
+        )
+        assertEquals(2, payloadStorageService.storedPayloadCount())
+        assertEquals(0, cacheStorageService.storedPayloadCount())
+    }
+
+    @Test
     fun `snapshot will be delivered as failed span once resurrected`() {
         deadSessionEnvelope.resurrectPayload()
 
@@ -210,6 +307,8 @@ class PayloadResurrectionServiceImplTest {
         val sessionSpan = getStoredParts().single().getSessionSpan()
         assertEquals("dead-session-native-crash", sessionSpan?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID))
 
+        // clear snapshots before running second scenario
+        payloadStorageService.clearStorage()
         nativeCrashService.addNativeCrashData(
             createNativeCrashData(
                 nativeCrashId = "dead-session-native-crash",
@@ -447,6 +546,7 @@ class PayloadResurrectionServiceImplTest {
         }
         val service = PayloadResurrectionServiceImpl(
             intakeService = hangingIntakeService,
+            payloadStorageService = payloadStorageService,
             cacheStorageService = cacheStorageService,
             cachedLogEnvelopeStore = cachedLogEnvelopeStore,
             logger = logger,

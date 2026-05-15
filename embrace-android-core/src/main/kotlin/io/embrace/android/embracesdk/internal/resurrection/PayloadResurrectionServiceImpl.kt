@@ -126,7 +126,8 @@ internal class PayloadResurrectionServiceImpl(
                     if (resource != null && metadata != null) {
                         cachedLogEnvelopeStore.create(
                             storedTelemetryMetadata = createNativeCrashEnvelopeMetadata(
-                                sessionPartId = nativeCrash.sessionPartId
+                                sessionPartId = nativeCrash.sessionPartId,
+                                userSessionId = nativeCrash.userSessionId,
                             ),
                             resource = resource,
                             metadata = metadata
@@ -181,7 +182,8 @@ internal class PayloadResurrectionServiceImpl(
                     nativeCrashProvider(sessionId)?.apply {
                         val nativeCrashEnvelopeMetadata = createNativeCrashEnvelopeMetadata(
                             sessionPartId = sessionId,
-                            processIdentifier = processIdentifier
+                            processIdentifier = processIdentifier,
+                            userSessionId = userSessionId,
                         )
 
                         cachedLogEnvelopeStore.create(

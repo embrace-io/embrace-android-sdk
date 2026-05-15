@@ -39,12 +39,15 @@ interface CachedLogEnvelopeStore {
         fun createNativeCrashEnvelopeMetadata(
             sessionPartId: String? = null,
             processIdentifier: String? = null,
+            userSessionId: String? = null,
         ) = StoredTelemetryMetadata(
             timestamp = 0L,
             uuid = sessionPartId ?: "none",
             processIdentifier = processIdentifier ?: "none",
             envelopeType = SupportedEnvelopeType.CRASH,
             payloadType = PayloadType.NATIVE_CRASH,
+            userSessionId = userSessionId.orEmpty(),
+            sessionPartId = sessionPartId.orEmpty(),
         )
     }
 }

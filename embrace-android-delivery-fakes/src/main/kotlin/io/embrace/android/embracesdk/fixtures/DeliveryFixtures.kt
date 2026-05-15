@@ -5,6 +5,11 @@ import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 
+const val FAKE_USER_SESSION_ID = "fa1a3ec1d50f4c0fa9f0b6c3e2f1a8d5"
+const val FAKE_SESSION_PART_ID = "f1e2d3c4b5a69788776655443322110f"
+const val FAKE_USER_SESSION_ID_2 = "deadbeefcafef00d1234567890abcdef"
+const val FAKE_SESSION_PART_ID_2 = "0123456789abcdef0123456789abcdef"
+
 val fakeCachedSessionStoredTelemetryMetadata = StoredTelemetryMetadata(
     timestamp = DEFAULT_FAKE_CURRENT_TIME + 1000L,
     uuid = "30690ad1-6b87-4e08-b72c-7deca14451d8",
@@ -12,6 +17,8 @@ val fakeCachedSessionStoredTelemetryMetadata = StoredTelemetryMetadata(
     envelopeType = SupportedEnvelopeType.SESSION,
     complete = false,
     payloadType = PayloadType.SESSION,
+    userSessionId = FAKE_USER_SESSION_ID,
+    sessionPartId = FAKE_SESSION_PART_ID,
 )
 
 val fakeSessionStoredTelemetryMetadata = StoredTelemetryMetadata(
@@ -19,8 +26,10 @@ val fakeSessionStoredTelemetryMetadata = StoredTelemetryMetadata(
     uuid = "30690ad1-6b87-4e08-b72c-7deca14451d8",
     processIdentifier = "8115ec91-3e5e-4d8a-816d-cc40306f9822",
     envelopeType = SupportedEnvelopeType.SESSION,
-    true,
+    complete = true,
     payloadType = PayloadType.SESSION,
+    userSessionId = FAKE_USER_SESSION_ID,
+    sessionPartId = FAKE_SESSION_PART_ID,
 )
 
 val fakeSessionStoredTelemetryMetadata2 = StoredTelemetryMetadata(
@@ -29,6 +38,8 @@ val fakeSessionStoredTelemetryMetadata2 = StoredTelemetryMetadata(
     processIdentifier = "8115ec91-3e5e-4d8a-816d-cc40306f9822",
     envelopeType = SupportedEnvelopeType.SESSION,
     payloadType = PayloadType.SESSION,
+    userSessionId = FAKE_USER_SESSION_ID_2,
+    sessionPartId = FAKE_SESSION_PART_ID_2,
 )
 
 val fakeLogStoredTelemetryMetadata = StoredTelemetryMetadata(
@@ -55,4 +66,6 @@ val fakeNativeCrashStoredTelemetryMetadata = StoredTelemetryMetadata(
     envelopeType = SupportedEnvelopeType.CRASH,
     complete = false,
     payloadType = PayloadType.NATIVE_CRASH,
+    userSessionId = FAKE_USER_SESSION_ID,
+    sessionPartId = "bb6b5b1ea2ff48928382fe81d7991ced",
 )

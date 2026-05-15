@@ -80,16 +80,17 @@ class NativeCrashHandlerInstallerImplTest {
         nativeCrashHandlerInstaller.install()
 
         assertTrue(fakeDelegate.signalHandlerInstalled)
-        assertEquals("p1_1692201601000_null_pid_true_native_v1.json", getFilename())
+        assertEquals("p1_1692201601000_null_pid_true_native_null_null_v2.json", getFilename())
     }
 
     @Test
     fun `report path containing session ID`() {
         sessionId = "sid"
+        userSessionId = "usid"
         nativeCrashHandlerInstaller.install()
 
         assertTrue(fakeDelegate.signalHandlerInstalled)
-        assertEquals("p1_1692201601000_sid_pid_true_native_v1.json", getFilename())
+        assertEquals("p1_1692201601000_sid_pid_true_native_usid_sid_v2.json", getFilename())
     }
 
     @Test
@@ -120,14 +121,15 @@ class NativeCrashHandlerInstallerImplTest {
     fun `report path updated on new session`() {
         nativeCrashHandlerInstaller.install()
         executorService.runCurrentlyBlocked()
-        assertEquals("p1_1692201601000_null_pid_true_native_v1.json", getFilename())
+        assertEquals("p1_1692201601000_null_pid_true_native_null_null_v2.json", getFilename())
 
         // trigger new session and update report path
         args.clock.tick(9000)
         sessionId = "sid"
+        userSessionId = "usid"
         args.sessionChangeListeners.forEach { it.onPostSessionChange() }
         assertTrue(fakeDelegate.signalHandlerInstalled)
-        assertEquals("p1_1692201610000_sid_pid_true_native_v1.json", getFilename())
+        assertEquals("p1_1692201610000_sid_pid_true_native_usid_sid_v2.json", getFilename())
     }
 
     @Test

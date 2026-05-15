@@ -5,31 +5,22 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertError
 import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.fakes.FakeActivity
-import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeSplashScreenActivity
-import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.delivery.PayloadType
-import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
-import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.toEmbracePayload
-import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.ACTIVITY_GAP
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.LIFECYCLE_EVENT_GAP
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.POST_ACTIVITY_ACTION_DWELL
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.opentelemetry.kotlin.aliases.OtelJavaSpanData
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -38,22 +29,13 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.annotation.Config
-import java.util.zip.GZIPInputStream
 
 @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
 @RunWith(AndroidJUnit4::class)
 internal class AppStartupTraceTest {
-    private lateinit var payloadStorageService: FakePayloadStorageService
-
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
-        EmbraceSetupInterface(fakeStorageLayer = true).also {
-            payloadStorageService = checkNotNull(it.fakePayloadStorageService)
-        }
-    }
-
-    private val testSerializer = TestPlatformSerializer()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
     @Test
     fun `startup spans recorded in foreground session when background activity is enabled`() {
@@ -377,7 +359,7 @@ internal class AppStartupTraceTest {
                 simulateJvmUncaughtException(RuntimeException())
             },
             assertAction = {
-                val session = payloadStorageService.getPersistedCrashedSession()
+                val session = getSingleSessionEnvelope()
                 val spans = session.findSpansOfType(EmbType.Performance.Default).associateBy { it.name }
                 with(checkNotNull(spans["emb-app-startup-cold"])) {
                     assertError(ErrorCode.FAILURE)
@@ -441,7 +423,7 @@ internal class AppStartupTraceTest {
                 simulateJvmUncaughtException(RuntimeException())
             },
             assertAction = {
-                val session = payloadStorageService.getPersistedCrashedSession()
+                val session = getSingleSessionEnvelope()
                 val spans = session.findSpansOfType(EmbType.Performance.Default).associateBy { it.name }
                 with(checkNotNull(spans["emb-app-startup-warm"])) {
                     assertError(ErrorCode.FAILURE)
@@ -495,18 +477,4 @@ internal class AppStartupTraceTest {
     private fun Map<String, OtelJavaSpanData?>.activityResumeSpan() = getSpan("emb-activity-load")
     private fun Map<String, OtelJavaSpanData?>.appReadySpan() = getSpan("emb-app-ready")
     private fun Map<String, OtelJavaSpanData?>.getSpan(name: String) = this[name] ?: error("Span missing")
-
-    private fun FakePayloadStorageService.getPersistedCrashedSession(): Envelope<SessionPartPayload> {
-        return storedPayloadMetadata()
-            .filter { it.payloadType == PayloadType.SESSION && it.complete }
-            .map { metadata ->
-                testSerializer.fromJson<Envelope<SessionPartPayload>>(
-                    GZIPInputStream(loadPayloadAsStream(metadata)),
-                    checkNotNull(SupportedEnvelopeType.SESSION.serializedType)
-                )
-            }
-            .single { envelope ->
-                envelope.getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID) != null
-            }
-    }
 }

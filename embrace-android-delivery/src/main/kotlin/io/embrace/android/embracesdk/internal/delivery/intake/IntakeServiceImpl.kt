@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.internal.delivery.intake
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
+import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRASH
+import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.SESSION
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
@@ -14,6 +16,9 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
+import java.util.concurrent.FutureTask
+import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.atomic.AtomicReference
 
 class IntakeServiceImpl(
     private val schedulingService: SchedulingService,
@@ -29,6 +34,12 @@ class IntakeServiceImpl(
     private val cachingTasks: MutableMap<SupportedEnvelopeType, Future<*>> = ConcurrentHashMap()
     private val lastCachedEntry: MutableMap<SupportedEnvelopeType, StoredTelemetryMetadata> = ConcurrentHashMap()
 
+    // State machine for crash teardown. Transitions are one-way: ACTIVE → CRASH_RECEIVED → SEALED.
+    // Once a crash-terminating payload (JVM_CRASH) is taken we stop the scheduler and
+    // worker and only accept one final SESSION payload (persisted synchronously so the crash
+    // session lands before the process dies).
+    private val state = AtomicReference(State.ACTIVE)
+
     override fun shutdown() {
         worker.shutdownAndWait(shutdownTimeoutMs)
     }
@@ -40,13 +51,27 @@ class IntakeServiceImpl(
     ): Future<*> {
         deliveryTracer?.onTake(metadata)
 
-        // allow persistence (required for session payload etc) but disallow scheduling any more HTTP requests
-        if (metadata.complete && metadata.isCrashTerminatingProcess()) {
-            schedulingService.shutdown()
-            processIntake(intake, metadata, staleEntry)
-            return worker.submit(metadata) {
-                // no-op
+        if (metadata.isCrashTerminatingProcess() && metadata.complete) {
+            if (state.compareAndSet(State.ACTIVE, State.CRASH_RECEIVED)) {
+                schedulingService.shutdown()
+                // non-blocking shutdown: reject subsequent submissions but defer the drain to
+                // payloadStore.handleCrash's later intakeService.shutdown() call
+                worker.shutdownAndWait(0)
+                processIntake(intake, metadata, staleEntry)
+                return immediateFuture()
             }
+            throw RejectedExecutionException("Rejecting as crash already accepted")
+        }
+
+        if (metadata.envelopeType == SESSION && metadata.complete &&
+            state.compareAndSet(State.CRASH_RECEIVED, State.SEALED)
+        ) {
+            processIntake(intake, metadata, staleEntry)
+            return immediateFuture()
+        }
+
+        if (state.get() != State.ACTIVE) {
+            throw RejectedExecutionException("Intake service is sealed after crash teardown")
         }
 
         val future = worker.submit(metadata) {
@@ -106,7 +131,7 @@ class IntakeServiceImpl(
 
             if (metadata.complete) {
                 deliveryTracer?.onPayloadIntake(metadata)
-                if (!metadata.isCrashTerminatingProcess()) {
+                if (state.get() == State.ACTIVE) {
                     schedulingService.onPayloadIntake()
                 }
             } else if (!cacheableEnvelopeTypes.contains(metadata.envelopeType)) {
@@ -124,10 +149,18 @@ class IntakeServiceImpl(
         }
     }
 
+    private fun immediateFuture(): Future<*> = FutureTask { }.apply { run() }
+
     private fun StoredTelemetryMetadata.isCrashTerminatingProcess(): Boolean =
         payloadType == PayloadType.JVM_CRASH || payloadType == PayloadType.REACT_NATIVE_CRASH
 
+    private enum class State {
+        ACTIVE,
+        CRASH_RECEIVED,
+        SEALED,
+    }
+
     private companion object {
-        private val cacheableEnvelopeTypes = listOf(SupportedEnvelopeType.SESSION, SupportedEnvelopeType.CRASH)
+        private val cacheableEnvelopeTypes = listOf(SESSION, CRASH)
     }
 }

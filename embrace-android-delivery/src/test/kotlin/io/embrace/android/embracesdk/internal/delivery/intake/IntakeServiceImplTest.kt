@@ -570,6 +570,74 @@ class IntakeServiceImplTest {
     }
 
     @Test
+    fun `crash teardown routes subsequent session intake through synchronous path`() {
+        // create snapshot from periodic caching
+        val snapshotMetadata = sessionMetadata.copy(
+            timestamp = clock.tick(),
+            uuid = "snapshot-uuid",
+            complete = false
+        )
+        intakeService.take(sessionEnvelope, snapshotMetadata)
+        executorService.runCurrentlyBlocked()
+        assertEquals(1, cacheStorageService.storedPayloadCount())
+
+        // submit JVM crash payload
+        val jvmCrashMetadata = StoredTelemetryMetadata(
+            timestamp = clock.tick(),
+            uuid = "crash-uuid",
+            processIdentifier = PROCESS_ID,
+            envelopeType = CRASH,
+            complete = true,
+            payloadType = PayloadType.JVM_CRASH
+        )
+        intakeService.take(logEnvelope, jvmCrashMetadata)
+
+        // submit final session payload after crash
+        val crashSessionMetadata = sessionMetadata.copy(timestamp = clock.tick(), uuid = "crash-session")
+        intakeService.take(sessionEnvelope, crashSessionMetadata)
+
+        // both crash payload and crash session are persisted synchronously, snapshot file is deleted
+        assertEquals(2, payloadStorageService.storedPayloadCount())
+        assertEquals(0, cacheStorageService.storedPayloadCount())
+
+        // subsequent session snapshot rejected
+        assertIntakeRejected(
+            sessionEnvelope,
+            sessionMetadata.copy(
+                timestamp = clock.tick(),
+                uuid = "late-snapshot",
+                complete = false
+            )
+        )
+
+        // subsequent log rejected
+        assertIntakeRejected(
+            logEnvelope,
+            StoredTelemetryMetadata(
+                timestamp = clock.tick(),
+                uuid = "log-uuid",
+                processIdentifier = PROCESS_ID,
+                envelopeType = LOG,
+                complete = true,
+                payloadType = PayloadType.LOG
+            )
+        )
+
+        // subsequent crash rejected
+        assertIntakeRejected(
+            logEnvelope,
+            StoredTelemetryMetadata(
+                timestamp = clock.tick(),
+                uuid = "crash-uuid",
+                processIdentifier = PROCESS_ID,
+                envelopeType = CRASH,
+                complete = true,
+                payloadType = PayloadType.JVM_CRASH
+            )
+        )
+    }
+
+    @Test
     fun `duplicate cache takes will result in the first future being canceled`() {
         val f1 = intakeService.take(sessionEnvelope, sessionMetadata.copy(complete = false))
         assertFalse(f1.isDone)
@@ -581,5 +649,19 @@ class IntakeServiceImplTest {
         assertEquals(1, cacheStorageService.storedPayloadCount())
         assertFalse(f2.isCancelled)
         assertTrue(f2.isDone)
+    }
+
+    private fun assertIntakeRejected(envelope: Envelope<*>, metadata: StoredTelemetryMetadata) {
+        val service = when {
+            metadata.complete -> payloadStorageService
+            else -> cacheStorageService
+        }
+        service.clearStorage()
+        try {
+            intakeService.take(envelope, metadata)
+        } catch (ignored: RejectedExecutionException) {
+            // expected: worker is shut down (the production rejection handler would log and drop)
+        }
+        assertEquals(0, service.storedPayloadCount())
     }
 }

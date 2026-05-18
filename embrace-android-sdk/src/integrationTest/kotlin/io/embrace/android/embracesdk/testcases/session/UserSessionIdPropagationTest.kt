@@ -73,9 +73,10 @@ internal class UserSessionIdPropagationTest {
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
         EmbraceSetupInterface(
             fakeStorageLayer = true,
-            workersToFake = listOf(Worker.Background.LogMessageWorker),
+            workersToFake = listOf(Worker.Background.LogMessageWorker, Worker.Background.NonIoRegWorker),
         ).apply {
             getFakedWorkerExecutor(Worker.Background.LogMessageWorker).blockingMode = false
+            getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).blockingMode = false
         }.also {
             payloadStorageService = checkNotNull(it.fakePayloadStorageService)
         }

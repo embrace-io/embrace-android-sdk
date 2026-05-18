@@ -40,15 +40,15 @@
         },
         {
           "key": "emb.state.network",
-          "value": "unverified"
+          "value": "__EMBRACE_TEST_IGNORE__"
         },
         {
           "key": "emb.state.power",
-          "value": "unknown"
+          "value": "__EMBRACE_TEST_IGNORE__"
         },
         {
           "key": "emb.state.screen-automatic",
-          "value": "android.app.Activity"
+          "value": "__EMBRACE_TEST_IGNORE__"
         },
         {
           "key": "emb.state.test",

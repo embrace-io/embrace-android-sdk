@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.testcases.features
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.internal.logs.LogExceptionType
 import io.embrace.android.embracesdk.Severity
+import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.assertions.getOtelSeverity
@@ -87,6 +88,7 @@ internal class LogFeatureTest {
                     expectedSeverityNumber = SeverityNumber.WARN,
                     expectedSeverityText = Severity.WARNING.name,
                     expectedTimeMs = logTimestamps.remove(),
+                    hasSession = false,
                 )
             }
         )
@@ -110,6 +112,7 @@ internal class LogFeatureTest {
                     expectedSeverityNumber = SeverityNumber.ERROR,
                     expectedSeverityText = Severity.ERROR.name,
                     expectedTimeMs = logTimestamps.remove(),
+                    hasSession = false,
                 )
             }
         )
@@ -138,6 +141,7 @@ internal class LogFeatureTest {
                         expectedSeverityNumber = getOtelSeverity(severity),
                         expectedSeverityText = severity.name,
                         expectedTimeMs = logTimestamps.remove(),
+                        hasSession = false,
                     )
                 }
             }
@@ -168,6 +172,7 @@ internal class LogFeatureTest {
                         expectedSeverityText = severity.name,
                         expectedTimeMs = logTimestamps.remove(),
                         expectedProperties = customProperties,
+                        hasSession = false,
                     )
                 }
             })
@@ -195,6 +200,7 @@ internal class LogFeatureTest {
                     expectedExceptionMessage = checkNotNull(testException.message),
                     expectedStacktrace = testException.getSafeStackTrace()?.toList(),
                     expectedEmbType = "sys.exception",
+                    hasSession = false,
                 )
             }
         )
@@ -222,6 +228,7 @@ internal class LogFeatureTest {
                     expectedExceptionMessage = checkNotNull(testException.message),
                     expectedStacktrace = testException.getSafeStackTrace()?.toList(),
                     expectedEmbType = "sys.exception",
+                    hasSession = false,
                 )
             }
         )
@@ -257,6 +264,7 @@ internal class LogFeatureTest {
                         expectedStacktrace = testException.getSafeStackTrace()?.toList(),
                         expectedProperties = customProperties,
                         expectedEmbType = "sys.exception",
+                        hasSession = false,
                     )
                 }
             }
@@ -292,6 +300,7 @@ internal class LogFeatureTest {
                         expectedStacktrace = testException.getSafeStackTrace()?.toList(),
                         expectedProperties = customProperties,
                         expectedEmbType = "sys.exception",
+                        hasSession = false,
                     )
                 }
             }
@@ -318,6 +327,7 @@ internal class LogFeatureTest {
                     expectedType = LogExceptionType.HANDLED.value,
                     expectedStacktrace = stacktrace.toList(),
                     expectedEmbType = "sys.exception",
+                    hasSession = false,
                 )
             }
         )
@@ -347,6 +357,7 @@ internal class LogFeatureTest {
                         expectedType = LogExceptionType.HANDLED.value,
                         expectedStacktrace = stacktrace.toList(),
                         expectedEmbType = "sys.exception",
+                        hasSession = false,
                     )
                 }
             }
@@ -378,6 +389,7 @@ internal class LogFeatureTest {
                         expectedStacktrace = stacktrace.toList(),
                         expectedProperties = customProperties,
                         expectedEmbType = "sys.exception",
+                        hasSession = false,
                     )
                 }
             }
@@ -416,6 +428,7 @@ internal class LogFeatureTest {
                         expectedStacktrace = stacktrace.toList(),
                         expectedProperties = customProperties,
                         expectedEmbType = "sys.exception",
+                        hasSession = false,
                     )
                 }
             }
@@ -433,7 +446,7 @@ internal class LogFeatureTest {
             testCaseAction = {
                 recordSession {
                     repeat(150) {
-                        embrace.addSessionProperty("session-prop$it", "val", true)
+                        embrace.addUserSessionProperty("session-prop$it", "val", PropertyScope.PERMANENT)
                     }
                     embrace.logMessage("test", Severity.INFO, props)
                 }
@@ -461,7 +474,7 @@ internal class LogFeatureTest {
             testCaseAction = {
                 recordSession {
                     repeat(maxCustomSessionProps + 1) {
-                        embrace.addSessionProperty("session-prop$it", "val", true)
+                        embrace.addUserSessionProperty("session-prop$it", "val", PropertyScope.PERMANENT)
                     }
                     embrace.logMessage("test", Severity.INFO)
                 }

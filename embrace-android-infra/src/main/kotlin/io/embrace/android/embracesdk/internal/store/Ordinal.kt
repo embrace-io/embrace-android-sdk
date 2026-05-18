@@ -36,5 +36,12 @@ enum class Ordinal(val key: String) {
      * Increments at the start of every user session. This allows us to check the % of user sessions
      * that didn't get delivered to the backend.
      */
-    USER_SESSION("io.embrace.usersessionnumber")
+    USER_SESSION("io.embrace.usersessionnumber"),
+
+    /**
+     * Monotonically increments on each session part created. Persisted across SDK install
+     * lifetime; seeded from [USER_SESSION] the first time it is read. Surfaced as
+     * `emb.session_part_number`.
+     */
+    SESSION_PART("io.embrace.sessionpartnumber")
 }

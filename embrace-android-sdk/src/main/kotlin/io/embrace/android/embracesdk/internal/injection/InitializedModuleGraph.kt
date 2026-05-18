@@ -77,6 +77,7 @@ internal class InitializedModuleGraph(
             workerThreadModule,
             { null },
             { null },
+            { userSessionOrchestrationModule.sessionOrchestrator },
         )
     }
 
@@ -93,6 +94,8 @@ internal class InitializedModuleGraph(
             essentialServiceModule,
             coreModule,
             storageService,
+            { userSessionOrchestrationModule.sessionIdProvider.getCurrentUserSessionId() },
+            { userSessionOrchestrationModule.sessionIdProvider.getActiveSessionIds() },
         )
     }
 

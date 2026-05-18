@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.FakeMainThreadHandler
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -31,6 +32,7 @@ class NativeCrashHandlerInstallerImplTest {
     private lateinit var executorService: BlockingScheduledExecutorService
     private lateinit var outputDir: File
     private var sessionId: String? = null
+    private var userSessionId: String? = null
 
     @Before
     fun setUp() {
@@ -44,6 +46,7 @@ class NativeCrashHandlerInstallerImplTest {
         fakeDelegate = FakeJniDelegate()
         fakeMainThreadHandler = FakeMainThreadHandler()
         sessionId = null
+        userSessionId = null
         outputDir = Files.createTempDirectory("test").toFile()
         executorService = BlockingScheduledExecutorService(blockingMode = false)
 
@@ -53,6 +56,13 @@ class NativeCrashHandlerInstallerImplTest {
             logger = FakeInternalLogger(false),
             backgroundWorkerSupplier = { BackgroundWorker(executorService) },
             sessionIdSupplier = { sessionId },
+            userSessionIdSupplier = { userSessionId },
+            activeSessionIdsSupplier = {
+                SessionIdsSnapshot(
+                    userSessionId = userSessionId.orEmpty(),
+                    sessionPartId = sessionId.orEmpty()
+                )
+            },
             processIdentifier = "pid"
         )
         nativeCrashHandlerInstaller = NativeCrashHandlerInstallerImpl(
@@ -70,30 +80,56 @@ class NativeCrashHandlerInstallerImplTest {
         nativeCrashHandlerInstaller.install()
 
         assertTrue(fakeDelegate.signalHandlerInstalled)
-        assertEquals("p1_1692201601000_null_pid_true_native_v1.json", getFilename())
+        assertEquals("p1_1692201601000_null_pid_true_native_null_null_v2.json", getFilename())
     }
 
     @Test
     fun `report path containing session ID`() {
         sessionId = "sid"
+        userSessionId = "usid"
         nativeCrashHandlerInstaller.install()
 
         assertTrue(fakeDelegate.signalHandlerInstalled)
-        assertEquals("p1_1692201601000_sid_pid_true_native_v1.json", getFilename())
+        assertEquals("p1_1692201601000_sid_pid_true_native_usid_sid_v2.json", getFilename())
+    }
+
+    @Test
+    fun `session IDs are forwarded to native on install`() {
+        sessionId = "sid"
+        userSessionId = "usid"
+        nativeCrashHandlerInstaller.install()
+
+        assertEquals("sid", fakeDelegate.sessionId)
+        assertEquals("usid", fakeDelegate.userSessionId)
+    }
+
+    @Test
+    fun `session IDs are updated on session change`() {
+        nativeCrashHandlerInstaller.install()
+        executorService.runCurrentlyBlocked()
+        assertEquals("null", fakeDelegate.sessionId)
+        assertEquals("null", fakeDelegate.userSessionId)
+
+        sessionId = "sid2"
+        userSessionId = "usid2"
+        args.sessionChangeListeners.forEach { it.onPostSessionChange() }
+        assertEquals("sid2", fakeDelegate.sessionId)
+        assertEquals("usid2", fakeDelegate.userSessionId)
     }
 
     @Test
     fun `report path updated on new session`() {
         nativeCrashHandlerInstaller.install()
         executorService.runCurrentlyBlocked()
-        assertEquals("p1_1692201601000_null_pid_true_native_v1.json", getFilename())
+        assertEquals("p1_1692201601000_null_pid_true_native_null_null_v2.json", getFilename())
 
         // trigger new session and update report path
         args.clock.tick(9000)
         sessionId = "sid"
+        userSessionId = "usid"
         args.sessionChangeListeners.forEach { it.onPostSessionChange() }
         assertTrue(fakeDelegate.signalHandlerInstalled)
-        assertEquals("p1_1692201610000_sid_pid_true_native_v1.json", getFilename())
+        assertEquals("p1_1692201610000_sid_pid_true_native_usid_sid_v2.json", getFilename())
     }
 
     @Test

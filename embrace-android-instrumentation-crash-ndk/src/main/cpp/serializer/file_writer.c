@@ -18,6 +18,7 @@
 // crash keys
 static const char *kReportIDKey = "report_id";
 static const char *kSessionIDKey = "sid";
+static const char *kUserSessionIDKey = "usid";
 static const char *kCrashTSKey = "ts";
 static const char *kUnwinderErrorCode = "ue";
 static const char *kExceptionNameKey = "en";
@@ -177,6 +178,7 @@ bool emb_add_basic_info_to_json(const emb_crash *crash, JSON_Object *root_object
     RETURN_ON_JSON_FAILURE(json_object_set_string(root_object, kVersionKey, kCurrentPayloadVersion));
     RETURN_ON_JSON_FAILURE(json_object_set_number(root_object, kCrashTSKey, crash->crash_ts));
     RETURN_ON_JSON_FAILURE(json_object_set_string(root_object, kSessionIDKey, crash->session_id));
+    RETURN_ON_JSON_FAILURE(json_object_set_string(root_object, kUserSessionIDKey, crash->user_session_id));
     return true;
 }
 

@@ -5,8 +5,8 @@ import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
+import io.embrace.android.embracesdk.fakes.FakeSessionIdProvider
 import io.embrace.android.embracesdk.fakes.FakeSessionPartTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
@@ -44,7 +44,6 @@ internal class PayloadFactoryBaTest {
     private lateinit var spanSink: SpanSink
     private lateinit var currentSessionPartSpan: CurrentSessionPartSpan
     private lateinit var spanService: SpanService
-    private lateinit var store: FakeOrdinalStore
     private lateinit var blockingExecutorService: BlockingScheduledExecutorService
 
     @Before
@@ -53,7 +52,6 @@ internal class PayloadFactoryBaTest {
         metadataService = FakeMetadataService()
         sessionTracker = FakeSessionPartTracker()
         activityService = FakeAppStateTracker(AppState.BACKGROUND)
-        store = FakeOrdinalStore()
         userService = FakeUserService()
         val initModule = FakeInitModule(clock = clock)
         spanRepository = initModule.openTelemetryModule.spanRepository
@@ -124,12 +122,12 @@ internal class PayloadFactoryBaTest {
         )
         val collator = PayloadMessageCollatorImpl(
             payloadSourceModule.sessionPartEnvelopeSource,
-            store,
-            currentSessionPartSpan
+            currentSessionPartSpan,
+            FakeSessionIdProvider(),
         )
         return PayloadFactoryImpl(collator, payloadSourceModule.logEnvelopeSource, configService, logger).apply {
             if (createInitialSession) {
-                startPayloadWithState(AppState.BACKGROUND, clock.now(), true)
+                startPayloadWithState(AppState.BACKGROUND, clock.now(), true, { 1 }, { 1 })
             }
         }
     }

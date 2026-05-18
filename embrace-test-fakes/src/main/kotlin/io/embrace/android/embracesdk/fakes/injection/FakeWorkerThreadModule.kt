@@ -12,20 +12,24 @@ import java.util.concurrent.atomic.AtomicReference
 class FakeWorkerThreadModule(
     fakeInitModule: FakeInitModule = FakeInitModule(),
     threadBlockageMonitoringThread: Thread? = null,
-    private val testWorker: Worker? = null,
-    private val anotherTestWorker: Worker? = null,
+    testWorkers: List<Worker.Background> = emptyList(),
     private val testPriorityWorker: Worker.Priority? = null,
     private val base: WorkerThreadModule = WorkerThreadModuleImpl(),
 ) : WorkerThreadModule by base {
 
     val executorClock: FakeClock = fakeInitModule.getFakeClock() ?: FakeClock()
-    val executor: BlockingScheduledExecutorService = BlockingScheduledExecutorService(fakeClock = executorClock)
-    val anotherExecutor: BlockingScheduledExecutorService = BlockingScheduledExecutorService(fakeClock = executorClock)
     val priorityWorkerExecutor: BlockingScheduledExecutorService =
         BlockingScheduledExecutorService(fakeClock = executorClock)
 
-    private val backgroundWorker = BackgroundWorker(executor)
-    private val anotherBackgroundWorker = BackgroundWorker(anotherExecutor)
+    private val workerExecutors: Map<Worker.Background, BlockingScheduledExecutorService> =
+        testWorkers.associateWith { BlockingScheduledExecutorService(fakeClock = executorClock) }
+    private val workers: Map<Worker.Background, BackgroundWorker> =
+        workerExecutors.mapValues { (_, exec) -> BackgroundWorker(exec) }
+
+    /** Returns the [BlockingScheduledExecutorService] for [worker]; throws if [worker] is not faked. */
+    fun executorFor(worker: Worker.Background): BlockingScheduledExecutorService =
+        checkNotNull(workerExecutors[worker]) { "Worker $worker is not faked." }
+
     private val priorityWorker = PriorityWorker<Any>(priorityWorkerExecutor)
     private val threadBlockageWatchdogThreadRef: AtomicReference<Thread> = if (threadBlockageMonitoringThread == null) {
         base.threadBlockageMonitorThread
@@ -41,13 +45,8 @@ class FakeWorkerThreadModule(
             base.priorityWorker(worker)
         }
 
-    override fun backgroundWorker(worker: Worker.Background): BackgroundWorker {
-        return when (worker) {
-            testWorker -> backgroundWorker
-            anotherTestWorker -> anotherBackgroundWorker
-            else -> base.backgroundWorker(worker)
-        }
-    }
+    override fun backgroundWorker(worker: Worker.Background): BackgroundWorker =
+        workers[worker] ?: base.backgroundWorker(worker)
 
     override val threadBlockageMonitorThread: AtomicReference<Thread> = threadBlockageWatchdogThreadRef
 }

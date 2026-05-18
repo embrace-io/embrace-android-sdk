@@ -33,11 +33,11 @@ internal class ThreadBlockageFeatureTest {
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
         EmbraceSetupInterface(
-            workerToFake = Worker.Background.ThreadBlockageWatchdogWorker,
+            workersToFake = listOf(Worker.Background.ThreadBlockageWatchdogWorker),
             threadBlockageWatchdogThread = Thread.currentThread()
         ).also {
             with(it) {
-                watchdogExecutor = getFakedWorkerExecutor()
+                watchdogExecutor = getFakedWorkerExecutor(Worker.Background.ThreadBlockageWatchdogWorker)
                 watchdogExecutor.blockingMode = true
             }
         }

@@ -62,7 +62,7 @@ internal fun createStoredNativeCrashData(
         cachedCrashEnvelopeMetadata = if (createCrashEnvelope) {
             StoredTelemetryMetadata(
                 timestamp = crashMetadata.timestamp,
-                uuid = nativeCrashData.sessionId,
+                uuid = nativeCrashData.sessionPartId,
                 processIdentifier = crashMetadata.processIdentifier,
                 complete = false,
                 envelopeType = SupportedEnvelopeType.CRASH,
@@ -75,7 +75,7 @@ internal fun createStoredNativeCrashData(
             fakeIncompleteSessionEnvelope(
                 startMs = sessionMetadata.timestamp,
                 lastHeartbeatTimeMs = sessionMetadata.timestamp + 1000L,
-                sessionId = nativeCrashData.sessionId,
+                sessionId = nativeCrashData.sessionPartId,
                 sessionProperties = mapOf("dead-session-prop" to "some-val"),
                 processIdentifier = sessionMetadata.processIdentifier,
                 resource = envelopeResource,

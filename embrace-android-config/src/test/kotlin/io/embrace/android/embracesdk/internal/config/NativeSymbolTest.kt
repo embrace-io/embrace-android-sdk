@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.config
 
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
+import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.config.FakeBase64SharedObjectFilesMap
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
@@ -83,6 +84,7 @@ class NativeSymbolTest {
             filesDir = Files.createTempDirectory("tmp").toFile(),
             logger = FakeInternalLogger(),
             hasConfiguredOtlpExport = { false },
+            uuidSource = TestUuidSource(),
         )
     }
 }

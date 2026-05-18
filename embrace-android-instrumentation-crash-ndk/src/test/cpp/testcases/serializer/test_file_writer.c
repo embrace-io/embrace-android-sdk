@@ -63,6 +63,7 @@ static emb_crash crash = {
         .unhandled = true,
         .unhandled_count = 1,
         .session_id = "dummy_session_id",
+        .user_session_id = "dummy_user_session_id",
         .report_id = "dummy_report_id",
         .crash_ts = 1234567890,
         .start_ts = 1234567800,

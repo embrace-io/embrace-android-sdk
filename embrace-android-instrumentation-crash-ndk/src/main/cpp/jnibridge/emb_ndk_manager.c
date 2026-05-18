@@ -78,9 +78,12 @@ JNIEXPORT void JNICALL
 Java_io_embrace_android_embracesdk_internal_instrumentation_crash_ndk_jni_JniDelegateImpl_onSessionChange(JNIEnv *env,
                                                                                                           jobject thiz,
                                                                                                           jstring _session_id,
+                                                                                                          jstring _user_session_id,
                                                                                                           jstring _report_path) {
     const char *session_id = (*env)->GetStringUTFChars(env, _session_id, 0);
     snprintf(__emb_env->crash.session_id, EMB_SESSION_ID_SIZE, "%s", session_id);
+    const char *user_session_id = (*env)->GetStringUTFChars(env, _user_session_id, 0);
+    snprintf(__emb_env->crash.user_session_id, EMB_SESSION_ID_SIZE, "%s", user_session_id);
     const char *report_path = (*env)->GetStringUTFChars(env, _report_path, 0);
     snprintf(__emb_env->report_path, EMB_PATH_SIZE, "%s", report_path);
 }

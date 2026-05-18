@@ -31,7 +31,7 @@ internal class InternalErrorLogTest {
             },
             testCaseAction = {
                 recordSession {
-                    logger.trackInternalError(InternalErrorType.INTERNAL_INTERFACE_FAIL, RuntimeException("Some error message"))
+                    logger.trackInternalError(InternalErrorType.InternalInterfaceFail, RuntimeException("Some error message"))
                 }
             },
             assertAction = {

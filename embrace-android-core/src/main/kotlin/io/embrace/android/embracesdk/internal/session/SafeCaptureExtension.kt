@@ -13,7 +13,7 @@ internal inline fun <R> captureDataSafely(logger: InternalLogger, result: Provid
     return try {
         result()
     } catch (exc: Throwable) {
-        logger.trackInternalError(InternalErrorType.SAFE_DATA_CAPTURE_FAIL, exc)
+        logger.trackInternalError(InternalErrorType.SafeDataCaptureFail, exc)
         null
     }
 }

@@ -155,7 +155,7 @@ internal class EmbraceImpl(
                 )
             }
         } catch (t: Throwable) {
-            logger.trackInternalError(InternalErrorType.INSTRUMENTATION_REG_FAIL, t)
+            logger.trackInternalError(InternalErrorType.InstrumentationRegFail, t)
         }
     }
 

@@ -176,7 +176,7 @@ class ConfigServiceImpl(
             val decodedSymbols: String = encodedSymbols.decodeBase64()?.utf8() ?: return null
             return serializer.fromJson(decodedSymbols, NativeSymbols::class.java)
         } catch (ex: Exception) {
-            logger.trackInternalError(InternalErrorType.INVALID_NATIVE_SYMBOLS, ex)
+            logger.trackInternalError(InternalErrorType.InvalidNativeSymbols, ex)
         }
 
         return null

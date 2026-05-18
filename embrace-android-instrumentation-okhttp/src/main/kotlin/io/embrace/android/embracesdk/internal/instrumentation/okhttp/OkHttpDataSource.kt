@@ -321,7 +321,7 @@ internal class OkHttpDataSource(
             dataCaptureErrorMessage =
                 "There were errors in capturing the following part(s) of the network call: %s$errors"
             logger.trackInternalError(
-                InternalErrorType.DATA_SOURCE_DATA_CAPTURE_FAIL,
+                InternalErrorType.DataSourceDataCaptureFail,
                 RuntimeException(
                     "Failure during the building of NetworkCaptureData. $dataCaptureErrorMessage",
                     e
@@ -361,7 +361,7 @@ internal class OkHttpDataSource(
             }
         } catch (e: IOException) {
             logger.trackInternalError(
-                InternalErrorType.DATA_SOURCE_DATA_CAPTURE_FAIL,
+                InternalErrorType.DataSourceDataCaptureFail,
                 e
             )
         }

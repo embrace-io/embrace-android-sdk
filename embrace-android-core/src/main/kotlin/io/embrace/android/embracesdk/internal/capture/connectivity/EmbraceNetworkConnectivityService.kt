@@ -30,7 +30,7 @@ internal class EmbraceNetworkConnectivityService(
                 notifyNetworkConnectivityListeners(connectivityStatus)
             }
         } catch (ex: Exception) {
-            logger.trackInternalError(InternalErrorType.NETWORK_STATUS_CAPTURE_FAIL, ex)
+            logger.trackInternalError(InternalErrorType.NetworkStatusCaptureFail, ex)
         }
     }
 
@@ -50,7 +50,7 @@ internal class EmbraceNetworkConnectivityService(
                 ConnectivityStatus.None
             }
         } catch (e: Exception) {
-            logger.trackInternalError(InternalErrorType.NETWORK_STATUS_CAPTURE_FAIL, e)
+            logger.trackInternalError(InternalErrorType.NetworkStatusCaptureFail, e)
             status = OptimisticUnknown
         }
         return status

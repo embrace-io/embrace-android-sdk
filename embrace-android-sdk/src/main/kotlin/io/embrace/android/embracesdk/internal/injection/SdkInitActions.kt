@@ -139,7 +139,7 @@ internal fun ModuleGraph.triggerPayloadSend() {
         } else {
             val payloadCount = deliveryModule?.cacheStorageService?.getUndeliveredPayloads()?.size ?: 0
             initModule.logger.trackInternalError(
-                type = InternalErrorType.PAYLOAD_RESURRECTION_FAIL,
+                type = InternalErrorType.PayloadResurrectionFail,
                 throwable = IllegalStateException(
                     "Resurrection service not found. Undelivered payloads not processed: $payloadCount"
                 )

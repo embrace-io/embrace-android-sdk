@@ -67,7 +67,7 @@ internal class SessionPartTrackerImpl(
                 try {
                     activityManager?.setProcessStateSummary(sessionId.toByteArray())
                 } catch (e: Throwable) {
-                    logger.trackInternalError(InternalErrorType.PROCESS_STATE_SUMMARY_FAIL, e)
+                    logger.trackInternalError(InternalErrorType.ProcessStateSummaryFail, e)
                 }
             }
         }

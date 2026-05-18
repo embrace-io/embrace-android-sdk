@@ -135,7 +135,7 @@ class IntakeServiceImpl(
                 }
             } else if (!cacheableEnvelopeTypes.contains(metadata.envelopeType)) {
                 logger.trackInternalError(
-                    InternalErrorType.INTAKE_UNEXPECTED_TYPE,
+                    InternalErrorType.IntakeUnexpectedType,
                     IllegalStateException("Unexpected envelope type cache attempt: ${metadata.envelopeType}"),
                 )
             }
@@ -144,7 +144,7 @@ class IntakeServiceImpl(
                 cacheStorageService.delete(it)
             }
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.INTAKE_FAIL, exc)
+            logger.trackInternalError(InternalErrorType.IntakeFail, exc)
         }
     }
 

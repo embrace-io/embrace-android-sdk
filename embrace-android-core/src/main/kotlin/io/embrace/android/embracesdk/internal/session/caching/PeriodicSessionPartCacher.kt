@@ -42,7 +42,7 @@ class PeriodicSessionPartCacher(
             try {
                 provider()
             } catch (ex: Exception) {
-                logger.trackInternalError(InternalErrorType.FG_SESSION_CACHE_FAIL, ex)
+                logger.trackInternalError(InternalErrorType.PeriodicSessionCacheFail, ex)
             }
         }
     }

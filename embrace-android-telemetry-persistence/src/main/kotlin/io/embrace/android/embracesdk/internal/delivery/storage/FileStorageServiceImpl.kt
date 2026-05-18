@@ -44,7 +44,7 @@ class FileStorageServiceImpl(
         try {
             storeImpl(metadata, action)
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, exc)
+            logger.trackInternalError(InternalErrorType.PayloadStorageFail, exc)
         }
     }
 
@@ -92,7 +92,7 @@ class FileStorageServiceImpl(
             metadata.asFile().delete()
         } catch (exc: Throwable) {
             if (exc !is FileNotFoundException) {
-                logger.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, exc)
+                logger.trackInternalError(InternalErrorType.PayloadStorageFail, exc)
             }
         } finally {
             storedFiles.remove(metadata)
@@ -103,7 +103,7 @@ class FileStorageServiceImpl(
         return try {
             metadata.asFile().inputStream().buffered()
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, exc)
+            logger.trackInternalError(InternalErrorType.PayloadStorageFail, exc)
             null
         }
     }
@@ -142,7 +142,7 @@ class FileStorageServiceImpl(
         )
             .take(removalCount)
         removals.forEach(::processDelete)
-        logger.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, RuntimeException("Pruned payload storage"))
+        logger.trackInternalError(InternalErrorType.PayloadStorageFail, RuntimeException("Pruned payload storage"))
 
         // notify the caller whether the new payload should be dropped
         val shouldNotPersist = removals.contains(newPayload)

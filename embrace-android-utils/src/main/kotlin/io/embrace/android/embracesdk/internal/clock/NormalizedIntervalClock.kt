@@ -33,7 +33,7 @@ class NormalizedIntervalClock(
         if (prev > 0L && newTime < prev - driftThresholdMs) {
             if (hasLoggedDrift.compareAndSet(false, true)) {
                 logger?.trackInternalError(
-                    InternalErrorType.INTERNAL_INTERFACE_FAIL,
+                    InternalErrorType.InternalInterfaceFail,
                     IllegalStateException(
                         "NormalizedIntervalClock drifted back in time by more than threshold. Delivery is likely out-of-order."
                     )

@@ -25,7 +25,7 @@ internal class EmbraceUncaughtExceptionHandler(
         try {
             dataSource.logUnhandledJvmThrowable(exception)
         } catch (ex: Exception) {
-            logger.trackInternalError(InternalErrorType.UNCAUGHT_EXC_HANDLER, ex)
+            logger.trackInternalError(InternalErrorType.UncaughtExceptionHandler, ex)
         } finally {
             defaultHandler?.uncaughtException(thread, exception)
         }

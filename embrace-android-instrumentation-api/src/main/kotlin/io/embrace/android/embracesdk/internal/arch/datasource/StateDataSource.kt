@@ -105,7 +105,7 @@ abstract class StateDataSource<T : Any>(
                 )
             )
         } catch (t: Throwable) {
-            logger.trackInternalError(InternalErrorType.SESSION_STATE_CREATION_FAIL, t)
+            logger.trackInternalError(InternalErrorType.SessionStateCreationFail, t)
         }
     }
 

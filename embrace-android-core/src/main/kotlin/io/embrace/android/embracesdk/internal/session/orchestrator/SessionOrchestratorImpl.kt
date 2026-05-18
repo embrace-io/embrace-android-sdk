@@ -83,7 +83,7 @@ internal class SessionOrchestratorImpl(
                 userSessionState = when {
                     stored != null && clock.now() < stored.startTimeMs -> {
                         logger.trackInternalError(
-                            InternalErrorType.CLOCK_BACKWARDS_SHIFT,
+                            InternalErrorType.ClockBackwardsShift,
                             IllegalStateException(
                                 "Clock shifted backwards from previous user session."
                             )

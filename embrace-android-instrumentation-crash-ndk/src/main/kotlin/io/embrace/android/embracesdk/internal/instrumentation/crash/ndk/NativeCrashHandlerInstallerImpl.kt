@@ -63,7 +63,7 @@ internal class NativeCrashHandlerInstallerImpl(
                 }
             }
         } catch (ex: Exception) {
-            logger.trackInternalError(InternalErrorType.NATIVE_HANDLER_INSTALL_FAIL, ex)
+            logger.trackInternalError(InternalErrorType.NativeHandlerInstallFail, ex)
         }
     }
 

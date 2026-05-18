@@ -133,7 +133,7 @@ class SchedulingServiceImpl(
                 }
             }
         } catch (t: Throwable) {
-            logger.trackInternalError(InternalErrorType.DELIVERY_SCHEDULING_FAIL, t)
+            logger.trackInternalError(InternalErrorType.DeliverySchedulingFail, t)
         }
     }
 
@@ -171,7 +171,7 @@ class SchedulingServiceImpl(
                         )
                     } ?: ExecutionResult.NotAttempted
                 } catch (t: Throwable) {
-                    logger.trackInternalError(InternalErrorType.DELIVERY_SCHEDULING_FAIL, t)
+                    logger.trackInternalError(InternalErrorType.DeliverySchedulingFail, t)
                     ExecutionResult.Incomplete(exception = t, retry = false)
                 }
             }

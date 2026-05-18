@@ -28,7 +28,7 @@ internal class SharedObjectLoaderImpl(
                 } catch (exc: UnsatisfiedLinkError) {
                     if (!loggedFailure.getAndSet(true)) {
                         logger.trackInternalError(
-                            type = InternalErrorType.NATIVE_READ_FAIL,
+                            type = InternalErrorType.NativeReadFail,
                             throwable = exc
                         )
                     }

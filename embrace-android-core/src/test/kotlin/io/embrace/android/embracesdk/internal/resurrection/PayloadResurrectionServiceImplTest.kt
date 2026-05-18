@@ -509,7 +509,7 @@ class PayloadResurrectionServiceImplTest {
         assertEquals(0, cacheStorageService.storedPayloadCount())
         assertEquals(1, logger.internalErrorMessages.size)
         assertEquals(
-            InternalErrorType.PAYLOAD_RESURRECTION_PAYLOAD_FAIL.toString(),
+            InternalErrorType.PayloadResurrectionPayloadFail.toString(),
             logger.internalErrorMessages.single().msg
         )
     }

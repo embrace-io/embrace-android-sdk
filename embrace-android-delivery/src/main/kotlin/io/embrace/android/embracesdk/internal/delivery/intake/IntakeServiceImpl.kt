@@ -17,7 +17,6 @@ import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
 import java.util.concurrent.FutureTask
-import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicReference
 
 class IntakeServiceImpl(
@@ -60,7 +59,7 @@ class IntakeServiceImpl(
                 processIntake(intake, metadata, staleEntry)
                 return immediateFuture()
             }
-            throw RejectedExecutionException("Rejecting as crash already accepted")
+            return immediateFuture()
         }
 
         if (metadata.envelopeType == SESSION && metadata.complete &&
@@ -71,7 +70,7 @@ class IntakeServiceImpl(
         }
 
         if (state.get() != State.ACTIVE) {
-            throw RejectedExecutionException("Intake service is sealed after crash teardown")
+            return immediateFuture()
         }
 
         val future = worker.submit(metadata) {

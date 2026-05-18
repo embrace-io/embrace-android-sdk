@@ -78,7 +78,7 @@ class DeliveryModuleImpl(
         )
     }
 
-    private val payloadStorageService: PayloadStorageService by singleton {
+    override val payloadStorageService: PayloadStorageService by singleton {
         payloadStorageServiceProvider?.invoke() ?: run {
             val location = StorageLocation.PAYLOAD.asFile(
                 logger = initModule.logger,

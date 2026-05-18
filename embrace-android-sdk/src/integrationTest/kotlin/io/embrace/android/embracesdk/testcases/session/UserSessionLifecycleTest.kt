@@ -382,8 +382,9 @@ internal class UserSessionLifecycleTest {
                 recordSession()
             },
             assertAction = {
-                val sessions = getSessionEnvelopes(2)
+                val sessions = getSessionEnvelopes(3)
                 assertNotEquals(sessions[0].getUserSessionId(), sessions[1].getUserSessionId())
+                assertEquals(sessions[1].getUserSessionId(), sessions[2].getUserSessionId())
                 assertEquals(MANUAL, sessions[0].getUserSessionTerminationReason())
             },
         )

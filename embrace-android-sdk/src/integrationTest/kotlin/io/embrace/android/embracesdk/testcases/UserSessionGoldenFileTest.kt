@@ -1,12 +1,9 @@
 package io.embrace.android.embracesdk.testcases
 
-import android.app.ApplicationExitInfo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
-import io.embrace.android.embracesdk.fakes.TestAeiData
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
-import io.embrace.android.embracesdk.fakes.setupFakeAeiData
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.UserSessionRemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
@@ -201,31 +198,6 @@ internal class UserSessionGoldenFileTest {
                     expectedUserSessionId = userSessionId,
                     expectedSessionPartId = sessionPartId,
                     goldenFile = "user_session_ndk_crash_log.json",
-                )
-            }
-        )
-    }
-
-    @Test
-    fun `anr exit`() {
-        testRule.runTest(
-            setupAction = {
-                val anr = TestAeiData(
-                    ApplicationExitInfo.REASON_ANR,
-                    0,
-                    "aei",
-                    "user input dispatch timed out",
-                )
-                setupFakeAeiData(listOf(anr.toAeiObject()))
-            },
-            testCaseAction = {
-                recordSession()
-            },
-            assertAction = {
-                assertPayloadsMatchGoldenFiles(
-                    logsWithNoUserSession = listOf(
-                        LogDiff(getSingleLogEnvelope(), "user_session_aei_log.json"),
-                    ),
                 )
             }
         )

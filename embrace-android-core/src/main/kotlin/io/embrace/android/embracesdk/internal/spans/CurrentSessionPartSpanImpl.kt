@@ -20,9 +20,7 @@ import io.opentelemetry.kotlin.Clock
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import io.opentelemetry.kotlin.tracing.Tracer
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
 
 internal class CurrentSessionPartSpanImpl(
     private val openTelemetryClock: Clock,
@@ -35,30 +33,35 @@ internal class CurrentSessionPartSpanImpl(
 ) : CurrentSessionPartSpan {
 
     /**
-     * Number of traces created in the current session. This value will be reset when a new session is created.
+     * Guards initialization and starting of new sessions. This is not used to fully guard the sessionState which is read during
+     * [canStartNewSpan] and [spanStopCallback] without guards to avoid creating a bottleneck.
      */
-    private val traceCount = AtomicInteger(0)
-    private val internalTraceCount = AtomicInteger(0)
-    private val initialized = AtomicBoolean(false)
+    private val sessionTransitionLock = Any()
+
+    @Volatile
+    private var initialized: Boolean = false
 
     /**
-     * The span that models the lifetime of the current session or background activity
+     * Encapsulation of the current session span (if there is one) and its trace counts.
      */
-    private val sessionSpan: AtomicReference<EmbraceSdkSpan?> = AtomicReference(null)
-    private val lastSessionSpan: AtomicReference<EmbraceSdkSpan?> = AtomicReference(null)
+    @Volatile
+    private var sessionState: SessionState? = null
+
+    @Volatile
+    private var lastSessionSpan: EmbraceSdkSpan? = null
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
-        if (!initialized.get()) {
-            synchronized(sessionSpan) {
-                if (!initialized.get()) {
-                    sessionSpan.set(startSessionSpan(sdkInitStartTimeMs))
-                    initialized.set(sessionSpan.get() != null)
+        if (!initialized) {
+            synchronized(sessionTransitionLock) {
+                if (!initialized) {
+                    sessionState = SessionState(startSessionSpan(sdkInitStartTimeMs))
+                    initialized = sessionState != null
                 }
             }
         }
     }
 
-    override fun initialized(): Boolean = initialized.get()
+    override fun initialized(): Boolean = initialized
 
     /**
      * Creating a new Span is only possible if the current session span is active, the parent has already been started, and the total
@@ -66,38 +69,31 @@ internal class CurrentSessionPartSpanImpl(
      * be counted as such towards the limits, so make sure there's no case afterwards where a Span is not created.
      */
     override fun canStartNewSpan(parent: EmbraceSpan?, internal: Boolean): Boolean {
-        // Check conditions where no span can be created
-        val currentSession = sessionSpan.get() ?: return false
-        if (!currentSession.isRecording || (parent != null && parent.spanId == null)) {
+        val state = sessionState ?: return false
+        if (!state.isReady || (parent != null && parent.spanId == null)) {
             return false
         }
 
-        // If a span can be created, always let internal spans be to be created
         return if (internal) {
-            checkTraceCount(internalTraceCount, MAX_INTERNAL_SPANS_PER_SESSION)
+            checkTraceCount(state.internalTraceCount, MAX_INTERNAL_SPANS_PER_SESSION)
         } else {
-            checkTraceCount(traceCount, MAX_NON_INTERNAL_SPANS_PER_SESSION)
+            checkTraceCount(state.traceCount, MAX_NON_INTERNAL_SPANS_PER_SESSION)
         }
     }
 
     private fun checkTraceCount(counter: AtomicInteger, limit: Int): Boolean {
         return if (counter.get() >= limit) {
-            // If we have already reached the maximum number of spans created for this session, don't allow another one
             telemetryService.trackAppliedLimit("span", AppliedLimitType.DROP)
             false
         } else {
-            synchronized(counter) {
-                counter.getAndIncrement() < limit
-            }
+            counter.getAndIncrement() < limit
         }
     }
 
-    override fun getSessionId(): String {
-        return sessionSpan.get()?.getSystemAttribute(SessionAttributes.SESSION_ID) ?: ""
-    }
+    override fun getSessionId(): String = sessionState?.sessionId ?: ""
 
     override fun spanStopCallback(spanId: String) {
-        val currentSessionPartSpan = sessionSpan.get()
+        val currentSessionPartSpan = sessionState?.span
         val spanToStop = spanRepository.getSpan(spanId)
 
         if (currentSessionPartSpan != spanToStop) {
@@ -124,10 +120,10 @@ internal class CurrentSessionPartSpanImpl(
     }
 
     override fun readySession(): Boolean {
-        if (sessionSpan.get() == null) {
-            synchronized(sessionSpan) {
-                if (sessionSpan.get() == null) {
-                    sessionSpan.set(startSessionSpan(openTelemetryClock.now().nanosToMillis()))
+        if (sessionState == null) {
+            synchronized(sessionTransitionLock) {
+                if (sessionState == null) {
+                    sessionState = SessionState(startSessionSpan(openTelemetryClock.now().nanosToMillis()))
                     return sessionSpanReady()
                 }
             }
@@ -139,8 +135,8 @@ internal class CurrentSessionPartSpanImpl(
         startNewSession: Boolean,
         appTerminationCause: AppTerminationCause?,
     ): List<EmbraceSpanData> {
-        synchronized(sessionSpan) {
-            val endingSessionSpan = sessionSpan.get()
+        synchronized(sessionTransitionLock) {
+            val endingSessionSpan = sessionState?.span
             return if (endingSessionSpan != null && endingSessionSpan.isRecording) {
                 // Right now, session spans don't survive native crashes and sudden process terminations,
                 // so telemetry will not be recorded in those cases, for now.
@@ -152,14 +148,13 @@ internal class CurrentSessionPartSpanImpl(
 
                 if (appTerminationCause == null) {
                     endingSessionSpan.stop()
-                    lastSessionSpan.set(endingSessionSpan)
+                    lastSessionSpan = endingSessionSpan
                     spanRepository.clearCompletedSpans()
-                    val newSession = if (startNewSession) {
-                        startSessionSpan(openTelemetryClock.now().nanosToMillis())
+                    sessionState = if (startNewSession) {
+                        SessionState(startSessionSpan(openTelemetryClock.now().nanosToMillis()))
                     } else {
                         null
                     }
-                    sessionSpan.set(newSession)
                 } else {
                     val crashTime = openTelemetryClock.now().nanosToMillis()
                     spanRepository.failActiveSpans(crashTime)
@@ -176,15 +171,12 @@ internal class CurrentSessionPartSpanImpl(
         }
     }
 
-    override fun current(): EmbraceSdkSpan? = sessionSpan.get()
+    override fun current(): EmbraceSdkSpan? = sessionState?.span
 
     /**
      * This method should always be used when starting a new session span
      */
     private fun startSessionSpan(startTimeMs: Long): EmbraceSdkSpan {
-        traceCount.set(0)
-        internalTraceCount.set(0)
-
         return embraceSpanFactorySupplier().create(
             OtelSpanStartArgs(
                 name = "session",
@@ -197,7 +189,7 @@ internal class CurrentSessionPartSpanImpl(
         ).apply {
             start(startTimeMs = startTimeMs)
             setSystemAttribute(SessionAttributes.SESSION_ID, Uuid.getEmbUuid())
-            val previousSessionSpan = lastSessionSpan.get()
+            val previousSessionSpan = lastSessionSpan
             previousSessionSpan?.spanContext?.let {
                 val prevSessionId = previousSessionSpan.getSystemAttribute(SessionAttributes.SESSION_ID) ?: ""
                 addSystemLink(
@@ -209,7 +201,18 @@ internal class CurrentSessionPartSpanImpl(
         }
     }
 
-    private fun sessionSpanReady() = sessionSpan.get()?.isRecording ?: false
+    private fun sessionSpanReady() = sessionState?.isReady == true
+
+    /**
+     * Encapsulates the current session span and the current trace counts for limit enforcement.
+     */
+    private class SessionState(val span: EmbraceSdkSpan) {
+        val traceCount: AtomicInteger = AtomicInteger(0)
+        val internalTraceCount: AtomicInteger = AtomicInteger(0)
+
+        val sessionId: String? get() = span.getSystemAttribute(SessionAttributes.SESSION_ID)
+        val isReady: Boolean get() = span.isRecording
+    }
 
     companion object {
         const val MAX_INTERNAL_SPANS_PER_SESSION: Int = 5000

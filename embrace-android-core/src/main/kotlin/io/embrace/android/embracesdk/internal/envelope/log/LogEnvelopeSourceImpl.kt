@@ -40,7 +40,8 @@ internal class LogEnvelopeSourceImpl(
             val envelope = cachedLogEnvelopeStore.get(
                 createNativeCrashEnvelopeMetadata(
                     sessionPartId = nativeCrash?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID),
-                    processIdentifier = nativeCrash?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER)
+                    processIdentifier = nativeCrash?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER),
+                    userSessionId = nativeCrash?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID),
                 )
             )
 

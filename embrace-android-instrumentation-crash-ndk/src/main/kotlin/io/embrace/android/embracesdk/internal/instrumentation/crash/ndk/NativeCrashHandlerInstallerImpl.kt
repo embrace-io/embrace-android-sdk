@@ -64,10 +64,11 @@ internal class NativeCrashHandlerInstallerImpl(
     private fun updateSessionIds() {
         val ids = args.activeSessionIds()
         val sessionPartId = sanitizeSessionId(ids.sessionPartId)
+        val userSessionId = sanitizeSessionId(ids.userSessionId)
         delegate.onSessionChange(
             sessionPartId,
-            sanitizeSessionId(ids.userSessionId),
-            createNativeReportPath(sessionPartId)
+            userSessionId,
+            createNativeReportPath(sessionPartId, userSessionId)
         )
     }
 
@@ -112,13 +113,15 @@ internal class NativeCrashHandlerInstallerImpl(
         }
     }
 
-    private fun createNativeReportPath(sanitizedSessionPartId: String): String {
+    private fun createNativeReportPath(sanitizedSessionPartId: String, sanitizedUserSessionId: String): String {
         val metadata = StoredTelemetryMetadata(
             timestamp = clock.now(),
             uuid = sanitizedSessionPartId,
             processIdentifier = processIdentifier,
             envelopeType = SupportedEnvelopeType.CRASH,
             payloadType = PayloadType.NATIVE_CRASH,
+            userSessionId = sanitizedUserSessionId,
+            sessionPartId = sanitizedSessionPartId,
         )
         return File(outputDir.value, metadata.filename).absolutePath
     }

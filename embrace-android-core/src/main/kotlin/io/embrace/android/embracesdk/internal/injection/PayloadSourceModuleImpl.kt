@@ -154,6 +154,7 @@ class PayloadSourceModuleImpl(
         deliveryModule ?: return@singleton null
         PayloadResurrectionServiceImpl(
             intakeService = deliveryModule.intakeService,
+            payloadStorageService = deliveryModule.payloadStorageService,
             cacheStorageService = deliveryModule.cacheStorageService,
             cachedLogEnvelopeStore = deliveryModule.cachedLogEnvelopeStore,
             logger = initModule.logger,

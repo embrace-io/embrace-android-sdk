@@ -38,6 +38,7 @@ import kotlin.math.max
 
 internal class PayloadResurrectionServiceImpl(
     private val intakeService: IntakeService,
+    private val payloadStorageService: PayloadStorageService,
     private val cacheStorageService: PayloadStorageService,
     private val cachedLogEnvelopeStore: CachedLogEnvelopeStore,
     private val logger: InternalLogger,
@@ -68,9 +69,13 @@ internal class PayloadResurrectionServiceImpl(
     private fun processTombstones(nativeCrashServiceProvider: Provider<NativeCrashService?>) {
         val nativeCrashService = nativeCrashServiceProvider()
         val undeliveredPayloads = cacheStorageService.getUndeliveredPayloads()
-        val payloadsToResurrect = undeliveredPayloads.filterNot { it.isCrashEnvelope() }
+        val nonCrashPayloads = undeliveredPayloads.filterNot { it.isCrashEnvelope() }
+        val (payloadsToResurrect, redundantPayloads) = dedupeSessionPayloads(nonCrashPayloads)
         val nativeCrashes = nativeCrashService?.getNativeCrashes()?.associateBy { it.sessionPartId } ?: emptyMap()
         val processedCrashes = mutableSetOf<NativeCrashData>()
+
+        // delete duplicate cached payloads as the surviving copy has already been stored in payloadStorageService
+        redundantPayloads.forEach { cacheStorageService.delete(it) }
 
         payloadsToResurrect.forEach { payload ->
             runCatching {
@@ -163,6 +168,63 @@ internal class PayloadResurrectionServiceImpl(
     }
 
     private fun StoredTelemetryMetadata.isCrashEnvelope() = envelopeType == SupportedEnvelopeType.CRASH
+
+    /**
+     * Splits payloads into two collections: one that should be resurrected, and another that should be
+     * discarded.
+     *
+     * Cached session payloads can be redundant either when another cached payload has the same session
+     * ID, or when the session ID is matched by a complete payload in [payloadStorageService].
+     *
+     * Non-SESSION payloads and SESSION payloads with no encoded session IDs (legacy v1 filenames)
+     * bypass the dedupe checks.
+     */
+    private fun dedupeSessionPayloads(
+        candidates: List<StoredTelemetryMetadata>,
+    ): Pair<List<StoredTelemetryMetadata>, List<StoredTelemetryMetadata>> {
+        val alreadyDeliverable: Set<SessionKey> = payloadStorageService.getPayloadsByPriority()
+            .mapNotNullTo(mutableSetOf()) { it.sessionKey() }
+
+        // For each session key in the cache, find the latest timestamp — that's the winner.
+        val latestTimestampPerKey = mutableMapOf<SessionKey, Long>()
+        candidates.forEach { meta ->
+            val key = meta.sessionKey() ?: return@forEach
+            val current = latestTimestampPerKey[key]
+            if (current == null || meta.timestamp > current) {
+                latestTimestampPerKey[key] = meta.timestamp
+            }
+        }
+
+        val deliverables = mutableListOf<StoredTelemetryMetadata>()
+        val redundant = mutableListOf<StoredTelemetryMetadata>()
+        val emittedKeys = mutableSetOf<SessionKey>()
+
+        candidates.forEach { meta ->
+            val key = meta.sessionKey()
+            when {
+                key == null -> deliverables += meta
+                key in alreadyDeliverable -> redundant += meta
+                key !in emittedKeys && meta.timestamp == latestTimestampPerKey[key] -> {
+                    deliverables += meta
+                    emittedKeys += key
+                }
+                else -> redundant += meta
+            }
+        }
+        return deliverables to redundant
+    }
+
+    private fun StoredTelemetryMetadata.sessionKey(): SessionKey? {
+        return if (envelopeType == SupportedEnvelopeType.SESSION &&
+            (userSessionId.isNotEmpty() || sessionPartId.isNotEmpty())
+        ) {
+            SessionKey(userSessionId, sessionPartId)
+        } else {
+            null
+        }
+    }
+
+    private data class SessionKey(val userSessionId: String, val sessionPartId: String)
 
     private fun StoredTelemetryMetadata.processUndeliveredPayload(
         nativeCrashService: NativeCrashService?,

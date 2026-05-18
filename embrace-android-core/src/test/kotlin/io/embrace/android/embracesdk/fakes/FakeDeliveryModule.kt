@@ -13,6 +13,7 @@ class FakeDeliveryModule(
     override val payloadStore: PayloadStore = FakePayloadStore(),
     override val intakeService: IntakeService = FakeIntakeService(),
     override val payloadCachingService: PayloadCachingService = FakePayloadCachingService(),
+    override val payloadStorageService: PayloadStorageService = FakePayloadStorageService(),
     override val cacheStorageService: PayloadStorageService = FakePayloadStorageService(),
     override val cachedLogEnvelopeStore: CachedLogEnvelopeStore = FakeCachedLogEnvelopeStore(),
     override val schedulingService: SchedulingService = FakeSchedulingService(),

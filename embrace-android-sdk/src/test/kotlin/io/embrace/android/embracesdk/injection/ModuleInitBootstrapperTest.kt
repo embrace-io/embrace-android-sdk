@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
@@ -14,7 +15,9 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.postInit
 import io.embrace.android.embracesdk.internal.injection.postLoadInstrumentation
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -94,6 +97,48 @@ internal class ModuleInitBootstrapperTest {
             moduleInitBootstrapper.init(
                 context = context,
             )
+        )
+    }
+
+    @Test
+    fun `postInit installs metadata provider before instrumentation loads`() {
+        assertTrue(moduleInitBootstrapper.init(context))
+        val eventService = moduleInitBootstrapper.openTelemetryModule.eventService
+
+        val preLogger = FakeOpenTelemetryLogger()
+        eventService.log(
+            impl = preLogger,
+            eventName = null,
+            body = "before-post-init",
+            timestamp = null,
+            observedTimestamp = null,
+            context = null,
+            severityNumber = null,
+            severityText = null,
+            addCurrentMetadata = true,
+            eventAttributes = null,
+        )
+        assertFalse(
+            preLogger.logs.single().attributes.containsKey(EmbSessionAttributes.EMB_STATE)
+        )
+
+        moduleInitBootstrapper.postInit()
+
+        val postLogger = FakeOpenTelemetryLogger()
+        eventService.log(
+            impl = postLogger,
+            eventName = null,
+            body = "after-post-init",
+            timestamp = null,
+            observedTimestamp = null,
+            context = null,
+            severityNumber = null,
+            severityText = null,
+            addCurrentMetadata = true,
+            eventAttributes = null,
+        )
+        assertTrue(
+            postLogger.logs.single().attributes.containsKey(EmbSessionAttributes.EMB_STATE)
         )
     }
 

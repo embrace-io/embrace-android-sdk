@@ -18,10 +18,14 @@ class PeriodicSessionPartCacher(
 
     private var scheduledFuture: ScheduledFuture<*>? = null
 
+    @Volatile
+    private var stopped = false
+
     /**
      * It starts a background job that will schedule a callback to do periodic caching.
      */
     fun start(provider: Provider<Envelope<SessionPartPayload>?>) {
+        stopped = false
         scheduledFuture = this.worker.scheduleWithFixedDelay(
             onPeriodicCache(provider),
             0,
@@ -31,6 +35,9 @@ class PeriodicSessionPartCacher(
     }
 
     private fun onPeriodicCache(provider: Provider<Envelope<SessionPartPayload>?>) = Runnable {
+        if (stopped) {
+            return@Runnable
+        }
         EmbTrace.trace("snapshot-session") {
             try {
                 provider()
@@ -41,7 +48,8 @@ class PeriodicSessionPartCacher(
     }
 
     fun stop() {
-        scheduledFuture?.cancel(false)
+        stopped = true
+        scheduledFuture?.cancel(true)
     }
 
     fun shutdownAndWait() {

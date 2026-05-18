@@ -56,7 +56,7 @@ val fakeCrashStoredTelemetryMetadata = StoredTelemetryMetadata(
     processIdentifier = "8115ec91-3e5e-4d8a-816d-cc40306f9822",
     envelopeType = SupportedEnvelopeType.CRASH,
     complete = true,
-    payloadType = PayloadType.CRASH,
+    payloadType = PayloadType.JVM_CRASH,
 )
 
 val fakeNativeCrashStoredTelemetryMetadata = StoredTelemetryMetadata(

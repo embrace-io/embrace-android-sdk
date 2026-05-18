@@ -1,0 +1,104 @@
+{
+  "logs": [
+    {
+      "time_unix_nano": "__EMBRACE_TEST_IGNORE__",
+      "severity_number": 9,
+      "severity_text": "INFO",
+      "body": "user input dispatch timed out",
+      "attributes": [
+        {
+          "key": "aei_session_part_id",
+          "value": "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d"
+        },
+        {
+          "key": "aei_user_session_id",
+          "value": "2f003c4d5e6f7a8b9c0d1e2f3a4b5c6d"
+        },
+        {
+          "key": "description",
+          "value": "aei"
+        },
+        {
+          "key": "emb.android.aei_crash_number",
+          "value": "null"
+        },
+        {
+          "key": "emb.android.crash_number",
+          "value": "null"
+        },
+        {
+          "key": "emb.private.send_mode",
+          "value": "IMMEDIATE"
+        },
+        {
+          "key": "emb.session_part_id",
+          "value": ""
+        },
+        {
+          "key": "emb.state",
+          "value": "__EMBRACE_TEST_IGNORE__"
+        },
+        {
+          "key": "emb.state.network",
+          "value": "unverified"
+        },
+        {
+          "key": "emb.state.power",
+          "value": "unknown"
+        },
+        {
+          "key": "emb.state.screen-automatic",
+          "value": "Initializing"
+        },
+        {
+          "key": "emb.state.test",
+          "value": "__EMBRACE_TEST_IGNORE__"
+        },
+        {
+          "key": "emb.type",
+          "value": "sys.exit"
+        },
+        {
+          "key": "emb.user_session_id",
+          "value": ""
+        },
+        {
+          "key": "exit_status",
+          "value": "0"
+        },
+        {
+          "key": "log.record.uid",
+          "value": "__EMBRACE_TEST_IGNORE__"
+        },
+        {
+          "key": "process_importance",
+          "value": "100"
+        },
+        {
+          "key": "pss",
+          "value": "1509123409"
+        },
+        {
+          "key": "reason",
+          "value": "6"
+        },
+        {
+          "key": "rss",
+          "value": "1123409"
+        },
+        {
+          "key": "session.id",
+          "value": ""
+        },
+        {
+          "key": "session_id_error",
+          "value": ""
+        },
+        {
+          "key": "timestamp",
+          "value": "15000000000"
+        }
+      ]
+    }
+  ]
+}

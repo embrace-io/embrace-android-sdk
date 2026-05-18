@@ -3,14 +3,21 @@ package io.embrace.android.embracesdk.testcases
 import android.app.ApplicationExitInfo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Severity
+import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.TestAeiData
+import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.setupFakeAeiData
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.UserSessionRemoteConfig
+import io.embrace.android.embracesdk.internal.delivery.PayloadType
+import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
+import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.LogDiff
 import io.embrace.android.embracesdk.testframework.assertions.SessionPartDiff
 import io.embrace.android.embracesdk.testframework.assertions.UserSessionDiff
@@ -19,6 +26,7 @@ import io.embrace.android.embracesdk.testframework.assertions.assertPayloadsMatc
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.zip.GZIPInputStream
 
 /**
  * Verifies that the session span and log payload emitted by the SDK for basic scenarios match
@@ -27,9 +35,16 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 internal class UserSessionGoldenFileTest {
 
+    private lateinit var payloadStorageService: FakePayloadStorageService
+    private val testSerializer = TestPlatformSerializer()
+
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+        EmbraceSetupInterface(fakeStorageLayer = true).also {
+            payloadStorageService = checkNotNull(it.fakePayloadStorageService)
+        }
+    }
 
     /**
      * Asserts that sessions and logs can be associated via user session IDs.
@@ -77,6 +92,9 @@ internal class UserSessionGoldenFileTest {
 
     /**
      * Asserts that sessions and JVM crashes can be associated via user session IDs.
+     *
+     * Crash teardown shuts down the delivery scheduler, so the session and crash payloads are
+     * persisted but not delivered to the API. We read them directly from storage instead.
      */
     @Test
     fun `JVM crash association`() {
@@ -90,13 +108,28 @@ internal class UserSessionGoldenFileTest {
                 assertPayloadsMatchGoldenFiles(
                     UserSessionDiff(
                         SessionPartDiff(
-                            envelope = getSingleSessionEnvelope(),
+                            envelope = payloadStorageService.getPersistedCrashedSession(),
                             goldenFile = "user_session_jvm_crash_span.json",
-                            logs = listOf(LogDiff(getSingleLogEnvelope(), "user_session_jvm_crash_log.json")),
+                            logs = listOf(
+                                LogDiff(
+                                    payloadStorageService.getPersistedCrashLog(),
+                                    "user_session_jvm_crash_log.json",
+                                ),
+                            ),
                         ),
                     ),
                 )
             }
+        )
+    }
+
+    private fun FakePayloadStorageService.getPersistedCrashedSession(): Envelope<SessionPartPayload> {
+        val metadata = storedPayloadMetadata().single {
+            it.payloadType == PayloadType.SESSION && it.complete
+        }
+        return testSerializer.fromJson(
+            GZIPInputStream(loadPayloadAsStream(metadata)),
+            checkNotNull(SupportedEnvelopeType.SESSION.serializedType),
         )
     }
 

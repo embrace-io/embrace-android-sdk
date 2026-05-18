@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.assertions.getLogsOfType
 import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.assertions.toMap
+import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.TestAeiData
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -65,6 +66,8 @@ import java.util.concurrent.TimeUnit
 @RunWith(AndroidJUnit4::class)
 internal class UserSessionIdPropagationTest {
 
+    private lateinit var payloadStorageService: FakePayloadStorageService
+
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
@@ -73,6 +76,8 @@ internal class UserSessionIdPropagationTest {
             workersToFake = listOf(Worker.Background.LogMessageWorker),
         ).apply {
             getFakedWorkerExecutor(Worker.Background.LogMessageWorker).blockingMode = false
+        }.also {
+            payloadStorageService = checkNotNull(it.fakePayloadStorageService)
         }
     }
 
@@ -190,7 +195,8 @@ internal class UserSessionIdPropagationTest {
                 recordSession { simulateJvmUncaughtException(RuntimeException("test crash")) }
             },
             assertAction = {
-                getSingleLogEnvelope().getLastLog().assertSessionIds()
+                // crash teardown shuts down delivery, so read the persisted envelope directly
+                payloadStorageService.getPersistedCrashLog().getLastLog().assertSessionIds()
             },
             otelExportAssertion = {
                 val log = awaitLogs(1) { it.attributes.toStringMap().containsKey(EmbType.System.Crash.key) }.single()

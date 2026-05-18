@@ -54,13 +54,13 @@ internal class PayloadResurrectionServiceImpl(
         runCatching {
             processTombstones(nativeCrashServiceProvider)
         }.onFailure {
-            logger.trackInternalError(InternalErrorType.PAYLOAD_RESURRECTION_FAIL, it)
+            logger.trackInternalError(InternalErrorType.PayloadResurrectionFail, it)
         }
         completionListeners.forEach { listener ->
             runCatching {
                 listener()
             }.onFailure {
-                logger.trackInternalError(InternalErrorType.PAYLOAD_RESURRECTION_FAIL, it)
+                logger.trackInternalError(InternalErrorType.PayloadResurrectionFail, it)
             }
         }
     }
@@ -81,7 +81,7 @@ internal class PayloadResurrectionServiceImpl(
                 )
             }.onFailure {
                 logger.trackInternalError(
-                    type = InternalErrorType.PAYLOAD_RESURRECTION_PAYLOAD_FAIL,
+                    type = InternalErrorType.PayloadResurrectionPayloadFail,
                     throwable = it
                 )
             }
@@ -133,7 +133,7 @@ internal class PayloadResurrectionServiceImpl(
                         )
                     } else {
                         logger.trackInternalError(
-                            type = InternalErrorType.NATIVE_CRASH_RESURRECTION_ERROR,
+                            type = InternalErrorType.NativeCrashResurrectionError,
                             throwable = IllegalStateException("Cached native crash envelope data not found")
                         )
                     }
@@ -147,7 +147,7 @@ internal class PayloadResurrectionServiceImpl(
                 }
                 if (sessionlessNativeCrashes.size > 1) {
                     logger.trackInternalError(
-                        type = InternalErrorType.NATIVE_CRASH_RESURRECTION_ERROR,
+                        type = InternalErrorType.NativeCrashResurrectionError,
                         throwable = IllegalStateException("Multiple sessionless native crashes found.")
                     )
                 }
@@ -228,7 +228,7 @@ internal class PayloadResurrectionServiceImpl(
             try {
                 task.get(5, TimeUnit.SECONDS)
             } catch (e: TimeoutException) {
-                logger.trackInternalError(InternalErrorType.INTAKE_FAIL, e)
+                logger.trackInternalError(InternalErrorType.IntakeFail, e)
             }
         }
     }

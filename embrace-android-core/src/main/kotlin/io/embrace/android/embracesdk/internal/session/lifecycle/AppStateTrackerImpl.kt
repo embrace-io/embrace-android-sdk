@@ -103,7 +103,7 @@ internal class AppStateTrackerImpl(
         try {
             action()
         } catch (ex: Exception) {
-            logger.trackInternalError(InternalErrorType.APP_STATE_CALLBACK_FAIL, ex)
+            logger.trackInternalError(InternalErrorType.AppStateCallbackFail, ex)
         }
     }
 

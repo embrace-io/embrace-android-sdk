@@ -31,7 +31,7 @@ internal class InternalErrorDataSourceImplTest {
 
     @Test
     fun `handle throwable with no message`() {
-        dataSource.trackInternalError(InternalErrorType.DELIVERY_SCHEDULING_FAIL, IllegalStateException())
+        dataSource.trackInternalError(InternalErrorType.DeliverySchedulingFail, IllegalStateException())
         val data = args.destination.logEvents.single()
         val attrs = assertInternalErrorLogged(data)
         assertEquals("java.lang.IllegalStateException", attrs[ExceptionAttributes.EXCEPTION_TYPE])
@@ -41,7 +41,7 @@ internal class InternalErrorDataSourceImplTest {
 
     @Test
     fun `handle throwable with message`() {
-        dataSource.trackInternalError(InternalErrorType.DELIVERY_SCHEDULING_FAIL, IllegalArgumentException("Whoops!"))
+        dataSource.trackInternalError(InternalErrorType.DeliverySchedulingFail, IllegalArgumentException("Whoops!"))
         val data = args.destination.logEvents.single()
         val attrs = assertInternalErrorLogged(data)
         assertEquals("java.lang.IllegalArgumentException", attrs[ExceptionAttributes.EXCEPTION_TYPE])
@@ -52,7 +52,7 @@ internal class InternalErrorDataSourceImplTest {
     @Test
     fun `limit not exceeded`() {
         repeat(15) {
-            dataSource.trackInternalError(InternalErrorType.DELIVERY_SCHEDULING_FAIL, IllegalStateException())
+            dataSource.trackInternalError(InternalErrorType.DeliverySchedulingFail, IllegalStateException())
         }
         assertEquals(10, args.destination.logEvents.size)
     }

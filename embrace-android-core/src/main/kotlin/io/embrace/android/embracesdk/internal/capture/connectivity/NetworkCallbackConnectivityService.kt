@@ -118,6 +118,6 @@ internal class NetworkCallbackConnectivityService(
         runCatching {
             action()
         }.onFailure {
-            logger.trackInternalError(InternalErrorType.CONNECTIVITY_UPDATE_FAILURE, it)
+            logger.trackInternalError(InternalErrorType.ConnectivityUpdateFailure, it)
         }
 }

@@ -118,12 +118,12 @@ class HucLiteDataSource(
 
             factoryInstaller(newFactory ?: instrumentedUrlStreamHandlerFactoryProvider())
         }.onFailure {
-            logger.trackInternalError(InternalErrorType.URL_STREAM_HANDLER_FACTORY_INSTALL_FAIL, it)
+            logger.trackInternalError(InternalErrorType.UrlStreamHandlerFactoryInstallFail, it)
         }
     }
 
     private fun errorHandler(t: Throwable) {
-        logger.trackInternalError(InternalErrorType.DATA_SOURCE_DATA_CAPTURE_FAIL, InstrumentationException(t))
+        logger.trackInternalError(InternalErrorType.DataSourceDataCaptureFail, InstrumentationException(t))
     }
 
     class RequestData(

@@ -63,7 +63,7 @@ internal class EmbraceUserService(
         return try {
             getStoredUserInfo()
         } catch (ex: Exception) {
-            logger.trackInternalError(InternalErrorType.USER_LOAD_FAIL, ex)
+            logger.trackInternalError(InternalErrorType.UserLoadFail, ex)
             null
         }
     }

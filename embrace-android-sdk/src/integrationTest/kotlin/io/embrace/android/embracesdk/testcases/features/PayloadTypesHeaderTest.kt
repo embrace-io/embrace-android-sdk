@@ -61,7 +61,7 @@ internal class PayloadTypesHeaderTest {
             },
             testCaseAction = {
                 embrace.logInfo("some message")
-                logger.trackInternalError(InternalErrorType.INTERNAL_INTERFACE_FAIL, RuntimeException("some internal error"))
+                logger.trackInternalError(InternalErrorType.InternalInterfaceFail, RuntimeException("some internal error"))
                 embrace.logWarning("uh oh!")
                 clock.tick(2000L)
             },
@@ -97,7 +97,7 @@ internal class PayloadTypesHeaderTest {
             },
             testCaseAction = {
                 embrace.logInfo("log message")
-                logger.trackInternalError(InternalErrorType.INTERNAL_INTERFACE_FAIL, RuntimeException("some internal error"))
+                logger.trackInternalError(InternalErrorType.InternalInterfaceFail, RuntimeException("some internal error"))
                 embrace.logMessage(
                     "Flutter error occurred",
                     Severity.ERROR,
@@ -146,7 +146,7 @@ internal class PayloadTypesHeaderTest {
             },
             testCaseAction = {
                 embrace.logInfo("log message")
-                logger.trackInternalError(InternalErrorType.INTERNAL_INTERFACE_FAIL, RuntimeException("some internal error"))
+                logger.trackInternalError(InternalErrorType.InternalInterfaceFail, RuntimeException("some internal error"))
                 EmbraceInternalApi.unityInternalInterface.logUnhandledUnityException(
                     "UnityException",
                     "Unity error occurred",

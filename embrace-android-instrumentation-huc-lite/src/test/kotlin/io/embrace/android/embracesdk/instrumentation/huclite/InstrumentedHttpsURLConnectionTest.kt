@@ -425,7 +425,7 @@ internal class InstrumentedHttpsURLConnectionTest {
         every { mockWrappedConnection.url } throws FakeIOException()
         instrumentedConnection.responseCode
         assertNoRequestRecorded()
-        assertEquals(InternalErrorType.DATA_SOURCE_DATA_CAPTURE_FAIL.name, getInternalErrors().single().msg)
+        assertEquals(InternalErrorType.DataSourceDataCaptureFail.toString(), getInternalErrors().single().msg)
     }
 
     @Test

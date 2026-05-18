@@ -1,40 +1,47 @@
 package io.embrace.android.embracesdk.internal.logging
 
+import io.embrace.android.embracesdk.internal.logging.InternalLogger.Severity
+import io.embrace.android.embracesdk.internal.logging.InternalLogger.Severity.ERROR
+
 /**
  * Represents a type of internal error that can be recorded for the Embrace SDK's telemetry.
  */
-enum class InternalErrorType {
-    UNCAUGHT_EXC_HANDLER,
-    ENABLE_DATA_CAPTURE,
-    NETWORK_STATUS_CAPTURE_FAIL,
-    SCREEN_RES_CAPTURE_FAIL,
-    FG_SESSION_CACHE_FAIL,
-    APP_STATE_CALLBACK_FAIL,
-    THREAD_BLOCKAGE_HEARTBEAT_CHECK_FAIL,
-    DATA_SOURCE_DATA_CAPTURE_FAIL,
-    USER_LOAD_FAIL,
-    NATIVE_CRASH_LOAD_FAIL,
-    NATIVE_CRASH_RESURRECTION_ERROR,
-    INVALID_NATIVE_SYMBOLS,
-    NATIVE_HANDLER_INSTALL_FAIL,
-    SAFE_DATA_CAPTURE_FAIL,
-    PROCESS_STATE_SUMMARY_FAIL,
-    DELIVERY_SCHEDULING_FAIL,
-    PAYLOAD_DELIVERY_FAIL,
-    PAYLOAD_RESURRECTION_FAIL,
-    PAYLOAD_RESURRECTION_PAYLOAD_FAIL,
-    INTAKE_FAIL,
-    INTAKE_UNEXPECTED_TYPE,
-    PAYLOAD_STORAGE_FAIL,
-    INTERNAL_INTERFACE_FAIL,
-    NATIVE_READ_FAIL,
-    APP_LAUNCH_TRACE_FAIL,
-    UI_CALLBACK_FAIL,
-    INSTRUMENTATION_REG_FAIL,
-    URL_STREAM_HANDLER_FACTORY_INSTALL_FAIL,
-    SESSION_STATE_CREATION_FAIL,
-    CONNECTIVITY_UPDATE_FAILURE,
-    CLOCK_BACKWARDS_SHIFT,
-    USER_SESSION_CALLBACK_FAIL,
-    NAV_CONTROLLER_TRACKING_FAIL,
+sealed class InternalErrorType(private val severity: Severity) {
+
+    fun shouldCapture(): Boolean = severity >= ERROR
+
+    override fun toString(): String = javaClass.simpleName
+
+    object UncaughtExceptionHandler : InternalErrorType(ERROR)
+    object ProcessAeiRecords : InternalErrorType(ERROR)
+    object NetworkStatusCaptureFail : InternalErrorType(ERROR)
+    object ScreenResCaptureFail : InternalErrorType(ERROR)
+    object PeriodicSessionCacheFail : InternalErrorType(ERROR)
+    object AppStateCallbackFail : InternalErrorType(ERROR)
+    object ThreadBlockageHeartbeatCheckFail : InternalErrorType(ERROR)
+    object DataSourceDataCaptureFail : InternalErrorType(ERROR)
+    object UserLoadFail : InternalErrorType(ERROR)
+    object NativeCrashLoadFail : InternalErrorType(ERROR)
+    object NativeCrashResurrectionError : InternalErrorType(ERROR)
+    object InvalidNativeSymbols : InternalErrorType(ERROR)
+    object NativeHandlerInstallFail : InternalErrorType(ERROR)
+    object SafeDataCaptureFail : InternalErrorType(ERROR)
+    object ProcessStateSummaryFail : InternalErrorType(ERROR)
+    object DeliverySchedulingFail : InternalErrorType(ERROR)
+    object PayloadDeliveryFail : InternalErrorType(ERROR)
+    object PayloadResurrectionFail : InternalErrorType(ERROR)
+    object PayloadResurrectionPayloadFail : InternalErrorType(ERROR)
+    object IntakeFail : InternalErrorType(ERROR)
+    object IntakeUnexpectedType : InternalErrorType(ERROR)
+    object PayloadStorageFail : InternalErrorType(ERROR)
+    object InternalInterfaceFail : InternalErrorType(ERROR)
+    object NativeReadFail : InternalErrorType(ERROR)
+    object AppLaunchTraceFail : InternalErrorType(ERROR)
+    object UiCallbackFail : InternalErrorType(ERROR)
+    object InstrumentationRegFail : InternalErrorType(ERROR)
+    object UrlStreamHandlerFactoryInstallFail : InternalErrorType(ERROR)
+    object SessionStateCreationFail : InternalErrorType(ERROR)
+    object ConnectivityUpdateFailure : InternalErrorType(ERROR)
+    object ClockBackwardsShift : InternalErrorType(ERROR)
+    object NavControllerTrackingFail : InternalErrorType(ERROR)
 }

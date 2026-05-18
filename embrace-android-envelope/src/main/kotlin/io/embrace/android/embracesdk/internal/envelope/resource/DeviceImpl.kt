@@ -68,7 +68,7 @@ class DeviceImpl(
                 displayMetrics.heightPixels
             )
         } catch (ex: Exception) {
-            logger.trackInternalError(InternalErrorType.SCREEN_RES_CAPTURE_FAIL, ex)
+            logger.trackInternalError(InternalErrorType.ScreenResCaptureFail, ex)
             ""
         }
     }

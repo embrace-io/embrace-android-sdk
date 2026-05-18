@@ -20,6 +20,9 @@ internal class InternalErrorDataSourceImpl(
     ) {
 
     override fun trackInternalError(type: InternalErrorType, throwable: Throwable) {
+        if (!type.shouldCapture()) {
+            return
+        }
         captureTelemetry {
             val schemaType = SchemaType.InternalError(throwable)
             addLog(schemaType, LogSeverity.ERROR, "", true)

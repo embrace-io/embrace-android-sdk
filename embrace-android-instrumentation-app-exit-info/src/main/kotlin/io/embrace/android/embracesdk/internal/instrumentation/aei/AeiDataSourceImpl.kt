@@ -41,7 +41,7 @@ internal class AeiDataSourceImpl(
             try {
                 processAeiRecords()
             } catch (exc: Throwable) {
-                logger.trackInternalError(InternalErrorType.ENABLE_DATA_CAPTURE, exc)
+                logger.trackInternalError(InternalErrorType.ProcessAeiRecords, exc)
             }
         }
     }

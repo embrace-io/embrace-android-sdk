@@ -15,7 +15,7 @@ fun StorageLocation.asFile(
     try {
         File(rootDirSupplier(), dir).apply(File::mkdirs)
     } catch (exc: Throwable) {
-        logger?.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, exc)
+        logger?.trackInternalError(InternalErrorType.PayloadStorageFail, exc)
         File(fallbackDirSupplier(), dir).apply(File::mkdirs)
     }
 }

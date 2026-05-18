@@ -6,7 +6,7 @@ enum class PayloadType(
 ) {
     SESSION("ux.session", "session"),
     LOG("sys.log", "log"),
-    JVM_CRASH("sys.android.crash", "crash"),
+    CRASH("sys.android.crash", "crash"),
     NATIVE_CRASH("sys.android.native_crash", "native"),
     REACT_NATIVE_CRASH("sys.android.react_native_crash", "react"),
     FLUTTER_EXCEPTION("sys.flutter_exception", "flutter"),

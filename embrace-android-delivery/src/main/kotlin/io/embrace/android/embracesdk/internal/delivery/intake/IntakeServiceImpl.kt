@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.delivery.intake
 
-import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
@@ -39,16 +38,6 @@ class IntakeServiceImpl(
         staleEntry: StoredTelemetryMetadata?,
     ): Future<*> {
         deliveryTracer?.onTake(metadata)
-
-        // allow persistence (required for session payload etc) but disallow scheduling any more HTTP requests
-        if (metadata.complete && metadata.isCrashTerminatingProcess()) {
-            schedulingService.shutdown()
-            processIntake(intake, metadata, staleEntry)
-            return worker.submit(metadata) {
-                // no-op
-            }
-        }
-
         val future = worker.submit(metadata) {
             processIntake(
                 intake = intake,
@@ -106,9 +95,7 @@ class IntakeServiceImpl(
 
             if (metadata.complete) {
                 deliveryTracer?.onPayloadIntake(metadata)
-                if (!metadata.isCrashTerminatingProcess()) {
-                    schedulingService.onPayloadIntake()
-                }
+                schedulingService.onPayloadIntake()
             } else if (!cacheableEnvelopeTypes.contains(metadata.envelopeType)) {
                 logger.trackInternalError(
                     InternalErrorType.INTAKE_UNEXPECTED_TYPE,
@@ -123,9 +110,6 @@ class IntakeServiceImpl(
             logger.trackInternalError(InternalErrorType.INTAKE_FAIL, exc)
         }
     }
-
-    private fun StoredTelemetryMetadata.isCrashTerminatingProcess(): Boolean =
-        payloadType == PayloadType.JVM_CRASH || payloadType == PayloadType.REACT_NATIVE_CRASH
 
     private companion object {
         private val cacheableEnvelopeTypes = listOf(SupportedEnvelopeType.SESSION, SupportedEnvelopeType.CRASH)

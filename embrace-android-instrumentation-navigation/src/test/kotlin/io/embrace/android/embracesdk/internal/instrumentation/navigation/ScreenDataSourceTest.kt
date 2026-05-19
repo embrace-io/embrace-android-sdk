@@ -4,7 +4,6 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -26,7 +25,6 @@ internal class ScreenDataSourceTest {
 
     @Test
     fun `data source not initialized by default`() {
-        assertFalse(dataSource.isEnabled())
         assertTrue(args.destination.createdStateTokens.isEmpty())
         assertEquals("Uninitialized", dataSource.getCurrentStateValue())
     }
@@ -36,7 +34,7 @@ internal class ScreenDataSourceTest {
         val firstTime = args.clock.tick()
         dataSource.onScreenLoaded("home")
         assertEquals("home", dataSource.getCurrentStateValue())
-        assertTrue(dataSource.isEnabled())
+        assertTrue(args.destination.createdStateTokens.isNotEmpty())
 
         val secondTime = args.clock.tick()
         dataSource.onScreenLoaded("settings")

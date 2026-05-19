@@ -19,7 +19,7 @@ class ScreenDataSource(
     maxTransitions = MAX_SCREEN_STATE_TRANSITIONS,
 ) {
 
-    override val enableOnCreate: Boolean = false
+    override val captureStateOnCreation: Boolean = false
 
     private val lastScreen = AtomicReference<String?>(null)
 

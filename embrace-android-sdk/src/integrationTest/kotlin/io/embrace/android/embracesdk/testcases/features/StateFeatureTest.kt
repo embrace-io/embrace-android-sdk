@@ -10,11 +10,9 @@ import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
-import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttributeValue
@@ -25,6 +23,7 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.LIFECYCLE_EVENT_GAP
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -48,6 +47,9 @@ internal class StateFeatureTest {
             },
             assertAction = {
                 assertTrue(getSingleSessionEnvelope().findSpansOfType(EmbType.State).isNotEmpty())
+            },
+            otelExportAssertion = {
+                assertNotNull(awaitSpansWithType(4, EmbType.State).single { it.name == "emb-state-test" })
             }
         )
     }
@@ -100,7 +102,6 @@ internal class StateFeatureTest {
                 val sessions = listOf(background.first(), foreground.first(), background.last())
                 repeat(sessions.size) { i ->
                     val stateSpan = checkNotNull(sessions[i].getStateSpan("emb-state-test"))
-                    assertTrue(checkNotNull(stateSpan.attributes).hasEmbraceAttribute(PrivateSpan))
                     with(checkNotNull(stateSpan.events)) {
                         repeat(size) { j ->
                             val event = transitions[i][j]

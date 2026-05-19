@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.okhttp3.EmbraceCustomPathException
 import okhttp3.Call
 import okhttp3.Interceptor
+import okhttp3.OkHttp
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody
@@ -117,6 +118,8 @@ internal class OkHttpDataSource(
                     errorType = cause?.javaClass?.canonicalName ?: UNKNOWN_EXCEPTION,
                     errorMessage = cause?.message ?: UNKNOWN_MESSAGE,
                     traceId = request.header(CUSTOM_TRACE_ID_HEADER_NAME),
+                    userAgentName = OKHTTP_USER_AGENT_NAME,
+                    userAgentVersion = OkHttp.VERSION,
                 )
             )
         } finally {
@@ -224,6 +227,8 @@ internal class OkHttpDataSource(
         bytesReceived = contentLength,
         statusCode = response.code,
         traceId = request.header(CUSTOM_TRACE_ID_HEADER_NAME),
+        userAgentName = OKHTTP_USER_AGENT_NAME,
+        userAgentVersion = OkHttp.VERSION,
     )
 
     private fun ResponseBody.decompressResponseBody(
@@ -383,6 +388,7 @@ internal class OkHttpDataSource(
         private const val UNKNOWN_MESSAGE =
             "An error occurred during the execution of this network request"
         private const val ENCODING_GZIP = "gzip"
+        private const val OKHTTP_USER_AGENT_NAME = "okhttp"
         private const val CONTENT_LENGTH_HEADER_NAME = "Content-Length"
         private const val CONTENT_ENCODING_HEADER_NAME = "Content-Encoding"
         private const val CONTENT_TYPE_HEADER_NAME = "Content-Type"

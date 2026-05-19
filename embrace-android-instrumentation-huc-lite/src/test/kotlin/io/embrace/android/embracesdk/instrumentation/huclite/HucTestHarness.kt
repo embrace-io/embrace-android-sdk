@@ -14,6 +14,7 @@ import io.mockk.mockk
 import io.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.HttpAttributes
+import io.opentelemetry.kotlin.semconv.UserAgentAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -109,6 +110,8 @@ internal class HucTestHarness {
         assertEquals(expectedMethod, attributes[HttpAttributes.HTTP_REQUEST_METHOD])
         assertEquals(expectedStartTime, startTimeMs)
         assertEquals(expectedEndTime, endTimeMs)
+        assertEquals("HttpURLConnection", attributes[UserAgentAttributes.USER_AGENT_NAME])
+        assertFalse(attributes[UserAgentAttributes.USER_AGENT_VERSION].isNullOrEmpty())
 
         assertFalse(attributes.containsKey(ErrorAttributes.ERROR_TYPE))
         assertFalse(attributes.containsKey(ExceptionAttributes.EXCEPTION_MESSAGE))
@@ -130,6 +133,8 @@ internal class HucTestHarness {
         assertEquals(expectedStartTime, startTimeMs)
         assertEquals(expectedEndTime, endTimeMs)
         assertEquals(ErrorCodeAttribute.Failure, errorCode)
+        assertEquals("HttpURLConnection", attributes[UserAgentAttributes.USER_AGENT_NAME])
+        assertFalse(attributes[UserAgentAttributes.USER_AGENT_VERSION].isNullOrEmpty())
     }
 }
 

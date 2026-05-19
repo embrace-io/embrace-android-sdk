@@ -49,7 +49,7 @@ internal class NetworkRequestDataSourceTest {
                 startTime = 600L,
                 endTime = 650L,
                 errorType = "RuntimeException",
-                errorMessage = ""
+                errorMessage = "",
             )
         )
 
@@ -92,7 +92,7 @@ internal class NetworkRequestDataSourceTest {
             expectedName = expectedSpanName,
             expectedStartTimeMs = 600L,
             expectedEndTimeMs = 650L,
-            expectedErrorCode = ErrorCodeAttribute.Failure
+            expectedErrorCode = ErrorCodeAttribute.Failure,
         )
     }
 

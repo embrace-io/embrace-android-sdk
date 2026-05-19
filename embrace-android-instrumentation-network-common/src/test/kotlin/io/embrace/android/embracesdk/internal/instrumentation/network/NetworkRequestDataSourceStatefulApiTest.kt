@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.semconv.EmbNetworkRequestAttributes
 import io.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.HttpAttributes
+import io.opentelemetry.kotlin.semconv.UserAgentAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -206,7 +207,9 @@ internal class NetworkRequestDataSourceStatefulApiTest {
         endRequest(
             callId = request1,
             url = url,
-            endTime = 1150L
+            endTime = 1150L,
+            userAgentName = "okhttp",
+            userAgentVersion = "4.12.0",
         )
 
         val spans = harness.getNetworkSpans().sortedBy { it.startTimeMs }
@@ -216,6 +219,10 @@ internal class NetworkRequestDataSourceStatefulApiTest {
             expectedName = expectedSpanName,
             expectedStartTimeMs = 10,
             expectedEndTimeMs = 1150,
+            expectedAttributes = mapOf(
+                UserAgentAttributes.USER_AGENT_NAME to "okhttp",
+                UserAgentAttributes.USER_AGENT_VERSION to "4.12.0",
+            ),
         )
         harness.assertNetworkRequest(
             spanToken = spans[1],
@@ -282,6 +289,8 @@ internal class NetworkRequestDataSourceStatefulApiTest {
         errorType: String? = null,
         errorMessage: String? = null,
         traceId: String? = "fake-trace-id",
+        userAgentName: String? = null,
+        userAgentVersion: String? = null,
     ) {
         harness.dataSource.endRequest(
             RequestEndData(
@@ -295,6 +304,8 @@ internal class NetworkRequestDataSourceStatefulApiTest {
                 errorType = errorType,
                 errorMessage = errorMessage,
                 traceId = traceId,
+                userAgentName = userAgentName,
+                userAgentVersion = userAgentVersion,
             )
         )
     }

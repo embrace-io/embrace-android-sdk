@@ -76,7 +76,7 @@ internal class AeiDataSourceImplTest {
             mockActivityManager,
             store,
             FakeOrdinalStore()
-        ).apply(AeiDataSourceImpl::enable)
+        ).apply(AeiDataSourceImpl::onDataCaptureEnabled)
     }
 
     @Before

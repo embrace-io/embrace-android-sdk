@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.assertions.assertStateTransition
 import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.assertions.getLogs
 import io.embrace.android.embracesdk.assertions.hasLinkToEmbraceSpan
-import io.embrace.android.embracesdk.fakes.LazyInitDataSource
+import io.embrace.android.embracesdk.fakes.LazyInitStateDataSource
 import io.embrace.android.embracesdk.fakes.TestStateDataSource
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -455,7 +455,7 @@ internal class StateFeatureTest {
                 recordSession {
                     clock.tick()
                     initTime = clock.now()
-                    findDataSource<LazyInitDataSource>().onStateChange("initialized", initTime)
+                    findDataSource<LazyInitStateDataSource>().onStateChange("initialized", initTime)
                 }
             },
             assertAction = {

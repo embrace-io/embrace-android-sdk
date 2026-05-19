@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 /**
  * Tracks internal errors & sends them as OTel logs.
  */
-class InternalErrorDataSourceImpl(
+internal class InternalErrorDataSourceImpl(
     args: InstrumentationArgs,
 ) : InternalErrorDataSource,
     DataSourceImpl(

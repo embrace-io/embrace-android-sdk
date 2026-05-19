@@ -4,14 +4,12 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
-import io.embrace.android.embracesdk.fakes.LazyInitDataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.limits.LimitStrategy
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -20,9 +18,7 @@ internal class DataSourceImplTest {
 
     @Test
     fun `capture data successfully`() {
-        val source = FakeDataSourceImpl().apply {
-            enable()
-        }
+        val source = FakeDataSourceImpl()
         var b = true
         var validationFailed = 0
         source.captureTelemetry(
@@ -75,19 +71,6 @@ internal class DataSourceImplTest {
 
         assertEquals(0, count)
         assertEquals(4, validationFailed)
-    }
-
-    @Test
-    fun `data sources based on DataSourceImpl not enabled on creation is enabled at first data capture`() {
-        val source = LazyInitDataSource(
-            FakeInstrumentationArgs(
-                application = ApplicationProvider.getApplicationContext()
-            )
-        )
-
-        assertFalse(source.isEnabled())
-        source.captureTelemetry { }
-        assertTrue(source.isEnabled())
     }
 
     private class FakeDataSourceImpl(

@@ -5,8 +5,8 @@ package io.embrace.android.embracesdk.internal.arch.datasource
  * of data that will be sent to Embrace. It attempts to enforce limits and input validation
  * by default.
  *
- * Implementations that use [DataSourceState] to manage their lifecycles should extend [DataSourceImpl], as they work in tandem
- * to provide and enforce the proper creation/enablement steps.
+ * [DataSourceState] is closely related. It is responsible for determining when a data source
+ * should be turned on/off, according to the SDK's configuration and the process lifecycle.
  */
 interface DataSource {
 
@@ -17,16 +17,16 @@ interface DataSource {
     val instrumentationName: String
 
     /**
-     * Enables this data source for data capture. This should include registering any listeners, and resetting any state (if applicable).
+     * Enables data capture. This should include registering any listeners, and resetting
+     * any state (if applicable).
      *
      * You should NOT attempt to track state within the [DataSource] with a boolean flag.
      */
     fun onDataCaptureEnabled()
 
     /**
-     * Disables data capture. This should include unregistering any listeners, and resetting any state (if applicable).
-     *
-     * Disabling data capture does not make this data source not enabled.
+     * Disables data capture. This should include unregistering any listeners, and resetting
+     * any state (if applicable).
      *
      * You should NOT attempt to track state within the [DataSource] with a boolean flag.
      */
@@ -38,7 +38,7 @@ interface DataSource {
     fun resetDataCaptureLimits()
 
     /**
-     * Captures telemetry from the given action, if the [DataSourceState] limits allow it.
+     * Captures telemetry from the given action, if the [DataSourceState] and limits allow it.
      */
     fun <T> captureTelemetry(
         inputValidation: () -> Boolean = { true },

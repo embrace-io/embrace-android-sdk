@@ -48,18 +48,4 @@ internal class DataSourceStateTest {
         assertEquals(0, source.enableDataCaptureCount)
         assertEquals(0, source.disableDataCaptureCount)
     }
-
-    @Test
-    fun `enable config method datasource not invoked if enableOnCreate is false`() {
-        val source = FakeDataSource(
-            application = RuntimeEnvironment.getApplication(),
-            enableOnCreate = false,
-        )
-        DataSourceState(
-            factory = { source },
-            configGate = { true },
-        )
-
-        assertEquals(0, source.enableDataCaptureCount)
-    }
 }

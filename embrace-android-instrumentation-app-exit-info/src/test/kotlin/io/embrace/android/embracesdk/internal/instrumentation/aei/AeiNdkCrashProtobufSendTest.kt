@@ -142,7 +142,7 @@ internal class AeiNdkCrashProtobufSendTest {
             activityManager,
             FakeKeyValueStore(),
             FakeOrdinalStore(),
-        ) { ndkTraceFile }.enable()
+        ) { ndkTraceFile }.onDataCaptureEnabled()
         return args.destination
     }
 

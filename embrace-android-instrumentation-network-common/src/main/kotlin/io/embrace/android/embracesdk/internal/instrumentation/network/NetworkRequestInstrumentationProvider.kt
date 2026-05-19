@@ -15,9 +15,8 @@ class NetworkRequestInstrumentationProvider : InstrumentationProvider {
     override fun register(args: InstrumentationArgs): DataSourceState<*>? {
         return DataSourceState(
             factory = {
-                val impl = NetworkRequestDataSourceImpl(args)
-                networkRequestDataSource = impl
-                impl
+                networkRequestDataSource = NetworkRequestDataSourceImpl(args)
+                networkRequestDataSource
             }
         )
     }

@@ -30,7 +30,7 @@ internal class LowPowerDataSourceTest {
         dataSource = LowPowerDataSource(
             args,
             fakeBackgroundWorker(),
-        ) { mockk(relaxed = true) }.apply(LowPowerDataSource::enable)
+        ) { mockk(relaxed = true) }.apply(LowPowerDataSource::onDataCaptureEnabled)
     }
 
     @Test

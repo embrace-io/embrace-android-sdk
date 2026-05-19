@@ -146,7 +146,7 @@ internal class ModuleInitBootstrapperTest {
     fun `post load instrumentation hooks up listeners`() {
         moduleInitBootstrapper.init(context)
         val registry = moduleInitBootstrapper.instrumentationModule.instrumentationRegistry
-        val dataSource = CrashHandlerDataSource(moduleInitBootstrapper.instrumentationModule.instrumentationArgs)
+        val dataSource = CrashHandlerDataSource()
         registry.add(DataSourceState(factory = { dataSource }))
 
         moduleInitBootstrapper.postLoadInstrumentation()

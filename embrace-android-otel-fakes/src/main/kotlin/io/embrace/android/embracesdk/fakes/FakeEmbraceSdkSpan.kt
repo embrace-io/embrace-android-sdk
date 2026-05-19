@@ -162,7 +162,7 @@ class FakeEmbraceSdkSpan(
     }
 
     override fun asNewContext(): Context? = sdkSpan?.let {
-        openTelemetry.context.storeSpan(parentContext, it)
+        parentContext.storeSpan(it)
     }
 
     override fun asW3cTraceParent(): String? = sdkSpan?.spanContext?.run { "00-${traceId}-${spanId}-01" }

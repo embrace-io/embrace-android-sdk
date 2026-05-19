@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.opentelemetry.kotlin.attributes.AnyValue
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 
 class FakeAttributesMutator(
@@ -35,6 +36,14 @@ class FakeAttributesMutator(
     }
 
     override fun setStringListAttribute(key: String, value: List<String>) {
+        attributes[key] = value
+    }
+
+    override fun setByteArrayAttribute(key: String, value: ByteArray) {
+        attributes[key] = value
+    }
+
+    override fun setAnyValueAttribute(key: String, value: AnyValue) {
         attributes[key] = value
     }
 }

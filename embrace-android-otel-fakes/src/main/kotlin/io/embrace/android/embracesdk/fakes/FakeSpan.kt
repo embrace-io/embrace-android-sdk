@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.opentelemetry.kotlin.attributes.AnyValue
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.tracing.StatusData
 import io.opentelemetry.kotlin.tracing.model.SpanLink
@@ -73,5 +74,11 @@ class FakeSpan(
     }
 
     override fun setStringListAttribute(key: String, value: List<String>) {
+    }
+
+    override fun setByteArrayAttribute(key: String, value: ByteArray) {
+    }
+
+    override fun setAnyValueAttribute(key: String, value: AnyValue) {
     }
 }

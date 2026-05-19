@@ -72,3 +72,11 @@ fun <T> Collection<T>.threadSafeTake(n: Int): List<T> {
         }
     }
 }
+
+/**
+ * A stable and thread-safe implementation of [toList]. [toList] has a race between a `size` check and an unprotected `get(0)` or
+ * `iterator().next()` call which can fail if the last item it removed from the collection after the `size == 1` check.
+ */
+fun <T> Collection<T>.threadSafeToList(): List<T> {
+    return ArrayList(this)
+}

@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.utils.threadSafeToList
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import java.io.File
 import java.io.FileNotFoundException
@@ -109,7 +110,7 @@ class FileStorageServiceImpl(
     }
 
     override fun getStoredPayloads(): List<StoredTelemetryMetadata> {
-        return storedFiles.toList()
+        return storedFiles.threadSafeToList()
     }
 
     /**

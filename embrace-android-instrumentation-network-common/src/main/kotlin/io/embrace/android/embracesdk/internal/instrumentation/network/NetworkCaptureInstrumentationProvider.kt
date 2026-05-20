@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 
+@Volatile
 private var networkCaptureDataSource: NetworkCaptureDataSource? = null
 
 fun retrieveNetworkCaptureDataSource(): NetworkCaptureDataSource? {

@@ -5,10 +5,9 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
+import io.embrace.android.embracesdk.instrumentation.androidx.navigation.rememberObservedBackStack
 import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.news.ui.NewsArticleDetailUi
 import io.embrace.android.exampleapp.paradigms.news.ui.NewsArticleListUi
@@ -22,7 +21,7 @@ class NewsNav3Activity : ComponentActivity() {
         setContent {
             ExampleAppTheme {
                 val sampleData = appGraph().sampleData
-                val backStack = remember { mutableStateListOf<NewsNav3Key>(NewsNav3Key.Sections) }
+                val backStack = rememberObservedBackStack<NewsNav3Key>(NewsNav3Key.Sections)
                 NavDisplay(
                     backStack = backStack,
                     onBack = { backStack.removeLastOrNull() },

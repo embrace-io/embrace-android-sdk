@@ -6,12 +6,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
+import io.embrace.android.embracesdk.instrumentation.androidx.navigation.rememberObservedBackStack
 import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.ecommerce.ui.EcommerceCartUi
 import io.embrace.android.exampleapp.paradigms.ecommerce.ui.EcommerceCategoriesUi
@@ -28,7 +28,7 @@ class EcommerceNav3Activity : ComponentActivity() {
                 val graph = appGraph()
                 val sampleData = graph.sampleData
                 val cartStore = graph.cartStore
-                val backStack = remember { mutableStateListOf<EcommerceNav3Key>(EcommerceNav3Key.Categories) }
+                val backStack = rememberObservedBackStack<EcommerceNav3Key>(EcommerceNav3Key.Categories)
                 var orderPlacedTotalCents by remember { mutableStateOf<Long?>(null) }
                 NavDisplay(
                     backStack = backStack,

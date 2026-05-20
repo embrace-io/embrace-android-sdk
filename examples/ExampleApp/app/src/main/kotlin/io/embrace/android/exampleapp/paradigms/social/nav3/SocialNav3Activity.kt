@@ -6,12 +6,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
+import io.embrace.android.embracesdk.instrumentation.androidx.navigation.rememberObservedBackStack
 import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.social.ui.ComposePostUi
 import io.embrace.android.exampleapp.paradigms.social.ui.ProfileScreen
@@ -26,7 +26,7 @@ class SocialNav3Activity : ComponentActivity() {
         setContent {
             ExampleAppTheme {
                 val sampleData = appGraph().sampleData
-                val backStack = remember { mutableStateListOf<SocialNav3Keys>(SocialNav3Keys.Timeline) }
+                val backStack = rememberObservedBackStack<SocialNav3Keys>(SocialNav3Keys.Timeline)
                 var postedBody by remember { mutableStateOf<String?>(null) }
                 NavDisplay(
                     backStack = backStack,

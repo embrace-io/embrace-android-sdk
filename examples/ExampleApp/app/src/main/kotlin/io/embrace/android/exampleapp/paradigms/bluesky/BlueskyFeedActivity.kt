@@ -5,10 +5,9 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
+import io.embrace.android.embracesdk.instrumentation.androidx.navigation.rememberObservedBackStack
 import io.embrace.android.exampleapp.di.appGraph
 import io.embrace.android.exampleapp.paradigms.bluesky.ui.BlueskyFeedTimelineUi
 import io.embrace.android.exampleapp.paradigms.social.ui.PostDetailUi
@@ -28,9 +27,7 @@ class BlueskyFeedActivity : ComponentActivity() {
         setContent {
             ExampleAppTheme {
                 val graph = appGraph()
-                val backStack = remember {
-                    mutableStateListOf<BlueskyFeedKey>(BlueskyFeedKey.Timeline)
-                }
+                val backStack = rememberObservedBackStack<BlueskyFeedKey>(BlueskyFeedKey.Timeline)
                 NavDisplay(
                     backStack = backStack,
                     onBack = { backStack.removeLastOrNull() },

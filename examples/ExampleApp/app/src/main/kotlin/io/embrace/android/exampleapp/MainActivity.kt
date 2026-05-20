@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import io.embrace.android.embracesdk.instrumentation.androidx.navigation.rememberObservedNavController
 import io.embrace.android.exampleapp.ui.CodeExample
 import io.embrace.android.exampleapp.ui.CodeExampleDetailScreen
 import io.embrace.android.exampleapp.ui.CodeExampleListScreen
@@ -20,7 +20,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ExampleAppTheme {
-                val navController = rememberNavController()
+                val navController = rememberObservedNavController()
                 NavHost(navController = navController, startDestination = "main") {
                     composable("main") {
                         CodeExampleListScreen(navController, examples)

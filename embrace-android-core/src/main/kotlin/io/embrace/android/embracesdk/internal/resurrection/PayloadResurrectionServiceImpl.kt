@@ -35,6 +35,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.zip.GZIPInputStream
+import java.util.zip.ZipException
 import kotlin.math.max
 
 internal class PayloadResurrectionServiceImpl(
@@ -107,23 +108,17 @@ internal class PayloadResurrectionServiceImpl(
             val sessionlessNativeCrashes = nativeCrashes.values.filterNot { processedCrashes.contains(it) }
             if (sessionlessNativeCrashes.isNotEmpty()) {
                 val cachedCrashEnvelopeMetadata = undeliveredPayloads.firstOrNull { it.isCrashEnvelope() }
-                val cachedCrashEnvelope = if (cachedCrashEnvelopeMetadata != null) {
-                    try {
-                        cacheStorageService.loadPayloadAsStream(cachedCrashEnvelopeMetadata)
-                            ?.let { rawPayloadAsStream ->
-                                serializer.fromJson<Envelope<LogPayload>>(
-                                    inputStream = GZIPInputStream(rawPayloadAsStream),
-                                    type = checkNotNull(SupportedEnvelopeType.CRASH.serializedType)
-                                )
-                            }
-                    } catch (_: Exception) {
-                        null
-                    } finally {
-                        runCatching { cacheStorageService.delete(cachedCrashEnvelopeMetadata) }
+                val cachedCrashEnvelope = cachedCrashEnvelopeMetadata
+                    ?.loadDecompressedPayload()
+                    ?.let { payloadStream ->
+                        runCatching {
+                            serializer.fromJson<Envelope<LogPayload>>(
+                                inputStream = payloadStream,
+                                type = checkNotNull(SupportedEnvelopeType.CRASH.serializedType)
+                            )
+                        }.getOrNull()
                     }
-                } else {
-                    null
-                }
+                    ?.also { runCatching { cacheStorageService.delete(cachedCrashEnvelopeMetadata) } }
                 val resource = cachedCrashEnvelope?.resource
                 val metadata = cachedCrashEnvelope?.metadata
                 sessionlessNativeCrashes.forEach { nativeCrash ->
@@ -174,15 +169,14 @@ internal class PayloadResurrectionServiceImpl(
     ) {
         val resurrectedPayload = when (envelopeType) {
             SupportedEnvelopeType.SESSION -> {
-                cacheStorageService.loadPayloadAsStream(this)
-                    ?.let { rawPayloadAsStream ->
-                        processUndeliveredPayloadImpl(
-                            rawPayloadAsStream,
-                            nativeCrashService,
-                            nativeCrashProvider,
-                            postNativeCrashProcessingCallback,
-                        )
-                    }
+                loadDecompressedPayload()?.let { payloadStream ->
+                    processUndeliveredPayloadImpl(
+                        payloadStream,
+                        nativeCrashService,
+                        nativeCrashProvider,
+                        postNativeCrashProcessingCallback,
+                    )
+                }
             }
 
             else -> null
@@ -204,13 +198,13 @@ internal class PayloadResurrectionServiceImpl(
     }
 
     private fun StoredTelemetryMetadata.processUndeliveredPayloadImpl(
-        rawPayloadAsStream: InputStream,
+        payloadStream: InputStream,
         nativeCrashService: NativeCrashService?,
         nativeCrashProvider: (String) -> NativeCrashData?,
         postNativeCrashProcessingCallback: (NativeCrashData) -> Unit,
     ): Envelope<SessionPartPayload> {
         val deadPart = serializer.fromJson<Envelope<SessionPartPayload>>(
-            inputStream = GZIPInputStream(rawPayloadAsStream),
+            inputStream = payloadStream,
             type = checkNotNull(envelopeType.serializedType)
         )
 
@@ -303,6 +297,15 @@ internal class PayloadResurrectionServiceImpl(
             this
         }
     }
+
+    private fun StoredTelemetryMetadata.loadDecompressedPayload(): InputStream? =
+        cacheStorageService.loadPayloadAsStream(this)?.let {
+            try {
+                GZIPInputStream(it)
+            } catch (_: ZipException) {
+                null
+            }
+        }
 
     /**
      * To approximate the time of any snapshot to be converted into a failed span, we look to the session span of the payload and take

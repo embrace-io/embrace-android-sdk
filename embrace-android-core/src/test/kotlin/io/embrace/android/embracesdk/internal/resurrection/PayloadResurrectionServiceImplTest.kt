@@ -245,12 +245,26 @@ class PayloadResurrectionServiceImplTest {
     @Test
     fun `session payload skipped without error when cache returns null stream`() {
         cacheStorageService.addFakePayload(sessionMetadata)
-        val service = serviceWithNullStreamCache()
+        val service = serviceWithPayloadStream(null)
 
         service.resurrectOldPayloads { nativeCrashService }
 
         assertEquals(0, payloadStorageService.storedPayloadCount())
         assertEquals(0, cacheStorageService.storedPayloadCount())
+        assertEquals(1, cacheStorageService.deleteCount.get())
+        assertTrue(logger.internalErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `session payload skipped without error when gzip stream is invalid`() {
+        cacheStorageService.addFakePayload(sessionMetadata)
+        val service = serviceWithPayloadStream("hi there".byteInputStream())
+
+        service.resurrectOldPayloads { nativeCrashService }
+
+        assertEquals(0, payloadStorageService.storedPayloadCount())
+        assertEquals(0, cacheStorageService.storedPayloadCount())
+        assertEquals(1, cacheStorageService.deleteCount.get())
         assertTrue(logger.internalErrorMessages.isEmpty())
     }
 
@@ -266,7 +280,7 @@ class PayloadResurrectionServiceImplTest {
         )
         nativeCrashService.addNativeCrashData(deadSessionCrashData)
 
-        val service = serviceWithNullStreamCache()
+        val service = serviceWithPayloadStream(null)
         service.resurrectOldPayloads { nativeCrashService }
 
         assertEquals(0, payloadStorageService.storedPayloadCount())
@@ -537,9 +551,9 @@ class PayloadResurrectionServiceImplTest {
         }
     }
 
-    private fun serviceWithNullStreamCache(): PayloadResurrectionServiceImpl {
+    private fun serviceWithPayloadStream(payloadStream: InputStream?): PayloadResurrectionServiceImpl {
         val nullStreamCacheStorage = object : PayloadStorageService by cacheStorageService {
-            override fun loadPayloadAsStream(metadata: StoredTelemetryMetadata): InputStream? = null
+            override fun loadPayloadAsStream(metadata: StoredTelemetryMetadata): InputStream? = payloadStream
         }
         return PayloadResurrectionServiceImpl(
             intakeService = IntakeServiceImpl(

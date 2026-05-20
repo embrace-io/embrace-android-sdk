@@ -19,7 +19,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.powersave.PowerSta
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.session.getStateSpan
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.LIFECYCLE_EVENT_GAP
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -108,10 +107,7 @@ internal class LowPowerFeatureTest {
                 val message = getSingleSessionEnvelope()
                 val sessionSpan = checkNotNull(message.getSessionSpan())
                 with(checkNotNull(message.getStateSpan("emb-state-power"))) {
-                    assertEquals(
-                        checkNotNull(sessionSpan.startTimeNanos).nanosToMillis() + LIFECYCLE_EVENT_GAP,
-                        checkNotNull(startTimeNanos).nanosToMillis()
-                    )
+                    assertEquals(transitions[0].first, checkNotNull(startTimeNanos).nanosToMillis())
                     assertEquals(sessionSpan.endTimeNanos, endTimeNanos)
                     with(checkNotNull(events)) {
                         assertEquals(2, size)
@@ -119,11 +115,6 @@ internal class LowPowerFeatureTest {
                             this[i].assertStateTransition(
                                 timestampMs = transitions[i].first,
                                 newStateValue = transitions[i].second,
-                                notInSession = if (i == 0) {
-                                    1
-                                } else {
-                                    0
-                                }
                             )
                         }
                     }

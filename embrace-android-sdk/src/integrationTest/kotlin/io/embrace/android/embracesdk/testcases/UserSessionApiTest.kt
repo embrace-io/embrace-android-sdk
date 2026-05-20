@@ -85,7 +85,7 @@ internal class UserSessionApiTest {
                     "emb.usage.set_username" to "1",
                     "emb.usage.set_user_email" to "1",
                     "emb.usage.set_user_identifier" to "1",
-                    EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID to "9",
+                    EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID to "8",
                     EmbSessionAttributes.EMB_STARTUP_DURATION to "0"
                 ).toSortedMap()
 

@@ -114,7 +114,7 @@ abstract class StateDataSource<T : Any>(
     }
 
     private fun startStateCapture() {
-        if (!stateCaptureActive.getAndSet(true)) {
+        if (stateCaptureActive.compareAndSet(false, true)) {
             createSessionStateSpan(currentState.get())
         }
     }

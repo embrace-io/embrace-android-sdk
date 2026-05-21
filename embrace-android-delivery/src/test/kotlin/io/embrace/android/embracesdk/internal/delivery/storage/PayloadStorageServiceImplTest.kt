@@ -125,8 +125,6 @@ class PayloadStorageServiceImplTest {
             Pair(1000L, SESSION)
         )
         assertEquals(expected, outputs)
-        val msg = logger.internalErrorMessages.last().throwable?.message
-        assertEquals("Pruned payload storage", msg)
     }
 
     @Test

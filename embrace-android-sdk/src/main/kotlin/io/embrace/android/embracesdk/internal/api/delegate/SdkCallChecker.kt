@@ -10,9 +10,14 @@ internal class SdkCallChecker(
 ) {
 
     /**
-     * Whether the Embrace SDK has been started yet.
+     * Whether the Embrace SDK has been started yet. The SDK will still be considered started even if it were disabled subsequently
      */
     val started = AtomicBoolean(false)
+
+    /**
+     * Whether the Embrace SDK has been explicitly disabled.
+     */
+    private val disabled = AtomicBoolean(false)
 
     /**
      * Checks if the SDK is started and logs the public API usage.
@@ -21,11 +26,19 @@ internal class SdkCallChecker(
      * For instance, get_current_session_id go directly through checkSdkStarted.
      */
     fun check(action: String, outputErrorMessage: Boolean = true): Boolean {
-        val isStarted = started.get()
-        if (!isStarted && outputErrorMessage) {
-            logger.logSdkNotInitialized(action)
+        return if (!disabled.get()) {
+            val isStarted = started.get()
+            if (!isStarted && outputErrorMessage) {
+                logger.logSdkNotInitialized(action)
+            }
+            telemetryService?.onPublicApiCalled(action)
+            isStarted
+        } else {
+            false
         }
-        telemetryService?.onPublicApiCalled(action)
-        return isStarted
+    }
+
+    fun disable() {
+        disabled.set(true)
     }
 }

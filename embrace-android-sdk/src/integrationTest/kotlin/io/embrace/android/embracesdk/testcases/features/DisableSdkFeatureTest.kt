@@ -139,9 +139,7 @@ internal class DisableSdkFeatureTest {
 
                 assertEquals(0, getLogEnvelopes(0).size)
                 assertEquals(0, getSessionEnvelopes(0).size)
-                assertEquals(4, logger.sdkNotInitializedMessages.size)
-                assertEquals(2, logger.sdkNotInitializedMessages.filter { it.msg == "add_breadcrumb" }.size)
-                assertEquals(2, logger.sdkNotInitializedMessages.filter { it.msg == "log_message" }.size)
+                assertEquals(0, logger.sdkNotInitializedMessages.size)
             },
         )
     }

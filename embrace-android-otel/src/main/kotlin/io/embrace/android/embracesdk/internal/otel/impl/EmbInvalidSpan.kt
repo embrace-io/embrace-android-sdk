@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.opentelemetry.kotlin.OpenTelemetry
+import io.opentelemetry.kotlin.attributes.AnyValue
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.tracing.Span
 import io.opentelemetry.kotlin.tracing.SpanContext
@@ -55,5 +56,11 @@ internal class EmbInvalidSpan(openTelemetry: OpenTelemetry) : Span, SpanCreation
     }
 
     override fun setStringListAttribute(key: String, value: List<String>) {
+    }
+
+    override fun setByteArrayAttribute(key: String, value: ByteArray) {
+    }
+
+    override fun setAnyValueAttribute(key: String, value: AnyValue) {
     }
 }

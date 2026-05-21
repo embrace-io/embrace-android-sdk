@@ -88,7 +88,7 @@ internal class ExternalTracerTest {
                 recordSession {
                     val span = embTracer.startSpan("external-span")
                     startTimeMs = clock.now()
-                    val parentContext = embOpenTelemetry.context.storeSpan(embOpenTelemetry.context.root(), span)
+                    val parentContext = embOpenTelemetry.context.root().storeSpan(span)
                     val childSpan = embTracer.startSpan("child-span", parentContext)
                     childSpan.setStatus(StatusData.Error("oh no"))
                     val exception = RuntimeException("bah")
@@ -178,7 +178,7 @@ internal class ExternalTracerTest {
                 embOpenTelemetry = embrace.getOpenTelemetryKotlin()
                 recordSession {
                     val parentSpan = embTracer.startSpan("external-span")
-                    val parentContext = embOpenTelemetry.context.storeSpan(embOpenTelemetry.context.root(), parentSpan)
+                    val parentContext = embOpenTelemetry.context.root().storeSpan(parentSpan)
                     embTracer.startSpan("set-parent-explicitly", parentContext).end()
                     parentSpan.end()
                 }

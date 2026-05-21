@@ -63,9 +63,9 @@ class FileStorageServiceImplTest {
     }
 
     @Test
-    fun `load payload stream error`() {
+    fun `load payload stream no file`() {
         assertNull(service.loadPayloadAsStream(fakeSessionStoredTelemetryMetadata))
-        checkNotNull(logger.internalErrorMessages.single())
+        assertTrue(logger.internalErrorMessages.isEmpty())
     }
 
     @Test

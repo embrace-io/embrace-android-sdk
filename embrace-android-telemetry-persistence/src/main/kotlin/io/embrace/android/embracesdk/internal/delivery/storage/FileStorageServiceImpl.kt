@@ -103,6 +103,8 @@ class FileStorageServiceImpl(
     override fun loadPayloadAsStream(metadata: StoredTelemetryMetadata): InputStream? {
         return try {
             metadata.asFile().inputStream().buffered()
+        } catch (_: FileNotFoundException) {
+            null
         } catch (exc: Throwable) {
             logger.trackInternalError(InternalErrorType.PayloadStorageFail, exc)
             null

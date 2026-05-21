@@ -80,7 +80,7 @@ class PayloadStorageServiceImplTest {
     @Test
     fun `load non existent file`() {
         assertNull(service.loadPayloadAsStream(metadata))
-        assertNotNull(logger.internalErrorMessages.single().throwable)
+        assertTrue(logger.internalErrorMessages.isEmpty())
     }
 
     @Test

@@ -103,6 +103,8 @@ class FileStorageServiceImpl(
     override fun loadPayloadAsStream(metadata: StoredTelemetryMetadata): InputStream? {
         return try {
             metadata.asFile().inputStream().buffered()
+        } catch (_: FileNotFoundException) {
+            null
         } catch (exc: Throwable) {
             logger.trackInternalError(InternalErrorType.PayloadStorageFail, exc)
             null
@@ -143,7 +145,6 @@ class FileStorageServiceImpl(
         )
             .take(removalCount)
         removals.forEach(::processDelete)
-        logger.trackInternalError(InternalErrorType.PayloadStorageFail, RuntimeException("Pruned payload storage"))
 
         // notify the caller whether the new payload should be dropped
         val shouldNotPersist = removals.contains(newPayload)

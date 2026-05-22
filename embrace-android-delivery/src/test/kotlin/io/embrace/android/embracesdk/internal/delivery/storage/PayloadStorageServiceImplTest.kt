@@ -80,7 +80,7 @@ class PayloadStorageServiceImplTest {
     @Test
     fun `load non existent file`() {
         assertNull(service.loadPayloadAsStream(metadata))
-        assertNotNull(logger.internalErrorMessages.single().throwable)
+        assertTrue(logger.internalErrorMessages.isEmpty())
     }
 
     @Test
@@ -125,8 +125,6 @@ class PayloadStorageServiceImplTest {
             Pair(1000L, SESSION)
         )
         assertEquals(expected, outputs)
-        val msg = logger.internalErrorMessages.last().throwable?.message
-        assertEquals("Pruned payload storage", msg)
     }
 
     @Test

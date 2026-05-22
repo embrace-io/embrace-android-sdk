@@ -7,8 +7,10 @@ import android.os.Build
 import android.os.Environment
 import android.os.Process
 import android.os.StatFs
+import android.os.SystemClock
 import android.os.storage.StorageManager
 import androidx.annotation.RequiresApi
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
@@ -24,6 +26,7 @@ internal class EmbraceMetadataService(
     private val storageStatsManager: Lazy<StorageStatsManager?>,
     private val configService: ConfigService,
     private val store: KeyValueStore,
+    private val clock: Clock,
     private val metadataBackgroundWorker: BackgroundWorker,
 ) : MetadataService {
 
@@ -89,6 +92,32 @@ internal class EmbraceMetadataService(
     }
 
     override fun getDiskUsage(): DiskUsage? = diskUsage
+
+    override fun getClockDrift(): ClockDrift? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            return null
+        }
+
+        val wallTime = clock.now()
+
+        val gnssTime = runCatching { SystemClock.currentGnssTimeClock().millis() }.getOrNull()
+        val networkTime =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                runCatching { SystemClock.currentNetworkTimeClock().millis() }.getOrNull()
+            } else {
+                null
+            }
+
+        if (gnssTime == null && networkTime == null) {
+            return null
+        }
+
+        return ClockDrift(
+            wallTimeMillis = wallTime,
+            networkTimeMillis = networkTime,
+            gnssTimeMillis = gnssTime,
+        )
+    }
 
     private companion object {
         const val PREVIOUS_APP_VERSION_KEY = "io.embrace.lastappversion"

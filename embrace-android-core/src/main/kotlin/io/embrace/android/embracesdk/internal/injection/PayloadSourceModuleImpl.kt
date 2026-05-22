@@ -145,6 +145,7 @@ class PayloadSourceModuleImpl(
                 lazy { storageManager },
                 configService,
                 coreModule.store,
+                initModule.clock,
                 workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker)
             )
         }

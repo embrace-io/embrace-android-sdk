@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeLogLimitingService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
@@ -59,6 +60,35 @@ internal class SessionPartSpanAttrPopulatorImplTest {
             EmbSessionAttributes.EMB_SESSION_END_TYPE to "state",
             EmbSessionAttributes.EMB_ERROR_LOG_COUNT to "0",
             EmbSessionAttributes.EMB_DISK_FREE_BYTES to "500000000"
+        )
+        assertEquals(expected, attrs)
+    }
+
+    @Test
+    fun `clock drift attributes populated when aux clocks available`() {
+        populator = SessionPartSpanAttrPopulatorImpl(
+            destination,
+            { 0 },
+            FakeLogLimitingService(),
+            FakeMetadataService(
+                wallClock = FakeClock(1000L),
+                networkClock = FakeClock(950L),
+                gnssClock = FakeClock(990L),
+            ),
+        )
+
+        populator.populateSessionSpanEndAttrs(LifeEventType.STATE, "crashId", false)
+
+        val attrs = destination.attributes
+        val expected = mapOf(
+            EmbSessionAttributes.EMB_CLEAN_EXIT to "true",
+            EmbSessionAttributes.EMB_TERMINATED to "false",
+            EmbSessionAttributes.EMB_CRASH_ID to "crashId",
+            EmbSessionAttributes.EMB_SESSION_END_TYPE to "state",
+            EmbSessionAttributes.EMB_ERROR_LOG_COUNT to "0",
+            EmbSessionAttributes.EMB_DISK_FREE_BYTES to "500000000",
+            EmbSessionAttributes.EMB_CLOCK_NETWORK_DRIFT_MILLIS to "50",
+            EmbSessionAttributes.EMB_CLOCK_GNSS_DRIFT_MILLIS to "10",
         )
         assertEquals(expected, attrs)
     }

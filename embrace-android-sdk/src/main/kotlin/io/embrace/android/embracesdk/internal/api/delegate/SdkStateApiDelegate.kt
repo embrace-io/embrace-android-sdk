@@ -17,6 +17,9 @@ internal class SdkStateApiDelegate(
         bootstrapper.configService.deviceId
     }
     private val crashVerifier by embraceImplInject(sdkCallChecker) { bootstrapper.featureModule.lastRunCrashVerifier }
+    private val currentSessionPartSpan by embraceImplInject(sdkCallChecker) {
+        bootstrapper.openTelemetryModule.currentSessionPartSpan
+    }
 
     override val isStarted: Boolean
         get() = sdkCallChecker.started.get()
@@ -38,6 +41,24 @@ internal class SdkStateApiDelegate(
                 if (sessionId != null) {
                     return sessionId
                 }
+            }
+            return null
+        }
+
+    override val currentSessionSpanId: String?
+        get() {
+            val localSpan = currentSessionPartSpan
+            if (localSpan != null && sdkCallChecker.check("get_current_session_span_id")) {
+                return localSpan.getSessionSpanContext()?.spanId
+            }
+            return null
+        }
+
+    override val currentSessionTraceId: String?
+        get() {
+            val localSpan = currentSessionPartSpan
+            if (localSpan != null && sdkCallChecker.check("get_current_session_trace_id")) {
+                return localSpan.getSessionSpanContext()?.traceId
             }
             return null
         }

@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.opentelemetry.kotlin.tracing.SpanContext
 import java.util.concurrent.atomic.AtomicInteger
 
 class FakeCurrentSessionPartSpan(
@@ -61,6 +62,10 @@ class FakeCurrentSessionPartSpan(
 
     override fun getSessionId(): String {
         return "testSessionId$sessionIteration"
+    }
+
+    override fun getSessionSpanContext(): SpanContext? {
+        return sessionSpan?.spanContext
     }
 
     override fun spanStopCallback(spanId: String) {

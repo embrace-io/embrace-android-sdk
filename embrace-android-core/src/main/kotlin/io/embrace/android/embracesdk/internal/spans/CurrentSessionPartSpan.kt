@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.opentelemetry.kotlin.tracing.SpanContext
 
 /**
  * Abstraction of the current session span
@@ -33,6 +34,11 @@ interface CurrentSessionPartSpan : Initializable {
      * Returns the current session ID
      */
     fun getSessionId(): String
+
+    /**
+     * Returns the current session span-context
+     */
+    fun getSessionSpanContext(): SpanContext?
 
     /**
      * Callback to be invoked when a span is just about to be stopped

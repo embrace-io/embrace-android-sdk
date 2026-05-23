@@ -9,4 +9,6 @@ class FakeSdkStateApi(
     override val deviceId: String = "fake-id"
     override val currentSessionId: String? = null
     override val lastRunEndState: LastRunEndState = LastRunEndState.INVALID
+    override val currentSessionSpanId: String? = null
+    override val currentSessionTraceId: String? = null
 }

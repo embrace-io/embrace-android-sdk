@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.Clock
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.semconv.SessionAttributes
+import io.opentelemetry.kotlin.tracing.SpanContext
 import io.opentelemetry.kotlin.tracing.Tracer
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -91,6 +92,8 @@ internal class CurrentSessionPartSpanImpl(
     }
 
     override fun getSessionId(): String = sessionState?.sessionId ?: ""
+
+    override fun getSessionSpanContext(): SpanContext? = sessionState?.span?.spanContext
 
     override fun spanStopCallback(spanId: String) {
         val currentSessionPartSpan = sessionState?.span

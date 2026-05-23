@@ -18,7 +18,7 @@ fun assertEmbraceSpanData(
     span: Span?,
     expectedStartTimeMs: Long,
     expectedEndTimeMs: Long?,
-    expectedParentId: String,
+    expectedParentId: String? = null,
     expectedTraceId: String? = null,
     expectedStatus: Span.Status = Span.Status.UNSET,
     expectedErrorCode: ErrorCode? = null,
@@ -31,7 +31,9 @@ fun assertEmbraceSpanData(
     with(span) {
         assertEquals("Wrong start time", expectedStartTimeMs, startTimeNanos?.nanosToMillis())
         assertEquals("Wrong end time", expectedEndTimeMs, endTimeNanos?.nanosToMillis())
-        assertEquals(expectedParentId, parentSpanId)
+        if (expectedParentId != null) {
+            assertEquals(expectedParentId, parentSpanId)
+        }
         if (expectedTraceId != null) {
             assertEquals(expectedTraceId, traceId)
         } else {

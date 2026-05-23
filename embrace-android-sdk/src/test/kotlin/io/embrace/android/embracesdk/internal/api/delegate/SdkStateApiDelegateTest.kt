@@ -15,6 +15,8 @@ import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -83,5 +85,31 @@ internal class SdkStateApiDelegateTest {
     fun `last end state is invalid if SDK not enabled`() {
         sdkCallChecker.started.set(false)
         assertEquals(LastRunEndState.INVALID, delegate.lastRunEndState)
+    }
+
+    @Test
+    fun getCurrentSessionSpanId() {
+        val spanId = delegate.currentSessionSpanId
+        assertNotNull(spanId)
+        assertTrue(spanId!!.isNotBlank())
+    }
+
+    @Test
+    fun getCurrentSessionTraceId() {
+        val traceId = delegate.currentSessionTraceId
+        assertNotNull(traceId)
+        assertTrue(traceId!!.isNotBlank())
+    }
+
+    @Test
+    fun `session span id returns null when SDK not started`() {
+        sdkCallChecker.started.set(false)
+        assertNull(delegate.currentSessionSpanId)
+    }
+
+    @Test
+    fun `session trace id returns null when SDK not started`() {
+        sdkCallChecker.started.set(false)
+        assertNull(delegate.currentSessionTraceId)
     }
 }

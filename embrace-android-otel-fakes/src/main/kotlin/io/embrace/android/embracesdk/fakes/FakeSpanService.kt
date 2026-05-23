@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 class FakeSpanService : SpanService {
 
     val createdSpans: MutableList<FakeEmbraceSdkSpan> = mutableListOf()
+    val capturedParents: MutableList<EmbraceSpan?> = mutableListOf()
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
     }
@@ -34,6 +35,7 @@ class FakeSpanService : SpanService {
         private = private,
         autoTerminationMode = autoTerminationMode
     ).apply {
+        capturedParents.add(parent)
         createdSpans.add(this)
     }
 
@@ -79,6 +81,7 @@ class FakeSpanService : SpanService {
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ): Boolean {
+        capturedParents.add(parent)
         createdSpans.add(
             FakeEmbraceSdkSpan(
                 name = name,

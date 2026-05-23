@@ -257,6 +257,30 @@ internal class TelemetryDestinationImplTest {
     }
 
     @Test
+    fun `startSpanCapture with schema type uses session span as parent`() {
+        currentSessionPartSpan.readySession()
+        val sessionSpan = currentSessionPartSpan.current()
+        impl.startSpanCapture(SchemaType.Breadcrumb("test"), clock.now())
+        assertEquals(sessionSpan, spanService.capturedParents.single())
+    }
+
+    @Test
+    fun `recordCompletedSpan with no explicit parent uses session span as parent`() {
+        currentSessionPartSpan.readySession()
+        val sessionSpan = currentSessionPartSpan.current()
+        impl.recordCompletedSpan(name = "test", startTimeMs = 0L, endTimeMs = 10L)
+        assertEquals(sessionSpan, spanService.capturedParents.single())
+    }
+
+    @Test
+    fun `startSpanCapture with no explicit parent uses session span as parent`() {
+        currentSessionPartSpan.readySession()
+        val sessionSpan = currentSessionPartSpan.current()
+        impl.startSpanCapture(name = "test", startTimeMs = clock.now(), parent = null, type = EmbType.Performance.Default)
+        assertEquals(sessionSpan, spanService.capturedParents.single())
+    }
+
+    @Test
     fun `test session span events`() {
         currentSessionPartSpan.readySession()
         val current = checkNotNull(currentSessionPartSpan.current())

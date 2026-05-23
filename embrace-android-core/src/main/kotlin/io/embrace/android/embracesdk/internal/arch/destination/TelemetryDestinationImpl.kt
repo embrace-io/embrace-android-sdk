@@ -94,7 +94,8 @@ class TelemetryDestinationImpl(
             startTimeMs = startTimeMs,
             autoTerminationMode = mode,
             private = private,
-            type = schemaType.telemetryType
+            type = schemaType.telemetryType,
+            parent = currentSessionPartSpan.current()
         ).apply {
             schemaType.attributes().forEach {
                 addAttribute(it.key, it.value)
@@ -113,13 +114,13 @@ class TelemetryDestinationImpl(
         type: EmbType,
         private: Boolean,
     ): SpanToken {
-        val parentRef = retrieveParentReference(parent)
+        val parentRef = retrieveParentReference(parent) ?: currentSessionPartSpan.current()
         val span = spanService.startSpan(
             name = name,
             startTimeMs = startTimeMs,
             parent = parentRef,
             private = private,
-            type = type,
+            type = type
         )
         return SpanTokenImpl(span) {
             sessionUpdateAction?.invoke()
@@ -150,7 +151,7 @@ class TelemetryDestinationImpl(
         attributes: Map<String, String>,
         events: List<SpanEvent>,
     ) {
-        val parentRef = retrieveParentReference(parent)
+        val parentRef = retrieveParentReference(parent) ?: currentSessionPartSpan.current()
         spanService.recordCompletedSpan(
             name = name,
             startTimeMs = startTimeMs,

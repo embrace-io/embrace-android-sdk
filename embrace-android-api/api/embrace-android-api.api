@@ -111,6 +111,8 @@ public final class io/embrace/android/embracesdk/internal/api/SdkApi$DefaultImpl
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/SdkStateApi {
 	public abstract fun getCurrentSessionId ()Ljava/lang/String;
+	public abstract fun getCurrentSessionSpanId ()Ljava/lang/String;
+	public abstract fun getCurrentSessionTraceId ()Ljava/lang/String;
 	public abstract fun getDeviceId ()Ljava/lang/String;
 	public abstract fun getLastRunEndState ()Lio/embrace/android/embracesdk/LastRunEndState;
 	public abstract fun isStarted ()Z

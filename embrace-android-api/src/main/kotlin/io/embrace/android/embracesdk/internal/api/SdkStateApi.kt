@@ -17,5 +17,9 @@ public interface SdkStateApi {
 
     public val currentSessionId: String?
 
+    public val currentSessionSpanId: String?
+
+    public val currentSessionTraceId: String?
+
     public val lastRunEndState: LastRunEndState
 }

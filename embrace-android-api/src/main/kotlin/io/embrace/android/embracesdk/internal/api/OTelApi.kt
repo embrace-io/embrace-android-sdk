@@ -47,4 +47,10 @@ public interface OTelApi {
      * This must be called before the SDK is started in order for it to take effect.
      */
     public fun setResourceAttribute(key: String, value: String)
+
+    /**
+     * When enabled, spans started without an explicit parent are automatically parented to the
+     * current session span. Must be called before the SDK is started.
+     */
+    public fun setAutoParentOrphanSpansToSession(enabled: Boolean)
 }

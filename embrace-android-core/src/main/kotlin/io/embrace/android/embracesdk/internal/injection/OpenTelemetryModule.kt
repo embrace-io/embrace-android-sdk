@@ -70,4 +70,6 @@ interface OpenTelemetryModule {
         bypassValidation: Boolean,
         otelBehavior: OtelBehavior,
     )
+
+    fun setAutoParentOrphanSpansToSession(enable: Boolean)
 }

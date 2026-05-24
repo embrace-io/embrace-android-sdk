@@ -36,6 +36,8 @@ class OpenTelemetryModuleImpl(
 
     private var otelBehavior: OtelBehavior? = null
 
+    private var autoParentOrphanSpansToSession: Boolean = false
+
     override val spanRepository: SpanRepository by lazy {
         SpanRepository()
     }
@@ -86,6 +88,10 @@ class OpenTelemetryModuleImpl(
         this.sensitiveKeysBehavior = sensitiveKeysBehavior
         this.bypassLimitsValidation = bypassValidation
         setupOtelBehavior(otelBehavior)
+    }
+
+    override fun setAutoParentOrphanSpansToSession(enable: Boolean) {
+        this.autoParentOrphanSpansToSession = enable
     }
 
     private fun setupOtelBehavior(otelBehavior: OtelBehavior) {
@@ -139,6 +145,7 @@ class OpenTelemetryModuleImpl(
             tracerSupplier = { otelSdkWrapper.sdkTracer },
             openTelemetrySupplier = { otelSdkWrapper.openTelemetryKotlin },
             embraceSpanFactorySupplier = { embraceSpanFactory },
+            sessionSpanProvider = if (autoParentOrphanSpansToSession) currentSessionPartSpan::current else null,
         )
     }
 

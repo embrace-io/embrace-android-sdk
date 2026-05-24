@@ -49,6 +49,13 @@ internal class OTelApiDelegate(
         bootstrapper.openTelemetryModule.otelSdkConfig.setResourceAttribute(key, value)
     }
 
+    override fun setAutoParentOrphanSpansToSession(enabled: Boolean) {
+        if (sdkCallChecker.started.get()) {
+            return
+        }
+        bootstrapper.openTelemetryModule.setAutoParentOrphanSpansToSession(enabled)
+    }
+
     override fun getOpenTelemetryKotlin(): OpenTelemetry {
         return if (sdkCallChecker.started.get()) {
             bootstrapper.openTelemetryModule.otelSdkWrapper.openTelemetryKotlin

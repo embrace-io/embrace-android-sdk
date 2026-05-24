@@ -28,8 +28,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun endView (Ljava/lang/String;)Z
 	public fun generateW3cTraceparent ()Ljava/lang/String;
 	public fun getCurrentSessionId ()Ljava/lang/String;
-	public fun getCurrentSessionSpanId ()Ljava/lang/String;
-	public fun getCurrentSessionTraceId ()Ljava/lang/String;
 	public fun getDeviceId ()Ljava/lang/String;
 	public static final fun getInstance ()Lio/embrace/android/embracesdk/Embrace;
 	public fun getLastRunEndState ()Lio/embrace/android/embracesdk/LastRunEndState;
@@ -53,6 +51,7 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun removeSessionProperty (Ljava/lang/String;)Z
 	public fun screenLoaded (Ljava/lang/String;)V
 	public fun screenLoaded (Ljava/lang/String;Ljava/util/Map;)V
+	public fun setAutoParentOrphanSpansToSession (Z)V
 	public fun setResourceAttribute (Ljava/lang/String;Ljava/lang/String;)V
 	public fun setUserEmail (Ljava/lang/String;)V
 	public fun setUserIdentifier (Ljava/lang/String;)V

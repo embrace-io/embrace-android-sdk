@@ -97,6 +97,7 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/OTelA
 	public abstract fun addSpanExporter (Lio/opentelemetry/kotlin/tracing/export/SpanExporter;)V
 	public abstract fun addSpanProcessor (Lio/opentelemetry/kotlin/tracing/export/SpanProcessor;)V
 	public abstract fun getOpenTelemetryKotlin ()Lio/opentelemetry/kotlin/OpenTelemetry;
+	public abstract fun setAutoParentOrphanSpansToSession (Z)V
 	public abstract fun setResourceAttribute (Ljava/lang/String;Ljava/lang/String;)V
 }
 
@@ -111,8 +112,6 @@ public final class io/embrace/android/embracesdk/internal/api/SdkApi$DefaultImpl
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/SdkStateApi {
 	public abstract fun getCurrentSessionId ()Ljava/lang/String;
-	public abstract fun getCurrentSessionSpanId ()Ljava/lang/String;
-	public abstract fun getCurrentSessionTraceId ()Ljava/lang/String;
 	public abstract fun getDeviceId ()Ljava/lang/String;
 	public abstract fun getLastRunEndState ()Lio/embrace/android/embracesdk/LastRunEndState;
 	public abstract fun isStarted ()Z

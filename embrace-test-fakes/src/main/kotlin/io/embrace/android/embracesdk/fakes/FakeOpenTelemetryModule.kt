@@ -57,4 +57,8 @@ class FakeOpenTelemetryModule(
     override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean, otelBehavior: OtelBehavior) {
         // no-op
     }
+
+    override fun setAutoParentOrphanSpansToSession(enable: Boolean) {
+
+    }
 }

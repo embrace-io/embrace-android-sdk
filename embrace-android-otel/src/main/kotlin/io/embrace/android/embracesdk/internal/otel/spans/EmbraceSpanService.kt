@@ -23,11 +23,14 @@ class EmbraceSpanService(
     private val embraceSpanFactorySupplier: Provider<EmbraceSpanFactory>,
     private val tracerSupplier: Provider<Tracer>,
     private val openTelemetrySupplier: Provider<OpenTelemetry>,
+    private val sessionSpanProvider: (() -> EmbraceSpan?)? = null,
 ) : SpanService {
     private val uninitializedSdkSpansService: UninitializedSdkSpanService = UninitializedSdkSpanService()
 
     @Volatile
     private var currentDelegate: SpanService = uninitializedSdkSpansService
+
+    private fun resolveParent(explicit: EmbraceSpan?): EmbraceSpan? = explicit ?: sessionSpanProvider?.invoke()
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
         if (!initialized()) {
@@ -64,7 +67,7 @@ class EmbraceSpanService(
     ): EmbraceSdkSpan =
         currentDelegate.createSpan(
             name = name,
-            parent = parent,
+            parent = resolveParent(parent),
             type = type,
             internal = internal,
             private = private,
@@ -85,7 +88,7 @@ class EmbraceSpanService(
         code: () -> T,
     ): T = currentDelegate.recordSpan(
         name = name,
-        parent = parent,
+        parent = resolveParent(parent),
         type = type,
         internal = internal,
         private = private,
@@ -110,7 +113,7 @@ class EmbraceSpanService(
         name = name,
         startTimeMs = startTimeMs,
         endTimeMs = endTimeMs,
-        parent = parent,
+        parent = resolveParent(parent),
         type = type,
         internal = internal,
         private = private,

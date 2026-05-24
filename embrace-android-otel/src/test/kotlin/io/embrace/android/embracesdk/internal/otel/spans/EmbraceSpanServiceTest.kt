@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.assertions.assertIsTypePerformance
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSpanFactory
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
@@ -63,7 +64,7 @@ internal class EmbraceSpanServiceTest {
         spanService.initializeService(clock.now().nanosToMillis())
     }
 
-    private fun createEmbraceSpanService(): EmbraceSpanService {
+    private fun createEmbraceSpanService(sessionSpanProvider: (() -> EmbraceSpan?)? = null): EmbraceSpanService {
         val dataValidator = DataValidator(telemetryService = FakeTelemetryService())
 
         return EmbraceSpanService(
@@ -80,7 +81,8 @@ internal class EmbraceSpanServiceTest {
             },
             dataValidator = dataValidator,
             tracerSupplier = { tracer },
-            openTelemetrySupplier = { fakeOpenTelemetry() }
+            openTelemetrySupplier = { fakeOpenTelemetry() },
+            sessionSpanProvider = sessionSpanProvider,
         )
     }
 
@@ -175,6 +177,34 @@ internal class EmbraceSpanServiceTest {
             assertTrue(service.recordCompletedSpan("test-span", 10, 20))
         }
         assertFalse(service.recordCompletedSpan("test-span", 10, 20))
+    }
+
+    @Test
+    fun `sessionSpanProvider used as parent when no explicit parent given`() {
+        val sessionSpan = FakeEmbraceSdkSpan(name = "session-span")
+        val service = createEmbraceSpanService(sessionSpanProvider = { sessionSpan })
+        service.initializeService(clock.now().nanosToMillis())
+
+        assertNotNull(service.startSpan("child-span"))
+        assertTrue(service.recordCompletedSpan("completed-child", 10, 20))
+    }
+
+    @Test
+    fun `explicit parent overrides sessionSpanProvider`() {
+        val sessionSpan = FakeEmbraceSdkSpan(name = "session-span")
+        val explicitParent = FakeEmbraceSdkSpan(name = "explicit-parent")
+        val service = createEmbraceSpanService(sessionSpanProvider = { sessionSpan })
+        service.initializeService(clock.now().nanosToMillis())
+
+        assertNotNull(service.startSpan("child-span", parent = explicitParent))
+    }
+
+    @Test
+    fun `no sessionSpanProvider results in no parent`() {
+        val service = createEmbraceSpanService(sessionSpanProvider = null)
+        service.initializeService(clock.now().nanosToMillis())
+
+        assertNotNull(service.startSpan("root-span"))
     }
 
     @Suppress("UNUSED_PARAMETER")

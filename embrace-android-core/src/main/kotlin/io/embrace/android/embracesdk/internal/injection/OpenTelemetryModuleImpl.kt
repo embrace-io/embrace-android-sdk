@@ -145,7 +145,7 @@ class OpenTelemetryModuleImpl(
             tracerSupplier = { otelSdkWrapper.sdkTracer },
             openTelemetrySupplier = { otelSdkWrapper.openTelemetryKotlin },
             embraceSpanFactorySupplier = { embraceSpanFactory },
-            sessionSpanProvider = if (autoParentOrphanSpansToSession) currentSessionPartSpan::current else null,
+            sessionSpanProvider = { if (autoParentOrphanSpansToSession) currentSessionPartSpan.current() else null },
         )
     }
 

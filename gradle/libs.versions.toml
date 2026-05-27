@@ -104,6 +104,7 @@ apktool-lib = { module = "org.apktool:apktool-lib", version.ref = "apktoolLib" }
 bundletool = { module = "com.android.tools.build:bundletool", version.ref = "bundletool" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerialization" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 opentelemetry-kotlin = { module = "io.opentelemetry.kotlin:core", version.ref = "otelKotlin" }
 opentelemetry-kotlin-api = { module = "io.opentelemetry.kotlin:api", version.ref = "otelKotlin" }
 opentelemetry-kotlin-api-ext = { module = "io.opentelemetry.kotlin:api-ext", version.ref = "otelKotlin" }
@@ -123,5 +124,6 @@ detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildconfig" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlinGradlePlugin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlinGradlePlugin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlinGradlePlugin" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "koverGradlePlugin" }
 benchmark = { id = "androidx.benchmark", version.ref = "androidxBenchmark" }

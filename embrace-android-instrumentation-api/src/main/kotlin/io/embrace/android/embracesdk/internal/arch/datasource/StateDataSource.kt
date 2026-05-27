@@ -94,6 +94,11 @@ abstract class StateDataSource<T : Any>(
      */
     fun getCurrentStateValue(): T = currentState.get()
 
+    /**
+     * Returns true if the data source is currently active
+     */
+    fun isActive(): Boolean = stateCaptureActive.get()
+
     @CallSuper
     override fun onDataCaptureEnabled() {
         if (captureStateOnCreation) {

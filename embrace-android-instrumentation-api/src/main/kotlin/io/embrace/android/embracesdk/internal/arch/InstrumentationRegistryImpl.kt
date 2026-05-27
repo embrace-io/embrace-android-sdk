@@ -78,8 +78,9 @@ class InstrumentationRegistryImpl(
             .toList()
             .filter { it.dataSource is StateDataSource<*> }
             .forEach {
-                (it.dataSource as StateDataSource<*>).apply {
-                    stateAttributes[stateAttributeKey] = getCurrentStateValue()
+                val stateDataSource = it.dataSource as StateDataSource<*>
+                if (stateDataSource.isActive()) {
+                    stateAttributes[stateDataSource.stateAttributeKey] = stateDataSource.getCurrentStateValue()
                 }
             }
 

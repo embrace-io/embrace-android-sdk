@@ -180,7 +180,7 @@ internal class BackgroundActivityDisabledTest {
                 sessionSpan2.assertExpectedSessionSpanAttributes(
                     startMs = session2StartMs,
                     endMs = session2EndMs,
-                    sequenceId = 14,
+                    sequenceId = 13,
                     coldStart = false,
                 )
 

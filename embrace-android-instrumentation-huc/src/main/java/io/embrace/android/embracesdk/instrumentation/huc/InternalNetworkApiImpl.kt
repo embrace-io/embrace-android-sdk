@@ -52,5 +52,5 @@ internal class InternalNetworkApiImpl(
         ) ?: false
     }
 
-    override fun logInternalError(error: Throwable) = args.logger.trackInternalError(InternalErrorType.INTERNAL_INTERFACE_FAIL, error)
+    override fun logInternalError(error: Throwable) = args.logger.trackInternalError(InternalErrorType.InternalInterfaceFail, error)
 }

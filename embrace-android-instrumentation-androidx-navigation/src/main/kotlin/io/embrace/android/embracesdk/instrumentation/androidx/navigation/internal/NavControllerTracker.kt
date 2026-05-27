@@ -38,7 +38,7 @@ internal class NavControllerTracker(
                 }
             }
         }.onFailure {
-            logger.trackInternalError(InternalErrorType.NAV_CONTROLLER_TRACKING_FAIL, it)
+            logger.trackInternalError(InternalErrorType.NavControllerTrackingFail, it)
         }
     }
 

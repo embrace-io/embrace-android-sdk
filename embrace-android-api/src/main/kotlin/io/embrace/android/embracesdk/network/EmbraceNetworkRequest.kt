@@ -82,20 +82,20 @@ public class EmbraceNetworkRequest private constructor(
         get() = bytesSent ?: 0
 
     public companion object {
-
         /**
          * Construct a new [EmbraceNetworkRequest] instance where a HTTP response was returned.
-         * If no response was returned, use [.fromIncompleteRequest]
-         * instead.
+         * If no response was returned, use [.fromIncompleteRequest] instead.
          *
-         * @param url           the URL of the request.
-         * @param httpMethod    the HTTP method of the request.
-         * @param startTime     the start time of the request.
-         * @param endTime       the end time of the request.
-         * @param bytesSent     the number of bytes sent.
-         * @param bytesReceived the number of bytes received.
-         * @param statusCode    the status code of the response.
-         * @param traceId       the trace ID of the request, used for distributed tracing.
+         * @param url                the URL of the request.
+         * @param httpMethod         the HTTP method of the request.
+         * @param startTime          the start time of the request.
+         * @param endTime            the end time of the request.
+         * @param bytesSent          the number of bytes sent.
+         * @param bytesReceived      the number of bytes received.
+         * @param statusCode         the status code of the response.
+         * @param traceId            the trace ID of the request, used for distributed tracing.
+         * @param w3cTraceparent     the W3C-compliant traceparent of the network call.
+         * @param networkCaptureData network capture data for the request.
          * @return a new [EmbraceNetworkRequest] instance.
          */
         @JvmStatic
@@ -130,15 +130,17 @@ public class EmbraceNetworkRequest private constructor(
 
         /**
          * Construct a new [EmbraceNetworkRequest] instance where a HTTP response was not returned.
-         * If a response was returned, use [.fromCompletedRequest]
-         * instead.
+         * If a response was returned, use [.fromCompletedRequest] instead.
          *
-         * @param url          the URL of the request.
-         * @param httpMethod   the HTTP method of the request.
-         * @param startTime    the start time of the request.
-         * @param endTime      the end time of the request.
-         * @param errorType    the error type that occurred.
-         * @param errorMessage the error message
+         * @param url                the URL of the request.
+         * @param httpMethod         the HTTP method of the request.
+         * @param startTime          the start time of the request.
+         * @param endTime            the end time of the request.
+         * @param errorType          the error type that occurred.
+         * @param errorMessage       the error message.
+         * @param traceId            the trace ID of the request, used for distributed tracing.
+         * @param w3cTraceparent     the W3C-compliant traceparent of the network call.
+         * @param networkCaptureData network capture data for the request.
          * @return a new [EmbraceNetworkRequest] instance.
          */
         @JvmStatic

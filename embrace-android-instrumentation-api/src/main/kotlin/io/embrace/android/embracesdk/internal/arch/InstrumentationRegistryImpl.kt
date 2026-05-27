@@ -66,7 +66,7 @@ class InstrumentationRegistryImpl(
                     add(dataSourceState)
                 }
             } catch (exc: Throwable) {
-                logger.trackInternalError(InternalErrorType.INSTRUMENTATION_REG_FAIL, exc)
+                logger.trackInternalError(InternalErrorType.InstrumentationRegFail, exc)
             }
         }
     }

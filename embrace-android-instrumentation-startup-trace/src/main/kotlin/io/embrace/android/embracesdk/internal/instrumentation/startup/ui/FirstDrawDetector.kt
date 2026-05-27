@@ -48,7 +48,7 @@ internal class FirstDrawDetector(
                 }
             } else if (!loadingActivities.containsKey(instanceId)) {
                 logger.trackInternalError(
-                    type = InternalErrorType.UI_CALLBACK_FAIL,
+                    type = InternalErrorType.UiCallbackFail,
                     throwable = IllegalStateException(
                         "Fail to attach frame rendering callback because the callback on Window was null"
                     )
@@ -69,7 +69,7 @@ internal class FirstDrawDetector(
                 activity.window.decorView.viewTreeObserver.unregisterFrameCommitCallback(firstDrawCallback)
             }.exceptionOrNull()?.let { exception ->
                 logger.trackInternalError(
-                    type = InternalErrorType.UI_CALLBACK_FAIL,
+                    type = InternalErrorType.UiCallbackFail,
                     throwable = IllegalStateException("Failed to unregister first draw callback", exception)
                 )
             }

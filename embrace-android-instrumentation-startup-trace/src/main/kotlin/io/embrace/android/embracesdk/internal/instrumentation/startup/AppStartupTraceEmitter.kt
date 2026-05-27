@@ -211,12 +211,6 @@ internal class AppStartupTraceEmitter(
         if (!dataCollectionComplete.getAndSet(true)) {
             EmbTrace.trace("record-startup") {
                 recordStartup(traceEndTimeMs, completed)
-                if (appStartupRootSpan.get()?.isRecording() != false) {
-                    logger.trackInternalError(
-                        type = InternalErrorType.APP_LAUNCH_TRACE_FAIL,
-                        throwable = IllegalStateException("App startup trace recording attempted but did not succeed")
-                    )
-                }
             }
             appStartupCompleteCallback?.invoke()
         }
@@ -248,7 +242,7 @@ internal class AppStartupTraceEmitter(
             appStartupRootSpan.set(rootSpan)
         } else {
             logger.trackInternalError(
-                type = InternalErrorType.APP_LAUNCH_TRACE_FAIL,
+                type = InternalErrorType.AppLaunchTraceFail,
                 throwable = IllegalStateException("App startup trace could not be started")
             )
         }

@@ -22,6 +22,8 @@ import java.util.ServiceLoader
  * between modules.
  */
 internal fun ModuleGraph.postInit() {
+    openTelemetryModule.eventService.setMetadataProvider(eventMetadataSupplierProvider())
+
     openTelemetryModule.applyConfiguration(
         sensitiveKeysBehavior = configService.sensitiveKeysBehavior,
         bypassValidation = configService.isOnlyUsingOtelExporters(),
@@ -141,7 +143,7 @@ internal fun ModuleGraph.triggerPayloadSend() {
         } else {
             val payloadCount = deliveryModule?.cacheStorageService?.getUndeliveredPayloads()?.size ?: 0
             initModule.logger.trackInternalError(
-                type = InternalErrorType.PAYLOAD_RESURRECTION_FAIL,
+                type = InternalErrorType.PayloadResurrectionFail,
                 throwable = IllegalStateException(
                     "Resurrection service not found. Undelivered payloads not processed: $payloadCount"
                 )
@@ -177,13 +179,6 @@ internal fun ModuleGraph.markSdkInitComplete() {
     val startMsg = "Embrace SDK version ${BuildConfig.VERSION_NAME} started" +
         (appId?.let { " for appId = $it" } ?: " without an app ID")
     initModule.logger.logInfo(startMsg)
-}
-
-/**
- * Set the provider of metadata for the event service
- */
-internal fun ModuleGraph.setupMetadataProvider() {
-    openTelemetryModule.eventService.setMetadataProvider(eventMetadataSupplierProvider())
 }
 
 private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, String>> {

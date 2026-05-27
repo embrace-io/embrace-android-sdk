@@ -209,7 +209,7 @@ internal class SessionOrchestratorListenerTest {
         clock.tick(10000)
         orchestrator.endSessionWithManual()
         assertTrue(secondListenerInvoked)
-        assertTrue(logger.internalErrorMessages.any { it.msg == InternalErrorType.USER_SESSION_CALLBACK_FAIL.toString() })
+        assertTrue(logger.internalErrorMessages.any { it.msg == InternalErrorType.UserSessionCallbackFail.toString() })
     }
 
     private fun restoredMetadataStore() = UserSessionMetadataStore(FakeKeyValueStore()).also { store ->

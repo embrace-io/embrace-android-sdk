@@ -19,6 +19,10 @@
           "value": "background"
         },
         {
+          "key": "emb.state.lazy-init",
+          "value": "__EMBRACE_TEST_IGNORE__"
+        },
+        {
           "key": "emb.state.network",
           "value": "__EMBRACE_TEST_IGNORE__"
         },
@@ -28,6 +32,10 @@
         },
         {
           "key": "emb.state.screen-automatic",
+          "value": "__EMBRACE_TEST_IGNORE__"
+        },
+        {
+          "key": "emb.state.screen-manual",
           "value": "__EMBRACE_TEST_IGNORE__"
         },
         {

@@ -55,7 +55,7 @@ abstract class DataSourceImpl(
                 telemetryService.trackAppliedLimit(instrumentationName, AppliedLimitType.DROP)
             }
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.DATA_SOURCE_DATA_CAPTURE_FAIL, exc)
+            logger.trackInternalError(InternalErrorType.DataSourceDataCaptureFail, exc)
         }
         return null
     }

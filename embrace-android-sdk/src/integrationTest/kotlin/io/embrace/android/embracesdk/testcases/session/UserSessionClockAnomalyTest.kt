@@ -40,7 +40,7 @@ internal class UserSessionClockAnomalyTest {
                 val logger = testRule.bootstrapper.initModule.logger as FakeInternalLogger
 
                 assertTrue(logger.internalErrorMessages.any {
-                    it.msg == InternalErrorType.CLOCK_BACKWARDS_SHIFT.toString()
+                    it.msg == InternalErrorType.ClockBackwardsShift.toString()
                 })
             }
         )
@@ -69,7 +69,7 @@ internal class UserSessionClockAnomalyTest {
 
                 val logger = testRule.bootstrapper.initModule.logger as FakeInternalLogger
                 assertTrue(logger.internalErrorMessages.any {
-                    it.msg == InternalErrorType.CLOCK_BACKWARDS_SHIFT.toString()
+                    it.msg == InternalErrorType.ClockBackwardsShift.toString()
                 })
             }
         )

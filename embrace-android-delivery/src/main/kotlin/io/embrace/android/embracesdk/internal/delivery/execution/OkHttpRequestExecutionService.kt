@@ -56,7 +56,7 @@ class OkHttpRequestExecutionService(
             // for those. But any unexpected error should be logged.
             if (throwable !is IOException) {
                 logger.trackInternalError(
-                    type = InternalErrorType.PAYLOAD_DELIVERY_FAIL,
+                    type = InternalErrorType.PayloadDeliveryFail,
                     throwable = throwable
                 )
             }

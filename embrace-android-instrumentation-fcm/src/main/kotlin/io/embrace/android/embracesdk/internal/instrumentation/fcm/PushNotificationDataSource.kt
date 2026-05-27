@@ -35,7 +35,7 @@ class PushNotificationDataSource(
                 notificationPriority = notification?.notificationPriority,
             )
         } catch (e: Exception) {
-            logger.trackInternalError(InternalErrorType.DATA_SOURCE_DATA_CAPTURE_FAIL, e)
+            logger.trackInternalError(InternalErrorType.DataSourceDataCaptureFail, e)
         }
     }
 

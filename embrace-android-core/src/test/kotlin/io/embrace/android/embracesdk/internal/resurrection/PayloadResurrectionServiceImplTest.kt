@@ -39,6 +39,7 @@ import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRASH
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeServiceImpl
+import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
@@ -59,6 +60,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.ByteArrayInputStream
+import java.io.InputStream
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -340,6 +342,63 @@ class PayloadResurrectionServiceImplTest {
     }
 
     @Test
+    fun `session payload skipped without error when cache returns null stream`() {
+        cacheStorageService.addFakePayload(sessionMetadata)
+        val service = serviceWithPayloadStream(null)
+
+        service.resurrectOldPayloads { nativeCrashService }
+
+        assertEquals(0, payloadStorageService.storedPayloadCount())
+        assertEquals(0, cacheStorageService.storedPayloadCount())
+        assertEquals(1, cacheStorageService.deleteCount.get())
+        assertTrue(logger.internalErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `session payload skipped without error when gzip stream is invalid`() {
+        cacheStorageService.addFakePayload(sessionMetadata)
+        val service = serviceWithPayloadStream("hi there".byteInputStream())
+
+        service.resurrectOldPayloads { nativeCrashService }
+
+        assertEquals(0, payloadStorageService.storedPayloadCount())
+        assertEquals(0, cacheStorageService.storedPayloadCount())
+        assertEquals(1, cacheStorageService.deleteCount.get())
+        assertTrue(logger.internalErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `sessionless native crash sent without envelope data when crash envelope stream returns null`() {
+        val deadSessionCrashData = createNativeCrashData(
+            nativeCrashId = "native-crash-1",
+            sessionId = "no-session-id"
+        )
+        cacheStorageService.addPayload(
+            metadata = fakeCachedCrashEnvelopeMetadata,
+            data = fakeEmptyLogEnvelope()
+        )
+        nativeCrashService.addNativeCrashData(deadSessionCrashData)
+
+        val service = serviceWithPayloadStream(null)
+        service.resurrectOldPayloads { nativeCrashService }
+
+        assertEquals(0, payloadStorageService.storedPayloadCount())
+        assertEquals(0, cacheStorageService.storedPayloadCount())
+        assertTrue(cachedLogEnvelopeStore.createdEnvelopes.isEmpty())
+
+        assertEquals(1, nativeCrashService.nativeCrashesSent.size)
+        with(nativeCrashService.nativeCrashesSent.first()) {
+            assertEquals(deadSessionCrashData, first)
+        }
+
+        assertEquals(1, logger.internalErrorMessages.size)
+        assertEquals(
+            InternalErrorType.NativeCrashResurrectionError.toString(),
+            logger.internalErrorMessages.single().msg
+        )
+    }
+
+    @Test
     fun `session payload that contains more than one span will not be resurrected`() {
         multipleSessionSpanEnvelope.resurrectPayload()
         assertResurrectionFailure()
@@ -575,7 +634,6 @@ class PayloadResurrectionServiceImplTest {
         thread.start()
         thread.join(5000)
     }
-
     private fun Envelope<SessionPartPayload>.resurrectPayload() {
         cacheStorageService.addPayload(
             metadata = sessionMetadata,
@@ -591,6 +649,27 @@ class PayloadResurrectionServiceImplTest {
                 Envelope.sessionEnvelopeType
             )
         }
+    }
+
+    private fun serviceWithPayloadStream(payloadStream: InputStream?): PayloadResurrectionServiceImpl {
+        val nullStreamCacheStorage = object : PayloadStorageService by cacheStorageService {
+            override fun loadPayloadAsStream(metadata: StoredTelemetryMetadata): InputStream? = payloadStream
+        }
+        return PayloadResurrectionServiceImpl(
+            intakeService = IntakeServiceImpl(
+                schedulingService,
+                payloadStorageService,
+                nullStreamCacheStorage,
+                logger,
+                serializer,
+                PriorityWorker(intakeExecutor),
+            ),
+            payloadStorageService = payloadStorageService,
+            cacheStorageService = nullStreamCacheStorage,
+            cachedLogEnvelopeStore = cachedLogEnvelopeStore,
+            logger = logger,
+            serializer = serializer,
+        )
     }
 
     private fun createNativeCrashData(
@@ -610,7 +689,7 @@ class PayloadResurrectionServiceImplTest {
         assertEquals(0, cacheStorageService.storedPayloadCount())
         assertEquals(1, logger.internalErrorMessages.size)
         assertEquals(
-            InternalErrorType.PAYLOAD_RESURRECTION_PAYLOAD_FAIL.toString(),
+            InternalErrorType.PayloadResurrectionPayloadFail.toString(),
             logger.internalErrorMessages.single().msg
         )
     }

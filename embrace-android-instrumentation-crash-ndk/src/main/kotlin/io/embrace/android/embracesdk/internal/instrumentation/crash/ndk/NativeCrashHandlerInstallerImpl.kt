@@ -57,7 +57,7 @@ internal class NativeCrashHandlerInstallerImpl(
                 args.registerSessionPartChangeListener { updateSessionIds() }
             }
         } catch (ex: Exception) {
-            logger.trackInternalError(InternalErrorType.NATIVE_HANDLER_INSTALL_FAIL, ex)
+            logger.trackInternalError(InternalErrorType.NativeHandlerInstallFail, ex)
         }
     }
 

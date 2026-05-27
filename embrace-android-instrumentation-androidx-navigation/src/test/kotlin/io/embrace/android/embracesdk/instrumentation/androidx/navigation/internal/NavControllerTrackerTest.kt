@@ -126,7 +126,7 @@ internal class NavControllerTrackerTest {
         assertTrue(fakeTracker.attachedCalls.isEmpty())
         assertTrue(
             errorLogger.internalErrorMessages.any {
-                it.msg == InternalErrorType.NAV_CONTROLLER_TRACKING_FAIL.toString()
+                it.msg == InternalErrorType.NavControllerTrackingFail.toString()
             }
         )
     }

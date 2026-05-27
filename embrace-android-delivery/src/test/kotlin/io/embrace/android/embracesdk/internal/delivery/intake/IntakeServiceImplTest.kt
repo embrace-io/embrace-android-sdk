@@ -441,7 +441,7 @@ class IntakeServiceImplTest {
             }
 
         assertEquals(cache1.filename, cacheStorageService.storedFilenames().single())
-        assertEquals(InternalErrorType.INTAKE_UNEXPECTED_TYPE.toString(), logger.internalErrorMessages.single().msg)
+        assertEquals(InternalErrorType.IntakeUnexpectedType.toString(), logger.internalErrorMessages.single().msg)
     }
 
     @Test

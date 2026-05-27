@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation
 
 import android.annotation.SuppressLint
+import android.os.Build
 import io.embrace.android.embracesdk.instrumentation.huclite.DelegatingInstrumentedURLStreamHandlerFactory
 import io.embrace.android.embracesdk.instrumentation.huclite.HucLitePathOverrideRequest
 import io.embrace.android.embracesdk.instrumentation.huclite.InstrumentedUrlStreamHandlerFactory
@@ -22,6 +23,7 @@ import io.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.HttpAttributes
 import io.opentelemetry.kotlin.semconv.UrlAttributes
+import io.opentelemetry.kotlin.semconv.UserAgentAttributes
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 import java.net.URL
@@ -118,12 +120,12 @@ class HucLiteDataSource(
 
             factoryInstaller(newFactory ?: instrumentedUrlStreamHandlerFactoryProvider())
         }.onFailure {
-            logger.trackInternalError(InternalErrorType.URL_STREAM_HANDLER_FACTORY_INSTALL_FAIL, it)
+            logger.trackInternalError(InternalErrorType.UrlStreamHandlerFactoryInstallFail, it)
         }
     }
 
     private fun errorHandler(t: Throwable) {
-        logger.trackInternalError(InternalErrorType.DATA_SOURCE_DATA_CAPTURE_FAIL, InstrumentationException(t))
+        logger.trackInternalError(InternalErrorType.DataSourceDataCaptureFail, InstrumentationException(t))
     }
 
     class RequestData(
@@ -169,7 +171,7 @@ class HucLiteDataSource(
                     completedRequestAttributes(
                         url = telemetryUrlProvider(),
                         httpMethod = method,
-                        responseCode = responseCode
+                        responseCode = responseCode,
                     )
                 )
                 telemetryDestination.recordCompletedSpan(
@@ -214,6 +216,8 @@ class HucLiteDataSource(
             UrlAttributes.URL_FULL to url,
             HttpAttributes.HTTP_REQUEST_METHOD to httpMethod,
             HttpAttributes.HTTP_RESPONSE_STATUS_CODE to responseCode,
+            UserAgentAttributes.USER_AGENT_NAME to HUC_USER_AGENT_NAME,
+            UserAgentAttributes.USER_AGENT_VERSION to Build.VERSION.SDK_INT.toString(),
         ).toNonNullMap().mapValues { it.value.toString() }
 
         private fun incompleteRequestAttributes(
@@ -226,6 +230,8 @@ class HucLiteDataSource(
             HttpAttributes.HTTP_REQUEST_METHOD to httpMethod,
             ErrorAttributes.ERROR_TYPE to errorType,
             ExceptionAttributes.EXCEPTION_MESSAGE to errorMessage,
+            UserAgentAttributes.USER_AGENT_NAME to HUC_USER_AGENT_NAME,
+            UserAgentAttributes.USER_AGENT_VERSION to Build.VERSION.SDK_INT.toString(),
         ).toNonNullMap().mapValues { it.value }
 
         private fun getValidStartTime(): Long =
@@ -256,6 +262,7 @@ class HucLiteDataSource(
 
         private companion object {
             const val INVALID_START_TIME = -1L
+            const val HUC_USER_AGENT_NAME = "HttpURLConnection"
         }
     }
 

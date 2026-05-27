@@ -882,7 +882,7 @@ internal class SessionOrchestratorTest {
 
         val errors = logger.internalErrorMessages
         assertEquals(1, errors.size)
-        assertEquals(InternalErrorType.CLOCK_BACKWARDS_SHIFT.toString(), errors[0].msg)
+        assertEquals(InternalErrorType.ClockBackwardsShift.toString(), errors[0].msg)
     }
 
     @Test
@@ -911,7 +911,7 @@ internal class SessionOrchestratorTest {
 
         val errors = logger.internalErrorMessages
         assertEquals(1, errors.size)
-        assertEquals(InternalErrorType.CLOCK_BACKWARDS_SHIFT.toString(), errors[0].msg)
+        assertEquals(InternalErrorType.ClockBackwardsShift.toString(), errors[0].msg)
     }
 
     @Test

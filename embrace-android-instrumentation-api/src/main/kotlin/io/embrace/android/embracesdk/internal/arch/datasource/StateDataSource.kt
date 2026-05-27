@@ -7,11 +7,16 @@ import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Base [DataSource] to handle State updates in a unified way. This will create the right objects to represent a state in the data model,
  * as well as track and put in the common metadata expected by the backend.
+ *
+ * When state capture begins, a span will be cut for each session part that it overlaps with. By default, state capture begins when the
+ * data source is created, but it can be deferred to when [onStateChange] is first called if [captureStateOnCreation] is overridden and
+ * set to false.
  */
 abstract class StateDataSource<T : Any>(
     private val args: InstrumentationArgs,
@@ -24,9 +29,17 @@ abstract class StateDataSource<T : Any>(
     instrumentationName = "${stateTypeFactory(defaultValue).stateName}_state_data_source"
 ) {
     val stateAttributeKey: String = "emb.state.${stateTypeFactory(defaultValue).stateName}"
+
+    /**
+     * If true, state capture will begin when [onDataCaptureEnabled] is called. Otherwise, it will happen lazily when [onStateChange]
+     * is first invoked using the new value as the initial state.
+     */
+    protected open val captureStateOnCreation: Boolean = true
+
     private val currentState: AtomicReference<T> = AtomicReference(defaultValue)
     private val partStateToken: AtomicReference<SessionPartStateToken<T>?> = AtomicReference()
     private val unrecordedTransitions = AtomicReference(noUnrecordedTransitions)
+    private val stateCaptureActive = AtomicBoolean(false)
 
     /**
      * Notify that the state has changed at the given time to the given value, with the given number of transitions dropped by the
@@ -38,6 +51,10 @@ abstract class StateDataSource<T : Any>(
         transitionAttributes: Map<String, String> = emptyMap(),
         droppedTransitions: Int = 0,
     ) {
+        if (!stateCaptureActive.get()) {
+            startStateCapture()
+        }
+
         val oldState = currentState.getAndSet(newState)
         val currentStateToken = partStateToken.get()
         // Track the number of transitions dropped by instrumentation that didn't cause this to be invoked
@@ -79,9 +96,8 @@ abstract class StateDataSource<T : Any>(
 
     @CallSuper
     override fun onDataCaptureEnabled() {
-        // Create a new state span as soon as the data source is enabled if there's an active session
-        if (args.sessionPartId() != null) {
-            createSessionStateSpan(currentState.get())
+        if (captureStateOnCreation) {
+            startStateCapture()
         }
     }
 
@@ -97,15 +113,23 @@ abstract class StateDataSource<T : Any>(
         createSessionStateSpan(currentState.get())
     }
 
+    private fun startStateCapture() {
+        if (stateCaptureActive.compareAndSet(false, true)) {
+            createSessionStateSpan(currentState.get())
+        }
+    }
+
     private fun createSessionStateSpan(initialValue: T) {
-        try {
-            partStateToken.set(
-                args.destination.startSessionPartStateCapture(
-                    state = stateTypeFactory(initialValue)
+        if (stateCaptureActive.get() && args.sessionPartId() != null) {
+            try {
+                partStateToken.set(
+                    args.destination.startSessionPartStateCapture(
+                        state = stateTypeFactory(initialValue)
+                    )
                 )
-            )
-        } catch (t: Throwable) {
-            logger.trackInternalError(InternalErrorType.SESSION_STATE_CREATION_FAIL, t)
+            } catch (t: Throwable) {
+                logger.trackInternalError(InternalErrorType.SessionStateCreationFail, t)
+            }
         }
     }
 

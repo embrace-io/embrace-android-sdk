@@ -122,7 +122,7 @@ class BlockedThreadDetector(
             }
             onMonitorThreadInterval(now)
         } catch (exc: Exception) {
-            logger.trackInternalError(InternalErrorType.THREAD_BLOCKAGE_HEARTBEAT_CHECK_FAIL, exc)
+            logger.trackInternalError(InternalErrorType.ThreadBlockageHeartbeatCheckFail, exc)
         }
     }
 

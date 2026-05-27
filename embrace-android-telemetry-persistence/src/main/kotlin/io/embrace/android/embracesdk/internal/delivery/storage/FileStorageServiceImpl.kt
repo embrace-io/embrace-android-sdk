@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.utils.threadSafeToList
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import java.io.File
 import java.io.FileNotFoundException
@@ -44,7 +45,7 @@ class FileStorageServiceImpl(
         try {
             storeImpl(metadata, action)
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, exc)
+            logger.trackInternalError(InternalErrorType.PayloadStorageFail, exc)
         }
     }
 
@@ -92,7 +93,7 @@ class FileStorageServiceImpl(
             metadata.asFile().delete()
         } catch (exc: Throwable) {
             if (exc !is FileNotFoundException) {
-                logger.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, exc)
+                logger.trackInternalError(InternalErrorType.PayloadStorageFail, exc)
             }
         } finally {
             storedFiles.remove(metadata)
@@ -102,14 +103,16 @@ class FileStorageServiceImpl(
     override fun loadPayloadAsStream(metadata: StoredTelemetryMetadata): InputStream? {
         return try {
             metadata.asFile().inputStream().buffered()
+        } catch (_: FileNotFoundException) {
+            null
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, exc)
+            logger.trackInternalError(InternalErrorType.PayloadStorageFail, exc)
             null
         }
     }
 
     override fun getStoredPayloads(): List<StoredTelemetryMetadata> {
-        return storedFiles.toList()
+        return storedFiles.threadSafeToList()
     }
 
     /**
@@ -142,7 +145,6 @@ class FileStorageServiceImpl(
         )
             .take(removalCount)
         removals.forEach(::processDelete)
-        logger.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, RuntimeException("Pruned payload storage"))
 
         // notify the caller whether the new payload should be dropped
         val shouldNotPersist = removals.contains(newPayload)

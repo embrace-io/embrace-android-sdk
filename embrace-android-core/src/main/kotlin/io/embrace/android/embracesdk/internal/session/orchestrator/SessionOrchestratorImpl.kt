@@ -94,7 +94,7 @@ internal class SessionOrchestratorImpl(
                 userSessionState = when {
                     stored != null && clock.now() < stored.startTimeMs -> {
                         logger.trackInternalError(
-                            InternalErrorType.CLOCK_BACKWARDS_SHIFT,
+                            InternalErrorType.ClockBackwardsShift,
                             IllegalStateException(
                                 "Clock shifted backwards from previous user session."
                             )
@@ -251,7 +251,7 @@ internal class SessionOrchestratorImpl(
             try {
                 listener.onSessionStateEvent(SessionStateEvent.UserSessionActive(state.metadata.userSessionId))
             } catch (e: Exception) {
-                logger.trackInternalError(InternalErrorType.USER_SESSION_CALLBACK_FAIL, e)
+                logger.trackInternalError(InternalErrorType.UserSessionCallbackFail, e)
             }
         }
     }
@@ -261,7 +261,7 @@ internal class SessionOrchestratorImpl(
             try {
                 listener.onSessionStateEvent(event)
             } catch (e: Exception) {
-                logger.trackInternalError(InternalErrorType.USER_SESSION_CALLBACK_FAIL, e)
+                logger.trackInternalError(InternalErrorType.UserSessionCallbackFail, e)
             }
         }
     }
@@ -526,7 +526,7 @@ internal class SessionOrchestratorImpl(
         if (current is UserSessionState.Active) {
             if (timestamp < current.metadata.startTimeMs) {
                 logger.trackInternalError(
-                    InternalErrorType.CLOCK_BACKWARDS_SHIFT,
+                    InternalErrorType.ClockBackwardsShift,
                     IllegalStateException("Clock shifted backwards from user session start time.")
                 )
                 terminateUserSession(current)

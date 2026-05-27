@@ -57,7 +57,7 @@ internal class NativeCrashProcessorImpl(
                     }
                 } else {
                     logger.trackInternalError(
-                        type = InternalErrorType.NATIVE_CRASH_LOAD_FAIL,
+                        type = InternalErrorType.NativeCrashLoadFail,
                         throwable = FileNotFoundException("Failed to load crash report at ${crashFile.path}")
                     )
                     null
@@ -65,7 +65,7 @@ internal class NativeCrashProcessorImpl(
             } catch (t: Throwable) {
                 crashFile.delete()
                 logger.trackInternalError(
-                    type = InternalErrorType.NATIVE_CRASH_LOAD_FAIL,
+                    type = InternalErrorType.NativeCrashLoadFail,
                     throwable = RuntimeException(
                         "Failed to read native crash file {crashFilePath=" + crashFile.absolutePath + "}.",
                         t

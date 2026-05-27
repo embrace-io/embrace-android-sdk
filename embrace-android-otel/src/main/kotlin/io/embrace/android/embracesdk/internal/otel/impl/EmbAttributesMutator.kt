@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
+import io.opentelemetry.kotlin.attributes.AnyValue
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 import java.util.concurrent.ConcurrentHashMap
 
@@ -39,6 +40,14 @@ internal class EmbAttributesMutator(
     }
 
     override fun setStringListAttribute(key: String, value: List<String>) {
+        map[key] = value
+    }
+
+    override fun setByteArrayAttribute(key: String, value: ByteArray) {
+        map[key] = value
+    }
+
+    override fun setAnyValueAttribute(key: String, value: AnyValue) {
         map[key] = value
     }
 }

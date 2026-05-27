@@ -160,7 +160,7 @@ internal class ExternalLoggerTest {
                     eventName = "my.event",
                     timestamp = logTime,
                     observedTimestamp = observedTime,
-                    context = embOpenTelemetry.context.storeSpan(embOpenTelemetry.context.root(), span),
+                    context = embOpenTelemetry.context.root().storeSpan(span),
                     severityNumber = SeverityNumber.INFO,
                     severityText = "",
                 ) {

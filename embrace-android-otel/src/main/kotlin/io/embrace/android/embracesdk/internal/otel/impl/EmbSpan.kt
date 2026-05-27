@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.opentelemetry.kotlin.Clock
 import io.opentelemetry.kotlin.OpenTelemetry
+import io.opentelemetry.kotlin.attributes.AnyValue
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.tracing.Span
 import io.opentelemetry.kotlin.tracing.SpanContext
@@ -49,6 +50,14 @@ class EmbSpan(
     }
 
     override fun setBooleanAttribute(key: String, value: Boolean) {
+        setStringAttribute(key, value.toString())
+    }
+
+    override fun setByteArrayAttribute(key: String, value: ByteArray) {
+        setStringAttribute(key, value.contentToString())
+    }
+
+    override fun setAnyValueAttribute(key: String, value: AnyValue) {
         setStringAttribute(key, value.toString())
     }
 

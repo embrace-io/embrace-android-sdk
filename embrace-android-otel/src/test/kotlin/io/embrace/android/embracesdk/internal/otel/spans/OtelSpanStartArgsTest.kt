@@ -52,7 +52,7 @@ internal class OtelSpanStartArgsTest {
             assertTrue(contains(EmbType.Performance.Default))
         }
         assertEquals("emb-test", args.initialSpanName)
-        val spanContext = fakeOpenTelemetry(false).span.fromContext(args.parentContext).spanContext
+        val spanContext = args.parentContext.extractSpan().spanContext
         assertFalse(spanContext.isValid)
 
         args.startSpan(startTime).assertSpan(
@@ -66,7 +66,7 @@ internal class OtelSpanStartArgsTest {
     fun `add parent after initial creation`() {
         val parent = tracer.startSpan("parent")
         val otel = fakeOpenTelemetry(true)
-        val ctx = otel.context.storeSpan(otel.context.root(), parent)
+        val ctx = otel.context.root().storeSpan(parent)
         val args = OtelSpanStartArgs(
             name = "test",
             type = EmbType.Performance.Default,
@@ -76,7 +76,7 @@ internal class OtelSpanStartArgsTest {
             parentCtx = ctx,
             openTelemetry = otel
         )
-        val spanContext = otel.span.fromContext(args.parentContext).spanContext
+        val spanContext = args.parentContext.extractSpan().spanContext
         assertEquals(parent.spanContext.traceId, spanContext.traceId)
 
         val startTime = otelClock.now()

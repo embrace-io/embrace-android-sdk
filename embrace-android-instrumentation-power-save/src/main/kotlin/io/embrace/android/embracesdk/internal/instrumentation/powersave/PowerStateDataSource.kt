@@ -19,6 +19,8 @@ class PowerStateDataSource(
     private val powerManagerProvider: Provider<PowerManager?> = { args.systemService(Context.POWER_SERVICE) }
     private val receiver = PowerSaveModeReceiver(powerManagerProvider, ::onPowerSaveModeChanged)
 
+    override val captureStateOnCreation = false
+
     override fun onDataCaptureEnabled() {
         super.onDataCaptureEnabled()
         args.backgroundWorker(Worker.Background.NonIoRegWorker).run {
@@ -35,11 +37,15 @@ class PowerStateDataSource(
 
     private fun onPowerSaveModeChanged(powerSaveMode: Boolean) {
         val timestamp = clock.now()
-        val newState = if (powerSaveMode) {
-            PowerMode.LOW
-        } else {
-            PowerMode.NORMAL
+        if (getCurrentStateValue() != PowerMode.UNKNOWN || powerSaveMode) {
+            onStateChange(
+                newState = if (powerSaveMode) {
+                    PowerMode.LOW
+                } else {
+                    PowerMode.NORMAL
+                },
+                transitionTimeMs = timestamp
+            )
         }
-        onStateChange(newState, timestamp)
     }
 }

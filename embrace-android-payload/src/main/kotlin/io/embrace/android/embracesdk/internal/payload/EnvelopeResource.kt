@@ -30,6 +30,8 @@ package io.embrace.android.embracesdk.internal.payload
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
+import io.embrace.android.embracesdk.internal.serialization.EnvelopeResourceSerializer
+import kotlinx.serialization.Serializable
 
 /**
  * Immutable attributes about the app, device, and Embrace SDK internal state for duration of an app launch.
@@ -66,6 +68,7 @@ import com.squareup.moshi.JsonClass
  * @param numCores (Android) The number of CPU cores the device has. Previous name: d.nc
  */
 
+@Serializable(with = EnvelopeResourceSerializer::class)
 @JsonClass(generateAdapter = false)
 data class EnvelopeResource(
 

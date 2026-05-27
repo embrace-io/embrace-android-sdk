@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.internal.payload
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Types
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import java.lang.reflect.ParameterizedType
 
 /**
@@ -13,20 +15,26 @@ import java.lang.reflect.ParameterizedType
  * - CrashPayload
  * - NetworkCapturePayload
  */
+@Serializable
 @JsonClass(generateAdapter = true)
 data class Envelope<T>(
+    @SerialName("resource")
     @Json(name = "resource")
     val resource: EnvelopeResource? = null,
 
+    @SerialName("metadata")
     @Json(name = "metadata")
     val metadata: EnvelopeMetadata? = null,
 
+    @SerialName("version")
     @Json(name = "version")
     val version: String? = null,
 
+    @SerialName("type")
     @Json(name = "type")
     val type: String? = null,
 
+    @SerialName("data")
     @Json(name = "data")
     val data: T,
 ) {

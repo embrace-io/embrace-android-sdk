@@ -2,38 +2,48 @@ package io.embrace.android.embracesdk.internal.payload
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 /**
  * Describes a particular Java exception. Where an exception has a cause, there will be an
  * [LegacyExceptionInfo] for each nested cause.
  */
+@Serializable
 @JsonClass(generateAdapter = true)
-class LegacyExceptionInfo(
+class LegacyExceptionInfo internal constructor(
 
     /**
      * The name of the class throwing the exception.
      */
-    @Json(name = "n") val name: String,
+    @SerialName("n") @Json(name = "n") val name: String,
 
     /**
      * The exception message.
      */
-    @Json(name = "m") val message: String?,
-
-    lines: List<String>,
-) {
+    @SerialName("m") @Json(name = "m") val message: String?,
 
     /**
      * String representation of each line of the stack trace.
      */
-    @Json(name = "tt")
-    val lines: List<String> = lines.take(STACK_FRAME_LIMIT)
+    @SerialName("tt") @Json(name = "tt") val lines: List<String>,
 
     /**
      * The original length of the stack trace. This will be null if it has not been truncated.
      */
-    @Json(name = "length")
-    val originalLength: Int? = lines.size.takeIf { it > STACK_FRAME_LIMIT }
+    @SerialName("length") @Json(name = "length") val originalLength: Int?,
+) {
+
+    /**
+     * Creates a [LegacyExceptionInfo], truncating the stack trace to at most [STACK_FRAME_LIMIT]
+     * frames and recording the original length when truncation occurs.
+     */
+    constructor(name: String, message: String?, lines: List<String>) : this(
+        name = name,
+        message = message,
+        lines = lines.take(STACK_FRAME_LIMIT),
+        originalLength = lines.size.takeIf { it > STACK_FRAME_LIMIT },
+    )
 
     companion object {
 

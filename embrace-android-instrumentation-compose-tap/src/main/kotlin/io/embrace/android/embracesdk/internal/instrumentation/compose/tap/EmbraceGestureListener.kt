@@ -22,11 +22,9 @@ internal class EmbraceGestureListener(
 
     override fun onSingleTapUp(event: MotionEvent): Boolean {
         try {
-            if (event.actionMasked == MotionEvent.ACTION_UP) {
-                activityRef.get()?.let { activity ->
-                    activity.window?.let {
-                        logTapUp(it.decorView, event)
-                    }
+            activityRef.get()?.let { activity ->
+                activity.window?.let {
+                    logTapUp(it.decorView, event)
                 }
             }
         } catch (e: Throwable) {

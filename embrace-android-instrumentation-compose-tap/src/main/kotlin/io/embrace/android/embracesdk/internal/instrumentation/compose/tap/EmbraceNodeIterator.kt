@@ -8,7 +8,6 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsConfiguration
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.semantics.getAllSemanticsNodes
 import androidx.compose.ui.semantics.getOrNull
 
 private const val UNKNOWN_ELEMENT_NAME = "Unlabeled Compose element"
@@ -25,9 +24,8 @@ internal class EmbraceNodeIterator(
     @SuppressLint("VisibleForTests")
     fun findClickedElement(root: View, x: Float, y: Float) {
         val semanticsOwner = if (root is ViewRootForTest) root.semanticsOwner else return
-        val semanticsNodes = semanticsOwner.getAllSemanticsNodes(true)
 
-        findClickedElement(semanticsNodes, x, y)?.let {
+        findClickedElement(semanticsOwner.rootSemanticsNode, x, y)?.let {
             val clickedView = ClickedView(it, x, y)
             dataSource.logComposeTap(
                 Pair(clickedView.x, clickedView.y),
@@ -39,15 +37,20 @@ internal class EmbraceNodeIterator(
     /**
      * Iterates over the compose tree to find the clicked element and retrieve its tag
      * */
-    private fun findClickedElement(semanticsNodes: List<SemanticsNode>, x: Float, y: Float): String? {
-        for (node in semanticsNodes) {
-            if (isNodeInPosition(node, x, y)) {
-                val clickableElementName = getClickableElementName(node.config)
-                if (clickableElementName != null) {
-                    return clickableElementName
-                }
+    private fun findClickedElement(semanticsNode: SemanticsNode, x: Float, y: Float): String? {
+        val children = semanticsNode.children
+        for (i in children.indices) {
+            val childNode = children[i]
+            findClickedElement(childNode, x, y)?.let { return it }
+        }
+
+        if (isNodeInPosition(semanticsNode, x, y)) {
+            val clickableElementName = getClickableElementName(semanticsNode.config)
+            if (clickableElementName != null) {
+                return clickableElementName
             }
         }
+
         return null
     }
 
@@ -67,6 +70,14 @@ internal class EmbraceNodeIterator(
                 val contentDescription = contentDescriptionSemanticsConfiguration.getOrNull(0)
                 if (contentDescription != null) {
                     return contentDescription
+                }
+            }
+
+            val textSemanticsConfiguration = semanticsConfiguration.getOrNull(SemanticsProperties.Text)
+            if (textSemanticsConfiguration != null) {
+                val text = textSemanticsConfiguration.getOrNull(0)?.text
+                if (text != null) {
+                    return text
                 }
             }
 

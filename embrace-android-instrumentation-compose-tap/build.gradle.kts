@@ -12,4 +12,8 @@ dependencies {
     implementation(project(":embrace-android-instrumentation-api"))
     implementation(project(":embrace-android-instrumentation-taps"))
     compileOnly(libs.compose)
+
+    testImplementation(project(":embrace-android-instrumentation-api-fakes"))
+    testImplementation(libs.compose)
+    testImplementation(libs.robolectric)
 }

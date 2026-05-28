@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.internal.instrumentation.compose.tap
 
+import android.annotation.SuppressLint
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
-import java.util.LinkedList
-import java.util.Queue
+import java.util.ArrayDeque
 
 internal class ComposeClickedTargetIterator(
     private val logger: InternalLogger,
@@ -13,6 +13,7 @@ internal class ComposeClickedTargetIterator(
 ) : EmbraceClickedTargetIterator {
 
     private val nodeLocator = EmbraceNodeIterator(dataSource)
+    private val windowLocation = IntArray(2)
 
     override fun findTarget(
         decorView: View,
@@ -20,25 +21,42 @@ internal class ComposeClickedTargetIterator(
         y: Float,
     ) {
         try {
-            val queue: Queue<View> = LinkedList()
+            if (!containsWindowPoint(decorView, x, y)) {
+                return
+            }
+
+            val queue = ArrayDeque<View>()
             queue.add(decorView)
             while (queue.isNotEmpty()) {
-                val view = queue.poll()
-                view?.let {
-                    if (it is ViewGroup) {
-                        // TODO: define a limit of how many views we want to store and process to avoid processing ridiculously large view
-                        for (i in 0 until it.childCount) {
-                            queue.add(it.getChildAt(i))
+                val view = queue.removeFirst()
+                if (view is ViewGroup) {
+                    // scan the children in reverse (z-index) order
+                    for (i in view.childCount - 1 downTo 0) {
+                        val child = view.getChildAt(i)
+                        // ViewGroups that don't clipChildren need to be fully scanned
+                        if (!view.clipChildren || containsWindowPoint(child, x, y)) {
+                            queue.add(child)
                         }
                     }
-
-                    if (it.parent is ComposeView) { // this validation is to reduce the locate method execution to the proper view
-                        nodeLocator.findClickedElement(it, x, y)
-                    }
+                }
+                if (view.parent is ComposeView) {
+                    nodeLocator.findClickedElement(view, x, y)
                 }
             }
         } catch (e: Throwable) {
             logger.logError("Failed to find target", e)
         }
+    }
+
+    private fun containsWindowPoint(view: View, x: Float, y: Float): Boolean {
+        @SuppressLint("UseKtx") // core-ktx is not a dependency of this module
+        if (view.visibility != View.VISIBLE) {
+            return false
+        }
+
+        view.getLocationInWindow(windowLocation)
+        val (viewX, viewY) = windowLocation
+        return x >= viewX && x < viewX + view.width &&
+            y >= viewY && y < viewY + view.height
     }
 }

@@ -55,10 +55,10 @@ internal class SessionPartSpanAttrPopulatorImpl(
 
             metadataService.getClockDrift()?.let { drift ->
                 drift.networkDriftMillis?.let {
-                    addSessionPartAttribute(EmbSessionAttributes.EMB_CLOCK_NETWORK_DRIFT_MILLIS, it.toString())
+                    addSessionPartAttribute(EmbSessionAttributes.EMB_CLOCK_NETWORK_DRIFT, it.toString())
                 }
                 drift.gnssDriftMillis?.let {
-                    addSessionPartAttribute(EmbSessionAttributes.EMB_CLOCK_GNSS_DRIFT_MILLIS, it.toString())
+                    addSessionPartAttribute(EmbSessionAttributes.EMB_CLOCK_GNSS_DRIFT, it.toString())
                 }
             }
         }

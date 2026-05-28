@@ -17,16 +17,16 @@ object EmbSessionAttributes {
     const val EMB_CLEAN_EXIT: String = "emb.clean_exit"
 
     /**
-     * The time delta between wall-time and the GNSS reported time in milliseconds (Wall Time - GNSS Time)
+     * Drift in milliseconds. Positive = GNSS clock behind wall clock. (Wall Time - GNSS Time)
      */
     @ExperimentalSemconv
-    const val EMB_CLOCK_GNSS_DRIFT_MILLIS: String = "emb.clock_gnss_drift_millis"
+    const val EMB_CLOCK_GNSS_DRIFT: String = "emb.clock_gnss_drift"
 
     /**
-     * The time delta between wall-time and the network reported time in milliseconds (Wall Time - Network Time)
+     * Drift in milliseconds. Positive = network clock behind wall clock. (Wall Time - Network Time)
      */
     @ExperimentalSemconv
-    const val EMB_CLOCK_NETWORK_DRIFT_MILLIS: String = "emb.clock_network_drift_millis"
+    const val EMB_CLOCK_NETWORK_DRIFT: String = "emb.clock_network_drift"
 
     /**
      * Whether the session is a cold start.

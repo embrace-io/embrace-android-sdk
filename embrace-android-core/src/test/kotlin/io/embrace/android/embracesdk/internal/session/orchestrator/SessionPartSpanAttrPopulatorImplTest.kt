@@ -87,8 +87,8 @@ internal class SessionPartSpanAttrPopulatorImplTest {
             EmbSessionAttributes.EMB_SESSION_END_TYPE to "state",
             EmbSessionAttributes.EMB_ERROR_LOG_COUNT to "0",
             EmbSessionAttributes.EMB_DISK_FREE_BYTES to "500000000",
-            EmbSessionAttributes.EMB_CLOCK_NETWORK_DRIFT_MILLIS to "50",
-            EmbSessionAttributes.EMB_CLOCK_GNSS_DRIFT_MILLIS to "10",
+            EmbSessionAttributes.EMB_CLOCK_NETWORK_DRIFT to "50",
+            EmbSessionAttributes.EMB_CLOCK_GNSS_DRIFT to "10",
         )
         assertEquals(expected, attrs)
     }

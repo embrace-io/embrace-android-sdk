@@ -105,8 +105,8 @@ internal class UserSessionApiTest {
             EmbTelemetryAttributes.EMB_IS_EMULATOR,
             EmbTelemetryAttributes.EMB_OKHTTP3_ON_CLASSPATH,
             EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO,
-            EmbSessionAttributes.EMB_CLOCK_GNSS_DRIFT_MILLIS,
-            EmbSessionAttributes.EMB_CLOCK_NETWORK_DRIFT_MILLIS,
+            EmbSessionAttributes.EMB_CLOCK_GNSS_DRIFT,
+            EmbSessionAttributes.EMB_CLOCK_NETWORK_DRIFT,
         )
 
         // Attributes that are unstable that we should not try to verify

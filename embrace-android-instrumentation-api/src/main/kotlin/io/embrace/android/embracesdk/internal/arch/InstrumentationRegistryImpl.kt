@@ -19,7 +19,7 @@ class InstrumentationRegistryImpl(
     private val dataSourceStates = CopyOnWriteArrayList<DataSourceState<*>>()
 
     override fun onPreSessionEnd() {
-        dataSourceStates.toList()
+        dataSourceStates
             .filter { it.dataSource is SessionPartEndListener }
             .map { it.dataSource as SessionPartEndListener }
             .forEach {
@@ -28,7 +28,7 @@ class InstrumentationRegistryImpl(
     }
 
     override fun onPostSessionChange() {
-        dataSourceStates.toList().forEach {
+        dataSourceStates.forEach {
             it.dataSource?.run {
                 resetDataCaptureLimits()
                 if (this is SessionPartChangeListener) {
@@ -75,10 +75,9 @@ class InstrumentationRegistryImpl(
         val stateAttributes = mutableMapOf<String, Any>()
 
         dataSourceStates
-            .toList()
-            .filter { it.dataSource is StateDataSource<*> }
-            .forEach {
-                val stateDataSource = it.dataSource as StateDataSource<*>
+            .mapTo(ArrayList(dataSourceStates.size)) { it.dataSource }
+            .filterIsInstance<StateDataSource<*>>()
+            .forEach { stateDataSource ->
                 if (stateDataSource.isActive()) {
                     stateAttributes[stateDataSource.stateAttributeKey] = stateDataSource.getCurrentStateValue()
                 }

@@ -112,7 +112,7 @@ internal class EmbraceMetadataService(
             return null
         }
 
-        return ClockDrift(
+        return ClockDrift.fromWallDrift(
             wallTimeMillis = wallTime,
             networkTimeMillis = networkTime,
             gnssTimeMillis = gnssTime,

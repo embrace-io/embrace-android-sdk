@@ -35,7 +35,7 @@ class FakeMetadataService(
             return null
         }
 
-        return ClockDrift(
+        return ClockDrift.fromWallDrift(
             wallTimeMillis = wallClock.now(),
             networkTimeMillis = networkClock?.now(),
             gnssTimeMillis = gnssClock?.now(),

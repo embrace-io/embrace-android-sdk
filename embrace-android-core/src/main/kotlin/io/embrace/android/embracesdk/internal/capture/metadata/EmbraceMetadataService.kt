@@ -98,25 +98,26 @@ internal class EmbraceMetadataService(
             return null
         }
 
-        val wallTime = clock.now()
+        val gnssDrift = runCatching {
+            val gnss = SystemClock.currentGnssTimeClock().millis()
+            ClockDrift.calculateDrift(wallTimeMillis = clock.now(), auxTimeMillis = gnss)
+        }.getOrNull()
 
-        val gnssTime = runCatching { SystemClock.currentGnssTimeClock().millis() }.getOrNull()
-        val networkTime =
+        val networkDrift =
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                runCatching { SystemClock.currentNetworkTimeClock().millis() }.getOrNull()
+                runCatching {
+                    val network = SystemClock.currentNetworkTimeClock().millis()
+                    ClockDrift.calculateDrift(wallTimeMillis = clock.now(), auxTimeMillis = network)
+                }.getOrNull()
             } else {
                 null
             }
 
-        if (gnssTime == null && networkTime == null) {
+        if (gnssDrift == null && networkDrift == null) {
             return null
         }
 
-        return ClockDrift.fromWallDrift(
-            wallTimeMillis = wallTime,
-            networkTimeMillis = networkTime,
-            gnssTimeMillis = gnssTime,
-        )
+        return ClockDrift(networkDriftMillis = networkDrift, gnssDriftMillis = gnssDrift)
     }
 
     private companion object {

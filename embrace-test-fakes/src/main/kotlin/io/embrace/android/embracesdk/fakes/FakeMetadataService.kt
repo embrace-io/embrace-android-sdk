@@ -31,15 +31,13 @@ class FakeMetadataService(
     override fun getDiskUsage(): DiskUsage = diskUsage
 
     override fun getClockDrift(): ClockDrift? {
-        if (networkClock == null && gnssClock == null) {
+        val wall = wallClock.now()
+        val gnssDrift = gnssClock?.let { ClockDrift.calculateDrift(wall, it.now()) }
+        val networkDrift = networkClock?.let { ClockDrift.calculateDrift(wall, it.now()) }
+        if (gnssDrift == null && networkDrift == null) {
             return null
         }
-
-        return ClockDrift.fromWallDrift(
-            wallTimeMillis = wallClock.now(),
-            networkTimeMillis = networkClock?.now(),
-            gnssTimeMillis = gnssClock?.now(),
-        )
+        return ClockDrift(networkDriftMillis = networkDrift, gnssDriftMillis = gnssDrift)
     }
 
     override fun precomputeValues() {}

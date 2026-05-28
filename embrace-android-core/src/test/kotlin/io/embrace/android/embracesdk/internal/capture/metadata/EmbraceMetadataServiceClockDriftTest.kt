@@ -54,6 +54,7 @@ internal class EmbraceMetadataServiceClockDriftTest {
         EmbraceShadowSystemClock.gnssClock = fixedClock(wallTimeMillis - 50)
         EmbraceShadowSystemClock.networkClock = fixedClock(wallTimeMillis - 100)
 
+        service.precomputeValues()
         assertNull(service.getClockDrift())
     }
 
@@ -63,6 +64,7 @@ internal class EmbraceMetadataServiceClockDriftTest {
         EmbraceShadowSystemClock.gnssClock = fixedClock(wallTimeMillis - 50)
         EmbraceShadowSystemClock.networkClock = fixedClock(wallTimeMillis - 100)
 
+        service.precomputeValues()
         val drift = service.getClockDrift()
 
         assertEquals(50L, drift?.gnssDriftMillis)
@@ -72,6 +74,7 @@ internal class EmbraceMetadataServiceClockDriftTest {
     @Config(sdk = [Build.VERSION_CODES.Q])
     @Test
     fun `getClockDrift on Q returns null when GNSS clock is unavailable`() {
+        service.precomputeValues()
         assertNull(service.getClockDrift())
     }
 
@@ -81,6 +84,7 @@ internal class EmbraceMetadataServiceClockDriftTest {
         EmbraceShadowSystemClock.gnssClock = fixedClock(wallTimeMillis - 25)
         EmbraceShadowSystemClock.networkClock = fixedClock(wallTimeMillis - 100)
 
+        service.precomputeValues()
         val drift = service.getClockDrift()
 
         assertEquals(25L, drift?.gnssDriftMillis)
@@ -93,6 +97,7 @@ internal class EmbraceMetadataServiceClockDriftTest {
         EmbraceShadowSystemClock.gnssClock = fixedClock(wallTimeMillis - 50)
         EmbraceShadowSystemClock.networkClock = fixedClock(wallTimeMillis - 100)
 
+        service.precomputeValues()
         val drift = service.getClockDrift()
 
         assertEquals(50L, drift?.gnssDriftMillis)
@@ -104,6 +109,7 @@ internal class EmbraceMetadataServiceClockDriftTest {
     fun `getClockDrift on TIRAMISU returns only network drift when GNSS is unavailable`() {
         EmbraceShadowSystemClock.networkClock = fixedClock(wallTimeMillis - 100)
 
+        service.precomputeValues()
         val drift = service.getClockDrift()
 
         assertNull(drift?.gnssDriftMillis)
@@ -115,6 +121,7 @@ internal class EmbraceMetadataServiceClockDriftTest {
     fun `getClockDrift on TIRAMISU returns only GNSS drift when network is unavailable`() {
         EmbraceShadowSystemClock.gnssClock = fixedClock(wallTimeMillis - 50)
 
+        service.precomputeValues()
         val drift = service.getClockDrift()
 
         assertEquals(50L, drift?.gnssDriftMillis)
@@ -124,6 +131,7 @@ internal class EmbraceMetadataServiceClockDriftTest {
     @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
     @Test
     fun `getClockDrift on TIRAMISU returns null when both clocks are unavailable`() {
+        service.precomputeValues()
         assertNull(service.getClockDrift())
     }
 

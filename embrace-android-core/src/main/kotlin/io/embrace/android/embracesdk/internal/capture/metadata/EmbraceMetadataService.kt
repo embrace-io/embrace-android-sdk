@@ -37,6 +37,9 @@ internal class EmbraceMetadataService(
     @Volatile
     private var diskUsage: DiskUsage? = null
 
+    @Volatile
+    private var clockDrift: ClockDrift? = null
+
     private var appVersion: String?
         get() = store.getString(PREVIOUS_APP_VERSION_KEY)
         set(value) = store.edit { putString(PREVIOUS_APP_VERSION_KEY, value) }
@@ -66,6 +69,7 @@ internal class EmbraceMetadataService(
             if (diskUsage == null) {
                 diskUsage = DiskUsage(null, free)
             }
+            clockDrift = computeClockDrift()
         }
     }
 
@@ -93,7 +97,9 @@ internal class EmbraceMetadataService(
 
     override fun getDiskUsage(): DiskUsage? = diskUsage
 
-    override fun getClockDrift(): ClockDrift? {
+    override fun getClockDrift(): ClockDrift? = clockDrift
+
+    private fun computeClockDrift(): ClockDrift? {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             return null
         }

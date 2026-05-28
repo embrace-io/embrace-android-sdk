@@ -66,15 +66,17 @@ internal class SessionPartSpanAttrPopulatorImplTest {
 
     @Test
     fun `clock drift attributes populated when aux clocks available`() {
+        val metadataService = FakeMetadataService(
+            wallClock = FakeClock(1000L),
+            networkClock = FakeClock(950L),
+            gnssClock = FakeClock(990L),
+        ).apply { precomputeValues() }
+
         populator = SessionPartSpanAttrPopulatorImpl(
             destination,
             { 0 },
             FakeLogLimitingService(),
-            FakeMetadataService(
-                wallClock = FakeClock(1000L),
-                networkClock = FakeClock(950L),
-                gnssClock = FakeClock(990L),
-            ),
+            metadataService,
         )
 
         populator.populateSessionSpanEndAttrs(LifeEventType.STATE, "crashId", false)

@@ -24,21 +24,25 @@ class FakeMetadataService(
 
     private var appSessionId: String? = null
 
+    @Volatile
+    private var clockDrift: ClockDrift? = null
+
     init {
         appSessionId = sessionId
     }
 
     override fun getDiskUsage(): DiskUsage = diskUsage
 
-    override fun getClockDrift(): ClockDrift? {
+    override fun getClockDrift(): ClockDrift? = clockDrift
+
+    override fun precomputeValues() {
         val wall = wallClock.now()
         val gnssDrift = gnssClock?.let { ClockDrift.calculateDrift(wall, it.now()) }
         val networkDrift = networkClock?.let { ClockDrift.calculateDrift(wall, it.now()) }
-        if (gnssDrift == null && networkDrift == null) {
-            return null
+        clockDrift = if (gnssDrift == null && networkDrift == null) {
+            null
+        } else {
+            ClockDrift(networkDriftMillis = networkDrift, gnssDriftMillis = gnssDrift)
         }
-        return ClockDrift(networkDriftMillis = networkDrift, gnssDriftMillis = gnssDrift)
     }
-
-    override fun precomputeValues() {}
 }

@@ -9,8 +9,9 @@ interface MetadataService {
     fun getDiskUsage(): DiskUsage?
 
     /**
-     * Gets the current device's time drift relative to its auxiliary clocks if available. This value is read live and does not
-     * depend on [precomputeValues].
+     * Gets the device's time drift relative to its auxiliary clocks if available. The value is sampled during [precomputeValues] so
+     * that the underlying IPC stays off any consumer's critical path; this method returns `null` until that work completes, and
+     * `null` thereafter if neither auxiliary clock could be read.
      *
      * @return the device's time drift relative to its auxiliary clocks
      */

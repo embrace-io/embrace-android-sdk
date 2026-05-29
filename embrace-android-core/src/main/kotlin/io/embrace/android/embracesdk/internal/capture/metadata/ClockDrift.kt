@@ -13,7 +13,6 @@ data class ClockDrift(
          * Computes the drift between the wall clock and an auxiliary clock, both expressed in milliseconds since the epoch.
          * Positive return values indicate the auxiliary clock is behind the wall clock; negative values indicate it is ahead.
          */
-        @JvmStatic
         fun calculateDrift(wallTimeMillis: Long, auxTimeMillis: Long): Long = wallTimeMillis - auxTimeMillis
     }
 }

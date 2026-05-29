@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
-import kotlinx.serialization.SerializationStrategy
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
@@ -80,16 +79,15 @@ class FakePayloadStorageService(
     override fun getUndeliveredPayloads(): List<StoredTelemetryMetadata> =
         cachedPayloads.filter { !it.key.complete && it.key.processIdentifier != processIdProvider() }.keys.toList()
 
-    @Suppress("UNCHECKED_CAST")
-    fun <T> addPayload(metadata: StoredTelemetryMetadata, data: T) {
+    fun addPayload(metadata: StoredTelemetryMetadata, data: Envelope<*>) {
         store(metadata) { stream ->
-            val envelopeSerializer =
-                checkNotNull(metadata.envelopeType.envelopeSerializer) as SerializationStrategy<T>
-            serializer.toJson(data, envelopeSerializer, stream)
+            serializer.toJson(data, metadata.envelopeType.requireEnvelopeSerializer(), stream)
         }
     }
 
-    fun addFakePayload(metadata: StoredTelemetryMetadata) = addPayload(metadata, createFakePayload(metadata))
+    fun addFakePayload(metadata: StoredTelemetryMetadata) {
+        createFakePayload(metadata)?.let { addPayload(metadata, it) }
+    }
 
     fun storedFilenames(): List<String> = cachedPayloads.keys.map { it.filename }
 

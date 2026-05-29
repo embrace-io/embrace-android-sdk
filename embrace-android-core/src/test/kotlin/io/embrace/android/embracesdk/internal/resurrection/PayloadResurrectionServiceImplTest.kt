@@ -546,7 +546,7 @@ class PayloadResurrectionServiceImplTest {
         return payloadStorageService.storedPayloads().map { bytes ->
             serializer.fromJson(
                 GZIPInputStream(ByteArrayInputStream(bytes)),
-                Envelope.sessionEnvelopeType
+                Envelope.sessionEnvelopeSerializer
             )
         }
     }

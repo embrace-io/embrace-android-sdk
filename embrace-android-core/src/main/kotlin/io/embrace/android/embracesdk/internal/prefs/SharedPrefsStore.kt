@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.prefs
 
 import android.content.SharedPreferences
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.serialization.fromJson
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
 
@@ -38,10 +39,9 @@ internal class SharedPrefsStore(
         return impl.getStringSet(key, null)
     }
 
-    @Suppress("UNCHECKED_CAST")
     override fun getStringMap(key: String): Map<String, String>? {
         val mapString = impl.getString(key, null) ?: return null
-        return serializer.fromJson(mapString, Map::class.java) as Map<String, String>
+        return serializer.fromJson<Map<String, String>>(mapString)
     }
 
     override fun edit(action: KeyValueStoreEditor.() -> Unit) {

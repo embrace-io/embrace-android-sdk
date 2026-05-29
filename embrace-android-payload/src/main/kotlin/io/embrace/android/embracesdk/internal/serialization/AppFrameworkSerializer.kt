@@ -10,8 +10,7 @@ import kotlinx.serialization.encoding.Encoder
 
 /**
  * Serializes [AppFramework] as its integer [AppFramework.value] (1/2/3/4) and decodes via
- * [AppFramework.fromInt], mapping unknown values to null. Mirrors the previous Moshi
- * `AppFrameworkAdapter`.
+ * [AppFramework.fromInt], mapping unknown values to null.
  */
 internal object AppFrameworkSerializer : KSerializer<AppFramework?> {
 

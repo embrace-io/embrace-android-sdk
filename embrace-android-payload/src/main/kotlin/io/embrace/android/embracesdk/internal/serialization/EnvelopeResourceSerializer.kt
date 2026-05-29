@@ -21,10 +21,11 @@ import kotlinx.serialization.json.longOrNull
 import kotlinx.serialization.json.put
 
 /**
- * Custom serializer for [EnvelopeResource] that mirrors the previous Moshi `EnvelopeResourceAdapter`.
+ * Serializer for [EnvelopeResource] that flattens [EnvelopeResource.extras] into the JSON object
+ * alongside the known fields.
  *
  * On write, the 27 known fields are emitted in declaration order (nulls omitted), followed by the
- * flattened [EnvelopeResource.extras] map as additional top-level keys (insertion order preserved).
+ * [EnvelopeResource.extras] entries as additional top-level keys (insertion order preserved).
  * [EnvelopeResource.appFramework] is encoded as its integer [AppFramework.value].
  *
  * On read, the 27 known keys are extracted and any remaining (non-null) key is folded back into

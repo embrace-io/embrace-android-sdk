@@ -93,7 +93,7 @@ internal class PeriodicPartCacheTest {
                     val lastSessionMetadata = sessions.last()
                     return TestPlatformSerializer().fromJson(
                         GZIPInputStream(loadPayloadAsStream(lastSessionMetadata)),
-                        checkNotNull(SupportedEnvelopeType.SESSION.serializedType)
+                        Envelope.sessionEnvelopeSerializer
                     )
                 }
             }

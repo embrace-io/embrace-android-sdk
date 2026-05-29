@@ -2,10 +2,9 @@ package io.embrace.android.embracesdk.internal.payload
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
-import com.squareup.moshi.Types
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import java.lang.reflect.ParameterizedType
 
 /**
  * Envelope used for Embrace API requests for different types of data:
@@ -40,10 +39,11 @@ data class Envelope<T>(
 ) {
 
     companion object {
-        val sessionEnvelopeType: ParameterizedType =
-            Types.newParameterizedType(Envelope::class.java, SessionPartPayload::class.java)
-        val logEnvelopeType: ParameterizedType =
-            Types.newParameterizedType(Envelope::class.java, LogPayload::class.java)
+        val sessionEnvelopeSerializer: KSerializer<Envelope<SessionPartPayload>> =
+            serializer(SessionPartPayload.serializer())
+
+        val logEnvelopeSerializer: KSerializer<Envelope<LogPayload>> =
+            serializer(LogPayload.serializer())
 
         fun LogPayload.createLogEnvelope(resource: EnvelopeResource, metadata: EnvelopeMetadata) =
             Envelope(

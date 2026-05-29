@@ -24,6 +24,7 @@ import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.serialization.fromJson
 import io.embrace.android.embracesdk.internal.session.getSessionId
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.session.getUserSessionProperties
@@ -112,10 +113,7 @@ internal class PayloadResurrectionServiceImpl(
                     ?.loadDecompressedPayload()
                     ?.let { payloadStream ->
                         runCatching {
-                            serializer.fromJson<Envelope<LogPayload>>(
-                                inputStream = payloadStream,
-                                type = checkNotNull(SupportedEnvelopeType.CRASH.serializedType)
-                            )
+                            serializer.fromJson<Envelope<LogPayload>>(payloadStream)
                         }.getOrNull()
                     }
                     ?.also { runCatching { cacheStorageService.delete(cachedCrashEnvelopeMetadata) } }
@@ -203,10 +201,7 @@ internal class PayloadResurrectionServiceImpl(
         nativeCrashProvider: (String) -> NativeCrashData?,
         postNativeCrashProcessingCallback: (NativeCrashData) -> Unit,
     ): Envelope<SessionPartPayload> {
-        val deadPart = serializer.fromJson<Envelope<SessionPartPayload>>(
-            inputStream = payloadStream,
-            type = checkNotNull(envelopeType.serializedType)
-        )
+        val deadPart = serializer.fromJson<Envelope<SessionPartPayload>>(payloadStream)
 
         val sessionId = deadPart.getSessionId()
         val appState = deadPart.getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE)

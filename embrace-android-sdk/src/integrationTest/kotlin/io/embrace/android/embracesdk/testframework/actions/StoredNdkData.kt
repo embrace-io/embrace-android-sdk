@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.serialization.fromJson
 import java.io.File
 
 internal data class StoredNativeCrashData(
@@ -53,9 +54,8 @@ internal fun createStoredNativeCrashData(
     envelopeResource: EnvelopeResource = fakeEnvelopeResource,
     envelopeMetadata: EnvelopeMetadata = fakeEnvelopeMetadata,
 ): StoredNativeCrashData {
-    val nativeCrashData = serializer.fromJson(
-        ResourceReader.readResource(resourceFixtureName),
-        NativeCrashData::class.java
+    val nativeCrashData = serializer.fromJson<NativeCrashData>(
+        ResourceReader.readResource(resourceFixtureName)
     )
     return StoredNativeCrashData(
         sessionMetadata = sessionMetadata,

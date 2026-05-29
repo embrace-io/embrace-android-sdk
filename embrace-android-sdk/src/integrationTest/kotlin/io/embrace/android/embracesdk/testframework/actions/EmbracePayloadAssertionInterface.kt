@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
-import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -20,6 +19,8 @@ import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.serialization.fromJson
+import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -197,7 +198,7 @@ internal class EmbracePayloadAssertionInterface(
     private fun readRemoteConfigFile(file: File): RemoteConfig {
         try {
             return file.inputStream().buffered().use {
-                serializer.fromJson(it, RemoteConfig::class.java)
+                serializer.fromJson<RemoteConfig>(it)
             }
         } catch (exc: Throwable) {
             throw IllegalStateException("Failed to read remote config file.", exc)
@@ -237,10 +238,7 @@ internal class EmbracePayloadAssertionInterface(
         assertEquals("ERROR", log.severityText)
         assertEquals("", log.body)
 
-        val symbols = serializer.toJson(
-            symbolMap,
-            TypeUtils.typedMap(String::class.java, String::class.java)
-        )
+        val symbols = serializer.toJson(symbolMap)
         assertEquals(crashData.nativeCrash.timestamp, log.timeUnixNano?.nanosToMillis())
 
         val attrs = checkNotNull(log.attributes)
@@ -302,15 +300,12 @@ internal class EmbracePayloadAssertionInterface(
      * Validates a payload against a golden file in the test resources. If the payload does not match
      * the golden file, the assertion fails.
      */
-    internal fun <T> validatePayloadAgainstGoldenFile(
-        payload: T,
+    internal fun validatePayloadAgainstGoldenFile(
+        payload: Envelope<SessionPartPayload>,
         goldenFileName: String,
     ) {
         try {
-            val observedJson = serializer.toJson(
-                payload,
-                Envelope.sessionEnvelopeType
-            )
+            val observedJson = serializer.toJson(payload, Envelope.sessionEnvelopeSerializer)
             val expectedJson = ResourceReader.readResourceAsText(goldenFileName)
             val result = JsonComparator.compare(JSONObject(expectedJson), JSONObject(observedJson))
 

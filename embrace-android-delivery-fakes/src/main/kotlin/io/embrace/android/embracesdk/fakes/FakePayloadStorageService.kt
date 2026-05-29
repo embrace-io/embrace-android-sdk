@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
+import kotlinx.serialization.SerializationStrategy
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
@@ -79,9 +80,12 @@ class FakePayloadStorageService(
     override fun getUndeliveredPayloads(): List<StoredTelemetryMetadata> =
         cachedPayloads.filter { !it.key.complete && it.key.processIdentifier != processIdProvider() }.keys.toList()
 
+    @Suppress("UNCHECKED_CAST")
     fun <T> addPayload(metadata: StoredTelemetryMetadata, data: T) {
         store(metadata) { stream ->
-            serializer.toJson(data, checkNotNull(metadata.envelopeType.serializedType), stream)
+            val envelopeSerializer =
+                checkNotNull(metadata.envelopeType.envelopeSerializer) as SerializationStrategy<T>
+            serializer.toJson(data, envelopeSerializer, stream)
         }
     }
 
@@ -102,10 +106,13 @@ class FakePayloadStorageService(
     }
 
     private fun createFakePayload(metadata: StoredTelemetryMetadata) =
-        when (metadata.envelopeType.serializedType) {
-            Envelope.sessionEnvelopeType -> Envelope(data = SessionPartPayload())
-            Envelope.logEnvelopeType -> Envelope(data = LogPayload())
-            else -> null
+        when (metadata.envelopeType) {
+            SupportedEnvelopeType.SESSION -> Envelope(data = SessionPartPayload())
+            SupportedEnvelopeType.CRASH,
+            SupportedEnvelopeType.LOG,
+            SupportedEnvelopeType.BLOB,
+            -> Envelope(data = LogPayload())
+            SupportedEnvelopeType.ATTACHMENT -> null
         }
 
     private fun deleteSynchronous(metadata: StoredTelemetryMetadata, callback: () -> Unit) {
@@ -122,7 +129,7 @@ class FakePayloadStorageService(
         }
         return serializer.fromJson(
             GZIPInputStream(loadPayloadAsStream(metadata)),
-            checkNotNull(SupportedEnvelopeType.CRASH.serializedType)
+            Envelope.logEnvelopeSerializer
         )
     }
 }

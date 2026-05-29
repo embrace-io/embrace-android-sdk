@@ -9,6 +9,6 @@ description = "Embrace Android SDK: Payload"
 dependencies {
     implementation(libs.moshi)
     ksp(libs.moshi.kotlin.codegen)
-    implementation(libs.kotlinx.serialization.json)
+    api(libs.kotlinx.serialization.json)
     testImplementation(libs.junit)
 }

@@ -22,6 +22,7 @@ import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
@@ -199,7 +200,7 @@ internal class JvmCrashFeatureTest {
                     expectedState = "foreground"
                 )
                 val exceptionInfo = LegacyExceptionInfo.ofThrowable(testException)
-                val expectedExceptionCause = serializer.toJson(listOf(exceptionInfo), List::class.java)
+                val expectedExceptionCause = serializer.toJson(listOf(exceptionInfo))
                 val expectedJsException = "{\"n\":\"name\",\"m\":\"message\",\"t\":\"type\",\"st\":\"stacktrace\"}"
 
                 val message = payloadStorageService.getPersistedSession()
@@ -225,9 +226,9 @@ internal class JvmCrashFeatureTest {
         return storedPayloadMetadata()
             .filter { it.payloadType == PayloadType.SESSION && it.complete }
             .map { metadata ->
-                testSerializer.fromJson<Envelope<SessionPartPayload>>(
+                testSerializer.fromJson(
                     GZIPInputStream(loadPayloadAsStream(metadata)),
-                    checkNotNull(SupportedEnvelopeType.SESSION.serializedType)
+                    Envelope.sessionEnvelopeSerializer
                 )
             }
             .single { envelope ->
@@ -263,7 +264,7 @@ internal class JvmCrashFeatureTest {
         )
 
         val exceptionInfo = LegacyExceptionInfo.ofThrowable(testException)
-        val expectedExceptionCause = serializer.toJson(listOf(exceptionInfo), List::class.java)
+        val expectedExceptionCause = serializer.toJson(listOf(exceptionInfo))
 
         attributes?.assertMatches(
             mapOf(

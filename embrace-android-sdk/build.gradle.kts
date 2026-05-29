@@ -48,12 +48,7 @@ dependencies {
     // lifecycle
     implementation(libs.lifecycle.runtime)
     implementation(libs.lifecycle.process)
-    ksp(libs.lifecycle.compiler)
     testImplementation(libs.lifecycle.testing)
-
-    // json
-    implementation(libs.moshi)
-    ksp(libs.moshi.kotlin.codegen)
 
     implementation(libs.profileinstaller)
 

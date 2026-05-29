@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.payload
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -10,28 +8,27 @@ import kotlinx.serialization.Serializable
  * [LegacyExceptionInfo] for each nested cause.
  */
 @Serializable
-@JsonClass(generateAdapter = true)
 class LegacyExceptionInfo internal constructor(
 
     /**
      * The name of the class throwing the exception.
      */
-    @SerialName("n") @Json(name = "n") val name: String,
+    @SerialName("n") val name: String,
 
     /**
      * The exception message.
      */
-    @SerialName("m") @Json(name = "m") val message: String?,
+    @SerialName("m") val message: String?,
 
     /**
      * String representation of each line of the stack trace.
      */
-    @SerialName("tt") @Json(name = "tt") val lines: List<String>,
+    @SerialName("tt") val lines: List<String>,
 
     /**
      * The original length of the stack trace. This will be null if it has not been truncated.
      */
-    @SerialName("length") @Json(name = "length") val originalLength: Int?,
+    @SerialName("length") val originalLength: Int?,
 ) {
 
     /**

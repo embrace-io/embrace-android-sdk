@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.payload
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -11,10 +9,8 @@ import kotlinx.serialization.Serializable
  * @param logs
  */
 @Serializable
-@JsonClass(generateAdapter = true)
 data class LogPayload(
 
     @SerialName("logs")
-    @Json(name = "logs")
     val logs: List<Log>? = null,
 )

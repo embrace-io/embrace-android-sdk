@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.config.remote
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -11,9 +9,7 @@ import kotlinx.serialization.Serializable
  * session payload. This feature may be enabled/disabled.
  */
 @Serializable
-@JsonClass(generateAdapter = true)
 data class SessionRemoteConfig(
     @SerialName("enable")
-    @Json(name = "enable")
     val isEnabled: Boolean? = null,
 )

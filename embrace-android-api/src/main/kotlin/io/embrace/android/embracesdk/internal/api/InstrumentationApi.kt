@@ -99,22 +99,27 @@ public interface InstrumentationApi {
     )
 
     /**
-     * Observe navigation within the given [Activity] that is controlled by the given [navigationController].
-     *
+     * Register the given [navigationController] so that navigation it performs within the given [Activity] is observed.
      * [navigationController] is intentionally typeless so the SDK can introspect about its capabilities and do the required
-     * wiring in order to observe and track navigation
+     * wiring in order to observe and track navigation. Currently, only instance of `androidx.navigation.NavController` is supported.
+     *
+     * This method should be called during the host [Activity]'s `onResume()` callback after the starting destination is loaded.
      */
     public fun observeNavigation(activity: Activity, navigationController: Any)
 
     /**
-     * Record the given [screen] has been loaded. Calling this does not affect automatic navigation tracking instrumentation.
+     * Record that the given [screen] has been loaded.
+     *
+     * This is independent of the other forms of navigation instrumentation. Calling it neither affects nor is affected by other navigation
+     * instrumentation.
      */
     public fun screenLoaded(screen: String): Unit = screenLoaded(screen, emptyMap())
 
     /**
-     * Record the given [screen] has been loaded. Calling this does not affect automatic navigation tracking instrumentation.
+     * Record that the given [screen] has been loaded with the given attributes [eventAttributes].
      *
-     * Optionally pass in [eventAttributes] to be recorded with the screen loading event.
+     * This is independent of the other forms of navigation instrumentation. Calling it neither affects nor is affected by other navigation
+     * instrumentation.
      */
     public fun screenLoaded(screen: String, eventAttributes: Map<String, String>)
 }

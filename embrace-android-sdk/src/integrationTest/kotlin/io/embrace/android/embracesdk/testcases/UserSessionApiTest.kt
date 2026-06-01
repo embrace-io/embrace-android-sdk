@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -65,7 +66,7 @@ internal class UserSessionApiTest {
                 val attrs = checkNotNull(sessionSpan.attributes)
                 val attributeKeys = attrs.map { it.key }
                 validateExistenceOnly.forEach { key ->
-                    attributeKeys.contains(key)
+                    assertTrue("'$key' not found in attrs", attributeKeys.contains(key))
                 }
 
                 val attributesToCheck = attrs.filterNot {
@@ -104,6 +105,8 @@ internal class UserSessionApiTest {
             EmbTelemetryAttributes.EMB_IS_EMULATOR,
             EmbTelemetryAttributes.EMB_OKHTTP3_ON_CLASSPATH,
             EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO,
+            EmbSessionAttributes.EMB_CLOCK_GNSS_DRIFT,
+            EmbSessionAttributes.EMB_CLOCK_NETWORK_DRIFT,
         )
 
         // Attributes that are unstable that we should not try to verify

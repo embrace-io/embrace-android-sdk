@@ -506,6 +506,16 @@ groups:
         brief: "The inactivity timeout (in seconds) that the SDK was configured to use."
         stability: development
         examples: ["300", "1800"]
+      - id: emb.clock_network_drift
+        type: string
+        brief: "Drift in milliseconds. Positive = network clock behind wall clock. (Wall Time - Network Time)"
+        stability: development
+        examples: ["123", "-321"]
+      - id: emb.clock_gnss_drift
+        type: string
+        brief: "Drift in milliseconds. Positive = GNSS clock behind wall clock. (Wall Time - GNSS Time)"
+        stability: development
+        examples: ["987", "-789"]
 
   - id: emb.android
     type: attribute_group

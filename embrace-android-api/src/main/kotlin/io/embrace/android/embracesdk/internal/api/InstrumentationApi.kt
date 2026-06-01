@@ -110,7 +110,7 @@ public interface InstrumentationApi {
     /**
      * Record that the given [screen] has been loaded.
      *
-     * This is independent of the other forms navigation instrumentation. Calling it neither affects nor is affected by other navigation
+     * This is independent of the other forms of navigation instrumentation. Calling it neither affects nor is affected by other navigation
      * instrumentation.
      */
     public fun screenLoaded(screen: String): Unit = screenLoaded(screen, emptyMap())
@@ -118,7 +118,7 @@ public interface InstrumentationApi {
     /**
      * Record that the given [screen] has been loaded with the given attributes [eventAttributes].
      *
-     * This is independent of the other forms navigation instrumentation. Calling it neither affects nor is affected by other navigation
+     * This is independent of the other forms of navigation instrumentation. Calling it neither affects nor is affected by other navigation
      * instrumentation.
      */
     public fun screenLoaded(screen: String, eventAttributes: Map<String, String>)

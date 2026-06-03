@@ -57,6 +57,7 @@ class ConfigServiceImpl(
         RemoteConfigStoreImpl(
             serializer = serializer,
             storageDir = File(filesDir, "embrace_remote_config"),
+            deviceIdProvider = ::deviceId,
         )
     }
 
@@ -74,6 +75,10 @@ class ConfigServiceImpl(
     }
 
     override val deviceId: String = run {
+        // fast path: the deviceId cached in the binary config avoids the SharedPreferences load
+        remoteConfigStore.loadDeviceId()?.let { return@run it }
+
+        // canonical source: SharedPreferences, generating and persisting a new id on first launch
         val deviceId = store.getString(DEVICE_IDENTIFIER_KEY)
         if (deviceId != null) {
             return@run deviceId

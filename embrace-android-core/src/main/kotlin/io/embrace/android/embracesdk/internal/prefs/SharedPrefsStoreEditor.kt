@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal.prefs
 
 import android.content.SharedPreferences
-import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import android.util.JsonWriter
 import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
+import java.io.StringWriter
 
 internal class SharedPrefsStoreEditor(
     private val editor: SharedPreferences.Editor,
-    private val serializer: PlatformSerializer,
 ) : KeyValueStoreEditor, AutoCloseable {
 
     override fun putString(key: String, value: String?) {
@@ -33,9 +33,14 @@ internal class SharedPrefsStoreEditor(
         key: String,
         value: Map<String, String>?,
     ) {
-        val mapString = when {
-            value != null -> serializer.toJson(value, Map::class.java)
-            else -> null
+        val mapString = value?.let { map ->
+            StringWriter().apply {
+                JsonWriter(this).use { writer ->
+                    writer.beginObject()
+                    map.forEach { (k, v) -> writer.name(k).value(v) }
+                    writer.endObject()
+                }
+            }.toString()
         }
         editor.putString(key, mapString)
     }

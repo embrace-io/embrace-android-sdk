@@ -11,4 +11,5 @@ dependencies {
     testImplementation(project(":embrace-test-common"))
     testImplementation(project(":embrace-android-config-fakes"))
     testImplementation(libs.mockwebserver)
+    testImplementation(libs.kotlin.reflect)
 }

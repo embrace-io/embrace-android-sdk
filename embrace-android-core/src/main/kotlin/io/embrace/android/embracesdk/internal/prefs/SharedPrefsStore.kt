@@ -1,13 +1,14 @@
 package io.embrace.android.embracesdk.internal.prefs
 
 import android.content.SharedPreferences
-import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import android.util.JsonReader
+import android.util.JsonToken
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
+import java.io.StringReader
 
 internal class SharedPrefsStore(
     private val impl: SharedPreferences,
-    private val serializer: PlatformSerializer,
 ) : KeyValueStore {
 
     override fun getString(key: String): String? {
@@ -38,14 +39,30 @@ internal class SharedPrefsStore(
         return impl.getStringSet(key, null)
     }
 
-    @Suppress("UNCHECKED_CAST")
     override fun getStringMap(key: String): Map<String, String>? {
         val mapString = impl.getString(key, null) ?: return null
-        return serializer.fromJson(mapString, Map::class.java) as Map<String, String>
+        return try {
+            JsonReader(StringReader(mapString)).use { reader ->
+                val map = LinkedHashMap<String, String>()
+                reader.beginObject()
+                while (reader.hasNext()) {
+                    val name = reader.nextName()
+                    if (reader.peek() == JsonToken.NULL) {
+                        reader.nextNull()
+                    } else {
+                        map[name] = reader.nextString()
+                    }
+                }
+                reader.endObject()
+                map
+            }
+        } catch (exc: Exception) {
+            null
+        }
     }
 
     override fun edit(action: KeyValueStoreEditor.() -> Unit) {
-        SharedPrefsStoreEditor(impl.edit(), serializer).use {
+        SharedPrefsStoreEditor(impl.edit()).use {
             it.action()
         }
     }

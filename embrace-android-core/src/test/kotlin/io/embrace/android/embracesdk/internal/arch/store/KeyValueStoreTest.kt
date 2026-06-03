@@ -26,7 +26,7 @@ internal class KeyValueStoreTest {
     @Before
     fun setUp() {
         val prefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        store = SharedPrefsStore(prefs, TestPlatformSerializer())
+        store = SharedPrefsStore(prefs)
     }
 
     @Test
@@ -72,5 +72,21 @@ internal class KeyValueStoreTest {
         assertEquals(boolValue, store.getBoolean("bool", false))
         assertEquals(setValue, store.getStringSet("set"))
         assertEquals(mapValue, store.getStringMap("map"))
+    }
+
+    @Test
+    fun testStringMapJsonCompatibilityWithMoshi() {
+        val serializer = TestPlatformSerializer()
+        val map = mapOf("a" to "b", "c" to "d")
+
+        // the new reader parses a map serialized the old (Moshi) way
+        store.edit { putString("legacy", serializer.toJson(map, Map::class.java)) }
+        assertEquals(map, store.getStringMap("legacy"))
+
+        // the new writer produces output the old (Moshi) deserializer can read
+        store.edit { putStringMap("new", map) }
+        @Suppress("UNCHECKED_CAST")
+        val viaMoshi = serializer.fromJson(checkNotNull(store.getString("new")), Map::class.java) as Map<String, String>
+        assertEquals(map, viaMoshi)
     }
 }

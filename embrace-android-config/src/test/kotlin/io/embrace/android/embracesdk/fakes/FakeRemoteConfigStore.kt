@@ -9,10 +9,14 @@ class FakeRemoteConfigStore(
 
     var saveCount: Int = 0
 
+    var deviceId: String? = null
+
     override fun loadResponse(): ConfigHttpResponse? = impl
 
     override fun saveResponse(response: ConfigHttpResponse) {
         saveCount++
         impl = response
     }
+
+    override fun loadDeviceId(): String? = deviceId
 }

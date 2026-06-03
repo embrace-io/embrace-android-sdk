@@ -30,8 +30,7 @@ class CoreModuleImpl(
         SharedPrefsStore(
             PreferenceManager.getDefaultSharedPreferences(
                 context
-            ),
-            initModule.jsonSerializer
+            )
         )
     }
 

@@ -27,6 +27,7 @@ fun createEnabledFeatureConfigInstrumentation(cfg: VariantConfig) = modelSdkConf
         boolMethod("isHttpUrlConnectionCaptureEnabled") { networking?.enableNativeMonitoring }
         boolMethod("isHucLiteInstrumentationEnabled") { networking?.enableHucLiteInstrumentation }
         boolMethod("isNetworkSpanForwardingEnabled") { networking?.enableNetworkSpanForwarding }
+        boolMethod("isTraceparentInjectionEnabled") { networking?.enableTraceparentInjection }
         boolMethod("isUiLoadTracingEnabled") { automaticDataCaptureConfig?.uiLoadPerfTracingDisabled != true }
         boolMethod("isUiLoadTracingTraceAll") {
             if (automaticDataCaptureConfig != null) {

@@ -17,5 +17,6 @@ public interface NetworkRequestApi {
      */
     public fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest)
 
+    @Deprecated("This is no longer supported")
     public fun generateW3cTraceparent(): String?
 }

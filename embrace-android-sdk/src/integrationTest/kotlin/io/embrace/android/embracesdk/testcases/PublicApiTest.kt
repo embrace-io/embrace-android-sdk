@@ -103,18 +103,6 @@ internal class PublicApiTest {
     }
 
     @Test
-    fun `ensure all generated W3C traceparent conforms to the expected format`() {
-        testRule.runTest(
-            instrumentedConfig = instrumentedConfig,
-            testCaseAction = {
-                repeat(100) {
-                    assertTrue(validPattern.matches(checkNotNull(embrace.generateW3cTraceparent())))
-                }
-            }
-        )
-    }
-
-    @Test
     fun `test sdk time`() {
         testRule.runTest(
             testCaseAction = {

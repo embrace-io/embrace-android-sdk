@@ -28,12 +28,8 @@ internal class NetworkRequestApiDelegate(
         }
     }
 
-    override fun generateW3cTraceparent(): String? =
-        if (configService?.networkSpanForwardingBehavior?.isNetworkSpanForwardingEnabled() == true) {
-            DefaultTraceparentGenerator.generateW3cTraceparent()
-        } else {
-            null
-        }
+    @Deprecated("This is no longer supported")
+    override fun generateW3cTraceparent(): String = DefaultTraceparentGenerator.generateW3cTraceparent()
 
     private fun logNetworkRequest(request: EmbraceNetworkRequest) {
         val req = request.toHttpNetworkRequest()

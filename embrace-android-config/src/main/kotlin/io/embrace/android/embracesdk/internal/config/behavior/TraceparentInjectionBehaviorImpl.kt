@@ -15,13 +15,32 @@ class TraceparentInjectionBehaviorImpl(
     private val networkCapture: NetworkCaptureConfig = local.networkCapture
     private val injectionPctEnabled: Float? = remote?.traceparentInjectionPctEnabled
     private val allowlistMatcher = HostAllowlistMatcher(networkCapture.getTraceparentOnlyAllowDomains())
+    private val enableLegacyFallback: Boolean =
+        if (remote == null || remote.nsfPctEnabled != null) {
+            false
+        } else {
+            @Suppress("DEPRECATION")
+            val fallbackConfig = remote.networkSpanForwardingRemoteConfig
+            if (fallbackConfig == null) {
+                false
+            } else {
+                thresholdCheck.isBehaviorEnabled(fallbackConfig.pctEnabled) == true
+            }
+        }
 
-    override fun isTraceparentInjectionEnabled(): Boolean {
-        return injectionPctEnabled?.let { thresholdCheck.isBehaviorEnabled(it) }
-            ?: enabledFeatures.isTraceparentInjectionEnabled()
-    }
+    override fun isTraceparentInjectionEnabled(): Boolean =
+        if (enableLegacyFallback) {
+            true
+        } else {
+            if (injectionPctEnabled == null) {
+                enabledFeatures.isTraceparentInjectionEnabled()
+            } else {
+                thresholdCheck.isBehaviorEnabled(injectionPctEnabled)
+            }
+        }
 
-    override fun shouldInjectTraceparent(host: String?): Boolean = isTraceparentInjectionEnabled() && allowlistMatcher.isAllowed(host)
+    override fun shouldInjectTraceparent(host: String?): Boolean =
+        isTraceparentInjectionEnabled() && (enableLegacyFallback || allowlistMatcher.isAllowed(host))
 
     /**
      * Case-insensitively matches a request host against the local allowlist of hostnames. If the allowList is not provided at init time,

@@ -108,6 +108,28 @@ internal class NetworkSpanForwardingBehaviorImplTest {
         )
     }
 
+    @Test
+    fun `legacy fallback forwards for all hosts regardless of allowlist or injection flag`() {
+        val behavior = behavior(
+            localInjectionEnabled = false,
+            allowedDomains = emptyList(),
+            remote = remote(deprecatedNsfEnabledPct = 100f),
+        )
+        assertTrue(behavior.isNetworkSpanForwardingEnabled())
+        assertTrue(behavior.shouldForwardForDomain("test.com"))
+    }
+
+    @Test
+    fun `legacy fallback does not apply when the flat NSF flag is present`() {
+        val behavior = behavior(
+            localInjectionEnabled = false,
+            allowedDomains = listOf("test.com"),
+            remote = remote(nsfEnabledPct = 100f, deprecatedNsfEnabledPct = 100f),
+        )
+        assertFalse(behavior.isNetworkSpanForwardingEnabled())
+        assertFalse(behavior.shouldForwardForDomain("test.com"))
+    }
+
     private fun remote(
         nsfEnabledPct: Float? = null,
         deprecatedNsfEnabledPct: Float? = null,

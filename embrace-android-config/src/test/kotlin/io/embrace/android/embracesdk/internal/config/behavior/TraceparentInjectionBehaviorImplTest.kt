@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.fakes.FAKE_DEVICE_ID
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeNetworkCaptureConfig
+import io.embrace.android.embracesdk.internal.config.remote.NetworkSpanForwardingRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -96,7 +97,47 @@ internal class TraceparentInjectionBehaviorImplTest {
         )
     }
 
-    private fun remote(injectionPct: Float? = null) = RemoteConfig(traceparentInjectionPctEnabled = injectionPct)
+    @Test
+    fun `legacy fallback enables injection and bypasses the allowlist`() {
+        val behavior = behavior(
+            localInjectFlagEnabled = false,
+            allowedDomains = emptyList(),
+            remote = remote(deprecatedNsfPct = 100f),
+        )
+        assertTrue(behavior.isTraceparentInjectionEnabled())
+        assertTrue(behavior.shouldInjectTraceparent("test.com"))
+    }
+
+    @Test
+    fun `legacy fallback does not apply when the flat NSF flag is present`() {
+        val behavior = behavior(
+            localInjectFlagEnabled = false,
+            allowedDomains = listOf("test.com"),
+            remote = remote(nsfPct = 100f, deprecatedNsfPct = 100f),
+        )
+        assertFalse(behavior.isTraceparentInjectionEnabled())
+        assertFalse(behavior.shouldInjectTraceparent("test.com"))
+    }
+
+    @Test
+    fun `legacy fallback does not apply when the deprecated flag is disabled`() {
+        val behavior = behavior(
+            localInjectFlagEnabled = false,
+            remote = remote(deprecatedNsfPct = 0f),
+        )
+        assertFalse(behavior.isTraceparentInjectionEnabled())
+        assertFalse(behavior.shouldInjectTraceparent("test.com"))
+    }
+
+    private fun remote(
+        injectionPct: Float? = null,
+        nsfPct: Float? = null,
+        deprecatedNsfPct: Float? = null,
+    ) = RemoteConfig(
+        traceparentInjectionPctEnabled = injectionPct,
+        nsfPctEnabled = nsfPct,
+        networkSpanForwardingRemoteConfig = deprecatedNsfPct?.let { NetworkSpanForwardingRemoteConfig(pctEnabled = it) },
+    )
 
     private fun behavior(
         localInjectFlagEnabled: Boolean = true,

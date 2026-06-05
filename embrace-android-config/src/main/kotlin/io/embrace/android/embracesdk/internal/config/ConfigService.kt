@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehavior
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 
@@ -71,6 +72,11 @@ interface ConfigService {
      * Provides behavior for the app exit info feature
      */
     val appExitInfoBehavior: AppExitInfoBehavior
+
+    /**
+     * How the traceparent injection feature should behave
+     */
+    val traceparentInjectionBehavior: TraceparentInjectionBehavior
 
     /**
      * How the network span forwarding feature should behave

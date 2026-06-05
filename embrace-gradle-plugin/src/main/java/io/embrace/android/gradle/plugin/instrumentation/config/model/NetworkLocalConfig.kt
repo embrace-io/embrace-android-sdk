@@ -33,6 +33,12 @@ data class NetworkLocalConfig(
 
     @Json(name = "enable_network_span_forwarding")
     val enableNetworkSpanForwarding: Boolean? = null,
+
+    @Json(name = "enable_traceparent_injection")
+    val enableTraceparentInjection: Boolean? = null,
+
+    @Json(name = "traceparent_only_allow_domains")
+    val traceparentOnlyAllowDomains: List<String>? = null,
 ) : Serializable {
 
     private companion object {

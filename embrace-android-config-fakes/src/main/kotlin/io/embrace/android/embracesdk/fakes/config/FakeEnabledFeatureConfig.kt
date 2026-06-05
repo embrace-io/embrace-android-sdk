@@ -27,6 +27,7 @@ class FakeEnabledFeatureConfig(
      */
     private val hucLiteInstrumentation: Boolean = false,
     private val networkSpanForwarding: Boolean = base.isNetworkSpanForwardingEnabled(),
+    private val traceparentInjection: Boolean = base.isTraceparentInjectionEnabled(),
     private val uiLoadTracingEnabled: Boolean = base.isUiLoadTracingEnabled(),
     private val uiLoadTracingTraceAll: Boolean = base.isUiLoadTracingTraceAll(),
     private val endStartupWithAppReady: Boolean = base.isEndStartupWithAppReadyEnabled(),
@@ -53,6 +54,7 @@ class FakeEnabledFeatureConfig(
     override fun isHttpUrlConnectionCaptureEnabled(): Boolean = httpUrlConnectionCapture
     override fun isHucLiteInstrumentationEnabled(): Boolean = hucLiteInstrumentation
     override fun isNetworkSpanForwardingEnabled(): Boolean = networkSpanForwarding
+    override fun isTraceparentInjectionEnabled(): Boolean = traceparentInjection
     override fun isUiLoadTracingEnabled(): Boolean = uiLoadTracingEnabled
     override fun isUiLoadTracingTraceAll(): Boolean = uiLoadTracingTraceAll
     override fun isEndStartupWithAppReadyEnabled(): Boolean = endStartupWithAppReady

@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.OtelBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -130,8 +131,10 @@ class ConfigServiceImpl(
     override val sdkModeBehavior = SdkModeBehaviorImpl(thresholdCheck, remoteConfig)
     override val appExitInfoBehavior =
         AppExitInfoBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
+    override val traceparentInjectionBehavior =
+        TraceparentInjectionBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
     override val networkSpanForwardingBehavior =
-        NetworkSpanForwardingBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
+        NetworkSpanForwardingBehaviorImpl(traceparentInjectionBehavior, thresholdCheck, instrumentedConfig, remoteConfig)
     override val otelBehavior = OtelBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
 
     override val appId: String? = run {

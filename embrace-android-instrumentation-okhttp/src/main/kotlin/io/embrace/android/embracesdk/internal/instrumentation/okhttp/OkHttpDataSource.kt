@@ -135,13 +135,15 @@ internal class OkHttpDataSource(
             return chain.proceed(originalRequest)
         }
 
-        val isNetworkSpanForwardingEnabled = configService.networkSpanForwardingBehavior.isNetworkSpanForwardingEnabled()
-        // Inject the started span's W3C traceparent representation as a header if network span forwarding is enabled
-        val request = if (isNetworkSpanForwardingEnabled) {
+        val host = originalRequest.url.host
+        val request = if (originalRequest.header(TRACEPARENT_HEADER_NAME) == null &&
+            configService.traceparentInjectionBehavior.shouldInjectTraceparent(host)
+        ) {
             originalRequest.newBuilder().header(TRACEPARENT_HEADER_NAME, callData.id).build()
         } else {
             originalRequest
         }
+        val forwardNetworkSpan = configService.networkSpanForwardingBehavior.shouldForwardForDomain(host)
 
         // Let the request execution proceed and obs
         val networkResponse: Response = chain.proceed(request)
@@ -183,7 +185,7 @@ internal class OkHttpDataSource(
             networkCaptureDataSource?.recordNetworkRequest(
                 requestEndData.createHttpNetworkRequest(
                     httpMethod = request.method,
-                    w3cTraceparent = if (isNetworkSpanForwardingEnabled) {
+                    w3cTraceparent = if (forwardNetworkSpan) {
                         callData.id
                     } else {
                         null

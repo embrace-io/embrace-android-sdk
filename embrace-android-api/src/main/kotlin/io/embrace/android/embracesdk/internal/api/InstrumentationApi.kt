@@ -106,20 +106,4 @@ public interface InstrumentationApi {
      * This method should be called during the host [Activity]'s `onResume()` callback after the starting destination is loaded.
      */
     public fun observeNavigation(activity: Activity, navigationController: Any)
-
-    /**
-     * Record that the given [screen] has been loaded.
-     *
-     * This is independent of the other forms of navigation instrumentation. Calling it neither affects nor is affected by other navigation
-     * instrumentation.
-     */
-    public fun screenLoaded(screen: String): Unit = screenLoaded(screen, emptyMap())
-
-    /**
-     * Record that the given [screen] has been loaded with the given attributes [eventAttributes].
-     *
-     * This is independent of the other forms of navigation instrumentation. Calling it neither affects nor is affected by other navigation
-     * instrumentation.
-     */
-    public fun screenLoaded(screen: String, eventAttributes: Map<String, String>)
 }

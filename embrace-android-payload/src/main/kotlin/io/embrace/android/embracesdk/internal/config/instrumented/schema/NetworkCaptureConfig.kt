@@ -33,4 +33,13 @@ interface NetworkCaptureConfig {
      * sdk_config.capture_public_key
      */
     fun getNetworkBodyCapturePublicKey(): String? = null
+
+    /**
+     * Declares the list of hostnames for which traceparent injection and network span forwarding are permitted.
+     * If it's null, all hosts are allowed. If it's empty, all hosts are denied.
+     * Entries can be exact hostnames or a leading-dot domain suffix that matches all subdomains (e.g. ".test.com" matches "foo.test.com").
+     *
+     * sdk_config.networking.traceparent_only_allow_domains
+     */
+    fun getTraceparentOnlyAllowDomains(): List<String>? = null
 }

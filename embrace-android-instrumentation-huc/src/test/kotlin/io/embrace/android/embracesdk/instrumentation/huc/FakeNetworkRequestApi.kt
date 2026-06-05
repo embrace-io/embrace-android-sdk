@@ -12,5 +12,6 @@ class FakeNetworkRequestApi(
         requests.add(networkRequest)
     }
 
+    @Deprecated("This is no longer supported")
     override fun generateW3cTraceparent(): String? = traceparent
 }

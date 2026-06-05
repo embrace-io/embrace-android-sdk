@@ -17,9 +17,11 @@ import io.embrace.android.embracesdk.instrumentation.androidx.navigation.interna
 import io.embrace.android.embracesdk.internal.arch.navigation.findActivity
 
 /**
- * Wrapper for [rememberNavController] that registers the returned [NavHostController] with the Embrace SDK so navigations are observed.
+ * Composable that wraps [rememberNavController] and registers the created [NavHostController] with the Embrace SDK so its destination
+ * changes are tracked as instances of app navigation.
  *
- * Replace uses of [rememberNavController] with this Composable to enable the functionality.
+ * The SDK will use attributes of the loaded `NavDestination` to identify the event: `route` if non-empty, and otherwise `label` if
+ * non-empty. If both are empty, the name of the `Navigator` will be used as fallback.
  */
 @Composable
 public fun rememberObservedNavController(
@@ -37,8 +39,10 @@ public fun rememberObservedNavController(
 }
 
 /**
- * Composable that creates a Nav3 back stack whose mutations are tracked as navigation state changes. The new navigation state value
- * will be what the [toString] method on the object returns.
+ * Composable that creates a Nav3 back stack whose mutations are tracked as instances of app navigation.
+ *
+ * The SDK will use the value of the [toString] method of the top element of the back stack to identify which destination was navigated to.
+ * Ensure that value is stable and consistently what's expected.
  */
 @Composable
 public fun <T : Any> rememberObservedBackStack(vararg keys: T): SnapshotStateList<T> {

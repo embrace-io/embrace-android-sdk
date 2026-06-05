@@ -13,6 +13,13 @@
       "value": "true"
     },
     {
+      "key" : "emb.clock_gnss_drift",
+      "value" : "169220159900"
+    }, {
+      "key" : "emb.clock_network_drift",
+      "value" : "169220159900"
+    },
+    {
       "key": "emb.cold_start",
       "value": "false"
     },

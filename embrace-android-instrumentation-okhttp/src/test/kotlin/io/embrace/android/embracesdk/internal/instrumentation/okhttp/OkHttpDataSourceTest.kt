@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeLogData
 import io.embrace.android.embracesdk.fakes.FakeSpanToken
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeTraceparentInjectionBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSourceImpl
@@ -90,6 +91,7 @@ internal class OkHttpDataSourceTest {
     private var isNetworkSpanForwardingEnabled = false
         set(value) {
             field = value
+            configService.traceparentInjectionBehavior = FakeTraceparentInjectionBehavior(traceparentInjectionEnabled = value)
             configService.networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior(value)
         }
 
@@ -406,6 +408,50 @@ internal class OkHttpDataSourceTest {
             val attrs = span.attributes
             assertNull(attrs[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
             assertEquals(span.asW3cTraceparent(), attrs[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
+        }
+    }
+
+    @Test
+    fun `existing traceparent header is preserved and not used for the forwarded network span`() {
+        configService.traceparentInjectionBehavior = FakeTraceparentInjectionBehavior(traceparentInjectionEnabled = true)
+        configService.networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior(networkSpanForwardingEnabled = true)
+        val appTraceparent = "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01"
+        postRequestBuilder.header(TRACEPARENT_HEADER, appTraceparent)
+        server.enqueue(createBaseMockResponse())
+        val response = runPostRequest()
+        assertNetworkRequestReceived { span ->
+            assertEquals(appTraceparent, response.networkResponse?.request?.header(TRACEPARENT_HEADER))
+            assertEquals(span.asW3cTraceparent(), span.attributes[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
+        }
+    }
+
+    @Test
+    fun `traceparent injected but span not forwarded when injection on and NSF off`() {
+        configService.traceparentInjectionBehavior = FakeTraceparentInjectionBehavior(traceparentInjectionEnabled = true)
+        configService.networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior(networkSpanForwardingEnabled = false)
+        server.enqueue(createBaseMockResponse())
+        val response = runPostRequest()
+        assertNetworkRequestReceived { span ->
+            assertEquals(span.asW3cTraceparent(), response.networkResponse?.request?.header(TRACEPARENT_HEADER))
+            assertNull(span.attributes[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
+        }
+    }
+
+    @Test
+    fun `nothing injected or forwarded when injection does not apply to the host`() {
+        configService.traceparentInjectionBehavior = FakeTraceparentInjectionBehavior(
+            traceparentInjectionEnabled = true,
+            hostCheckSucceeds = false,
+        )
+        configService.networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior(
+            networkSpanForwardingEnabled = true,
+            hostCheckSucceeds = false,
+        )
+        server.enqueue(createBaseMockResponse())
+        val response = runPostRequest()
+        assertNetworkRequestReceived { span ->
+            assertNull(response.networkResponse?.request?.header(TRACEPARENT_HEADER))
+            assertNull(span.attributes[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
         }
     }
 

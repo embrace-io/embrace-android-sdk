@@ -5,13 +5,13 @@ import io.embrace.android.embracesdk.assertions.assertStateTransition
 import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.assertions.getLogs
 import io.embrace.android.embracesdk.assertions.hasLinkToEmbraceSpan
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.LazyInitStateDataSource
 import io.embrace.android.embracesdk.fakes.TestStateDataSource
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
-import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -22,11 +22,15 @@ import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttributeValue
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.session.getStateSpan
+import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.LIFECYCLE_EVENT_GAP
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -38,19 +42,31 @@ internal class StateFeatureTest {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+        EmbraceSetupInterface(
+            workersToFake = listOf(Worker.Background.LogMessageWorker),
+        ).apply {
+            getFakedWorkerExecutor(Worker.Background.LogMessageWorker).blockingMode = false
+        }
+    }
 
     val stateEnabledRemoteConfig = RemoteConfig(pctStateCaptureEnabledV2 = 100.0f)
     val stateDisabledRemoteConfig = RemoteConfig(pctStateCaptureEnabledV2 = 0.0f)
 
     @Test
     fun `state feature on by default`() {
+        var testDataSourceActive = false
         testRule.runTest(
             testCaseAction = {
+                testDataSourceActive = findDataSource<TestStateDataSource>().isActive()
                 recordSession()
             },
             assertAction = {
+                assertTrue(testDataSourceActive)
                 assertTrue(getSingleSessionEnvelope().findSpansOfType(EmbType.State).isNotEmpty())
+            },
+            otelExportAssertion = {
+                assertNotNull(awaitSpansWithType(3, EmbType.State).single { it.name == "emb-state-test" })
             }
         )
     }
@@ -103,7 +119,6 @@ internal class StateFeatureTest {
                 val sessions = listOf(background.first(), foreground.first(), background.last())
                 repeat(sessions.size) { i ->
                     val stateSpan = checkNotNull(sessions[i].getStateSpan("emb-state-test"))
-                    assertTrue(checkNotNull(stateSpan.attributes).hasEmbraceAttribute(PrivateSpan))
                     with(checkNotNull(stateSpan.events)) {
                         repeat(size) { j ->
                             val event = transitions[i][j]
@@ -449,16 +464,20 @@ internal class StateFeatureTest {
     @Test
     fun `lazy init state data sources generate state span at time of first use`() {
         var initTime = 0L
+        var lazyInitDataSourceActivePreInit = false
         testRule.runTest(
             testCaseAction = {
                 recordSession()
                 recordSession {
                     clock.tick()
                     initTime = clock.now()
-                    findDataSource<LazyInitStateDataSource>().onStateChange("initialized", initTime)
+                    val lazyDataSource = findDataSource<LazyInitStateDataSource>()
+                    lazyInitDataSourceActivePreInit = lazyDataSource.isActive()
+                    lazyDataSource.onStateChange("initialized", initTime)
                 }
             },
             assertAction = {
+                assertFalse(lazyInitDataSourceActivePreInit)
                 val sessionParts = getSessionEnvelopes(2)
                 assertNull(sessionParts[0].getStateSpan("emb-state-lazy-init"))
 
@@ -467,6 +486,34 @@ internal class StateFeatureTest {
                     val firstTransition = checkNotNull(events).first()
                     firstTransition.assertStateTransition(initTime, "initialized")
                 }
+            }
+        )
+    }
+
+    @Test
+    fun `lazy init state data source only add attribute to logs after initialization`() {
+        lateinit var logWorkerExecutor: BlockingScheduledExecutorService
+        testRule.runTest(
+            setupAction = {
+                logWorkerExecutor = getFakedWorkerExecutor(Worker.Background.LogMessageWorker).apply {
+                    blockingMode = true
+                }
+            },
+            testCaseAction = {
+                recordSession {
+                    embrace.logInfo("before")
+                    clock.tick()
+                    findDataSource<LazyInitStateDataSource>().onStateChange("initialized", clock.now())
+                    embrace.logInfo("after")
+                    clock.tick(2000L)
+                    logWorkerExecutor.runCurrentlyBlocked()
+                }
+            },
+            assertAction = {
+                val logs = getSingleLogEnvelope().getLogs { checkNotNull(it.attributes).hasEmbraceAttribute(EmbType.System.Log) }
+                assertEquals(2, logs.size)
+                assertFalse(checkNotNull(logs[0].attributes).hasEmbraceAttributeKey("emb.state.lazy-init"))
+                assertTrue(checkNotNull(logs[1].attributes).hasEmbraceAttributeValue("emb.state.lazy-init", "initialized"))
             }
         )
     }

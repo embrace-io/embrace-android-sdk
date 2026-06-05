@@ -72,6 +72,15 @@ internal class SessionPartSpanAttrPopulatorImpl(
                 addSessionPartAttribute(EmbSessionAttributes.EMB_DISK_FREE_BYTES, free.toString())
             }
 
+            metadataService.getClockDrift()?.let { drift ->
+                drift.networkDriftMillis?.let {
+                    addSessionPartAttribute(EmbSessionAttributes.EMB_CLOCK_NETWORK_DRIFT, it.toString())
+                }
+                drift.gnssDriftMillis?.let {
+                    addSessionPartAttribute(EmbSessionAttributes.EMB_CLOCK_GNSS_DRIFT, it.toString())
+                }
+            }
+
             endAttributes.forEach { (key, value) ->
                 addSessionPartAttribute(key, value)
             }

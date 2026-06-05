@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjecti
 
 class FakeTraceparentInjectionBehavior(
     var traceparentInjectionEnabled: Boolean = false,
-    var hostCheckSucceeds: Boolean = true
+    var hostCheckSucceeds: Boolean = true,
 ) : TraceparentInjectionBehavior {
 
     override fun isTraceparentInjectionEnabled(): Boolean = traceparentInjectionEnabled

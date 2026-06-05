@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.fakes.FakeRemoteConfigSource
 import io.embrace.android.embracesdk.fakes.FakeRemoteConfigStore
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.store.StoredConfigResponse
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -40,11 +41,26 @@ class CombinedRemoteConfigSourceTest {
     fun `test initial config populated`() {
         val cfg = RemoteConfig(100)
         source = CombinedRemoteConfigSource(
-            FakeRemoteConfigStore(ConfigHttpResponse(cfg, null)),
+            FakeRemoteConfigStore(StoredConfigResponse(cfg, null, null)),
             lazy { remoteConfigSource },
             BackgroundWorker(executorService)
         )
         assertEquals(cfg, source.getConfig())
+    }
+
+    @Test
+    fun `test device id null when not cached`() {
+        assertNull(source.getDeviceId())
+    }
+
+    @Test
+    fun `test device id sourced from cache`() {
+        source = CombinedRemoteConfigSource(
+            FakeRemoteConfigStore(StoredConfigResponse(RemoteConfig(), null, "cached-device-id")),
+            lazy { remoteConfigSource },
+            BackgroundWorker(executorService)
+        )
+        assertEquals("cached-device-id", source.getDeviceId())
     }
 
     @Test
@@ -58,7 +74,7 @@ class CombinedRemoteConfigSourceTest {
 
     @Test
     fun `test persisted etag value populated`() {
-        remoteConfigStore.impl = ConfigHttpResponse(RemoteConfig(), "etag")
+        remoteConfigStore.impl = StoredConfigResponse(RemoteConfig(), "etag", null)
         assertEquals(0, remoteConfigSource.callCount)
         source.scheduleConfigRequests()
         executorService.runCurrentlyBlocked()

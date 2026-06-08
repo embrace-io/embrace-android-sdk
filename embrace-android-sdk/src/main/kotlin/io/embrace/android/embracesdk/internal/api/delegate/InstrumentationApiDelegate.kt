@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.arch.datasource.SpanEventImpl
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
-import io.embrace.android.embracesdk.internal.instrumentation.navigation.ScreenDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.traceInstanceId
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -28,9 +27,6 @@ internal class InstrumentationApiDelegate(
     }
     private val navigationTrackingService by embraceImplInject(sdkCallChecker) {
         bootstrapper.essentialServiceModule.navigationTrackingService
-    }
-    private val screenDataSource by embraceImplInject(sdkCallChecker) {
-        bootstrapper.instrumentationModule.instrumentationRegistry.findByType(ScreenDataSource::class)
     }
 
     override fun appReady() {
@@ -104,14 +100,6 @@ internal class InstrumentationApiDelegate(
     override fun observeNavigation(activity: Activity, navigationController: Any) {
         if (sdkCallChecker.check("observe_navigation")) {
             navigationTrackingService?.trackNavigation(activity, navigationController)
-        }
-    }
-
-    override fun screenLoaded(screen: String, eventAttributes: Map<String, String>) {
-        if (sdkCallChecker.check("screen_loaded")) {
-            screenDataSource?.run {
-                onScreenLoaded(screen, eventAttributes)
-            }
         }
     }
 

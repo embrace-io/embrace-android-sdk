@@ -318,9 +318,6 @@ sealed class SchemaType(
         }
     }
 
-    class ScreenState(initialValue: String) :
-        State<String>(initialValue, "screen-manual")
-
     /**
      * A custom telemetry type. This allows the hybrid SDKs (and others) to pass in custom
      * telemetry schemas if required.

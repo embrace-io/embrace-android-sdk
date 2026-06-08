@@ -103,5 +103,3 @@ fun Envelope<SessionPartPayload>.hasSpanSnapshotsOfType(telemetryType: EmbType):
 }
 
 fun Envelope<SessionPartPayload>.getNavigationStateSpan() = getStateSpan("emb-state-screen-automatic")
-
-fun Envelope<SessionPartPayload>.getScreenStateSpan() = getStateSpan("emb-state-screen-manual")

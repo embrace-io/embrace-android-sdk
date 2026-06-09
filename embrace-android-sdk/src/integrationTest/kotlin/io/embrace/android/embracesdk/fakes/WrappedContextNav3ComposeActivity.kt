@@ -10,7 +10,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
-import io.embrace.android.embracesdk.instrumentation.androidx.navigation.internal.rememberObservedBackStack
+import io.embrace.android.embracesdk.instrumentation.androidx.navigation.rememberObservedBackStack
 
 /**
  * Variant of [Nav3ObservedActivity] where the back stack is created in a different context.

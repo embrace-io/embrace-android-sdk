@@ -30,21 +30,21 @@ public class AndroidxNavigationInstrumentationProvider : InstrumentationProvider
 }
 
 /**
- * Function called by [rememberObservedNavController]
+ * Function called by [io.embrace.android.embracesdk.instrumentation.androidx.navigation.rememberObservedNavController]
  * to register a Nav 2 [androidx.navigation.NavController] with the SDK.
  */
 internal var trackNavigation: (Activity, Any?) -> Unit = { _, _ -> }
     private set
 
 /**
- * Function called by [rememberObservedBackStack]
+ * Function called by [io.embrace.android.embracesdk.instrumentation.androidx.navigation.rememberObservedBackStack]
  * when an Activity first attaches a Nav 3 back stack.
  */
 internal var attachBackStack: (activity: Activity) -> Unit = { }
     private set
 
 /**
- * Function called by [rememberObservedBackStack]
+ * Function called by [io.embrace.android.embracesdk.instrumentation.androidx.navigation.rememberObservedBackStack]
  * when the top-of-stack route changes for an attached Nav 3 back stack.
  */
 internal var onBackStackDestinationChange: (activity: Activity, newDestination: String) -> Unit = { _, _ -> }

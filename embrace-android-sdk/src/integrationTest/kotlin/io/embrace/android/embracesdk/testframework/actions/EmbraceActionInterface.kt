@@ -237,6 +237,19 @@ internal class EmbraceActionInterface(
         activityController: ActivityController<T> = Robolectric.buildActivity(T::class.java),
     ) where T : Activity, T : HasNavController = simulateNavControllerNavigation(routes, activityController)
 
+    /**
+     * Simulates opening the given [Activity] and navigating through the given destinations using the NavController provided
+     * by the [HasNavController] interface. The public API for tracking NavControllers will be called after onResume
+     * to register the given NavController for navigation tracking.
+     */
+    inline fun <reified T> simulateNavControllerTrackingAndNavigation(
+        routes: List<String>,
+        activityController: ActivityController<T>,
+    ): AppExecutionTimestamps where T : Activity, T : HasNavController =
+        simulateNavControllerNavigation(routes, activityController) { activity ->
+            embrace.observeNavigation(activity, activityController.get().getNavController())
+        }
+
     inline fun <reified T> simulateBackStackNavigation(
         routes: List<Any>,
         activityController: ActivityController<T> = Robolectric.buildActivity(T::class.java),

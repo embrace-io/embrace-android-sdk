@@ -1,18 +1,12 @@
 package io.embrace.android.embracesdk.internal.utils
 
 import java.util.UUID
+import kotlin.random.Random
 
-object Uuid {
+class UuidSourceImpl(private val random: Random = Random.Default) : UuidSource {
 
-    /**
-     * Get the Embrace UUID. If the argument uuid is null, generates the Embrace UUID using a
-     * random UUID.
-     *
-     * @param uuid the uuid.
-     * @return the Embrace UUID.
-     */
-    fun getEmbUuid(uuid: String? = null): String {
-        val input = uuid ?: UUID.randomUUID().toString()
+    override fun createUuid(): String {
+        val input = UUID(random.nextLong(), random.nextLong()).toString()
 
         // optimization: avoid expensive pattern compilation in replaceAll()
         val buf = input.toCharArray()

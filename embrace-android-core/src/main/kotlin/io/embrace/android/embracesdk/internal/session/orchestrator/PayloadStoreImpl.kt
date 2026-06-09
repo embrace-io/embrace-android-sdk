@@ -15,13 +15,15 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
-import io.embrace.android.embracesdk.internal.utils.Uuid
+import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
+import io.embrace.android.embracesdk.internal.utils.UuidSource
 
 internal class PayloadStoreImpl(
     private val intakeService: IntakeService,
     private val clock: Clock,
     private val processIdProvider: () -> String,
-    private val uuidProvider: () -> String = { Uuid.getEmbUuid() },
+    private val uuidSource: UuidSource,
+    private val sessionIdsProvider: () -> SessionIdsSnapshot,
 ) : PayloadStore {
 
     override fun storeSessionPartPayload(
@@ -109,14 +111,17 @@ internal class PayloadStoreImpl(
         payloadType: PayloadType,
         payloadTypesHeader: String = payloadType.value,
     ): StoredTelemetryMetadata {
+        val sessionIds = sessionIdsProvider()
         return StoredTelemetryMetadata(
-            clock.now(),
-            uuidProvider(),
-            processIdProvider(),
-            type,
-            complete,
+            timestamp = clock.now(),
+            uuid = uuidSource.createUuid(),
+            processIdentifier = processIdProvider(),
+            envelopeType = type,
+            complete = complete,
             payloadType = payloadType,
-            payloadTypesHeader = payloadTypesHeader
+            payloadTypesHeader = payloadTypesHeader,
+            userSessionId = sessionIds.userSessionId,
+            sessionPartId = sessionIds.sessionPartId,
         )
     }
 

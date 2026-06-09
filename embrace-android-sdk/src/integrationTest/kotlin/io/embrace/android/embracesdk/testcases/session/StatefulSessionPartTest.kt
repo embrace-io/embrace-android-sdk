@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionSpan
-import io.embrace.android.embracesdk.assertions.getSessionId
+import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.hasSpanSnapshotsOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -51,7 +51,7 @@ internal class StatefulSessionPartTest {
 
                 // verify second session
                 val second = messages[1]
-                assertNotEquals(first.getSessionId(), second.getSessionId())
+                assertNotEquals(first.getSessionPartId(), second.getSessionPartId())
             }
         )
     }

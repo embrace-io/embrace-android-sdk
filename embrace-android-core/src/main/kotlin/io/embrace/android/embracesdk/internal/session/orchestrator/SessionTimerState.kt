@@ -8,9 +8,6 @@ import java.util.concurrent.ScheduledFuture
  */
 internal class SessionTimerState(
     private val future: ScheduledFuture<*>,
-
-    @Volatile
-    var exceeded: Boolean = false,
 ) {
     fun cancel() {
         runCatching {

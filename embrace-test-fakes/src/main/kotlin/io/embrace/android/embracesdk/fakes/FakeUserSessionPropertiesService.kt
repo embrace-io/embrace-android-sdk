@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.internal.capture.session.PropertyScope
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
 
 class FakeUserSessionPropertiesService : UserSessionPropertiesService {
@@ -9,7 +10,7 @@ class FakeUserSessionPropertiesService : UserSessionPropertiesService {
     var cleanupAfterSessionEndCallCount = 0
     var prepareNewSessionCallCount = 0
 
-    override fun addProperty(originalKey: String, originalValue: String, permanent: Boolean): Boolean {
+    override fun addProperty(originalKey: String, originalValue: String, scope: PropertyScope): Boolean {
         props[originalKey] = originalValue
         return true
     }

@@ -89,7 +89,7 @@ class NetworkCaptureDataSourceImpl(
                     responseHeaders = requestBody.responseHeaders,
                     responseSize = requestBody.responseBodySize,
                     responseStatus = statusCode,
-                    sessionId = args.sessionId(),
+                    sessionId = args.sessionPartId(),
                     startTime = startTime,
                     url = url,
                     errorMessage = errorMessage

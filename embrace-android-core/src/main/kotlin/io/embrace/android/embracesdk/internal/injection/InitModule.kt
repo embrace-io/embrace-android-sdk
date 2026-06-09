@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.config.instrumented.schema.Instrum
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.utils.UuidSource
 import okhttp3.OkHttpClient
 
 /**
@@ -41,4 +42,6 @@ interface InitModule {
     val instrumentedConfig: InstrumentedConfig
 
     val okHttpClient: OkHttpClient
+
+    val uuidSource: UuidSource
 }

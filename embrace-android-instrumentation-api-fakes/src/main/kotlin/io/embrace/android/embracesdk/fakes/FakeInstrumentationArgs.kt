@@ -7,8 +7,10 @@ import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -23,6 +25,7 @@ class FakeInstrumentationArgs(
     override val clock: FakeClock = FakeClock(),
     override val store: FakeKeyValueStore = FakeKeyValueStore(),
     override val serializer: PlatformSerializer = TestPlatformSerializer(),
+    override val uuidSource: UuidSource = TestUuidSource(),
     override val ordinalStore: OrdinalStore = FakeOrdinalStore(),
     override val processIdentifier: String = "fake-process-id",
     override val appStateTracker: AppStateTracker = FakeAppStateTracker(),
@@ -30,6 +33,8 @@ class FakeInstrumentationArgs(
     val backgroundWorkerSupplier: (worker: Worker.Background) -> BackgroundWorker = { fakeBackgroundWorker() },
     val priorityWorkerSupplier: (worker: Worker.Priority) -> PriorityWorker<*> = { fakePriorityWorker<Any>() },
     val sessionIdSupplier: () -> String? = { null },
+    val userSessionIdSupplier: () -> String? = { null },
+    val activeSessionIdsSupplier: () -> SessionIdsSnapshot = { SessionIdsSnapshot("", "") },
     val sessionChangeListeners: MutableList<SessionPartChangeListener> = mutableListOf(),
     val sessionEndListeners: MutableList<SessionPartEndListener> = mutableListOf(),
     val systemServiceSupplier: (name: String) -> Any? = { null },
@@ -45,7 +50,11 @@ class FakeInstrumentationArgs(
     @Suppress("UNCHECKED_CAST")
     override fun <T> systemService(name: String): T? = systemServiceSupplier(name) as? T
 
-    override fun sessionId(): String? = sessionIdSupplier()
+    override fun sessionPartId(): String? = sessionIdSupplier()
+
+    override fun userSessionId(): String? = userSessionIdSupplier()
+
+    override fun activeSessionIds(): SessionIdsSnapshot = activeSessionIdsSupplier()
 
     override fun userSessionProperties(): Map<String, String> = emptyMap()
 

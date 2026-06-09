@@ -29,7 +29,7 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.NativeSymbols
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
-import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
+import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import okhttp3.OkHttpClient
 import okio.ByteString.Companion.decodeBase64
@@ -50,6 +50,7 @@ class ConfigServiceImpl(
     private val filesDir: File,
     private val logger: InternalLogger,
     private val hasConfiguredOtlpExport: () -> Boolean,
+    private val uuidSource: UuidSource,
 ) : ConfigService {
 
     private val onlyOtelExportEnabled: Boolean = instrumentedConfig.project.getAppId() == null
@@ -79,7 +80,7 @@ class ConfigServiceImpl(
         if (deviceId != null) {
             return@run deviceId
         }
-        val newId = getEmbUuid()
+        val newId = uuidSource.createUuid()
         store.edit {
             putString(DEVICE_IDENTIFIER_KEY, newId)
         }

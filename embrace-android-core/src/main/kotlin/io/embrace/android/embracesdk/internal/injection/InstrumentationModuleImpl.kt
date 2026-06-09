@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.storage.StorageService
 
 class InstrumentationModuleImpl(
@@ -15,6 +16,8 @@ class InstrumentationModuleImpl(
     essentialServiceModule: EssentialServiceModule,
     coreModule: CoreModule,
     storageService: StorageService,
+    userSessionIdProvider: () -> String?,
+    activeSessionIdsProvider: () -> SessionIdsSnapshot,
 ) : InstrumentationModule {
 
     override val instrumentationRegistry: InstrumentationRegistry by singleton {
@@ -34,9 +37,12 @@ class InstrumentationModuleImpl(
             workerThreadModule = workerThreadModule,
             store = coreModule.store,
             serializer = initModule.jsonSerializer,
+            uuidSource = initModule.uuidSource,
             sessionPartTracker = essentialServiceModule.sessionPartTracker,
             ordinalStore = coreModule.ordinalStore,
             userSessionPropertiesService = essentialServiceModule.userSessionPropertiesService,
+            userSessionIdProvider = userSessionIdProvider,
+            activeSessionIdsProvider = activeSessionIdsProvider,
             processIdentifier = openTelemetryModule.otelSdkConfig.processIdentifier,
             crashMarkerFileProvider = { storageService.getFileForWrite("embrace_crash_marker") },
             appStateTracker = essentialServiceModule.appStateTracker,

@@ -1,10 +1,18 @@
 #include "jni_util.h"
+#include "../jnibridge/emb_ndk_manager.h"
 #include <stdbool.h>
 
 JavaVM *emb_JVM;
 
 jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     emb_JVM = vm;
+
+    JNIEnv *env;
+    if ((*vm)->GetEnv(vm, (void **) &env, JNI_VERSION_1_6) != JNI_OK) {
+        return JNI_ERR;
+    }
+    EMB_RegisterJniDelegateImpl(env);
+
     return JNI_VERSION_1_6;
 }
 

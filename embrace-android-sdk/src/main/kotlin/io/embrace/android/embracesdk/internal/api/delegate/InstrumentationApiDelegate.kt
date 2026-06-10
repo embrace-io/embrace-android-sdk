@@ -25,9 +25,6 @@ internal class InstrumentationApiDelegate(
     private val appStartupDataCollector by embraceImplInject(sdkCallChecker) {
         bootstrapper.dataCaptureServiceModule.appStartupDataCollector
     }
-    private val navigationTrackingService by embraceImplInject(sdkCallChecker) {
-        bootstrapper.essentialServiceModule.navigationTrackingService
-    }
 
     override fun appReady() {
         if (sdkCallChecker.check("app_ready")) {
@@ -94,12 +91,6 @@ internal class InstrumentationApiDelegate(
                 events = events.map(::toSpanEvent),
                 errorCode = errorCode?.toErrorCodeAttribute()
             )
-        }
-    }
-
-    override fun observeNavigation(activity: Activity, navigationController: Any) {
-        if (sdkCallChecker.check("observe_navigation")) {
-            navigationTrackingService?.trackNavigation(activity, navigationController)
         }
     }
 

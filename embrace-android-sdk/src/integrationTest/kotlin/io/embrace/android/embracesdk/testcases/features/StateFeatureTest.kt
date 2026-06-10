@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
+import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -30,7 +31,6 @@ import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterfac
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -64,9 +64,6 @@ internal class StateFeatureTest {
             assertAction = {
                 assertTrue(testDataSourceActive)
                 assertTrue(getSingleSessionEnvelope().findSpansOfType(EmbType.State).isNotEmpty())
-            },
-            otelExportAssertion = {
-                assertNotNull(awaitSpansWithType(3, EmbType.State).single { it.name == "emb-state-test" })
             }
         )
     }
@@ -119,6 +116,7 @@ internal class StateFeatureTest {
                 val sessions = listOf(background.first(), foreground.first(), background.last())
                 repeat(sessions.size) { i ->
                     val stateSpan = checkNotNull(sessions[i].getStateSpan("emb-state-test"))
+                    assertTrue(checkNotNull(stateSpan.attributes).hasEmbraceAttribute(PrivateSpan))
                     with(checkNotNull(stateSpan.events)) {
                         repeat(size) { j ->
                             val event = transitions[i][j]

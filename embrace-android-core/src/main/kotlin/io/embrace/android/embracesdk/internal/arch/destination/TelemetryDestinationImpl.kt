@@ -130,7 +130,7 @@ class TelemetryDestinationImpl(
         val spanToken = startSpanCapture(
             schemaType = state,
             startTimeMs = clock.now(),
-            private = false
+            private = true
         )
 
         return SessionPartStateTokenImpl(

@@ -10,6 +10,8 @@ import io.embrace.android.embracesdk.fakes.FakeSpanToken
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
+import io.embrace.android.embracesdk.internal.arch.startup.MAX_COLD_STARTUP_INIT_GAP_MS
+import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupTraceEmitter
 import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupTraceEmitter.Companion.ACTIVITY_FIRST_DRAW_SPAN
@@ -600,6 +602,7 @@ internal class AppStartupTraceEmitterTest {
             destination = destination,
             versionChecker = BuildVersionChecker,
             logger = logger,
+            startupClassifier = StartupClassifierImpl(),
             manualEnd = manualEnd,
             processInfo = FakeProcessInfo(
                 if (BuildVersionChecker.isAtLeast(VERSION_CODES.N)) {
@@ -607,7 +610,7 @@ internal class AppStartupTraceEmitterTest {
                 } else {
                     null
                 }
-            )
+            ),
         )
 
     private fun AppStartupTraceEmitter.simulateAppStartup(
@@ -760,7 +763,7 @@ internal class AppStartupTraceEmitterTest {
             clock.tick(50L)
             start to end
         } else {
-            clock.tick(AppStartupTraceEmitter.SDK_AND_ACTIVITY_INIT_GAP + 1)
+            clock.tick(MAX_COLD_STARTUP_INIT_GAP_MS + 1)
             null to null
         }
 

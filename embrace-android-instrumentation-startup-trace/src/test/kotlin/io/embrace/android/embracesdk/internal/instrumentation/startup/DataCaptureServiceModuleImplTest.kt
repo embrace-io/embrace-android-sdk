@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -14,10 +15,11 @@ internal class DataCaptureServiceModuleImplTest {
     @Test
     fun testDefaultImplementations() {
         val module = DataCaptureServiceModuleImpl(
-            FakeClock(),
-            FakeInternalLogger(),
-            FakeTelemetryDestination(),
-            FakeConfigService(),
+            clock = FakeClock(),
+            logger = FakeInternalLogger(),
+            destination = FakeTelemetryDestination(),
+            configService = FakeConfigService(),
+            startupClassifier = StartupClassifierImpl(),
         )
 
         assertNotNull(module.appStartupDataCollector)
@@ -29,12 +31,13 @@ internal class DataCaptureServiceModuleImplTest {
     @Test
     fun `disable ui load performance capture`() {
         val module = DataCaptureServiceModuleImpl(
-            FakeClock(),
-            FakeInternalLogger(),
-            FakeTelemetryDestination(),
-            FakeConfigService(
+            clock = FakeClock(),
+            logger = FakeInternalLogger(),
+            destination = FakeTelemetryDestination(),
+            configService = FakeConfigService(
                 autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uiLoadTracingEnabled = false)
             ),
+            startupClassifier = StartupClassifierImpl(),
         )
 
         assertNull(module.uiLoadDataListener)
@@ -44,12 +47,13 @@ internal class DataCaptureServiceModuleImplTest {
     @Test
     fun `enable only selected ui load performance capture`() {
         val module = DataCaptureServiceModuleImpl(
-            FakeClock(),
-            FakeInternalLogger(),
-            FakeTelemetryDestination(),
-            FakeConfigService(
+            clock = FakeClock(),
+            logger = FakeInternalLogger(),
+            destination = FakeTelemetryDestination(),
+            configService = FakeConfigService(
                 autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uiLoadTracingTraceAll = false)
             ),
+            startupClassifier = StartupClassifierImpl(),
         )
 
         assertNotNull(module.uiLoadDataListener)

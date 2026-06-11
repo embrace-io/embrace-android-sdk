@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
+import io.embrace.android.embracesdk.internal.arch.startup.MAX_COLD_STARTUP_INIT_GAP_MS
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
@@ -160,7 +161,7 @@ internal class AppStartupTraceTest {
                 )
             ),
             testCaseAction = {
-                val initGap = 10000L
+                val initGap = MAX_COLD_STARTUP_INIT_GAP_MS + 1
                 clock.tick(initGap)
                 startupActivityInitMs = clock.now()
                 simulateOpeningActivities(
@@ -232,7 +233,7 @@ internal class AppStartupTraceTest {
                 )
             ),
             testCaseAction = {
-                val initGap = 10000L
+                val initGap = MAX_COLD_STARTUP_INIT_GAP_MS + 1
                 val splashScreenDwellTime = 5000L
                 firstActivityInitMs = clock.tick(initGap)
                 startupActivityInitMs = clock.now() + (3 * LIFECYCLE_EVENT_GAP) + POST_ACTIVITY_ACTION_DWELL +
@@ -430,7 +431,7 @@ internal class AppStartupTraceTest {
                 )
             ),
             testCaseAction = {
-                clock.tick(10000L)
+                clock.tick(MAX_COLD_STARTUP_INIT_GAP_MS + 1)
                 startupActivityInitMs = clock.now()
                 simulateOpeningActivities(
                     addStartupActivity = false,
@@ -464,7 +465,7 @@ internal class AppStartupTraceTest {
                 )
             ),
             testCaseAction = {
-                clock.tick(10000L)
+                clock.tick(MAX_COLD_STARTUP_INIT_GAP_MS + 1)
                 startupActivityInitMs = clock.now()
                 simulateOpeningActivities(
                     addStartupActivity = false,

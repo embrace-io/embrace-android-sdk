@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifier
+import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
@@ -23,6 +25,7 @@ class InitModuleImpl(
     override val clock: Clock = NormalizedIntervalClock(logger = logger),
     override val systemInfo: SystemInfo = SystemInfo(),
     override val uuidSource: UuidSource = UuidSourceImpl(),
+    override val startupClassifier: StartupClassifier = StartupClassifierImpl(),
 ) : InitModule {
 
     override val telemetryService: TelemetryService by singleton {

@@ -6,6 +6,7 @@ import androidx.lifecycle.LifecycleOwner
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifier
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -147,6 +148,7 @@ internal class ModuleInitBootstrapper(
             logger: InternalLogger,
             destination: TelemetryDestination,
             configService: ConfigService,
+            startupClassifier: StartupClassifier,
             versionChecker: VersionChecker,
         ->
         DataCaptureServiceModuleImpl(
@@ -154,7 +156,8 @@ internal class ModuleInitBootstrapper(
             logger,
             destination,
             configService,
-            versionChecker
+            startupClassifier,
+            versionChecker,
         )
     },
     private val deliveryModuleSupplier: DeliveryModuleSupplier = {

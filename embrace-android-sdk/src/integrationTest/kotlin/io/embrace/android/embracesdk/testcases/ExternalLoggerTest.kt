@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
@@ -86,7 +87,7 @@ internal class ExternalLoggerTest {
                 clock.tick()
                 recordSession {
                     logTime = clock.now().millisToNanos()
-                    embrace.addSessionProperty("session-attr", "blah", true)
+                    embrace.addUserSessionProperty("session-attr", "blah", PropertyScope.PERMANENT)
                     embLogger.emit(
                         body = "test",
                         eventName = null,
@@ -151,8 +152,8 @@ internal class ExternalLoggerTest {
                 observedTime = clock.now().millisToNanos()
                 clock.tick()
                 logTime = clock.now().millisToNanos()
-                embrace.addSessionProperty("bg-attr", "blah", true)
-                sessionId = checkNotNull(embrace.currentSessionId)
+                embrace.addUserSessionProperty("bg-attr", "blah", PropertyScope.PERMANENT)
+                sessionId = testRule.bootstrapper.userSessionOrchestrationModule.sessionIdProvider.getCurrentUserSessionId()
                 val span = embOpenTelemetry.getTracer("").startSpan("my-span")
                 parentContext = span.spanContext
                 embLogger.emit(

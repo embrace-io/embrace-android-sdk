@@ -2,13 +2,15 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
-import java.util.concurrent.atomic.AtomicInteger
 
 class FakeOrdinalStore : OrdinalStore {
 
-    private val counts = Ordinal.entries.associateWith { AtomicInteger(0) }
+    private val lock = Any()
+    private val values = mutableMapOf<Ordinal, Int>()
 
-    override fun incrementAndGet(ordinal: Ordinal): Int {
-        return checkNotNull(counts[ordinal]).incrementAndGet()
+    override fun incrementAndGet(ordinal: Ordinal, seed: () -> Int): Int = synchronized(lock) {
+        val next = values[ordinal]?.plus(1) ?: seed()
+        values[ordinal] = next
+        next
     }
 }

@@ -125,7 +125,7 @@ abstract class StateDataSource<T : Any>(
     }
 
     private fun createSessionStateSpan(initialValue: T) {
-        if (stateCaptureActive.get() && args.sessionId() != null) {
+        if (stateCaptureActive.get() && args.sessionPartId() != null) {
             try {
                 partStateToken.set(
                     args.destination.startSessionPartStateCapture(

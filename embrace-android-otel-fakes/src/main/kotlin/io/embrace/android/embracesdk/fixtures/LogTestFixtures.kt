@@ -6,8 +6,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SendMode
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Log
-import io.embrace.android.embracesdk.internal.payload.NativeCrashData
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 
 val testLog: Log = Log(
     traceId = "ceadd56622414a06ae382e4e5a70bcf7",
@@ -44,7 +42,7 @@ val nativeCrashLog = Log(
     attributes = listOf(
         Attribute(EmbSessionAttributes.EMB_PRIVATE_SEND_MODE, SendMode.IMMEDIATE.name),
         EmbType.System.NativeCrash.toPayload(),
-        Attribute(SessionAttributes.SESSION_ID, "bb6b5b1ea2ff48928382fe81d7991ced"),
+        Attribute(EmbSessionAttributes.EMB_SESSION_PART_ID, "bb6b5b1ea2ff48928382fe81d7991ced"),
         Attribute(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER, "8115ec91-3e5e-4d8a-816d-cc40306f9822"),
     )
 )

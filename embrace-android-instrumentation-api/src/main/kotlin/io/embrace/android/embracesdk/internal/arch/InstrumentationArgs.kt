@@ -9,9 +9,11 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -74,6 +76,8 @@ interface InstrumentationArgs {
      */
     val serializer: PlatformSerializer
 
+    val uuidSource: UuidSource
+
     /**
      * Persists ordinals that are cross-cutting concerns across the SDK, such as session number
      * and crash number.
@@ -97,9 +101,20 @@ interface InstrumentationArgs {
     fun <T> systemService(name: String): T?
 
     /**
-     * Retrieves the current session ID, or null if there is no active session.
+     * Retrieves the current session part ID, or null if there is no active session part.
      */
-    fun sessionId(): String?
+    fun sessionPartId(): String?
+
+    /**
+     * Retrieves the current user session ID, or null if there is no active user session.
+     */
+    fun userSessionId(): String?
+
+    /**
+     * Returns the congruent user session and session part ID pair to be put onto telemetry. The snapshot will be appropriate to use
+     * even if there isn't an active user session or session part, as those field will be populated with empty strings.
+     */
+    fun activeSessionIds(): SessionIdsSnapshot
 
     /**
      * Identifier that uniquely identifies the current process.

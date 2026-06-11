@@ -32,7 +32,7 @@ public interface EmbraceAndroidApi {
      * A matching call to [.endView] must be made when the view is no longer
      * displayed.
      *
-     * A maximum of 100 breadcrumbs will be recorded per session, with a maximum length of 256
+     * A maximum of 100 breadcrumbs will be recorded per session part, with a maximum length of 256
      * characters per view name.
      *
      * @param name the name of the view to log
@@ -47,7 +47,7 @@ public interface EmbraceAndroidApi {
      * A matching call to [.startView] must be made when the view is first
      * displayed, or no breadcrumb will be logged.
      *
-     * A maximum of 100 breadcrumbs will be recorded per session, with a maximum length of 256
+     * A maximum of 100 breadcrumbs will be recorded per session part, with a maximum length of 256
      * characters per view name.
      *
      * @param name the name of the view to log

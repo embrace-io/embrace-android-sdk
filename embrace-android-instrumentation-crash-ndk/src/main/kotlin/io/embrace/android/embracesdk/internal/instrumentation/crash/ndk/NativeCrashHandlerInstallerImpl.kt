@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniD
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.io.File
@@ -24,7 +23,7 @@ internal class NativeCrashHandlerInstallerImpl(
     private val delegate: JniDelegate,
     private val mainThreadHandler: MainThreadHandler,
     private val outputDir: Lazy<File>,
-    private val reportId: String = Uuid.getEmbUuid(),
+    private val reportId: String = args.uuidSource.createUuid(),
     private val devLogging: Boolean = false,
 ) : NativeCrashHandlerInstaller {
 
@@ -49,25 +48,36 @@ internal class NativeCrashHandlerInstallerImpl(
     private fun startNativeCrashMonitoring() {
         try {
             if (sharedObjectLoader.loadEmbraceNative()) {
-                delegate.onSessionChange(
-                    sanitizeSessionId(args.sessionId()),
-                    createNativeReportPath()
-                )
+                updateSessionIds()
                 mainThreadHandler.postAtFrontOfQueue { installSignals() }
                 mainThreadHandler.postDelayed(
                     Runnable(::checkSignalHandlersOverwritten),
                     HANDLER_CHECK_DELAY_MS
                 )
-                args.registerSessionPartChangeListener {
-                    delegate.onSessionChange(sanitizeSessionId(args.sessionId()), createNativeReportPath())
-                }
+                args.registerSessionPartChangeListener { updateSessionIds() }
             }
         } catch (ex: Exception) {
             logger.trackInternalError(InternalErrorType.NativeHandlerInstallFail, ex)
         }
     }
 
-    private fun sanitizeSessionId(sid: String?) = sid ?: "null"
+    private fun updateSessionIds() {
+        val ids = args.activeSessionIds()
+        val sessionPartId = sanitizeSessionId(ids.sessionPartId)
+        val userSessionId = sanitizeSessionId(ids.userSessionId)
+        delegate.onSessionChange(
+            sessionPartId,
+            userSessionId,
+            createNativeReportPath(sessionPartId, userSessionId)
+        )
+    }
+
+    private fun sanitizeSessionId(sid: String?) =
+        if (sid.isNullOrBlank()) {
+            "null"
+        } else {
+            sid
+        }
 
     private fun checkSignalHandlersOverwritten() {
         if (configService.autoDataCaptureBehavior.is3rdPartySigHandlerDetectionEnabled()) {
@@ -103,13 +113,15 @@ internal class NativeCrashHandlerInstallerImpl(
         }
     }
 
-    private fun createNativeReportPath(): String {
+    private fun createNativeReportPath(sanitizedSessionPartId: String, sanitizedUserSessionId: String): String {
         val metadata = StoredTelemetryMetadata(
             timestamp = clock.now(),
-            uuid = sanitizeSessionId(args.sessionId()),
+            uuid = sanitizedSessionPartId,
             processIdentifier = processIdentifier,
             envelopeType = SupportedEnvelopeType.CRASH,
             payloadType = PayloadType.NATIVE_CRASH,
+            userSessionId = sanitizedUserSessionId,
+            sessionPartId = sanitizedSessionPartId,
         )
         return File(outputDir.value, metadata.filename).absolutePath
     }

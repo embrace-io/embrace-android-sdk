@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.session
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
@@ -30,6 +31,16 @@ internal class UserSessionMetadataStoreTest {
         partIndex = 2,
         lastActivityMs = 9000L,
     )
+    private val metadataBackgroundOnly = UserSessionMetadata(
+        startTimeMs = 3000L,
+        userSessionId = "test-uuid-3",
+        userSessionNumber = 7L,
+        maxDurationSecs = 3600L,
+        inactivityTimeoutSecs = 1800L,
+        partIndex = 4,
+        lastActivityMs = 3000L,
+        isBackgroundOnly = true,
+    )
 
     @Before
     fun setUp() {
@@ -45,30 +56,30 @@ internal class UserSessionMetadataStoreTest {
     @Test
     fun `save and load round-trips all fields`() {
         metadataStore.save(metadata)
-        val loaded = checkNotNull(metadataStore.load())
+        metadata.assertMetadataEquals(metadataStore.load())
+    }
 
-        assertEquals(metadata.startTimeMs, loaded.startTimeMs)
-        assertEquals(metadata.userSessionId, loaded.userSessionId)
-        assertEquals(metadata.userSessionNumber, loaded.userSessionNumber)
-        assertEquals(metadata.maxDurationSecs, loaded.maxDurationSecs)
-        assertEquals(metadata.inactivityTimeoutSecs, loaded.inactivityTimeoutSecs)
-        assertEquals(metadata.partIndex, loaded.partIndex)
-        assertEquals(metadata.lastActivityMs, loaded.lastActivityMs)
+    @Test
+    fun `save and load background only metadata`() {
+        metadataStore.save(metadataBackgroundOnly)
+        val loaded = metadataStore.load()
+        metadataBackgroundOnly.assertMetadataEquals(loaded)
+        assertEquals(true, loaded?.isBackgroundOnly)
+    }
+
+    @Test
+    fun `session persisted without the background marker loads as a regular session`() {
+        metadataStore.save(metadata)
+        val loaded = checkNotNull(saveAndRemoveFromRawMap(metadata, EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART))
+        metadata.assertMetadataEquals(loaded)
+        assertFalse(loaded.isBackgroundOnly)
     }
 
     @Test
     fun `values can be overwritten`() {
         metadataStore.save(metadata)
         metadataStore.save(metadata2)
-        val loaded = checkNotNull(metadataStore.load())
-
-        assertEquals(metadata2.startTimeMs, loaded.startTimeMs)
-        assertEquals(metadata2.userSessionId, loaded.userSessionId)
-        assertEquals(metadata2.userSessionNumber, loaded.userSessionNumber)
-        assertEquals(metadata2.maxDurationSecs, loaded.maxDurationSecs)
-        assertEquals(metadata2.inactivityTimeoutSecs, loaded.inactivityTimeoutSecs)
-        assertEquals(metadata2.partIndex, loaded.partIndex)
-        assertEquals(metadata2.lastActivityMs, loaded.lastActivityMs)
+        metadata2.assertMetadataEquals(metadataStore.load())
     }
 
     @Test
@@ -80,61 +91,61 @@ internal class UserSessionMetadataStoreTest {
 
     @Test
     fun `load returns null when session id is missing`() {
-        metadataStore.save(metadata)
-        val stored = checkNotNull(kvStore.getStringMap("embrace.user_session")).toMutableMap()
-        stored.remove(EmbSessionAttributes.EMB_USER_SESSION_ID)
-        kvStore.edit { putStringMap("embrace.user_session", stored) }
-
-        assertNull(metadataStore.load())
+        assertNull(saveAndRemoveFromRawMap(metadata, EmbSessionAttributes.EMB_USER_SESSION_ID))
     }
 
     @Test
     fun `load returns null when start timestamp is missing`() {
-        metadataStore.save(metadata)
-        val stored = checkNotNull(kvStore.getStringMap("embrace.user_session")).toMutableMap()
-        stored.remove(EmbSessionAttributes.EMB_USER_SESSION_START_TS)
-        kvStore.edit { putStringMap("embrace.user_session", stored) }
-
-        assertNull(metadataStore.load())
+        assertNull(saveAndRemoveFromRawMap(metadata, EmbSessionAttributes.EMB_USER_SESSION_START_TS))
     }
 
     @Test
     fun `load returns null when session number is missing`() {
-        metadataStore.save(metadata)
-        val stored = checkNotNull(kvStore.getStringMap("embrace.user_session")).toMutableMap()
-        stored.remove(EmbSessionAttributes.EMB_USER_SESSION_NUMBER)
-        kvStore.edit { putStringMap("embrace.user_session", stored) }
-
-        assertNull(metadataStore.load())
+        assertNull(saveAndRemoveFromRawMap(metadata, EmbSessionAttributes.EMB_USER_SESSION_NUMBER))
     }
 
     @Test
     fun `load returns null when max duration is missing`() {
-        metadataStore.save(metadata)
-        val stored = checkNotNull(kvStore.getStringMap("embrace.user_session")).toMutableMap()
-        stored.remove(EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS)
-        kvStore.edit { putStringMap("embrace.user_session", stored) }
-
-        assertNull(metadataStore.load())
+        assertNull(saveAndRemoveFromRawMap(metadata, EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS))
     }
 
     @Test
     fun `load returns null when inactivity timeout is missing`() {
-        metadataStore.save(metadata)
-        val stored = checkNotNull(kvStore.getStringMap("embrace.user_session")).toMutableMap()
-        stored.remove(EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS)
-        kvStore.edit { putStringMap("embrace.user_session", stored) }
-
-        assertNull(metadataStore.load())
+        assertNull(saveAndRemoveFromRawMap(metadata, EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS))
     }
 
     @Test
     fun `load returns null when part index is missing`() {
-        metadataStore.save(metadata)
-        val stored = checkNotNull(kvStore.getStringMap("embrace.user_session")).toMutableMap()
-        stored.remove(EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX)
-        kvStore.edit { putStringMap("embrace.user_session", stored) }
+        assertNull(saveAndRemoveFromRawMap(metadata, EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX))
+    }
 
-        assertNull(metadataStore.load())
+    private fun getRawMap(): MutableMap<String, String> = checkNotNull(kvStore.getStringMap("embrace.user_session")).toMutableMap()
+
+    private fun saveAndRemoveFromRawMap(
+        sessionMetadata: UserSessionMetadata,
+        attribute: String,
+    ): UserSessionMetadata? {
+        metadataStore.save(sessionMetadata)
+        kvStore.edit {
+            putStringMap(
+                "embrace.user_session",
+                getRawMap().apply {
+                    remove(attribute)
+                }
+            )
+        }
+        return metadataStore.load()
+    }
+
+    private fun UserSessionMetadata.assertMetadataEquals(other: UserSessionMetadata?) {
+        checkNotNull(other)
+        assertEquals(startTimeMs, other.startTimeMs)
+        assertEquals(userSessionId, other.userSessionId)
+        assertEquals(userSessionNumber, other.userSessionNumber)
+        assertEquals(maxDurationSecs, other.maxDurationSecs)
+        assertEquals(inactivityTimeoutSecs, other.inactivityTimeoutSecs)
+        assertEquals(partIndex, other.partIndex)
+        assertEquals(lastActivityMs, other.lastActivityMs)
+        assertEquals(isBackgroundOnly, other.isBackgroundOnly)
     }
 }

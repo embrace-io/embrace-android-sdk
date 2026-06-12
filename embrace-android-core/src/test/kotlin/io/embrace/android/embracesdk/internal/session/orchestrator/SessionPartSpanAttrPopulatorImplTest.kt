@@ -70,6 +70,17 @@ internal class SessionPartSpanAttrPopulatorImplTest {
         assertEquals("1800", attrs[EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS])
         assertEquals("user-session-uuid", attrs[SessionAttributes.SESSION_ID])
         assertEquals("id", attrs[EmbSessionAttributes.EMB_SESSION_PART_ID])
+        assertFalse(attrs.containsKey(EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART))
+    }
+
+    @Test
+    fun `background-only marker stamped on session part span`() {
+        populator.populateSessionSpanStartAttrs(zygote, userSession.copy(isBackgroundOnly = true))
+
+        val attrs = destination.attributes
+        assertEquals("1", attrs[EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART])
+        assertEquals("user-session-uuid", attrs[EmbSessionAttributes.EMB_USER_SESSION_ID])
+        assertEquals("user-session-uuid", attrs[SessionAttributes.SESSION_ID])
     }
 
     @Test

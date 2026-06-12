@@ -477,6 +477,11 @@ groups:
         brief: "Set to 1 when the SDK knows for certain this is the final part of a session (max duration reached, inactivity timeout, or manual termination). Omitted when the value would be 0."
         stability: development
         examples: ["1"]
+      - id: emb.is_background_only_part
+        type: string
+        brief: "Set to 1 when the session part belongs to a background user session, i.e. a user session covering a period when the app process is alive but the user is not active. Omitted for regular user sessions."
+        stability: development
+        examples: ["1"]
       - id: emb.user_session_termination_reason
         type:
           allow_custom_values: false

@@ -59,6 +59,12 @@ object EmbSessionAttributes {
     const val EMB_HEARTBEAT_TIME_UNIX_NANO: String = "emb.heartbeat_time_unix_nano"
 
     /**
+     * Set to 1 when the session part belongs to a background user session, i.e. a user session covering a period when the app process is alive but the user is not active. Omitted for regular user sessions.
+     */
+    @ExperimentalSemconv
+    const val EMB_IS_BACKGROUND_ONLY_PART: String = "emb.is_background_only_part"
+
+    /**
      * Set to 1 when the SDK knows for certain this is the final part of a session (max duration reached, inactivity timeout, or manual termination). Omitted when the value would be 0.
      */
     @ExperimentalSemconv

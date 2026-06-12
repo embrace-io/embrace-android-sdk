@@ -47,6 +47,8 @@ internal class UserSessionMetadataStore(private val store: KeyValueStore) {
         val inactivityTimeoutSecs = attrs[EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS]?.toLongOrNull() ?: return null
         val partIndex = attrs[EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX]?.toIntOrNull() ?: return null
         val lastActivityMs = attrs[KEY_LAST_ACTIVITY_TS]?.toLongOrNull() ?: return null
+        val isBackgroundOnly =
+            attrs[EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART] == UserSessionMetadata.BACKGROUND_ONLY_MARKER
         return UserSessionMetadata(
             startTimeMs = startMs,
             userSessionId = id,
@@ -55,6 +57,7 @@ internal class UserSessionMetadataStore(private val store: KeyValueStore) {
             inactivityTimeoutSecs = inactivityTimeoutSecs,
             partIndex = partIndex,
             lastActivityMs = lastActivityMs,
+            isBackgroundOnly = isBackgroundOnly,
         )
     }
 }

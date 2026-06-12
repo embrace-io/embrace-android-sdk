@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.spans.TracingApi
 public interface SdkApi :
     LogsApi,
     NetworkRequestApi,
-    SessionApi,
+    UserSessionApi,
     UserApi,
     TracingApi,
     EmbraceAndroidApi,

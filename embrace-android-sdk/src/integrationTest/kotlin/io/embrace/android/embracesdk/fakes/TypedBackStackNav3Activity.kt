@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
-import io.embrace.android.embracesdk.instrumentation.androidx.navigation.rememberObservedBackStack
+import io.embrace.android.embracesdk.instrumentation.androidx.navigation.internal.rememberObservedBackStack
 
 /**
  * An Activity that uses Nav3 and calls [rememberObservedBackStack] to create and track a back stack that uses typed objects as

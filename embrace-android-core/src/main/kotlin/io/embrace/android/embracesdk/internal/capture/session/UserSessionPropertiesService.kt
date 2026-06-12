@@ -4,19 +4,16 @@ interface UserSessionPropertiesService {
 
     /**
      * Annotates the session with a new property. Use this to track permanent and ephemeral
-     * features of the session. A permanent property is added to all sessions submitted from this
-     * device, use this for properties such as work site, building, owner. A non-permanent property
-     * is added to only the currently active session.
+     * features of the session.
      *
      * The default maximum is 10 total properties in a session.
      *
      * @param originalKey       The key for this property, must be unique within session properties
      * @param originalValue     The value to store for this property
-     * @param permanent If true the property is applied to all sessions going forward, persist
-     * through app launches.
+     * @param scope             The lifetime scope for this property
      * @return A boolean indicating whether the property was added or not
      */
-    fun addProperty(originalKey: String, originalValue: String, permanent: Boolean): Boolean
+    fun addProperty(originalKey: String, originalValue: String, scope: PropertyScope): Boolean
 
     /**
      * Removes a property from the session. If that property was permanent then it is removed from

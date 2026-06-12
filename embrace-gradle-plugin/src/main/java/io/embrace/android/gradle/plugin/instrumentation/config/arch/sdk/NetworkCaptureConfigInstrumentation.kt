@@ -10,6 +10,9 @@ import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConf
 fun createNetworkCaptureConfigInstrumentation(cfg: VariantConfig) = modelSdkConfigClass {
     intMethod("getRequestLimitPerDomain") { cfg.embraceConfig?.sdkConfig?.networking?.defaultCaptureLimit }
     stringListMethod("getIgnoredRequestPatternList") { cfg.embraceConfig?.sdkConfig?.networking?.disabledUrlPatterns }
+    stringListMethod("getTraceparentOnlyAllowDomains") {
+        cfg.embraceConfig?.sdkConfig?.networking?.traceparentOnlyAllowDomains
+    }
     stringMethod("getNetworkBodyCapturePublicKey") { cfg.embraceConfig?.sdkConfig?.capturePublicKey }
     mapMethod("getLimitsByDomain") {
         cfg.embraceConfig?.sdkConfig?.networking?.domains?.associate {

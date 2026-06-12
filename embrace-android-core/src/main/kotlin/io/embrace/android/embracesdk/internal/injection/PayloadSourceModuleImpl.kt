@@ -145,6 +145,7 @@ class PayloadSourceModuleImpl(
                 lazy { storageManager },
                 configService,
                 coreModule.store,
+                initModule.clock,
                 workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker)
             )
         }
@@ -154,6 +155,7 @@ class PayloadSourceModuleImpl(
         deliveryModule ?: return@singleton null
         PayloadResurrectionServiceImpl(
             intakeService = deliveryModule.intakeService,
+            payloadStorageService = deliveryModule.payloadStorageService,
             cacheStorageService = deliveryModule.cacheStorageService,
             cachedLogEnvelopeStore = deliveryModule.cachedLogEnvelopeStore,
             logger = initModule.logger,

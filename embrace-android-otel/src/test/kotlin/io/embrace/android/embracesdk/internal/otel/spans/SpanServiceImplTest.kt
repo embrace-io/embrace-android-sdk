@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.assertions.assertNotPrivateSpan
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
+import io.embrace.android.embracesdk.fakes.FakeSessionIdProvider
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.TestConstants.TESTS_DEFAULT_USE_KOTLIN_SDK
@@ -622,7 +623,7 @@ internal class SpanServiceImplTest {
             appVersion = "1.0.0",
             packageName = "com.test.app",
             systemInfo = SystemInfo(),
-            sessionIdProvider = { "fake-session-id" },
+            sessionIdProvider = { FakeSessionIdProvider(userSessionId = "fake-session-id") },
             processIdentifierProvider = { "fake-pid" }
         )
         val otelSdkWrapper = OtelSdkWrapper(

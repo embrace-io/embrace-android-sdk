@@ -213,5 +213,7 @@ internal class SdkIntegrationTestRule(
 
     companion object {
         const val DEFAULT_SDK_START_TIME_MS = 169220160000L
+        const val DEFAULT_EXPIRED_USER_SESSION_ID = "ef7ddb7cc8dd40a1be7b5cce5dc49d95"
+        const val DEFAULT_DEAD_SESSION_PART_ID = "dde17b0916354843bf2fbead12b028a9"
     }
 }

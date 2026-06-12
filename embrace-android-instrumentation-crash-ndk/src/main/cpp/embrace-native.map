@@ -1,0 +1,7 @@
+{
+    global:
+        JNI_OnLoad;
+        emb_jniIsAttached; # resolved by Embrace Unity (see jni_util.c)
+    local:
+        *;
+};

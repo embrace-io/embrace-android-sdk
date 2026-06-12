@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -65,7 +66,7 @@ internal class UserSessionApiTest {
                 val attrs = checkNotNull(sessionSpan.attributes)
                 val attributeKeys = attrs.map { it.key }
                 validateExistenceOnly.forEach { key ->
-                    attributeKeys.contains(key)
+                    assertTrue("'$key' not found in attrs", attributeKeys.contains(key))
                 }
 
                 val attributesToCheck = attrs.filterNot {
@@ -79,7 +80,6 @@ internal class UserSessionApiTest {
                     EmbSessionAttributes.EMB_SESSION_START_TYPE to "state",
                     EmbSessionAttributes.EMB_TERMINATED to "false",
                     EmbSessionAttributes.EMB_SESSION_END_TYPE to "state",
-                    EmbSessionAttributes.EMB_SESSION_NUMBER to "1",
                     "emb.type" to "ux.session",
                     EmbSessionAttributes.EMB_ERROR_LOG_COUNT to "0",
                     "emb.usage.set_username" to "1",
@@ -104,11 +104,21 @@ internal class UserSessionApiTest {
             EmbTelemetryAttributes.EMB_IS_EMULATOR,
             EmbTelemetryAttributes.EMB_OKHTTP3_ON_CLASSPATH,
             EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO,
+            EmbSessionAttributes.EMB_CLOCK_GNSS_DRIFT,
+            EmbSessionAttributes.EMB_CLOCK_NETWORK_DRIFT,
         )
 
         // Attributes that are unstable that we should not try to verify
         val ignoredAttributes = setOf(
-            EmbSessionAttributes.EMB_DISK_FREE_BYTES
+            EmbSessionAttributes.EMB_DISK_FREE_BYTES,
+            EmbSessionAttributes.EMB_SESSION_PART_ID,
+            EmbSessionAttributes.EMB_USER_SESSION_ID,
+            EmbSessionAttributes.EMB_USER_SESSION_NUMBER,
+            EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS,
+            EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS,
+            EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX,
+            EmbSessionAttributes.EMB_SESSION_PART_NUMBER,
+            EmbSessionAttributes.EMB_USER_SESSION_START_TS,
         ).plus(validateExistenceOnly)
     }
 }

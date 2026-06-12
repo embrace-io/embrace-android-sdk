@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.store.Ordinal
-import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.utils.encodeToUTF8String
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
@@ -55,7 +54,7 @@ class JvmCrashDataSourceImpl(
     override fun logUnhandledJvmThrowable(exception: Throwable) {
         if (!mainCrashHandled.getAndSet(true)) {
             captureTelemetry(inputValidation = configService.autoDataCaptureBehavior::isJvmCrashCaptureEnabled) {
-                val crashId = Uuid.getEmbUuid()
+                val crashId = args.uuidSource.createUuid()
                 val attrs = TelemetryAttributes().apply {
                     val crashException = LegacyExceptionInfo.ofThrowable(exception)
                     setAttribute(

@@ -5,6 +5,8 @@ import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
+import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifier
+import io.embrace.android.embracesdk.internal.arch.startup.StartupType
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.hasRenderEvent
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.supportFrameCommitCallback
@@ -45,6 +47,7 @@ internal class AppStartupTraceEmitter(
     private val destination: TelemetryDestination,
     private val versionChecker: VersionChecker,
     private val logger: InternalLogger,
+    private val startupClassifier: StartupClassifier,
     manualEnd: Boolean,
     processInfo: ProcessInfo,
 ) : AppStartupDataCollector {
@@ -97,8 +100,8 @@ internal class AppStartupTraceEmitter(
     @Volatile
     private var appStartupCompleteCallback: (() -> Unit)? = null
 
-    @Volatile
-    private var recordColdStart = true
+    private val recordColdStart: Boolean
+        get() = startupClassifier.startupType() == StartupType.COLD
 
     override fun applicationInitStart(timestampMs: Long?) {
         applicationInitStartMs = timestampMs ?: nowMs()
@@ -116,8 +119,12 @@ internal class AppStartupTraceEmitter(
         val sdkInitStartMs = startupServiceProvider()?.getSdkInitStartMs()
         val sdkInitEndMs = startupServiceProvider()?.getSdkInitEndMs()
         if (sdkInitStartMs != null && sdkInitEndMs != null) {
-            applicationActivityCreationGap(sdkInitEndMs)?.let { gap ->
-                recordColdStart = gap <= SDK_AND_ACTIVITY_INIT_GAP
+            startupClassifier.evaluateStartup(
+                sdkInitEndMs = sdkInitEndMs,
+                appInitEndMs = applicationInitEndMs,
+                postAppInitTimeMs = activityInitTimeMs,
+            )
+            if (startupClassifier.startupType() != null) {
                 startTrace(
                     isColdStart = recordColdStart,
                     sdkInitStartMs = sdkInitStartMs,
@@ -400,9 +407,6 @@ internal class AppStartupTraceEmitter(
         }
     }
 
-    private fun applicationActivityCreationGap(sdkInitEndMs: Long): Long? =
-        duration(applicationInitEndMs ?: sdkInitEndMs, firstActivityInitStartMs)
-
     private fun nowMs(): Long = clock.now()
 
     private fun SpanToken.addTraceMetadata() {
@@ -435,12 +439,6 @@ internal class AppStartupTraceEmitter(
     }
 
     companion object {
-        /**
-         * The gap between the end of the Embrace SDK initialization to when the first activity loaded after startup happens.
-         * If this gap is greater than 2 seconds, it is assumed that the app process was not created because the user tapped on the app,
-         * so we track this app launch as a warm start.
-         */
-        const val SDK_AND_ACTIVITY_INIT_GAP: Long = 2000L
         const val COLD_APP_STARTUP_ROOT_SPAN = "app-startup-cold"
         const val WARM_APP_STARTUP_ROOT_SPAN = "app-startup-warm"
         const val PROCESS_INIT_SPAN = "process-init"
@@ -451,11 +449,5 @@ internal class AppStartupTraceEmitter(
         const val ACTIVITY_FIRST_DRAW_SPAN = "activity-first-draw"
         const val ACTIVITY_LOAD_SPAN = "activity-load"
         const val APP_READY_SPAN = "app-ready"
-
-        fun duration(start: Long?, end: Long?): Long? = if (start != null && end != null) {
-            end - start
-        } else {
-            null
-        }
     }
 }

@@ -6,6 +6,7 @@ import androidx.lifecycle.LifecycleOwner
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifier
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -67,6 +68,7 @@ internal class ModuleInitBootstrapper(
                 store = coreModule.store,
                 abis = Build.SUPPORTED_ABIS,
                 logger = initModule.logger,
+                uuidSource = initModule.uuidSource,
             )
         }
     },
@@ -94,6 +96,7 @@ internal class ModuleInitBootstrapper(
             workerThreadModule: WorkerThreadModule,
             lifecycleOwnerProvider: Provider<LifecycleOwner?>,
             networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
+            sessionOrchestratorProvider,
         ->
         EssentialServiceModuleImpl(
             initModule,
@@ -103,6 +106,7 @@ internal class ModuleInitBootstrapper(
             workerThreadModule,
             lifecycleOwnerProvider,
             networkConnectivityServiceProvider,
+            sessionOrchestratorProvider,
         )
     },
     private val featureModuleSupplier: FeatureModuleSupplier = {
@@ -124,6 +128,8 @@ internal class ModuleInitBootstrapper(
             essentialServiceModule: EssentialServiceModule,
             coreModule: CoreModule,
             storageService: StorageService,
+            userSessionIdProvider,
+            activeSessionIdsProvider,
         ->
         InstrumentationModuleImpl(
             initModule,
@@ -133,6 +139,8 @@ internal class ModuleInitBootstrapper(
             essentialServiceModule,
             coreModule,
             storageService,
+            userSessionIdProvider,
+            activeSessionIdsProvider,
         )
     },
     private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = {
@@ -140,6 +148,7 @@ internal class ModuleInitBootstrapper(
             logger: InternalLogger,
             destination: TelemetryDestination,
             configService: ConfigService,
+            startupClassifier: StartupClassifier,
             versionChecker: VersionChecker,
         ->
         DataCaptureServiceModuleImpl(
@@ -147,7 +156,8 @@ internal class ModuleInitBootstrapper(
             logger,
             destination,
             configService,
-            versionChecker
+            startupClassifier,
+            versionChecker,
         )
     },
     private val deliveryModuleSupplier: DeliveryModuleSupplier = {

@@ -228,7 +228,7 @@ class PluginIntegrationTestRule : ExternalResource() {
                 "-Dorg.gradle.daemon=false",
                 "-Dorg.gradle.parallel=true",
                 "-Dorg.gradle.caching=true",
-                "-Dorg.gradle.jvmargs=-Xmx4g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g",
+                "-Dorg.gradle.jvmargs=-Xmx4g -XX:+UseParallelGC",
                 "-Dorg.gradle.java.home=${testMatrix.jdk.path}",
                 "-Pembrace.baseUrl=$baseUrl",
                 "-Pagp_version=${testMatrix.agp}",

@@ -6,6 +6,7 @@
 #define EMBRACE_NATIVE_CRASHES_EMB_NDK_MANAGER_H
 
 #include "../schema/stack_frames.h"
+#include <jni.h>
 #include <stdbool.h>
 
 #ifdef CLANG_ANALYZE_ASYNCSAFE
@@ -24,5 +25,7 @@ typedef struct {
     bool already_handled_crash;
     emb_crash crash;
 } emb_env;
+
+void EMB_RegisterJniDelegateImpl(JNIEnv *env);
 
 #endif //EMBRACE_NATIVE_CRASHES_EMB_NDK_MANAGER_H

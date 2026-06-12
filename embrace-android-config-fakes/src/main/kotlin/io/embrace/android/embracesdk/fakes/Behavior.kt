@@ -21,6 +21,8 @@ import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImp
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
@@ -102,16 +104,22 @@ fun createAppExitInfoBehavior(
 ): AppExitInfoBehavior = AppExitInfoBehaviorImpl(thresholdCheck, InstrumentedConfigImpl, remoteCfg)
 
 /**
+ * A [TraceparentInjectionBehaviorImpl] that returns default values.
+ */
+fun createTraceparentInjectionBehavior(
+    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
+    remoteConfig: RemoteConfig? = null,
+): TraceparentInjectionBehavior = TraceparentInjectionBehaviorImpl(thresholdCheck, InstrumentedConfigImpl, remoteConfig)
+
+/**
  * A [NetworkSpanForwardingBehaviorImpl] that returns default values.
  */
 fun createNetworkSpanForwardingBehavior(
+    traceparentInjectionBehavior: TraceparentInjectionBehavior,
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     remoteConfig: RemoteConfig? = null,
-): NetworkSpanForwardingBehavior = NetworkSpanForwardingBehaviorImpl(
-    thresholdCheck,
-    InstrumentedConfigImpl,
-    remoteConfig
-)
+): NetworkSpanForwardingBehavior =
+    NetworkSpanForwardingBehaviorImpl(traceparentInjectionBehavior, thresholdCheck, InstrumentedConfigImpl, remoteConfig)
 
 /**
  * A [SensitiveKeysBehaviorImpl] that returns default values.
@@ -123,5 +131,5 @@ fun createSensitiveKeysBehavior() = SensitiveKeysBehaviorImpl(InstrumentedConfig
  */
 fun createOtelBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: RemoteConfig? = null
+    remoteCfg: RemoteConfig? = null,
 ) = OtelBehaviorImpl(thresholdCheck, InstrumentedConfigImpl, remoteCfg)

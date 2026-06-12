@@ -4,7 +4,10 @@ import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForward
 
 class FakeNetworkSpanForwardingBehavior(
     var networkSpanForwardingEnabled: Boolean = false,
+    var hostCheckSucceeds: Boolean = true,
 ) : NetworkSpanForwardingBehavior {
 
     override fun isNetworkSpanForwardingEnabled(): Boolean = networkSpanForwardingEnabled
+
+    override fun shouldForwardForDomain(host: String?): Boolean = networkSpanForwardingEnabled && hostCheckSucceeds
 }

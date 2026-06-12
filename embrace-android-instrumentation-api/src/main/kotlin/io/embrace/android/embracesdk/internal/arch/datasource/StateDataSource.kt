@@ -94,6 +94,11 @@ abstract class StateDataSource<T : Any>(
      */
     fun getCurrentStateValue(): T = currentState.get()
 
+    /**
+     * Returns true if the data source is currently active
+     */
+    fun isActive(): Boolean = stateCaptureActive.get()
+
     @CallSuper
     override fun onDataCaptureEnabled() {
         if (captureStateOnCreation) {
@@ -120,7 +125,7 @@ abstract class StateDataSource<T : Any>(
     }
 
     private fun createSessionStateSpan(initialValue: T) {
-        if (stateCaptureActive.get() && args.sessionId() != null) {
+        if (stateCaptureActive.get() && args.sessionPartId() != null) {
             try {
                 partStateToken.set(
                     args.destination.startSessionPartStateCapture(

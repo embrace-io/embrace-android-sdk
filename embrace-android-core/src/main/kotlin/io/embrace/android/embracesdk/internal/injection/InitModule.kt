@@ -1,11 +1,13 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifier
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.utils.UuidSource
 import okhttp3.OkHttpClient
 
 /**
@@ -41,4 +43,8 @@ interface InitModule {
     val instrumentedConfig: InstrumentedConfig
 
     val okHttpClient: OkHttpClient
+
+    val uuidSource: UuidSource
+
+    val startupClassifier: StartupClassifier
 }

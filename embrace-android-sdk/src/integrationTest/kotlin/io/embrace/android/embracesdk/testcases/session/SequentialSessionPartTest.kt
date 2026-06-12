@@ -50,39 +50,32 @@ internal class SequentialSessionPartTest {
                 val secondSession = sessions[1]
                 val thirdSession = sessions[2]
 
-                val firstBaSessionSpan = firstBa.getValidatedSessionSpan(
-                    sessionNumber = 1,
-                )
+                val firstBaSessionSpan = firstBa.getValidatedSessionSpan()
 
                 val firstSessionSpan = firstSession.getValidatedSessionSpan(
-                    sessionNumber = 1,
                     previousSessionSpan = firstBaSessionSpan,
                     previousSessionId = firstBa.getSessionId()
                 )
 
                 val secondBaSessionSpan = secondBa.getValidatedSessionSpan(
-                    sessionNumber = 2,
                     isColdStart = false,
                     previousSessionSpan = firstSessionSpan,
                     previousSessionId = firstSession.getSessionId()
                 )
 
                 val secondSessionSpan = secondSession.getValidatedSessionSpan(
-                    sessionNumber = 2,
                     isColdStart = false,
                     previousSessionSpan = secondBaSessionSpan,
                     previousSessionId = secondBa.getSessionId()
                 )
 
                 val thirdBaSessionSpan = thirdBa.getValidatedSessionSpan(
-                    sessionNumber = 3,
                     isColdStart = false,
                     previousSessionSpan = secondSessionSpan,
                     previousSessionId = secondSession.getSessionId()
                 )
 
                 thirdSession.getValidatedSessionSpan(
-                    sessionNumber = 3,
                     isColdStart = false,
                     previousSessionSpan = thirdBaSessionSpan,
                     previousSessionId = thirdBa.getSessionId()
@@ -105,19 +98,15 @@ internal class SequentialSessionPartTest {
                 val second = sessions[1]
                 val third = sessions[2]
 
-                val firstSessionSpan = first.getValidatedSessionSpan(
-                    sessionNumber = 1
-                )
+                val firstSessionSpan = first.getValidatedSessionSpan()
 
                 val secondSessionSpan = second.getValidatedSessionSpan(
-                    sessionNumber = 2,
                     isColdStart = false,
                     previousSessionSpan = firstSessionSpan,
                     previousSessionId = first.getSessionId()
                 )
 
                 third.getValidatedSessionSpan(
-                    sessionNumber = 3,
                     isColdStart = false,
                     previousSessionSpan = secondSessionSpan,
                     previousSessionId = second.getSessionId()
@@ -127,7 +116,6 @@ internal class SequentialSessionPartTest {
     }
 
     private fun Envelope<SessionPartPayload>.getValidatedSessionSpan(
-        sessionNumber: Long,
         isColdStart: Boolean = true,
         previousSessionSpan: Span? = null,
         previousSessionId: String? = null,
@@ -137,7 +125,6 @@ internal class SequentialSessionPartTest {
         with(sessionSpan) {
             checkNotNull(attributes).assertMatches(
                 mapOf(
-                    EmbSessionAttributes.EMB_SESSION_NUMBER to sessionNumber,
                     EmbSessionAttributes.EMB_COLD_START to isColdStart
                 )
             )

@@ -18,7 +18,7 @@ internal class UserSessionPropertiesServiceImpl(
     private var listener: ((Map<String, String>) -> Unit)? = null
     private val props = EmbraceUserSessionProperties(store, configService, destination, telemetryService)
 
-    override fun addProperty(originalKey: String, originalValue: String, permanent: Boolean): Boolean {
+    override fun addProperty(originalKey: String, originalValue: String, scope: PropertyScope): Boolean {
         if (!isValidKey(originalKey)) {
             return false
         }
@@ -41,10 +41,6 @@ internal class UserSessionPropertiesServiceImpl(
             truncatedValue
         }
 
-        val scope = when {
-            permanent -> PropertyScope.PERMANENT
-            else -> PropertyScope.USER_SESSION
-        }
         val added = props.add(sanitizedKey, sanitizedValue, scope)
         if (added) {
             listener?.invoke(props.get())

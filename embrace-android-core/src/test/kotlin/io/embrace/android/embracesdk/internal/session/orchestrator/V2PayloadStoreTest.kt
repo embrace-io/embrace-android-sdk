@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeIntakeService
 import io.embrace.android.embracesdk.fakes.FakePayloadIntake
+import io.embrace.android.embracesdk.fakes.FakeSessionIdProvider
+import io.embrace.android.embracesdk.fakes.FakeUuidSource
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System
@@ -20,13 +22,26 @@ import org.junit.Test
 
 class V2PayloadStoreTest {
 
+    private companion object {
+        const val USER_SESSION_ID = "fakeUserSessionId"
+        const val SESSION_PART_ID = "fakeSessionPartId"
+    }
+
     private lateinit var store: PayloadStoreImpl
     private lateinit var intakeService: FakeIntakeService
+    private lateinit var sessionIdProvider: FakeSessionIdProvider
 
     @Before
     fun setUp() {
         intakeService = FakeIntakeService()
-        store = PayloadStoreImpl(intakeService, FakeClock(), { "fakeProcessId" }) { "fakeuuid" }
+        sessionIdProvider = FakeSessionIdProvider(userSessionId = USER_SESSION_ID, sessionPartId = SESSION_PART_ID)
+        store = PayloadStoreImpl(
+            intakeService,
+            FakeClock(),
+            { "fakeProcessId" },
+            FakeUuidSource(),
+            sessionIdProvider::getActiveSessionIds,
+        )
     }
 
     @Test
@@ -36,7 +51,7 @@ class V2PayloadStoreTest {
         verifySessionIntake(
             envelope,
             intakeService.getIntakes(),
-            "p3_1692201601000_fakeuuid_fakeProcessId_true_session_v1.json"
+            "p3_1692201601000_fakeuuid_fakeProcessId_true_session_${USER_SESSION_ID}_${SESSION_PART_ID}_v2.json"
         )
     }
 
@@ -47,7 +62,7 @@ class V2PayloadStoreTest {
         verifySessionIntake(
             envelope,
             intakeService.getIntakes(),
-            "p3_1692201601000_fakeuuid_fakeProcessId_true_session_v1.json"
+            "p3_1692201601000_fakeuuid_fakeProcessId_true_session_${USER_SESSION_ID}_${SESSION_PART_ID}_v2.json"
         )
     }
 
@@ -58,7 +73,10 @@ class V2PayloadStoreTest {
 
         val intake = intakeService.getIntakes<LogPayload>().single()
         assertSame(envelope, intake.envelope)
-        assertEquals("p5_1692201601000_fakeuuid_fakeProcessId_true_unknown_v1.json", intake.metadata.filename)
+        assertEquals(
+            "p5_1692201601000_fakeuuid_fakeProcessId_true_unknown_${USER_SESSION_ID}_${SESSION_PART_ID}_v2.json",
+            intake.metadata.filename
+        )
         assertEquals(0, intakeService.shutdownCount)
     }
 
@@ -75,7 +93,7 @@ class V2PayloadStoreTest {
         verifySessionIntake(
             envelope,
             intakeService.getIntakes(false),
-            "p3_1692201601000_fakeuuid_fakeProcessId_false_session_v1.json"
+            "p3_1692201601000_fakeuuid_fakeProcessId_false_session_${USER_SESSION_ID}_${SESSION_PART_ID}_v2.json"
         )
     }
 
@@ -116,7 +134,10 @@ class V2PayloadStoreTest {
 
         val intake = intakeService.getIntakes<Pair<String, ByteArray>>().single()
         assertSame(envelope, intake.envelope)
-        assertEquals("p4_1692201601000_fakeuuid_fakeProcessId_true_attachment_v1.json", intake.metadata.filename)
+        assertEquals(
+            "p4_1692201601000_fakeuuid_fakeProcessId_true_attachment_${USER_SESSION_ID}_${SESSION_PART_ID}_v2.json",
+            intake.metadata.filename
+        )
         assertEquals(0, intakeService.shutdownCount)
     }
 

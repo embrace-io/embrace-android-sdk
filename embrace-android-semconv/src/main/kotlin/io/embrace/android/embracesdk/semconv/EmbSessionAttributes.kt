@@ -17,6 +17,18 @@ object EmbSessionAttributes {
     const val EMB_CLEAN_EXIT: String = "emb.clean_exit"
 
     /**
+     * Drift in milliseconds. Positive = GNSS clock behind wall clock. (Wall Time - GNSS Time)
+     */
+    @ExperimentalSemconv
+    const val EMB_CLOCK_GNSS_DRIFT: String = "emb.clock_gnss_drift"
+
+    /**
+     * Drift in milliseconds. Positive = network clock behind wall clock. (Wall Time - Network Time)
+     */
+    @ExperimentalSemconv
+    const val EMB_CLOCK_NETWORK_DRIFT: String = "emb.clock_network_drift"
+
+    /**
      * Whether the session is a cold start.
      */
     @ExperimentalSemconv
@@ -47,10 +59,10 @@ object EmbSessionAttributes {
     const val EMB_HEARTBEAT_TIME_UNIX_NANO: String = "emb.heartbeat_time_unix_nano"
 
     /**
-     * Set to 1 if this session part is the known final part (max duration reached or manual termination). Omitted otherwise.
+     * Set to 1 when the session part belongs to a background user session, i.e. a user session covering a period when the app process is alive but the user is not active. Omitted for regular user sessions.
      */
     @ExperimentalSemconv
-    const val EMB_IS_FINAL_SESSION: String = "emb.is_final_session"
+    const val EMB_IS_BACKGROUND_ONLY_PART: String = "emb.is_background_only_part"
 
     /**
      * Set to 1 when the SDK knows for certain this is the final part of a session (max duration reached, inactivity timeout, or manual termination). Omitted when the value would be 0.
@@ -95,6 +107,12 @@ object EmbSessionAttributes {
     const val EMB_SESSION_PART_ID: String = "emb.session_part_id"
 
     /**
+     * Monotonically incrementing counter of session parts since SDK install. Seeded from emb.session_number when first created; increments by 1 on each new session part. Never resets across process or session boundaries.
+     */
+    @ExperimentalSemconv
+    const val EMB_SESSION_PART_NUMBER: String = "emb.session_part_number"
+
+    /**
      * The session start type.
      */
     @ExperimentalSemconv
@@ -125,33 +143,6 @@ object EmbSessionAttributes {
     const val EMB_TERMINATED: String = "emb.terminated"
 
     /**
-     * The reason the session part was terminated.
-     */
-    @ExperimentalSemconv
-    const val EMB_TERMINATION_REASON: String = "emb.termination_reason"
-
-    object EmbTerminationReasonValues {
-
-        /**
-         * Session ended because the maximum session duration was reached.
-         */
-        @ExperimentalSemconv
-        const val MAX_DURATION_REACHED: String = "max_duration_reached"
-
-        /**
-         * Session ended due to inactivity timeout.
-         */
-        @ExperimentalSemconv
-        const val INACTIVITY: String = "inactivity"
-
-        /**
-         * Session ended by manual termination.
-         */
-        @ExperimentalSemconv
-        const val MANUAL: String = "manual"
-    }
-
-    /**
      * UUID identifying the session.
      */
     @ExperimentalSemconv
@@ -179,11 +170,38 @@ object EmbSessionAttributes {
      * The index of the part within the session. 1-indexed, matching the behavior of session_number.
      */
     @ExperimentalSemconv
-    const val EMB_USER_SESSION_PART_NUMBER: String = "emb.user_session_part_number"
+    const val EMB_USER_SESSION_PART_INDEX: String = "emb.user_session_part_index"
 
     /**
      * Session start timestamp (milliseconds since epoch).
      */
     @ExperimentalSemconv
     const val EMB_USER_SESSION_START_TS: String = "emb.user_session_start_ts"
+
+    /**
+     * The reason the session part was terminated.
+     */
+    @ExperimentalSemconv
+    const val EMB_USER_SESSION_TERMINATION_REASON: String = "emb.user_session_termination_reason"
+
+    object EmbUserSessionTerminationReasonValues {
+
+        /**
+         * Session ended because the maximum session duration was reached.
+         */
+        @ExperimentalSemconv
+        const val MAX_DURATION_REACHED: String = "max_duration_reached"
+
+        /**
+         * Session ended due to inactivity timeout.
+         */
+        @ExperimentalSemconv
+        const val INACTIVITY: String = "inactivity"
+
+        /**
+         * Session ended by manual termination.
+         */
+        @ExperimentalSemconv
+        const val MANUAL: String = "manual"
+    }
 }

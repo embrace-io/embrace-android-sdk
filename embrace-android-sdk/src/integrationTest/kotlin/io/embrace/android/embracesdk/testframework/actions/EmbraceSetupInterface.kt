@@ -12,10 +12,13 @@ import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
+import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.fakes.fakeIncompleteSessionEnvelope
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
+import io.embrace.android.embracesdk.fixtures.fakeCachedSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.config.BuildInfo
@@ -42,23 +45,29 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
-import io.embrace.android.embracesdk.internal.utils.Uuid
+import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.robolectric.Shadows
 import org.robolectric.shadows.ShadowLooper
+import kotlin.time.Duration.Companion.seconds
+import kotlin.random.Random
 
 /**
  * Test harness for which an instance is generated each test run and provided to the test by the Rule
  */
 internal class EmbraceSetupInterface(
-    workerToFake: Worker.Background? = null,
+    workersToFake: List<Worker.Background> = emptyList(),
     private val threadBlockageWatchdogThread: Thread? = null,
     fakeStorageLayer: Boolean = false,
     ignoredInternalErrors: List<InternalErrorType> = listOf(),
     val fakeClock: FakeClock = FakeClock(currentTime = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS),
 ) {
-    private val processIdentifier: String = Uuid.getEmbUuid()
+    private val uuidSource: UuidSource = TestUuidSource()
+    private val processIdentifier: String = uuidSource.createUuid()
 
     val fakeNetworkConnectivityService = FakeNetworkConnectivityService()
     val fakeJniDelegate = FakeJniDelegate().also {
@@ -85,11 +94,12 @@ internal class EmbraceSetupInterface(
     private val fakeInitModule: FakeInitModule = FakeInitModule(
         clock = fakeClock,
         logger = FakeInternalLogger(ignoredErrors = ignoredInternalErrors),
+        uuidSource = uuidSource,
     )
 
     private val workerThreadModule: WorkerThreadModule = initWorkerThreadModule(
         fakeInitModule = fakeInitModule,
-        workerToFake = workerToFake,
+        workersToFake = workersToFake,
         threadBlockageWatchdogThread = threadBlockageWatchdogThread
     )
 
@@ -119,10 +129,11 @@ internal class EmbraceSetupInterface(
                 store = coreModule.store,
                 abis = Build.SUPPORTED_ABIS,
                 logger = initModule.logger,
+                uuidSource = initModule.uuidSource,
             )
             DecoratedConfigService(impl)
         },
-        essentialServiceModuleSupplier = { initModule, configService, openTelemetryModule, coreModule, workerThreadModule, _, _ ->
+        essentialServiceModuleSupplier = { initModule, configService, openTelemetryModule, coreModule, workerThreadModule, _, _, sessionOrchestratorProvider ->
             EssentialServiceModuleImpl(
                 initModule = initModule,
                 configService = configService,
@@ -131,6 +142,7 @@ internal class EmbraceSetupInterface(
                 workerThreadModule = workerThreadModule,
                 lifecycleOwnerProvider = { fakeLifecycleOwner },
                 networkConnectivityServiceProvider = { fakeNetworkConnectivityService },
+                sessionOrchestratorProvider = sessionOrchestratorProvider,
             )
         },
         deliveryModuleSupplier = { configService, initModule, otelModule, workerThreadModule, coreModule, essentialServiceModule, _, _, _, _ ->
@@ -162,6 +174,8 @@ internal class EmbraceSetupInterface(
                 essentialServiceModule,
                 coreModule,
                 storageModule,
+                userSessionIdProvider,
+                activeSessionIdsProvider,
             ->
             val impl = InstrumentationModuleImpl(
                 initModule,
@@ -171,6 +185,8 @@ internal class EmbraceSetupInterface(
                 essentialServiceModule,
                 coreModule,
                 storageModule,
+                userSessionIdProvider,
+                activeSessionIdsProvider,
             )
             object : InstrumentationModule {
                 override val instrumentationRegistry: InstrumentationRegistry = FakeInstrumentationRegistry(impl.instrumentationRegistry)
@@ -217,6 +233,71 @@ internal class EmbraceSetupInterface(
         }
     }
 
+    /**
+     * Persist a fake user session before the SDK starts, simulating a store
+     * from a previous process.
+     */
+    @OptIn(ExperimentalSemconv::class)
+    fun persistUserSession(
+        userSessionId: String,
+        startMs: Long,
+        lastActivityMs: Long,
+        sessionNumber: Int = 1,
+        partIndex: Int = 1,
+        maxDurationSeconds: Int = 43200,
+        inactivityTimeoutSeconds: Int = 1800,
+    ) {
+        getStore().edit {
+            putStringMap(
+                "embrace.user_session",
+                mapOf(
+                    EmbSessionAttributes.EMB_USER_SESSION_ID to userSessionId,
+                    EmbSessionAttributes.EMB_USER_SESSION_START_TS to startMs.toString(),
+                    EmbSessionAttributes.EMB_USER_SESSION_NUMBER to sessionNumber.toString(),
+                    EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS to maxDurationSeconds.toString(),
+                    EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS to inactivityTimeoutSeconds.toString(),
+                    SessionAttributes.SESSION_ID to userSessionId,
+                    EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX to partIndex.toString(),
+                    "emb.user_session_last_activity_ts" to lastActivityMs.toString(),
+                )
+            )
+        }
+    }
+
+    fun persistExpiredUserSession(
+        sdkStartTimeMs: Long,
+        userSessionId: String,
+        maxDurationSeconds: Int = 43200,
+        inactivityTimeoutSeconds: Int = 1800,
+        cacheIncompletePartPayload: Boolean = false,
+    ): Long {
+        val userSessionStartTimeMs: Long = sdkStartTimeMs - maxDurationSeconds.seconds.inWholeMilliseconds - 60_000
+        val lastActivityMs: Long = userSessionStartTimeMs + inactivityTimeoutSeconds.seconds.inWholeMilliseconds - 10_000
+        persistUserSession(
+            userSessionId = userSessionId,
+            startMs = userSessionStartTimeMs,
+            lastActivityMs = lastActivityMs,
+            maxDurationSeconds = maxDurationSeconds,
+            inactivityTimeoutSeconds = inactivityTimeoutSeconds
+        )
+        if (cacheIncompletePartPayload) {
+            val metadata = fakeCachedSessionStoredTelemetryMetadata.copy(timestamp = userSessionStartTimeMs)
+            checkNotNull(fakeCacheStorageService) {
+                "Fake storage layer not initialized"
+            }.addPayload(
+                metadata = metadata,
+                data = fakeIncompleteSessionEnvelope(
+                    sessionId = userSessionId,
+                    startMs = metadata.timestamp,
+                    lastHeartbeatTimeMs = metadata.timestamp + 1_000L,
+                    processIdentifier = metadata.processIdentifier
+                )
+            )
+        }
+
+        return userSessionStartTimeMs
+    }
+
     fun getClock(): FakeClock = fakeClock
 
     fun getSpanSink(): SpanSink = fakeInitModule.openTelemetryModule.spanSink
@@ -225,28 +306,29 @@ internal class EmbraceSetupInterface(
 
     fun getEmbLogger(): FakeInternalLogger = fakeInitModule.logger as FakeInternalLogger
 
-    fun getFakedWorkerExecutor(): BlockingScheduledExecutorService = (workerThreadModule as FakeWorkerThreadModule).executor
+    fun getFakedWorkerExecutor(worker: Worker.Background): BlockingScheduledExecutorService =
+        (workerThreadModule as FakeWorkerThreadModule).executorFor(worker)
 
     fun getStore(): KeyValueStore = coreModule.store
 
     private companion object {
         fun initWorkerThreadModule(
             fakeInitModule: FakeInitModule,
-            workerToFake: Worker.Background?,
+            workersToFake: List<Worker.Background>,
             threadBlockageWatchdogThread: Thread?,
         ): WorkerThreadModule =
-            if (workerToFake == null) {
+            if (workersToFake.isEmpty()) {
                 WorkerThreadModuleImpl()
             } else {
                 FakeWorkerThreadModule(
                     fakeInitModule = fakeInitModule,
-                    testWorker = workerToFake,
+                    testWorkers = workersToFake,
                     threadBlockageMonitoringThread = threadBlockageWatchdogThread
                 )
             }
     }
 
-    private class DecoratedConfigService(private val impl: ConfigService): ConfigService by impl {
+    private class DecoratedConfigService(private val impl: ConfigService) : ConfigService by impl {
         override val buildInfo: BuildInfo = BuildInfo(
             "fakeBuildId",
             "fakeBuildType",

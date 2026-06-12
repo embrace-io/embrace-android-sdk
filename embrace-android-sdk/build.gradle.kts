@@ -43,6 +43,7 @@ dependencies {
     implementation(project(":embrace-android-instrumentation-taps"))
     implementation(project(":embrace-android-instrumentation-thermal-state"))
     implementation(project(":embrace-android-instrumentation-view"))
+    implementation(project(":embrace-android-instrumentation-vitals"))
     implementation(project(":embrace-android-instrumentation-webview"))
 
     // lifecycle

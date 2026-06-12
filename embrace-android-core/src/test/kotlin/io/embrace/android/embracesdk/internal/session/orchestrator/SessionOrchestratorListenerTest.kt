@@ -107,11 +107,14 @@ internal class SessionOrchestratorListenerTest {
         orchestrator.onForeground()
         assertEquals(2, events.size)
 
-        // past max duration — new user session
+        // exceeds duration - new background-only user session active
         clock.tick(maxDurationMs + 1)
         orchestrator.onBackground()
-        orchestrator.onForeground()
         assertEquals(3, events.size)
+
+        // foregrounding ends background-only session
+        orchestrator.onForeground()
+        assertEquals(4, events.size)
     }
 
     @Test
@@ -144,11 +147,14 @@ internal class SessionOrchestratorListenerTest {
         orchestrator.onForeground()
         assertEquals(1, events.size)
 
-        // past max duration — old session terminates
+        // exceeds max duration - background will end existing user session
         clock.tick(maxDurationMs + 1)
         orchestrator.onBackground()
-        orchestrator.onForeground()
         assertEquals(2, events.size)
+
+        // foregrounding after a period when a user session has ended will result in the ending of the background-only one that was started
+        orchestrator.onForeground()
+        assertEquals(3, events.size)
     }
 
     @Test

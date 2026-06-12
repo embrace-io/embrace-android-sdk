@@ -48,6 +48,7 @@ import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -56,6 +57,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RuntimeEnvironment
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
@@ -67,7 +69,6 @@ internal class SessionOrchestratorTest {
     private lateinit var logEnvelopeSource: FakeLogEnvelopeSource
     private lateinit var appStateTracker: FakeAppStateTracker
     private lateinit var clock: FakeClock
-    private lateinit var configService: FakeConfigService
     private lateinit var store: FakePayloadStore
     private lateinit var userSessionPropertiesService: UserSessionPropertiesService
     private lateinit var sessionTracker: SessionPartTracker
@@ -88,11 +89,6 @@ internal class SessionOrchestratorTest {
     fun setUp() {
         clock = FakeClock()
         logger = FakeInternalLogger(throwOnInternalError = false)
-        configService = FakeConfigService(
-            backgroundActivityBehavior = createBackgroundActivityBehavior(
-                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
-            )
-        )
     }
 
     @Test
@@ -221,17 +217,11 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `end session with manual in background rotates user session and stores payload`() {
-        configService = FakeConfigService(
-            backgroundActivityBehavior = createBackgroundActivityBehavior(
-                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
-            ),
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = inactivityMs,
-            )
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = backgroundEnabledConfigService(),
         )
-        createOrchestrator(AppState.FOREGROUND)
-        val firstUserSession = checkNotNull(orchestrator.currentUserSession())
+        val firstUserSession = activeUserSession()
 
         clock.tick(1000)
         orchestrator.onBackground()
@@ -241,7 +231,7 @@ internal class SessionOrchestratorTest {
         orchestrator.endSessionWithManual()
 
         assertEquals(storedBefore + 1, store.storedSessionPartPayloads.size)
-        val secondUserSession = checkNotNull(orchestrator.currentUserSession())
+        val secondUserSession = activeUserSession()
         assertNotEquals(firstUserSession.userSessionId, secondUserSession.userSessionId)
     }
 
@@ -254,34 +244,32 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `backgrounding with background activity disabled caches empty crash envelope`() {
-        configService = FakeConfigService(
-            backgroundActivityBehavior = createBackgroundActivityBehavior(
-                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 0f))
-            )
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = FakeConfigService(backgroundActivityBehavior = backgroundActivityBehavior(false)),
         )
-        createOrchestrator(AppState.FOREGROUND)
         orchestrator.onBackground()
         assertEquals(1, store.cachedEmptyCrashPayloads.size)
     }
 
     @Test
     fun `foregrounding with background activity disabled does not cache empty crash envelope`() {
-        configService = FakeConfigService(
-            backgroundActivityBehavior = createBackgroundActivityBehavior(
-                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 0f))
-            )
+        createOrchestrator(
+            startingAppState = AppState.BACKGROUND,
+            configService = FakeConfigService(backgroundActivityBehavior = backgroundActivityBehavior(false)),
         )
-        createOrchestrator(AppState.BACKGROUND)
         orchestrator.onForeground()
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
     }
 
     @Test
     fun `test manual session end disabled for session gating`() {
-        configService = FakeConfigService(
-            sessionBehavior = FakeUserSessionBehavior(sessionControlEnabled = true)
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = FakeConfigService(
+                sessionBehavior = FakeUserSessionBehavior(sessionControlEnabled = true)
+            ),
         )
-        createOrchestrator(AppState.FOREGROUND)
 
         clock.tick(10000)
         assertEquals(1, payloadCollator.sessionCount.get())
@@ -292,8 +280,10 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `ending session manually above time threshold succeeds`() {
-        configService = FakeConfigService()
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = FakeConfigService(),
+        )
         clock.tick(10000)
         assertEquals(1, payloadCollator.sessionCount.get())
         orchestrator.endSessionWithManual()
@@ -303,8 +293,10 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `first manual end always succeeds regardless of time since session start`() {
-        configService = FakeConfigService()
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = FakeConfigService(),
+        )
         clock.tick(1000)
 
         orchestrator.endSessionWithManual()
@@ -315,36 +307,34 @@ internal class SessionOrchestratorTest {
     @Test
     fun `cool-off window is measured from last manual end`() {
         val maxDuration = 2000L
-        configService = FakeConfigService(
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDuration,
-                sessionInactivityTimeoutMs = inactivityMs,
-            )
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = sessionLimitsConfigService(customMaxSessionDurationMs = maxDuration),
         )
-        createOrchestrator(AppState.FOREGROUND)
 
         // first manual end
         clock.tick(10000)
         orchestrator.endSessionWithManual()
-        val sessionAfterManualEnd = checkNotNull(orchestrator.currentUserSession())
+        val sessionAfterManualEnd = activeUserSession()
 
         // max duration exceeded
-        clock.tick(maxDuration)
-        inactivityWorkerExecutor.runCurrentlyBlocked()
-        val sessionAfterRollover = checkNotNull(orchestrator.currentUserSession())
+        runTimerThread(maxDuration)
+        val sessionAfterRollover = activeUserSession()
         assertNotEquals(sessionAfterManualEnd.userSessionId, sessionAfterRollover.userSessionId)
 
         // 5001ms since last manual end should be allowed
         clock.tick(3001)
         orchestrator.endSessionWithManual()
-        val sessionAfterSecondManual = checkNotNull(orchestrator.currentUserSession())
+        val sessionAfterSecondManual = activeUserSession()
         assertNotEquals(sessionAfterRollover.userSessionId, sessionAfterSecondManual.userSessionId)
     }
 
     @Test
     fun `rate limit of manual end`() {
-        configService = FakeConfigService()
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = FakeConfigService(),
+        )
 
         clock.tick(10000)
         orchestrator.endSessionWithManual()
@@ -361,8 +351,10 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `ending session manually when no session exists does not start a new session`() {
-        configService = FakeConfigService()
-        createOrchestrator(AppState.BACKGROUND)
+        createOrchestrator(
+            startingAppState = AppState.BACKGROUND,
+            configService = FakeConfigService(),
+        )
         clock.tick(1000)
         orchestrator.endSessionWithManual()
         assertEquals(0, payloadCollator.baCount.get())
@@ -453,18 +445,12 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `user session max duration boundary`() {
-        configService = FakeConfigService(
-            backgroundActivityBehavior = createBackgroundActivityBehavior(
-                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
-            ),
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = inactivityMs,
-            )
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = backgroundEnabledConfigService(),
         )
-        createOrchestrator(AppState.FOREGROUND)
 
-        val first = checkNotNull(orchestrator.currentUserSession())
+        val first = activeUserSession()
         assertEquals(1L, first.userSessionNumber)
         assertEquals(1, first.partIndex)
         assertEquals(TimeUnit.MILLISECONDS.toSeconds(maxDurationMs), first.maxDurationSecs)
@@ -475,38 +461,43 @@ internal class SessionOrchestratorTest {
         clock.tick(maxDurationMs)
         orchestrator.onBackground()
         orchestrator.onForeground()
-        val repeat = checkNotNull(orchestrator.currentUserSession())
+        val repeat = activeUserSession()
         assertEquals(first.userSessionId, repeat.userSessionId)
         assertEquals(3, repeat.partIndex)
 
-        // at/past max duration — new user session starts
+        // exceeds max duration in the background, so the user session that will be created for the new part will be background-only
         clock.tick(1)
         orchestrator.onBackground()
+
+        val backgroundOnlySession = activeUserSession()
+        assertNotEquals(first.userSessionId, backgroundOnlySession.userSessionId)
+        assertEquals(2L, backgroundOnlySession.userSessionNumber)
+        assertTrue(backgroundOnlySession.isBackgroundOnly)
+
+        // foregrounding ends the background-only user session and starts a regular one
         orchestrator.onForeground()
-        val second = checkNotNull(orchestrator.currentUserSession())
-        assertNotEquals(first.userSessionId, second.userSessionId)
-        assertEquals(2L, second.userSessionNumber)
-        assertEquals(2, second.partIndex)
+        val second = activeUserSession()
+        assertNotEquals(backgroundOnlySession.userSessionId, second.userSessionId)
+        assertEquals(3L, second.userSessionNumber)
+        assertFalse(second.isBackgroundOnly)
+        assertEquals(1, second.partIndex)
     }
 
     @Test
     fun `user session manual end`() {
-        configService = FakeConfigService(
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = inactivityMs,
-            )
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = sessionLimitsConfigService(),
         )
-        createOrchestrator(AppState.FOREGROUND)
 
-        val first = checkNotNull(orchestrator.currentUserSession())
+        val first = activeUserSession()
         assertEquals(1L, first.userSessionNumber)
         assertEquals(1, first.partIndex)
 
         // manual end always terminates and starts a new user session
         clock.tick(10000)
         orchestrator.endSessionWithManual()
-        val second = checkNotNull(orchestrator.currentUserSession())
+        val second = activeUserSession()
         assertEquals(2L, second.userSessionNumber)
         assertNotEquals(first.userSessionId, second.userSessionId)
         assertEquals(1, second.partIndex)
@@ -514,64 +505,54 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `part index increments within user session`() {
-        configService = FakeConfigService(
-            backgroundActivityBehavior = createBackgroundActivityBehavior(
-                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
-            ),
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = inactivityMs,
-            )
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = backgroundEnabledConfigService(),
         )
-        createOrchestrator(AppState.FOREGROUND)
 
-        assertEquals(1, checkNotNull(orchestrator.currentUserSession()).partIndex)
+        assertEquals(1, activeUserSession().partIndex)
 
         orchestrator.onBackground()
-        assertEquals(2, checkNotNull(orchestrator.currentUserSession()).partIndex)
+        assertEquals(2, activeUserSession().partIndex)
 
         orchestrator.onForeground()
-        assertEquals(3, checkNotNull(orchestrator.currentUserSession()).partIndex)
+        assertEquals(3, activeUserSession().partIndex)
 
         // new user session resets part index to 1
         clock.tick(10000)
         orchestrator.endSessionWithManual()
-        assertEquals(1, checkNotNull(orchestrator.currentUserSession()).partIndex)
+        assertEquals(1, activeUserSession().partIndex)
     }
 
     @Test
     fun `user session ordinal persistence`() {
-        configService = FakeConfigService(
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = inactivityMs,
-            )
-        )
         val sharedOrdinalStore = FakeOrdinalStore()
 
-        createOrchestrator(AppState.FOREGROUND, ordinalStoreOverride = sharedOrdinalStore)
-        assertEquals(1L, checkNotNull(orchestrator.currentUserSession()).userSessionNumber)
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = sessionLimitsConfigService(),
+            ordinalStoreOverride = sharedOrdinalStore,
+        )
+        assertEquals(1L, activeUserSession().userSessionNumber)
 
         // New orchestrator with shared ordinal store but fresh metadata store
         createOrchestrator(
-            AppState.FOREGROUND,
+            startingAppState = AppState.FOREGROUND,
+            configService = sessionLimitsConfigService(),
             ordinalStoreOverride = sharedOrdinalStore,
             metadataStoreOverride = UserSessionMetadataStore(FakeKeyValueStore()),
         )
-        assertEquals(2L, checkNotNull(orchestrator.currentUserSession()).userSessionNumber)
+        assertEquals(2L, activeUserSession().userSessionNumber)
     }
 
     @Test
     fun `user session metadata attributes`() {
-        configService = FakeConfigService(
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = inactivityMs,
-            )
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = sessionLimitsConfigService(),
         )
-        createOrchestrator(AppState.FOREGROUND)
 
-        val session = checkNotNull(orchestrator.currentUserSession())
+        val session = activeUserSession()
         val attrs = session.attributes
         assertEquals(session.startTimeMs, attrs[EmbSessionAttributes.EMB_USER_SESSION_START_TS])
         assertEquals(session.userSessionId, attrs[EmbSessionAttributes.EMB_USER_SESSION_ID])
@@ -582,28 +563,15 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `restores active session from metadata store`() {
-        configService = FakeConfigService(
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = inactivityMs,
-            )
-        )
-        val prePopulated = UserSessionMetadataStore(FakeKeyValueStore())
-        prePopulated.save(
-            UserSessionMetadata(
-                startTimeMs = clock.now(),
-                userSessionId = "restored-id",
-                userSessionNumber = 7L,
-                maxDurationSecs = TimeUnit.MILLISECONDS.toSeconds(maxDurationMs),
-                inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
-                partIndex = 1,
-                lastActivityMs = clock.now(),
-            )
+        val prePopulated = storeWithUserSession(userSessionId = "restored-id", userSessionNumber = 7L)
+
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = sessionLimitsConfigService(),
+            metadataStoreOverride = prePopulated,
         )
 
-        createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = prePopulated)
-
-        val session = checkNotNull(orchestrator.currentUserSession())
+        val session = activeUserSession()
         assertEquals("restored-id", session.userSessionId)
         assertEquals(7L, session.userSessionNumber)
         assertEquals(2, session.partIndex)
@@ -611,12 +579,6 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `exception in loadPersistedUserSession falls back to NoActiveSession`() {
-        configService = FakeConfigService(
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = inactivityMs,
-            )
-        )
         val throwingStore = UserSessionMetadataStore(
             object : KeyValueStore {
                 override fun getString(key: String): String? = null
@@ -632,111 +594,72 @@ internal class SessionOrchestratorTest {
             }
         )
 
-        createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = throwingStore)
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = sessionLimitsConfigService(),
+            metadataStoreOverride = throwingStore,
+        )
         assertNotNull(orchestrator.currentUserSession())
     }
 
     @Test
     fun `previous session beyond max duration from metadata store`() {
-        configService = FakeConfigService(
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = inactivityMs,
-            )
-        )
-        val expiredStore = UserSessionMetadataStore(FakeKeyValueStore())
-        expiredStore.save(
-            UserSessionMetadata(
-                startTimeMs = 0L,
-                userSessionId = "old-id",
-                userSessionNumber = 3L,
-                maxDurationSecs = TimeUnit.MILLISECONDS.toSeconds(maxDurationMs),
-                inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
-                partIndex = 1,
-                lastActivityMs = 0L,
-            )
-        )
+        val expiredStore = storeWithUserSession(userSessionId = "old-id", startTimeMs = 0L, userSessionNumber = 3L)
 
         clock.tick(maxDurationMs)
-        createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = expiredStore)
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = sessionLimitsConfigService(),
+            metadataStoreOverride = expiredStore,
+        )
 
         // Expired session is discarded; a fresh user session is created instead
-        val session = checkNotNull(orchestrator.currentUserSession())
+        val session = activeUserSession()
         assertNotEquals("old-id", session.userSessionId)
     }
 
     @Test
     fun `process killed in background after inactivity timeout - new user session on restart`() {
-        configService = FakeConfigService(
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = inactivityMs,
-            )
-        )
-        val store = UserSessionMetadataStore(FakeKeyValueStore())
-        val backgroundTime = clock.now()
-        store.save(
-            UserSessionMetadata(
-                startTimeMs = backgroundTime,
-                userSessionId = "bg-killed-id",
-                userSessionNumber = 2L,
-                maxDurationSecs = TimeUnit.MILLISECONDS.toSeconds(maxDurationMs),
-                inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
-                partIndex = 2,
-                lastActivityMs = backgroundTime,
-            )
-        )
+        val store = storeWithUserSession(userSessionId = "bg-killed-id", partIndex = 2)
 
         // simulate process restart after inactivity timeout
         clock.tick(inactivityMs + 1)
-        createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = store)
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = sessionLimitsConfigService(),
+            metadataStoreOverride = store,
+        )
 
-        val session = checkNotNull(orchestrator.currentUserSession())
+        val session = activeUserSession()
         assertNotEquals("bg-killed-id", session.userSessionId)
     }
 
     @Test
     fun `process killed in background before inactivity timeout - session is restored`() {
-        configService = FakeConfigService(
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = inactivityMs,
-            )
-        )
-        val store = UserSessionMetadataStore(FakeKeyValueStore())
-        val backgroundTime = clock.now()
-        store.save(
-            UserSessionMetadata(
-                startTimeMs = backgroundTime,
-                userSessionId = "bg-killed-id",
-                userSessionNumber = 2L,
-                maxDurationSecs = TimeUnit.MILLISECONDS.toSeconds(maxDurationMs),
-                inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
-                partIndex = 2,
-                lastActivityMs = backgroundTime,
-            )
-        )
+        val store = storeWithUserSession(userSessionId = "bg-killed-id", partIndex = 2)
 
         // simulate process restart before inactivity timeout
         clock.tick(inactivityMs - 1)
-        createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = store)
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = sessionLimitsConfigService(),
+            metadataStoreOverride = store,
+        )
 
-        val session = checkNotNull(orchestrator.currentUserSession())
+        val session = activeUserSession()
         assertEquals("bg-killed-id", session.userSessionId)
     }
 
     @Test
     fun `session is persisted when started`() {
-        configService = FakeConfigService(
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = inactivityMs,
-            )
-        )
         val freshStore = UserSessionMetadataStore(FakeKeyValueStore())
-        createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = freshStore)
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = sessionLimitsConfigService(),
+            metadataStoreOverride = freshStore,
+        )
 
-        val session = checkNotNull(orchestrator.currentUserSession())
+        val session = activeUserSession()
         val stored = checkNotNull(freshStore.load())
         assertEquals(session.userSessionId, stored.userSessionId)
         assertEquals(session.startTimeMs, stored.startTimeMs)
@@ -745,19 +668,17 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `store is overridden for new user session`() {
-        configService = FakeConfigService(
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = inactivityMs,
-            )
-        )
         val sharedStore = UserSessionMetadataStore(FakeKeyValueStore())
-        createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = sharedStore)
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = sessionLimitsConfigService(),
+            metadataStoreOverride = sharedStore,
+        )
 
-        val firstId = checkNotNull(orchestrator.currentUserSession()).userSessionId
+        val firstId = activeUserSession().userSessionId
         clock.tick(10000)
         orchestrator.endSessionWithManual()
-        val secondId = checkNotNull(orchestrator.currentUserSession()).userSessionId
+        val secondId = activeUserSession().userSessionId
         assertNotEquals(firstId, secondId)
 
         val stored = checkNotNull(sharedStore.load())
@@ -766,15 +687,12 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `crash does not advance user session`() {
-        configService = FakeConfigService(
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = inactivityMs,
-            )
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = sessionLimitsConfigService(),
         )
-        createOrchestrator(AppState.FOREGROUND)
 
-        val initialId = checkNotNull(orchestrator.currentUserSession()).userSessionId
+        val initialId = activeUserSession().userSessionId
         orchestrator.handleCrash("crash-id")
         // crash does not produce a new session part, so user session is unchanged
         assertEquals(initialId, orchestrator.currentUserSession()?.userSessionId)
@@ -783,101 +701,76 @@ internal class SessionOrchestratorTest {
     @Test
     fun `persisted session uses stored max duration`() {
         val configMaxMs = TimeUnit.MINUTES.toMillis(5)
-        val persistedMaxSecs = TimeUnit.MINUTES.toSeconds(10)
-        configService = FakeConfigService(
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = configMaxMs,
-                sessionInactivityTimeoutMs = inactivityMs,
-            )
-        )
-        val persistedStore = UserSessionMetadataStore(FakeKeyValueStore())
-        persistedStore.save(
-            UserSessionMetadata(
-                startTimeMs = clock.now(),
-                userSessionId = "persisted-id",
-                userSessionNumber = 5L,
-                maxDurationSecs = persistedMaxSecs,
-                inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
-                partIndex = 1,
-                lastActivityMs = clock.now(),
-            )
+        val persistedMaxDurationMs = TimeUnit.MINUTES.toMillis(10)
+        val persistedStore = storeWithUserSession(
+            userSessionId = "persisted-id",
+            userSessionNumber = 5L,
+            persistedMaxDurationMs = persistedMaxDurationMs,
         )
 
-        createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = persistedStore)
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = sessionLimitsConfigService(customMaxSessionDurationMs = configMaxMs),
+            metadataStoreOverride = persistedStore,
+        )
 
         // persisted 10-min duration used
-        assertEquals("persisted-id", checkNotNull(orchestrator.currentUserSession()).userSessionId)
+        assertEquals("persisted-id", activeUserSession().userSessionId)
 
         // exceed duration
         clock.tick(TimeUnit.MINUTES.toMillis(11))
         orchestrator.onBackground()
         orchestrator.onForeground()
-        val newSession = checkNotNull(orchestrator.currentUserSession())
+        val newSession = activeUserSession()
         assertNotEquals("persisted-id", newSession.userSessionId)
     }
 
     @Test
     fun `persisted inactivity timeout is adopted and new session reverts to config`() {
-        val configInactivityMs = TimeUnit.MINUTES.toMillis(5)
+        val configInactivitySecs = TimeUnit.MINUTES.toSeconds(5)
         val persistedInactivitySecs = TimeUnit.MINUTES.toSeconds(10)
-        configService = FakeConfigService(
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = configInactivityMs,
-            )
-        )
-        val persistedStore = UserSessionMetadataStore(FakeKeyValueStore())
-        persistedStore.save(
-            UserSessionMetadata(
-                startTimeMs = clock.now(),
-                userSessionId = "persisted-id",
-                userSessionNumber = 3L,
-                maxDurationSecs = TimeUnit.MILLISECONDS.toSeconds(maxDurationMs),
-                inactivityTimeoutSecs = persistedInactivitySecs,
-                partIndex = 1,
-                lastActivityMs = clock.now(),
-            )
+        val persistedStore = storeWithUserSession(
+            userSessionId = "persisted-id",
+            userSessionNumber = 3L,
+            persistedInactivityTimeoutMs = TimeUnit.SECONDS.toMillis(persistedInactivitySecs),
         )
 
-        createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = persistedStore)
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = sessionLimitsConfigService(
+                customInactivityTimeoutMs = TimeUnit.SECONDS.toMillis(configInactivitySecs)
+            ),
+            metadataStoreOverride = persistedStore,
+        )
 
         // restored session retains persisted inactivity timeout
-        val restored = checkNotNull(orchestrator.currentUserSession())
+        val restored = activeUserSession()
         assertEquals("persisted-id", restored.userSessionId)
         assertEquals(persistedInactivitySecs, restored.inactivityTimeoutSecs)
 
         // new session should use current config inactivity timeout
         clock.tick(10000)
         orchestrator.endSessionWithManual()
-        val newSession = checkNotNull(orchestrator.currentUserSession())
+        val newSession = activeUserSession()
         assertNotEquals("persisted-id", newSession.userSessionId)
-        assertEquals(TimeUnit.MILLISECONDS.toSeconds(configInactivityMs), newSession.inactivityTimeoutSecs)
+        assertEquals(configInactivitySecs, newSession.inactivityTimeoutSecs)
     }
 
     @Test
     fun `clock shifted backwards discards restored session`() {
-        configService = FakeConfigService(
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = inactivityMs,
-            )
-        )
-        val store = UserSessionMetadataStore(FakeKeyValueStore())
-        store.save(
-            UserSessionMetadata(
-                startTimeMs = clock.now() + 1_000L,
-                userSessionId = "future-id",
-                userSessionNumber = 5L,
-                maxDurationSecs = TimeUnit.MILLISECONDS.toSeconds(maxDurationMs),
-                inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
-                partIndex = 1,
-                lastActivityMs = clock.now() + 1_000L,
-            )
+        val store = storeWithUserSession(
+            userSessionId = "future-id",
+            startTimeMs = clock.now() + 1_000L,
+            userSessionNumber = 5L,
         )
 
-        createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = store)
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = sessionLimitsConfigService(),
+            metadataStoreOverride = store,
+        )
 
-        val session = checkNotNull(orchestrator.currentUserSession())
+        val session = activeUserSession()
         assertNotEquals("future-id", session.userSessionId)
 
         val errors = logger.internalErrorMessages
@@ -887,27 +780,22 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `clock shifted backwards during new session part terminates and restarts user session`() {
-        configService = FakeConfigService(
-            backgroundActivityBehavior = createBackgroundActivityBehavior(
-                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
-            ),
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = inactivityMs,
-            )
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = backgroundEnabledConfigService(),
         )
-        createOrchestrator(AppState.FOREGROUND)
 
-        val first = checkNotNull(orchestrator.currentUserSession())
+        val first = activeUserSession()
         assertEquals(1L, first.userSessionNumber)
 
         clock.setCurrentTime(first.startTimeMs - 1_000L)
         orchestrator.onBackground()
 
-        val second = checkNotNull(orchestrator.currentUserSession())
+        val second = activeUserSession()
         assertNotEquals(first.userSessionId, second.userSessionId)
         assertEquals(2L, second.userSessionNumber)
         assertEquals(1, second.partIndex)
+        assertTrue(second.isBackgroundOnly)
 
         val errors = logger.internalErrorMessages
         assertEquals(1, errors.size)
@@ -915,63 +803,53 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
-    fun `exceeding inactivity timeout creates new user sessions`() {
-        configService = FakeConfigService(
-            backgroundActivityBehavior = createBackgroundActivityBehavior(
-                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
-            ),
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = inactivityMs,
-            )
+    fun `exceeding inactivity timeout creates a background-only user session that ends on foreground`() {
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = backgroundEnabledConfigService(),
         )
-        createOrchestrator(AppState.FOREGROUND)
 
-        val firstSession = checkNotNull(orchestrator.currentUserSession())
+        val firstSession = activeUserSession()
         assertEquals(1L, firstSession.userSessionNumber)
+        assertFalse(firstSession.isBackgroundOnly)
 
         orchestrator.onBackground()
 
-        // 1. exceed inactivity timeout. create new bg session part + user session
-        clock.tick(inactivityMs)
-        inactivityWorkerExecutor.runCurrentlyBlocked()
+        // exceeds inactivity timeout. the user session ends and a background-only user session is created
+        runTimerThread(inactivityMs)
 
-        val secondSession = checkNotNull(orchestrator.currentUserSession())
-        assertNotEquals(firstSession.userSessionId, secondSession.userSessionId)
-        assertEquals(2L, secondSession.userSessionNumber)
+        val backgroundOnlySession = activeUserSession()
+        assertNotEquals(firstSession.userSessionId, backgroundOnlySession.userSessionId)
+        assertEquals(2L, backgroundOnlySession.userSessionNumber)
+        assertTrue(backgroundOnlySession.isBackgroundOnly)
 
-        // foreground within the second session's inactivity window has same user session
+        // check that a background-only user session won't time out due to inactivity - it's already considered to be inactive
+        runTimerThread(inactivityMs * 10)
+        assertEquals(backgroundOnlySession.userSessionId, activeUserSession().userSessionId)
+
+        // foregrounding ends the background-only user session and starts a regular one
+        orchestrator.onForeground()
+
+        val sessionAfterFg = activeUserSession()
+        assertNotEquals(backgroundOnlySession.userSessionId, sessionAfterFg.userSessionId)
+        assertEquals(3L, sessionAfterFg.userSessionNumber)
+        assertFalse(sessionAfterFg.isBackgroundOnly)
+
+        // a regular user session will survive a foregrounding if it's within the inactivity grace period
+        orchestrator.onBackground()
         clock.tick(1000)
         orchestrator.onForeground()
-
-        val sessionAfterFg = checkNotNull(orchestrator.currentUserSession())
-        assertEquals(secondSession.userSessionId, sessionAfterFg.userSessionId)
-        assertEquals(2L, sessionAfterFg.userSessionNumber)
-
-        // foreground after the second session's own inactivity deadline has new user session
-        orchestrator.onBackground()
-        clock.tick(inactivityMs + 1)
-        orchestrator.onForeground()
-
-        val thirdSession = checkNotNull(orchestrator.currentUserSession())
-        assertNotEquals(secondSession.userSessionId, thirdSession.userSessionId)
-        assertEquals(3L, thirdSession.userSessionNumber)
+        assertEquals(sessionAfterFg.userSessionId, activeUserSession().userSessionId)
     }
 
     @Test
     fun `inactivity timeout not exceeded keeps existing user session`() {
-        configService = FakeConfigService(
-            backgroundActivityBehavior = createBackgroundActivityBehavior(
-                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 0f))
-            ),
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = inactivityMs,
-            )
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = backgroundDisabledConfigService(),
         )
-        createOrchestrator(AppState.FOREGROUND)
 
-        val firstSession = checkNotNull(orchestrator.currentUserSession())
+        val firstSession = activeUserSession()
         assertEquals(1L, firstSession.userSessionNumber)
 
         orchestrator.onBackground()
@@ -981,25 +859,19 @@ internal class SessionOrchestratorTest {
         orchestrator.onForeground()
         clock.tick(inactivityMs + 1)
 
-        val sessionAfterForeground = checkNotNull(orchestrator.currentUserSession())
+        val sessionAfterForeground = activeUserSession()
         assertEquals(firstSession.userSessionId, sessionAfterForeground.userSessionId)
         assertEquals(1L, sessionAfterForeground.userSessionNumber)
     }
 
     @Test
     fun `inactivity deadline elapsed before timer fires still creates new user session`() {
-        configService = FakeConfigService(
-            backgroundActivityBehavior = createBackgroundActivityBehavior(
-                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 0f))
-            ),
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = inactivityMs,
-            )
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = backgroundDisabledConfigService(),
         )
-        createOrchestrator(AppState.FOREGROUND)
 
-        val firstSession = checkNotNull(orchestrator.currentUserSession())
+        val firstSession = activeUserSession()
         assertEquals(1L, firstSession.userSessionNumber)
 
         orchestrator.onBackground()
@@ -1009,7 +881,7 @@ internal class SessionOrchestratorTest {
 
         orchestrator.onForeground()
 
-        val secondSession = checkNotNull(orchestrator.currentUserSession())
+        val secondSession = activeUserSession()
         assertNotEquals(firstSession.userSessionId, secondSession.userSessionId)
         assertEquals(2L, secondSession.userSessionNumber)
     }
@@ -1017,7 +889,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `user session start time matches initial session part start time`() {
         createOrchestrator(AppState.FOREGROUND)
-        val userSession = checkNotNull(orchestrator.currentUserSession())
+        val userSession = activeUserSession()
         val sessionPart = checkNotNull(sessionTracker.getActiveSessionPart())
         assertEquals(userSession.startTimeMs, sessionPart.startTime)
     }
@@ -1027,7 +899,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(AppState.FOREGROUND)
         clock.tick(5000)
         orchestrator.endSessionWithManual()
-        val userSession = checkNotNull(orchestrator.currentUserSession())
+        val userSession = activeUserSession()
         val sessionPart = checkNotNull(sessionTracker.getActiveSessionPart())
         assertEquals(userSession.startTimeMs, sessionPart.startTime)
     }
@@ -1038,12 +910,14 @@ internal class SessionOrchestratorTest {
     }
 
     private fun createOrchestrator(
-        state: AppState,
+        startingAppState: AppState,
+        configService: FakeConfigService =
+            FakeConfigService(backgroundActivityBehavior = backgroundActivityBehavior(true)),
         ordinalStoreOverride: FakeOrdinalStore? = null,
         metadataStoreOverride: UserSessionMetadataStore? = null,
     ) {
         store = FakePayloadStore()
-        appStateTracker = FakeAppStateTracker(state)
+        appStateTracker = FakeAppStateTracker(startingAppState)
         currentSessionPartSpan = FakeCurrentSessionPartSpan(clock).apply { initializeService(clock.now()) }
         destination = FakeTelemetryDestination()
         payloadCollator = FakePayloadMessageCollator(currentSessionPartSpan = currentSessionPartSpan)
@@ -1053,7 +927,7 @@ internal class SessionOrchestratorTest {
             payloadMessageCollator = payloadCollator,
             logEnvelopeSource = payloadSourceModule.logEnvelopeSource,
             configService = configService,
-            logger = logger
+            logger = logger,
         )
         userSessionPropertiesService = FakeUserSessionPropertiesService()
         sessionTracker = SessionPartTrackerImpl(
@@ -1121,139 +995,111 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `max duration timeout creates new session`() {
-        configService = FakeConfigService(
-            backgroundActivityBehavior = createBackgroundActivityBehavior(
-                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
-            ),
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = inactivityMs,
-            )
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = backgroundEnabledConfigService(),
         )
-        createOrchestrator(AppState.FOREGROUND)
 
-        val first = checkNotNull(orchestrator.currentUserSession())
+        val first = activeUserSession()
         assertEquals(1L, first.userSessionNumber)
 
-        clock.tick(maxDurationMs)
-        inactivityWorkerExecutor.runCurrentlyBlocked()
+        runTimerThread(maxDurationMs)
 
-        val second = checkNotNull(orchestrator.currentUserSession())
+        val second = activeUserSession()
         assertNotEquals(first.userSessionId, second.userSessionId)
         assertEquals(2L, second.userSessionNumber)
     }
 
     @Test
     fun `max duration timer not scheduled when starting in background`() {
-        configService = FakeConfigService(
-            backgroundActivityBehavior = createBackgroundActivityBehavior(
-                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
-            ),
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = inactivityMs,
-            )
+        createOrchestrator(
+            startingAppState = AppState.BACKGROUND,
+            configService = backgroundEnabledConfigService(),
         )
-        createOrchestrator(AppState.BACKGROUND)
         assertNull(orchestrator.currentUserSession())
 
-        clock.tick(maxDurationMs * 2)
-        inactivityWorkerExecutor.runCurrentlyBlocked()
+        runTimerThread(maxDurationMs * 2)
         assertNull(orchestrator.currentUserSession())
     }
 
     @Test
     fun `max duration timer cancelled on manual session end and rescheduled for new session`() {
-        configService = FakeConfigService(
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = inactivityMs,
-            )
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = sessionLimitsConfigService(),
         )
-        createOrchestrator(AppState.FOREGROUND)
 
-        val first = checkNotNull(orchestrator.currentUserSession())
+        val first = activeUserSession()
         assertEquals(1L, first.userSessionNumber)
 
         // manual end cancels the old timer and starts a new one
         clock.tick(10000)
         orchestrator.endSessionWithManual()
-        val second = checkNotNull(orchestrator.currentUserSession())
+        val second = activeUserSession()
         assertEquals(2L, second.userSessionNumber)
 
         // old timer (from first session) fires but should be a no-op since the session changed
-        inactivityWorkerExecutor.runCurrentlyBlocked()
-        assertEquals(second.userSessionId, checkNotNull(orchestrator.currentUserSession()).userSessionId)
+        runTimerThread()
+        assertEquals(second.userSessionId, activeUserSession().userSessionId)
 
         // advance by the new session's full max duration and fire — now a new session should start
-        clock.tick(maxDurationMs)
-        inactivityWorkerExecutor.runCurrentlyBlocked()
-        val third = checkNotNull(orchestrator.currentUserSession())
+        runTimerThread(maxDurationMs)
+        val third = activeUserSession()
         assertNotEquals(second.userSessionId, third.userSessionId)
         assertEquals(3L, third.userSessionNumber)
     }
 
     @Test
     fun `restored session schedules timer for remaining duration`() {
-        configService = FakeConfigService(
-            backgroundActivityBehavior = createBackgroundActivityBehavior(
-                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
-            ),
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = inactivityMs,
-            )
-        )
         val halfElapsed = maxDurationMs / 2
-        val restoredStore = UserSessionMetadataStore(FakeKeyValueStore())
-        restoredStore.save(
-            UserSessionMetadata(
-                startTimeMs = clock.now() - halfElapsed,
-                userSessionId = "restored-id",
-                userSessionNumber = 4L,
-                maxDurationSecs = TimeUnit.MILLISECONDS.toSeconds(maxDurationMs),
-                inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
-                partIndex = 1,
-                lastActivityMs = clock.now(),
-            )
+        val restoredStore = storeWithUserSession(
+            userSessionId = "restored-id",
+            startTimeMs = clock.now() - halfElapsed,
+            lastActivityMs = clock.now(),
+            userSessionNumber = 4L,
         )
 
-        createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = restoredStore)
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = backgroundEnabledConfigService(),
+            metadataStoreOverride = restoredStore,
+        )
 
-        val restored = checkNotNull(orchestrator.currentUserSession())
+        val restored = activeUserSession()
         assertEquals("restored-id", restored.userSessionId)
 
         // advance to just before the remaining window expires — session should not rotate
-        clock.tick(halfElapsed - 1)
-        inactivityWorkerExecutor.runCurrentlyBlocked()
-        assertEquals("restored-id", checkNotNull(orchestrator.currentUserSession()).userSessionId)
+        runTimerThread(halfElapsed - 1)
+        assertEquals("restored-id", activeUserSession().userSessionId)
 
         // advance past the remaining window — timer fires, session rotates
-        clock.tick(1)
-        inactivityWorkerExecutor.runCurrentlyBlocked()
-        val newSession = checkNotNull(orchestrator.currentUserSession())
+        runTimerThread(1)
+        val newSession = activeUserSession()
         assertNotEquals("restored-id", newSession.userSessionId)
     }
 
     @Test
     fun `max duration timer fires while backgrounded and rotates user session`() {
-        configService = bgCaptureEnabledConfig()
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = backgroundEnabledConfigService(),
+        )
 
-        val first = checkNotNull(orchestrator.currentUserSession())
+        val first = activeUserSession()
         val storedBefore = store.storedSessionPartPayloads.size
 
         // Background well before max duration, then sit in BG past max duration without coming back to FG.
         clock.tick(1_000)
         orchestrator.onBackground()
 
-        clock.tick(maxDurationMs)
-        inactivityWorkerExecutor.runCurrentlyBlocked()
+        runTimerThread(maxDurationMs)
 
-        val second = checkNotNull(orchestrator.currentUserSession())
+        val second = activeUserSession()
         assertNotEquals(first.userSessionId, second.userSessionId)
         assertEquals(2L, second.userSessionNumber)
         assertEquals(1, second.partIndex)
+        // created while backgrounded, so the replacement is a background user session
+        assertTrue(second.isBackgroundOnly)
 
         // The session part created by the BG max-duration rotation must remain BG.
         val activePart = checkNotNull(sessionTracker.getActiveSessionPart())
@@ -1265,25 +1111,21 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `max duration timer fires in background but does not create stranded part when capture disabled`() {
-        configService = FakeConfigService(
-            backgroundActivityBehavior = createBackgroundActivityBehavior(),
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = maxDurationMs * 4,
-            )
+        // FakeConfigService's default backgroundActivityBehavior has bg capture disabled
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = sessionLimitsConfigService(customInactivityTimeoutMs = maxDurationMs * 4),
         )
-        createOrchestrator(AppState.FOREGROUND)
-        val first = checkNotNull(orchestrator.currentUserSession())
+        val first = activeUserSession()
         val baCountBefore = payloadCollator.baCount.get()
 
         clock.tick(1_000)
         orchestrator.onBackground()
 
-        clock.tick(maxDurationMs)
-        inactivityWorkerExecutor.runCurrentlyBlocked()
+        runTimerThread(maxDurationMs)
 
         // The user session must still rotate: max-duration is a hard limit independent of capture config.
-        val second = checkNotNull(orchestrator.currentUserSession())
+        val second = activeUserSession()
         assertNotEquals(first.userSessionId, second.userSessionId)
         assertEquals(2L, second.userSessionNumber)
 
@@ -1293,39 +1135,63 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
+    fun `inactivity timer fires in background but no part is created when capture disabled`() {
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = backgroundDisabledConfigService(),
+        )
+        val first = activeUserSession()
+
+        clock.tick(1_000)
+        orchestrator.onBackground()
+
+        runTimerThread(inactivityMs)
+
+        val second = activeUserSession()
+        assertNotEquals(first.userSessionId, second.userSessionId)
+        assertEquals(2L, second.userSessionNumber)
+        assertTrue(second.isBackgroundOnly)
+        assertNull(sessionTracker.getActiveSessionPart())
+
+        orchestrator.onForeground()
+        assertEquals(0, payloadCollator.baCount.get())
+    }
+
+    @Test
     fun `max duration timer not cancelled when transitioning to background`() {
         // Long inactivity so it can't fire before the max-duration timer and confound the result.
-        configService = FakeConfigService(
-            backgroundActivityBehavior = createBackgroundActivityBehavior(
-                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = FakeConfigService(
+                backgroundActivityBehavior = backgroundActivityBehavior(true),
+                sessionBehavior = FakeUserSessionBehavior(
+                    maxSessionDurationMs = maxDurationMs,
+                    sessionInactivityTimeoutMs = maxDurationMs * 4,
+                ),
             ),
-            sessionBehavior = FakeUserSessionBehavior(
-                maxSessionDurationMs = maxDurationMs,
-                sessionInactivityTimeoutMs = maxDurationMs * 4,
-            )
         )
-        createOrchestrator(AppState.FOREGROUND)
 
-        val first = checkNotNull(orchestrator.currentUserSession())
+        val first = activeUserSession()
 
         clock.tick(maxDurationMs / 2)
         orchestrator.onBackground()
 
         // advance past the max duration
-        clock.tick(maxDurationMs / 2 + 1)
-        inactivityWorkerExecutor.runCurrentlyBlocked()
+        runTimerThread(maxDurationMs / 2 + 1)
 
-        val second = checkNotNull(orchestrator.currentUserSession())
+        val second = activeUserSession()
         assertNotEquals(first.userSessionId, second.userSessionId)
         assertEquals(2L, second.userSessionNumber)
     }
 
     @Test
     fun `max duration timer not rescheduled when foregrounding before it has fired`() {
-        configService = bgCaptureEnabledConfig()
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = backgroundEnabledConfigService(),
+        )
 
-        val first = checkNotNull(orchestrator.currentUserSession())
+        val first = activeUserSession()
 
         // Multiple FG/BG transitions before max duration must NOT re-schedule the timer.
         // A leaked timer would fire twice and rotate the user session prematurely.
@@ -1337,10 +1203,9 @@ internal class SessionOrchestratorTest {
         }
 
         // Now advance past the original max-duration deadline and let the timer fire.
-        clock.tick(maxDurationMs)
-        inactivityWorkerExecutor.runCurrentlyBlocked()
+        runTimerThread(maxDurationMs)
 
-        val second = checkNotNull(orchestrator.currentUserSession())
+        val second = activeUserSession()
         assertNotEquals(first.userSessionId, second.userSessionId)
         // Exactly one rotation: number 2, not 3+.
         assertEquals(2L, second.userSessionNumber)
@@ -1348,23 +1213,23 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `max duration timer not scheduled for user session started in background`() {
-        configService = bgCaptureEnabledConfig()
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = backgroundEnabledConfigService(),
+        )
 
         // trigger inactivity timeout to create new user session
         orchestrator.onBackground()
-        clock.tick(inactivityMs + 1)
-        inactivityWorkerExecutor.runCurrentlyBlocked()
+        runTimerThread(inactivityMs + 1)
 
-        val rotatedInBg = checkNotNull(orchestrator.currentUserSession())
+        val rotatedInBg = activeUserSession()
         assertEquals(2L, rotatedInBg.userSessionNumber)
         assertEquals(1, rotatedInBg.partIndex)
 
         // tick past max duration threshold
-        clock.tick(maxDurationMs * 2)
-        inactivityWorkerExecutor.runCurrentlyBlocked()
+        runTimerThread(maxDurationMs * 2)
 
-        val current = checkNotNull(orchestrator.currentUserSession())
+        val current = activeUserSession()
         assertEquals(rotatedInBg.userSessionId, current.userSessionId)
         assertEquals(2L, current.userSessionNumber)
     }
@@ -1375,9 +1240,11 @@ internal class SessionOrchestratorTest {
         // briefly backgrounds shortly before max-duration. Max-duration then fires in BG and rotates the user
         // session. The inactivity timer scheduled by the late onBackground anchors on the to-be-terminated
         // session — if it survives, it incorrectly rotates the freshly-created BG session.
-        configService = bgCaptureEnabledConfig()
-        createOrchestrator(AppState.FOREGROUND)
-        val first = checkNotNull(orchestrator.currentUserSession())
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = backgroundEnabledConfigService(),
+        )
+        val first = activeUserSession()
 
         // Stay FG until just before max-duration, then background.
         val bgGapMs = inactivityMs / 4
@@ -1385,39 +1252,210 @@ internal class SessionOrchestratorTest {
         orchestrator.onBackground()
 
         // Advance to max-duration; it fires in BG and rotates the user session.
-        clock.tick(bgGapMs + 1)
-        inactivityWorkerExecutor.runCurrentlyBlocked()
+        runTimerThread(bgGapMs + 1)
 
-        val rotated = checkNotNull(orchestrator.currentUserSession())
+        val rotated = activeUserSession()
         assertNotEquals(first.userSessionId, rotated.userSessionId)
         assertEquals(2L, rotated.userSessionNumber)
 
         // Advance well past where the stale inactivity timer would have fired. A leaked timer would
         // rotate the BG session a second time and bump userSessionNumber to 3.
-        clock.tick(inactivityMs * 2)
-        inactivityWorkerExecutor.runCurrentlyBlocked()
+        runTimerThread(inactivityMs * 2)
 
-        val current = checkNotNull(orchestrator.currentUserSession())
+        val current = activeUserSession()
         assertEquals(rotated.userSessionId, current.userSessionId)
         assertEquals(2L, current.userSessionNumber)
     }
 
-    private fun bgCaptureEnabledConfig() = FakeConfigService(
-        backgroundActivityBehavior = createBackgroundActivityBehavior(
-            remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
-        ),
+    @Test
+    fun `only background-only user session carries the marker attribute in its metadata`() {
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = backgroundEnabledConfigService(),
+        )
+
+        val regular = activeUserSession()
+        assertFalse(regular.attributes.containsKey(EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART))
+
+        orchestrator.onBackground()
+        runTimerThread(inactivityMs)
+
+        val backgroundOnlySession = activeUserSession()
+        assertTrue(backgroundOnlySession.isBackgroundOnly)
+        assertEquals("1", backgroundOnlySession.attributes[EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART])
+    }
+
+    @Test
+    fun `manual end while in background creates a background-only user session`() {
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = backgroundEnabledConfigService(),
+        )
+
+        val first = activeUserSession()
+
+        clock.tick(1000)
+        orchestrator.onBackground()
+        clock.tick(1000)
+        orchestrator.endSessionWithManual()
+
+        val backgroundOnlySession = activeUserSession()
+        assertNotEquals(first.userSessionId, backgroundOnlySession.userSessionId)
+        assertTrue(backgroundOnlySession.isBackgroundOnly)
+
+        orchestrator.onForeground()
+        val regular = activeUserSession()
+        assertNotEquals(backgroundOnlySession.userSessionId, regular.userSessionId)
+        assertFalse(regular.isBackgroundOnly)
+    }
+
+    @Test
+    fun `restored background user session is reused when process starts in background`() {
+        val store = storeWithUserSession(
+            userSessionId = "bg-session-id",
+            isBackgroundOnly = true
+        )
+
+        // Starting with the clock beyond the inactivity time should not result in a new background only session
+        clock.tick(inactivityMs * 1)
+        createOrchestrator(
+            startingAppState = AppState.BACKGROUND,
+            configService = backgroundEnabledConfigService(),
+            metadataStoreOverride = store,
+        )
+
+        val restored = activeUserSession()
+        assertEquals("bg-session-id", restored.userSessionId)
+        assertTrue(restored.isBackgroundOnly)
+
+        orchestrator.onForeground()
+        val regular = activeUserSession()
+        assertNotEquals("bg-session-id", regular.userSessionId)
+        assertFalse(regular.isBackgroundOnly)
+    }
+
+    @Test
+    fun `restored background user session past max duration is discarded`() {
+        val store = storeWithUserSession(
+            userSessionId = "bg-session-id",
+            isBackgroundOnly = true
+        )
+
+        clock.tick(maxDurationMs + 1)
+        createOrchestrator(
+            startingAppState = AppState.BACKGROUND,
+            configService = backgroundEnabledConfigService(),
+            metadataStoreOverride = store,
+        )
+
+        // user session not restored
+        assertNull(orchestrator.currentUserSession())
+
+        orchestrator.onForeground()
+        val regular = activeUserSession()
+        assertNotEquals("bg-session-id", regular.userSessionId)
+        assertFalse(regular.isBackgroundOnly)
+    }
+
+    @Test
+    fun `restored background user session is replaced when process starts in foreground`() {
+        val store = storeWithUserSession(
+            userSessionId = "bg-session-id",
+            isBackgroundOnly = true
+        )
+
+        clock.tick(1000)
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = backgroundEnabledConfigService(),
+            metadataStoreOverride = store,
+        )
+
+        val session = activeUserSession()
+        assertNotEquals("bg-session-id", session.userSessionId)
+        assertFalse(session.isBackgroundOnly)
+    }
+
+    private fun backgroundEnabledConfigService() = FakeConfigService(
+        backgroundActivityBehavior = backgroundActivityBehavior(true),
         sessionBehavior = FakeUserSessionBehavior(
             maxSessionDurationMs = maxDurationMs,
             sessionInactivityTimeoutMs = inactivityMs,
+        ),
+    )
+
+    private fun backgroundDisabledConfigService() = FakeConfigService(
+        backgroundActivityBehavior = backgroundActivityBehavior(false),
+        sessionBehavior = FakeUserSessionBehavior(
+            maxSessionDurationMs = maxDurationMs,
+            sessionInactivityTimeoutMs = inactivityMs,
+        ),
+    )
+
+    private fun sessionLimitsConfigService(
+        customMaxSessionDurationMs: Long = maxDurationMs,
+        customInactivityTimeoutMs: Long = inactivityMs,
+    ) = FakeConfigService(
+        sessionBehavior = FakeUserSessionBehavior(
+            maxSessionDurationMs = customMaxSessionDurationMs,
+            sessionInactivityTimeoutMs = customInactivityTimeoutMs,
         )
     )
+
+    private fun backgroundActivityBehavior(enabled: Boolean) = createBackgroundActivityBehavior(
+        remoteCfg = RemoteConfig(
+            backgroundActivityConfig = BackgroundActivityRemoteConfig(
+                threshold = if (enabled) {
+                    100f
+                } else {
+                    0f
+                }
+            )
+        )
+    )
+
+    private fun storeWithUserSession(
+        userSessionId: String,
+        startTimeMs: Long = clock.now(),
+        lastActivityMs: Long = startTimeMs,
+        userSessionNumber: Long = 2L,
+        partIndex: Int = 1,
+        isBackgroundOnly: Boolean = false,
+        persistedMaxDurationMs: Long = maxDurationMs,
+        persistedInactivityTimeoutMs: Long = inactivityMs,
+    ): UserSessionMetadataStore = UserSessionMetadataStore(FakeKeyValueStore()).apply {
+        save(
+            UserSessionMetadata(
+                startTimeMs = startTimeMs,
+                userSessionId = userSessionId,
+                userSessionNumber = userSessionNumber,
+                maxDurationSecs = TimeUnit.MILLISECONDS.toSeconds(persistedMaxDurationMs),
+                inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(persistedInactivityTimeoutMs),
+                partIndex = partIndex,
+                lastActivityMs = lastActivityMs,
+                isBackgroundOnly = isBackgroundOnly,
+            )
+        )
+    }
+
+    private fun activeUserSession(): UserSessionMetadata = checkNotNull(orchestrator.currentUserSession())
+
+    private fun runTimerThread(timeIncrementBeforeUnblockMs: Long = 0L) {
+        if (timeIncrementBeforeUnblockMs > 0L) {
+            clock.tick(timeIncrementBeforeUnblockMs)
+        }
+        inactivityWorkerExecutor.runCurrentlyBlocked()
+    }
 
     private fun validateSession(
         sessionSpan: EmbraceSdkSpan?,
         endTimeMs: Long,
         endType: LifeEventType,
     ) {
-        assertEquals(endType, endType)
+        assertEquals(
+            endType.toString().lowercase(Locale.US),
+            destination.attributes[EmbSessionAttributes.EMB_SESSION_END_TYPE],
+        )
         assertEquals(endTimeMs, checkNotNull(sessionSpan).snapshot()?.endTimeNanos?.nanosToMillis())
     }
 }

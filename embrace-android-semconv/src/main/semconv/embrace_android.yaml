@@ -230,6 +230,28 @@ groups:
         stability: development
         examples: ["0", "1", "2", "3"]
 
+  - id: emb.smoothness
+    type: attribute_group
+    stability: development
+    brief: "Embrace smoothness vital attributes (experimental)"
+    prefix: ""
+    attributes:
+      - id: smoothness.outcome
+        type: string
+        brief: "How the focal moment ended."
+        stability: development
+        examples: ["settled", "interrupted"]
+      - id: smoothness.frame_count
+        type: int
+        brief: "Number of frames rendered during the focal moment."
+        stability: development
+        examples: [10, 42]
+      - id: smoothness.normalized_dropped_frames
+        type: double
+        brief: "Total jank over the focal moment, expressed in 60fps-reference frames."
+        stability: development
+        examples: [0.5, 2.0]
+
   - id: emb.network_request
     type: attribute_group
     stability: development

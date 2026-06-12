@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.config
 
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.config.FakeBase64SharedObjectFilesMap
@@ -77,7 +78,7 @@ class NativeSymbolTest {
             instrumentedConfig = cfg,
             worker = fakeBackgroundWorker(),
             serializer = serializer,
-            store = FakeDeviceIdStore(),
+            store = FakeKeyValueStore(),
             okHttpClient = okHttpClient,
             abis = arrayOf(arch),
             sdkVersion = "1.2.3",

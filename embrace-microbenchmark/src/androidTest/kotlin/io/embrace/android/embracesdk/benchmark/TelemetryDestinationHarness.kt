@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.benchmark
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.destination.TelemetryDestinationImpl
+import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifier
+import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
@@ -45,6 +47,7 @@ internal class TelemetryDestinationHarness {
         override val logger: InternalLogger = InternalLoggerImpl()
         override val systemInfo: SystemInfo = SystemInfo()
         override val uuidSource: UuidSource = UuidSourceImpl()
+        override val startupClassifier: StartupClassifier = StartupClassifierImpl()
         override val jsonSerializer: PlatformSerializer = EmbraceSerializer()
         override val instrumentedConfig: InstrumentedConfig = InstrumentedConfigImpl
         override val okHttpClient: OkHttpClient = OkHttpClient()

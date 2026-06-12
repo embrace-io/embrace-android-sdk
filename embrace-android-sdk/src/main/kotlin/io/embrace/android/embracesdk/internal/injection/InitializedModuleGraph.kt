@@ -113,6 +113,7 @@ internal class InitializedModuleGraph(
             initModule.logger,
             instrumentationModule.instrumentationArgs.destination,
             configService,
+            initModule.startupClassifier,
             versionChecker,
         )
     }

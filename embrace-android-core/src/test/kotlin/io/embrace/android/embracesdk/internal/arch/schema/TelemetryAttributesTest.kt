@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
-import io.embrace.android.embracesdk.internal.utils.Uuid
+import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
@@ -17,7 +17,7 @@ internal class TelemetryAttributesTest {
     @Before
     fun setup() {
         customAttributes = mapOf("custom" to "attributeValue")
-        sessionId = Uuid.getEmbUuid()
+        sessionId = TestUuidSource().createUuid()
     }
 
     @Test
@@ -48,7 +48,7 @@ internal class TelemetryAttributesTest {
 
     @Test
     fun `overwritten values returned`() {
-        val newSessionId = Uuid.getEmbUuid()
+        val newSessionId = TestUuidSource().createUuid()
         telemetryAttributes = TelemetryAttributes()
         val sessionIdKey = SessionAttributes.SESSION_ID
         telemetryAttributes.setAttribute(sessionIdKey, sessionId)
@@ -61,7 +61,7 @@ internal class TelemetryAttributesTest {
 
     @Test
     fun `schema attribute values take priority if the same key is used`() {
-        val newSessionId = Uuid.getEmbUuid()
+        val newSessionId = TestUuidSource().createUuid()
         telemetryAttributes = TelemetryAttributes(
             customAttributes = mapOf(SessionAttributes.SESSION_ID to sessionId)
         )

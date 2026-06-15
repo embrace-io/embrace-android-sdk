@@ -24,15 +24,17 @@ import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
-import io.embrace.android.embracesdk.testframework.assertions.JsonComparator
+import io.embrace.android.embracesdk.testframework.assertions.JsonComparator.compare
+import io.embrace.android.embracesdk.testframework.assertions.Placeholder
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import io.embrace.android.embracesdk.testframework.server.FormPart
+import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.json.JSONObject
-import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import java.io.File
 import java.io.IOException
 import java.util.Locale
@@ -51,7 +53,7 @@ internal class EmbracePayloadAssertionInterface(
         private const val WAIT_TIME_MS = 10000
     }
 
-    private val serializer by lazy { bootstrapper.initModule.jsonSerializer }
+    internal val serializer by lazy { bootstrapper.initModule.jsonSerializer }
     private val deliveryTracer by lazy {
         checkNotNull(bootstrapper.deliveryModule?.deliveryTracer)
     }
@@ -109,13 +111,17 @@ internal class EmbracePayloadAssertionInterface(
 
     /**
      * Returns a list of sessions that were completed by the SDK.
+     *
+     * Set [assertOrdering] to false when the test deliberately produces sessions with
+     * out-of-order start times (e.g. clock-backwards anomaly tests).
      */
     internal fun getSessionEnvelopes(
         expectedSize: Int,
         state: AppState = AppState.FOREGROUND,
         waitTimeMs: Int = WAIT_TIME_MS,
+        assertOrdering: Boolean = true,
     ): List<Envelope<SessionPartPayload>> {
-        return retrieveSessionEnvelopes(expectedSize, state, waitTimeMs)
+        return retrieveSessionEnvelopes(expectedSize, state, waitTimeMs, assertOrdering)
     }
 
     /**
@@ -126,7 +132,7 @@ internal class EmbracePayloadAssertionInterface(
     ): Envelope<SessionPartPayload> = getSessionEnvelopes(1, state).single()
 
     private fun retrieveSessionEnvelopes(
-        expectedSize: Int, appState: AppState, waitTimeMs: Int,
+        expectedSize: Int, appState: AppState, waitTimeMs: Int, assertOrdering: Boolean,
     ): List<Envelope<SessionPartPayload>> {
         val supplier = {
             checkNotNull(apiServer).getSessionEnvelopes()
@@ -134,7 +140,7 @@ internal class EmbracePayloadAssertionInterface(
         }
         try {
             val envelopes = retrievePayload(expectedSize, waitTimeMs, supplier)
-            assertSessionsDeliveredInOrder(envelopes)
+            if (assertOrdering) assertSessionsDeliveredInOrder(envelopes)
             return envelopes
         } catch (exc: TimeoutException) {
             val envelopes = checkNotNull(apiServer).getSessionEnvelopes()
@@ -252,9 +258,8 @@ internal class EmbracePayloadAssertionInterface(
         )
         assertNotNull(attrs.findAttributeValue("log.record.uid"))
         assertNotNull(attrs.findAttributeValue(EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER))
-        if (crashData.partEnvelope != null) {
-            assertEquals(crashData.partEnvelope.getSessionId(), attrs.findAttributeValue("session.id"))
-        }
+        assertEquals(crashData.nativeCrash.sessionPartId, attrs.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID))
+        assertEquals(crashData.nativeCrash.userSessionId, attrs.findAttributeValue(SessionAttributes.SESSION_ID))
         assertNativeCrashDoesNotExist(crashData)
     }
 
@@ -300,22 +305,27 @@ internal class EmbracePayloadAssertionInterface(
      * Validates a payload against a golden file in the test resources. If the payload does not match
      * the golden file, the assertion fails.
      */
-    internal fun validatePayloadAgainstGoldenFile(
-        payload: Envelope<SessionPartPayload>,
+    @OptIn(ExperimentalStdlibApi::class)
+    internal inline fun <reified T : Any> validatePayloadAgainstGoldenFile(
+        payload: T,
         goldenFileName: String,
+        placeholders: Map<Placeholder, String> = emptyMap(),
     ) {
         try {
-            val observedJson = serializer.toJson(payload, Envelope.sessionEnvelopeSerializer)
-            val expectedJson = ResourceReader.readResourceAsText(goldenFileName)
-            val result = JsonComparator.compare(JSONObject(expectedJson), JSONObject(observedJson))
-
+            val observedJson = serializer.toJson(payload)
+            val expectedJson = placeholders.entries.fold(
+                ResourceReader.readResourceAsText(goldenFileName)
+            ) { json, (placeholder, value) ->
+                json.replace(placeholder.token, value)
+            }
+            val result = compare(JSONObject(expectedJson), JSONObject(observedJson))
             if (result.isNotEmpty()) {
                 val msg by lazy {
                     "Request payload differed from expected JSON '$goldenFileName' due to following " +
                         "reasons: ${result.joinToString("; ")}\n" +
                         "Dump of full JSON: $observedJson"
                 }
-                Assert.fail(msg)
+                fail(msg)
             }
         } catch (e: IOException) {
             throw IllegalStateException("Failed to validate request against golden file.", e)

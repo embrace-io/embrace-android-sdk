@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.OtelBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -29,7 +30,7 @@ import io.embrace.android.embracesdk.internal.payload.NativeSymbols
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.serialization.fromJson
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
-import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
+import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import okhttp3.OkHttpClient
 import okio.ByteString.Companion.decodeBase64
@@ -50,6 +51,7 @@ class ConfigServiceImpl(
     private val filesDir: File,
     private val logger: InternalLogger,
     private val hasConfiguredOtlpExport: () -> Boolean,
+    private val uuidSource: UuidSource,
 ) : ConfigService {
 
     private val onlyOtelExportEnabled: Boolean = instrumentedConfig.project.getAppId() == null
@@ -79,7 +81,7 @@ class ConfigServiceImpl(
         if (deviceId != null) {
             return@run deviceId
         }
-        val newId = getEmbUuid()
+        val newId = uuidSource.createUuid()
         store.edit {
             putString(DEVICE_IDENTIFIER_KEY, newId)
         }
@@ -131,8 +133,10 @@ class ConfigServiceImpl(
     override val sdkModeBehavior = SdkModeBehaviorImpl(thresholdCheck, remoteConfig)
     override val appExitInfoBehavior =
         AppExitInfoBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
+    override val traceparentInjectionBehavior =
+        TraceparentInjectionBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
     override val networkSpanForwardingBehavior =
-        NetworkSpanForwardingBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
+        NetworkSpanForwardingBehaviorImpl(traceparentInjectionBehavior, thresholdCheck, instrumentedConfig, remoteConfig)
     override val otelBehavior = OtelBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
 
     override val appId: String? = run {

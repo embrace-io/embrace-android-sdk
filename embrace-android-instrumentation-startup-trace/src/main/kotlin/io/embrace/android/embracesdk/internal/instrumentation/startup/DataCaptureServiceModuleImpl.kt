@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.startup
 import android.app.Application
 import android.os.SystemClock
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifier
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.UiLoadDataListener
@@ -18,6 +19,7 @@ class DataCaptureServiceModuleImpl(
     logger: InternalLogger,
     destination: TelemetryDestination,
     configService: ConfigService,
+    private val startupClassifier: StartupClassifier,
     versionChecker: VersionChecker = BuildVersionChecker,
 ) : DataCaptureServiceModule {
 
@@ -34,11 +36,12 @@ class DataCaptureServiceModuleImpl(
             destination = destination,
             versionChecker = versionChecker,
             logger = logger,
+            startupClassifier = startupClassifier,
             manualEnd = configService.autoDataCaptureBehavior.isEndStartupWithAppReadyEnabled(),
             processInfo = ProcessInfoImpl(
                 deviceStartTimeMs = deviceStartTimeMs,
                 versionChecker = versionChecker,
-            )
+            ),
         )
     }
 

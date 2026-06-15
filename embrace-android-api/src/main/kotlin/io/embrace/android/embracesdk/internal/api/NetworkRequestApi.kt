@@ -11,11 +11,12 @@ public interface NetworkRequestApi {
 
     /**
      * Logs the fact that a network call occurred. These are recorded and sent to Embrace as part
-     * of a particular session.
+     * of a session part.
      *
      * You can create an instance of [EmbraceNetworkRequest] using the factory functions.
      */
     public fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest)
 
+    @Deprecated("This is no longer supported")
     public fun generateW3cTraceparent(): String?
 }

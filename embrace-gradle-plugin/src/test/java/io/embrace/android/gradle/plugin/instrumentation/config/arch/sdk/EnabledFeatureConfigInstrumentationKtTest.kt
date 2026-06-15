@@ -47,6 +47,7 @@ class EnabledFeatureConfigInstrumentationKtTest {
         ConfigMethod("isHttpUrlConnectionCaptureEnabled", "()Z", true),
         ConfigMethod("isHucLiteInstrumentationEnabled", "()Z", true),
         ConfigMethod("isNetworkSpanForwardingEnabled", "()Z", true),
+        ConfigMethod("isTraceparentInjectionEnabled", "()Z", true),
         ConfigMethod("isUiLoadTracingEnabled", "()Z", true),
         ConfigMethod("isUiLoadTracingTraceAll", "()Z", true),
         ConfigMethod("isEndStartupWithAppReadyEnabled", "()Z", true),
@@ -104,7 +105,8 @@ class EnabledFeatureConfigInstrumentationKtTest {
                             captureRequestContentLength = true,
                             enableNativeMonitoring = true,
                             enableHucLiteInstrumentation = true,
-                            enableNetworkSpanForwarding = true
+                            enableNetworkSpanForwarding = true,
+                            enableTraceparentInjection = true
                         ),
                         sigHandlerDetection = true,
                         taps = TapsLocalConfig(

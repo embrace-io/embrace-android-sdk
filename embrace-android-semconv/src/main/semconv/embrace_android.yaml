@@ -457,17 +457,17 @@ groups:
         brief: "Session start timestamp (milliseconds since epoch)."
         stability: development
         examples: ["1617983000000"]
-      - id: emb.is_final_session
-        type: string
-        brief: "Set to 1 if this session part is the known final part (max duration reached or manual termination). Omitted otherwise."
-        stability: development
-        examples: ["1"]
       - id: emb.session_part_id
         type: string
         brief: "UUID identifying the session part."
         stability: development
         examples: ["3a1c2b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"]
-      - id: emb.user_session_part_number
+      - id: emb.session_part_number
+        type: string
+        brief: "Monotonically incrementing counter of session parts since SDK install. Seeded from emb.session_number when first created; increments by 1 on each new session part. Never resets across process or session boundaries."
+        stability: development
+        examples: ["1", "2", "42"]
+      - id: emb.user_session_part_index
         type: string
         brief: "The index of the part within the session. 1-indexed, matching the behavior of session_number."
         stability: development
@@ -477,7 +477,12 @@ groups:
         brief: "Set to 1 when the SDK knows for certain this is the final part of a session (max duration reached, inactivity timeout, or manual termination). Omitted when the value would be 0."
         stability: development
         examples: ["1"]
-      - id: emb.termination_reason
+      - id: emb.is_background_only_part
+        type: string
+        brief: "Set to 1 when the session part belongs to a background user session, i.e. a user session covering a period when the app process is alive but the user is not active. Omitted for regular user sessions."
+        stability: development
+        examples: ["1"]
+      - id: emb.user_session_termination_reason
         type:
           allow_custom_values: false
           members:
@@ -506,6 +511,16 @@ groups:
         brief: "The inactivity timeout (in seconds) that the SDK was configured to use."
         stability: development
         examples: ["300", "1800"]
+      - id: emb.clock_network_drift
+        type: string
+        brief: "Drift in milliseconds. Positive = network clock behind wall clock. (Wall Time - Network Time)"
+        stability: development
+        examples: ["123", "-321"]
+      - id: emb.clock_gnss_drift
+        type: string
+        brief: "Drift in milliseconds. Positive = GNSS clock behind wall clock. (Wall Time - GNSS Time)"
+        stability: development
+        examples: ["987", "-789"]
 
   - id: emb.android
     type: attribute_group

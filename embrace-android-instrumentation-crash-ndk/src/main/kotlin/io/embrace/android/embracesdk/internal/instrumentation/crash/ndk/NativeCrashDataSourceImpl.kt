@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 
 internal class NativeCrashDataSourceImpl(
@@ -38,9 +39,18 @@ internal class NativeCrashDataSourceImpl(
             val nativeCrashNumber = args.ordinalStore.incrementAndGet(Ordinal.NATIVE_CRASH)
             val crashAttributes = TelemetryAttributes().apply {
                 setAttribute(
+                    key = EmbSessionAttributes.EMB_SESSION_PART_ID,
+                    value = nativeCrash.sessionPartId,
+                )
+
+                setAttribute(
                     key = SessionAttributes.SESSION_ID,
-                    value = nativeCrash.sessionId,
-                    keepBlankishValues = false,
+                    value = nativeCrash.userSessionId,
+                )
+
+                setAttribute(
+                    key = EmbSessionAttributes.EMB_USER_SESSION_ID,
+                    value = nativeCrash.userSessionId,
                 )
 
                 metadata.forEach { attribute ->

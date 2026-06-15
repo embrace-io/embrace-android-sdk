@@ -44,4 +44,5 @@ sealed class InternalErrorType(private val severity: Severity) {
     object ConnectivityUpdateFailure : InternalErrorType(ERROR)
     object ClockBackwardsShift : InternalErrorType(ERROR)
     object NavControllerTrackingFail : InternalErrorType(ERROR)
+    object UserSessionCallbackFail : InternalErrorType(ERROR)
 }

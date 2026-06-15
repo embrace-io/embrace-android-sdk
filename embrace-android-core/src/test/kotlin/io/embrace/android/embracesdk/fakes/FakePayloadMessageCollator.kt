@@ -12,28 +12,26 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class FakePayloadMessageCollator(
     val currentSessionPartSpan: FakeCurrentSessionPartSpan = FakeCurrentSessionPartSpan(),
+    var userSessionId: String = ""
 ) : PayloadMessageCollator {
 
     val sessionCount: AtomicInteger = AtomicInteger(0)
     val baCount: AtomicInteger = AtomicInteger(0)
 
     override fun buildInitialPart(params: InitialEnvelopeParams): SessionPartToken = with(params) {
-        val sessionNumber = when (appState) {
-            AppState.FOREGROUND -> {
-                sessionCount.incrementAndGet()
-            }
-
-            AppState.BACKGROUND -> {
-                baCount.incrementAndGet()
-            }
+        when (appState) {
+            AppState.FOREGROUND -> sessionCount.incrementAndGet()
+            AppState.BACKGROUND -> baCount.incrementAndGet()
         }
         SessionPartToken(
-            sessionId = currentSessionPartSpan.getSessionId(),
+            sessionPartId = currentSessionPartSpan.getSessionId(),
+            userSessionId = userSessionId,
             startTime = startTime,
             isColdStart = coldStart,
             appState = appState,
             startType = startType,
-            number = sessionNumber,
+            userSessionPartIndex = userSessionPartIndex,
+            sessionPartNumber = sessionPartNumber,
         )
     }
 

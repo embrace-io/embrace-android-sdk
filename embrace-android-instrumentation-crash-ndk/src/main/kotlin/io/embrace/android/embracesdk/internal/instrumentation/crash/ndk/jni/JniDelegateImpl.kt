@@ -7,7 +7,7 @@ class JniDelegateImpl : JniDelegate {
         devLogging: Boolean,
     )
 
-    external override fun onSessionChange(sessionId: String, reportPath: String)
+    external override fun onSessionChange(sessionId: String, userSessionId: String, reportPath: String)
     external override fun getCrashReport(path: String): String?
     external override fun checkForOverwrittenHandlers(): String?
     external override fun reinstallSignalHandlers(): Boolean

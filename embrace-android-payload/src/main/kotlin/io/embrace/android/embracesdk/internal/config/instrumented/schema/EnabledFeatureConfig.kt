@@ -139,6 +139,14 @@ interface EnabledFeatureConfig {
     fun isNetworkSpanForwardingEnabled(): Boolean = false
 
     /**
+     * Gates whether the W3C traceparent header should be injected on outgoing network requests one is not already present.
+     * This is required to be enabled for network span forwarding to work.
+     *
+     * sdk_config.networking.enable_traceparent_injection
+     */
+    fun isTraceparentInjectionEnabled(): Boolean = false
+
+    /**
      * Gates whether the SDK will capture traces for the performance of the opening of Activities.
      *
      * Will be true if sdk_config.automatic_data_capture.ui_load_tracing_disabled is not true

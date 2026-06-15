@@ -7,6 +7,8 @@ cmake_minimum_required(VERSION 3.4.1)
 
 set (CMAKE_CXX_STANDARD 17)
 
+add_compile_options(-ffunction-sections -fdata-sections)
+
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
 # You can define multiple libraries, and CMake builds them for you.
@@ -73,4 +75,13 @@ set_target_properties(embrace-native
 
 add_subdirectory(3rdparty/libunwindstack-ndk/cmake)
 target_link_libraries(embrace-native unwindstack)
+target_link_options(embrace-native PRIVATE "-Wl,--gc-sections")
 target_link_options(embrace-native PRIVATE "-Wl,-z,max-page-size=16384")
+
+# Only export symbols for entry points that must be resolvable by name. In debug builds we export the emb_* symbols for the tests to use.
+if(CMAKE_BUILD_TYPE STREQUAL Debug)
+    set(EMB_VERSION_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/embrace-native-debug.map")
+else()
+    set(EMB_VERSION_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/embrace-native.map")
+endif()
+target_link_options(embrace-native PRIVATE "-Wl,--version-script=${EMB_VERSION_SCRIPT}")

@@ -4,27 +4,29 @@ import io.embrace.android.embracesdk.internal.envelope.session.SessionPartEnvelo
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
+import io.embrace.android.embracesdk.internal.session.id.SessionIdProvider
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
-import io.embrace.android.embracesdk.internal.store.OrdinalStore
 
 /**
  * Generates a payload
  */
 internal class PayloadMessageCollatorImpl(
     private val sessionPartEnvelopeSource: SessionPartEnvelopeSource,
-    private val store: OrdinalStore,
     private val currentSessionPartSpan: CurrentSessionPartSpan,
+    private val sessionIdProvider: SessionIdProvider,
 ) : PayloadMessageCollator {
 
     override fun buildInitialPart(params: InitialEnvelopeParams): SessionPartToken = with(params) {
         currentSessionPartSpan.readySession()
         SessionPartToken(
-            sessionId = currentSessionPartSpan.getSessionId(),
+            sessionPartId = currentSessionPartSpan.getSessionId(),
+            userSessionId = sessionIdProvider.getCurrentUserSessionId(),
             startTime = startTime,
-            isColdStart = coldStart,
             appState = appState,
+            isColdStart = coldStart,
             startType = startType,
-            number = getSessionNumber(store)
+            userSessionPartIndex = userSessionPartIndex,
+            sessionPartNumber = sessionPartNumber,
         )
     }
 

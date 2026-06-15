@@ -98,7 +98,7 @@ class NetworkRequestDataSourceImpl(
             )
 
             spanToken.asW3cTraceparent()?.also { traceparent ->
-                if (configService.networkSpanForwardingBehavior.isNetworkSpanForwardingEnabled()) {
+                if (configService.networkSpanForwardingBehavior.shouldForwardForDomain(domain)) {
                     spanToken.setSystemAttribute(EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT, traceparent)
                 }
                 activeRequests[traceparent] = spanToken

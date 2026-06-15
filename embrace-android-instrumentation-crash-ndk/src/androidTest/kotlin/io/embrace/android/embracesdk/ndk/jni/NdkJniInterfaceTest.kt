@@ -24,7 +24,7 @@ internal class NdkJniInterfaceTest : NativeTestSuite() {
 
     @Test
     fun onSessionChange() {
-        val result = delegate.onSessionChange("new_session_id", "new_native_report_path")
+        val result = delegate.onSessionChange("new_session_id", "new_user_session_id", "new_native_report_path")
         assertEquals(Unit.javaClass, result.javaClass)
     }
 

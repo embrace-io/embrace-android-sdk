@@ -115,7 +115,7 @@ sealed class SchemaType(
     }
 
     class AeiLog(
-        sessionId: String?,
+        sessionPartId: String?,
         sessionIdError: String?,
         importance: Int?,
         pss: Long?,
@@ -127,9 +127,14 @@ sealed class SchemaType(
         traceStatus: String?,
         crashNumber: Int?,
         aeiNumber: Int?,
+        userSessionId: String?,
     ) : SchemaType(EmbType.System.Exit) {
         override val schemaAttributes: Map<String, String> = mapOf(
-            EmbAeiAttributes.AEI_SESSION_ID to sessionId,
+            EmbAeiAttributes.AEI_SESSION_PART_ID to sessionPartId,
+            EmbAeiAttributes.AEI_USER_SESSION_ID to userSessionId,
+            EmbSessionAttributes.EMB_SESSION_PART_ID to "",
+            EmbSessionAttributes.EMB_USER_SESSION_ID to "",
+            SessionAttributes.SESSION_ID to "",
             EmbAeiAttributes.SESSION_ID_ERROR to sessionIdError,
             EmbAeiAttributes.PROCESS_IMPORTANCE to importance.toString(),
             EmbAeiAttributes.PSS to pss.toString(),
@@ -312,9 +317,6 @@ sealed class SchemaType(
             override fun toString(): String = name
         }
     }
-
-    class ScreenState(initialValue: String) :
-        State<String>(initialValue, "screen-manual")
 
     /**
      * A custom telemetry type. This allows the hybrid SDKs (and others) to pass in custom

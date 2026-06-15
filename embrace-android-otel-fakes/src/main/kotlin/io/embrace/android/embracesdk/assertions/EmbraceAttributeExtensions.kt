@@ -68,12 +68,16 @@ fun Span.assertIsPrivateSpan(): Unit = assertHasEmbraceAttribute(PrivateSpan)
 fun Span.assertNotPrivateSpan(): Unit = assertDoesNotHaveEmbraceAttribute(PrivateSpan)
 
 /**
- * Return as a [Attribute] representation, to be used used for Embrace payloads
+ * Return as a [Attribute] representation, to be used for Embrace payloads
  */
 fun EmbraceAttribute.toPayload(): Attribute = Attribute(key, value)
 
 fun Span.assertHasEmbraceAttribute(embraceAttribute: EmbraceAttribute) {
-    assertTrue(checkNotNull(attributes).contains(embraceAttribute.toPayload()))
+    with(checkNotNull(attributes)) {
+        val attrPayload = embraceAttribute.toPayload()
+        assertTrue("Span with name $name does not contain attribute '${attrPayload.key}'", any { it.key == attrPayload.key })
+        assertEquals(attrPayload.data, single { it.key == attrPayload.key }.data)
+    }
 }
 
 fun Span.assertDoesNotHaveEmbraceAttribute(embraceAttribute: EmbraceAttribute) {

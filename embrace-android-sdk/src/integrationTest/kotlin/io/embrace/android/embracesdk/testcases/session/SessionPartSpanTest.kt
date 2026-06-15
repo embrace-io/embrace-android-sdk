@@ -29,11 +29,11 @@ internal class SessionPartSpanTest {
             instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(bgActivityCapture = true)),
             testCaseAction = {
                 recordSession {
-                    ids.add(embrace.currentSessionId)
+                    ids.add(embrace.currentUserSessionId)
                 }
-                ids.add(embrace.currentSessionId)
+                ids.add(embrace.currentUserSessionId)
                 recordSession {
-                    ids.add(embrace.currentSessionId)
+                    ids.add(embrace.currentUserSessionId)
                 }
             },
             assertAction = {

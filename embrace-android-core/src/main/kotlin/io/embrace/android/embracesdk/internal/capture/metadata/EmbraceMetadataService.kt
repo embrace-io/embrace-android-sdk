@@ -7,8 +7,10 @@ import android.os.Build
 import android.os.Environment
 import android.os.Process
 import android.os.StatFs
+import android.os.SystemClock
 import android.os.storage.StorageManager
 import androidx.annotation.RequiresApi
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
@@ -24,6 +26,7 @@ internal class EmbraceMetadataService(
     private val storageStatsManager: Lazy<StorageStatsManager?>,
     private val configService: ConfigService,
     private val store: KeyValueStore,
+    private val clock: Clock,
     private val metadataBackgroundWorker: BackgroundWorker,
 ) : MetadataService {
 
@@ -33,6 +36,9 @@ internal class EmbraceMetadataService(
 
     @Volatile
     private var diskUsage: DiskUsage? = null
+
+    @Volatile
+    private var clockDrift: ClockDrift? = null
 
     private var appVersion: String?
         get() = store.getString(PREVIOUS_APP_VERSION_KEY)
@@ -63,6 +69,7 @@ internal class EmbraceMetadataService(
             if (diskUsage == null) {
                 diskUsage = DiskUsage(null, free)
             }
+            clockDrift = computeClockDrift()
         }
     }
 
@@ -89,6 +96,35 @@ internal class EmbraceMetadataService(
     }
 
     override fun getDiskUsage(): DiskUsage? = diskUsage
+
+    override fun getClockDrift(): ClockDrift? = clockDrift
+
+    private fun computeClockDrift(): ClockDrift? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            return null
+        }
+
+        val gnssDrift = runCatching {
+            val gnss = SystemClock.currentGnssTimeClock().millis()
+            ClockDrift.calculateDrift(wallTimeMillis = clock.now(), auxTimeMillis = gnss)
+        }.getOrNull()
+
+        val networkDrift =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                runCatching {
+                    val network = SystemClock.currentNetworkTimeClock().millis()
+                    ClockDrift.calculateDrift(wallTimeMillis = clock.now(), auxTimeMillis = network)
+                }.getOrNull()
+            } else {
+                null
+            }
+
+        if (gnssDrift == null && networkDrift == null) {
+            return null
+        }
+
+        return ClockDrift(networkDriftMillis = networkDrift, gnssDriftMillis = gnssDrift)
+    }
 
     private companion object {
         const val PREVIOUS_APP_VERSION_KEY = "io.embrace.lastappversion"

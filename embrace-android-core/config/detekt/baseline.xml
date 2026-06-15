@@ -3,5 +3,6 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>ComplexCondition:SessionOrchestratorImpl.kt$SessionOrchestratorImpl$transitionType == TransitionType.END_MANUAL || transitionType == TransitionType.INACTIVITY_TIMEOUT || transitionType == TransitionType.INACTIVITY_FOREGROUND || transitionType == TransitionType.MAX_DURATION</ID>
+    <ID>CyclomaticComplexMethod:SessionOrchestratorImpl.kt$SessionOrchestratorImpl$private fun transitionState( transitionType: TransitionType, timestamp: Long, oldSessionAction: ((initial: SessionPartToken) -> Envelope&lt;SessionPartPayload>?)? = null, newSessionAction: (Provider&lt;SessionPartToken?>)? = null, earlyTerminationCondition: () -> Boolean = { false }, crashId: String? = null, )</ID>
   </CurrentIssues>
 </SmellBaseline>

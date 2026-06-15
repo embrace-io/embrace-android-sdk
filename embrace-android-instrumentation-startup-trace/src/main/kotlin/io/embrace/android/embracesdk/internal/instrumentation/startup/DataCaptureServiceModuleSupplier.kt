@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.startup
 
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifier
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
@@ -15,5 +16,6 @@ typealias DataCaptureServiceModuleSupplier = (
     logger: InternalLogger,
     destination: TelemetryDestination,
     configService: ConfigService,
+    startupClassifier: StartupClassifier,
     versionChecker: VersionChecker,
 ) -> DataCaptureServiceModule

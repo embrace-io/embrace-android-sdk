@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.fakes.injection
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -12,6 +13,7 @@ import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.utils.UuidSource
 
 class FakeInitModule(
     clock: Clock = FakeClock(),
@@ -22,10 +24,12 @@ class FakeInitModule(
         deviceModel = "Phake Phone Phive"
     ),
     private val fakeTelemetryService: TelemetryService? = null,
+    override val uuidSource: UuidSource = TestUuidSource(),
     private val initModule: InitModule = InitModuleImpl(
         logger = logger,
         clock = clock,
-        systemInfo = systemInfo
+        systemInfo = systemInfo,
+        uuidSource = uuidSource,
     ),
     override var instrumentedConfig: InstrumentedConfig = FakeInstrumentedConfig(),
 ) : InitModule by initModule {

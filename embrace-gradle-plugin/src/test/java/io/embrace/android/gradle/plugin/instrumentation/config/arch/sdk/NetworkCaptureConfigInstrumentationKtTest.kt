@@ -22,6 +22,7 @@ class NetworkCaptureConfigInstrumentationKtTest {
         ConfigMethod("getIgnoredRequestPatternList", "()Ljava/util/List;", listOf("pattern1", "pattern2")),
         ConfigMethod("getNetworkBodyCapturePublicKey", "()Ljava/lang/String;", "my_key"),
         ConfigMethod("getLimitsByDomain", "()Ljava/util/Map;", mapOf("domain1" to "1", "domain2" to "2")),
+        ConfigMethod("getTraceparentOnlyAllowDomains", "()Ljava/util/List;", listOf("foo.test.com", ".example.com")),
     )
 
     @Test
@@ -50,7 +51,8 @@ class NetworkCaptureConfigInstrumentationKtTest {
                                 domains = listOf(
                                     DomainLocalConfig("domain1", 1),
                                     DomainLocalConfig("domain2", 2)
-                                )
+                                ),
+                                traceparentOnlyAllowDomains = listOf("foo.test.com", ".example.com")
                             )
                         ),
                         null

@@ -7,6 +7,7 @@ class FakeJniDelegate : JniDelegate {
     private val rawCrashes: MutableMap<String, String?> = mutableMapOf()
     var culprit: String? = "testCulprit"
     var sessionId: String? = null
+    var userSessionId: String? = null
     var reportPath: String? = null
     var signalHandlerInstalled: Boolean = false
     var signalHandlerReinstalled = false
@@ -19,8 +20,9 @@ class FakeJniDelegate : JniDelegate {
         signalHandlerInstalled = true
     }
 
-    override fun onSessionChange(sessionId: String, reportPath: String) {
+    override fun onSessionChange(sessionId: String, userSessionId: String, reportPath: String) {
         this.sessionId = sessionId
+        this.userSessionId = userSessionId
         this.reportPath = reportPath
     }
 

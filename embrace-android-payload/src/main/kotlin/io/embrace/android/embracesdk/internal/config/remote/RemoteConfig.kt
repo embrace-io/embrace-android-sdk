@@ -86,8 +86,22 @@ data class RemoteConfig(
     @SerialName("max_session_properties")
     val maxUserSessionProperties: Int? = null,
 
+    @Deprecated("Superseded by the flat nsfPctEnabled key; retained for back-compat with persisted/old payloads.")
     @SerialName("network_span_forwarding")
     val networkSpanForwardingRemoteConfig: NetworkSpanForwardingRemoteConfig? = null,
+
+    /**
+     * Percentage of devices for which network span forwarding is enabled.
+     * Replacement for the flag in the deprecated [networkSpanForwardingRemoteConfig]
+     */
+    @SerialName("nsf_pct_enabled")
+    val nsfPctEnabled: Float? = null,
+
+    /**
+     * Percentage of devices for which W3C traceparent injection is enabled.
+     */
+    @SerialName("traceparent_injection_pct_enabled")
+    val traceparentInjectionPctEnabled: Float? = null,
 
     @SerialName("ui_load_instrumentation_enabled_v2")
     val uiLoadInstrumentationEnabled: Boolean? = null,

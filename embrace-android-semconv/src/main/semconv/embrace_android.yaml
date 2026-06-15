@@ -498,9 +498,13 @@ groups:
               value: "manual"
               brief: "Session ended by manual termination."
               stability: development
+            - id: end_background_only_user_session
+              value: "end_background_only_user_session"
+              brief: "Background user session ended because the app entered the foreground."
+              stability: development
         brief: "The reason the session part was terminated."
         stability: development
-        examples: ["max_duration_reached", "inactivity", "manual"]
+        examples: ["max_duration_reached", "inactivity", "manual", "end_background_only_user_session"]
       - id: emb.user_session_max_duration_seconds
         type: string
         brief: "The maximum session duration (in seconds) that the SDK was configured to use."

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
+import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -47,6 +48,16 @@ internal class TransitionTypeTest {
     }
 
     @Test
+    fun `BACKGROUND_ONLY_SESSION_END endAttributes`() {
+        val attrs = TransitionType.BACKGROUND_ONLY_SESSION_END.endAttributes
+        assertEquals("1", attrs[EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART])
+        assertEquals(
+            EmbSessionAttributes.EmbUserSessionTerminationReasonValues.END_BACKGROUND_ONLY_USER_SESSION,
+            attrs[EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON],
+        )
+    }
+
+    @Test
     fun `non-final transition types have empty endAttributes`() {
         listOf(
             TransitionType.INITIAL,
@@ -55,6 +66,32 @@ internal class TransitionTypeTest {
             TransitionType.CRASH,
         ).forEach { type ->
             assertEquals(emptyMap<String, String>(), type.endAttributes)
+        }
+    }
+
+    @Test
+    fun `validate post-transition end state for every relevant transition type and current state combination`() {
+        // transitions that always leave the SDK in a specific state regardless of current state
+        mapOf(
+            TransitionType.ON_FOREGROUND to AppState.FOREGROUND,
+            TransitionType.INACTIVITY_FOREGROUND to AppState.FOREGROUND,
+            TransitionType.BACKGROUND_ONLY_SESSION_END to AppState.FOREGROUND,
+            TransitionType.ON_BACKGROUND to AppState.BACKGROUND,
+            TransitionType.INACTIVITY_TIMEOUT to AppState.BACKGROUND,
+        ).forEach { (type, expected) ->
+            assertEquals(expected, type.postTransitionEndState(AppState.FOREGROUND))
+            assertEquals(expected, type.postTransitionEndState(AppState.BACKGROUND))
+        }
+
+        // transitions that don't alter the current states
+        listOf(
+            TransitionType.INITIAL,
+            TransitionType.END_MANUAL,
+            TransitionType.CRASH,
+            TransitionType.MAX_DURATION,
+        ).forEach { type ->
+            assertEquals(AppState.FOREGROUND, type.postTransitionEndState(AppState.FOREGROUND))
+            assertEquals(AppState.BACKGROUND, type.postTransitionEndState(AppState.BACKGROUND))
         }
     }
 }

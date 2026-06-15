@@ -92,6 +92,7 @@ internal class SessionOrchestratorImpl(
             try {
                 val stored = metadataStore.load()
                 userSessionState = when {
+                    // Current timestamp not congruent with stored user session's timestamp, so clear the cache
                     stored != null && clock.now() < stored.startTimeMs -> {
                         logger.trackInternalError(
                             InternalErrorType.ClockBackwardsShift,
@@ -103,7 +104,14 @@ internal class SessionOrchestratorImpl(
                         UserSessionState.NoActiveSession
                     }
 
-                    stored != null && !stored.isOverMaxDuration(clock) && !stored.isInactive(clock) -> {
+                    // Continue a background-only user session if it won't extend it beyond its max duration
+                    // Don't set any expiry timers those aren't applicable when the user isn't considered active
+                    stored != null && stored.isBackgroundOnly && !stored.isOverMaxDuration(clock) -> {
+                        UserSessionState.Active(stored)
+                    }
+
+                    // Continue a user session if it won't extend it beyond its max duration and it's within it inactivity grace period
+                    stored != null && !stored.isBackgroundOnly && !stored.isOverMaxDuration(clock) && !stored.isInactive(clock) -> {
                         scheduleMaxDurationTimeout(stored)
                         UserSessionState.Active(stored)
                     }
@@ -137,9 +145,10 @@ internal class SessionOrchestratorImpl(
         val transitionType = synchronized(lock) {
             inactivityTimerState?.cancel()
             inactivityTimerState = null
-            val metadata = (userSessionState as? UserSessionState.Active)?.metadata
-
-            if (metadata?.isInactive(clock) == true) {
+            val metadata = currentUserSession()
+            if (metadata?.isBackgroundOnly == true) {
+                TransitionType.BACKGROUND_ONLY_SESSION_END
+            } else if (metadata?.isInactive(clock) == true) {
                 TransitionType.INACTIVITY_FOREGROUND
             } else if (metadata?.isOverMaxDuration(clock) == true) {
                 TransitionType.MAX_DURATION
@@ -314,8 +323,8 @@ internal class SessionOrchestratorImpl(
             }
 
             // calculate new session state
-            val endAppState = transitionType.endState(state)
-            val newSession = sessionTracker.newActiveSessionPart(
+            val endAppState = transitionType.postTransitionEndState(state)
+            val newSessionPart = sessionTracker.newActiveSessionPart(
                 endSessionPartCallback = {
                     // End the current session or background activity, if either exist.
                     EmbTrace.trace("end-current-session") {
@@ -346,24 +355,24 @@ internal class SessionOrchestratorImpl(
 
             // update newly created session
             val userSession = currentUserSession()
-            if (newSession != null) {
+            if (newSessionPart != null) {
                 if (userSession != null) {
                     // persist partIndex to handle user session restoration in new process
-                    val updatedUserSession = userSession.copy(partIndex = newSession.userSessionPartIndex)
+                    val updatedUserSession = userSession.copy(partIndex = newSessionPart.userSessionPartIndex)
                     metadataStore.save(updatedUserSession)
                     userSessionState = UserSessionState.Active(updatedUserSession)
 
                     if (endAppState == AppState.FOREGROUND) {
-                        sessionTracker.setProcessStateSummary(newSession.sessionPartId, userSession.userSessionId)
+                        sessionTracker.setProcessStateSummary(newSessionPart.sessionPartId, userSession.userSessionId)
                     }
                 }
                 boundaryDelegate.prepareForNewSession()
-                sessionSpanAttrPopulator.populateSessionSpanStartAttrs(newSession, userSession)
+                sessionSpanAttrPopulator.populateSessionSpanStartAttrs(newSessionPart, userSession)
                 if (transitionType != TransitionType.CRASH) {
                     // initiate periodic caching of the payload if a new session has started
                     EmbTrace.start("initiate-periodic-caching")
                     updatePeriodicCacheAttrs()
-                    payloadCachingService?.startCaching(newSession, endAppState) { state, timestamp, zygote ->
+                    payloadCachingService?.startCaching(newSessionPart, endAppState) { state, timestamp, zygote ->
                         synchronized(lock) {
                             updatePeriodicCacheAttrs()
                             payloadFactory.snapshotPayload(state, timestamp, zygote)
@@ -383,32 +392,36 @@ internal class SessionOrchestratorImpl(
 
     private fun scheduleInactivityTimeout() {
         inactivityTimerState?.cancel()
-        val metadata = (userSessionState as? UserSessionState.Active)?.metadata ?: return
-        inactivityTimerState = SessionTimerState(
-            backgroundWorker.schedule<Unit>(
-                ::onInactivityTimeout,
-                metadata.inactivityTimeoutSecs,
-                TimeUnit.SECONDS,
+        val metadata = currentUserSession() ?: return
+        if (!metadata.isBackgroundOnly) {
+            inactivityTimerState = SessionTimerState(
+                backgroundWorker.schedule<Unit>(
+                    ::onInactivityTimeout,
+                    metadata.inactivityTimeoutSecs,
+                    TimeUnit.SECONDS,
+                )
             )
-        )
+        }
     }
 
     private fun scheduleMaxDurationTimeout(metadata: UserSessionMetadata) {
-        maxDurationTimerState?.cancel()
-        val remainingSecs = metadata.maxDurationSecs - ((clock.now() - metadata.startTimeMs) / 1_000L)
-        val delay = max(remainingSecs, 0)
-        maxDurationTimerState = SessionTimerState(
-            backgroundWorker.schedule<Unit>(
-                ::onMaxDurationTimeout,
-                delay,
-                TimeUnit.SECONDS,
+        if (!metadata.isBackgroundOnly) {
+            maxDurationTimerState?.cancel()
+            val remainingSecs = metadata.maxDurationSecs - ((clock.now() - metadata.startTimeMs) / 1_000L)
+            val delay = max(remainingSecs, 0)
+            maxDurationTimerState = SessionTimerState(
+                backgroundWorker.schedule<Unit>(
+                    ::onMaxDurationTimeout,
+                    delay,
+                    TimeUnit.SECONDS,
+                )
             )
-        )
+        }
     }
 
     private fun onMaxDurationTimeout() {
         synchronized(lock) {
-            if (userSessionState !is UserSessionState.Active) {
+            if (userSessionState !is UserSessionState.Active || currentUserSession()?.isBackgroundOnly == true) {
                 return
             }
             val currentAppState = state
@@ -440,6 +453,9 @@ internal class SessionOrchestratorImpl(
 
     private fun onInactivityTimeout() {
         synchronized(lock) {
+            if (currentUserSession()?.isBackgroundOnly == true) {
+                return
+            }
             val timestamp = clock.now()
             transitionState(
                 transitionType = TransitionType.INACTIVITY_TIMEOUT,
@@ -495,18 +511,14 @@ internal class SessionOrchestratorImpl(
         when {
             transitionType == TransitionType.CRASH -> {}
 
-            transitionType == TransitionType.END_MANUAL ||
-                transitionType == TransitionType.INACTIVITY_TIMEOUT ||
-                transitionType == TransitionType.INACTIVITY_FOREGROUND ||
-                transitionType == TransitionType.MAX_DURATION ->
-                handleUserSessionEnd(timestamp)
-
             transitionType == TransitionType.INITIAL && state == AppState.BACKGROUND -> {}
 
+            transitionType.endsUserSession -> handleUserSessionTransition(timestamp, endAppState)
+
             else -> {
-                handleNewSessionPart(timestamp)
+                handleNewSessionPart(timestamp, endAppState)
                 if (endAppState == AppState.FOREGROUND && maxDurationTimerState == null) {
-                    (userSessionState as? UserSessionState.Active)?.metadata?.let {
+                    currentUserSession()?.let {
                         scheduleMaxDurationTimeout(it)
                     }
                 } else if (endAppState == AppState.BACKGROUND) {
@@ -517,46 +529,34 @@ internal class SessionOrchestratorImpl(
     }
 
     /**
-     * Called whenever a new session part is successfully created for a non-manual, non-crash
-     * transition. If the active user session has exceeded max duration, terminates it and starts
-     * a new one. If no user session is active, starts a new one. Otherwise keeps the current one.
+     * Called whenever a new session part is successfully created for a non-terminating, non-crash
+     * transition. Continues the active user session if it can host the new part; otherwise ends
+     * it (if there is one) and starts a new user session whose flavour follows [endAppState].
      */
-    private fun handleNewSessionPart(timestamp: Long) {
-        val current = userSessionState
-        if (current is UserSessionState.Active) {
-            if (timestamp < current.metadata.startTimeMs) {
-                logger.trackInternalError(
-                    InternalErrorType.ClockBackwardsShift,
-                    IllegalStateException("Clock shifted backwards from user session start time.")
-                )
-                terminateUserSession(current)
-                startNewUserSession(timestamp)
-            } else if (current.metadata.isOverMaxDuration(clock)) {
-                terminateUserSession(current)
-                startNewUserSession(timestamp)
-            } else {
-                val updatedMetadata = current.metadata.copy(lastActivityMs = timestamp)
-                metadataStore.save(updatedMetadata)
-                userSessionState = UserSessionState.Active(updatedMetadata)
-            }
+    private fun handleNewSessionPart(timestamp: Long, endAppState: AppState) {
+        val current = userSessionState as? UserSessionState.Active
+        if (current != null && current.metadata.continueUserSession(timestamp, endAppState)) {
+            val updatedMetadata = current.metadata.copy(lastActivityMs = timestamp)
+            metadataStore.save(updatedMetadata)
+            userSessionState = UserSessionState.Active(updatedMetadata)
         } else {
-            startNewUserSession(timestamp)
+            handleUserSessionTransition(timestamp, endAppState)
         }
     }
 
     /**
-     * Called when the developer manually ends the session. Terminates any active user session,
-     * then always starts a new one.
+     * Called when the active user session ends for any reason other than a crash. Terminates it, then always starts based on
+     * the post transition [AppState]
      */
-    private fun handleUserSessionEnd(timestamp: Long) {
+    private fun handleUserSessionTransition(timestamp: Long, endAppState: AppState) {
         val state = userSessionState
         if (state is UserSessionState.Active) {
             terminateUserSession(state)
         }
-        startNewUserSession(timestamp)
+        startNewUserSession(timestamp, endAppState)
     }
 
-    private fun startNewUserSession(startTimeMs: Long) {
+    private fun startNewUserSession(startTimeMs: Long, endAppState: AppState) {
         val maxDurationMs = configService.sessionBehavior.getMaxSessionDurationMs()
         val inactivityTimeoutMs = configService.sessionBehavior.getSessionInactivityTimeoutMs()
         val userSessionNumber = ordinalStore.incrementAndGet(Ordinal.USER_SESSION).toLong()
@@ -568,12 +568,13 @@ internal class SessionOrchestratorImpl(
             inactivityTimeoutSecs = inactivityTimeoutMs / 1_000L,
             partIndex = 0,
             lastActivityMs = startTimeMs,
+            isBackgroundOnly = endAppState == AppState.BACKGROUND,
         )
         metadataStore.save(newMetadata)
         userSessionState = UserSessionState.Active(newMetadata)
         notifyListeners(SessionStateEvent.UserSessionActive(newMetadata.userSessionId))
 
-        if (state == AppState.FOREGROUND) {
+        if (endAppState == AppState.FOREGROUND) {
             scheduleMaxDurationTimeout(newMetadata)
         }
     }
@@ -587,4 +588,26 @@ internal class SessionOrchestratorImpl(
         userSessionState = UserSessionState.Terminated
         notifyListeners(SessionStateEvent.UserSessionEnded(state.metadata.userSessionId))
     }
+
+    /**
+     * Returns true if this user session should continue and false if a new one should be started.
+     */
+    private fun UserSessionMetadata.continueUserSession(timestamp: Long, endAppState: AppState): Boolean =
+        when {
+            // Don't continue session if current time is not congruent with the user session's timestamp
+            timestamp < startTimeMs -> {
+                logger.trackInternalError(
+                    InternalErrorType.ClockBackwardsShift,
+                    IllegalStateException("Clock shifted backwards from user session start time.")
+                )
+                false
+            }
+
+            // Don't continue user session if it's background-only and the app is going into the foreground
+            isBackgroundOnly && endAppState == AppState.FOREGROUND -> false
+
+            isOverMaxDuration(clock) -> false
+
+            else -> true
+        }
 }

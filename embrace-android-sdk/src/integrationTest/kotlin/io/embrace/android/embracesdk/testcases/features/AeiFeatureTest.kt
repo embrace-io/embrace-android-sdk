@@ -15,13 +15,13 @@ import io.embrace.android.embracesdk.fakes.TestAeiData
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.setupFakeAeiData
-import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.AppExitInfoConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.semconv.EmbAeiAttributes
+import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -162,7 +162,12 @@ internal class AeiFeatureTest {
                 recordSession()
             },
             assertAction = {
-                val envelopes = getLogEnvelopes(expectedSize)
+                // All AEI logs are created at potentially the same time and the actual timestamps in the log
+                // isn't mapped to the time when the payload is created. As such, opt out of order validation.
+                val envelopes = getLogEnvelopes(
+                    expectedSize = expectedSize,
+                    logsOrderedByTimestamp = false
+                )
                 assertEquals(expectedSize, envelopes.size)
                 val logs = envelopes.mapNotNull { it.data.logs?.singleOrNull() }
                     .filter { it.attributes?.findAttributeValue("emb.type") == "sys.exit" }

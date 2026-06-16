@@ -45,6 +45,10 @@ internal class RemoteConfigStoreImpl(
                 etag = cached.etag,
                 deviceId = cached.deviceId,
             )
+        } catch (_: IllegalArgumentException) {
+            // delete the cache file if it appears to be corrupted
+            cachedConfigFile.delete()
+            null
         } catch (exc: Exception) {
             null
         }
@@ -62,6 +66,10 @@ internal class RemoteConfigStoreImpl(
                 },
                 deviceId = null,
             )
+        } catch (_: IllegalArgumentException) {
+            // delete the cache file if it appears to be corrupted
+            configFile.delete()
+            null
         } catch (exc: Exception) {
             null
         }

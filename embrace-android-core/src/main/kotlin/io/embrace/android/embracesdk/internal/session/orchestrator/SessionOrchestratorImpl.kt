@@ -68,6 +68,7 @@ internal class SessionOrchestratorImpl(
     private val lock = Any()
     private val userSessionListeners = CopyOnWriteArrayList<UserSessionListener>()
 
+    @Volatile
     private var state = appStateTracker.getAppState()
 
     @Volatile
@@ -151,11 +152,13 @@ internal class SessionOrchestratorImpl(
     }
 
     override fun onForeground() {
-        val transitionType = synchronized(lock) {
+        // Hold the as we cancel the inactivity timer and determine the transition type. The lock would be acquired in transitionState()
+        // anyway so we're just handing on for the entire duration instead of dropping it and reacquiring it again.
+        synchronized(lock) {
             inactivityTimerState?.cancel()
             inactivityTimerState = null
             val metadata = currentUserSession()
-            if (metadata?.isBackgroundOnly == true) {
+            val transitionType = if (metadata?.isBackgroundOnly == true) {
                 TransitionType.BACKGROUND_ONLY_SESSION_END
             } else if (metadata?.isInactive(clock) == true) {
                 TransitionType.INACTIVITY_FOREGROUND
@@ -164,30 +167,30 @@ internal class SessionOrchestratorImpl(
             } else {
                 TransitionType.ON_FOREGROUND
             }
+
+            val timestamp = clock.now()
+
+            transitionState(
+                transitionType = transitionType,
+                timestamp = timestamp,
+                oldSessionAction = { initial: SessionPartToken ->
+                    payloadFactory.endPayloadWithState(AppState.BACKGROUND, timestamp, initial)
+                },
+                newSessionAction = {
+                    payloadFactory.startPayloadWithState(
+                        state = AppState.FOREGROUND,
+                        timestamp = timestamp,
+                        coldStart = coldStart,
+                        userSessionPartIndex = ::incrementPartIndex,
+                        sessionPartNumber = ::incrementSessionPartNumber,
+                    )
+                },
+                earlyTerminationCondition = {
+                    return@transitionState shouldRunOnForeground(state)
+                }
+            )
+            coldStart = false
         }
-
-        val timestamp = clock.now()
-
-        transitionState(
-            transitionType = transitionType,
-            timestamp = timestamp,
-            oldSessionAction = { initial: SessionPartToken ->
-                payloadFactory.endPayloadWithState(AppState.BACKGROUND, timestamp, initial)
-            },
-            newSessionAction = {
-                payloadFactory.startPayloadWithState(
-                    state = AppState.FOREGROUND,
-                    timestamp = timestamp,
-                    coldStart = coldStart,
-                    userSessionPartIndex = ::incrementPartIndex,
-                    sessionPartNumber = ::incrementSessionPartNumber,
-                )
-            },
-            earlyTerminationCondition = {
-                return@transitionState shouldRunOnForeground(state)
-            }
-        )
-        coldStart = false
     }
 
     override fun onBackground() {
@@ -263,12 +266,14 @@ internal class SessionOrchestratorImpl(
         (userSessionState as? Active)?.metadata
 
     override fun addUserSessionListener(listener: UserSessionListener) {
-        userSessionListeners.add(listener)
-        currentUserSession()?.let { metadata ->
-            try {
-                listener.onSessionStateEvent(UserSessionActive(metadata.userSessionId))
-            } catch (e: Exception) {
-                logger.trackInternalError(InternalErrorType.UserSessionCallbackFail, e)
+        synchronized(lock) {
+            userSessionListeners.add(listener)
+            currentUserSession()?.let { metadata ->
+                try {
+                    listener.onSessionStateEvent(UserSessionActive(metadata.userSessionId))
+                } catch (e: Exception) {
+                    logger.trackInternalError(InternalErrorType.UserSessionCallbackFail, e)
+                }
             }
         }
     }

@@ -221,6 +221,26 @@ internal class SessionOrchestratorListenerTest {
         assertTrue(logger.internalErrorMessages.any { it.msg == InternalErrorType.UserSessionCallbackFail.toString() })
     }
 
+    @Test
+    fun `registering a listener from within a listener callback does not deadlock`() {
+        configService = sessionBehaviorConfig()
+        createOrchestrator(AppState.FOREGROUND)
+
+        val innerEvents = mutableListOf<SessionStateEvent>()
+        var innerRegistered = false
+        orchestrator.addUserSessionListener {
+            if (!innerRegistered) {
+                innerRegistered = true
+                orchestrator.addUserSessionListener { event ->
+                    innerEvents.add(event)
+                }
+            }
+        }
+
+        assertTrue(innerRegistered)
+        assertEquals(listOf(SessionStateEvent.UserSessionActive::class), innerEvents.map { it::class })
+    }
+
     private fun restoredMetadataStore() = UserSessionMetadataStore(FakeKeyValueStore()).also { store ->
         store.save(
             UserSessionMetadata.Classified(

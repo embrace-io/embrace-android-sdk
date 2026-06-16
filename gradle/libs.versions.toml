@@ -9,7 +9,7 @@ kotlinGradlePlugin = "2.3.10"
 koverGradlePlugin = "0.9.8"
 lint = "32.2.1"
 openTelemetryCore = "1.63.0"
-moshi = "1.15.2"
+moshi = "1.15.2" # only used by the Gradle-plugin
 lifecycle = "2.7.0" # version pinned to 2.7.0 because of AGP bug
 annotation = "1.10.0"
 otelKotlin = "0.4.0"
@@ -59,7 +59,6 @@ kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", v
 kotlin-serialization-compiler-plugin = { module = "org.jetbrains.kotlin:kotlin-serialization-compiler-plugin-embeddable", version.ref = "kotlinGradlePlugin" }
 kotlin-compose-compiler-plugin = { module = "org.jetbrains.kotlin:kotlin-compose-compiler-plugin-embeddable", version.ref = "kotlinGradlePlugin" }
 lifecycle-runtime = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
-lifecycle-compiler = { group = "androidx.lifecycle", name = "lifecycle-compiler", version.ref = "lifecycle" }
 lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycle" }
 lifecycle-testing = { group = "androidx.lifecycle", name = "lifecycle-runtime-testing", version.ref = "lifecycle" }
 androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
@@ -104,6 +103,7 @@ apktool-lib = { module = "org.apktool:apktool-lib", version.ref = "apktoolLib" }
 bundletool = { module = "com.android.tools.build:bundletool", version.ref = "bundletool" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerialization" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 opentelemetry-kotlin = { module = "io.opentelemetry.kotlin:core", version.ref = "otelKotlin" }
 opentelemetry-kotlin-api = { module = "io.opentelemetry.kotlin:api", version.ref = "otelKotlin" }
 opentelemetry-kotlin-api-ext = { module = "io.opentelemetry.kotlin:api-ext", version.ref = "otelKotlin" }
@@ -123,5 +123,6 @@ detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildconfig" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlinGradlePlugin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlinGradlePlugin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlinGradlePlugin" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "koverGradlePlugin" }
 benchmark = { id = "androidx.benchmark", version.ref = "androidxBenchmark" }

@@ -10,7 +10,7 @@ internal interface RemoteConfigStore {
     /**
      * Loads the most recent remote configuration, if any.
      */
-    fun loadResponse(): ConfigHttpResponse?
+    fun loadResponse(): StoredConfigResponse?
 
     /**
      * Saves a new remote configuration, overwriting whatever was stored before.

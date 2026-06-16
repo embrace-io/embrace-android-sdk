@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.payload
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 class NativeSymbols(
-    @Json(name = "symbols")
+    @SerialName("symbols")
     val symbols: Map<String, Map<String, String>>,
 )

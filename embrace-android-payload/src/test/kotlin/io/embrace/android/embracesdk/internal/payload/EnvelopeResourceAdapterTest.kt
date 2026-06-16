@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.internal.payload
 
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.fromJson
+import io.embrace.android.embracesdk.internal.serialization.toJson
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -47,13 +49,13 @@ internal class EnvelopeResourceAdapterTest {
 
     @Test
     fun testFullObject() {
-        val observed = serializer.toJson(fullResource, EnvelopeResource::class.java)
+        val observed = serializer.toJson(fullResource)
         val expected = loadGoldenFile("envelope_resource_full.json")
         assertObjectsMatch(expected, observed)
 
         // Null fields serialization
         val emptyResource = EnvelopeResource()
-        val emptyJson = serializer.toJson(emptyResource, EnvelopeResource::class.java)
+        val emptyJson = serializer.toJson(emptyResource)
         assertNotNull(emptyJson)
         assertTrue(emptyJson.startsWith("{"))
         assertTrue(emptyJson.endsWith("}"))
@@ -61,7 +63,7 @@ internal class EnvelopeResourceAdapterTest {
 
     @Test
     fun testNullObject() {
-        val observed = serializer.toJson(emptyResource, EnvelopeResource::class.java)
+        val observed = serializer.toJson(emptyResource)
         val expected = loadGoldenFile("envelope_resource_null.json")
         assertObjectsMatch(expected, observed)
     }
@@ -75,13 +77,13 @@ internal class EnvelopeResourceAdapterTest {
             4 to AppFramework.FLUTTER,
         ).forEach { (value, expected) ->
             val json = """{"app_framework": $value}"""
-            val resource = serializer.fromJson(json, EnvelopeResource::class.java)
+            val resource: EnvelopeResource = serializer.fromJson(json)
             assertEquals(expected, resource.appFramework)
         }
 
         // unknown value handled
         val unknownJson = """{"app_framework": 999}"""
-        val unknownResource = serializer.fromJson(unknownJson, EnvelopeResource::class.java)
+        val unknownResource: EnvelopeResource = serializer.fromJson(unknownJson)
         assertNull(unknownResource.appFramework)
     }
 
@@ -92,8 +94,8 @@ internal class EnvelopeResourceAdapterTest {
     }
 
     private fun assertObjectsMatch(input: String, actual: String) {
-        val expected = serializer.fromJson(input, EnvelopeResource::class.java)
-        val observed = serializer.fromJson(actual, EnvelopeResource::class.java)
+        val expected: EnvelopeResource = serializer.fromJson(input)
+        val observed: EnvelopeResource = serializer.fromJson(actual)
 
         assertEquals(expected.appVersion, observed.appVersion)
         assertEquals(expected.appFramework, observed.appFramework)

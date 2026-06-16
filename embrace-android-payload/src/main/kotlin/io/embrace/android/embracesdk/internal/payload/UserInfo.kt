@@ -1,23 +1,23 @@
 package io.embrace.android.embracesdk.internal.payload
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 /**
  * Information about the user of the app, provided by the developer performing the integration.
  */
-@JsonClass(generateAdapter = true)
+@Serializable
 data class UserInfo(
 
-    @Json(name = "id")
+    @SerialName("id")
     val userId: String? = null,
 
-    @Json(name = "em")
+    @SerialName("em")
     val email: String? = null,
 
-    @Json(name = "un")
+    @SerialName("un")
     val username: String? = null,
 
-    @Json(name = "per")
+    @SerialName("per")
     val personas: Set<String>? = null,
 )

@@ -21,6 +21,8 @@ internal class CombinedRemoteConfigSource(
 
     fun getConfig(): RemoteConfig? = response?.cfg
 
+    fun getDeviceId(): String? = response?.deviceId
+
     fun scheduleConfigRequests() {
         worker.scheduleWithFixedDelay(
             ::attemptConfigRequest,

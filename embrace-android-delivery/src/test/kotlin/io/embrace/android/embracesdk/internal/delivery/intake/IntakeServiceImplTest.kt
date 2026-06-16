@@ -64,12 +64,12 @@ class IntakeServiceImplTest {
     )
     private val sessionDataExpected = run {
         val baos = ByteArrayOutputStream()
-        serializer.toJson(sessionEnvelope, Envelope.sessionEnvelopeType, GZIPOutputStream(baos))
+        serializer.toJson(sessionEnvelope, Envelope.sessionEnvelopeSerializer, GZIPOutputStream(baos))
         baos.toByteArray()
     }
     private val logDataExpected = run {
         val baos = ByteArrayOutputStream()
-        serializer.toJson(logEnvelope, Envelope.logEnvelopeType, GZIPOutputStream(baos))
+        serializer.toJson(logEnvelope, Envelope.logEnvelopeSerializer, GZIPOutputStream(baos))
         baos.toByteArray()
     }
 

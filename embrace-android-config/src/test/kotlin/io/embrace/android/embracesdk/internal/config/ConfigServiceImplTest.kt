@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.config
 
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -113,7 +114,7 @@ internal class ConfigServiceImplTest {
         instrumentedConfig = FakeInstrumentedConfig(project = FakeProjectConfig(appId = appId)),
         worker = fakeBackgroundWorker(),
         serializer = serializer,
-        store = FakeDeviceIdStore(),
+        store = FakeKeyValueStore(),
         okHttpClient = okHttpClient,
         abis = arrayOf("arm64-v8a"),
         sdkVersion = "1.2.3",

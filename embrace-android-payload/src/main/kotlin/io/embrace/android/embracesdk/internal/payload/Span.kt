@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.payload
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 /**
  * A span represents a single unit of work done in the app. It can be a network request, a database
@@ -17,44 +17,44 @@ import com.squareup.moshi.JsonClass
  * @param events
  * @param attributes
  */
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Span(
 
     /* The ID of the trace that this span is part of */
-    @Json(name = "trace_id")
+    @SerialName("trace_id")
     val traceId: String? = null,
 
     /* A value that uniquely identifies a span instance */
-    @Json(name = "span_id")
+    @SerialName("span_id")
     val spanId: String? = null,
 
     /* A value that uniquely identifies the parent span */
-    @Json(name = "parent_span_id")
+    @SerialName("parent_span_id")
     val parentSpanId: String? = null,
 
     /* The name of the span */
-    @Json(name = "name")
+    @SerialName("name")
     val name: String? = null,
 
     /* The time the span started, in nanoseconds since the Unix epoch */
-    @Json(name = "start_time_unix_nano")
+    @SerialName("start_time_unix_nano")
     val startTimeNanos: Long? = null,
 
     /* The time the span ended, in nanoseconds since the Unix epoch */
-    @Json(name = "end_time_unix_nano")
+    @SerialName("end_time_unix_nano")
     val endTimeNanos: Long? = null,
 
     /* The status of the span. Can be one of 'Unset', 'Error', or 'Ok' */
-    @Json(name = "status")
+    @SerialName("status")
     val status: Status? = null,
 
-    @Json(name = "events")
+    @SerialName("events")
     val events: List<SpanEvent>? = null,
 
-    @Json(name = "attributes")
+    @SerialName("attributes")
     val attributes: List<Attribute>? = null,
 
-    @Json(name = "links")
+    @SerialName("links")
     val links: List<Link>? = null,
 ) {
 
@@ -63,15 +63,15 @@ data class Span(
      *
      * Values: UNSET,ERROR,OK
      */
-    @JsonClass(generateAdapter = false)
+    @Serializable
     enum class Status(val value: String) {
-        @Json(name = "Unset")
+        @SerialName("Unset")
         UNSET("Unset"),
 
-        @Json(name = "Error")
+        @SerialName("Error")
         ERROR("Error"),
 
-        @Json(name = "Ok")
+        @SerialName("Ok")
         OK("Ok")
     }
 }

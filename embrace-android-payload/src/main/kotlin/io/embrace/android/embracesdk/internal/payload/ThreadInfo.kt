@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal.payload
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 /**
  * Represents thread information at a given point in time.
  */
-@JsonClass(generateAdapter = true)
+@Serializable
 data class ThreadInfo(
 
     /**
@@ -22,24 +22,24 @@ data class ThreadInfo(
     /**
      * The name of the thread.
      */
-    @Json(name = "n")
+    @SerialName("n")
     val name: String?,
 
     /**
      * The priority of the thread
      */
-    @Json(name = "p")
+    @SerialName("p")
     val priority: Int,
 
     /**
      * String representation of each line of the stack trace.
      */
-    @Json(name = "tt")
+    @SerialName("tt")
     val lines: List<String>?,
 
     /**
      * The total number of frames in the stack before truncation
      */
-    @Json(name = "fc")
+    @SerialName("fc")
     val frameCount: Int,
 )

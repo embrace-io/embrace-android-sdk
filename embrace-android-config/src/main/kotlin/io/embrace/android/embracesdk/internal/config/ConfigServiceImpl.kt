@@ -28,6 +28,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.NativeSymbols
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.serialization.fromJson
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -59,6 +60,7 @@ class ConfigServiceImpl(
         RemoteConfigStoreImpl(
             serializer = serializer,
             storageDir = File(filesDir, "embrace_remote_config"),
+            deviceIdProvider = { deviceId },
         )
     }
 
@@ -75,17 +77,21 @@ class ConfigServiceImpl(
         )
     }
 
-    override val deviceId: String = run {
-        val deviceId = store.getString(DEVICE_IDENTIFIER_KEY)
-        if (deviceId != null) {
-            return@run deviceId
-        }
-        val newId = uuidSource.createUuid()
-        store.edit {
-            putString(DEVICE_IDENTIFIER_KEY, newId)
-        }
-        newId
+    // the stored || http proxy; lazy-loads the cached config from the store on first access.
+    private val combinedRemoteConfigSource: CombinedRemoteConfigSource? = run {
+        if (onlyOtelExportEnabled) return@run null
+        CombinedRemoteConfigSource(
+            store = remoteConfigStore,
+            httpSource = lazy { checkNotNull(remoteConfigSource) },
+            worker = worker
+        )
     }
+
+    // the device ID co-cached with the remote config feeds the fast path; on a cache hit nothing
+    // is read from the KeyValueStore.
+    private val deviceIdProvider = DeviceIdProvider(store, combinedRemoteConfigSource?.getDeviceId(), uuidSource)
+
+    override val deviceId: String = deviceIdProvider.deviceId
 
     private val remoteConfigSource: RemoteConfigSource? = run {
         if (onlyOtelExportEnabled) return@run null
@@ -103,19 +109,13 @@ class ConfigServiceImpl(
         )
     }
 
-    // kick off config HTTP request early so the SDK can't get in a permanently disabled state
-    private val combinedRemoteConfigSource: CombinedRemoteConfigSource? = run {
-        if (onlyOtelExportEnabled) return@run null
-        CombinedRemoteConfigSource(
-            store = remoteConfigStore,
-            httpSource = lazy { checkNotNull(remoteConfigSource) },
-            worker = worker
-        ).apply {
-            scheduleConfigRequests()
-        }
-    }
-
     private val remoteConfig: RemoteConfig? = combinedRemoteConfigSource?.getConfig()
+
+    // kick off config HTTP request early so the SDK can't get in a permanently disabled state.
+    // scheduled only after deviceId is resolved, since the request reads it.
+    init {
+        combinedRemoteConfigSource?.scheduleConfigRequests()
+    }
 
     private val thresholdCheck: BehaviorThresholdCheck = BehaviorThresholdCheck(::deviceId)
     override val backgroundActivityBehavior =
@@ -178,7 +178,7 @@ class ConfigServiceImpl(
         try {
             val encodedSymbols = instrumentedConfig.symbols.getBase64SharedObjectFilesMap() ?: return null
             val decodedSymbols: String = encodedSymbols.decodeBase64()?.utf8() ?: return null
-            return serializer.fromJson(decodedSymbols, NativeSymbols::class.java)
+            return serializer.fromJson<NativeSymbols>(decodedSymbols)
         } catch (ex: Exception) {
             logger.trackInternalError(InternalErrorType.InvalidNativeSymbols, ex)
         }
@@ -191,6 +191,5 @@ class ConfigServiceImpl(
         const val ARM_64_NAME = "arm64-v8a"
         const val ARCH_X86_NAME = "x86"
         const val ARCH_X86_64_NAME = "x86_64"
-        const val DEVICE_IDENTIFIER_KEY = "io.embrace.deviceid"
     }
 }

@@ -1,128 +1,128 @@
 package io.embrace.android.embracesdk.internal.payload
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import java.util.UUID
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class NetworkCapturedCall(
     /**
      * The duration of the network request in milliseconds.
      */
-    @Json(name = "dur")
+    @SerialName("dur")
     val duration: Long? = null,
 
     /**
      * The end time of the request.
      */
-    @Json(name = "et")
+    @SerialName("et")
     val endTime: Long? = null,
 
     /**
      * The HTTP method the network request corresponds to.
      */
-    @Json(name = "m")
+    @SerialName("m")
     val httpMethod: String? = null,
 
     /**
      * The matched URL from the rule.
      */
-    @Json(name = "mu")
+    @SerialName("mu")
     val matchedUrl: String? = null,
 
     /**
      * UUID identifying the network request captured.
      */
-    @Json(name = "id")
+    @SerialName("id")
     val networkId: String = UUID.randomUUID().toString(),
 
     /**
      * Request body.
      */
-    @Json(name = "qb")
+    @SerialName("qb")
     val requestBody: String? = null,
 
     /**
      * Captured request body size in bytes.
      */
-    @Json(name = "qi")
+    @SerialName("qi")
     val requestBodySize: Int? = null,
 
     /**
      * The query string for the request, if present.
      */
-    @Json(name = "qq")
+    @SerialName("qq")
     val requestQuery: String? = null,
 
     /**
      * A dictionary containing the HTTP query headers.
      */
-    @Json(name = "qh")
+    @SerialName("qh")
     val requestQueryHeaders: Map<String, String>? = null,
 
     /**
      * Request body size in bytes.
      */
-    @Json(name = "qz")
+    @SerialName("qz")
     val requestSize: Int? = null,
 
     /**
      * Contents of the body in a network request.
      */
-    @Json(name = "sb")
+    @SerialName("sb")
     val responseBody: String? = null,
 
     /**
      * Captured response body size in bytes.
      */
-    @Json(name = "si")
+    @SerialName("si")
     val responseBodySize: Int? = null,
 
     /**
      * A dictionary containing the HTTP response headers.
      */
-    @Json(name = "sh")
+    @SerialName("sh")
     val responseHeaders: Map<String, String>? = null,
 
     /**
      * Response body size in bytes.
      */
-    @Json(name = "sz")
+    @SerialName("sz")
     val responseSize: Int? = null,
 
     /**
      * UUID identifying the network request captured.
      */
-    @Json(name = "sc")
+    @SerialName("sc")
     val responseStatus: Int? = null,
 
     /**
      * Session ID that the network request occurred during.
      */
-    @Json(name = "sid")
+    @SerialName("sid")
     val sessionId: String? = null,
 
     /**
      * The start time of the request.
      */
-    @Json(name = "st")
+    @SerialName("st")
     val startTime: Long? = null,
 
     /**
      * The URL being requested.
      */
-    @Json(name = "url")
+    @SerialName("url")
     val url: String? = null,
 
     /**
      * Error message in case the network call has failed.
      */
-    @Json(name = "em")
+    @SerialName("em")
     val errorMessage: String? = null,
 
     /**
      * Encrypted data.
      */
-    @Json(name = "ne")
+    @SerialName("ne")
     val encryptedPayload: String? = null,
 )

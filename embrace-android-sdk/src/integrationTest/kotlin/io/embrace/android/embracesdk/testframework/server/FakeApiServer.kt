@@ -2,13 +2,13 @@ package io.embrace.android.embracesdk.testframework.server
 
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
-import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
+import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.threadLocal
 import io.embrace.android.embracesdk.assertions.getLastLog
@@ -131,11 +131,7 @@ internal class FakeApiServer(
         // serialize the config response
         val configResponseBuffer = Buffer()
         val gzipSink = GzipSink(configResponseBuffer).buffer()
-        serializer.toJson(
-            remoteConfig,
-            RemoteConfig::class.java,
-            gzipSink.outputStream()
-        )
+        serializer.toJson(remoteConfig, gzipSink.outputStream())
         val response = MockResponse()
             .setBody(configResponseBuffer)
             .addHeader("etag", "server_etag_value")
@@ -167,14 +163,13 @@ internal class FakeApiServer(
 
     private fun deserializeEnvelope(request: RecordedRequest, endpoint: Endpoint): Envelope<*> {
         try {
-            val type = when (endpoint) {
-                Endpoint.LOGS -> LogPayload::class
-                Endpoint.SESSIONS -> SessionPartPayload::class
+            val envelopeSerializer = when (endpoint) {
+                Endpoint.LOGS -> Envelope.logEnvelopeSerializer
+                Endpoint.SESSIONS -> Envelope.sessionEnvelopeSerializer
                 else -> error("Unsupported endpoint $endpoint")
             }
-            val envelopeType = TypeUtils.parameterizedType(Envelope::class, type)
             GZIPInputStream(request.body.inputStream()).use { stream ->
-                return serializer.fromJson(stream, envelopeType)
+                return serializer.fromJson(stream, envelopeSerializer)
             }
         } catch (exc: Exception) {
             throw IllegalStateException("Failed to deserialize request envelope", exc)

@@ -501,9 +501,9 @@ internal class AppStartupTraceTest {
         return storedPayloadMetadata()
             .filter { it.payloadType == PayloadType.SESSION && it.complete }
             .map { metadata ->
-                testSerializer.fromJson<Envelope<SessionPartPayload>>(
+                testSerializer.fromJson(
                     GZIPInputStream(loadPayloadAsStream(metadata)),
-                    checkNotNull(SupportedEnvelopeType.SESSION.serializedType)
+                    Envelope.sessionEnvelopeSerializer
                 )
             }
             .single { envelope ->

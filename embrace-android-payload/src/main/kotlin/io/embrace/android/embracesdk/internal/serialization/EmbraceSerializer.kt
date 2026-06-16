@@ -1,78 +1,32 @@
+@file:OptIn(ExperimentalSerializationApi::class)
+
 package io.embrace.android.embracesdk.internal.serialization
 
-import com.squareup.moshi.Moshi
-import okio.buffer
-import okio.sink
-import okio.source
+import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerializationStrategy
+import kotlinx.serialization.json.decodeFromStream
+import kotlinx.serialization.json.encodeToStream
 import java.io.InputStream
 import java.io.OutputStream
-import java.lang.reflect.Type
 
 /**
- * A wrapper around the JSON library to allow for thread-safe serialization.
+ * Default [PlatformSerializer] backed by the shared [embraceJson] instance.
  */
 class EmbraceSerializer : PlatformSerializer {
 
-    private val ref = object : ThreadLocal<Moshi>() {
-        override fun initialValue(): Moshi = Moshi.Builder()
-            .add(AppFrameworkAdapter())
-            .add(EnvelopeResourceAdapter())
-            .build()
+    override fun <T> toJson(value: T, serializer: SerializationStrategy<T>): String =
+        embraceJson.encodeToString(serializer, value)
+
+    override fun <T> toJson(value: T, serializer: SerializationStrategy<T>, outputStream: OutputStream) {
+        // Close on completion so wrapping streams (e.g. GZIPOutputStream) flush their trailing
+        // blocks; encodeToStream does not close the stream itself.
+        outputStream.use { embraceJson.encodeToStream(serializer, value, it) }
     }
 
-    private val impl by lazy { checkNotNull(ref.get()) }
+    override fun <T> fromJson(json: String, deserializer: DeserializationStrategy<T>): T =
+        embraceJson.decodeFromString(deserializer, json)
 
-    override fun <T> toJson(src: T): String {
-        val clz = checkNotNull(src)::class.java
-        val adapter = impl.adapter<T>(clz)
-        return adapter.toJson(src) ?: error("Failed converting object to JSON.")
-    }
-
-    override fun <T> toJson(src: T, clz: Class<T>): String {
-        val adapter = impl.adapter(clz)
-        return adapter.toJson(src) ?: error("Failed converting object to JSON.")
-    }
-
-    override fun <T> toJson(src: T, type: Type): String {
-        val adapter = impl.adapter<T>(type)
-        return adapter.toJson(src) ?: error("Failed converting object to JSON.")
-    }
-
-    override fun <T> toJson(any: T, clazz: Class<T>, outputStream: OutputStream) {
-        outputStream.sink().buffer().use {
-            val adapter = impl.adapter(clazz)
-            adapter.toJson(it, any)
-        }
-    }
-
-    override fun <T> toJson(any: T, type: Type, outputStream: OutputStream) {
-        outputStream.sink().buffer().use {
-            val adapter = impl.adapter<T>(type)
-            adapter.toJson(it, any)
-        }
-    }
-
-    override fun <T> fromJson(json: String, clz: Class<T>): T {
-        val adapter = impl.adapter(clz)
-        return adapter.fromJson(json) ?: error("JSON conversion failed.")
-    }
-
-    override fun <T> fromJson(json: String, type: Type): T {
-        val adapter = impl.adapter<T>(type)
-        return adapter.fromJson(json) ?: error("JSON conversion failed.")
-    }
-
-    override fun <T> fromJson(inputStream: InputStream, clz: Class<T>): T {
-        return inputStream.source().buffer().use {
-            val adapter = impl.adapter(clz)
-            adapter.fromJson(it) ?: error("JSON conversion failed.")
-        }
-    }
-
-    override fun <T> fromJson(inputStream: InputStream, type: Type): T {
-        return inputStream.source().buffer().use {
-            val adapter = impl.adapter<T>(type)
-            adapter.fromJson(it) ?: error("JSON conversion failed.")
-        }
-    }
+    override fun <T> fromJson(inputStream: InputStream, deserializer: DeserializationStrategy<T>): T =
+        inputStream.use { embraceJson.decodeFromStream(deserializer, it) }
 }

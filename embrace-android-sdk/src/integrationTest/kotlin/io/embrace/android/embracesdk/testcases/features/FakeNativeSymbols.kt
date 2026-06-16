@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeBase64SharedObjectFilesMap
 import io.embrace.android.embracesdk.internal.config.CpuAbi
 import io.embrace.android.embracesdk.internal.payload.NativeSymbols
+import io.embrace.android.embracesdk.internal.serialization.toJson
 
 fun createNativeSymbolsForCurrentArch(
     symbols: Map<String, String>,

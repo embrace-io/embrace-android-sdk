@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.testframework.assertions.SessionPartDiff
 import io.embrace.android.embracesdk.testframework.assertions.UserSessionDiff
 import io.embrace.android.embracesdk.testframework.assertions.assertLogPayloadMatchesGoldenFile
 import io.embrace.android.embracesdk.testframework.assertions.assertPayloadsMatchGoldenFiles
+import kotlinx.serialization.KSerializer
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -126,7 +127,7 @@ internal class UserSessionGoldenFileTest {
         }
         return testSerializer.fromJson(
             GZIPInputStream(loadPayloadAsStream(metadata)),
-            checkNotNull(SupportedEnvelopeType.SESSION.serializedType),
+            Envelope.sessionEnvelopeSerializer,
         )
     }
 

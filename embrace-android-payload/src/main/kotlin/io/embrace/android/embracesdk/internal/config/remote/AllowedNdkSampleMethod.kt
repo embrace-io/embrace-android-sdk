@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.config.remote
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 class AllowedNdkSampleMethod(
-    @Json(name = "c") val clz: String? = null,
-    @Json(name = "m") val method: String? = null,
+    @SerialName("c") val clz: String? = null,
+    @SerialName("m") val method: String? = null,
 )

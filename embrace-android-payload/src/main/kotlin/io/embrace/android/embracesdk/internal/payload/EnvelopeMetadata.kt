@@ -1,29 +1,29 @@
 package io.embrace.android.embracesdk.internal.payload
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 /**
  * Mutable attributes about the app, device, and Embrace SDK internal state
  * that are not tied to a session.
  */
-@JsonClass(generateAdapter = true)
+@Serializable
 data class EnvelopeMetadata(
-    @Json(name = "user_id")
+    @SerialName("user_id")
     val userId: String? = null,
 
-    @Json(name = "email")
+    @SerialName("email")
     val email: String? = null,
 
-    @Json(name = "username")
+    @SerialName("username")
     val username: String? = null,
 
-    @Json(name = "personas")
+    @SerialName("personas")
     val personas: Set<String>? = null,
 
-    @Json(name = "timezone_description")
+    @SerialName("timezone_description")
     val timezoneDescription: String? = null,
 
-    @Json(name = "locale")
+    @SerialName("locale")
     val locale: String? = null,
 )

@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
+import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -70,10 +71,11 @@ internal class NativeCrashDataSourceImpl(
                     )
                 }
 
-                if (!nativeCrash.symbols.isNullOrEmpty()) {
+                val symbols = nativeCrash.symbols
+                if (!symbols.isNullOrEmpty()) {
                     setAttribute(
                         EmbType.System.NativeCrash.embNativeCrashSymbols,
-                        args.serializer.toJson(nativeCrash.symbols, Map::class.java),
+                        args.serializer.toJson(symbols),
                         keepBlankishValues = false,
                     )
                 }

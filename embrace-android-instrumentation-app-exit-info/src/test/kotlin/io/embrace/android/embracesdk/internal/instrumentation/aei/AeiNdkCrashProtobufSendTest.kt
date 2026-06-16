@@ -11,8 +11,9 @@ import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
-import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.fromJson
+import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
@@ -56,10 +57,9 @@ internal class AeiNdkCrashProtobufSendTest {
         val input = HashMap<String, String>()
         input["serialization_test"] = trace
         val serializer = EmbraceSerializer()
-        val type = TypeUtils.typedMap(String::class.java, String::class.java)
-        val json = serializer.toJson(input, type)
+        val json = serializer.toJson<Map<String, String>>(input)
 
-        val output: Map<String, String> = serializer.fromJson(json, type)
+        val output: Map<String, String> = serializer.fromJson(json)
         val outputTrace = checkNotNull(output["serialization_test"])
         val byteStream = outputTrace.decodeBlob()
         assertProtobufIsReadable(byteStream)

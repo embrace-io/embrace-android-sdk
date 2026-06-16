@@ -1,21 +1,21 @@
 package io.embrace.android.embracesdk.internal.payload
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Link(
 
     /* The ID of the span that this link is to */
-    @Json(name = "span_id")
+    @SerialName("span_id")
     val spanId: String? = null,
 
-    @Json(name = "trace_id")
+    @SerialName("trace_id")
     val traceId: String? = null,
 
-    @Json(name = "attributes")
+    @SerialName("attributes")
     val attributes: List<Attribute>? = null,
 
-    @Json(name = "is_remote")
+    @SerialName("is_remote")
     val isRemote: Boolean? = null,
 )

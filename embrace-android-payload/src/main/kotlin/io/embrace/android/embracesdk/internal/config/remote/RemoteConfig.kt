@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal.config.remote
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 /**
  * Configuration of the SDK set by the Embrace API.
  */
-@JsonClass(generateAdapter = true)
+@Serializable
 data class RemoteConfig(
 
     /**
@@ -14,113 +14,113 @@ data class RemoteConfig(
      * identifies the percentage of devices for which the SDK is enabled. A threshold of 100 means
      * that the SDK is enabled for all devices, whilst 0 means it is disabled for all devices.
      */
-    @Json(name = "threshold")
+    @SerialName("threshold")
     val threshold: Int? = null,
 
     /**
      * List of regular expressions matching event names and log messages which should be disabled.
      */
-    @Json(name = "disabled_event_and_log_patterns")
+    @SerialName("disabled_event_and_log_patterns")
     val disabledEventAndLogPatterns: Set<String>? = null,
 
     /**
      * List of regular expressions of URLs which should not be logged.
      */
-    @Json(name = "disabled_url_patterns")
+    @SerialName("disabled_url_patterns")
     val disabledUrlPatterns: Set<String>? = null,
 
     /**
      * Rules that will allow the specification of network requests to be captured
      */
-    @Json(name = "network_capture")
+    @SerialName("network_capture")
     val networkCaptureRules: Set<NetworkCaptureRuleRemoteConfig>? = null,
 
     /**
      * Settings relating to the user interface, such as the breadcrumb limits.
      */
-    @Json(name = "ui")
+    @SerialName("ui")
     val uiConfig: UiRemoteConfig? = null,
 
     /**
      * Settings defining the capture limits for network calls.
      */
-    @Json(name = "network")
+    @SerialName("network")
     val networkConfig: NetworkRemoteConfig? = null,
 
     /**
      * Settings defining session control is enabled or not
      */
-    @Json(name = "session_control")
+    @SerialName("session_control")
     val sessionConfig: SessionRemoteConfig? = null,
 
     /**
      * Settings defining the log configuration.
      */
-    @Json(name = "logs")
+    @SerialName("logs")
     val logConfig: LogRemoteConfig? = null,
 
-    @Json(name = "anr")
+    @SerialName("anr")
     val threadBlockageRemoteConfig: ThreadBlockageRemoteConfig? = null,
 
-    @Json(name = "data")
+    @SerialName("data")
     val dataConfig: DataRemoteConfig? = null,
 
-    @Json(name = "killswitch")
+    @SerialName("killswitch")
     val killSwitchConfig: KillSwitchRemoteConfig? = null,
 
     /**
      * Settings defining if internal exception capture is enabled or not
      */
-    @Json(name = "internal_exception_capture_enabled")
+    @SerialName("internal_exception_capture_enabled")
     val internalExceptionCaptureEnabled: Boolean? = null,
 
-    @Json(name = "app_exit_info")
+    @SerialName("app_exit_info")
     val appExitInfoConfig: AppExitInfoConfig? = null,
 
-    @Json(name = "background")
+    @SerialName("background")
     val backgroundActivityConfig: BackgroundActivityRemoteConfig? = null,
 
     /**
      * The maximum number of properties that can be attached to a session
      */
-    @Json(name = "max_session_properties")
+    @SerialName("max_session_properties")
     val maxUserSessionProperties: Int? = null,
 
     @Deprecated("Superseded by the flat nsfPctEnabled key; retained for back-compat with persisted/old payloads.")
-    @Json(name = "network_span_forwarding")
+    @SerialName("network_span_forwarding")
     val networkSpanForwardingRemoteConfig: NetworkSpanForwardingRemoteConfig? = null,
 
     /**
      * Percentage of devices for which network span forwarding is enabled.
      * Replacement for the flag in the deprecated [networkSpanForwardingRemoteConfig]
      */
-    @Json(name = "nsf_pct_enabled")
+    @SerialName("nsf_pct_enabled")
     val nsfPctEnabled: Float? = null,
 
     /**
      * Percentage of devices for which W3C traceparent injection is enabled.
      */
-    @Json(name = "traceparent_injection_pct_enabled")
+    @SerialName("traceparent_injection_pct_enabled")
     val traceparentInjectionPctEnabled: Float? = null,
 
-    @Json(name = "ui_load_instrumentation_enabled_v2")
+    @SerialName("ui_load_instrumentation_enabled_v2")
     val uiLoadInstrumentationEnabled: Boolean? = null,
 
-    @Json(name = "otel_kotlin_sdk")
+    @SerialName("otel_kotlin_sdk")
     val otelKotlinSdkConfig: OtelKotlinSdkConfig? = null,
 
-    @Json(name = "pct_state_enabled_v2")
+    @SerialName("pct_state_enabled_v2")
     val pctStateCaptureEnabledV2: Float? = null,
 
     /**
      * Percentage of devices for which the NetworkCallback-based NetworkConnectivityService implementation is enabled.
      */
-    @Json(name = "pct_network_callback_connectivity_service_enabled")
+    @SerialName("pct_network_callback_connectivity_service_enabled")
     val pctNetworkCallbackConnectivityServiceEnabled: Float? = null,
 
-    @Json(name = "pct_screen_tracking_enabled")
+    @SerialName("pct_screen_tracking_enabled")
     val pctNavigationStateCaptureEnabled: Float? = null,
 
-    @Json(name = "user_session")
+    @SerialName("user_session")
     val userSession: UserSessionRemoteConfig? = null,
 )

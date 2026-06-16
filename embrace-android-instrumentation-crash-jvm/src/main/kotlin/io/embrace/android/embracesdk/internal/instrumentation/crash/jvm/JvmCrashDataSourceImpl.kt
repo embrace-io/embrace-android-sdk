@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.arch.stacktrace.truncateStacktrace
 import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.utils.encodeToUTF8String
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
@@ -68,7 +69,7 @@ class JvmCrashDataSourceImpl(
                     setAttribute(
                         ExceptionAttributes.EXCEPTION_STACKTRACE,
                         encodeToUTF8String(
-                            serializer.toJson(crashException.lines, List::class.java),
+                            serializer.toJson(crashException.lines),
                         ),
                     )
                     setAttribute(LogAttributes.LOG_RECORD_UID, crashId)
@@ -114,7 +115,7 @@ class JvmCrashDataSourceImpl(
             result.add(0, exceptionInfo)
             throwable = throwable.cause
         }
-        return serializer.toJson(result, List::class.java)
+        return serializer.toJson<List<LegacyExceptionInfo>>(result)
     }
 
     /**
@@ -122,7 +123,7 @@ class JvmCrashDataSourceImpl(
      */
     private fun getThreadsInfo(): String {
         val threadsList = Thread.getAllStackTraces().map { truncateStacktrace(it.key, it.value) }
-        return serializer.toJson(threadsList, List::class.java)
+        return serializer.toJson(threadsList)
     }
 
     /**

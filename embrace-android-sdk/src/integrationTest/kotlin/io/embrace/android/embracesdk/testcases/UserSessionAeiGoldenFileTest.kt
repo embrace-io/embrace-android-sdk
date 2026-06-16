@@ -50,15 +50,21 @@ internal class UserSessionAeiGoldenFileTest {
 
     @Test
     fun `aei log without active session`() {
+        var pendingUserSessionId: String? = null
         testRule.runTest(
             setupAction = { setupFakeAeiData(listOf(anr.toAeiObject())) },
             testCaseAction = {
                 testRule.setup.getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).runCurrentlyBlocked()
+                pendingUserSessionId = checkNotNull(
+                    testRule.bootstrapper.userSessionOrchestrationModule.sessionOrchestrator.currentUserSession()
+                ).userSessionId
             },
             assertAction = {
+                // the process started in the background, so the AEI log belongs to the
+                // flavour-pending user session created at process start, with no session part
                 assertLogPayloadMatchesGoldenFile(
                     envelope = getSingleLogEnvelope(),
-                    expectedUserSessionId = "",
+                    expectedUserSessionId = checkNotNull(pendingUserSessionId),
                     expectedSessionPartId = "",
                     goldenFile = "user_session_aei_log_no_session.json",
                 )

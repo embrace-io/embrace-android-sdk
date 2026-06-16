@@ -24,6 +24,8 @@ import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
+import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
+import io.embrace.android.embracesdk.internal.arch.startup.StartupType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.capture.session.PropertyScope
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
@@ -78,6 +80,7 @@ internal class SessionOrchestratorTest {
     private lateinit var instrumentationRegistry: InstrumentationRegistry
     private lateinit var fakeDataSource: FakeDataSource
     private lateinit var logger: FakeInternalLogger
+    private lateinit var startupClassifier: StartupClassifierImpl
     private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
     private lateinit var destination: FakeTelemetryDestination
     private var orchestratorStartTimeMs: Long = 0
@@ -89,6 +92,7 @@ internal class SessionOrchestratorTest {
     fun setUp() {
         clock = FakeClock()
         logger = FakeInternalLogger(throwOnInternalError = false)
+        startupClassifier = StartupClassifierImpl()
     }
 
     @Test
@@ -101,8 +105,11 @@ internal class SessionOrchestratorTest {
         assertTrue(store.storedSessionPartPayloads.isEmpty())
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
-        // starting in bg produces no user session.
-        assertNull(orchestrator.currentUserSession())
+        with(checkNotNull(activeUserSession())) {
+            assertEquals(1L, userSessionNumber)
+            assertNull(isBackgroundOnly)
+            assertNull(startupClassifier.startupType())
+        }
     }
 
     @Test
@@ -125,7 +132,7 @@ internal class SessionOrchestratorTest {
         clock.tick()
         val foregroundTime = clock.now()
         val sessionSpan = currentSessionPartSpan.sessionSpan
-        assertNull(orchestrator.currentUserSession())
+        val initialUserSession = activeUserSession()
         orchestrator.onForeground()
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
         validateSession(
@@ -134,7 +141,10 @@ internal class SessionOrchestratorTest {
             endType = LifeEventType.BKGND_STATE
         )
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
-        assertNotNull(orchestrator.currentUserSession())
+        with(checkNotNull(activeUserSession())) {
+            assertEquals(initialUserSession.userSessionId, userSessionId)
+            assertEquals(false, isBackgroundOnly)
+        }
     }
 
     @Test
@@ -472,14 +482,14 @@ internal class SessionOrchestratorTest {
         val backgroundOnlySession = activeUserSession()
         assertNotEquals(first.userSessionId, backgroundOnlySession.userSessionId)
         assertEquals(2L, backgroundOnlySession.userSessionNumber)
-        assertTrue(backgroundOnlySession.isBackgroundOnly)
+        assertEquals(true, backgroundOnlySession.isBackgroundOnly)
 
         // foregrounding ends the background-only user session and starts a regular one
         orchestrator.onForeground()
         val second = activeUserSession()
         assertNotEquals(backgroundOnlySession.userSessionId, second.userSessionId)
         assertEquals(3L, second.userSessionNumber)
-        assertFalse(second.isBackgroundOnly)
+        assertEquals(false, second.isBackgroundOnly)
         assertEquals(1, second.partIndex)
     }
 
@@ -795,7 +805,7 @@ internal class SessionOrchestratorTest {
         assertNotEquals(first.userSessionId, second.userSessionId)
         assertEquals(2L, second.userSessionNumber)
         assertEquals(1, second.partIndex)
-        assertTrue(second.isBackgroundOnly)
+        assertEquals(true, second.isBackgroundOnly)
 
         val errors = logger.internalErrorMessages
         assertEquals(1, errors.size)
@@ -811,7 +821,7 @@ internal class SessionOrchestratorTest {
 
         val firstSession = activeUserSession()
         assertEquals(1L, firstSession.userSessionNumber)
-        assertFalse(firstSession.isBackgroundOnly)
+        assertEquals(false, firstSession.isBackgroundOnly)
 
         orchestrator.onBackground()
 
@@ -821,7 +831,7 @@ internal class SessionOrchestratorTest {
         val backgroundOnlySession = activeUserSession()
         assertNotEquals(firstSession.userSessionId, backgroundOnlySession.userSessionId)
         assertEquals(2L, backgroundOnlySession.userSessionNumber)
-        assertTrue(backgroundOnlySession.isBackgroundOnly)
+        assertEquals(true, backgroundOnlySession.isBackgroundOnly)
 
         // check that a background-only user session won't time out due to inactivity - it's already considered to be inactive
         runTimerThread(inactivityMs * 10)
@@ -833,7 +843,7 @@ internal class SessionOrchestratorTest {
         val sessionAfterFg = activeUserSession()
         assertNotEquals(backgroundOnlySession.userSessionId, sessionAfterFg.userSessionId)
         assertEquals(3L, sessionAfterFg.userSessionNumber)
-        assertFalse(sessionAfterFg.isBackgroundOnly)
+        assertEquals(false, sessionAfterFg.isBackgroundOnly)
 
         // a regular user session will survive a foregrounding if it's within the inactivity grace period
         orchestrator.onBackground()
@@ -986,6 +996,7 @@ internal class SessionOrchestratorTest {
             logger,
             BackgroundWorker(inactivityWorkerExecutor),
             TestUuidSource(),
+            startupClassifier,
         ).apply {
             start()
         }
@@ -1016,10 +1027,14 @@ internal class SessionOrchestratorTest {
             startingAppState = AppState.BACKGROUND,
             configService = backgroundEnabledConfigService(),
         )
-        assertNull(orchestrator.currentUserSession())
+        val initialUserSession = activeUserSession()
 
-        runTimerThread(maxDurationMs * 2)
-        assertNull(orchestrator.currentUserSession())
+        // The background-startup window elapses, so the task run on the thread should classify it as background-only.
+        // It should still be the active one as there should be no timers that end it.
+        runTimerThread(BACKGROUND_STARTUP_WINDOW_MS + 1)
+        val current = activeUserSession()
+        assertEquals(initialUserSession.userSessionId, current.userSessionId)
+        assertEquals(true, current.isBackgroundOnly)
     }
 
     @Test
@@ -1098,8 +1113,9 @@ internal class SessionOrchestratorTest {
         assertNotEquals(first.userSessionId, second.userSessionId)
         assertEquals(2L, second.userSessionNumber)
         assertEquals(1, second.partIndex)
-        // created while backgrounded, so the replacement is a background user session
-        assertTrue(second.isBackgroundOnly)
+
+        // created while backgrounded, so the new uer session is background-only
+        assertEquals(true, second.isBackgroundOnly)
 
         // The session part created by the BG max-duration rotation must remain BG.
         val activePart = checkNotNull(sessionTracker.getActiveSessionPart())
@@ -1150,7 +1166,7 @@ internal class SessionOrchestratorTest {
         val second = activeUserSession()
         assertNotEquals(first.userSessionId, second.userSessionId)
         assertEquals(2L, second.userSessionNumber)
-        assertTrue(second.isBackgroundOnly)
+        assertEquals(true, second.isBackgroundOnly)
         assertNull(sessionTracker.getActiveSessionPart())
 
         orchestrator.onForeground()
@@ -1281,7 +1297,7 @@ internal class SessionOrchestratorTest {
         runTimerThread(inactivityMs)
 
         val backgroundOnlySession = activeUserSession()
-        assertTrue(backgroundOnlySession.isBackgroundOnly)
+        assertEquals(true, backgroundOnlySession.isBackgroundOnly)
         assertEquals("1", backgroundOnlySession.attributes[EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART])
     }
 
@@ -1301,12 +1317,12 @@ internal class SessionOrchestratorTest {
 
         val backgroundOnlySession = activeUserSession()
         assertNotEquals(first.userSessionId, backgroundOnlySession.userSessionId)
-        assertTrue(backgroundOnlySession.isBackgroundOnly)
+        assertEquals(true, backgroundOnlySession.isBackgroundOnly)
 
         orchestrator.onForeground()
         val regular = activeUserSession()
         assertNotEquals(backgroundOnlySession.userSessionId, regular.userSessionId)
-        assertFalse(regular.isBackgroundOnly)
+        assertEquals(false, regular.isBackgroundOnly)
     }
 
     @Test
@@ -1326,12 +1342,12 @@ internal class SessionOrchestratorTest {
 
         val restored = activeUserSession()
         assertEquals("bg-session-id", restored.userSessionId)
-        assertTrue(restored.isBackgroundOnly)
+        assertEquals(true, restored.isBackgroundOnly)
 
         orchestrator.onForeground()
         val regular = activeUserSession()
         assertNotEquals("bg-session-id", regular.userSessionId)
-        assertFalse(regular.isBackgroundOnly)
+        assertEquals(false, regular.isBackgroundOnly)
     }
 
     @Test
@@ -1348,13 +1364,16 @@ internal class SessionOrchestratorTest {
             metadataStoreOverride = store,
         )
 
-        // user session not restored
-        assertNull(orchestrator.currentUserSession())
+        // the expired session is not restored - a new unclassified one is active instead
+        val initialUserSession = activeUserSession()
+        assertNotEquals("bg-session-id", initialUserSession.userSessionId)
+        assertNull(initialUserSession.isBackgroundOnly)
 
+        // Foregrounding turns that new session into a regular, not background-only one
         orchestrator.onForeground()
         val regular = activeUserSession()
-        assertNotEquals("bg-session-id", regular.userSessionId)
-        assertFalse(regular.isBackgroundOnly)
+        assertEquals(initialUserSession.userSessionId, regular.userSessionId)
+        assertEquals(false, regular.isBackgroundOnly)
     }
 
     @Test
@@ -1373,7 +1392,200 @@ internal class SessionOrchestratorTest {
 
         val session = activeUserSession()
         assertNotEquals("bg-session-id", session.userSessionId)
-        assertFalse(session.isBackgroundOnly)
+        assertEquals(false, session.isBackgroundOnly)
+    }
+
+    @Test
+    fun `background-startup window elapsing resolves unclassified session to background-only`() {
+        createOrchestrator(
+            startingAppState = AppState.BACKGROUND,
+            configService = backgroundEnabledConfigService(),
+        )
+
+        val initialUserSession = activeUserSession()
+        assertNull(initialUserSession.isBackgroundOnly)
+        assertNull(startupClassifier.startupType())
+        assertNull(destination.attributes[EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART])
+
+        runTimerThread(BACKGROUND_STARTUP_WINDOW_MS + 1)
+
+        with(checkNotNull(activeUserSession())) {
+            assertEquals(initialUserSession.userSessionId, userSessionId)
+            assertEquals(true, isBackgroundOnly)
+            assertEquals(StartupType.BACKGROUND, startupClassifier.startupType())
+            assertEquals("1", destination.attributes[EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART])
+        }
+
+        // foregrounding ends the background-only session and starts a regular one
+        orchestrator.onForeground()
+        val regular = activeUserSession()
+        assertNotEquals(initialUserSession.userSessionId, regular.userSessionId)
+        assertEquals(false, regular.isBackgroundOnly)
+    }
+
+    @Test
+    fun `foregrounding within background-startup window does not resolve the startup classification`() {
+        createOrchestrator(
+            startingAppState = AppState.BACKGROUND,
+            configService = backgroundEnabledConfigService(),
+        )
+        val initialUserSession = activeUserSession()
+
+        clock.tick(1000)
+        orchestrator.onForeground()
+
+        with(checkNotNull(activeUserSession())) {
+            assertEquals(initialUserSession.userSessionId, userSessionId)
+            assertEquals(false, isBackgroundOnly)
+            assertNull(startupClassifier.startupType())
+        }
+
+        // the previously scheduled timer should be cancelled and not classify the startup type
+        runTimerThread(BACKGROUND_STARTUP_WINDOW_MS)
+        assertNull(startupClassifier.startupType())
+    }
+
+    @Test
+    fun `unclassified user session is persisted as background-only during the window`() {
+        val store = UserSessionMetadataStore(FakeKeyValueStore())
+        createOrchestrator(
+            startingAppState = AppState.BACKGROUND,
+            configService = backgroundEnabledConfigService(),
+            metadataStoreOverride = store,
+        )
+
+        val initialUserSession = activeUserSession()
+        assertNull(initialUserSession.isBackgroundOnly)
+
+        // persisted user session will presume it's background-only because it will only be read in this state if the process dies with
+        // it being further classified
+        val persisted = checkNotNull(store.load())
+        assertEquals(initialUserSession.userSessionId, persisted.userSessionId)
+        assertEquals(true, persisted.isBackgroundOnly)
+
+        // foregrounding within the window rewrites the persisted copy as a regular session
+        clock.tick(1000)
+        orchestrator.onForeground()
+        assertEquals(false, checkNotNull(store.load()).isBackgroundOnly)
+    }
+
+    @Test
+    fun `manual end during the background-startup window terminates the pending session`() {
+        createOrchestrator(
+            startingAppState = AppState.BACKGROUND,
+            configService = backgroundEnabledConfigService(),
+        )
+        val pending = activeUserSession()
+
+        clock.tick(1000)
+        orchestrator.endSessionWithManual()
+
+        // the replacement is created in the background, so it is committed background-only
+        val replacement = activeUserSession()
+        assertNotEquals(pending.userSessionId, replacement.userSessionId)
+        assertEquals(true, replacement.isBackgroundOnly)
+
+        // the previously scheduled timer should be cancelled and not classify the startup type
+        runTimerThread(BACKGROUND_STARTUP_WINDOW_MS + 1)
+        assertNull(startupClassifier.startupType())
+    }
+
+    @Test
+    fun `crash during the background-startup window leaves the pending session untouched`() {
+        val store = UserSessionMetadataStore(FakeKeyValueStore())
+        createOrchestrator(
+            startingAppState = AppState.BACKGROUND,
+            configService = backgroundEnabledConfigService(),
+            metadataStoreOverride = store,
+        )
+        val initialUserSession = activeUserSession()
+
+        orchestrator.handleCrash("crash-id")
+
+        assertEquals(initialUserSession.userSessionId, activeUserSession().userSessionId)
+        assertEquals(true, checkNotNull(store.load()).isBackgroundOnly)
+    }
+
+    @Test
+    fun `restored regular user session for a new process continues in background as such past the background-startup window`() {
+        val store = storeWithUserSession(userSessionId = "regular-id")
+
+        clock.tick(1000)
+        createOrchestrator(
+            startingAppState = AppState.BACKGROUND,
+            configService = backgroundEnabledConfigService(),
+            metadataStoreOverride = store,
+        )
+
+        with(checkNotNull(activeUserSession())) {
+            assertEquals("regular-id", userSessionId)
+            assertEquals(false, isBackgroundOnly)
+            assertNull(startupClassifier.startupType())
+        }
+
+        runTimerThread(BACKGROUND_STARTUP_WINDOW_MS + 1)
+
+        with(checkNotNull(activeUserSession())) {
+            assertEquals("regular-id", userSessionId)
+            assertEquals(false, isBackgroundOnly)
+            assertNull(startupClassifier.startupType())
+        }
+    }
+
+    @Test
+    fun `cold start foregrounding within the background-startup window is classified regular`() {
+        createOrchestrator(
+            startingAppState = AppState.BACKGROUND,
+            configService = backgroundEnabledConfigService(),
+        )
+        val initialUserSession = activeUserSession()
+
+        // A slow Application.onCreate keeps the app in the background for most of the window before the first activity foregrounds.
+        // As long as that happens within the background-startup window, the session created at process start should still
+        // become regular user session.
+        clock.tick(BACKGROUND_STARTUP_WINDOW_MS - 1)
+        orchestrator.onForeground()
+
+        with(checkNotNull(activeUserSession())) {
+            assertEquals(initialUserSession.userSessionId, userSessionId)
+            assertEquals(false, isBackgroundOnly)
+        }
+
+        // the previously scheduled timer should be cancelled
+        runTimerThread(BACKGROUND_STARTUP_WINDOW_MS + 1)
+        with(checkNotNull(activeUserSession())) {
+            assertEquals(initialUserSession.userSessionId, userSessionId)
+            assertEquals(false, isBackgroundOnly)
+            assertNull(startupClassifier.startupType())
+        }
+    }
+
+    @Test
+    fun `background startup timer doesn't reclassify startup if already classified`() {
+        createOrchestrator(
+            startingAppState = AppState.BACKGROUND,
+            configService = backgroundEnabledConfigService(),
+        )
+        val initialUserSession = activeUserSession()
+
+        startupClassifier.evaluateStartup(
+            sdkInitEndMs = clock.now(),
+            appInitEndMs = clock.now() + 1,
+            postAppInitTimeMs = clock.now() + 2,
+        )
+        assertEquals(StartupType.COLD, startupClassifier.startupType())
+
+        // The timer fires but doesn't reclassify the startup or classify the user session
+        runTimerThread(BACKGROUND_STARTUP_WINDOW_MS + 1)
+        assertNull(activeUserSession().isBackgroundOnly)
+        assertNull(destination.attributes[EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART])
+
+        // the imminent foregrounding that occurs after startup classification will classify the session
+        orchestrator.onForeground()
+        with(checkNotNull(activeUserSession())) {
+            assertEquals(initialUserSession.userSessionId, userSessionId)
+            assertEquals(false, isBackgroundOnly)
+        }
     }
 
     private fun backgroundEnabledConfigService() = FakeConfigService(
@@ -1425,7 +1637,7 @@ internal class SessionOrchestratorTest {
         persistedInactivityTimeoutMs: Long = inactivityMs,
     ): UserSessionMetadataStore = UserSessionMetadataStore(FakeKeyValueStore()).apply {
         save(
-            UserSessionMetadata(
+            UserSessionMetadata.Classified(
                 startTimeMs = startTimeMs,
                 userSessionId = userSessionId,
                 userSessionNumber = userSessionNumber,

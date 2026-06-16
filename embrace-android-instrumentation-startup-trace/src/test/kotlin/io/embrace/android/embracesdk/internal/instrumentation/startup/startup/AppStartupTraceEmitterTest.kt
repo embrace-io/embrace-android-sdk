@@ -11,7 +11,9 @@ import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.startup.MAX_COLD_STARTUP_INIT_GAP_MS
+import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifier
 import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
+import io.embrace.android.embracesdk.internal.arch.startup.StartupType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupTraceEmitter
 import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupTraceEmitter.Companion.ACTIVITY_FIRST_DRAW_SPAN
@@ -118,6 +120,22 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `verify warm start trace without application init start and end triggered in T`() {
         createTraceEmitter().simulateAppStartup(isColdStart = false, hasAppInitEvents = false)
+    }
+
+    @Config(sdk = [VERSION_CODES.TIRAMISU])
+    @Test
+    fun `startup already classified as background records a warm trace even with a cold-sized init gap`() {
+        // The session orchestrator's background-startup window elapsed before any activity was created, so it resolved the
+        // shared classification to BACKGROUND. When an activity is eventually created with a gap that would otherwise be a cold
+        // start, the trace is recorded as warm rather than cold - the accepted consequence of treating a slow process start as a
+        // background launch.
+        val classifier = StartupClassifierImpl().apply { assumeBackgroundStartup() }
+        createTraceEmitter(startupClassifier = classifier).simulateAppStartup(verifyTrace = false)
+
+        val spanMap = destination.completedSpans().associateBy { it.name }
+        assertNotNull(spanMap.warmAppStartupRootSpan())
+        assertNull(spanMap.coldAppStartupRootSpan())
+        assertEquals(StartupType.BACKGROUND, classifier.startupType())
     }
 
     @Config(sdk = [VERSION_CODES.TIRAMISU])
@@ -595,14 +613,17 @@ internal class AppStartupTraceEmitterTest {
             )
     }
 
-    private fun createTraceEmitter(manualEnd: Boolean = false) =
+    private fun createTraceEmitter(
+        manualEnd: Boolean = false,
+        startupClassifier: StartupClassifier = StartupClassifierImpl(),
+    ) =
         AppStartupTraceEmitter(
             clock = clock,
             startupServiceProvider = { startupService },
             destination = destination,
             versionChecker = BuildVersionChecker,
             logger = logger,
-            startupClassifier = StartupClassifierImpl(),
+            startupClassifier = startupClassifier,
             manualEnd = manualEnd,
             processInfo = FakeProcessInfo(
                 if (BuildVersionChecker.isAtLeast(VERSION_CODES.N)) {

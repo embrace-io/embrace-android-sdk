@@ -27,6 +27,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
+import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.capture.session.PropertyScope
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
@@ -71,6 +72,7 @@ internal class SessionOrchestratorListenerTest {
     private lateinit var instrumentationRegistry: InstrumentationRegistry
     private lateinit var fakeDataSource: FakeDataSource
     private lateinit var logger: FakeInternalLogger
+    private lateinit var startupClassifier: StartupClassifierImpl
     private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
     private lateinit var destination: FakeTelemetryDestination
     private var orchestratorStartTimeMs: Long = 0
@@ -82,6 +84,7 @@ internal class SessionOrchestratorListenerTest {
     fun setUp() {
         clock = FakeClock()
         logger = FakeInternalLogger(throwOnInternalError = false)
+        startupClassifier = StartupClassifierImpl()
         configService = FakeConfigService(
             backgroundActivityBehavior = createBackgroundActivityBehavior(
                 remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
@@ -220,7 +223,7 @@ internal class SessionOrchestratorListenerTest {
 
     private fun restoredMetadataStore() = UserSessionMetadataStore(FakeKeyValueStore()).also { store ->
         store.save(
-            UserSessionMetadata(
+            UserSessionMetadata.Classified(
                 startTimeMs = clock.now(),
                 userSessionId = "restored-id",
                 userSessionNumber = 7L,
@@ -228,6 +231,7 @@ internal class SessionOrchestratorListenerTest {
                 inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
                 partIndex = 1,
                 lastActivityMs = clock.now(),
+                isBackgroundOnly = false,
             )
         )
     }
@@ -327,6 +331,7 @@ internal class SessionOrchestratorListenerTest {
             logger,
             fakeBackgroundWorker(),
             TestUuidSource(),
+            startupClassifier,
         ).apply {
             start()
         }

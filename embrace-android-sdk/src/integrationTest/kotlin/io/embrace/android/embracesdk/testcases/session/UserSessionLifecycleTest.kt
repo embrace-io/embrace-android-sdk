@@ -2,10 +2,12 @@ package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.assertions.getUserSessionTerminationReason
 import io.embrace.android.embracesdk.assertions.isFinalSessionPart
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -20,6 +22,8 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSI
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_NUMBER
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_START_TS
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues.BACKGROUND_ONLY_USER_SESSION_FOREGROUNDED
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues.INACTIVITY
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues.MANUAL
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -53,7 +57,7 @@ internal class UserSessionLifecycleTest {
     }
 
     @Test
-    fun `user session created only once the app enters the foreground`() {
+    fun `user session created at process start resolves to the foreground session`() {
         testRule.runTest(
             persistedRemoteConfig = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(100f)),
             testCaseAction = { recordSession() },
@@ -61,21 +65,64 @@ internal class UserSessionLifecycleTest {
                 val bgSession = getSingleSessionEnvelope(AppState.BACKGROUND)
                 val fgSession = getSingleSessionEnvelope(AppState.FOREGROUND)
 
+                // the pre-foreground part belongs to the user session created eagerly at process
+                // start, whose pending flavour resolved to the regular user session of this
+                // launch when the app entered the foreground
                 val bgSessionSpan = bgSession.findSessionSpan()
                 val bgAttrs = bgSessionSpan.attributes
-                assertEquals("", bgAttrs?.findAttributeValue(EMB_USER_SESSION_ID))
-                assertEquals("", bgAttrs?.findAttributeValue(EMB_SESSION_PART_ID))
-                assertNull(bgAttrs?.findAttributeValue(EMB_USER_SESSION_NUMBER))
-                assertNull(bgAttrs?.findAttributeValue(EMB_USER_SESSION_PART_INDEX))
-                assertNull(bgAttrs?.findAttributeValue(EMB_USER_SESSION_START_TS))
+                assertEquals(fgSession.getUserSessionId(), bgAttrs?.findAttributeValue(EMB_USER_SESSION_ID))
+                assertFalse(bgAttrs?.findAttributeValue(EMB_SESSION_PART_ID).isNullOrBlank())
+                assertEquals("1", bgAttrs?.findAttributeValue(EMB_USER_SESSION_NUMBER))
+                assertEquals("1", bgAttrs?.findAttributeValue(EMB_USER_SESSION_PART_INDEX))
+                assertNotNull(bgAttrs?.findAttributeValue(EMB_USER_SESSION_START_TS))
 
-                // entering foreground creates the first user session
                 val fgSessionSpan = fgSession.findSessionSpan()
                 assertNotNull(fgSession.getUserSessionId())
                 assertEquals(fgSession.getUserSessionId(), fgSession.getSessionId())
                 assertEquals("1", fgSessionSpan.attributes?.findAttributeValue(EMB_USER_SESSION_NUMBER))
                 assertFalse(fgSession.isFinalSessionPart())
                 assertNull(fgSession.getUserSessionTerminationReason())
+            }
+        )
+    }
+
+    @Test
+    fun `process foregrounding after the background-startup window splits into background-only then regular session`() {
+        testRule.runTest(
+            persistedRemoteConfig = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(100f)),
+            testCaseAction = {
+                // The process starts in the background and does not foreground within the 5s
+                // background-startup window, so the eagerly-created process-start session is
+                // classified background-only when the window elapses.
+                clock.tick(6_000L)
+                unblockTimerThread()
+                // The app foregrounds only afterwards (e.g. a slow background launch the OS later
+                // surfaced). This ends the background-only session and starts a regular one.
+                recordSession()
+            },
+            assertAction = {
+                val bgSession = getSingleSessionEnvelope(AppState.BACKGROUND)
+                val fgSession = getSingleSessionEnvelope(AppState.FOREGROUND)
+
+                // The pre-foreground part is the background-only session (number 1): it carries the
+                // marker and ends with the background-only termination reason when the app foregrounds.
+                val bgAttrs = bgSession.findSessionSpan().attributes
+                assertEquals("1", bgAttrs?.findAttributeValue(EMB_IS_BACKGROUND_ONLY_PART))
+                assertEquals("1", bgAttrs?.findAttributeValue(EMB_USER_SESSION_NUMBER))
+                assertTrue(bgSession.isFinalSessionPart())
+                assertEquals(BACKGROUND_ONLY_USER_SESSION_FOREGROUNDED, bgSession.getUserSessionTerminationReason())
+
+                // The foreground part is a distinct, regular user session (number 2) - no marker.
+                val fgAttrs = fgSession.findSessionSpan().attributes
+                assertNotEquals(bgSession.getUserSessionId(), fgSession.getUserSessionId())
+                assertNull(fgAttrs?.findAttributeValue(EMB_IS_BACKGROUND_ONLY_PART))
+                assertEquals("2", fgAttrs?.findAttributeValue(EMB_USER_SESSION_NUMBER))
+
+                // The late foreground is recorded as a warm startup, not cold, and lands in the
+                // regular foreground session - the accepted consequence of the fixed window.
+                val perfSpanNames = fgSession.findSpansOfType(EmbType.Performance.Default).map { it.name }
+                assertTrue(perfSpanNames.contains("emb-app-startup-warm"))
+                assertFalse(perfSpanNames.contains("emb-app-startup-cold"))
             }
         )
     }
@@ -296,8 +343,9 @@ internal class UserSessionLifecycleTest {
                 val secondSession = sessions[1].findSessionSpan()
 
                 assertNotEquals(sessions[0].getUserSessionId(), sessions[1].getUserSessionId())
-                // cold-start background session ends before any user session exists
-                assertNull(firstBg.attributes?.findAttributeValue(EMB_USER_SESSION_NUMBER))
+                // the cold-start background part belongs to the first user session, created
+                // eagerly at process start and resolved to regular at the first foreground
+                assertEquals("1", firstBg.attributes?.findAttributeValue(EMB_USER_SESSION_NUMBER))
                 assertEquals("1", firstSession.attributes?.findAttributeValue(EMB_USER_SESSION_NUMBER))
                 assertEquals("1", secondBg.attributes?.findAttributeValue(EMB_USER_SESSION_NUMBER))
                 assertEquals("2", secondSession.attributes?.findAttributeValue(EMB_USER_SESSION_NUMBER))

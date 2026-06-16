@@ -36,7 +36,7 @@ internal class SessionIdProviderImplTest {
 
     @Test
     fun `getCurrentUserSessionId returns the orchestrator's active user session id`() {
-        sessionOrchestrator.currentSession = UserSessionMetadata(
+        sessionOrchestrator.currentSession = UserSessionMetadata.Classified(
             startTimeMs = 1000L,
             userSessionId = "user-session-uuid",
             userSessionNumber = 1L,
@@ -44,6 +44,7 @@ internal class SessionIdProviderImplTest {
             inactivityTimeoutSecs = 300L,
             partIndex = 1,
             lastActivityMs = 1000L,
+            isBackgroundOnly = false,
         )
         assertEquals("user-session-uuid", provider.getCurrentUserSessionId())
     }
@@ -52,7 +53,7 @@ internal class SessionIdProviderImplTest {
     fun `getActiveSessionIds returns IDs from session parts tracker even if current session per the orchestrator differs`() {
         val token = fakeSessionPartToken()
         sessionPartTracker.currentSession = token
-        sessionOrchestrator.currentSession = UserSessionMetadata(
+        sessionOrchestrator.currentSession = UserSessionMetadata.Classified(
             startTimeMs = token.startTime + 10_000L,
             userSessionId = "new-user-session",
             userSessionNumber = 2,
@@ -60,6 +61,7 @@ internal class SessionIdProviderImplTest {
             inactivityTimeoutSecs = 300L,
             partIndex = token.userSessionPartIndex + 1,
             lastActivityMs = token.startTime + 10_000L,
+            isBackgroundOnly = false,
         )
         assertEquals(SessionIdsSnapshot(token.userSessionId, token.sessionPartId), provider.getActiveSessionIds())
     }
@@ -67,7 +69,7 @@ internal class SessionIdProviderImplTest {
     @Test
     fun `getActiveSessionIds falls back to the orchestrator's user session id when no active session part`() {
         sessionPartTracker.currentSession = null
-        sessionOrchestrator.currentSession = UserSessionMetadata(
+        sessionOrchestrator.currentSession = UserSessionMetadata.Classified(
             startTimeMs = 1000L,
             userSessionId = "user-session-uuid",
             userSessionNumber = 1L,
@@ -75,6 +77,7 @@ internal class SessionIdProviderImplTest {
             inactivityTimeoutSecs = 300L,
             partIndex = 1,
             lastActivityMs = 1000L,
+            isBackgroundOnly = false,
         )
         assertEquals(
             SessionIdsSnapshot(userSessionId = "user-session-uuid", sessionPartId = ""),

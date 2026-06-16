@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.session
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
@@ -13,7 +12,7 @@ internal class UserSessionMetadataStoreTest {
     private lateinit var kvStore: FakeKeyValueStore
     private lateinit var metadataStore: UserSessionMetadataStore
 
-    private val metadata = UserSessionMetadata(
+    private val metadata = UserSessionMetadata.Classified(
         startTimeMs = 1000L,
         userSessionId = "test-uuid",
         userSessionNumber = 3L,
@@ -21,8 +20,9 @@ internal class UserSessionMetadataStoreTest {
         inactivityTimeoutSecs = 1800L,
         partIndex = 1,
         lastActivityMs = 5000L,
+        isBackgroundOnly = false,
     )
-    private val metadata2 = UserSessionMetadata(
+    private val metadata2 = UserSessionMetadata.Classified(
         startTimeMs = 2000L,
         userSessionId = "test-uuid-2",
         userSessionNumber = 5L,
@@ -30,8 +30,9 @@ internal class UserSessionMetadataStoreTest {
         inactivityTimeoutSecs = 3600L,
         partIndex = 2,
         lastActivityMs = 9000L,
+        isBackgroundOnly = false,
     )
-    private val metadataBackgroundOnly = UserSessionMetadata(
+    private val metadataBackgroundOnly = UserSessionMetadata.Classified(
         startTimeMs = 3000L,
         userSessionId = "test-uuid-3",
         userSessionNumber = 7L,
@@ -72,7 +73,7 @@ internal class UserSessionMetadataStoreTest {
         metadataStore.save(metadata)
         val loaded = checkNotNull(saveAndRemoveFromRawMap(metadata, EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART))
         metadata.assertMetadataEquals(loaded)
-        assertFalse(loaded.isBackgroundOnly)
+        assertEquals(false, loaded.isBackgroundOnly)
     }
 
     @Test
@@ -122,7 +123,7 @@ internal class UserSessionMetadataStoreTest {
     private fun getRawMap(): MutableMap<String, String> = checkNotNull(kvStore.getStringMap("embrace.user_session")).toMutableMap()
 
     private fun saveAndRemoveFromRawMap(
-        sessionMetadata: UserSessionMetadata,
+        sessionMetadata: UserSessionMetadata.Classified,
         attribute: String,
     ): UserSessionMetadata? {
         metadataStore.save(sessionMetadata)

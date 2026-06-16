@@ -68,6 +68,9 @@ internal class UserSessionInactivityTimeoutGoldenFileTest {
 
                 assertPayloadsMatchGoldenFiles(
                     UserSessionDiff(
+                        // the pre-foreground part belongs to the first user session: its
+                        // flavour-pending session resolved to regular when the app foregrounded
+                        SessionPartDiff(bgPartEnvelopes[0], "user_session_bg_timeout_1.json"),
                         SessionPartDiff(sessionPartEnvelopes[0], "user_session_bg_timeout_2.json"),
                         SessionPartDiff(bgPartEnvelopes[1], "user_session_bg_timeout_3.json"),
                     ),
@@ -76,9 +79,6 @@ internal class UserSessionInactivityTimeoutGoldenFileTest {
                     ),
                     UserSessionDiff(
                         SessionPartDiff(sessionPartEnvelopes[1], "user_session_bg_timeout_5.json")
-                    ),
-                    partsWithNoUserSession = listOf(
-                        SessionPartDiff(bgPartEnvelopes[0], "user_session_bg_timeout_1.json")
                     ),
                 )
             }

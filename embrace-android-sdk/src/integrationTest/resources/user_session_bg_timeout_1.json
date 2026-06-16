@@ -97,6 +97,26 @@
       "value": "__EMBRACE_TEST_USER_SESSION_ID__"
     },
     {
+      "key": "emb.user_session_inactivity_timeout_seconds",
+      "value": "1800"
+    },
+    {
+      "key": "emb.user_session_max_duration_seconds",
+      "value": "43200"
+    },
+    {
+      "key": "emb.user_session_number",
+      "value": "1"
+    },
+    {
+      "key": "emb.user_session_part_index",
+      "value": "1"
+    },
+    {
+      "key": "emb.user_session_start_ts",
+      "value": "169220160000"
+    },
+    {
       "key": "session.id",
       "value": "__EMBRACE_TEST_USER_SESSION_ID__"
     }

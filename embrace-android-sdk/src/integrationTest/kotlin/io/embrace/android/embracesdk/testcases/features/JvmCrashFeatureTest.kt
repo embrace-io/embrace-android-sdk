@@ -106,7 +106,6 @@ internal class JvmCrashFeatureTest {
                 payloadStorageService.getPersistedCrashLog().getLastLog().assertCrash(
                     crashIdFromSession = ba.getCrashedId(),
                     crashTimeMs = crashTimeMs,
-                    hasSession = false,
                 )
             }
         )
@@ -124,7 +123,6 @@ internal class JvmCrashFeatureTest {
                 payloadStorageService.getPersistedCrashLog().getLastLog().assertCrash(
                     crashIdFromSession = null,
                     crashTimeMs = crashTimeMs,
-                    hasSession = false,
                 )
             }
         )

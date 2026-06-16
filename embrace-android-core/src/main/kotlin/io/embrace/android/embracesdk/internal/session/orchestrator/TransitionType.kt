@@ -46,7 +46,7 @@ enum class TransitionType(
         userSessionTerminationReason = EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED,
     ),
     BACKGROUND_ONLY_SESSION_END(
-        userSessionTerminationReason = EmbUserSessionTerminationReasonValues.END_BACKGROUND_ONLY_USER_SESSION,
+        userSessionTerminationReason = EmbUserSessionTerminationReasonValues.BACKGROUND_ONLY_USER_SESSION_FOREGROUNDED,
         nextAppState = AppState.FOREGROUND,
     );
 

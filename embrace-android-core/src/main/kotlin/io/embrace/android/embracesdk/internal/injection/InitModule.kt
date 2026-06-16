@@ -42,7 +42,7 @@ interface InitModule {
 
     val instrumentedConfig: InstrumentedConfig
 
-    val okHttpClient: OkHttpClient
+    val okHttpClient: Lazy<OkHttpClient>
 
     val uuidSource: UuidSource
 

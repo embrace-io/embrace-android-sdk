@@ -11,7 +11,7 @@ import okio.buffer
 import java.io.IOException
 
 internal class OkHttpRemoteConfigSource(
-    private val okhttpClient: OkHttpClient,
+    private val okhttpClient: Lazy<OkHttpClient>,
     private val serializer: PlatformSerializer,
     private val configEndpoint: ConfigEndpoint,
 ) : RemoteConfigSource {
@@ -30,7 +30,7 @@ internal class OkHttpRemoteConfigSource(
 
     private fun fetchConfigImpl(): ConfigHttpResponse? {
         val request = prepareRequest()
-        val call = okhttpClient.newCall(request)
+        val call = okhttpClient.value.newCall(request)
         val response = call.execute()
         return processResponse(response)
     }

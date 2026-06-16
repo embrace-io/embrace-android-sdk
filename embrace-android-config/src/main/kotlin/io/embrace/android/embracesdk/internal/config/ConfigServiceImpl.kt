@@ -44,7 +44,7 @@ class ConfigServiceImpl(
     worker: BackgroundWorker,
     private val serializer: PlatformSerializer,
     store: KeyValueStore,
-    okHttpClient: OkHttpClient,
+    okHttpClient: Lazy<OkHttpClient>,
     abis: Array<String>,
     private val sdkVersion: String,
     private val apiLevel: Int,

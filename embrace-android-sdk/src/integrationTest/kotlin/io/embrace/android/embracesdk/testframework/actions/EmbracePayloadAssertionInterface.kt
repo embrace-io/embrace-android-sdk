@@ -65,19 +65,31 @@ internal class EmbracePayloadAssertionInterface(
      * Returns the list of log payload envelopes that have been sent. If [expectedSize] is specified,
      * it will wait a maximum of 1 second for the number of payloads that exist to equal
      * to that before returning, timing out if it doesn't.
+     *
+     * Set [logsOrderedByTimestamp] to false if the logs in each payload envelope are all after or equal to all the logs
+     * in the previously delivered payload. This is true in most cases, so we can use the log timestamps as a proxy for
+     * the delivery order. But in some instances, where a payload contains log with order timestamps, this proxy
+     * relationship no longer holds
      */
-    internal fun getLogEnvelopes(expectedSize: Int) = retrieveLogEnvelopes(expectedSize)
+    internal fun getLogEnvelopes(
+        expectedSize: Int,
+        logsOrderedByTimestamp: Boolean = true
+    ) = retrieveLogEnvelopes(expectedSize, logsOrderedByTimestamp)
+
     internal fun getSingleLogEnvelope() = getLogEnvelopes(1).single()
 
     private fun retrieveLogEnvelopes(
         expectedSize: Int,
+        logsOrderedByTimestamp: Boolean,
     ): List<Envelope<LogPayload>> {
         val supplier = { checkNotNull(apiServer).getLogEnvelopes() }
         try {
             val envelopes = retrievePayload(expectedSize = expectedSize, supplier = supplier)
-            val envelopesByType = envelopes.groupBy { it.type ?: "" }
-            envelopesByType.forEach {
-                assertLogsDeliveredInOrder(it.value)
+            if (logsOrderedByTimestamp) {
+                val envelopesByType = envelopes.groupBy { it.type ?: "" }
+                envelopesByType.forEach {
+                    assertLogsDeliveredInOrder(it.value)
+                }
             }
             return envelopes
         } catch (exc: TimeoutException) {

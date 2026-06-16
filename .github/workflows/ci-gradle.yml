@@ -79,10 +79,14 @@ jobs:
         if: ${{ matrix.gradle-task == 'build' }}
         run: ./gradlew build embrace-microbenchmark:assembleAndroidTest -x embrace-gradle-plugin-integration-tests:test --stacktrace
 
+      - name: Publish SDK to Maven Local
+        if: ${{ matrix.gradle-task == 'bundleReleaseExampleApp' }}
+        run: ./gradlew publishToMavenLocal --no-configuration-cache --stacktrace
+
       - name: Gradle (examples/ExampleApp/ bundleRelease)
         if: ${{ matrix.gradle-task == 'bundleReleaseExampleApp' }}
         working-directory: examples/ExampleApp
-        run: ./gradlew bundleRelease
+        run: ./gradlew bundleRelease --stacktrace
 
       - name: Archive Test Results
         if: ${{ always() && matrix.gradle-task != 'bundleReleaseExampleApp' }}

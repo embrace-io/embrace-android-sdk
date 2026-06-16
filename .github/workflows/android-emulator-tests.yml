@@ -65,6 +65,11 @@ jobs:
           disable-animations: false
           script: echo 'Generated AVD snapshot for caching.'
 
+      # Publish the in-repo SDK to Maven Local so the example app resolves it instead of a published version.
+      - name: Publish SDK to Maven Local
+        if: matrix.working-directory == 'examples/ExampleApp'
+        run: ./gradlew publishToMavenLocal --no-configuration-cache --stacktrace
+
       - name: Run tests on android emulator
         uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a # v2.37.0
         if: matrix.working-directory == 'examples/ExampleApp'

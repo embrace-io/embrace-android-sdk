@@ -50,7 +50,7 @@ internal class TelemetryDestinationHarness {
         override val startupClassifier: StartupClassifier = StartupClassifierImpl()
         override val jsonSerializer: PlatformSerializer = EmbraceSerializer()
         override val instrumentedConfig: InstrumentedConfig = InstrumentedConfigImpl
-        override val okHttpClient: OkHttpClient = OkHttpClient()
+        override val okHttpClient: Lazy<OkHttpClient> = lazyOf(OkHttpClient())
     }
 
     private object NoopTelemetryService : TelemetryService {

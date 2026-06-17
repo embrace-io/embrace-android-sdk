@@ -47,7 +47,7 @@ class OkHttpRemoteConfigSourceTest {
         val gzipSink = GzipSink(configResponseBuffer).buffer()
         TestPlatformSerializer().toJson(remoteConfig, gzipSink.outputStream())
         source = OkHttpRemoteConfigSource(
-            client,
+            lazyOf(client),
             TestPlatformSerializer(),
             ConfigEndpoint(
                 "deviceId",

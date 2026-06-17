@@ -638,6 +638,107 @@ class IntakeServiceImplTest {
     }
 
     @Test
+    fun `resurrected session part from another process should not seal the intake service`() {
+        // crash occurs in the current process, moving intake into CRASH_RECEIVED
+        // it is persisted synchronously, by passing the background worker that may not run before the process dies
+        val jvmCrashMetadata = StoredTelemetryMetadata(
+            timestamp = clock.tick(),
+            uuid = "crash-uuid",
+            processIdentifier = PROCESS_ID,
+            envelopeType = CRASH,
+            complete = true,
+            payloadType = PayloadType.JVM_CRASH
+        )
+        intakeService.take(logEnvelope, jvmCrashMetadata)
+        assertEquals(1, payloadStorageService.storedPayloadCount())
+        assertEquals(0, executorService.tasksBlockedCount())
+
+        // a complete SESSION resurrected from a different process arrives during teardown
+        // it is persisted synchronously but doesn't seal the intake service
+        val resurrectedSessionMetadata = StoredTelemetryMetadata(
+            timestamp = clock.tick(),
+            uuid = "resurrected-session",
+            processIdentifier = "old-pid",
+            envelopeType = SESSION,
+            complete = true,
+        )
+        intakeService.take(sessionEnvelope, resurrectedSessionMetadata)
+        assertEquals(2, payloadStorageService.storedPayloadCount())
+        assertEquals(0, executorService.tasksBlockedCount())
+
+        // because the resurrected session did not seal, the crashing process's own session part will be persisted and seals the service
+        val crashSessionMetadata = StoredTelemetryMetadata(
+            timestamp = clock.tick(),
+            uuid = "crash-session",
+            processIdentifier = PROCESS_ID,
+            envelopeType = SESSION,
+            complete = true,
+        )
+        intakeService.take(sessionEnvelope, crashSessionMetadata)
+        assertEquals(3, payloadStorageService.storedPayloadCount())
+        assertEquals(0, executorService.tasksBlockedCount())
+
+        // the crash session sealed the intake, so a subsequent payload is dropped
+        assertIntakeRejected(
+            logEnvelope,
+            StoredTelemetryMetadata(
+                timestamp = clock.tick(),
+                uuid = "post-seal-log",
+                processIdentifier = PROCESS_ID,
+                envelopeType = LOG,
+                complete = true,
+                payloadType = PayloadType.LOG
+            )
+        )
+    }
+
+    @Test
+    fun `all payloads arriving during crash teardown before sealing are persisted, not dropped`() {
+        val jvmCrashMetadata = StoredTelemetryMetadata(
+            timestamp = clock.tick(),
+            uuid = "crash-uuid",
+            processIdentifier = PROCESS_ID,
+            envelopeType = CRASH,
+            complete = true,
+            payloadType = PayloadType.JVM_CRASH
+        )
+        intakeService.take(logEnvelope, jvmCrashMetadata)
+        assertEquals(1, payloadStorageService.storedPayloadCount())
+
+        val logInWindow = StoredTelemetryMetadata(
+            timestamp = clock.tick(),
+            uuid = "log-in-window",
+            processIdentifier = PROCESS_ID,
+            envelopeType = LOG,
+            complete = true,
+            payloadType = PayloadType.LOG
+        )
+        val attachmentInWindow = StoredTelemetryMetadata(
+            timestamp = clock.tick(),
+            uuid = "attachment-in-window",
+            processIdentifier = PROCESS_ID,
+            envelopeType = ATTACHMENT,
+            complete = true,
+            payloadType = PayloadType.ATTACHMENT
+        )
+        intakeService.take(logEnvelope, logInWindow)
+        intakeService.take(attachmentEnvelope, attachmentInWindow)
+        assertEquals(3, payloadStorageService.storedPayloadCount())
+        assertEquals(0, executorService.tasksBlockedCount())
+
+        // the crashing process's own session part seals the intake (persisted synchronously)
+        val crashSessionMetadata = StoredTelemetryMetadata(
+            timestamp = clock.tick(),
+            uuid = "crash-session",
+            processIdentifier = PROCESS_ID,
+            envelopeType = SESSION,
+            complete = true
+        )
+        intakeService.take(sessionEnvelope, crashSessionMetadata)
+        assertEquals(4, payloadStorageService.storedPayloadCount())
+    }
+
+    @Test
     fun `duplicate cache takes will result in the first future being canceled`() {
         val f1 = intakeService.take(sessionEnvelope, sessionMetadata.copy(complete = false))
         assertFalse(f1.isDone)

@@ -1,14 +1,17 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.assertions.getLastLog
+import io.embrace.android.embracesdk.assertions.getSessionId
+import io.embrace.android.embracesdk.assertions.getStartTime
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
-import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -16,7 +19,6 @@ import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
-import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
@@ -26,15 +28,18 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
+import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule.Companion.DEFAULT_SDK_START_TIME_MS
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.opentelemetry.kotlin.logging.SeverityNumber
 import io.opentelemetry.kotlin.semconv.LogAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -50,8 +55,13 @@ internal class JvmCrashFeatureTest {
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
-        EmbraceSetupInterface(fakeStorageLayer = true).apply {
+        EmbraceSetupInterface(
+            fakeStorageLayer = true,
+            workersToFake = listOf(Worker.Background.NonIoRegWorker, Worker.Background.IoRegWorker),
+        ).apply {
             getEmbLogger().throwOnInternalError = false
+            getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).blockingMode = false
+            getFakedWorkerExecutor(Worker.Background.IoRegWorker).blockingMode = false
         }.also {
             payloadStorageService = checkNotNull(it.fakePayloadStorageService)
         }
@@ -123,6 +133,48 @@ internal class JvmCrashFeatureTest {
                 payloadStorageService.getPersistedCrashLog().getLastLog().assertCrash(
                     crashIdFromSession = null,
                     crashTimeMs = crashTimeMs,
+                )
+            }
+        )
+    }
+
+    @Test
+    fun `resurrected session part is preserved when a JVM crash happens after startup`() {
+        lateinit var ioWorker: BlockingScheduledExecutorService
+        lateinit var nonIoWorker: BlockingScheduledExecutorService
+        val resurrectedSessionId = "aabbccdd11223344aabbccdd11223344"
+        testRule.runTest(
+            persistedRemoteConfig = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(100f)),
+            setupAction = {
+                persistExpiredUserSession(
+                    sdkStartTimeMs = DEFAULT_SDK_START_TIME_MS - 100_0000,
+                    userSessionId = resurrectedSessionId,
+                    cacheIncompletePartPayload = true,
+                )
+                ioWorker = getFakedWorkerExecutor(Worker.Background.IoRegWorker)
+                nonIoWorker = getFakedWorkerExecutor(Worker.Background.NonIoRegWorker)
+            },
+            testCaseAction = {
+                crashTimeMs = clock.now()
+                ioWorker.runCurrentlyBlocked()
+                nonIoWorker.runCurrentlyBlocked()
+                simulateJvmUncaughtException(testException)
+                ioWorker.runCurrentlyBlocked()
+                nonIoWorker.runCurrentlyBlocked()
+            },
+            assertAction = {
+                // The resurrected session is delivered normally and is not associated with the crash.
+                val resurrectedSession = getSingleSessionEnvelope(AppState.FOREGROUND)
+                assertEquals(resurrectedSessionId, resurrectedSession.getSessionId())
+                assertNull(resurrectedSession.getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID))
+
+                // The crashing process's own session part is held back during teardown, persisted, and carries the crash id.
+                val ba = payloadStorageService.getPersistedSession(AppState.BACKGROUND)
+                assertEquals(crashTimeMs, ba.getStartTime())
+                payloadStorageService.getPersistedCrashLog().getLastLog().assertCrash(
+                    crashIdFromSession = ba.getCrashedId(),
+                    crashTimeMs = crashTimeMs,
+                    hasSession = true,
                 )
             }
         )

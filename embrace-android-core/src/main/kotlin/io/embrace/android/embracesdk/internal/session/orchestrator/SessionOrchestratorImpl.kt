@@ -62,9 +62,7 @@ internal class SessionOrchestratorImpl(
     /**
      * Tracks whether the foreground phase comes from a cold start or not.
      */
-    @Volatile
     private var coldStart = true
-
     private val lock = Any()
     private val userSessionListeners = CopyOnWriteArrayList<UserSessionListener>()
 
@@ -77,13 +75,8 @@ internal class SessionOrchestratorImpl(
     @Volatile
     private var lastManualEndMs: Long? = null
 
-    @Volatile
     private var inactivityTimerState: SessionTimerState? = null
-
-    @Volatile
     private var maxDurationTimerState: SessionTimerState? = null
-
-    @Volatile
     private var backgroundStartupWindowTimerState: SessionTimerState? = null
 
     init {
@@ -152,8 +145,8 @@ internal class SessionOrchestratorImpl(
     }
 
     override fun onForeground() {
-        // Hold the as we cancel the inactivity timer and determine the transition type. The lock would be acquired in transitionState()
-        // anyway so we're just handing on for the entire duration instead of dropping it and reacquiring it again.
+        // Hold the lock as we cancel the inactivity timer and determine the transition type. The lock would be acquired in
+        // transitionState() anyway so we're just hanging on to it for the entire duration instead of dropping and reacquiring it again.
         synchronized(lock) {
             inactivityTimerState?.cancel()
             inactivityTimerState = null

@@ -52,7 +52,7 @@ internal class TransitionTypeTest {
         val attrs = TransitionType.BACKGROUND_ONLY_SESSION_END.endAttributes
         assertEquals("1", attrs[EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART])
         assertEquals(
-            EmbSessionAttributes.EmbUserSessionTerminationReasonValues.END_BACKGROUND_ONLY_USER_SESSION,
+            EmbSessionAttributes.EmbUserSessionTerminationReasonValues.BACKGROUND_ONLY_USER_SESSION_FOREGROUNDED,
             attrs[EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON],
         )
     }

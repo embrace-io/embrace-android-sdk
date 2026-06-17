@@ -14,9 +14,9 @@ internal class UserSessionMetadataStore(private val store: KeyValueStore) {
     }
 
     /**
-     * Persists the given [UserSessionMetadata] to the store.
+     * Persists the given [UserSessionMetadata.Classified] to the store.
      */
-    fun save(metadata: UserSessionMetadata) {
+    fun save(metadata: UserSessionMetadata.Classified) {
         store.edit {
             val map = metadata.attributes.mapValues { it.value.toString() }.toMutableMap()
             map[EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX] = metadata.partIndex.toString()
@@ -35,10 +35,9 @@ internal class UserSessionMetadataStore(private val store: KeyValueStore) {
     }
 
     /**
-     * Loads a [UserSessionMetadata] from the store, or returns null if any required attribute
-     * is absent or cannot be parsed.
+     * Loads a [UserSessionMetadata.Classified] from the store, or returns null if any required attribute is absent or cannot be parsed.
      */
-    fun load(): UserSessionMetadata? {
+    fun load(): UserSessionMetadata.Classified? {
         val attrs = store.getStringMap(KEY_SESSION) ?: return null
         val id = attrs[EmbSessionAttributes.EMB_USER_SESSION_ID] ?: return null
         val startMs = attrs[EmbSessionAttributes.EMB_USER_SESSION_START_TS]?.toLongOrNull() ?: return null
@@ -47,9 +46,8 @@ internal class UserSessionMetadataStore(private val store: KeyValueStore) {
         val inactivityTimeoutSecs = attrs[EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS]?.toLongOrNull() ?: return null
         val partIndex = attrs[EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX]?.toIntOrNull() ?: return null
         val lastActivityMs = attrs[KEY_LAST_ACTIVITY_TS]?.toLongOrNull() ?: return null
-        val isBackgroundOnly =
-            attrs[EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART] == UserSessionMetadata.BACKGROUND_ONLY_MARKER
-        return UserSessionMetadata(
+        val isBackgroundOnly = attrs[EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART] == UserSessionMetadata.BACKGROUND_ONLY_MARKER
+        return UserSessionMetadata.Classified(
             startTimeMs = startMs,
             userSessionId = id,
             userSessionNumber = number,

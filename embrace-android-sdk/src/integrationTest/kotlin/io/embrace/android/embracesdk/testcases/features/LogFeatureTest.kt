@@ -88,7 +88,6 @@ internal class LogFeatureTest {
                     expectedSeverityNumber = SeverityNumber.WARN,
                     expectedSeverityText = Severity.WARNING.name,
                     expectedTimeMs = logTimestamps.remove(),
-                    hasSession = false,
                 )
             }
         )
@@ -112,7 +111,6 @@ internal class LogFeatureTest {
                     expectedSeverityNumber = SeverityNumber.ERROR,
                     expectedSeverityText = Severity.ERROR.name,
                     expectedTimeMs = logTimestamps.remove(),
-                    hasSession = false,
                 )
             }
         )
@@ -141,7 +139,6 @@ internal class LogFeatureTest {
                         expectedSeverityNumber = getOtelSeverity(severity),
                         expectedSeverityText = severity.name,
                         expectedTimeMs = logTimestamps.remove(),
-                        hasSession = false,
                     )
                 }
             }
@@ -172,7 +169,6 @@ internal class LogFeatureTest {
                         expectedSeverityText = severity.name,
                         expectedTimeMs = logTimestamps.remove(),
                         expectedProperties = customProperties,
-                        hasSession = false,
                     )
                 }
             })
@@ -200,7 +196,6 @@ internal class LogFeatureTest {
                     expectedExceptionMessage = checkNotNull(testException.message),
                     expectedStacktrace = testException.getSafeStackTrace()?.toList(),
                     expectedEmbType = "sys.exception",
-                    hasSession = false,
                 )
             }
         )
@@ -228,7 +223,6 @@ internal class LogFeatureTest {
                     expectedExceptionMessage = checkNotNull(testException.message),
                     expectedStacktrace = testException.getSafeStackTrace()?.toList(),
                     expectedEmbType = "sys.exception",
-                    hasSession = false,
                 )
             }
         )
@@ -264,7 +258,6 @@ internal class LogFeatureTest {
                         expectedStacktrace = testException.getSafeStackTrace()?.toList(),
                         expectedProperties = customProperties,
                         expectedEmbType = "sys.exception",
-                        hasSession = false,
                     )
                 }
             }
@@ -300,7 +293,6 @@ internal class LogFeatureTest {
                         expectedStacktrace = testException.getSafeStackTrace()?.toList(),
                         expectedProperties = customProperties,
                         expectedEmbType = "sys.exception",
-                        hasSession = false,
                     )
                 }
             }
@@ -327,7 +319,6 @@ internal class LogFeatureTest {
                     expectedType = LogExceptionType.HANDLED.value,
                     expectedStacktrace = stacktrace.toList(),
                     expectedEmbType = "sys.exception",
-                    hasSession = false,
                 )
             }
         )
@@ -357,7 +348,6 @@ internal class LogFeatureTest {
                         expectedType = LogExceptionType.HANDLED.value,
                         expectedStacktrace = stacktrace.toList(),
                         expectedEmbType = "sys.exception",
-                        hasSession = false,
                     )
                 }
             }
@@ -389,7 +379,6 @@ internal class LogFeatureTest {
                         expectedStacktrace = stacktrace.toList(),
                         expectedProperties = customProperties,
                         expectedEmbType = "sys.exception",
-                        hasSession = false,
                     )
                 }
             }
@@ -428,7 +417,6 @@ internal class LogFeatureTest {
                         expectedStacktrace = stacktrace.toList(),
                         expectedProperties = customProperties,
                         expectedEmbType = "sys.exception",
-                        hasSession = false,
                     )
                 }
             }

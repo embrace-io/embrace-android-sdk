@@ -28,15 +28,8 @@ internal class SessionPartSpanAttrPopulatorImplTest {
         userSessionPartIndex = 5,
         sessionPartNumber = 12,
     )
-    private val userSession = UserSessionMetadata(
-        startTimeMs = 1000L,
-        userSessionId = "user-session-uuid",
-        userSessionNumber = 3L,
-        maxDurationSecs = 43200L,
-        inactivityTimeoutSecs = 1800L,
-        partIndex = 2,
-        lastActivityMs = 1000L,
-    )
+    private val userSession = testClassifiedUserSession(isBackgroundOnly = false)
+    private val backgroundOnlyUserSession = testClassifiedUserSession(isBackgroundOnly = true)
     private lateinit var populator: SessionPartSpanAttrPopulatorImpl
     private lateinit var destination: FakeTelemetryDestination
 
@@ -75,7 +68,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
 
     @Test
     fun `background-only marker stamped on session part span`() {
-        populator.populateSessionSpanStartAttrs(zygote, userSession.copy(isBackgroundOnly = true))
+        populator.populateSessionSpanStartAttrs(zygote, backgroundOnlyUserSession)
 
         val attrs = destination.attributes
         assertEquals("1", attrs[EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART])
@@ -176,4 +169,15 @@ internal class SessionPartSpanAttrPopulatorImplTest {
         )
         assertEquals(expected, attrs)
     }
+
+    private fun testClassifiedUserSession(isBackgroundOnly: Boolean) = UserSessionMetadata.Classified(
+        startTimeMs = 1000L,
+        userSessionId = "user-session-uuid",
+        userSessionNumber = 3L,
+        maxDurationSecs = 43200L,
+        inactivityTimeoutSecs = 1800L,
+        partIndex = 2,
+        lastActivityMs = 1000L,
+        isBackgroundOnly = isBackgroundOnly,
+    )
 }

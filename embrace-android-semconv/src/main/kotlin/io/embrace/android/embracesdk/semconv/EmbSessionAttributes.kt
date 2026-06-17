@@ -208,6 +208,6 @@ object EmbSessionAttributes {
          * Background user session ended because the app entered the foreground.
          */
         @ExperimentalSemconv
-        const val END_BACKGROUND_ONLY_USER_SESSION: String = "end_background_only_user_session"
+        const val BACKGROUND_ONLY_USER_SESSION_FOREGROUNDED: String = "background_only_user_session_foregrounded"
     }
 }

@@ -37,9 +37,9 @@ import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingSer
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.session.LifeEventType
-import io.embrace.android.embracesdk.internal.session.TerminatedUserSession
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
+import io.embrace.android.embracesdk.internal.session.UserSessionRestoreDecision
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionPartCacher
 import io.embrace.android.embracesdk.internal.session.id.SessionIdProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
@@ -1398,7 +1398,7 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
-    fun `userSessionTerminatedAtStartup has correct reason when a user session is not restored because would be over the max duration`() {
+    fun `userSessionRestoreDecision is terminated with max duration reason when a regular session is over max duration`() {
         val store = storeWithUserSession(userSessionId = "expired-id", isBackgroundOnly = false)
         clock.tick(maxDurationMs + 1)
         createOrchestrator(
@@ -1408,13 +1408,17 @@ internal class SessionOrchestratorTest {
         )
 
         assertEquals(
-            TerminatedUserSession("expired-id", EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED),
-            orchestrator.userSessionTerminatedAtStartup
+            UserSessionRestoreDecision.Terminated(
+                userSessionId = "expired-id",
+                backgroundOnly = false,
+                reason = EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED,
+            ),
+            orchestrator.userSessionRestoreDecision
         )
     }
 
     @Test
-    fun `userSessionTerminatedAtStartup has correct reason when a user session was not restored due to inactivity timeout`() {
+    fun `userSessionRestoreDecision is terminated with inactivity reason when a regular session is inactive`() {
         val store = storeWithUserSession(userSessionId = "inactive-id", isBackgroundOnly = false)
         clock.tick(inactivityMs + 1)
         createOrchestrator(
@@ -1424,13 +1428,37 @@ internal class SessionOrchestratorTest {
         )
 
         assertEquals(
-            TerminatedUserSession("inactive-id", EmbUserSessionTerminationReasonValues.INACTIVITY),
-            orchestrator.userSessionTerminatedAtStartup
+            UserSessionRestoreDecision.Terminated(
+                userSessionId = "inactive-id",
+                backgroundOnly = false,
+                reason = EmbUserSessionTerminationReasonValues.INACTIVITY,
+            ),
+            orchestrator.userSessionRestoreDecision
         )
     }
 
     @Test
-    fun `userSessionTerminatedAtStartup is null when the persisted session is continued`() {
+    fun `userSessionRestoreDecision is terminated and background-only when a background-only session is over max duration`() {
+        val store = storeWithUserSession(userSessionId = "bg-expired", isBackgroundOnly = true)
+        clock.tick(maxDurationMs + 1)
+        createOrchestrator(
+            startingAppState = AppState.BACKGROUND,
+            configService = backgroundEnabledConfigService(),
+            metadataStoreOverride = store,
+        )
+
+        assertEquals(
+            UserSessionRestoreDecision.Terminated(
+                userSessionId = "bg-expired",
+                backgroundOnly = true,
+                reason = EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED,
+            ),
+            orchestrator.userSessionRestoreDecision
+        )
+    }
+
+    @Test
+    fun `userSessionRestoreDecision is restored for a continued regular session`() {
         val store = storeWithUserSession(userSessionId = "live-id", isBackgroundOnly = false)
         createOrchestrator(
             startingAppState = AppState.FOREGROUND,
@@ -1439,21 +1467,40 @@ internal class SessionOrchestratorTest {
         )
 
         assertEquals("live-id", activeUserSession().userSessionId)
-        assertNull(orchestrator.userSessionTerminatedAtStartup)
+        assertEquals(
+            UserSessionRestoreDecision.Restored(userSessionId = "live-id", backgroundOnly = false),
+            orchestrator.userSessionRestoreDecision
+        )
     }
 
     @Test
-    fun `userSessionTerminatedAtStartup is null when there is no persisted session`() {
+    fun `userSessionRestoreDecision is restored and background-only for a continued background-only session`() {
+        val store = storeWithUserSession(userSessionId = "bg-live", isBackgroundOnly = true)
+        createOrchestrator(
+            startingAppState = AppState.BACKGROUND,
+            configService = backgroundEnabledConfigService(),
+            metadataStoreOverride = store,
+        )
+
+        assertEquals("bg-live", activeUserSession().userSessionId)
+        assertEquals(
+            UserSessionRestoreDecision.Restored(userSessionId = "bg-live", backgroundOnly = true),
+            orchestrator.userSessionRestoreDecision
+        )
+    }
+
+    @Test
+    fun `userSessionRestoreDecision is null when there is no persisted session`() {
         createOrchestrator(
             startingAppState = AppState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
         )
 
-        assertNull(orchestrator.userSessionTerminatedAtStartup)
+        assertNull(orchestrator.userSessionRestoreDecision)
     }
 
     @Test
-    fun `userSessionTerminatedAtStartup records correct termination reason if the current timestamp is before that of the user session`() {
+    fun `userSessionRestoreDecision is terminated with clock mismatch reason if the current timestamp is before the persisted session`() {
         val store = storeWithUserSession(userSessionId = "future-id", startTimeMs = clock.now() + 10_000L)
         createOrchestrator(
             startingAppState = AppState.FOREGROUND,
@@ -1462,8 +1509,12 @@ internal class SessionOrchestratorTest {
         )
 
         assertEquals(
-            TerminatedUserSession("future-id", EmbUserSessionTerminationReasonValues.CLOCK_MISMATCH),
-            orchestrator.userSessionTerminatedAtStartup
+            UserSessionRestoreDecision.Terminated(
+                userSessionId = "future-id",
+                backgroundOnly = false,
+                reason = EmbUserSessionTerminationReasonValues.CLOCK_MISMATCH,
+            ),
+            orchestrator.userSessionRestoreDecision
         )
     }
 

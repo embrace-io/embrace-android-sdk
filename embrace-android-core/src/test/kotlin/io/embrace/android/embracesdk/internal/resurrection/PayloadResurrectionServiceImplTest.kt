@@ -49,7 +49,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
-import io.embrace.android.embracesdk.internal.session.TerminatedUserSession
+import io.embrace.android.embracesdk.internal.session.UserSessionRestoreDecision
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.toEmbraceSpanData
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
@@ -330,7 +330,11 @@ class PayloadResurrectionServiceImplTest {
     fun `final session part marker and termination reason stamped on a resurrected snapshot whose user session ended on restore`() {
         cacheStorageService.addPayload(metadata = sessionMetadata, data = deadSessionEnvelope)
         resurrectInBackground(
-            terminatedUserSession = TerminatedUserSession(FAKE_USER_SESSION_ID, EmbUserSessionTerminationReasonValues.INACTIVITY)
+            restoreDecision = UserSessionRestoreDecision.Terminated(
+                userSessionId = FAKE_USER_SESSION_ID,
+                backgroundOnly = false,
+                reason = EmbUserSessionTerminationReasonValues.INACTIVITY,
+            )
         )
 
         val attributes = checkNotNull(getStoredParts().single().getSessionSpan()?.attributes)
@@ -355,9 +359,10 @@ class PayloadResurrectionServiceImplTest {
     fun `final session part marker and termination reason not stamped when the ended user session id does not match`() {
         cacheStorageService.addPayload(metadata = sessionMetadata, data = deadSessionEnvelope)
         resurrectInBackground(
-            terminatedUserSession = TerminatedUserSession(
-                FAKE_USER_SESSION_ID_2,
-                EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED
+            restoreDecision = UserSessionRestoreDecision.Terminated(
+                userSessionId = FAKE_USER_SESSION_ID_2,
+                backgroundOnly = false,
+                reason = EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED,
             )
         )
 
@@ -387,9 +392,10 @@ class PayloadResurrectionServiceImplTest {
             data = fakeIncompleteSessionEnvelope(sessionId = "later-part")
         )
         resurrectInBackground(
-            terminatedUserSession = TerminatedUserSession(
+            restoreDecision = UserSessionRestoreDecision.Terminated(
                 userSessionId = FAKE_USER_SESSION_ID,
-                reason = EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED
+                backgroundOnly = false,
+                reason = EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED,
             )
         )
 
@@ -404,6 +410,65 @@ class PayloadResurrectionServiceImplTest {
         val earlierAttrs = checkNotNull(parts.getValue("earlier-part").getSessionSpan()?.attributes)
         assertNull(earlierAttrs.findAttributeValue(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART))
         assertNull(earlierAttrs.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON))
+    }
+
+    @Test
+    fun `background-only marker and termination reason stamped on a resurrected part of a terminated background-only session`() {
+        cacheStorageService.addPayload(metadata = sessionMetadata, data = deadSessionEnvelope)
+        resurrectInBackground(
+            restoreDecision = UserSessionRestoreDecision.Terminated(
+                userSessionId = FAKE_USER_SESSION_ID,
+                backgroundOnly = true,
+                reason = EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED,
+            )
+        )
+
+        val attributes = checkNotNull(getStoredParts().single().getSessionSpan()?.attributes)
+        assertEquals("1", attributes.findAttributeValue(EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART))
+    }
+
+    @Test
+    fun `background-only marker stamped on a resurrected part of a restored background-only session`() {
+        cacheStorageService.addPayload(metadata = sessionMetadata, data = deadSessionEnvelope)
+        resurrectInBackground(
+            restoreDecision = UserSessionRestoreDecision.Restored(
+                userSessionId = FAKE_USER_SESSION_ID,
+                backgroundOnly = true,
+            )
+        )
+
+        val attributes = checkNotNull(getStoredParts().single().getSessionSpan()?.attributes)
+        assertEquals("1", attributes.findAttributeValue(EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART))
+        assertNull(attributes.findAttributeValue(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART))
+    }
+
+    @Test
+    fun `background-only marker not stamped when the restored session is not background-only`() {
+        cacheStorageService.addPayload(metadata = sessionMetadata, data = deadSessionEnvelope)
+        resurrectInBackground(
+            restoreDecision = UserSessionRestoreDecision.Restored(
+                userSessionId = FAKE_USER_SESSION_ID,
+                backgroundOnly = false,
+            )
+        )
+
+        val attributes = checkNotNull(getStoredParts().single().getSessionSpan()?.attributes)
+        assertNull(attributes.findAttributeValue(EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART))
+    }
+
+    @Test
+    fun `background-only marker not stamped on a part that does not match the terminated session ID`() {
+        cacheStorageService.addPayload(metadata = sessionMetadata, data = deadSessionEnvelope)
+        resurrectInBackground(
+            restoreDecision = UserSessionRestoreDecision.Terminated(
+                userSessionId = FAKE_USER_SESSION_ID_2,
+                backgroundOnly = true,
+                reason = EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED,
+            )
+        )
+
+        val attributes = checkNotNull(getStoredParts().single().getSessionSpan()?.attributes)
+        assertNull(attributes.findAttributeValue(EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART))
     }
 
     @Test
@@ -713,10 +778,10 @@ class PayloadResurrectionServiceImplTest {
      */
     private fun resurrectInBackground(
         nativeCrashServiceProvider: () -> NativeCrashService? = { nativeCrashService },
-        terminatedUserSession: TerminatedUserSession? = null,
+        restoreDecision: UserSessionRestoreDecision? = null,
     ) {
         val thread = Thread {
-            resurrectionService.resurrectOldPayloads(nativeCrashServiceProvider, { terminatedUserSession })
+            resurrectionService.resurrectOldPayloads(nativeCrashServiceProvider, { restoreDecision })
         }
         thread.start()
         thread.join(5000)

@@ -20,10 +20,10 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
-import io.embrace.android.embracesdk.internal.session.TerminatedUserSession
 import io.embrace.android.embracesdk.internal.session.UserSessionListener
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
+import io.embrace.android.embracesdk.internal.session.UserSessionRestoreDecision
 import io.embrace.android.embracesdk.internal.session.UserSessionState
 import io.embrace.android.embracesdk.internal.session.UserSessionState.Active
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
@@ -82,7 +82,7 @@ internal class SessionOrchestratorImpl(
     private var backgroundStartupWindowTimerState: SessionTimerState? = null
 
     @Volatile
-    override var userSessionTerminatedAtStartup: TerminatedUserSession? = null
+    override var userSessionRestoreDecision: UserSessionRestoreDecision? = null
         private set
 
     init {
@@ -114,21 +114,20 @@ internal class SessionOrchestratorImpl(
                             )
                         )
                         metadataStore.clear()
-                        userSessionTerminatedAtStartup = TerminatedUserSession(
-                            userSessionId = stored.userSessionId,
-                            reason = EmbUserSessionTerminationReasonValues.CLOCK_MISMATCH
-                        )
+                        userSessionRestoreDecision = stored.toTerminatedDecision(EmbUserSessionTerminationReasonValues.CLOCK_MISMATCH)
                         UserSessionState.NoActiveSession
                     }
 
                     // Continue a background-only user session if it won't extend it beyond its max duration
                     // Don't set any expiry timers those aren't applicable when the user isn't considered active
                     stored.isBackgroundOnly && !overMaxDuration -> {
+                        userSessionRestoreDecision = stored.toRestoredDecision()
                         Active(stored)
                     }
 
                     // Continue a user session if it won't extend it beyond its max duration and is within its inactivity grace period
                     !stored.isBackgroundOnly && !overMaxDuration && !inactive -> {
+                        userSessionRestoreDecision = stored.toRestoredDecision()
                         scheduleMaxDurationTimeout(stored)
                         Active(stored)
                     }
@@ -136,9 +135,8 @@ internal class SessionOrchestratorImpl(
                     else -> {
                         // A stored session that isn't being continued ended in the dead process - record the matching reason so
                         // resurrection can stamp its final part as terminated.
-                        userSessionTerminatedAtStartup = TerminatedUserSession(
-                            userSessionId = stored.userSessionId,
-                            reason = if (overMaxDuration) {
+                        userSessionRestoreDecision = stored.toTerminatedDecision(
+                            if (overMaxDuration) {
                                 EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED
                             } else {
                                 EmbUserSessionTerminationReasonValues.INACTIVITY
@@ -152,6 +150,12 @@ internal class SessionOrchestratorImpl(
             }
         }
     }
+
+    private fun UserSessionMetadata.Classified.toRestoredDecision(): UserSessionRestoreDecision.Restored =
+        UserSessionRestoreDecision.Restored(userSessionId = userSessionId, backgroundOnly = isBackgroundOnly)
+
+    private fun UserSessionMetadata.Classified.toTerminatedDecision(reason: String): UserSessionRestoreDecision.Terminated =
+        UserSessionRestoreDecision.Terminated(userSessionId = userSessionId, backgroundOnly = isBackgroundOnly, reason = reason)
 
     private fun createInitialSessionPart() {
         val timestamp = clock.now()

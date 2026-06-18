@@ -20,7 +20,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCr
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionService
-import io.embrace.android.embracesdk.internal.session.TerminatedUserSession
+import io.embrace.android.embracesdk.internal.session.UserSessionRestoreDecision
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSnapshotType
 import io.embrace.android.embracesdk.internal.utils.Provider
 
@@ -60,7 +60,7 @@ private class FakePayloadResurrectionService : PayloadResurrectionService {
 
     override fun resurrectOldPayloads(
         nativeCrashServiceProvider: Provider<NativeCrashService?>,
-        terminatedUserSessionProvider: Provider<TerminatedUserSession?>,
+        userSessionRestoreDecisionProvider: Provider<UserSessionRestoreDecision?>,
     ) {
         resurrectCount++
         completionListeners.forEach { it() }

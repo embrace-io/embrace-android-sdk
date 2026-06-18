@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.resurrection
 
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashService
-import io.embrace.android.embracesdk.internal.session.TerminatedUserSession
+import io.embrace.android.embracesdk.internal.session.UserSessionRestoreDecision
 import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
@@ -22,12 +22,11 @@ interface PayloadResurrectionService {
      * Resurrects any payloads that were cached in a previous process & sends them to the
      * [IntakeService].
      *
-     * [terminatedUserSessionProvider] provides information about the user session that was not continued when this process
-     * starts so that if a session part payload from it were to be resurrected, the SDK can stamp it with the reason the user session
-     * was terminated and the fact that it was the last session part.
+     * [userSessionRestoreDecisionProvider] provides this SDK instance's decision about whether to continue the persisted user session
+     * at startup or terminate it implicitly. The provider returning null implies that there was no persisted user session at startup.
      */
     fun resurrectOldPayloads(
         nativeCrashServiceProvider: Provider<NativeCrashService?>,
-        terminatedUserSessionProvider: Provider<TerminatedUserSession?> = { null },
+        userSessionRestoreDecisionProvider: Provider<UserSessionRestoreDecision?> = { null },
     )
 }

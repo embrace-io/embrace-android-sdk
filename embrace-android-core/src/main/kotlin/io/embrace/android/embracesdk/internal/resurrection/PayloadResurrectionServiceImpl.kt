@@ -26,7 +26,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.serialization.fromJson
-import io.embrace.android.embracesdk.internal.session.TerminatedUserSession
+import io.embrace.android.embracesdk.internal.session.UserSessionRestoreDecision
 import io.embrace.android.embracesdk.internal.session.getSessionId
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.session.getUserSessionProperties
@@ -58,10 +58,10 @@ internal class PayloadResurrectionServiceImpl(
 
     override fun resurrectOldPayloads(
         nativeCrashServiceProvider: Provider<NativeCrashService?>,
-        terminatedUserSessionProvider: Provider<TerminatedUserSession?>,
+        userSessionRestoreDecisionProvider: Provider<UserSessionRestoreDecision?>,
     ) {
         runCatching {
-            processTombstones(nativeCrashServiceProvider, terminatedUserSessionProvider())
+            processTombstones(nativeCrashServiceProvider, userSessionRestoreDecisionProvider())
         }.onFailure {
             logger.trackInternalError(InternalErrorType.PayloadResurrectionFail, it)
         }
@@ -76,7 +76,7 @@ internal class PayloadResurrectionServiceImpl(
 
     private fun processTombstones(
         nativeCrashServiceProvider: Provider<NativeCrashService?>,
-        terminatedUserSession: TerminatedUserSession?,
+        restoreDecision: UserSessionRestoreDecision?,
     ) {
         val nativeCrashService = nativeCrashServiceProvider()
         val undeliveredPayloads = cacheStorageService.getUndeliveredPayloads()
@@ -88,15 +88,27 @@ internal class PayloadResurrectionServiceImpl(
         // delete duplicate cached payloads as the surviving copy has already been stored in payloadStorageService
         redundantPayloads.forEach { cacheStorageService.delete(it) }
 
-        val lastPartForTerminatedUserSession = lastSessionPartForUserSession(payloadsToResurrect, terminatedUserSession)
+        // Only a terminated session has a final part to stamp
+        val terminatedUserSession = restoreDecision as? UserSessionRestoreDecision.Terminated
+        val lastPartForTerminatedUserSession = if (terminatedUserSession != null) {
+            lastSessionPartForUserSession(payloadsToResurrect, terminatedUserSession.userSessionId)
+        } else {
+            null
+        }
         payloadsToResurrect.forEach { payload ->
-            val userSessionTerminationReason = terminatedUserSession?.reason?.takeIf { payload == lastPartForTerminatedUserSession }
+            val userSessionTerminationReason = if (lastPartForTerminatedUserSession != null) {
+                terminatedUserSession?.reason?.takeIf { payload == lastPartForTerminatedUserSession }
+            } else {
+                null
+            }
+
             runCatching {
                 payload.processUndeliveredPayload(
                     nativeCrashService = nativeCrashService,
                     nativeCrashProvider = nativeCrashes::get,
                     postNativeCrashProcessingCallback = processedCrashes::add,
                     userSessionTerminationReason = userSessionTerminationReason,
+                    isBackgroundOnly = restoreDecision?.takeIf { it.userSessionId == payload.userSessionId }?.backgroundOnly == true,
                 )
             }.onFailure {
                 logger.trackInternalError(
@@ -186,17 +198,16 @@ internal class PayloadResurrectionServiceImpl(
     private fun StoredTelemetryMetadata.isCrashEnvelope() = envelopeType == SupportedEnvelopeType.CRASH
 
     /**
-     * The last session part of [terminatedUserSession] among the resurrected payloads (the in-flight part at death, i.e. the latest
-     * snapshot by timestamp), or null if there is no terminated session. Only this part should be stamped final; any earlier part of
-     * the same session stays unstamped.
+     * The last session part of the user session with ID [terminatedUserSessionId] among the resurrected payloads, or null if there is
+     * no session part from this terminated user session.
      */
     private fun lastSessionPartForUserSession(
         payloads: List<StoredTelemetryMetadata>,
-        terminatedUserSession: TerminatedUserSession?,
-    ): StoredTelemetryMetadata? = terminatedUserSession?.let { terminated ->
+        terminatedUserSessionId: String,
+    ): StoredTelemetryMetadata? = terminatedUserSessionId?.let {
         payloads
-            .filter { it.envelopeType == SupportedEnvelopeType.SESSION && it.userSessionId == terminated.userSessionId }
-            .maxByOrNull { it.timestamp }
+            .filter { payload -> payload.envelopeType == SupportedEnvelopeType.SESSION && payload.userSessionId == terminatedUserSessionId }
+            .maxByOrNull { payload -> payload.timestamp }
     }
 
     /**
@@ -262,6 +273,7 @@ internal class PayloadResurrectionServiceImpl(
         nativeCrashProvider: (String) -> NativeCrashData?,
         postNativeCrashProcessingCallback: (NativeCrashData) -> Unit,
         userSessionTerminationReason: String?,
+        isBackgroundOnly: Boolean,
     ) {
         val resurrectedPayload = when (envelopeType) {
             SupportedEnvelopeType.SESSION -> {
@@ -272,6 +284,7 @@ internal class PayloadResurrectionServiceImpl(
                         nativeCrashProvider,
                         postNativeCrashProcessingCallback,
                         userSessionTerminationReason,
+                        isBackgroundOnly,
                     )
                 }
             }
@@ -300,6 +313,7 @@ internal class PayloadResurrectionServiceImpl(
         nativeCrashProvider: (String) -> NativeCrashData?,
         postNativeCrashProcessingCallback: (NativeCrashData) -> Unit,
         userSessionTerminationReason: String?,
+        isBackgroundOnly: Boolean,
     ): Envelope<SessionPartPayload> {
         val deadPart = serializer.fromJson<Envelope<SessionPartPayload>>(payloadStream)
 
@@ -338,10 +352,13 @@ internal class PayloadResurrectionServiceImpl(
             null
         }
 
-        return deadPart.resurrectSession(nativeCrash, userSessionTerminationReason)
-            ?: throw IllegalArgumentException(
-                "Session resurrection failed. Payload does not contain exactly one session span."
-            )
+        return deadPart.resurrectSession(
+            nativeCrashData = nativeCrash,
+            userSessionTerminationReason = userSessionTerminationReason,
+            isBackgroundOnly = isBackgroundOnly
+        ) ?: throw IllegalArgumentException(
+            "Session resurrection failed. Payload does not contain exactly one session span."
+        )
     }
 
     /**
@@ -351,6 +368,7 @@ internal class PayloadResurrectionServiceImpl(
     private fun Envelope<SessionPartPayload>.resurrectSession(
         nativeCrashData: NativeCrashData?,
         userSessionTerminationReason: String?,
+        isBackgroundOnly: Boolean,
     ): Envelope<SessionPartPayload>? {
         val completedSpanIds = data.spans?.map { it.spanId }?.toSet() ?: emptySet()
         val failedSpans = data.spanSnapshots
@@ -361,6 +379,9 @@ internal class PayloadResurrectionServiceImpl(
         val sessionSpan = completedSpans.singleOrNull { it.hasEmbraceAttribute(EmbType.Ux.Session) } ?: return null
 
         val attributesToAttach = buildList {
+            if (isBackgroundOnly) {
+                addAll(sessionSpan.backgroundOnlyAttributes())
+            }
             if (userSessionTerminationReason != null) {
                 addAll(sessionSpan.finalSessionPartAttributes(userSessionTerminationReason))
             }
@@ -383,6 +404,16 @@ internal class PayloadResurrectionServiceImpl(
             )
         )
     }
+
+    /**
+     * Attribute marking this session part as belonging to a background-only user session.
+     */
+    private fun Span.backgroundOnlyAttributes(): List<Attribute> =
+        if (attributes?.hasEmbraceAttributeKey(EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART) == false) {
+            listOf(Attribute(EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART, "1"))
+        } else {
+            emptyList()
+        }
 
     /**
      * Attributes marking this session part as the final one of a terminated user session, or empty if it is already marked final.

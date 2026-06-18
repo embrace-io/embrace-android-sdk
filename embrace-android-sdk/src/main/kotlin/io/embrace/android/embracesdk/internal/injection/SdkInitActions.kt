@@ -138,8 +138,8 @@ internal fun ModuleGraph.triggerPayloadSend() {
                 nativeCrashServiceProvider = {
                     instrumentationModule.instrumentationRegistry.findByType(NativeCrashDataSource::class)
                 },
-                terminatedUserSessionProvider = {
-                    userSessionOrchestrationModule.sessionOrchestrator.userSessionTerminatedAtStartup
+                userSessionRestoreDecisionProvider = {
+                    userSessionOrchestrationModule.sessionOrchestrator.userSessionRestoreDecision
                 }
             )
             resurrectionAttempted = true

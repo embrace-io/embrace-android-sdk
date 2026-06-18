@@ -44,7 +44,8 @@ class IntakeServiceImpl(
     // that is being ended by the JVM crash. In the case of the former, we process it normally. In the case of the latter,
     // we process it on the current thread (which should be the main thread) because we know it's going to crash anyway, and we
     // want to ensure that it is successfully persisted.
-    private val crashingProcessingIdentifier = AtomicReference<String?>(null)
+    @Volatile
+    private var crashingProcessingIdentifier: String? = null
 
     override fun shutdown() {
         worker.shutdownAndWait(shutdownTimeoutMs)
@@ -59,7 +60,7 @@ class IntakeServiceImpl(
 
         if (metadata.isCrashTerminatingProcess() && metadata.complete) {
             if (state.compareAndSet(State.ACTIVE, State.CRASH_RECEIVED)) {
-                crashingProcessingIdentifier.set(metadata.processIdentifier)
+                crashingProcessingIdentifier = metadata.processIdentifier
                 schedulingService.shutdown()
                 // non-blocking shutdown: reject subsequent submissions but defer the drain to
                 // payloadStore.handleCrash's later intakeService.shutdown() call
@@ -170,7 +171,7 @@ class IntakeServiceImpl(
      * Returns true if the metadata is for a session part payload for the current process that is crashing.
      */
     private fun StoredTelemetryMetadata.isCrashingPartForCurrentProcess(): Boolean =
-        envelopeType == SESSION && complete && processIdentifier == crashingProcessingIdentifier.get()
+        envelopeType == SESSION && complete && processIdentifier == crashingProcessingIdentifier
 
     private enum class State {
         ACTIVE,

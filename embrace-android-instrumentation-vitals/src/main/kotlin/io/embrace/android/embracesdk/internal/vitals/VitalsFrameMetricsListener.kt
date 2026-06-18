@@ -4,7 +4,6 @@ import android.os.Build
 import android.view.FrameMetrics
 import android.view.Window
 import androidx.annotation.RequiresApi
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 
 /**
  * Forwards each frame's `(vsyncNanos, jankNanos)` to the [FocalInteractionCallbacks], on the Vitals handler thread.
@@ -13,7 +12,6 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 @RequiresApi(Build.VERSION_CODES.N)
 internal class VitalsFrameMetricsListener(
     private val focalCallbacks: FocalInteractionCallbacks,
-    private val logger: InternalLogger,
     private val frameMetricsStrategy: FrameMetricsStrategy,
 ) : Window.OnFrameMetricsAvailableListener {
 
@@ -26,8 +24,7 @@ internal class VitalsFrameMetricsListener(
             val vsyncNanos = frameMetricsStrategy.vsyncNanos(frameMetrics)
             val jankNanos = frameMetricsStrategy.jankNanos(frameMetrics)
             focalCallbacks.onFrame(vsyncNanos, jankNanos)
-        } catch (e: Throwable) {
-            logger.logError("Failed to process frame metrics", e)
+        } catch (_: Throwable) {
         }
     }
 }

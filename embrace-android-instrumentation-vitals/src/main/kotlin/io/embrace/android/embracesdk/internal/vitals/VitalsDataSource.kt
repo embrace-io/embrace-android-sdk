@@ -109,15 +109,12 @@ internal class VitalsDataSource(
     }
 
     internal fun displayRefreshIntervalNanos(): Long {
-        val refreshRate = try {
+        val refreshRate = runCatching {
             args.systemService<DisplayManager>(Context.DISPLAY_SERVICE)
                 ?.getDisplay(Display.DEFAULT_DISPLAY)
                 ?.refreshRate
                 ?: NORMALIZED_REFRESH_RATE
-        } catch (e: Throwable) {
-            logger.logError("Failed to read display refresh rate; defaulting to 60Hz", e)
-            NORMALIZED_REFRESH_RATE
-        }
+        }.getOrDefault(NORMALIZED_REFRESH_RATE)
         val rate = if (refreshRate > 0f) refreshRate else NORMALIZED_REFRESH_RATE
         return (NANOS_PER_SECOND / rate).toLong()
     }

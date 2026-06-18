@@ -18,6 +18,7 @@ class AutoDataCaptureBehaviorImpl(
         const val UI_LOAD_REMOTE_ENABLED_DEFAULT = true
         const val STATE_CAPTURE_ENABLED_DEFAULT = true
         const val NAVIGATION_STATE_CAPTURE_ENABLED_DEFAULT = true
+        const val SMOOTHNESS_CAPTURE_ENABLED_DEFAULT = false
     }
 
     private val local = local.enabledFeatures
@@ -56,4 +57,7 @@ class AutoDataCaptureBehaviorImpl(
 
     override fun isNavigationStateCaptureEnabled(): Boolean =
         thresholdCheck.isBehaviorEnabled(remote?.pctNavigationStateCaptureEnabled) ?: NAVIGATION_STATE_CAPTURE_ENABLED_DEFAULT
+
+    override fun isSmoothnessCaptureEnabled(): Boolean =
+        thresholdCheck.isBehaviorEnabled(remote?.pctSmoothnessEnabled) ?: SMOOTHNESS_CAPTURE_ENABLED_DEFAULT
 }

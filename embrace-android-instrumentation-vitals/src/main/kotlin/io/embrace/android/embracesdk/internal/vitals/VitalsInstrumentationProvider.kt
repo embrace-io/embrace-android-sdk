@@ -16,7 +16,7 @@ class VitalsInstrumentationProvider : InstrumentationProvider {
         }
         return DataSourceState(
             factory = { VitalsDataSource(args) },
-            configGate = { true },
+            configGate = { args.configService.autoDataCaptureBehavior.isSmoothnessCaptureEnabled() },
         )
     }
 }

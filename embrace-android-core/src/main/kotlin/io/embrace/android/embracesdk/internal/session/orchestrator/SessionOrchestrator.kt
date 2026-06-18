@@ -37,3 +37,8 @@ interface SessionOrchestrator : AppStateListener, CrashTeardownHandler {
      */
     fun addUserSessionListener(listener: UserSessionListener)
 }
+
+/**
+ * How long after SDK init do we classify a user session if it has not already been classified by an app launch.
+ */
+internal const val BACKGROUND_STARTUP_WINDOW_MS = 5_000L

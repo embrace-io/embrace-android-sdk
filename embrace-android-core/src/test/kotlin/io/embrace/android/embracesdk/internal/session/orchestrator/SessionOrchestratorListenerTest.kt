@@ -27,6 +27,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
+import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.capture.session.PropertyScope
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
@@ -71,6 +72,7 @@ internal class SessionOrchestratorListenerTest {
     private lateinit var instrumentationRegistry: InstrumentationRegistry
     private lateinit var fakeDataSource: FakeDataSource
     private lateinit var logger: FakeInternalLogger
+    private lateinit var startupClassifier: StartupClassifierImpl
     private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
     private lateinit var destination: FakeTelemetryDestination
     private var orchestratorStartTimeMs: Long = 0
@@ -82,6 +84,7 @@ internal class SessionOrchestratorListenerTest {
     fun setUp() {
         clock = FakeClock()
         logger = FakeInternalLogger(throwOnInternalError = false)
+        startupClassifier = StartupClassifierImpl()
         configService = FakeConfigService(
             backgroundActivityBehavior = createBackgroundActivityBehavior(
                 remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
@@ -107,11 +110,14 @@ internal class SessionOrchestratorListenerTest {
         orchestrator.onForeground()
         assertEquals(2, events.size)
 
-        // past max duration — new user session
+        // exceeds duration - new background-only user session active
         clock.tick(maxDurationMs + 1)
         orchestrator.onBackground()
-        orchestrator.onForeground()
         assertEquals(3, events.size)
+
+        // foregrounding ends background-only session
+        orchestrator.onForeground()
+        assertEquals(4, events.size)
     }
 
     @Test
@@ -144,11 +150,14 @@ internal class SessionOrchestratorListenerTest {
         orchestrator.onForeground()
         assertEquals(1, events.size)
 
-        // past max duration — old session terminates
+        // exceeds max duration - background will end existing user session
         clock.tick(maxDurationMs + 1)
         orchestrator.onBackground()
-        orchestrator.onForeground()
         assertEquals(2, events.size)
+
+        // foregrounding after a period when a user session has ended will result in the ending of the background-only one that was started
+        orchestrator.onForeground()
+        assertEquals(3, events.size)
     }
 
     @Test
@@ -212,9 +221,29 @@ internal class SessionOrchestratorListenerTest {
         assertTrue(logger.internalErrorMessages.any { it.msg == InternalErrorType.UserSessionCallbackFail.toString() })
     }
 
+    @Test
+    fun `registering a listener from within a listener callback does not deadlock`() {
+        configService = sessionBehaviorConfig()
+        createOrchestrator(AppState.FOREGROUND)
+
+        val innerEvents = mutableListOf<SessionStateEvent>()
+        var innerRegistered = false
+        orchestrator.addUserSessionListener {
+            if (!innerRegistered) {
+                innerRegistered = true
+                orchestrator.addUserSessionListener { event ->
+                    innerEvents.add(event)
+                }
+            }
+        }
+
+        assertTrue(innerRegistered)
+        assertEquals(listOf(SessionStateEvent.UserSessionActive::class), innerEvents.map { it::class })
+    }
+
     private fun restoredMetadataStore() = UserSessionMetadataStore(FakeKeyValueStore()).also { store ->
         store.save(
-            UserSessionMetadata(
+            UserSessionMetadata.Classified(
                 startTimeMs = clock.now(),
                 userSessionId = "restored-id",
                 userSessionNumber = 7L,
@@ -222,6 +251,7 @@ internal class SessionOrchestratorListenerTest {
                 inactivityTimeoutSecs = TimeUnit.MILLISECONDS.toSeconds(inactivityMs),
                 partIndex = 1,
                 lastActivityMs = clock.now(),
+                isBackgroundOnly = false,
             )
         )
     }
@@ -321,6 +351,7 @@ internal class SessionOrchestratorListenerTest {
             logger,
             fakeBackgroundWorker(),
             TestUuidSource(),
+            startupClassifier,
         ).apply {
             start()
         }

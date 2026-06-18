@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.config.remote
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class OtelKotlinSdkConfig(
-    @Json(name = "pct_enabled")
+    @SerialName("pct_enabled")
     val pctEnabled: Float? = null,
 )

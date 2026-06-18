@@ -23,7 +23,7 @@ import java.io.InputStream
 import java.util.zip.GZIPInputStream
 
 class OkHttpRequestExecutionService(
-    private val okHttpClient: OkHttpClient,
+    private val okHttpClient: Lazy<OkHttpClient>,
     private val coreBaseUrl: String,
     private val lazyDeviceId: Lazy<String>,
     private val appId: String,
@@ -50,7 +50,7 @@ class OkHttpRequestExecutionService(
 
         var executionError: Throwable? = null
         val httpCallResponse = try {
-            okHttpClient.newCall(request).execute()
+            okHttpClient.value.newCall(request).execute()
         } catch (throwable: Throwable) {
             // IOExceptions are expected during the execution of a network request is expected, so don't log errors
             // for those. But any unexpected error should be logged.

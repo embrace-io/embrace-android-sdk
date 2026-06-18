@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.config.source
 
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.serialization.fromJson
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -10,7 +11,7 @@ import okio.buffer
 import java.io.IOException
 
 internal class OkHttpRemoteConfigSource(
-    private val okhttpClient: OkHttpClient,
+    private val okhttpClient: Lazy<OkHttpClient>,
     private val serializer: PlatformSerializer,
     private val configEndpoint: ConfigEndpoint,
 ) : RemoteConfigSource {
@@ -29,7 +30,7 @@ internal class OkHttpRemoteConfigSource(
 
     private fun fetchConfigImpl(): ConfigHttpResponse? {
         val request = prepareRequest()
-        val call = okhttpClient.newCall(request)
+        val call = okhttpClient.value.newCall(request)
         val response = call.execute()
         return processResponse(response)
     }
@@ -56,7 +57,7 @@ internal class OkHttpRemoteConfigSource(
         val cfg = response.body?.source()?.use { src ->
             val gzipSource = GzipSource(src)
             gzipSource.buffer().inputStream().use {
-                serializer.fromJson(it, RemoteConfig::class.java)
+                serializer.fromJson<RemoteConfig>(it)
             }
         }
         return ConfigHttpResponse(cfg, etag)

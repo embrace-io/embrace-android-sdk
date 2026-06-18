@@ -72,6 +72,7 @@ class UserSessionOrchestrationModuleImpl(
             initModule.logger,
             workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
             initModule.uuidSource,
+            initModule.startupClassifier,
         )
     }
 }

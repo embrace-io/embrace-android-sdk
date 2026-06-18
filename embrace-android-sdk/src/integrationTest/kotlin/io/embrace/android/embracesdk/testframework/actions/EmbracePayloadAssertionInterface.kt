@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
-import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -20,6 +19,8 @@ import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.serialization.fromJson
+import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -38,8 +39,6 @@ import java.io.File
 import java.io.IOException
 import java.util.Locale
 import java.util.concurrent.TimeoutException
-import kotlin.reflect.javaType
-import kotlin.reflect.typeOf
 
 /**
  * Provides assertions that can be used in integration tests to validate the behavior of the SDK,
@@ -65,19 +64,31 @@ internal class EmbracePayloadAssertionInterface(
      * Returns the list of log payload envelopes that have been sent. If [expectedSize] is specified,
      * it will wait a maximum of 1 second for the number of payloads that exist to equal
      * to that before returning, timing out if it doesn't.
+     *
+     * Set [logsOrderedByTimestamp] to false if the logs in each payload envelope are all after or equal to all the logs
+     * in the previously delivered payload. This is true in most cases, so we can use the log timestamps as a proxy for
+     * the delivery order. But in some instances, where a payload contains log with order timestamps, this proxy
+     * relationship no longer holds
      */
-    internal fun getLogEnvelopes(expectedSize: Int) = retrieveLogEnvelopes(expectedSize)
+    internal fun getLogEnvelopes(
+        expectedSize: Int,
+        logsOrderedByTimestamp: Boolean = true
+    ) = retrieveLogEnvelopes(expectedSize, logsOrderedByTimestamp)
+
     internal fun getSingleLogEnvelope() = getLogEnvelopes(1).single()
 
     private fun retrieveLogEnvelopes(
         expectedSize: Int,
+        logsOrderedByTimestamp: Boolean,
     ): List<Envelope<LogPayload>> {
         val supplier = { checkNotNull(apiServer).getLogEnvelopes() }
         try {
             val envelopes = retrievePayload(expectedSize = expectedSize, supplier = supplier)
-            val envelopesByType = envelopes.groupBy { it.type ?: "" }
-            envelopesByType.forEach {
-                assertLogsDeliveredInOrder(it.value)
+            if (logsOrderedByTimestamp) {
+                val envelopesByType = envelopes.groupBy { it.type ?: "" }
+                envelopesByType.forEach {
+                    assertLogsDeliveredInOrder(it.value)
+                }
             }
             return envelopes
         } catch (exc: TimeoutException) {
@@ -205,7 +216,7 @@ internal class EmbracePayloadAssertionInterface(
     private fun readRemoteConfigFile(file: File): RemoteConfig {
         try {
             return file.inputStream().buffered().use {
-                serializer.fromJson(it, RemoteConfig::class.java)
+                serializer.fromJson<RemoteConfig>(it)
             }
         } catch (exc: Throwable) {
             throw IllegalStateException("Failed to read remote config file.", exc)
@@ -245,10 +256,7 @@ internal class EmbracePayloadAssertionInterface(
         assertEquals("ERROR", log.severityText)
         assertEquals("", log.body)
 
-        val symbols = serializer.toJson(
-            symbolMap,
-            TypeUtils.typedMap(String::class.java, String::class.java)
-        )
+        val symbols = serializer.toJson(symbolMap)
         assertEquals(crashData.nativeCrash.timestamp, log.timeUnixNano?.nanosToMillis())
 
         val attrs = checkNotNull(log.attributes)
@@ -316,10 +324,7 @@ internal class EmbracePayloadAssertionInterface(
         placeholders: Map<Placeholder, String> = emptyMap(),
     ) {
         try {
-            val observedJson = serializer.toJson(
-                payload,
-                typeOf<T>().javaType
-            )
+            val observedJson = serializer.toJson(payload)
             val expectedJson = placeholders.entries.fold(
                 ResourceReader.readResourceAsText(goldenFileName)
             ) { json, (placeholder, value) ->

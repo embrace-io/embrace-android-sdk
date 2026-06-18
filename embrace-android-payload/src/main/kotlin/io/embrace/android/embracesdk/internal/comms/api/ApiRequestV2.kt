@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.comms.api
 
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class ApiRequestV2(
     val contentType: String = "application/json",
     val userAgent: String,

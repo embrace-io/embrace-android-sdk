@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal.payload
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 class JsException(
-    @Json(name = "n") var name: String?,
-    @Json(name = "m") var message: String?,
-    @Json(name = "t") var type: String?,
-    @Json(name = "st") var stacktrace: String?,
+    @SerialName("n") var name: String?,
+    @SerialName("m") var message: String?,
+    @SerialName("t") var type: String?,
+    @SerialName("st") var stacktrace: String?,
 )

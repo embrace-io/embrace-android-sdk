@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.serialization.fromJson
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import java.io.File
 import java.io.FileNotFoundException
@@ -52,7 +53,7 @@ internal class NativeCrashProcessorImpl(
             try {
                 val crashReport = delegate.getCrashReport(crashFile.path)
                 if (crashReport != null) {
-                    serializer.fromJson(crashReport, NativeCrashData::class.java).apply {
+                    serializer.fromJson<NativeCrashData>(crashReport).apply {
                         this.symbols = symbolMap
                     }
                 } else {

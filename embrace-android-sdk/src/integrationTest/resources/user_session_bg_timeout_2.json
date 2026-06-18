@@ -110,11 +110,11 @@
     },
     {
       "key": "emb.user_session_part_index",
-      "value": "1"
+      "value": "2"
     },
     {
       "key": "emb.user_session_start_ts",
-      "value": "169220160010"
+      "value": "169220160000"
     },
     {
       "key": "session.id",

@@ -1,9 +1,8 @@
 package io.embrace.android.embracesdk.internal.payload
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
-import com.squareup.moshi.Types
-import java.lang.reflect.ParameterizedType
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 /**
  * Envelope used for Embrace API requests for different types of data:
@@ -13,29 +12,30 @@ import java.lang.reflect.ParameterizedType
  * - CrashPayload
  * - NetworkCapturePayload
  */
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Envelope<T>(
-    @Json(name = "resource")
+    @SerialName("resource")
     val resource: EnvelopeResource? = null,
 
-    @Json(name = "metadata")
+    @SerialName("metadata")
     val metadata: EnvelopeMetadata? = null,
 
-    @Json(name = "version")
+    @SerialName("version")
     val version: String? = null,
 
-    @Json(name = "type")
+    @SerialName("type")
     val type: String? = null,
 
-    @Json(name = "data")
+    @SerialName("data")
     val data: T,
 ) {
 
     companion object {
-        val sessionEnvelopeType: ParameterizedType =
-            Types.newParameterizedType(Envelope::class.java, SessionPartPayload::class.java)
-        val logEnvelopeType: ParameterizedType =
-            Types.newParameterizedType(Envelope::class.java, LogPayload::class.java)
+        val sessionEnvelopeSerializer: KSerializer<Envelope<SessionPartPayload>> =
+            serializer(SessionPartPayload.serializer())
+
+        val logEnvelopeSerializer: KSerializer<Envelope<LogPayload>> =
+            serializer(LogPayload.serializer())
 
         fun LogPayload.createLogEnvelope(resource: EnvelopeResource, metadata: EnvelopeMetadata) =
             Envelope(

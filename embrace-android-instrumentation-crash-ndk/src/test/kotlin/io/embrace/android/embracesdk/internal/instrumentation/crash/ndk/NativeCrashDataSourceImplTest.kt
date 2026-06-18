@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashException
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashSymbols
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
+import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -72,7 +73,7 @@ internal class NativeCrashDataSourceImplTest {
             )
             assertEquals("1", attributes[EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER])
             assertEquals(testNativeCrashData.crash, attributes[embNativeCrashException])
-            val json = args.serializer.toJson(testNativeCrashData.symbols, Map::class.java)
+            val json = args.serializer.toJson(testNativeCrashData.symbols)
             assertEquals(
                 json.toByteArray().toUTF8String(),
                 attributes[embNativeCrashSymbols]

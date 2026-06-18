@@ -3,8 +3,12 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.SessionStateEvent
+import io.embrace.android.embracesdk.SessionStateEvent.UserSessionActive
+import io.embrace.android.embracesdk.SessionStateEvent.UserSessionEnded
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifier
+import io.embrace.android.embracesdk.internal.arch.startup.StartupType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -20,6 +24,7 @@ import io.embrace.android.embracesdk.internal.session.UserSessionListener
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
 import io.embrace.android.embracesdk.internal.session.UserSessionState
+import io.embrace.android.embracesdk.internal.session.UserSessionState.Active
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.store.Ordinal
@@ -51,17 +56,17 @@ internal class SessionOrchestratorImpl(
     private val logger: InternalLogger,
     private val backgroundWorker: BackgroundWorker,
     private val uuidSource: UuidSource,
+    private val startupClassifier: StartupClassifier,
 ) : SessionOrchestrator {
 
     /**
      * Tracks whether the foreground phase comes from a cold start or not.
      */
-    @Volatile
     private var coldStart = true
-
     private val lock = Any()
     private val userSessionListeners = CopyOnWriteArrayList<UserSessionListener>()
 
+    @Volatile
     private var state = appStateTracker.getAppState()
 
     @Volatile
@@ -70,11 +75,9 @@ internal class SessionOrchestratorImpl(
     @Volatile
     private var lastManualEndMs: Long? = null
 
-    @Volatile
     private var inactivityTimerState: SessionTimerState? = null
-
-    @Volatile
     private var maxDurationTimerState: SessionTimerState? = null
+    private var backgroundStartupWindowTimerState: SessionTimerState? = null
 
     init {
         loadPersistedUserSession()
@@ -92,6 +95,7 @@ internal class SessionOrchestratorImpl(
             try {
                 val stored = metadataStore.load()
                 userSessionState = when {
+                    // Current timestamp not congruent with stored user session's timestamp, so clear the cache
                     stored != null && clock.now() < stored.startTimeMs -> {
                         logger.trackInternalError(
                             InternalErrorType.ClockBackwardsShift,
@@ -103,9 +107,16 @@ internal class SessionOrchestratorImpl(
                         UserSessionState.NoActiveSession
                     }
 
-                    stored != null && !stored.isOverMaxDuration(clock) && !stored.isInactive(clock) -> {
+                    // Continue a background-only user session if it won't extend it beyond its max duration
+                    // Don't set any expiry timers those aren't applicable when the user isn't considered active
+                    stored != null && stored.isBackgroundOnly && !stored.isOverMaxDuration(clock) -> {
+                        Active(stored)
+                    }
+
+                    // Continue a user session if it won't extend it beyond its max duration and is within its inactivity grace period
+                    stored != null && !stored.isBackgroundOnly && !stored.isOverMaxDuration(clock) && !stored.isInactive(clock) -> {
                         scheduleMaxDurationTimeout(stored)
-                        UserSessionState.Active(stored)
+                        Active(stored)
                     }
 
                     else -> UserSessionState.NoActiveSession
@@ -134,42 +145,45 @@ internal class SessionOrchestratorImpl(
     }
 
     override fun onForeground() {
-        val transitionType = synchronized(lock) {
+        // Hold the lock as we cancel the inactivity timer and determine the transition type. The lock would be acquired in
+        // transitionState() anyway so we're just hanging on to it for the entire duration instead of dropping and reacquiring it again.
+        synchronized(lock) {
             inactivityTimerState?.cancel()
             inactivityTimerState = null
-            val metadata = (userSessionState as? UserSessionState.Active)?.metadata
-
-            if (metadata?.isInactive(clock) == true) {
+            val metadata = currentUserSession()
+            val transitionType = if (metadata?.isBackgroundOnly == true) {
+                TransitionType.BACKGROUND_ONLY_SESSION_END
+            } else if (metadata?.isInactive(clock) == true) {
                 TransitionType.INACTIVITY_FOREGROUND
             } else if (metadata?.isOverMaxDuration(clock) == true) {
                 TransitionType.MAX_DURATION
             } else {
                 TransitionType.ON_FOREGROUND
             }
+
+            val timestamp = clock.now()
+
+            transitionState(
+                transitionType = transitionType,
+                timestamp = timestamp,
+                oldSessionAction = { initial: SessionPartToken ->
+                    payloadFactory.endPayloadWithState(AppState.BACKGROUND, timestamp, initial)
+                },
+                newSessionAction = {
+                    payloadFactory.startPayloadWithState(
+                        state = AppState.FOREGROUND,
+                        timestamp = timestamp,
+                        coldStart = coldStart,
+                        userSessionPartIndex = ::incrementPartIndex,
+                        sessionPartNumber = ::incrementSessionPartNumber,
+                    )
+                },
+                earlyTerminationCondition = {
+                    return@transitionState shouldRunOnForeground(state)
+                }
+            )
+            coldStart = false
         }
-
-        val timestamp = clock.now()
-
-        transitionState(
-            transitionType = transitionType,
-            timestamp = timestamp,
-            oldSessionAction = { initial: SessionPartToken ->
-                payloadFactory.endPayloadWithState(AppState.BACKGROUND, timestamp, initial)
-            },
-            newSessionAction = {
-                payloadFactory.startPayloadWithState(
-                    state = AppState.FOREGROUND,
-                    timestamp = timestamp,
-                    coldStart = coldStart,
-                    userSessionPartIndex = ::incrementPartIndex,
-                    sessionPartNumber = ::incrementSessionPartNumber,
-                )
-            },
-            earlyTerminationCondition = {
-                return@transitionState shouldRunOnForeground(state)
-            }
-        )
-        coldStart = false
     }
 
     override fun onBackground() {
@@ -242,16 +256,17 @@ internal class SessionOrchestratorImpl(
     }
 
     override fun currentUserSession(): UserSessionMetadata? =
-        (userSessionState as? UserSessionState.Active)?.metadata
+        (userSessionState as? Active)?.metadata
 
     override fun addUserSessionListener(listener: UserSessionListener) {
-        userSessionListeners.add(listener)
-        val state = userSessionState
-        if (state is UserSessionState.Active) {
-            try {
-                listener.onSessionStateEvent(SessionStateEvent.UserSessionActive(state.metadata.userSessionId))
-            } catch (e: Exception) {
-                logger.trackInternalError(InternalErrorType.UserSessionCallbackFail, e)
+        synchronized(lock) {
+            userSessionListeners.add(listener)
+            currentUserSession()?.let { metadata ->
+                try {
+                    listener.onSessionStateEvent(UserSessionActive(metadata.userSessionId))
+                } catch (e: Exception) {
+                    logger.trackInternalError(InternalErrorType.UserSessionCallbackFail, e)
+                }
             }
         }
     }
@@ -314,8 +329,8 @@ internal class SessionOrchestratorImpl(
             }
 
             // calculate new session state
-            val endAppState = transitionType.endState(state)
-            val newSession = sessionTracker.newActiveSessionPart(
+            val endAppState = transitionType.postTransitionEndState(state)
+            val newSessionPart = sessionTracker.newActiveSessionPart(
                 endSessionPartCallback = {
                     // End the current session or background activity, if either exist.
                     EmbTrace.trace("end-current-session") {
@@ -344,26 +359,24 @@ internal class SessionOrchestratorImpl(
             // update the current state of the SDK
             state = endAppState
 
-            // update newly created session
+            // update newly created session part and user session, if applicable
             val userSession = currentUserSession()
-            if (newSession != null) {
+            if (newSessionPart != null) {
                 if (userSession != null) {
                     // persist partIndex to handle user session restoration in new process
-                    val updatedUserSession = userSession.copy(partIndex = newSession.userSessionPartIndex)
-                    metadataStore.save(updatedUserSession)
-                    userSessionState = UserSessionState.Active(updatedUserSession)
+                    setActiveUserSession(userSession.withPartIndex(newSessionPart.userSessionPartIndex))
 
                     if (endAppState == AppState.FOREGROUND) {
-                        sessionTracker.setProcessStateSummary(newSession.sessionPartId, userSession.userSessionId)
+                        sessionTracker.setProcessStateSummary(newSessionPart.sessionPartId, userSession.userSessionId)
                     }
                 }
                 boundaryDelegate.prepareForNewSession()
-                sessionSpanAttrPopulator.populateSessionSpanStartAttrs(newSession, userSession)
+                sessionSpanAttrPopulator.populateSessionSpanStartAttrs(newSessionPart, userSession)
                 if (transitionType != TransitionType.CRASH) {
                     // initiate periodic caching of the payload if a new session has started
                     EmbTrace.start("initiate-periodic-caching")
                     updatePeriodicCacheAttrs()
-                    payloadCachingService?.startCaching(newSession, endAppState) { state, timestamp, zygote ->
+                    payloadCachingService?.startCaching(newSessionPart, endAppState) { state, timestamp, zygote ->
                         synchronized(lock) {
                             updatePeriodicCacheAttrs()
                             payloadFactory.snapshotPayload(state, timestamp, zygote)
@@ -381,34 +394,46 @@ internal class SessionOrchestratorImpl(
         }
     }
 
-    private fun scheduleInactivityTimeout() {
+    private fun scheduleInactivityTimeout(metadata: UserSessionMetadata.Classified?) {
         inactivityTimerState?.cancel()
-        val metadata = (userSessionState as? UserSessionState.Active)?.metadata ?: return
-        inactivityTimerState = SessionTimerState(
-            backgroundWorker.schedule<Unit>(
-                ::onInactivityTimeout,
-                metadata.inactivityTimeoutSecs,
-                TimeUnit.SECONDS,
+        if (metadata != null && !metadata.isBackgroundOnly) {
+            inactivityTimerState = SessionTimerState(
+                backgroundWorker.schedule<Unit>(
+                    ::onInactivityTimeout,
+                    metadata.inactivityTimeoutSecs,
+                    TimeUnit.SECONDS,
+                )
             )
-        )
+        }
     }
 
-    private fun scheduleMaxDurationTimeout(metadata: UserSessionMetadata) {
-        maxDurationTimerState?.cancel()
-        val remainingSecs = metadata.maxDurationSecs - ((clock.now() - metadata.startTimeMs) / 1_000L)
-        val delay = max(remainingSecs, 0)
-        maxDurationTimerState = SessionTimerState(
-            backgroundWorker.schedule<Unit>(
-                ::onMaxDurationTimeout,
-                delay,
-                TimeUnit.SECONDS,
+    private fun scheduleMaxDurationTimeout(metadata: UserSessionMetadata?) {
+        if (metadata is UserSessionMetadata.Classified && !metadata.isBackgroundOnly) {
+            maxDurationTimerState?.cancel()
+            val remainingSecs = metadata.maxDurationSecs - ((clock.now() - metadata.startTimeMs) / 1_000L)
+            val delay = max(remainingSecs, 0)
+            maxDurationTimerState = SessionTimerState(
+                backgroundWorker.schedule<Unit>(
+                    ::onMaxDurationTimeout,
+                    delay,
+                    TimeUnit.SECONDS,
+                )
             )
-        )
+        }
+    }
+
+    /**
+     * Cancels and clears the background-startup window timer once it's no longer needed
+     */
+    private fun clearBackgroundStartupWindowTimer() {
+        backgroundStartupWindowTimerState?.cancel()
+        backgroundStartupWindowTimerState = null
     }
 
     private fun onMaxDurationTimeout() {
         synchronized(lock) {
-            if (userSessionState !is UserSessionState.Active) {
+            val metadata = currentUserSessionIfClassified()
+            if (metadata == null || metadata.isBackgroundOnly) {
                 return
             }
             val currentAppState = state
@@ -440,6 +465,10 @@ internal class SessionOrchestratorImpl(
 
     private fun onInactivityTimeout() {
         synchronized(lock) {
+            val metadata = currentUserSessionIfClassified()
+            if (metadata == null || metadata.isBackgroundOnly) {
+                return
+            }
             val timestamp = clock.now()
             transitionState(
                 transitionType = TransitionType.INACTIVITY_TIMEOUT,
@@ -487,104 +516,166 @@ internal class SessionOrchestratorImpl(
 
     /**
      * Decides what to do with the user session at the start of a session-part transition.
-     * Crashes leave the user session untouched. INITIAL with state=BACKGROUND defers user-session
-     * creation to the first foreground entry — the first user session of a process must originate
-     * from a foreground transition.
      */
     private fun transitionUserSession(transitionType: TransitionType, endAppState: AppState, timestamp: Long) {
         when {
+            // User session does not need to be modified when the part transition is happening due to a crash
             transitionType == TransitionType.CRASH -> {}
 
-            transitionType == TransitionType.END_MANUAL ||
-                transitionType == TransitionType.INACTIVITY_TIMEOUT ||
-                transitionType == TransitionType.INACTIVITY_FOREGROUND ||
-                transitionType == TransitionType.MAX_DURATION ->
-                handleUserSessionEnd(timestamp)
+            // User session needs to be established when the SDK starts up.
+            // Create an unclassified user session and schedule a task to classify as background-only if it's not classified when it runs.
+            transitionType == TransitionType.INITIAL && state == AppState.BACKGROUND -> {
+                if (userSessionState !is Active) {
+                    val newMetadata = createUnclassifiedUserSession(timestamp)
+                    setActiveUserSession(newMetadata)
+                    notifyListeners(UserSessionActive(newMetadata.userSessionId))
+                    backgroundStartupWindowTimerState = SessionTimerState(
+                        backgroundWorker.schedule<Unit>(
+                            ::makeCurrentUserSessionBackgroundOnly,
+                            BACKGROUND_STARTUP_WINDOW_MS,
+                            TimeUnit.MILLISECONDS,
+                        )
+                    )
+                }
+            }
 
-            transitionType == TransitionType.INITIAL && state == AppState.BACKGROUND -> {}
+            // User session being ended explicitly - end current one and start a new one based on the expected endAppState.
+            transitionType.endsUserSession -> {
+                clearBackgroundStartupWindowTimer()
+                transitionToNewUserSession(timestamp, endAppState)
+                scheduleSessionEndTimers(endAppState)
+            }
 
+            // Transitions where the current user session may continue
             else -> {
-                handleNewSessionPart(timestamp)
-                if (endAppState == AppState.FOREGROUND && maxDurationTimerState == null) {
-                    (userSessionState as? UserSessionState.Active)?.metadata?.let {
-                        scheduleMaxDurationTimeout(it)
-                    }
-                } else if (endAppState == AppState.BACKGROUND) {
-                    scheduleInactivityTimeout()
+                clearBackgroundStartupWindowTimer()
+
+                // Update the current user session either by modifying the existing one or replacing it with a new one
+                when (val current = currentUserSession()) {
+                    is UserSessionMetadata.Unclassified -> setActiveUserSession(
+                        current.classify(
+                            isBackgroundOnly = endAppState == AppState.BACKGROUND,
+                            updatedLastActivityMs = timestamp
+                        )
+                    )
+
+                    is UserSessionMetadata.Classified ->
+                        if (current.continueUserSession(timestamp, endAppState)) {
+                            setActiveUserSession(current.withNewActivity(timestamp))
+                        } else {
+                            transitionToNewUserSession(timestamp, endAppState)
+                        }
+
+                    null -> transitionToNewUserSession(timestamp, endAppState)
+                }
+
+                scheduleSessionEndTimers(endAppState)
+            }
+        }
+    }
+
+    private fun createUnclassifiedUserSession(startTimeMs: Long): UserSessionMetadata.Unclassified =
+        UserSessionMetadata.Unclassified(
+            startTimeMs = startTimeMs,
+            userSessionId = uuidSource.createUuid(),
+            userSessionNumber = ordinalStore.incrementAndGet(Ordinal.USER_SESSION).toLong(),
+            maxDurationSecs = configService.sessionBehavior.getMaxSessionDurationMs() / 1_000L,
+            inactivityTimeoutSecs = configService.sessionBehavior.getSessionInactivityTimeoutMs() / 1_000L,
+            partIndex = 0,
+            lastActivityMs = startTimeMs,
+        )
+
+    /**
+     * The background-startup window elapsed without the app entering the foreground and classifying the user session as not
+     * background-only, so we assume the process creation was not triggered by an app launch and classify it as background-only.
+     */
+    private fun makeCurrentUserSessionBackgroundOnly() {
+        synchronized(lock) {
+            val userSession = currentUserSession()
+            if (userSession is UserSessionMetadata.Unclassified) {
+                startupClassifier.assumeBackgroundStartup()
+                if (startupClassifier.startupType() == StartupType.BACKGROUND) {
+                    setActiveUserSession(userSession.classify(isBackgroundOnly = true))
+                    destination.addSessionPartAttribute(
+                        EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART,
+                        UserSessionMetadata.BACKGROUND_ONLY_MARKER,
+                    )
                 }
             }
         }
     }
 
     /**
-     * Called whenever a new session part is successfully created for a non-manual, non-crash
-     * transition. If the active user session has exceeded max duration, terminates it and starts
-     * a new one. If no user session is active, starts a new one. Otherwise keeps the current one.
+     * Schedule the appropriate user session ending timers given the app state
      */
-    private fun handleNewSessionPart(timestamp: Long) {
-        val current = userSessionState
-        if (current is UserSessionState.Active) {
-            if (timestamp < current.metadata.startTimeMs) {
-                logger.trackInternalError(
-                    InternalErrorType.ClockBackwardsShift,
-                    IllegalStateException("Clock shifted backwards from user session start time.")
-                )
-                terminateUserSession(current)
-                startNewUserSession(timestamp)
-            } else if (current.metadata.isOverMaxDuration(clock)) {
-                terminateUserSession(current)
-                startNewUserSession(timestamp)
-            } else {
-                val updatedMetadata = current.metadata.copy(lastActivityMs = timestamp)
-                metadataStore.save(updatedMetadata)
-                userSessionState = UserSessionState.Active(updatedMetadata)
-            }
-        } else {
-            startNewUserSession(timestamp)
+    private fun scheduleSessionEndTimers(endAppState: AppState) {
+        val userSession = currentUserSessionIfClassified()
+        if (endAppState == AppState.FOREGROUND && maxDurationTimerState == null) {
+            scheduleMaxDurationTimeout(userSession)
+        } else if (endAppState == AppState.BACKGROUND) {
+            scheduleInactivityTimeout(userSession)
         }
     }
 
     /**
-     * Called when the developer manually ends the session. Terminates any active user session,
-     * then always starts a new one.
+     * Called when the active user session ends for any reason other than a crash. Terminates it, then start a new one based on
+     * the post transition [AppState]
      */
-    private fun handleUserSessionEnd(timestamp: Long) {
-        val state = userSessionState
-        if (state is UserSessionState.Active) {
-            terminateUserSession(state)
+    private fun transitionToNewUserSession(timestamp: Long, endAppState: AppState) {
+        // End current user session if it exists
+        currentUserSession()?.let {
+            maxDurationTimerState?.cancel()
+            maxDurationTimerState = null
+            inactivityTimerState?.cancel()
+            inactivityTimerState = null
+            metadataStore.clear()
+            userSessionState = UserSessionState.Terminated
+            notifyListeners(UserSessionEnded(it.userSessionId))
         }
-        startNewUserSession(timestamp)
+
+        // Start new user session, make it active, and broadcast new user session being active to listeners. The caller is
+        // responsible for scheduling the new session's end timers (see scheduleSessionEndTimers).
+        val newMetadata = createUnclassifiedUserSession(timestamp).classify(isBackgroundOnly = endAppState == AppState.BACKGROUND)
+        setActiveUserSession(newMetadata)
+        notifyListeners(UserSessionActive(newMetadata.userSessionId))
     }
 
-    private fun startNewUserSession(startTimeMs: Long) {
-        val maxDurationMs = configService.sessionBehavior.getMaxSessionDurationMs()
-        val inactivityTimeoutMs = configService.sessionBehavior.getSessionInactivityTimeoutMs()
-        val userSessionNumber = ordinalStore.incrementAndGet(Ordinal.USER_SESSION).toLong()
-        val newMetadata = UserSessionMetadata(
-            startTimeMs = startTimeMs,
-            userSessionId = uuidSource.createUuid(),
-            userSessionNumber = userSessionNumber,
-            maxDurationSecs = maxDurationMs / 1_000L,
-            inactivityTimeoutSecs = inactivityTimeoutMs / 1_000L,
-            partIndex = 0,
-            lastActivityMs = startTimeMs,
-        )
-        metadataStore.save(newMetadata)
-        userSessionState = UserSessionState.Active(newMetadata)
-        notifyListeners(SessionStateEvent.UserSessionActive(newMetadata.userSessionId))
-
-        if (state == AppState.FOREGROUND) {
-            scheduleMaxDurationTimeout(newMetadata)
+    /**
+     * Persists [metadata] and adopts it as the active user session. An unclassified user session is persisted as background-only
+     * so that a process death inside the background-startup window reads as a background start, while remaining unclassified in memory
+     * until the foreground transition or the window resolves it.
+     */
+    private fun setActiveUserSession(metadata: UserSessionMetadata) {
+        val persisted = when (metadata) {
+            is UserSessionMetadata.Classified -> metadata
+            is UserSessionMetadata.Unclassified -> metadata.classify(isBackgroundOnly = true)
         }
+        metadataStore.save(persisted)
+        userSessionState = Active(metadata)
     }
 
-    private fun terminateUserSession(state: UserSessionState.Active) {
-        maxDurationTimerState?.cancel()
-        maxDurationTimerState = null
-        inactivityTimerState?.cancel()
-        inactivityTimerState = null
-        metadataStore.clear()
-        userSessionState = UserSessionState.Terminated
-        notifyListeners(SessionStateEvent.UserSessionEnded(state.metadata.userSessionId))
-    }
+    private fun currentUserSessionIfClassified(): UserSessionMetadata.Classified? =
+        currentUserSession() as? UserSessionMetadata.Classified
+
+    /**
+     * Returns true if this user session should continue and false if a new one should be started.
+     */
+    private fun UserSessionMetadata.Classified.continueUserSession(timestamp: Long, endAppState: AppState): Boolean =
+        when {
+            // Don't continue session if current time is not congruent with the user session's timestamp
+            timestamp < startTimeMs -> {
+                logger.trackInternalError(
+                    InternalErrorType.ClockBackwardsShift,
+                    IllegalStateException("Clock shifted backwards from user session start time.")
+                )
+                false
+            }
+
+            // Don't continue user session if it's background-only and the app is going into the foreground
+            isBackgroundOnly && endAppState == AppState.FOREGROUND -> false
+
+            isOverMaxDuration(clock) -> false
+
+            else -> true
+        }
 }

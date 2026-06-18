@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.payload
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 /**
  * An event that occurred during a span
@@ -10,17 +10,17 @@ import com.squareup.moshi.JsonClass
  * @param timestampNanos The time the event occurred, in nanoseconds since the Unix epoch
  * @param attributes
  */
-@JsonClass(generateAdapter = true)
+@Serializable
 data class SpanEvent(
 
     /* The name of the event */
-    @Json(name = "name")
+    @SerialName("name")
     val name: String? = null,
 
     /* The time the event occurred, in nanoseconds since the Unix epoch */
-    @Json(name = "time_unix_nano")
+    @SerialName("time_unix_nano")
     val timestampNanos: Long? = null,
 
-    @Json(name = "attributes")
+    @SerialName("attributes")
     val attributes: List<Attribute>? = null,
 )

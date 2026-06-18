@@ -1,14 +1,14 @@
 package io.embrace.android.embracesdk.internal.config.remote
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 /**
  * Configuration values relating to data capture of the SDK
  */
-@JsonClass(generateAdapter = true)
+@Serializable
 data class DataRemoteConfig(
 
-    @Json(name = "pct_thermal_status_enabled")
+    @SerialName("pct_thermal_status_enabled")
     val pctThermalStatusEnabled: Float? = null,
 )

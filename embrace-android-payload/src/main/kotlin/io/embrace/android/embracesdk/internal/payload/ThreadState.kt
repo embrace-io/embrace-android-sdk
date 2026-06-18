@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.payload
 
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.Serializable
 
 @Suppress("unused")
-@JsonClass(generateAdapter = false)
+@Serializable
 enum class ThreadState(val code: Int) {
     NEW(0),
     RUNNABLE(1),

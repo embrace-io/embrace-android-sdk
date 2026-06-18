@@ -1,35 +1,35 @@
 package io.embrace.android.embracesdk.internal.config.remote
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 /**
  * Configuration values relating to the logs of the app.
  */
-@JsonClass(generateAdapter = true)
+@Serializable
 data class LogRemoteConfig(
 
     /**
      * Used to truncate log messages.
      */
-    @Json(name = "max_length")
+    @SerialName("max_length")
     val logMessageMaximumAllowedLength: Int? = null,
 
     /**
      * Limit of info logs that user is able to send.
      */
-    @Json(name = "info_limit")
+    @SerialName("info_limit")
     val logInfoLimit: Int? = null,
 
     /**
      * Limit of warning logs that user is able to send.
      */
-    @Json(name = "warn_limit")
+    @SerialName("warn_limit")
     val logWarnLimit: Int? = null,
 
     /**
      * Limit of error logs that user is able to send.
      */
-    @Json(name = "error_limit")
+    @SerialName("error_limit")
     val logErrorLimit: Int? = null,
 )

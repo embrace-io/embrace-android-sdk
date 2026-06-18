@@ -79,13 +79,15 @@ class FakePayloadStorageService(
     override fun getUndeliveredPayloads(): List<StoredTelemetryMetadata> =
         cachedPayloads.filter { !it.key.complete && it.key.processIdentifier != processIdProvider() }.keys.toList()
 
-    fun <T> addPayload(metadata: StoredTelemetryMetadata, data: T) {
+    fun addPayload(metadata: StoredTelemetryMetadata, data: Envelope<*>) {
         store(metadata) { stream ->
-            serializer.toJson(data, checkNotNull(metadata.envelopeType.serializedType), stream)
+            serializer.toJson(data, metadata.envelopeType.requireEnvelopeSerializer(), stream)
         }
     }
 
-    fun addFakePayload(metadata: StoredTelemetryMetadata) = addPayload(metadata, createFakePayload(metadata))
+    fun addFakePayload(metadata: StoredTelemetryMetadata) {
+        createFakePayload(metadata)?.let { addPayload(metadata, it) }
+    }
 
     fun storedFilenames(): List<String> = cachedPayloads.keys.map { it.filename }
 
@@ -102,10 +104,13 @@ class FakePayloadStorageService(
     }
 
     private fun createFakePayload(metadata: StoredTelemetryMetadata) =
-        when (metadata.envelopeType.serializedType) {
-            Envelope.sessionEnvelopeType -> Envelope(data = SessionPartPayload())
-            Envelope.logEnvelopeType -> Envelope(data = LogPayload())
-            else -> null
+        when (metadata.envelopeType) {
+            SupportedEnvelopeType.SESSION -> Envelope(data = SessionPartPayload())
+            SupportedEnvelopeType.CRASH,
+            SupportedEnvelopeType.LOG,
+            SupportedEnvelopeType.BLOB,
+            -> Envelope(data = LogPayload())
+            SupportedEnvelopeType.ATTACHMENT -> null
         }
 
     private fun deleteSynchronous(metadata: StoredTelemetryMetadata, callback: () -> Unit) {
@@ -122,7 +127,7 @@ class FakePayloadStorageService(
         }
         return serializer.fromJson(
             GZIPInputStream(loadPayloadAsStream(metadata)),
-            checkNotNull(SupportedEnvelopeType.CRASH.serializedType)
+            Envelope.logEnvelopeSerializer
         )
     }
 }

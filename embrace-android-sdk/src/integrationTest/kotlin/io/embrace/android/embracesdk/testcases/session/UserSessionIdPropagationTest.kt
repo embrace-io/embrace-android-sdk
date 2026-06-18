@@ -249,6 +249,7 @@ internal class UserSessionIdPropagationTest {
     fun `AEI log contains session part id and user session id`() {
         val sessionPartId = "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d"
         val userSessionId = "2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e"
+        var currentUserSessionId: String? = null
         testRule.runTest(
             setupAction = {
                 val ctx = ApplicationProvider.getApplicationContext<Application>()
@@ -270,12 +271,16 @@ internal class UserSessionIdPropagationTest {
             },
             testCaseAction = { recordSession() },
             assertAction = {
+                // the AEI log was emitted before the app foregrounded, so it carries the id of
+                // the flavour-pending user session - which resolved to the recorded session's
+                // user session when the app entered the foreground - and no session part id
+                currentUserSessionId = getSingleSessionEnvelope().getUserSessionId()
                 val logAttrs = checkNotNull(getSingleLogEnvelope().getLogOfType(EmbType.System.Exit).attributes)
                 assertEquals(sessionPartId, logAttrs.findAttributeValue(AEI_SESSION_PART_ID))
                 assertEquals(userSessionId, logAttrs.findAttributeValue(AEI_USER_SESSION_ID))
                 assertEquals("", logAttrs.findAttributeValue(EMB_SESSION_PART_ID))
-                assertEquals("", logAttrs.findAttributeValue(EMB_USER_SESSION_ID))
-                assertEquals("", logAttrs.findAttributeValue(SESSION_ID))
+                assertEquals(currentUserSessionId, logAttrs.findAttributeValue(EMB_USER_SESSION_ID))
+                assertEquals(currentUserSessionId, logAttrs.findAttributeValue(SESSION_ID))
             },
             otelExportAssertion = {
                 val log = awaitLogs(1) { it.attributes.toStringMap().containsKey(EmbType.System.Exit.key) }.single()
@@ -283,8 +288,8 @@ internal class UserSessionIdPropagationTest {
                 assertEquals(sessionPartId, logAttrs[AEI_SESSION_PART_ID])
                 assertEquals(userSessionId, logAttrs[AEI_USER_SESSION_ID])
                 assertEquals("", logAttrs[EMB_SESSION_PART_ID])
-                assertEquals("", logAttrs[EMB_USER_SESSION_ID])
-                assertEquals("", logAttrs[SESSION_ID])
+                assertEquals(currentUserSessionId, logAttrs[EMB_USER_SESSION_ID])
+                assertEquals(currentUserSessionId, logAttrs[SESSION_ID])
             },
         )
     }

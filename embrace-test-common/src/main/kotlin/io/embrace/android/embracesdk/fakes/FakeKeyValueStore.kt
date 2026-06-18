@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
-import java.util.concurrent.ConcurrentHashMap
 
 class FakeKeyValueStore : KeyValueStore {
 

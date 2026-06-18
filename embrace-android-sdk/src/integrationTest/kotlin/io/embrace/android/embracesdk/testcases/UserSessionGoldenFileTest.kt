@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.testframework.assertions.SessionPartDiff
 import io.embrace.android.embracesdk.testframework.assertions.UserSessionDiff
 import io.embrace.android.embracesdk.testframework.assertions.assertLogPayloadMatchesGoldenFile
 import io.embrace.android.embracesdk.testframework.assertions.assertPayloadsMatchGoldenFiles
+import kotlinx.serialization.KSerializer
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -69,19 +70,26 @@ internal class UserSessionGoldenFileTest {
     }
 
     /**
-     * Asserts that a log without a user session contains empty attributes for the user session ID and session part ID.
+     * Asserts that a log recorded in the background before the app ever foregrounds carries the
+     * id of the flavour-pending user session created at process start, with an empty session
+     * part ID.
      */
     @Test
     fun `log without user session`() {
+        var pendingUserSessionId: String? = null
         testRule.runTest(
             testCaseAction = {
                 embrace.logMessage("Hi", Severity.INFO, mapOf(EmbSessionAttributes.EMB_PRIVATE_SEND_MODE to "immediate"))
+                pendingUserSessionId = checkNotNull(
+                    testRule.bootstrapper.userSessionOrchestrationModule.sessionOrchestrator.currentUserSession()
+                ).userSessionId
             },
             assertAction = {
-                assertPayloadsMatchGoldenFiles(
-                    logsWithNoUserSession = listOf(
-                        LogDiff(getSingleLogEnvelope(), "log_without_user_session.json"),
-                    ),
+                assertLogPayloadMatchesGoldenFile(
+                    envelope = getSingleLogEnvelope(),
+                    expectedUserSessionId = checkNotNull(pendingUserSessionId),
+                    expectedSessionPartId = "",
+                    goldenFile = "log_without_user_session.json",
                 )
             }
         )
@@ -126,7 +134,7 @@ internal class UserSessionGoldenFileTest {
         }
         return testSerializer.fromJson(
             GZIPInputStream(loadPayloadAsStream(metadata)),
-            checkNotNull(SupportedEnvelopeType.SESSION.serializedType),
+            Envelope.sessionEnvelopeSerializer,
         )
     }
 

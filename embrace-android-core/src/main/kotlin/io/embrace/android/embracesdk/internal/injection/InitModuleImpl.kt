@@ -40,7 +40,7 @@ class InitModuleImpl(
 
     override val instrumentedConfig: InstrumentedConfig = InstrumentedConfigImpl
 
-    override val okHttpClient by singleton {
+    override val okHttpClient: Lazy<OkHttpClient> = lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         EmbTrace.trace("okhttp-client-init") {
             OkHttpClient()
                 .newBuilder()

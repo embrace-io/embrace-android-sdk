@@ -42,6 +42,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.UuidSource
@@ -217,7 +218,7 @@ internal class EmbraceSetupInterface(
     ) {
         crashData.getCrashFile().createNewFile()
         val key = crashData.getCrashFile().absolutePath
-        val json = serializer.toJson(crashData.nativeCrash, NativeCrashData::class.java)
+        val json = serializer.toJson(crashData.nativeCrash)
         fakeJniDelegate.addCrashRaw(key, json)
     }
 

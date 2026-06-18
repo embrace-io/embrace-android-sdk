@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
+import io.embrace.android.embracesdk.internal.session.TerminatedUserSession
 import io.embrace.android.embracesdk.internal.session.UserSessionListener
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 
@@ -36,6 +37,11 @@ interface SessionOrchestrator : AppStateListener, CrashTeardownHandler {
      * Registers a listener that is invoked for user session lifecycle events.
      */
     fun addUserSessionListener(listener: UserSessionListener)
+
+    /**
+     * The implicitly-terminated user session that was not continued at startup
+     */
+    val userSessionTerminatedAtStartup: TerminatedUserSession?
 }
 
 /**

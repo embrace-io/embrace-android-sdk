@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
+import io.embrace.android.embracesdk.internal.session.TerminatedUserSession
 import io.embrace.android.embracesdk.internal.session.UserSessionListener
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
@@ -34,6 +35,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
@@ -79,6 +81,10 @@ internal class SessionOrchestratorImpl(
     private var maxDurationTimerState: SessionTimerState? = null
     private var backgroundStartupWindowTimerState: SessionTimerState? = null
 
+    @Volatile
+    override var userSessionTerminatedAtStartup: TerminatedUserSession? = null
+        private set
+
     init {
         loadPersistedUserSession()
         appStateTracker.addListener(this)
@@ -94,9 +100,13 @@ internal class SessionOrchestratorImpl(
         synchronized(lock) {
             try {
                 val stored = metadataStore.load()
+                val overMaxDuration = stored?.isOverMaxDuration(clock) ?: false
+                val inactive = stored?.isInactive(clock) ?: false
                 userSessionState = when {
+                    stored == null -> UserSessionState.NoActiveSession
+
                     // Current timestamp not congruent with stored user session's timestamp, so clear the cache
-                    stored != null && clock.now() < stored.startTimeMs -> {
+                    clock.now() < stored.startTimeMs -> {
                         logger.trackInternalError(
                             InternalErrorType.ClockBackwardsShift,
                             IllegalStateException(
@@ -104,22 +114,38 @@ internal class SessionOrchestratorImpl(
                             )
                         )
                         metadataStore.clear()
+                        userSessionTerminatedAtStartup = TerminatedUserSession(
+                            userSessionId = stored.userSessionId,
+                            reason = EmbUserSessionTerminationReasonValues.CLOCK_MISMATCH
+                        )
                         UserSessionState.NoActiveSession
                     }
 
                     // Continue a background-only user session if it won't extend it beyond its max duration
                     // Don't set any expiry timers those aren't applicable when the user isn't considered active
-                    stored != null && stored.isBackgroundOnly && !stored.isOverMaxDuration(clock) -> {
+                    stored.isBackgroundOnly && !overMaxDuration -> {
                         Active(stored)
                     }
 
                     // Continue a user session if it won't extend it beyond its max duration and is within its inactivity grace period
-                    stored != null && !stored.isBackgroundOnly && !stored.isOverMaxDuration(clock) && !stored.isInactive(clock) -> {
+                    !stored.isBackgroundOnly && !overMaxDuration && !inactive -> {
                         scheduleMaxDurationTimeout(stored)
                         Active(stored)
                     }
 
-                    else -> UserSessionState.NoActiveSession
+                    else -> {
+                        // A stored session that isn't being continued ended in the dead process - record the matching reason so
+                        // resurrection can stamp its final part as terminated.
+                        userSessionTerminatedAtStartup = TerminatedUserSession(
+                            userSessionId = stored.userSessionId,
+                            reason = if (overMaxDuration) {
+                                EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED
+                            } else {
+                                EmbUserSessionTerminationReasonValues.INACTIVITY
+                            }
+                        )
+                        UserSessionState.NoActiveSession
+                    }
                 }
             } catch (e: Exception) {
                 userSessionState = UserSessionState.NoActiveSession

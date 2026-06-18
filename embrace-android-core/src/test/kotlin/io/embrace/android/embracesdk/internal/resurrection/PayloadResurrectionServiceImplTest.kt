@@ -49,10 +49,12 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
+import io.embrace.android.embracesdk.internal.session.TerminatedUserSession
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.toEmbraceSpanData
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues
 import io.embrace.android.embracesdk.spans.ErrorCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -325,6 +327,86 @@ class PayloadResurrectionServiceImplTest {
     }
 
     @Test
+    fun `final session part marker and termination reason stamped on a resurrected snapshot whose user session ended on restore`() {
+        cacheStorageService.addPayload(metadata = sessionMetadata, data = deadSessionEnvelope)
+        resurrectInBackground(
+            terminatedUserSession = TerminatedUserSession(FAKE_USER_SESSION_ID, EmbUserSessionTerminationReasonValues.INACTIVITY)
+        )
+
+        val attributes = checkNotNull(getStoredParts().single().getSessionSpan()?.attributes)
+        assertEquals("1", attributes.findAttributeValue(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART))
+        assertEquals(
+            EmbUserSessionTerminationReasonValues.INACTIVITY,
+            attributes.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON)
+        )
+    }
+
+    @Test
+    fun `final session part marker and termination reason not stamped when no user session ended on restore`() {
+        cacheStorageService.addPayload(metadata = sessionMetadata, data = deadSessionEnvelope)
+        resurrectInBackground()
+
+        val attributes = checkNotNull(getStoredParts().single().getSessionSpan()?.attributes)
+        assertNull(attributes.findAttributeValue(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART))
+        assertNull(attributes.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON))
+    }
+
+    @Test
+    fun `final session part marker and termination reason not stamped when the ended user session id does not match`() {
+        cacheStorageService.addPayload(metadata = sessionMetadata, data = deadSessionEnvelope)
+        resurrectInBackground(
+            terminatedUserSession = TerminatedUserSession(
+                FAKE_USER_SESSION_ID_2,
+                EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED
+            )
+        )
+
+        val attributes = checkNotNull(getStoredParts().single().getSessionSpan()?.attributes)
+        assertNull(attributes.findAttributeValue(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART))
+        assertNull(attributes.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON))
+    }
+
+    @Test
+    fun `only the last session part of a terminated user session is marked`() {
+        val earlierMeta = sessionMetadata.copy(
+            uuid = sessionMetadata.uuid + "-earlier",
+            sessionPartId = sessionMetadata.sessionPartId + "-earlier",
+            timestamp = sessionMetadata.timestamp
+        )
+        val laterMeta = sessionMetadata.copy(
+            uuid = sessionMetadata.uuid + "-later",
+            sessionPartId = sessionMetadata.sessionPartId + "-later",
+            timestamp = sessionMetadata.timestamp + 1000L
+        )
+        cacheStorageService.addPayload(
+            metadata = earlierMeta,
+            data = fakeIncompleteSessionEnvelope(sessionId = "earlier-part")
+        )
+        cacheStorageService.addPayload(
+            metadata = laterMeta,
+            data = fakeIncompleteSessionEnvelope(sessionId = "later-part")
+        )
+        resurrectInBackground(
+            terminatedUserSession = TerminatedUserSession(
+                userSessionId = FAKE_USER_SESSION_ID,
+                reason = EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED
+            )
+        )
+
+        val parts = getStoredParts().associateBy { it.getSessionId() }
+        val laterAttrs = checkNotNull(parts.getValue("later-part").getSessionSpan()?.attributes)
+        assertEquals("1", laterAttrs.findAttributeValue(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART))
+        assertEquals(
+            EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED,
+            laterAttrs.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON)
+        )
+
+        val earlierAttrs = checkNotNull(parts.getValue("earlier-part").getSessionSpan()?.attributes)
+        assertNull(earlierAttrs.findAttributeValue(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART))
+        assertNull(earlierAttrs.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON))
+    }
+
+    @Test
     fun `session payload that doesn't contain session span will not be resurrected`() {
         noSessionSpanEnvelope.resurrectPayload()
         assertResurrectionFailure()
@@ -346,7 +428,7 @@ class PayloadResurrectionServiceImplTest {
         cacheStorageService.addFakePayload(sessionMetadata)
         val service = serviceWithPayloadStream(null)
 
-        service.resurrectOldPayloads { nativeCrashService }
+        service.resurrectOldPayloads(nativeCrashServiceProvider = { nativeCrashService })
 
         assertEquals(0, payloadStorageService.storedPayloadCount())
         assertEquals(0, cacheStorageService.storedPayloadCount())
@@ -359,7 +441,7 @@ class PayloadResurrectionServiceImplTest {
         cacheStorageService.addFakePayload(sessionMetadata)
         val service = serviceWithPayloadStream("hi there".byteInputStream())
 
-        service.resurrectOldPayloads { nativeCrashService }
+        service.resurrectOldPayloads(nativeCrashServiceProvider = { nativeCrashService })
 
         assertEquals(0, payloadStorageService.storedPayloadCount())
         assertEquals(0, cacheStorageService.storedPayloadCount())
@@ -380,7 +462,7 @@ class PayloadResurrectionServiceImplTest {
         nativeCrashService.addNativeCrashData(deadSessionCrashData)
 
         val service = serviceWithPayloadStream(null)
-        service.resurrectOldPayloads { nativeCrashService }
+        service.resurrectOldPayloads(nativeCrashServiceProvider = { nativeCrashService })
 
         assertEquals(0, payloadStorageService.storedPayloadCount())
         assertEquals(0, cacheStorageService.storedPayloadCount())
@@ -560,7 +642,7 @@ class PayloadResurrectionServiceImplTest {
             metadata = sessionMetadata,
             data = deadSessionEnvelope
         )
-        resurrectInBackground { null }
+        resurrectInBackground({ null })
 
         val storedMetadata = payloadStorageService.storedPayloadMetadata().single()
         assertEquals(fakeCachedSessionStoredTelemetryMetadata.copy(complete = true), storedMetadata)
@@ -616,7 +698,7 @@ class PayloadResurrectionServiceImplTest {
 
         var listenerCalled = false
         service.addResurrectionCompleteListener { listenerCalled = true }
-        service.resurrectOldPayloads { nativeCrashService }
+        service.resurrectOldPayloads(nativeCrashServiceProvider = { nativeCrashService })
 
         assertTrue(listenerCalled)
         assertTrue(
@@ -629,8 +711,13 @@ class PayloadResurrectionServiceImplTest {
     /**
      * Runs resurrection on a background thread to simulate what happens in production
      */
-    private fun resurrectInBackground(nativeCrashServiceProvider: () -> NativeCrashService? = { nativeCrashService }) {
-        val thread = Thread { resurrectionService.resurrectOldPayloads(nativeCrashServiceProvider) }
+    private fun resurrectInBackground(
+        nativeCrashServiceProvider: () -> NativeCrashService? = { nativeCrashService },
+        terminatedUserSession: TerminatedUserSession? = null,
+    ) {
+        val thread = Thread {
+            resurrectionService.resurrectOldPayloads(nativeCrashServiceProvider, { terminatedUserSession })
+        }
         thread.start()
         thread.join(5000)
     }

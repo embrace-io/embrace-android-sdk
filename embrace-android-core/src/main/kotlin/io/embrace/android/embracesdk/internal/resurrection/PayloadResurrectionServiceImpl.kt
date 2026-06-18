@@ -169,7 +169,7 @@ internal class PayloadResurrectionServiceImpl(
                             userSessionId = nativeCrash.userSessionId,
                         ),
                         resource = resource,
-                        metadata = metadata
+                        metadata = metadata,
                     )
                 } else {
                     logger.trackInternalError(
@@ -355,7 +355,7 @@ internal class PayloadResurrectionServiceImpl(
         return deadPart.resurrectSession(
             nativeCrashData = nativeCrash,
             userSessionTerminationReason = userSessionTerminationReason,
-            isBackgroundOnly = isBackgroundOnly
+            isBackgroundOnly = isBackgroundOnly,
         ) ?: throw IllegalArgumentException(
             "Session resurrection failed. Payload does not contain exactly one session span."
         )

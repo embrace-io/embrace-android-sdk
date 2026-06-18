@@ -34,16 +34,6 @@ internal class FocalMomentTrackerTest {
         clock = Clock { 0L },
     )
 
-    // The tracker reads time from SystemClock.uptimeMillis; Robolectric keeps it paused until advance()
-    // moves it, so vsync times are expressed relative to nowNanos().
-    private fun nowNanos(): Long = SystemClock.uptimeMillis() * 1_000_000L
-    private fun advance(millis: Long) = ShadowSystemClock.advanceBy(Duration.ofMillis(millis))
-
-    /** A frame delivered on the Vitals thread; processed synchronously. */
-    private fun redraw(vsyncNanos: Long, jankNanos: Long = 0L) {
-        tracker.onFrame(vsyncNanos, jankNanos)
-    }
-
     @Test
     fun `after release the aftermath settles at the tighter threshold and emits on flush`() {
         val start = nowNanos()
@@ -264,5 +254,15 @@ internal class FocalMomentTrackerTest {
         tracker.onScreenStop()
 
         assertEquals(1.0, emitted.single().normalizedDroppedFrames, 0.01)
+    }
+
+    // The tracker reads time from SystemClock.uptimeMillis; Robolectric keeps it paused until advance()
+    // moves it, so vsync times are expressed relative to nowNanos().
+    private fun nowNanos(): Long = SystemClock.uptimeMillis() * 1_000_000L
+    private fun advance(millis: Long) = ShadowSystemClock.advanceBy(Duration.ofMillis(millis))
+
+    /** A frame delivered on the Vitals thread; processed synchronously. */
+    private fun redraw(vsyncNanos: Long, jankNanos: Long = 0L) {
+        tracker.onFrame(vsyncNanos, jankNanos)
     }
 }

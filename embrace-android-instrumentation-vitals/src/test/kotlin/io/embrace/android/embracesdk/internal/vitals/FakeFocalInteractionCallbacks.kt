@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.vitals
 
 /** Test double that counts the signals delivered to a [FocalInteractionCallbacks]. */
-internal class RecordingFocalInteractionCallbacks : FocalInteractionCallbacks {
+internal class FakeFocalInteractionCallbacks : FocalInteractionCallbacks {
     var screenStartCount = 0
     var screenStopCount = 0
     var interactionStartCount = 0

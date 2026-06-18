@@ -18,7 +18,7 @@ import org.robolectric.Robolectric.buildActivity
 internal class VitalsWindowCallbackTest {
 
     private lateinit var args: FakeInstrumentationArgs
-    private val focalCallbacks = RecordingFocalInteractionCallbacks()
+    private val focalCallbacks = FakeFocalInteractionCallbacks()
     private lateinit var callback: VitalsWindowCallback
     private var delegateCalls = 0
 
@@ -34,15 +34,6 @@ internal class VitalsWindowCallbackTest {
             }
         }
         callback = VitalsWindowCallback(delegate, args.logger, focalCallbacks)
-    }
-
-    private fun dispatch(action: Int): Boolean {
-        val event = MotionEvent.obtain(0L, 0L, action, 1f, 1f, 0)
-        try {
-            return callback.dispatchTouchEvent(event)
-        } finally {
-            event.recycle()
-        }
     }
 
     @Test
@@ -79,5 +70,14 @@ internal class VitalsWindowCallbackTest {
         assertEquals(0, focalCallbacks.interactionStartCount)
         assertEquals(0, focalCallbacks.interactionEndCount)
         assertEquals(1, delegateCalls)
+    }
+
+    private fun dispatch(action: Int): Boolean {
+        val event = MotionEvent.obtain(0L, 0L, action, 1f, 1f, 0)
+        try {
+            return callback.dispatchTouchEvent(event)
+        } finally {
+            event.recycle()
+        }
     }
 }

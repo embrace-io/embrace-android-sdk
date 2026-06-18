@@ -25,7 +25,7 @@ internal class VitalsActivityListenerTest {
     }
 
     private lateinit var args: FakeInstrumentationArgs
-    private val focalCallbacks = RecordingFocalInteractionCallbacks()
+    private val focalCallbacks = FakeFocalInteractionCallbacks()
     private lateinit var listener: VitalsActivityListener
 
     @Before

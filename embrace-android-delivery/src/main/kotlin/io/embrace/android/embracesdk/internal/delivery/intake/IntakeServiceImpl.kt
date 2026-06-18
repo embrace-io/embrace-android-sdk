@@ -39,6 +39,14 @@ class IntakeServiceImpl(
     // session lands before the process dies).
     private val state = AtomicReference(State.ACTIVE)
 
+    // Set if the current process has taken in a new log that signifies that it will end soon due to a JVM crash.
+    // This value is checked later when we encounter a session part, which could be one that we are resurrecting and not the one
+    // that is being ended by the JVM crash. In the case of the former, we process it normally. In the case of the latter,
+    // we process it on the current thread (which should be the main thread) because we know it's going to crash anyway, and we
+    // want to ensure that it is successfully persisted.
+    @Volatile
+    private var crashingProcessingIdentifier: String? = null
+
     override fun shutdown() {
         worker.shutdownAndWait(shutdownTimeoutMs)
     }
@@ -52,6 +60,7 @@ class IntakeServiceImpl(
 
         if (metadata.isCrashTerminatingProcess() && metadata.complete) {
             if (state.compareAndSet(State.ACTIVE, State.CRASH_RECEIVED)) {
+                crashingProcessingIdentifier = metadata.processIdentifier
                 schedulingService.shutdown()
                 // non-blocking shutdown: reject subsequent submissions but defer the drain to
                 // payloadStore.handleCrash's later intakeService.shutdown() call
@@ -62,10 +71,15 @@ class IntakeServiceImpl(
             return immediateFuture()
         }
 
-        if (metadata.envelopeType == SESSION && metadata.complete &&
-            state.compareAndSet(State.CRASH_RECEIVED, State.SEALED)
-        ) {
+        // The worker is shut down once a crash is detected, so anything arriving before the service is sealed must be persisted
+        // synchronously (like resurrected session parts) or be unrecoverably loss.
+        if (state.get() == State.CRASH_RECEIVED) {
             processIntake(intake, metadata, staleEntry)
+            // Only seal the service if the payload is the crashing session's last session part, after which we take in no more
+            // telemetry and let the process die.
+            if (metadata.isCrashingPartForCurrentProcess()) {
+                state.set(State.SEALED)
+            }
             return immediateFuture()
         }
 
@@ -152,6 +166,12 @@ class IntakeServiceImpl(
 
     private fun StoredTelemetryMetadata.isCrashTerminatingProcess(): Boolean =
         payloadType == PayloadType.JVM_CRASH || payloadType == PayloadType.REACT_NATIVE_CRASH
+
+    /**
+     * Returns true if the metadata is for a session part payload for the current process that is crashing.
+     */
+    private fun StoredTelemetryMetadata.isCrashingPartForCurrentProcess(): Boolean =
+        envelopeType == SESSION && complete && processIdentifier == crashingProcessingIdentifier
 
     private enum class State {
         ACTIVE,

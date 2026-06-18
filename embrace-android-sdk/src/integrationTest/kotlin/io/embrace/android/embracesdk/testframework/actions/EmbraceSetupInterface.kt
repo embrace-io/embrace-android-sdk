@@ -40,7 +40,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.sharedOb
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
-import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
@@ -54,7 +53,6 @@ import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.robolectric.Shadows
 import org.robolectric.shadows.ShadowLooper
 import kotlin.time.Duration.Companion.seconds
-import kotlin.random.Random
 
 /**
  * Test harness for which an instance is generated each test run and provided to the test by the Rule
@@ -246,20 +244,24 @@ internal class EmbraceSetupInterface(
         partIndex: Int = 1,
         maxDurationSeconds: Int = 43200,
         inactivityTimeoutSeconds: Int = 1800,
+        isBackgroundOnly: Boolean = false,
     ) {
         getStore().edit {
             putStringMap(
                 "embrace.user_session",
-                mapOf(
-                    EmbSessionAttributes.EMB_USER_SESSION_ID to userSessionId,
-                    EmbSessionAttributes.EMB_USER_SESSION_START_TS to startMs.toString(),
-                    EmbSessionAttributes.EMB_USER_SESSION_NUMBER to sessionNumber.toString(),
-                    EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS to maxDurationSeconds.toString(),
-                    EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS to inactivityTimeoutSeconds.toString(),
-                    SessionAttributes.SESSION_ID to userSessionId,
-                    EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX to partIndex.toString(),
-                    "emb.user_session_last_activity_ts" to lastActivityMs.toString(),
-                )
+                buildMap {
+                    put(EmbSessionAttributes.EMB_USER_SESSION_ID, userSessionId)
+                    put(EmbSessionAttributes.EMB_USER_SESSION_START_TS, startMs.toString())
+                    put(EmbSessionAttributes.EMB_USER_SESSION_NUMBER, sessionNumber.toString())
+                    put(EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS, maxDurationSeconds.toString())
+                    put(EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS, inactivityTimeoutSeconds.toString())
+                    put(SessionAttributes.SESSION_ID, userSessionId)
+                    put(EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX, partIndex.toString())
+                    put("emb.user_session_last_activity_ts", lastActivityMs.toString())
+                    if (isBackgroundOnly) {
+                        put(EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART, "1")
+                    }
+                }
             )
         }
     }
@@ -270,6 +272,7 @@ internal class EmbraceSetupInterface(
         maxDurationSeconds: Int = 43200,
         inactivityTimeoutSeconds: Int = 1800,
         cacheIncompletePartPayload: Boolean = false,
+        isBackgroundOnly: Boolean = false,
     ): Long {
         val userSessionStartTimeMs: Long = sdkStartTimeMs - maxDurationSeconds.seconds.inWholeMilliseconds - 60_000
         val lastActivityMs: Long = userSessionStartTimeMs + inactivityTimeoutSeconds.seconds.inWholeMilliseconds - 10_000
@@ -278,7 +281,8 @@ internal class EmbraceSetupInterface(
             startMs = userSessionStartTimeMs,
             lastActivityMs = lastActivityMs,
             maxDurationSeconds = maxDurationSeconds,
-            inactivityTimeoutSeconds = inactivityTimeoutSeconds
+            inactivityTimeoutSeconds = inactivityTimeoutSeconds,
+            isBackgroundOnly = isBackgroundOnly,
         )
         if (cacheIncompletePartPayload) {
             val metadata = fakeCachedSessionStoredTelemetryMetadata.copy(timestamp = userSessionStartTimeMs)

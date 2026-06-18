@@ -137,6 +137,81 @@ internal class UserSessionIdPropagationTest {
     }
 
     @Test
+    fun `log before foreground carries the restored user session id when a persisted session is continued`() {
+        val persistedId = "aabbccdd11223344aabbccdd11223344"
+        testRule.runTest(
+            setupAction = {
+                persistUserSession(
+                    userSessionId = persistedId,
+                    startMs = DEFAULT_SDK_START_TIME_MS - 1_000L,
+                    lastActivityMs = DEFAULT_SDK_START_TIME_MS - 100L,
+                )
+            },
+            testCaseAction = {
+                embrace.logMessage("cold-window-log", Severity.INFO)
+                recordSession {
+                    flushLogBatch()
+                }
+            },
+            assertAction = {
+                val sessionUserSessionId = getSingleSessionEnvelope().getUserSessionId()
+                val logAttrs = checkNotNull(getSingleLogEnvelope().getLogOfType(EmbType.System.Log).attributes)
+                val logUserSessionId = logAttrs.findAttributeValue(EMB_USER_SESSION_ID)
+                assertEquals(persistedId, sessionUserSessionId)
+                assertEquals(persistedId, logUserSessionId)
+                assertTrue(logAttrs.findAttributeValue(EMB_SESSION_PART_ID).isNullOrEmpty())
+            },
+        )
+    }
+
+    @Test
+    fun `log before foreground carries a new user session id when the persisted session is dropped`() {
+        testRule.runTest(
+            setupAction = {
+                persistExpiredUserSession(
+                    sdkStartTimeMs = DEFAULT_SDK_START_TIME_MS,
+                    userSessionId = DEFAULT_EXPIRED_USER_SESSION_ID,
+                )
+            },
+            testCaseAction = {
+                embrace.logMessage("cold-window-log", Severity.INFO)
+                recordSession {
+                    flushLogBatch()
+                }
+            },
+            assertAction = {
+                val sessionUserSessionId = getSingleSessionEnvelope().getUserSessionId()
+                val logAttrs = checkNotNull(getSingleLogEnvelope().getLogOfType(EmbType.System.Log).attributes)
+                val logUserSessionId = logAttrs.findAttributeValue(EMB_USER_SESSION_ID)
+                assertTrue(sessionUserSessionId.isNotEmpty())
+                assertNotEquals(DEFAULT_EXPIRED_USER_SESSION_ID, sessionUserSessionId)
+                assertEquals(sessionUserSessionId, logUserSessionId)
+                assertTrue(logAttrs.findAttributeValue(EMB_SESSION_PART_ID).isNullOrEmpty())
+            },
+        )
+    }
+
+    @Test
+    fun `log before foreground carries the new user session id when no session is persisted`() {
+        testRule.runTest(
+            testCaseAction = {
+                embrace.logMessage("cold-window-log", Severity.INFO)
+                recordSession {
+                    flushLogBatch()
+                }
+            },
+            assertAction = {
+                val sessionUserSessionId = getSingleSessionEnvelope().getUserSessionId()
+                val logAttrs = checkNotNull(getSingleLogEnvelope().getLogOfType(EmbType.System.Log).attributes)
+                val logUserSessionId = logAttrs.findAttributeValue(EMB_USER_SESSION_ID)
+                assertTrue(sessionUserSessionId.isNotEmpty())
+                assertEquals(sessionUserSessionId, logUserSessionId)
+                assertTrue(logAttrs.findAttributeValue(EMB_SESSION_PART_ID).isNullOrEmpty())
+            },
+        )
+    }
+
+    @Test
     fun `log in second part of same user session carries same user session id but different session part id`() {
         testRule.runTest(
             testCaseAction = {

@@ -137,6 +137,9 @@ internal fun ModuleGraph.triggerPayloadSend() {
             resurrectionService.resurrectOldPayloads(
                 nativeCrashServiceProvider = {
                     instrumentationModule.instrumentationRegistry.findByType(NativeCrashDataSource::class)
+                },
+                userSessionRestoreDecisionProvider = {
+                    userSessionOrchestrationModule.sessionOrchestrator.userSessionRestoreDecision
                 }
             )
             resurrectionAttempted = true

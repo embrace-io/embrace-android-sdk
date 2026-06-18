@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
 import io.embrace.android.embracesdk.internal.session.UserSessionListener
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
+import io.embrace.android.embracesdk.internal.session.UserSessionRestoreDecision
 
 /**
  * Orchestrates the session and background activities in response to state changes and manual
@@ -36,6 +37,12 @@ interface SessionOrchestrator : AppStateListener, CrashTeardownHandler {
      * Registers a listener that is invoked for user session lifecycle events.
      */
     fun addUserSessionListener(listener: UserSessionListener)
+
+    /**
+     * The decision made at the startup of this SDK instance about whether or not a persisted user session will be continued or
+     * implicitly terminated. If this is null, it means no persisted user session was found
+     */
+    val userSessionRestoreDecision: UserSessionRestoreDecision?
 }
 
 /**

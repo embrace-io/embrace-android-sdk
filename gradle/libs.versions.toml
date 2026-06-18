@@ -45,7 +45,7 @@ jvmTargetCompatibility = "11"
 kotlinCoreLibrariesVersion = "2.0.21"
 minCompileSdk = "34"
 minAgpVersion = "8.0.2"
-compileSdk = "36"
+compileSdk = "37"
 minSdk = "21"
 
 [libraries]

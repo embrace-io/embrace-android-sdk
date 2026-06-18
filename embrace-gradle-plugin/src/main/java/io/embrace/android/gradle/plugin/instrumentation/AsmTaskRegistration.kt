@@ -56,7 +56,7 @@ class AsmTaskRegistration : EmbraceTaskRegistration {
 
                 params.encodedSharedObjectFilesMap.set(
                     encodeFileToBase64Task.safeFlatMap {
-                        it?.outputFile ?: project.provider { null }
+                        it.outputFile
                     }
                 )
 
@@ -66,7 +66,7 @@ class AsmTaskRegistration : EmbraceTaskRegistration {
 
                 params.reactNativeBundleId.set(
                     reactNativeTask.safeFlatMap {
-                        it?.bundleIdOutputFile ?: project.provider { null }
+                        it.bundleIdOutputFile
                     }
                 )
             }

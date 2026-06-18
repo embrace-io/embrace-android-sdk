@@ -121,6 +121,12 @@ data class RemoteConfig(
     @Json(name = "pct_screen_tracking_enabled")
     val pctNavigationStateCaptureEnabled: Float? = null,
 
+    /**
+     * Percentage of devices for which the smoothness vital is captured.
+     */
+    @Json(name = "pct_smoothness_enabled")
+    val pctSmoothnessEnabled: Float? = null,
+
     @Json(name = "user_session")
     val userSession: UserSessionRemoteConfig? = null,
 )

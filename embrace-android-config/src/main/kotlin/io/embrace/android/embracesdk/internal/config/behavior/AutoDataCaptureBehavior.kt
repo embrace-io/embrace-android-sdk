@@ -79,4 +79,9 @@ interface AutoDataCaptureBehavior {
      * Whether navigation state capture is enabled
      */
     fun isNavigationStateCaptureEnabled(): Boolean
+
+    /**
+     * Whether smoothness vital capture is enabled
+     */
+    fun isSmoothnessCaptureEnabled(): Boolean
 }

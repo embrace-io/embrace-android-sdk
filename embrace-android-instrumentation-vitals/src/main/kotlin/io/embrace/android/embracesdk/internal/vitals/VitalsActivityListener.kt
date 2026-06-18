@@ -60,7 +60,7 @@ internal class VitalsActivityListener(
         if (frameListeners.containsKey(window)) {
             return
         }
-        val listener = VitalsFrameMetricsListener(focalCallbacks, logger, frameMetricsStrategy)
+        val listener = VitalsFrameMetricsListener(focalCallbacks, frameMetricsStrategy)
         frameListeners[window] = listener
         window.addOnFrameMetricsAvailableListener(listener, frameMetricsHandler)
     }

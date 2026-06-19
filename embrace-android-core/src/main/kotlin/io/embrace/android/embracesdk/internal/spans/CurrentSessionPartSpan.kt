@@ -32,7 +32,7 @@ interface CurrentSessionPartSpan : Initializable {
     /**
      * Returns the current session ID
      */
-    fun getSessionId(): String
+    fun getId(): String
 
     /**
      * Callback to be invoked when a span is just about to be stopped

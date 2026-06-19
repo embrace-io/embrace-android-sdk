@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.assertions.getLastLog
-import io.embrace.android.embracesdk.assertions.getSessionId
+import io.embrace.android.embracesdk.assertions.getOtelSessionId
 import io.embrace.android.embracesdk.assertions.getStartTime
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
@@ -172,7 +172,7 @@ internal class JvmCrashFeatureTest {
             assertAction = {
                 // The resurrected session is delivered normally and is not associated with the crash.
                 val resurrectedSession = getSingleSessionEnvelope(AppState.FOREGROUND)
-                assertEquals(resurrectedSessionId, resurrectedSession.getSessionId())
+                assertEquals(resurrectedSessionId, resurrectedSession.getOtelSessionId())
                 assertNull(resurrectedSession.getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID))
 
                 // The crashing process's own session part is held back during teardown, persisted, and carries the crash id.

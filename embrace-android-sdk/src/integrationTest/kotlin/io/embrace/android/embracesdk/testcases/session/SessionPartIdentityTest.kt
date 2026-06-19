@@ -6,15 +6,16 @@ import io.embrace.android.embracesdk.assertions.assertSessionIds
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.assertions.getSessionPartId
+import io.embrace.android.embracesdk.assertions.getSessionPartNumber
 import io.embrace.android.embracesdk.assertions.getUserSessionId
+import io.embrace.android.embracesdk.assertions.getUserSessionNumber
+import io.embrace.android.embracesdk.assertions.getUserSessionPartIndex
 import io.embrace.android.embracesdk.assertions.toMap
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
-import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.toStringMap
-import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_SESSION_PART_NUMBER
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_NUMBER
@@ -112,22 +113,18 @@ internal class SessionPartIdentityTest {
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(4)
-                val us1p1 = sessions[0].findSessionSpan().attributes
-                val us1p2 = sessions[1].findSessionSpan().attributes
-                val us2p1 = sessions[2].findSessionSpan().attributes
-                val us2p2 = sessions[3].findSessionSpan().attributes
 
-                assertEquals("1", us1p1?.findAttributeValue(EMB_USER_SESSION_NUMBER))
-                assertEquals("1", us1p1?.findAttributeValue(EMB_SESSION_PART_NUMBER))
+                assertEquals("1", sessions[0].getUserSessionNumber())
+                assertEquals("1", sessions[0].getSessionPartNumber())
 
-                assertEquals("1", us1p2?.findAttributeValue(EMB_USER_SESSION_NUMBER))
-                assertEquals("2", us1p2?.findAttributeValue(EMB_SESSION_PART_NUMBER))
+                assertEquals("1", sessions[1].getUserSessionNumber())
+                assertEquals("2", sessions[1].getSessionPartNumber())
 
-                assertEquals("2", us2p1?.findAttributeValue(EMB_USER_SESSION_NUMBER))
-                assertEquals("3", us2p1?.findAttributeValue(EMB_SESSION_PART_NUMBER))
+                assertEquals("2", sessions[2].getUserSessionNumber())
+                assertEquals("3", sessions[2].getSessionPartNumber())
 
-                assertEquals("2", us2p2?.findAttributeValue(EMB_USER_SESSION_NUMBER))
-                assertEquals("4", us2p2?.findAttributeValue(EMB_SESSION_PART_NUMBER))
+                assertEquals("2", sessions[3].getUserSessionNumber())
+                assertEquals("4", sessions[3].getSessionPartNumber())
             },
         )
     }
@@ -150,9 +147,8 @@ internal class SessionPartIdentityTest {
             testCaseAction = { recordSession() },
             assertAction = {
                 val session = getSingleSessionEnvelope()
-                val attrs = session.findSessionSpan().attributes
-                assertEquals("7", attrs?.findAttributeValue(EMB_USER_SESSION_NUMBER))
-                assertEquals("7", attrs?.findAttributeValue(EMB_SESSION_PART_NUMBER))
+                assertEquals("7", session.getUserSessionNumber())
+                assertEquals("7", session.getSessionPartNumber())
             }
         )
     }
@@ -170,22 +166,18 @@ internal class SessionPartIdentityTest {
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(4)
-                val us1p1 = sessions[0].findSessionSpan().attributes
-                val us1p2 = sessions[1].findSessionSpan().attributes
-                val us2p1 = sessions[2].findSessionSpan().attributes
-                val us2p2 = sessions[3].findSessionSpan().attributes
 
-                assertEquals("1", us1p1?.findAttributeValue(EMB_USER_SESSION_NUMBER))
-                assertEquals("1", us1p1?.findAttributeValue(EMB_USER_SESSION_PART_INDEX))
+                assertEquals("1", sessions[0].getUserSessionNumber())
+                assertEquals("1", sessions[0].getUserSessionPartIndex())
 
-                assertEquals("1", us1p2?.findAttributeValue(EMB_USER_SESSION_NUMBER))
-                assertEquals("2", us1p2?.findAttributeValue(EMB_USER_SESSION_PART_INDEX))
+                assertEquals("1", sessions[1].getUserSessionNumber())
+                assertEquals("2", sessions[1].getUserSessionPartIndex())
 
-                assertEquals("2", us2p1?.findAttributeValue(EMB_USER_SESSION_NUMBER))
-                assertEquals("1", us2p1?.findAttributeValue(EMB_USER_SESSION_PART_INDEX))
+                assertEquals("2", sessions[2].getUserSessionNumber())
+                assertEquals("1", sessions[2].getUserSessionPartIndex())
 
-                assertEquals("2", us2p2?.findAttributeValue(EMB_USER_SESSION_NUMBER))
-                assertEquals("2", us2p2?.findAttributeValue(EMB_USER_SESSION_PART_INDEX))
+                assertEquals("2", sessions[3].getUserSessionNumber())
+                assertEquals("2", sessions[3].getUserSessionPartIndex())
             },
         )
     }
@@ -203,7 +195,7 @@ internal class SessionPartIdentityTest {
             assertAction = {
                 val session = getSingleSessionEnvelope()
                 assertEquals(persistedId, session.getUserSessionId())
-                assertEquals("3", session.findSessionSpan().attributes?.findAttributeValue(EMB_USER_SESSION_PART_INDEX))
+                assertEquals("3", session.getUserSessionPartIndex())
             }
         )
     }
@@ -222,7 +214,7 @@ internal class SessionPartIdentityTest {
             assertAction = {
                 val session = getSingleSessionEnvelope()
                 assertNotEquals(persistedId, session.getUserSessionId())
-                assertEquals("1", session.findSessionSpan().attributes?.findAttributeValue(EMB_USER_SESSION_PART_INDEX))
+                assertEquals("1", session.getUserSessionPartIndex())
             }
         )
     }

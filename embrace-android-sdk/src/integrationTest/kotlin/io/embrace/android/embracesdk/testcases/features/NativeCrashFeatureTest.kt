@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.getLogOfType
-import io.embrace.android.embracesdk.assertions.getSessionId
+import io.embrace.android.embracesdk.assertions.getOtelSessionId
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
@@ -230,11 +230,11 @@ internal class NativeCrashFeatureTest {
                 assertNativeCrashSent(log2, crashData2, fakeSymbols)
 
                 // sessions updated to include crash IDs
-                val session1 = sessionEnvelopes.single { it.getSessionId() == crashData.nativeCrash.sessionPartId }
+                val session1 = sessionEnvelopes.single { it.getOtelSessionId() == crashData.nativeCrash.sessionPartId }
                 session1.assertDeadPartResurrected(crashData)
 
                 // sessions updated to include crash IDs
-                val session2 = sessionEnvelopes.single { it.getSessionId() == crashData2.nativeCrash.sessionPartId }
+                val session2 = sessionEnvelopes.single { it.getOtelSessionId() == crashData2.nativeCrash.sessionPartId }
                 session2.assertDeadPartResurrected(crashData2)
             }
         )

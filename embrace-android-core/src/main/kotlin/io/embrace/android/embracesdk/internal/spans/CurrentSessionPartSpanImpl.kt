@@ -92,7 +92,7 @@ internal class CurrentSessionPartSpanImpl(
         }
     }
 
-    override fun getSessionId(): String = sessionState?.sessionId ?: ""
+    override fun getId(): String = sessionState?.sessionId ?: ""
 
     override fun spanStopCallback(spanId: String) {
         val currentSessionPartSpan = sessionState?.span

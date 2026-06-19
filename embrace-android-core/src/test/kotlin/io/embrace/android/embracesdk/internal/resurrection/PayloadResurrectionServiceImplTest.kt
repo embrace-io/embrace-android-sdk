@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.assertions.findAttributeValue
 import io.embrace.android.embracesdk.assertions.findSpansByName
 import io.embrace.android.embracesdk.assertions.getLastHeartbeatTimeMs
-import io.embrace.android.embracesdk.assertions.getSessionId
+import io.embrace.android.embracesdk.assertions.getOtelSessionId
 import io.embrace.android.embracesdk.assertions.getStartTime
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeCachedLogEnvelopeStore
@@ -303,7 +303,7 @@ class PayloadResurrectionServiceImplTest {
         nativeCrashService.addNativeCrashData(
             createNativeCrashData(
                 nativeCrashId = "dead-session-native-crash",
-                sessionId = deadSessionEnvelope.getSessionId()
+                sessionId = deadSessionEnvelope.getOtelSessionId()
             )
         )
         deadSessionEnvelope.resurrectPayload()
@@ -399,7 +399,7 @@ class PayloadResurrectionServiceImplTest {
             )
         )
 
-        val parts = getStoredParts().associateBy { it.getSessionId() }
+        val parts = getStoredParts().associateBy { it.getOtelSessionId() }
         val laterAttrs = checkNotNull(parts.getValue("later-part").getSessionSpan()?.attributes)
         assertEquals("1", laterAttrs.findAttributeValue(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART))
         assertEquals(
@@ -555,7 +555,7 @@ class PayloadResurrectionServiceImplTest {
     fun `multiple native crashes will be resurrected properly with the crash data sent separately`() {
         val deadSessionCrashData = createNativeCrashData(
             nativeCrashId = "native-crash-1",
-            sessionId = deadSessionEnvelope.getSessionId()
+            sessionId = deadSessionEnvelope.getOtelSessionId()
         )
         nativeCrashService.addNativeCrashData(deadSessionCrashData)
         cacheStorageService.addPayload(
@@ -576,7 +576,7 @@ class PayloadResurrectionServiceImplTest {
         )
         val earlierSessionCrashData = createNativeCrashData(
             nativeCrashId = "native-crash-2",
-            sessionId = earlierDeadSession.getSessionId()
+            sessionId = earlierDeadSession.getOtelSessionId()
         )
         val earlierDeadSessionMetadata = StoredTelemetryMetadata(
             timestamp = earlierDeadSession.getStartTime(),
@@ -601,7 +601,7 @@ class PayloadResurrectionServiceImplTest {
             assertEquals(sessionMetadata.copy(complete = true), this)
         }
         with(sessionEnvelopes.first()) {
-            assertEquals(deadSessionEnvelope.getSessionId(), getSessionId())
+            assertEquals(deadSessionEnvelope.getOtelSessionId(), getOtelSessionId())
             assertEquals(
                 "native-crash-1",
                 getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID)
@@ -616,7 +616,7 @@ class PayloadResurrectionServiceImplTest {
             assertEquals(earlierDeadSessionMetadata.copy(complete = true), this)
         }
         with(sessionEnvelopes.last()) {
-            assertEquals(earlierDeadSession.getSessionId(), getSessionId())
+            assertEquals(earlierDeadSession.getOtelSessionId(), getOtelSessionId())
             assertEquals(
                 "native-crash-2",
                 getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID)

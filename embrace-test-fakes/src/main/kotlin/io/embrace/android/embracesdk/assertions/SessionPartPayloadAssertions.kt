@@ -23,7 +23,7 @@ fun Envelope<SessionPartPayload>.findSessionSpan(): Span {
 /**
  * Return the user session ID from the session span in the payload
  */
-fun Envelope<SessionPartPayload>.getSessionId(): String {
+fun Envelope<SessionPartPayload>.getOtelSessionId(): String {
     return checkNotNull(findSessionSpan().attributes?.findAttributeValue("session.id")) {
         "No session id found in session payload"
     }
@@ -58,6 +58,30 @@ fun Envelope<SessionPartPayload>.getUserSessionTerminationReason(): String? =
  */
 fun Envelope<SessionPartPayload>.isFinalSessionPart(): Boolean =
     findSessionSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART) == "1"
+
+/**
+ * Whether the `emb.is_background_only_part` marker is present (and set to "1") on the session.
+ */
+fun Envelope<SessionPartPayload>.isBackgroundOnlyPart(): Boolean =
+    findSessionSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART) == "1"
+
+/**
+ * Return the value of the `emb.user_session_number` attribute (the user-session ordinal) on the session span.
+ */
+fun Envelope<SessionPartPayload>.getUserSessionNumber(): String? =
+    findSessionSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_NUMBER)
+
+/**
+ * Return the value of the `emb.user_session_part_index` attribute (part index within the user session) on the session span.
+ */
+fun Envelope<SessionPartPayload>.getUserSessionPartIndex(): String? =
+    findSessionSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX)
+
+/**
+ * Return the value of the `emb.session_part_number` attribute (install-lifetime monotonic counter) on the session span.
+ */
+fun Envelope<SessionPartPayload>.getSessionPartNumber(): String? =
+    findSessionSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_NUMBER)
 
 /**
  * Return the session start time in milliseconds from the session span in the payload

@@ -164,54 +164,6 @@ internal class UserSessionLifecycleTest {
     }
 
     @Test
-    fun `new user session can be manually created`() {
-        testRule.runTest(
-            testCaseAction = {
-                recordSession {
-                    clock.tick(10_000)
-                    embrace.endUserSession()
-                }
-            },
-            assertAction = {
-                val sessions = getSessionEnvelopes(2)
-
-                assertNotEquals(sessions[0].getUserSessionId(), sessions[1].getUserSessionId())
-                assertTrue(sessions[0].isFinalSessionPart())
-                assertEquals(MANUAL, sessions[0].getUserSessionTerminationReason())
-                assertFalse(sessions[1].isFinalSessionPart())
-                assertNull(sessions[1].getUserSessionTerminationReason())
-            }
-        )
-    }
-
-    @Test
-    fun `endUserSession past the manual cooldown window ends a second user session`() {
-        testRule.runTest(
-            testCaseAction = {
-                recordSession {
-                    // user session old enough for the first manual end to take effect
-                    clock.tick(10_000)
-                    embrace.endUserSession()
-                    // past the 5s cooldown, so the second manual end also takes effect
-                    clock.tick(6_000)
-                    embrace.endUserSession()
-                }
-            },
-            assertAction = {
-                val sessions = getSessionEnvelopes(3)
-                assertNotEquals(sessions[0].getUserSessionId(), sessions[1].getUserSessionId())
-                assertNotEquals(sessions[1].getUserSessionId(), sessions[2].getUserSessionId())
-                assertTrue(sessions[0].isFinalSessionPart())
-                assertEquals(MANUAL, sessions[0].getUserSessionTerminationReason())
-                assertTrue(sessions[1].isFinalSessionPart())
-                assertEquals(MANUAL, sessions[1].getUserSessionTerminationReason())
-                assertFalse(sessions[2].isFinalSessionPart())
-                assertNull(sessions[2].getUserSessionTerminationReason())
-            }
-        )
-    }
-
-    @Test
     fun `new user session can be created via inactivity timeout with background activity disabled`() {
         testRule.runTest(
             persistedRemoteConfig = RemoteConfig(

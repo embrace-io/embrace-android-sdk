@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.assertions.getUserSessionTerminationReason
 import io.embrace.android.embracesdk.assertions.isFinalSessionPart
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
@@ -132,6 +133,37 @@ internal class UserSessionLifecycleTest {
     }
 
     @Test
+    fun `persisted background-only user session is not reused by a foreground cold start`() {
+        val persistedId = "aabbccdd11223344aabbccdd11223344"
+        val startMs = DEFAULT_SDK_START_TIME_MS - 1_000L
+        val lastActivityMs = DEFAULT_SDK_START_TIME_MS - 100L
+        testRule.runTest(
+            persistedRemoteConfig = backgroundActivityEnabledConfig,
+            setupAction = {
+                persistUserSession(
+                    userSessionId = persistedId,
+                    startMs = startMs,
+                    lastActivityMs = lastActivityMs,
+                    isBackgroundOnly = true,
+                )
+            },
+            testCaseAction = { recordSession() },
+            assertAction = {
+                val bgSession = getSingleSessionEnvelope(AppState.BACKGROUND)
+                val fgSession = getSingleSessionEnvelope(AppState.FOREGROUND)
+
+                assertEquals(persistedId, bgSession.getUserSessionId())
+                assertEquals("1", bgSession.findSessionSpan().attributes?.findAttributeValue(EMB_IS_BACKGROUND_ONLY_PART))
+                assertTrue(bgSession.isFinalSessionPart())
+                assertEquals(BACKGROUND_ONLY_USER_SESSION_FOREGROUNDED, bgSession.getUserSessionTerminationReason())
+
+                assertNotEquals(persistedId, fgSession.getUserSessionId())
+                assertNull(fgSession.findSessionSpan().attributes?.findAttributeValue(EMB_IS_BACKGROUND_ONLY_PART))
+            }
+        )
+    }
+
+    @Test
     fun `new user session can be manually created`() {
         testRule.runTest(
             testCaseAction = {
@@ -148,6 +180,33 @@ internal class UserSessionLifecycleTest {
                 assertEquals(MANUAL, sessions[0].getUserSessionTerminationReason())
                 assertFalse(sessions[1].isFinalSessionPart())
                 assertNull(sessions[1].getUserSessionTerminationReason())
+            }
+        )
+    }
+
+    @Test
+    fun `endUserSession past the manual cooldown window ends a second user session`() {
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    // user session old enough for the first manual end to take effect
+                    clock.tick(10_000)
+                    embrace.endUserSession()
+                    // past the 5s cooldown, so the second manual end also takes effect
+                    clock.tick(6_000)
+                    embrace.endUserSession()
+                }
+            },
+            assertAction = {
+                val sessions = getSessionEnvelopes(3)
+                assertNotEquals(sessions[0].getUserSessionId(), sessions[1].getUserSessionId())
+                assertNotEquals(sessions[1].getUserSessionId(), sessions[2].getUserSessionId())
+                assertTrue(sessions[0].isFinalSessionPart())
+                assertEquals(MANUAL, sessions[0].getUserSessionTerminationReason())
+                assertTrue(sessions[1].isFinalSessionPart())
+                assertEquals(MANUAL, sessions[1].getUserSessionTerminationReason())
+                assertFalse(sessions[2].isFinalSessionPart())
+                assertNull(sessions[2].getUserSessionTerminationReason())
             }
         )
     }
@@ -353,6 +412,48 @@ internal class UserSessionLifecycleTest {
                 assertEquals("1", firstSession.attributes?.findAttributeValue(EMB_USER_SESSION_NUMBER))
                 assertEquals("1", secondBg.attributes?.findAttributeValue(EMB_USER_SESSION_NUMBER))
                 assertEquals("2", secondSession.attributes?.findAttributeValue(EMB_USER_SESSION_NUMBER))
+            }
+        )
+    }
+
+    @Test
+    fun `background-only user session may exceed max duration without being capped`() {
+        val maxDurationSeconds = 3600
+        val inactivityTimeoutSeconds = 60
+        val maxDurationMs = maxDurationSeconds * 1_000L
+        testRule.runTest(
+            persistedRemoteConfig = RemoteConfig(
+                backgroundActivityConfig = BackgroundActivityRemoteConfig(100f),
+                userSession = UserSessionRemoteConfig(
+                    maxDurationSeconds = maxDurationSeconds,
+                    inactivityTimeoutSeconds = inactivityTimeoutSeconds,
+                ),
+            ),
+            testCaseAction = {
+                recordSession()
+                clock.tick(inactivityTimeoutSeconds * 1_000L + 1_000L)
+                unblockTimerThread()
+                clock.tick(maxDurationMs + 60_000L)
+                recordSession()
+            },
+            assertAction = {
+                val fgSessions = getSessionEnvelopes(2, AppState.FOREGROUND)
+                val bgSessions = getSessionEnvelopes(3, AppState.BACKGROUND)
+
+                // exactly one part is background-only: the long-lived middle session S2
+                val backgroundOnlyParts = bgSessions.filter {
+                    it.findSessionSpan().attributes?.findAttributeValue(EMB_IS_BACKGROUND_ONLY_PART) == "1"
+                }
+                assertEquals(1, backgroundOnlyParts.size)
+                val longBackgroundPart = backgroundOnlyParts.single()
+
+                val userSessionIds = (fgSessions + bgSessions).map { it.getUserSessionId() }.toSet()
+                assertEquals(3, userSessionIds.size)
+
+                val span = longBackgroundPart.findSessionSpan()
+                val partDurationMs = checkNotNull(span.endTimeNanos).nanosToMillis() - checkNotNull(span.startTimeNanos).nanosToMillis()
+                assertTrue(partDurationMs > maxDurationMs)
+                assertTrue(longBackgroundPart.isFinalSessionPart())
             }
         )
     }

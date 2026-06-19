@@ -7,11 +7,15 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.assertions.getSessionId
+import io.embrace.android.embracesdk.assertions.getStartTime
 import io.embrace.android.embracesdk.assertions.getUserSessionId
+import io.embrace.android.embracesdk.assertions.getUserSessionTerminationReason
+import io.embrace.android.embracesdk.assertions.isFinalSessionPart
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.fakeIncompleteSessionEnvelope
+import io.embrace.android.embracesdk.fixtures.FAKE_USER_SESSION_ID
 import io.embrace.android.embracesdk.fixtures.fakeCachedSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeNativeCrashStoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -19,6 +23,10 @@ import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectionTyp
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
+import io.embrace.android.embracesdk.internal.session.getSessionSpan
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_SESSION_PART_ID
 import io.embrace.android.embracesdk.testcases.features.createNativeSymbolsForCurrentArch
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -29,8 +37,11 @@ import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.actions.createStoredNativeCrashData
 import io.opentelemetry.kotlin.semconv.SessionAttributes.SESSION_ID
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -71,6 +82,36 @@ internal class UserSessionResurrectionTest {
                 assertNotEquals(DEFAULT_EXPIRED_USER_SESSION_ID, live.getSessionId())
                 assertNotEquals(DEFAULT_EXPIRED_USER_SESSION_ID, live.getUserSessionId())
                 assertNotNull(live.getUserSessionId())
+            },
+        )
+    }
+
+    @Test
+    fun `resurrected part of a terminated background-only session is stamped with the marker and final part`() {
+        testRule.runTest(
+            setupAction = {
+                fakeNetworkConnectivityService.connectivityStatus = ConnectivityStatus.None
+                persistExpiredUserSession(
+                    sdkStartTimeMs = DEFAULT_SDK_START_TIME_MS,
+                    userSessionId = FAKE_USER_SESSION_ID,
+                    cacheIncompletePartPayload = true,
+                    isBackgroundOnly = true,
+                )
+            },
+            testCaseAction = {
+                recordSession()
+                simulateConnectionTypeChange(ConnectionType.WIFI)
+            },
+            assertAction = {
+                val resurrected = getSessionEnvelopes(2).single { it.getSessionId() == FAKE_USER_SESSION_ID }
+                val attributes = checkNotNull(resurrected.getSessionSpan()?.attributes)
+
+                assertEquals("1", attributes.findAttributeValue(EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART))
+                assertEquals("1", attributes.findAttributeValue(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART))
+                assertEquals(
+                    EmbSessionAttributes.EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED,
+                    attributes.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON)
+                )
             },
         )
     }
@@ -140,6 +181,77 @@ internal class UserSessionResurrectionTest {
                 val attrs = checkNotNull(getSingleLogEnvelope().getLogOfType(EmbType.System.NativeCrash).attributes)
                 assertEquals("", attrs.findAttributeValue(SESSION_ID))
                 assertEquals("", attrs.findAttributeValue(EMB_SESSION_PART_ID))
+            },
+        )
+    }
+
+    @Test
+    fun `native crash with no active session part carries the user session id and not a session part id`() {
+        val userSessionId = "aabbccdd11223344aabbccdd11223344"
+        testRule.runTest(
+            instrumentedConfig = nativeCrashEnabledConfig(),
+            setupAction = {
+                setupNativeCrash(userSessionId = userSessionId, sessionPartId = "null")
+            },
+            testCaseAction = { recordSession() },
+            assertAction = {
+                val attrs = checkNotNull(getSingleLogEnvelope().getLogOfType(EmbType.System.NativeCrash).attributes)
+                assertEquals(userSessionId, attrs.findAttributeValue(SESSION_ID))
+                assertEquals(userSessionId, attrs.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID))
+                assertEquals("null", attrs.findAttributeValue(EMB_SESSION_PART_ID))
+            },
+        )
+    }
+
+    @Test
+    fun `restored user session continues a resurrected prior-process part without stamping it final`() {
+        val persistedId = "aabbccdd11223344aabbccdd11223344"
+        val priorProcessId = "prior-launch-process-id"
+        testRule.runTest(
+            setupAction = {
+                fakeNetworkConnectivityService.connectivityStatus = ConnectivityStatus.None
+                persistUserSession(
+                    userSessionId = persistedId,
+                    startMs = DEFAULT_SDK_START_TIME_MS - 1_000L,
+                    lastActivityMs = DEFAULT_SDK_START_TIME_MS - 100L,
+                )
+                checkNotNull(fakeCacheStorageService).addPayload(
+                    metadata = fakeCachedSessionStoredTelemetryMetadata.copy(
+                        userSessionId = persistedId,
+                        timestamp = DEFAULT_SDK_START_TIME_MS - 900L,
+                    ),
+                    data = fakeIncompleteSessionEnvelope(
+                        sessionId = persistedId,
+                        processIdentifier = priorProcessId,
+                        startMs = DEFAULT_SDK_START_TIME_MS - 900L,
+                        lastHeartbeatTimeMs = DEFAULT_SDK_START_TIME_MS - 800L,
+                    ),
+                )
+            },
+            testCaseAction = {
+                recordSession()
+                simulateConnectionTypeChange(ConnectionType.WIFI)
+            },
+            assertAction = {
+                val sessions = getSessionEnvelopes(2)
+                val priorLaunchPart = sessions[0]
+                val currentLaunchPart = sessions[1]
+
+                // both parts belong to the one continued user session
+                assertEquals(persistedId, priorLaunchPart.getSessionId())
+                assertEquals(persistedId, currentLaunchPart.getSessionId())
+                assertEquals(persistedId, currentLaunchPart.getUserSessionId())
+
+                fun Envelope<SessionPartPayload>.processId() =
+                    getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER)
+                assertEquals(priorProcessId, priorLaunchPart.processId())
+                assertNotEquals(priorProcessId, currentLaunchPart.processId())
+                assertTrue(priorLaunchPart.getStartTime() < currentLaunchPart.getStartTime())
+
+                assertFalse(priorLaunchPart.isFinalSessionPart())
+                assertNull(priorLaunchPart.getUserSessionTerminationReason())
+                assertFalse(currentLaunchPart.isFinalSessionPart())
+                assertNull(currentLaunchPart.getUserSessionTerminationReason())
             },
         )
     }

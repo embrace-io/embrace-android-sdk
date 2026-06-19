@@ -186,6 +186,24 @@ internal class UserSessionResurrectionTest {
     }
 
     @Test
+    fun `native crash with no active session part carries the user session id and not a session part id`() {
+        val userSessionId = "aabbccdd11223344aabbccdd11223344"
+        testRule.runTest(
+            instrumentedConfig = nativeCrashEnabledConfig(),
+            setupAction = {
+                setupNativeCrash(userSessionId = userSessionId, sessionPartId = "null")
+            },
+            testCaseAction = { recordSession() },
+            assertAction = {
+                val attrs = checkNotNull(getSingleLogEnvelope().getLogOfType(EmbType.System.NativeCrash).attributes)
+                assertEquals(userSessionId, attrs.findAttributeValue(SESSION_ID))
+                assertEquals(userSessionId, attrs.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID))
+                assertEquals("null", attrs.findAttributeValue(EMB_SESSION_PART_ID))
+            },
+        )
+    }
+
+    @Test
     fun `restored user session continues a resurrected prior-process part without stamping it final`() {
         val persistedId = "aabbccdd11223344aabbccdd11223344"
         val priorProcessId = "prior-launch-process-id"

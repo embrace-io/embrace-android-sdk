@@ -40,13 +40,18 @@ static inline void emb_copy_frame_data(unwindstack::AndroidUnwinderData &android
         // need to call DemangleFunctionNames() for this.
         emb_strncpy(data->function_name, frame.function_name.c_str(), EMB_FRAME_STR_SIZE);
 
-        // map info
-        data->elf_file_not_readable = map_info->ElfFileNotReadable();
-        data->start = map_info->start();
-        data->end = map_info->end();
-        data->offset = map_info->offset();
-        data->flags = map_info->flags();
-        emb_strncpy(data->full_name, map_info->GetFullName().c_str(), EMB_FRAME_STR_SIZE);
+        if (map_info != nullptr) {
+            // map info
+            data->elf_file_not_readable = map_info->ElfFileNotReadable();
+            data->start = map_info->start();
+            data->end = map_info->end();
+            data->offset = map_info->offset();
+            data->flags = map_info->flags();
+            emb_strncpy(data->full_name, map_info->GetFullName().c_str(), EMB_FRAME_STR_SIZE);
+        } else {
+            data->elf_file_not_readable = true;
+            data->full_name[0] = '\0';
+        }
     }
 }
 

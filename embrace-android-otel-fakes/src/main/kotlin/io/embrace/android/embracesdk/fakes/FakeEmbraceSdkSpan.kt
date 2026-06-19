@@ -253,6 +253,7 @@ class FakeEmbraceSdkSpan(
             endTimeMs: Long? = null,
             sessionProperties: Map<String, String>? = null,
             processIdentifier: String = "fake-process-id",
+            sessionPartId: String = "fakeSessionPartId",
         ): FakeEmbraceSdkSpan =
             FakeEmbraceSdkSpan(
                 name = "emb-session",
@@ -267,6 +268,8 @@ class FakeEmbraceSdkSpan(
                 }
 
                 setSystemAttribute(SessionAttributes.SESSION_ID, sessionId)
+                setSystemAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, sessionId)
+                setSystemAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionPartId)
                 setSystemAttribute(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER, processIdentifier)
                 setSystemAttribute(EmbSessionAttributes.EMB_STATE, "foreground")
                 setSystemAttribute(

@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.testframework.assertions
 
 import io.embrace.android.embracesdk.assertions.findSessionSpan
-import io.embrace.android.embracesdk.assertions.getOtelSessionId
 import io.embrace.android.embracesdk.assertions.getSessionPartId
+import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
@@ -50,7 +50,7 @@ internal fun EmbracePayloadAssertionInterface.assertPayloadsMatchGoldenFiles(
 
     userSessions.forEach { userSession ->
         // Use the first part's userSessionId as the correct one for all the payloads
-        val userSessionId: String = userSession.partDiffs.first().envelope.getOtelSessionId().also { newId ->
+        val userSessionId: String = userSession.partDiffs.first().envelope.getUserSessionId().also { newId ->
             assertFalse(
                 "Unexpected user session ID. Duplicate of a previously seen one",
                 alreadySeenUserSessions.contains(newId)

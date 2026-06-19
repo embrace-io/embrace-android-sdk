@@ -27,7 +27,7 @@ internal class StatefulSessionPartTest {
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
     @Test
-    fun `session messages are recorded`() {
+    fun `stateful session records correct life-event start and end types with distinct part ids`() {
         testRule.runTest(
             testCaseAction = {
                 recordSession {

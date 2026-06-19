@@ -1,5 +1,3 @@
-@file:Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS", "UPPER_BOUND_VIOLATED_BASED_ON_JAVA_ANNOTATIONS")
-
 package io.embrace.android.gradle.plugin.tasks.r8
 
 import com.android.build.api.artifact.SingleArtifact
@@ -7,9 +5,9 @@ import com.android.build.api.variant.Variant
 import io.embrace.android.gradle.plugin.agp.AgpUtils.isDexguard
 import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.gradle.isTaskRegistered
-import io.embrace.android.gradle.plugin.gradle.nullSafeMap
 import io.embrace.android.gradle.plugin.gradle.registerTask
 import io.embrace.android.gradle.plugin.gradle.safeFlatMap
+import io.embrace.android.gradle.plugin.gradle.safeMap
 import io.embrace.android.gradle.plugin.gradle.tryGetTaskProvider
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
@@ -58,7 +56,7 @@ class JvmMappingUploadTaskRegistration : EmbraceTaskRegistration {
         project: Project,
         variant: AndroidCompactedVariantData,
         anchorTask: TaskProvider<Task>,
-        mappingFile: Provider<File?>,
+        mappingFile: Provider<File>,
         behavior: PluginBehavior,
         variantConfigurationsListProperty: ListProperty<VariantConfig>,
         buildIdProvider: Provider<String>,
@@ -119,7 +117,7 @@ class JvmMappingUploadTaskRegistration : EmbraceTaskRegistration {
     private fun fetchJvmMappingFile(
         obfuscationTask: TaskProvider<Task>,
         variant: Variant,
-    ): Provider<File?> {
+    ): Provider<File> {
         return if (isDexguard(obfuscationTask)) {
             fetchDexguardMappingFile(obfuscationTask)
         } else {
@@ -130,11 +128,11 @@ class JvmMappingUploadTaskRegistration : EmbraceTaskRegistration {
 
     private fun fetchDexguardMappingFile(
         obfuscationTask: TaskProvider<Task>,
-    ): Provider<File?> {
+    ): Provider<File> {
         return obfuscationTask.safeFlatMap { task ->
             task.outputs.files.asFileTree.filter {
                 it.name == "mapping.txt"
-            }.elements.nullSafeMap {
+            }.elements.safeMap {
                 it.firstOrNull()?.asFile
             }
         }

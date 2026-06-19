@@ -1,12 +1,10 @@
-@file:Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS", "UPPER_BOUND_VIOLATED_BASED_ON_JAVA_ANNOTATIONS")
-
 package io.embrace.android.gradle.plugin.tasks.ndk
 
 import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.gradle.lazyTaskLookup
-import io.embrace.android.gradle.plugin.gradle.nullSafeMap
 import io.embrace.android.gradle.plugin.gradle.registerTask
 import io.embrace.android.gradle.plugin.gradle.safeFlatMap
+import io.embrace.android.gradle.plugin.gradle.safeMap
 import io.embrace.android.gradle.plugin.gradle.tryGetTaskProvider
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
@@ -128,19 +126,19 @@ class NdkUploadTasksRegistration(
 
     /**
      * If a custom symbols directory is specified, use that directory to find the shared object files. If not, use the
-     * output of the mergeNativeLibs task to find the shared object files. This could return null, but project.layout.dir
-     * will handle that case.
+     * output of the mergeNativeLibs task to find the shared object files. If no directory can be resolved this yields an
+     * empty provider.
      */
     private fun getSharedObjectFilesProvider(
         project: Project,
-        mergeNativeLibsTaskProvider: Provider<Task?>,
-    ): Provider<Directory?> {
+        mergeNativeLibsTaskProvider: Provider<Task>,
+    ): Provider<Directory> {
         val customSymbolsDirectory = behavior.customSymbolsDirectory
         return project.layout.dir(
             if (!customSymbolsDirectory.isNullOrEmpty()) {
                 project.provider { getNativeSharedObjectFilesFromCustomDirectory(customSymbolsDirectory, project) }
             } else {
-                getDefaultNativeSharedObjectFiles(project, mergeNativeLibsTaskProvider)
+                getDefaultNativeSharedObjectFiles(mergeNativeLibsTaskProvider)
             }
         )
     }
@@ -161,17 +159,16 @@ class NdkUploadTasksRegistration(
      * app/build/intermediates/merged_native_libs/release/out/lib/armeabi-v7a/libembrace-native.so
      */
     private fun getDefaultNativeSharedObjectFiles(
-        project: Project,
-        mergeNativeLibsTaskProvider: Provider<Task?>,
-    ): Provider<File?> {
+        mergeNativeLibsTaskProvider: Provider<Task>,
+    ): Provider<File> {
         return mergeNativeLibsTaskProvider.safeFlatMap { task ->
-            task?.outputs?.files?.asFileTree?.elements?.nullSafeMap { files ->
+            task.outputs.files.asFileTree.elements.safeMap { files ->
                 files
                     .firstOrNull { it.asFile.extension == "so" }
                     ?.asFile
                     ?.parentFile
                     ?.parentFile
-            } ?: project.provider { null }
+            }
         }
     }
 }

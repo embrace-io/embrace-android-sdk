@@ -44,15 +44,16 @@ fun <T : Task> Project.tryGetTaskProvider(taskName: String, taskType: Class<T>):
 
 /**
  * Lazily looks up a task by name and type, returning a [Provider] that yields the task if it exists,
- * or `null` if not found. Useful for wiring optional tasks into the task graph without realizing them early.
+ * or an empty provider if not found. Useful for wiring optional tasks into the task graph without
+ * realizing them early.
  *
  * @param T The expected type of the task.
  * @param name The name of the task to look up.
- * @return A [Provider] of the task, or `provider { null }` if the task is not present.
+ * @return A [Provider] of the task, or an empty provider if the task is not present.
  */
-@Suppress("UPPER_BOUND_VIOLATED_BASED_ON_JAVA_ANNOTATIONS")
-inline fun <reified T : Task> Project.lazyTaskLookup(name: String): Provider<T?> {
-    return provider {
+inline fun <reified T : Task> Project.lazyTaskLookup(name: String): Provider<T> {
+    val taskProvider: Provider<TaskProvider<T>> = provider {
         tryGetTaskProvider(name, T::class.java)
-    }.safeFlatMap { it as Provider<T?> }
+    }
+    return taskProvider.safeFlatMap<TaskProvider<T>, T> { it }
 }

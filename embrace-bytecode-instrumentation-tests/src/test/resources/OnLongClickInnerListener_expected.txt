@@ -14,8 +14,6 @@ public final class io/embrace/test/fixtures/KotlinNestedOnLongClick$OnLongClickI
   final synthetic Lio/embrace/test/fixtures/KotlinNestedOnLongClick; this$0
 
   // access flags 0x1
-  // signature ()V
-  // declaration: void <init>()
   public <init>(Lio/embrace/test/fixtures/KotlinNestedOnLongClick;)V
    L0
     LINENUMBER 9 L0

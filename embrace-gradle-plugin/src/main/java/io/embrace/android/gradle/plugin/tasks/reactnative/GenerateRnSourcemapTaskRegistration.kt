@@ -1,11 +1,9 @@
-@file:Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS", "UPPER_BOUND_VIOLATED_BASED_ON_JAVA_ANNOTATIONS")
-
 package io.embrace.android.gradle.plugin.tasks.reactnative
 
 import io.embrace.android.gradle.plugin.gradle.lazyTaskLookup
-import io.embrace.android.gradle.plugin.gradle.nullSafeMap
 import io.embrace.android.gradle.plugin.gradle.registerTask
 import io.embrace.android.gradle.plugin.gradle.safeFlatMap
+import io.embrace.android.gradle.plugin.gradle.safeMap
 import io.embrace.android.gradle.plugin.gradle.tryGetTaskProvider
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
@@ -81,9 +79,9 @@ class GenerateRnSourcemapTaskRegistration : EmbraceTaskRegistration {
         }
     }
 
-    private fun getBundleFileProvider(generatorTask: Provider<Task?>, project: Project): Provider<File?> =
+    private fun getBundleFileProvider(generatorTask: Provider<Task>, project: Project): Provider<File> =
         generatorTask.safeFlatMap { task ->
-            task?.outputs?.files?.asFileTree?.elements?.safeFlatMap { fileLocations ->
+            task.outputs.files.asFileTree.elements.safeFlatMap { fileLocations ->
                 val bundleFile = fileLocations.firstOrNull { location ->
                     location.asFile.name.endsWith(RN_BUNDLE_FILE_EXTENSION)
                 }?.asFile
@@ -93,14 +91,14 @@ class GenerateRnSourcemapTaskRegistration : EmbraceTaskRegistration {
                 } else {
                     findBundleFile(project)
                 }
-            } ?: findBundleFile(project)
+            }
         }
 
     /**
      * Iterate through all folders inside build folder to find index.android.bundle
      */
-    private fun findBundleFile(project: Project): Provider<File?> {
-        return project.layout.buildDirectory.nullSafeMap { buildDir ->
+    private fun findBundleFile(project: Project): Provider<File> {
+        return project.layout.buildDirectory.safeMap { buildDir ->
             buildDir.asFile.walk()
                 .filter { it.isFile && (it.name == "index.android.bundle") }
                 .firstOrNull()
@@ -108,12 +106,12 @@ class GenerateRnSourcemapTaskRegistration : EmbraceTaskRegistration {
     }
 
     private fun getSourcemapFileProvider(
-        generatorTask: Provider<Task?>,
+        generatorTask: Provider<Task>,
         project: Project,
         data: AndroidCompactedVariantData,
-    ): Provider<File?> =
+    ): Provider<File> =
         generatorTask.safeFlatMap { task ->
-            task?.outputs?.files?.asFileTree?.elements?.flatMap { fileLocations ->
+            task.outputs.files.asFileTree.elements.flatMap { fileLocations ->
                 val sourcemapFile = fileLocations.firstOrNull { location ->
                     location.asFile.name.endsWith(RN_SOURCEMAP_FILE_EXTENSION)
                 }?.asFile
@@ -123,11 +121,11 @@ class GenerateRnSourcemapTaskRegistration : EmbraceTaskRegistration {
                 } else {
                     findSourcemapFile(project, data)
                 }
-            } ?: findSourcemapFile(project, data)
+            }
         }
 
-    private fun findSourcemapFile(project: Project, data: AndroidCompactedVariantData): Provider<File?> {
-        return project.layout.buildDirectory.nullSafeMap { buildDir ->
+    private fun findSourcemapFile(project: Project, data: AndroidCompactedVariantData): Provider<File> {
+        return project.layout.buildDirectory.safeMap { buildDir ->
             File(buildDir.asFile, "generated/sourcemaps/$SOURCE_MAP_NAME").takeIf { it.exists() }
                 ?: File(buildDir.asFile, getReactNativeSourcemapFilePath(project, data.name)).takeIf { it.exists() }
         }

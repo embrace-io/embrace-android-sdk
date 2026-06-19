@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.assertions.findAttributeValue
 import io.embrace.android.embracesdk.assertions.findSpansByName
 import io.embrace.android.embracesdk.assertions.getLastHeartbeatTimeMs
 import io.embrace.android.embracesdk.assertions.getOtelSessionId
+import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.getStartTime
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeCachedLogEnvelopeStore
@@ -303,7 +304,7 @@ class PayloadResurrectionServiceImplTest {
         nativeCrashService.addNativeCrashData(
             createNativeCrashData(
                 nativeCrashId = "dead-session-native-crash",
-                sessionId = deadSessionEnvelope.getOtelSessionId()
+                sessionPartId = deadSessionEnvelope.getSessionPartId()
             )
         )
         deadSessionEnvelope.resurrectPayload()
@@ -316,7 +317,7 @@ class PayloadResurrectionServiceImplTest {
         nativeCrashService.addNativeCrashData(
             createNativeCrashData(
                 nativeCrashId = "dead-session-native-crash",
-                sessionId = "fake-id"
+                sessionPartId = "fake-id"
             )
         )
         deadSessionEnvelope.resurrectPayload()
@@ -518,7 +519,7 @@ class PayloadResurrectionServiceImplTest {
     fun `sessionless native crash sent without envelope data when crash envelope stream returns null`() {
         val deadSessionCrashData = createNativeCrashData(
             nativeCrashId = "native-crash-1",
-            sessionId = "no-session-id"
+            sessionPartId = "no-session-id"
         )
         cacheStorageService.addPayload(
             metadata = fakeCachedCrashEnvelopeMetadata,
@@ -555,7 +556,7 @@ class PayloadResurrectionServiceImplTest {
     fun `multiple native crashes will be resurrected properly with the crash data sent separately`() {
         val deadSessionCrashData = createNativeCrashData(
             nativeCrashId = "native-crash-1",
-            sessionId = deadSessionEnvelope.getOtelSessionId()
+            sessionPartId = deadSessionEnvelope.getSessionPartId()
         )
         nativeCrashService.addNativeCrashData(deadSessionCrashData)
         cacheStorageService.addPayload(
@@ -567,6 +568,7 @@ class PayloadResurrectionServiceImplTest {
         val oldMetadata = fakeEnvelopeMetadata.copy(username = "old-admin")
         val earlierDeadSession = fakeIncompleteSessionEnvelope(
             sessionId = "anotherFakeSessionId",
+            sessionPartId = "anotherFakeSessionPartId",
             startMs = deadSessionEnvelope.getStartTime() - 100_000L,
             lastHeartbeatTimeMs = deadSessionEnvelope.getStartTime() - 90_000L,
             sessionProperties = mapOf("prop" to "earlier"),
@@ -576,7 +578,7 @@ class PayloadResurrectionServiceImplTest {
         )
         val earlierSessionCrashData = createNativeCrashData(
             nativeCrashId = "native-crash-2",
-            sessionId = earlierDeadSession.getOtelSessionId()
+            sessionPartId = earlierDeadSession.getSessionPartId()
         )
         val earlierDeadSessionMetadata = StoredTelemetryMetadata(
             timestamp = earlierDeadSession.getStartTime(),
@@ -656,7 +658,7 @@ class PayloadResurrectionServiceImplTest {
     fun `native crashes without sessions are sent properly`() {
         val deadSessionCrashData = createNativeCrashData(
             nativeCrashId = "native-crash-1",
-            sessionId = "no-session-id"
+            sessionPartId = "no-session-id"
         )
         cacheStorageService.addPayload(
             metadata = fakeCachedCrashEnvelopeMetadata,
@@ -686,7 +688,7 @@ class PayloadResurrectionServiceImplTest {
     fun `native crashes without sessions or cached crash envelopes sent`() {
         val deadSessionCrashData = createNativeCrashData(
             nativeCrashId = "native-crash-1",
-            sessionId = "no-session-id"
+            sessionPartId = "no-session-id"
         )
         nativeCrashService.addNativeCrashData(deadSessionCrashData)
         resurrectInBackground()
@@ -826,10 +828,10 @@ class PayloadResurrectionServiceImplTest {
 
     private fun createNativeCrashData(
         nativeCrashId: String,
-        sessionId: String,
+        sessionPartId: String,
     ) = NativeCrashData(
         nativeCrashId = nativeCrashId,
-        sessionPartId = sessionId,
+        sessionPartId = sessionPartId,
         userSessionId = "",
         timestamp = 0L,
         crash = null,

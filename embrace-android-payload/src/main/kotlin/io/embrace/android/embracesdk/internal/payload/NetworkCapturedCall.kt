@@ -97,10 +97,10 @@ data class NetworkCapturedCall(
     val responseStatus: Int? = null,
 
     /**
-     * Session ID that the network request occurred during.
+     * Session part ID that the network request occurred during.
      */
     @SerialName("sid")
-    val sessionId: String? = null,
+    val sessionPartId: String? = null,
 
     /**
      * The start time of the request.

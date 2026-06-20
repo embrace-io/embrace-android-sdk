@@ -199,7 +199,8 @@ sealed class SchemaType(
         responseHeaders: Map<String, String>?,
         responseSize: Int?,
         responseStatus: Int?,
-        sessionId: String?,
+        // FIXME: this is populated with the session part ID but is used to populate session.id, which is a mismatch
+        sessionPartId: String?,
         startTime: Long?,
         url: String?,
         errorMessage: String?,
@@ -223,7 +224,7 @@ sealed class SchemaType(
             HttpAttributes.HTTP_RESPONSE_HEADER to responseHeaders.toString(),
             EmbNetworkCapturedRequestAttributes.RESPONSE_SIZE to responseSize.toString(),
             HttpAttributes.HTTP_RESPONSE_STATUS_CODE to responseStatus.toString(),
-            SessionAttributes.SESSION_ID to sessionId,
+            SessionAttributes.SESSION_ID to sessionPartId,
             EmbNetworkCapturedRequestAttributes.START_TIME to startTime.toString(),
             EmbNetworkCapturedRequestAttributes.URL to url,
             ExceptionAttributes.EXCEPTION_MESSAGE to errorMessage,

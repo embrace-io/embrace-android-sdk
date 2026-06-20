@@ -4,9 +4,9 @@ import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.assertions.findAttributeValue
 import io.embrace.android.embracesdk.assertions.findSpansByName
 import io.embrace.android.embracesdk.assertions.getLastHeartbeatTimeMs
-import io.embrace.android.embracesdk.assertions.getOtelSessionId
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.getStartTime
+import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeCachedLogEnvelopeStore
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
@@ -425,7 +425,7 @@ class PayloadResurrectionServiceImplTest {
             )
         )
 
-        val parts = getStoredParts().associateBy { it.getOtelSessionId() }
+        val parts = getStoredParts().associateBy { it.getUserSessionId() }
         val laterAttrs = checkNotNull(parts.getValue("later-part").getSessionSpan()?.attributes)
         assertEquals("1", laterAttrs.findAttributeValue(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART))
         assertEquals(
@@ -628,7 +628,7 @@ class PayloadResurrectionServiceImplTest {
             assertEquals(sessionMetadata.copy(complete = true), this)
         }
         with(sessionEnvelopes.first()) {
-            assertEquals(deadSessionEnvelope.getOtelSessionId(), getOtelSessionId())
+            assertEquals(deadSessionEnvelope.getUserSessionId(), getUserSessionId())
             assertEquals(
                 "native-crash-1",
                 getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID)
@@ -643,7 +643,7 @@ class PayloadResurrectionServiceImplTest {
             assertEquals(earlierDeadSessionMetadata.copy(complete = true), this)
         }
         with(sessionEnvelopes.last()) {
-            assertEquals(earlierDeadSession.getOtelSessionId(), getOtelSessionId())
+            assertEquals(earlierDeadSession.getUserSessionId(), getUserSessionId())
             assertEquals(
                 "native-crash-2",
                 getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID)

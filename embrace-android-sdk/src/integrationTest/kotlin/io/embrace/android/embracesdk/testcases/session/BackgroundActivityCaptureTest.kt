@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.android.embracesdk.testframework.assertions.assertSessionIds
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -198,6 +199,11 @@ internal class BackgroundActivityCaptureTest {
 
                 val sessionSpan1 = session1.findSessionSpan()
                 val sessionSpan2 = session2.findSessionSpan()
+
+                // each part carries all three session ids, present and consistent (session.id == emb.user_session_id)
+                session1.assertSessionIds()
+                session2.assertSessionIds()
+
                 sessionSpan1.assertExpectedSessionSpanAttributes(
                     startMs = session1StartMs,
                     endMs = session1EndMs,

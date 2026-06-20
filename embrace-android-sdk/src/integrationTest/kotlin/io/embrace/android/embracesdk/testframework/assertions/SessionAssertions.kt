@@ -1,5 +1,8 @@
 package io.embrace.android.embracesdk.testframework.assertions
 
+import io.embrace.android.embracesdk.assertions.SessionIds
+import io.embrace.android.embracesdk.assertions.getOtelSessionId
+import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.assertions.getUserSessionTerminationReason
 import io.embrace.android.embracesdk.assertions.isFinalSessionPart
@@ -11,6 +14,7 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 
@@ -56,4 +60,31 @@ fun Log.assertSessionIds(expectedUserSessionId: String, expectedSessionPartId: S
     assertEquals(expectedUserSessionId, attrs.findAttributeValue(SessionAttributes.SESSION_ID))
     assertEquals(expectedUserSessionId, attrs.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID))
     assertEquals(expectedSessionPartId, attrs.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID))
+}
+
+/**
+ * Asserts the session part payload's session span has all session-related IDs: emb.user_session_id, session.id, and emb.session_part_id
+ * The first two are always equal, while the session part ID should not equal the other two.
+ */
+fun Envelope<SessionPartPayload>.assertSessionIds(): SessionIds {
+    val otelSessionId = getOtelSessionId()
+    val userSessionId = getUserSessionId()
+    val sessionPartId = getSessionPartId()
+    assertEquals("session.id must equal emb.user_session_id", userSessionId, otelSessionId)
+    assertNotEquals("emb.session_part_id must not equal emb.user_session_id", sessionPartId, userSessionId)
+    return SessionIds(userSessionId = userSessionId, partId = sessionPartId)
+}
+
+/**
+ * Asserts a log has session.id and emb.user_session_id which are the same value.
+ */
+fun Log.assertSessionIdsConsistent() {
+    val attrs = checkNotNull(attributes) { "no attributes found on log" }
+    val otelSessionId = attrs.findAttributeValue(SessionAttributes.SESSION_ID)
+    assertFalse("session.id must be present on the log", otelSessionId.isNullOrBlank())
+    assertEquals(
+        "session.id must equal emb.user_session_id on the log",
+        otelSessionId,
+        attrs.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID)
+    )
 }

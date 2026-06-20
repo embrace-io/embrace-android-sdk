@@ -21,26 +21,25 @@ import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.arch.stacktrace.compatThreadId
+import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
-import io.embrace.android.embracesdk.internal.arch.state.AppState
-import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.toEmbraceSpanData
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
+import io.embrace.android.embracesdk.testframework.assertions.assertSessionIds
 import io.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.opentelemetry.kotlin.semconv.SessionAttributes
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
@@ -50,6 +49,8 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
 internal class TracingApiTest {
@@ -417,6 +418,7 @@ internal class TracingApiTest {
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
+                sessions.forEach { it.assertSessionIds() }
                 // Different session parts have unique part IDs
                 assertNotEquals(sessions.first().getSessionPartId(), sessions.last().getSessionPartId())
 

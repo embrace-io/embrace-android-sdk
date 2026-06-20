@@ -63,8 +63,8 @@ internal class NativeCrashHandlerInstallerImpl(
 
     private fun updateSessionIds() {
         val ids = args.activeSessionIds()
-        val sessionPartId = sanitizeSessionId(ids.sessionPartId)
-        val userSessionId = sanitizeSessionId(ids.userSessionId)
+        val sessionPartId = sanitizeId(ids.sessionPartId)
+        val userSessionId = sanitizeId(ids.userSessionId)
         delegate.onSessionChange(
             sessionPartId,
             userSessionId,
@@ -72,7 +72,7 @@ internal class NativeCrashHandlerInstallerImpl(
         )
     }
 
-    private fun sanitizeSessionId(sid: String?) =
+    private fun sanitizeId(sid: String?) =
         if (sid.isNullOrBlank()) {
             "null"
         } else {

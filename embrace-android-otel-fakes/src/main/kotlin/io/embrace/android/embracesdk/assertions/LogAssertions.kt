@@ -43,8 +43,8 @@ fun assertOtelLogReceived(
         if (hasSession) {
             assertFalse(log.attributes?.findAttributeValue(SessionAttributes.SESSION_ID).isNullOrBlank())
         } else {
-            val sessionId = log.attributes?.findAttributeValue(SessionAttributes.SESSION_ID)
-            assertEquals("", sessionId ?: "")
+            val otelSessionId = log.attributes?.findAttributeValue(SessionAttributes.SESSION_ID)
+            assertEquals("", otelSessionId ?: "")
         }
         expectedType?.let { assertAttribute(log, EmbAndroidAttributes.EMB_EXCEPTION_HANDLING, it) }
         assertEquals(expectedState, log.attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE))

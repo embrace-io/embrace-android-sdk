@@ -103,7 +103,7 @@ internal class ExternalLoggerTest {
                 }
             },
             assertAction = {
-                val sessionId = getSingleSessionEnvelope().getOtelSessionId()
+                val otelSessionId = getSingleSessionEnvelope().getOtelSessionId()
                 exportedOTelLog = logExporter.exportedLogs.single()
                 with(exportedOTelLog) {
                     assertOTelLogRecord(
@@ -119,7 +119,7 @@ internal class ExternalLoggerTest {
                         expectedSpanContext = embOpenTelemetry.spanContext.invalid,
                         expectedSeverityNumber = SeverityNumber.FATAL,
                         expectedSeverityText = "DANG",
-                        expectedSessionId = sessionId,
+                        expectedOtelSessionId = otelSessionId,
                         expectedAppState = AppState.FOREGROUND,
                         expectedSessionProperties = mapOf("session-attr" to "blah"),
                         expectedAttributes = mapOf("foo" to "bar"),
@@ -137,7 +137,7 @@ internal class ExternalLoggerTest {
     fun `record an event with otel logging API in the background with a span parent`() {
         var logTime: Long = -1L
         var observedTime: Long = -1L
-        var sessionId = ""
+        var otelSessionId = ""
         var parentContext: SpanContext? = null
         var exportedOTelLog: ReadableLogRecord? = null
         testRule.runTest(
@@ -153,7 +153,7 @@ internal class ExternalLoggerTest {
                 clock.tick()
                 logTime = clock.now().millisToNanos()
                 embrace.addUserSessionProperty("bg-attr", "blah", PropertyScope.PERMANENT)
-                sessionId = testRule.bootstrapper.userSessionOrchestrationModule.sessionIdsProvider.getCurrentUserSessionId()
+                otelSessionId = testRule.bootstrapper.userSessionOrchestrationModule.sessionIdsProvider.getCurrentUserSessionId()
                 val span = embOpenTelemetry.getTracer("").startSpan("my-span")
                 parentContext = span.spanContext
                 embLogger.emit(
@@ -185,7 +185,7 @@ internal class ExternalLoggerTest {
                         expectedSpanContext = checkNotNull(parentContext),
                         expectedSeverityNumber = SeverityNumber.INFO,
                         expectedSeverityText = "",
-                        expectedSessionId = sessionId,
+                        expectedOtelSessionId = otelSessionId,
                         expectedAppState = AppState.BACKGROUND,
                         expectedSessionProperties = mapOf("bg-attr" to "blah"),
                         expectedAttributes = mapOf("foo" to "bar"),
@@ -219,7 +219,7 @@ internal class ExternalLoggerTest {
         expectedSpanContext: SpanContext,
         expectedSeverityNumber: SeverityNumber,
         expectedSeverityText: String?,
-        expectedSessionId: String?,
+        expectedOtelSessionId: String?,
         expectedAppState: AppState,
         expectedSessionProperties: Map<String, String>,
         expectedAttributes: Map<String, String>,
@@ -247,8 +247,8 @@ internal class ExternalLoggerTest {
         assertEquals(expectedSeverityText, severityText)
         with(checkNotNull(attributes.mapValues { it.value.toString() })) {
             assertNotNull(filter { it.key == LogAttributes.LOG_RECORD_UID }.size)
-            if (expectedSessionId != null) {
-                assertEquals(expectedSessionId, this[SessionAttributes.SESSION_ID])
+            if (expectedOtelSessionId != null) {
+                assertEquals(expectedOtelSessionId, this[SessionAttributes.SESSION_ID])
             } else {
                 assertFalse(containsKey(SessionAttributes.SESSION_ID))
             }

@@ -53,7 +53,7 @@ internal class PublicApiTest {
     }
 
     @Test
-    fun `getCurrentUserSessionId returns sessionId when SDK is started and foreground session is active`() {
+    fun `getCurrentUserSessionId returns the user session id when SDK is started and foreground session is active`() {
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
@@ -65,21 +65,21 @@ internal class PublicApiTest {
     }
 
     @Test
-    fun `getCurrentUserSessionId returns sessionId when SDK is started and background session is active`() {
-        var foregroundSessionId: String? = null
-        var backgroundSessionId: String? = null
+    fun `getCurrentUserSessionId returns the user session id when SDK is started and background session is active`() {
+        var foregroundUserSessionId: String? = null
+        var backgroundUserSessionId: String? = null
         testRule.runTest(
             persistedRemoteConfig = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(100f)),
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
-                    foregroundSessionId = embrace.currentUserSessionId
+                    foregroundUserSessionId = embrace.currentUserSessionId
                 }
-                backgroundSessionId = embrace.currentUserSessionId
+                backgroundUserSessionId = embrace.currentUserSessionId
             },
             assertAction = {
-                assertNotNull(backgroundSessionId)
-                assertEquals(foregroundSessionId, backgroundSessionId)
+                assertNotNull(backgroundUserSessionId)
+                assertEquals(foregroundUserSessionId, backgroundUserSessionId)
             }
         )
     }

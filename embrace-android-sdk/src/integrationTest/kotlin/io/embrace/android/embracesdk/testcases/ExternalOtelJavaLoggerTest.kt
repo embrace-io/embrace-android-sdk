@@ -102,7 +102,7 @@ internal class ExternalOtelJavaLoggerTest {
                 }
             },
             assertAction = {
-                val sessionId = getSingleSessionEnvelope().getOtelSessionId()
+                val otelSessionId = getSingleSessionEnvelope().getOtelSessionId()
                 exportedOTelLog = logExporter.exportedLogs.single()
                 with(exportedOTelLog) {
                     assertOTelLogRecord(
@@ -118,7 +118,7 @@ internal class ExternalOtelJavaLoggerTest {
                         expectedSpanContext = OtelJavaSpanContext.getInvalid(),
                         expectedSeverity = OtelJavaSeverity.FATAL,
                         expectedSeverityText = "DANG",
-                        expectedSessionId = sessionId,
+                        expectedOtelSessionId = otelSessionId,
                         expectedAppState = AppState.FOREGROUND,
                         expectedSessionProperties = mapOf("session-attr" to "blah"),
                         expectedAttributes = mapOf("foo" to "bar"),
@@ -133,7 +133,7 @@ internal class ExternalOtelJavaLoggerTest {
     fun `record an event with java otel logging API in the background with a span parent`() {
         var logTime: Long = -1L
         var observedTime: Long = -1L
-        var sessionId = ""
+        var otelSessionId = ""
         var parentContext: OtelJavaSpanContext? = null
         var exportedOTelLog: OtelJavaLogRecordData?
         testRule.runTest(
@@ -149,7 +149,7 @@ internal class ExternalOtelJavaLoggerTest {
                 clock.tick()
                 logTime = clock.now().millisToNanos()
                 embrace.addUserSessionProperty("bg-attr", "blah", PropertyScope.PERMANENT)
-                sessionId = testRule.bootstrapper.userSessionOrchestrationModule.sessionIdsProvider.getCurrentUserSessionId()
+                otelSessionId = testRule.bootstrapper.userSessionOrchestrationModule.sessionIdsProvider.getCurrentUserSessionId()
                 val span = embOpenTelemetry.getTracer("").spanBuilder("my-span").startSpan()
                 val logContext = span.storeInContext(OtelJavaContext.root())
                 parentContext = span.spanContext
@@ -182,7 +182,7 @@ internal class ExternalOtelJavaLoggerTest {
                         expectedSpanContext = checkNotNull(parentContext),
                         expectedSeverity = OtelJavaSeverity.INFO,
                         expectedSeverityText = null,
-                        expectedSessionId = sessionId,
+                        expectedOtelSessionId = otelSessionId,
                         expectedAppState = AppState.BACKGROUND,
                         expectedSessionProperties = mapOf("bg-attr" to "blah"),
                         expectedAttributes = mapOf("foo" to "bar"),
@@ -217,7 +217,7 @@ internal class ExternalOtelJavaLoggerTest {
         expectedSpanContext: OtelJavaSpanContext,
         expectedSeverity: OtelJavaSeverity,
         expectedSeverityText: String?,
-        expectedSessionId: String?,
+        expectedOtelSessionId: String?,
         expectedAppState: AppState,
         expectedSessionProperties: Map<String, String>,
         expectedAttributes: Map<String, String>,
@@ -252,8 +252,8 @@ internal class ExternalOtelJavaLoggerTest {
         assertEquals(expectedSeverityText, severityText)
         with(checkNotNull(attributes.toStringMap())) {
             assertNotNull(filter { it.key == LogAttributes.LOG_RECORD_UID }.size)
-            if (expectedSessionId != null) {
-                assertEquals(expectedSessionId, this[SessionAttributes.SESSION_ID])
+            if (expectedOtelSessionId != null) {
+                assertEquals(expectedOtelSessionId, this[SessionAttributes.SESSION_ID])
             } else {
                 assertFalse(containsKey(SessionAttributes.SESSION_ID))
             }

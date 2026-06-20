@@ -31,7 +31,7 @@ class NativeCrashHandlerInstallerImplTest {
     private lateinit var nativeCrashHandlerInstaller: NativeCrashHandlerInstallerImpl
     private lateinit var executorService: BlockingScheduledExecutorService
     private lateinit var outputDir: File
-    private var sessionId: String? = null
+    private var sessionPartId: String? = null
     private var userSessionId: String? = null
 
     @Before
@@ -45,7 +45,7 @@ class NativeCrashHandlerInstallerImplTest {
         fakeSharedObjectLoader = FakeSharedObjectLoader()
         fakeDelegate = FakeJniDelegate()
         fakeMainThreadHandler = FakeMainThreadHandler()
-        sessionId = null
+        sessionPartId = null
         userSessionId = null
         outputDir = Files.createTempDirectory("test").toFile()
         executorService = BlockingScheduledExecutorService(blockingMode = false)
@@ -55,12 +55,12 @@ class NativeCrashHandlerInstallerImplTest {
             configService = fakeConfigService,
             logger = FakeInternalLogger(false),
             backgroundWorkerSupplier = { BackgroundWorker(executorService) },
-            sessionPartIdSupplier = { sessionId },
+            sessionPartIdSupplier = { sessionPartId },
             userSessionIdSupplier = { userSessionId },
             activeSessionIdsSupplier = {
                 SessionIdsSnapshot(
                     userSessionId = userSessionId.orEmpty(),
-                    sessionPartId = sessionId.orEmpty()
+                    sessionPartId = sessionPartId.orEmpty()
                 )
             },
             processIdentifier = "pid"
@@ -84,8 +84,8 @@ class NativeCrashHandlerInstallerImplTest {
     }
 
     @Test
-    fun `report path containing session ID`() {
-        sessionId = "sid"
+    fun `report path containing session part ID and user session ID`() {
+        sessionPartId = "sid"
         userSessionId = "usid"
         nativeCrashHandlerInstaller.install()
 
@@ -95,11 +95,11 @@ class NativeCrashHandlerInstallerImplTest {
 
     @Test
     fun `session IDs are forwarded to native on install`() {
-        sessionId = "sid"
+        sessionPartId = "sid"
         userSessionId = "usid"
         nativeCrashHandlerInstaller.install()
 
-        assertEquals("sid", fakeDelegate.sessionId)
+        assertEquals("sid", fakeDelegate.sessionPartId)
         assertEquals("usid", fakeDelegate.userSessionId)
     }
 
@@ -107,13 +107,13 @@ class NativeCrashHandlerInstallerImplTest {
     fun `session IDs are updated on session change`() {
         nativeCrashHandlerInstaller.install()
         executorService.runCurrentlyBlocked()
-        assertEquals("null", fakeDelegate.sessionId)
+        assertEquals("null", fakeDelegate.sessionPartId)
         assertEquals("null", fakeDelegate.userSessionId)
 
-        sessionId = "sid2"
+        sessionPartId = "sid2"
         userSessionId = "usid2"
         args.sessionChangeListeners.forEach { it.onPostSessionChange() }
-        assertEquals("sid2", fakeDelegate.sessionId)
+        assertEquals("sid2", fakeDelegate.sessionPartId)
         assertEquals("usid2", fakeDelegate.userSessionId)
     }
 
@@ -125,7 +125,7 @@ class NativeCrashHandlerInstallerImplTest {
 
         // trigger new session and update report path
         args.clock.tick(9000)
-        sessionId = "sid"
+        sessionPartId = "sid"
         userSessionId = "usid"
         args.sessionChangeListeners.forEach { it.onPostSessionChange() }
         assertTrue(fakeDelegate.signalHandlerInstalled)

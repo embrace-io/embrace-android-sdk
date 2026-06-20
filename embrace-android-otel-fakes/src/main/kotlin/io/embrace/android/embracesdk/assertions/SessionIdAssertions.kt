@@ -23,7 +23,7 @@ data class SessionIds(
  */
 fun Map<String, String?>.assertSessionIds(): SessionIds {
     val userSessionId = get(EmbSessionAttributes.EMB_USER_SESSION_ID)
-    val sessionId = get(SessionAttributes.SESSION_ID)
+    val otelSessionId = get(SessionAttributes.SESSION_ID)
     val partId = get(EmbSessionAttributes.EMB_SESSION_PART_ID)
 
     assertTrue(
@@ -31,14 +31,14 @@ fun Map<String, String?>.assertSessionIds(): SessionIds {
         EMB_UUID_REGEX.matches(userSessionId ?: ""),
     )
     assertTrue(
-        "session.id must be a 32-char hex UUID but was: $sessionId",
-        EMB_UUID_REGEX.matches(sessionId ?: ""),
+        "session.id must be a 32-char hex UUID but was: $otelSessionId",
+        EMB_UUID_REGEX.matches(otelSessionId ?: ""),
     )
     assertTrue(
         "emb.session_part_id must be a 32-char hex UUID but was: $partId",
         EMB_UUID_REGEX.matches(partId ?: ""),
     )
-    assertEquals("session.id must equal emb.user_session_id", userSessionId, sessionId)
+    assertEquals("session.id must equal emb.user_session_id", userSessionId, otelSessionId)
     assertNotEquals("emb.session_part_id must not equal emb.user_session_id", partId, userSessionId)
 
     return SessionIds(

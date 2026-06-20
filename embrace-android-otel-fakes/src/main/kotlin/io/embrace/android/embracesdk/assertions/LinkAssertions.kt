@@ -12,12 +12,12 @@ import org.junit.Assert.assertTrue
 
 fun Link.validatePreviousSessionLink(
     previousSessionSpan: Span,
-    previousSessionId: String,
+    previousOtelSessionId: String,
     previousUserSessionId: String? = null,
     previousSessionPartId: String? = null,
 ) {
     val expected = buildMap {
-        put(SessionAttributes.SESSION_ID, previousSessionId)
+        put(SessionAttributes.SESSION_ID, previousOtelSessionId)
         previousUserSessionId?.let { put(EmbSessionAttributes.EMB_USER_SESSION_ID, it) }
         previousSessionPartId?.let { put(EmbSessionAttributes.EMB_SESSION_PART_ID, it) }
     }

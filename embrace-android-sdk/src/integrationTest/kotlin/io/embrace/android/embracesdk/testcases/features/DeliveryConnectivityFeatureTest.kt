@@ -89,11 +89,11 @@ internal class DeliveryConnectivityFeatureTest {
                 startMs = fakeClock.now()
                 payloadStorageService.addPayload(
                     fakeSessionStoredTelemetryMetadata.copy(timestamp = startMs),
-                    fakeSessionEnvelope(sessionId = "1", startMs = startMs)
+                    fakeSessionEnvelope(userSessionId = "1", startMs = startMs)
                 )
                 payloadStorageService.addPayload(
                     fakeSessionStoredTelemetryMetadata2,
-                    fakeSessionEnvelope(sessionId = "2", startMs = startMs + 1000)
+                    fakeSessionEnvelope(userSessionId = "2", startMs = startMs + 1000)
                 )
             },
             testCaseAction = {},

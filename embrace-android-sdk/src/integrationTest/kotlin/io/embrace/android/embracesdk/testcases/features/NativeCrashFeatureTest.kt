@@ -211,13 +211,13 @@ internal class NativeCrashFeatureTest {
                 val expectedCrashEnvelope = checkNotNull(crashData.cachedCrashEnvelope)
 
                 // crashes sent
-                val crashEnvelope1 = logEnvelopes.single { findMatchingSessionId(it, crashData) }
+                val crashEnvelope1 = logEnvelopes.single { findMatchingSessionPartId(it, crashData) }
                 with(crashEnvelope1) {
                     assertEquals(expectedCrashEnvelope.resource, resource)
                     assertEquals(expectedCrashEnvelope.metadata, metadata)
                 }
 
-                val crashEnvelope2 = logEnvelopes.single { findMatchingSessionId(it, crashData2) }
+                val crashEnvelope2 = logEnvelopes.single { findMatchingSessionPartId(it, crashData2) }
                 with(crashEnvelope2) {
                     assertEquals(fakeLaterEnvelopeResource, resource)
                     assertEquals(fakeLaterEnvelopeMetadata, metadata)
@@ -305,12 +305,12 @@ internal class NativeCrashFeatureTest {
     }
 
     @Test
-    fun `sessionId and crash path properly set up when background activity enabled`() {
+    fun `session ids and crash path properly set up when background activity enabled`() {
         checkNativeMetadata(true)
     }
 
     @Test
-    fun `sessionId and crash path properly set up when background activity disabled`() {
+    fun `session ids and crash path properly set up when background activity disabled`() {
         checkNativeMetadata(false)
     }
 
@@ -367,7 +367,7 @@ internal class NativeCrashFeatureTest {
         nativeSessionMetadata.add(Pair(userSessionId, reportPath))
     }
 
-    private fun findMatchingSessionId(it: Envelope<LogPayload>, data: StoredNativeCrashData): Boolean {
+    private fun findMatchingSessionPartId(it: Envelope<LogPayload>, data: StoredNativeCrashData): Boolean {
         return it.getLogOfType(EmbType.System.NativeCrash).attributes?.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID) == data.nativeCrash.sessionPartId
     }
 

@@ -110,13 +110,13 @@ internal class CurrentSessionPartSpanImpl(
                 }
             }
 
-            val sessionId = currentSessionPartSpan?.getSystemAttribute(SessionAttributes.SESSION_ID)
-            if (sessionId != null) {
+            val otelSessionId = currentSessionPartSpan?.getSystemAttribute(SessionAttributes.SESSION_ID)
+            if (otelSessionId != null) {
                 currentSessionPartSpan.spanContext?.let { sessionSpanContext ->
                     spanToStop?.addSystemLink(
                         linkedSpanContext = sessionSpanContext,
                         type = LinkType.EndSession,
-                        attributes = mapOf(SessionAttributes.SESSION_ID to sessionId) + sessionIds
+                        attributes = mapOf(SessionAttributes.SESSION_ID to otelSessionId) + sessionIds
                     )
                 }
             }
@@ -195,11 +195,11 @@ internal class CurrentSessionPartSpanImpl(
             setSystemAttribute(SessionAttributes.SESSION_ID, uuidSource.createUuid())
             val previousSessionSpan = lastSessionSpan
             previousSessionSpan?.spanContext?.let {
-                val prevSessionId = previousSessionSpan.getSystemAttribute(SessionAttributes.SESSION_ID) ?: ""
+                val previousOtelSessionId = previousSessionSpan.getSystemAttribute(SessionAttributes.SESSION_ID) ?: ""
                 addSystemLink(
                     linkedSpanContext = it,
                     type = LinkType.PreviousSession,
-                    attributes = mapOf(SessionAttributes.SESSION_ID to prevSessionId) +
+                    attributes = mapOf(SessionAttributes.SESSION_ID to previousOtelSessionId) +
                         previousSessionSpan.userSessionIdAttrs()
                 )
             }

@@ -83,8 +83,8 @@ class DeliveryTracer {
         addWithThreadInfo(DeliveryTraceState.ServerReceivedRequest(endpoint))
     }
 
-    fun onServerCompletedRequest(endpoint: String, sessionId: String) {
-        addWithThreadInfo(DeliveryTraceState.ServerCompletedRequest(endpoint, sessionId))
+    fun onServerCompletedRequest(endpoint: String, otelSessionId: String) {
+        addWithThreadInfo(DeliveryTraceState.ServerCompletedRequest(endpoint, otelSessionId))
     }
 
     private fun addWithThreadInfo(state: DeliveryTraceState) {

@@ -234,31 +234,31 @@ internal class SessionPartPayloadTest {
 
                 val firstSessionSpan = firstSession.getValidatedSessionSpan(
                     previousSessionSpan = firstBaSessionSpan,
-                    previousSessionId = firstBa.getOtelSessionId()
+                    previousOtelSessionId = firstBa.getOtelSessionId()
                 )
 
                 val secondBaSessionSpan = secondBa.getValidatedSessionSpan(
                     isColdStart = false,
                     previousSessionSpan = firstSessionSpan,
-                    previousSessionId = firstSession.getOtelSessionId()
+                    previousOtelSessionId = firstSession.getOtelSessionId()
                 )
 
                 val secondSessionSpan = secondSession.getValidatedSessionSpan(
                     isColdStart = false,
                     previousSessionSpan = secondBaSessionSpan,
-                    previousSessionId = secondBa.getOtelSessionId()
+                    previousOtelSessionId = secondBa.getOtelSessionId()
                 )
 
                 val thirdBaSessionSpan = thirdBa.getValidatedSessionSpan(
                     isColdStart = false,
                     previousSessionSpan = secondSessionSpan,
-                    previousSessionId = secondSession.getOtelSessionId()
+                    previousOtelSessionId = secondSession.getOtelSessionId()
                 )
 
                 thirdSession.getValidatedSessionSpan(
                     isColdStart = false,
                     previousSessionSpan = thirdBaSessionSpan,
-                    previousSessionId = thirdBa.getOtelSessionId()
+                    previousOtelSessionId = thirdBa.getOtelSessionId()
                 )
             }
         )
@@ -283,13 +283,13 @@ internal class SessionPartPayloadTest {
                 val secondSessionSpan = second.getValidatedSessionSpan(
                     isColdStart = false,
                     previousSessionSpan = firstSessionSpan,
-                    previousSessionId = first.getOtelSessionId()
+                    previousOtelSessionId = first.getOtelSessionId()
                 )
 
                 third.getValidatedSessionSpan(
                     isColdStart = false,
                     previousSessionSpan = secondSessionSpan,
-                    previousSessionId = second.getOtelSessionId()
+                    previousOtelSessionId = second.getOtelSessionId()
                 )
             }
         )
@@ -298,7 +298,7 @@ internal class SessionPartPayloadTest {
     private fun Envelope<SessionPartPayload>.getValidatedSessionSpan(
         isColdStart: Boolean = true,
         previousSessionSpan: Span? = null,
-        previousSessionId: String? = null,
+        previousOtelSessionId: String? = null,
     ): Span {
         val sessionSpan = findSessionSpan()
         assertFalse(hasSpanSnapshotsOfType(EmbType.Ux.Session))
@@ -309,8 +309,8 @@ internal class SessionPartPayloadTest {
                 )
             )
 
-            if (previousSessionSpan != null && previousSessionId != null) {
-                assertPreviousSession(previousSessionSpan, previousSessionId)
+            if (previousSessionSpan != null && previousOtelSessionId != null) {
+                assertPreviousSession(previousSessionSpan, previousOtelSessionId)
             } else {
                 assertNoPreviousSession()
             }

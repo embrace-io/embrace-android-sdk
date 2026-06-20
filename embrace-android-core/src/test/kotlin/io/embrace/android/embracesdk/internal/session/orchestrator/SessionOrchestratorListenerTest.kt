@@ -39,7 +39,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionPartCacher
-import io.embrace.android.embracesdk.internal.session.id.SessionIdProvider
+import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
@@ -307,7 +307,7 @@ internal class SessionOrchestratorListenerTest {
                 logger
             ),
             clock,
-            object : SessionIdProvider {
+            object : SessionIdsProvider {
                 override fun getCurrentSessionPartId(): String = sessionTracker.getActiveSessionPartId() ?: ""
                 override fun getCurrentUserSessionId(): String = ""
                 override fun getActiveSessionIds(): SessionIdsSnapshot =

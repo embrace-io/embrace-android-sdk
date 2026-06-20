@@ -172,7 +172,7 @@ internal class EmbraceSetupInterface(
                 essentialServiceModule,
                 coreModule,
                 storageModule,
-                userSessionIdProvider,
+                userSessionIdsProvider,
                 activeSessionIdsProvider,
             ->
             val impl = InstrumentationModuleImpl(
@@ -183,7 +183,7 @@ internal class EmbraceSetupInterface(
                 essentialServiceModule,
                 coreModule,
                 storageModule,
-                userSessionIdProvider,
+                userSessionIdsProvider,
                 activeSessionIdsProvider,
             )
             object : InstrumentationModule {

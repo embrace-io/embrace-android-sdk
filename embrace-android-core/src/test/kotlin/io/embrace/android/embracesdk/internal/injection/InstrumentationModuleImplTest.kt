@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
-import io.embrace.android.embracesdk.fakes.FakeSessionIdProvider
+import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
@@ -29,8 +29,8 @@ internal class InstrumentationModuleImplTest {
             essentialServiceModule = FakeEssentialServiceModule(),
             coreModule = FakeCoreModule(),
             storageService = FakeStorageService(),
-            userSessionIdProvider = { null },
-            activeSessionIdsProvider = { FakeSessionIdProvider().getActiveSessionIds() },
+            userSessionIdsProvider = { null },
+            activeSessionIdsProvider = { FakeSessionIdsProvider().getActiveSessionIds() },
         )
         assertSame(module.instrumentationRegistry, module.instrumentationRegistry)
         assertNotNull(module.instrumentationRegistry)

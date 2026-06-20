@@ -2,10 +2,10 @@ package io.embrace.android.embracesdk.internal.session.id
 
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 
-internal class SessionIdProviderImpl(
+internal class SessionIdsProviderImpl(
     private val sessionOrchestratorProvider: () -> SessionOrchestrator?,
     private val sessionPartTracker: SessionPartTracker,
-) : SessionIdProvider {
+) : SessionIdsProvider {
 
     override fun getCurrentUserSessionId(): String =
         sessionOrchestratorProvider()?.currentUserSession()?.userSessionId ?: ""

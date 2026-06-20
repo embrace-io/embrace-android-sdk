@@ -8,17 +8,17 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
-internal class SessionIdProviderImplTest {
+internal class SessionIdsProviderImplTest {
 
     private lateinit var sessionOrchestrator: FakeSessionOrchestrator
     private lateinit var sessionPartTracker: FakeSessionPartTracker
-    private lateinit var provider: SessionIdProviderImpl
+    private lateinit var provider: SessionIdsProviderImpl
 
     @Before
     fun setUp() {
         sessionOrchestrator = FakeSessionOrchestrator()
         sessionPartTracker = FakeSessionPartTracker()
-        provider = SessionIdProviderImpl({ sessionOrchestrator }, sessionPartTracker)
+        provider = SessionIdsProviderImpl({ sessionOrchestrator }, sessionPartTracker)
     }
 
     @Test

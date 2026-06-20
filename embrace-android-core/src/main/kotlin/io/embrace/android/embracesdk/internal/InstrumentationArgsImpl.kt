@@ -44,7 +44,7 @@ internal class InstrumentationArgsImpl(
     private val workerThreadModule: WorkerThreadModule,
     private val sessionPartTracker: SessionPartTracker,
     private val userSessionPropertiesService: UserSessionPropertiesService,
-    private val userSessionIdProvider: () -> String?,
+    private val userSessionIdsProvider: () -> String?,
     private val activeSessionIdsProvider: () -> SessionIdsSnapshot,
     crashMarkerFileProvider: () -> File,
 ) : InstrumentationArgs {
@@ -67,7 +67,7 @@ internal class InstrumentationArgsImpl(
 
     override fun sessionPartId(): String? = sessionPartTracker.getActiveSessionPartId()
 
-    override fun userSessionId(): String? = userSessionIdProvider()
+    override fun userSessionId(): String? = userSessionIdsProvider()
 
     override fun activeSessionIds(): SessionIdsSnapshot = activeSessionIdsProvider()
 

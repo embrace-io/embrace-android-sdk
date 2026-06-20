@@ -94,8 +94,8 @@ internal class InitializedModuleGraph(
             essentialServiceModule,
             coreModule,
             storageService,
-            { userSessionOrchestrationModule.sessionIdProvider.getCurrentUserSessionId() },
-            { userSessionOrchestrationModule.sessionIdProvider.getActiveSessionIds() },
+            { userSessionOrchestrationModule.sessionIdsProvider.getCurrentUserSessionId() },
+            { userSessionOrchestrationModule.sessionIdsProvider.getActiveSessionIds() },
         )
     }
 

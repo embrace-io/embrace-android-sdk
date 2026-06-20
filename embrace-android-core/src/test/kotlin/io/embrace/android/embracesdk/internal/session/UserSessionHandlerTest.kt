@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
-import io.embrace.android.embracesdk.fakes.FakeSessionIdProvider
+import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeSessionPartTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
@@ -98,7 +98,7 @@ internal class UserSessionHandlerTest {
                 payloadSource = partPayloadSource
             ),
             currentSessionPartSpan,
-            FakeSessionIdProvider(),
+            FakeSessionIdsProvider(),
         )
         payloadFactory = PayloadFactoryImpl(collator, payloadSourceModule.logEnvelopeSource, configService, logger)
     }

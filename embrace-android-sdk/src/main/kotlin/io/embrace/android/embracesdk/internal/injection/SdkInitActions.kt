@@ -49,7 +49,7 @@ internal fun ModuleGraph.postInit() {
     essentialServiceModule.telemetryDestination.currentStatesProvider =
         instrumentationModule.instrumentationRegistry::getCurrentStates
 
-    openTelemetryModule.setSessionIdProvider(userSessionOrchestrationModule.sessionIdProvider)
+    openTelemetryModule.setSessionIdsProvider(userSessionOrchestrationModule.sessionIdsProvider)
 
     // Start the orchestrator and create the first session part once all the module dependencies have been created and wired up
     userSessionOrchestrationModule.sessionOrchestrator.start()
@@ -189,7 +189,7 @@ private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, St
         mutableMapOf<String, String>().apply {
             val sessionPart = essentialServiceModule.sessionPartTracker.getActiveSessionPart()
             val sessionState = sessionPart?.appState ?: essentialServiceModule.appStateTracker.getAppState()
-            val sessionIds = userSessionOrchestrationModule.sessionIdProvider.getActiveSessionIds()
+            val sessionIds = userSessionOrchestrationModule.sessionIdsProvider.getActiveSessionIds()
 
             put(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionIds.sessionPartId)
             put(EmbSessionAttributes.EMB_USER_SESSION_ID, sessionIds.userSessionId)

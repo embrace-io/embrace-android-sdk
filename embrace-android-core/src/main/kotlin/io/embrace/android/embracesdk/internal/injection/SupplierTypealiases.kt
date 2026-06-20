@@ -63,7 +63,7 @@ typealias InstrumentationModuleSupplier = (
     essentialServiceModule: EssentialServiceModule,
     coreModule: CoreModule,
     storageService: StorageService,
-    userSessionIdProvider: () -> String?,
+    userSessionIdsProvider: () -> String?,
     activeSessionIdsProvider: () -> SessionIdsSnapshot,
 ) -> InstrumentationModule
 

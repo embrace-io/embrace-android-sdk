@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.session.id
 /**
  * Used to obtain the current user session ID and session part ID.
  */
-interface SessionIdProvider {
+interface SessionIdsProvider {
 
     /**
      * Returns the ID of the current user session.

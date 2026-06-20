@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.LastRunEndState
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeLogService
-import io.embrace.android.embracesdk.fakes.FakeSessionIdProvider
+import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
@@ -26,7 +26,7 @@ internal class SdkStateApiDelegateTest {
     private lateinit var delegate: SdkStateApiDelegate
     private lateinit var logService: FakeLogService
     private lateinit var configService: FakeConfigService
-    private lateinit var sessionIdProvider: FakeSessionIdProvider
+    private lateinit var sessionIdsProvider: FakeSessionIdsProvider
     private lateinit var sdkCallChecker: SdkCallChecker
     private lateinit var logger: FakeInternalLogger
 
@@ -34,7 +34,7 @@ internal class SdkStateApiDelegateTest {
     fun setUp() {
         logService = FakeLogService()
         configService = FakeConfigService(deviceId = TestUuidSource().createUuid())
-        sessionIdProvider = FakeSessionIdProvider()
+        sessionIdsProvider = FakeSessionIdsProvider()
         val moduleInitBootstrapper = ModuleInitBootstrapper(
             FakeInitModule(),
             configServiceSupplier = { _, _, _, _ ->
@@ -47,7 +47,7 @@ internal class SdkStateApiDelegateTest {
                 FakeLogModule(logService = logService)
             },
             userSessionOrchestrationModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _ ->
-                FakeUserSessionOrchestrationModule(sessionIdProvider = sessionIdProvider)
+                FakeUserSessionOrchestrationModule(sessionIdsProvider = sessionIdsProvider)
             },
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
@@ -78,7 +78,7 @@ internal class SdkStateApiDelegateTest {
 
     @Test
     fun getCurrentSessionId() {
-        sessionIdProvider.userSessionId = "test"
+        sessionIdsProvider.userSessionId = "test"
         assertEquals("test", delegate.currentUserSessionId)
     }
 

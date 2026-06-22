@@ -96,11 +96,13 @@ internal class LogEnvelopeSourceImplTest {
     fun `check native crash envelope`() {
         val crashPayload = LogPayload(logs = listOf(nativeCrashLog))
         val crashLogAttributes = checkNotNull(nativeCrashLog.attributes)
-        val expectedSessionId = crashLogAttributes.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID)
+        val expectedSessionPartId = crashLogAttributes.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID)
+        val expectedUserSessionId = crashLogAttributes.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID)
         val expectedProcessIdentifier = crashLogAttributes.findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER)
         val cachedCrashEnvelopeMetadata = createNativeCrashEnvelopeMetadata(
-            sessionPartId = expectedSessionId,
+            sessionPartId = expectedSessionPartId,
             processIdentifier = expectedProcessIdentifier,
+            userSessionId = expectedUserSessionId,
         )
         logSource.singleLogPayloadsSource = listOf(
             LogRequest(crashPayload)
@@ -118,7 +120,7 @@ internal class LogEnvelopeSourceImplTest {
 
         with(cachedLogEnvelopeStore.envelopeGetRequest.single()) {
             assertEquals(0L, timestamp)
-            assertEquals(expectedSessionId, uuid)
+            assertEquals(expectedSessionPartId, uuid)
             assertEquals(expectedProcessIdentifier, processIdentifier)
             assertEquals(SupportedEnvelopeType.CRASH, envelopeType)
             assertEquals(PayloadType.NATIVE_CRASH, payloadType)

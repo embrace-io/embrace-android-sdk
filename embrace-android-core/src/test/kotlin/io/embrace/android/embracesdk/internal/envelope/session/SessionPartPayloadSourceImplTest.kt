@@ -38,7 +38,7 @@ internal class SessionPartPayloadSourceImplTest {
         }
         activeSpan = FakeEmbraceSdkSpan.started()
         spanRepository = SpanRepository()
-        spanRepository.trackStartedSpan(checkNotNull(currentSessionPartSpan.sessionSpan))
+        spanRepository.trackStartedSpan(checkNotNull(currentSessionPartSpan.sessionPartSpan))
         spanRepository.trackStartedSpan(activeSpan)
         impl = SessionPartPayloadSourceImpl(
             mapOf("armeabi-v7a" to "my-symbols"),

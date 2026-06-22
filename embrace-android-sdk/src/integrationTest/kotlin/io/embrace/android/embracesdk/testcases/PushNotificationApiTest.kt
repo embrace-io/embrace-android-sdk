@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findEventOfType
-import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -98,8 +98,8 @@ internal class PushNotificationApiTest {
             },
             assertAction = {
                 val payload = getSingleSessionEnvelope()
-                val sessionSpan = payload.findSessionSpan()
-                val event = sessionSpan.findEventOfType(EmbType.System.PushNotification)
+                val sessionPartSpan = payload.findSessionPartSpan()
+                val event = sessionPartSpan.findEventOfType(EmbType.System.PushNotification)
                 assertTrue(checkNotNull(event.timestampNanos) > 0)
                 event.attributes?.assertMatches(mapOf(
                     EmbType.System.PushNotification.asPair(),
@@ -115,8 +115,8 @@ internal class PushNotificationApiTest {
     }
 
     private fun Envelope<SessionPartPayload>.assertNotification(type: String) {
-        val sessionSpan = findSessionSpan()
-        val event = sessionSpan.findEventOfType(EmbType.System.PushNotification)
+        val sessionPartSpan = findSessionPartSpan()
+        val event = sessionPartSpan.findEventOfType(EmbType.System.PushNotification)
         assertTrue(checkNotNull(event.timestampNanos) > 0)
         event.attributes?.assertMatches(mapOf(
             EmbType.System.PushNotification.asPair(),

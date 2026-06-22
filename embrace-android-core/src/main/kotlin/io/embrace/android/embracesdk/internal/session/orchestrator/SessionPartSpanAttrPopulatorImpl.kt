@@ -18,7 +18,7 @@ internal class SessionPartSpanAttrPopulatorImpl(
     private val metadataService: MetadataService,
 ) : SessionPartSpanAttrPopulator {
 
-    override fun populateSessionSpanStartAttrs(sessionPart: SessionPartToken, userSession: UserSessionMetadata?) {
+    override fun populateSessionPartSpanStartAttrs(sessionPart: SessionPartToken, userSession: UserSessionMetadata?) {
         with(destination) {
             addSessionPartAttribute(EmbSessionAttributes.EMB_COLD_START, sessionPart.isColdStart.toString())
             addSessionPartAttribute(EmbSessionAttributes.EMB_STATE, sessionPart.appState.name.lowercase(Locale.US))
@@ -44,7 +44,7 @@ internal class SessionPartSpanAttrPopulatorImpl(
         }
     }
 
-    override fun populateSessionSpanEndAttrs(
+    override fun populateSessionPartSpanEndAttrs(
         endType: LifeEventType?,
         crashId: String?,
         coldStart: Boolean,

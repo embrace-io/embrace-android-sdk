@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.testcases.session
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findEventsOfType
-import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.assertions.getLogsOfType
 import io.embrace.android.embracesdk.assertions.getOtelSessionId
 import io.embrace.android.embracesdk.assertions.getSessionPartId
@@ -143,7 +143,7 @@ internal class BackgroundActivityCaptureTest {
                 }
 
                 with(secondSession) {
-                    with(findSessionSpan()) {
+                    with(findSessionPartSpan()) {
                         with(findEventsOfType(EmbType.System.Breadcrumb)) {
                             assertEquals(1, size)
                             single().attributes?.assertMatches(
@@ -197,21 +197,21 @@ internal class BackgroundActivityCaptureTest {
                 assertEquals(session1.version, session2.version)
                 assertEquals(session1.type, session2.type)
 
-                val sessionSpan1 = session1.findSessionSpan()
-                val sessionSpan2 = session2.findSessionSpan()
+                val sessionPartSpan1 = session1.findSessionPartSpan()
+                val sessionPartSpan2 = session2.findSessionPartSpan()
 
                 // each part carries all three session ids, present and consistent (session.id == emb.user_session_id)
                 session1.assertSessionIds()
                 session2.assertSessionIds()
 
-                sessionSpan1.assertExpectedSessionSpanAttributes(
+                sessionPartSpan1.assertExpectedSessionPartSpanAttributes(
                     startMs = session1StartMs,
                     endMs = session1EndMs,
                     sequenceId = 1,
                     coldStart = true,
                 )
 
-                sessionSpan2.assertExpectedSessionSpanAttributes(
+                sessionPartSpan2.assertExpectedSessionPartSpanAttributes(
                     startMs = session2StartMs,
                     endMs = session2EndMs,
                     sequenceId = 13,
@@ -219,19 +219,19 @@ internal class BackgroundActivityCaptureTest {
                 )
 
                 assertNotEquals(
-                    sessionSpan1.attributes?.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID),
-                    sessionSpan2.attributes?.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID)
+                    sessionPartSpan1.attributes?.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID),
+                    sessionPartSpan2.attributes?.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID)
                 )
 
                 assertEquals(
-                    sessionSpan1.attributes?.findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER),
-                    sessionSpan2.attributes?.findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER)
+                    sessionPartSpan1.attributes?.findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER),
+                    sessionPartSpan2.attributes?.findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER)
                 )
             }
         )
     }
 
-    private fun Span.assertExpectedSessionSpanAttributes(
+    private fun Span.assertExpectedSessionPartSpanAttributes(
         startMs: Long,
         endMs: Long,
         sequenceId: Int,

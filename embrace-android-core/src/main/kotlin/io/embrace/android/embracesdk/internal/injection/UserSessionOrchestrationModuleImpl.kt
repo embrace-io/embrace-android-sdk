@@ -48,7 +48,7 @@ class UserSessionOrchestrationModuleImpl(
             essentialServiceModule.userSessionPropertiesService
         )
 
-        val sessionSpanAttrPopulator = SessionPartSpanAttrPopulatorImpl(
+        val sessionPartSpanAttrPopulator = SessionPartSpanAttrPopulatorImpl(
             essentialServiceModule.telemetryDestination,
             startupDurationProvider,
             logModule.logLimitingService,
@@ -66,7 +66,7 @@ class UserSessionOrchestrationModuleImpl(
             deliveryModule?.payloadCachingService,
             instrumentationModule.instrumentationRegistry,
             essentialServiceModule.telemetryDestination,
-            sessionSpanAttrPopulator,
+            sessionPartSpanAttrPopulator,
             coreModule.ordinalStore,
             UserSessionMetadataStore(coreModule.store),
             initModule.logger,

@@ -26,7 +26,7 @@ import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.toJson
-import io.embrace.android.embracesdk.internal.session.getSessionSpan
+import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
@@ -173,7 +173,7 @@ internal class JvmCrashFeatureTest {
                 // The resurrected session is delivered normally and is not associated with the crash.
                 val resurrectedSession = getSingleSessionEnvelope(AppState.FOREGROUND)
                 assertEquals(resurrectedSessionId, resurrectedSession.getUserSessionId())
-                assertNull(resurrectedSession.getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID))
+                assertNull(resurrectedSession.getSessionPartSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID))
 
                 // The crashing process's own session part is held back during teardown, persisted, and carries the crash id.
                 val ba = payloadStorageService.getPersistedSession(AppState.BACKGROUND)
@@ -264,7 +264,7 @@ internal class JvmCrashFeatureTest {
                 val expectedJsException = "{\"n\":\"name\",\"m\":\"message\",\"t\":\"type\",\"st\":\"stacktrace\"}"
 
                 val message = payloadStorageService.getPersistedSession()
-                val crashId = message.getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID)
+                val crashId = message.getSessionPartSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID)
                 assertNotNull(crashId)
                 log.attributes?.assertMatches(
                     mapOf(
@@ -292,14 +292,14 @@ internal class JvmCrashFeatureTest {
                 )
             }
             .single { envelope ->
-                val attrs = envelope.getSessionSpan()?.attributes
+                val attrs = envelope.getSessionPartSpan()?.attributes
                 attrs?.findAttributeValue(EmbSessionAttributes.EMB_STATE) == expectedState &&
                     attrs.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID) != null
             }
     }
 
     private fun Envelope<SessionPartPayload>.getCrashedId(): String {
-        val crashId = checkNotNull(getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID))
+        val crashId = checkNotNull(getSessionPartSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID))
         assertFalse(crashId.isBlank())
         return crashId
     }

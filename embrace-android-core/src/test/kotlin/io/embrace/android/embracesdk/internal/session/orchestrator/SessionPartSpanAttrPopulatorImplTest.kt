@@ -46,7 +46,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
 
     @Test
     fun `start attributes populated with user session`() {
-        populator.populateSessionSpanStartAttrs(zygote, userSession)
+        populator.populateSessionPartSpanStartAttrs(zygote, userSession)
 
         val attrs = destination.attributes
         assertEquals("false", attrs[EmbSessionAttributes.EMB_COLD_START])
@@ -68,7 +68,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
 
     @Test
     fun `background-only marker stamped on session part span`() {
-        populator.populateSessionSpanStartAttrs(zygote, backgroundOnlyUserSession)
+        populator.populateSessionPartSpanStartAttrs(zygote, backgroundOnlyUserSession)
 
         val attrs = destination.attributes
         assertEquals("1", attrs[EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART])
@@ -78,7 +78,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
 
     @Test
     fun `start attributes populated without user session`() {
-        populator.populateSessionSpanStartAttrs(zygote, userSession = null)
+        populator.populateSessionPartSpanStartAttrs(zygote, userSession = null)
 
         val attrs = destination.attributes
         assertEquals("false", attrs[EmbSessionAttributes.EMB_COLD_START])
@@ -100,7 +100,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
 
     @Test
     fun `end attributes populated`() {
-        populator.populateSessionSpanEndAttrs(LifeEventType.STATE, "crashId", false, emptyMap())
+        populator.populateSessionPartSpanEndAttrs(LifeEventType.STATE, "crashId", false, emptyMap())
 
         val attrs = destination.attributes
         val expected = mapOf(
@@ -116,7 +116,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
 
     @Test
     fun `end attributes - final session part`() {
-        populator.populateSessionSpanEndAttrs(
+        populator.populateSessionPartSpanEndAttrs(
             LifeEventType.STATE,
             null,
             false,
@@ -154,7 +154,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
             metadataService,
         )
 
-        populator.populateSessionSpanEndAttrs(LifeEventType.STATE, "crashId", false, emptyMap())
+        populator.populateSessionPartSpanEndAttrs(LifeEventType.STATE, "crashId", false, emptyMap())
 
         val attrs = destination.attributes
         val expected = mapOf(

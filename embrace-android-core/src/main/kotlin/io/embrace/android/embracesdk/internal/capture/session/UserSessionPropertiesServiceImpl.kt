@@ -68,7 +68,7 @@ internal class UserSessionPropertiesServiceImpl(
     }
 
     override fun prepareForNewSession() {
-        props.addPropsForNewSessionSpan()
+        props.addPropsForNewSessionPartSpan()
     }
 
     override fun addChangeListener(listener: (Map<String, String>) -> Unit) {

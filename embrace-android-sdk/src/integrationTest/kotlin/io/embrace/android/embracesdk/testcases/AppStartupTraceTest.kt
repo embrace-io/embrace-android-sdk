@@ -21,7 +21,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.session.getSessionSpan
+import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.internal.toEmbracePayload
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -507,7 +507,7 @@ internal class AppStartupTraceTest {
                 )
             }
             .single { envelope ->
-                envelope.getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID) != null
+                envelope.getSessionPartSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID) != null
             }
     }
 }

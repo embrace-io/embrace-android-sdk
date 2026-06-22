@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectionTyp
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStateDataSource
-import io.embrace.android.embracesdk.internal.session.getSessionSpan
+import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.internal.session.getStateSpan
 import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -58,14 +58,14 @@ internal class NetworkStateFeatureTest {
             },
             assertAction = {
                 val message = getSingleSessionEnvelope()
-                val sessionSpan = checkNotNull(message.getSessionSpan())
+                val sessionPartSpan = checkNotNull(message.getSessionPartSpan())
                 val stateSpan = message.getStateSpan("emb-state-network")
                 with(checkNotNull(stateSpan)) {
                     assertEquals(
-                        checkNotNull(sessionSpan.startTimeNanos).nanosToMillis() + LIFECYCLE_EVENT_GAP,
+                        checkNotNull(sessionPartSpan.startTimeNanos).nanosToMillis() + LIFECYCLE_EVENT_GAP,
                         checkNotNull(startTimeNanos).nanosToMillis()
                     )
-                    assertEquals(sessionSpan.endTimeNanos, endTimeNanos)
+                    assertEquals(sessionPartSpan.endTimeNanos, endTimeNanos)
                     with(checkNotNull(events)) {
                         assertEquals(3, size)
                         assertEquals(transitions.size, size)
@@ -110,14 +110,14 @@ internal class NetworkStateFeatureTest {
             },
             assertAction = {
                 val message = getSingleSessionEnvelope()
-                val sessionSpan = checkNotNull(message.getSessionSpan())
+                val sessionPartSpan = checkNotNull(message.getSessionPartSpan())
                 val stateSpan = checkNotNull(message.getStateSpan("emb-state-network"))
                 with(stateSpan) {
                     assertEquals(
-                        checkNotNull(sessionSpan.startTimeNanos).nanosToMillis() + LIFECYCLE_EVENT_GAP,
+                        checkNotNull(sessionPartSpan.startTimeNanos).nanosToMillis() + LIFECYCLE_EVENT_GAP,
                         checkNotNull(startTimeNanos).nanosToMillis()
                     )
-                    assertEquals(sessionSpan.endTimeNanos, endTimeNanos)
+                    assertEquals(sessionPartSpan.endTimeNanos, endTimeNanos)
                     checkNotNull(stateSpan.attributes).none { it.key == EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION }
                     with(checkNotNull(events)) {
                         assertEquals(5, size)

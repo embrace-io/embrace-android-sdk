@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.testcases.features
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findEventOfType
-import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -45,7 +45,7 @@ internal class BreadcrumbFeatureTest {
     }
 
     private fun Envelope<SessionPartPayload>.assertBreadcrumbWithMessage(message: String) {
-        findSessionSpan().findEventOfType(EmbType.System.Breadcrumb).attributes?.assertMatches(mapOf(
+        findSessionPartSpan().findEventOfType(EmbType.System.Breadcrumb).attributes?.assertMatches(mapOf(
             EmbBreadcrumbAttributes.MESSAGE to message
         ))
     }

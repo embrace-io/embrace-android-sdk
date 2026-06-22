@@ -59,11 +59,11 @@ internal class UserSessionApiTest {
 
                 // validate session span
                 val spans = checkNotNull(message.data.spans)
-                val sessionSpan = spans.single { it.name == "emb-session" }
-                assertEquals(startTime, sessionSpan.startTimeNanos?.nanosToMillis())
-                assertNotNull(sessionSpan.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
+                val sessionPartSpan = spans.single { it.name == "emb-session" }
+                assertEquals(startTime, sessionPartSpan.startTimeNanos?.nanosToMillis())
+                assertNotNull(sessionPartSpan.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
 
-                val attrs = checkNotNull(sessionSpan.attributes)
+                val attrs = checkNotNull(sessionPartSpan.attributes)
                 val attributeKeys = attrs.map { it.key }
                 validateExistenceOnly.forEach { key ->
                     assertTrue("'$key' not found in attrs", attributeKeys.contains(key))

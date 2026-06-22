@@ -133,12 +133,12 @@ internal class SessionOrchestratorTest {
         createOrchestrator(AppState.BACKGROUND)
         clock.tick()
         val foregroundTime = clock.now()
-        val sessionSpan = currentSessionPartSpan.sessionSpan
+        val sessionPartSpan = currentSessionPartSpan.sessionPartSpan
         val initialUserSession = activeUserSession()
         orchestrator.onForeground()
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
         validateSession(
-            sessionSpan = sessionSpan,
+            sessionPartSpan = sessionPartSpan,
             endTimeMs = foregroundTime,
             endType = LifeEventType.BKGND_STATE
         )
@@ -154,10 +154,10 @@ internal class SessionOrchestratorTest {
         createOrchestrator(AppState.FOREGROUND)
         clock.tick()
         val backgroundTime = clock.now()
-        val sessionSpan = currentSessionPartSpan.sessionSpan
+        val sessionPartSpan = currentSessionPartSpan.sessionPartSpan
         orchestrator.onBackground()
         validateSession(
-            sessionSpan = sessionSpan,
+            sessionPartSpan = sessionPartSpan,
             endTimeMs = backgroundTime,
             endType = LifeEventType.STATE
         )
@@ -217,10 +217,10 @@ internal class SessionOrchestratorTest {
         createOrchestrator(AppState.FOREGROUND)
         clock.tick(10000)
         val endTimeMs = clock.now()
-        val sessionSpan = currentSessionPartSpan.sessionSpan
+        val sessionPartSpan = currentSessionPartSpan.sessionPartSpan
         orchestrator.endSessionWithManual()
         validateSession(
-            sessionSpan = sessionSpan,
+            sessionPartSpan = sessionPartSpan,
             endTimeMs = endTimeMs,
             endType = LifeEventType.MANUAL
         )
@@ -1783,7 +1783,7 @@ internal class SessionOrchestratorTest {
     }
 
     private fun validateSession(
-        sessionSpan: EmbraceSdkSpan?,
+        sessionPartSpan: EmbraceSdkSpan?,
         endTimeMs: Long,
         endType: LifeEventType,
     ) {
@@ -1791,6 +1791,6 @@ internal class SessionOrchestratorTest {
             endType.toString().lowercase(Locale.US),
             destination.attributes[EmbSessionAttributes.EMB_SESSION_END_TYPE],
         )
-        assertEquals(endTimeMs, checkNotNull(sessionSpan).snapshot()?.endTimeNanos?.nanosToMillis())
+        assertEquals(endTimeMs, checkNotNull(sessionPartSpan).snapshot()?.endTimeNanos?.nanosToMillis())
     }
 }

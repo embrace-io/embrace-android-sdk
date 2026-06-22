@@ -11,7 +11,7 @@ import io.opentelemetry.kotlin.tracing.SpanContext
 import org.junit.Assert.assertTrue
 
 fun Link.validatePreviousSessionPartLink(
-    previousSessionSpan: Span,
+    previousSessionPartSpan: Span,
     previousSessionPartId: String,
     previousUserSessionId: String? = null,
 ) {
@@ -23,7 +23,7 @@ fun Link.validatePreviousSessionPartLink(
         }
     }
     validateSystemLink(
-        linkedSpan = previousSessionSpan,
+        linkedSpan = previousSessionPartSpan,
         type = LinkType.PreviousSession,
         expectedAttributes = expected
     )

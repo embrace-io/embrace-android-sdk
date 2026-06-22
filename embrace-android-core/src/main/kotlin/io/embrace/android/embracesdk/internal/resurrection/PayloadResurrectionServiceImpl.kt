@@ -27,7 +27,7 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.serialization.fromJson
 import io.embrace.android.embracesdk.internal.session.UserSessionRestoreDecision
-import io.embrace.android.embracesdk.internal.session.getSessionSpan
+import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.internal.session.getUserSessionProperties
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -315,7 +315,7 @@ internal class PayloadResurrectionServiceImpl(
         isBackgroundOnly: Boolean,
     ): Envelope<SessionPartPayload> {
         val deadPart = serializer.fromJson<Envelope<SessionPartPayload>>(payloadStream)
-        val deadSessionPartSpan = deadPart.getSessionSpan()
+        val deadSessionPartSpan = deadPart.getSessionPartSpan()
         val sessionPartId = deadSessionPartSpan?.resolveSessionPartIdForCrashMatch()
         val appState = deadSessionPartSpan?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE)
         val nativeCrash = if (nativeCrashService != null && sessionPartId != null) {
@@ -375,25 +375,25 @@ internal class PayloadResurrectionServiceImpl(
             ?.map { it.toFailedSpan(endTimeMs = getFailedSpanEndTimeMs(this)) }
             ?: emptyList()
         val completedSpans = (data.spans ?: emptyList()) + failedSpans
-        val sessionSpan = completedSpans.singleOrNull { it.hasEmbraceAttribute(EmbType.Ux.Session) } ?: return null
+        val sessionPartSpan = completedSpans.singleOrNull { it.hasEmbraceAttribute(EmbType.Ux.Session) } ?: return null
 
         val attributesToAttach = buildList {
             if (isBackgroundOnly) {
-                addAll(sessionSpan.backgroundOnlyAttributes())
+                addAll(sessionPartSpan.backgroundOnlyAttributes())
             }
             if (userSessionTerminationReason != null) {
-                addAll(sessionSpan.finalSessionPartAttributes(userSessionTerminationReason))
+                addAll(sessionPartSpan.finalSessionPartAttributes(userSessionTerminationReason))
             }
             if (nativeCrashData != null) {
-                addAll(sessionSpan.crashAttributes(nativeCrashData))
+                addAll(sessionPartSpan.crashAttributes(nativeCrashData))
             }
         }
 
         val spans = if (attributesToAttach.isEmpty()) {
             completedSpans
         } else {
-            val updatedSessionSpan = sessionSpan.copy(attributes = (sessionSpan.attributes ?: emptyList()) + attributesToAttach)
-            completedSpans.minus(sessionSpan).plus(updatedSessionSpan)
+            val updatedSessionPartSpan = sessionPartSpan.copy(attributes = (sessionPartSpan.attributes ?: emptyList()) + attributesToAttach)
+            completedSpans.minus(sessionPartSpan).plus(updatedSessionPartSpan)
         }
 
         return copy(
@@ -466,10 +466,10 @@ internal class PayloadResurrectionServiceImpl(
      * time, so we just leave it at 0.
      */
     private fun getFailedSpanEndTimeMs(envelope: Envelope<SessionPartPayload>): Long {
-        val sessionSpan = envelope.getSessionSpan() ?: return 0L
-        val endTimeMs = sessionSpan.endTimeNanos ?: 0L
+        val sessionPartSpan = envelope.getSessionPartSpan() ?: return 0L
+        val endTimeMs = sessionPartSpan.endTimeNanos ?: 0L
         val lastHeartbeatTimeMs =
-            sessionSpan.attributes?.findAttributeValue(EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO)?.toLongOrNull() ?: 0L
+            sessionPartSpan.attributes?.findAttributeValue(EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO)?.toLongOrNull() ?: 0L
         return max(endTimeMs, lastHeartbeatTimeMs).nanosToMillis()
     }
 }

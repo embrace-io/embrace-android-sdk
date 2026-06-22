@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.assertions.getOtelSessionId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
@@ -75,8 +75,8 @@ internal class UserSessionLifecycleTest {
 
                 // the pre-foreground part belongs to the user session created eagerly at process start and classified as regular
                 // when the app entered the foreground
-                val bgSessionSpan = bgSession.findSessionSpan()
-                val bgAttrs = bgSessionSpan.attributes
+                val bgSessionPartSpan = bgSession.findSessionPartSpan()
+                val bgAttrs = bgSessionPartSpan.attributes
                 assertEquals(fgSession.getUserSessionId(), bgAttrs?.findAttributeValue(EMB_USER_SESSION_ID))
                 assertFalse(bgAttrs?.findAttributeValue(EMB_SESSION_PART_ID).isNullOrBlank())
                 assertEquals("1", bgAttrs?.findAttributeValue(EMB_USER_SESSION_NUMBER))
@@ -84,10 +84,10 @@ internal class UserSessionLifecycleTest {
                 assertNotNull(bgAttrs?.findAttributeValue(EMB_USER_SESSION_START_TS))
                 assertFalse(bgSession.isBackgroundOnlyPart())
 
-                val fgSessionSpan = fgSession.findSessionSpan()
+                val fgSessionPartSpan = fgSession.findSessionPartSpan()
                 assertNotNull(fgSession.getUserSessionId())
                 assertEquals(fgSession.getUserSessionId(), fgSession.getOtelSessionId())
-                assertEquals("1", fgSessionSpan.attributes?.findAttributeValue(EMB_USER_SESSION_NUMBER))
+                assertEquals("1", fgSessionPartSpan.attributes?.findAttributeValue(EMB_USER_SESSION_NUMBER))
                 fgSession.assertNotFinalPart()
 
                 val perfSpanNames = fgSession.findSpansOfType(EmbType.Performance.Default).map { it.name }
@@ -113,13 +113,13 @@ internal class UserSessionLifecycleTest {
 
                 // The pre-foreground part is the background-only session (number 1): it carries the
                 // marker and ends with the background-only termination reason when the app foregrounds.
-                val bgAttrs = bgSession.findSessionSpan().attributes
+                val bgAttrs = bgSession.findSessionPartSpan().attributes
                 assertTrue(bgSession.isBackgroundOnlyPart())
                 assertEquals("1", bgAttrs?.findAttributeValue(EMB_USER_SESSION_NUMBER))
                 bgSession.assertFinalPart(BACKGROUND_ONLY_USER_SESSION_FOREGROUNDED)
 
                 // The foreground part is a distinct, regular user session (number 2) - no marker.
-                val fgAttrs = fgSession.findSessionSpan().attributes
+                val fgAttrs = fgSession.findSessionPartSpan().attributes
                 assertDistinctUserSessions(bgSession, fgSession)
                 assertFalse(fgSession.isBackgroundOnlyPart())
                 assertEquals("2", fgAttrs?.findAttributeValue(EMB_USER_SESSION_NUMBER))
@@ -333,10 +333,10 @@ internal class UserSessionLifecycleTest {
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
                 val bgActivities = getSessionEnvelopes(2, state = AppState.BACKGROUND)
-                val firstBg = bgActivities[0].findSessionSpan()
-                val secondBg = bgActivities[1].findSessionSpan()
-                val firstSession = sessions[0].findSessionSpan()
-                val secondSession = sessions[1].findSessionSpan()
+                val firstBg = bgActivities[0].findSessionPartSpan()
+                val secondBg = bgActivities[1].findSessionPartSpan()
+                val firstSession = sessions[0].findSessionPartSpan()
+                val secondSession = sessions[1].findSessionPartSpan()
 
                 assertDistinctUserSessions(sessions[0], sessions[1])
                 // the cold-start background part belongs to the first user session, created
@@ -383,7 +383,7 @@ internal class UserSessionLifecycleTest {
                 val userSessionIds = (fgSessions + bgSessions).map { it.getUserSessionId() }.toSet()
                 assertEquals(3, userSessionIds.size)
 
-                val span = longBackgroundPart.findSessionSpan()
+                val span = longBackgroundPart.findSessionPartSpan()
                 val partDurationMs = checkNotNull(span.endTimeNanos).nanosToMillis() - checkNotNull(span.startTimeNanos).nanosToMillis()
                 assertTrue(partDurationMs > maxDurationMs)
                 assertTrue(longBackgroundPart.isFinalSessionPart())

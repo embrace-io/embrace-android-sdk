@@ -27,7 +27,7 @@ fun fakeSessionEnvelope(
     endMs: Long = 161000400000L,
     sessionProperties: Map<String, String>? = null,
 ): Envelope<SessionPartPayload> {
-    val sessionSpan = FakeEmbraceSdkSpan.sessionSpan(
+    val sessionPartSpan = FakeEmbraceSdkSpan.sessionPartSpan(
         userSessionId = userSessionId,
         sessionPartId = sessionPartId,
         startTimeMs = startMs,
@@ -35,7 +35,7 @@ fun fakeSessionEnvelope(
         endTimeMs = endMs,
         sessionProperties = sessionProperties,
     )
-    val spans = listOf(testSpan, checkNotNull(sessionSpan.snapshot()))
+    val spans = listOf(testSpan, checkNotNull(sessionPartSpan.snapshot()))
     val spanSnapshots = listOfNotNull(FakeEmbraceSdkSpan.started().snapshot())
 
     return Envelope(
@@ -61,7 +61,7 @@ fun fakeIncompleteSessionEnvelope(
     metadata: EnvelopeMetadata = fakeEnvelopeMetadata,
 ): Envelope<SessionPartPayload> {
     val fakeClock = FakeClock(currentTime = startMs)
-    val incompleteSessionSpan = FakeEmbraceSdkSpan.sessionSpan(
+    val incompleteSessionPartSpan = FakeEmbraceSdkSpan.sessionPartSpan(
         userSessionId = userSessionId,
         sessionPartId = sessionPartId,
         startTimeMs = startMs,
@@ -76,7 +76,7 @@ fun fakeIncompleteSessionEnvelope(
         type = "spans",
         data = SessionPartPayload(
             spanSnapshots = listOfNotNull(
-                incompleteSessionSpan.snapshot(),
+                incompleteSessionPartSpan.snapshot(),
                 FakeEmbraceSdkSpan.started(clock = fakeClock).snapshot()
             )
         )

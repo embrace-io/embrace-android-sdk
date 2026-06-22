@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.testcases.session
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.assertions.assertSessionIds
-import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.getSessionPartNumber
@@ -53,16 +53,16 @@ internal class SessionPartIdentityTest {
                 recordSession()
             },
             assertAction = {
-                val attrMap = checkNotNull(getSingleSessionEnvelope().findSessionSpan().attributes?.toMap())
-                assertFirstSessionSpanAttributes(attrMap)
+                val attrMap = checkNotNull(getSingleSessionEnvelope().findSessionPartSpan().attributes?.toMap())
+                assertFirstSessionPartSpanAttributes(attrMap)
             },
             otelExportAssertion = {
-                assertFirstSessionSpanAttributes(awaitSpansWithType(1, EmbType.Ux.Session).single().attributes.toStringMap())
+                assertFirstSessionPartSpanAttributes(awaitSpansWithType(1, EmbType.Ux.Session).single().attributes.toStringMap())
             },
         )
     }
 
-    private fun assertFirstSessionSpanAttributes(attrs: Map<String, String>) {
+    private fun assertFirstSessionPartSpanAttributes(attrs: Map<String, String>) {
         attrs.assertSessionIds()
         assertEquals("1", attrs[EMB_USER_SESSION_NUMBER])
         assertEquals("1", attrs[EMB_USER_SESSION_PART_INDEX])

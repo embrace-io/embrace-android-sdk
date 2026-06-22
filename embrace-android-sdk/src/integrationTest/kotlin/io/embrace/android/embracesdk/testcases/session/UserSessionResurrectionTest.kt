@@ -23,7 +23,7 @@ import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
-import io.embrace.android.embracesdk.internal.session.getSessionSpan
+import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testcases.features.createNativeSymbolsForCurrentArch
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -224,7 +224,7 @@ internal class UserSessionResurrectionTest {
                 assertEquals(persistedId, currentLaunchPart.getUserSessionId())
 
                 fun Envelope<SessionPartPayload>.processId() =
-                    getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER)
+                    getSessionPartSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER)
                 assertEquals(priorProcessId, priorLaunchPart.processId())
                 assertNotEquals(priorProcessId, currentLaunchPart.processId())
                 assertTrue(priorLaunchPart.getStartTime() < currentLaunchPart.getStartTime())

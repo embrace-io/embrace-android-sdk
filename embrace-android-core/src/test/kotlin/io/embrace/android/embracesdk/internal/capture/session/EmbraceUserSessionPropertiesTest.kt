@@ -132,13 +132,13 @@ internal class EmbraceUserSessionPropertiesTest {
     }
 
     @Test
-    fun `addPropsForNewSessionSpan includes permanent and process but not session`() {
+    fun `addPropsForNewSessionPartSpan includes permanent and process but not session`() {
         props.add("permKey", "permVal", PropertyScope.PERMANENT)
         props.add("procKey", "procVal", PropertyScope.PROCESS)
         props.add("sessKey", "sessVal", PropertyScope.USER_SESSION)
 
         destination.attributes.clear()
-        props.addPropsForNewSessionSpan()
+        props.addPropsForNewSessionPartSpan()
 
         val keys = destination.attributes.keys.map { it.removePrefix("emb.properties.") }
         assertTrue("permanent prop missing", keys.contains("permKey"))
@@ -372,7 +372,7 @@ internal class EmbraceUserSessionPropertiesTest {
         val apiCaller = Thread {
             repeat(iterations) {
                 try {
-                    props.addPropsForNewSessionSpan()
+                    props.addPropsForNewSessionPartSpan()
                 } catch (e: ConcurrentModificationException) {
                     errors.incrementAndGet()
                 }

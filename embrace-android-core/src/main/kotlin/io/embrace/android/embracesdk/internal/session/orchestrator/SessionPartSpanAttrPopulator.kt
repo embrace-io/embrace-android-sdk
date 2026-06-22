@@ -12,12 +12,12 @@ interface SessionPartSpanAttrPopulator {
     /**
      * Populates session span attributes at the start of the session.
      */
-    fun populateSessionSpanStartAttrs(sessionPart: SessionPartToken, userSession: UserSessionMetadata?)
+    fun populateSessionPartSpanStartAttrs(sessionPart: SessionPartToken, userSession: UserSessionMetadata?)
 
     /**
      * Populates session span attributes at the end of the session.
      */
-    fun populateSessionSpanEndAttrs(
+    fun populateSessionPartSpanEndAttrs(
         endType: LifeEventType?,
         crashId: String?,
         coldStart: Boolean,

@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getOtelSessionId
+import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
@@ -236,7 +237,7 @@ internal class EmbracePayloadAssertionInterface(
             assertEquals(Span.Status.ERROR, status)
 
             if (crashData != null) {
-                assertEquals(checkNotNull(crashData.partEnvelope).getOtelSessionId(), getOtelSessionId())
+                assertEquals(checkNotNull(crashData.partEnvelope).getUserSessionId(), getUserSessionId())
                 assertEquals(crashData.lastHeartbeatMs, endTimeNanos?.nanosToMillis())
                 assertEquals(
                     crashData.nativeCrash.nativeCrashId,

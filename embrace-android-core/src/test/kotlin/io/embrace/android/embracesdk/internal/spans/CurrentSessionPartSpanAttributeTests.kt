@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
-import io.opentelemetry.kotlin.semconv.SessionAttributes
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
@@ -52,7 +52,7 @@ internal class CurrentSessionPartSpanAttributeTests {
     }
 
     private fun EmbraceSpanData.assertCommonSessionSpanAttrs() {
-        assertNotNull(attributes.findAttributeValue(SessionAttributes.SESSION_ID))
+        assertNotNull(attributes.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID))
         assertEquals("ux.session", attributes.findAttributeValue("emb.type"))
     }
 }

@@ -47,7 +47,7 @@ internal class CurrentSessionPartSpanImpl(
      * Encapsulation of the current session span (if there is one) and its trace counts.
      */
     @Volatile
-    private var sessionState: SessionState? = null
+    private var sessionPartState: SessionPartState? = null
 
     @Volatile
     private var lastSessionSpan: EmbraceSdkSpan? = null
@@ -56,8 +56,8 @@ internal class CurrentSessionPartSpanImpl(
         if (!initialized) {
             synchronized(sessionTransitionLock) {
                 if (!initialized) {
-                    sessionState = SessionState(startSessionSpan(sdkInitStartTimeMs))
-                    initialized = sessionState != null
+                    sessionPartState = startSessionPartSpan(sdkInitStartTimeMs)
+                    initialized = sessionPartState != null
                 }
             }
         }
@@ -71,7 +71,7 @@ internal class CurrentSessionPartSpanImpl(
      * be counted as such towards the limits, so make sure there's no case afterwards where a Span is not created.
      */
     override fun canStartNewSpan(parent: EmbraceSpan?, internal: Boolean): Boolean {
-        val state = sessionState ?: return false
+        val state = sessionPartState ?: return false
         if (!state.isReady || (parent != null && parent.spanId == null)) {
             return false
         }
@@ -92,42 +92,46 @@ internal class CurrentSessionPartSpanImpl(
         }
     }
 
-    override fun getId(): String = sessionState?.sessionId ?: ""
+    override fun getId(): String = sessionPartState?.sessionPartId ?: ""
 
     override fun spanStopCallback(spanId: String) {
-        val currentSessionPartSpan = sessionState?.span
+        val currentSessionPartSpan = sessionPartState?.span
         val spanToStop = spanRepository.getSpan(spanId)
 
         if (currentSessionPartSpan != spanToStop) {
-            val sessionIds = currentSessionPartSpan?.userSessionIdAttrs() ?: emptyMap()
-
+            val linkAttrs = currentSessionPartSpan?.partLinkAttrs() ?: emptyMap()
             spanToStop?.spanContext?.let { spanToStopContext ->
                 if (currentSessionPartSpan != null) {
-                    currentSessionPartSpan.addSystemLink(spanToStopContext, LinkType.EndedIn, sessionIds)
+                    currentSessionPartSpan.addSystemLink(
+                        linkedSpanContext = spanToStopContext,
+                        type = LinkType.EndedIn,
+                        attributes = linkAttrs
+                    )
                     if (spanToStop.hasEmbraceAttribute(EmbType.State)) {
-                        currentSessionPartSpan.addSystemLink(spanToStopContext, LinkType.State, sessionIds)
+                        currentSessionPartSpan.addSystemLink(
+                            linkedSpanContext = spanToStopContext,
+                            type = LinkType.State,
+                            attributes = linkAttrs
+                        )
                     }
                 }
             }
 
-            val otelSessionId = currentSessionPartSpan?.getSystemAttribute(SessionAttributes.SESSION_ID)
-            if (otelSessionId != null) {
-                currentSessionPartSpan.spanContext?.let { sessionSpanContext ->
-                    spanToStop?.addSystemLink(
-                        linkedSpanContext = sessionSpanContext,
-                        type = LinkType.EndSession,
-                        attributes = mapOf(SessionAttributes.SESSION_ID to otelSessionId) + sessionIds
-                    )
-                }
+            currentSessionPartSpan?.spanContext?.let { sessionSpanContext ->
+                spanToStop?.addSystemLink(
+                    linkedSpanContext = sessionSpanContext,
+                    type = LinkType.EndSession,
+                    attributes = linkAttrs
+                )
             }
         }
     }
 
     override fun readySession(): Boolean {
-        if (sessionState == null) {
+        if (sessionPartState == null) {
             synchronized(sessionTransitionLock) {
-                if (sessionState == null) {
-                    sessionState = SessionState(startSessionSpan(openTelemetryClock.now().nanosToMillis()))
+                if (sessionPartState == null) {
+                    sessionPartState = startSessionPartSpan(openTelemetryClock.now().nanosToMillis())
                     return sessionSpanReady()
                 }
             }
@@ -140,7 +144,7 @@ internal class CurrentSessionPartSpanImpl(
         appTerminationCause: AppTerminationCause?,
     ): List<EmbraceSpanData> {
         synchronized(sessionTransitionLock) {
-            val endingSessionSpan = sessionState?.span
+            val endingSessionSpan = sessionPartState?.span
             return if (endingSessionSpan != null && endingSessionSpan.isRecording) {
                 // Right now, session spans don't survive native crashes and sudden process terminations,
                 // so telemetry will not be recorded in those cases, for now.
@@ -154,8 +158,8 @@ internal class CurrentSessionPartSpanImpl(
                     endingSessionSpan.stop()
                     lastSessionSpan = endingSessionSpan
                     spanRepository.clearCompletedSpans()
-                    sessionState = if (startNewSession) {
-                        SessionState(startSessionSpan(openTelemetryClock.now().nanosToMillis()))
+                    sessionPartState = if (startNewSession) {
+                        startSessionPartSpan(openTelemetryClock.now().nanosToMillis())
                     } else {
                         null
                     }
@@ -175,13 +179,15 @@ internal class CurrentSessionPartSpanImpl(
         }
     }
 
-    override fun current(): EmbraceSdkSpan? = sessionState?.span
+    override fun current(): EmbraceSdkSpan? = sessionPartState?.span
 
     /**
-     * This method should always be used when starting a new session span
+     * This method should always be used when starting a new session part span. It creates a UUID for the session part and
+     * puts it in the span. This is the one true place for creating a new session part and its persisted metadata.
      */
-    private fun startSessionSpan(startTimeMs: Long): EmbraceSdkSpan {
-        return embraceSpanFactorySupplier().create(
+    private fun startSessionPartSpan(startTimeMs: Long): SessionPartState {
+        val sessionPartId = uuidSource.createUuid()
+        val span = embraceSpanFactorySupplier().create(
             OtelSpanStartArgs(
                 name = "session",
                 type = EmbType.Ux.Session,
@@ -192,39 +198,41 @@ internal class CurrentSessionPartSpanImpl(
             )
         ).apply {
             start(startTimeMs = startTimeMs)
-            setSystemAttribute(SessionAttributes.SESSION_ID, uuidSource.createUuid())
+            setSystemAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionPartId)
             val previousSessionSpan = lastSessionSpan
             previousSessionSpan?.spanContext?.let {
-                val previousOtelSessionId = previousSessionSpan.getSystemAttribute(SessionAttributes.SESSION_ID) ?: ""
                 addSystemLink(
                     linkedSpanContext = it,
                     type = LinkType.PreviousSession,
-                    attributes = mapOf(SessionAttributes.SESSION_ID to previousOtelSessionId) +
-                        previousSessionSpan.userSessionIdAttrs()
+                    attributes = previousSessionSpan.partLinkAttrs()
                 )
             }
         }
+        return SessionPartState(span, sessionPartId)
     }
 
-    private fun sessionSpanReady() = sessionState?.isReady == true
+    private fun sessionSpanReady() = sessionPartState?.isReady == true
 
     /**
      * Encapsulates the current session span and the current trace counts for limit enforcement.
      */
-    private class SessionState(val span: EmbraceSdkSpan) {
+    private class SessionPartState(val span: EmbraceSdkSpan, val sessionPartId: String) {
         val traceCount: AtomicInteger = AtomicInteger(0)
         val internalTraceCount: AtomicInteger = AtomicInteger(0)
 
-        val sessionId: String? get() = span.getSystemAttribute(SessionAttributes.SESSION_ID)
         val isReady: Boolean get() = span.isRecording
     }
 
-    private fun EmbraceSdkSpan.userSessionIdAttrs(): Map<String, String> = buildMap {
-        getSystemAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID)?.let {
-            put(EmbSessionAttributes.EMB_USER_SESSION_ID, it)
-        }
+    /**
+     * Attributes for a span link that references the session part represented by this span.
+     */
+    private fun EmbraceSdkSpan.partLinkAttrs(): Map<String, String> = buildMap {
         getSystemAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID)?.let {
             put(EmbSessionAttributes.EMB_SESSION_PART_ID, it)
+        }
+        getSystemAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID)?.let {
+            put(EmbSessionAttributes.EMB_USER_SESSION_ID, it)
+            put(SessionAttributes.SESSION_ID, it)
         }
     }
 

@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.assertions.assertError
 import io.embrace.android.embracesdk.assertions.assertHasEmbraceAttribute
 import io.embrace.android.embracesdk.assertions.assertIsType
-import io.embrace.android.embracesdk.assertions.validatePreviousSessionLink
+import io.embrace.android.embracesdk.assertions.validatePreviousSessionPartLink
 import io.embrace.android.embracesdk.assertions.validateSystemLink
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
@@ -447,7 +447,7 @@ internal class CurrentSessionPartSpanImplTests {
         with(spanRepository.getActiveSpans().single()) {
             assertTrue(hasEmbraceAttribute(EmbType.Ux.Session))
             assertNotEquals(originalSessionSpan.spanId, spanId)
-            checkNotNull(snapshot()?.links?.single()).validatePreviousSessionLink(originalSessionSpan, originalSessionId)
+            checkNotNull(snapshot()?.links?.single()).validatePreviousSessionPartLink(originalSessionSpan, originalSessionId)
         }
     }
 
@@ -458,17 +458,15 @@ internal class CurrentSessionPartSpanImplTests {
         val originalSessionPartId = "previous-session-part"
         originalSessionSpan.setSystemAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, originalUserSessionId)
         originalSessionSpan.setSystemAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, originalSessionPartId)
-        val originalSessionId = currentSessionPartSpan.getId()
         val originalSnapshot = checkNotNull(originalSessionSpan.snapshot())
 
         currentSessionPartSpan.endSession(startNewSession = true)
 
         with(spanRepository.getActiveSpans().single()) {
-            checkNotNull(snapshot()?.links?.single()).validatePreviousSessionLink(
+            checkNotNull(snapshot()?.links?.single()).validatePreviousSessionPartLink(
                 previousSessionSpan = originalSnapshot,
-                previousOtelSessionId = originalSessionId,
-                previousUserSessionId = originalUserSessionId,
                 previousSessionPartId = originalSessionPartId,
+                previousUserSessionId = originalUserSessionId,
             )
         }
     }
@@ -546,7 +544,6 @@ internal class CurrentSessionPartSpanImplTests {
     @Test
     fun `span stop callback creates the correct span links`() {
         val sessionSpan = checkNotNull(spanRepository.getActiveSpans().single())
-        val otelSessionId = checkNotNull(sessionSpan.getSystemAttribute(SessionAttributes.SESSION_ID))
         val userSessionId = "user-session-uuid"
         val sessionPartId = "session-part-uuid"
         sessionSpan.setSystemAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, userSessionId)
@@ -558,19 +555,20 @@ internal class CurrentSessionPartSpanImplTests {
         val spanSnapshot = checkNotNull(span.snapshot())
         val sessionSpanSnapshot = checkNotNull(sessionSpan.snapshot())
 
-        val expectedOtelSessionIds = mapOf(
-            EmbSessionAttributes.EMB_USER_SESSION_ID to userSessionId,
+        val expectedPartLinkAttrs = mapOf(
             EmbSessionAttributes.EMB_SESSION_PART_ID to sessionPartId,
+            EmbSessionAttributes.EMB_USER_SESSION_ID to userSessionId,
+            SessionAttributes.SESSION_ID to userSessionId,
         )
         checkNotNull(spanSnapshot.links).single().validateSystemLink(
             linkedSpan = sessionSpanSnapshot,
             type = LinkType.EndSession,
-            expectedAttributes = mapOf(SessionAttributes.SESSION_ID to otelSessionId) + expectedOtelSessionIds
+            expectedAttributes = expectedPartLinkAttrs
         )
         checkNotNull(sessionSpanSnapshot.links).single().validateSystemLink(
             linkedSpan = spanSnapshot,
             type = LinkType.EndedIn,
-            expectedAttributes = expectedOtelSessionIds,
+            expectedAttributes = expectedPartLinkAttrs,
         )
     }
 

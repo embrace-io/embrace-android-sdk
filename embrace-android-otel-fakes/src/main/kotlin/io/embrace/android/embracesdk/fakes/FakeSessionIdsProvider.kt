@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.session.id.SessionIdProvider
+import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 
-class FakeSessionIdProvider(
+class FakeSessionIdsProvider(
     var userSessionId: String = "",
     var sessionPartId: String = "",
-) : SessionIdProvider {
+) : SessionIdsProvider {
     override fun getCurrentUserSessionId(): String = userSessionId
     override fun getCurrentSessionPartId(): String = sessionPartId
     override fun getActiveSessionIds(): SessionIdsSnapshot =

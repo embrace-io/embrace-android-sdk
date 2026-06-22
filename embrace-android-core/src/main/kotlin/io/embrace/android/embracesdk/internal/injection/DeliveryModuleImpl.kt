@@ -47,7 +47,7 @@ class DeliveryModuleImpl(
             initModule.clock,
             processIdProvider,
             initModule.uuidSource,
-            essentialServiceModule.sessionIdProvider::getActiveSessionIds,
+            essentialServiceModule.sessionIdsProvider::getActiveSessionIds,
         )
     }
 
@@ -78,7 +78,7 @@ class DeliveryModuleImpl(
         PayloadCachingServiceImpl(
             partCacher,
             initModule.clock,
-            essentialServiceModule.sessionIdProvider,
+            essentialServiceModule.sessionIdsProvider,
             payloadStore,
             deliveryTracer
         )

@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
-import io.embrace.android.embracesdk.fakes.FakeSessionIdProvider
+import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.fakes.fakeSessionPartToken
 import io.embrace.android.embracesdk.internal.arch.state.AppState
@@ -21,19 +21,19 @@ class PayloadCachingServiceImplTest {
 
     private lateinit var executorService: BlockingScheduledExecutorService
     private lateinit var service: PayloadCachingService
-    private lateinit var sessionIdProvider: FakeSessionIdProvider
+    private lateinit var sessionIdsProvider: FakeSessionIdsProvider
     private val zygote = fakeSessionPartToken()
 
     @Before
     fun setUp() {
         executorService = BlockingScheduledExecutorService(FakeClock())
         val cacher = PeriodicSessionPartCacher(BackgroundWorker(executorService), FakeInternalLogger(), INTERVAL)
-        sessionIdProvider = FakeSessionIdProvider(sessionPartId = zygote.sessionPartId)
+        sessionIdsProvider = FakeSessionIdsProvider(sessionPartId = zygote.sessionPartId)
 
         service = PayloadCachingServiceImpl(
             cacher,
             FakeClock(),
-            sessionIdProvider,
+            sessionIdsProvider,
             FakePayloadStore()
         )
     }
@@ -48,7 +48,7 @@ class PayloadCachingServiceImplTest {
 
     @Test
     fun `session id mismatch does not cache`() {
-        sessionIdProvider.sessionPartId = "someOtherId"
+        sessionIdsProvider.sessionPartId = "someOtherId"
         var count = 0
         service.startCaching(zygote, AppState.FOREGROUND) { _, _, _ ->
             count++

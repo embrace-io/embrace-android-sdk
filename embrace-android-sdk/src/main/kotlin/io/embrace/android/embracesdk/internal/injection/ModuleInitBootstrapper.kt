@@ -128,7 +128,7 @@ internal class ModuleInitBootstrapper(
             essentialServiceModule: EssentialServiceModule,
             coreModule: CoreModule,
             storageService: StorageService,
-            userSessionIdProvider,
+            userSessionIdsProvider,
             activeSessionIdsProvider,
         ->
         InstrumentationModuleImpl(
@@ -139,7 +139,7 @@ internal class ModuleInitBootstrapper(
             essentialServiceModule,
             coreModule,
             storageService,
-            userSessionIdProvider,
+            userSessionIdsProvider,
             activeSessionIdsProvider,
         )
     },

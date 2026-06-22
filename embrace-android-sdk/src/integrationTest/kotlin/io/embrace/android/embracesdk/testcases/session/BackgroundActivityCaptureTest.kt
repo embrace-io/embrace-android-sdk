@@ -6,9 +6,13 @@ import io.embrace.android.embracesdk.assertions.findEventsOfType
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getLogsOfType
 import io.embrace.android.embracesdk.assertions.getSessionId
+import io.embrace.android.embracesdk.assertions.getSessionPartId
+import io.embrace.android.embracesdk.assertions.hasSpanSnapshotsOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -26,14 +30,38 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 
 /**
- * Verify functionality of the SDK if background activities are disabled
+ * Asserts the SDK's behavior with background activity capture enabled and disabled: background parts are
+ * recorded (with distinct ids) when enabled, and telemetry is handled correctly when disabled.
  */
 @RunWith(AndroidJUnit4::class)
-internal class BackgroundActivityDisabledTest {
+internal class BackgroundActivityCaptureTest {
 
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+
+    @Test
+    fun `bg activity messages are recorded`() {
+        testRule.runTest(
+            persistedRemoteConfig = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(100f)),
+            testCaseAction = {
+                recordSession()
+                clock.tick(30000)
+                recordSession()
+            },
+            assertAction = {
+                // filter out dupes from overwritten saves
+                val bgActivities = getSessionEnvelopes(2, AppState.BACKGROUND).distinctBy { it.getSessionPartId() }
+                assertEquals(2, bgActivities.size)
+
+                val first = bgActivities[0]
+                assertFalse(first.hasSpanSnapshotsOfType(EmbType.Ux.Session))
+
+                // ID should be different for each
+                assertNotEquals(first.getSessionPartId(), bgActivities[1].getSessionPartId())
+            }
+        )
+    }
 
     @Test
     fun `recording telemetry in the background when background activity is disabled does the right thing`() {

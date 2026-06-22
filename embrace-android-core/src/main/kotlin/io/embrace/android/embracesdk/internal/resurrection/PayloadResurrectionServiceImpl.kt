@@ -31,7 +31,6 @@ import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.session.getUserSessionProperties
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import java.io.InputStream
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
@@ -315,13 +314,14 @@ internal class PayloadResurrectionServiceImpl(
         isBackgroundOnly: Boolean,
     ): Envelope<SessionPartPayload> {
         val deadPart = serializer.fromJson<Envelope<SessionPartPayload>>(payloadStream)
+        val deadPartAttrs = deadPart.getSessionSpan()?.attributes
 
-        val sessionId = deadPart.getSessionSpan()?.attributes?.findAttributeValue(SessionAttributes.SESSION_ID)
-        val appState = deadPart.getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE)
-        val nativeCrash = if (nativeCrashService != null && sessionId != null) {
-            nativeCrashProvider(sessionId)?.apply {
+        val sessionPartId = deadPartAttrs?.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID)
+        val appState = deadPartAttrs?.findAttributeValue(EmbSessionAttributes.EMB_STATE)
+        val nativeCrash = if (nativeCrashService != null && sessionPartId != null) {
+            nativeCrashProvider(sessionPartId)?.apply {
                 val nativeCrashEnvelopeMetadata = createNativeCrashEnvelopeMetadata(
-                    sessionPartId = sessionId,
+                    sessionPartId = sessionPartId,
                     processIdentifier = processIdentifier,
                     userSessionId = userSessionId,
                 )
@@ -428,10 +428,10 @@ internal class PayloadResurrectionServiceImpl(
         }
 
     /**
-     * Attributes attaching the native crash to this session span if its session id matches, or empty otherwise.
+     * Attributes attaching the native crash to this session span if its session part id matches, or empty otherwise.
      */
     private fun Span.crashAttributes(nativeCrashData: NativeCrashData): List<Attribute> =
-        if (attributes?.findAttributeValue(SessionAttributes.SESSION_ID) == nativeCrashData.sessionPartId) {
+        if (attributes?.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID) == nativeCrashData.sessionPartId) {
             listOf(Attribute(EmbSessionAttributes.EMB_CRASH_ID, nativeCrashData.nativeCrashId))
         } else {
             emptyList()

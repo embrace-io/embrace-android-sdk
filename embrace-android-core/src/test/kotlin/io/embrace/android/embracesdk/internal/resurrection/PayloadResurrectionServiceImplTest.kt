@@ -241,7 +241,7 @@ class PayloadResurrectionServiceImplTest {
         // Session B is only in the cache — should be resurrected normally.
         val sessionBMeta = fakeSessionStoredTelemetryMetadata2.copy(complete = false)
         val sessionBEnvelope = fakeIncompleteSessionEnvelope(
-            sessionId = "session-b",
+            userSessionId = "session-b",
             startMs = sessionBMeta.timestamp,
             lastHeartbeatTimeMs = sessionBMeta.timestamp + 1000L
         )
@@ -411,11 +411,11 @@ class PayloadResurrectionServiceImplTest {
         )
         cacheStorageService.addPayload(
             metadata = earlierMeta,
-            data = fakeIncompleteSessionEnvelope(sessionId = "earlier-part")
+            data = fakeIncompleteSessionEnvelope(userSessionId = "earlier-part")
         )
         cacheStorageService.addPayload(
             metadata = laterMeta,
-            data = fakeIncompleteSessionEnvelope(sessionId = "later-part")
+            data = fakeIncompleteSessionEnvelope(userSessionId = "later-part")
         )
         resurrectInBackground(
             restoreDecision = UserSessionRestoreDecision.Terminated(
@@ -592,7 +592,7 @@ class PayloadResurrectionServiceImplTest {
         val oldResource = fakeEnvelopeResource.copy(appVersion = "1.4", sdkVersion = "6.13", osVersion = "10")
         val oldMetadata = fakeEnvelopeMetadata.copy(username = "old-admin")
         val earlierDeadSession = fakeIncompleteSessionEnvelope(
-            sessionId = "anotherFakeSessionId",
+            userSessionId = "anotherFakeSessionId",
             sessionPartId = "anotherFakeSessionPartId",
             startMs = deadSessionEnvelope.getStartTime() - 100_000L,
             lastHeartbeatTimeMs = deadSessionEnvelope.getStartTime() - 90_000L,
@@ -930,7 +930,7 @@ class PayloadResurrectionServiceImplTest {
                 spanSnapshots = deadSessionEnvelope.data.spanSnapshots?.plus(
                     checkNotNull(
                         FakeEmbraceSdkSpan.sessionSpan(
-                            sessionId = "fake-session-span-id",
+                            userSessionId = "fake-session-span-id",
                             startTimeMs = deadSessionEnvelope.getStartTime() + 1001L,
                             lastHeartbeatTimeMs = deadSessionEnvelope.getStartTime() + 1001L,
                         ).snapshot()

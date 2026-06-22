@@ -203,7 +203,7 @@ internal class UserSessionResurrectionTest {
                         timestamp = DEFAULT_SDK_START_TIME_MS - 900L,
                     ),
                     data = fakeIncompleteSessionEnvelope(
-                        sessionId = persistedId,
+                        userSessionId = persistedId,
                         processIdentifier = priorProcessId,
                         startMs = DEFAULT_SDK_START_TIME_MS - 900L,
                         lastHeartbeatTimeMs = DEFAULT_SDK_START_TIME_MS - 800L,
@@ -262,7 +262,7 @@ internal class UserSessionResurrectionTest {
             storedNativeCrashData.copy(
                 nativeCrash = nativeCrash,
                 partEnvelope = fakeIncompleteSessionEnvelope(
-                    sessionId = userSessionId,
+                    userSessionId = userSessionId,
                     startMs = sessionMetadata.timestamp,
                     lastHeartbeatTimeMs = sessionMetadata.timestamp + 1_000L,
                 )

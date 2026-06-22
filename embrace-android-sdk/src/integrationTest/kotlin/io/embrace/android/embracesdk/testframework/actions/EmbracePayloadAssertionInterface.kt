@@ -158,7 +158,7 @@ internal class EmbracePayloadAssertionInterface(
             val envelopes = checkNotNull(apiServer).getSessionEnvelopes()
             val sessions: List<Map<String, String?>> = envelopes.map {
                 mapOf(
-                    "sessionId" to it.getOtelSessionId(),
+                    "otelSessionId" to it.getOtelSessionId(),
                     "cleanExit" to it.findSessionSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_CLEAN_EXIT),
                     "state" to it.findSessionSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE)
                 )

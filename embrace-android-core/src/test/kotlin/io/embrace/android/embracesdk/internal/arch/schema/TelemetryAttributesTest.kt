@@ -12,24 +12,24 @@ internal class TelemetryAttributesTest {
 
     private lateinit var customAttributes: Map<String, String>
     private lateinit var telemetryAttributes: TelemetryAttributes
-    private lateinit var sessionId: String
+    private lateinit var otelSessionId: String
 
     @Before
     fun setup() {
         customAttributes = mapOf("custom" to "attributeValue")
-        sessionId = TestUuidSource().createUuid()
+        otelSessionId = TestUuidSource().createUuid()
     }
 
     @Test
     fun `only schema properties`() {
         telemetryAttributes = TelemetryAttributes()
-        telemetryAttributes.setAttribute(SessionAttributes.SESSION_ID, sessionId)
+        telemetryAttributes.setAttribute(SessionAttributes.SESSION_ID, otelSessionId)
         telemetryAttributes.setAttribute(ExceptionAttributes.EXCEPTION_TYPE, "exceptionValue")
         val attributes = telemetryAttributes.snapshot()
         assertEquals(2, attributes.size)
-        assertEquals(sessionId, attributes[SessionAttributes.SESSION_ID])
+        assertEquals(otelSessionId, attributes[SessionAttributes.SESSION_ID])
         assertEquals("exceptionValue", attributes[ExceptionAttributes.EXCEPTION_TYPE])
-        assertEquals(sessionId, telemetryAttributes.getAttribute(SessionAttributes.SESSION_ID))
+        assertEquals(otelSessionId, telemetryAttributes.getAttribute(SessionAttributes.SESSION_ID))
         assertEquals("exceptionValue", telemetryAttributes.getAttribute(ExceptionAttributes.EXCEPTION_TYPE))
     }
 
@@ -38,37 +38,37 @@ internal class TelemetryAttributesTest {
         telemetryAttributes = TelemetryAttributes(
             customAttributes = customAttributes
         )
-        val sessionIdKey = SessionAttributes.SESSION_ID
-        telemetryAttributes.setAttribute(sessionIdKey, sessionId)
+        val otelSessionIdKey = SessionAttributes.SESSION_ID
+        telemetryAttributes.setAttribute(otelSessionIdKey, otelSessionId)
 
         val attributes = telemetryAttributes.snapshot()
         assertEquals("attributeValue", attributes["custom"])
-        assertEquals(sessionId, attributes[sessionIdKey])
+        assertEquals(otelSessionId, attributes[otelSessionIdKey])
     }
 
     @Test
     fun `overwritten values returned`() {
-        val newSessionId = TestUuidSource().createUuid()
+        val newOtelSessionId = TestUuidSource().createUuid()
         telemetryAttributes = TelemetryAttributes()
-        val sessionIdKey = SessionAttributes.SESSION_ID
-        telemetryAttributes.setAttribute(sessionIdKey, sessionId)
-        telemetryAttributes.setAttribute(sessionIdKey, newSessionId)
+        val otelSessionIdKey = SessionAttributes.SESSION_ID
+        telemetryAttributes.setAttribute(otelSessionIdKey, otelSessionId)
+        telemetryAttributes.setAttribute(otelSessionIdKey, newOtelSessionId)
 
         val attributes = telemetryAttributes.snapshot()
         assertEquals(1, attributes.size)
-        assertEquals(newSessionId, attributes[sessionIdKey])
+        assertEquals(newOtelSessionId, attributes[otelSessionIdKey])
     }
 
     @Test
     fun `schema attribute values take priority if the same key is used`() {
-        val newSessionId = TestUuidSource().createUuid()
+        val newOtelSessionId = TestUuidSource().createUuid()
         telemetryAttributes = TelemetryAttributes(
-            customAttributes = mapOf(SessionAttributes.SESSION_ID to sessionId)
+            customAttributes = mapOf(SessionAttributes.SESSION_ID to otelSessionId)
         )
-        telemetryAttributes.setAttribute(SessionAttributes.SESSION_ID, newSessionId)
+        telemetryAttributes.setAttribute(SessionAttributes.SESSION_ID, newOtelSessionId)
         val attributes = telemetryAttributes.snapshot()
         assertEquals(1, attributes.size)
-        assertEquals(newSessionId, attributes[SessionAttributes.SESSION_ID])
+        assertEquals(newOtelSessionId, attributes[SessionAttributes.SESSION_ID])
     }
 
     @Test
@@ -76,7 +76,7 @@ internal class TelemetryAttributesTest {
         telemetryAttributes = TelemetryAttributes(
             customAttributes = customAttributes
         )
-        telemetryAttributes.setAttribute(SessionAttributes.SESSION_ID, sessionId)
+        telemetryAttributes.setAttribute(SessionAttributes.SESSION_ID, otelSessionId)
 
         val attributes = telemetryAttributes.snapshot()
         assertEquals(2, attributes.size)
@@ -88,17 +88,17 @@ internal class TelemetryAttributesTest {
         val blankishValues = listOf("", " ", "null", "NULL")
 
         // Give me Union types, plz
-        val sessionIdKey = SessionAttributes.SESSION_ID
+        val otelSessionIdKey = SessionAttributes.SESSION_ID
         blankishValues.forEach { value ->
-            telemetryAttributes.setAttribute(sessionIdKey, value, true)
-            assertEquals(value, telemetryAttributes.getAttribute(sessionIdKey))
+            telemetryAttributes.setAttribute(otelSessionIdKey, value, true)
+            assertEquals(value, telemetryAttributes.getAttribute(otelSessionIdKey))
         }
 
-        telemetryAttributes.setAttribute(sessionIdKey, "test")
+        telemetryAttributes.setAttribute(otelSessionIdKey, "test")
 
         blankishValues.forEach { value ->
-            telemetryAttributes.setAttribute(sessionIdKey, value, false)
-            assertEquals("test", telemetryAttributes.getAttribute(sessionIdKey))
+            telemetryAttributes.setAttribute(otelSessionIdKey, value, false)
+            assertEquals("test", telemetryAttributes.getAttribute(otelSessionIdKey))
         }
 
         blankishValues.forEach { value ->

@@ -30,7 +30,7 @@ interface CurrentSessionPartSpan : Initializable {
     fun canStartNewSpan(parent: EmbraceSpan?, internal: Boolean): Boolean
 
     /**
-     * Returns the current session ID
+     * Returns the current session part ID
      */
     fun getId(): String
 

@@ -37,8 +37,8 @@ fun Span.findEventsOfType(telemetryType: EmbType): List<SpanEvent> {
     }
 }
 
-fun Span.assertPreviousSession(previousSessionSpan: Span, previousSessionId: String) {
-    findLinkOfType(LinkType.PreviousSession).validatePreviousSessionLink(previousSessionSpan, previousSessionId)
+fun Span.assertPreviousSession(previousSessionSpan: Span, previousOtelSessionId: String) {
+    findLinkOfType(LinkType.PreviousSession).validatePreviousSessionLink(previousSessionSpan, previousOtelSessionId)
 }
 
 fun Span.assertNoPreviousSession() =

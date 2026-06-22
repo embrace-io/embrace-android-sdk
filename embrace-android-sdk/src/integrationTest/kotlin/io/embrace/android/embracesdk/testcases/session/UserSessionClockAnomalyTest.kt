@@ -50,12 +50,12 @@ internal class UserSessionClockAnomalyTest {
     @Test
     fun `clock shifting backwards when loading existing user session terminates existing user session and logs internal error`() {
         // write a session that started in the future
-        val sessionId = "stale-session-id"
+        val staleUserSessionId = "stale-session-id"
         testRule.runTest(
             setupAction = {
                 val futureStartMs = testRule.bootstrapper.initModule.clock.now() + 100_000L
                 persistUserSession(
-                    userSessionId = sessionId,
+                    userSessionId = staleUserSessionId,
                     startMs = futureStartMs,
                     lastActivityMs = futureStartMs,
                 )
@@ -65,8 +65,8 @@ internal class UserSessionClockAnomalyTest {
             },
             assertAction = {
                 val session = getSingleSessionEnvelope()
-                assertNotEquals(sessionId, session.getUserSessionId())
-                assertNotEquals(sessionId, session.getOtelSessionId())
+                assertNotEquals(staleUserSessionId, session.getUserSessionId())
+                assertNotEquals(staleUserSessionId, session.getOtelSessionId())
 
                 val logger = testRule.bootstrapper.initModule.logger as FakeInternalLogger
                 assertTrue(logger.internalErrorMessages.any {

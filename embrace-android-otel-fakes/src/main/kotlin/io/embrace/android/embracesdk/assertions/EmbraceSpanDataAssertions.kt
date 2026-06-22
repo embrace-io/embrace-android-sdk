@@ -24,7 +24,7 @@ fun assertEmbraceSpanData(
     expectedErrorCode: ErrorCode? = null,
     expectedCustomAttributes: Map<String, String> = emptyMap(),
     expectedEvents: List<SpanEvent> = emptyList(),
-    expectedSessionId: String? = null,
+    expectedOtelSessionId: String? = null,
     private: Boolean = false,
 ) {
     checkNotNull(span)
@@ -50,8 +50,8 @@ fun assertEmbraceSpanData(
         }
         assertEquals(expectedEvents, events)
 
-        if (expectedSessionId != null) {
-            assertEquals(expectedSessionId, attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
+        if (expectedOtelSessionId != null) {
+            assertEquals(expectedOtelSessionId, attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
         }
 
         if (private) {

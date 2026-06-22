@@ -466,7 +466,7 @@ internal class CurrentSessionPartSpanImplTests {
         with(spanRepository.getActiveSpans().single()) {
             checkNotNull(snapshot()?.links?.single()).validatePreviousSessionLink(
                 previousSessionSpan = originalSnapshot,
-                previousSessionId = originalSessionId,
+                previousOtelSessionId = originalSessionId,
                 previousUserSessionId = originalUserSessionId,
                 previousSessionPartId = originalSessionPartId,
             )
@@ -546,7 +546,7 @@ internal class CurrentSessionPartSpanImplTests {
     @Test
     fun `span stop callback creates the correct span links`() {
         val sessionSpan = checkNotNull(spanRepository.getActiveSpans().single())
-        val sessionId = checkNotNull(sessionSpan.getSystemAttribute(SessionAttributes.SESSION_ID))
+        val otelSessionId = checkNotNull(sessionSpan.getSystemAttribute(SessionAttributes.SESSION_ID))
         val userSessionId = "user-session-uuid"
         val sessionPartId = "session-part-uuid"
         sessionSpan.setSystemAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, userSessionId)
@@ -558,19 +558,19 @@ internal class CurrentSessionPartSpanImplTests {
         val spanSnapshot = checkNotNull(span.snapshot())
         val sessionSpanSnapshot = checkNotNull(sessionSpan.snapshot())
 
-        val expectedSessionIds = mapOf(
+        val expectedOtelSessionIds = mapOf(
             EmbSessionAttributes.EMB_USER_SESSION_ID to userSessionId,
             EmbSessionAttributes.EMB_SESSION_PART_ID to sessionPartId,
         )
         checkNotNull(spanSnapshot.links).single().validateSystemLink(
             linkedSpan = sessionSpanSnapshot,
             type = LinkType.EndSession,
-            expectedAttributes = mapOf(SessionAttributes.SESSION_ID to sessionId) + expectedSessionIds
+            expectedAttributes = mapOf(SessionAttributes.SESSION_ID to otelSessionId) + expectedOtelSessionIds
         )
         checkNotNull(sessionSpanSnapshot.links).single().validateSystemLink(
             linkedSpan = spanSnapshot,
             type = LinkType.EndedIn,
-            expectedAttributes = expectedSessionIds,
+            expectedAttributes = expectedOtelSessionIds,
         )
     }
 

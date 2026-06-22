@@ -247,7 +247,7 @@ class FakeEmbraceSdkSpan(
             }
 
         fun sessionSpan(
-            sessionId: String,
+            userSessionId: String,
             startTimeMs: Long,
             lastHeartbeatTimeMs: Long?,
             endTimeMs: Long? = null,
@@ -267,8 +267,8 @@ class FakeEmbraceSdkSpan(
                     )
                 }
 
-                setSystemAttribute(SessionAttributes.SESSION_ID, sessionId)
-                setSystemAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, sessionId)
+                setSystemAttribute(SessionAttributes.SESSION_ID, userSessionId)
+                setSystemAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, userSessionId)
                 setSystemAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionPartId)
                 setSystemAttribute(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER, processIdentifier)
                 setSystemAttribute(EmbSessionAttributes.EMB_STATE, "foreground")

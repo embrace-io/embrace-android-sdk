@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
  * if you attempt set info about Flutter/Unity/ReactNative on this fake, which is decided for an Android device.
  */
 class FakeMetadataService(
-    sessionId: String? = null,
+    userSessionId: String? = null,
     private val wallClock: Clock = FakeClock(),
     private val networkClock: Clock? = null,
     private val gnssClock: Clock? = null,
@@ -22,13 +22,13 @@ class FakeMetadataService(
         )
     }
 
-    private var appSessionId: String? = null
+    private var appUserSessionId: String? = null
 
     @Volatile
     private var clockDrift: ClockDrift? = null
 
     init {
-        appSessionId = sessionId
+        appUserSessionId = userSessionId
     }
 
     override fun getDiskUsage(): DiskUsage = diskUsage

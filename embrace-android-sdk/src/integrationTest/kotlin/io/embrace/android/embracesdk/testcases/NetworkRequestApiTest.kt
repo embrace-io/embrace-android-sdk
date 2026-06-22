@@ -1,21 +1,31 @@
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.assertions.assertMatches
+import io.embrace.android.embracesdk.assertions.getLogOfType
+import io.embrace.android.embracesdk.assertions.getSessionPartId
+import io.embrace.android.embracesdk.assertions.getUserSessionId
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.SendMode
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
-import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
+import io.embrace.android.embracesdk.semconv.EmbNetworkCapturedRequestAttributes
+import io.embrace.android.embracesdk.semconv.EmbNetworkRequestAttributes
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
-import io.embrace.android.embracesdk.assertions.assertMatches
-import io.embrace.android.embracesdk.semconv.EmbNetworkRequestAttributes
+import io.embrace.android.embracesdk.testframework.assertions.assertSessionIds
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.HttpAttributes
+import io.opentelemetry.kotlin.semconv.UrlAttributes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -270,6 +280,74 @@ internal class NetworkRequestApiTest {
                     "Unexpected number of requests in sent session: ${spans.size}",
                     2,
                     spans.size
+                )
+            }
+        )
+    }
+
+    @Test
+    fun `captured network body log carries expected attributes`() {
+        testRule.runTest(
+            persistedRemoteConfig = RemoteConfig(
+                networkCaptureRules = setOf(
+                    NetworkCaptureRuleRemoteConfig(
+                        id = "test",
+                        duration = 0,
+                        method = "GET",
+                        urlRegex = "embrace.io",
+                        expiresIn = 10000,
+                        statusCodes = setOf(200),
+                    )
+                )
+            ),
+            testCaseAction = {
+                recordSession {
+                    embrace.recordNetworkRequest(
+                        EmbraceNetworkRequest.fromCompletedRequest(
+                            URL,
+                            HttpMethod.GET,
+                            START_TIME,
+                            END_TIME,
+                            BYTES_SENT,
+                            BYTES_RECEIVED,
+                            200,
+                            networkCaptureData = NETWORK_CAPTURE_DATA,
+                        )
+                    )
+                }
+            },
+            assertAction = {
+                val session = getSingleSessionEnvelope()
+                val capturedLog = getSingleLogEnvelope().getLogOfType(EmbType.System.NetworkCapturedRequest)
+                val attrs = checkNotNull(capturedLog.attributes)
+
+                // the captured request body and metadata
+                attrs.assertMatches(
+                    mapOf(
+                        EmbNetworkCapturedRequestAttributes.DURATION to END_TIME - START_TIME,
+                        EmbNetworkCapturedRequestAttributes.START_TIME to START_TIME,
+                        EmbNetworkCapturedRequestAttributes.END_TIME to END_TIME,
+                        EmbNetworkCapturedRequestAttributes.URL to URL,
+                        EmbNetworkCapturedRequestAttributes.REQUEST_BODY to "haha",
+                        EmbNetworkCapturedRequestAttributes.REQUEST_SIZE to 4,
+                        EmbNetworkCapturedRequestAttributes.REQUEST_QUERY to "trackMe=noooooo",
+                        EmbNetworkCapturedRequestAttributes.RESPONSE_BODY to "woohoo",
+                        EmbNetworkCapturedRequestAttributes.RESPONSE_SIZE to 6,
+                        EmbSessionAttributes.EMB_PRIVATE_SEND_MODE to SendMode.IMMEDIATE,
+                        HttpAttributes.HTTP_REQUEST_HEADER to mapOf("x-emb-test" to "holla").toString(),
+                        HttpAttributes.HTTP_REQUEST_METHOD to "GET",
+                        HttpAttributes.HTTP_REQUEST_BODY_SIZE to 4,
+                        HttpAttributes.HTTP_RESPONSE_STATUS_CODE to 200,
+                        HttpAttributes.HTTP_RESPONSE_BODY_SIZE to 6,
+                        HttpAttributes.HTTP_RESPONSE_HEADER to mapOf("x-emb-response-header" to "alloh").toString(),
+                        UrlAttributes.URL_FULL to "embrace.io",
+                    )
+                )
+
+                assertFalse(attrs.findAttributeValue(EmbNetworkCapturedRequestAttributes.NETWORK_ID).isNullOrBlank())
+                capturedLog.assertSessionIds(
+                    expectedUserSessionId = session.getUserSessionId(),
+                    expectedSessionPartId = session.getSessionPartId(),
                 )
             }
         )

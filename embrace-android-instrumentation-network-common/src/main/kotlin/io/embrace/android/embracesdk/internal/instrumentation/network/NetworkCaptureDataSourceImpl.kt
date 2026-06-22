@@ -127,7 +127,6 @@ class NetworkCaptureDataSourceImpl(
                     responseHeaders = call.responseHeaders,
                     responseSize = call.responseSize,
                     responseStatus = call.responseStatus,
-                    sessionPartId = call.sessionPartId,
                     startTime = call.startTime,
                     url = call.url,
                     errorMessage = call.errorMessage,

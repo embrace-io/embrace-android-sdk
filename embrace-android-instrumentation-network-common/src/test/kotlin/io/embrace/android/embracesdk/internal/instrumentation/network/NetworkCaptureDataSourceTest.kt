@@ -6,12 +6,16 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.createNetworkBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
+import io.embrace.android.embracesdk.semconv.EmbNetworkCapturedRequestAttributes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -80,7 +84,7 @@ internal class NetworkCaptureDataSourceTest {
         val result = service.getNetworkCaptureRules("https://embrace.io/changelog", "GET")
         assertEquals(1, result.size)
         args.store.edit {
-            putInt(NetworkCaptureDataSourceImpl.Companion.NETWORK_CAPTURE_RULE_PREFIX_KEY + rule.id, 0)
+            putInt(NetworkCaptureDataSourceImpl.NETWORK_CAPTURE_RULE_PREFIX_KEY + rule.id, 0)
         }
         val emptyRule = service.getNetworkCaptureRules("https://embrace.io/changelog", "GET")
         assertEquals(0, emptyRule.size)
@@ -92,7 +96,7 @@ internal class NetworkCaptureDataSourceTest {
         cfg = RemoteConfig(networkCaptureRules = setOf(rule))
         val service = getService()
         args.store.edit {
-            putInt(NetworkCaptureDataSourceImpl.Companion.NETWORK_CAPTURE_RULE_PREFIX_KEY + rule.id, 0)
+            putInt(NetworkCaptureDataSourceImpl.NETWORK_CAPTURE_RULE_PREFIX_KEY + rule.id, 0)
         }
         val emptyRule = service.getNetworkCaptureRules("https://embrace.io/changelog", "GET")
         assertEquals(0, emptyRule.size)
@@ -226,6 +230,48 @@ internal class NetworkCaptureDataSourceTest {
     }
 
     @Test
+    fun `network body is encrypted into a single opaque attribute with no plaintext content when encryption enabled`() {
+        configService = FakeConfigService(
+            networkBehavior = FakeNetworkBehavior(
+                rules = setOf(getDefaultRule()),
+                captureBodyEncryptionEnabled = true,
+                publicKey = fakeNetworkBodyPublicKey,
+            )
+        )
+        args = FakeInstrumentationArgs(
+            application = ApplicationProvider.getApplicationContext(),
+            configService = configService,
+        )
+        destination = args.destination
+
+        NetworkCaptureDataSourceImpl(args).recordNetworkRequest(
+            HttpNetworkRequest(
+                url = "https://embrace.io/changelog",
+                httpMethod = "GET",
+                statusCode = 200,
+                startTime = 0,
+                endTime = 1000,
+                body = HttpNetworkRequest.HttpRequestBody(
+                    requestHeaders = mapOf("req-header" to "value"),
+                    requestQueryParams = "trackMe=noooooo",
+                    capturedRequestBody = "request-body-plaintext".toByteArray(),
+                    responseHeaders = mapOf("res-header" to "value"),
+                    capturedResponseBody = "response-body-plaintext".toByteArray(),
+                    dataCaptureErrorMessage = null,
+                ),
+            )
+        )
+
+        assertEquals(1, destination.logEvents.size)
+        val attrs = destination.logEvents[0].schemaType.attributes()
+        assertFalse(checkNotNull(attrs[EmbNetworkCapturedRequestAttributes.ENCRYPTED_PAYLOAD]).isBlank())
+        assertNull(attrs[EmbNetworkCapturedRequestAttributes.REQUEST_BODY])
+        assertNull(attrs[EmbNetworkCapturedRequestAttributes.RESPONSE_BODY])
+        assertNull(attrs[EmbNetworkCapturedRequestAttributes.REQUEST_QUERY])
+        assertNull(attrs[EmbNetworkCapturedRequestAttributes.URL])
+    }
+
+    @Test
     fun `test telemetry tracked when network body is truncated`() {
         cfg = RemoteConfig(networkCaptureRules = setOf(getDefaultRule(maxSize = 2)))
         val telemetryService = FakeTelemetryService()
@@ -264,7 +310,7 @@ internal class NetworkCaptureDataSourceTest {
             configService = configService
         )
         destination = args.destination
-        return NetworkCaptureDataSourceImpl(args,)
+        return NetworkCaptureDataSourceImpl(args)
     }
 
     private fun getDefaultRule(
@@ -287,4 +333,13 @@ internal class NetworkCaptureDataSourceTest {
             maxCount = maxCount,
             statusCodes = statusCodes
         )
+
+    private val fakeNetworkBodyPublicKey: String =
+        "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuAZAv5tzK9Ab/DsVpNaY\n" +
+            "iuslKQsOHjz4N4haZLT8VaVIrlVjtkd5nPrVgEKStQf6PKnQ+1C0Tp069b6aPUkG\n" +
+            "22UL96nCKQ1eCIwRUT+Da7ac2YVuL21+HTs1KxLEWgN7qGy1uYNonrpsiY3XqzDv\n" +
+            "YMo65oFzbBV+yctuGHDFaulULJiLL8cE3/Rg3T0RfHK+C5/PqC8FBj6kn3FP9FZJ\n" +
+            "M4cty3nzbNWknj8r7+ikmOwma6CHEZz2u1gwPhIchNxNKuUF+4vxcBre9V/96LYO\n" +
+            "jSOGSDJmJN6ehUJjUpu7YSuGCki8YoLHAyoD/mYy7N/hYSeZwHiNjM+r44lZHNQT\n" +
+            "pwIDAQAB"
 }

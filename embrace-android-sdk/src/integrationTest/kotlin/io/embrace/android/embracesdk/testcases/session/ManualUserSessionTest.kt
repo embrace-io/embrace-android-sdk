@@ -2,19 +2,14 @@ package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionSpan
-import io.embrace.android.embracesdk.assertions.getUserSessionId
-import io.embrace.android.embracesdk.assertions.getUserSessionTerminationReason
-import io.embrace.android.embracesdk.assertions.isFinalSessionPart
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues.MANUAL
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
+import io.embrace.android.embracesdk.testframework.assertions.assertDistinctUserSessions
+import io.embrace.android.embracesdk.testframework.assertions.assertFinalPart
+import io.embrace.android.embracesdk.testframework.assertions.assertNotFinalPart
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -94,7 +89,7 @@ internal class ManualUserSessionTest {
             },
             assertAction = {
                 val fgSessions = getSessionEnvelopes(2)
-                assertNotEquals(fgSessions[0].getUserSessionId(), fgSessions[1].getUserSessionId())
+                assertDistinctUserSessions(fgSessions[0], fgSessions[1])
             },
         )
     }
@@ -111,11 +106,9 @@ internal class ManualUserSessionTest {
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
 
-                assertNotEquals(sessions[0].getUserSessionId(), sessions[1].getUserSessionId())
-                assertTrue(sessions[0].isFinalSessionPart())
-                assertEquals(MANUAL, sessions[0].getUserSessionTerminationReason())
-                assertFalse(sessions[1].isFinalSessionPart())
-                assertNull(sessions[1].getUserSessionTerminationReason())
+                assertDistinctUserSessions(sessions[0], sessions[1])
+                sessions[0].assertFinalPart(MANUAL)
+                sessions[1].assertNotFinalPart()
             }
         )
     }
@@ -135,14 +128,11 @@ internal class ManualUserSessionTest {
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(3)
-                assertNotEquals(sessions[0].getUserSessionId(), sessions[1].getUserSessionId())
-                assertNotEquals(sessions[1].getUserSessionId(), sessions[2].getUserSessionId())
-                assertTrue(sessions[0].isFinalSessionPart())
-                assertEquals(MANUAL, sessions[0].getUserSessionTerminationReason())
-                assertTrue(sessions[1].isFinalSessionPart())
-                assertEquals(MANUAL, sessions[1].getUserSessionTerminationReason())
-                assertFalse(sessions[2].isFinalSessionPart())
-                assertNull(sessions[2].getUserSessionTerminationReason())
+                assertDistinctUserSessions(sessions[0], sessions[1])
+                assertDistinctUserSessions(sessions[1], sessions[2])
+                sessions[0].assertFinalPart(MANUAL)
+                sessions[1].assertFinalPart(MANUAL)
+                sessions[2].assertNotFinalPart()
             }
         )
     }

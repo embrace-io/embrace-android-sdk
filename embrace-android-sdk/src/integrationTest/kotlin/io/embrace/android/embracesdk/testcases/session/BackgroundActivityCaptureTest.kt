@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findEventsOfType
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getLogsOfType
-import io.embrace.android.embracesdk.assertions.getSessionId
+import io.embrace.android.embracesdk.assertions.getOtelSessionId
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.hasSpanSnapshotsOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -125,7 +125,7 @@ internal class BackgroundActivityCaptureTest {
                     attributes?.assertMatches(
                         mapOf(
                             EmbSessionAttributes.EMB_STATE to "foreground",
-                            SessionAttributes.SESSION_ID to sessions[1].getSessionId()
+                            SessionAttributes.SESSION_ID to sessions[1].getOtelSessionId()
                         )
                     )
                 }
@@ -136,7 +136,7 @@ internal class BackgroundActivityCaptureTest {
                     attributes?.assertMatches(
                         mapOf(
                             EmbSessionAttributes.EMB_STATE to "foreground",
-                            SessionAttributes.SESSION_ID to secondSession.getSessionId()
+                            SessionAttributes.SESSION_ID to secondSession.getOtelSessionId()
                         )
                     )
                 }

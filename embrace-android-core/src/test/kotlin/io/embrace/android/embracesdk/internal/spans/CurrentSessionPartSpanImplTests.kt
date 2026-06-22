@@ -442,7 +442,7 @@ internal class CurrentSessionPartSpanImplTests {
     @Test
     fun `new session started after ending has correct metadata`() {
         val originalSessionSpan = checkNotNull(spanRepository.getActiveSpans().single().snapshot())
-        val originalSessionId = currentSessionPartSpan.getSessionId()
+        val originalSessionId = currentSessionPartSpan.getId()
         currentSessionPartSpan.endSession(startNewSession = true)
         with(spanRepository.getActiveSpans().single()) {
             assertTrue(hasEmbraceAttribute(EmbType.Ux.Session))
@@ -458,7 +458,7 @@ internal class CurrentSessionPartSpanImplTests {
         val originalSessionPartId = "previous-session-part"
         originalSessionSpan.setSystemAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, originalUserSessionId)
         originalSessionSpan.setSystemAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, originalSessionPartId)
-        val originalSessionId = currentSessionPartSpan.getSessionId()
+        val originalSessionId = currentSessionPartSpan.getId()
         val originalSnapshot = checkNotNull(originalSessionSpan.snapshot())
 
         currentSessionPartSpan.endSession(startNewSession = true)
@@ -603,13 +603,13 @@ internal class CurrentSessionPartSpanImplTests {
     }
 
     private fun CurrentSessionPartSpan.assertNoSessionSpan() {
-        assertEquals("", getSessionId())
+        assertEquals("", getId())
         assertFalse(canStartNewSpan(parent = null, internal = true))
         assertTrue(endSession(true).isEmpty())
     }
 
     private fun CurrentSessionPartSpan.assertSessionSpan() {
-        assertTrue(getSessionId().isNotBlank())
+        assertTrue(getId().isNotBlank())
         assertTrue(canStartNewSpan(parent = null, internal = true))
     }
 }

@@ -24,7 +24,7 @@ class FakePayloadMessageCollator(
             AppState.BACKGROUND -> baCount.incrementAndGet()
         }
         SessionPartToken(
-            sessionPartId = currentSessionPartSpan.getSessionId(),
+            sessionPartId = currentSessionPartSpan.getId(),
             userSessionId = userSessionId,
             startTime = startTime,
             isColdStart = coldStart,

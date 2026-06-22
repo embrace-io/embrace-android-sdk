@@ -3,9 +3,10 @@ package io.embrace.android.embracesdk.testcases.session
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.findSpansOfType
-import io.embrace.android.embracesdk.assertions.getSessionId
+import io.embrace.android.embracesdk.assertions.getOtelSessionId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.assertions.getUserSessionTerminationReason
+import io.embrace.android.embracesdk.assertions.isBackgroundOnlyPart
 import io.embrace.android.embracesdk.assertions.isFinalSessionPart
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
@@ -18,7 +19,6 @@ import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.worker.Worker
-import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_SESSION_PART_ID
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_ID
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_NUMBER
@@ -30,11 +30,14 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSession
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule.Companion.DEFAULT_SDK_START_TIME_MS
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.assertions.assertDistinctUserSessions
+import io.embrace.android.embracesdk.testframework.assertions.assertFinalPart
+import io.embrace.android.embracesdk.testframework.assertions.assertNotFinalPart
+import io.embrace.android.embracesdk.testframework.assertions.assertSameUserSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -79,14 +82,13 @@ internal class UserSessionLifecycleTest {
                 assertEquals("1", bgAttrs?.findAttributeValue(EMB_USER_SESSION_NUMBER))
                 assertEquals("1", bgAttrs?.findAttributeValue(EMB_USER_SESSION_PART_INDEX))
                 assertNotNull(bgAttrs?.findAttributeValue(EMB_USER_SESSION_START_TS))
-                assertNull(bgAttrs?.findAttributeValue(EMB_IS_BACKGROUND_ONLY_PART))
+                assertFalse(bgSession.isBackgroundOnlyPart())
 
                 val fgSessionSpan = fgSession.findSessionSpan()
                 assertNotNull(fgSession.getUserSessionId())
-                assertEquals(fgSession.getUserSessionId(), fgSession.getSessionId())
+                assertEquals(fgSession.getUserSessionId(), fgSession.getOtelSessionId())
                 assertEquals("1", fgSessionSpan.attributes?.findAttributeValue(EMB_USER_SESSION_NUMBER))
-                assertFalse(fgSession.isFinalSessionPart())
-                assertNull(fgSession.getUserSessionTerminationReason())
+                fgSession.assertNotFinalPart()
 
                 val perfSpanNames = fgSession.findSpansOfType(EmbType.Performance.Default).map { it.name }
                 assertFalse(perfSpanNames.contains("emb-app-startup-warm"))
@@ -112,15 +114,14 @@ internal class UserSessionLifecycleTest {
                 // The pre-foreground part is the background-only session (number 1): it carries the
                 // marker and ends with the background-only termination reason when the app foregrounds.
                 val bgAttrs = bgSession.findSessionSpan().attributes
-                assertEquals("1", bgAttrs?.findAttributeValue(EMB_IS_BACKGROUND_ONLY_PART))
+                assertTrue(bgSession.isBackgroundOnlyPart())
                 assertEquals("1", bgAttrs?.findAttributeValue(EMB_USER_SESSION_NUMBER))
-                assertTrue(bgSession.isFinalSessionPart())
-                assertEquals(BACKGROUND_ONLY_USER_SESSION_FOREGROUNDED, bgSession.getUserSessionTerminationReason())
+                bgSession.assertFinalPart(BACKGROUND_ONLY_USER_SESSION_FOREGROUNDED)
 
                 // The foreground part is a distinct, regular user session (number 2) - no marker.
                 val fgAttrs = fgSession.findSessionSpan().attributes
-                assertNotEquals(bgSession.getUserSessionId(), fgSession.getUserSessionId())
-                assertNull(fgAttrs?.findAttributeValue(EMB_IS_BACKGROUND_ONLY_PART))
+                assertDistinctUserSessions(bgSession, fgSession)
+                assertFalse(fgSession.isBackgroundOnlyPart())
                 assertEquals("2", fgAttrs?.findAttributeValue(EMB_USER_SESSION_NUMBER))
 
                 // The late foreground is recorded as a warm startup, not cold, and lands in the
@@ -153,12 +154,11 @@ internal class UserSessionLifecycleTest {
                 val fgSession = getSingleSessionEnvelope(AppState.FOREGROUND)
 
                 assertEquals(persistedId, bgSession.getUserSessionId())
-                assertEquals("1", bgSession.findSessionSpan().attributes?.findAttributeValue(EMB_IS_BACKGROUND_ONLY_PART))
-                assertTrue(bgSession.isFinalSessionPart())
-                assertEquals(BACKGROUND_ONLY_USER_SESSION_FOREGROUNDED, bgSession.getUserSessionTerminationReason())
+                assertTrue(bgSession.isBackgroundOnlyPart())
+                bgSession.assertFinalPart(BACKGROUND_ONLY_USER_SESSION_FOREGROUNDED)
 
                 assertNotEquals(persistedId, fgSession.getUserSessionId())
-                assertNull(fgSession.findSessionSpan().attributes?.findAttributeValue(EMB_IS_BACKGROUND_ONLY_PART))
+                assertFalse(fgSession.isBackgroundOnlyPart())
             }
         )
     }
@@ -178,13 +178,11 @@ internal class UserSessionLifecycleTest {
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
 
-                assertNotEquals(sessions[0].getUserSessionId(), sessions[1].getUserSessionId())
+                assertDistinctUserSessions(sessions[0], sessions[1])
 
                 // session orchestrator cannot be sure of final session reason, so does not set it
-                assertFalse(sessions[0].isFinalSessionPart())
-                assertNull(sessions[0].getUserSessionTerminationReason())
-                assertFalse(sessions[1].isFinalSessionPart())
-                assertNull(sessions[1].getUserSessionTerminationReason())
+                sessions[0].assertNotFinalPart()
+                sessions[1].assertNotFinalPart()
             }
         )
     }
@@ -206,14 +204,11 @@ internal class UserSessionLifecycleTest {
                 val fgSessions = getSessionEnvelopes(2, AppState.FOREGROUND)
                 val bgSessions = getSessionEnvelopes(2, AppState.BACKGROUND)
 
-                assertNotEquals(fgSessions[0].getUserSessionId(), fgSessions[1].getUserSessionId())
-                assertTrue(bgSessions[1].isFinalSessionPart())
-                assertEquals(INACTIVITY, bgSessions[1].getUserSessionTerminationReason())
-                assertFalse(bgSessions[0].isFinalSessionPart())
-                assertFalse(fgSessions[0].isFinalSessionPart())
-                assertNull(fgSessions[0].getUserSessionTerminationReason())
-                assertFalse(fgSessions[1].isFinalSessionPart())
-                assertNull(fgSessions[1].getUserSessionTerminationReason())
+                assertDistinctUserSessions(fgSessions[0], fgSessions[1])
+                bgSessions[1].assertFinalPart(INACTIVITY)
+                bgSessions[0].assertNotFinalPart()
+                fgSessions[0].assertNotFinalPart()
+                fgSessions[1].assertNotFinalPart()
             }
         )
     }
@@ -234,7 +229,11 @@ internal class UserSessionLifecycleTest {
         val inactivityTimeoutSeconds = 30
         testRule.runTest(
             persistedRemoteConfig = RemoteConfig(
-                backgroundActivityConfig = if (backgroundActivityEnabled) BackgroundActivityRemoteConfig(100f) else null,
+                backgroundActivityConfig = if (backgroundActivityEnabled) {
+                    BackgroundActivityRemoteConfig(100f)
+                } else {
+                    null
+                },
                 userSession = UserSessionRemoteConfig(inactivityTimeoutSeconds = inactivityTimeoutSeconds),
             ),
             testCaseAction = {
@@ -245,11 +244,9 @@ internal class UserSessionLifecycleTest {
             assertAction = {
                 val sessions = getSessionEnvelopes(2, AppState.FOREGROUND)
 
-                assertEquals(sessions[0].getUserSessionId(), sessions[1].getUserSessionId())
-                assertFalse(sessions[0].isFinalSessionPart())
-                assertNull(sessions[0].getUserSessionTerminationReason())
-                assertFalse(sessions[1].isFinalSessionPart())
-                assertNull(sessions[1].getUserSessionTerminationReason())
+                assertSameUserSession(sessions[0], sessions[1])
+                sessions[0].assertNotFinalPart()
+                sessions[1].assertNotFinalPart()
             }
         )
     }
@@ -267,9 +264,8 @@ internal class UserSessionLifecycleTest {
             assertAction = {
                 val session = getSingleSessionEnvelope()
                 assertEquals(persistedId, session.getUserSessionId())
-                assertEquals(persistedId, session.getSessionId())
-                assertFalse(session.isFinalSessionPart())
-                assertNull(session.getUserSessionTerminationReason())
+                assertEquals(persistedId, session.getOtelSessionId())
+                session.assertNotFinalPart()
             }
         )
     }
@@ -289,9 +285,8 @@ internal class UserSessionLifecycleTest {
             assertAction = {
                 val session = getSingleSessionEnvelope()
                 assertNotEquals(persistedId, session.getUserSessionId())
-                assertNotEquals(persistedId, session.getSessionId())
-                assertFalse(session.isFinalSessionPart())
-                assertNull(session.getUserSessionTerminationReason())
+                assertNotEquals(persistedId, session.getOtelSessionId())
+                session.assertNotFinalPart()
             }
         )
     }
@@ -312,9 +307,8 @@ internal class UserSessionLifecycleTest {
             assertAction = {
                 val session = getSingleSessionEnvelope()
                 assertNotEquals(persistedId, session.getUserSessionId())
-                assertNotEquals(persistedId, session.getSessionId())
-                assertFalse(session.isFinalSessionPart())
-                assertNull(session.getUserSessionTerminationReason())
+                assertNotEquals(persistedId, session.getOtelSessionId())
+                session.assertNotFinalPart()
             }
         )
     }
@@ -344,7 +338,7 @@ internal class UserSessionLifecycleTest {
                 val firstSession = sessions[0].findSessionSpan()
                 val secondSession = sessions[1].findSessionSpan()
 
-                assertNotEquals(sessions[0].getUserSessionId(), sessions[1].getUserSessionId())
+                assertDistinctUserSessions(sessions[0], sessions[1])
                 // the cold-start background part belongs to the first user session, created
                 // eagerly at process start and resolved to regular at the first foreground
                 assertEquals("1", firstBg.attributes?.findAttributeValue(EMB_USER_SESSION_NUMBER))
@@ -381,7 +375,7 @@ internal class UserSessionLifecycleTest {
 
                 // exactly one part is background-only: the long-lived middle session S2
                 val backgroundOnlyParts = bgSessions.filter {
-                    it.findSessionSpan().attributes?.findAttributeValue(EMB_IS_BACKGROUND_ONLY_PART) == "1"
+                    it.isBackgroundOnlyPart()
                 }
                 assertEquals(1, backgroundOnlyParts.size)
                 val longBackgroundPart = backgroundOnlyParts.single()
@@ -413,7 +407,7 @@ internal class UserSessionLifecycleTest {
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
-                assertNotEquals(sessions[0].getUserSessionId(), sessions[1].getUserSessionId())
+                assertDistinctUserSessions(sessions[0], sessions[1])
             },
         )
     }
@@ -433,7 +427,7 @@ internal class UserSessionLifecycleTest {
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
-                assertNotEquals(sessions[0].getUserSessionId(), sessions[1].getUserSessionId())
+                assertDistinctUserSessions(sessions[0], sessions[1])
             },
         )
     }
@@ -453,7 +447,7 @@ internal class UserSessionLifecycleTest {
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
-                assertNotEquals(sessions[0].getUserSessionId(), sessions[1].getUserSessionId())
+                assertDistinctUserSessions(sessions[0], sessions[1])
             },
         )
     }
@@ -475,9 +469,9 @@ internal class UserSessionLifecycleTest {
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(3)
-                assertNotEquals(sessions[0].getUserSessionId(), sessions[1].getUserSessionId())
-                assertEquals(sessions[1].getUserSessionId(), sessions[2].getUserSessionId())
-                assertEquals(MANUAL, sessions[0].getUserSessionTerminationReason())
+                assertDistinctUserSessions(sessions[0], sessions[1])
+                assertSameUserSession(sessions[1], sessions[2])
+                sessions[0].assertFinalPart(MANUAL)
             },
         )
     }
@@ -488,7 +482,7 @@ internal class UserSessionLifecycleTest {
             inactivityTimeoutSeconds = 30,
             partsGapSeconds = 29
         ) { sessions ->
-            assertEquals(sessions[0].getUserSessionId(), sessions[1].getUserSessionId())
+            assertSameUserSession(sessions[0], sessions[1])
         }
     }
 
@@ -498,7 +492,7 @@ internal class UserSessionLifecycleTest {
             inactivityTimeoutSeconds = 60,
             partsGapSeconds = 60
         ) { sessions ->
-            assertNotEquals(sessions[0].getUserSessionId(), sessions[1].getUserSessionId())
+            assertDistinctUserSessions(sessions[0], sessions[1])
         }
     }
 
@@ -508,7 +502,7 @@ internal class UserSessionLifecycleTest {
             inactivityTimeoutSeconds = 30,
             partsGapSeconds = 31
         ) { sessions ->
-            assertNotEquals(sessions[0].getUserSessionId(), sessions[1].getUserSessionId())
+            assertDistinctUserSessions(sessions[0], sessions[1])
         }
     }
 

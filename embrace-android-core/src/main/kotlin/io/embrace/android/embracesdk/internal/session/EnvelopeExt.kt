@@ -2,12 +2,10 @@ package io.embrace.android.embracesdk.internal.session
 
 import io.embrace.android.embracesdk.internal.arch.attrs.isEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 
 fun Envelope<SessionPartPayload>.getSessionSpan(): Span? {
     return data.spans?.singleOrNull { it.hasEmbraceAttribute(EmbType.Ux.Session) }
@@ -16,10 +14,6 @@ fun Envelope<SessionPartPayload>.getSessionSpan(): Span? {
 
 fun Envelope<SessionPartPayload>.getStateSpan(spanName: String): Span? {
     return data.spans?.singleOrNull { it.hasEmbraceAttribute(EmbType.State) && it.name == spanName }
-}
-
-fun Envelope<SessionPartPayload>.getSessionId(): String? {
-    return getSessionSpan()?.attributes?.findAttributeValue(SessionAttributes.SESSION_ID)
 }
 
 fun Envelope<SessionPartPayload>.getUserSessionProperties(): Map<String, String> {

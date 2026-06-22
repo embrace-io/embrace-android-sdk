@@ -59,7 +59,7 @@ class FakeCurrentSessionPartSpan(
         return true
     }
 
-    override fun getSessionId(): String {
+    override fun getId(): String {
         return "testSessionId$sessionIteration"
     }
 

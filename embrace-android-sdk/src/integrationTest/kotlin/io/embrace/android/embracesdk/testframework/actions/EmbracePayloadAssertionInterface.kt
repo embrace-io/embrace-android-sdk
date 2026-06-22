@@ -5,7 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findSessionSpan
-import io.embrace.android.embracesdk.assertions.getSessionId
+import io.embrace.android.embracesdk.assertions.getOtelSessionId
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
@@ -158,7 +158,7 @@ internal class EmbracePayloadAssertionInterface(
             val envelopes = checkNotNull(apiServer).getSessionEnvelopes()
             val sessions: List<Map<String, String?>> = envelopes.map {
                 mapOf(
-                    "sessionId" to it.getSessionId(),
+                    "sessionId" to it.getOtelSessionId(),
                     "cleanExit" to it.findSessionSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_CLEAN_EXIT),
                     "state" to it.findSessionSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE)
                 )
@@ -236,7 +236,7 @@ internal class EmbracePayloadAssertionInterface(
             assertEquals(Span.Status.ERROR, status)
 
             if (crashData != null) {
-                assertEquals(checkNotNull(crashData.partEnvelope).getSessionId(), getSessionId())
+                assertEquals(checkNotNull(crashData.partEnvelope).getOtelSessionId(), getOtelSessionId())
                 assertEquals(crashData.lastHeartbeatMs, endTimeNanos?.nanosToMillis())
                 assertEquals(
                     crashData.nativeCrash.nativeCrashId,
@@ -292,8 +292,8 @@ internal class EmbracePayloadAssertionInterface(
             val nextEnd = next.findSessionSpan().startTimeNanos ?: return@zipWithNext
             assertTrue(
                 "Session payloads delivered out of order. " +
-                    "Previous (id=${prev.getSessionId()}) startTimeNanos=$prevEnd, " +
-                    "next (id=${next.getSessionId()}) startTimeNanos=$nextEnd",
+                    "Previous (id=${prev.getOtelSessionId()}) startTimeNanos=$prevEnd, " +
+                    "next (id=${next.getOtelSessionId()}) startTimeNanos=$nextEnd",
                 nextEnd >= prevEnd
             )
         }

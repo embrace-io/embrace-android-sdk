@@ -1,12 +1,13 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.assertions.getSessionId
+import io.embrace.android.embracesdk.assertions.getOtelSessionId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.assertions.assertDistinctUserSessions
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -36,7 +37,7 @@ internal class UserSessionClockAnomalyTest {
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(2, assertOrdering = false)
-                assertNotEquals(sessions[0].getUserSessionId(), sessions[1].getUserSessionId())
+                assertDistinctUserSessions(sessions[0], sessions[1])
                 val logger = testRule.bootstrapper.initModule.logger as FakeInternalLogger
 
                 assertTrue(logger.internalErrorMessages.any {
@@ -65,7 +66,7 @@ internal class UserSessionClockAnomalyTest {
             assertAction = {
                 val session = getSingleSessionEnvelope()
                 assertNotEquals(sessionId, session.getUserSessionId())
-                assertNotEquals(sessionId, session.getSessionId())
+                assertNotEquals(sessionId, session.getOtelSessionId())
 
                 val logger = testRule.bootstrapper.initModule.logger as FakeInternalLogger
                 assertTrue(logger.internalErrorMessages.any {

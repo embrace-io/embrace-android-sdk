@@ -267,40 +267,27 @@ internal class UserSessionLifecycleTest {
     }
 
     @Test
-    fun `user session recovers from inactivity timeout with background activity disabled`() {
-        testRule.runTest(
-            persistedRemoteConfig = RemoteConfig(
-                userSession = UserSessionRemoteConfig(inactivityTimeoutSeconds = 30)
-            ),
-            testCaseAction = {
-                val inactivityMs = 30L * 1_000L
-                recordSession()
-                clock.tick(inactivityMs - 1_000L)
-                recordSession()
-            },
-            assertAction = {
-                val sessions = getSessionEnvelopes(2)
-
-                assertEquals(sessions[0].getUserSessionId(), sessions[1].getUserSessionId())
-                assertFalse(sessions[0].isFinalSessionPart())
-                assertNull(sessions[0].getUserSessionTerminationReason())
-                assertFalse(sessions[1].isFinalSessionPart())
-                assertNull(sessions[1].getUserSessionTerminationReason())
-            }
-        )
-    }
+    fun `user session recovers from inactivity timeout with background activity disabled`() =
+        runRecoversWithinInactivityTest(backgroundActivityEnabled = false)
 
     @Test
-    fun `user session recovers from inactivity timeout with background activity enabled`() {
+    fun `user session recovers from inactivity timeout with background activity enabled`() =
+        runRecoversWithinInactivityTest(backgroundActivityEnabled = true)
+
+    /**
+     * Foregrounding just before the inactivity timeout continues the same user session, whether or not background
+     * activity is enabled. Filtering to FOREGROUND envelopes makes the assertion identical across both configs.
+     */
+    private fun runRecoversWithinInactivityTest(backgroundActivityEnabled: Boolean) {
+        val inactivityTimeoutSeconds = 30
         testRule.runTest(
             persistedRemoteConfig = RemoteConfig(
-                backgroundActivityConfig = BackgroundActivityRemoteConfig(100f),
-                userSession = UserSessionRemoteConfig(inactivityTimeoutSeconds = 30),
+                backgroundActivityConfig = if (backgroundActivityEnabled) BackgroundActivityRemoteConfig(100f) else null,
+                userSession = UserSessionRemoteConfig(inactivityTimeoutSeconds = inactivityTimeoutSeconds),
             ),
             testCaseAction = {
-                val inactivityMs = 30L * 1_000L
                 recordSession()
-                clock.tick(inactivityMs - 1_000L)
+                clock.tick(inactivityTimeoutSeconds * 1_000L - 1_000L)
                 recordSession()
             },
             assertAction = {

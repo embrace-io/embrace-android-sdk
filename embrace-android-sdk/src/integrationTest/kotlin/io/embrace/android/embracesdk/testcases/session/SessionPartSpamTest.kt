@@ -21,7 +21,7 @@ internal class SessionPartSpamTest {
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
     @Test
-    fun `session messages are recorded`() {
+    fun `many sequential sessions each get a distinct foreground and background part id`() {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(bgActivityCapture = true)),
             testCaseAction = {

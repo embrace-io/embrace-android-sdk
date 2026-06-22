@@ -3,7 +3,8 @@ package io.embrace.android.embracesdk.testcases
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.getLastLog
-import io.embrace.android.embracesdk.assertions.getOtelSessionId
+import io.embrace.android.embracesdk.assertions.getSessionPartId
+import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaLogRecordExporter
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -102,7 +103,8 @@ internal class ExternalOtelJavaLoggerTest {
                 }
             },
             assertAction = {
-                val otelSessionId = getSingleSessionEnvelope().getOtelSessionId()
+                val session = getSingleSessionEnvelope()
+                val userSessionId = session.getUserSessionId()
                 exportedOTelLog = logExporter.exportedLogs.single()
                 with(exportedOTelLog) {
                     assertOTelLogRecord(
@@ -118,7 +120,8 @@ internal class ExternalOtelJavaLoggerTest {
                         expectedSpanContext = OtelJavaSpanContext.getInvalid(),
                         expectedSeverity = OtelJavaSeverity.FATAL,
                         expectedSeverityText = "DANG",
-                        expectedOtelSessionId = otelSessionId,
+                        expectedUserSessionId = userSessionId,
+                        expectedSessionPartId = session.getSessionPartId(),
                         expectedAppState = AppState.FOREGROUND,
                         expectedSessionProperties = mapOf("session-attr" to "blah"),
                         expectedAttributes = mapOf("foo" to "bar"),
@@ -133,7 +136,8 @@ internal class ExternalOtelJavaLoggerTest {
     fun `record an event with java otel logging API in the background with a span parent`() {
         var logTime: Long = -1L
         var observedTime: Long = -1L
-        var otelSessionId = ""
+        var userSessionId = ""
+        var sessionPartId = ""
         var parentContext: OtelJavaSpanContext? = null
         var exportedOTelLog: OtelJavaLogRecordData?
         testRule.runTest(
@@ -149,7 +153,9 @@ internal class ExternalOtelJavaLoggerTest {
                 clock.tick()
                 logTime = clock.now().millisToNanos()
                 embrace.addUserSessionProperty("bg-attr", "blah", PropertyScope.PERMANENT)
-                otelSessionId = testRule.bootstrapper.userSessionOrchestrationModule.sessionIdsProvider.getCurrentUserSessionId()
+                val sessionIds = testRule.bootstrapper.userSessionOrchestrationModule.sessionIdsProvider.getActiveSessionIds()
+                userSessionId = sessionIds.userSessionId
+                sessionPartId = sessionIds.sessionPartId
                 val span = embOpenTelemetry.getTracer("").spanBuilder("my-span").startSpan()
                 val logContext = span.storeInContext(OtelJavaContext.root())
                 parentContext = span.spanContext
@@ -182,7 +188,8 @@ internal class ExternalOtelJavaLoggerTest {
                         expectedSpanContext = checkNotNull(parentContext),
                         expectedSeverity = OtelJavaSeverity.INFO,
                         expectedSeverityText = null,
-                        expectedOtelSessionId = otelSessionId,
+                        expectedUserSessionId = userSessionId,
+                        expectedSessionPartId = sessionPartId,
                         expectedAppState = AppState.BACKGROUND,
                         expectedSessionProperties = mapOf("bg-attr" to "blah"),
                         expectedAttributes = mapOf("foo" to "bar"),
@@ -217,7 +224,8 @@ internal class ExternalOtelJavaLoggerTest {
         expectedSpanContext: OtelJavaSpanContext,
         expectedSeverity: OtelJavaSeverity,
         expectedSeverityText: String?,
-        expectedOtelSessionId: String?,
+        expectedUserSessionId: String?,
+        expectedSessionPartId: String?,
         expectedAppState: AppState,
         expectedSessionProperties: Map<String, String>,
         expectedAttributes: Map<String, String>,
@@ -252,11 +260,14 @@ internal class ExternalOtelJavaLoggerTest {
         assertEquals(expectedSeverityText, severityText)
         with(checkNotNull(attributes.toStringMap())) {
             assertNotNull(filter { it.key == LogAttributes.LOG_RECORD_UID }.size)
-            if (expectedOtelSessionId != null) {
-                assertEquals(expectedOtelSessionId, this[SessionAttributes.SESSION_ID])
+            if (expectedUserSessionId != null) {
+                assertEquals(expectedUserSessionId, this[SessionAttributes.SESSION_ID])
+                assertEquals(expectedUserSessionId, this[EmbSessionAttributes.EMB_USER_SESSION_ID])
             } else {
                 assertFalse(containsKey(SessionAttributes.SESSION_ID))
+                assertFalse(containsKey(EmbSessionAttributes.EMB_USER_SESSION_ID))
             }
+            assertEquals(expectedSessionPartId, this[EmbSessionAttributes.EMB_SESSION_PART_ID])
             assertEquals(expectedAppState.description, this[EmbSessionAttributes.EMB_STATE])
             assertTrue(containsKey("emb.state.test"))
             expectedSessionProperties.forEach { prop ->

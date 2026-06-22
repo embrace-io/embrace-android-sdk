@@ -32,7 +32,7 @@ class FakeInstrumentationArgs(
     override val telemetryService: TelemetryService = FakeTelemetryService(),
     val backgroundWorkerSupplier: (worker: Worker.Background) -> BackgroundWorker = { fakeBackgroundWorker() },
     val priorityWorkerSupplier: (worker: Worker.Priority) -> PriorityWorker<*> = { fakePriorityWorker<Any>() },
-    val sessionIdSupplier: () -> String? = { null },
+    val sessionPartIdSupplier: () -> String? = { null },
     val userSessionIdSupplier: () -> String? = { null },
     val activeSessionIdsSupplier: () -> SessionIdsSnapshot = { SessionIdsSnapshot("", "") },
     val sessionChangeListeners: MutableList<SessionPartChangeListener> = mutableListOf(),
@@ -50,7 +50,7 @@ class FakeInstrumentationArgs(
     @Suppress("UNCHECKED_CAST")
     override fun <T> systemService(name: String): T? = systemServiceSupplier(name) as? T
 
-    override fun sessionPartId(): String? = sessionIdSupplier()
+    override fun sessionPartId(): String? = sessionPartIdSupplier()
 
     override fun userSessionId(): String? = userSessionIdSupplier()
 

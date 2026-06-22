@@ -55,7 +55,7 @@ class NativeCrashHandlerInstallerImplTest {
             configService = fakeConfigService,
             logger = FakeInternalLogger(false),
             backgroundWorkerSupplier = { BackgroundWorker(executorService) },
-            sessionIdSupplier = { sessionId },
+            sessionPartIdSupplier = { sessionId },
             userSessionIdSupplier = { userSessionId },
             activeSessionIdsSupplier = {
                 SessionIdsSnapshot(

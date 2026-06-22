@@ -31,6 +31,7 @@ import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.session.getUserSessionProperties
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.opentelemetry.kotlin.semconv.SessionAttributes
 import java.io.InputStream
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
@@ -314,10 +315,9 @@ internal class PayloadResurrectionServiceImpl(
         isBackgroundOnly: Boolean,
     ): Envelope<SessionPartPayload> {
         val deadPart = serializer.fromJson<Envelope<SessionPartPayload>>(payloadStream)
-        val deadPartAttrs = deadPart.getSessionSpan()?.attributes
-
-        val sessionPartId = deadPartAttrs?.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID)
-        val appState = deadPartAttrs?.findAttributeValue(EmbSessionAttributes.EMB_STATE)
+        val deadSessionPartSpan = deadPart.getSessionSpan()
+        val sessionPartId = deadSessionPartSpan?.resolveSessionPartIdForCrashMatch()
+        val appState = deadSessionPartSpan?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE)
         val nativeCrash = if (nativeCrashService != null && sessionPartId != null) {
             nativeCrashProvider(sessionPartId)?.apply {
                 val nativeCrashEnvelopeMetadata = createNativeCrashEnvelopeMetadata(
@@ -430,12 +430,25 @@ internal class PayloadResurrectionServiceImpl(
     /**
      * Attributes attaching the native crash to this session span if its session part id matches, or empty otherwise.
      */
-    private fun Span.crashAttributes(nativeCrashData: NativeCrashData): List<Attribute> =
-        if (attributes?.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID) == nativeCrashData.sessionPartId) {
+    private fun Span.crashAttributes(nativeCrashData: NativeCrashData): List<Attribute> {
+        val sessionPartId = resolveSessionPartIdForCrashMatch()
+        return if (sessionPartId != null && sessionPartId == nativeCrashData.sessionPartId) {
             listOf(Attribute(EmbSessionAttributes.EMB_CRASH_ID, nativeCrashData.nativeCrashId))
         } else {
             emptyList()
         }
+    }
+
+    /**
+     * Resolves the session part id used to match a native crash to this session part.
+     *
+     * A current-SDK session part span always has [EmbSessionAttributes.EMB_SESSION_PART_ID] so its presence means no fallback, so we take
+     * whatever value it defines. Lacking that, it means it was created with a version of the SDK that predates user session, so we
+     * get the ID defined in [SessionAttributes.SESSION_ID]. If neither exists, this session part span is not valid, so we return null.
+     */
+    private fun Span.resolveSessionPartIdForCrashMatch(): String? =
+        attributes?.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID)
+            ?: attributes?.findAttributeValue(SessionAttributes.SESSION_ID)
 
     private fun StoredTelemetryMetadata.loadDecompressedPayload(): InputStream? =
         cacheStorageService.loadPayloadAsStream(this)?.let {

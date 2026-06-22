@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.testcases
 
 import android.app.ApplicationExitInfo
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.assertions.getOtelSessionId
 import io.embrace.android.embracesdk.assertions.getSessionPartId
+import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.fakes.TestAeiData
 import io.embrace.android.embracesdk.fakes.setupFakeAeiData
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -40,7 +40,7 @@ internal class UserSessionAeiGoldenFileTest {
                 val sessionEnvelope = getSingleSessionEnvelope()
                 assertLogPayloadMatchesGoldenFile(
                     envelope = getSingleLogEnvelope(),
-                    expectedUserSessionId = sessionEnvelope.getOtelSessionId(),
+                    expectedUserSessionId = sessionEnvelope.getUserSessionId(),
                     expectedSessionPartId = sessionEnvelope.getSessionPartId(),
                     goldenFile = "user_session_aei_log_active.json",
                 )

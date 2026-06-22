@@ -6,7 +6,6 @@ import android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.assertions.getLogOfType
-import io.embrace.android.embracesdk.assertions.getOtelSessionId
 import io.embrace.android.embracesdk.assertions.getStartTime
 import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.assertions.isBackgroundOnlyPart
@@ -76,8 +75,7 @@ internal class UserSessionResurrectionTest {
                 val sessions = getSessionEnvelopes(2)
                 val resurrected = sessions.first()
                 val live = sessions.last()
-                assertEquals(DEFAULT_EXPIRED_USER_SESSION_ID, resurrected.getOtelSessionId())
-                assertNotEquals(DEFAULT_EXPIRED_USER_SESSION_ID, live.getOtelSessionId())
+                assertEquals(DEFAULT_EXPIRED_USER_SESSION_ID, resurrected.getUserSessionId())
                 assertNotEquals(DEFAULT_EXPIRED_USER_SESSION_ID, live.getUserSessionId())
                 assertNotNull(live.getUserSessionId())
             },
@@ -101,7 +99,7 @@ internal class UserSessionResurrectionTest {
                 simulateConnectionTypeChange(ConnectionType.WIFI)
             },
             assertAction = {
-                val resurrected = getSessionEnvelopes(2).single { it.getOtelSessionId() == FAKE_USER_SESSION_ID }
+                val resurrected = getSessionEnvelopes(2).single { it.getUserSessionId() == FAKE_USER_SESSION_ID }
 
                 assertTrue(resurrected.isBackgroundOnlyPart())
                 resurrected.assertFinalPart(EmbSessionAttributes.EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED)
@@ -131,8 +129,7 @@ internal class UserSessionResurrectionTest {
                 val sessions = getSessionEnvelopes(2)
                 val resurrected = sessions.first()
                 val live = sessions.last()
-                assertEquals(DEFAULT_EXPIRED_USER_SESSION_ID, resurrected.getOtelSessionId())
-                assertNotEquals(DEFAULT_EXPIRED_USER_SESSION_ID, live.getOtelSessionId())
+                assertEquals(DEFAULT_EXPIRED_USER_SESSION_ID, resurrected.getUserSessionId())
                 assertNotEquals(DEFAULT_EXPIRED_USER_SESSION_ID, live.getUserSessionId())
 
                 getSingleLogEnvelope().getLastLog().assertSessionIds(DEFAULT_EXPIRED_USER_SESSION_ID, DEFAULT_DEAD_SESSION_PART_ID)
@@ -223,8 +220,7 @@ internal class UserSessionResurrectionTest {
                 val currentLaunchPart = sessions[1]
 
                 // both parts belong to the one continued user session
-                assertEquals(persistedId, priorLaunchPart.getOtelSessionId())
-                assertEquals(persistedId, currentLaunchPart.getOtelSessionId())
+                assertEquals(persistedId, priorLaunchPart.getUserSessionId())
                 assertEquals(persistedId, currentLaunchPart.getUserSessionId())
 
                 fun Envelope<SessionPartPayload>.processId() =

@@ -21,13 +21,15 @@ fun fakeSessionPartToken(): SessionPartToken = SessionPartToken(
 )
 
 fun fakeSessionEnvelope(
-    sessionId: String = "fakeSessionPartId",
+    sessionId: String = "fakeUserSessionId",
+    sessionPartId: String = "fakeSessionPartId",
     startMs: Long = 160000000000L,
     endMs: Long = 161000400000L,
     sessionProperties: Map<String, String>? = null,
 ): Envelope<SessionPartPayload> {
     val sessionSpan = FakeEmbraceSdkSpan.sessionSpan(
         sessionId = sessionId,
+        sessionPartId = sessionPartId,
         startTimeMs = startMs,
         lastHeartbeatTimeMs = endMs,
         endTimeMs = endMs,
@@ -50,6 +52,7 @@ fun fakeSessionEnvelope(
 
 fun fakeIncompleteSessionEnvelope(
     sessionId: String = "fakeIncompleteSessionId",
+    sessionPartId: String = "fakeIncompleteSessionPartId",
     processIdentifier: String = "fakeIncompleteSessionProcessId",
     startMs: Long = 1691000000000L,
     lastHeartbeatTimeMs: Long = 1691000300000L,
@@ -60,6 +63,7 @@ fun fakeIncompleteSessionEnvelope(
     val fakeClock = FakeClock(currentTime = startMs)
     val incompleteSessionSpan = FakeEmbraceSdkSpan.sessionSpan(
         sessionId = sessionId,
+        sessionPartId = sessionPartId,
         startTimeMs = startMs,
         lastHeartbeatTimeMs = lastHeartbeatTimeMs,
         sessionProperties = sessionProperties,

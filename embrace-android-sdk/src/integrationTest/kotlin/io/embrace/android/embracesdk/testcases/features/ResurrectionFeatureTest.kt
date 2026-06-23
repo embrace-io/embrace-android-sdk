@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.testcases.features
 
-import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
@@ -26,9 +25,7 @@ import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
 
-@Config(sdk = [TIRAMISU])
 @RunWith(AndroidJUnit4::class)
 internal class ResurrectionFeatureTest {
 

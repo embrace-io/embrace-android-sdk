@@ -14,7 +14,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
 
 /**
  * Integration test to verify that the X-EM-PAYLOAD-TYPES header is sent correctly
@@ -49,7 +48,6 @@ internal class PayloadTypesHeaderTest {
         )
     }
 
-    @Config(sdk = [21])
     @Test
     fun `batched logs of different types send a list of header types`() {
         lateinit var logger: InternalLogger
@@ -78,7 +76,6 @@ internal class PayloadTypesHeaderTest {
         )
     }
 
-    @Config(sdk = [21])
     @Test
     fun `flutter exceptions are sent immediately in separate envelopes`() {
         val instrumentedConfig = FakeInstrumentedConfig(
@@ -127,7 +124,6 @@ internal class PayloadTypesHeaderTest {
         )
     }
 
-    @Config(sdk = [21])
     @Test
     fun `unity exceptions are sent immediately in separate envelopes`() {
         val instrumentedConfig = FakeInstrumentedConfig(

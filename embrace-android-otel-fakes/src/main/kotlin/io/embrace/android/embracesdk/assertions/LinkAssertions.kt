@@ -10,16 +10,17 @@ import io.opentelemetry.kotlin.semconv.SessionAttributes
 import io.opentelemetry.kotlin.tracing.SpanContext
 import org.junit.Assert.assertTrue
 
-fun Link.validatePreviousSessionLink(
+fun Link.validatePreviousSessionPartLink(
     previousSessionSpan: Span,
-    previousOtelSessionId: String,
+    previousSessionPartId: String,
     previousUserSessionId: String? = null,
-    previousSessionPartId: String? = null,
 ) {
     val expected = buildMap {
-        put(SessionAttributes.SESSION_ID, previousOtelSessionId)
-        previousUserSessionId?.let { put(EmbSessionAttributes.EMB_USER_SESSION_ID, it) }
-        previousSessionPartId?.let { put(EmbSessionAttributes.EMB_SESSION_PART_ID, it) }
+        put(EmbSessionAttributes.EMB_SESSION_PART_ID, previousSessionPartId)
+        previousUserSessionId?.let {
+            put(EmbSessionAttributes.EMB_USER_SESSION_ID, it)
+            put(SessionAttributes.SESSION_ID, it)
+        }
     }
     validateSystemLink(
         linkedSpan = previousSessionSpan,

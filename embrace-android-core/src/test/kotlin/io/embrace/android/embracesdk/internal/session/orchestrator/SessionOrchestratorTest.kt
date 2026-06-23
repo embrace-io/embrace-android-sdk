@@ -1128,32 +1128,30 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
-    fun `max duration timer fires in background but does not create stranded part when capture disabled`() {
-        // FakeConfigService's default backgroundActivityBehavior has bg capture disabled
+    fun `manual session end in background with capture disabled terminates without creating a new user session or session part`() {
         createOrchestrator(
             startingAppState = AppState.FOREGROUND,
-            configService = sessionLimitsConfigService(customInactivityTimeoutMs = maxDurationMs * 4),
+            configService = sessionLimitsConfigService(),
         )
         val first = activeUserSession()
-        val baCountBefore = payloadCollator.baCount.get()
 
         clock.tick(1_000)
         orchestrator.onBackground()
+        clock.tick(1_000)
+        orchestrator.endSessionWithManual()
 
-        runTimerThread(maxDurationMs)
+        assertNull(orchestrator.currentUserSession())
+        assertNull(sessionTracker.getActiveSessionPart())
 
-        // The user session must still rotate: max-duration is a hard limit independent of capture config.
+        orchestrator.onForeground()
         val second = activeUserSession()
         assertNotEquals(first.userSessionId, second.userSessionId)
-        assertEquals(2L, second.userSessionNumber)
-
-        // No new BG session-part was created — capture is disabled, so the rotation produced no payload.
-        assertEquals(baCountBefore, payloadCollator.baCount.get())
-        assertNull(sessionTracker.getActiveSessionPart())
+        assertEquals(first.userSessionNumber + 1, second.userSessionNumber)
+        assertEquals(false, second.isBackgroundOnly)
     }
 
     @Test
-    fun `inactivity timer fires in background but no part is created when capture disabled`() {
+    fun `inactivity timer fires in background with capture disabled terminates without a phantom user session`() {
         createOrchestrator(
             startingAppState = AppState.FOREGROUND,
             configService = backgroundDisabledConfigService(),
@@ -1165,14 +1163,14 @@ internal class SessionOrchestratorTest {
 
         runTimerThread(inactivityMs)
 
-        val second = activeUserSession()
-        assertNotEquals(first.userSessionId, second.userSessionId)
-        assertEquals(2L, second.userSessionNumber)
-        assertEquals(true, second.isBackgroundOnly)
+        assertNull(orchestrator.currentUserSession())
         assertNull(sessionTracker.getActiveSessionPart())
 
         orchestrator.onForeground()
-        assertEquals(0, payloadCollator.baCount.get())
+        val second = activeUserSession()
+        assertNotEquals(first.userSessionId, second.userSessionId)
+        assertEquals(first.userSessionNumber + 1, second.userSessionNumber)
+        assertEquals(false, second.isBackgroundOnly)
     }
 
     @Test

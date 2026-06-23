@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.testcases.features
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.assertions.getSessionPartId
+import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
@@ -312,6 +313,52 @@ internal class NativeCrashFeatureTest {
     @Test
     fun `session ids and crash path properly set up when background activity disabled`() {
         checkNativeMetadata(false)
+    }
+
+    @Test
+    fun `persisted metadata for a native crash when background activity is disabled when there is a user session is correct`() {
+        lateinit var jniDelegate: FakeJniDelegate
+        lateinit var ioWorker: BlockingScheduledExecutorService
+        testRule.runTest(
+            instrumentedConfig = config,
+            setupAction = {
+                jniDelegate = fakeJniDelegate
+                ioWorker = getFakedWorkerExecutor(Worker.Background.IoRegWorker)
+            },
+            testCaseAction = {
+                ioWorker.runCurrentlyBlocked()
+                recordSession()
+                ioWorker.runCurrentlyBlocked()
+            },
+            assertAction = {
+                val userSessionId = getSingleSessionEnvelope().getUserSessionId()
+                assertEquals(userSessionId, jniDelegate.userSessionId)
+                assertEquals("null", jniDelegate.sessionPartId)
+            }
+        )
+    }
+
+    @Test
+    fun `persisted metadata for a native crash when background activity is disabled when there is no user session is correct`() {
+        lateinit var jniDelegate: FakeJniDelegate
+        lateinit var ioWorker: BlockingScheduledExecutorService
+        testRule.runTest(
+            instrumentedConfig = config,
+            setupAction = {
+                jniDelegate = fakeJniDelegate
+                ioWorker = getFakedWorkerExecutor(Worker.Background.IoRegWorker)
+            },
+            testCaseAction = {
+                ioWorker.runCurrentlyBlocked()
+                recordSession()
+                embrace.endUserSession()
+                ioWorker.runCurrentlyBlocked()
+            },
+            assertAction = {
+                assertEquals("null", jniDelegate.userSessionId)
+                assertEquals("null", jniDelegate.sessionPartId)
+            }
+        )
     }
 
     private fun checkNativeMetadata(backgroundActivityEnabled: Boolean) {

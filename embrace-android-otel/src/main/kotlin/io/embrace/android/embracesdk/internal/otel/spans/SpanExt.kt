@@ -19,10 +19,10 @@ fun Span.hasEmbraceAttributeValue(key: String, value: Any): Boolean {
 }
 
 fun Span.toFailedSpan(endTimeMs: Long): Span {
-    val isSessionSpan = hasEmbraceAttribute(EmbType.Ux.Session)
+    val isSessionPartSpan = hasEmbraceAttribute(EmbType.Ux.Session)
     val newAttributes = mutableMapOf<String, String>().apply {
         setEmbraceAttribute(ErrorCodeAttribute.Failure)
-        if (isSessionSpan) {
+        if (isSessionPartSpan) {
             setEmbraceAttribute(AppTerminationCause.Crash)
         }
     }

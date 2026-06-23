@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.assertions.assertMatches
-import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.assertions.getOtelSessionId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
@@ -22,7 +22,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.fromJson
 import io.embrace.android.embracesdk.internal.serialization.toJson
-import io.embrace.android.embracesdk.internal.session.getSessionSpan
+import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.assertions.JsonComparator.compare
@@ -160,8 +160,8 @@ internal class EmbracePayloadAssertionInterface(
             val sessions: List<Map<String, String?>> = envelopes.map {
                 mapOf(
                     "otelSessionId" to it.getOtelSessionId(),
-                    "cleanExit" to it.findSessionSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_CLEAN_EXIT),
-                    "state" to it.findSessionSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE)
+                    "cleanExit" to it.findSessionPartSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_CLEAN_EXIT),
+                    "state" to it.findSessionPartSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE)
                 )
             }
             throwPayloadErrMsg(expectedSize, envelopes.filter { it.findAppState() == appState }.size, sessions, exc)
@@ -169,7 +169,7 @@ internal class EmbracePayloadAssertionInterface(
     }
 
     private fun Envelope<SessionPartPayload>.findAppState(): AppState {
-        val attrs = findSessionSpan().attributes
+        val attrs = findSessionPartSpan().attributes
         val state = checkNotNull(attrs?.findAttributeValue(EmbSessionAttributes.EMB_STATE)) {
             "AppState not found in session payload."
         }
@@ -233,7 +233,7 @@ internal class EmbracePayloadAssertionInterface(
     }
 
     fun Envelope<SessionPartPayload>.assertDeadPartResurrected(crashData: StoredNativeCrashData?) {
-        with(checkNotNull(getSessionSpan())) {
+        with(checkNotNull(getSessionPartSpan())) {
             assertEquals(Span.Status.ERROR, status)
 
             if (crashData != null) {
@@ -289,8 +289,8 @@ internal class EmbracePayloadAssertionInterface(
 
     private fun assertSessionsDeliveredInOrder(envelopes: List<Envelope<SessionPartPayload>>) {
         envelopes.zipWithNext { prev, next ->
-            val prevEnd = prev.findSessionSpan().startTimeNanos ?: return@zipWithNext
-            val nextEnd = next.findSessionSpan().startTimeNanos ?: return@zipWithNext
+            val prevEnd = prev.findSessionPartSpan().startTimeNanos ?: return@zipWithNext
+            val nextEnd = next.findSessionPartSpan().startTimeNanos ?: return@zipWithNext
             assertTrue(
                 "Session payloads delivered out of order. " +
                     "Previous (id=${prev.getOtelSessionId()}) startTimeNanos=$prevEnd, " +

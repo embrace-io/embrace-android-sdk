@@ -37,7 +37,7 @@ internal class CurrentSessionPartSpanAttributeTests {
         assertEquals("emb-session", span.name)
 
         // assert attributes added by default
-        span.assertCommonSessionSpanAttrs()
+        span.assertCommonSessionPartSpanAttrs()
     }
 
     @Test
@@ -48,10 +48,10 @@ internal class CurrentSessionPartSpanAttributeTests {
         assertEquals("emb-session", span.name)
 
         // assert attributes added by default
-        span.assertCommonSessionSpanAttrs()
+        span.assertCommonSessionPartSpanAttrs()
     }
 
-    private fun EmbraceSpanData.assertCommonSessionSpanAttrs() {
+    private fun EmbraceSpanData.assertCommonSessionPartSpanAttrs() {
         assertNotNull(attributes.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID))
         assertEquals("ux.session", attributes.findAttributeValue("emb.type"))
     }

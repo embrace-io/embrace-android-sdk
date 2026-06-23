@@ -21,7 +21,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttributeValue
-import io.embrace.android.embracesdk.internal.session.getSessionSpan
+import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.internal.session.getStateSpan
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
@@ -123,10 +123,10 @@ internal class StateFeatureTest {
                             this[j].assertStateTransition(event.first, event.second)
                         }
                     }
-                    val sessionSpan = checkNotNull(sessions[i].getSessionSpan())
-                    sessionSpan.hasLinkToEmbraceSpan(stateSpan, LinkType.State)
-                    assertEquals(sessionSpan.startTimeNanos, stateSpan.startTimeNanos)
-                    assertEquals(sessionSpan.endTimeNanos, stateSpan.endTimeNanos)
+                    val sessionPartSpan = checkNotNull(sessions[i].getSessionPartSpan())
+                    sessionPartSpan.hasLinkToEmbraceSpan(stateSpan, LinkType.State)
+                    assertEquals(sessionPartSpan.startTimeNanos, stateSpan.startTimeNanos)
+                    assertEquals(sessionPartSpan.endTimeNanos, stateSpan.endTimeNanos)
                     stateSpan.attributes?.hasEmbraceAttributeValue(EmbStateTransitionAttributes.EMB_STATE_INITIAL_VALUE, initialStateValue)
                     initialStateValue = stateUpdates[i]
                 }
@@ -194,7 +194,7 @@ internal class StateFeatureTest {
             },
             assertAction = {
                 val sessionPayload = getSingleSessionEnvelope()
-                val sessionSpan = checkNotNull(sessionPayload.getSessionSpan())
+                val sessionPartSpan = checkNotNull(sessionPayload.getSessionPartSpan())
                 val stateSpan = checkNotNull(sessionPayload.getStateSpan("emb-state-test"))
                 with(checkNotNull(stateSpan.events)) {
                     assertEquals(stateUpdates.size, size)
@@ -207,10 +207,10 @@ internal class StateFeatureTest {
                     }
                 }
                 assertEquals(
-                    checkNotNull(sessionSpan.startTimeNanos).nanosToMillis() + LIFECYCLE_EVENT_GAP,
+                    checkNotNull(sessionPartSpan.startTimeNanos).nanosToMillis() + LIFECYCLE_EVENT_GAP,
                     checkNotNull(stateSpan.startTimeNanos).nanosToMillis()
                 )
-                assertEquals(sessionSpan.endTimeNanos, stateSpan.endTimeNanos)
+                assertEquals(sessionPartSpan.endTimeNanos, stateSpan.endTimeNanos)
             }
         )
     }

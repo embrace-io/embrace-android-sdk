@@ -50,7 +50,7 @@ internal class CurrentSessionPartSpanImpl(
     private var sessionPartState: SessionPartState? = null
 
     @Volatile
-    private var lastSessionSpan: EmbraceSdkSpan? = null
+    private var lastSessionPartSpan: EmbraceSdkSpan? = null
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
         if (!initialized) {
@@ -117,9 +117,9 @@ internal class CurrentSessionPartSpanImpl(
                 }
             }
 
-            currentSessionPartSpan?.spanContext?.let { sessionSpanContext ->
+            currentSessionPartSpan?.spanContext?.let { sessionPartSpanContext ->
                 spanToStop?.addSystemLink(
-                    linkedSpanContext = sessionSpanContext,
+                    linkedSpanContext = sessionPartSpanContext,
                     type = LinkType.EndSession,
                     attributes = linkAttrs
                 )
@@ -132,11 +132,11 @@ internal class CurrentSessionPartSpanImpl(
             synchronized(sessionTransitionLock) {
                 if (sessionPartState == null) {
                     sessionPartState = startSessionPartSpan(openTelemetryClock.now().nanosToMillis())
-                    return sessionSpanReady()
+                    return sessionPartSpanReady()
                 }
             }
         }
-        return sessionSpanReady()
+        return sessionPartSpanReady()
     }
 
     override fun endSession(
@@ -144,19 +144,19 @@ internal class CurrentSessionPartSpanImpl(
         appTerminationCause: AppTerminationCause?,
     ): List<EmbraceSpanData> {
         synchronized(sessionTransitionLock) {
-            val endingSessionSpan = sessionPartState?.span
-            return if (endingSessionSpan != null && endingSessionSpan.isRecording) {
+            val endingSessionPartSpan = sessionPartState?.span
+            return if (endingSessionPartSpan != null && endingSessionPartSpan.isRecording) {
                 // Right now, session spans don't survive native crashes and sudden process terminations,
                 // so telemetry will not be recorded in those cases, for now.
                 val telemetryAttributes = telemetryService.getAndClearTelemetryAttributes()
 
                 telemetryAttributes.forEach {
-                    endingSessionSpan.addAttribute(it.key, it.value)
+                    endingSessionPartSpan.addAttribute(it.key, it.value)
                 }
 
                 if (appTerminationCause == null) {
-                    endingSessionSpan.stop()
-                    lastSessionSpan = endingSessionSpan
+                    endingSessionPartSpan.stop()
+                    lastSessionPartSpan = endingSessionPartSpan
                     spanRepository.clearCompletedSpans()
                     sessionPartState = if (startNewSession) {
                         startSessionPartSpan(openTelemetryClock.now().nanosToMillis())
@@ -166,11 +166,11 @@ internal class CurrentSessionPartSpanImpl(
                 } else {
                     val crashTime = openTelemetryClock.now().nanosToMillis()
                     spanRepository.failActiveSpans(crashTime)
-                    endingSessionSpan.setSystemAttribute(
+                    endingSessionPartSpan.setSystemAttribute(
                         appTerminationCause.key,
                         appTerminationCause.value
                     )
-                    endingSessionSpan.stop(errorCode = ErrorCode.FAILURE, endTimeMs = crashTime)
+                    endingSessionPartSpan.stop(errorCode = ErrorCode.FAILURE, endTimeMs = crashTime)
                 }
                 spanSink.flushSpans()
             } else {
@@ -199,19 +199,19 @@ internal class CurrentSessionPartSpanImpl(
         ).apply {
             start(startTimeMs = startTimeMs)
             setSystemAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionPartId)
-            val previousSessionSpan = lastSessionSpan
-            previousSessionSpan?.spanContext?.let {
+            val previousSessionPartSpan = lastSessionPartSpan
+            previousSessionPartSpan?.spanContext?.let {
                 addSystemLink(
                     linkedSpanContext = it,
                     type = LinkType.PreviousSession,
-                    attributes = previousSessionSpan.partLinkAttrs()
+                    attributes = previousSessionPartSpan.partLinkAttrs()
                 )
             }
         }
         return SessionPartState(span, sessionPartId)
     }
 
-    private fun sessionSpanReady() = sessionPartState?.isReady == true
+    private fun sessionPartSpanReady() = sessionPartState?.isReady == true
 
     /**
      * Encapsulates the current session span and the current trace counts for limit enforcement.

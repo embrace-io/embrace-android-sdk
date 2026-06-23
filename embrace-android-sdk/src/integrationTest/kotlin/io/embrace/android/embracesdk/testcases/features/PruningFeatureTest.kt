@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectionType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
@@ -46,8 +46,8 @@ internal class PruningFeatureTest {
                 assertEquals(STORAGE_LIMIT, sessionEnvelopes.size)
 
                 val breadcrumbs = sessionEnvelopes.map { envelope ->
-                    val sessionSpan = envelope.findSessionSpan()
-                    val breadcrumbEvent = checkNotNull(sessionSpan.events?.single {
+                    val sessionPartSpan = envelope.findSessionPartSpan()
+                    val breadcrumbEvent = checkNotNull(sessionPartSpan.events?.single {
                         it.name == "emb-breadcrumb"
                     })
                     checkNotNull(breadcrumbEvent.attributes?.findAttributeValue("message")).toInt()

@@ -16,7 +16,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.instrumentation.powersave.PowerStateDataSource
-import io.embrace.android.embracesdk.internal.session.getSessionSpan
+import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.internal.session.getStateSpan
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
@@ -105,10 +105,10 @@ internal class LowPowerFeatureTest {
             },
             assertAction = {
                 val message = getSingleSessionEnvelope()
-                val sessionSpan = checkNotNull(message.getSessionSpan())
+                val sessionPartSpan = checkNotNull(message.getSessionPartSpan())
                 with(checkNotNull(message.getStateSpan("emb-state-power"))) {
                     assertEquals(transitions[0].first, checkNotNull(startTimeNanos).nanosToMillis())
-                    assertEquals(sessionSpan.endTimeNanos, endTimeNanos)
+                    assertEquals(sessionPartSpan.endTimeNanos, endTimeNanos)
                     with(checkNotNull(events)) {
                         assertEquals(2, size)
                         repeat(size) { i ->

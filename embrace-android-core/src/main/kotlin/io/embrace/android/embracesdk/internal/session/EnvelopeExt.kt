@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 
-fun Envelope<SessionPartPayload>.getSessionSpan(): Span? {
+fun Envelope<SessionPartPayload>.getSessionPartSpan(): Span? {
     return data.spans?.singleOrNull { it.hasEmbraceAttribute(EmbType.Ux.Session) }
         ?: data.spanSnapshots?.singleOrNull { it.hasEmbraceAttribute(EmbType.Ux.Session) }
 }
@@ -17,7 +17,7 @@ fun Envelope<SessionPartPayload>.getStateSpan(spanName: String): Span? {
 }
 
 fun Envelope<SessionPartPayload>.getUserSessionProperties(): Map<String, String> {
-    return getSessionSpan()?.getUserSessionProperties() ?: emptyMap()
+    return getSessionPartSpan()?.getUserSessionProperties() ?: emptyMap()
 }
 
 @Suppress("UNCHECKED_CAST")

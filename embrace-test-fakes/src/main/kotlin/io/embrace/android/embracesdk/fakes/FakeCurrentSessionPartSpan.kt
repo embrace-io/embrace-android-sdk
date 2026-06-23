@@ -16,16 +16,16 @@ class FakeCurrentSessionPartSpan(
     val attributes = mutableMapOf<String, String>()
     val stoppedSpans = mutableSetOf<String>()
     var initializedCallCount: Int = 0
-    var sessionSpan: FakeEmbraceSdkSpan? = null
+    var sessionPartSpan: FakeEmbraceSdkSpan? = null
 
     private val sessionIteration = AtomicInteger(1)
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
-        sessionSpan = newSessionSpan(sdkInitStartTimeMs)
+        sessionPartSpan = newSessionPartSpan(sdkInitStartTimeMs)
     }
 
     override fun current(): EmbraceSdkSpan? {
-        return sessionSpan
+        return sessionPartSpan
     }
 
     override fun initialized(): Boolean {
@@ -34,7 +34,7 @@ class FakeCurrentSessionPartSpan(
     }
 
     override fun readySession(): Boolean {
-        sessionSpan = newSessionSpan(clock.now())
+        sessionPartSpan = newSessionPartSpan(clock.now())
         return true
     }
 
@@ -42,16 +42,16 @@ class FakeCurrentSessionPartSpan(
         startNewSession: Boolean,
         appTerminationCause: AppTerminationCause?,
     ): List<EmbraceSpanData> {
-        val endingSessionSpan = checkNotNull(sessionSpan)
+        val endingSessionPartSpan = checkNotNull(sessionPartSpan)
         val errorCode = if (appTerminationCause != null) {
             ErrorCode.FAILURE
         } else {
             null
         }
-        endingSessionSpan.stop(errorCode, clock.now())
-        val payload = listOf(checkNotNull(endingSessionSpan.snapshot()).toEmbracePayload())
+        endingSessionPartSpan.stop(errorCode, clock.now())
+        val payload = listOf(checkNotNull(endingSessionPartSpan.snapshot()).toEmbracePayload())
         sessionIteration.incrementAndGet()
-        sessionSpan = if (appTerminationCause == null) newSessionSpan(clock.now()) else null
+        sessionPartSpan = if (appTerminationCause == null) newSessionPartSpan(clock.now()) else null
         return payload
     }
 
@@ -67,8 +67,8 @@ class FakeCurrentSessionPartSpan(
         stoppedSpans.add(spanId)
     }
 
-    private fun newSessionSpan(startTimeMs: Long) =
-        FakeEmbraceSdkSpan.sessionSpan(
+    private fun newSessionPartSpan(startTimeMs: Long) =
+        FakeEmbraceSdkSpan.sessionPartSpan(
             userSessionId = "fake-session-span-id",
             startTimeMs = startTimeMs,
             lastHeartbeatTimeMs = startTimeMs

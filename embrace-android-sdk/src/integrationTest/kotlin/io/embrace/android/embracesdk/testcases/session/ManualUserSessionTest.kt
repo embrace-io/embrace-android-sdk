@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
@@ -37,8 +37,8 @@ internal class ManualUserSessionTest {
                 val messages = getSessionEnvelopes(2)
                 val stateSession = messages[0] // started via state, ended manually
                 val manualSession = messages[1] // started manually, ended via state
-                checkNotNull(stateSession.findSessionSpan())
-                checkNotNull(manualSession.findSessionSpan())
+                checkNotNull(stateSession.findSessionPartSpan())
+                checkNotNull(manualSession.findSessionPartSpan())
             }
         )
     }
@@ -55,7 +55,7 @@ internal class ManualUserSessionTest {
             },
             assertAction = {
                 val message = getSingleSessionEnvelope()
-                checkNotNull(message.findSessionSpan())
+                checkNotNull(message.findSessionPartSpan())
             }
         )
     }
@@ -71,7 +71,7 @@ internal class ManualUserSessionTest {
                 }
             },
             assertAction = {
-                checkNotNull(getSingleSessionEnvelope().findSessionSpan())
+                checkNotNull(getSingleSessionEnvelope().findSessionPartSpan())
             }
         )
     }

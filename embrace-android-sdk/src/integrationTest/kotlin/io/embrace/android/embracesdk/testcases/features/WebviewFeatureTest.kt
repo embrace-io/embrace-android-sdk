@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.testcases.features
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findEventsOfType
-import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.instrumentation.webview.WebViewUrlDataSource
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -30,7 +30,7 @@ internal class WebviewFeatureTest {
             },
             assertAction = {
                 val message = getSingleSessionEnvelope()
-                val events = message.findSessionSpan().findEventsOfType(EmbType.System.WebViewInfo)
+                val events = message.findSessionPartSpan().findEventsOfType(EmbType.System.WebViewInfo)
                 assertEquals(1, events.size)
 
                 val event = events[0]

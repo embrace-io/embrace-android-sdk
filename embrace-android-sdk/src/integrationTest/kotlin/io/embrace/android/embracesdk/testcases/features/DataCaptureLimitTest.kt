@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findEventsOfType
-import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
@@ -44,8 +44,8 @@ internal class DataCaptureLimitTest {
     }
 
     private fun assertBreadcrumbsMatchLimit(envelope: Envelope<SessionPartPayload>) {
-        val sessionSpan = envelope.findSessionSpan()
-        val crumbs = sessionSpan.findEventsOfType(EmbType.System.Breadcrumb)
+        val sessionPartSpan = envelope.findSessionPartSpan()
+        val crumbs = sessionPartSpan.findEventsOfType(EmbType.System.Breadcrumb)
         assertEquals(100, crumbs.size)
     }
 }

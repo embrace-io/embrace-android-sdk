@@ -31,7 +31,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
-import io.embrace.android.embracesdk.internal.session.getSessionSpan
+import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.internal.toEmbraceSpanData
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -174,7 +174,7 @@ internal class TracingApiTest {
                     testRule.setup.getSpanSink().completedSpans().map(EmbraceSpanData::toEmbracePayload)
 
                 val spansMap = allSpans.associateBy { it.name }
-                val sessionSpan = checkNotNull(spansMap["emb-session"])
+                val sessionPartSpan = checkNotNull(spansMap["emb-session"])
                 val traceRootSpan = checkNotNull(spansMap["test-trace-root"])
 
                 results.add("\nAll spans to validate: ${allSpans.map { it.name }}")
@@ -268,7 +268,7 @@ internal class TracingApiTest {
                 )
 
                 assertEmbraceSpanData(
-                    span = sessionSpan,
+                    span = sessionPartSpan,
                     expectedStartTimeMs = sessionStartTimeMs,
                     expectedEndTimeMs = sessionEndTimeMs,
                     expectedParentId = OtelIds.INVALID_SPAN_ID,
@@ -296,8 +296,8 @@ internal class TracingApiTest {
                 )
             },
             otelExportAssertion = {
-                val sessionSpan = awaitSpansWithType(2, EmbType.Ux.Session).last().toEmbraceSpanData().toEmbracePayload()
-                val otelSessionId = checkNotNull(sessionSpan.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
+                val sessionPartSpan = awaitSpansWithType(2, EmbType.Ux.Session).last().toEmbraceSpanData().toEmbracePayload()
+                val otelSessionId = checkNotNull(sessionPartSpan.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
                 val span = awaitSpans(1) { it.name == "test-trace-root" }.single().toEmbraceSpanData().toEmbracePayload()
                 assertEquals(otelSessionId, span.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
             }
@@ -380,7 +380,7 @@ internal class TracingApiTest {
                 with(getSingleSessionEnvelope()) {
                     val op = findSpanByName(name = "my-op")
                     val op2 = findSpanByName(name = "my-op-2")
-                    op2.hasLinkToEmbraceSpan(checkNotNull(getSessionSpan()), LinkType.EndedIn)
+                    op2.hasLinkToEmbraceSpan(checkNotNull(getSessionPartSpan()), LinkType.EndedIn)
 
                     val links = checkNotNull(op2.findCustomLinks())
                     links[0].validateLinkToSpan(linkedSpan = op, expectedAttributes = mapOf("test" to "value"))
@@ -388,10 +388,10 @@ internal class TracingApiTest {
                 }
             },
             otelExportAssertion = {
-                val sessionSpan = awaitSpansWithType(1, EmbType.Ux.Session).single().toEmbraceSpanData().toEmbracePayload()
+                val sessionPartSpan = awaitSpansWithType(1, EmbType.Ux.Session).single().toEmbraceSpanData().toEmbracePayload()
                 val linkedToSpan = awaitSpans(1) { it.name == "my-op" }.single().toEmbraceSpanData().toEmbracePayload()
                 val spanWithLinks = awaitSpans(1) { it.name == "my-op-2" }.single().toEmbraceSpanData().toEmbracePayload()
-                spanWithLinks.hasLinkToEmbraceSpan(sessionSpan, LinkType.EndedIn)
+                spanWithLinks.hasLinkToEmbraceSpan(sessionPartSpan, LinkType.EndedIn)
 
                 val links = checkNotNull(spanWithLinks.findCustomLinks())
                 links[0].validateLinkToSpan(linkedSpan = linkedToSpan, expectedAttributes = mapOf("test" to "value"))
@@ -432,8 +432,8 @@ internal class TracingApiTest {
             },
             otelExportAssertion = {
                 // Get the session ID from a session span exported via OTel
-                val sessionSpan = awaitSpansWithType(2, EmbType.Ux.Session).first().toEmbraceSpanData().toEmbracePayload()
-                val expectedOtelSessionId = checkNotNull(sessionSpan.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
+                val sessionPartSpan = awaitSpansWithType(2, EmbType.Ux.Session).first().toEmbraceSpanData().toEmbracePayload()
+                val expectedOtelSessionId = checkNotNull(sessionPartSpan.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
                 val span1 = awaitSpans(1) { it.name == "span1" }.single().toEmbraceSpanData().toEmbracePayload()
                 val span2 = awaitSpans(1) { it.name == "span2" }.single().toEmbraceSpanData().toEmbracePayload()
                 assertEquals(expectedOtelSessionId, span1.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))

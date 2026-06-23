@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.assertNoPreviousSession
 import io.embrace.android.embracesdk.assertions.assertPreviousSessionPart
-import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.assertions.getOtelSessionId
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.hasLinkToEmbraceSpan
@@ -23,7 +23,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.getSessionProperty
-import io.embrace.android.embracesdk.internal.session.getSessionSpan
+import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import java.util.Locale
@@ -90,11 +90,11 @@ internal class SessionPartPayloadTest {
                 val sessions = getSessionEnvelopes(2)
 
                 // validate info added to first session
-                val span = sessions[0].findSessionSpan()
+                val span = sessions[0].findSessionPartSpan()
                 assertEquals("bar", span.getSessionProperty("foo"))
 
                 // confirm info not added to next session
-                val nextSpan = sessions[1].findSessionSpan()
+                val nextSpan = sessions[1].findSessionPartSpan()
                 assertNull(nextSpan.getSessionProperty("foo"))
             }
         )
@@ -135,7 +135,7 @@ internal class SessionPartPayloadTest {
             },
             assertAction = {
                 val session = getSingleSessionEnvelope()
-                assertEquals(100, session.getSessionSpan()?.events?.size)
+                assertEquals(100, session.getSessionPartSpan()?.events?.size)
             }
         )
     }
@@ -161,21 +161,21 @@ internal class SessionPartPayloadTest {
                 val sessions = getSessionEnvelopes(2)
                 val firstSession = sessions[0]
                 val secondSession = sessions[1]
-                val firstSessionSpan = checkNotNull(firstSession.getSessionSpan())
+                val firstSessionPartSpan = checkNotNull(firstSession.getSessionPartSpan())
                 val startAndEndInSession = checkNotNull(firstSession.data.spans?.single { it.name == "startAndEndInSession"})
 
-                assertTrue(firstSessionSpan.hasLinkToEmbraceSpan(startAndEndInSession, LinkType.EndedIn))
-                assertFalse(firstSessionSpan.hasLinkToEmbraceSpan(firstSessionSpan, LinkType.EndedIn))
-                assertTrue(startAndEndInSession.hasLinkToEmbraceSpan(firstSessionSpan, LinkType.EndSession))
+                assertTrue(firstSessionPartSpan.hasLinkToEmbraceSpan(startAndEndInSession, LinkType.EndedIn))
+                assertFalse(firstSessionPartSpan.hasLinkToEmbraceSpan(firstSessionPartSpan, LinkType.EndedIn))
+                assertTrue(startAndEndInSession.hasLinkToEmbraceSpan(firstSessionPartSpan, LinkType.EndSession))
 
-                val secondSessionSpan = checkNotNull(secondSession.getSessionSpan())
+                val secondSessionPartSpan = checkNotNull(secondSession.getSessionPartSpan())
                 val startInSessionEndInBackground =
                     checkNotNull(secondSession.data.spans?.single { it.name == "startInSessionEndInBackground"})
                 val startAndEndInDifferentSessions =
                     checkNotNull(secondSession.data.spans?.single { it.name == "startAndEndInDifferentSessions"})
-                assertTrue(secondSessionSpan.hasLinkToEmbraceSpan(startAndEndInDifferentSessions, LinkType.EndedIn))
-                assertFalse(secondSessionSpan.hasLinkToEmbraceSpan(secondSessionSpan, LinkType.EndedIn))
-                assertTrue(startAndEndInDifferentSessions.hasLinkToEmbraceSpan(secondSessionSpan, LinkType.EndSession))
+                assertTrue(secondSessionPartSpan.hasLinkToEmbraceSpan(startAndEndInDifferentSessions, LinkType.EndedIn))
+                assertFalse(secondSessionPartSpan.hasLinkToEmbraceSpan(secondSessionPartSpan, LinkType.EndedIn))
+                assertTrue(startAndEndInDifferentSessions.hasLinkToEmbraceSpan(secondSessionPartSpan, LinkType.EndSession))
                 assertEquals(0, startInSessionEndInBackground.links?.size)
             }
         )
@@ -196,7 +196,7 @@ internal class SessionPartPayloadTest {
                 // verify first session
                 val messages = getSessionEnvelopes(2)
                 val first = messages[0]
-                first.findSessionSpan().attributes?.assertMatches(mapOf(
+                first.findSessionPartSpan().attributes?.assertMatches(mapOf(
                     EmbSessionAttributes.EMB_SESSION_START_TYPE to LifeEventType.STATE.name.lowercase(Locale.ENGLISH),
                     EmbSessionAttributes.EMB_SESSION_END_TYPE to LifeEventType.STATE.name.lowercase(Locale.ENGLISH),
                     EmbSessionAttributes.EMB_ERROR_LOG_COUNT to 0
@@ -230,34 +230,34 @@ internal class SessionPartPayloadTest {
                 val secondSession = sessions[1]
                 val thirdSession = sessions[2]
 
-                val firstBaSessionSpan = firstBa.getValidatedSessionSpan()
+                val firstBaSessionPartSpan = firstBa.getValidatedSessionPartSpan()
 
-                val firstSessionSpan = firstSession.getValidatedSessionSpan(
-                    previousSessionSpan = firstBaSessionSpan,
+                val firstSessionPartSpan = firstSession.getValidatedSessionPartSpan(
+                    previousSessionPartSpan = firstBaSessionPartSpan,
                     previousSessionPartId = firstBa.getSessionPartId()
                 )
 
-                val secondBaSessionSpan = secondBa.getValidatedSessionSpan(
+                val secondBaSessionPartSpan = secondBa.getValidatedSessionPartSpan(
                     isColdStart = false,
-                    previousSessionSpan = firstSessionSpan,
+                    previousSessionPartSpan = firstSessionPartSpan,
                     previousSessionPartId = firstSession.getSessionPartId()
                 )
 
-                val secondSessionSpan = secondSession.getValidatedSessionSpan(
+                val secondSessionPartSpan = secondSession.getValidatedSessionPartSpan(
                     isColdStart = false,
-                    previousSessionSpan = secondBaSessionSpan,
+                    previousSessionPartSpan = secondBaSessionPartSpan,
                     previousSessionPartId = secondBa.getSessionPartId()
                 )
 
-                val thirdBaSessionSpan = thirdBa.getValidatedSessionSpan(
+                val thirdBaSessionPartSpan = thirdBa.getValidatedSessionPartSpan(
                     isColdStart = false,
-                    previousSessionSpan = secondSessionSpan,
+                    previousSessionPartSpan = secondSessionPartSpan,
                     previousSessionPartId = secondSession.getSessionPartId()
                 )
 
-                thirdSession.getValidatedSessionSpan(
+                thirdSession.getValidatedSessionPartSpan(
                     isColdStart = false,
-                    previousSessionSpan = thirdBaSessionSpan,
+                    previousSessionPartSpan = thirdBaSessionPartSpan,
                     previousSessionPartId = thirdBa.getSessionPartId()
                 )
             }
@@ -278,43 +278,43 @@ internal class SessionPartPayloadTest {
                 val second = sessions[1]
                 val third = sessions[2]
 
-                val firstSessionSpan = first.getValidatedSessionSpan()
+                val firstSessionPartSpan = first.getValidatedSessionPartSpan()
 
-                val secondSessionSpan = second.getValidatedSessionSpan(
+                val secondSessionPartSpan = second.getValidatedSessionPartSpan(
                     isColdStart = false,
-                    previousSessionSpan = firstSessionSpan,
+                    previousSessionPartSpan = firstSessionPartSpan,
                     previousSessionPartId = first.getSessionPartId()
                 )
 
-                third.getValidatedSessionSpan(
+                third.getValidatedSessionPartSpan(
                     isColdStart = false,
-                    previousSessionSpan = secondSessionSpan,
+                    previousSessionPartSpan = secondSessionPartSpan,
                     previousSessionPartId = second.getSessionPartId()
                 )
             }
         )
     }
 
-    private fun Envelope<SessionPartPayload>.getValidatedSessionSpan(
+    private fun Envelope<SessionPartPayload>.getValidatedSessionPartSpan(
         isColdStart: Boolean = true,
-        previousSessionSpan: Span? = null,
+        previousSessionPartSpan: Span? = null,
         previousSessionPartId: String? = null,
     ): Span {
-        val sessionSpan = findSessionSpan()
+        val sessionPartSpan = findSessionPartSpan()
         assertFalse(hasSpanSnapshotsOfType(EmbType.Ux.Session))
-        with(sessionSpan) {
+        with(sessionPartSpan) {
             checkNotNull(attributes).assertMatches(
                 mapOf(
                     EmbSessionAttributes.EMB_COLD_START to isColdStart
                 )
             )
 
-            if (previousSessionSpan != null && previousSessionPartId != null) {
-                assertPreviousSessionPart(previousSessionSpan, previousSessionPartId)
+            if (previousSessionPartSpan != null && previousSessionPartId != null) {
+                assertPreviousSessionPart(previousSessionPartSpan, previousSessionPartId)
             } else {
                 assertNoPreviousSession()
             }
         }
-        return sessionSpan
+        return sessionPartSpan
     }
 }

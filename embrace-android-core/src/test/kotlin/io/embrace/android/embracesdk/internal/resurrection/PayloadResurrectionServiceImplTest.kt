@@ -52,7 +52,7 @@ import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.UserSessionRestoreDecision
-import io.embrace.android.embracesdk.internal.session.getSessionSpan
+import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.internal.toEmbraceSpanData
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -142,12 +142,12 @@ class PayloadResurrectionServiceImplTest {
         assertEquals(0, cacheStorageService.storedPayloadCount())
 
         val sessionEnvelope = getStoredParts().single()
-        val sessionSpan = checkNotNull(sessionEnvelope.getSessionSpan())
+        val sessionPartSpan = checkNotNull(sessionEnvelope.getSessionPartSpan())
         val expectedStartTimeMs = deadSessionEnvelope.getStartTime()
         val expectedEndTimeMs = deadSessionEnvelope.getLastHeartbeatTimeMs()
 
         assertEmbraceSpanData(
-            span = sessionSpan,
+            span = sessionPartSpan,
             expectedStartTimeMs = expectedStartTimeMs,
             expectedEndTimeMs = expectedEndTimeMs,
             expectedParentId = OtelIds.INVALID_SPAN_ID,
@@ -271,10 +271,10 @@ class PayloadResurrectionServiceImplTest {
         assertEquals(2, sentSession.data.spans?.size)
         assertEquals(0, sentSession.data.spanSnapshots?.size)
 
-        val sessionSpan = checkNotNull(sentSession.getSessionSpan())
+        val sessionPartSpan = checkNotNull(sentSession.getSessionPartSpan())
         val spanSnapshot =
             checkNotNull(
-                deadSessionEnvelope.data.spanSnapshots?.filterNot { it.spanId == sessionSpan.spanId }
+                deadSessionEnvelope.data.spanSnapshots?.filterNot { it.spanId == sessionPartSpan.spanId }
                     ?.single()
             )
         val resurrectedSnapshot = sentSession.findSpansByName(checkNotNull(spanSnapshot.name)).single()
@@ -282,7 +282,7 @@ class PayloadResurrectionServiceImplTest {
         assertEmbraceSpanData(
             span = resurrectedSnapshot,
             expectedStartTimeMs = checkNotNull(spanSnapshot.startTimeNanos?.nanosToMillis()),
-            expectedEndTimeMs = checkNotNull(sessionSpan.endTimeNanos?.nanosToMillis()),
+            expectedEndTimeMs = checkNotNull(sessionPartSpan.endTimeNanos?.nanosToMillis()),
             expectedParentId = OtelIds.INVALID_SPAN_ID,
             expectedErrorCode = ErrorCode.FAILURE,
             expectedCustomAttributes = mapOf(
@@ -311,8 +311,8 @@ class PayloadResurrectionServiceImplTest {
         )
         deadSessionEnvelope.resurrectPayload()
 
-        val sessionSpan = getStoredParts().single().getSessionSpan()
-        assertEquals("dead-session-native-crash", sessionSpan?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID))
+        val sessionPartSpan = getStoredParts().single().getSessionPartSpan()
+        assertEquals("dead-session-native-crash", sessionPartSpan?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID))
 
         // clear snapshots before running second scenario
         payloadStorageService.clearStorage()
@@ -325,7 +325,7 @@ class PayloadResurrectionServiceImplTest {
         deadSessionEnvelope.resurrectPayload()
 
         val attributes =
-            checkNotNull(getStoredParts().last().getSessionSpan()?.attributes)
+            checkNotNull(getStoredParts().last().getSessionPartSpan()?.attributes)
         assertNull(attributes.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID))
     }
 
@@ -345,10 +345,10 @@ class PayloadResurrectionServiceImplTest {
 
         resurrectInBackground()
 
-        val sessionSpan = getStoredParts().single().getSessionSpan()
+        val sessionPartSpan = getStoredParts().single().getSessionPartSpan()
         assertEquals(
             "legacy-native-crash",
-            sessionSpan?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID)
+            sessionPartSpan?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID)
         )
     }
 
@@ -363,7 +363,7 @@ class PayloadResurrectionServiceImplTest {
             )
         )
 
-        val attributes = checkNotNull(getStoredParts().single().getSessionSpan()?.attributes)
+        val attributes = checkNotNull(getStoredParts().single().getSessionPartSpan()?.attributes)
         assertEquals("1", attributes.findAttributeValue(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART))
         assertEquals(
             EmbUserSessionTerminationReasonValues.INACTIVITY,
@@ -376,7 +376,7 @@ class PayloadResurrectionServiceImplTest {
         cacheStorageService.addPayload(metadata = sessionMetadata, data = deadSessionEnvelope)
         resurrectInBackground()
 
-        val attributes = checkNotNull(getStoredParts().single().getSessionSpan()?.attributes)
+        val attributes = checkNotNull(getStoredParts().single().getSessionPartSpan()?.attributes)
         assertNull(attributes.findAttributeValue(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART))
         assertNull(attributes.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON))
     }
@@ -392,7 +392,7 @@ class PayloadResurrectionServiceImplTest {
             )
         )
 
-        val attributes = checkNotNull(getStoredParts().single().getSessionSpan()?.attributes)
+        val attributes = checkNotNull(getStoredParts().single().getSessionPartSpan()?.attributes)
         assertNull(attributes.findAttributeValue(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART))
         assertNull(attributes.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON))
     }
@@ -426,14 +426,14 @@ class PayloadResurrectionServiceImplTest {
         )
 
         val parts = getStoredParts().associateBy { it.getUserSessionId() }
-        val laterAttrs = checkNotNull(parts.getValue("later-part").getSessionSpan()?.attributes)
+        val laterAttrs = checkNotNull(parts.getValue("later-part").getSessionPartSpan()?.attributes)
         assertEquals("1", laterAttrs.findAttributeValue(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART))
         assertEquals(
             EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED,
             laterAttrs.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON)
         )
 
-        val earlierAttrs = checkNotNull(parts.getValue("earlier-part").getSessionSpan()?.attributes)
+        val earlierAttrs = checkNotNull(parts.getValue("earlier-part").getSessionPartSpan()?.attributes)
         assertNull(earlierAttrs.findAttributeValue(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART))
         assertNull(earlierAttrs.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON))
     }
@@ -449,7 +449,7 @@ class PayloadResurrectionServiceImplTest {
             )
         )
 
-        val attributes = checkNotNull(getStoredParts().single().getSessionSpan()?.attributes)
+        val attributes = checkNotNull(getStoredParts().single().getSessionPartSpan()?.attributes)
         assertEquals("1", attributes.findAttributeValue(EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART))
     }
 
@@ -463,7 +463,7 @@ class PayloadResurrectionServiceImplTest {
             )
         )
 
-        val attributes = checkNotNull(getStoredParts().single().getSessionSpan()?.attributes)
+        val attributes = checkNotNull(getStoredParts().single().getSessionPartSpan()?.attributes)
         assertEquals("1", attributes.findAttributeValue(EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART))
         assertNull(attributes.findAttributeValue(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART))
     }
@@ -478,7 +478,7 @@ class PayloadResurrectionServiceImplTest {
             )
         )
 
-        val attributes = checkNotNull(getStoredParts().single().getSessionSpan()?.attributes)
+        val attributes = checkNotNull(getStoredParts().single().getSessionPartSpan()?.attributes)
         assertNull(attributes.findAttributeValue(EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART))
     }
 
@@ -493,13 +493,13 @@ class PayloadResurrectionServiceImplTest {
             )
         )
 
-        val attributes = checkNotNull(getStoredParts().single().getSessionSpan()?.attributes)
+        val attributes = checkNotNull(getStoredParts().single().getSessionPartSpan()?.attributes)
         assertNull(attributes.findAttributeValue(EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART))
     }
 
     @Test
     fun `session payload that doesn't contain session span will not be resurrected`() {
-        noSessionSpanEnvelope.resurrectPayload()
+        noSessionPartSpanEnvelope.resurrectPayload()
         assertResurrectionFailure()
     }
 
@@ -573,7 +573,7 @@ class PayloadResurrectionServiceImplTest {
 
     @Test
     fun `session payload that contains more than one span will not be resurrected`() {
-        multipleSessionSpanEnvelope.resurrectPayload()
+        multipleSessionPartSpanEnvelope.resurrectPayload()
         assertResurrectionFailure()
     }
 
@@ -631,11 +631,11 @@ class PayloadResurrectionServiceImplTest {
             assertEquals(deadSessionEnvelope.getUserSessionId(), getUserSessionId())
             assertEquals(
                 "native-crash-1",
-                getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID)
+                getSessionPartSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID)
             )
             assertEquals(
                 "foreground",
-                getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE)
+                getSessionPartSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE)
             )
         }
 
@@ -646,11 +646,11 @@ class PayloadResurrectionServiceImplTest {
             assertEquals(earlierDeadSession.getUserSessionId(), getUserSessionId())
             assertEquals(
                 "native-crash-2",
-                getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID)
+                getSessionPartSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID)
             )
             assertEquals(
                 "foreground",
-                getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE)
+                getSessionPartSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE)
             )
         }
 
@@ -739,8 +739,8 @@ class PayloadResurrectionServiceImplTest {
         val storedMetadata = payloadStorageService.storedPayloadMetadata().single()
         assertEquals(fakeCachedSessionStoredTelemetryMetadata.copy(complete = true), storedMetadata)
         assertEquals(0, cacheStorageService.storedPayloadCount())
-        val sessionSpan = checkNotNull(getStoredParts().single().getSessionSpan())
-        assertNull(checkNotNull(sessionSpan.attributes).findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID))
+        val sessionPartSpan = checkNotNull(getStoredParts().single().getSessionPartSpan())
+        assertNull(checkNotNull(sessionPartSpan.attributes).findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID))
     }
 
     @Test
@@ -920,16 +920,16 @@ class PayloadResurrectionServiceImplTest {
                 )
             )
         }
-        val noSessionSpanEnvelope = deadSessionEnvelope.copy(
+        val noSessionPartSpanEnvelope = deadSessionEnvelope.copy(
             data = deadSessionEnvelope.data.copy(
                 spanSnapshots = emptyList()
             )
         )
-        val multipleSessionSpanEnvelope = deadSessionEnvelope.copy(
+        val multipleSessionPartSpanEnvelope = deadSessionEnvelope.copy(
             data = deadSessionEnvelope.data.copy(
                 spanSnapshots = deadSessionEnvelope.data.spanSnapshots?.plus(
                     checkNotNull(
-                        FakeEmbraceSdkSpan.sessionSpan(
+                        FakeEmbraceSdkSpan.sessionPartSpan(
                             userSessionId = "fake-session-span-id",
                             startTimeMs = deadSessionEnvelope.getStartTime() + 1001L,
                             lastHeartbeatTimeMs = deadSessionEnvelope.getStartTime() + 1001L,

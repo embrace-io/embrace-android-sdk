@@ -52,7 +52,7 @@ internal class SessionOrchestratorImpl(
     private val payloadCachingService: PayloadCachingService?,
     instrumentationRegistry: InstrumentationRegistry,
     private val destination: TelemetryDestination,
-    private val sessionSpanAttrPopulator: SessionPartSpanAttrPopulator,
+    private val sessionPartSpanAttrPopulator: SessionPartSpanAttrPopulator,
     private val ordinalStore: OrdinalStore,
     private val metadataStore: UserSessionMetadataStore,
     private val logger: InternalLogger,
@@ -350,7 +350,7 @@ internal class SessionOrchestratorImpl(
 
             val endingSession = sessionTracker.getActiveSessionPart()
             if (endingSession != null) {
-                sessionSpanAttrPopulator.populateSessionSpanEndAttrs(
+                sessionPartSpanAttrPopulator.populateSessionPartSpanEndAttrs(
                     endType = transitionType.lifeEventType(state),
                     crashId = crashId,
                     coldStart = endingSession.isColdStart,
@@ -401,7 +401,7 @@ internal class SessionOrchestratorImpl(
                     }
                 }
                 boundaryDelegate.prepareForNewSession()
-                sessionSpanAttrPopulator.populateSessionSpanStartAttrs(newSessionPart, userSession)
+                sessionPartSpanAttrPopulator.populateSessionPartSpanStartAttrs(newSessionPart, userSession)
                 if (transitionType != TransitionType.CRASH) {
                     // initiate periodic caching of the payload if a new session has started
                     EmbTrace.start("initiate-periodic-caching")

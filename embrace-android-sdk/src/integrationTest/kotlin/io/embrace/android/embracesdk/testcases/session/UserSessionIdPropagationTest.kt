@@ -10,7 +10,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.assertions.SessionIds
 import io.embrace.android.embracesdk.assertions.assertSessionIds
-import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.assertions.getLogsOfType
@@ -30,7 +30,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
-import io.embrace.android.embracesdk.internal.session.getSessionSpan
+import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.internal.toStringMap
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbAeiAttributes.AEI_SESSION_PART_ID
@@ -471,7 +471,7 @@ internal class UserSessionIdPropagationTest {
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
-                val sessionSpanFromOldPart = checkNotNull(sessions[0].getSessionSpan())
+                val sessionPartSpanFromOldPart = checkNotNull(sessions[0].getSessionPartSpan())
                 val oldUserSessionId = sessions[0].getUserSessionId()
                 val newUserSessionId = sessions[1].getUserSessionId()
                 assertNotEquals(oldUserSessionId, newUserSessionId)
@@ -479,7 +479,7 @@ internal class UserSessionIdPropagationTest {
                 val log = getSingleLogEnvelope().getLastLog()
                 val logSessionId = log.attributes?.findAttributeValue(SESSION_ID)
                 assertEquals(oldUserSessionId, logSessionId)
-                assertTrue(checkNotNull(log.timeUnixNano) <= checkNotNull(sessionSpanFromOldPart.endTimeNanos))
+                assertTrue(checkNotNull(log.timeUnixNano) <= checkNotNull(sessionPartSpanFromOldPart.endTimeNanos))
             },
         )
     }
@@ -514,7 +514,7 @@ internal class UserSessionIdPropagationTest {
     }
 
     private fun Envelope<SessionPartPayload>.assertSessionIds(): SessionIds =
-        checkNotNull(findSessionSpan().attributes).toMap().assertSessionIds()
+        checkNotNull(findSessionPartSpan().attributes).toMap().assertSessionIds()
 
     private fun Log.assertSessionIds(): SessionIds =
         checkNotNull(attributes).toMap().assertSessionIds()

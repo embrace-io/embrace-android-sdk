@@ -246,7 +246,7 @@ class FakeEmbraceSdkSpan(
                 stop()
             }
 
-        fun sessionSpan(
+        fun sessionPartSpan(
             userSessionId: String,
             startTimeMs: Long,
             lastHeartbeatTimeMs: Long?,

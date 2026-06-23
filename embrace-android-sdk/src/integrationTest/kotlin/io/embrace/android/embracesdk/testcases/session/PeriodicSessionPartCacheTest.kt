@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.testcases.session
 
 import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.assertions.findSpanSnapshotOfType
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
@@ -72,7 +72,7 @@ internal class PeriodicPartCacheTest {
                     )
                 )
                 val completedMessage = getSingleSessionEnvelope()
-                val completedSpan = completedMessage.findSessionSpan()
+                val completedSpan = completedMessage.findSessionPartSpan()
                 assertEquals("Passed", completedSpan.getSessionProperty("Test"))
                 completedSpan.attributes?.assertMatches(
                     mapOf(

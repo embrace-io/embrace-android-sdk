@@ -39,6 +39,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -80,6 +81,21 @@ internal class CurrentSessionPartSpanImplTests {
         val uninitialized = FakeInitModule(clock = clock).openTelemetryModule.currentSessionPartSpan
         assertFalse(uninitialized.initialized())
         uninitialized.assertNoSessionPartSpan()
+    }
+
+    @Test
+    fun `initializeService does not clobber a session part span already started by readySession`() {
+        val sessionPartSpan = FakeInitModule(clock = clock).openTelemetryModule.currentSessionPartSpan
+        assertFalse(sessionPartSpan.initialized())
+
+        assertTrue(sessionPartSpan.readySession())
+        val partId = sessionPartSpan.getId()
+        val createdSpan = checkNotNull(sessionPartSpan.current())
+        sessionPartSpan.initializeService(clock.now())
+
+        assertTrue(sessionPartSpan.initialized())
+        assertEquals(partId, sessionPartSpan.getId())
+        assertSame(createdSpan, sessionPartSpan.current())
     }
 
     @Test

@@ -56,7 +56,7 @@ internal class CurrentSessionPartSpanImpl(
         if (!initialized) {
             synchronized(sessionTransitionLock) {
                 if (!initialized) {
-                    sessionPartState = startSessionPartSpan(sdkInitStartTimeMs)
+                    ensureInitialSessionPartExists { sdkInitStartTimeMs }
                     initialized = sessionPartState != null
                 }
             }
@@ -128,14 +128,7 @@ internal class CurrentSessionPartSpanImpl(
     }
 
     override fun readySession(): Boolean {
-        if (sessionPartState == null) {
-            synchronized(sessionTransitionLock) {
-                if (sessionPartState == null) {
-                    sessionPartState = startSessionPartSpan(openTelemetryClock.now().nanosToMillis())
-                    return sessionPartSpanReady()
-                }
-            }
-        }
+        ensureInitialSessionPartExists { openTelemetryClock.now().nanosToMillis() }
         return sessionPartSpanReady()
     }
 
@@ -180,6 +173,19 @@ internal class CurrentSessionPartSpanImpl(
     }
 
     override fun current(): EmbraceSdkSpan? = sessionPartState?.span
+
+    /**
+     * Creates the current session part span if one does not already exist.
+     */
+    private inline fun ensureInitialSessionPartExists(startTimeMs: () -> Long) {
+        if (sessionPartState == null) {
+            synchronized(sessionTransitionLock) {
+                if (sessionPartState == null) {
+                    sessionPartState = startSessionPartSpan(startTimeMs())
+                }
+            }
+        }
+    }
 
     /**
      * This method should always be used when starting a new session part span. It creates a UUID for the session part and

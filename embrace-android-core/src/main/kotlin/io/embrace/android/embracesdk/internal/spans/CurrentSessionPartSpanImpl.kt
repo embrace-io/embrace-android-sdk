@@ -177,7 +177,7 @@ internal class CurrentSessionPartSpanImpl(
     /**
      * Creates the current session part span if one does not already exist.
      */
-    private fun ensureInitialSessionPartExists(startTimeMs: () -> Long) {
+    private inline fun ensureInitialSessionPartExists(startTimeMs: () -> Long) {
         if (sessionPartState == null) {
             synchronized(sessionTransitionLock) {
                 if (sessionPartState == null) {

@@ -13,14 +13,14 @@ sealed class LinkType(
     override val key: String = EmbSpanAttributes.EMB_LINK_TYPE
 
     /**
-     * On a session span, it links to the previous valid session span for this app instance.
+     * On a session part span, it links to the previous valid session part span for this app instance.
      */
-    object PreviousSession : LinkType("PREV_SESSION")
+    object PreviousSessionPart : LinkType("PREV_SESSION_PART")
 
     /**
-     * On a span that is not a session span, it links to the session span of the session in which it ended.
+     * On a span that is not a session part span, it links to the session part span of the session part in which it ended.
      */
-    object EndSession : LinkType("END_SESSION")
+    object EndSessionPart : LinkType("END_SESSION_PART")
 
     /**
      * On a session span, it links to a span that ended during the session associated this the session span.

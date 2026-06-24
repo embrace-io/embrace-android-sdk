@@ -24,7 +24,7 @@ fun Link.validatePreviousSessionPartLink(
     }
     validateSystemLink(
         linkedSpan = previousSessionPartSpan,
-        type = LinkType.PreviousSession,
+        type = LinkType.PreviousSessionPart,
         expectedAttributes = expected
     )
 }

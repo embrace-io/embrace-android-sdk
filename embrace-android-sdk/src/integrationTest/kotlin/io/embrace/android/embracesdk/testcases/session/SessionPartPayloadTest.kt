@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.testcases.session
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.assertMatches
-import io.embrace.android.embracesdk.assertions.assertNoPreviousSession
+import io.embrace.android.embracesdk.assertions.assertNoPreviousSessionPart
 import io.embrace.android.embracesdk.assertions.assertPreviousSessionPart
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.assertions.getOtelSessionId
@@ -166,7 +166,7 @@ internal class SessionPartPayloadTest {
 
                 assertTrue(firstSessionPartSpan.hasLinkToEmbraceSpan(startAndEndInSession, LinkType.EndedIn))
                 assertFalse(firstSessionPartSpan.hasLinkToEmbraceSpan(firstSessionPartSpan, LinkType.EndedIn))
-                assertTrue(startAndEndInSession.hasLinkToEmbraceSpan(firstSessionPartSpan, LinkType.EndSession))
+                assertTrue(startAndEndInSession.hasLinkToEmbraceSpan(firstSessionPartSpan, LinkType.EndSessionPart))
 
                 val secondSessionPartSpan = checkNotNull(secondSession.getSessionPartSpan())
                 val startInSessionEndInBackground =
@@ -175,7 +175,7 @@ internal class SessionPartPayloadTest {
                     checkNotNull(secondSession.data.spans?.single { it.name == "startAndEndInDifferentSessions"})
                 assertTrue(secondSessionPartSpan.hasLinkToEmbraceSpan(startAndEndInDifferentSessions, LinkType.EndedIn))
                 assertFalse(secondSessionPartSpan.hasLinkToEmbraceSpan(secondSessionPartSpan, LinkType.EndedIn))
-                assertTrue(startAndEndInDifferentSessions.hasLinkToEmbraceSpan(secondSessionPartSpan, LinkType.EndSession))
+                assertTrue(startAndEndInDifferentSessions.hasLinkToEmbraceSpan(secondSessionPartSpan, LinkType.EndSessionPart))
                 assertEquals(0, startInSessionEndInBackground.links?.size)
             }
         )
@@ -312,7 +312,7 @@ internal class SessionPartPayloadTest {
             if (previousSessionPartSpan != null && previousSessionPartId != null) {
                 assertPreviousSessionPart(previousSessionPartSpan, previousSessionPartId)
             } else {
-                assertNoPreviousSession()
+                assertNoPreviousSessionPart()
             }
         }
         return sessionPartSpan

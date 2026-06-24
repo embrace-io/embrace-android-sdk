@@ -3,7 +3,10 @@ package io.embrace.android.embracesdk.testframework.assertions
 import io.embrace.android.embracesdk.assertions.SessionIds
 import io.embrace.android.embracesdk.assertions.getOtelSessionId
 import io.embrace.android.embracesdk.assertions.getSessionPartId
+import io.embrace.android.embracesdk.assertions.getSessionPartNumber
 import io.embrace.android.embracesdk.assertions.getUserSessionId
+import io.embrace.android.embracesdk.assertions.getUserSessionNumber
+import io.embrace.android.embracesdk.assertions.getUserSessionPartIndex
 import io.embrace.android.embracesdk.assertions.getUserSessionTerminationReason
 import io.embrace.android.embracesdk.assertions.isFinalSessionPart
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
@@ -48,6 +51,51 @@ fun assertDistinctUserSessions(vararg envelopes: Envelope<SessionPartPayload>) {
 fun assertSameUserSession(vararg envelopes: Envelope<SessionPartPayload>) {
     val ids = envelopes.map { it.getUserSessionId() }.toSet()
     assertEquals("expected one user session id but got $ids", 1, ids.size)
+}
+
+/**
+ * Asserts a single session part's user-session number, and optionally its session part number and part index
+ */
+fun Envelope<SessionPartPayload>.assertSessionOrdinals(
+    userSessionNumber: Int,
+    sessionPartNumber: Int? = null,
+    partIndex: Int? = null,
+) {
+    assertEquals("unexpected emb.user_session_number", userSessionNumber.toString(), getUserSessionNumber())
+    if (sessionPartNumber != null) {
+        assertEquals("unexpected emb.session_part_number", sessionPartNumber.toString(), getSessionPartNumber())
+    }
+    if (partIndex != null) {
+        assertEquals("unexpected emb.user_session_part_index", partIndex.toString(), getUserSessionPartIndex())
+    }
+}
+
+/**
+ * Asserts the user session numbers and optionally the session part numbers across a chronologically sorted list of session part envelopes.
+ */
+fun assertUserSessionNumbers(
+    envelopes: List<Envelope<SessionPartPayload>>,
+    userSessionNumbers: List<Int>,
+    sessionPartNumbers: List<Int>? = null,
+) {
+    assertEquals(
+        "expected ${userSessionNumbers.size} session-part envelopes but got ${envelopes.size}",
+        userSessionNumbers.size,
+        envelopes.size,
+    )
+    if (sessionPartNumbers != null) {
+        assertEquals(
+            "envelope count does not match the user session numbers to be asserted",
+            userSessionNumbers.size,
+            sessionPartNumbers.size,
+        )
+    }
+    envelopes.forEachIndexed { index, envelope ->
+        envelope.assertSessionOrdinals(
+            userSessionNumber = userSessionNumbers[index],
+            sessionPartNumber = sessionPartNumbers?.get(index),
+        )
+    }
 }
 
 /**

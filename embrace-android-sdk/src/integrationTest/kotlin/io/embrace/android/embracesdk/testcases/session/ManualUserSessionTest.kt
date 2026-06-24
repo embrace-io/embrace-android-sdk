@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.assertions.assertDistinctUserSessions
 import io.embrace.android.embracesdk.testframework.assertions.assertFinalPart
 import io.embrace.android.embracesdk.testframework.assertions.assertNotFinalPart
+import io.embrace.android.embracesdk.testframework.assertions.assertUserSessionNumbers
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -39,6 +40,11 @@ internal class ManualUserSessionTest {
                 val manualSession = messages[1] // started manually, ended via state
                 checkNotNull(stateSession.findSessionPartSpan())
                 checkNotNull(manualSession.findSessionPartSpan())
+                assertUserSessionNumbers(
+                    envelopes = messages,
+                    userSessionNumbers = listOf(1, 2),
+                    sessionPartNumbers = listOf(1, 2)
+                )
             }
         )
     }
@@ -95,6 +101,26 @@ internal class ManualUserSessionTest {
     }
 
     @Test
+    fun `manually ending a user session in the background while background activity is disabled does not create a new user session`() {
+        testRule.runTest(
+            testCaseAction = {
+                recordSession()
+                embrace.endUserSession()
+                recordSession()
+            },
+            assertAction = {
+                val sessions = getSessionEnvelopes(2)
+                assertDistinctUserSessions(sessions[0], sessions[1])
+                assertUserSessionNumbers(
+                    envelopes = sessions,
+                    userSessionNumbers = listOf(1, 2),
+                    sessionPartNumbers = listOf(1, 2)
+                )
+            },
+        )
+    }
+
+    @Test
     fun `new user session can be manually created`() {
         testRule.runTest(
             testCaseAction = {
@@ -107,6 +133,11 @@ internal class ManualUserSessionTest {
                 val sessions = getSessionEnvelopes(2)
 
                 assertDistinctUserSessions(sessions[0], sessions[1])
+                assertUserSessionNumbers(
+                    envelopes = sessions,
+                    userSessionNumbers = listOf(1, 2),
+                    sessionPartNumbers = listOf(1, 2)
+                )
                 sessions[0].assertFinalPart(MANUAL)
                 sessions[1].assertNotFinalPart()
             }
@@ -130,6 +161,11 @@ internal class ManualUserSessionTest {
                 val sessions = getSessionEnvelopes(3)
                 assertDistinctUserSessions(sessions[0], sessions[1])
                 assertDistinctUserSessions(sessions[1], sessions[2])
+                assertUserSessionNumbers(
+                    envelopes = sessions,
+                    userSessionNumbers = listOf(1, 2, 3),
+                    sessionPartNumbers = listOf(1, 2, 3)
+                )
                 sessions[0].assertFinalPart(MANUAL)
                 sessions[1].assertFinalPart(MANUAL)
                 sessions[2].assertNotFinalPart()

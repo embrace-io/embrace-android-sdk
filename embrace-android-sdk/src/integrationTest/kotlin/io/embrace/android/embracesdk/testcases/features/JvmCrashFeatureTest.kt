@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.UserSessionRemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -140,6 +141,38 @@ internal class JvmCrashFeatureTest {
                 val userSessionId = attrs.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID)
                 assertFalse(userSessionId.isNullOrBlank())
                 assertEquals(userSessionId, attrs.findAttributeValue(SessionAttributes.SESSION_ID))
+                assertEquals("", attrs.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID) ?: "")
+            }
+        )
+    }
+
+    @Test
+    fun `crash in background after inactivity kills the user session with bg disabled carries empty session ids`() {
+        lateinit var nonIoWorker: BlockingScheduledExecutorService
+        testRule.runTest(
+            persistedRemoteConfig = RemoteConfig(
+                userSession = UserSessionRemoteConfig(inactivityTimeoutSeconds = 30)
+            ),
+            setupAction = {
+                nonIoWorker = getFakedWorkerExecutor(Worker.Background.NonIoRegWorker)
+            },
+            testCaseAction = {
+                recordSession()
+                clock.tick(30L * 1_000L + 1_000L)
+                nonIoWorker.runCurrentlyBlocked()
+                crashTimeMs = clock.now()
+                simulateJvmUncaughtException(testException)
+            },
+            assertAction = {
+                val crashLog = payloadStorageService.getPersistedCrashLog().getLastLog()
+                crashLog.assertCrash(
+                    crashIdFromSession = null,
+                    crashTimeMs = crashTimeMs,
+                    hasSession = false,
+                )
+                val attrs = checkNotNull(crashLog.attributes)
+                assertEquals("", attrs.findAttributeValue(SessionAttributes.SESSION_ID) ?: "")
+                assertEquals("", attrs.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID) ?: "")
                 assertEquals("", attrs.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID) ?: "")
             }
         )

@@ -572,7 +572,11 @@ internal class SessionOrchestratorImpl(
             // User session being ended explicitly - end current one and start a new one based on the expected endAppState.
             transitionType.endsUserSession -> {
                 clearBackgroundStartupWindowTimer()
-                transitionToNewUserSession(timestamp, endAppState)
+                if (endAppState == AppState.BACKGROUND && !configService.backgroundActivityBehavior.isBackgroundActivityCaptureEnabled()) {
+                    terminateActiveUserSession()
+                } else {
+                    transitionToNewUserSession(timestamp, endAppState)
+                }
                 scheduleSessionEndTimers(endAppState)
             }
 
@@ -653,6 +657,19 @@ internal class SessionOrchestratorImpl(
      */
     private fun transitionToNewUserSession(timestamp: Long, endAppState: AppState) {
         // End current user session if it exists
+        terminateActiveUserSession()
+
+        // Start new user session, make it active, and broadcast new user session being active to listeners. The caller is
+        // responsible for scheduling the new session's end timers (see scheduleSessionEndTimers).
+        val newMetadata = createUnclassifiedUserSession(timestamp).classify(isBackgroundOnly = endAppState == AppState.BACKGROUND)
+        setActiveUserSession(newMetadata)
+        notifyListeners(UserSessionActive(newMetadata.userSessionId))
+    }
+
+    /**
+     * Ends the active user session  and leaves the SDK with no active user session ([UserSessionState.Terminated]).
+     */
+    private fun terminateActiveUserSession() {
         currentUserSession()?.let {
             maxDurationTimerState?.cancel()
             maxDurationTimerState = null
@@ -662,12 +679,6 @@ internal class SessionOrchestratorImpl(
             userSessionState = UserSessionState.Terminated
             notifyListeners(UserSessionEnded(it.userSessionId))
         }
-
-        // Start new user session, make it active, and broadcast new user session being active to listeners. The caller is
-        // responsible for scheduling the new session's end timers (see scheduleSessionEndTimers).
-        val newMetadata = createUnclassifiedUserSession(timestamp).classify(isBackgroundOnly = endAppState == AppState.BACKGROUND)
-        setActiveUserSession(newMetadata)
-        notifyListeners(UserSessionActive(newMetadata.userSessionId))
     }
 
     /**

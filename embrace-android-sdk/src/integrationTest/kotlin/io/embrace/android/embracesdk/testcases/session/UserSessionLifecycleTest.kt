@@ -27,6 +27,7 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSI
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues.BACKGROUND_ONLY_USER_SESSION_FOREGROUNDED
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues.INACTIVITY
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues.MANUAL
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule.Companion.DEFAULT_SDK_START_TIME_MS
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
@@ -34,6 +35,8 @@ import io.embrace.android.embracesdk.testframework.assertions.assertDistinctUser
 import io.embrace.android.embracesdk.testframework.assertions.assertFinalPart
 import io.embrace.android.embracesdk.testframework.assertions.assertNotFinalPart
 import io.embrace.android.embracesdk.testframework.assertions.assertSameUserSession
+import io.embrace.android.embracesdk.testframework.assertions.assertSessionOrdinals
+import io.embrace.android.embracesdk.testframework.assertions.assertUserSessionNumbers
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -163,8 +166,11 @@ internal class UserSessionLifecycleTest {
         )
     }
 
+    /**
+     * NOTE: timer thread is not unblocked so the timer never fires
+     */
     @Test
-    fun `new user session can be created via inactivity timeout with background activity disabled`() {
+    fun `inactivity timeout detected at foreground with background activity disabled creates a new user session`() {
         testRule.runTest(
             persistedRemoteConfig = RemoteConfig(
                 userSession = UserSessionRemoteConfig(inactivityTimeoutSeconds = 30)
@@ -179,6 +185,11 @@ internal class UserSessionLifecycleTest {
                 val sessions = getSessionEnvelopes(2)
 
                 assertDistinctUserSessions(sessions[0], sessions[1])
+                assertUserSessionNumbers(
+                    envelopes = sessions,
+                    userSessionNumbers = listOf(1, 2),
+                    sessionPartNumbers = listOf(1, 2)
+                )
 
                 // session orchestrator cannot be sure of final session reason, so does not set it
                 sessions[0].assertNotFinalPart()
@@ -187,8 +198,13 @@ internal class UserSessionLifecycleTest {
         )
     }
 
+    /**
+     * NOTE: this does NOT fire the inactivity timer (no unblockTimerThread). The timeout is detected lazily on the next
+     * foreground (TransitionType.INACTIVITY_FOREGROUND). The timer-driven path is covered separately by
+     * `inactivity timer firing in background with capture enabled advances user session number by one each time`.
+     */
     @Test
-    fun `new user session can be created via inactivity timeout with background activity enabled`() {
+    fun `inactivity timeout detected at foreground with background activity enabled creates a new user session`() {
         testRule.runTest(
             persistedRemoteConfig = RemoteConfig(
                 backgroundActivityConfig = BackgroundActivityRemoteConfig(100f),
@@ -209,6 +225,81 @@ internal class UserSessionLifecycleTest {
                 bgSessions[0].assertNotFinalPart()
                 fgSessions[0].assertNotFinalPart()
                 fgSessions[1].assertNotFinalPart()
+            }
+        )
+    }
+
+    @Test
+    fun `inactivity timer firing in background with capture disabled doesn't create a new user session`() {
+        testRule.runTest(
+            persistedRemoteConfig = RemoteConfig(
+                userSession = UserSessionRemoteConfig(inactivityTimeoutSeconds = 30)
+            ),
+            testCaseAction = {
+                recordSession()
+                clock.tick(30L * 1_000L + 1_000L)
+                unblockTimerThread()
+                recordSession()
+            },
+            assertAction = {
+                val sessionParts = getSessionEnvelopes(2)
+                assertDistinctUserSessions(sessionParts[0], sessionParts[1])
+                assertUserSessionNumbers(
+                    envelopes = sessionParts,
+                    userSessionNumbers = listOf(1, 2),
+                    sessionPartNumbers = listOf(1, 2)
+                )
+            }
+        )
+    }
+
+    @Test
+    fun `max duration detected at foreground with background activity disabled advances user session number by one`() {
+        testRule.runTest(
+            persistedRemoteConfig = RemoteConfig(
+                userSession = UserSessionRemoteConfig(maxDurationSeconds = 3600)
+            ),
+            testCaseAction = {
+                recordSession()
+                clock.tick(3600 * 1_000L + 1_000L + 1)
+                recordSession()
+            },
+            assertAction = {
+                val sessionParts = getSessionEnvelopes(2)
+                assertDistinctUserSessions(sessionParts[0], sessionParts[1])
+                assertUserSessionNumbers(
+                    envelopes = sessionParts,
+                    userSessionNumbers = listOf(1, 2),
+                    sessionPartNumbers = listOf(1, 2)
+                )
+            }
+        )
+    }
+
+    @Test
+    fun `inactivity timer firing in background with capture enabled advances user session number by one each time`() {
+        testRule.runTest(
+            persistedRemoteConfig = RemoteConfig(
+                backgroundActivityConfig = BackgroundActivityRemoteConfig(100f),
+                userSession = UserSessionRemoteConfig(inactivityTimeoutSeconds = 30),
+            ),
+            testCaseAction = {
+                recordSession()
+                clock.tick(30L * 1_000L + 1_000L)
+                unblockTimerThread()
+                clock.tick(10_000L)
+                recordSession()
+            },
+            assertAction = {
+                val fgSessions = getSessionEnvelopes(2, AppState.FOREGROUND)
+                val bgSessionPart = getSessionEnvelopes(expectedSize = 3, state = AppState.BACKGROUND).last()
+                assertDistinctUserSessions(fgSessions[0], bgSessionPart)
+                assertDistinctUserSessions(bgSessionPart, fgSessions[1])
+                assertDistinctUserSessions(fgSessions[0], fgSessions[1])
+
+                fgSessions[0].assertSessionOrdinals(userSessionNumber = 1)
+                bgSessionPart.assertSessionOrdinals(userSessionNumber = 2)
+                fgSessions[1].assertSessionOrdinals(userSessionNumber = 3)
             }
         )
     }
@@ -245,6 +336,10 @@ internal class UserSessionLifecycleTest {
                 val sessions = getSessionEnvelopes(2, AppState.FOREGROUND)
 
                 assertSameUserSession(sessions[0], sessions[1])
+                assertUserSessionNumbers(
+                    envelopes = sessions,
+                    userSessionNumbers = listOf(1, 1)
+                )
                 sessions[0].assertNotFinalPart()
                 sessions[1].assertNotFinalPart()
             }
@@ -313,8 +408,11 @@ internal class UserSessionLifecycleTest {
         )
     }
 
+    /**
+     * NOTE: the timer does not fire because the thread it runs on has not been unblocked
+     */
     @Test
-    fun `new user session can be created via max duration`() {
+    fun `max duration exceeded while backgrounded creates a new user session on the next foreground`() {
         val cfg = UserSessionRemoteConfig(
             maxDurationSeconds = 3600,
             inactivityTimeoutSeconds = 3600,
@@ -408,6 +506,11 @@ internal class UserSessionLifecycleTest {
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
                 assertDistinctUserSessions(sessions[0], sessions[1])
+                assertUserSessionNumbers(
+                    envelopes = sessions,
+                    userSessionNumbers = listOf(1, 2),
+                    sessionPartNumbers = listOf(1, 2)
+                )
             },
         )
     }
@@ -428,6 +531,11 @@ internal class UserSessionLifecycleTest {
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
                 assertDistinctUserSessions(sessions[0], sessions[1])
+                assertUserSessionNumbers(
+                    envelopes = sessions,
+                    userSessionNumbers = listOf(1, 2),
+                    sessionPartNumbers = listOf(1, 2)
+                )
             },
         )
     }
@@ -440,21 +548,27 @@ internal class UserSessionLifecycleTest {
                 userSession = UserSessionRemoteConfig(maxDurationSeconds = maxDurationSeconds),
             ),
             testCaseAction = {
-                recordSession()
-                clock.tick(maxDurationSeconds * 1_000L)
-                unblockTimerThread()
-                recordSession()
+                recordSession {
+                    clock.tick(maxDurationSeconds * 1_000L)
+                    unblockTimerThread()
+                }
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
                 assertDistinctUserSessions(sessions[0], sessions[1])
+                sessions[0].assertFinalPart(MAX_DURATION_REACHED)
+                assertUserSessionNumbers(
+                    envelopes = sessions,
+                    userSessionNumbers = listOf(1, 2),
+                    sessionPartNumbers = listOf(1, 2)
+                )
             },
         )
     }
 
     @Test
     fun `manual end after max duration but before the job is processed terminates with MANUAL`() {
-        val maxDurationSeconds = 600
+        val maxDurationSeconds = 3600
         testRule.runTest(
             persistedRemoteConfig = RemoteConfig(
                 userSession = UserSessionRemoteConfig(maxDurationSeconds = maxDurationSeconds),
@@ -471,6 +585,10 @@ internal class UserSessionLifecycleTest {
                 val sessions = getSessionEnvelopes(3)
                 assertDistinctUserSessions(sessions[0], sessions[1])
                 assertSameUserSession(sessions[1], sessions[2])
+                assertUserSessionNumbers(
+                    envelopes = sessions,
+                    userSessionNumbers = listOf(1, 2, 2)
+                )
                 sessions[0].assertFinalPart(MANUAL)
             },
         )
@@ -483,6 +601,11 @@ internal class UserSessionLifecycleTest {
             partsGapSeconds = 29
         ) { sessions ->
             assertSameUserSession(sessions[0], sessions[1])
+            assertUserSessionNumbers(
+                envelopes = sessions,
+                userSessionNumbers = listOf(1, 1),
+                sessionPartNumbers = listOf(1, 2)
+            )
         }
     }
 
@@ -493,6 +616,11 @@ internal class UserSessionLifecycleTest {
             partsGapSeconds = 60
         ) { sessions ->
             assertDistinctUserSessions(sessions[0], sessions[1])
+            assertUserSessionNumbers(
+                envelopes = sessions,
+                userSessionNumbers = listOf(1, 2),
+                sessionPartNumbers = listOf(1, 2)
+            )
         }
     }
 
@@ -503,6 +631,11 @@ internal class UserSessionLifecycleTest {
             partsGapSeconds = 31
         ) { sessions ->
             assertDistinctUserSessions(sessions[0], sessions[1])
+            assertUserSessionNumbers(
+                envelopes = sessions,
+                userSessionNumbers = listOf(1, 2),
+                sessionPartNumbers = listOf(1, 2)
+            )
         }
     }
 

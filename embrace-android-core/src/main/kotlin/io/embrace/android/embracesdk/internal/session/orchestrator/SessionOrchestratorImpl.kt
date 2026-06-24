@@ -572,8 +572,8 @@ internal class SessionOrchestratorImpl(
             // User session being ended explicitly - end current one and start a new one based on the expected endAppState.
             transitionType.endsUserSession -> {
                 clearBackgroundStartupWindowTimer()
-                if (endAppState == AppState.BACKGROUND && !configService.backgroundActivityBehavior.isBackgroundActivityCaptureEnabled()
-                ) {
+                if (endAppState == AppState.BACKGROUND &&
+                    !configService.backgroundActivityBehavior.isBackgroundActivityCaptureEnabled()) {
                     terminateActiveUserSession()
                 } else {
                     transitionToNewUserSession(timestamp, endAppState)

@@ -83,7 +83,7 @@ internal class UserSessionIdPropagationTest {
     }
 
     @Test
-    fun `session span carries the user session id and session part id`() {
+    fun `session part span carries the user session id and session part id`() {
         testRule.runTest(
             testCaseAction = { recordSession() },
             assertAction = {

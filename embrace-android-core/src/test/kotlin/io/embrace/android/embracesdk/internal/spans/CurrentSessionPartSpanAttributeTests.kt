@@ -32,7 +32,7 @@ internal class CurrentSessionPartSpanAttributeTests {
     }
 
     @Test
-    fun `attributes added to cold start session span`() {
+    fun `attributes added to cold start session part span`() {
         val span = currentSessionPartSpan.endSession(true).single()
         assertEquals("emb-session", span.name)
 
@@ -41,8 +41,8 @@ internal class CurrentSessionPartSpanAttributeTests {
     }
 
     @Test
-    fun `attributes added to hot session span`() {
-        // end the first session span then create another one
+    fun `attributes added to hot session part span`() {
+        // end the first session part span then create another one
         currentSessionPartSpan.endSession(true)
         val span = currentSessionPartSpan.endSession(true).single()
         assertEquals("emb-session", span.name)

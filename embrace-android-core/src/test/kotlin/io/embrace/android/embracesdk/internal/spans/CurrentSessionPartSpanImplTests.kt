@@ -71,7 +71,7 @@ internal class CurrentSessionPartSpanImplTests {
     }
 
     @Test
-    fun `session span ready when initialized`() {
+    fun `session part span ready when initialized`() {
         assertTrue(currentSessionPartSpan.initialized())
         currentSessionPartSpan.assertSessionPartSpan()
     }
@@ -393,7 +393,7 @@ internal class CurrentSessionPartSpanImplTests {
     }
 
     @Test
-    fun `flushing with app termination and termination reason flushes session span with right termination type`() {
+    fun `flushing with app termination and termination reason flushes session part span with right termination type`() {
         AppTerminationCause::class.sealedSubclasses.forEach {
             val cause = checkNotNull(it.objectInstance)
             val module = FakeInitModule(clock = clock)
@@ -415,7 +415,7 @@ internal class CurrentSessionPartSpanImplTests {
     }
 
     @Test
-    fun `crashing results in the session span and active spans being terminated`() {
+    fun `crashing results in the session part span and active spans being terminated`() {
         val sessionStartTimeMs = clock.now()
         clock.tick(100)
 
@@ -495,7 +495,7 @@ internal class CurrentSessionPartSpanImplTests {
     }
 
     @Test
-    fun `calling readySession creates a session span if not present`() {
+    fun `calling readySession creates a session part span if not present`() {
         currentSessionPartSpan.endSession(startNewSession = false)
         currentSessionPartSpan.assertNoSessionPartSpan()
         assertTrue(currentSessionPartSpan.readySession())
@@ -503,14 +503,14 @@ internal class CurrentSessionPartSpanImplTests {
     }
 
     @Test
-    fun `readySession will not replace existing session span`() {
+    fun `readySession will not replace existing session part span`() {
         val originalSessionPartSpanId = spanRepository.getActiveSpans().single().spanId
         assertTrue(currentSessionPartSpan.readySession())
         assertEquals(originalSessionPartSpanId, spanRepository.getActiveSpans().single().spanId)
     }
 
     @Test
-    fun `readySession will return false if session span is not recording`() {
+    fun `readySession will return false if session part span is not recording`() {
         val sessionPartSpan = CurrentSessionPartSpanImpl(
             openTelemetryClock = FakeOtelKotlinClock(),
             telemetryService = telemetryService,
@@ -589,7 +589,7 @@ internal class CurrentSessionPartSpanImplTests {
     }
 
     @Test
-    fun `session ending will not create span link to its own session span`() {
+    fun `session ending will not create span link to its own session part span`() {
         val sessionPartSpan = checkNotNull(spanRepository.getActiveSpans().single())
         currentSessionPartSpan.endSession(startNewSession = true)
         val sessionPartSpanSnapshot = checkNotNull(sessionPartSpan.snapshot())

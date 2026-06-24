@@ -23,7 +23,7 @@ internal class OrchestratorBoundaryDelegate(
     }
 
     /**
-     * Prepare the SDK to create another session. This will be invoked AFTER a new session span has been created.
+     * Prepare the SDK to create another session. This will be invoked AFTER a new session part span has been created.
      */
     fun prepareForNewSession() {
         userSessionPropertiesService.prepareForNewSession()

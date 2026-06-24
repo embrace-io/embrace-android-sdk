@@ -302,7 +302,7 @@ class PayloadResurrectionServiceImplTest {
     }
 
     @Test
-    fun `crash ID is only added to session span with matching session ID`() {
+    fun `crash ID is only added to session part span with matching session ID`() {
         nativeCrashService.addNativeCrashData(
             createNativeCrashData(
                 nativeCrashId = "dead-session-native-crash",
@@ -498,7 +498,7 @@ class PayloadResurrectionServiceImplTest {
     }
 
     @Test
-    fun `session payload that doesn't contain session span will not be resurrected`() {
+    fun `session payload that doesn't contain session part span will not be resurrected`() {
         noSessionPartSpanEnvelope.resurrectPayload()
         assertResurrectionFailure()
     }

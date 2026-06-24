@@ -44,7 +44,7 @@ internal class CurrentSessionPartSpanImpl(
     private var initialized: Boolean = false
 
     /**
-     * Encapsulation of the current session span (if there is one) and its trace counts.
+     * Encapsulation of the current session part span (if there is one) and its trace counts.
      */
     @Volatile
     private var sessionPartState: SessionPartState? = null
@@ -66,7 +66,7 @@ internal class CurrentSessionPartSpanImpl(
     override fun initialized(): Boolean = initialized
 
     /**
-     * Creating a new Span is only possible if the current session span is active, the parent has already been started, and the total
+     * Creating a new Span is only possible if the current session part span is active, the parent has already been started, and the total
      * session trace limit has not been reached. Once this method returns true, a new span is assumed to have been created and will
      * be counted as such towards the limits, so make sure there's no case afterwards where a Span is not created.
      */
@@ -139,7 +139,7 @@ internal class CurrentSessionPartSpanImpl(
         synchronized(sessionTransitionLock) {
             val endingSessionPartSpan = sessionPartState?.span
             return if (endingSessionPartSpan != null && endingSessionPartSpan.isRecording) {
-                // Right now, session spans don't survive native crashes and sudden process terminations,
+                // Right now, session part spans don't survive native crashes and sudden process terminations,
                 // so telemetry will not be recorded in those cases, for now.
                 val telemetryAttributes = telemetryService.getAndClearTelemetryAttributes()
 
@@ -220,7 +220,7 @@ internal class CurrentSessionPartSpanImpl(
     private fun sessionPartSpanReady() = sessionPartState?.isReady == true
 
     /**
-     * Encapsulates the current session span and the current trace counts for limit enforcement.
+     * Encapsulates the current session part span and the current trace counts for limit enforcement.
      */
     private class SessionPartState(val span: EmbraceSdkSpan, val sessionPartId: String) {
         val traceCount: AtomicInteger = AtomicInteger(0)

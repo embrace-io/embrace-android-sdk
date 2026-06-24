@@ -356,13 +356,13 @@ internal class PayloadResurrectionServiceImpl(
             userSessionTerminationReason = userSessionTerminationReason,
             isBackgroundOnly = isBackgroundOnly,
         ) ?: throw IllegalArgumentException(
-            "Session resurrection failed. Payload does not contain exactly one session span."
+            "Session resurrection failed. Payload does not contain exactly one session part span."
         )
     }
 
     /**
      * Return copy of envelope with a modified set of spans to reflect their resurrected states, or null if the
-     * payload does not contain exactly one session span.
+     * payload does not contain exactly one session part span.
      */
     private fun Envelope<SessionPartPayload>.resurrectSession(
         nativeCrashData: NativeCrashData?,
@@ -428,7 +428,7 @@ internal class PayloadResurrectionServiceImpl(
         }
 
     /**
-     * Attributes attaching the native crash to this session span if its session part id matches, or empty otherwise.
+     * Attributes attaching the native crash to this session part span if its session part id matches, or empty otherwise.
      */
     private fun Span.crashAttributes(nativeCrashData: NativeCrashData): List<Attribute> {
         val sessionPartId = resolveSessionPartIdForCrashMatch()
@@ -460,8 +460,8 @@ internal class PayloadResurrectionServiceImpl(
         }
 
     /**
-     * To approximate the time of any snapshot to be converted into a failed span, we look to the session span of the payload and take
-     * either the end time or the last heartbeat time, whichever exists and is later. If the session span itself is a snapshot, it will
+     * To approximate the time of any snapshot to be converted into a failed span, we look to the session part span of the payload and take
+     * either the end time or the last heartbeat time, whichever exists and is later. If the session part span itself is a snapshot, it will
      * not have an end time, in which case it will fall back to the last heartbeat time. If either exists, it means we can't find a better
      * time, so we just leave it at 0.
      */

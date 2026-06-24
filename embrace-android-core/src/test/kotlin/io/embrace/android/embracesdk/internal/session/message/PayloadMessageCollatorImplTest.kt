@@ -136,7 +136,7 @@ internal class PayloadMessageCollatorImplTest {
     }
 
     @Test
-    fun `session span is created when session payload is built if it did not exist before`() {
+    fun `session part span is created when session payload is built if it did not exist before`() {
         currentSessionPartSpan.endSession(startNewSession = false)
         listOf(true, false).forEach { startupTemperature ->
             LifeEventType.entries.forEach { lifeEventType ->

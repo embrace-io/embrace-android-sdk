@@ -34,7 +34,7 @@ interface OpenTelemetryModule {
     val spanSink: SpanSink
 
     /**
-     * Component that manages and provides access to the current session span
+     * Component that manages and provides access to the current session part span
      */
     val currentSessionPartSpan: CurrentSessionPartSpan
 

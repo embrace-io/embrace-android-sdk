@@ -22,7 +22,7 @@ interface TelemetryDestination {
     )
 
     /**
-     * Add a span event for the given [schemaType] to the session span. If [startTimeMs] is null, the
+     * Add a span event for the given [schemaType] to the session part span. If [startTimeMs] is null, the
      * current time will be used. Returns true if the event was added, otherwise false.
      */
     fun addSessionPartEvent(schemaType: SchemaType, startTimeMs: Long): Boolean
@@ -33,7 +33,7 @@ interface TelemetryDestination {
     fun removeSessionPartEvents(type: EmbType)
 
     /**
-     * Add the given key-value pair as an Attribute to the session span
+     * Add the given key-value pair as an Attribute to the session part span
      */
     fun addSessionPartAttribute(key: String, value: String)
 

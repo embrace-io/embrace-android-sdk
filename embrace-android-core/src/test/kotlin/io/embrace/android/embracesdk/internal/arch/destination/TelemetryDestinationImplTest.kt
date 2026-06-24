@@ -257,7 +257,7 @@ internal class TelemetryDestinationImplTest {
     }
 
     @Test
-    fun `test session span events`() {
+    fun `test session part span events`() {
         currentSessionPartSpan.readySession()
         val current = checkNotNull(currentSessionPartSpan.current())
         val schemaType = SchemaType.Breadcrumb("Hi")
@@ -273,7 +273,7 @@ internal class TelemetryDestinationImplTest {
     }
 
     @Test
-    fun `test session span attributes`() {
+    fun `test session part span attributes`() {
         currentSessionPartSpan.readySession()
         val current = checkNotNull(currentSessionPartSpan.current())
         impl.addSessionPartAttribute("foo", "bar")

@@ -95,7 +95,7 @@ internal class EmbraceUserSessionProperties(
     }
 
     /**
-     * Adds all user session properties to the session span.
+     * Adds all user session properties to the session part span.
      */
     fun addPropsForNewSessionPartSpan() {
         synchronized(lock) {

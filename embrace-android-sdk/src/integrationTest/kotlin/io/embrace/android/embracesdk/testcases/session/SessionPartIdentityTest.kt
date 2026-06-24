@@ -47,7 +47,7 @@ internal class SessionPartIdentityTest {
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
     @Test
-    fun `session span and envelope contains various user session attributes`() {
+    fun `session part span and envelope contains various user session attributes`() {
         testRule.runTest(
             testCaseAction = {
                 recordSession()

@@ -406,8 +406,15 @@ internal class SessionOrchestratorImpl(
                     // initiate periodic caching of the payload if a new session has started
                     EmbTrace.start("initiate-periodic-caching")
                     updatePeriodicCacheAttrs()
+                    val updateIntervalMs = lastActivityUpdateIntervalMs(userSession)
                     payloadCachingService?.startCaching(newSessionPart, endAppState) { state, timestamp, zygote ->
                         synchronized(lock) {
+                            if (state == AppState.FOREGROUND) {
+                                updateUserSessionActivityIfStale(
+                                    timestamp = timestamp,
+                                    updateIntervalMs = updateIntervalMs
+                                )
+                            }
                             updatePeriodicCacheAttrs()
                             payloadFactory.snapshotPayload(state, timestamp, zygote)
                         }
@@ -543,6 +550,21 @@ internal class SessionOrchestratorImpl(
         destination.addSessionPartAttribute(EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO, now.toString())
         destination.addSessionPartAttribute(EmbSessionAttributes.EMB_TERMINATED, true.toString())
     }
+
+    private fun updateUserSessionActivityIfStale(timestamp: Long, updateIntervalMs: Long) {
+        currentUserSessionIfClassified()?.let { current ->
+            if (timestamp - current.lastActivityMs >= updateIntervalMs) {
+                setActiveUserSession(current.withNewActivity(timestamp))
+            }
+        }
+    }
+
+    private fun lastActivityUpdateIntervalMs(metadata: UserSessionMetadata?): Long =
+        if (metadata == null || metadata.inactivityTimeoutSecs <= SHORT_INACTIVITY_TIMEOUT_CUTOFF_SECS) {
+            LAST_ACTIVITY_UPDATE_SHORT_MS
+        } else {
+            LAST_ACTIVITY_UPDATE_LONG_MS
+        }
 
     /**
      * Decides what to do with the user session at the start of a session-part transition.
@@ -719,4 +741,10 @@ internal class SessionOrchestratorImpl(
 
             else -> true
         }
+
+    private companion object {
+        private const val SHORT_INACTIVITY_TIMEOUT_CUTOFF_SECS = 2 * 60
+        private const val LAST_ACTIVITY_UPDATE_SHORT_MS = 20 * 1000L
+        private const val LAST_ACTIVITY_UPDATE_LONG_MS = 60 * 1000L
+    }
 }

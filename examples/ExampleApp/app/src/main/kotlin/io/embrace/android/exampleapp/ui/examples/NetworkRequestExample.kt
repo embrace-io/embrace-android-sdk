@@ -20,10 +20,14 @@ import java.nio.charset.StandardCharsets
 import java.util.concurrent.Executors
 import javax.net.ssl.HttpsURLConnection
 
-private enum class RequestType {
+private enum class RequestType(
+    val usePost: Boolean = false,
+    val addFakeTraceparent: Boolean = false
+) {
     GET_REQUEST,
     REDIRECTED_GET_REQUEST,
-    POST_REQUEST,
+    POST_REQUEST(usePost = true),
+    POST_REQUEST_WITH_FAKE_TRACEPARENT(usePost = true, addFakeTraceparent = true),
     NOT_FOUND_REQUEST,
     INVALID_REQUEST,
     CRASH_DURING_GET_REQUEST,
@@ -71,7 +75,11 @@ fun NetworkRequestExample() {
                     connection.connectTimeout = 5000
                     connection.readTimeout = 15000
 
-                    if (requestValue == RequestType.POST_REQUEST) {
+                    if (requestValue.addFakeTraceparent) {
+                        connection.setRequestProperty("traceparent", "fake-trace-parent")
+                    }
+
+                    if (requestValue.usePost) {
                         connection.requestMethod = "POST"
                         connection.doInput = true
                         connection.doOutput = true
@@ -103,7 +111,7 @@ fun NetworkRequestExample() {
 private fun getUrl(requestValue: RequestType): String = when (requestValue) {
     RequestType.GET_REQUEST -> "https://www.google.com"
     RequestType.REDIRECTED_GET_REQUEST -> "https://google.com"
-    RequestType.POST_REQUEST -> "https://httpbin.org/post"
+    RequestType.POST_REQUEST, RequestType.POST_REQUEST_WITH_FAKE_TRACEPARENT -> "https://httpbin.org/post"
     RequestType.NOT_FOUND_REQUEST -> "https://httpbin.org/status/404"
     RequestType.INVALID_REQUEST -> "https://some-invalid-url.path"
     RequestType.CRASH_DURING_GET_REQUEST -> "https://www.google.com/crash"
@@ -111,7 +119,10 @@ private fun getUrl(requestValue: RequestType): String = when (requestValue) {
 
 private fun prepareRequest(requestType: RequestType): Request {
     val builder = Request.Builder().url(getUrl(requestType))
-    if (requestType == RequestType.POST_REQUEST) {
+    if (requestType.addFakeTraceparent) {
+        builder.addHeader("traceparent", "fake-trace-parent")
+    }
+    if (requestType.usePost) {
         builder.post("{}".toRequestBody("application/json".toMediaType()))
     }
     return builder.build()

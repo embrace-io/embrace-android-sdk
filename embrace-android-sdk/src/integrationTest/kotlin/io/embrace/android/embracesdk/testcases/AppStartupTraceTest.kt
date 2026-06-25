@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.startup.MAX_COLD_STARTUP_INIT_GAP_MS
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
-import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -23,6 +22,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.internal.toEmbracePayload
+import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -49,7 +49,18 @@ internal class AppStartupTraceTest {
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
-        EmbraceSetupInterface(fakeStorageLayer = true).also {
+        EmbraceSetupInterface(
+            fakeStorageLayer = true,
+            workersToFake = listOf(
+                Worker.Background.NonIoRegWorker,
+                Worker.Background.IoRegWorker,
+                Worker.Background.PeriodicCacheWorker,
+            ),
+        ).apply {
+            getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).blockingMode = false
+            getFakedWorkerExecutor(Worker.Background.IoRegWorker).blockingMode = false
+            getFakedWorkerExecutor(Worker.Background.PeriodicCacheWorker).blockingMode = false
+        }.also {
             payloadStorageService = checkNotNull(it.fakePayloadStorageService)
         }
     }

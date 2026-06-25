@@ -103,6 +103,12 @@ data class NetworkCapturedCall(
     val sessionPartId: String? = null,
 
     /**
+     * User Session ID that the network request occurred during.
+     */
+    @SerialName("usi")
+    val userSessionId: String? = null,
+
+    /**
      * The start time of the request.
      */
     @SerialName("st")

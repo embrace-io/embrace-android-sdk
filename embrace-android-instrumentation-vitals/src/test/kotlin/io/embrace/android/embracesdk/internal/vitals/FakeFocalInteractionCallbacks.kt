@@ -8,7 +8,7 @@ internal class FakeFocalInteractionCallbacks : FocalInteractionCallbacks {
     var interactionMoveCount = 0
     var interactionEndCount = 0
 
-    override fun onFrame(vsyncNanos: Long, jankNanos: Long) {}
+    override fun onFrame(vsyncNanos: Long, frameDispatchNanos: Long, jankNanos: Long) {}
     override fun onScreenStart() { screenStartCount++ }
     override fun onScreenStop() { screenStopCount++ }
     override fun onInteractionStart() { interactionStartCount++ }

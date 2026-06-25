@@ -20,8 +20,14 @@ internal class FocalMomentTrackerTest {
         private var pending: Runnable? = null
         val settleArmed: Boolean get() = pending != null
         override fun post(action: Runnable) = action.run()
-        override fun scheduleSettle(delayMs: Long, action: Runnable) { pending = action }
-        override fun cancelSettle() { pending = null }
+        override fun scheduleSettle(delayMs: Long, action: Runnable) {
+            pending = action
+        }
+
+        override fun cancelSettle() {
+            pending = null
+        }
+
         fun fireSettle() = pending?.run() ?: Unit
     }
 
@@ -34,24 +40,25 @@ internal class FocalMomentTrackerTest {
         clock = Clock { 0L },
     )
 
+    // The tracker reads time from SystemClock.uptimeMillis; Robolectric keeps it paused until advance()
+    // moves it, so all vsync times are expressed relative to [start], captured before the clock moves.
+    private val start = SystemClock.uptimeMillis() * 1_000_000L
+
     @Test
     fun `after release the aftermath settles at the tighter threshold and emits on flush`() {
-        val start = nowNanos()
         tracker.onInteractionStart()
         assertTrue(scheduler.settleArmed)
 
-        redraw(vsyncNanos = start + 16_000_000L, jankNanos = 4_000_000L)
+        redraw(vsyncNanos = start + 16.ms, jankNanos = 4.ms)
         tracker.onInteractionEnd() // finger up -> 100ms threshold
 
         // 34ms since last activity: under the tight threshold, not settled
-        advance(50)
-        scheduler.fireSettle()
+        settleAfter(50)
         assertTrue("not settled yet", emitted.isEmpty())
         assertTrue(scheduler.settleArmed)
 
         // 134ms since last activity: past the tight threshold (a held finger would still wait on 500ms)
-        advance(100)
-        scheduler.fireSettle()
+        settleAfter(100)
         assertTrue("held, not emitted", emitted.isEmpty())
         assertFalse(scheduler.settleArmed)
 
@@ -64,19 +71,16 @@ internal class FocalMomentTrackerTest {
 
     @Test
     fun `a held finger uses the longer grace, not the tight threshold`() {
-        val start = nowNanos()
         tracker.onInteractionStart()
-        redraw(vsyncNanos = start + 16_000_000L)
+        redraw(vsyncNanos = start + 16.ms)
 
         // 134ms since activity: past the tight threshold but the finger is still down, so not settled
-        advance(150)
-        scheduler.fireSettle()
+        settleAfter(150)
         assertTrue("held finger uses the longer grace", scheduler.settleArmed)
         assertTrue(emitted.isEmpty())
 
         // 534ms since activity: past the held grace
-        advance(400)
-        scheduler.fireSettle()
+        settleAfter(400)
         assertFalse(scheduler.settleArmed)
 
         tracker.onScreenStop()
@@ -86,7 +90,6 @@ internal class FocalMomentTrackerTest {
 
     @Test
     fun `a touch move refreshes liveness and keeps a quiescent held focal moment open`() {
-        val start = nowNanos()
         tracker.onInteractionStart()
 
         // a move 400ms in (no redraws) keeps the finger "live"
@@ -94,26 +97,22 @@ internal class FocalMomentTrackerTest {
         tracker.onInteractionMove()
 
         // without the move this would have settled by 500ms; the move pushed the baseline out
-        advance(100) // now 500ms; 100ms since the move
-        scheduler.fireSettle()
+        settleAfter(100) // now 500ms; 100ms since the move
         assertTrue("not settled: the move refreshed liveness", scheduler.settleArmed)
         assertTrue(emitted.isEmpty())
 
         // settles 500ms after the move
-        advance(400) // now 900ms; 500ms since the move
-        scheduler.fireSettle()
+        settleAfter(400) // now 900ms; 500ms since the move
         assertFalse(scheduler.settleArmed)
     }
 
     @Test
     fun `a move after a settle flushes the buffered result and opens a fresh interaction`() {
-        val start = nowNanos()
         tracker.onInteractionStart()
-        redraw(vsyncNanos = start + 16_000_000L, jankNanos = 4_000_000L) // a frame so the flush emits
+        redraw(vsyncNanos = start + 16.ms, jankNanos = 4.ms) // a frame so the flush emits
 
         // no further activity: the held grace elapses and the focal moment enters held
-        advance(600)
-        scheduler.fireSettle()
+        settleAfter(600)
         assertFalse(scheduler.settleArmed)
         assertTrue("held, not yet emitted", emitted.isEmpty())
 
@@ -126,26 +125,22 @@ internal class FocalMomentTrackerTest {
 
     @Test
     fun `once the finger lifts, the tight threshold applies`() {
-        val start = nowNanos()
         tracker.onInteractionStart()
         tracker.onInteractionEnd()
 
         // 99ms: one ms short of the tight threshold (a held finger would wait 500ms)
-        advance(99)
-        scheduler.fireSettle()
+        settleAfter(99)
         assertTrue(scheduler.settleArmed)
 
         // 100ms: at the tight threshold -> held
-        advance(1)
-        scheduler.fireSettle()
+        settleAfter(1)
         assertFalse(scheduler.settleArmed)
     }
 
     @Test
     fun `a new screen interrupts the interaction immediately without opening a new focal moment`() {
-        val start = nowNanos()
         tracker.onInteractionStart()
-        redraw(vsyncNanos = start + 16_000_000L) // a frame so the interrupt emits
+        redraw(vsyncNanos = start + 16.ms) // a frame so the interrupt emits
         advance(40)
         tracker.onScreenStart()
 
@@ -157,13 +152,12 @@ internal class FocalMomentTrackerTest {
 
     @Test
     fun `a continuously redrawing interaction never caps`() {
-        val start = nowNanos()
         tracker.onInteractionStart()
 
-        var t = start + 16_000_000L
+        var t = start + 16.ms
         repeat(400) { // ~6.4s of unbroken frames, well past any settling cap
             redraw(vsyncNanos = t)
-            t += 16_000_000L
+            t += 16.ms
         }
 
         assertTrue("an active interaction has no cap", emitted.isEmpty())
@@ -172,9 +166,8 @@ internal class FocalMomentTrackerTest {
 
     @Test
     fun `pause interrupts an open interaction immediately`() {
-        val start = nowNanos()
         tracker.onInteractionStart()
-        redraw(vsyncNanos = start + 16_000_000L) // a frame so the interrupt emits
+        redraw(vsyncNanos = start + 16.ms) // a frame so the interrupt emits
         advance(30)
         tracker.onScreenStop()
 
@@ -186,20 +179,18 @@ internal class FocalMomentTrackerTest {
 
     @Test
     fun `a slow frame delivered after the settle is still counted, not dropped`() {
-        val start = nowNanos()
         tracker.onInteractionStart()
         tracker.onInteractionEnd() // finger up -> tight threshold
-        redraw(vsyncNanos = start + 16_000_000L) // last known frame
+        redraw(vsyncNanos = start + 16.ms) // last known frame
 
         // The main thread was blocked building a slow frame; the settle timeout fires before that
         // frame's metrics are delivered.
-        advance(200)
-        scheduler.fireSettle()
+        settleAfter(200)
         assertFalse("held, not emitted", scheduler.settleArmed)
         assertTrue(emitted.isEmpty())
 
         // the slow frame's metrics finally arrive (contiguous vsync) and wake the held tracker
-        tracker.onFrame(vsyncNanos = start + 20_000_000L, jankNanos = 8_000_000L)
+        redraw(vsyncNanos = start + 20.ms, jankNanos = 8.ms)
         assertTrue("resumed", scheduler.settleArmed)
 
         // it re-settles, and the flush includes the late frame's jank
@@ -213,18 +204,44 @@ internal class FocalMomentTrackerTest {
     }
 
     @Test
+    fun `an in-flight frame back-dates the start to its render dispatch, but ends at its visible vsync`() {
+        tracker.onInteractionStart() // focal moment opens here, at start (the touch-down)
+        tracker.onInteractionEnd() // finger up -> tight threshold
+
+        // A frame already being rendered when the user touched: its render was dispatched 30ms before the
+        // touch-down and it became visible 10ms after. Its jank is counted in full, so the moment must
+        // cover the whole render — back-dated to the dispatch — while ending at the visible vsync.
+        redraw(
+            vsyncNanos = start + 10.ms, // becomes visible 10ms in
+            jankNanos = 8.ms,
+            frameDispatchNanos = start - 30.ms, // render dispatched 30ms before the touch
+        )
+
+        settleAfter(200)
+        assertFalse("held", scheduler.settleArmed)
+
+        tracker.onScreenStop()
+        val result = emitted.single()
+        assertEquals(FocalOutcome.SETTLED, result.outcome)
+        // start back-dated 30ms to the dispatch, end at the frame's visible vsync 10ms in: 40ms total
+        assertEquals("duration spans the render dispatch through the frame's visibility", 40L, result.durationMs)
+        // the start epoch shifts back by the same 30ms (clock is fixed at 0), so the end (10ms) stays put
+        assertEquals(-30L, result.startTimeMs)
+        assertEquals("end time is the visible vsync, unaffected by the back-date", 10L, result.startTimeMs + result.durationMs)
+        assertTrue("the in-flight frame's jank is counted", result.normalizedDroppedFrames > 0.0)
+    }
+
+    @Test
     fun `a frame after a real idle gap flushes the buffered settle and discards the orphan frame`() {
-        val start = nowNanos()
         tracker.onInteractionStart()
         tracker.onInteractionEnd()
-        redraw(vsyncNanos = start + 16_000_000L)
-        advance(120) // past the tight threshold -> held
-        scheduler.fireSettle()
+        redraw(vsyncNanos = start + 16.ms)
+        settleAfter(120) // past the tight threshold -> held
         assertTrue(emitted.isEmpty())
         assertFalse(scheduler.settleArmed)
 
         // a redraw long after the gap (e.g. an async repaint with no trigger) flushes the settle
-        tracker.onFrame(vsyncNanos = start + 5_000_000_000L, jankNanos = 4_000_000L)
+        redraw(vsyncNanos = start + 5000.ms, jankNanos = 4.ms)
 
         val result = emitted.single()
         assertEquals(FocalOutcome.SETTLED, result.outcome)
@@ -235,11 +252,10 @@ internal class FocalMomentTrackerTest {
 
     @Test
     fun `frames delivered before a focal moment opens are ignored`() {
-        val start = nowNanos()
         // a large-jank frame before any focal moment: must be dropped, not counted
-        tracker.onFrame(vsyncNanos = start, jankNanos = 1_000_000_000L)
+        redraw(vsyncNanos = start, jankNanos = 1000.ms)
         tracker.onInteractionStart()
-        redraw(vsyncNanos = start + 10_000_000L, jankNanos = 5_000_000L)
+        redraw(vsyncNanos = start + 10.ms, jankNanos = 5.ms)
         tracker.onScreenStop()
 
         // only the in-focal-moment frame (~0.3) contributes; the pre-open 1s frame would have added ~60
@@ -248,21 +264,29 @@ internal class FocalMomentTrackerTest {
 
     @Test
     fun `jank is forwarded per frame and normalized into the result`() {
-        val start = nowNanos()
         tracker.onInteractionStart()
-        redraw(vsyncNanos = start + 1_000_000L, jankNanos = 1_000_000_000L / 60) // one dropped 60fps frame -> 1.0
+        redraw(vsyncNanos = start + 1.ms, jankNanos = 1000.ms / 60) // one dropped 60fps frame -> 1.0
         tracker.onScreenStop()
 
         assertEquals(1.0, emitted.single().normalizedDroppedFrames, 0.01)
     }
 
-    // The tracker reads time from SystemClock.uptimeMillis; Robolectric keeps it paused until advance()
-    // moves it, so vsync times are expressed relative to nowNanos().
-    private fun nowNanos(): Long = SystemClock.uptimeMillis() * 1_000_000L
     private fun advance(millis: Long) = ShadowSystemClock.advanceBy(Duration.ofMillis(millis))
 
-    /** A frame delivered on the Vitals thread; processed synchronously. */
-    private fun redraw(vsyncNanos: Long, jankNanos: Long = 0L) {
-        tracker.onFrame(vsyncNanos, jankNanos)
+    /** Advances the clock by [millis] and then fires the pending settle check. */
+    private fun settleAfter(millis: Long) {
+        advance(millis)
+        scheduler.fireSettle()
     }
+
+    /**
+     * A frame delivered on the Vitals thread; processed synchronously. [frameDispatchNanos] defaults to
+     * the vsync (an instantaneous frame); pass an earlier value to model a frame whose render took time.
+     */
+    private fun redraw(vsyncNanos: Long, jankNanos: Long = 0L, frameDispatchNanos: Long = vsyncNanos) {
+        tracker.onFrame(vsyncNanos, frameDispatchNanos, jankNanos)
+    }
+
+    /** Milliseconds expressed in the nanosecond base the tracker works in. */
+    private val Int.ms: Long get() = this * 1_000_000L
 }

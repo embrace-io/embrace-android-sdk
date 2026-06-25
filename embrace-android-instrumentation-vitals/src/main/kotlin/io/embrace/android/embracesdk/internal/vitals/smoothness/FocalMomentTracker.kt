@@ -33,6 +33,7 @@ internal class FocalMomentTracker(
     private var capturing = false
     private var held = false
     private var focalMomentStartNanos = 0L
+    private var focalMomentStartEpochMs = 0L
     private var lastRedrawVsyncNanos = 0L
     private var interacting = false
     private var lastMoveNanos = 0L
@@ -54,16 +55,16 @@ internal class FocalMomentTracker(
     override fun onScreenStop() = scheduler.post(screenChangeRunnable)
 
     @WorkerThread
-    override fun onFrame(vsyncNanos: Long, jankNanos: Long) {
+    override fun onFrame(vsyncNanos: Long, frameDispatchNanos: Long, jankNanos: Long) {
         if (capturing) {
-            recordFrame(vsyncNanos, jankNanos)
+            recordFrame(vsyncNanos, frameDispatchNanos, jankNanos)
             armSettle()
         } else if (held) {
             if (vsyncNanos - bufferedEndNanos < idleThresholdNanos) {
                 // Frame is contiguous with the buffered settle: resume capturing so its jank is included.
                 held = false
                 capturing = true
-                recordFrame(vsyncNanos, jankNanos)
+                recordFrame(vsyncNanos, frameDispatchNanos, jankNanos)
                 armSettle()
             } else {
                 // Idle gap before this frame: emit the buffered settle and discard the orphan frame.
@@ -109,20 +110,31 @@ internal class FocalMomentTracker(
     private fun startFocalMoment() {
         val now = nowNanos()
         focalMomentStartNanos = now
+        focalMomentStartEpochMs = clock.now()
         lastRedrawVsyncNanos = now
         held = false
         interacting = true
         lastMoveNanos = now
         capturing = true
-        reporter.onFocalMomentStart(clock.now())
+        reporter.onFocalMomentStart()
         armSettle()
     }
 
     @WorkerThread
-    private fun recordFrame(vsyncNanos: Long, jankNanos: Long) {
+    private fun recordFrame(vsyncNanos: Long, frameDispatchNanos: Long, jankNanos: Long) {
+        // The frame becomes visible at its vsync; that's when the user sees it, so the moment runs to there.
         if (vsyncNanos > lastRedrawVsyncNanos) {
             lastRedrawVsyncNanos = vsyncNanos
         }
+
+        // A jank frame is counted in full, so the moment must also cover the render that produced it. We
+        // back-date the start to when the engine dispatched the frame's work, if that predates the
+        // moment, shifting the reported start epoch by the same amount so the end stays put.
+        if (frameDispatchNanos < focalMomentStartNanos) {
+            focalMomentStartEpochMs -= (focalMomentStartNanos - frameDispatchNanos) / NANOS_PER_MS
+            focalMomentStartNanos = frameDispatchNanos
+        }
+
         reporter.onFocalMomentFrame(jankNanos)
     }
 
@@ -143,6 +155,7 @@ internal class FocalMomentTracker(
         if (!capturing) {
             return
         }
+
         val lastActivity = lastActivityNanos()
         if (nowNanos() - lastActivity >= currentThresholdNanos()) {
             enterHeld(endNanos = lastActivity)
@@ -176,10 +189,12 @@ internal class FocalMomentTracker(
         held = false
         scheduler.cancelSettle()
         val durationMs = (endNanos - focalMomentStartNanos) / NANOS_PER_MS
-        reporter.onFocalMomentEnd(outcome, durationMs)
+        reporter.onFocalMomentEnd(outcome, focalMomentStartEpochMs, durationMs)
     }
 
-    /** Buffers a tentative settle and awaits the emit event. */
+    /**
+     * Buffers a tentative settle and awaits the emit event.
+     */
     @WorkerThread
     private fun enterHeld(endNanos: Long) {
         bufferedEndNanos = endNanos

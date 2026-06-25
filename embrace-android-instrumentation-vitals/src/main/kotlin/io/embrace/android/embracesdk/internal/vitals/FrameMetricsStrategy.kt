@@ -7,9 +7,10 @@ import androidx.annotation.RequiresApi
 import androidx.annotation.WorkerThread
 
 /**
- * Extracts `(vsyncNanos, jankNanos)` from a [FrameMetrics]. The concrete strategy is selected once by
- * API level via [create]. `vsyncNanos` is in Choreographer's `frameTimeNanos` base; `jankNanos` is how
- * far the frame ran past its render budget, or 0 if it met it.
+ * Extracts `(vsyncNanos, frameDispatchNanos, jankNanos)` from a [FrameMetrics]. The concrete strategy is
+ * selected once by API level via [create]. `vsyncNanos` is in Choreographer's `frameTimeNanos` base — when
+ * the frame became visible; `frameDispatchNanos` is when its render work was dispatched, in the same base;
+ * `jankNanos` is how far the frame ran past its render budget, or 0 if it met it.
  */
 @RequiresApi(Build.VERSION_CODES.N)
 internal interface FrameMetricsStrategy {
@@ -19,6 +20,14 @@ internal interface FrameMetricsStrategy {
 
     @WorkerThread
     fun jankNanos(frameMetrics: FrameMetrics): Long
+
+    /**
+     * When the rendering engine first dispatched work to build the frame, in the same base as
+     * [vsyncNanos]: `vsyncNanos - (FrameMetrics.TOTAL_DURATION)`.
+     */
+    @WorkerThread
+    fun frameDispatchNanos(frameMetrics: FrameMetrics): Long =
+        vsyncNanos(frameMetrics) - frameMetrics.getMetric(FrameMetrics.TOTAL_DURATION)
 
     /**
      * Updates the display refresh interval used as the frame budget for devices that don't include the [FrameMetrics.DEADLINE]

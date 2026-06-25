@@ -12,13 +12,11 @@ internal class SmoothnessReporter(
     private val emit: (SmoothnessResult) -> Unit,
 ) {
 
-    private var startTimeMs = 0L
     private var frameCount = 0
     private var normalizedDroppedFrames = 0.0
 
     @WorkerThread
-    fun onFocalMomentStart(startTimeMs: Long) {
-        this.startTimeMs = startTimeMs
+    fun onFocalMomentStart() {
         frameCount = 0
         normalizedDroppedFrames = 0.0
     }
@@ -30,7 +28,7 @@ internal class SmoothnessReporter(
     }
 
     @WorkerThread
-    fun onFocalMomentEnd(outcome: FocalOutcome, durationMs: Long) {
+    fun onFocalMomentEnd(outcome: FocalOutcome, startTimeMs: Long, durationMs: Long) {
         if (frameCount == 0) {
             // No frames rendered: nothing to report.
             return

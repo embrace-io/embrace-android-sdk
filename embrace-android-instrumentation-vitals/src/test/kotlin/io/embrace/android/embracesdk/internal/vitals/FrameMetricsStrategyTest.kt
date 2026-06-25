@@ -79,6 +79,22 @@ internal class FrameMetricsStrategyTest {
 
     @Config(sdk = [O, S])
     @Test
+    fun `at API 26 and above the dispatch time is the vsync less the full render duration`() {
+        // A stuck frame: visible at vsync 600ms after a 500ms render -> dispatched at 100ms.
+        val stuck = frameMetrics(vsyncNanos = 600_000_000L, totalDurationNanos = 500_000_000L)
+        assertEquals(100_000_000L, strategy().frameDispatchNanos(stuck))
+    }
+
+    @Config(sdk = [N])
+    @Test
+    fun `below API 26 the dispatch time is the metrics-delivery time less the render duration`() {
+        // No real vsync exists, so it is derived from the delivery time (the paused Robolectric clock).
+        val expected = SystemClock.uptimeMillis() * 1_000_000L - 500_000_000L
+        assertEquals(expected, strategy().frameDispatchNanos(frameMetrics(totalDurationNanos = 500_000_000L)))
+    }
+
+    @Config(sdk = [O, S])
+    @Test
     fun `from API 26 a first-draw frame reports zero jank — it is the baseline, not a dropped frame`() {
         // A long frame that would otherwise be janky, but flagged as first-draw, reports zero jank.
         val firstDraw = frameMetrics(totalDurationNanos = 100_000_000L, firstDraw = true, deadlineNanos = 16_666_666L)

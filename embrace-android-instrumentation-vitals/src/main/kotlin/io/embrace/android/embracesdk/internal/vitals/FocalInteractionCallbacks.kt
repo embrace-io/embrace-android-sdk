@@ -6,9 +6,12 @@ package io.embrace.android.embracesdk.internal.vitals
 internal interface FocalInteractionCallbacks {
 
     /**
-     * A frame was redrawn: [vsyncNanos] is its vsync time, [jankNanos] how far it overran its budget.
+     * A frame was redrawn: [vsyncNanos] is its vsync — when it became visible to the user;
+     * [frameDispatchNanos] is when the rendering engine first dispatched work to build it (its vsync less
+     * the full time it took to produce — far before the vsync for a stuck frame); and [jankNanos] is how
+     * far it overran its budget.
      */
-    fun onFrame(vsyncNanos: Long, jankNanos: Long)
+    fun onFrame(vsyncNanos: Long, frameDispatchNanos: Long, jankNanos: Long)
 
     /**
      * A new screen began (Activity resumed).

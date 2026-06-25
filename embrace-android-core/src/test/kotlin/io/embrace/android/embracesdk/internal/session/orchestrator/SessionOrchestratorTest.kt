@@ -456,6 +456,53 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
+    fun `user session last activity time is updated every minute for default inactivity timeout`() {
+        createOrchestrator(startingAppState = AppState.FOREGROUND)
+        val initial = activeUserSession().lastActivityMs
+
+        clock.tick(59_000)
+        sessionCacheExecutor.runCurrentlyBlocked()
+        assertEquals(initial, activeUserSession().lastActivityMs)
+
+        clock.tick(2_000)
+        sessionCacheExecutor.runCurrentlyBlocked()
+        assertEquals(clock.now(), activeUserSession().lastActivityMs)
+    }
+
+    @Test
+    fun `user session last activity time is updated every 20s for short inactivity timeouts`() {
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = sessionLimitsConfigService(customInactivityTimeoutMs = 60_000L),
+        )
+        val initial = activeUserSession().lastActivityMs
+
+        clock.tick(19_000L)
+        sessionCacheExecutor.runCurrentlyBlocked()
+        assertEquals(initial, activeUserSession().lastActivityMs)
+
+        clock.tick(2_000L)
+        sessionCacheExecutor.runCurrentlyBlocked()
+        assertEquals(clock.now(), activeUserSession().lastActivityMs)
+    }
+
+    @Test
+    fun `user session last activity time does not update when app in the background`() {
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            configService = FakeConfigService(
+                backgroundActivityBehavior = backgroundActivityBehavior(true)
+            ),
+        )
+        orchestrator.onBackground()
+        val backgroundedAt = activeUserSession().lastActivityMs
+        clock.tick(2 * 60_000L)
+        orchestrator.onSessionDataUpdate()
+        sessionCacheExecutor.runCurrentlyBlocked()
+        assertEquals(backgroundedAt, activeUserSession().lastActivityMs)
+    }
+
+    @Test
     fun `user session max duration boundary`() {
         createOrchestrator(
             startingAppState = AppState.FOREGROUND,

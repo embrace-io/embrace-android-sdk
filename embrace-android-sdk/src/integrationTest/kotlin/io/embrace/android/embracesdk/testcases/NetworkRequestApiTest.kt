@@ -390,6 +390,7 @@ internal class NetworkRequestApiTest {
                         HttpAttributes.HTTP_REQUEST_METHOD to expectedRequest.httpMethod,
                         EmbNetworkRequestAttributes.EMB_TRACE_ID to expectedRequest.traceId,
                         EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT to expectedRequest.w3cTraceparent,
+                        EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY to expectedRequest.w3cTraceparent?.let { "true" },
                         HttpAttributes.HTTP_RESPONSE_STATUS_CODE to when {
                             completed -> expectedRequest.responseCode
                             else -> null

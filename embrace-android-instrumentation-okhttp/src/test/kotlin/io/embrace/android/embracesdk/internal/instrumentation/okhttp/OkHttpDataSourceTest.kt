@@ -368,6 +368,7 @@ internal class OkHttpDataSourceTest {
             val attrs = span.attributes
             assertEquals("200", attrs[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
             assertNull(attrs[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
+            assertNull(attrs[EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY])
         }
     }
 
@@ -381,6 +382,7 @@ internal class OkHttpDataSourceTest {
             val traceparent = span.asW3cTraceparent()
             assertEquals("200", attrs[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
             assertEquals(traceparent, attrs[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
+            assertEquals("true", attrs[EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY])
             assertEquals(traceparent, response.networkResponse?.request?.header(TRACEPARENT_HEADER))
         }
     }
@@ -396,6 +398,7 @@ internal class OkHttpDataSourceTest {
             val attrs = span.attributes
             assertNull(attrs[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
             assertEquals(span.asW3cTraceparent(), attrs[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
+            assertEquals("true", attrs[EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY])
         }
     }
 
@@ -408,6 +411,7 @@ internal class OkHttpDataSourceTest {
             val attrs = span.attributes
             assertNull(attrs[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
             assertEquals(span.asW3cTraceparent(), attrs[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
+            assertEquals("true", attrs[EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY])
         }
     }
 
@@ -422,6 +426,7 @@ internal class OkHttpDataSourceTest {
         assertNetworkRequestReceived { span ->
             assertEquals(appTraceparent, response.networkResponse?.request?.header(TRACEPARENT_HEADER))
             assertEquals(span.asW3cTraceparent(), span.attributes[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
+            assertEquals("true", span.attributes[EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY])
         }
     }
 
@@ -434,6 +439,7 @@ internal class OkHttpDataSourceTest {
         assertNetworkRequestReceived { span ->
             assertEquals(span.asW3cTraceparent(), response.networkResponse?.request?.header(TRACEPARENT_HEADER))
             assertNull(span.attributes[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
+            assertNull(span.attributes[EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY])
         }
     }
 
@@ -452,6 +458,7 @@ internal class OkHttpDataSourceTest {
         assertNetworkRequestReceived { span ->
             assertNull(response.networkResponse?.request?.header(TRACEPARENT_HEADER))
             assertNull(span.attributes[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
+            assertNull(span.attributes[EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY])
         }
     }
 

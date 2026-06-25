@@ -52,7 +52,7 @@ internal class NativeCrashHandlerInstallerImpl(
                 mainThreadHandler.postAtFrontOfQueue { installSignals() }
                 mainThreadHandler.postDelayed(
                     Runnable(::checkSignalHandlersOverwritten),
-                    HANDLER_CHECK_DELAY_MS
+                    HANDLER_CHECK_DELAY_MS,
                 )
                 args.registerSessionPartChangeListener { updateSessionIds() }
             }
@@ -68,7 +68,7 @@ internal class NativeCrashHandlerInstallerImpl(
         delegate.onSessionChange(
             sessionPartId,
             userSessionId,
-            createNativeReportPath(sessionPartId, userSessionId)
+            createNativeReportPath(sessionPartId, userSessionId),
         )
     }
 
@@ -108,7 +108,7 @@ internal class NativeCrashHandlerInstallerImpl(
             delegate.installSignalHandlers(
                 markerFilePath,
                 reportId,
-                devLogging
+                devLogging,
             )
         }
     }

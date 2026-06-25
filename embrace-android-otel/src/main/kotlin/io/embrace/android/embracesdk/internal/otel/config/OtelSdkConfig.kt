@@ -88,7 +88,7 @@ class OtelSdkConfig(
         EmbraceSpanProcessor(
             sessionIdsProvider,
             processIdentifier,
-            spanExporter
+            spanExporter,
         )
     }
 

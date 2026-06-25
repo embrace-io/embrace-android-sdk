@@ -14,7 +14,7 @@ interface NetworkService {
 
     fun postNdkHandshake(
         appId: String,
-        handshake: NdkUploadHandshakeRequest
+        handshake: NdkUploadHandshakeRequest,
     ): HttpCallResult
 
     fun uploadFile(params: RequestParams, file: File): HttpCallResult

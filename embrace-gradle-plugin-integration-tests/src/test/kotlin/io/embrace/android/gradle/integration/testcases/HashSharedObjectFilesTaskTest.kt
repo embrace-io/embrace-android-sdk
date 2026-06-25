@@ -51,9 +51,9 @@ class HashSharedObjectFilesTaskTest {
             assertions = { projectDir ->
                 assertEquals(
                     projectDir.file("expectedOutput.json").bufferedReader().use { it.readText() },
-                    projectDir.file("build/output.json").bufferedReader().use { it.readText() }
+                    projectDir.file("build/output.json").bufferedReader().use { it.readText() },
                 )
-            }
+            },
         )
     }
 
@@ -77,7 +77,7 @@ class HashSharedObjectFilesTaskTest {
             expectedExceptionMessage = "Shared object files not found",
             assertions = {
                 verifyNoUploads()
-            }
+            },
         )
     }
 
@@ -95,7 +95,7 @@ class HashSharedObjectFilesTaskTest {
             expectedExceptionMessage = "Compressed shared object files directory does not contain any architecture directories",
             assertions = {
                 verifyNoUploads()
-            }
+            },
         )
     }
 
@@ -113,7 +113,7 @@ class HashSharedObjectFilesTaskTest {
             },
             assertions = {
                 verifyNoUploads()
-            }
+            },
         )
     }
 }

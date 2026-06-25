@@ -8,7 +8,7 @@ public sealed class SessionStateEvent(
     /**
      * ID representing the user session.
      */
-    public val userSessionId: String
+    public val userSessionId: String,
 ) {
 
     /**

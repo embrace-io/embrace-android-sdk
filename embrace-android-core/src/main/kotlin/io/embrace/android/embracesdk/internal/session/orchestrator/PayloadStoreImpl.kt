@@ -34,8 +34,8 @@ internal class PayloadStoreImpl(
             intake = envelope,
             metadata = createMetadata(
                 type = SupportedEnvelopeType.SESSION,
-                payloadType = PayloadType.SESSION
-            )
+                payloadType = PayloadType.SESSION,
+            ),
         )
     }
 
@@ -45,8 +45,8 @@ internal class PayloadStoreImpl(
             metadata = createMetadata(
                 type = SupportedEnvelopeType.SESSION,
                 complete = false,
-                payloadType = PayloadType.SESSION
-            )
+                payloadType = PayloadType.SESSION,
+            ),
         )
     }
 
@@ -59,8 +59,8 @@ internal class PayloadStoreImpl(
             metadata = createMetadata(
                 type = type,
                 payloadType = payloadType,
-                payloadTypesHeader = payloadTypesHeader
-            )
+                payloadTypesHeader = payloadTypesHeader,
+            ),
         )
     }
 
@@ -69,8 +69,8 @@ internal class PayloadStoreImpl(
             intake = envelope,
             metadata = createMetadata(
                 type = SupportedEnvelopeType.ATTACHMENT,
-                payloadType = PayloadType.ATTACHMENT
-            )
+                payloadType = PayloadType.ATTACHMENT,
+            ),
         )
     }
 
@@ -80,8 +80,8 @@ internal class PayloadStoreImpl(
             metadata = createMetadata(
                 type = SupportedEnvelopeType.CRASH,
                 complete = false,
-                payloadType = PayloadType.UNKNOWN
-            )
+                payloadType = PayloadType.UNKNOWN,
+            ),
         )
     }
 
@@ -129,7 +129,7 @@ internal class PayloadStoreImpl(
      * Returns the payload type for the given [Envelope].
      */
     private fun getPayloadType(envelope: Envelope<LogPayload>) = fromValue(
-        envelope.data.logs?.firstOrNull()?.attributes?.findAttributeValue("emb.type")
+        envelope.data.logs?.firstOrNull()?.attributes?.findAttributeValue("emb.type"),
     )
 
     /**

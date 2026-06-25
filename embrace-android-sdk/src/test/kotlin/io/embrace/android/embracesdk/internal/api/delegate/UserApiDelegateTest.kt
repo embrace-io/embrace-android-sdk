@@ -31,7 +31,7 @@ internal class UserApiDelegateTest {
                 FakeEssentialServiceModule().apply {
                     fakeUserService = userService as FakeUserService
                 }
-            }
+            },
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
         val sdkCallChecker = SdkCallChecker(FakeInternalLogger(), FakeTelemetryService())

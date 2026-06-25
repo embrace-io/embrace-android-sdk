@@ -33,7 +33,7 @@ class EmbraceGradlePluginDelegate {
         val embraceVariantConfigurationBuilder =
             EmbraceVariantConfigurationBuilder(
                 project.layout.projectDirectory,
-                project.providers
+                project.providers,
             )
 
         val taskRegistrar = TaskRegistrar(
@@ -41,7 +41,7 @@ class EmbraceGradlePluginDelegate {
             behavior,
             embraceVariantConfigurationBuilder,
             variantConfigurationsListProperty,
-            agpWrapper
+            agpWrapper,
         )
 
         taskRegistrar.registerTasks()
@@ -77,7 +77,7 @@ class EmbraceGradlePluginDelegate {
         } catch (e: Throwable) {
             logger.info(
                 "There was an exception while checking if desugaring is required. " +
-                    "We will consider desugaring is not required. Build will continue normally."
+                    "We will consider desugaring is not required. Build will continue normally.",
             )
         }
 
@@ -95,7 +95,7 @@ class EmbraceGradlePluginDelegate {
                     "}\n" +
                     "in your app\'s module build.gradle file. Use a newer version of the desugaring library if required.\n" +
                     "You can find more info at: \n" +
-                    "https://developer.android.com/studio/write/java8-support#library-desugaring"
+                    "https://developer.android.com/studio/write/java8-support#library-desugaring",
             )
         }
     }
@@ -113,7 +113,7 @@ class EmbraceGradlePluginDelegate {
                         "gradle.properties.\nAlternatively you can set your minSdk to 26 or higher.\n" +
                         "This avoids a desugaring bug in old AGP versions that will lead to runtime crashes on old devices.\n" +
                         "For the full context for this workaround, please see the following issue:" +
-                        " https://issuetracker.google.com/issues/230454566#comment18"
+                        " https://issuetracker.google.com/issues/230454566#comment18",
                 )
             }
         }

@@ -31,5 +31,5 @@ enum class SessionPartSnapshotType(
     /**
      * The end session is being constructed because of a JVM crash.
      */
-    JVM_CRASH(endedCleanly = false, forceQuit = false)
+    JVM_CRASH(endedCleanly = false, forceQuit = false),
 }

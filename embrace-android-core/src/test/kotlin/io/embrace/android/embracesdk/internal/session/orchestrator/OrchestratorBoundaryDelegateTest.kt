@@ -14,7 +14,7 @@ internal class OrchestratorBoundaryDelegateTest {
     fun setUp() {
         userSessionPropertiesService = FakeUserSessionPropertiesService()
         delegate = OrchestratorBoundaryDelegate(
-            userSessionPropertiesService
+            userSessionPropertiesService,
         )
     }
 

@@ -10,5 +10,5 @@ enum class HttpMethod {
     CONNECT,
     OPTIONS,
     TRACE,
-    PATCH
+    PATCH,
 }

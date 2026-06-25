@@ -225,7 +225,7 @@ internal class EmbraceUserService(
             userId = "",
             email = "",
             username = "",
-            personas = emptySet()
+            personas = emptySet(),
         )
 
         const val USER_IDENTIFIER_KEY = "io.embrace.userid"

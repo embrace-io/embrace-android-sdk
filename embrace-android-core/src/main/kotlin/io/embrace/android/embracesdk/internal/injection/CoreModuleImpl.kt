@@ -29,9 +29,9 @@ class CoreModuleImpl(
     override val store: KeyValueStore by singleton {
         SharedPrefsStore(
             PreferenceManager.getDefaultSharedPreferences(
-                context
+                context,
             ),
-            initModule.jsonSerializer
+            initModule.jsonSerializer,
         )
     }
 

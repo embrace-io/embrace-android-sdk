@@ -45,7 +45,7 @@ internal class EnvelopeResourceSourceImplTest {
             FakeDevice(),
             "",
             53,
-            { "fakeReactNativeBundleId" }
+            { "fakeReactNativeBundleId" },
         )
         val envelope = source.getEnvelopeResource()
 

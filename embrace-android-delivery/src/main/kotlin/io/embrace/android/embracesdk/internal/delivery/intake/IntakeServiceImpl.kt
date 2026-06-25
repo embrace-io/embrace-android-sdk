@@ -91,7 +91,7 @@ class IntakeServiceImpl(
             processIntake(
                 intake = intake,
                 metadata = metadata,
-                staleEntry = staleEntry
+                staleEntry = staleEntry,
             )
         }
 

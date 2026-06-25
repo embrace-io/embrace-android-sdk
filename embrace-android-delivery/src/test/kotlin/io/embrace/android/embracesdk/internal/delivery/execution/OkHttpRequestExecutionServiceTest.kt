@@ -89,7 +89,7 @@ class OkHttpRequestExecutionServiceTest {
         val result = requestExecutionService.attemptHttpRequest(
             payloadStream = { testPostBody.byteInputStream() },
             envelopeType = SupportedEnvelopeType.SESSION,
-            payloadType = PayloadType.SESSION.value
+            payloadType = PayloadType.SESSION.value,
         )
 
         // then the result should be incomplete
@@ -106,7 +106,7 @@ class OkHttpRequestExecutionServiceTest {
         val result = requestExecutionService.attemptHttpRequest(
             payloadStream = { testPostBody.byteInputStream() },
             envelopeType = SupportedEnvelopeType.SESSION,
-            payloadType = PayloadType.SESSION.value
+            payloadType = PayloadType.SESSION.value,
         )
 
         // then the result should be successful
@@ -122,7 +122,7 @@ class OkHttpRequestExecutionServiceTest {
         val result = requestExecutionService.attemptHttpRequest(
             payloadStream = { testPostBody.byteInputStream() },
             envelopeType = SupportedEnvelopeType.SESSION,
-            payloadType = PayloadType.SESSION.value
+            payloadType = PayloadType.SESSION.value,
         )
 
         // then the result should be other
@@ -135,14 +135,14 @@ class OkHttpRequestExecutionServiceTest {
         server.enqueue(
             MockResponse()
                 .setResponseCode(429)
-                .setHeaders(mapOf("Retry-After" to "10").toHeaders())
+                .setHeaders(mapOf("Retry-After" to "10").toHeaders()),
         )
 
         // when attempting to make a request
         val result = requestExecutionService.attemptHttpRequest(
             payloadStream = { testPostBody.byteInputStream() },
             envelopeType = SupportedEnvelopeType.SESSION,
-            payloadType = PayloadType.SESSION.value
+            payloadType = PayloadType.SESSION.value,
         )
 
         // then the result should be too many requests
@@ -159,7 +159,7 @@ class OkHttpRequestExecutionServiceTest {
         val result = requestExecutionService.attemptHttpRequest(
             payloadStream = { testPostBody.byteInputStream() },
             envelopeType = SupportedEnvelopeType.SESSION,
-            payloadType = PayloadType.SESSION.value
+            payloadType = PayloadType.SESSION.value,
         )
 
         // then the result should be incomplete
@@ -175,14 +175,14 @@ class OkHttpRequestExecutionServiceTest {
         server.enqueue(
             MockResponse()
                 .setResponseCode(500)
-                .setHeaders(mapOf("custom-error-header" to "ouch").toHeaders())
+                .setHeaders(mapOf("custom-error-header" to "ouch").toHeaders()),
         )
 
         // when attempting to make a request
         val result = requestExecutionService.attemptHttpRequest(
             payloadStream = { testPostBody.byteInputStream() },
             envelopeType = SupportedEnvelopeType.SESSION,
-            payloadType = PayloadType.SESSION.value
+            payloadType = PayloadType.SESSION.value,
         )
 
         // then the result should be failure
@@ -199,7 +199,7 @@ class OkHttpRequestExecutionServiceTest {
         requestExecutionService.attemptHttpRequest(
             payloadStream = { testPostBody.byteInputStream() },
             envelopeType = SupportedEnvelopeType.SESSION,
-            payloadType = PayloadType.SESSION.value
+            payloadType = PayloadType.SESSION.value,
         )
 
         // then the request should include the expected headers
@@ -223,7 +223,7 @@ class OkHttpRequestExecutionServiceTest {
         requestExecutionService.attemptHttpRequest(
             payloadStream = { testPostBody.byteInputStream() },
             envelopeType = SupportedEnvelopeType.LOG,
-            payloadType = PayloadType.AEI.value
+            payloadType = PayloadType.AEI.value,
         )
 
         // then the request should include the expected headers

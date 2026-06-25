@@ -80,7 +80,7 @@ internal class SpanServiceImplTest {
     @Test
     fun `create trace that is internally logged but public`() {
         val embraceSpan = checkNotNull(
-            spansService.createSpan(name = "test-span", internal = true, private = false)
+            spansService.createSpan(name = "test-span", internal = true, private = false),
         )
         assertNull(embraceSpan.parent)
         assertTrue(embraceSpan.start())
@@ -93,7 +93,7 @@ internal class SpanServiceImplTest {
     @Test
     fun `create trace that is private but not considered internally logged`() {
         val embraceSpan = checkNotNull(
-            spansService.createSpan(name = "test-span", internal = false, private = true)
+            spansService.createSpan(name = "test-span", internal = false, private = true),
         )
         assertNull(embraceSpan.parent)
         assertTrue(embraceSpan.start())
@@ -118,7 +118,7 @@ internal class SpanServiceImplTest {
             spansService.createSpan(
                 name = "test-span",
                 type = EmbType.Performance.Default,
-            )
+            ),
         )
         assertTrue(embraceSpan.start())
         assertTrue(embraceSpan.stop())
@@ -183,7 +183,7 @@ internal class SpanServiceImplTest {
                 parent = parent,
                 startTimeMs = childStartTimeMs,
                 type = EmbType.Ux.View,
-            )
+            ),
         )
         clock.tick(40L)
         val childSpanEndTimeMs = clock.now()
@@ -214,7 +214,7 @@ internal class SpanServiceImplTest {
         val expectedType = EmbType.Performance.Default
         val expectedAttributes = mapOf(
             Pair("attribute1", "value1"),
-            Pair("attribute2", "value2")
+            Pair("attribute2", "value2"),
         )
         val expectedEvents = listOfNotNull(
             EmbraceSpanEvent.create(name = "event1", timestampMs = 1_000_000L.nanosToMillis(), expectedAttributes),
@@ -257,7 +257,7 @@ internal class SpanServiceImplTest {
                 startTimeMs = expectedStartTimeMs,
                 endTimeMs = expectedEndTimeMs,
                 parent = parentSpan,
-            )
+            ),
         )
 
         with(verifyAndReturnSoleCompletedSpan("emb-$expectedName")) {
@@ -282,7 +282,7 @@ internal class SpanServiceImplTest {
                     startTimeMs = 0,
                     endTimeMs = 1,
                     errorCode = errorCode,
-                )
+                ),
             )
             with(verifyAndReturnSoleCompletedSpan("emb-test${errorCode.name}")) {
                 assertError(errorCode)
@@ -298,7 +298,7 @@ internal class SpanServiceImplTest {
                 name = "test-pan",
                 startTimeMs = 500,
                 endTimeMs = 499,
-            )
+            ),
         )
     }
 
@@ -372,7 +372,7 @@ internal class SpanServiceImplTest {
                 startTimeMs = 100L,
                 endTimeMs = 200L,
                 internal = false,
-            )
+            ),
         )
         assertNotNull(spansService.recordSpan(name = TOO_LONG_SPAN_NAME, internal = false) { 1 })
         assertEquals(2, spanSink.completedSpans().size)
@@ -384,7 +384,7 @@ internal class SpanServiceImplTest {
                 startTimeMs = 100L,
                 endTimeMs = 200L,
                 internal = false,
-            )
+            ),
         )
         assertEquals(4, spanSink.completedSpans().size)
     }
@@ -398,7 +398,7 @@ internal class SpanServiceImplTest {
                 startTimeMs = 100L,
                 endTimeMs = 200L,
                 internal = true,
-            )
+            ),
         )
         assertTrue(
             spansService.recordCompletedSpan(
@@ -406,8 +406,8 @@ internal class SpanServiceImplTest {
                 startTimeMs = 100L,
                 endTimeMs = 200L,
                 internal = true,
-                attributes = tooBigSystemAttributes
-            )
+                attributes = tooBigSystemAttributes,
+            ),
         )
         assertTrue(
             spansService.recordCompletedSpan(
@@ -415,19 +415,19 @@ internal class SpanServiceImplTest {
                 startTimeMs = 100L,
                 endTimeMs = 200L,
                 internal = true,
-                events = tooBigSystemEvents
-            )
+                events = tooBigSystemEvents,
+            ),
         )
         assertNotNull(
             spansService.recordSpan(name = TOO_LONG_INTERNAL_SPAN_NAME, internal = true) {
                 1
-            }
+            },
         )
         assertNotNull(spansService.createSpan(name = MAX_LENGTH_INTERNAL_SPAN_NAME, internal = true))
         assertNotNull(
             spansService.recordSpan(name = MAX_LENGTH_INTERNAL_SPAN_NAME, internal = true) {
                 2
-            }
+            },
         )
         assertTrue(
             spansService.recordCompletedSpan(
@@ -436,8 +436,8 @@ internal class SpanServiceImplTest {
                 endTimeMs = 200L,
                 internal = true,
                 attributes = maxSizeSystemAttributes,
-                events = maxSizeSystemEvents
-            )
+                events = maxSizeSystemEvents,
+            ),
         )
         val completedSpans = spanSink.completedSpans()
         assertEquals(6, completedSpans.size)
@@ -454,7 +454,7 @@ internal class SpanServiceImplTest {
                 endTimeMs = 200L,
                 internal = false,
                 events = tooBigCustomEvents,
-            )
+            ),
         )
         assertTrue(
             spansService.recordCompletedSpan(
@@ -463,7 +463,7 @@ internal class SpanServiceImplTest {
                 endTimeMs = 200L,
                 internal = false,
                 events = maxSizeCustomEvents,
-            )
+            ),
         )
 
         assertEquals(maxEventAttrCount, spanSink.flushSpans().single { it.name == "too many events" }.events.size)
@@ -487,7 +487,7 @@ internal class SpanServiceImplTest {
                 endTimeMs = 200L,
                 internal = false,
                 events = events,
-            )
+            ),
         )
 
         val completedSpans = spanSink.completedSpans()
@@ -505,7 +505,7 @@ internal class SpanServiceImplTest {
                 endTimeMs = 200L,
                 internal = false,
                 attributes = tooBigCustomAttributes,
-            )
+            ),
         )
         assertTrue(
             spansService.recordCompletedSpan(
@@ -514,7 +514,7 @@ internal class SpanServiceImplTest {
                 endTimeMs = 200L,
                 internal = false,
                 attributes = maxSizeCustomAttributes,
-            )
+            ),
         )
 
         spanSink.flushSpans()
@@ -535,7 +535,7 @@ internal class SpanServiceImplTest {
                 endTimeMs = 200L,
                 internal = false,
                 attributes = attributesMap,
-            )
+            ),
         )
 
         val truncatedAttributesSpan = spanSink.completedSpans().single { it.name == MAX_LENGTH_SPAN_NAME }
@@ -556,7 +556,7 @@ internal class SpanServiceImplTest {
                 startTimeMs = 100L,
                 endTimeMs = 200L,
                 internal = false,
-            )
+            ),
         )
         assertTrue(
             spansService.recordCompletedSpan(
@@ -565,7 +565,7 @@ internal class SpanServiceImplTest {
                 endTimeMs = 200L,
                 internal = false,
                 events = tooBigCustomEvents,
-            )
+            ),
         )
         assertTrue(
             spansService.recordCompletedSpan(
@@ -574,7 +574,7 @@ internal class SpanServiceImplTest {
                 endTimeMs = 200L,
                 internal = false,
                 attributes = tooBigCustomAttributes,
-            )
+            ),
         )
     }
 
@@ -589,7 +589,7 @@ internal class SpanServiceImplTest {
                 startTimeMs = 100L,
                 endTimeMs = 200L,
                 internal = true,
-            )
+            ),
         )
         assertTrue(
             spansService.recordCompletedSpan(
@@ -598,7 +598,7 @@ internal class SpanServiceImplTest {
                 endTimeMs = 200L,
                 internal = true,
                 events = tooBigSystemEvents,
-            )
+            ),
         )
         assertTrue(
             spansService.recordCompletedSpan(
@@ -607,7 +607,7 @@ internal class SpanServiceImplTest {
                 endTimeMs = 200L,
                 internal = true,
                 attributes = tooBigSystemAttributes,
-            )
+            ),
         )
 
         assertEquals(3, spanSink.completedSpans().size)
@@ -624,7 +624,7 @@ internal class SpanServiceImplTest {
             packageName = "com.test.app",
             systemInfo = SystemInfo(),
             sessionIdsProvider = { FakeSessionIdsProvider(userSessionId = "fake-session-id") },
-            processIdentifierProvider = { "fake-pid" }
+            processIdentifierProvider = { "fake-pid" },
         )
         val otelSdkWrapper = OtelSdkWrapper(
             otelClock = fakeClock,
@@ -641,12 +641,12 @@ internal class SpanServiceImplTest {
                 openTelemetryClock = fakeClock,
                 spanRepository = SpanRepository(),
                 dataValidator = dataValidator,
-                telemetryService = FakeTelemetryService()
+                telemetryService = FakeTelemetryService(),
             ),
             dataValidator = dataValidator,
             canStartNewSpan = ::canStartNewSpan,
             initCallback = ::initCallback,
-            openTelemetry = otelSdkWrapper.openTelemetryKotlin
+            openTelemetry = otelSdkWrapper.openTelemetryKotlin,
         ).apply {
             initializeService(fakeClock.now().nanosToMillis())
         }

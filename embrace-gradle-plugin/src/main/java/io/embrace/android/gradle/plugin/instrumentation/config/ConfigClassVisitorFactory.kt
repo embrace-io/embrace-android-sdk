@@ -18,7 +18,8 @@ object ConfigClassVisitorFactory {
         NetworkCaptureConfig,
         ProjectConfig,
         RedactionConfig,
-        Base64SharedObjectFilesMap;
+        Base64SharedObjectFilesMap,
+        ;
 
         val className = "io.embrace.android.embracesdk.internal.config.instrumented.${name}Impl"
 

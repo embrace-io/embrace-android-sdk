@@ -74,7 +74,7 @@ internal class InstrumentedHttpsURLConnectionTest {
 
         assertSingleClientError(
             expectedStartTime = startTime,
-            expectedEndTime = getCurrentTimeMs()
+            expectedEndTime = getCurrentTimeMs(),
         )
     }
 
@@ -106,7 +106,7 @@ internal class InstrumentedHttpsURLConnectionTest {
         assertSingleSuccessfulRequest(
             expectedMethod = "POST",
             expectedStartTime = startTime,
-            expectedEndTime = endTime
+            expectedEndTime = endTime,
         )
     }
 
@@ -193,7 +193,7 @@ internal class InstrumentedHttpsURLConnectionTest {
         assertSingleSuccessfulRequest(
             expectedStartTime = startTime,
             expectedEndTime = getCurrentTimeMs(),
-            expectedUrl = "https://fakeurl.pizza/override/path?doStuff=true"
+            expectedUrl = "https://fakeurl.pizza/override/path?doStuff=true",
         )
     }
 
@@ -205,7 +205,7 @@ internal class InstrumentedHttpsURLConnectionTest {
 
         assertSingleSuccessfulRequest(
             expectedStartTime = startTime,
-            expectedEndTime = getCurrentTimeMs()
+            expectedEndTime = getCurrentTimeMs(),
         )
     }
 
@@ -219,7 +219,7 @@ internal class InstrumentedHttpsURLConnectionTest {
             expectedStartTime = FAKE_TIME_MS,
             expectedEndTime = FAKE_TIME_MS,
             expectedResponseCode = 503,
-            expectedMethod = "POST"
+            expectedMethod = "POST",
         )
     }
 

@@ -7,7 +7,7 @@ import java.io.Serializable
 @JsonClass(generateAdapter = true)
 data class ThreadBlockageLocalConfig(
     @Json(name = "capture_unity_thread")
-    val captureUnityThread: Boolean? = null
+    val captureUnityThread: Boolean? = null,
 ) : Serializable {
 
     private companion object {

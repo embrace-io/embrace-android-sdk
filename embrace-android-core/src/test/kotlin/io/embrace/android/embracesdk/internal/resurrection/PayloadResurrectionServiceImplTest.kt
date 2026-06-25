@@ -155,7 +155,7 @@ class PayloadResurrectionServiceImplTest {
             expectedCustomAttributes = mapOf(
                 EmbType.Ux.Session.asPair(),
                 AppTerminationCause.Crash.asPair(),
-            )
+            ),
         )
     }
 
@@ -163,7 +163,7 @@ class PayloadResurrectionServiceImplTest {
     fun `all payloads from previous app launches are deleted after resurrection`() {
         cacheStorageService.addPayload(
             metadata = fakeCachedCrashEnvelopeMetadata,
-            data = fakeEmptyLogEnvelope()
+            data = fakeEmptyLogEnvelope(),
         )
         assertEquals(1, cacheStorageService.storedPayloadCount())
         assertEquals(0, cacheStorageService.deleteCount.get())
@@ -178,11 +178,11 @@ class PayloadResurrectionServiceImplTest {
         // simulate a race where a complete session payload _and_ cached session payload are both on disk
         payloadStorageService.addPayload(
             metadata = fakeSessionStoredTelemetryMetadata,
-            data = deadSessionEnvelope
+            data = deadSessionEnvelope,
         )
         cacheStorageService.addPayload(
             metadata = sessionMetadata,
-            data = deadSessionEnvelope
+            data = deadSessionEnvelope,
         )
         assertEquals(1, payloadStorageService.storedPayloadCount())
         assertEquals(1, cacheStorageService.storedPayloadCount())
@@ -198,11 +198,11 @@ class PayloadResurrectionServiceImplTest {
     fun `duplicate session snapshots only send the most recent one`() {
         val earlierMeta = sessionMetadata.copy(
             timestamp = sessionMetadata.timestamp - 5_000L,
-            uuid = "earlier-uuid"
+            uuid = "earlier-uuid",
         )
         val earlierEnvelope = fakeIncompleteSessionEnvelope(
             startMs = earlierMeta.timestamp,
-            lastHeartbeatTimeMs = earlierMeta.timestamp + 100L
+            lastHeartbeatTimeMs = earlierMeta.timestamp + 100L,
         )
         cacheStorageService.addPayload(metadata = earlierMeta, data = earlierEnvelope)
         cacheStorageService.addPayload(metadata = sessionMetadata, data = deadSessionEnvelope)
@@ -231,11 +231,11 @@ class PayloadResurrectionServiceImplTest {
     fun `dedupe does not affect unrelated sessions`() {
         payloadStorageService.addPayload(
             metadata = fakeSessionStoredTelemetryMetadata,
-            data = deadSessionEnvelope
+            data = deadSessionEnvelope,
         )
         cacheStorageService.addPayload(
             metadata = sessionMetadata,
-            data = deadSessionEnvelope
+            data = deadSessionEnvelope,
         )
 
         // Session B is only in the cache — should be resurrected normally.
@@ -243,7 +243,7 @@ class PayloadResurrectionServiceImplTest {
         val sessionBEnvelope = fakeIncompleteSessionEnvelope(
             userSessionId = "session-b",
             startMs = sessionBMeta.timestamp,
-            lastHeartbeatTimeMs = sessionBMeta.timestamp + 1000L
+            lastHeartbeatTimeMs = sessionBMeta.timestamp + 1000L,
         )
         cacheStorageService.addPayload(metadata = sessionBMeta, data = sessionBEnvelope)
 
@@ -257,7 +257,7 @@ class PayloadResurrectionServiceImplTest {
                 FAKE_USER_SESSION_ID to FAKE_SESSION_PART_ID,
                 FAKE_USER_SESSION_ID_2 to FAKE_SESSION_PART_ID_2,
             ),
-            storedKeys
+            storedKeys,
         )
         assertEquals(2, payloadStorageService.storedPayloadCount())
         assertEquals(0, cacheStorageService.storedPayloadCount())
@@ -275,7 +275,7 @@ class PayloadResurrectionServiceImplTest {
         val spanSnapshot =
             checkNotNull(
                 deadSessionEnvelope.data.spanSnapshots?.filterNot { it.spanId == sessionPartSpan.spanId }
-                    ?.single()
+                    ?.single(),
             )
         val resurrectedSnapshot = sentSession.findSpansByName(checkNotNull(spanSnapshot.name)).single()
 
@@ -286,8 +286,8 @@ class PayloadResurrectionServiceImplTest {
             expectedParentId = OtelIds.INVALID_SPAN_ID,
             expectedErrorCode = ErrorCode.FAILURE,
             expectedCustomAttributes = mapOf(
-                EmbType.Performance.Default.asPair()
-            )
+                EmbType.Performance.Default.asPair(),
+            ),
         )
     }
 
@@ -306,8 +306,8 @@ class PayloadResurrectionServiceImplTest {
         nativeCrashService.addNativeCrashData(
             createNativeCrashData(
                 nativeCrashId = "dead-session-native-crash",
-                sessionPartId = deadSessionEnvelope.getSessionPartId()
-            )
+                sessionPartId = deadSessionEnvelope.getSessionPartId(),
+            ),
         )
         deadSessionEnvelope.resurrectPayload()
 
@@ -319,8 +319,8 @@ class PayloadResurrectionServiceImplTest {
         nativeCrashService.addNativeCrashData(
             createNativeCrashData(
                 nativeCrashId = "dead-session-native-crash",
-                sessionPartId = "fake-id"
-            )
+                sessionPartId = "fake-id",
+            ),
         )
         deadSessionEnvelope.resurrectPayload()
 
@@ -336,7 +336,7 @@ class PayloadResurrectionServiceImplTest {
             createNativeCrashData(
                 nativeCrashId = "legacy-native-crash",
                 sessionPartId = legacySessionId,
-            )
+            ),
         )
         cacheStorageService.addPayload(
             metadata = sessionMetadata.copy(userSessionId = "", sessionPartId = ""),
@@ -348,7 +348,7 @@ class PayloadResurrectionServiceImplTest {
         val sessionPartSpan = getStoredParts().single().getSessionPartSpan()
         assertEquals(
             "legacy-native-crash",
-            sessionPartSpan?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID)
+            sessionPartSpan?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID),
         )
     }
 
@@ -360,14 +360,14 @@ class PayloadResurrectionServiceImplTest {
                 userSessionId = FAKE_USER_SESSION_ID,
                 backgroundOnly = false,
                 reason = EmbUserSessionTerminationReasonValues.INACTIVITY,
-            )
+            ),
         )
 
         val attributes = checkNotNull(getStoredParts().single().getSessionPartSpan()?.attributes)
         assertEquals("1", attributes.findAttributeValue(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART))
         assertEquals(
             EmbUserSessionTerminationReasonValues.INACTIVITY,
-            attributes.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON)
+            attributes.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON),
         )
     }
 
@@ -389,7 +389,7 @@ class PayloadResurrectionServiceImplTest {
                 userSessionId = FAKE_USER_SESSION_ID_2,
                 backgroundOnly = false,
                 reason = EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED,
-            )
+            ),
         )
 
         val attributes = checkNotNull(getStoredParts().single().getSessionPartSpan()?.attributes)
@@ -402,27 +402,27 @@ class PayloadResurrectionServiceImplTest {
         val earlierMeta = sessionMetadata.copy(
             uuid = sessionMetadata.uuid + "-earlier",
             sessionPartId = sessionMetadata.sessionPartId + "-earlier",
-            timestamp = sessionMetadata.timestamp
+            timestamp = sessionMetadata.timestamp,
         )
         val laterMeta = sessionMetadata.copy(
             uuid = sessionMetadata.uuid + "-later",
             sessionPartId = sessionMetadata.sessionPartId + "-later",
-            timestamp = sessionMetadata.timestamp + 1000L
+            timestamp = sessionMetadata.timestamp + 1000L,
         )
         cacheStorageService.addPayload(
             metadata = earlierMeta,
-            data = fakeIncompleteSessionEnvelope(userSessionId = "earlier-part")
+            data = fakeIncompleteSessionEnvelope(userSessionId = "earlier-part"),
         )
         cacheStorageService.addPayload(
             metadata = laterMeta,
-            data = fakeIncompleteSessionEnvelope(userSessionId = "later-part")
+            data = fakeIncompleteSessionEnvelope(userSessionId = "later-part"),
         )
         resurrectInBackground(
             restoreDecision = UserSessionRestoreDecision.Terminated(
                 userSessionId = FAKE_USER_SESSION_ID,
                 backgroundOnly = false,
                 reason = EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED,
-            )
+            ),
         )
 
         val parts = getStoredParts().associateBy { it.getUserSessionId() }
@@ -430,7 +430,7 @@ class PayloadResurrectionServiceImplTest {
         assertEquals("1", laterAttrs.findAttributeValue(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART))
         assertEquals(
             EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED,
-            laterAttrs.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON)
+            laterAttrs.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON),
         )
 
         val earlierAttrs = checkNotNull(parts.getValue("earlier-part").getSessionPartSpan()?.attributes)
@@ -446,7 +446,7 @@ class PayloadResurrectionServiceImplTest {
                 userSessionId = FAKE_USER_SESSION_ID,
                 backgroundOnly = true,
                 reason = EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED,
-            )
+            ),
         )
 
         val attributes = checkNotNull(getStoredParts().single().getSessionPartSpan()?.attributes)
@@ -460,7 +460,7 @@ class PayloadResurrectionServiceImplTest {
             restoreDecision = UserSessionRestoreDecision.Restored(
                 userSessionId = FAKE_USER_SESSION_ID,
                 backgroundOnly = true,
-            )
+            ),
         )
 
         val attributes = checkNotNull(getStoredParts().single().getSessionPartSpan()?.attributes)
@@ -475,7 +475,7 @@ class PayloadResurrectionServiceImplTest {
             restoreDecision = UserSessionRestoreDecision.Restored(
                 userSessionId = FAKE_USER_SESSION_ID,
                 backgroundOnly = false,
-            )
+            ),
         )
 
         val attributes = checkNotNull(getStoredParts().single().getSessionPartSpan()?.attributes)
@@ -490,7 +490,7 @@ class PayloadResurrectionServiceImplTest {
                 userSessionId = FAKE_USER_SESSION_ID_2,
                 backgroundOnly = true,
                 reason = EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED,
-            )
+            ),
         )
 
         val attributes = checkNotNull(getStoredParts().single().getSessionPartSpan()?.attributes)
@@ -507,7 +507,7 @@ class PayloadResurrectionServiceImplTest {
     fun `resurrection failure deletes cache file and logs unrecoverable error`() {
         cacheStorageService.addPayload(
             metadata = sessionMetadata,
-            data = deadSessionEnvelope
+            data = deadSessionEnvelope,
         )
         serializer.errorOnNextOperation()
         resurrectInBackground()
@@ -544,11 +544,11 @@ class PayloadResurrectionServiceImplTest {
     fun `sessionless native crash sent without envelope data when crash envelope stream returns null`() {
         val deadSessionCrashData = createNativeCrashData(
             nativeCrashId = "native-crash-1",
-            sessionPartId = "no-session-id"
+            sessionPartId = "no-session-id",
         )
         cacheStorageService.addPayload(
             metadata = fakeCachedCrashEnvelopeMetadata,
-            data = fakeEmptyLogEnvelope()
+            data = fakeEmptyLogEnvelope(),
         )
         nativeCrashService.addNativeCrashData(deadSessionCrashData)
 
@@ -567,7 +567,7 @@ class PayloadResurrectionServiceImplTest {
         assertEquals(1, logger.internalErrorMessages.size)
         assertEquals(
             InternalErrorType.NativeCrashResurrectionError.toString(),
-            logger.internalErrorMessages.single().msg
+            logger.internalErrorMessages.single().msg,
         )
     }
 
@@ -581,12 +581,12 @@ class PayloadResurrectionServiceImplTest {
     fun `multiple native crashes will be resurrected properly with the crash data sent separately`() {
         val deadSessionCrashData = createNativeCrashData(
             nativeCrashId = "native-crash-1",
-            sessionPartId = deadSessionEnvelope.getSessionPartId()
+            sessionPartId = deadSessionEnvelope.getSessionPartId(),
         )
         nativeCrashService.addNativeCrashData(deadSessionCrashData)
         cacheStorageService.addPayload(
             metadata = sessionMetadata,
-            data = deadSessionEnvelope
+            data = deadSessionEnvelope,
         )
 
         val oldResource = fakeEnvelopeResource.copy(appVersion = "1.4", sdkVersion = "6.13", osVersion = "10")
@@ -598,24 +598,24 @@ class PayloadResurrectionServiceImplTest {
             lastHeartbeatTimeMs = deadSessionEnvelope.getStartTime() - 90_000L,
             sessionProperties = mapOf("prop" to "earlier"),
             resource = oldResource,
-            metadata = oldMetadata
+            metadata = oldMetadata,
 
         )
         val earlierSessionCrashData = createNativeCrashData(
             nativeCrashId = "native-crash-2",
-            sessionPartId = earlierDeadSession.getSessionPartId()
+            sessionPartId = earlierDeadSession.getSessionPartId(),
         )
         val earlierDeadSessionMetadata = StoredTelemetryMetadata(
             timestamp = earlierDeadSession.getStartTime(),
             uuid = "fake-uuid",
             processIdentifier = "fakePid",
             envelopeType = SupportedEnvelopeType.SESSION,
-            complete = false
+            complete = false,
         )
         nativeCrashService.addNativeCrashData(earlierSessionCrashData)
         cacheStorageService.addPayload(
             metadata = earlierDeadSessionMetadata,
-            data = earlierDeadSession
+            data = earlierDeadSession,
         )
 
         resurrectInBackground()
@@ -631,11 +631,11 @@ class PayloadResurrectionServiceImplTest {
             assertEquals(deadSessionEnvelope.getUserSessionId(), getUserSessionId())
             assertEquals(
                 "native-crash-1",
-                getSessionPartSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID)
+                getSessionPartSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID),
             )
             assertEquals(
                 "foreground",
-                getSessionPartSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE)
+                getSessionPartSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE),
             )
         }
 
@@ -646,11 +646,11 @@ class PayloadResurrectionServiceImplTest {
             assertEquals(earlierDeadSession.getUserSessionId(), getUserSessionId())
             assertEquals(
                 "native-crash-2",
-                getSessionPartSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID)
+                getSessionPartSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID),
             )
             assertEquals(
                 "foreground",
-                getSessionPartSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE)
+                getSessionPartSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE),
             )
         }
 
@@ -674,7 +674,7 @@ class PayloadResurrectionServiceImplTest {
             assertEquals(earlierSessionCrashData, first)
             assertEquals(
                 "earlier",
-                second.findAttributeValue(second.keys.single { it.isEmbraceAttributeName() })
+                second.findAttributeValue(second.keys.single { it.isEmbraceAttributeName() }),
             )
         }
     }
@@ -683,14 +683,14 @@ class PayloadResurrectionServiceImplTest {
     fun `native crashes without sessions are sent properly`() {
         val deadSessionCrashData = createNativeCrashData(
             nativeCrashId = "native-crash-1",
-            sessionPartId = "no-session-id"
+            sessionPartId = "no-session-id",
         )
         cacheStorageService.addPayload(
             metadata = fakeCachedCrashEnvelopeMetadata,
             data = fakeEmptyLogEnvelope(
                 resource = fakeLaterEnvelopeResource,
-                metadata = fakeLaterEnvelopeMetadata
-            )
+                metadata = fakeLaterEnvelopeMetadata,
+            ),
         )
         nativeCrashService.addNativeCrashData(deadSessionCrashData)
         resurrectInBackground()
@@ -713,7 +713,7 @@ class PayloadResurrectionServiceImplTest {
     fun `native crashes without sessions or cached crash envelopes sent`() {
         val deadSessionCrashData = createNativeCrashData(
             nativeCrashId = "native-crash-1",
-            sessionPartId = "no-session-id"
+            sessionPartId = "no-session-id",
         )
         nativeCrashService.addNativeCrashData(deadSessionCrashData)
         resurrectInBackground()
@@ -732,7 +732,7 @@ class PayloadResurrectionServiceImplTest {
     fun `dead session is resurrected with no crashId when nativeCrashService is null`() {
         cacheStorageService.addPayload(
             metadata = sessionMetadata,
-            data = deadSessionEnvelope
+            data = deadSessionEnvelope,
         )
         resurrectInBackground({ null })
 
@@ -796,7 +796,7 @@ class PayloadResurrectionServiceImplTest {
         assertTrue(
             logger.internalErrorMessages.any {
                 it.throwable is TimeoutException
-            }
+            },
         )
     }
 
@@ -817,7 +817,7 @@ class PayloadResurrectionServiceImplTest {
     private fun Envelope<SessionPartPayload>.resurrectPayload() {
         cacheStorageService.addPayload(
             metadata = sessionMetadata,
-            data = this
+            data = this,
         )
         resurrectInBackground()
     }
@@ -826,13 +826,13 @@ class PayloadResurrectionServiceImplTest {
      * Rewrites a session payload to look like one from an SDK that predates the user session concept
      */
     private fun Envelope<SessionPartPayload>.asPreUserSessionPayload(
-        legacySessionId: String
+        legacySessionId: String,
     ): Envelope<SessionPartPayload> {
         return copy(
             data = data.copy(
                 spans = data.spans.toPreUserSessionSpan(legacySessionId),
                 spanSnapshots = data.spanSnapshots.toPreUserSessionSpan(legacySessionId),
-            )
+            ),
         )
     }
 
@@ -847,7 +847,7 @@ class PayloadResurrectionServiceImplTest {
                         } else {
                             it
                         }
-                    }
+                    },
             )
         }
 
@@ -855,7 +855,7 @@ class PayloadResurrectionServiceImplTest {
         return payloadStorageService.storedPayloads().map { bytes ->
             serializer.fromJson(
                 GZIPInputStream(ByteArrayInputStream(bytes)),
-                Envelope.sessionEnvelopeSerializer
+                Envelope.sessionEnvelopeSerializer,
             )
         }
     }
@@ -899,7 +899,7 @@ class PayloadResurrectionServiceImplTest {
         assertEquals(1, logger.internalErrorMessages.size)
         assertEquals(
             InternalErrorType.PayloadResurrectionPayloadFail.toString(),
-            logger.internalErrorMessages.single().msg
+            logger.internalErrorMessages.single().msg,
         )
     }
 
@@ -908,22 +908,22 @@ class PayloadResurrectionServiceImplTest {
         val sessionMetadata = fakeCachedSessionStoredTelemetryMetadata
         val deadSessionEnvelope = fakeIncompleteSessionEnvelope(
             startMs = sessionMetadata.timestamp,
-            lastHeartbeatTimeMs = sessionMetadata.timestamp + 1000L
+            lastHeartbeatTimeMs = sessionMetadata.timestamp + 1000L,
         )
         val messedUpSessionEnvelope = with(deadSessionEnvelope) {
             copy(
                 data = data.copy(
                     spans = listOf(
-                        startedSnapshot.copy(endTimeNanos = startedSnapshot.startTimeNanos + 10000000L).toEmbracePayload()
+                        startedSnapshot.copy(endTimeNanos = startedSnapshot.startTimeNanos + 10000000L).toEmbracePayload(),
                     ),
-                    spanSnapshots = data.spanSnapshots?.plus(listOfNotNull(startedSnapshot).map(EmbraceSpanData::toEmbracePayload))
-                )
+                    spanSnapshots = data.spanSnapshots?.plus(listOfNotNull(startedSnapshot).map(EmbraceSpanData::toEmbracePayload)),
+                ),
             )
         }
         val noSessionPartSpanEnvelope = deadSessionEnvelope.copy(
             data = deadSessionEnvelope.data.copy(
-                spanSnapshots = emptyList()
-            )
+                spanSnapshots = emptyList(),
+            ),
         )
         val multipleSessionPartSpanEnvelope = deadSessionEnvelope.copy(
             data = deadSessionEnvelope.data.copy(
@@ -933,10 +933,10 @@ class PayloadResurrectionServiceImplTest {
                             userSessionId = "fake-session-span-id",
                             startTimeMs = deadSessionEnvelope.getStartTime() + 1001L,
                             lastHeartbeatTimeMs = deadSessionEnvelope.getStartTime() + 1001L,
-                        ).snapshot()
-                    )
-                )
-            )
+                        ).snapshot(),
+                    ),
+                ),
+            ),
         )
         val fakeCachedCrashEnvelopeMetadata = StoredTelemetryMetadata(
             timestamp = 1000L,
@@ -944,7 +944,7 @@ class PayloadResurrectionServiceImplTest {
             processIdentifier = "old-process-id",
             envelopeType = CRASH,
             complete = false,
-            payloadType = PayloadType.UNKNOWN
+            payloadType = PayloadType.UNKNOWN,
         )
     }
 }

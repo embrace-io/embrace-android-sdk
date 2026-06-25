@@ -13,6 +13,6 @@ class FakeDevice(
         deviceModel = "Galaxy S10",
         osName = "android",
         osVersion = "8.0.0",
-        androidOsApiLevel = "26"
+        androidOsApiLevel = "26",
     ),
 ) : Device

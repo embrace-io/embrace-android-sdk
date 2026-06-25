@@ -17,7 +17,7 @@ internal class NoopReactNativeInternalInterfaceTest {
     @Before
     fun setUp() {
         impl = NoopReactNativeInternalInterface(
-            NoopEmbraceInternalInterface
+            NoopEmbraceInternalInterface,
         )
     }
 

@@ -14,7 +14,7 @@ class NetworkCaptureConfigInstrumentationKtTest {
         null,
         null,
         null,
-        null
+        null,
     )
 
     private val methods = listOf(
@@ -50,14 +50,14 @@ class NetworkCaptureConfigInstrumentationKtTest {
                                 disabledUrlPatterns = listOf("pattern1", "pattern2"),
                                 domains = listOf(
                                     DomainLocalConfig("domain1", 1),
-                                    DomainLocalConfig("domain2", 2)
+                                    DomainLocalConfig("domain2", 2),
                                 ),
-                                traceparentOnlyAllowDomains = listOf("foo.test.com", ".example.com")
-                            )
+                                traceparentOnlyAllowDomains = listOf("foo.test.com", ".example.com"),
+                            ),
                         ),
-                        null
-                    )
-                )
+                        null,
+                    ),
+                ),
             )
         methods.forEach { method ->
             verifyConfigMethodVisitor(instrumentation, method)

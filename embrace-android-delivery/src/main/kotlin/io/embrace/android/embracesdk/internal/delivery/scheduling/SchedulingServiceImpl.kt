@@ -47,7 +47,7 @@ class SchedulingServiceImpl(
     private val scheduledDeliveryAttempt: ScheduledDeliveryAttempt = ScheduledDeliveryAttempt(
         clock = clock,
         scheduleAction = ::queueDeliveryAttempt,
-        worker = schedulingWorker
+        worker = schedulingWorker,
     )
 
     override fun onPayloadIntake() {
@@ -145,7 +145,7 @@ class SchedulingServiceImpl(
             .firstOrNull()
         deliveryTracer?.onFindNextPayload(
             payloadsByPriority,
-            payloadToSend
+            payloadToSend,
         )
         return payloadToSend
     }
@@ -167,7 +167,7 @@ class SchedulingServiceImpl(
                         executionService.attemptHttpRequest(
                             payloadStream = { this },
                             envelopeType = payload.envelopeType,
-                            payloadType = payload.payloadTypesHeader
+                            payloadType = payload.payloadTypesHeader,
                         )
                     } ?: ExecutionResult.NotAttempted
                 } catch (t: Throwable) {
@@ -235,7 +235,7 @@ class SchedulingServiceImpl(
 
             payloadsToRetry[payload] = RetryInstance(
                 failedAttempts = retryAttempts + 1,
-                nextRetryTimeMs = nextRetryTimeMs
+                nextRetryTimeMs = nextRetryTimeMs,
             )
         }
 
@@ -453,7 +453,7 @@ class SchedulingServiceImpl(
                         scheduleAction()
                     },
                     requestedDeliveryAttemptTimeMs - clock.now(),
-                    TimeUnit.MILLISECONDS
+                    TimeUnit.MILLISECONDS,
                 )
                 scheduledTime = requestedDeliveryAttemptTimeMs
             }
@@ -472,7 +472,7 @@ class SchedulingServiceImpl(
                 UnknownHostException::class.java,
                 ConnectException::class.java,
                 SSLException::class.java,
-                NoRouteToHostException::class.java
+                NoRouteToHostException::class.java,
             )
 
         /**

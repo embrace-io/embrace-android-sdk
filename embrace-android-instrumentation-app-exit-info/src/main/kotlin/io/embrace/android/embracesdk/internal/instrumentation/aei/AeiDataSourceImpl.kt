@@ -28,7 +28,7 @@ internal class AeiDataSourceImpl(
 ) : DataSourceImpl(
     args = args,
     limitStrategy = UpToLimitStrategy { SDK_AEI_SEND_LIMIT },
-    instrumentationName = "aei_data_source"
+    instrumentationName = "aei_data_source",
 ) {
 
     private companion object {

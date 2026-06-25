@@ -32,7 +32,7 @@ internal class HucTestHarness {
             destination = fakeTelemetryDestination,
             logger = fakeEmbLogger,
             clock = fakeClock,
-        )
+        ),
     )
 
     var mockWrappedConnection: HttpsURLConnection =

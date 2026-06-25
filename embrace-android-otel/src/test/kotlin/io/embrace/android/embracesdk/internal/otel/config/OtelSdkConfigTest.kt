@@ -23,7 +23,7 @@ internal class OtelSdkConfigTest {
             osVersion = "testOsVersionName",
             androidOsApiLevel = "99",
             deviceManufacturer = "testManufacturer",
-            deviceModel = "testModel"
+            deviceModel = "testModel",
         )
 
         val configuration = OtelSdkConfig(
@@ -33,7 +33,7 @@ internal class OtelSdkConfigTest {
             sdkVersion = "1.0",
             appVersion = "2.5.1",
             packageName = "com.test.app",
-            systemInfo = systemInfo
+            systemInfo = systemInfo,
         )
 
         val attrs = FakeAttributesMutator().apply(configuration.resourceAction).attributes
@@ -49,7 +49,7 @@ internal class OtelSdkConfigTest {
             AndroidAttributes.ANDROID_OS_API_LEVEL to systemInfo.androidOsApiLevel,
             DeviceAttributes.DEVICE_MANUFACTURER to systemInfo.deviceManufacturer,
             DeviceAttributes.DEVICE_MODEL_IDENTIFIER to systemInfo.deviceModel,
-            DeviceAttributes.DEVICE_MODEL_NAME to systemInfo.deviceModel
+            DeviceAttributes.DEVICE_MODEL_NAME to systemInfo.deviceModel,
         ).mapKeys { it.key }
         assertEquals(expected, attrs)
     }

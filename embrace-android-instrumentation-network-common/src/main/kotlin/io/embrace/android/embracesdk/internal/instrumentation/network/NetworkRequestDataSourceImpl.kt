@@ -34,7 +34,7 @@ class NetworkRequestDataSourceImpl(
 ) : NetworkRequestDataSource, DataSourceImpl(
     args,
     NoopLimitStrategy,
-    "network_request_data_source"
+    "network_request_data_source",
 ) {
     private val activeRequests: MutableMap<String, SpanToken> = ConcurrentHashMap()
     private val domainCountLimiter: DomainCountLimiter = args.configService.networkBehavior.domainCountLimiter
@@ -46,7 +46,7 @@ class NetworkRequestDataSourceImpl(
 
         // Get the domain, if it can be successfully parsed. If not, don't log this call.
         val domain = getDomain(
-            stripUrl(request.url)
+            stripUrl(request.url),
         ) ?: return
 
         captureTelemetry(
@@ -55,7 +55,7 @@ class NetworkRequestDataSourceImpl(
             },
             invalidInputCallback = {
                 telemetryService.trackAppliedLimit("network_request", AppliedLimitType.DROP)
-            }
+            },
         ) {
             val networkRequestSchemaType = SchemaType.NetworkRequest(generateSchemaAttributes(request))
             val statusCode = request.statusCode
@@ -70,7 +70,7 @@ class NetworkRequestDataSourceImpl(
                 endTimeMs = request.endTime,
                 type = EmbType.Performance.Network,
                 attributes = networkRequestSchemaType.attributes(),
-                errorCode = errorCode
+                errorCode = errorCode,
             )
         }
     }
@@ -82,19 +82,19 @@ class NetworkRequestDataSourceImpl(
 
         // Get the domain, if it can be successfully parsed. If not, don't log this call.
         val domain = getDomain(
-            stripUrl(startData.url)
+            stripUrl(startData.url),
         ) ?: return null
 
         return captureTelemetry(
             inputValidation = { domainCountLimiter.canLogNetworkRequest(domain) },
             invalidInputCallback = {
                 telemetryService.trackAppliedLimit("network_request", AppliedLimitType.DROP)
-            }
+            },
         ) {
             val spanToken = destination.startSpanCapture(
                 schemaType = SchemaType.NetworkRequest(requestStartAttributes(startData)),
                 startTimeMs = startData.sdkClockStartTime,
-                name = getNetworkSpanName(startData.httpMethod, startData.url)
+                name = getNetworkSpanName(startData.httpMethod, startData.url),
             )
 
             spanToken.asW3cTraceparent()?.also { traceparent ->

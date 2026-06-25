@@ -25,7 +25,7 @@ internal class EmbLoggerTest {
         eventService = FakeEventService()
         logger = EmbLogger(
             impl = sdkLogger,
-            eventService = eventService
+            eventService = eventService,
         )
     }
 

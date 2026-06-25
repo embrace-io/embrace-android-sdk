@@ -63,20 +63,20 @@ internal class TelemetryDestinationImplTest {
         impl = createDestination()
         val expectedSchemaType = Log(
             TelemetryAttributes(
-                customAttributes = mapOf("foo" to "bar")
-            )
+                customAttributes = mapOf("foo" to "bar"),
+            ),
         )
         impl.addLog(
             schemaType = expectedSchemaType,
             severity = LogSeverity.ERROR,
-            message = "test"
+            message = "test",
         )
         eventService.eventData.single().assertFakeEvent(
             expectedTimestamp = clock.now().millisToNanos(),
             expectedMessage = "test",
             expectedSeverity = Severity.ERROR,
             expectedSchemaType = expectedSchemaType,
-            expectedIsPrivate = false
+            expectedIsPrivate = false,
         )
         verifyAndResetSessionUpdate()
     }
@@ -97,13 +97,13 @@ internal class TelemetryDestinationImplTest {
                 mapOf(PrivateSpan.asPair())
             } else {
                 emptyMap()
-            }
+            },
         )
     }
 
     private fun FakeEventService.FakeEventData.assertAttributes(
         expectedSchemaType: SchemaType,
-        expectedAdditionalAttributes: Map<String, String>
+        expectedAdditionalAttributes: Map<String, String>,
     ) {
         val attrContainer = FakeAttributesMutator()
         checkNotNull(attributes).invoke(attrContainer)
@@ -121,28 +121,28 @@ internal class TelemetryDestinationImplTest {
             schemaType = expectedSchemaType,
             severity = LogSeverity.ERROR,
             message = "test",
-            isPrivate = true
+            isPrivate = true,
         )
         eventService.eventData.single().assertFakeEvent(
             expectedTimestamp = clock.now().millisToNanos(),
             expectedMessage = "test",
             expectedSeverity = Severity.ERROR,
             expectedSchemaType = expectedSchemaType,
-            expectedIsPrivate = true
+            expectedIsPrivate = true,
         )
 
         impl.addLog(
             schemaType = expectedSchemaType,
             severity = LogSeverity.ERROR,
             message = "test",
-            isPrivate = false
+            isPrivate = false,
         )
         eventService.eventData.last().assertFakeEvent(
             expectedTimestamp = clock.now().millisToNanos(),
             expectedMessage = "test",
             expectedSeverity = Severity.ERROR,
             expectedSchemaType = expectedSchemaType,
-            expectedIsPrivate = false
+            expectedIsPrivate = false,
         )
     }
 
@@ -154,7 +154,7 @@ internal class TelemetryDestinationImplTest {
             schemaType = Log(TelemetryAttributes()),
             severity = LogSeverity.ERROR,
             message = "test",
-            timestampMs = fakeTimeMs
+            timestampMs = fakeTimeMs,
         )
 
         eventService.eventData.single().assertFakeEvent(
@@ -162,7 +162,7 @@ internal class TelemetryDestinationImplTest {
             expectedMessage = "test",
             expectedSeverity = Severity.ERROR,
             expectedSchemaType = expectedSchemaType,
-            expectedIsPrivate = false
+            expectedIsPrivate = false,
         )
     }
 
@@ -187,7 +187,7 @@ internal class TelemetryDestinationImplTest {
             startTimeMs,
             endTimeMs,
             attributes = mapOf("foo" to "bar"),
-            events = listOf(SpanEventImpl("event", clock.now().millisToNanos(), mapOf("key" to "value")))
+            events = listOf(SpanEventImpl("event", clock.now().millisToNanos(), mapOf("key" to "value"))),
         )
         val span = spanService.createdSpans.single()
         assertEquals(name, span.name)
@@ -222,7 +222,7 @@ internal class TelemetryDestinationImplTest {
             type = type,
             internal = true,
             private = false,
-            attributes = attributes
+            attributes = attributes,
         )
         val span = spanService.createdSpans.single()
         assertEquals(name, span.name)

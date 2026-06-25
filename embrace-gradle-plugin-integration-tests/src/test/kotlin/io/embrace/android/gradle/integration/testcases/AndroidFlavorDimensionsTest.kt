@@ -24,7 +24,7 @@ class AndroidFlavorDimensionsTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
                 verifyJvmMappingRequestsSent(obfuscatedAppIds)
-            }
+            },
         )
     }
 
@@ -37,7 +37,7 @@ class AndroidFlavorDimensionsTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
                 verifyJvmMappingRequestsSent(listOf("democ", "demor"))
-            }
+            },
         )
     }
 
@@ -50,7 +50,7 @@ class AndroidFlavorDimensionsTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
                 verifyJvmMappingRequestsSent(listOf("demor", "fullr"))
-            }
+            },
         )
     }
 
@@ -63,7 +63,7 @@ class AndroidFlavorDimensionsTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
                 verifyJvmMappingRequestsSent(listOf("fullc"))
-            }
+            },
         )
     }
 
@@ -76,7 +76,7 @@ class AndroidFlavorDimensionsTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
                 verifyJvmMappingRequestsSent(obfuscatedAppIds)
-            }
+            },
         )
     }
 
@@ -89,7 +89,7 @@ class AndroidFlavorDimensionsTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
                 verifyJvmMappingRequestsSent(listOf("democ", "demor"))
-            }
+            },
         )
     }
 
@@ -102,7 +102,7 @@ class AndroidFlavorDimensionsTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
                 verifyJvmMappingRequestsSent(listOf("demor", "fullr"))
-            }
+            },
         )
     }
 
@@ -115,7 +115,7 @@ class AndroidFlavorDimensionsTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
                 verifyJvmMappingRequestsSent(listOf("fullc"))
-            }
+            },
         )
     }
 }

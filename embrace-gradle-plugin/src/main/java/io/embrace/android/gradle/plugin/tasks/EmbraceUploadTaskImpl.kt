@@ -11,7 +11,7 @@ import javax.inject.Inject
 
 @DisableCachingByDefault(because = "Upload tasks perform network I/O and should not be cached")
 abstract class EmbraceUploadTaskImpl @Inject constructor(
-    objectFactory: ObjectFactory
+    objectFactory: ObjectFactory,
 ) : DefaultTask(), EmbraceUploadTask {
 
     @get:Input

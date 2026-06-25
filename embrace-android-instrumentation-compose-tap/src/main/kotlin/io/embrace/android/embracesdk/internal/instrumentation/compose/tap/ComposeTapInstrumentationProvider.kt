@@ -14,7 +14,7 @@ class ComposeTapInstrumentationProvider : InstrumentationProvider {
                     tapDataSourceProvider = { tapDataSource },
                 )
             },
-            configGate = args.configService.autoDataCaptureBehavior::isComposeClickCaptureEnabled
+            configGate = args.configService.autoDataCaptureBehavior::isComposeClickCaptureEnabled,
         )
     }
 }

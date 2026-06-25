@@ -16,7 +16,7 @@ class LowPowerDataSource(
 ) : DataSourceImpl(
     args = args,
     limitStrategy = UpToLimitStrategy { MAX_CAPTURED_POWER_MODE_INTERVALS },
-    instrumentationName = "low_power_data_source"
+    instrumentationName = "low_power_data_source",
 ) {
 
     private companion object {

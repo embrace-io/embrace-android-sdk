@@ -44,7 +44,7 @@ class GenerateRnSourcemapTaskIntegrationTest {
                 parts[1].validateBodyApiToken(IntegrationTestDefaults.API_TOKEN)
                 parts[2].validateBodyBuildId()
                 parts[3].validateMappingFile("sourcemap.json")
-            }
+            },
         )
     }
 

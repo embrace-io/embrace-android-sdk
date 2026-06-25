@@ -48,12 +48,12 @@ class NdkUploadTasksRegistration(
         val compressionTaskProvider = project.registerTask(
             CompressSharedObjectFilesTask.NAME,
             CompressSharedObjectFilesTask::class.java,
-            data
+            data,
         ) { task ->
             task.architecturesDirectory.set(sharedObjectFilesProvider)
             task.failBuildOnUploadErrors.set(behavior.failBuildOnUploadErrors)
             task.compressedSharedObjectFilesDirectory.set(
-                project.layout.buildDirectory.dir("intermediates/embrace/compressed/${data.name}")
+                project.layout.buildDirectory.dir("intermediates/embrace/compressed/${data.name}"),
             )
 
             // dependsOn doesn't accept null providers, so we use an empty list if the task is not found.
@@ -66,21 +66,21 @@ class NdkUploadTasksRegistration(
         val hashTaskProvider = project.registerTask(
             HashSharedObjectFilesTask.NAME,
             HashSharedObjectFilesTask::class.java,
-            data
+            data,
         ) { task ->
             task.compressedSharedObjectFilesDirectory.set(
-                compressionTaskProvider.flatMap { it.compressedSharedObjectFilesDirectory }
+                compressionTaskProvider.flatMap { it.compressedSharedObjectFilesDirectory },
             )
             task.failBuildOnUploadErrors.set(behavior.failBuildOnUploadErrors)
             task.architecturesToHashedSharedObjectFilesMap.set(
-                project.layout.buildDirectory.file("intermediates/embrace/hashes/${data.name}/hashes.json")
+                project.layout.buildDirectory.file("intermediates/embrace/hashes/${data.name}/hashes.json"),
             )
         }
 
         val uploadTask = project.registerTask(
             UploadSharedObjectFilesTask.NAME,
             UploadSharedObjectFilesTask::class.java,
-            data
+            data,
         ) { task ->
             // TODO: An error thrown in registration will make the build will fail. Should we use failBuildOnUploadErrors for this too?
             task.failBuildOnUploadErrors.set(behavior.failBuildOnUploadErrors)
@@ -93,31 +93,31 @@ class NdkUploadTasksRegistration(
                         failBuildOnUploadErrors = failBuildOnUploadErrors,
                         baseUrl = behavior.baseUrl,
                     )
-                }
+                },
             )
 
             task.compressedSharedObjectFilesDirectory.set(
-                compressionTaskProvider.flatMap { it.compressedSharedObjectFilesDirectory }
+                compressionTaskProvider.flatMap { it.compressedSharedObjectFilesDirectory },
             )
 
             task.architecturesToHashedSharedObjectFilesMapJson.set(
-                hashTaskProvider.flatMap { it.architecturesToHashedSharedObjectFilesMap }
+                hashTaskProvider.flatMap { it.architecturesToHashedSharedObjectFilesMap },
             )
         }
 
         project.registerTask(
             EncodeFileToBase64Task.NAME,
             EncodeFileToBase64Task::class.java,
-            data
+            data,
         ) { task ->
             task.inputFile.set(
-                hashTaskProvider.flatMap { it.architecturesToHashedSharedObjectFilesMap }
+                hashTaskProvider.flatMap { it.architecturesToHashedSharedObjectFilesMap },
             )
 
             task.failBuildOnUploadErrors.set(behavior.failBuildOnUploadErrors)
 
             task.outputFile.set(
-                project.layout.buildDirectory.file("intermediates/embrace/ndk/${data.name}/encoded_map.txt")
+                project.layout.buildDirectory.file("intermediates/embrace/ndk/${data.name}/encoded_map.txt"),
             )
 
             task.dependsOn(uploadTask)
@@ -139,7 +139,7 @@ class NdkUploadTasksRegistration(
                 project.provider { getNativeSharedObjectFilesFromCustomDirectory(customSymbolsDirectory, project) }
             } else {
                 getDefaultNativeSharedObjectFiles(mergeNativeLibsTaskProvider)
-            }
+            },
         )
     }
 

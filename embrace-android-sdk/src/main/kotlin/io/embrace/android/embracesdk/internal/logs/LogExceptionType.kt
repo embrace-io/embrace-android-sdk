@@ -8,5 +8,5 @@ package io.embrace.android.embracesdk.internal.logs
 internal enum class LogExceptionType(val value: String) {
     NONE("none"),
     HANDLED("handled"),
-    UNHANDLED("unhandled")
+    UNHANDLED("unhandled"),
 }

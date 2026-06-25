@@ -8,7 +8,7 @@ import java.io.Serializable
 data class ViewLocalConfig(
 
     @Json(name = "enable_automatic_activity_capture")
-    val enableAutomaticActivityCapture: Boolean? = null
+    val enableAutomaticActivityCapture: Boolean? = null,
 ) : Serializable {
 
     private companion object {

@@ -20,7 +20,7 @@ data class DomainLocalConfig(
      * Limit for the number of requests to be tracked.
      */
     @Json(name = "domain_limit")
-    val limit: Int
+    val limit: Int,
 ) : Serializable {
 
     private companion object {

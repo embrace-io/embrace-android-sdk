@@ -13,7 +13,7 @@ internal class EnvelopeMetadataSourceImplTest {
             userId = "userId",
             email = "email",
             username = "username",
-            personas = setOf("persona1", "persona2")
+            personas = setOf("persona1", "persona2"),
         )
         val source = EnvelopeMetadataSourceImpl { userInfo }
         val metadata = source.getEnvelopeMetadata()

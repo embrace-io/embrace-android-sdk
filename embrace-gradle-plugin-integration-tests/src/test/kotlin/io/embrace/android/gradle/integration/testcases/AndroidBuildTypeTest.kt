@@ -24,7 +24,7 @@ class AndroidBuildTypeTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
                 verifyJvmMappingRequestsSent(obfuscatedAppIds)
-            }
+            },
         )
     }
 
@@ -37,7 +37,7 @@ class AndroidBuildTypeTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
                 verifyJvmMappingRequestsSent(listOf("custo"))
-            }
+            },
         )
     }
 
@@ -50,7 +50,7 @@ class AndroidBuildTypeTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
                 verifyJvmMappingRequestsSent(obfuscatedAppIds)
-            }
+            },
         )
     }
 
@@ -63,7 +63,7 @@ class AndroidBuildTypeTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
                 verifyJvmMappingRequestsSent(listOf("custo"))
-            }
+            },
         )
     }
 }

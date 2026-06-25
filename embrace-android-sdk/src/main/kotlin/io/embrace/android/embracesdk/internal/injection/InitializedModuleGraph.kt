@@ -132,7 +132,7 @@ internal class InitializedModuleGraph(
                 null,
                 null,
                 null,
-                null
+                null,
             )
         }
     }
@@ -150,7 +150,7 @@ internal class InitializedModuleGraph(
             configService,
             openTelemetryModule,
             threadBlockageService,
-            deliveryModule
+            deliveryModule,
         )
     }
 

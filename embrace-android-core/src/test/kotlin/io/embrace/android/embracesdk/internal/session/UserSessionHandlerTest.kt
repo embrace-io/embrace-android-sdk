@@ -71,7 +71,7 @@ internal class UserSessionHandlerTest {
         metadataService = FakeMetadataService()
         sessionTracker = FakeSessionPartTracker()
         configService = FakeConfigService(
-            sessionBehavior = createSessionBehavior()
+            sessionBehavior = createSessionBehavior(),
         )
         val initModule = FakeInitModule(clock = clock)
         spanSink = initModule.openTelemetryModule.spanSink
@@ -86,16 +86,16 @@ internal class UserSessionHandlerTest {
             FakeOtelPayloadMapper(),
             FakeAppStateTracker(),
             FakeClock(),
-            logger
+            logger,
         )
         val payloadSourceModule = FakePayloadSourceModule(
-            partPayloadSource = partPayloadSource
+            partPayloadSource = partPayloadSource,
         )
         val collator = PayloadMessageCollatorImpl(
             SessionPartEnvelopeSourceImpl(
                 metadataSource = FakeEnvelopeMetadataSource(),
                 resourceSource = FakeEnvelopeResourceSource(),
-                payloadSource = partPayloadSource
+                payloadSource = partPayloadSource,
             ),
             currentSessionPartSpan,
             FakeSessionIdsProvider(),
@@ -134,7 +134,7 @@ internal class UserSessionHandlerTest {
             AppState.FOREGROUND,
             clock.now(),
             initial,
-            "fakeCrashId"
+            "fakeCrashId",
         )
         assertSpanInSessionEnvelope(msg)
     }
@@ -157,8 +157,8 @@ internal class UserSessionHandlerTest {
                 payloadFactory.endPayloadWithState(
                     AppState.FOREGROUND,
                     clock.now(),
-                    initial
-                )
+                    initial,
+                ),
             )
         val spans = checkNotNull(envelope.data.spans)
         assertEquals(2, spans.size)
@@ -184,7 +184,7 @@ internal class UserSessionHandlerTest {
                 true,
                 { 1 },
                 { 1 },
-            )
+            ),
         )
     }
 

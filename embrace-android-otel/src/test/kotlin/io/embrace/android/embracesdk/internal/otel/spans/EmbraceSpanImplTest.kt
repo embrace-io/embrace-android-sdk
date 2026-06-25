@@ -81,7 +81,7 @@ internal class EmbraceSpanImplTest {
             dataValidator = dataValidator,
             stopCallback = ::stopCallback,
             redactionFunction = ::redactionFunction,
-            telemetryService = FakeTelemetryService()
+            telemetryService = FakeTelemetryService(),
         )
         embraceSpan = embraceSpanFactory.create(
             otelSpanStartArgs = OtelSpanStartArgs(
@@ -91,7 +91,7 @@ internal class EmbraceSpanImplTest {
                 private = false,
                 tracer = tracer,
                 openTelemetry = fakeOpenTelemetry(),
-            )
+            ),
         )
         fakeClock.tick(100)
     }
@@ -134,7 +134,7 @@ internal class EmbraceSpanImplTest {
                 expectedStartTimeMs = expectedStartTimeMs,
                 expectedEndTimeMs = null,
                 eventCount = 1,
-                expectedCustomAttributeCount = 1
+                expectedCustomAttributeCount = 1,
             )
             assertEquals("00-$traceId-$spanId-01", embraceSpan.asW3cTraceParent())
             assertEquals(1, spanRepository.getActiveSpans().size)
@@ -170,7 +170,7 @@ internal class EmbraceSpanImplTest {
             assertSnapshot(
                 expectedStartTimeMs = expectedStartTimeMs,
                 expectedEndTimeMs = expectedEndTimeMs,
-                expectedStatus = Span.Status.ERROR
+                expectedStatus = Span.Status.ERROR,
             )
             validateStoppedSpan()
         }
@@ -186,7 +186,7 @@ internal class EmbraceSpanImplTest {
             assertSnapshot(
                 expectedStartTimeMs = expectedStartTimeMs,
                 expectedEndTimeMs = expectedEndTimeMs,
-                expectedStatus = Span.Status.ERROR
+                expectedStatus = Span.Status.ERROR,
             )
             validateStoppedSpan()
         }
@@ -202,16 +202,16 @@ internal class EmbraceSpanImplTest {
                 addEvent(
                     name = "second current event",
                     timestampMs = null,
-                    attributes = mapOf(Pair("key", "value"), Pair("key2", "value1"))
-                )
+                    attributes = mapOf(Pair("key", "value"), Pair("key2", "value1")),
+                ),
             )
             assertTrue(addEvent(name = "past event", timestampMs = fakeClock.now() - 1L, attributes = emptyMap()))
             assertTrue(
                 addEvent(
                     name = "future event",
                     timestampMs = fakeClock.now() + 2L,
-                    mapOf(Pair("key", "value"), Pair("key2", "value1"))
-                )
+                    mapOf(Pair("key", "value"), Pair("key2", "value1")),
+                ),
             )
             assertTrue(updateNotified)
         }
@@ -290,12 +290,12 @@ internal class EmbraceSpanImplTest {
                 assertEquals(timestampNanos, timestampNanos)
                 assertEquals(
                     IllegalStateException::class.java.canonicalName,
-                    attrs.single { it.key == ExceptionAttributes.EXCEPTION_TYPE }.data
+                    attrs.single { it.key == ExceptionAttributes.EXCEPTION_TYPE }.data,
                 )
                 assertEquals("oops", attrs.single { it.key == ExceptionAttributes.EXCEPTION_MESSAGE }.data)
                 assertEquals(
                     firstExceptionStackTrace,
-                    attrs.single { it.key == ExceptionAttributes.EXCEPTION_STACKTRACE }.data
+                    attrs.single { it.key == ExceptionAttributes.EXCEPTION_STACKTRACE }.data,
                 )
             }
             with(sanitizedEvents[1]) {
@@ -304,13 +304,13 @@ internal class EmbraceSpanImplTest {
                 assertEquals(timestampNanos, timestampNanos)
                 assertEquals(
                     RuntimeException::class.java.canonicalName,
-                    attrs.single { it.key == ExceptionAttributes.EXCEPTION_TYPE }.data
+                    attrs.single { it.key == ExceptionAttributes.EXCEPTION_TYPE }.data,
                 )
                 assertEquals("haha", attrs.single { it.key == ExceptionAttributes.EXCEPTION_MESSAGE }.data)
                 assertEquals("myValue", attrs.single { it.key == "myKey" }.data)
                 assertEquals(
                     secondExceptionStackTrace,
-                    attrs.single { it.key == ExceptionAttributes.EXCEPTION_STACKTRACE }.data
+                    attrs.single { it.key == ExceptionAttributes.EXCEPTION_STACKTRACE }.data,
                 )
             }
         }
@@ -353,8 +353,8 @@ internal class EmbraceSpanImplTest {
                 addEvent(
                     name = "yo",
                     timestampMs = null,
-                    attributes = eventAttributesAMap
-                )
+                    attributes = eventAttributesAMap,
+                ),
             )
             assertFalse(addEvent("failed event"))
             assertFalse(recordException(exception = RuntimeException()))
@@ -434,8 +434,8 @@ internal class EmbraceSpanImplTest {
         assertFalse(
             embraceSpan.addSystemLink(
                 checkNotNull(FakeEmbraceSdkSpan.stopped().spanContext),
-                LinkType.PreviousSessionPart
-            )
+                LinkType.PreviousSessionPart,
+            ),
         )
     }
 
@@ -462,8 +462,8 @@ internal class EmbraceSpanImplTest {
                 addEvent(
                     name = EXPECTED_EVENT_NAME,
                     timestampMs = null,
-                    attributes = mapOf(Pair(EXPECTED_ATTRIBUTE_NAME, EXPECTED_ATTRIBUTE_VALUE))
-                )
+                    attributes = mapOf(Pair(EXPECTED_ATTRIBUTE_NAME, EXPECTED_ATTRIBUTE_VALUE)),
+                ),
             )
             assertTrue(addAttribute(key = EXPECTED_ATTRIBUTE_NAME, value = EXPECTED_ATTRIBUTE_VALUE))
 

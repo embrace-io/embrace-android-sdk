@@ -41,9 +41,9 @@ internal class BlockedThreadDetectorTest {
         configService = FakeConfigService(
             threadBlockageBehavior = createThreadBlockageBehavior(
                 remoteCfg = RemoteConfig(
-                    threadBlockageRemoteConfig = cfg
-                )
-            )
+                    threadBlockageRemoteConfig = cfg,
+                ),
+            ),
         )
         watchdogExecutorService = BlockingScheduledExecutorService(clock)
         logger = FakeInternalLogger()

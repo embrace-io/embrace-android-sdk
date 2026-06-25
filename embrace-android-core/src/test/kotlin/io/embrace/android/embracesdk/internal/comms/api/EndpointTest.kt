@@ -39,10 +39,10 @@ internal class EndpointTest {
             updateRateLimitStatus()
             scheduleRetry(
                 BackgroundWorker(
-                    scheduledExecutorService
+                    scheduledExecutorService,
                 ),
                 retryAfter,
-                mockExecuteApiCalls
+                mockExecuteApiCalls,
             )
         }
 
@@ -61,10 +61,10 @@ internal class EndpointTest {
                 updateRateLimitStatus()
                 scheduleRetry(
                     BackgroundWorker(
-                        scheduledExecutorService
+                        scheduledExecutorService,
                     ),
                     null,
-                    mockExecuteApiCalls
+                    mockExecuteApiCalls,
                 )
             }
         } andThenAnswer {
@@ -72,10 +72,10 @@ internal class EndpointTest {
                 updateRateLimitStatus()
                 scheduleRetry(
                     BackgroundWorker(
-                        scheduledExecutorService
+                        scheduledExecutorService,
                     ),
                     null,
-                    mockExecuteApiCalls
+                    mockExecuteApiCalls,
                 )
             }
         } andThenAnswer {
@@ -87,10 +87,10 @@ internal class EndpointTest {
             updateRateLimitStatus()
             scheduleRetry(
                 BackgroundWorker(
-                    scheduledExecutorService
+                    scheduledExecutorService,
                 ),
                 null,
-                mockExecuteApiCalls
+                mockExecuteApiCalls,
             )
         }
 

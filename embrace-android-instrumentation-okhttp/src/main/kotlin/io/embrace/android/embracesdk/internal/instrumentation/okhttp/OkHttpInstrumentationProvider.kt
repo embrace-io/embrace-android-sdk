@@ -16,7 +16,7 @@ class OkHttpInstrumentationProvider : InstrumentationProvider {
                 okhttpDataSource = OkHttpDataSource(
                     args,
                     ::retrieveNetworkRequestDataSource,
-                    ::retrieveNetworkCaptureDataSource
+                    ::retrieveNetworkCaptureDataSource,
                 )
                 okhttpDataSource
             },

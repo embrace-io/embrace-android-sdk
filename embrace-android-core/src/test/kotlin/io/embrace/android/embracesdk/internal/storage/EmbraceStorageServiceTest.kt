@@ -28,7 +28,7 @@ internal class EmbraceStorageServiceTest {
         cacheDir = Files.createTempDirectory("cache_temp").toFile()
         filesDir = Files.createTempDirectory("files_temp").toFile()
         val embraceFilesPath = Files.createDirectory(
-            Paths.get(filesDir.absolutePath, "embrace")
+            Paths.get(filesDir.absolutePath, "embrace"),
         ).toFile()
         embraceFilesDir = embraceFilesPath.absolutePath
         val ctx = mockk<Context>()

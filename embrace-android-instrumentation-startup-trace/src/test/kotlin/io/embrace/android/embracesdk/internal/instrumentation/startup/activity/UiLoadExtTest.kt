@@ -45,7 +45,7 @@ internal class UiLoadExtTest {
         uiLoadEventListener = FakeUiLoadEventListener()
         drawEventEmitter = FakeDrawEventEmitter()
         RuntimeEnvironment.getApplication().registerActivityLifecycleCallbacks(
-            ClockTickingActivityLifecycleCallbacks(clock)
+            ClockTickingActivityLifecycleCallbacks(clock),
         )
     }
 
@@ -159,7 +159,7 @@ internal class UiLoadExtTest {
             firstDrawDetector = drawEventEmitter,
             autoTraceEnabled = autoTraceEnabled,
             clock = clock,
-            versionChecker = BuildVersionChecker
+            versionChecker = BuildVersionChecker,
         ).apply {
             RuntimeEnvironment.getApplication().registerActivityLifecycleCallbacks(this)
             activityController = Robolectric.buildActivity(activityClass.java)
@@ -201,120 +201,120 @@ internal class UiLoadExtTest {
         private val expectedColdOpenEvents = listOf(
             createEvent(
                 stage = "create",
-                timestampMs = START_TIME_MS + PRE_DURATION
+                timestampMs = START_TIME_MS + PRE_DURATION,
             ),
             createEvent(
                 stage = "createEnd",
-                timestampMs = START_TIME_MS + POST_DURATION + STATE_DURATION + PRE_DURATION
+                timestampMs = START_TIME_MS + POST_DURATION + STATE_DURATION + PRE_DURATION,
             ),
             createEvent(
                 stage = "start",
-                timestampMs = START_TIME_MS + POST_DURATION + STATE_DURATION + PRE_DURATION * 2
+                timestampMs = START_TIME_MS + POST_DURATION + STATE_DURATION + PRE_DURATION * 2,
             ),
             createEvent(
                 stage = "startEnd",
-                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2,
             ),
             createEvent(
                 stage = "resume",
-                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + PRE_DURATION
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + PRE_DURATION,
             ),
             createEvent(
                 stage = "resumeEnd",
-                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3,
             ),
             createEvent(
                 stage = "render",
-                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3,
             ),
             createEvent(
                 stage = "renderEnd",
-                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + RENDER_DURATION
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + RENDER_DURATION,
             ),
             createEvent(
                 stage = "discard",
-                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + RENDER_DURATION + PRE_DURATION
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + RENDER_DURATION + PRE_DURATION,
             ),
         )
 
         val expectedHotOpenEvents = listOf(
             createEvent(
                 stage = "start",
-                timestampMs = START_TIME_MS + PRE_DURATION
+                timestampMs = START_TIME_MS + PRE_DURATION,
             ),
             createEvent(
                 stage = "startEnd",
-                timestampMs = START_TIME_MS + POST_DURATION + STATE_DURATION + PRE_DURATION
+                timestampMs = START_TIME_MS + POST_DURATION + STATE_DURATION + PRE_DURATION,
             ),
             createEvent(
                 stage = "resume",
-                timestampMs = START_TIME_MS + POST_DURATION + STATE_DURATION + PRE_DURATION * 2
+                timestampMs = START_TIME_MS + POST_DURATION + STATE_DURATION + PRE_DURATION * 2,
             ),
             createEvent(
                 stage = "resumeEnd",
-                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2,
             ),
             createEvent(
                 stage = "render",
-                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2,
             ),
             createEvent(
                 stage = "renderEnd",
-                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + RENDER_DURATION
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + RENDER_DURATION,
             ),
             createEvent(
                 stage = "discard",
-                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + RENDER_DURATION + PRE_DURATION
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + RENDER_DURATION + PRE_DURATION,
             ),
         )
 
         val legacyColdOpenEvents = listOf(
             createEvent(
                 stage = "create",
-                timestampMs = START_TIME_MS + STATE_DURATION
+                timestampMs = START_TIME_MS + STATE_DURATION,
             ),
             createEvent(
                 stage = "createEnd",
-                timestampMs = START_TIME_MS + STATE_DURATION * 2
+                timestampMs = START_TIME_MS + STATE_DURATION * 2,
             ),
             createEvent(
                 stage = "start",
-                timestampMs = START_TIME_MS + STATE_DURATION * 2
+                timestampMs = START_TIME_MS + STATE_DURATION * 2,
             ),
             createEvent(
                 stage = "startEnd",
-                timestampMs = START_TIME_MS + STATE_DURATION * 3
+                timestampMs = START_TIME_MS + STATE_DURATION * 3,
             ),
             createEvent(
                 stage = "resume",
-                timestampMs = START_TIME_MS + STATE_DURATION * 3
+                timestampMs = START_TIME_MS + STATE_DURATION * 3,
             ),
             createEvent(
                 stage = "discard",
-                timestampMs = START_TIME_MS + STATE_DURATION * 4
+                timestampMs = START_TIME_MS + STATE_DURATION * 4,
             ),
         )
 
         val legacyHotOpenEvents = listOf(
             createEvent(
                 stage = "createEnd",
-                timestampMs = START_TIME_MS + STATE_DURATION
+                timestampMs = START_TIME_MS + STATE_DURATION,
             ),
             createEvent(
                 stage = "start",
-                timestampMs = START_TIME_MS + STATE_DURATION
+                timestampMs = START_TIME_MS + STATE_DURATION,
             ),
             createEvent(
                 stage = "startEnd",
-                timestampMs = START_TIME_MS + STATE_DURATION * 2
+                timestampMs = START_TIME_MS + STATE_DURATION * 2,
             ),
             createEvent(
                 stage = "resume",
-                timestampMs = START_TIME_MS + STATE_DURATION * 2
+                timestampMs = START_TIME_MS + STATE_DURATION * 2,
             ),
             createEvent(
                 stage = "discard",
-                timestampMs = START_TIME_MS + STATE_DURATION * 3
+                timestampMs = START_TIME_MS + STATE_DURATION * 3,
             ),
         )
 
@@ -322,7 +322,7 @@ internal class UiLoadExtTest {
             EventData(
                 stage = stage,
                 instanceId = 0,
-                timestampMs = timestampMs
+                timestampMs = timestampMs,
             )
     }
 }

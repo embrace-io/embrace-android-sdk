@@ -114,7 +114,7 @@ internal class EmbraceImpl(
                 bootstrapper.configService,
                 bootstrapper.payloadSourceModule,
                 this,
-                bootstrapper
+                bootstrapper,
             )
 
             // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
@@ -179,7 +179,7 @@ internal class EmbraceImpl(
                         it.asFile(
                             logger = null,
                             rootDirSupplier = { rootDir },
-                            fallbackDirSupplier = { fallbackDir }
+                            fallbackDirSupplier = { fallbackDir },
                         ).value
                     }.forEach {
                         it.deleteRecursively()

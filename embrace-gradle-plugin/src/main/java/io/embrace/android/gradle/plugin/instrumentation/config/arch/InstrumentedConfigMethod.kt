@@ -14,7 +14,7 @@ import org.objectweb.asm.MethodVisitor
 class InstrumentedConfigMethod(
     private val functionName: String,
     private val returnType: ReturnType,
-    private val valueProvider: () -> Any?
+    private val valueProvider: () -> Any?,
 ) {
 
     fun isConfigInstrumentationTarget(name: String, descriptor: String): Boolean {
@@ -28,32 +28,32 @@ class InstrumentedConfigMethod(
             ReturnType.BOOLEAN -> BooleanReturnValueMethodVisitor(
                 result as Boolean,
                 api,
-                visitor
+                visitor,
             )
             ReturnType.INT -> IntReturnValueMethodVisitor(
                 result as Int,
                 api,
-                visitor
+                visitor,
             )
             ReturnType.LONG -> LongReturnValueMethodVisitor(
                 result as Long,
                 api,
-                visitor
+                visitor,
             )
             ReturnType.STRING -> StringReturnValueMethodVisitor(
                 result as String,
                 api,
-                visitor
+                visitor,
             )
             ReturnType.STRING_LIST -> io.embrace.android.gradle.plugin.instrumentation.config.StringListReturnValueMethodVisitor(
                 result as List<String>,
                 api,
-                visitor
+                visitor,
             )
             ReturnType.MAP -> MapReturnValueMethodVisitor(
                 result as Map<String, String>,
                 api,
-                visitor
+                visitor,
             )
         }
     }

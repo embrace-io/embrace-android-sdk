@@ -45,7 +45,7 @@ class OtelSdkWrapper(
         EmbTrace.trace("otel-tracer-init") {
             kotlinApi.tracerProvider.getTracer(
                 name = configuration.sdkName,
-                version = configuration.sdkVersion
+                version = configuration.sdkVersion,
             )
         }
     }
@@ -93,7 +93,7 @@ class OtelSdkWrapper(
         EmbOpenTelemetry(
             impl = kotlinApi,
             traceProviderSupplier = { EmbTracerProvider(kotlinApi, spanService, otelClock, useKotlinSdk) },
-            loggerProviderSupplier = { EmbLoggerProvider(kotlinApi, eventService) }
+            loggerProviderSupplier = { EmbLoggerProvider(kotlinApi, eventService) },
         )
     }
 }

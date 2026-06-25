@@ -40,7 +40,7 @@ class HucLiteDataSource(
 ) : DataSourceImpl(
     args = args,
     limitStrategy = NoopLimitStrategy,
-    instrumentationName = "huc_lite_data_source"
+    instrumentationName = "huc_lite_data_source",
 ) {
     private val telemetryDestination = args.destination
     private val domainCountLimiter = args.configService.networkBehavior.domainCountLimiter
@@ -77,7 +77,7 @@ class HucLiteDataSource(
                     },
                     clock = clock,
                     telemetryDestination = telemetryDestination,
-                    errorHandler = ::errorHandler
+                    errorHandler = ::errorHandler,
                 )
             }.onFailure {
                 errorHandler(it)
@@ -141,8 +141,8 @@ class HucLiteDataSource(
             getOverriddenURLString(
                 request = HucLitePathOverrideRequest(
                     requestHeaderProvider = connection::getRequestProperty,
-                    originalUrl = connection.url
-                )
+                    originalUrl = connection.url,
+                ),
             )
         }
 
@@ -172,7 +172,7 @@ class HucLiteDataSource(
                         url = telemetryUrlProvider(),
                         httpMethod = method,
                         responseCode = responseCode,
-                    )
+                    ),
                 )
                 telemetryDestination.recordCompletedSpan(
                     name = "$method ${pathProvider()}",
@@ -180,7 +180,7 @@ class HucLiteDataSource(
                     endTimeMs = endTimeMs,
                     errorCode = errorCode,
                     type = EmbType.Performance.Network,
-                    attributes = networkRequestSchemaType.attributes()
+                    attributes = networkRequestSchemaType.attributes(),
                 )
             }
         }
@@ -194,8 +194,8 @@ class HucLiteDataSource(
                         url = telemetryUrlProvider(),
                         httpMethod = method,
                         errorType = t::class.java.canonicalName ?: t::class.java.simpleName,
-                        errorMessage = t.message ?: "Unexpected error"
-                    )
+                        errorMessage = t.message ?: "Unexpected error",
+                    ),
                 )
                 telemetryDestination.recordCompletedSpan(
                     name = "$method ${pathProvider()}",
@@ -203,7 +203,7 @@ class HucLiteDataSource(
                     endTimeMs = errorTimeMs,
                     errorCode = ErrorCodeAttribute.Failure,
                     type = EmbType.Performance.Network,
-                    attributes = networkRequestSchemaType.attributes()
+                    attributes = networkRequestSchemaType.attributes(),
                 )
             }
         }
@@ -243,7 +243,7 @@ class HucLiteDataSource(
 
         private fun recordRequest(
             urlProvider: () -> String,
-            recordingFunction: () -> Unit
+            recordingFunction: () -> Unit,
         ) {
             runCatching {
                 if (requestRecorded.compareAndSet(false, true)) {

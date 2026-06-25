@@ -60,7 +60,7 @@ internal class EmbraceMetadataService(
                 val deviceDiskAppUsage = getDeviceDiskAppUsage(
                     storageStatsManager.value,
                     context.packageManager,
-                    context.packageName
+                    context.packageName,
                 )
                 if (deviceDiskAppUsage != null) {
                     diskUsage = DiskUsage(deviceDiskAppUsage, free)
@@ -85,7 +85,7 @@ internal class EmbraceMetadataService(
                 val stats = storageStatsManager.queryStatsForPackage(
                     StorageManager.UUID_DEFAULT,
                     packageInfo.packageName,
-                    Process.myUserHandle()
+                    Process.myUserHandle(),
                 )
                 return stats.appBytes + stats.dataBytes + stats.cacheBytes
             }

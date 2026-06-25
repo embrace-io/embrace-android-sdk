@@ -33,7 +33,7 @@ public class EmbraceSpanEvent internal constructor(
             return EmbraceSpanEvent(
                 name = name,
                 timestampNanos = TimeUnit.MILLISECONDS.toNanos(timestampMs),
-                attributes = attributes ?: emptyMap()
+                attributes = attributes ?: emptyMap(),
             )
         }
     }

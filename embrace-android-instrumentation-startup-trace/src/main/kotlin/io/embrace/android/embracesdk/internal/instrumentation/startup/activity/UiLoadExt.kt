@@ -159,7 +159,7 @@ private class LifecycleEventEmitter(
         if (activity.traceLoad()) {
             uiLoadEventListener.createEnd(
                 instanceId = traceInstanceId(activity),
-                timestampMs = nowMs()
+                timestampMs = nowMs(),
             )
         }
     }
@@ -171,7 +171,7 @@ private class LifecycleEventEmitter(
                 val renderStartCallback = {
                     uiLoadEventListener.render(
                         instanceId = instanceId,
-                        timestampMs = nowMs()
+                        timestampMs = nowMs(),
                     )
                 }
 
@@ -179,7 +179,7 @@ private class LifecycleEventEmitter(
                 val renderEndCallback = {
                     uiLoadEventListener.renderEnd(
                         instanceId = instanceId,
-                        timestampMs = nowMs()
+                        timestampMs = nowMs(),
                     )
                 }
                 drawEventEmitter.registerFirstDrawCallback(activity, renderStartCallback, renderEndCallback)
@@ -199,7 +199,7 @@ private class LifecycleEventEmitter(
             )
             uiLoadEventListener.startEnd(
                 instanceId = instanceId,
-                timestampMs = nowMs()
+                timestampMs = nowMs(),
             )
         }
     }
@@ -208,7 +208,7 @@ private class LifecycleEventEmitter(
         if (activity.traceLoad()) {
             uiLoadEventListener.resume(
                 instanceId = traceInstanceId(activity),
-                timestampMs = nowMs()
+                timestampMs = nowMs(),
             )
         }
     }
@@ -218,7 +218,7 @@ private class LifecycleEventEmitter(
             val now = nowMs()
             uiLoadEventListener.resumeEnd(
                 instanceId = traceInstanceId(activity),
-                timestampMs = now
+                timestampMs = now,
             )
         }
     }
@@ -229,7 +229,7 @@ private class LifecycleEventEmitter(
             instanceStartTime.remove(instanceId)
             uiLoadEventListener.discard(
                 instanceId = instanceId,
-                timestampMs = nowMs()
+                timestampMs = nowMs(),
             )
             drawEventEmitter?.unregisterFirstDrawCallback(activity)
         }

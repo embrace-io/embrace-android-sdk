@@ -64,7 +64,7 @@ internal class SensitiveKeysBehaviorImplTest {
     fun `sensitive list is truncated to 10000 keys`() {
         // given a sensitive list with more than 10000 keys
         val behavior = SensitiveKeysBehaviorImpl(
-            (List(10000) { it.toString() } + "password").toConfig()
+            (List(10000) { it.toString() } + "password").toConfig(),
         )
 
         // when checking a key present in the 10001st position

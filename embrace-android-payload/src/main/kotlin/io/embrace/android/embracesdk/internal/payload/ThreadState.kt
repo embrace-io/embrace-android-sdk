@@ -10,5 +10,5 @@ enum class ThreadState(val code: Int) {
     BLOCKED(2),
     WAITING(3),
     TIMED_WAITING(4),
-    TERMINATED(5)
+    TERMINATED(5),
 }

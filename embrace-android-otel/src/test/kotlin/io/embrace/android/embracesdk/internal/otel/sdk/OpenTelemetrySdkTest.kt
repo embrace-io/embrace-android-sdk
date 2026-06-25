@@ -47,7 +47,7 @@ internal class OpenTelemetrySdkTest {
             expectedServiceVersion = configuration.appVersion,
             systemInfo = systemInfo,
             expectedDistroName = configuration.sdkName,
-            expectedDistroVersion = configuration.sdkVersion
+            expectedDistroVersion = configuration.sdkVersion,
         )
     }
 
@@ -59,7 +59,7 @@ internal class OpenTelemetrySdkTest {
             expectedServiceVersion = configuration.appVersion,
             systemInfo = systemInfo,
             expectedDistroName = configuration.sdkName,
-            expectedDistroVersion = configuration.sdkVersion
+            expectedDistroVersion = configuration.sdkVersion,
         )
     }
 
@@ -80,7 +80,7 @@ internal class OpenTelemetrySdkTest {
         val tracer = sdk.openTelemetryKotlin.tracerProvider.getTracer(
             name = "testScope",
             version = "v1",
-            schemaUrl = "url"
+            schemaUrl = "url",
         )
         tracer.startSpan("test").end()
         with(spanExporter.exportedSpans.single().instrumentationScopeInfo) {
@@ -106,7 +106,7 @@ internal class OpenTelemetrySdkTest {
         val logger = loggerProvider.getLogger(
             name = "testScope",
             version = "v1",
-            schemaUrl = "url"
+            schemaUrl = "url",
         )
         logger.emit()
         with(logExporter.exportedLogs.single().instrumentationScopeInfo) {

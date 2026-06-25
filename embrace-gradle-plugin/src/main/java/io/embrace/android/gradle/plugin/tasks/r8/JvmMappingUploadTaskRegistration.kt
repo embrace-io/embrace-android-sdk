@@ -66,14 +66,14 @@ class JvmMappingUploadTaskRegistration : EmbraceTaskRegistration {
         val compressionTask = project.registerTask(
             compressionTaskName,
             FileCompressionTask::class.java,
-            variant
+            variant,
         ) { task: FileCompressionTask ->
             // automatically link as a task dependency
             task.originalFile.fileProvider(mappingFile)
             task.compressedFile.convention(
                 project.layout.buildDirectory.file(
-                    "outputs/embrace/mapping/compressed/${variant.name}/$anchorTaskWithoutVariant/$FILE_NAME_MAPPING_TXT"
-                )
+                    "outputs/embrace/mapping/compressed/${variant.name}/$anchorTaskWithoutVariant/$FILE_NAME_MAPPING_TXT",
+                ),
             )
         }
 
@@ -81,7 +81,7 @@ class JvmMappingUploadTaskRegistration : EmbraceTaskRegistration {
         val uploadTask = project.registerTask(
             uploadTaskName,
             MultipartUploadTask::class.java,
-            variant
+            variant,
         ) { task ->
             val variantConfig = variantConfigurationsListProperty.get().first { it.variantName == variant.name }
             // buildIdProvider is ValueSource-backed: Gradle re-evaluates it on every build even
@@ -97,13 +97,13 @@ class JvmMappingUploadTaskRegistration : EmbraceTaskRegistration {
                         baseUrl = behavior.baseUrl,
                         failBuildOnUploadErrors = behavior.failBuildOnUploadErrors.get(),
                     )
-                }
+                },
             )
 
             // link output of compression task to the input of this task
             // dependencies to mapping file compression will be added automatically
             task.uploadFile.set(
-                compressionTask.flatMap { it.compressedFile }
+                compressionTask.flatMap { it.compressedFile },
             )
         }
 
@@ -152,7 +152,7 @@ class JvmMappingUploadTaskRegistration : EmbraceTaskRegistration {
             "dexguardApk$name",
             "dexguardAab$name",
             "minify${name}WithProguard",
-            "minify${name}WithR8"
+            "minify${name}WithR8",
         )
         val tasks = targetObfuscationTasks.filter { taskName ->
             isTaskRegistered(project.tryGetTaskProvider(taskName))

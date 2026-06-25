@@ -31,6 +31,6 @@ fun Span.toFailedSpan(endTimeMs: Long): Span {
         endTimeNanos = endTimeMs.millisToNanos(),
         parentSpanId = parentSpanId ?: OtelIds.INVALID_SPAN_ID,
         status = Span.Status.ERROR,
-        attributes = newAttributes.map { Attribute(it.key, it.value) }.plus(attributes ?: emptyList())
+        attributes = newAttributes.map { Attribute(it.key, it.value) }.plus(attributes ?: emptyList()),
     )
 }

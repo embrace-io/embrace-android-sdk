@@ -16,7 +16,7 @@ class PushNotificationDataSource(
 ) : DataSourceImpl(
     args = args,
     limitStrategy = UpToLimitStrategy(args.configService.breadcrumbBehavior::getCustomBreadcrumbLimit),
-    instrumentationName = "push_notification_data_source"
+    instrumentationName = "push_notification_data_source",
 ) {
 
     fun logPushNotification(
@@ -58,7 +58,7 @@ class PushNotificationDataSource(
                     from = if (captureFcmPiiData) from else null,
                     priority = notificationPriority ?: 0,
                 ),
-                clock.now()
+                clock.now(),
             )
         }
     }

@@ -23,7 +23,7 @@ internal class InternalInterfaceModuleImplTest {
             FakeConfigService(),
             FakePayloadSourceModule(),
             EmbraceImpl(),
-            ModuleInitBootstrapper(FakeInitModule())
+            ModuleInitBootstrapper(FakeInitModule()),
         )
 
         assertNotNull(module.flutterInternalInterface)

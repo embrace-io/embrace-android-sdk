@@ -36,7 +36,7 @@ fun Variant.toVariantOutputInfoProvider(project: Project): Provider<VariantOutpu
         VariantOutputInfo(
             versionName = UNKNOWN,
             versionCode = UNKNOWN,
-            packageName = UNKNOWN
+            packageName = UNKNOWN,
         )
     }
 
@@ -53,7 +53,7 @@ fun Variant.toVariantOutputInfoProvider(project: Project): Provider<VariantOutpu
             VariantOutputInfo(
                 versionName = versionPair.first,
                 versionCode = versionPair.second,
-                packageName = pkg
+                packageName = pkg,
             )
         }
 }

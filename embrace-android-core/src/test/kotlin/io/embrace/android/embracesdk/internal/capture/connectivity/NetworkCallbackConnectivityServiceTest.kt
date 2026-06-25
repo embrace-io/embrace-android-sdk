@@ -346,7 +346,7 @@ internal class NetworkCallbackConnectivityServiceTest {
             disconnectedUnknown to buildCaps {
                 addCapability(NET_CAPABILITY_INTERNET)
             },
-            none to buildCaps { }
+            none to buildCaps { },
         )
 
         val connectivityStatuses = mapOf(
@@ -357,7 +357,7 @@ internal class NetworkCallbackConnectivityServiceTest {
             connectedUnknown to ConnectivityStatus.Unknown(true),
             disconnectedUnknown to ConnectivityStatus.Unknown(false),
             unverified to ConnectivityStatus.Unverified,
-            none to ConnectivityStatus.None
+            none to ConnectivityStatus.None,
         )
 
         private fun createNetworkInfo(

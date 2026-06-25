@@ -18,7 +18,7 @@ class EnvelopeMetadataSourceImpl(
             username = userInfo.username,
             personas = userInfo.personas ?: emptySet(),
             timezoneDescription = TimeZone.getDefault().id,
-            locale = Locale.getDefault().language + "_" + Locale.getDefault().country
+            locale = Locale.getDefault().language + "_" + Locale.getDefault().country,
         )
     }
 }

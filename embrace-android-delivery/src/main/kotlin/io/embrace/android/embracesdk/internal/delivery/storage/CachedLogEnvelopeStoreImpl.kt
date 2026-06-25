@@ -28,7 +28,7 @@ class CachedLogEnvelopeStoreImpl(
         worker,
         logger,
         clock,
-        storageLimit
+        storageLimit,
     )
 
     override fun create(
@@ -39,7 +39,7 @@ class CachedLogEnvelopeStoreImpl(
         fileStorageService.store(storedTelemetryMetadata) { stream ->
             serializer.toJson(
                 LogPayload().createLogEnvelope(resource, metadata),
-                stream
+                stream,
             )
         }
     }

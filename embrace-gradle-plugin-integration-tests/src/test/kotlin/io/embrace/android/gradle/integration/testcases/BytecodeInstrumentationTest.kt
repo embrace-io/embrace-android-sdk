@@ -38,7 +38,7 @@ class BytecodeInstrumentationTest {
             setup = ndkSetup,
             assertions = { projectDir ->
                 verifyBytecodeInstrumented(projectDir, "bytecode-instrumentation-enabled.json")
-            }
+            },
         )
     }
 
@@ -52,7 +52,7 @@ class BytecodeInstrumentationTest {
             setup = ndkSetup,
             assertions = { projectDir ->
                 verifyBytecodeInstrumented(projectDir, "bytecode-instrumentation-disabled.json")
-            }
+            },
         )
     }
 
@@ -66,7 +66,7 @@ class BytecodeInstrumentationTest {
             setup = ndkSetup,
             assertions = { projectDir ->
                 verifyBytecodeInstrumented(projectDir, "bytecode-instrumentation-disabled.json")
-            }
+            },
         )
     }
 
@@ -80,7 +80,7 @@ class BytecodeInstrumentationTest {
             setup = ndkSetup,
             assertions = { projectDir ->
                 verifyBytecodeInstrumented(projectDir, "bytecode-instrumentation-disabled.json")
-            }
+            },
         )
     }
 

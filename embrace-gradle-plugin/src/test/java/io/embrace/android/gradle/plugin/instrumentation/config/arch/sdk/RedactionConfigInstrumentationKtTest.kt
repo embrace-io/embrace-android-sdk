@@ -12,11 +12,11 @@ class RedactionConfigInstrumentationKtTest {
         null,
         null,
         null,
-        null
+        null,
     )
 
     private val methods = listOf(
-        ConfigMethod("getSensitiveKeysDenylist", "()Ljava/util/List;", listOf("password"))
+        ConfigMethod("getSensitiveKeysDenylist", "()Ljava/util/List;", listOf("password")),
     )
 
     @Test
@@ -37,11 +37,11 @@ class RedactionConfigInstrumentationKtTest {
                     null,
                     null,
                     SdkLocalConfig(
-                        sensitiveKeysDenylist = listOf("password")
+                        sensitiveKeysDenylist = listOf("password"),
                     ),
-                    null
-                )
-            )
+                    null,
+                ),
+            ),
         )
         methods.forEach { method ->
             verifyConfigMethodVisitor(instrumentation, method)

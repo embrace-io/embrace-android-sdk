@@ -60,8 +60,8 @@ internal class PayloadFactoryBaTest {
         spanService = initModule.openTelemetryModule.spanService
         configService = FakeConfigService(
             backgroundActivityBehavior = createBackgroundActivityBehavior(
-                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
-            )
+                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f)),
+            ),
         )
         blockingExecutorService = BlockingScheduledExecutorService(blockingMode = false)
     }
@@ -117,8 +117,8 @@ internal class PayloadFactoryBaTest {
                 FakeOtelPayloadMapper(),
                 FakeAppStateTracker(),
                 FakeClock(),
-                logger
-            )
+                logger,
+            ),
         )
         val collator = PayloadMessageCollatorImpl(
             payloadSourceModule.sessionPartEnvelopeSource,

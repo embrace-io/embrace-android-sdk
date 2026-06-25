@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
 import io.embrace.android.embracesdk.internal.config.source.RemoteConfigSource
 
 class FakeRemoteConfigSource(
-    var cfg: ConfigHttpResponse? = null
+    var cfg: ConfigHttpResponse? = null,
 ) : RemoteConfigSource {
 
     var callCount: Int = 0

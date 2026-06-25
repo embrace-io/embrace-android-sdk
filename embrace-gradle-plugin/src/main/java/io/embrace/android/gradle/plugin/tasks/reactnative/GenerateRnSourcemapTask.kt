@@ -70,7 +70,7 @@ abstract class GenerateRnSourcemapTask @Inject constructor(
         val jsonFile = generateBundleZipFile(
             bundleFile,
             sourceMapFile,
-            sourceMapAndBundleJsonFile
+            sourceMapAndBundleJsonFile,
         )
         uploadBundleFiles(jsonFile, bundleId)
 
@@ -83,7 +83,7 @@ abstract class GenerateRnSourcemapTask @Inject constructor(
         val networkService = OkHttpNetworkService(requestParams.get().baseUrl)
         val result = networkService.uploadRnSourcemapFile(
             requestParams.get().copy(buildId = bundleId),
-            jsonFile
+            jsonFile,
         )
         handleHttpCallResult(result, requestParams.get())
     }

@@ -30,7 +30,7 @@ internal class EmbraceNetworkRequestTest {
             END_TIME,
             BYTES_SENT,
             BYTES_RECEIVED,
-            RESPONSE_CODE
+            RESPONSE_CODE,
         )
         verifyDefaultCompletedRequest(request)
     }
@@ -45,7 +45,7 @@ internal class EmbraceNetworkRequestTest {
             BYTES_SENT,
             BYTES_RECEIVED,
             RESPONSE_CODE,
-            TRACE_ID
+            TRACE_ID,
         )
         verifyDefaultCompletedRequest(request)
         assertEquals(TRACE_ID, request.traceId)
@@ -64,7 +64,7 @@ internal class EmbraceNetworkRequestTest {
             RESPONSE_CODE,
             TRACE_ID,
             null,
-            captureData
+            captureData,
         )
         verifyDefaultCompletedRequest(request)
         assertEquals(TRACE_ID, request.traceId)
@@ -84,7 +84,7 @@ internal class EmbraceNetworkRequestTest {
             RESPONSE_CODE,
             TRACE_ID,
             traceParent,
-            captureData
+            captureData,
         )
         verifyDefaultCompletedRequest(request)
         assertEquals(TRACE_ID, request.traceId)
@@ -100,7 +100,7 @@ internal class EmbraceNetworkRequestTest {
             START_TIME,
             END_TIME,
             ERR_TYPE,
-            ERR_MSG
+            ERR_MSG,
         )
         verifyDefaultIncompleteRequest(request)
     }
@@ -114,7 +114,7 @@ internal class EmbraceNetworkRequestTest {
             END_TIME,
             ERR_TYPE,
             ERR_MSG,
-            TRACE_ID
+            TRACE_ID,
         )
         verifyDefaultIncompleteRequest(request)
         assertEquals(TRACE_ID, request.traceId)
@@ -132,7 +132,7 @@ internal class EmbraceNetworkRequestTest {
             ERR_MSG,
             TRACE_ID,
             null,
-            captureData
+            captureData,
         )
         verifyDefaultIncompleteRequest(request)
         assertEquals(TRACE_ID, request.traceId)
@@ -151,7 +151,7 @@ internal class EmbraceNetworkRequestTest {
             ERR_MSG,
             TRACE_ID,
             traceParent,
-            captureData
+            captureData,
         )
         verifyDefaultIncompleteRequest(request)
         assertEquals(TRACE_ID, request.traceId)

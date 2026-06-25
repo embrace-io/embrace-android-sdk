@@ -54,7 +54,7 @@ abstract class BuildTelemetryService :
                 project.gradle.sharedServices
                     .registerIfAbsent(
                         BuildTelemetryService::class.java.name,
-                        BuildTelemetryService::class.java
+                        BuildTelemetryService::class.java,
                     ) { serviceSpec: BuildServiceSpec<Params> ->
                         serviceSpec.parameters { params: Params ->
                             val telemetryProvider = BuildTelemetryCollector().collect(
@@ -62,7 +62,7 @@ abstract class BuildTelemetryService :
                                 behavior,
                                 project.providers,
                                 variantConfigurations,
-                                agpWrapper
+                                agpWrapper,
                             )
                             params.request.set(telemetryProvider)
                             params.baseUrl.set(behavior.baseUrl)
@@ -72,7 +72,7 @@ abstract class BuildTelemetryService :
 
             // subscribe for tasks events
             project.objects.newInstance(
-                BuildEventsListenerRegistryProvider::class.java
+                BuildEventsListenerRegistryProvider::class.java,
             ).getBuildEventsListenerRegistry().onTaskCompletion(serviceProvider)
             return serviceProvider
         }

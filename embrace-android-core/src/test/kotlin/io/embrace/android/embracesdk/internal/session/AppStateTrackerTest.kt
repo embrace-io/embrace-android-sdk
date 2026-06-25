@@ -60,12 +60,12 @@ internal class AppStateTrackerTest {
             answers = false,
             objectMocks = false,
             constructorMocks = false,
-            staticMocks = false
+            staticMocks = false,
         )
         fakeEmbLogger = FakeInternalLogger()
         stateService = AppStateTrackerImpl(
             fakeEmbLogger,
-            TestLifecycleOwner(Lifecycle.State.INITIALIZED)
+            TestLifecycleOwner(Lifecycle.State.INITIALIZED),
         )
     }
 
@@ -155,7 +155,7 @@ internal class AppStateTrackerTest {
         stateService.onForeground()
         val foregroundExpected = listOf(
             "DecoratedSessionOrchestrator",
-            "DecoratedListener"
+            "DecoratedListener",
         )
         assertEquals(foregroundExpected, invocations)
 
@@ -211,7 +211,7 @@ internal class AppStateTrackerTest {
                 every { lifecycle } returns mockk<Lifecycle> {
                     every { currentState } returns Lifecycle.State.INITIALIZED
                 }
-            }
+            },
         )
         assertEquals(AppState.BACKGROUND, stateService.getAppState())
     }
@@ -224,7 +224,7 @@ internal class AppStateTrackerTest {
                 every { lifecycle } returns mockk<Lifecycle> {
                     every { currentState } returns Lifecycle.State.STARTED
                 }
-            }
+            },
         )
         assertEquals(AppState.FOREGROUND, stateService.getAppState())
     }

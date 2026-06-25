@@ -123,7 +123,7 @@ sealed interface UserSessionMetadata {
          */
         fun classify(
             isBackgroundOnly: Boolean,
-            updatedLastActivityMs: Long = lastActivityMs
+            updatedLastActivityMs: Long = lastActivityMs,
         ): Classified = Classified(
             startTimeMs = startTimeMs,
             userSessionId = userSessionId,

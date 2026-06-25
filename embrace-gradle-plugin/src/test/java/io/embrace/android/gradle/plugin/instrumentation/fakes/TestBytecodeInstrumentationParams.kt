@@ -24,11 +24,11 @@ class TestBytecodeInstrumentationParams(
 
     override val config: Property<VariantConfig> =
         DefaultProperty(PropertyHost.NO_OP, VariantConfig::class.javaObjectType).convention(
-            VariantConfig("", "", null, null, null)
+            VariantConfig("", "", null, null, null),
         )
     override val variantOutputInfo: Property<VariantOutputInfo> =
         DefaultProperty(PropertyHost.NO_OP, VariantOutputInfo::class.javaObjectType).convention(
-            VariantOutputInfo("", "", "")
+            VariantOutputInfo("", "", ""),
         )
     override val encodedSharedObjectFilesMap: RegularFileProperty = ProjectBuilder.builder().build().objects.fileProperty()
     override val reactNativeBundleId: RegularFileProperty = ProjectBuilder.builder().build().objects.fileProperty()
@@ -36,7 +36,7 @@ class TestBytecodeInstrumentationParams(
         DefaultProperty(PropertyHost.NO_OP, Boolean::class.javaObjectType).convention(disabled)
     override val classInstrumentationFilter: Property<ClassInstrumentationFilter> =
         DefaultProperty(PropertyHost.NO_OP, ClassInstrumentationFilter::class.javaObjectType).convention(
-            classInstrumentationFilter
+            classInstrumentationFilter,
         )
     override val shouldInstrumentFirebaseMessaging: Property<Boolean> =
         DefaultProperty(PropertyHost.NO_OP, Boolean::class.javaObjectType).convention(instrumentFirebaseMessaging)

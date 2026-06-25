@@ -9,7 +9,8 @@ enum class CpuAbi(
     ARM64_V8A("arm64-v8a", false),
     X86("x86", true),
     X86_64("x86_64", false),
-    UNKNOWN("unknown", false);
+    UNKNOWN("unknown", false),
+    ;
 
     companion object {
         fun current(abis: Array<String>) = fromArchName(abis[0])

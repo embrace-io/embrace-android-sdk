@@ -23,7 +23,7 @@ interface SessionPartTracker {
     fun newActiveSessionPart(
         endSessionPartCallback: SessionPartToken.() -> Unit,
         startSessionPartCallback: () -> SessionPartToken?,
-        postTransitionAppState: AppState
+        postTransitionAppState: AppState,
     ): SessionPartToken?
 
     /**

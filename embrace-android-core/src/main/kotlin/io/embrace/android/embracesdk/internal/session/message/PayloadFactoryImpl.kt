@@ -81,7 +81,7 @@ internal class PayloadFactoryImpl(
                 appState = state,
                 userSessionPartIndex = userSessionPartIndex(),
                 sessionPartNumber = sessionPartNumber(),
-            )
+            ),
         )
     }
 
@@ -92,7 +92,7 @@ internal class PayloadFactoryImpl(
                 endType = SessionPartSnapshotType.NORMAL_END,
                 logger = logger,
                 continueMonitoring = true,
-            )
+            ),
         )
     }
 
@@ -114,7 +114,7 @@ internal class PayloadFactoryImpl(
                 appState = AppState.FOREGROUND,
                 userSessionPartIndex = userSessionPartIndex(),
                 sessionPartNumber = sessionPartNumber(),
-            )
+            ),
         )
     }
 
@@ -142,7 +142,7 @@ internal class PayloadFactoryImpl(
                 appState = AppState.BACKGROUND,
                 userSessionPartIndex = userSessionPartIndex(),
                 sessionPartNumber = sessionPartNumber(),
-            )
+            ),
         )
     }
 
@@ -153,7 +153,7 @@ internal class PayloadFactoryImpl(
                 endType = SessionPartSnapshotType.NORMAL_END,
                 logger = logger,
                 continueMonitoring = isBackgroundActivityEnabled(),
-            )
+            ),
         )
     }
 
@@ -170,7 +170,7 @@ internal class PayloadFactoryImpl(
                 endType = SessionPartSnapshotType.NORMAL_END,
                 logger = logger,
                 continueMonitoring = true,
-            )
+            ),
         )
     }
 
@@ -184,8 +184,8 @@ internal class PayloadFactoryImpl(
                 endType = SessionPartSnapshotType.JVM_CRASH,
                 logger = logger,
                 continueMonitoring = false,
-                crashId = crashId
-            )
+                crashId = crashId,
+            ),
         )
     }
 
@@ -202,8 +202,8 @@ internal class PayloadFactoryImpl(
                 endType = SessionPartSnapshotType.JVM_CRASH,
                 logger = logger,
                 continueMonitoring = false,
-                crashId = crashId
-            )
+                crashId = crashId,
+            ),
         )
     }
 
@@ -216,8 +216,8 @@ internal class PayloadFactoryImpl(
                 initial = initial,
                 endType = SessionPartSnapshotType.PERIODIC_CACHE,
                 logger = logger,
-                continueMonitoring = true
-            )
+                continueMonitoring = true,
+            ),
         )
     }
 
@@ -230,8 +230,8 @@ internal class PayloadFactoryImpl(
                 initial = initial,
                 endType = SessionPartSnapshotType.PERIODIC_CACHE,
                 logger = logger,
-                continueMonitoring = true
-            )
+                continueMonitoring = true,
+            ),
         )
     }
 

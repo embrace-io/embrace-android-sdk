@@ -13,6 +13,6 @@ fun ReadableLogRecord.toEmbracePayload(): Log {
         severityNumber = severityNumber?.ordinal,
         severityText = severityText,
         body = body?.toString(),
-        attributes = attributes.map { (key, value) -> Attribute(key, value.toString()) }
+        attributes = attributes.map { (key, value) -> Attribute(key, value.toString()) },
     )
 }

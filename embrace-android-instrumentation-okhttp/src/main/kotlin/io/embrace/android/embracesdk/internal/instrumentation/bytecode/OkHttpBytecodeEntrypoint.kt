@@ -39,11 +39,11 @@ object OkHttpBytecodeEntrypoint {
         try {
             addInterceptor(
                 thiz.interceptors(),
-                EmbraceOkHttpInterceptor(InterceptorType.APPLICATION, provider)
+                EmbraceOkHttpInterceptor(InterceptorType.APPLICATION, provider),
             )
             addInterceptor(
                 thiz.networkInterceptors(),
-                EmbraceOkHttpInterceptor(InterceptorType.NETWORK, provider)
+                EmbraceOkHttpInterceptor(InterceptorType.NETWORK, provider),
             )
         } catch (ignored: Throwable) {
         }

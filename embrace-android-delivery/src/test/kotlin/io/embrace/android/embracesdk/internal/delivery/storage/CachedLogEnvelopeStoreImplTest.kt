@@ -47,12 +47,12 @@ class CachedLogEnvelopeStoreImplTest {
         store.create(
             storedTelemetryMetadata = fakeNativeCrashEnvelope,
             resource = fakeEnvelopeResource,
-            metadata = fakeEnvelopeMetadata
+            metadata = fakeEnvelopeMetadata,
         )
 
         val anotherCrashMetadata = createNativeCrashEnvelopeMetadata(
             sessionPartId = "another-session",
-            processIdentifier = "another-process"
+            processIdentifier = "another-process",
         )
 
         assertNull(store.get(anotherCrashMetadata))
@@ -70,7 +70,7 @@ class CachedLogEnvelopeStoreImplTest {
     companion object {
         val fakeNativeCrashEnvelope = createNativeCrashEnvelopeMetadata(
             sessionPartId = "old-session-id",
-            processIdentifier = "old-process-id"
+            processIdentifier = "old-process-id",
         )
     }
 }

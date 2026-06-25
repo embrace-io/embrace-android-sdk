@@ -11,7 +11,7 @@ const val VARIANT_CONFIG_FILE_NAME = "embrace-config.json"
  */
 class VariantConfigurationFileFinder(
     private val projectDirectory: Directory,
-    private val fileLocations: List<String>
+    private val fileLocations: List<String>,
 ) {
     /**
      * It tries to fetch the file.
@@ -36,22 +36,22 @@ fun defaultConfigurationFileFinder(projectDirectory: Directory): VariantConfigur
 
 fun variantBuildTypeConfigurationFileFinder(
     variantInfo: AndroidCompactedVariantData,
-    projectDirectory: Directory
+    projectDirectory: Directory,
 ): VariantConfigurationFileFinder = singleLocationFileFinder(projectDirectory, variantInfo.buildTypeName)
 
 fun variantFlavorConfigurationFileFinder(
     variantInfo: AndroidCompactedVariantData,
-    projectDirectory: Directory
+    projectDirectory: Directory,
 ): VariantConfigurationFileFinder = singleLocationFileFinder(projectDirectory, variantInfo.flavorName)
 
 fun variantNameConfigurationFileFinder(
     variantInfo: AndroidCompactedVariantData,
-    projectDirectory: Directory
+    projectDirectory: Directory,
 ): VariantConfigurationFileFinder = singleLocationFileFinder(projectDirectory, variantInfo.name)
 
 fun variantProductFlavorsConfigurationFileFinder(
     variantInfo: AndroidCompactedVariantData,
-    projectDirectory: Directory
+    projectDirectory: Directory,
 ): VariantConfigurationFileFinder =
     VariantConfigurationFileFinder(
         projectDirectory,
@@ -59,7 +59,7 @@ fun variantProductFlavorsConfigurationFileFinder(
             it.isNotEmpty()
         }.map {
             "src/$it"
-        }.toList()
+        }.toList(),
     )
 
 private fun singleLocationFileFinder(projectDirectory: Directory, path: String): VariantConfigurationFileFinder =

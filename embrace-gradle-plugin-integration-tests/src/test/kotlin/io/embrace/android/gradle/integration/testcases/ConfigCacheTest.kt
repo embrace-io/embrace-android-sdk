@@ -31,12 +31,12 @@ class ConfigCacheTest {
                 setupMockResponses(
                     defaultExpectedLibs,
                     defaultExpectedArchs,
-                    defaultExpectedVariants
+                    defaultExpectedVariants,
                 )
             },
             projectType = ProjectType.ANDROID,
             assertions = {
-            }
+            },
         )
     }
 }

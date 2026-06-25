@@ -19,7 +19,7 @@ abstract class StateInstrumentationProvider<T : StateDataSource<S>, S : Any>(
             factory = factoryProvider(args),
             configGate = {
                 args.configGate() && args.configService.autoDataCaptureBehavior.isStateCaptureEnabled()
-            }
+            },
         )
     }
 }

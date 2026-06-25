@@ -41,7 +41,7 @@ class UnityTest {
             assertions = {
                 verifyLineMapRequestSent()
                 verifyMethodMapRequestSent()
-            }
+            },
         )
     }
 
@@ -58,7 +58,7 @@ class UnityTest {
                 verifyNoHandshakes()
                 verifyNoUploads()
                 verifyJvmMappingRequestsSent(0)
-            }
+            },
         )
     }
 

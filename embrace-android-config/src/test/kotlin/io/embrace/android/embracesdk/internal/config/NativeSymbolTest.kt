@@ -23,7 +23,7 @@ class NativeSymbolTest {
         "armeabi-v7a" to mapOf("symbol" to "armeabi-v7a-value"),
         "arm64-v8a" to mapOf("symbol" to "arm64-v8a-value"),
         "x86" to mapOf("symbol" to "x86-value"),
-        "x86_64" to mapOf("symbol" to "x86_64-value")
+        "x86_64" to mapOf("symbol" to "x86_64-value"),
     )
 
     private val serializer = TestPlatformSerializer()

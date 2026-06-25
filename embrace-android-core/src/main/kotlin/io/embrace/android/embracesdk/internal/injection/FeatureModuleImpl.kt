@@ -20,7 +20,7 @@ class FeatureModuleImpl(
         DataSourceState(
             factory = {
                 BreadcrumbDataSource(instrumentationModule.instrumentationArgs)
-            }
+            },
         ).apply {
             instrumentationModule.instrumentationRegistry.add(this)
         }

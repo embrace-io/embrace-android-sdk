@@ -10,7 +10,7 @@ import java.io.Serializable
 @JsonClass(generateAdapter = true)
 data class UnityConfig(
     @Json(name = "symbols_archive_name")
-    val symbolsArchiveName: String?
+    val symbolsArchiveName: String?,
 ) : Serializable {
 
     private companion object {

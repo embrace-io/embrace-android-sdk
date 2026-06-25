@@ -57,7 +57,7 @@ class EventServiceImpl(
             severityText = severityText,
             attributes = {
                 container.attributes.forEach { (k, v) -> setStringAttribute(k, v.toString()) }
-            }
+            },
         )
     }
 

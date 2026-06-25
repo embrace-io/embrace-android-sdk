@@ -20,7 +20,7 @@ internal class TraceparentInjectionBehaviorImplTest {
         val behavior = TraceparentInjectionBehaviorImpl(
             thresholdCheck = thresholdCheck,
             local = local,
-            remote = null
+            remote = null,
         )
         with(behavior) {
             assertFalse(isTraceparentInjectionEnabled())
@@ -51,49 +51,49 @@ internal class TraceparentInjectionBehaviorImplTest {
         assertTrue(
             behavior(
                 allowedDomains = null,
-            ).shouldInjectTraceparent("test.com")
+            ).shouldInjectTraceparent("test.com"),
         )
 
         assertFalse(
             behavior(
                 allowedDomains = emptyList(),
-            ).shouldInjectTraceparent("test.com")
+            ).shouldInjectTraceparent("test.com"),
         )
 
         assertTrue(
             behavior(
                 allowedDomains = listOf("test.com"),
-            ).shouldInjectTraceparent("test.com")
+            ).shouldInjectTraceparent("test.com"),
         )
 
         assertTrue(
             behavior(
                 allowedDomains = listOf(".test.com"),
-            ).shouldInjectTraceparent("foo.test.com")
+            ).shouldInjectTraceparent("foo.test.com"),
         )
 
         assertTrue(
             behavior(
                 allowedDomains = listOf(".TEST.com"),
-            ).shouldInjectTraceparent("foo.test.com")
+            ).shouldInjectTraceparent("foo.test.com"),
         )
 
         assertTrue(
             behavior(
                 allowedDomains = listOf(".test.com"),
-            ).shouldInjectTraceparent("foo.TEST.com")
+            ).shouldInjectTraceparent("foo.TEST.com"),
         )
 
         assertFalse(
             behavior(
                 allowedDomains = listOf("test.com"),
-            ).shouldInjectTraceparent(null)
+            ).shouldInjectTraceparent(null),
         )
 
         assertFalse(
             behavior(
                 allowedDomains = listOf("test.com"),
-            ).shouldInjectTraceparent("foo.com")
+            ).shouldInjectTraceparent("foo.com"),
         )
     }
 

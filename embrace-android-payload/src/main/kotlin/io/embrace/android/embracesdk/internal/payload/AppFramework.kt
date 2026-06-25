@@ -9,7 +9,8 @@ enum class AppFramework(val value: Int) {
     NATIVE(1),
     REACT_NATIVE(2),
     UNITY(3),
-    FLUTTER(4);
+    FLUTTER(4),
+    ;
 
     companion object {
 

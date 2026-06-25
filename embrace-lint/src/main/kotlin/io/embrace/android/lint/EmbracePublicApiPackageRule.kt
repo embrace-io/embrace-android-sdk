@@ -51,8 +51,8 @@ class EmbracePublicApiPackageRule : Detector(), Detector.UastScanner {
             severity = Severity.ERROR,
             implementation = Implementation(
                 EmbracePublicApiPackageRule::class.java,
-                Scope.JAVA_FILE_SCOPE
-            )
+                Scope.JAVA_FILE_SCOPE,
+            ),
         )
     }
 }

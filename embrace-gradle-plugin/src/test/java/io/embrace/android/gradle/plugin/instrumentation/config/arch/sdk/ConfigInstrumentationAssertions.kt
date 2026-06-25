@@ -22,7 +22,7 @@ fun verifyConfigMethodVisitor(
         method.name,
         method.descriptor,
         ASM_API_VERSION,
-        nextVisitor
+        nextVisitor,
     )
     assertEquals(
         "Expected ${method.name} to return ${method.result}",
@@ -35,6 +35,6 @@ fun verifyConfigMethodVisitor(
             is StringListReturnValueMethodVisitor -> visitor.replacedValue
             is MapReturnValueMethodVisitor -> visitor.replacedValue
             else -> null
-        }
+        },
     )
 }

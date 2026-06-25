@@ -22,14 +22,14 @@ class NdkUploadHandshakeTest {
     fun setUp() {
         mockNetworkService = mockk()
         ndkUploadHandshake = NdkUploadHandshake(
-            networkService = mockNetworkService
+            networkService = mockNetworkService,
         )
 
         ndkUploadHandshakeRequest = NdkUploadHandshakeRequest(
             appId = APP_ID,
             apiToken = API_TOKEN,
             variant = VARIANT,
-            archSymbols = emptyMap()
+            archSymbols = emptyMap(),
         )
     }
 
@@ -39,7 +39,7 @@ class NdkUploadHandshakeTest {
             appId = APP_ID,
             apiToken = API_TOKEN,
             variant = VARIANT,
-            archSymbols = emptyMap()
+            archSymbols = emptyMap(),
         )
         val expectedRequest = """
             {
@@ -63,8 +63,8 @@ class NdkUploadHandshakeTest {
                 "x86_64" to mapOf("libnative.so" to "f067beecae4f901c81c642d002810944460efd7b"),
                 "x86" to mapOf("libnative.so" to "3c84ca4cf150a346db8d195426e520b7a45a0118"),
                 "armeabi-v7a" to mapOf("libnative.so" to "b621b4bac764b4a1d6166984d63d9958187439a6"),
-                "arm64-v8a" to mapOf("libnative.so" to "7d8c51cd16d00a369a1b923e1e9aed88c501beee")
-            )
+                "arm64-v8a" to mapOf("libnative.so" to "7d8c51cd16d00a369a1b923e1e9aed88c501beee"),
+            ),
         )
         val expectedRequest = """
             {
@@ -132,8 +132,8 @@ class NdkUploadHandshakeTest {
                 "x86" to listOf("libnative.so"),
                 "x86_64" to listOf("libnative.so"),
                 "armeabi-v7a" to listOf("libnative.so"),
-                "arm64-v8a" to listOf("libnative.so")
-            )
+                "arm64-v8a" to listOf("libnative.so"),
+            ),
         )
         assertEquals(expectedResponse, deserializedResponse)
     }

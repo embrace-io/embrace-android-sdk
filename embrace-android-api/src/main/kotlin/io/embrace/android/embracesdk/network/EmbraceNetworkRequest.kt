@@ -124,7 +124,7 @@ public class EmbraceNetworkRequest private constructor(
                 null,
                 traceId,
                 w3cTraceparent,
-                networkCaptureData
+                networkCaptureData,
             )
         }
 
@@ -168,7 +168,7 @@ public class EmbraceNetworkRequest private constructor(
                 errorMessage,
                 traceId,
                 w3cTraceparent,
-                networkCaptureData
+                networkCaptureData,
             )
         }
 

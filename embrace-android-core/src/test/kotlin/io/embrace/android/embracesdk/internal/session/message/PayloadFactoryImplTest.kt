@@ -30,7 +30,7 @@ internal class PayloadFactoryImplTest {
         configService = FakeConfigService()
         partPayloadSource = FakeSessionPartPayloadSource()
         val payloadSourceModule = FakePayloadSourceModule(
-            partPayloadSource = partPayloadSource
+            partPayloadSource = partPayloadSource,
         )
         val collator = PayloadMessageCollatorImpl(
             sessionPartEnvelopeSource = payloadSourceModule.sessionPartEnvelopeSource,
@@ -41,7 +41,7 @@ internal class PayloadFactoryImplTest {
             payloadMessageCollator = collator,
             logEnvelopeSource = payloadSourceModule.logEnvelopeSource,
             configService = configService,
-            logger = initModule.logger
+            logger = initModule.logger,
         )
     }
 
@@ -54,7 +54,7 @@ internal class PayloadFactoryImplTest {
     @Test
     fun `verify expected payloads with ba enabled`() {
         configService.backgroundActivityBehavior = createBackgroundActivityBehavior(
-            remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
+            remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f)),
         )
         verifyPayloadWithState(state = FOREGROUND, zygoteCreated = true, startNewSession = true)
         verifyPayloadWithState(state = BACKGROUND, zygoteCreated = true, startNewSession = true)
@@ -64,7 +64,7 @@ internal class PayloadFactoryImplTest {
     @Test
     fun `verify expected payloads with ba disabled`() {
         configService.backgroundActivityBehavior = createBackgroundActivityBehavior(
-            remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 0f))
+            remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 0f)),
         )
         verifyPayloadWithState(state = FOREGROUND, zygoteCreated = true, startNewSession = false)
         verifyPayloadWithState(state = BACKGROUND, zygoteCreated = false, startNewSession = false)

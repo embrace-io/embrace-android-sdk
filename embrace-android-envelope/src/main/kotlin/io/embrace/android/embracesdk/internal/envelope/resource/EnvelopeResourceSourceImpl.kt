@@ -48,7 +48,7 @@ class EnvelopeResourceSourceImpl(
             osCode = device.systemInfo.androidOsApiLevel,
             screenResolution = device.screenResolution,
             numCores = device.numberOfCores,
-            extras = extras.toMap()
+            extras = extras.toMap(),
         )
     }
 

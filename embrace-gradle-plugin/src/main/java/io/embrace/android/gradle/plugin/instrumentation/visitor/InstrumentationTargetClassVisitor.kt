@@ -26,13 +26,13 @@ class InstrumentationTargetClassVisitor(
                 InstrumentationTargetMethodEndVisitor(
                     api = api,
                     methodVisitor = nextMethodVisitor,
-                    params = feature.insertionParams
+                    params = feature.insertionParams,
                 )
             } else {
                 InstrumentationTargetMethodVisitor(
                     api = api,
                     methodVisitor = nextMethodVisitor,
-                    params = feature.insertionParams
+                    params = feature.insertionParams,
                 )
             }
         } else {

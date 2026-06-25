@@ -17,7 +17,7 @@ class NetworkRequestInstrumentationProvider : InstrumentationProvider {
             factory = {
                 networkRequestDataSource = NetworkRequestDataSourceImpl(args)
                 networkRequestDataSource
-            }
+            },
         )
     }
 

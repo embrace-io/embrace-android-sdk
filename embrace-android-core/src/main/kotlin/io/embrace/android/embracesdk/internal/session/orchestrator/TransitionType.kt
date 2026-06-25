@@ -48,7 +48,8 @@ enum class TransitionType(
     BACKGROUND_ONLY_SESSION_END(
         userSessionTerminationReason = EmbUserSessionTerminationReasonValues.BACKGROUND_ONLY_USER_SESSION_FOREGROUNDED,
         nextAppState = AppState.FOREGROUND,
-    );
+    ),
+    ;
 
     /**
      * True if this session part transition always terminates the active user session

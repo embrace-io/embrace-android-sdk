@@ -30,7 +30,7 @@ class InitModuleImpl(
 
     override val telemetryService: TelemetryService by singleton {
         EmbraceTelemetryService(
-            systemInfo = systemInfo
+            systemInfo = systemInfo,
         )
     }
 

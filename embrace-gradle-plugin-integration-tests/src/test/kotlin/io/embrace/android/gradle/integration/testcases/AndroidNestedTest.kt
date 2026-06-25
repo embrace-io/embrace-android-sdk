@@ -22,7 +22,7 @@ class AndroidNestedTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(variants)
                 verifyJvmMappingRequestsSent(1)
-            }
+            },
         )
     }
 }

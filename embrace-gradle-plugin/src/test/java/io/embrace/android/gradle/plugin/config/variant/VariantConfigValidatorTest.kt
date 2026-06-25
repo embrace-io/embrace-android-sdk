@@ -40,7 +40,7 @@ class VariantConfigValidatorTest {
         apiToken,
         ndkEnabled,
         null,
-        null
+        null,
     )
 
     private fun assertValidationFailure(

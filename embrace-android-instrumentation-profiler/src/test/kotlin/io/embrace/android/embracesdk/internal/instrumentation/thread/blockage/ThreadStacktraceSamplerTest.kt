@@ -22,7 +22,7 @@ class ThreadStacktraceSamplerTest {
             clock,
             Thread.currentThread(),
             sampleLimit,
-            200
+            200,
         )
     }
 

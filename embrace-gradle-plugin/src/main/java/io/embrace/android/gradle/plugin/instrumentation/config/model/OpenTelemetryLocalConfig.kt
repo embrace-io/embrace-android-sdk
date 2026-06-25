@@ -7,7 +7,7 @@ import java.io.Serializable
 @JsonClass(generateAdapter = true)
 data class OpenTelemetryLocalConfig(
     @Json(name = "enable_otel_kotlin_sdk")
-    val otelKotlinSdkEnabled: Boolean? = null
+    val otelKotlinSdkEnabled: Boolean? = null,
 ) : Serializable {
 
     private companion object {

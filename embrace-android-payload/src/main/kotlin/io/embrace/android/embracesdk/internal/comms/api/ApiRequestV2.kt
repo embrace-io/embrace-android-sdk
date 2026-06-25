@@ -16,7 +16,7 @@ data class ApiRequestV2(
         val headers = mutableMapOf(
             "Accept" to accept,
             "User-Agent" to userAgent,
-            "Content-Type" to contentType
+            "Content-Type" to contentType,
         )
         contentEncoding?.let { headers["Content-Encoding"] = it }
         appId?.let { headers["X-EM-AID"] = it }

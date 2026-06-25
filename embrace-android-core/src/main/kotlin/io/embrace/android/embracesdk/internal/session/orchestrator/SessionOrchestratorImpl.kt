@@ -412,7 +412,7 @@ internal class SessionOrchestratorImpl(
                             if (state == AppState.FOREGROUND) {
                                 updateUserSessionActivityIfStale(
                                     timestamp = timestamp,
-                                    updateIntervalMs = updateIntervalMs
+                                    updateIntervalMs = updateIntervalMs,
                                 )
                             }
                             updatePeriodicCacheAttrs()

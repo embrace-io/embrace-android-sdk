@@ -18,8 +18,8 @@ fun SdkStateApiExample() {
     Text(Embrace.deviceId)
     Spacer(Modifier.padding(4.dp))
 
-    Text("Session ID")
-    Text("${Embrace.currentSessionId}")
+    Text("User Session ID")
+    Text("${Embrace.currentUserSessionId}")
     Spacer(Modifier.padding(4.dp))
 
     Text("Last run end state")

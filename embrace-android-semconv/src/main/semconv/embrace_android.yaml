@@ -241,6 +241,11 @@ groups:
         brief: "The W3C traceparent header value forwarded with the network request."
         stability: development
         examples: ["00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"]
+      - id: emb.forward_telemetry
+        type: boolean
+        brief: "Indicates the span should be forwarded to the customer's backend."
+        stability: development
+        examples: [true]
       - id: emb.trace_id
         type: string
         brief: "The Embrace trace ID used for correlation."

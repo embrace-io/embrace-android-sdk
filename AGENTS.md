@@ -251,6 +251,16 @@ InitModule -> CoreModule -> EssentialServiceModule -> ...
 - Max heap: 2g
 - Uses AndroidX Test Orchestrator
 
+### Integration-Test Flake Patterns
+
+Two recurring causes of intermittent failures in the `embrace-android-sdk` integration tests. Check for both when a test is flaky, and avoid them when writing new ones.
+
+**1. Asserting delivery *order* against telemetry content instead of payload metadata.**
+Payload **delivery order** is decided by `StoredTelemetryComparator` over the stored **metadata** (`envelopeType → timestamp → uuid → complete`) in `SchedulingServiceImpl.findNextPayload`. But helpers like `assertSessionsDeliveredInOrder` / `assertLogsDeliveredInOrder` assert on a value embedded *inside* the telemetry (e.g. the session-part span's `startTimeNanos`). For **live** sessions the two line up (a session is stored right after it ends, so metadata order tracks span order), so the default `assertOrdering = true` is fine. For **resurrected / bulk-delivered** payloads (crash resurrection, multiple cached sessions flushed together) they decouple: resurrection re-stores via `IntakeService.take(metadata = copy(...))`, which *preserves* the original metadata timestamp, and that has no guaranteed relationship to the embedded span start time. Delivery-by-start-time is **not a contract**. Fix: pass `getSessionEnvelopes(n, assertOrdering = false)` / `getLogEnvelopes(n, logsOrderedByTimestamp = false)` for these scenarios — the real assertions look payloads up by part id / log type, which is order-independent anyway. Don't try to "fix the data" (e.g. force a clock gap) to satisfy the order check; the gap usually already exists in the metadata and isn't what the assertion reads.
+
+**2. Real workers + no synchronization barrier in crash/teardown tests.**
+`SdkIntegrationTestRule.runTest` runs `testCaseAction → assertAction` with no worker drain between them. If the test leaves background workers real, async work (especially the recurring `PeriodicCacheWorker`, which ticks every ~2s on wall-clock time) races the assertion and the order-sensitive crash teardown, producing non-deterministic payload counts/contents (e.g. `NoSuchElementException` when the expected crash session hasn't been persisted yet). Fix: fake the relevant `Worker.Background` workers and set `getFakedWorkerExecutor(worker).blockingMode = false` so their tasks run **inline/synchronously** on the test thread (scheduled/periodic tasks then queue instead of firing on real time). For crash tests fake at least `PeriodicCacheWorker` (the real culprit); the crash session itself is persisted synchronously via the IntakeService `CRASH_RECEIVED` path, so this stays deterministic. Faking serializes timing/observability only — the asserted crash data is set synchronously under the orchestrator lock, so determinism doesn't weaken what the test validates.
+
 ---
 
 ## Public API Compatibility

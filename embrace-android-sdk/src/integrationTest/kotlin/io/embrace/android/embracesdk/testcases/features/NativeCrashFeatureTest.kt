@@ -207,8 +207,8 @@ internal class NativeCrashFeatureTest {
             },
             testCaseAction = {},
             assertAction = {
-                val sessionEnvelopes = getSessionEnvelopes(2)
-                val logEnvelopes = getLogEnvelopes(2)
+                val sessionEnvelopes = getSessionEnvelopes(expectedSize = 2, assertOrdering = false)
+                val logEnvelopes = getLogEnvelopes(expectedSize = 2, logsOrderedByTimestamp = false)
                 val expectedCrashEnvelope = checkNotNull(crashData.cachedCrashEnvelope)
 
                 // crashes sent
@@ -255,9 +255,7 @@ internal class NativeCrashFeatureTest {
                 }
             },
             assertAction = {
-                // This means the new and resurrected session as well as an Embrace log were delivered.
-                // Before a native crash log, which would've been delivered if processed.
-                assertEquals(2, getSessionEnvelopes(2).size)
+                assertEquals(2, getSessionEnvelopes(expectedSize = 2, assertOrdering = false).size)
                 assertNotNull(getSingleLogEnvelope().getLogOfType(EmbType.System.Log))
             }
         )
@@ -415,7 +413,8 @@ internal class NativeCrashFeatureTest {
     }
 
     private fun findMatchingSessionPartId(it: Envelope<LogPayload>, data: StoredNativeCrashData): Boolean {
-        return it.getLogOfType(EmbType.System.NativeCrash).attributes?.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID) == data.nativeCrash.sessionPartId
+        return it.getLogOfType(EmbType.System.NativeCrash).attributes
+            ?.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID) == data.nativeCrash.sessionPartId
     }
 
     private fun EmbracePayloadAssertionInterface.assertNoNativeCrashSent(

@@ -6,5 +6,5 @@ internal class ExceptionData(
     val name: String?,
     val message: String?,
     val stacktrace: String?,
-    val logExceptionType: LogExceptionType? = null
+    val logExceptionType: LogExceptionType? = null,
 )

@@ -40,15 +40,15 @@ internal class InternalNetworkApiImpl(
                     responseHeaders = body?.responseHeaders,
                     capturedResponseBody = body?.capturedResponseBody,
                     dataCaptureErrorMessage = body?.dataCaptureErrorMessage,
-                )
-            )
+                ),
+            ),
         )
     }
 
     override fun shouldCaptureNetworkBody(url: String, method: String): Boolean {
         return networkCaptureDataSource?.shouldCaptureNetworkBody(
             url = url,
-            method = method
+            method = method,
         ) ?: false
     }
 

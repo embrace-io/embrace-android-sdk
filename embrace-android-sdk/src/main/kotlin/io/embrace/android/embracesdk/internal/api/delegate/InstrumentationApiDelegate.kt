@@ -63,7 +63,7 @@ internal class InstrumentationApiDelegate(
                 endTimeMs = endTimeMs,
                 attributes = attributes,
                 events = events.map(::toSpanEvent),
-                errorCode = errorCode.toErrorCodeAttribute()
+                errorCode = errorCode.toErrorCodeAttribute(),
             )
         }
     }
@@ -89,7 +89,7 @@ internal class InstrumentationApiDelegate(
                 endTimeMs = endTimeMs,
                 attributes = attributes,
                 events = events.map(::toSpanEvent),
-                errorCode = errorCode?.toErrorCodeAttribute()
+                errorCode = errorCode?.toErrorCodeAttribute(),
             )
         }
     }
@@ -97,7 +97,7 @@ internal class InstrumentationApiDelegate(
     private fun toSpanEvent(event: EmbraceSpanEvent): SpanEvent = SpanEventImpl(
         name = event.name,
         timestampNanos = event.timestampNanos,
-        attributes = event.attributes
+        attributes = event.attributes,
     )
 
     private fun ErrorCode?.toErrorCodeAttribute(): ErrorCodeAttribute? {

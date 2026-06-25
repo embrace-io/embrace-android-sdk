@@ -39,8 +39,8 @@ class NativeCrashHandlerInstallerImplTest {
         val fakeConfigService =
             FakeConfigService(
                 autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(
-                    sigHandlerDetectionEnabled = true
-                )
+                    sigHandlerDetectionEnabled = true,
+                ),
             )
         fakeSharedObjectLoader = FakeSharedObjectLoader()
         fakeDelegate = FakeJniDelegate()
@@ -60,10 +60,10 @@ class NativeCrashHandlerInstallerImplTest {
             activeSessionIdsSupplier = {
                 SessionIdsSnapshot(
                     userSessionId = userSessionId.orEmpty(),
-                    sessionPartId = sessionPartId.orEmpty()
+                    sessionPartId = sessionPartId.orEmpty(),
                 )
             },
-            processIdentifier = "pid"
+            processIdentifier = "pid",
         )
         nativeCrashHandlerInstaller = NativeCrashHandlerInstallerImpl(
             args = args,

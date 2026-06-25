@@ -27,7 +27,7 @@ fun buildVariantConfig(
         variantFlavorConfigurationFileFinder(variantInfo, projectDirectory),
         variantProductFlavorsConfigurationFileFinder(variantInfo, projectDirectory),
         variantBuildTypeConfigurationFileFinder(variantInfo, projectDirectory),
-        defaultConfigurationFileFinder(projectDirectory)
+        defaultConfigurationFileFinder(projectDirectory),
     ),
     systemWrapper: SystemWrapper = JavaSystemWrapper(),
 ): EmbraceVariantConfig? {
@@ -67,11 +67,11 @@ private fun buildVariantConfiguration(configFile: File, systemWrapper: SystemWra
             "Embrace config file ${configFile.absoluteFile} contains an unrecognized key.\n" +
                 "Please check your embrace-config.json for typos or unsupported options.\n" +
                 "Available options are documented here: https://embrace.io/docs/android/configuration/configuration-file/\n" +
-                "Error: ${ex.localizedMessage}"
+                "Error: ${ex.localizedMessage}",
         )
     } catch (ex: Throwable) {
         throw IllegalArgumentException(
-            "Problem parsing field in Embrace config file ${configFile.absoluteFile}.\nError=${ex.localizedMessage}"
+            "Problem parsing field in Embrace config file ${configFile.absoluteFile}.\nError=${ex.localizedMessage}",
         )
     }
 }
@@ -85,7 +85,7 @@ private fun getApiTokenFromEnv(config: EmbraceVariantConfig, systemWrapper: Syst
 
     if (!config.apiToken.isNullOrEmpty() && !apiTokenFromEnv.isNullOrEmpty()) {
         logger.warn(
-            "API tokens were found in both an environment variable and the configuration file. The latter will be used."
+            "API tokens were found in both an environment variable and the configuration file. The latter will be used.",
         )
     }
 
@@ -101,7 +101,7 @@ private fun getAppIdFromEnv(config: EmbraceVariantConfig, systemWrapper: SystemW
 
     if (!config.appId.isNullOrEmpty() && !appIdFromEnv.isNullOrEmpty()) {
         logger.warn(
-            "App IDs were found in both an environment variable and the configuration file. The latter will be used."
+            "App IDs were found in both an environment variable and the configuration file. The latter will be used.",
         )
     }
 

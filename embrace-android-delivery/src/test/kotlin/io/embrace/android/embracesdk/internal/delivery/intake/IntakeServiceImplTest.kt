@@ -54,13 +54,13 @@ class IntakeServiceImplTest {
 
     private val serializer = TestPlatformSerializer()
     private val sessionEnvelope = Envelope(
-        data = SessionPartPayload(spans = listOf(Span(name = "session-span")))
+        data = SessionPartPayload(spans = listOf(Span(name = "session-span"))),
     )
     private val logEnvelope = Envelope(
-        data = LogPayload(logs = listOf(Log(body = "Log data")))
+        data = LogPayload(logs = listOf(Log(body = "Log data"))),
     )
     private val attachmentEnvelope = Envelope(
-        data = Pair("my-id", ByteArray(2))
+        data = Pair("my-id", ByteArray(2)),
     )
     private val sessionDataExpected = run {
         val baos = ByteArrayOutputStream()
@@ -100,7 +100,7 @@ class IntakeServiceImplTest {
             cacheStorageService,
             logger,
             serializer,
-            PriorityWorker(executorService)
+            PriorityWorker(executorService),
         )
     }
 
@@ -237,13 +237,13 @@ class IntakeServiceImplTest {
             { _, _ -> },
             1,
             1,
-            storedTelemetryRunnableComparator
+            storedTelemetryRunnableComparator,
         )
         val latch = CountDownLatch(1)
         executor.submit(
             PriorityRunnable(sessionMetadata) {
                 latch.await(1000, TimeUnit.MILLISECONDS)
-            }
+            },
         )
         val worker = PriorityWorker<StoredTelemetryMetadata>(executor)
         intakeService = IntakeServiceImpl(
@@ -252,7 +252,7 @@ class IntakeServiceImplTest {
             cacheStorageService,
             logger,
             TestPlatformSerializer(),
-            worker
+            worker,
         )
         with(intakeService) {
             take(sessionEnvelope, sessionMetadata)
@@ -291,7 +291,7 @@ class IntakeServiceImplTest {
             uuid = UUID,
             processIdentifier = PROCESS_ID,
             envelopeType = SESSION,
-            complete = false
+            complete = false,
         ).apply {
             intakeService.take(intake = sessionEnvelope, metadata = this)
         }
@@ -304,8 +304,8 @@ class IntakeServiceImplTest {
                 uuid = UUID,
                 processIdentifier = PROCESS_ID,
                 envelopeType = LOG,
-                complete = true
-            )
+                complete = true,
+            ),
         )
         assertTrue(cacheStorageService.storedFilenames().contains(snapshot1.filename))
 
@@ -315,7 +315,7 @@ class IntakeServiceImplTest {
             uuid = UUID,
             processIdentifier = PROCESS_ID,
             envelopeType = SESSION,
-            complete = false
+            complete = false,
         ).apply {
             intakeService.take(intake = sessionEnvelope, metadata = this)
         }
@@ -328,7 +328,7 @@ class IntakeServiceImplTest {
             uuid = UUID,
             processIdentifier = PROCESS_ID,
             envelopeType = SESSION,
-            complete = true
+            complete = true,
         ).apply {
             intakeService.take(intake = sessionEnvelope, metadata = this)
         }
@@ -346,7 +346,7 @@ class IntakeServiceImplTest {
             processIdentifier = PROCESS_ID,
             envelopeType = CRASH,
             complete = false,
-            payloadType = PayloadType.UNKNOWN
+            payloadType = PayloadType.UNKNOWN,
         ).apply {
             intakeService.take(intake = logEnvelope, metadata = this)
         }
@@ -359,7 +359,7 @@ class IntakeServiceImplTest {
             processIdentifier = PROCESS_ID,
             envelopeType = CRASH,
             complete = false,
-            payloadType = PayloadType.UNKNOWN
+            payloadType = PayloadType.UNKNOWN,
         ).apply {
             intakeService.take(intake = logEnvelope, metadata = this)
         }
@@ -378,7 +378,7 @@ class IntakeServiceImplTest {
             uuid = UUID,
             processIdentifier = PROCESS_ID,
             envelopeType = SESSION,
-            complete = false
+            complete = false,
         ).apply {
             intakeService.take(intake = sessionEnvelope, metadata = this)
         }
@@ -391,7 +391,7 @@ class IntakeServiceImplTest {
             uuid = "other-uuid",
             processIdentifier = "old-pid",
             envelopeType = SESSION,
-            complete = false
+            complete = false,
         ).apply {
             cacheStorageService.store(this) {
                 it.write("old".toByteArray())
@@ -406,9 +406,9 @@ class IntakeServiceImplTest {
                 uuid = UUID,
                 processIdentifier = PROCESS_ID,
                 envelopeType = SESSION,
-                complete = true
+                complete = true,
             ),
-            staleEntry = resurrectionSource
+            staleEntry = resurrectionSource,
         )
 
         // resurrectionSource was deleted (explicit staleEntry), snapshot is still present
@@ -436,7 +436,7 @@ class IntakeServiceImplTest {
             StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, BLOB, false, PayloadType.AEI).apply {
                 intakeService.take(
                     intake = logEnvelope,
-                    metadata = this
+                    metadata = this,
                 )
             }
 
@@ -463,7 +463,7 @@ class IntakeServiceImplTest {
             processIdentifier = PROCESS_ID,
             envelopeType = CRASH,
             complete = true,
-            payloadType = PayloadType.JVM_CRASH
+            payloadType = PayloadType.JVM_CRASH,
         )
 
         intakeService.take(logEnvelope, jvmCrashMetadata)
@@ -485,7 +485,7 @@ class IntakeServiceImplTest {
             processIdentifier = PROCESS_ID,
             envelopeType = CRASH,
             complete = false,
-            payloadType = PayloadType.JVM_CRASH
+            payloadType = PayloadType.JVM_CRASH,
         )
 
         intakeService.take(logEnvelope, incompleteCrashMetadata)
@@ -504,7 +504,7 @@ class IntakeServiceImplTest {
             processIdentifier = PROCESS_ID,
             envelopeType = CRASH,
             complete = true,
-            payloadType = PayloadType.NATIVE_CRASH
+            payloadType = PayloadType.NATIVE_CRASH,
         )
 
         intakeService.take(logEnvelope, nativeCrashMetadata)
@@ -526,7 +526,7 @@ class IntakeServiceImplTest {
             processIdentifier = PROCESS_ID,
             envelopeType = CRASH,
             complete = true,
-            payloadType = PayloadType.REACT_NATIVE_CRASH
+            payloadType = PayloadType.REACT_NATIVE_CRASH,
         )
 
         intakeService.take(logEnvelope, rnCrashMetadata)
@@ -547,7 +547,7 @@ class IntakeServiceImplTest {
             processIdentifier = PROCESS_ID,
             envelopeType = CRASH,
             complete = false,
-            payloadType = PayloadType.UNKNOWN
+            payloadType = PayloadType.UNKNOWN,
         ).apply {
             cacheStorageService.store(this) { it.write("stale".toByteArray()) }
         }
@@ -559,7 +559,7 @@ class IntakeServiceImplTest {
             processIdentifier = PROCESS_ID,
             envelopeType = CRASH,
             complete = true,
-            payloadType = PayloadType.JVM_CRASH
+            payloadType = PayloadType.JVM_CRASH,
         )
 
         intakeService.take(logEnvelope, jvmCrashMetadata, staleEntry = stale)
@@ -575,7 +575,7 @@ class IntakeServiceImplTest {
         val snapshotMetadata = sessionMetadata.copy(
             timestamp = clock.tick(),
             uuid = "snapshot-uuid",
-            complete = false
+            complete = false,
         )
         intakeService.take(sessionEnvelope, snapshotMetadata)
         executorService.runCurrentlyBlocked()
@@ -588,7 +588,7 @@ class IntakeServiceImplTest {
             processIdentifier = PROCESS_ID,
             envelopeType = CRASH,
             complete = true,
-            payloadType = PayloadType.JVM_CRASH
+            payloadType = PayloadType.JVM_CRASH,
         )
         intakeService.take(logEnvelope, jvmCrashMetadata)
 
@@ -606,8 +606,8 @@ class IntakeServiceImplTest {
             sessionMetadata.copy(
                 timestamp = clock.tick(),
                 uuid = "late-snapshot",
-                complete = false
-            )
+                complete = false,
+            ),
         )
 
         // subsequent log rejected
@@ -619,8 +619,8 @@ class IntakeServiceImplTest {
                 processIdentifier = PROCESS_ID,
                 envelopeType = LOG,
                 complete = true,
-                payloadType = PayloadType.LOG
-            )
+                payloadType = PayloadType.LOG,
+            ),
         )
 
         // subsequent crash rejected
@@ -632,8 +632,8 @@ class IntakeServiceImplTest {
                 processIdentifier = PROCESS_ID,
                 envelopeType = CRASH,
                 complete = true,
-                payloadType = PayloadType.JVM_CRASH
-            )
+                payloadType = PayloadType.JVM_CRASH,
+            ),
         )
     }
 
@@ -647,7 +647,7 @@ class IntakeServiceImplTest {
             processIdentifier = PROCESS_ID,
             envelopeType = CRASH,
             complete = true,
-            payloadType = PayloadType.JVM_CRASH
+            payloadType = PayloadType.JVM_CRASH,
         )
         intakeService.take(logEnvelope, jvmCrashMetadata)
         assertEquals(1, payloadStorageService.storedPayloadCount())
@@ -687,8 +687,8 @@ class IntakeServiceImplTest {
                 processIdentifier = PROCESS_ID,
                 envelopeType = LOG,
                 complete = true,
-                payloadType = PayloadType.LOG
-            )
+                payloadType = PayloadType.LOG,
+            ),
         )
     }
 
@@ -700,7 +700,7 @@ class IntakeServiceImplTest {
             processIdentifier = PROCESS_ID,
             envelopeType = CRASH,
             complete = true,
-            payloadType = PayloadType.JVM_CRASH
+            payloadType = PayloadType.JVM_CRASH,
         )
         intakeService.take(logEnvelope, jvmCrashMetadata)
         assertEquals(1, payloadStorageService.storedPayloadCount())
@@ -711,7 +711,7 @@ class IntakeServiceImplTest {
             processIdentifier = PROCESS_ID,
             envelopeType = LOG,
             complete = true,
-            payloadType = PayloadType.LOG
+            payloadType = PayloadType.LOG,
         )
         val attachmentInWindow = StoredTelemetryMetadata(
             timestamp = clock.tick(),
@@ -719,7 +719,7 @@ class IntakeServiceImplTest {
             processIdentifier = PROCESS_ID,
             envelopeType = ATTACHMENT,
             complete = true,
-            payloadType = PayloadType.ATTACHMENT
+            payloadType = PayloadType.ATTACHMENT,
         )
         intakeService.take(logEnvelope, logInWindow)
         intakeService.take(attachmentEnvelope, attachmentInWindow)
@@ -732,7 +732,7 @@ class IntakeServiceImplTest {
             uuid = "crash-session",
             processIdentifier = PROCESS_ID,
             envelopeType = SESSION,
-            complete = true
+            complete = true,
         )
         intakeService.take(sessionEnvelope, crashSessionMetadata)
         assertEquals(4, payloadStorageService.storedPayloadCount())

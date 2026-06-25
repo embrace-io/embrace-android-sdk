@@ -72,13 +72,13 @@ sealed class ExecutionResult(
             return when (responseCode) {
                 null -> Incomplete(
                     exception = executionError ?: IllegalStateException("Unknown execution error"),
-                    retry = true
+                    retry = true,
                 )
 
                 HTTP_OK -> Success
                 HTTP_TOO_MANY_REQUESTS -> TooManyRequests(
                     endpoint,
-                    headersProvider()["Retry-After"]?.toLongOrNull()?.times(1000)
+                    headersProvider()["Retry-After"]?.toLongOrNull()?.times(1000),
                 )
 
                 in HTTP_FAILURES -> Failure(responseCode)

@@ -11,8 +11,8 @@ class FakeUiLoadEventListener : UiLoadEventListener {
                 stage = "create",
                 instanceId = instanceId,
                 activityName = activityName,
-                timestampMs = timestampMs
-            )
+                timestampMs = timestampMs,
+            ),
         )
     }
 
@@ -21,8 +21,8 @@ class FakeUiLoadEventListener : UiLoadEventListener {
             EventData(
                 stage = "createEnd",
                 instanceId = instanceId,
-                timestampMs = timestampMs
-            )
+                timestampMs = timestampMs,
+            ),
         )
     }
 
@@ -32,8 +32,8 @@ class FakeUiLoadEventListener : UiLoadEventListener {
                 stage = "start",
                 instanceId = instanceId,
                 activityName = activityName,
-                timestampMs = timestampMs
-            )
+                timestampMs = timestampMs,
+            ),
         )
     }
 
@@ -42,8 +42,8 @@ class FakeUiLoadEventListener : UiLoadEventListener {
             EventData(
                 stage = "startEnd",
                 instanceId = instanceId,
-                timestampMs = timestampMs
-            )
+                timestampMs = timestampMs,
+            ),
         )
     }
 
@@ -52,8 +52,8 @@ class FakeUiLoadEventListener : UiLoadEventListener {
             EventData(
                 stage = "resume",
                 instanceId = instanceId,
-                timestampMs = timestampMs
-            )
+                timestampMs = timestampMs,
+            ),
         )
     }
 
@@ -62,8 +62,8 @@ class FakeUiLoadEventListener : UiLoadEventListener {
             EventData(
                 stage = "resumeEnd",
                 instanceId = instanceId,
-                timestampMs = timestampMs
-            )
+                timestampMs = timestampMs,
+            ),
         )
     }
 
@@ -72,8 +72,8 @@ class FakeUiLoadEventListener : UiLoadEventListener {
             EventData(
                 stage = "render",
                 instanceId = instanceId,
-                timestampMs = timestampMs
-            )
+                timestampMs = timestampMs,
+            ),
         )
     }
 
@@ -82,8 +82,8 @@ class FakeUiLoadEventListener : UiLoadEventListener {
             EventData(
                 stage = "renderEnd",
                 instanceId = instanceId,
-                timestampMs = timestampMs
-            )
+                timestampMs = timestampMs,
+            ),
         )
     }
 
@@ -92,8 +92,8 @@ class FakeUiLoadEventListener : UiLoadEventListener {
             EventData(
                 stage = "complete",
                 instanceId = instanceId,
-                timestampMs = timestampMs
-            )
+                timestampMs = timestampMs,
+            ),
         )
     }
 
@@ -102,8 +102,8 @@ class FakeUiLoadEventListener : UiLoadEventListener {
             EventData(
                 stage = "discard",
                 instanceId = instanceId,
-                timestampMs = timestampMs
-            )
+                timestampMs = timestampMs,
+            ),
         )
     }
 

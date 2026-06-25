@@ -18,7 +18,7 @@ class StoredTelemetryMetadataTest {
         SupportedEnvelopeType.CRASH to "p1",
         SupportedEnvelopeType.SESSION to "p3",
         SupportedEnvelopeType.LOG to "p5",
-        SupportedEnvelopeType.BLOB to "p7"
+        SupportedEnvelopeType.BLOB to "p7",
     )
 
     @Test
@@ -36,7 +36,7 @@ class StoredTelemetryMetadataTest {
                         payloadType = PayloadType.AEI,
                         userSessionId = USER_SESSION_ID,
                         sessionPartId = SESSION_PART_ID,
-                    ).filename
+                    ).filename,
                 )
             }
         }
@@ -55,7 +55,7 @@ class StoredTelemetryMetadataTest {
                         envelopeType = type,
                         complete = payloadComplete,
                         payloadType = PayloadType.AEI,
-                    ).filename
+                    ).filename,
                 )
             }
         }
@@ -74,7 +74,7 @@ class StoredTelemetryMetadataTest {
         ).filename
         assertEquals(
             "p3_${TIMESTAMP}_${UUID}_${PROCESS_ID}_true_session_${USER_SESSION_ID}_none_v2.json",
-            filename
+            filename,
         )
     }
 

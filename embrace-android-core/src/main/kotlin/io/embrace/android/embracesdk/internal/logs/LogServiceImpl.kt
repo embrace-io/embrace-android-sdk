@@ -42,11 +42,11 @@ class LogServiceImpl(
         destination.addLog(
             schemaType = schemaProvider(
                 TelemetryAttributes(
-                    customAttributes = redactSensitiveAttributes(attributes, telemetryType)
-                )
+                    customAttributes = redactSensitiveAttributes(attributes, telemetryType),
+                ),
             ),
             severity = severity,
-            message = trimToMaxLength(message, telemetryType)
+            message = trimToMaxLength(message, telemetryType),
         )
     }
 
@@ -75,7 +75,7 @@ class LogServiceImpl(
         return sanitizeAttributes(
             attributes = attributes,
             telemetryType = telemetryType,
-            bypassPropertyLimit = bypassLimitsValidation
+            bypassPropertyLimit = bypassLimitsValidation,
         ).mapValues { (key, value) ->
             when {
                 configService.sensitiveKeysBehavior.isSensitiveKey(key) -> REDACTED_LABEL

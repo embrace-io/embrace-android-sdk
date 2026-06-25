@@ -89,7 +89,7 @@ internal class BackgroundWorkerTest {
         val worker = BackgroundWorker(
             ShutdownAndWaitExecutorService(postShutdownAction = {
                 latch.countDown()
-            })
+            }),
         )
 
         var ran = false
@@ -107,7 +107,7 @@ internal class BackgroundWorkerTest {
         val worker = BackgroundWorker(
             ShutdownAndWaitExecutorService(postAwaitTerminationAction = {
                 latch.countDown()
-            })
+            }),
         )
 
         var ran = false

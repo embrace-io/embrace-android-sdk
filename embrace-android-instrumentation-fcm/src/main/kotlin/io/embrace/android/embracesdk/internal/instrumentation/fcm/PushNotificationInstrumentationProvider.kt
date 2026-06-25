@@ -13,7 +13,7 @@ class PushNotificationInstrumentationProvider : InstrumentationProvider {
             factory = {
                 fcmDataSource = PushNotificationDataSource(args)
                 fcmDataSource
-            }
+            },
         )
     }
 }

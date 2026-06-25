@@ -104,7 +104,7 @@ class Il2CppUploadTaskRegistration : EmbraceTaskRegistration {
         val compressionTask = project.registerTask(
             info.compressionTaskName,
             FileCompressionTask::class.java,
-            variant
+            variant,
         ) { task: FileCompressionTask ->
             val fileProvider = project.provider {
                 File(il2cppSymbolsDir, info.filename)
@@ -113,8 +113,8 @@ class Il2CppUploadTaskRegistration : EmbraceTaskRegistration {
             task.originalFile.fileProvider(fileProvider)
             task.compressedFile.convention(
                 project.layout.buildDirectory.file(
-                    "outputs/embrace/il2cpp/compressed/${variantConfig.variantName}/${info.filename}"
-                )
+                    "outputs/embrace/il2cpp/compressed/${variantConfig.variantName}/${info.filename}",
+                ),
             )
         }
         return compressionTask
@@ -133,7 +133,7 @@ class Il2CppUploadTaskRegistration : EmbraceTaskRegistration {
         val uploadTask = project.registerTask(
             info.uploadTaskName,
             MultipartUploadTask::class.java,
-            variant
+            variant,
         ) { task ->
             // buildIdProvider is ValueSource-backed: Gradle re-evaluates it on every build even
             // when the configuration cache is active, ensuring a fresh build ID each time.
@@ -148,7 +148,7 @@ class Il2CppUploadTaskRegistration : EmbraceTaskRegistration {
                         failBuildOnUploadErrors = behavior.failBuildOnUploadErrors.get(),
                         baseUrl = behavior.baseUrl,
                     )
-                }
+                },
             )
 
             // link output of compression task to the input of this task

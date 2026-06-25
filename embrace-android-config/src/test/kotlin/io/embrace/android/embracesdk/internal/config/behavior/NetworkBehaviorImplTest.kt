@@ -19,8 +19,8 @@ internal class NetworkBehaviorImplTest {
         networkConfig = NetworkRemoteConfig(
             defaultCaptureLimit = 409,
             domainLimits = mapOf(
-                "google.com" to 50
-            )
+                "google.com" to 50,
+            ),
         ),
         disabledUrlPatterns = setOf("example.com"),
         networkCaptureRules = setOf(
@@ -29,8 +29,8 @@ internal class NetworkBehaviorImplTest {
                 5000,
                 "GET",
                 "google.com",
-            )
-        )
+            ),
+        ),
     )
 
     @Test
@@ -63,7 +63,7 @@ internal class NetworkBehaviorImplTest {
                     "GET",
                     "google.com",
                 ),
-                getNetworkCaptureRules().single()
+                getNetworkCaptureRules().single(),
             )
         }
     }

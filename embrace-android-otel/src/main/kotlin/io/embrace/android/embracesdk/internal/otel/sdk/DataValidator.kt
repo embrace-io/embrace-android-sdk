@@ -63,7 +63,7 @@ class DataValidator(
             attributes.truncate(
                 maxCount = maxAttributeCount,
                 maxKeyLength = maxKeyLength,
-                maxValueLength = maxValueLength
+                maxValueLength = maxValueLength,
             )
         } else {
             attributes
@@ -111,8 +111,8 @@ class DataValidator(
             attributes = truncateAttributes(
                 attributes = attributes,
                 internal = internal,
-                countOverride = otelLimitsConfig.getMaxEventAttributeCount()
-            )
+                countOverride = otelLimitsConfig.getMaxEventAttributeCount(),
+            ),
         )
     }
 
@@ -129,7 +129,7 @@ class DataValidator(
         return truncatedEntries.associate {
             val truncatedKey = PropertyUtils.truncate(
                 value = it.key,
-                maxLength = maxKeyLength
+                maxLength = maxKeyLength,
             )
             if (truncatedKey != it.key) {
                 telemetryService.trackAppliedLimit("span_attribute_key", AppliedLimitType.TRUNCATE_STRING)
@@ -138,7 +138,7 @@ class DataValidator(
             val truncatedValue = truncateAttributeValue(
                 key = it.key,
                 value = it.value,
-                maxLength = maxValueLength
+                maxLength = maxValueLength,
             )
             if (truncatedValue != it.value) {
                 telemetryService.trackAppliedLimit("span_attribute_value", AppliedLimitType.TRUNCATE_STRING)

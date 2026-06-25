@@ -16,6 +16,6 @@ class AppEnvironment(val isDebug: Boolean) {
         PROD("prod"),
 
         @SerialName("UNKNOWN")
-        UNKNOWN("UNKNOWN")
+        UNKNOWN("UNKNOWN"),
     }
 }

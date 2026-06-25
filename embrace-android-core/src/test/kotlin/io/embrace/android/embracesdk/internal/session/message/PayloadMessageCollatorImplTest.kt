@@ -39,7 +39,7 @@ internal class PayloadMessageCollatorImplTest {
         val sessionPartEnvelopeSource = SessionPartEnvelopeSourceImpl(
             metadataSource = FakeEnvelopeMetadataSource(),
             resourceSource = FakeEnvelopeResourceSource(),
-            payloadSource = FakeSessionPartPayloadSource()
+            payloadSource = FakeSessionPartPayloadSource(),
         )
         currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan
         collator = PayloadMessageCollatorImpl(
@@ -59,7 +59,7 @@ internal class PayloadMessageCollatorImplTest {
                 AppState.BACKGROUND,
                 1,
                 1,
-            )
+            ),
         )
         msg.verifyInitialFieldsPopulated()
     }
@@ -74,7 +74,7 @@ internal class PayloadMessageCollatorImplTest {
                 AppState.FOREGROUND,
                 1,
                 1,
-            )
+            ),
         )
         msg.verifyInitialFieldsPopulated()
     }
@@ -90,7 +90,7 @@ internal class PayloadMessageCollatorImplTest {
                 AppState.BACKGROUND,
                 1,
                 1,
-            )
+            ),
         )
         startMsg.verifyInitialFieldsPopulated()
 
@@ -101,8 +101,8 @@ internal class PayloadMessageCollatorImplTest {
                 endType = SessionPartSnapshotType.NORMAL_END,
                 logger = initModule.logger,
                 continueMonitoring = true,
-                crashId = "crashId"
-            )
+                crashId = "crashId",
+            ),
         )
         payload.verifyFinalFieldsPopulated()
     }
@@ -118,7 +118,7 @@ internal class PayloadMessageCollatorImplTest {
                 AppState.FOREGROUND,
                 1,
                 1,
-            )
+            ),
         )
         startMsg.verifyInitialFieldsPopulated()
 
@@ -130,7 +130,7 @@ internal class PayloadMessageCollatorImplTest {
                 logger = initModule.logger,
                 continueMonitoring = true,
                 crashId = "crashId",
-            )
+            ),
         )
         payload.verifyFinalFieldsPopulated()
     }
@@ -149,7 +149,7 @@ internal class PayloadMessageCollatorImplTest {
                             previousState,
                             1,
                             1,
-                        )
+                        ),
                     ).verifyInitialFieldsPopulated()
                 }
             }

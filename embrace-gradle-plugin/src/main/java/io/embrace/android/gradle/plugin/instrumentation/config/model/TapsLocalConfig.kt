@@ -7,7 +7,7 @@ import java.io.Serializable
 @JsonClass(generateAdapter = true)
 data class TapsLocalConfig(
     @Json(name = "capture_coordinates")
-    val captureCoordinates: Boolean? = null
+    val captureCoordinates: Boolean? = null,
 ) : Serializable {
 
     private companion object {

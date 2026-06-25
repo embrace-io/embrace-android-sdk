@@ -22,7 +22,7 @@ class InstrumentationModuleImpl(
 
     override val instrumentationRegistry: InstrumentationRegistry by singleton {
         InstrumentationRegistryImpl(
-            initModule.logger
+            initModule.logger,
         )
     }
 

@@ -8,5 +8,5 @@ private const val EMBRACE_SESSION_PROPERTY_NAME_PREFIX = "emb.properties."
 fun String.toEmbraceAttributeName(): String = EMBRACE_SESSION_PROPERTY_NAME_PREFIX + this
 
 fun String.isEmbraceAttributeName(): Boolean = startsWith(
-    EMBRACE_SESSION_PROPERTY_NAME_PREFIX
+    EMBRACE_SESSION_PROPERTY_NAME_PREFIX,
 )

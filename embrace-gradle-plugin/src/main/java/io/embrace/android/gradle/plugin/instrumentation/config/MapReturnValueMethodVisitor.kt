@@ -9,7 +9,7 @@ import org.objectweb.asm.Opcodes
 class MapReturnValueMethodVisitor(
     val replacedValue: Map<String, String>,
     api: Int,
-    nextVisitor: MethodVisitor
+    nextVisitor: MethodVisitor,
 ) : MethodVisitor(api, nextVisitor) {
 
     override fun visitCode() {
@@ -30,7 +30,7 @@ class MapReturnValueMethodVisitor(
                 "java/util/HashMap",
                 "put",
                 "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-                false
+                false,
             )
             visitInsn(Opcodes.POP) // pop return value off stack
         }

@@ -20,5 +20,5 @@ enum class StorageLocation(val dir: String) {
     /**
      * Cached envelopes
      */
-    ENVELOPE("embrace_envelopes")
+    ENVELOPE("embrace_envelopes"),
 }

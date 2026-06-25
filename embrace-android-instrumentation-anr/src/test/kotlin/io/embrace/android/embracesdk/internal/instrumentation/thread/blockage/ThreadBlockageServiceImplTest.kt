@@ -32,7 +32,7 @@ internal class ThreadBlockageServiceImplTest {
         scheduledExecutorSupplier = {
             watchdogExecutorService = SingleThreadTestScheduledExecutor()
             watchdogExecutorService
-        }
+        },
     )
 
     @Before
@@ -232,13 +232,13 @@ internal class ThreadBlockageServiceImplTest {
                     extra,
                     samples.count { sample ->
                         sample.threadSample == null && sample.code == ThreadBlockageSample.CODE_SAMPLE_LIMIT_REACHED
-                    }
+                    },
                 )
                 assertEquals(
                     defaultLimit,
                     samples.count { sample ->
                         sample.code == ThreadBlockageSample.CODE_DEFAULT
-                    }
+                    },
                 )
             }
         }

@@ -12,7 +12,7 @@ class NetworkStatusInstrumentationProvider : InstrumentationProvider {
             },
             configGate = {
                 args.configService.autoDataCaptureBehavior.isNetworkConnectivityCaptureEnabled()
-            }
+            },
         )
     }
 }

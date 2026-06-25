@@ -52,7 +52,7 @@ internal class SessionPartPayloadSourceImpl(
         return SessionPartPayload(
             spans = spans,
             spanSnapshots = snapshots,
-            sharedLibSymbolMapping = symbolMap
+            sharedLibSymbolMapping = symbolMap,
         )
     }
 
@@ -71,7 +71,7 @@ internal class SessionPartPayloadSourceImpl(
                     otelPayloadMapper?.record()
                     val spans = currentSessionPartSpan.endSession(
                         startNewSession = startNewSession,
-                        appTerminationCause = appTerminationCause
+                        appTerminationCause = appTerminationCause,
                     )
                     spans.map(EmbraceSpanData::toEmbracePayload)
                 }

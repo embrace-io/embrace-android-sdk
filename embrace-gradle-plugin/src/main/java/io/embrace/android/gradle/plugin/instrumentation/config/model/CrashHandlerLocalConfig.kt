@@ -10,7 +10,7 @@ import java.io.Serializable
 @JsonClass(generateAdapter = true)
 data class CrashHandlerLocalConfig(
     @Json(name = "enabled")
-    val enabled: Boolean? = null
+    val enabled: Boolean? = null,
 ) : Serializable {
 
     private companion object {

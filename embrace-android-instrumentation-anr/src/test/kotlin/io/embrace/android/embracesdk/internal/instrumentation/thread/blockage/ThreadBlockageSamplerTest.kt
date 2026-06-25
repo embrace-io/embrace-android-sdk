@@ -51,13 +51,13 @@ internal class ThreadBlockageSamplerTest {
         val intervals = sampler.getThreadBlockageIntervals()
         assertEquals(
             listOf(10000L, 8000L, 6000L, 4000L, 2000L),
-            intervals.filter { it.samples != null }.map { checkNotNull(it.endTime) - it.startTime }
+            intervals.filter { it.samples != null }.map { checkNotNull(it.endTime) - it.startTime },
         )
         assertEquals(
             listOf(1500L, 1200L),
             intervals.filter {
                 it.samples == null
-            }.map { checkNotNull(it.endTime) - it.startTime }
+            }.map { checkNotNull(it.endTime) - it.startTime },
         )
     }
 
@@ -421,7 +421,7 @@ internal class ThreadBlockageSamplerTest {
         val exception = readerException.get()
         assertNull(
             "Concurrent access threw: ${exception?.javaClass?.simpleName}: ${exception?.message}",
-            exception
+            exception,
         )
     }
 

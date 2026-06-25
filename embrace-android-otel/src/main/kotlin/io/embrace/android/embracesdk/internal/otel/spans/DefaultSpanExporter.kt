@@ -29,7 +29,7 @@ internal class DefaultSpanExporter(
                         exporter.export(
                             telemetry.filterNot {
                                 it.attributes.containsKey(PrivateSpan.key)
-                            }
+                            },
                         )
                     } catch (ignored: Throwable) {
                         result = StoreDataResult.FAILURE

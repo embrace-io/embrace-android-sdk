@@ -8,7 +8,7 @@ import java.util.LinkedList
 import java.util.Queue
 
 class FakeMainThreadHandler(
-    private val handlerProvider: () -> Handler = ::defaultHandlerProvider
+    private val handlerProvider: () -> Handler = ::defaultHandlerProvider,
 ) : MainThreadHandler {
 
     override val wrappedHandler: Handler

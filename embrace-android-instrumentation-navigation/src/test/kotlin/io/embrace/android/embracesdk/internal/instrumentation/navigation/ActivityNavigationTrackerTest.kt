@@ -93,7 +93,7 @@ internal class ActivityNavigationTrackerTest {
         second: ActivityController<out Activity>,
     ): List<Long> {
         return invokeCallbacks(
-            listOf(first::start, first::resume, first::pause, second::start, second::resume, second::pause, ::onBackground)
+            listOf(first::start, first::resume, first::pause, second::start, second::resume, second::pause, ::onBackground),
         )
     }
 
@@ -102,7 +102,7 @@ internal class ActivityNavigationTrackerTest {
         second: ActivityController<out Activity>,
     ): List<Long> {
         return invokeCallbacks(
-            listOf(first::start, first::resume, second::start, second::resume, first::pause, second::pause, ::onBackground)
+            listOf(first::start, first::resume, second::start, second::resume, first::pause, second::pause, ::onBackground),
         )
     }
 

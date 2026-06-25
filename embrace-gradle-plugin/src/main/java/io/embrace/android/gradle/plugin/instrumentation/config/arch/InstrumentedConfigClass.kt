@@ -6,7 +6,7 @@ import org.objectweb.asm.MethodVisitor
  * Holds data on how a SDK config class should be instrumented with configuration values.
  */
 class InstrumentedConfigClass(
-    private val methods: MutableList<InstrumentedConfigMethod> = mutableListOf()
+    private val methods: MutableList<InstrumentedConfigMethod> = mutableListOf(),
 ) {
 
     fun addMethod(method: InstrumentedConfigMethod) {
@@ -21,7 +21,7 @@ class InstrumentedConfigClass(
         name: String,
         descriptor: String,
         api: Int,
-        visitor: MethodVisitor
+        visitor: MethodVisitor,
     ): MethodVisitor {
         val match = methods.singleOrNull {
             it.isConfigInstrumentationTarget(name, descriptor)

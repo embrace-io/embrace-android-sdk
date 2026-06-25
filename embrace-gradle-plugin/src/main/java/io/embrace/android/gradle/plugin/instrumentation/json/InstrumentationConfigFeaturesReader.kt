@@ -31,14 +31,14 @@ private fun InstrumentationConfigFeature.convertInstrumentationConfigFeature(): 
         name = name,
         targetParams = BytecodeClassInsertionParams(
             name = target.name,
-            descriptor = target.descriptor
+            descriptor = target.descriptor,
         ),
         insertionParams = BytecodeMethodInsertionParams(
             owner = insert.owner,
             name = insert.name,
             descriptor = insert.descriptor,
             operandStackIndices = insert.operandStackIndices,
-            insertAtEnd = insert.insertAtEnd
+            insertAtEnd = insert.insertAtEnd,
         ),
         visitStrategy = convertVisitStrategy(),
         addOverrideParams = addOverride?.let {
@@ -47,7 +47,7 @@ private fun InstrumentationConfigFeature.convertInstrumentationConfigFeature(): 
                 name = it.name,
                 descriptor = it.descriptor,
             )
-        }
+        },
     )
 
 private fun InstrumentationConfigFeature.convertVisitStrategy(): ClassVisitStrategy {

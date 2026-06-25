@@ -15,6 +15,6 @@ internal sealed class EmbraceDependencyMetadata(
     class Core(version: String = BuildConfig.VERSION) : EmbraceDependencyMetadata(
         EMBRACE_SDK_GROUP,
         EMBRACE_CORE_SDK_NAME,
-        version
+        version,
     )
 }

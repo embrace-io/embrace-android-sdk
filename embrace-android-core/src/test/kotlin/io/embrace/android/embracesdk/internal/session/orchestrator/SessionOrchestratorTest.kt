@@ -140,7 +140,7 @@ internal class SessionOrchestratorTest {
         validateSession(
             sessionPartSpan = sessionPartSpan,
             endTimeMs = foregroundTime,
-            endType = LifeEventType.BKGND_STATE
+            endType = LifeEventType.BKGND_STATE,
         )
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
         with(checkNotNull(activeUserSession())) {
@@ -159,7 +159,7 @@ internal class SessionOrchestratorTest {
         validateSession(
             sessionPartSpan = sessionPartSpan,
             endTimeMs = backgroundTime,
-            endType = LifeEventType.STATE
+            endType = LifeEventType.STATE,
         )
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
     }
@@ -222,7 +222,7 @@ internal class SessionOrchestratorTest {
         validateSession(
             sessionPartSpan = sessionPartSpan,
             endTimeMs = endTimeMs,
-            endType = LifeEventType.MANUAL
+            endType = LifeEventType.MANUAL,
         )
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
     }
@@ -279,7 +279,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(
             startingAppState = AppState.FOREGROUND,
             configService = FakeConfigService(
-                sessionBehavior = FakeUserSessionBehavior(sessionControlEnabled = true)
+                sessionBehavior = FakeUserSessionBehavior(sessionControlEnabled = true),
             ),
         )
 
@@ -491,7 +491,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(
             startingAppState = AppState.FOREGROUND,
             configService = FakeConfigService(
-                backgroundActivityBehavior = backgroundActivityBehavior(true)
+                backgroundActivityBehavior = backgroundActivityBehavior(true),
             ),
         )
         orchestrator.onBackground()
@@ -650,7 +650,7 @@ internal class SessionOrchestratorTest {
 
                 override fun edit(action: KeyValueStoreEditor.() -> Unit) = FakeKeyValueStore().edit(action)
                 override fun incrementAndGet(key: String): Int = 0
-            }
+            },
         )
 
         createOrchestrator(
@@ -797,7 +797,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(
             startingAppState = AppState.FOREGROUND,
             configService = sessionLimitsConfigService(
-                customInactivityTimeoutMs = TimeUnit.SECONDS.toMillis(configInactivitySecs)
+                customInactivityTimeoutMs = TimeUnit.SECONDS.toMillis(configInactivitySecs),
             ),
             metadataStoreOverride = persistedStore,
         )
@@ -991,14 +991,14 @@ internal class SessionOrchestratorTest {
         userSessionPropertiesService = FakeUserSessionPropertiesService()
         sessionTracker = SessionPartTrackerImpl(
             activityManager = null,
-            logger = logger
+            logger = logger,
         )
         sessionCacheExecutor = BlockingScheduledExecutorService(clock, true)
         inactivityWorkerExecutor = BlockingScheduledExecutorService(clock, true)
         payloadCachingService = PayloadCachingServiceImpl(
             PeriodicSessionPartCacher(
                 BackgroundWorker(sessionCacheExecutor),
-                logger
+                logger,
             ),
             clock,
             object : SessionIdsProvider {
@@ -1007,17 +1007,17 @@ internal class SessionOrchestratorTest {
                 override fun getActiveSessionIds(): SessionIdsSnapshot =
                     SessionIdsSnapshot(userSessionId = "", sessionPartId = sessionTracker.getActiveSessionPartId() ?: "")
             },
-            store
+            store,
         )
         fakeDataSource = FakeDataSource(RuntimeEnvironment.getApplication())
         instrumentationRegistry = InstrumentationRegistryImpl(
-            logger
+            logger,
         ).apply {
             add(
                 DataSourceState(
                     factory = { fakeDataSource },
-                    configGate = { true }
-                )
+                    configGate = { true },
+                ),
             )
         }
 
@@ -1028,7 +1028,7 @@ internal class SessionOrchestratorTest {
             configService,
             sessionTracker,
             OrchestratorBoundaryDelegate(
-                userSessionPropertiesService
+                userSessionPropertiesService,
             ),
             store,
             payloadCachingService,
@@ -1038,7 +1038,7 @@ internal class SessionOrchestratorTest {
                 destination,
                 { 0 },
                 FakeLogLimitingService(),
-                FakeMetadataService()
+                FakeMetadataService(),
             ),
             ordinalStoreOverride ?: FakeOrdinalStore(),
             metadataStoreOverride ?: UserSessionMetadataStore(FakeKeyValueStore()),
@@ -1376,7 +1376,7 @@ internal class SessionOrchestratorTest {
     fun `restored background user session is reused when process starts in background`() {
         val store = storeWithUserSession(
             userSessionId = "bg-session-id",
-            isBackgroundOnly = true
+            isBackgroundOnly = true,
         )
 
         // Starting with the clock beyond the inactivity time should not result in a new background only session
@@ -1401,7 +1401,7 @@ internal class SessionOrchestratorTest {
     fun `restored background user session past max duration is discarded`() {
         val store = storeWithUserSession(
             userSessionId = "bg-session-id",
-            isBackgroundOnly = true
+            isBackgroundOnly = true,
         )
 
         clock.tick(maxDurationMs + 1)
@@ -1427,7 +1427,7 @@ internal class SessionOrchestratorTest {
     fun `restored background user session is replaced when process starts in foreground`() {
         val store = storeWithUserSession(
             userSessionId = "bg-session-id",
-            isBackgroundOnly = true
+            isBackgroundOnly = true,
         )
 
         clock.tick(1000)
@@ -1458,7 +1458,7 @@ internal class SessionOrchestratorTest {
                 backgroundOnly = false,
                 reason = EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED,
             ),
-            orchestrator.userSessionRestoreDecision
+            orchestrator.userSessionRestoreDecision,
         )
     }
 
@@ -1478,7 +1478,7 @@ internal class SessionOrchestratorTest {
                 backgroundOnly = false,
                 reason = EmbUserSessionTerminationReasonValues.INACTIVITY,
             ),
-            orchestrator.userSessionRestoreDecision
+            orchestrator.userSessionRestoreDecision,
         )
     }
 
@@ -1498,7 +1498,7 @@ internal class SessionOrchestratorTest {
                 backgroundOnly = true,
                 reason = EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED,
             ),
-            orchestrator.userSessionRestoreDecision
+            orchestrator.userSessionRestoreDecision,
         )
     }
 
@@ -1514,7 +1514,7 @@ internal class SessionOrchestratorTest {
         assertEquals("live-id", activeUserSession().userSessionId)
         assertEquals(
             UserSessionRestoreDecision.Restored(userSessionId = "live-id", backgroundOnly = false),
-            orchestrator.userSessionRestoreDecision
+            orchestrator.userSessionRestoreDecision,
         )
     }
 
@@ -1530,7 +1530,7 @@ internal class SessionOrchestratorTest {
         assertEquals("bg-live", activeUserSession().userSessionId)
         assertEquals(
             UserSessionRestoreDecision.Restored(userSessionId = "bg-live", backgroundOnly = true),
-            orchestrator.userSessionRestoreDecision
+            orchestrator.userSessionRestoreDecision,
         )
     }
 
@@ -1559,7 +1559,7 @@ internal class SessionOrchestratorTest {
                 backgroundOnly = false,
                 reason = EmbUserSessionTerminationReasonValues.CLOCK_MISMATCH,
             ),
-            orchestrator.userSessionRestoreDecision
+            orchestrator.userSessionRestoreDecision,
         )
     }
 
@@ -1779,7 +1779,7 @@ internal class SessionOrchestratorTest {
         sessionBehavior = FakeUserSessionBehavior(
             maxSessionDurationMs = customMaxSessionDurationMs,
             sessionInactivityTimeoutMs = customInactivityTimeoutMs,
-        )
+        ),
     )
 
     private fun backgroundActivityBehavior(enabled: Boolean) = createBackgroundActivityBehavior(
@@ -1789,9 +1789,9 @@ internal class SessionOrchestratorTest {
                     100f
                 } else {
                     0f
-                }
-            )
-        )
+                },
+            ),
+        ),
     )
 
     private fun storeWithUserSession(
@@ -1814,7 +1814,7 @@ internal class SessionOrchestratorTest {
                 partIndex = partIndex,
                 lastActivityMs = lastActivityMs,
                 isBackgroundOnly = isBackgroundOnly,
-            )
+            ),
         )
     }
 

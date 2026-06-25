@@ -24,6 +24,6 @@ fun fakeNetworkCapturedCall(): NetworkCapturedCall {
         startTime = 1713452000,
         url = "https://httpbin.org/get",
         errorMessage = "",
-        encryptedPayload = "encrypted-payload"
+        encryptedPayload = "encrypted-payload",
     )
 }

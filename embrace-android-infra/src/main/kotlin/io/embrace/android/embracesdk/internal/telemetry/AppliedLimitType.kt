@@ -17,5 +17,5 @@ enum class AppliedLimitType(val attributeName: String) {
     /**
      * A telemetry item was completely dropped due to rate limits or other constraints.
      */
-    DROP("drop")
+    DROP("drop"),
 }

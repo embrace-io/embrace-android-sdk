@@ -16,7 +16,7 @@ inline fun <O : Any, I : Any> Provider<I>.safeMap(
             override fun transform(input: I): O? {
                 return transform(input)
             }
-        }
+        },
     )
 }
 

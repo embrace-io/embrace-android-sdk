@@ -15,7 +15,7 @@ data class VariantConfig(
     val buildId: String? = null,
     val buildType: String? = null,
     val buildFlavor: String? = null,
-    val embraceConfig: EmbraceVariantConfig? = null
+    val embraceConfig: EmbraceVariantConfig? = null,
 ) : Serializable {
 
     companion object {

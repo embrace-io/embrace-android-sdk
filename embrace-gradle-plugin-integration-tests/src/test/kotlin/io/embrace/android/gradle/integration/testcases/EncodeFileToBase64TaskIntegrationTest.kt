@@ -27,7 +27,7 @@ class EncodeFileToBase64TaskIntegrationTest {
             assertions = { projectDir ->
                 val encodedMap = projectDir.buildFile("encoded_map.txt").bufferedReader().use { it.readText() }
                 assertEquals(expectedBase64Encoding, encodedMap)
-            }
+            },
         )
     }
 }

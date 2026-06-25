@@ -10,7 +10,7 @@ data class WebViewLocalConfig(
     val captureWebViews: Boolean? = null,
 
     @Json(name = "capture_query_params")
-    val captureQueryParams: Boolean? = null
+    val captureQueryParams: Boolean? = null,
 ) : Serializable {
 
     private companion object {

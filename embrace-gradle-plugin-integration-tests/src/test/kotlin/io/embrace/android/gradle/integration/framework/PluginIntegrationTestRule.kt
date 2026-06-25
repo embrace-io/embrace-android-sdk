@@ -124,7 +124,7 @@ class PluginIntegrationTestRule : ExternalResource() {
             baseUrl,
             additionalArgs,
             attachDebugger,
-            testMatrix
+            testMatrix,
         )
 
         // run any preconditions before the build
@@ -235,7 +235,7 @@ class PluginIntegrationTestRule : ExternalResource() {
                 "-Pkotlin_version=${testMatrix.kotlin}",
                 "-Pplugin_snapshot_version=${loadSnapshotVersion()}",
                 "-PcompileAndTargetSdk=${testMatrix.compileAndTargetSdk}",
-            )
+            ),
         )
         // Android projects currently require this flag to compile
         if (projectType == ProjectType.ANDROID) {
@@ -245,12 +245,12 @@ class PluginIntegrationTestRule : ExternalResource() {
             println(
                 "Waiting for debugger to attach. You need to run the remote debugging " +
                     "configuration from Android Studio for this test case to continue. Please " +
-                    "see this module's README.md for further details."
+                    "see this module's README.md for further details.",
             )
             args.addAll(
                 listOf(
                     "-Dorg.gradle.debug=true",
-                )
+                ),
             )
         }
         return args

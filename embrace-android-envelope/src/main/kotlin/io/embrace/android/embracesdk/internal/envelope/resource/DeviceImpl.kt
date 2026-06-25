@@ -30,7 +30,7 @@ class DeviceImpl(
         "/data/local/bin/",
         "/system/sd/xbin/",
         "/system/bin/failsafe/",
-        "/data/local/"
+        "/data/local/",
     )
 
     init {
@@ -65,7 +65,7 @@ class DeviceImpl(
                 Locale.US,
                 "%dx%d",
                 displayMetrics.widthPixels,
-                displayMetrics.heightPixels
+                displayMetrics.heightPixels,
             )
         } catch (ex: Exception) {
             logger.trackInternalError(InternalErrorType.ScreenResCaptureFail, ex)
@@ -119,7 +119,7 @@ class DeviceImpl(
     private var persistedJailbroken: Boolean?
         get() = store.getBoolean(
             IS_JAILBROKEN_KEY,
-            false
+            false,
         )
         set(value) = store.edit { putBoolean(IS_JAILBROKEN_KEY, value) }
 

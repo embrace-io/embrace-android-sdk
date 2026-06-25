@@ -40,9 +40,9 @@ internal class JvmCrashDataSourceImplTest {
             ctx,
             configService = FakeConfigService(
                 autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(
-                    uncaughtExceptionHandlerEnabled = crashHandlerEnabled
-                )
-            )
+                    uncaughtExceptionHandlerEnabled = crashHandlerEnabled,
+                ),
+            ),
         )
         crashDataSource = JvmCrashDataSourceImpl(args).apply {
             telemetryModifier = modifier
@@ -73,7 +73,7 @@ internal class JvmCrashDataSourceImplTest {
         val embraceDefaultHandler = EmbraceUncaughtExceptionHandler(
             defaultHandler = null,
             dataSource = FakeJvmCrashDataSource(),
-            logger = FakeInternalLogger()
+            logger = FakeInternalLogger(),
         )
         Thread.setDefaultUncaughtExceptionHandler(embraceDefaultHandler)
         setupForHandleCrash(true)

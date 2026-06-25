@@ -29,7 +29,7 @@ internal class UnityInternalInterfaceImpl(
                 logger.logError(
                     "Unity metadata is corrupted or malformed. Unity version is " +
                         unityVersion + ", Unity build id is " + buildGuid +
-                        " and Unity SDK version is " + sdkVersionMessage
+                        " and Unity SDK version is " + sdkVersionMessage,
                 )
                 return
             }

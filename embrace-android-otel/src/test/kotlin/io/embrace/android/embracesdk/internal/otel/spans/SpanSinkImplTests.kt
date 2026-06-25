@@ -49,8 +49,8 @@ internal class SpanSinkImplTests {
         spanSink.storeCompletedSpans(
             listOf(
                 FakeSpanData(name = "fake1"),
-                FakeSpanData(name = "fake2")
-            ).map(FakeSpanData::toEmbraceSpanData)
+                FakeSpanData(name = "fake2"),
+            ).map(FakeSpanData::toEmbraceSpanData),
         )
         val unblockCompletedSpansLatch = CountDownLatch(1)
         val unblockFlushLatch = CountDownLatch(1)

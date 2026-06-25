@@ -16,7 +16,7 @@ class PowerSaveInstrumentationProvider : InstrumentationProvider {
                     provider = { args.systemService(Context.POWER_SERVICE) },
                 )
             },
-            configGate = { args.configService.autoDataCaptureBehavior.isPowerSaveModeCaptureEnabled() }
+            configGate = { args.configService.autoDataCaptureBehavior.isPowerSaveModeCaptureEnabled() },
         )
     }
 }

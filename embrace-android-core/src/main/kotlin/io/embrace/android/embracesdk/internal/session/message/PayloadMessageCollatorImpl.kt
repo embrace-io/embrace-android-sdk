@@ -34,14 +34,14 @@ internal class PayloadMessageCollatorImpl(
         val envelope = sessionPartEnvelopeSource.getEnvelope(
             endType = params.endType,
             startNewSession = params.startNewSession,
-            crashId = params.crashId
+            crashId = params.crashId,
         )
         return Envelope(
             resource = envelope.resource,
             metadata = envelope.metadata,
             data = envelope.data,
             version = envelope.version,
-            type = envelope.type
+            type = envelope.type,
         )
     }
 }

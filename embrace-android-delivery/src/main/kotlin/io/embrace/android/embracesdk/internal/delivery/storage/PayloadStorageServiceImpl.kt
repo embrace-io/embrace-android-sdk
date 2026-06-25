@@ -30,7 +30,7 @@ class PayloadStorageServiceImpl(
         worker,
         logger,
         clock,
-        storageLimit
+        storageLimit,
     )
 
     /**

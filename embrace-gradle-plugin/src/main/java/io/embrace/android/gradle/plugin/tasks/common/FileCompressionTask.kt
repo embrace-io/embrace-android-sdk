@@ -23,7 +23,7 @@ import javax.inject.Inject
  */
 @DisableCachingByDefault(because = "File compression output is written to disk and does not benefit from caching")
 abstract class FileCompressionTask @Inject constructor(
-    objectFactory: ObjectFactory
+    objectFactory: ObjectFactory,
 ) : DefaultTask(), EmbraceTask {
 
     @get:Input

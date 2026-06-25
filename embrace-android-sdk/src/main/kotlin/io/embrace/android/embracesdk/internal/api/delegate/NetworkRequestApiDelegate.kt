@@ -60,9 +60,9 @@ internal class NetworkRequestApiDelegate(
                     capturedRequestBody = data.capturedRequestBody,
                     responseHeaders = data.responseHeaders,
                     capturedResponseBody = data.capturedResponseBody,
-                    dataCaptureErrorMessage = data.dataCaptureErrorMessage
+                    dataCaptureErrorMessage = data.dataCaptureErrorMessage,
                 )
-            }
+            },
         )
     }
 }

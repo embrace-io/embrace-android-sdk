@@ -32,7 +32,7 @@ internal class EmbTracerTest {
             spanService = spanService,
             clock = openTelemetryClock,
             openTelemetry = fakeOpenTelemetry(),
-            useKotlinSdk = TESTS_DEFAULT_USE_KOTLIN_SDK
+            useKotlinSdk = TESTS_DEFAULT_USE_KOTLIN_SDK,
         )
     }
 
@@ -54,7 +54,7 @@ internal class EmbTracerTest {
             "foo",
             parentContext = parentCtx,
             spanKind = SpanKind.CLIENT,
-            startTimestamp = 500L.nanosToMillis()
+            startTimestamp = 500L.nanosToMillis(),
         ) {
             setStringAttribute("foo", "bar")
         }

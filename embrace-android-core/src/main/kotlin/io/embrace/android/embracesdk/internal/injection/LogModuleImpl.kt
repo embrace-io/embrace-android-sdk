@@ -22,7 +22,7 @@ class LogModuleImpl(
 
     override val logLimitingService: LogLimitingService by singleton {
         LogLimitingServiceImpl(
-            configService
+            configService,
         )
     }
 
@@ -31,7 +31,7 @@ class LogModuleImpl(
             essentialServiceModule.telemetryDestination,
             configService,
             logLimitingService,
-            initModule.telemetryService
+            initModule.telemetryService,
         )
     }
 

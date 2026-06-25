@@ -15,11 +15,11 @@ internal class LegacyExceptionInfoTest {
         assertEquals("UhOh.", info.message)
         assertEquals(
             "io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfoTest\$testOfThrowable\$throwable\$1",
-            info.name
+            info.name,
         )
         assertEquals(
             "io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfoTest.testOfThrowable(LegacyExceptionInfoTest.kt:12)",
-            info.lines.first()
+            info.lines.first(),
         )
         assertNull(info.originalLength)
     }
@@ -31,7 +31,7 @@ internal class LegacyExceptionInfoTest {
         val obj = LegacyExceptionInfo(
             "java.lang.IllegalStateException",
             "Whoops!",
-            (0 until len).map { "line $it" }
+            (0 until len).map { "line $it" },
         )
         assertEquals(limit, obj.lines.size)
         val expected = (0 until limit).map { "line $it" }

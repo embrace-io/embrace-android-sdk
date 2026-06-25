@@ -29,9 +29,9 @@ class IsolatedProjectsTest {
                     listOf("debug", "release"),
                     additionalAssertions = {
                         assertTrue(checkNotNull(isIsolatedProjectsEnabled))
-                    }
+                    },
                 )
-            }
+            },
         )
     }
 }

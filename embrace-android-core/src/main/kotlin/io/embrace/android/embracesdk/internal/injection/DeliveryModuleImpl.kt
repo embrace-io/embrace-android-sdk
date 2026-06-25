@@ -63,14 +63,14 @@ class DeliveryModuleImpl(
             initModule.logger,
             initModule.jsonSerializer,
             dataPersistenceWorker,
-            deliveryTracer
+            deliveryTracer,
         )
     }
 
     private val partCacher: PeriodicSessionPartCacher by singleton {
         PeriodicSessionPartCacher(
             workerThreadModule.backgroundWorker(Worker.Background.PeriodicCacheWorker),
-            initModule.logger
+            initModule.logger,
         )
     }
 
@@ -80,7 +80,7 @@ class DeliveryModuleImpl(
             initModule.clock,
             essentialServiceModule.sessionIdsProvider,
             payloadStore,
-            deliveryTracer
+            deliveryTracer,
         )
     }
 
@@ -89,7 +89,7 @@ class DeliveryModuleImpl(
             val location = StorageLocation.PAYLOAD.asFile(
                 logger = initModule.logger,
                 rootDirSupplier = { coreModule.context.filesDir },
-                fallbackDirSupplier = { coreModule.context.cacheDir }
+                fallbackDirSupplier = { coreModule.context.cacheDir },
             )
             PayloadStorageServiceImpl(
                 location,
@@ -97,7 +97,7 @@ class DeliveryModuleImpl(
                 processIdProvider,
                 initModule.logger,
                 initModule.clock,
-                deliveryTracer
+                deliveryTracer,
             )
         }
     }
@@ -107,7 +107,7 @@ class DeliveryModuleImpl(
             val location = StorageLocation.CACHE.asFile(
                 logger = initModule.logger,
                 rootDirSupplier = { coreModule.context.filesDir },
-                fallbackDirSupplier = { coreModule.context.cacheDir }
+                fallbackDirSupplier = { coreModule.context.cacheDir },
             )
             PayloadStorageServiceImpl(
                 location,
@@ -115,7 +115,7 @@ class DeliveryModuleImpl(
                 processIdProvider,
                 initModule.logger,
                 initModule.clock,
-                deliveryTracer
+                deliveryTracer,
             )
         }
     }
@@ -124,7 +124,7 @@ class DeliveryModuleImpl(
         val location = StorageLocation.ENVELOPE.asFile(
             logger = initModule.logger,
             rootDirSupplier = { coreModule.context.filesDir },
-            fallbackDirSupplier = { coreModule.context.cacheDir }
+            fallbackDirSupplier = { coreModule.context.cacheDir },
         )
         CachedLogEnvelopeStoreImpl(
             outputDir = location,
@@ -149,7 +149,7 @@ class DeliveryModuleImpl(
                 appId,
                 BuildConfig.VERSION_NAME,
                 initModule.logger,
-                deliveryTracer
+                deliveryTracer,
             )
         }
     }
@@ -162,7 +162,7 @@ class DeliveryModuleImpl(
             workerThreadModule.backgroundWorker(Worker.Background.HttpRequestWorker),
             initModule.clock,
             initModule.logger,
-            deliveryTracer
+            deliveryTracer,
         )
     }
 }

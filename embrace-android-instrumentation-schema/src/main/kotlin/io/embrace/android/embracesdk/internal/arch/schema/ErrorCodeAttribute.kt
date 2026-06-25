@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.semconv.EmbSpanAttributes
  * Attribute that stores the errorCode in an OpenTelemetry span
  */
 sealed class ErrorCodeAttribute(
-    override val value: String
+    override val value: String,
 ) : EmbraceAttribute {
     override val key: String = EmbSpanAttributes.EMB_ERROR_CODE
 

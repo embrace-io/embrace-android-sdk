@@ -54,15 +54,15 @@ data class StoredTelemetryMetadata(
 
         private fun parseV1(filename: String, parts: List<String>): Result<StoredTelemetryMetadata> {
             val envelopeType = SupportedEnvelopeType.fromPriority(parts[0]) ?: return failure(
-                IllegalArgumentException("Invalid priority: $filename")
+                IllegalArgumentException("Invalid priority: $filename"),
             )
             val timestamp = parts[1].toLongOrNull() ?: return failure(
-                IllegalArgumentException("Invalid timestamp: $filename")
+                IllegalArgumentException("Invalid timestamp: $filename"),
             )
             val uuid = parts[2]
             val processId = parts[3]
             val complete = parts[4].toBooleanStrictOrNull() ?: return failure(
-                IllegalArgumentException("Invalid completeness state: $filename")
+                IllegalArgumentException("Invalid completeness state: $filename"),
             )
             val payloadType = PayloadType.fromFilenameComponent(parts[5])
             return success(
@@ -73,21 +73,21 @@ data class StoredTelemetryMetadata(
                     envelopeType = envelopeType,
                     complete = complete,
                     payloadType = payloadType,
-                )
+                ),
             )
         }
 
         private fun parseV2(filename: String, parts: List<String>): Result<StoredTelemetryMetadata> {
             val envelopeType = SupportedEnvelopeType.fromPriority(parts[0]) ?: return failure(
-                IllegalArgumentException("Invalid priority: $filename")
+                IllegalArgumentException("Invalid priority: $filename"),
             )
             val timestamp = parts[1].toLongOrNull() ?: return failure(
-                IllegalArgumentException("Invalid timestamp: $filename")
+                IllegalArgumentException("Invalid timestamp: $filename"),
             )
             val uuid = parts[2]
             val processId = parts[3]
             val complete = parts[4].toBooleanStrictOrNull() ?: return failure(
-                IllegalArgumentException("Invalid completeness state: $filename")
+                IllegalArgumentException("Invalid completeness state: $filename"),
             )
             val payloadType = PayloadType.fromFilenameComponent(parts[5])
             val userSessionId = decodeId(parts[6])
@@ -102,7 +102,7 @@ data class StoredTelemetryMetadata(
                     payloadType = payloadType,
                     userSessionId = userSessionId,
                     sessionPartId = sessionPartId,
-                )
+                ),
             )
         }
     }

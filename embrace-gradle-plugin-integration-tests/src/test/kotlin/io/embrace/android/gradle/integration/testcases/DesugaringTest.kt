@@ -21,7 +21,7 @@ class DesugaringTest {
             expectedExceptionMessage = "Desugaring must be enabled when minSdk is < 26",
             assertions = {
                 verifyNoUploads()
-            }
+            },
         )
     }
 
@@ -38,7 +38,7 @@ class DesugaringTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(listOf("debug", "release"))
                 verifyJvmMappingRequestsSent(1)
-            }
+            },
         )
     }
 
@@ -55,7 +55,7 @@ class DesugaringTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(listOf("debug", "release"))
                 verifyJvmMappingRequestsSent(1)
-            }
+            },
         )
     }
 }

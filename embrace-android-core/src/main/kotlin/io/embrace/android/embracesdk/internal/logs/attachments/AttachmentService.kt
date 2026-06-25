@@ -19,7 +19,7 @@ class AttachmentService(private val limit: Int = 5) : SessionPartChangeListener 
     ): UserHosted = UserHosted(
         attachmentId,
         attachmentUrl,
-        ::incrementAndCheckAttachmentLimit
+        ::incrementAndCheckAttachmentLimit,
     )
 
     private val count: AtomicInteger = AtomicInteger(0)

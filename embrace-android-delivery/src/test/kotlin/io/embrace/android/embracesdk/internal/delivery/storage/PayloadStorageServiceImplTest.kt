@@ -105,7 +105,7 @@ class PayloadStorageServiceImplTest {
             Pair(1000L, CRASH),
             Pair(1000L, SESSION),
             Pair(1000L, LOG),
-            Pair(1000L, BLOB)
+            Pair(1000L, BLOB),
         ).forEach {
             val metadata = StoredTelemetryMetadata(it.first, UUID, PROCESS_ID, it.second)
             service.store(metadata) { stream ->
@@ -122,7 +122,7 @@ class PayloadStorageServiceImplTest {
             Pair(0L, CRASH),
             Pair(1000L, CRASH),
             Pair(0L, SESSION),
-            Pair(1000L, SESSION)
+            Pair(1000L, SESSION),
         )
         assertEquals(expected, outputs)
     }

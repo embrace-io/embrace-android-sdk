@@ -25,7 +25,7 @@ class EmbraceGradlePlugin : Plugin<Project> {
         val embrace = project.extensions.create(
             "embrace",
             EmbraceExtension::class.java,
-            project.objects
+            project.objects,
         )
 
         // this property will hold configuration for each variant. It will be updated each time a new variant

@@ -26,8 +26,8 @@ class MultipartFormReader {
                         contentDisposition = part.headers["Content-Disposition"]
                             ?: error("Missing Content-Disposition"),
                         data = part.body.readUtf8(),
-                        contentType = part.headers["Content-Type"]
-                    )
+                        contentType = part.headers["Content-Type"],
+                    ),
                 )
             }
         }
@@ -57,7 +57,7 @@ fun FormPart.validateBodyBuildId(expectedBuildId: String? = null) {
 fun FormPart.validateMappingFile(expectedFileName: String) {
     assertEquals(
         "form-data; name=\"file\"; filename=\"${expectedFileName}\"",
-        contentDisposition
+        contentDisposition,
     )
     assertEquals("text/plain", contentType)
     assertTrue(checkNotNull(data?.length) > 0)

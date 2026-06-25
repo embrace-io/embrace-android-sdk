@@ -39,7 +39,7 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
             variantOutputInfo,
             reactNativeBundleId,
             api,
-            visitor
+            visitor,
         )?.let {
             visitor = it
         }

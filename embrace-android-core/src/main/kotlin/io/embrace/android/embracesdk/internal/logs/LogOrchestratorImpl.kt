@@ -86,7 +86,7 @@ internal class LogOrchestratorImpl(
         scheduledCheckFuture = worker.schedule<Unit>(
             ::sendLogsIfNeeded,
             min(nextBatchCheck, nextInactivityCheck),
-            TimeUnit.MILLISECONDS
+            TimeUnit.MILLISECONDS,
         )
     }
 

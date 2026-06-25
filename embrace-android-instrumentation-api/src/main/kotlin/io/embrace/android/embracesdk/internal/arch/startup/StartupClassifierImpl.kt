@@ -20,7 +20,7 @@ class StartupClassifierImpl : StartupClassifier {
                 StartupType.COLD
             } else {
                 StartupType.WARM
-            }
+            },
         )
     }
 

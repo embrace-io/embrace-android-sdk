@@ -42,7 +42,7 @@ class ConfigInstrumentationTest {
             },
             assertions = { projectDir ->
                 verifyInstrumentedConfig(projectDir, "instrumented-config-default.json")
-            }
+            },
         )
     }
 
@@ -61,7 +61,7 @@ class ConfigInstrumentationTest {
             },
             assertions = { projectDir ->
                 verifyInstrumentedConfig(projectDir, "instrumented-config-overrides.json")
-            }
+            },
         )
     }
 

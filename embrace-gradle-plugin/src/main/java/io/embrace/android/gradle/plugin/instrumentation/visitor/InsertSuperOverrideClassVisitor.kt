@@ -31,13 +31,13 @@ class InsertSuperOverrideClassVisitor(
                 InstrumentationTargetMethodEndVisitor(
                     api = api,
                     methodVisitor = nextMethodVisitor,
-                    params = feature.insertionParams
+                    params = feature.insertionParams,
                 )
             } else {
                 InstrumentationTargetMethodVisitor(
                     api = api,
                     methodVisitor = nextMethodVisitor,
-                    params = feature.insertionParams
+                    params = feature.insertionParams,
                 )
             }
         } else {
@@ -53,7 +53,7 @@ class InsertSuperOverrideClassVisitor(
                 feature.targetParams.name,
                 feature.targetParams.descriptor,
                 null,
-                emptyArray()
+                emptyArray(),
             )
             nextMethodVisitor.addSuperCall()
         }
@@ -71,7 +71,7 @@ class InsertSuperOverrideClassVisitor(
             feature.addOverrideParams?.owner,
             feature.addOverrideParams?.name,
             feature.addOverrideParams?.descriptor,
-            false
+            false,
         )
 
         // load local variables required for method call (if any) and push onto the operand stack
@@ -86,7 +86,7 @@ class InsertSuperOverrideClassVisitor(
             params.owner,
             params.name,
             params.descriptor,
-            false
+            false,
         )
 
         visitEnd()

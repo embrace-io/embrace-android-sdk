@@ -127,7 +127,7 @@ class FakePayloadStorageService(
         }
         return serializer.fromJson(
             GZIPInputStream(loadPayloadAsStream(metadata)),
-            Envelope.logEnvelopeSerializer
+            Envelope.logEnvelopeSerializer,
         )
     }
 }

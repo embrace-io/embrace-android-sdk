@@ -152,7 +152,7 @@ internal class RemoteConfigStoreImplTest {
         store = RemoteConfigStoreImpl(
             TestPlatformSerializer(),
             dir,
-            { error("device id unavailable") }
+            { error("device id unavailable") },
         )
 
         val config = RemoteConfig(50)

@@ -58,13 +58,13 @@ class OkHttpNetworkService(
         return makePostRequest<BuildTelemetryRequest, String>(
             endpoint = EmbraceEndpoint.BUILD_DATA,
             payload = request,
-            deserializationAction = defaultBodyDeserializer
+            deserializationAction = defaultBodyDeserializer,
         )
     }
 
     override fun postNdkHandshake(
         appId: String,
-        handshake: NdkUploadHandshakeRequest
+        handshake: NdkUploadHandshakeRequest,
     ): HttpCallResult {
         return makePostRequest<NdkUploadHandshakeRequest, NdkUploadHandshakeResponse>(
             endpoint = EmbraceEndpoint.NDK_HANDSHAKE,
@@ -78,7 +78,7 @@ class OkHttpNetworkService(
         file: File,
         variantName: String,
         arch: String,
-        id: String
+        id: String,
     ): HttpCallResult {
         return makeMultipartRequest(params, file) {
             addFormDataPart(KEY_VARIANT, variantName)
@@ -101,7 +101,7 @@ class OkHttpNetworkService(
     private fun makeMultipartRequest(
         params: RequestParams,
         file: File,
-        action: MultipartBody.Builder.() -> Unit = {}
+        action: MultipartBody.Builder.() -> Unit = {},
     ): HttpCallResult {
         return makeRequest(
             requestProvider = {
@@ -111,7 +111,7 @@ class OkHttpNetworkService(
                     .post(requestBody.build())
                     .build()
             },
-            deserializationAction = defaultBodyDeserializer
+            deserializationAction = defaultBodyDeserializer,
         )
     }
 
@@ -119,7 +119,7 @@ class OkHttpNetworkService(
         endpoint: EmbraceEndpoint,
         payload: T,
         appId: String? = null,
-        deserializationAction: (stream: InputStream) -> O
+        deserializationAction: (stream: InputStream) -> O,
     ): HttpCallResult {
         val body = StreamedRequestBody(mediaTypeJson) {
             serializer.get().toJson(payload, T::class.java, it)
@@ -130,7 +130,7 @@ class OkHttpNetworkService(
                     .post(body)
                     .build()
             },
-            deserializationAction = deserializationAction
+            deserializationAction = deserializationAction,
         )
     }
 
@@ -176,7 +176,7 @@ class OkHttpNetworkService(
             is HttpCallResult.Error -> {
                 logger.error(
                     "Failed to make request",
-                    result.exception
+                    result.exception,
                 )
             }
         }
@@ -184,7 +184,7 @@ class OkHttpNetworkService(
 
     private inline fun <reified O> handleServerResponse(
         response: Response,
-        deserializationAction: (stream: InputStream) -> O
+        deserializationAction: (stream: InputStream) -> O,
     ): HttpCallResult {
         val result = when {
             response.isSuccessful -> {
@@ -202,7 +202,7 @@ class OkHttpNetworkService(
 
     private fun prepareCommonMultipartBody(
         params: RequestParams,
-        file: File
+        file: File,
     ): MultipartBody.Builder {
         return MultipartBody.Builder()
             .setType(MultipartBody.FORM)
@@ -216,7 +216,7 @@ class OkHttpNetworkService(
             .addFormDataPart(
                 KEY_MAPPING_FILE,
                 params.fileName,
-                file.asRequestBody(mediaTypeText)
+                file.asRequestBody(mediaTypeText),
             )
     }
 

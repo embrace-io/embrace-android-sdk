@@ -21,7 +21,7 @@ class EmbraceTracer(
             name = name,
             parent = parent,
             internal = false,
-            autoTerminationMode = autoTerminationMode
+            autoTerminationMode = autoTerminationMode,
         )
 
     override fun startSpan(
@@ -35,7 +35,7 @@ class EmbraceTracer(
             parent = parent,
             startTimeMs = startTimeMs?.normalizeTimestampAsMillis(),
             internal = false,
-            autoTerminationMode = autoTerminationMode
+            autoTerminationMode = autoTerminationMode,
         )
 
     override fun <T> recordSpan(
@@ -52,7 +52,7 @@ class EmbraceTracer(
         attributes = attributes,
         events = events,
         autoTerminationMode = autoTerminationMode,
-        code = code
+        code = code,
     )
 
     override fun recordCompletedSpan(
@@ -71,7 +71,7 @@ class EmbraceTracer(
         internal = false,
         attributes = attributes,
         events = events,
-        errorCode = errorCode
+        errorCode = errorCode,
     )
 
     override fun getSpan(spanId: String): EmbraceSpan? = spanService.getSpan(spanId = spanId)

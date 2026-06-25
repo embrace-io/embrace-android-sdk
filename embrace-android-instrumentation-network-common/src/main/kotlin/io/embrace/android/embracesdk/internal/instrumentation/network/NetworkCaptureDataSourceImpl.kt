@@ -18,7 +18,7 @@ class NetworkCaptureDataSourceImpl(
 ) : NetworkCaptureDataSource, DataSourceImpl(
     args = args,
     limitStrategy = NoopLimitStrategy,
-    instrumentationName = "network_capture_data_source"
+    instrumentationName = "network_capture_data_source",
 ) {
 
     private val keyValueStore: KeyValueStore = args.store
@@ -43,7 +43,7 @@ class NetworkCaptureDataSourceImpl(
             request.startTime,
             request.endTime,
             body,
-            request.errorMessage
+            request.errorMessage,
         )
     }
 
@@ -71,7 +71,7 @@ class NetworkCaptureDataSourceImpl(
                 val responseBody =
                     requestBody.dataCaptureErrorMessage ?: parseBody(
                         requestBody.capturedResponseBody,
-                        rule.maxSize
+                        rule.maxSize,
                     )
                 decreaseNetworkCaptureRuleRemainingCount(rule.id, rule.maxCount)
 
@@ -94,7 +94,7 @@ class NetworkCaptureDataSourceImpl(
                     sessionPartId = args.sessionPartId(),
                     startTime = startTime,
                     url = url,
-                    errorMessage = errorMessage
+                    errorMessage = errorMessage,
                 )
 
                 val networkLog = getNetworkPayload(capturedNetworkCall)
@@ -131,10 +131,10 @@ class NetworkCaptureDataSourceImpl(
                     startTime = call.startTime,
                     url = call.url,
                     errorMessage = call.errorMessage,
-                    encryptedPayload = call.encryptedPayload
+                    encryptedPayload = call.encryptedPayload,
                 ),
                 LogSeverity.INFO,
-                call.networkId
+                call.networkId,
             )
         }
     }
@@ -199,7 +199,7 @@ class NetworkCaptureDataSourceImpl(
         val capturePublicKey = configService.networkBehavior.getNetworkBodyCapturePublicKey() ?: return null
         return networkCaptureEncryptionManager.encrypt(
             serializer.toJson(capturedNetworkCall),
-            capturePublicKey
+            capturePublicKey,
         )
     }
 

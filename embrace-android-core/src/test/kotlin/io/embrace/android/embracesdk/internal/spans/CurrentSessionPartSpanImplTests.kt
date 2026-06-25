@@ -127,16 +127,16 @@ internal class CurrentSessionPartSpanImplTests {
             assertNotNull(
                 spanService.createSpan(
                     name = "spanzzz$it",
-                    internal = false
-                )
+                    internal = false,
+                ),
             )
         }
         assertEquals(
             NoopEmbraceSdkSpan,
             spanService.createSpan(
                 name = "failed-span",
-                internal = false
-            )
+                internal = false,
+            ),
         )
     }
 
@@ -146,16 +146,16 @@ internal class CurrentSessionPartSpanImplTests {
             assertNotNull(
                 spanService.createSpan(
                     name = "spanzzz$it",
-                    internal = false
-                )
+                    internal = false,
+                ),
             )
         }
         assertEquals(
             NoopEmbraceSdkSpan,
             spanService.createSpan(
                 name = "failed-span",
-                internal = false
-            )
+                internal = false,
+            ),
         )
 
         repeat(MAX_INTERNAL_SPANS_PER_SESSION) {
@@ -163,7 +163,7 @@ internal class CurrentSessionPartSpanImplTests {
         }
         assertEquals(
             NoopEmbraceSdkSpan,
-            spanService.createSpan(name = "failed-span")
+            spanService.createSpan(name = "failed-span"),
         )
     }
 
@@ -179,8 +179,8 @@ internal class CurrentSessionPartSpanImplTests {
                         private = false,
                         tracer = tracer,
                         openTelemetry = openTelemetry,
-                    )
-                )
+                    ),
+                ),
             )
         }
         assertEquals(
@@ -193,8 +193,8 @@ internal class CurrentSessionPartSpanImplTests {
                     private = false,
                     tracer = tracer,
                     openTelemetry = openTelemetry,
-                )
-            )
+                ),
+            ),
         )
         assertNotNull(
             spanService.createSpan(
@@ -205,8 +205,8 @@ internal class CurrentSessionPartSpanImplTests {
                     private = false,
                     tracer = tracer,
                     openTelemetry = openTelemetry,
-                )
-            )
+                ),
+            ),
         )
     }
 
@@ -218,7 +218,7 @@ internal class CurrentSessionPartSpanImplTests {
                 spanService.recordSpan(
                     name = "record$it",
                     internal = false,
-                ) { "derp" }
+                ) { "derp" },
             )
         }
         assertEquals(
@@ -226,7 +226,7 @@ internal class CurrentSessionPartSpanImplTests {
             spanService.createSpan(
                 name = "failed-span",
                 internal = false,
-            )
+            ),
         )
     }
 
@@ -239,7 +239,7 @@ internal class CurrentSessionPartSpanImplTests {
                     startTimeMs = 100L,
                     endTimeMs = 200L,
                     internal = false,
-                )
+                ),
             )
         }
         assertEquals(
@@ -247,7 +247,7 @@ internal class CurrentSessionPartSpanImplTests {
             spanService.createSpan(
                 name = "failed-span",
                 internal = false,
-            )
+            ),
         )
     }
 
@@ -257,7 +257,7 @@ internal class CurrentSessionPartSpanImplTests {
             spanService.createSpan(
                 name = "test-span",
                 internal = false,
-            )
+            ),
         )
         assertTrue(parent.start())
         repeat(MAX_NON_INTERNAL_SPANS_PER_SESSION - 1) {
@@ -266,7 +266,7 @@ internal class CurrentSessionPartSpanImplTests {
                 spanService.createSpan(
                     name = "spanzzz$it",
                     internal = false,
-                )
+                ),
             )
         }
         assertEquals(
@@ -274,7 +274,7 @@ internal class CurrentSessionPartSpanImplTests {
             spanService.createSpan(
                 name = "failed-span",
                 internal = false,
-            )
+            ),
         )
         assertEquals(
             NoopEmbraceSdkSpan,
@@ -282,18 +282,18 @@ internal class CurrentSessionPartSpanImplTests {
                 name = "child-span",
                 parent = parent,
                 internal = false,
-            )
+            ),
         )
         assertNotNull(
             spanService.createSpan(
                 name = "internal-again",
-            )
+            ),
         )
         assertNotNull(
             spanService.createSpan(
                 name = "internal-child-span",
                 parent = parent,
-            )
+            ),
         )
     }
 
@@ -315,7 +315,7 @@ internal class CurrentSessionPartSpanImplTests {
                 name = "failed-span",
                 parent = parentSpan,
                 internal = false,
-            )
+            ),
         )
         assertFalse(
             spanService.recordCompletedSpan(
@@ -324,7 +324,7 @@ internal class CurrentSessionPartSpanImplTests {
                 endTimeMs = 200L,
                 parent = parentSpan,
                 internal = false,
-            )
+            ),
         )
         spanSink.flushSpans()
         assertEquals(
@@ -333,7 +333,7 @@ internal class CurrentSessionPartSpanImplTests {
                 name = "failed-span",
                 parent = parentSpan,
                 internal = false,
-            ) { 2 }
+            ) { 2 },
         )
         assertEquals(0, spanSink.completedSpans().size)
     }
@@ -343,20 +343,20 @@ internal class CurrentSessionPartSpanImplTests {
         val parentSpan = checkNotNull(
             spanService.createSpan(
                 name = "parent-span",
-            )
+            ),
         )
         assertTrue(parentSpan.start())
         assertNotNull(
             spanService.createSpan(
                 name = "failed-span",
                 parent = parentSpan,
-            )
+            ),
         )
         assertNotNull(
             spanService.recordSpan(
                 name = "failed-span",
                 parent = parentSpan,
-            ) { }
+            ) { },
         )
         assertTrue(
             spanService.recordCompletedSpan(
@@ -364,7 +364,7 @@ internal class CurrentSessionPartSpanImplTests {
                 startTimeMs = 100L,
                 endTimeMs = 200L,
                 parent = parentSpan,
-            )
+            ),
         )
 
         repeat(MAX_NON_INTERNAL_SPANS_PER_SESSION) {
@@ -373,7 +373,7 @@ internal class CurrentSessionPartSpanImplTests {
                     name = "spanzzz$it",
                     parent = parentSpan,
                     internal = false,
-                )
+                ),
             )
         }
         assertEquals(
@@ -382,13 +382,13 @@ internal class CurrentSessionPartSpanImplTests {
                 name = "failed-span",
                 parent = parentSpan,
                 internal = false,
-            )
+            ),
         )
         assertNotNull(
             spanService.createSpan(
                 name = "internal-span",
                 parent = parentSpan,
-            )
+            ),
         )
     }
 
@@ -436,8 +436,8 @@ internal class CurrentSessionPartSpanImplTests {
             expectedErrorCode = ErrorCode.FAILURE,
             expectedCustomAttributes = mapOf(
                 AppTerminationCause.Crash.asPair(),
-                EmbType.Ux.Session.asPair()
-            )
+                EmbType.Ux.Session.asPair(),
+            ),
         )
 
         assertEmbraceSpanData(
@@ -447,8 +447,8 @@ internal class CurrentSessionPartSpanImplTests {
             expectedParentId = OtelIds.INVALID_SPAN_ID,
             expectedErrorCode = ErrorCode.FAILURE,
             expectedCustomAttributes = mapOf(
-                EmbType.Performance.Default.asPair()
-            )
+                EmbType.Performance.Default.asPair(),
+            ),
         )
 
         assertEquals(0, spanSink.completedSpans().size)
@@ -546,7 +546,7 @@ internal class CurrentSessionPartSpanImplTests {
             spanService.createSpan(
                 name = "child-span",
                 parent = parentSpan,
-            )
+            ),
         )
 
         // active span from before flush is still available and working
@@ -579,7 +579,7 @@ internal class CurrentSessionPartSpanImplTests {
         checkNotNull(spanSnapshot.links).single().validateSystemLink(
             linkedSpan = sessionPartSpanSnapshot,
             type = LinkType.EndSessionPart,
-            expectedAttributes = expectedPartLinkAttrs
+            expectedAttributes = expectedPartLinkAttrs,
         )
         checkNotNull(sessionPartSpanSnapshot.links).single().validateSystemLink(
             linkedSpan = spanSnapshot,

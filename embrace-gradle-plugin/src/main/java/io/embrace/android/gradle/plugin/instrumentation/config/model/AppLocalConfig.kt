@@ -8,7 +8,7 @@ import java.io.Serializable
 data class AppLocalConfig(
 
     @Json(name = "report_disk_usage")
-    val reportDiskUsage: Boolean? = null
+    val reportDiskUsage: Boolean? = null,
 ) : Serializable {
 
     private companion object {

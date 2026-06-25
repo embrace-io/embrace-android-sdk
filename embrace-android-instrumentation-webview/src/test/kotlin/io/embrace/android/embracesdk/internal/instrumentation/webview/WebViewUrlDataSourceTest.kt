@@ -33,9 +33,9 @@ internal class WebViewUrlDataSourceTest {
             assertEquals(args.clock.now(), startTimeMs)
             assertEquals(
                 mapOf(
-                    UrlAttributes.URL_FULL to "http://www.google.com?query=123"
+                    UrlAttributes.URL_FULL to "http://www.google.com?query=123",
                 ),
-                schemaType.attributes()
+                schemaType.attributes(),
             )
         }
     }
@@ -47,9 +47,9 @@ internal class WebViewUrlDataSourceTest {
             configService = FakeConfigService(
                 breadcrumbBehavior = FakeBreadcrumbBehavior(
                     queryParamCaptureEnabled = false,
-                    webViewBreadcrumbCaptureEnabled = true
-                )
-            )
+                    webViewBreadcrumbCaptureEnabled = true,
+                ),
+            ),
         )
 
         val clock = FakeClock()
@@ -60,9 +60,9 @@ internal class WebViewUrlDataSourceTest {
             assertEquals(clock.now(), startTimeMs)
             assertEquals(
                 mapOf(
-                    UrlAttributes.URL_FULL to "http://www.google.com"
+                    UrlAttributes.URL_FULL to "http://www.google.com",
                 ),
-                schemaType.attributes()
+                schemaType.attributes(),
             )
         }
     }
@@ -74,9 +74,9 @@ internal class WebViewUrlDataSourceTest {
             configService = FakeConfigService(
                 breadcrumbBehavior = FakeBreadcrumbBehavior(
                     queryParamCaptureEnabled = false,
-                    webViewBreadcrumbCaptureEnabled = true
-                )
-            )
+                    webViewBreadcrumbCaptureEnabled = true,
+                ),
+            ),
         )
 
         source = WebViewUrlDataSource(args)

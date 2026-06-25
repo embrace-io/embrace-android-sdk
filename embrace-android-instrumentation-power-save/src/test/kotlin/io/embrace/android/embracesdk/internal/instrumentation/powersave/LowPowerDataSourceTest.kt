@@ -25,7 +25,7 @@ internal class LowPowerDataSourceTest {
     @Before
     fun setUp() {
         args = FakeInstrumentationArgs(
-            application = ApplicationProvider.getApplicationContext()
+            application = ApplicationProvider.getApplicationContext(),
         )
         dataSource = LowPowerDataSource(
             args,
@@ -78,7 +78,7 @@ internal class LowPowerDataSourceTest {
         assertEquals("device-low-power", span.name)
         assertEquals(
             mapOf(EmbType.System.LowPower.asPair()),
-            span.attributes
+            span.attributes,
         )
     }
 }

@@ -7,7 +7,7 @@ import java.io.OutputStream
 
 class StreamedRequestBody(
     private val mediaType: MediaType,
-    private val serializationAction: (stream: OutputStream) -> Unit
+    private val serializationAction: (stream: OutputStream) -> Unit,
 ) : RequestBody() {
     override fun contentType() = mediaType
 

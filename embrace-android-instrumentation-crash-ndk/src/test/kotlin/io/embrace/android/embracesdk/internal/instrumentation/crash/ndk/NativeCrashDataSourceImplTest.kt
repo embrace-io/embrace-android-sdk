@@ -51,7 +51,7 @@ internal class NativeCrashDataSourceImplTest {
         nativeCrashDataSource.sendNativeCrash(
             nativeCrash = testNativeCrashData,
             userSessionProperties = mapOf(sessionPropertyName to "value"),
-            metadata = mapOf(EmbSessionAttributes.EMB_STATE to "background")
+            metadata = mapOf(EmbSessionAttributes.EMB_STATE to "background"),
         )
 
         with(args.destination.logEvents.single()) {
@@ -61,22 +61,22 @@ internal class NativeCrashDataSourceImplTest {
             assertEquals("background", attributes[EmbSessionAttributes.EMB_STATE])
             assertEquals(
                 testNativeCrashData.sessionPartId,
-                attributes[EmbSessionAttributes.EMB_SESSION_PART_ID]
+                attributes[EmbSessionAttributes.EMB_SESSION_PART_ID],
             )
             assertEquals(
                 testNativeCrashData.userSessionId,
-                attributes[SessionAttributes.SESSION_ID]
+                attributes[SessionAttributes.SESSION_ID],
             )
             assertEquals(
                 testNativeCrashData.userSessionId,
-                attributes[EmbSessionAttributes.EMB_USER_SESSION_ID]
+                attributes[EmbSessionAttributes.EMB_USER_SESSION_ID],
             )
             assertEquals("1", attributes[EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER])
             assertEquals(testNativeCrashData.crash, attributes[embNativeCrashException])
             val json = args.serializer.toJson(testNativeCrashData.symbols)
             assertEquals(
                 json.toByteArray().toUTF8String(),
-                attributes[embNativeCrashSymbols]
+                attributes[embNativeCrashSymbols],
             )
         }
     }

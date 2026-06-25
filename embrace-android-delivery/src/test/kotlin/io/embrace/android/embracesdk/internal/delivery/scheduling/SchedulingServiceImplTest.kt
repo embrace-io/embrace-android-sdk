@@ -60,7 +60,7 @@ internal class SchedulingServiceImplTest {
         networkUpdateDispatchExecutor = BlockingScheduledExecutorService(blockingMode = true)
         networkConnectivityService = FakeNetworkConnectivityService(
             initialConnectivityStatus = ConnectivityStatus.Unverified,
-            executor = networkUpdateDispatchExecutor
+            executor = networkUpdateDispatchExecutor,
         )
         storageService = FakePayloadStorageService(workerExecutor = storageExecutor).apply {
             addFakePayload(fakeLogStoredTelemetryMetadata)
@@ -129,7 +129,7 @@ internal class SchedulingServiceImplTest {
             assertEquals(
                 "Send attempt ${iteration + 1} did not result in the right number of sends after $delay ms",
                 2 * (iteration + 2),
-                executionService.sendAttempts()
+                executionService.sendAttempts(),
             )
             assertEquals("Send attempt $iteration failed", 2, storageService.storedPayloadCount())
             delay *= 2
@@ -315,7 +315,7 @@ internal class SchedulingServiceImplTest {
             assertEquals(
                 "Connection retry attempt ${iteration + 1} did not result in the right number of sends after $delay ms",
                 iteration + 2,
-                executionService.sendAttempts()
+                executionService.sendAttempts(),
             )
             delay *= 2
         }

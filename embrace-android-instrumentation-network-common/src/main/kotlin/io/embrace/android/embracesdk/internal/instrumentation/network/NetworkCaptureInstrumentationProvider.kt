@@ -17,7 +17,7 @@ class NetworkCaptureInstrumentationProvider : InstrumentationProvider {
             factory = {
                 networkCaptureDataSource = NetworkCaptureDataSourceImpl(args)
                 networkCaptureDataSource
-            }
+            },
         )
     }
 

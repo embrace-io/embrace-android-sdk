@@ -15,7 +15,7 @@ class NetworkStatusDataSource(
 ) : NetworkConnectivityListener, DataSourceImpl(
     args = args,
     limitStrategy = UpToLimitStrategy { MAX_CAPTURED_NETWORK_STATE_TRANSITIONS },
-    instrumentationName = "network_status_data_source"
+    instrumentationName = "network_status_data_source",
 ) {
     private val currentConnectionType: AtomicReference<ConnectionType> = AtomicReference(null)
     private var span: SpanToken? = null

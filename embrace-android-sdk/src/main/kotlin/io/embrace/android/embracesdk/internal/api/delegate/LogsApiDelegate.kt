@@ -125,7 +125,7 @@ internal class LogsApiDelegate(
                 message = exceptionMessage,
                 stacktrace = throwable.getSafeStackTrace()?.let(::serializeStacktrace),
                 logExceptionType = LogExceptionType.HANDLED,
-            )
+            ),
         )
     }
 
@@ -144,7 +144,7 @@ internal class LogsApiDelegate(
                 message = message,
                 stacktrace = serializeStacktrace(stacktraceElements),
                 logExceptionType = LogExceptionType.HANDLED,
-            )
+            ),
         )
     }
 
@@ -200,7 +200,7 @@ internal class LogsApiDelegate(
             message = message,
             severity = logSeverity,
             attributes = attrs,
-            schemaProvider = createSchemaProvider(attrs)
+            schemaProvider = createSchemaProvider(attrs),
         )
 
         // store attachment

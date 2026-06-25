@@ -282,7 +282,7 @@ private class EmbraceSpanImpl(
                     val attribute = dataValidator.truncateAttribute(
                         key = key,
                         value = value,
-                        internal = otelSpanStartArgs.internal
+                        internal = otelSpanStartArgs.internal,
                     )
                     customAttributes[attribute.first] = attribute.second
                     spanRepository.notifySpanUpdate()
@@ -339,7 +339,7 @@ private class EmbraceSpanImpl(
                 status = status.toEmbracePayload(),
                 events = events(),
                 attributes = getAttributesPayload(),
-                links = links()
+                links = links(),
             )
         } else {
             null
@@ -383,7 +383,7 @@ private class EmbraceSpanImpl(
             EmbraceSpanEvent.create(
                 name = it.name,
                 timestampMs = it.timestampNanos.nanosToMillis(),
-                attributes = it.attributes.redactIfSensitive()
+                attributes = it.attributes.redactIfSensitive(),
             )
         }
         return systemEvents.map(EmbraceSpanEvent::toEmbracePayload) +
@@ -446,7 +446,7 @@ private class EmbraceSpanImpl(
             EmbraceSpanEvent.create(
                 name = it.name,
                 timestampMs = it.timestampNanos.nanosToMillis(),
-                attributes = it.attributes.redactIfSensitive()
+                attributes = it.attributes.redactIfSensitive(),
             )
         }
         (systemEvents + redactedCustomEvents).forEach { event ->
@@ -475,6 +475,6 @@ private class EmbraceSpanImpl(
     private fun validateName(name: String) =
         dataValidator.truncateName(
             name = name,
-            internal = internal
+            internal = internal,
         )
 }

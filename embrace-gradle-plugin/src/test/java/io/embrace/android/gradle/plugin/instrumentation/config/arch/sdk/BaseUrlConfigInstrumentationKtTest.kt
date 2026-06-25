@@ -13,12 +13,12 @@ class BaseUrlConfigInstrumentationKtTest {
         null,
         null,
         null,
-        null
+        null,
     )
 
     private val methods = listOf(
         ConfigMethod("getConfig", "()Ljava/lang/String;", "config.example.com"),
-        ConfigMethod("getData", "()Ljava/lang/String;", "data.example.com")
+        ConfigMethod("getData", "()Ljava/lang/String;", "data.example.com"),
     )
 
     @Test
@@ -41,12 +41,12 @@ class BaseUrlConfigInstrumentationKtTest {
                     SdkLocalConfig(
                         baseUrls = BaseUrlLocalConfig(
                             config = "config.example.com",
-                            data = "data.example.com"
-                        )
+                            data = "data.example.com",
+                        ),
                     ),
-                    null
-                )
-            )
+                    null,
+                ),
+            ),
         )
         methods.forEach { method ->
             verifyConfigMethodVisitor(instrumentation, method)

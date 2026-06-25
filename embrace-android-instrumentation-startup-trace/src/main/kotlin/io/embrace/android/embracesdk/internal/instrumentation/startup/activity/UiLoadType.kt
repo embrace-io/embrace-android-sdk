@@ -12,5 +12,5 @@ internal enum class UiLoadType(val typeName: String) {
     /**
      * Load where the instance has already been created and just needs to be started and resumed (e.g. foregrounding)
      */
-    HOT("hot")
+    HOT("hot"),
 }

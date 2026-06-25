@@ -68,7 +68,7 @@ class EmbraceStorageService(
             .sumOf { it.length() }
         val storageTelemetryMap = mapOf(
             EmbTelemetryAttributes.EMB_STORAGE_USED to storageUsed.toString(),
-            EmbTelemetryAttributes.EMB_STORAGE_AVAILABLE to availableStorage.toString()
+            EmbTelemetryAttributes.EMB_STORAGE_AVAILABLE to availableStorage.toString(),
         )
         telemetryService.logStorageTelemetry(storageTelemetryMap)
     }

@@ -38,7 +38,7 @@ internal class ThermalStateDataSourceTest {
         assertEquals(PowerManager.THERMAL_STATUS_SEVERE, destination.createdSpans[1].attributes[EmbThermalStateAttributes.STATUS]?.toInt())
         assertEquals(
             PowerManager.THERMAL_STATUS_CRITICAL,
-            destination.createdSpans[2].attributes[EmbThermalStateAttributes.STATUS]?.toInt()
+            destination.createdSpans[2].attributes[EmbThermalStateAttributes.STATUS]?.toInt(),
         )
     }
 

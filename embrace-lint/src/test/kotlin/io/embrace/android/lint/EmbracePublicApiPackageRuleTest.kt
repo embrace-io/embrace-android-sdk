@@ -20,8 +20,8 @@ class EmbracePublicApiPackageRuleTest : LintDetectorTest() {
                 package io.embrace.android.embracesdk;
 
                 public class MyClass {}
-                """
-            )
+                """,
+            ),
         )
             .run()
             .expectErrorCount(1)
@@ -35,8 +35,8 @@ class EmbracePublicApiPackageRuleTest : LintDetectorTest() {
                 package io.embrace.android.embracesdk
 
                 class MyClass
-                """
-            )
+                """,
+            ),
         )
             .run()
             .expectErrorCount(1)
@@ -50,8 +50,8 @@ class EmbracePublicApiPackageRuleTest : LintDetectorTest() {
                 package com.example.allowed;
 
                 public class MyClass {}
-                """
-            )
+                """,
+            ),
         )
             .run()
             .expectClean()
@@ -65,8 +65,8 @@ class EmbracePublicApiPackageRuleTest : LintDetectorTest() {
                 package com.example.allowed
 
                 class MyClass
-                """
-            )
+                """,
+            ),
         )
             .run()
             .expectClean()

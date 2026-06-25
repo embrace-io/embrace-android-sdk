@@ -26,7 +26,7 @@ abstract class StateDataSource<T : Any>(
 ) : SessionPartEndListener, SessionPartChangeListener, DataSourceImpl(
     args = args,
     limitStrategy = UpToLimitStrategy { maxTransitions },
-    instrumentationName = "${stateTypeFactory(defaultValue).stateName}_state_data_source"
+    instrumentationName = "${stateTypeFactory(defaultValue).stateName}_state_data_source",
 ) {
     val stateAttributeKey: String = "emb.state.${stateTypeFactory(defaultValue).stateName}"
 
@@ -65,7 +65,7 @@ abstract class StateDataSource<T : Any>(
                 invalidInputCallback = {
                     // Input validation failing means the transition didn't change the state value, so keep track of it as unrecorded
                     unrecordedTransitions.updateDroppedByInstrumentation(1)
-                }
+                },
             ) {
                 val droppedTransitions = unrecordedTransitions.getAndSet(noUnrecordedTransitions)
                 val transitionRecorded = currentStateToken.update(
@@ -79,7 +79,7 @@ abstract class StateDataSource<T : Any>(
                 if (!transitionRecorded) {
                     unrecordedTransitions.incrementCount(
                         notInSession = droppedTransitions.notInSession + 1,
-                        droppedByInstrumentation = droppedTransitions.droppedByInstrumentation
+                        droppedByInstrumentation = droppedTransitions.droppedByInstrumentation,
                     )
                 }
             }
@@ -129,8 +129,8 @@ abstract class StateDataSource<T : Any>(
             try {
                 partStateToken.set(
                     args.destination.startSessionPartStateCapture(
-                        state = stateTypeFactory(initialValue)
-                    )
+                        state = stateTypeFactory(initialValue),
+                    ),
                 )
             } catch (t: Throwable) {
                 logger.trackInternalError(InternalErrorType.SessionStateCreationFail, t)
@@ -152,9 +152,9 @@ abstract class StateDataSource<T : Any>(
                 get().let { oldValue ->
                     UnrecordedTransitions(
                         notInSession = oldValue.notInSession + notInSession,
-                        droppedByInstrumentation = oldValue.droppedByInstrumentation + droppedByInstrumentation
+                        droppedByInstrumentation = oldValue.droppedByInstrumentation + droppedByInstrumentation,
                     )
-                }
+                },
             )
         }
     }

@@ -29,7 +29,7 @@ internal class InitModuleImplTest {
         val systemInfo = SystemInfo()
         val initModule = InitModuleImpl(
             clock = clock,
-            systemInfo = systemInfo
+            systemInfo = systemInfo,
         )
         assertSame(clock, initModule.clock)
         assertSame(systemInfo, initModule.systemInfo)

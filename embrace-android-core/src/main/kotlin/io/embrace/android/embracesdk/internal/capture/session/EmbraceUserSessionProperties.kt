@@ -31,7 +31,7 @@ internal class EmbraceUserSessionProperties(
                 SESSION_PROPERTIES_KEY,
                 properties.entries
                     .filter { it.value.scope == PropertyScope.PERMANENT }
-                    .associate { it.key to it.value.value }
+                    .associate { it.key to it.value.value },
             )
         }
     }
@@ -53,7 +53,7 @@ internal class EmbraceUserSessionProperties(
             }
             destination.addSessionPartAttribute(
                 sanitizedKey.toEmbraceAttributeName(),
-                sanitizedValue
+                sanitizedValue,
             )
             return true
         }

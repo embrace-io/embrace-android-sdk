@@ -36,10 +36,10 @@ class ThreadBlockageSampler(
                             clock = clock,
                             targetThread = targetThread,
                             sampleLimit = maxSamplesPerInterval,
-                            stacktraceFrameLimit = stacktraceFrameLimit
+                            stacktraceFrameLimit = stacktraceFrameLimit,
                         ),
-                        startTime = timestamp
-                    )
+                        startTime = timestamp,
+                    ),
                 )
             }
             ThreadBlockageEvent.BLOCKED_INTERVAL -> {
@@ -54,7 +54,7 @@ class ThreadBlockageSampler(
                                 startTime = startTime,
                                 endTime = timestamp,
                                 samples = sampler.getThreadBlockageSamples(),
-                            )
+                            ),
                         )
                     }
                     currentBlockage.set(null)
@@ -77,7 +77,7 @@ class ThreadBlockageSampler(
                         startTime = blockage.startTime,
                         lastKnownTime = clock.now(),
                         samples = blockage.sampler.getThreadBlockageSamples(),
-                    )
+                    ),
                 )
             } else {
                 results = intervalSink.get().toMutableList()
@@ -120,7 +120,7 @@ class ThreadBlockageSampler(
                 code = when (current) {
                     null -> CODE_SAMPLE_LIMIT_REACHED
                     else -> CODE_DEFAULT
-                }
+                },
             )
         }
     }
@@ -152,7 +152,7 @@ class ThreadBlockageSampler(
     @CheckResult
     private fun ThreadBlockageInterval.clearSamples(): ThreadBlockageInterval = copy(
         samples = null,
-        code = CODE_SAMPLES_CLEARED
+        code = CODE_SAMPLES_CLEARED,
     )
 
     private fun ThreadBlockageInterval.hasSamples(): Boolean = code != CODE_SAMPLES_CLEARED

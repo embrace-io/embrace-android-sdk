@@ -36,7 +36,7 @@ class FileCompressionTaskIntegrationTest {
                 assertEquals("Hello, world!", output)
                 val input = projectDir.file("input.txt").readText()
                 assertEquals(input, output)
-            }
+            },
         )
     }
 
@@ -48,7 +48,7 @@ class FileCompressionTaskIntegrationTest {
             assertions = { projectDir ->
                 assertFalse(projectDir.file("mapping.txt").exists())
                 assertFalse(projectDir.buildFile("mapping.txt").exists())
-            }
+            },
         )
     }
 }

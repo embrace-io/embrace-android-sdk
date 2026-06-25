@@ -67,7 +67,7 @@ class UninitializedSdkSpanService : SpanService {
                 private = private,
                 attributes = attributes,
                 events = events,
-                errorCode = errorCode
+                errorCode = errorCode,
             ) ?: if (bufferedCallsCount.getAndIncrement() < MAX_BUFFERED_CALLS) {
                 bufferedCalls.add(
                     BufferedRecordCompletedSpan(
@@ -81,7 +81,7 @@ class UninitializedSdkSpanService : SpanService {
                         attributes = attributes,
                         events = events,
                         errorCode = errorCode,
-                    )
+                    ),
                 )
                 true
             } else {
@@ -110,7 +110,7 @@ class UninitializedSdkSpanService : SpanService {
                         private = it.private,
                         attributes = it.attributes,
                         events = it.events,
-                        errorCode = it.errorCode
+                        errorCode = it.errorCode,
                     )
                 }
             } while (bufferedCalls.isNotEmpty())

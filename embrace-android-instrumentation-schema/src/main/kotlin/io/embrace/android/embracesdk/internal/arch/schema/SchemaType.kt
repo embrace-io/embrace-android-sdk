@@ -45,14 +45,14 @@ sealed class SchemaType(
 
     class Breadcrumb(message: String) : SchemaType(
         telemetryType = EmbType.System.Breadcrumb,
-        fixedObjectName = "breadcrumb"
+        fixedObjectName = "breadcrumb",
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(EmbBreadcrumbAttributes.MESSAGE to message)
     }
 
     class View(viewName: String) : SchemaType(
         telemetryType = EmbType.Ux.View,
-        fixedObjectName = "screen-view"
+        fixedObjectName = "screen-view",
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(EmbViewAttributes.VIEW_NAME to viewName)
     }
@@ -70,7 +70,7 @@ sealed class SchemaType(
         priority: Int,
     ) : SchemaType(
         telemetryType = EmbType.System.PushNotification,
-        fixedObjectName = "push-notification"
+        fixedObjectName = "push-notification",
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
             EmbPushNotificationAttributes.NOTIFICATION_TITLE to title,
@@ -78,7 +78,7 @@ sealed class SchemaType(
             EmbPushNotificationAttributes.NOTIFICATION_BODY to body,
             EmbPushNotificationAttributes.NOTIFICATION_ID to id,
             EmbPushNotificationAttributes.NOTIFICATION_FROM to from,
-            EmbPushNotificationAttributes.NOTIFICATION_PRIORITY to priority.toString()
+            EmbPushNotificationAttributes.NOTIFICATION_PRIORITY to priority.toString(),
         ).toNonNullMap()
     }
 
@@ -94,12 +94,12 @@ sealed class SchemaType(
         coords: String,
     ) : SchemaType(
         telemetryType = EmbType.Ux.Tap,
-        fixedObjectName = "ui-tap"
+        fixedObjectName = "ui-tap",
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
             EmbViewAttributes.VIEW_NAME to viewName,
             EmbTapAttributes.TAP_TYPE to type,
-            EmbTapAttributes.TAP_COORDS to coords
+            EmbTapAttributes.TAP_COORDS to coords,
         ).toNonNullMap()
     }
 
@@ -107,10 +107,10 @@ sealed class SchemaType(
         url: String,
     ) : SchemaType(
         telemetryType = EmbType.Ux.WebView,
-        fixedObjectName = "web-view"
+        fixedObjectName = "web-view",
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
-            UrlAttributes.URL_FULL to url
+            UrlAttributes.URL_FULL to url,
         ).toNonNullMap()
     }
 
@@ -145,7 +145,7 @@ sealed class SchemaType(
             EmbAeiAttributes.DESCRIPTION to description,
             EmbAeiAttributes.TRACE_STATUS to traceStatus,
             EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER to crashNumber.toString(),
-            EmbAndroidAttributes.EMB_ANDROID_AEI_CRASH_NUMBER to aeiNumber.toString()
+            EmbAndroidAttributes.EMB_ANDROID_AEI_CRASH_NUMBER to aeiNumber.toString(),
         ).toNonNullMap()
     }
 
@@ -178,7 +178,7 @@ sealed class SchemaType(
 
     object LowPower : SchemaType(
         telemetryType = EmbType.System.LowPower,
-        fixedObjectName = "device-low-power"
+        fixedObjectName = "device-low-power",
     ) {
         override val schemaAttributes: Map<String, String> = emptyMap()
     }
@@ -204,7 +204,7 @@ sealed class SchemaType(
         errorMessage: String?,
         encryptedPayload: String?,
     ) : SchemaType(
-        telemetryType = EmbType.System.NetworkCapturedRequest
+        telemetryType = EmbType.System.NetworkCapturedRequest,
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
             EmbNetworkCapturedRequestAttributes.DURATION to duration.toString(),
@@ -225,7 +225,7 @@ sealed class SchemaType(
             EmbNetworkCapturedRequestAttributes.START_TIME to startTime.toString(),
             EmbNetworkCapturedRequestAttributes.URL to url,
             ExceptionAttributes.EXCEPTION_MESSAGE to errorMessage,
-            EmbNetworkCapturedRequestAttributes.ENCRYPTED_PAYLOAD to encryptedPayload
+            EmbNetworkCapturedRequestAttributes.ENCRYPTED_PAYLOAD to encryptedPayload,
         ).toNonNullMap()
     }
 
@@ -233,10 +233,10 @@ sealed class SchemaType(
         networkStatus: String,
     ) : SchemaType(
         telemetryType = EmbType.System.NetworkStatus,
-        fixedObjectName = "network-status"
+        fixedObjectName = "network-status",
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
-            EmbNetworkStatusAttributes.NETWORK to networkStatus
+            EmbNetworkStatusAttributes.NETWORK to networkStatus,
         ).toNonNullMap()
     }
 
@@ -244,24 +244,24 @@ sealed class SchemaType(
         status: Int,
     ) : SchemaType(
         telemetryType = EmbType.Performance.ThermalState,
-        fixedObjectName = "thermal-state"
+        fixedObjectName = "thermal-state",
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
-            EmbThermalStateAttributes.STATUS to status.toString()
+            EmbThermalStateAttributes.STATUS to status.toString(),
         )
     }
 
     class InternalError(throwable: Throwable) : SchemaType(
         telemetryType = EmbType.System.InternalError,
-        fixedObjectName = "internal-error"
+        fixedObjectName = "internal-error",
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
             ExceptionAttributes.EXCEPTION_TYPE to throwable.javaClass.name,
             ExceptionAttributes.EXCEPTION_STACKTRACE to throwable.stackTrace.joinToString(
                 "\n",
-                transform = StackTraceElement::toString
+                transform = StackTraceElement::toString,
             ),
-            ExceptionAttributes.EXCEPTION_MESSAGE to (throwable.message ?: "")
+            ExceptionAttributes.EXCEPTION_MESSAGE to (throwable.message ?: ""),
         )
     }
 
@@ -274,10 +274,10 @@ sealed class SchemaType(
         val stateName: String,
     ) : SchemaType(
         telemetryType = EmbType.State,
-        fixedObjectName = "state-$stateName"
+        fixedObjectName = "state-$stateName",
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
-            EmbStateTransitionAttributes.EMB_STATE_INITIAL_VALUE to initialValue.toString()
+            EmbStateTransitionAttributes.EMB_STATE_INITIAL_VALUE to initialValue.toString(),
         )
     }
 
@@ -292,7 +292,8 @@ sealed class SchemaType(
             WAN(EmbNetworkStateAttributes.NetworkStatusValues.WAN),
             WAN_CONNECTING(EmbNetworkStateAttributes.NetworkStatusValues.WAN_CONNECTING),
             UNKNOWN(EmbNetworkStateAttributes.NetworkStatusValues.UNKNOWN),
-            UNKNOWN_CONNECTING(EmbNetworkStateAttributes.NetworkStatusValues.UNKNOWN_CONNECTING);
+            UNKNOWN_CONNECTING(EmbNetworkStateAttributes.NetworkStatusValues.UNKNOWN_CONNECTING),
+            ;
 
             override fun toString(): String = value
         }
@@ -303,7 +304,8 @@ sealed class SchemaType(
         enum class PowerMode(private val value: String) {
             NORMAL(EmbPowerStateAttributes.PowerModeValues.NORMAL),
             LOW(EmbPowerStateAttributes.PowerModeValues.LOW),
-            UNKNOWN(EmbPowerStateAttributes.PowerModeValues.UNKNOWN);
+            UNKNOWN(EmbPowerStateAttributes.PowerModeValues.UNKNOWN),
+            ;
 
             override fun toString(): String = value
         }
@@ -326,7 +328,7 @@ sealed class SchemaType(
         attributes: TelemetryAttributes,
         sendMode: SendMode,
     ) : SchemaType(
-        telemetryType = EmbType.Custom(type, subType, sendMode)
+        telemetryType = EmbType.Custom(type, subType, sendMode),
     ) {
         override val schemaAttributes: Map<String, String> = attributes.snapshot()
     }

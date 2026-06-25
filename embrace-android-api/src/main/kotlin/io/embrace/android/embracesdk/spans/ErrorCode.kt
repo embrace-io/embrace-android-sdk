@@ -17,5 +17,5 @@ public enum class ErrorCode {
     /**
      * The reason for the unsuccessful termination is unknown
      */
-    UNKNOWN
+    UNKNOWN,
 }

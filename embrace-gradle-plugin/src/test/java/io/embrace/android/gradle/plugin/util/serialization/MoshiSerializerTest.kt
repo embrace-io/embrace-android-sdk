@@ -67,5 +67,5 @@ class MoshiSerializerTest {
 @JsonClass(generateAdapter = true)
 class TestObject(
     @Json(name = "name") val name: String,
-    @Json(name = "team") val team: String
+    @Json(name = "team") val team: String,
 )

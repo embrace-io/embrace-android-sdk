@@ -50,7 +50,7 @@ internal class NetworkRequestDataSourceTest {
                 endTime = 650L,
                 errorType = "RuntimeException",
                 errorMessage = "",
-            )
+            ),
         )
 
         harness.args.destination.createdSpans
@@ -72,14 +72,14 @@ internal class NetworkRequestDataSourceTest {
             expectedName = expectedSpanName,
             expectedStartTimeMs = 200L,
             expectedEndTimeMs = 300L,
-            expectedErrorCode = ErrorCodeAttribute.Failure
+            expectedErrorCode = ErrorCodeAttribute.Failure,
         )
         harness.assertNetworkRequest(
             spanToken = requestSpans["www.example3.com"],
             expectedName = expectedSpanName,
             expectedStartTimeMs = 300L,
             expectedEndTimeMs = 400L,
-            expectedErrorCode = ErrorCodeAttribute.Failure
+            expectedErrorCode = ErrorCodeAttribute.Failure,
         )
         harness.assertNetworkRequest(
             spanToken = requestSpans["www.example4.com"],
@@ -136,7 +136,7 @@ internal class NetworkRequestDataSourceTest {
         with(checkNotNull(harness.getNetworkSpans().single())) {
             assertEquals(
                 NetworkUtils.stripUrl(url),
-                attributes["url.full"]
+                attributes["url.full"],
             )
         }
     }
@@ -157,8 +157,8 @@ internal class NetworkRequestDataSourceTest {
                 bytesSent = 100L,
                 bytesReceived = 1000L,
                 statusCode = statusCode,
-                body = body
-            )
+                body = body,
+            ),
         )
     }
 }

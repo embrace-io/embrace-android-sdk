@@ -119,7 +119,7 @@ class EmbSpan(
             EmbSpanEvent(
                 it.name ?: "",
                 it.timestampNanos ?: 0,
-                it.attributes.toEmbAttributesMutator()
+                it.attributes.toEmbAttributesMutator(),
             )
         }
 

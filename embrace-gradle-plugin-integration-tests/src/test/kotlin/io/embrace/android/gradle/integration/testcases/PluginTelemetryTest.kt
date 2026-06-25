@@ -20,7 +20,7 @@ class PluginTelemetryTest {
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(listOf("debug", "release"))
-            }
+            },
         )
     }
 
@@ -33,7 +33,7 @@ class PluginTelemetryTest {
             additionalArgs = listOf("-Pembrace.disableCollectBuildData=true"),
             assertions = {
                 verifyNoRequestsSent(EmbraceEndpoint.BUILD_DATA)
-            }
+            },
         )
     }
 }

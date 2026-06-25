@@ -54,8 +54,8 @@ internal class NavigationEventBrokerTest {
                 homeActivity.localClassName,
                 settingsActivity.localClassName,
                 "Backgrounded",
-                profileActivity.localClassName
-            )
+                profileActivity.localClassName,
+            ),
         )
     }
 
@@ -73,7 +73,7 @@ internal class NavigationEventBrokerTest {
             listOf(
                 homeActivity.localClassName,
                 "Backgrounded",
-            )
+            ),
         )
     }
 
@@ -101,7 +101,7 @@ internal class NavigationEventBrokerTest {
         broker.submitAndTick(ActivityResumed(settingsActivity, clock.now()))
         loadTimes.add(broker.submitAndTick(ActivityResumed(homeActivity, clock.now())))
         assertStateTransitions(
-            listOf(settingsActivity.localClassName, homeActivity.localClassName)
+            listOf(settingsActivity.localClassName, homeActivity.localClassName),
         )
     }
 

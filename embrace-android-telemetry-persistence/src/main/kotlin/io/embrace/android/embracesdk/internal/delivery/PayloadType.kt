@@ -15,7 +15,8 @@ enum class PayloadType(
     NETWORK_CAPTURE("sys.network_capture", "network"),
     INTERNAL_ERROR("sys.internal", "internal"),
     ATTACHMENT("attachment", "attachment"),
-    UNKNOWN("unknown", "unknown");
+    UNKNOWN("unknown", "unknown"),
+    ;
 
     companion object {
 

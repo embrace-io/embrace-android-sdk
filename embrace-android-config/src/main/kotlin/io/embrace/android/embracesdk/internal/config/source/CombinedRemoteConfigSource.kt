@@ -9,7 +9,7 @@ internal class CombinedRemoteConfigSource(
     private val store: RemoteConfigStore,
     httpSource: Lazy<RemoteConfigSource>,
     private val worker: BackgroundWorker,
-    private val intervalMs: Long = 60 * 60 * 1000
+    private val intervalMs: Long = 60 * 60 * 1000,
 ) {
 
     private val httpSource: RemoteConfigSource by httpSource
@@ -28,7 +28,7 @@ internal class CombinedRemoteConfigSource(
             ::attemptConfigRequest,
             0,
             intervalMs,
-            TimeUnit.MILLISECONDS
+            TimeUnit.MILLISECONDS,
         )
     }
 

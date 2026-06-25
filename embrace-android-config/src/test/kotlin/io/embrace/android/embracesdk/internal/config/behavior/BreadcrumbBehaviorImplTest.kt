@@ -15,8 +15,8 @@ internal class BreadcrumbBehaviorImplTest {
             99,
             98,
             97,
-            96
-        )
+            96,
+        ),
     )
 
     @Test
@@ -25,7 +25,7 @@ internal class BreadcrumbBehaviorImplTest {
             BreadcrumbBehaviorImpl(
                 InstrumentedConfigImpl,
                 null,
-            )
+            ),
         ) {
             assertEquals(100, getCustomBreadcrumbLimit())
             assertEquals(100, getTapBreadcrumbLimit())
@@ -45,7 +45,7 @@ internal class BreadcrumbBehaviorImplTest {
             BreadcrumbBehaviorImpl(
                 InstrumentedConfigImpl,
                 remote,
-            )
+            ),
         ) {
             assertEquals(99, getCustomBreadcrumbLimit())
             assertEquals(98, getTapBreadcrumbLimit())

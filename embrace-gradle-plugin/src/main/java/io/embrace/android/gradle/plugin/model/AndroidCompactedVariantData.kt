@@ -28,7 +28,7 @@ data class AndroidCompactedVariantData(
                 variant.buildType ?: "",
                 debuggable,
                 fetchProductFlavors(variant),
-                variant.name
+                variant.name,
             )
         }
 

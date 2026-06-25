@@ -34,7 +34,7 @@ internal class NetworkCaptureDataSourceTest {
     fun setUp() {
         cfg = RemoteConfig()
         configService = FakeConfigService(
-            networkBehavior = createNetworkBehavior(remoteCfg = cfg)
+            networkBehavior = createNetworkBehavior(remoteCfg = cfg),
         )
     }
 
@@ -136,7 +136,7 @@ internal class NetworkCaptureDataSourceTest {
                 startTime = 0,
                 endTime = 2000,
                 body = networkCaptureData,
-            )
+            ),
         )
         assertEquals(0, destination.logEvents.size)
 
@@ -148,8 +148,8 @@ internal class NetworkCaptureDataSourceTest {
                 statusCode = 200,
                 startTime = 0,
                 endTime = 6000,
-                body = networkCaptureData
-            )
+                body = networkCaptureData,
+            ),
         )
         assertEquals(1, destination.logEvents.size)
     }
@@ -168,8 +168,8 @@ internal class NetworkCaptureDataSourceTest {
                 statusCode = 200,
                 startTime = 0,
                 endTime = 2000,
-                body = networkCaptureData
-            )
+                body = networkCaptureData,
+            ),
         )
         assertEquals(1, destination.logEvents.size)
 
@@ -180,8 +180,8 @@ internal class NetworkCaptureDataSourceTest {
                 statusCode = 404,
                 startTime = 0,
                 endTime = 2000,
-                body = networkCaptureData
-            )
+                body = networkCaptureData,
+            ),
         )
         assertEquals(2, destination.logEvents.size)
 
@@ -192,8 +192,8 @@ internal class NetworkCaptureDataSourceTest {
                 statusCode = 500,
                 startTime = 0,
                 endTime = 2000,
-                body = networkCaptureData
-            )
+                body = networkCaptureData,
+            ),
         )
         assertEquals(2, destination.logEvents.size)
     }
@@ -237,7 +237,7 @@ internal class NetworkCaptureDataSourceTest {
                 rules = setOf(getDefaultRule()),
                 captureBodyEncryptionEnabled = true,
                 publicKey = fakeNetworkBodyPublicKey,
-            )
+            ),
         )
         args = FakeInstrumentationArgs(
             application = ApplicationProvider.getApplicationContext(),
@@ -260,7 +260,7 @@ internal class NetworkCaptureDataSourceTest {
                     capturedResponseBody = "response-body-plaintext".toByteArray(),
                     dataCaptureErrorMessage = null,
                 ),
-            )
+            ),
         )
 
         assertEquals(1, destination.logEvents.size)
@@ -280,7 +280,7 @@ internal class NetworkCaptureDataSourceTest {
         args = FakeInstrumentationArgs(
             application = ApplicationProvider.getApplicationContext(),
             configService = configService,
-            telemetryService = telemetryService
+            telemetryService = telemetryService,
         )
 
         val largeBody = ByteArray(3) { 'a'.code.toByte() }
@@ -291,8 +291,8 @@ internal class NetworkCaptureDataSourceTest {
                 statusCode = 200,
                 startTime = 0,
                 endTime = 1000,
-                body = HttpNetworkRequest.HttpRequestBody(null, null, largeBody, null, largeBody, null)
-            )
+                body = HttpNetworkRequest.HttpRequestBody(null, null, largeBody, null, largeBody, null),
+            ),
         )
 
         assertEquals(2, telemetryService.appliedLimits.size)
@@ -304,11 +304,11 @@ internal class NetworkCaptureDataSourceTest {
 
     private fun getService(): NetworkCaptureDataSourceImpl {
         configService = FakeConfigService(
-            networkBehavior = createNetworkBehavior(remoteCfg = cfg)
+            networkBehavior = createNetworkBehavior(remoteCfg = cfg),
         )
         args = FakeInstrumentationArgs(
             application = ApplicationProvider.getApplicationContext(),
-            configService = configService
+            configService = configService,
         )
         destination = args.destination
         return NetworkCaptureDataSourceImpl(args)
@@ -332,7 +332,7 @@ internal class NetworkCaptureDataSourceTest {
             expiresIn = expiresIn,
             maxSize = maxSize,
             maxCount = maxCount,
-            statusCodes = statusCodes
+            statusCodes = statusCodes,
         )
 
     private val fakeNetworkBodyPublicKey: String =

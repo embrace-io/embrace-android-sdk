@@ -35,8 +35,8 @@ class NormalizedIntervalClock(
                 logger?.trackInternalError(
                     InternalErrorType.InternalInterfaceFail,
                     IllegalStateException(
-                        "NormalizedIntervalClock drifted back in time by more than threshold. Delivery is likely out-of-order."
-                    )
+                        "NormalizedIntervalClock drifted back in time by more than threshold. Delivery is likely out-of-order.",
+                    ),
                 )
             }
         }

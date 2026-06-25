@@ -110,8 +110,8 @@ internal class SessionOrchestratorImpl(
                         logger.trackInternalError(
                             InternalErrorType.ClockBackwardsShift,
                             IllegalStateException(
-                                "Clock shifted backwards from previous user session."
-                            )
+                                "Clock shifted backwards from previous user session.",
+                            ),
                         )
                         metadataStore.clear()
                         userSessionRestoreDecision = stored.toTerminatedDecision(EmbUserSessionTerminationReasonValues.CLOCK_MISMATCH)
@@ -140,7 +140,7 @@ internal class SessionOrchestratorImpl(
                                 EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED
                             } else {
                                 EmbUserSessionTerminationReasonValues.INACTIVITY
-                            }
+                            },
                         )
                         UserSessionState.NoActiveSession
                     }
@@ -170,7 +170,7 @@ internal class SessionOrchestratorImpl(
                     userSessionPartIndex = ::incrementPartIndex,
                     sessionPartNumber = ::incrementSessionPartNumber,
                 )
-            }
+            },
         )
     }
 
@@ -210,7 +210,7 @@ internal class SessionOrchestratorImpl(
                 },
                 earlyTerminationCondition = {
                     return@transitionState shouldRunOnForeground(state)
-                }
+                },
             )
             coldStart = false
         }
@@ -235,7 +235,7 @@ internal class SessionOrchestratorImpl(
             },
             earlyTerminationCondition = {
                 return@transitionState shouldRunOnBackground(state)
-            }
+            },
         )
     }
 
@@ -263,7 +263,7 @@ internal class SessionOrchestratorImpl(
                     currentUserSession()?.startTimeMs,
                     lastManualEndMs,
                 )
-            }
+            },
         )
     }
 
@@ -275,7 +275,7 @@ internal class SessionOrchestratorImpl(
             oldSessionAction = { initial: SessionPartToken ->
                 payloadFactory.endPayloadWithCrash(state, timestamp, initial, crashId)
             },
-            crashId = crashId
+            crashId = crashId,
         )
     }
 
@@ -383,7 +383,7 @@ internal class SessionOrchestratorImpl(
                         newSessionAction?.invoke()
                     }
                 },
-                postTransitionAppState = endAppState
+                postTransitionAppState = endAppState,
             )
 
             // update the current state of the SDK
@@ -439,7 +439,7 @@ internal class SessionOrchestratorImpl(
                     ::onInactivityTimeout,
                     metadata.inactivityTimeoutSecs,
                     TimeUnit.SECONDS,
-                )
+                ),
             )
         }
     }
@@ -454,7 +454,7 @@ internal class SessionOrchestratorImpl(
                     ::onMaxDurationTimeout,
                     delay,
                     TimeUnit.SECONDS,
-                )
+                ),
             )
         }
     }
@@ -586,7 +586,7 @@ internal class SessionOrchestratorImpl(
                             ::makeCurrentUserSessionBackgroundOnly,
                             BACKGROUND_STARTUP_WINDOW_MS,
                             TimeUnit.MILLISECONDS,
-                        )
+                        ),
                     )
                 }
             }
@@ -611,8 +611,8 @@ internal class SessionOrchestratorImpl(
                     is UserSessionMetadata.Unclassified -> setActiveUserSession(
                         current.classify(
                             isBackgroundOnly = endAppState == AppState.BACKGROUND,
-                            updatedLastActivityMs = timestamp
-                        )
+                            updatedLastActivityMs = timestamp,
+                        ),
                     )
 
                     is UserSessionMetadata.Classified ->
@@ -729,7 +729,7 @@ internal class SessionOrchestratorImpl(
             timestamp < startTimeMs -> {
                 logger.trackInternalError(
                     InternalErrorType.ClockBackwardsShift,
-                    IllegalStateException("Clock shifted backwards from user session start time.")
+                    IllegalStateException("Clock shifted backwards from user session start time."),
                 )
                 false
             }

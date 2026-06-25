@@ -9,7 +9,7 @@ import org.objectweb.asm.Opcodes
 class StringListReturnValueMethodVisitor(
     val replacedValue: List<String>,
     api: Int,
-    nextVisitor: MethodVisitor
+    nextVisitor: MethodVisitor,
 ) : MethodVisitor(api, nextVisitor) {
 
     override fun visitCode() {
@@ -29,7 +29,7 @@ class StringListReturnValueMethodVisitor(
                 "java/util/ArrayList",
                 "add",
                 "(Ljava/lang/Object;)Z",
-                false
+                false,
             )
             visitInsn(Opcodes.POP) // pop return value off stack
         }

@@ -51,7 +51,7 @@ class V2PayloadStoreTest {
         verifySessionIntake(
             envelope,
             intakeService.getIntakes(),
-            "p3_1692201601000_fakeuuid_fakeProcessId_true_session_${USER_SESSION_ID}_${SESSION_PART_ID}_v2.json"
+            "p3_1692201601000_fakeuuid_fakeProcessId_true_session_${USER_SESSION_ID}_${SESSION_PART_ID}_v2.json",
         )
     }
 
@@ -62,7 +62,7 @@ class V2PayloadStoreTest {
         verifySessionIntake(
             envelope,
             intakeService.getIntakes(),
-            "p3_1692201601000_fakeuuid_fakeProcessId_true_session_${USER_SESSION_ID}_${SESSION_PART_ID}_v2.json"
+            "p3_1692201601000_fakeuuid_fakeProcessId_true_session_${USER_SESSION_ID}_${SESSION_PART_ID}_v2.json",
         )
     }
 
@@ -75,7 +75,7 @@ class V2PayloadStoreTest {
         assertSame(envelope, intake.envelope)
         assertEquals(
             "p5_1692201601000_fakeuuid_fakeProcessId_true_unknown_${USER_SESSION_ID}_${SESSION_PART_ID}_v2.json",
-            intake.metadata.filename
+            intake.metadata.filename,
         )
         assertEquals(0, intakeService.shutdownCount)
     }
@@ -93,7 +93,7 @@ class V2PayloadStoreTest {
         verifySessionIntake(
             envelope,
             intakeService.getIntakes(false),
-            "p3_1692201601000_fakeuuid_fakeProcessId_false_session_${USER_SESSION_ID}_${SESSION_PART_ID}_v2.json"
+            "p3_1692201601000_fakeuuid_fakeProcessId_false_session_${USER_SESSION_ID}_${SESSION_PART_ID}_v2.json",
         )
     }
 
@@ -114,7 +114,7 @@ class V2PayloadStoreTest {
         listOf(
             System.Exit,
             System.Exception,
-            System.Log
+            System.Log,
         ).forEach { type ->
             storeLogWithType(type)
             assertEquals(SupportedEnvelopeType.LOG, getLastLogMetadata().envelopeType)
@@ -136,7 +136,7 @@ class V2PayloadStoreTest {
         assertSame(envelope, intake.envelope)
         assertEquals(
             "p4_1692201601000_fakeuuid_fakeProcessId_true_attachment_${USER_SESSION_ID}_${SESSION_PART_ID}_v2.json",
-            intake.metadata.filename
+            intake.metadata.filename,
         )
         assertEquals(0, intakeService.shutdownCount)
     }
@@ -145,9 +145,9 @@ class V2PayloadStoreTest {
         val envelope = Envelope(
             data = LogPayload(
                 logs = listOf(
-                    Log(attributes = listOf(Attribute("emb.type", type.value)))
-                )
-            )
+                    Log(attributes = listOf(Attribute("emb.type", type.value))),
+                ),
+            ),
         )
         store.storeLogPayload(envelope, true)
     }

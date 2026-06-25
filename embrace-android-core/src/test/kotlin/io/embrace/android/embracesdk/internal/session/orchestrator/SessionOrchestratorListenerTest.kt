@@ -87,8 +87,8 @@ internal class SessionOrchestratorListenerTest {
         startupClassifier = StartupClassifierImpl()
         configService = FakeConfigService(
             backgroundActivityBehavior = createBackgroundActivityBehavior(
-                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
-            )
+                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f)),
+            ),
         )
     }
 
@@ -177,7 +177,7 @@ internal class SessionOrchestratorListenerTest {
                 SessionStateEvent.UserSessionEnded::class,
                 SessionStateEvent.UserSessionActive::class,
             ),
-            events.map { it::class }
+            events.map { it::class },
         )
     }
 
@@ -252,18 +252,18 @@ internal class SessionOrchestratorListenerTest {
                 partIndex = 1,
                 lastActivityMs = clock.now(),
                 isBackgroundOnly = false,
-            )
+            ),
         )
     }
 
     private fun sessionBehaviorConfig() = FakeConfigService(
         backgroundActivityBehavior = createBackgroundActivityBehavior(
-            remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
+            remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f)),
         ),
         sessionBehavior = FakeUserSessionBehavior(
             maxSessionDurationMs = maxDurationMs,
             sessionInactivityTimeoutMs = inactivityMs,
-        )
+        ),
     )
 
     private fun collectEvents(vararg targetTypes: kotlin.reflect.KClass<out SessionStateEvent>): MutableList<SessionStateEvent> {
@@ -292,19 +292,19 @@ internal class SessionOrchestratorListenerTest {
             payloadMessageCollator = payloadCollator,
             logEnvelopeSource = payloadSourceModule.logEnvelopeSource,
             configService = configService,
-            logger = logger
+            logger = logger,
         )
         userSessionPropertiesService = FakeUserSessionPropertiesService()
         userService = FakeUserService()
         sessionTracker = SessionPartTrackerImpl(
             activityManager = null,
-            logger = logger
+            logger = logger,
         )
         sessionCacheExecutor = BlockingScheduledExecutorService(clock, true)
         payloadCachingService = PayloadCachingServiceImpl(
             PeriodicSessionPartCacher(
                 BackgroundWorker(sessionCacheExecutor),
-                logger
+                logger,
             ),
             clock,
             object : SessionIdsProvider {
@@ -313,17 +313,17 @@ internal class SessionOrchestratorListenerTest {
                 override fun getActiveSessionIds(): SessionIdsSnapshot =
                     SessionIdsSnapshot(userSessionId = "", sessionPartId = sessionTracker.getActiveSessionPartId() ?: "")
             },
-            store
+            store,
         )
         fakeDataSource = FakeDataSource(RuntimeEnvironment.getApplication())
         instrumentationRegistry = InstrumentationRegistryImpl(
-            logger
+            logger,
         ).apply {
             add(
                 DataSourceState(
                     factory = { fakeDataSource },
-                    configGate = { true }
-                )
+                    configGate = { true },
+                ),
             )
         }
 
@@ -334,7 +334,7 @@ internal class SessionOrchestratorListenerTest {
             configService,
             sessionTracker,
             OrchestratorBoundaryDelegate(
-                userSessionPropertiesService
+                userSessionPropertiesService,
             ),
             store,
             payloadCachingService,
@@ -344,7 +344,7 @@ internal class SessionOrchestratorListenerTest {
                 destination,
                 { 0 },
                 FakeLogLimitingService(),
-                FakeMetadataService()
+                FakeMetadataService(),
             ),
             ordinalStoreOverride ?: FakeOrdinalStore(),
             metadataStoreOverride ?: UserSessionMetadataStore(FakeKeyValueStore()),

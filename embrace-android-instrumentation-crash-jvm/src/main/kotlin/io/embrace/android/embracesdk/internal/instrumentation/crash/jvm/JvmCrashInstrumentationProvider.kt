@@ -9,7 +9,7 @@ class JvmCrashInstrumentationProvider : InstrumentationProvider {
         return DataSourceState(
             factory = {
                 JvmCrashDataSourceImpl(args)
-            }
+            },
         )
     }
 

@@ -10,7 +10,7 @@ class ViewInstrumentationProvider : InstrumentationProvider {
             factory = {
                 ViewDataSource(args)
             },
-            configGate = { args.configService.breadcrumbBehavior.isActivityBreadcrumbCaptureEnabled() }
+            configGate = { args.configService.breadcrumbBehavior.isActivityBreadcrumbCaptureEnabled() },
         )
     }
 }

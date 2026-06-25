@@ -29,7 +29,7 @@ internal class SharedObjectLoaderImpl(
                     if (!loggedFailure.getAndSet(true)) {
                         logger.trackInternalError(
                             type = InternalErrorType.NativeReadFail,
-                            throwable = exc
+                            throwable = exc,
                         )
                     }
                     return false

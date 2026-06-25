@@ -27,7 +27,7 @@ class MissingConfigFileTest {
                 endpoints.forEach {
                     verifyNoRequestsSent(it)
                 }
-            }
+            },
         )
     }
 }

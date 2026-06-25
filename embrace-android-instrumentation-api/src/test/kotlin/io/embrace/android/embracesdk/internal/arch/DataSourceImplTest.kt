@@ -23,7 +23,7 @@ internal class DataSourceImplTest {
         var validationFailed = 0
         source.captureTelemetry(
             inputValidation = { true },
-            invalidInputCallback = { validationFailed++ }
+            invalidInputCallback = { validationFailed++ },
         ) {
             b = false
         }
@@ -63,7 +63,7 @@ internal class DataSourceImplTest {
         repeat(4) {
             source.captureTelemetry(
                 inputValidation = { false },
-                invalidInputCallback = { validationFailed++ }
+                invalidInputCallback = { validationFailed++ },
             ) {
                 count++
             }
@@ -77,11 +77,11 @@ internal class DataSourceImplTest {
         limitStrategy: LimitStrategy = NoopLimitStrategy,
         args: FakeInstrumentationArgs = FakeInstrumentationArgs(
             ApplicationProvider.getApplicationContext(),
-            logger = FakeInternalLogger(throwOnInternalError = false)
+            logger = FakeInternalLogger(throwOnInternalError = false),
         ),
     ) : DataSourceImpl(
         args,
         limitStrategy,
-        "test_data_source"
+        "test_data_source",
     )
 }

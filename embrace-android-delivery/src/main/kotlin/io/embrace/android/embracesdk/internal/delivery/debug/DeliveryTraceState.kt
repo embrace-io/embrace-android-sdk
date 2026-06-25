@@ -145,7 +145,7 @@ internal sealed class DeliveryTraceState {
      */
     class ServerCompletedRequest(
         private val endpoint: String,
-        private val metadata: String
+        private val metadata: String,
     ) : DeliveryTraceState() {
         override fun toString(): String = "[$threadName] ServerCompletedRequest, $endpoint $metadata"
     }
@@ -156,6 +156,6 @@ internal sealed class DeliveryTraceState {
 
     internal fun List<StoredTelemetryMetadata>.reportListString() = joinToString(
         "\n",
-        transform = { it.toReportString() }
+        transform = { it.toReportString() },
     )
 }

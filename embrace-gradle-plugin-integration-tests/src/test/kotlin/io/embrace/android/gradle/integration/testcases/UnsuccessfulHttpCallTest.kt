@@ -28,7 +28,7 @@ class UnsuccessfulHttpCallTest {
                 verifyBuildTelemetryRequestSent(variants)
                 verifyJvmMappingRequestsSent(1)
             },
-            expectedExceptionMessage = "Embrace HTTP request failed: ${EmbraceEndpoint.PROGUARD.url}, status=400"
+            expectedExceptionMessage = "Embrace HTTP request failed: ${EmbraceEndpoint.PROGUARD.url}, status=400",
         )
     }
 
@@ -45,7 +45,7 @@ class UnsuccessfulHttpCallTest {
                 verifyBuildTelemetryRequestSent(variants)
                 verifyJvmMappingRequestsSent(1)
             },
-            expectedExceptionMessage = "Embrace HTTP request failed: ${EmbraceEndpoint.PROGUARD.url}"
+            expectedExceptionMessage = "Embrace HTTP request failed: ${EmbraceEndpoint.PROGUARD.url}",
         )
     }
 }

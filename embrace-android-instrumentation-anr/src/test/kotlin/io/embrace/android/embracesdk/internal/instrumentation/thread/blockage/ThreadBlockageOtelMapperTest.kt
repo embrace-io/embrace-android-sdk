@@ -37,9 +37,9 @@ internal class ThreadBlockageOtelMapperTest {
         priority = 5,
         lines = listOf(
             "com.example.app.MainActivity.onCreate(MainActivity.kt:10)",
-            "com.example.app.MainActivity.onCreate(MainActivity.kt:20)"
+            "com.example.app.MainActivity.onCreate(MainActivity.kt:20)",
         ),
-        frameCount = 2
+        frameCount = 2,
     )
     private val truncatedThreadSample = ThreadSample(
         threadId = 1,
@@ -48,39 +48,39 @@ internal class ThreadBlockageOtelMapperTest {
         priority = 5,
         lines = listOf(
             "com.example.app.MainActivity.onCreate(MainActivity.kt:10)",
-            "com.example.app.MainActivity.onCreate(MainActivity.kt:20)"
+            "com.example.app.MainActivity.onCreate(MainActivity.kt:20)",
         ),
-        frameCount = 10000
+        frameCount = 10000,
     )
 
     private val firstSample = ThreadBlockageSample(
         timestamp = FIRST_SAMPLE_MS,
         sampleOverheadMs = FIRST_SAMPLE_OVERHEAD_MS,
-        threadSample = threadSample
+        threadSample = threadSample,
     )
 
     private val secondSample = ThreadBlockageSample(
         timestamp = SECOND_SAMPLE_MS,
         sampleOverheadMs = SECOND_SAMPLE_OVERHEAD_MS,
-        threadSample = threadSample
+        threadSample = threadSample,
     )
 
     private val truncatedSecondSample = ThreadBlockageSample(
         timestamp = SECOND_SAMPLE_MS,
         sampleOverheadMs = SECOND_SAMPLE_OVERHEAD_MS,
-        threadSample = truncatedThreadSample
+        threadSample = truncatedThreadSample,
     )
 
     private val completedInterval = ThreadBlockageInterval(
         startTime = START_TIME_MS,
         endTime = END_TIME_MS,
-        samples = listOf(firstSample, secondSample)
+        samples = listOf(firstSample, secondSample),
     )
 
     private val completedIntervalWithTruncatedSample = ThreadBlockageInterval(
         startTime = START_TIME_MS,
         endTime = END_TIME_MS,
-        samples = listOf(firstSample, truncatedSecondSample)
+        samples = listOf(firstSample, truncatedSecondSample),
     )
 
     private val inProgressInterval =
@@ -98,7 +98,7 @@ internal class ThreadBlockageOtelMapperTest {
             } else {
                 firstSample
             }
-        }
+        },
     )
 
     @Before
@@ -170,7 +170,7 @@ internal class ThreadBlockageOtelMapperTest {
             mapIntervalToSpan(
                 it,
                 clock,
-                random
+                random,
             )
         }.single()
         val events = checkNotNull(span.events)
@@ -206,7 +206,7 @@ internal class ThreadBlockageOtelMapperTest {
         assertEquals(thread.frameCount, attrs.findAttribute(EmbAnrAttributes.FRAME_COUNT).data?.toInt())
         assertEquals(
             thread.lines?.joinToString("\n"),
-            attrs.findAttribute(ExceptionAttributes.EXCEPTION_STACKTRACE).data
+            attrs.findAttribute(ExceptionAttributes.EXCEPTION_STACKTRACE).data,
         )
     }
 

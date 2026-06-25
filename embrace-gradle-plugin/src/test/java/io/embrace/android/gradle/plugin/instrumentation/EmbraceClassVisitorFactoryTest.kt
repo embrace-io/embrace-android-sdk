@@ -36,7 +36,7 @@ class EmbraceClassVisitorFactoryTest {
         val filter = ClassInstrumentationFilter(mutableListOf("kotlin.Boolean"))
         val params = TestBytecodeInstrumentationParams(
             disabled = false,
-            classInstrumentationFilter = filter
+            classInstrumentationFilter = filter,
         )
         val factory = TestVisitorFactoryImpl(params = params)
         assertTrue(factory.isInstrumentable(clzDataString))
@@ -50,7 +50,7 @@ class EmbraceClassVisitorFactoryTest {
         val config = createInstrumentationConfig(
             instrumentOnClick = false,
             instrumentOnLongClick = false,
-            instrumentWebview = false
+            instrumentWebview = false,
         )
         val observed = fetchClassVisitor(config, ctx, visitor)
         assertSame(visitor, observed)
@@ -77,7 +77,7 @@ class EmbraceClassVisitorFactoryTest {
         val config = createInstrumentationConfig(
             instrumentOnClick = false,
             instrumentOnLongClick = false,
-            instrumentOkHttp = false
+            instrumentOkHttp = false,
         )
         val observed = fetchClassVisitor(config, ctx, visitor)
         assertSame(visitor, observed)
@@ -99,10 +99,10 @@ class EmbraceClassVisitorFactoryTest {
     private fun fetchClassVisitor(
         testParams: TestBytecodeInstrumentationParams,
         ctx: ClassContext,
-        visitor: TestClassVisitor
+        visitor: TestClassVisitor,
     ) = TestVisitorFactoryImpl(params = testParams).createClassVisitor(
         ctx,
-        visitor
+        visitor,
     )
 
     private fun createInstrumentationConfig(

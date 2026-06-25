@@ -27,7 +27,7 @@ internal class SessionPartTrackerImplTest {
         tracker.newActiveSessionPart(
             endSessionPartCallback = {},
             startSessionPartCallback = { newSession },
-            postTransitionAppState = AppState.FOREGROUND
+            postTransitionAppState = AppState.FOREGROUND,
         )
 
         assertEquals(newSession, tracker.getActiveSessionPart())
@@ -39,12 +39,12 @@ internal class SessionPartTrackerImplTest {
             startTime = 11L,
             appState = AppState.BACKGROUND,
             isColdStart = false,
-            startType = LifeEventType.MANUAL
+            startType = LifeEventType.MANUAL,
         )
         tracker.newActiveSessionPart(
             endSessionPartCallback = {},
             startSessionPartCallback = { anotherSession },
-            postTransitionAppState = AppState.BACKGROUND
+            postTransitionAppState = AppState.BACKGROUND,
         )
 
         assertEquals(anotherSession, tracker.getActiveSessionPart())
@@ -53,7 +53,7 @@ internal class SessionPartTrackerImplTest {
         tracker.newActiveSessionPart(
             endSessionPartCallback = {},
             startSessionPartCallback = { null },
-            postTransitionAppState = AppState.FOREGROUND
+            postTransitionAppState = AppState.FOREGROUND,
         )
 
         assertNull(tracker.getActiveSessionPart())
@@ -80,7 +80,7 @@ internal class SessionPartTrackerImplTest {
                     callbackInvocations.add("new-session")
                     newSessions[i]
                 },
-                postTransitionAppState = AppState.FOREGROUND
+                postTransitionAppState = AppState.FOREGROUND,
             )
         }
 
@@ -97,7 +97,7 @@ internal class SessionPartTrackerImplTest {
                 "new-session",
                 "change-listener",
             ),
-            callbackInvocations.toList()
+            callbackInvocations.toList(),
         )
     }
 }

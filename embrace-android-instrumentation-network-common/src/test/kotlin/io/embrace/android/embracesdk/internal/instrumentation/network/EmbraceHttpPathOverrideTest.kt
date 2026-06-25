@@ -9,7 +9,7 @@ internal class EmbraceHttpPathOverrideTest {
     fun `check override path validity`() {
         val request: HttpPathOverrideRequest = FakeHttpOverrideRequest(
             urlString = DEFAULT_URL,
-            overriddenUrlStringProvider = ::customUrlProvider
+            overriddenUrlStringProvider = ::customUrlProvider,
         )
 
         assertEquals(DEFAULT_URL, getOverriddenURLString(request, null))

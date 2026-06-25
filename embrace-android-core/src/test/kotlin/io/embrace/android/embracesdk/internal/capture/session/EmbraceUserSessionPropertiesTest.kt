@@ -44,7 +44,7 @@ internal class EmbraceUserSessionPropertiesTest {
         store = FakeKeyValueStore()
 
         configService = FakeConfigService(
-            sessionBehavior = FakeUserSessionBehavior(MAX_SESSION_PROPERTIES_DEFAULT)
+            sessionBehavior = FakeUserSessionBehavior(MAX_SESSION_PROPERTIES_DEFAULT),
         )
         destination = FakeTelemetryDestination()
         telemetryService = FakeTelemetryService()
@@ -52,7 +52,7 @@ internal class EmbraceUserSessionPropertiesTest {
             store,
             configService,
             destination,
-            telemetryService
+            telemetryService,
         )
     }
 
@@ -242,11 +242,11 @@ internal class EmbraceUserSessionPropertiesTest {
         }
         assertFalse(
             "should not be able to add new key when limit is hit",
-            props.add("propPermNew", VALUE_VALID, PropertyScope.PERMANENT)
+            props.add("propPermNew", VALUE_VALID, PropertyScope.PERMANENT),
         )
         assertFalse(
             "should not be able to add new key when limit is hit",
-            props.add("propTempNew", VALUE_VALID, PropertyScope.USER_SESSION)
+            props.add("propTempNew", VALUE_VALID, PropertyScope.USER_SESSION),
         )
 
         // Verify telemetry tracked for dropped properties
@@ -259,17 +259,17 @@ internal class EmbraceUserSessionPropertiesTest {
         val otherValue = "other"
         assertTrue(
             "should be able to update key when properties are full",
-            props.add("prop0", otherValue, PropertyScope.PERMANENT)
+            props.add("prop0", otherValue, PropertyScope.PERMANENT),
         )
         assertEquals(
             "property was updated",
             otherValue,
-            props.get()["prop0"]
+            props.get()["prop0"],
         )
         assertTrue(props.remove("prop0"))
         assertTrue(
             "can add key once one was deleted",
-            props.add("prop11", VALUE_VALID, scope)
+            props.add("prop11", VALUE_VALID, scope),
         )
     }
 
@@ -285,26 +285,26 @@ internal class EmbraceUserSessionPropertiesTest {
         }
         assertFalse(
             "should not be able to add new key when limit is hit",
-            props.add("propPermNew", VALUE_VALID, PropertyScope.PERMANENT)
+            props.add("propPermNew", VALUE_VALID, PropertyScope.PERMANENT),
         )
         assertFalse(
             "should not be able to add new key when limit is hit",
-            props.add("propTempNew", VALUE_VALID, PropertyScope.USER_SESSION)
+            props.add("propTempNew", VALUE_VALID, PropertyScope.USER_SESSION),
         )
         val otherValue = "other"
         assertTrue(
             "should be able to update key when properties are full",
-            props.add("prop0", otherValue, PropertyScope.PERMANENT)
+            props.add("prop0", otherValue, PropertyScope.PERMANENT),
         )
         assertEquals(
             "property was updated",
             otherValue,
-            props.get()["prop0"]
+            props.get()["prop0"],
         )
         assertTrue(props.remove("prop0"))
         assertTrue(
             "can add key once one was deleted",
-            props.add("prop11", VALUE_VALID, scope)
+            props.add("prop11", VALUE_VALID, scope),
         )
     }
 

@@ -23,7 +23,7 @@ private val RELATIVE_PATH_PATTERN: Pattern = Pattern.compile("[A-Za-z0-9-._~:/\\
 @JvmOverloads
 fun getOverriddenURLString(
     request: HttpPathOverrideRequest,
-    pathOverride: String? = request.getHeaderByName(PATH_OVERRIDE)
+    pathOverride: String? = request.getHeaderByName(PATH_OVERRIDE),
 ): String {
     val url = try {
         if (pathOverride != null && validatePathOverride(pathOverride)) {

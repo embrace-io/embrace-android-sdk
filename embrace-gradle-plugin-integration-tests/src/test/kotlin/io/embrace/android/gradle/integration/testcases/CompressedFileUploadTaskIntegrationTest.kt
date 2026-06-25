@@ -33,7 +33,7 @@ class CompressedFileUploadTaskIntegrationTest {
             },
             assertions = {
                 assertFileUploaded(expectedFileContents, EmbraceEndpoint.PROGUARD)
-            }
+            },
         )
     }
 
@@ -44,7 +44,7 @@ class CompressedFileUploadTaskIntegrationTest {
             expectedOutcome = TaskOutcome.NO_SOURCE,
             assertions = {
                 verifyNoRequestsSent(EmbraceEndpoint.PROGUARD)
-            }
+            },
         )
     }
 
@@ -59,7 +59,7 @@ class CompressedFileUploadTaskIntegrationTest {
             },
             assertions = {
                 assertFileUploaded(expectedFileContents, EmbraceEndpoint.NDK)
-            }
+            },
         )
     }
 

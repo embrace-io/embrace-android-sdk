@@ -39,7 +39,7 @@ internal class EmbraceUrlConnectionDelegateTest {
     fun `completed successful requests with compressed responses from a wrapped stream are recorded properly`() {
         executeRequest(
             connection = createMockGzipConnection(),
-            wrappedIoStream = true
+            wrappedIoStream = true,
         )
         validateWholeRequest(
             url = url.toString(),
@@ -50,7 +50,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             responseBodySize = gzippedResponseBodySize,
             requestSize = requestBodySize,
             networkDataCaptured = true,
-            responseBody = responseBodyText
+            responseBody = responseBodyText,
         )
     }
 
@@ -58,7 +58,7 @@ internal class EmbraceUrlConnectionDelegateTest {
     fun `completed successful requests with uncompressed responses from a wrapped stream are recorded properly`() {
         executeRequest(
             connection = createMockUncompressedConnection(),
-            wrappedIoStream = true
+            wrappedIoStream = true,
         )
         validateWholeRequest(
             url = url.toString(),
@@ -69,7 +69,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             responseBodySize = responseBodySize,
             requestSize = requestBodySize,
             networkDataCaptured = true,
-            responseBody = responseBodyText
+            responseBody = responseBodyText,
         )
     }
 
@@ -77,7 +77,7 @@ internal class EmbraceUrlConnectionDelegateTest {
     fun `completed successful requests with compressed responses from an unwrapped output streams are recorded properly`() {
         executeRequest(
             connection = createMockGzipConnection(),
-            wrappedIoStream = false
+            wrappedIoStream = false,
         )
         validateWholeRequest(
             url = url.toString(),
@@ -86,7 +86,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             httpMethod = HttpMethod.POST.name,
             httpStatus = HTTP_OK,
             responseBodySize = gzippedResponseBodySize,
-            requestSize = 0
+            requestSize = 0,
         )
     }
 
@@ -94,7 +94,7 @@ internal class EmbraceUrlConnectionDelegateTest {
     fun `completed successful requests with uncompressed responses from an unwrapped output streams are recorded properly`() {
         executeRequest(
             connection = createMockUncompressedConnection(),
-            wrappedIoStream = false
+            wrappedIoStream = false,
         )
         validateWholeRequest(
             url = url.toString(),
@@ -103,7 +103,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             httpMethod = HttpMethod.POST.name,
             httpStatus = HTTP_OK,
             responseBodySize = responseBodySize,
-            requestSize = 0
+            requestSize = 0,
         )
     }
 
@@ -112,7 +112,7 @@ internal class EmbraceUrlConnectionDelegateTest {
         executeRequest(
             connection = createMockUncompressedConnection(),
             wrappedIoStream = true,
-            exceptionOnInputStream = true
+            exceptionOnInputStream = true,
         )
         validateWholeRequest(
             url = url.toString(),
@@ -123,7 +123,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             responseBodySize = 0,
             requestSize = 0,
             errorType = IO_ERROR,
-            errorMessage = "nope"
+            errorMessage = "nope",
         )
     }
 
@@ -132,7 +132,7 @@ internal class EmbraceUrlConnectionDelegateTest {
         executeRequest(
             connection = createMockGzipConnection(),
             wrappedIoStream = true,
-            exceptionOnInputStream = true
+            exceptionOnInputStream = true,
         )
         validateWholeRequest(
             url = url.toString(),
@@ -143,7 +143,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             responseBodySize = 0,
             requestSize = 0,
             errorType = IO_ERROR,
-            errorMessage = "nope"
+            errorMessage = "nope",
         )
     }
 
@@ -152,7 +152,7 @@ internal class EmbraceUrlConnectionDelegateTest {
         executeRequest(
             connection = createMockUncompressedConnection(),
             wrappedIoStream = false,
-            exceptionOnInputStream = true
+            exceptionOnInputStream = true,
         )
         validateWholeRequest(
             url = url.toString(),
@@ -163,7 +163,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             responseBodySize = 0,
             requestSize = 0,
             errorType = IO_ERROR,
-            errorMessage = "nope"
+            errorMessage = "nope",
         )
     }
 
@@ -172,7 +172,7 @@ internal class EmbraceUrlConnectionDelegateTest {
         executeRequest(
             connection = createMockGzipConnection(),
             wrappedIoStream = false,
-            exceptionOnInputStream = true
+            exceptionOnInputStream = true,
         )
         validateWholeRequest(
             url = url.toString(),
@@ -183,7 +183,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             responseBodySize = 0,
             requestSize = 0,
             errorType = IO_ERROR,
-            errorMessage = "nope"
+            errorMessage = "nope",
         )
     }
 
@@ -191,7 +191,7 @@ internal class EmbraceUrlConnectionDelegateTest {
     fun `completed unsuccessful requests are recorded properly`() {
         executeRequest(
             connection = createMockGzipConnection(expectedResponseCode = 500),
-            wrappedIoStream = true
+            wrappedIoStream = true,
         )
         validateWholeRequest(
             url = url.toString(),
@@ -202,7 +202,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             responseBodySize = gzippedResponseBodySize,
             requestSize = requestBodySize,
             networkDataCaptured = true,
-            responseBody = responseBodyText
+            responseBody = responseBodyText,
         )
     }
 
@@ -210,7 +210,7 @@ internal class EmbraceUrlConnectionDelegateTest {
     fun `completed requests with custom paths are recorded properly`() {
         executeRequest(
             connection = createMockConnectionWithPathOverride(),
-            wrappedIoStream = true
+            wrappedIoStream = true,
         )
         validateWholeRequest(
             url = customUrl.toString(),
@@ -221,7 +221,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             responseBodySize = gzippedResponseBodySize,
             requestSize = requestBodySize,
             networkDataCaptured = true,
-            responseBody = responseBodyText
+            responseBody = responseBodyText,
         )
     }
 
@@ -230,7 +230,7 @@ internal class EmbraceUrlConnectionDelegateTest {
         executeRequest(
             connection = createMockConnectionWithPathOverride(),
             wrappedIoStream = true,
-            exceptionOnInputStream = true
+            exceptionOnInputStream = true,
         )
         validateWholeRequest(
             url = customUrl.toString(),
@@ -241,7 +241,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             responseBodySize = 0,
             requestSize = 0,
             errorType = IO_ERROR,
-            errorMessage = "nope"
+            errorMessage = "nope",
         )
     }
 
@@ -249,7 +249,7 @@ internal class EmbraceUrlConnectionDelegateTest {
     fun `completed network call logged once with a wrapped output stream`() {
         executeRequest(
             connection = createMockUncompressedConnection(),
-            wrappedIoStream = true
+            wrappedIoStream = true,
         )
         assertEquals(1, internalApi.networkRequests.size)
     }
@@ -258,7 +258,7 @@ internal class EmbraceUrlConnectionDelegateTest {
     fun `completed network call logged exactly once with unwrapped output stream`() {
         executeRequest(
             connection = createMockUncompressedConnection(),
-            wrappedIoStream = false
+            wrappedIoStream = false,
         )
         assertEquals(1, internalApi.networkRequests.size)
     }
@@ -268,7 +268,7 @@ internal class EmbraceUrlConnectionDelegateTest {
         executeRequest(
             connection = createMockUncompressedConnection(),
             wrappedIoStream = true,
-            exceptionOnInputStream = true
+            exceptionOnInputStream = true,
         )
         assertEquals(1, internalApi.networkRequests.size)
     }
@@ -290,7 +290,7 @@ internal class EmbraceUrlConnectionDelegateTest {
         verifyIncompleteRequestLogged(
             mockConnection = mockConnection,
             errorType = TIMEOUT_ERROR,
-            noResponseAccess = false
+            noResponseAccess = false,
         )
         assertEquals(1, internalApi.networkRequests.size)
     }
@@ -304,7 +304,7 @@ internal class EmbraceUrlConnectionDelegateTest {
         verifyIncompleteRequestLogged(
             mockConnection = mockConnection,
             errorType = TIMEOUT_ERROR,
-            noResponseAccess = false
+            noResponseAccess = false,
         )
         assertEquals(1, internalApi.networkRequests.size)
     }
@@ -318,7 +318,7 @@ internal class EmbraceUrlConnectionDelegateTest {
         verifyIncompleteRequestLogged(
             mockConnection = mockConnection,
             errorType = TIMEOUT_ERROR,
-            noResponseAccess = false
+            noResponseAccess = false,
         )
         assertEquals(1, internalApi.networkRequests.size)
     }
@@ -340,7 +340,7 @@ internal class EmbraceUrlConnectionDelegateTest {
     fun `check traceparents are not forwarded by default`() {
         executeRequest(
             connection = createMockConnectionWithTraceparent(),
-            wrappedIoStream = true
+            wrappedIoStream = true,
         )
         val request = retrieveNetworkRequest()
         assertNull(request.w3cTraceparent)
@@ -352,7 +352,7 @@ internal class EmbraceUrlConnectionDelegateTest {
         executeRequest(
             connection = createMockConnectionWithTraceparent(),
             wrappedIoStream = true,
-            exceptionOnInputStream = true
+            exceptionOnInputStream = true,
         )
         val request = retrieveNetworkRequest()
         assertNull(request.responseCode)
@@ -365,7 +365,7 @@ internal class EmbraceUrlConnectionDelegateTest {
         internalApi.networkSpanForwardingEnabled = true
         executeRequest(
             connection = createMockConnectionWithTraceparent(),
-            wrappedIoStream = true
+            wrappedIoStream = true,
         )
         val request = retrieveNetworkRequest()
         assertEquals(HTTP_OK, request.responseCode)
@@ -378,7 +378,7 @@ internal class EmbraceUrlConnectionDelegateTest {
         executeRequest(
             connection = createMockConnectionWithTraceparent(),
             wrappedIoStream = true,
-            exceptionOnInputStream = true
+            exceptionOnInputStream = true,
         )
         val request = retrieveNetworkRequest()
         assertNull(request.responseCode)
@@ -390,9 +390,9 @@ internal class EmbraceUrlConnectionDelegateTest {
     fun `check traceIds are logged if a custom header name is specified`() {
         executeRequest(
             connection = createMockGzipConnection(
-                extraRequestHeaders = mapOf(Pair(traceIdHeaderName, listOf(customTraceId)))
+                extraRequestHeaders = mapOf(Pair(traceIdHeaderName, listOf(customTraceId))),
             ),
-            wrappedIoStream = true
+            wrappedIoStream = true,
         )
         val request = retrieveNetworkRequest()
         assertEquals(HTTP_OK, request.responseCode)
@@ -400,18 +400,18 @@ internal class EmbraceUrlConnectionDelegateTest {
     }
 
     private fun createMockConnectionWithPathOverride() = createMockGzipConnection(
-        extraRequestHeaders = mapOf(Pair(PATH_OVERRIDE, listOf(customPath)))
+        extraRequestHeaders = mapOf(Pair(PATH_OVERRIDE, listOf(customPath))),
     )
 
     private fun createMockConnectionWithTraceparent() = createMockGzipConnection(
-        extraRequestHeaders = mapOf(Pair(TRACEPARENT_HEADER_NAME, listOf(TRACEPARENT)))
+        extraRequestHeaders = mapOf(Pair(TRACEPARENT_HEADER_NAME, listOf(TRACEPARENT))),
     )
 
     private fun createMockUncompressedConnection(): HttpsURLConnection {
         return createMockConnection(
             inputStream = ByteArrayInputStream(responseBodyBytes),
             expectedResponseSize = responseBodySize,
-            expectedResponseCode = HTTP_OK
+            expectedResponseCode = HTTP_OK,
         )
     }
 
@@ -425,8 +425,8 @@ internal class EmbraceUrlConnectionDelegateTest {
             expectedResponseSize = gzippedResponseBodySize,
             expectedResponseCode = expectedResponseCode,
             extraResponseHeaders = mapOf(
-                Pair(CONTENT_ENCODING, listOf("gzip"))
-            )
+                Pair(CONTENT_ENCODING, listOf("gzip")),
+            ),
         )
     }
 
@@ -447,7 +447,7 @@ internal class EmbraceUrlConnectionDelegateTest {
 
         val requestHeaders = mutableMapOf(
             Pair(requestHeaderName, listOf(requestHeaderValue)),
-            Pair(traceIdHeaderName, listOf(defaultTraceId))
+            Pair(traceIdHeaderName, listOf(defaultTraceId)),
         )
 
         if (extraRequestHeaders.isNotEmpty()) {
@@ -456,7 +456,7 @@ internal class EmbraceUrlConnectionDelegateTest {
 
         val responseHeaders = mutableMapOf(
             Pair(CONTENT_LENGTH, listOf(expectedResponseSize.toString())),
-            Pair(responseHeaderName, listOf(responseHeaderValue))
+            Pair(responseHeaderName, listOf(responseHeaderValue)),
         )
 
         if (extraResponseHeaders.isNotEmpty()) {

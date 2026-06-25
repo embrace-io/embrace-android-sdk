@@ -30,7 +30,7 @@ class PeriodicSessionPartCacher(
             onPeriodicCache(provider),
             0,
             intervalMs,
-            TimeUnit.MILLISECONDS
+            TimeUnit.MILLISECONDS,
         )
     }
 

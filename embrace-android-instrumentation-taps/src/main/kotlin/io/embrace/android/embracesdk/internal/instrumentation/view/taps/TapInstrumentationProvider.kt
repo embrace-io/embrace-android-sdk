@@ -13,7 +13,7 @@ class TapInstrumentationProvider : InstrumentationProvider {
             factory = {
                 tapDataSource = TapDataSource(args)
                 tapDataSource
-            }
+            },
         )
     }
 }

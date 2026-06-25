@@ -19,7 +19,7 @@ class ThermalStateDataSource(
 ) : DataSourceImpl(
     args,
     limitStrategy = UpToLimitStrategy { MAX_CAPTURED_THERMAL_STATES },
-    instrumentationName = "thermal_state_data_source"
+    instrumentationName = "thermal_state_data_source",
 ) {
     private companion object {
         private const val MAX_CAPTURED_THERMAL_STATES = 100

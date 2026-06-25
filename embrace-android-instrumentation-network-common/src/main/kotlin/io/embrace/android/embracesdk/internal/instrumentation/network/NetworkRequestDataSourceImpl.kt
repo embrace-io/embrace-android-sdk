@@ -100,6 +100,7 @@ class NetworkRequestDataSourceImpl(
             spanToken.asW3cTraceparent()?.also { traceparent ->
                 if (configService.networkSpanForwardingBehavior.shouldForwardForDomain(domain)) {
                     spanToken.setSystemAttribute(EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT, traceparent)
+                    spanToken.setSystemAttribute(EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY, "true")
                 }
                 activeRequests[traceparent] = spanToken
             }
@@ -130,6 +131,7 @@ class NetworkRequestDataSourceImpl(
         ErrorAttributes.ERROR_TYPE to request.errorType,
         ExceptionAttributes.EXCEPTION_MESSAGE to request.errorMessage,
         EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT to request.w3cTraceparent,
+        EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY to request.w3cTraceparent?.let { "true" },
         EmbNetworkRequestAttributes.EMB_TRACE_ID to getValidTraceId(request.traceId),
     ).toNonNullMap().mapValues { it.value.toString() }
 

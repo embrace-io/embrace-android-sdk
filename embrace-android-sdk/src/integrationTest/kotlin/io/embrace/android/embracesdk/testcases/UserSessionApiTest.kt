@@ -57,7 +57,7 @@ internal class UserSessionApiTest {
                 // validate expected in-process spans
                 checkNotNull(snapshots.single { it.name == "emb-network-status" })
 
-                // validate session span
+                // validate session part span
                 val spans = checkNotNull(message.data.spans)
                 val sessionPartSpan = spans.single { it.name == "emb-session" }
                 assertEquals(startTime, sessionPartSpan.startTimeNanos?.nanosToMillis())

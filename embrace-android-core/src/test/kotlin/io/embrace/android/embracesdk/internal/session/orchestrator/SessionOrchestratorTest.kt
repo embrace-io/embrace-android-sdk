@@ -397,14 +397,14 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
-    fun `test session span cold start`() {
+    fun `test session part span cold start`() {
         createOrchestrator(AppState.BACKGROUND)
         orchestrator.onForeground()
         checkNotNull(store.storedSessionPartPayloads.last().first)
     }
 
     @Test
-    fun `test session span non cold start`() {
+    fun `test session part span non cold start`() {
         createOrchestrator(AppState.BACKGROUND)
         orchestrator.onForeground()
         orchestrator.onBackground()
@@ -412,7 +412,7 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
-    fun `test session span with crash`() {
+    fun `test session part span with crash`() {
         createOrchestrator(AppState.BACKGROUND)
         orchestrator.onForeground()
         orchestrator.handleCrash("my-crash-id")
@@ -420,7 +420,7 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
-    fun `test foreground session span heartbeat`() {
+    fun `test foreground session part span heartbeat`() {
         createOrchestrator(AppState.BACKGROUND)
         orchestrator.onForeground()
         assertHeartbeatMatchesClock()
@@ -438,7 +438,7 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
-    fun `test background session span heartbeat`() {
+    fun `test background session part span heartbeat`() {
         createOrchestrator(AppState.BACKGROUND)
         assertHeartbeatMatchesClock()
         assertEquals("true", destination.attributes[EmbSessionAttributes.EMB_TERMINATED])

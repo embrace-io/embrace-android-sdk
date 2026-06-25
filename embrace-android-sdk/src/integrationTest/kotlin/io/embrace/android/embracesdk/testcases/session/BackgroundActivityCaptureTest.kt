@@ -164,7 +164,7 @@ internal class BackgroundActivityCaptureTest {
 
     @Config(sdk = [21])
     @Test
-    fun `session span and payloads structurally correct`() {
+    fun `session part span and payloads structurally correct`() {
         var session1StartMs: Long = -1
         var session1EndMs: Long = -1
         var session2StartMs: Long = -1

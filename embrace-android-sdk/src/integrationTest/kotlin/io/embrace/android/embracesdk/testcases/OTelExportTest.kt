@@ -37,7 +37,7 @@ internal class OTelExportTest {
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
     @Test
-    fun `session span exported to user-supplied exporter`() {
+    fun `session part span exported to user-supplied exporter`() {
         val fakeSpanExporter = FakeSpanExporter()
         testRule.runTest(
             preSdkStartAction = {

@@ -32,7 +32,7 @@ internal class UserSessionTimeoutGoldenFileTest {
     /**
      * A session ends due to max duration being exceeded. The scheduled timer is fired
      * explicitly after advancing the fake clock, so the final-session-part attributes are
-     * stamped on the correct foreground session span.
+     * stamped on the correct foreground session part span.
      */
     @Test
     fun `session end max duration`() {

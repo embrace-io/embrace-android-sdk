@@ -111,7 +111,7 @@ fun Log.assertSessionIds(expectedUserSessionId: String, expectedSessionPartId: S
 }
 
 /**
- * Asserts the session part payload's session span has all session-related IDs: emb.user_session_id, session.id, and emb.session_part_id
+ * Asserts the session part payload's session part span has all session-related IDs: emb.user_session_id, session.id, and emb.session_part_id
  * The first two are always equal, while the session part ID should not equal the other two.
  */
 fun Envelope<SessionPartPayload>.assertSessionIds(): SessionIds {

@@ -27,7 +27,7 @@ import org.junit.runner.RunWith
 import java.util.zip.GZIPInputStream
 
 /**
- * Verifies that the session span and log payload emitted by the SDK for basic scenarios match
+ * Verifies that the session part span and log payload emitted by the SDK for basic scenarios match
  * known-good JSON golden files.
  */
 @RunWith(AndroidJUnit4::class)
@@ -48,7 +48,7 @@ internal class UserSessionGoldenFileTest {
      * Asserts that sessions and logs can be associated via user session IDs.
      */
     @Test
-    fun `basic session span and log payload association`() {
+    fun `basic session part span and log payload association`() {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
@@ -238,7 +238,7 @@ internal class UserSessionGoldenFileTest {
      * are serialized in the payload.
      */
     @Test
-    fun `session span reflects configured max duration and inactivity timeout`() {
+    fun `session part span reflects configured max duration and inactivity timeout`() {
         testRule.runTest(
             persistedRemoteConfig = RemoteConfig(
                 userSession = UserSessionRemoteConfig(

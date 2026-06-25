@@ -7,17 +7,17 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 
 /**
- * Abstraction of the current session span
+ * Abstraction of the current session part span
  */
 interface CurrentSessionPartSpan : Initializable {
     /**
-     * Ensure there exists a session span that is ready to take in data, and create one if it's possible.
-     * Returns true if an active session span exists at the time the method returns.
+     * Ensure there exists a session part span that is ready to take in data, and create one if it's possible.
+     * Returns true if an active session part span exists at the time the method returns.
      */
     fun readySession(): Boolean
 
     /**
-     * End the current session span and start a new one if the app is not terminating
+     * End the current session part span and start a new one if the app is not terminating
      */
     fun endSession(
         startNewSession: Boolean,
@@ -40,7 +40,7 @@ interface CurrentSessionPartSpan : Initializable {
     fun spanStopCallback(spanId: String)
 
     /**
-     * Returns the current session span, if any.
+     * Returns the current session part span, if any.
      */
     fun current(): EmbraceSdkSpan?
 }

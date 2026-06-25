@@ -124,7 +124,7 @@ internal class SessionPartPayloadTest {
     }
 
     @Test
-    fun `session span event limits do not affect logging maximum breadcrumbs`() {
+    fun `session part span event limits do not affect logging maximum breadcrumbs`() {
         testRule.runTest(
             testCaseAction = {
                 recordSession {

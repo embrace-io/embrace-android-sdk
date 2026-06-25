@@ -13,16 +13,16 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 
 /**
- * Returns the Session Span
+ * Returns the Session Part Span
  */
 fun Envelope<SessionPartPayload>.findSessionPartSpan(): Span {
     return checkNotNull(getSessionPartSpan()) {
-        "No session span found in session payload"
+        "No session part span found in session payload"
     }
 }
 
 /**
- * Return the user session ID from the session span in the payload
+ * Return the user session ID from the session part span in the payload
  */
 fun Envelope<SessionPartPayload>.getOtelSessionId(): String {
     return checkNotNull(findSessionPartSpan().attributes?.findAttributeValue(SessionAttributes.SESSION_ID)) {
@@ -31,7 +31,7 @@ fun Envelope<SessionPartPayload>.getOtelSessionId(): String {
 }
 
 /**
- * Return the user session ID from the emb.user_session_id attribute in the session span.
+ * Return the user session ID from the emb.user_session_id attribute in the session part span.
  */
 fun Envelope<SessionPartPayload>.getUserSessionId(): String {
     return checkNotNull(findSessionPartSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID)) {
@@ -40,7 +40,7 @@ fun Envelope<SessionPartPayload>.getUserSessionId(): String {
 }
 
 /**
- * Return the session part ID from the session span in the payload. Unique per session part.
+ * Return the session part ID from the session part span in the payload. Unique per session part.
  */
 fun Envelope<SessionPartPayload>.getSessionPartId(): String {
     return checkNotNull(findSessionPartSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID)) {
@@ -49,7 +49,7 @@ fun Envelope<SessionPartPayload>.getSessionPartId(): String {
 }
 
 /**
- * Return the value of the `emb.user_session_termination_reason` attribute on the session span
+ * Return the value of the `emb.user_session_termination_reason` attribute on the session part span
  */
 fun Envelope<SessionPartPayload>.getUserSessionTerminationReason(): String? =
     findSessionPartSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON)
@@ -67,25 +67,25 @@ fun Envelope<SessionPartPayload>.isBackgroundOnlyPart(): Boolean =
     findSessionPartSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART) == "1"
 
 /**
- * Return the value of the `emb.user_session_number` attribute (the user-session ordinal) on the session span.
+ * Return the value of the `emb.user_session_number` attribute (the user-session ordinal) on the session part span.
  */
 fun Envelope<SessionPartPayload>.getUserSessionNumber(): String? =
     findSessionPartSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_NUMBER)
 
 /**
- * Return the value of the `emb.user_session_part_index` attribute (part index within the user session) on the session span.
+ * Return the value of the `emb.user_session_part_index` attribute (part index within the user session) on the session part span.
  */
 fun Envelope<SessionPartPayload>.getUserSessionPartIndex(): String? =
     findSessionPartSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX)
 
 /**
- * Return the value of the `emb.session_part_number` attribute (install-lifetime monotonic counter) on the session span.
+ * Return the value of the `emb.session_part_number` attribute (install-lifetime monotonic counter) on the session part span.
  */
 fun Envelope<SessionPartPayload>.getSessionPartNumber(): String? =
     findSessionPartSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_NUMBER)
 
 /**
- * Return the session start time in milliseconds from the session span in the payload
+ * Return the session start time in milliseconds from the session part span in the payload
  */
 fun Envelope<SessionPartPayload>.getStartTime(): Long {
     return checkNotNull(findSessionPartSpan().startTimeNanos?.nanosToMillis()) {
@@ -94,7 +94,7 @@ fun Envelope<SessionPartPayload>.getStartTime(): Long {
 }
 
 /**
- * Return the last heartbeat time in milliseconds from the session span in the payload
+ * Return the last heartbeat time in milliseconds from the session part span in the payload
  */
 fun Envelope<SessionPartPayload>.getLastHeartbeatTimeMs(): Long {
     return checkNotNull(

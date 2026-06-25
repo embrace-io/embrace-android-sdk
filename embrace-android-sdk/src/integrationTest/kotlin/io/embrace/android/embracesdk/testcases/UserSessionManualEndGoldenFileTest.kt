@@ -10,7 +10,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Verifies the session spans emitted when a user session is manually ended.
+ * Verifies the session part spans emitted when a user session is manually ended.
  */
 @RunWith(AndroidJUnit4::class)
 internal class UserSessionManualEndGoldenFileTest {

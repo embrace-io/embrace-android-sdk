@@ -431,7 +431,7 @@ internal class TracingApiTest {
                 assertEquals(session1Id, span2.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
             },
             otelExportAssertion = {
-                // Get the session ID from a session span exported via OTel
+                // Get the session ID from a session part span exported via OTel
                 val sessionPartSpan = awaitSpansWithType(2, EmbType.Ux.Session).first().toEmbraceSpanData().toEmbracePayload()
                 val expectedOtelSessionId = checkNotNull(sessionPartSpan.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
                 val span1 = awaitSpans(1) { it.name == "span1" }.single().toEmbraceSpanData().toEmbracePayload()

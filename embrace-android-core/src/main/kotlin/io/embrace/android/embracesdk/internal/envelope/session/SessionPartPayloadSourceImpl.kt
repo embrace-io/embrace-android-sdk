@@ -39,14 +39,14 @@ internal class SessionPartPayloadSourceImpl(
             spanRepository.autoTerminateSpans(clock.now())
         }
 
-        // Snapshots should only be included if the process is expected to last beyond the current session
+        // Snapshots should only be included if the process is expected to last beyond the current user session
         val snapshots: List<Span>? = if (includeSnapshots) {
             retrieveSpanSnapshots(isCacheAttempt)
         } else {
             emptyList()
         }
 
-        // Ensure the span retrieving is last as that potentially ends the session span, which effectively ends the session
+        // Ensure the span retrieving is last as that potentially ends the session part span, which effectively ends the user session
         val spans: List<Span>? = retrieveSpanData(isCacheAttempt, startNewSession, crashId)
 
         return SessionPartPayload(
@@ -85,7 +85,7 @@ internal class SessionPartPayloadSourceImpl(
     }
 
     private fun retrieveSpanSnapshots(isCacheAttempt: Boolean) = captureDataSafely(logger) {
-        // Only snapshot session spans if we are caching an in-progress session payload
+        // Only snapshot session part spans if we are caching an in-progress session payload
         spanRepository.getActiveSpans()
             .filter { isCacheAttempt || !it.hasEmbraceAttribute(EmbType.Ux.Session) }
             .mapNotNull { it.snapshot() }

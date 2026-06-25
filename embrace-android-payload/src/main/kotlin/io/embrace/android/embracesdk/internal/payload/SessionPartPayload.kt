@@ -17,7 +17,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class SessionPartPayload(
 
-    /* A list of spans that have completed since the last session, including the session span,
+    /* A list of spans that have completed since the last session, including the session part span,
     which contains metadata about the session represented by this payload. The spans included
     here may not have started in this session, but they ended during it. */
     @SerialName("spans")

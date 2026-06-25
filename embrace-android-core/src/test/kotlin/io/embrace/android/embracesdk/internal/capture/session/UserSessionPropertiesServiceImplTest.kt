@@ -67,7 +67,7 @@ internal class UserSessionPropertiesServiceImplTest {
     }
 
     @Test
-    fun `populate session span with all set properties`() {
+    fun `populate session part span with all set properties`() {
         assertEquals(0, destination.attributes.size)
         service.addProperty("temp", "value", PropertyScope.USER_SESSION)
         service.addProperty("perm", "value", PropertyScope.PERMANENT)

@@ -75,7 +75,7 @@ internal class PayloadFactoryBaTest {
         spanService.initializeService(now)
         val msg = service.endPayloadWithCrash(AppState.BACKGROUND, now, initial, "crashId")
 
-        // there should be 1 completed span: the session span
+        // there should be 1 completed span: the session part span
         checkNotNull(msg)
         assertEquals(1, msg.data.spans?.size)
         assertEquals(0, spanSink.completedSpans().size)
@@ -87,7 +87,7 @@ internal class PayloadFactoryBaTest {
         spanService.initializeService(clock.now())
         val msg = service.endPayloadWithState(AppState.BACKGROUND, clock.now(), initial)
 
-        // there should be 1 completed span: the session span
+        // there should be 1 completed span: the session part span
         checkNotNull(msg)
         assertEquals(1, msg.data.spans?.size)
         assertEquals(0, spanSink.completedSpans().size)
@@ -100,7 +100,7 @@ internal class PayloadFactoryBaTest {
         clock.tick(1000L)
         val msg = service.endPayloadWithState(AppState.BACKGROUND, clock.now(), initial)
 
-        // there should be 1 completed span: the session span
+        // there should be 1 completed span: the session part span
         checkNotNull(msg)
         assertEquals(1, msg.data.spans?.size)
         assertEquals(0, spanSink.completedSpans().size)

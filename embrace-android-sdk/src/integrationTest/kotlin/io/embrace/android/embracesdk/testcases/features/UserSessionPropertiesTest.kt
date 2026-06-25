@@ -110,7 +110,7 @@ internal class UserSessionPropertiesTest {
                 recordSession()
             },
             assertAction = {
-                // TODO: verify session scoped property in session span
+                // TODO: verify session scoped property in session part span
             },
         )
     }

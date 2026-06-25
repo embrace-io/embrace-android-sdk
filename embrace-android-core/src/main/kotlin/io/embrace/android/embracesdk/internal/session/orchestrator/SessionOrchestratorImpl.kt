@@ -378,7 +378,7 @@ internal class SessionOrchestratorImpl(
                     // the user session is always ready
                     transitionUserSession(transitionType, endAppState, timestamp)
 
-                    // create the next session span if we should, and update the SDK state to reflect the transition
+                    // create the next session part span if we should, and update the SDK state to reflect the transition
                     EmbTrace.trace("create-new-session") {
                         newSessionAction?.invoke()
                     }

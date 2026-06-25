@@ -38,11 +38,11 @@ fun Span.findEventsOfType(telemetryType: EmbType): List<SpanEvent> {
 }
 
 fun Span.assertPreviousSessionPart(previousSessionPartSpan: Span, previousSessionPartId: String) {
-    findLinkOfType(LinkType.PreviousSession).validatePreviousSessionPartLink(previousSessionPartSpan, previousSessionPartId)
+    findLinkOfType(LinkType.PreviousSessionPart).validatePreviousSessionPartLink(previousSessionPartSpan, previousSessionPartId)
 }
 
-fun Span.assertNoPreviousSession() =
-    links?.filter { it.attributes?.toMap()?.containsKey(LinkType.PreviousSession.key) == false }?.size == 0
+fun Span.assertNoPreviousSessionPart() =
+    links?.filter { it.attributes?.toMap()?.containsKey(LinkType.PreviousSessionPart.key) == false }?.size == 0
 
 fun Span.findLinksOfType(type: LinkType) = links?.filter { it.attributes?.hasEmbraceAttribute(type) == true }
 

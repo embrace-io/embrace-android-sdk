@@ -468,7 +468,7 @@ internal class CurrentSessionPartSpanImplTests {
     }
 
     @Test
-    fun `previous session link includes user session and session part ids when set`() {
+    fun `previous session part link includes user session and session part ids when set`() {
         val originalSessionPartSpan = checkNotNull(spanRepository.getActiveSpans().single())
         val originalUserSessionId = "previous-user-session"
         val originalSessionPartId = "previous-session-part"
@@ -578,7 +578,7 @@ internal class CurrentSessionPartSpanImplTests {
         )
         checkNotNull(spanSnapshot.links).single().validateSystemLink(
             linkedSpan = sessionPartSpanSnapshot,
-            type = LinkType.EndSession,
+            type = LinkType.EndSessionPart,
             expectedAttributes = expectedPartLinkAttrs
         )
         checkNotNull(sessionPartSpanSnapshot.links).single().validateSystemLink(

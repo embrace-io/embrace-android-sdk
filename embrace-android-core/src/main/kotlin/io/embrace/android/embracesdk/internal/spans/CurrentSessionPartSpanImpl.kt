@@ -120,7 +120,7 @@ internal class CurrentSessionPartSpanImpl(
             currentSessionPartSpan?.spanContext?.let { sessionPartSpanContext ->
                 spanToStop?.addSystemLink(
                     linkedSpanContext = sessionPartSpanContext,
-                    type = LinkType.EndSession,
+                    type = LinkType.EndSessionPart,
                     attributes = linkAttrs
                 )
             }
@@ -209,7 +209,7 @@ internal class CurrentSessionPartSpanImpl(
             previousSessionPartSpan?.spanContext?.let {
                 addSystemLink(
                     linkedSpanContext = it,
-                    type = LinkType.PreviousSession,
+                    type = LinkType.PreviousSessionPart,
                     attributes = previousSessionPartSpan.partLinkAttrs()
                 )
             }

@@ -234,7 +234,7 @@ internal class EmbraceSpanImplTest {
             assertTrue(start())
             val linkedSpan = FakeEmbraceSdkSpan.stopped()
             val spanContext = checkNotNull(linkedSpan.spanContext)
-            assertTrue(embraceSpan.addSystemLink(spanContext, LinkType.PreviousSession))
+            assertTrue(embraceSpan.addSystemLink(spanContext, LinkType.PreviousSessionPart))
             assertTrue(updateNotified)
         }
     }
@@ -428,13 +428,13 @@ internal class EmbraceSpanImplTest {
         assertTrue(embraceSpan.start())
         repeat(dataValidator.otelLimitsConfig.getMaxSystemLinkCount()) {
             val spanContext = checkNotNull(FakeEmbraceSdkSpan.stopped().spanContext)
-            assertTrue(embraceSpan.addSystemLink(spanContext, LinkType.PreviousSession))
+            assertTrue(embraceSpan.addSystemLink(spanContext, LinkType.PreviousSessionPart))
         }
 
         assertFalse(
             embraceSpan.addSystemLink(
                 checkNotNull(FakeEmbraceSdkSpan.stopped().spanContext),
-                LinkType.PreviousSession
+                LinkType.PreviousSessionPart
             )
         )
     }
@@ -471,7 +471,7 @@ internal class EmbraceSpanImplTest {
             val linkAttrs = mapOf("link-attr" to "value")
             val spanContext = checkNotNull(linkedSpan.spanContext)
             assertTrue(embraceSpan.addLink(spanContext, linkAttrs))
-            assertTrue(embraceSpan.addSystemLink(spanContext, LinkType.PreviousSession))
+            assertTrue(embraceSpan.addSystemLink(spanContext, LinkType.PreviousSessionPart))
 
             val snapshot = checkNotNull(embraceSpan.snapshot())
 
@@ -501,7 +501,7 @@ internal class EmbraceSpanImplTest {
             // TODO: fix links to be returned in insertion order
             val snapshotLinks = checkNotNull(snapshot.links)
             snapshotLinks[1].validateLinkToSpan(checkNotNull(value = linkedSpan.snapshot()), expectedAttributes = linkAttrs)
-            snapshotLinks[0].validateSystemLink(checkNotNull(linkedSpan.snapshot()), LinkType.PreviousSession)
+            snapshotLinks[0].validateSystemLink(checkNotNull(linkedSpan.snapshot()), LinkType.PreviousSessionPart)
         }
     }
 

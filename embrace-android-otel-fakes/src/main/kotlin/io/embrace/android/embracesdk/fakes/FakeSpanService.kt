@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
+import io.embrace.android.embracesdk.internal.otel.spans.createContext
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -13,6 +14,8 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 class FakeSpanService : SpanService {
 
     val createdSpans: MutableList<FakeEmbraceSdkSpan> = mutableListOf()
+
+    private val knownSpans: MutableMap<String, EmbraceSpan> = mutableMapOf()
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
     }
@@ -28,7 +31,7 @@ class FakeSpanService : SpanService {
         autoTerminationMode: AutoTerminationMode,
     ): EmbraceSdkSpan = FakeEmbraceSdkSpan(
         name = name,
-        parentContext = fakeOpenTelemetry().context.root(),
+        parentContext = (parent as? EmbraceSdkSpan)?.createContext(fakeOpenTelemetry()) ?: fakeOpenTelemetry().context.root(),
         type = type,
         internal = internal,
         private = private,
@@ -98,5 +101,9 @@ class FakeSpanService : SpanService {
         return true
     }
 
-    override fun getSpan(spanId: String): EmbraceSpan? = null
+    override fun getSpan(spanId: String): EmbraceSpan? = knownSpans[spanId]
+
+    fun addKnownSpan(span: EmbraceSpan) {
+        knownSpans[checkNotNull(span.spanId)] = span
+    }
 }

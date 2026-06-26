@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeSpanService
+import io.embrace.android.embracesdk.fakes.getTraceIdFromTraceparent
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanEventImpl
@@ -171,8 +172,48 @@ internal class TelemetryDestinationImplTest {
         val span = impl.startSpanCapture(SchemaType.Breadcrumb("Whoops"), 5)
         assertNotNull(span)
         verifyAndResetSessionUpdate()
-        span?.stop()
+        span.stop()
         verifyAndResetSessionUpdate()
+    }
+
+    @Test
+    fun `span started without a parent is a root span`() {
+        impl.startSpanCapture(
+            schemaType = SchemaType.NetworkRequest(emptyMap()),
+            startTimeMs = 5,
+        )
+
+        assertNull(spanService.createdSpans.single().parent)
+    }
+
+    @Test
+    fun `span started with a resolvable parent shares the same trace id with that parent`() {
+        val parentSpan = FakeEmbraceSdkSpan.started()
+        val parentSpanId = checkNotNull(parentSpan.spanId)
+        spanService.addKnownSpan(parentSpan)
+
+        val token = impl.startSpanCapture(
+            schemaType = SchemaType.NetworkRequest(emptyMap()),
+            startTimeMs = 5,
+            parentSpanId = parentSpanId,
+        )
+
+        val childTraceId = checkNotNull(token.asW3cTraceparent()).getTraceIdFromTraceparent()
+        assertEquals(parentSpan.traceId, childTraceId)
+    }
+
+    @Test
+    fun `span started without a parent that can be resolved has no parent`() {
+        val parentSpan = FakeEmbraceSdkSpan.started()
+        val parentSpanId = checkNotNull(parentSpan.spanId)
+
+        impl.startSpanCapture(
+            schemaType = SchemaType.NetworkRequest(emptyMap()),
+            startTimeMs = 5,
+            parentSpanId = parentSpanId,
+        )
+
+        assertNull(spanService.createdSpans.single().parent)
     }
 
     @Test

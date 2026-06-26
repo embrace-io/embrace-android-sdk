@@ -9,6 +9,7 @@ include(
     ":embrace-android-envelope",
     ":embrace-android-infra",
     ":embrace-android-utils",
+    ":embrace-android-instrumentation-vitals",
     ":embrace-android-instrumentation-api",
     ":embrace-android-instrumentation-api-fakes",
     ":embrace-android-instrumentation-schema",

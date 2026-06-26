@@ -121,6 +121,12 @@ data class RemoteConfig(
     @SerialName("pct_screen_tracking_enabled")
     val pctNavigationStateCaptureEnabled: Float? = null,
 
+    /**
+     * Percentage of devices for which the smoothness vital is captured.
+     */
+    @SerialName("pct_smoothness_enabled")
+    val pctSmoothnessEnabled: Float? = null,
+
     @SerialName("user_session")
     val userSession: UserSessionRemoteConfig? = null,
 )

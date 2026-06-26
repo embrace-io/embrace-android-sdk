@@ -41,6 +41,7 @@ internal class AutoDataCaptureBehaviorImplTest {
             assertTrue(isStateCaptureEnabled())
             assertFalse(isNetworkCallbackConnectivityServiceEnabled())
             assertTrue(isNavigationStateCaptureEnabled())
+            assertFalse(isSmoothnessCaptureEnabled())
         }
     }
 
@@ -189,6 +190,29 @@ internal class AutoDataCaptureBehaviorImplTest {
             createBehavior(
                 remote = RemoteConfig(pctNavigationStateCaptureEnabled = 0.0f)
             ).isNavigationStateCaptureEnabled()
+        )
+    }
+
+    @Test
+    fun `smoothness capture disabled when remote field null`() {
+        assertFalse(createAutoDataCaptureBehavior(remoteCfg = null).isSmoothnessCaptureEnabled())
+    }
+
+    @Test
+    fun `smoothness capture enabled when pct is 100`() {
+        assertTrue(
+            createBehavior(
+                remote = RemoteConfig(pctSmoothnessEnabled = 100.0f)
+            ).isSmoothnessCaptureEnabled()
+        )
+    }
+
+    @Test
+    fun `smoothness capture disabled when pct is 0`() {
+        assertFalse(
+            createBehavior(
+                remote = RemoteConfig(pctSmoothnessEnabled = 0.0f)
+            ).isSmoothnessCaptureEnabled()
         )
     }
 

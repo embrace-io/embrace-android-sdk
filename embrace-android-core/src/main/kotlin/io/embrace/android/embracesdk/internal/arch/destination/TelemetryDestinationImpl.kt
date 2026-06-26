@@ -82,6 +82,7 @@ class TelemetryDestinationImpl(
         schemaType: SchemaType,
         startTimeMs: Long,
         name: String,
+        parentSpanId: String?,
         autoTerminate: Boolean,
         private: Boolean,
     ): SpanToken {
@@ -89,8 +90,17 @@ class TelemetryDestinationImpl(
             autoTerminate -> AutoTerminationMode.ON_BACKGROUND
             else -> AutoTerminationMode.NONE
         }
+
+        val parent = if (parentSpanId != null) {
+            // Only allow parents created by this SDK instance to parent a new span
+            spanService.getSpan(parentSpanId)
+        } else {
+            null
+        }
+
         val span = spanService.startSpan(
             name = name,
+            parent = parent,
             startTimeMs = startTimeMs,
             autoTerminationMode = mode,
             private = private,

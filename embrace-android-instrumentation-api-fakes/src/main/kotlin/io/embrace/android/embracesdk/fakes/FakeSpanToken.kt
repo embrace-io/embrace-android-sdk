@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.utils.UuidSource
 
 class FakeSpanToken(
     val name: String,
@@ -18,12 +19,17 @@ class FakeSpanToken(
     val private: Boolean,
     initialAttrs: Map<String, String>,
     val events: MutableList<SpanEvent>,
+    uuidSource: UuidSource,
 ) : SpanToken {
 
     val attributes: Map<String, String>
         get() = attrs.toMap()
 
     private val attrs: MutableMap<String, String> = initialAttrs.toMutableMap()
+
+    private val traceId: String = parent?.asW3cTraceparent()?.getTraceIdFromTraceparent() ?: uuidSource.createUuid().lowercase()
+
+    private val spanId: String = uuidSource.createUuid().lowercase().take(16)
 
     override fun stop(endTimeMs: Long?, errorCode: ErrorCodeAttribute?) {
         this.endTimeMs = endTimeMs ?: 0
@@ -44,7 +50,7 @@ class FakeSpanToken(
 
     override fun getStartTimeMs(): Long = startTimeMs
 
-    override fun asW3cTraceparent(): String = hashCode().toString()
+    override fun asW3cTraceparent(): String = "00-$traceId-$spanId-01"
 
     override fun addSystemEvent(
         name: String,
@@ -54,3 +60,5 @@ class FakeSpanToken(
         events.add(SpanEventImpl(name, eventTimeMs.millisToNanos(), attributes))
     }
 }
+
+fun String.getTraceIdFromTraceparent() = split("-")[1]

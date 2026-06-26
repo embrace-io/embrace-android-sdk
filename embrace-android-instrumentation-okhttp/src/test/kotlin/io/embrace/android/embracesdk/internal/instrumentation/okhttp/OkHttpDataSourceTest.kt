@@ -34,6 +34,7 @@ import okhttp3.mockwebserver.MockWebServer
 import okio.Buffer
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -125,9 +126,9 @@ internal class OkHttpDataSourceTest {
         }
 
         val dataSource = OkHttpDataSource(
-            args,
-            { networkRequestDataSource },
-            { networkCaptureDataSource },
+            args = args,
+            networkRequestDataSourceProvider = { networkRequestDataSource },
+            networkCaptureDataSourceProvider = { networkCaptureDataSource },
         )
         val applicationInterceptor = EmbraceOkHttpInterceptor(InterceptorType.APPLICATION) { dataSource }
         val preNetworkInterceptorTestInterceptor = TestInspectionInterceptor(
@@ -459,6 +460,35 @@ internal class OkHttpDataSourceTest {
             assertNull(response.networkResponse?.request?.header(TRACEPARENT_HEADER))
             assertNull(span.attributes[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
             assertNull(span.attributes[EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY])
+        }
+    }
+
+    @Test
+    fun `network span start uses the span represented by the value of the traceparent header as its parent`() {
+        postRequestBuilder.header(TRACEPARENT_HEADER, "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01")
+        server.enqueue(createBaseMockResponse())
+        runPostRequest()
+        assertNetworkRequestReceived { span ->
+            assertNotNull(span.parent)
+        }
+    }
+
+    @Test
+    fun `network span start does not pass in a parent if the traceparent value is not in the right format`() {
+        postRequestBuilder.header(TRACEPARENT_HEADER, "fake-traceparent")
+        server.enqueue(createBaseMockResponse())
+        runPostRequest()
+        assertNetworkRequestReceived { span ->
+            assertNull(span.parent)
+        }
+    }
+
+    @Test
+    fun `network span start does not pass in a parent when there is no inbound traceparent`() {
+        server.enqueue(createBaseMockResponse())
+        runPostRequest()
+        assertNetworkRequestReceived { span ->
+            assertNull(span.parent)
         }
     }
 

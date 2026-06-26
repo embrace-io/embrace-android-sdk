@@ -72,6 +72,7 @@ internal class OkHttpDataSource(
                 url = getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request)),
                 httpMethod = request.method,
                 sdkClockStartTime = sdkClockStartTime,
+                traceparent = request.header(TRACEPARENT_HEADER_NAME),
             ),
         ) ?: return null
 

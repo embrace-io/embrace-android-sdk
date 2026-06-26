@@ -30,7 +30,7 @@ internal class HandlerMessageDrawDetectorTest {
         detector.registerFirstDrawCallback(
             activity = Robolectric.buildActivity(Activity::class.java).get(),
             drawBeginCallback = { beginCallbackInvoked = true },
-            drawCompleteCallback = { endCallbackInvoked = true }
+            drawCompleteCallback = { endCallbackInvoked = true },
         )
         assertTrue(beginCallbackInvoked)
         with(handler.messageQueue.single()) {

@@ -58,7 +58,7 @@ class EmbraceVariantConfigurationBuilder(
         override fun obtain(): EmbraceVariantConfig? =
             buildVariantConfig(
                 variantInfo = parameters.getVariantInfo().get(),
-                projectDirectory = parameters.getProjectDirectory().get()
+                projectDirectory = parameters.getProjectDirectory().get(),
             )
     }
 }

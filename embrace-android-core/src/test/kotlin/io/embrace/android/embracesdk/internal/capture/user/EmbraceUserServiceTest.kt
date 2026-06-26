@@ -21,7 +21,7 @@ internal class EmbraceUserServiceTest {
 
     private val extraPersonas = setOf(
         "payer",
-        "first_day"
+        "first_day",
     )
 
     private val userPersonas = setOf(
@@ -44,7 +44,7 @@ internal class EmbraceUserServiceTest {
             email = "test@example.com",
             name = "Mr Test",
             payer = true,
-            firstDay = true
+            firstDay = true,
         )
 
         // load user info
@@ -154,7 +154,7 @@ internal class EmbraceUserServiceTest {
                 "Persona_6",
                 "Persona_7",
             ),
-            personas.toList()
+            personas.toList(),
         )
     }
 

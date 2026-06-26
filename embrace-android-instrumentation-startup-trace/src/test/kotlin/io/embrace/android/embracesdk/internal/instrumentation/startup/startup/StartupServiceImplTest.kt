@@ -37,7 +37,7 @@ internal class StartupServiceImplTest {
             startTimeMs = startTimeMillis,
             endTimeMs = endTimeMillis,
             endState = AppState.BACKGROUND,
-            threadName = "main"
+            threadName = "main",
         )
         val currentSpans = destination.completedSpans()
         assertEquals(1, currentSpans.size)
@@ -59,7 +59,7 @@ internal class StartupServiceImplTest {
                 startTimeMs = 10,
                 endTimeMs = 20,
                 endState = AppState.BACKGROUND,
-                threadName = "main"
+                threadName = "main",
             )
         }
         assertEquals(1, destination.completedSpans().size)
@@ -68,7 +68,7 @@ internal class StartupServiceImplTest {
                 startTimeMs = 10,
                 endTimeMs = 20,
                 endState = AppState.BACKGROUND,
-                threadName = "main"
+                threadName = "main",
             )
         }
         assertEquals(1, destination.completedSpans().size)

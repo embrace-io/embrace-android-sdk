@@ -127,7 +127,7 @@ internal class NavControllerTrackerTest {
         assertTrue(
             errorLogger.internalErrorMessages.any {
                 it.msg == InternalErrorType.NavControllerTrackingFail.toString()
-            }
+            },
         )
     }
 

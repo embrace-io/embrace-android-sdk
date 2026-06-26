@@ -42,7 +42,7 @@ class NdkUploadTasksRegistrationTest {
     private val testVariantName = "variantName"
     private val testVariantConfig = VariantConfig(
         variantName = testVariantName,
-        embraceConfig = createEmbraceVariantConfig()
+        embraceConfig = createEmbraceVariantConfig(),
     )
     private val testAndroidCompactedVariantData = AndroidCompactedVariantData(
         name = testVariantName,
@@ -69,7 +69,7 @@ class NdkUploadTasksRegistrationTest {
         embraceExtension = project.extensions.create("embrace", EmbraceExtension::class.java)
         testBehavior = PluginBehaviorImpl(
             project,
-            embraceExtension
+            embraceExtension,
         )
         testRegistrationParams = RegistrationParams(
             project,
@@ -84,7 +84,7 @@ class NdkUploadTasksRegistrationTest {
     private fun registerTestTask(project: Project, taskName: String): TaskProvider<DefaultTask> =
         project.tasks.register(
             taskName,
-            DefaultTask::class.java
+            DefaultTask::class.java,
         )
 
     @Test
@@ -92,8 +92,8 @@ class NdkUploadTasksRegistrationTest {
         verifyNoUploadTasksRegistered(
             VariantConfig(
                 variantName = testVariantName,
-                embraceConfig = createEmbraceVariantConfig(ndkEnabled = false)
-            )
+                embraceConfig = createEmbraceVariantConfig(ndkEnabled = false),
+            ),
         )
     }
 
@@ -102,8 +102,8 @@ class NdkUploadTasksRegistrationTest {
         val registration = createNdkUploadTasksRegistration(
             variantConfig = VariantConfig(
                 variantName = testVariantName,
-                embraceConfig = createEmbraceVariantConfig(ndkEnabled = null)
-            )
+                embraceConfig = createEmbraceVariantConfig(ndkEnabled = null),
+            ),
         )
         registerTestTask(project, "merge${testAndroidCompactedVariantData.name.capitalizedString()}NativeLibs")
         registration.register(testRegistrationParams)
@@ -137,7 +137,7 @@ class NdkUploadTasksRegistrationTest {
 
         // Then an exception is thrown when trying to access architecturesDirectory
         val compressionTask = project.tasks.findByName(
-            "${CompressSharedObjectFilesTask.NAME}${testAndroidCompactedVariantData.name.capitalizedString()}"
+            "${CompressSharedObjectFilesTask.NAME}${testAndroidCompactedVariantData.name.capitalizedString()}",
         ) as CompressSharedObjectFilesTask
 
         val exception = assertThrows(MissingValueException::class.java) {
@@ -147,7 +147,7 @@ class NdkUploadTasksRegistrationTest {
         assertEquals(
             "Cannot query the value of task ':compressSharedObjectFilesVariantName' property" +
                 " 'architecturesDirectory' because it has no value available.",
-            exception.message
+            exception.message,
         )
     }
 
@@ -163,7 +163,7 @@ class NdkUploadTasksRegistrationTest {
 
         // Then an exception is thrown when trying to access architecturesDirectory
         val compressionTask = project.tasks.findByName(
-            "${CompressSharedObjectFilesTask.NAME}$variantName"
+            "${CompressSharedObjectFilesTask.NAME}$variantName",
         ) as CompressSharedObjectFilesTask
 
         val exception = assertThrows(PropertyQueryException::class.java) {
@@ -177,7 +177,7 @@ class NdkUploadTasksRegistrationTest {
         variantConfig: VariantConfig? = null,
     ) = NdkUploadTasksRegistration(
         behavior ?: testBehavior,
-        variantConfig ?: testVariantConfig
+        variantConfig ?: testVariantConfig,
     )
 
     private fun createEmbraceVariantConfig(
@@ -191,7 +191,7 @@ class NdkUploadTasksRegistrationTest {
         apiToken = apiToken,
         ndkEnabled = ndkEnabled,
         sdkConfig = sdkConfig,
-        unityConfig = unityConfig
+        unityConfig = unityConfig,
     )
 
     private fun assertTaskNotRegistered(taskName: String, variantName: String) {

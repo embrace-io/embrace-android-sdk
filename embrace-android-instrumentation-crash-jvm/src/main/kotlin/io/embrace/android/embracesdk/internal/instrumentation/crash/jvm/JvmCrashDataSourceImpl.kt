@@ -29,7 +29,7 @@ class JvmCrashDataSourceImpl(
     DataSourceImpl(
         args = args,
         limitStrategy = NoopLimitStrategy,
-        instrumentationName = "jvm_crash_data_source"
+        instrumentationName = "jvm_crash_data_source",
     ) {
 
     private val serializer: PlatformSerializer = args.serializer
@@ -59,12 +59,12 @@ class JvmCrashDataSourceImpl(
                     val crashException = LegacyExceptionInfo.ofThrowable(exception)
                     setAttribute(
                         ExceptionAttributes.EXCEPTION_TYPE,
-                        crashException.name
+                        crashException.name,
                     )
                     setAttribute(
                         ExceptionAttributes.EXCEPTION_MESSAGE,
                         crashException.message
-                            ?: ""
+                            ?: "",
                     )
                     setAttribute(
                         ExceptionAttributes.EXCEPTION_STACKTRACE,
@@ -78,7 +78,7 @@ class JvmCrashDataSourceImpl(
                         EmbType.System.Crash.embAndroidCrashExceptionCause,
                         encodeToUTF8String(
                             getExceptionCause(exception),
-                        )
+                        ),
                     )
                     setAttribute(
                         EmbAndroidAttributes.EMB_ANDROID_THREADS,

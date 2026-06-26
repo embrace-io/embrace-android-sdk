@@ -11,7 +11,7 @@ import org.gradle.api.provider.Property
 
 internal class TestVisitorFactoryImpl(
     override val instrumentationContext: InstrumentationContext = TestInstrumentationContext(),
-    params: BytecodeInstrumentationParams = TestBytecodeInstrumentationParams()
+    params: BytecodeInstrumentationParams = TestBytecodeInstrumentationParams(),
 ) : EmbraceClassVisitorFactory() {
     override val parameters: Property<BytecodeInstrumentationParams> =
         DefaultProperty(PropertyHost.NO_OP, BytecodeInstrumentationParams::class.javaObjectType).convention(params)

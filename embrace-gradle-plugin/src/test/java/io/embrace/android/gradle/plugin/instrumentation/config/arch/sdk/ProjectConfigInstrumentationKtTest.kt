@@ -19,7 +19,7 @@ class ProjectConfigInstrumentationKtTest {
             null,
             null,
             null,
-        )
+        ),
     )
 
     private val variantOutputInfo = VariantOutputInfo("", "", "")
@@ -28,7 +28,7 @@ class ProjectConfigInstrumentationKtTest {
         ConfigMethod("getAppFramework", "()Ljava/lang/String;", "native"),
         ConfigMethod("getBuildId", "()Ljava/lang/String;", "my_id"),
         ConfigMethod("getBuildType", "()Ljava/lang/String;", "build_type"),
-        ConfigMethod("getBuildFlavor", "()Ljava/lang/String;", "build_flavor")
+        ConfigMethod("getBuildFlavor", "()Ljava/lang/String;", "build_flavor"),
     )
 
     @Test
@@ -50,14 +50,14 @@ class ProjectConfigInstrumentationKtTest {
                     apiToken = null,
                     ndkEnabled = null,
                     sdkConfig = SdkLocalConfig(appFramework = "native"),
-                    unityConfig = null
+                    unityConfig = null,
                 ),
                 buildId = "my_id",
                 buildType = "build_type",
-                buildFlavor = "build_flavor"
+                buildFlavor = "build_flavor",
             ),
             reactNativeBundleId = "a1B2c3",
-            variantOutputInfo
+            variantOutputInfo,
         )
         verifyConfigMethodVisitor(instrumentation, ConfigMethod("getAppId", "()Ljava/lang/String;", "abcde"))
         methods.forEach { method ->

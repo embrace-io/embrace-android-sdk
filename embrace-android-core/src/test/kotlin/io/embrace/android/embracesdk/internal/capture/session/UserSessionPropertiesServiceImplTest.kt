@@ -28,7 +28,7 @@ internal class UserSessionPropertiesServiceImplTest {
             FakeConfigService(
                 sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
                     FakeInstrumentedConfig(redaction = FakeRedactionConfig(sensitiveKeys = listOf("password"))),
-                )
+                ),
             )
         destination = FakeTelemetryDestination()
         telemetryService = FakeTelemetryService()
@@ -36,7 +36,7 @@ internal class UserSessionPropertiesServiceImplTest {
             FakeKeyValueStore(),
             fakeConfigService,
             destination,
-            telemetryService
+            telemetryService,
         )
         propState = emptyMap()
         service.addChangeListener { propState = it }

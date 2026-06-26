@@ -54,7 +54,7 @@ internal class ModuleInitBootstrapperTest {
                 FakeInstrumentationModule(application, logger = logger).apply {
                     registry = instrumentationRegistry
                 }
-            }
+            },
         )
     }
 
@@ -64,7 +64,7 @@ internal class ModuleInitBootstrapperTest {
             assertTrue(
                 moduleInitBootstrapper.init(
                     context = context,
-                )
+                ),
             )
             assertNotNull(initModule)
             assertNotNull(openTelemetryModule)
@@ -82,12 +82,12 @@ internal class ModuleInitBootstrapperTest {
         assertTrue(
             moduleInitBootstrapper.init(
                 context = context,
-            )
+            ),
         )
         assertFalse(
             moduleInitBootstrapper.init(
                 context = context,
-            )
+            ),
         )
     }
 
@@ -96,7 +96,7 @@ internal class ModuleInitBootstrapperTest {
         assertTrue(
             moduleInitBootstrapper.init(
                 context = context,
-            )
+            ),
         )
     }
 
@@ -119,7 +119,7 @@ internal class ModuleInitBootstrapperTest {
             eventAttributes = null,
         )
         assertFalse(
-            preLogger.logs.single().attributes.containsKey(EmbSessionAttributes.EMB_STATE)
+            preLogger.logs.single().attributes.containsKey(EmbSessionAttributes.EMB_STATE),
         )
 
         moduleInitBootstrapper.postInit()
@@ -138,7 +138,7 @@ internal class ModuleInitBootstrapperTest {
             eventAttributes = null,
         )
         assertTrue(
-            postLogger.logs.single().attributes.containsKey(EmbSessionAttributes.EMB_STATE)
+            postLogger.logs.single().attributes.containsKey(EmbSessionAttributes.EMB_STATE),
         )
     }
 
@@ -157,7 +157,7 @@ internal class ModuleInitBootstrapperTest {
             moduleInitBootstrapper.logModule.logOrchestrator,
             moduleInitBootstrapper.userSessionOrchestrationModule.sessionOrchestrator,
             moduleInitBootstrapper.featureModule.crashMarker,
-            moduleInitBootstrapper.deliveryModule?.payloadStore
+            moduleInitBootstrapper.deliveryModule?.payloadStore,
         )
         assertEquals(expected, handlers)
     }

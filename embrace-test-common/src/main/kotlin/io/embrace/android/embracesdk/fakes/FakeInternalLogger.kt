@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 class FakeInternalLogger(
     var throwOnInternalError: Boolean = true,
     override var errorHandlerProvider: Provider<InternalErrorHandler?> = { null },
-    val ignoredErrors: List<InternalErrorType> = emptyList()
+    val ignoredErrors: List<InternalErrorType> = emptyList(),
 ) : InternalLogger {
 
     data class LogMessage(

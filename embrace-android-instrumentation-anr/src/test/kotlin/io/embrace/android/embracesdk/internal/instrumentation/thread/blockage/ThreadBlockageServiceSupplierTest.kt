@@ -20,7 +20,7 @@ internal class ThreadBlockageServiceSupplierTest {
         val service = createThreadBlockageService(
             FakeInstrumentationArgs(
                 application,
-                configService = FakeConfigService()
+                configService = FakeConfigService(),
             ),
         )
         assertNotNull(service)
@@ -33,8 +33,8 @@ internal class ThreadBlockageServiceSupplierTest {
             FakeInstrumentationArgs(
                 application,
                 configService = FakeConfigService(
-                    autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(threadBlockageServiceEnabled = false)
-                )
+                    autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(threadBlockageServiceEnabled = false),
+                ),
             ),
         )
         assertNull(service)

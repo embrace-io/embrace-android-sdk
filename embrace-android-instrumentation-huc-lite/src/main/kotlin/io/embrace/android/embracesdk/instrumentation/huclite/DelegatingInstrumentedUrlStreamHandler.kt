@@ -25,7 +25,7 @@ internal class DelegatingInstrumentedUrlStreamHandler(
                     delegateHandler.javaClass,
                     "openConnection",
                     URL::class.java,
-                    Proxy::class.java
+                    Proxy::class.java,
                 )
             method.isAccessible = true
             return wrapInstrumentedConnection(method.invoke(delegateHandler, url, proxy) as URLConnection?)
@@ -41,7 +41,7 @@ internal class DelegatingInstrumentedUrlStreamHandler(
                     delegateHandler,
                     delegateHandler.javaClass,
                     "openConnection",
-                    URL::class.java
+                    URL::class.java,
                 )
             method.isAccessible = true
             return wrapInstrumentedConnection(method.invoke(delegateHandler, url) as URLConnection?)

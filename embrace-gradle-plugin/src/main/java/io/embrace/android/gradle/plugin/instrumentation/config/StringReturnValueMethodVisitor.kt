@@ -9,7 +9,7 @@ import org.objectweb.asm.Opcodes
 class StringReturnValueMethodVisitor(
     val replacedValue: String,
     api: Int,
-    nextVisitor: MethodVisitor
+    nextVisitor: MethodVisitor,
 ) : MethodVisitor(api, nextVisitor) {
 
     override fun visitInsn(opcode: Int) {

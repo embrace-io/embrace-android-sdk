@@ -8,7 +8,8 @@ class PushNotificationBreadcrumb {
 
         // this is a notification + data
         NOTIFICATION_AND_DATA("notif-data"),
-        UNKNOWN("unknown");
+        UNKNOWN("unknown"),
+        ;
 
         companion object Builder {
             fun notificationTypeFor(hasData: Boolean, hasNotification: Boolean): NotificationType {

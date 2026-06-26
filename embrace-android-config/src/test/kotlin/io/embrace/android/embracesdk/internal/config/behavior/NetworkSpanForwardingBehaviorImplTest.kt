@@ -26,11 +26,11 @@ internal class NetworkSpanForwardingBehaviorImplTest {
                 TraceparentInjectionBehaviorImpl(
                     thresholdCheck = thresholdCheck,
                     local = local,
-                    remote = null
+                    remote = null,
                 ),
                 thresholdCheck = thresholdCheck,
                 local = local,
-                remote = null
+                remote = null,
             )
         assertFalse(behavior.isNetworkSpanForwardingEnabled())
         assertFalse(behavior.shouldForwardForDomain("anything.com"))
@@ -67,44 +67,44 @@ internal class NetworkSpanForwardingBehaviorImplTest {
         assertTrue(
             behavior(
                 allowedDomains = null,
-                localNsfEnabled = true
-            ).shouldForwardForDomain("test.com")
+                localNsfEnabled = true,
+            ).shouldForwardForDomain("test.com"),
         )
 
         assertFalse(
             behavior(
                 localInjectionEnabled = false,
                 allowedDomains = null,
-                localNsfEnabled = true
-            ).shouldForwardForDomain("test.com")
+                localNsfEnabled = true,
+            ).shouldForwardForDomain("test.com"),
         )
 
         assertFalse(
             behavior(
                 allowedDomains = emptyList(),
-                localNsfEnabled = true
-            ).shouldForwardForDomain("test.com")
+                localNsfEnabled = true,
+            ).shouldForwardForDomain("test.com"),
         )
 
         assertTrue(
             behavior(
                 allowedDomains = listOf("test.com"),
-                localNsfEnabled = true
-            ).shouldForwardForDomain("test.com")
+                localNsfEnabled = true,
+            ).shouldForwardForDomain("test.com"),
         )
 
         assertTrue(
             behavior(
                 allowedDomains = listOf(".test.com"),
-                localNsfEnabled = true
-            ).shouldForwardForDomain("foo.test.com")
+                localNsfEnabled = true,
+            ).shouldForwardForDomain("foo.test.com"),
         )
 
         assertFalse(
             behavior(
                 allowedDomains = listOf("test.com"),
-                localNsfEnabled = true
-            ).shouldForwardForDomain("foo.com")
+                localNsfEnabled = true,
+            ).shouldForwardForDomain("foo.com"),
         )
     }
 
@@ -158,11 +158,11 @@ internal class NetworkSpanForwardingBehaviorImplTest {
             TraceparentInjectionBehaviorImpl(
                 thresholdCheck = thresholdCheck,
                 local = local,
-                remote = remote
+                remote = remote,
             ),
             thresholdCheck = thresholdCheck,
             local = local,
-            remote = remote
+            remote = remote,
         )
     }
 }

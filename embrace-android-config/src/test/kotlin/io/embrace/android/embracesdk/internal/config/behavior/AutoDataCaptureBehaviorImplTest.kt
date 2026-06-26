@@ -67,15 +67,15 @@ internal class AutoDataCaptureBehaviorImplTest {
         val remoteComposeKillSwitchOff = RemoteConfig(
             killSwitchConfig = KillSwitchRemoteConfig(
                 sigHandlerDetection = false,
-                jetpackCompose = true
-            )
+                jetpackCompose = true,
+            ),
         )
 
         // Jetpack Compose enabled remotely
         with(
             createAutoDataCaptureBehavior(
-                remoteCfg = remoteComposeKillSwitchOff
-            )
+                remoteCfg = remoteComposeKillSwitchOff,
+            ),
         ) {
             assertTrue(isComposeClickCaptureEnabled())
         }
@@ -86,7 +86,7 @@ internal class AutoDataCaptureBehaviorImplTest {
         val behavior = createBehavior(
             localUiLoadTracingEnabled = true,
             localUiLoadTracingTraceAllEnabled = true,
-            remote = remote.copy(uiLoadInstrumentationEnabled = false)
+            remote = remote.copy(uiLoadInstrumentationEnabled = false),
         )
 
         assertFalse(behavior.isUiLoadTracingEnabled())
@@ -98,7 +98,7 @@ internal class AutoDataCaptureBehaviorImplTest {
         val behavior = createBehavior(
             localUiLoadTracingEnabled = false,
             localUiLoadTracingTraceAllEnabled = false,
-            remote = remote.copy(uiLoadInstrumentationEnabled = true)
+            remote = remote.copy(uiLoadInstrumentationEnabled = true),
         )
 
         assertFalse(behavior.isUiLoadTracingEnabled())
@@ -110,7 +110,7 @@ internal class AutoDataCaptureBehaviorImplTest {
         val behavior = createBehavior(
             localUiLoadTracingEnabled = true,
             localUiLoadTracingTraceAllEnabled = false,
-            remote = remote.copy(uiLoadInstrumentationEnabled = true)
+            remote = remote.copy(uiLoadInstrumentationEnabled = true),
         )
 
         assertTrue(behavior.isUiLoadTracingEnabled())
@@ -122,7 +122,7 @@ internal class AutoDataCaptureBehaviorImplTest {
         val behavior = createBehavior(
             localUiLoadTracingEnabled = true,
             localUiLoadTracingTraceAllEnabled = false,
-            remote = remote.copy(uiLoadInstrumentationEnabled = true)
+            remote = remote.copy(uiLoadInstrumentationEnabled = true),
         )
 
         assertTrue(behavior.isUiLoadTracingEnabled())
@@ -134,7 +134,7 @@ internal class AutoDataCaptureBehaviorImplTest {
         val behavior = createBehavior(
             localUiLoadTracingEnabled = true,
             localUiLoadTracingTraceAllEnabled = true,
-            remote = remote.copy(pctStateCaptureEnabledV2 = 100.0f)
+            remote = remote.copy(pctStateCaptureEnabledV2 = 100.0f),
         )
 
         assertTrue(behavior.isStateCaptureEnabled())
@@ -145,7 +145,7 @@ internal class AutoDataCaptureBehaviorImplTest {
         val behavior = createBehavior(
             localUiLoadTracingEnabled = true,
             localUiLoadTracingTraceAllEnabled = true,
-            remote = remote.copy(pctStateCaptureEnabledV2 = 0.0f)
+            remote = remote.copy(pctStateCaptureEnabledV2 = 0.0f),
         )
 
         assertFalse(behavior.isStateCaptureEnabled())
@@ -160,8 +160,8 @@ internal class AutoDataCaptureBehaviorImplTest {
     fun `isNetworkCallbackConnectivityServiceEnabled true when pct is 100`() {
         assertTrue(
             createAutoDataCaptureBehavior(
-                remoteCfg = RemoteConfig(pctNetworkCallbackConnectivityServiceEnabled = 100.0f)
-            ).isNetworkCallbackConnectivityServiceEnabled()
+                remoteCfg = RemoteConfig(pctNetworkCallbackConnectivityServiceEnabled = 100.0f),
+            ).isNetworkCallbackConnectivityServiceEnabled(),
         )
     }
 
@@ -169,8 +169,8 @@ internal class AutoDataCaptureBehaviorImplTest {
     fun `isNetworkCallbackConnectivityServiceEnabled false when pct is 0`() {
         assertFalse(
             createAutoDataCaptureBehavior(
-                remoteCfg = RemoteConfig(pctNetworkCallbackConnectivityServiceEnabled = 0.0f)
-            ).isNetworkCallbackConnectivityServiceEnabled()
+                remoteCfg = RemoteConfig(pctNetworkCallbackConnectivityServiceEnabled = 0.0f),
+            ).isNetworkCallbackConnectivityServiceEnabled(),
         )
     }
 
@@ -178,8 +178,8 @@ internal class AutoDataCaptureBehaviorImplTest {
     fun `navigation state capture enabled when pct is 100`() {
         assertTrue(
             createBehavior(
-                remote = RemoteConfig(pctNavigationStateCaptureEnabled = 100.0f)
-            ).isNavigationStateCaptureEnabled()
+                remote = RemoteConfig(pctNavigationStateCaptureEnabled = 100.0f),
+            ).isNavigationStateCaptureEnabled(),
         )
     }
 
@@ -187,8 +187,8 @@ internal class AutoDataCaptureBehaviorImplTest {
     fun `navigation state capture disabled when pct is 0`() {
         assertFalse(
             createBehavior(
-                remote = RemoteConfig(pctNavigationStateCaptureEnabled = 0.0f)
-            ).isNavigationStateCaptureEnabled()
+                remote = RemoteConfig(pctNavigationStateCaptureEnabled = 0.0f),
+            ).isNavigationStateCaptureEnabled(),
         )
     }
 
@@ -202,8 +202,8 @@ internal class AutoDataCaptureBehaviorImplTest {
             enabledFeatures = FakeEnabledFeatureConfig(
                 uiLoadTracingTraceAll = localUiLoadTracingTraceAllEnabled,
                 uiLoadTracingEnabled = localUiLoadTracingEnabled,
-            )
+            ),
         ),
-        remote = remote
+        remote = remote,
     )
 }

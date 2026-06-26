@@ -52,7 +52,7 @@ internal class NetworkCallbackConnectivityService(
                             updateNetwork(defaultNetwork)
                             updateStatus(
                                 updatedNetwork = defaultNetwork,
-                                networkCapabilities = connectivityManager.getNetworkCapabilities(defaultNetwork)
+                                networkCapabilities = connectivityManager.getNetworkCapabilities(defaultNetwork),
                             )
                         }
                     }

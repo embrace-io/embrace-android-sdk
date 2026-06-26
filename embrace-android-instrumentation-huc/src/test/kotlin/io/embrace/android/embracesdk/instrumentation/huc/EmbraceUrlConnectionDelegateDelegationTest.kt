@@ -24,7 +24,7 @@ internal class EmbraceUrlConnectionDelegateDelegationTest {
         connectionDelegate = EmbraceUrlConnectionDelegate<HttpsURLConnection>(
             mockConnection,
             true,
-            FakeInternalNetworkApi()
+            FakeInternalNetworkApi(),
         )
     }
 

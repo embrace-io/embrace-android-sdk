@@ -17,5 +17,5 @@ public enum class LastRunEndState(public val value: Int) {
     /**
      * The last run did not result in a crash.
      */
-    CLEAN_EXIT(2)
+    CLEAN_EXIT(2),
 }

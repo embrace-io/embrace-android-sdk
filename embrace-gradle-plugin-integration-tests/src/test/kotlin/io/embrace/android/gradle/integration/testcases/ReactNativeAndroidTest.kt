@@ -29,7 +29,7 @@ class ReactNativeAndroidTest {
         "libjsi.so",
         "libnative-filters.so",
         "libnative-imagetranscoder.so",
-        "libreactnative.so"
+        "libreactnative.so",
     )
 
     private val defaultExpectedArchs = listOf("x86_64", "x86", "armeabi-v7a", "arm64-v8a")
@@ -55,7 +55,7 @@ class ReactNativeAndroidTest {
                 verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry, testMatrix = TestMatrix.MiddleVersion)
                 verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(handshakeLibs, handshakeArchs, defaultExpectedVariants)
-            }
+            },
         )
     }
 
@@ -72,7 +72,7 @@ class ReactNativeAndroidTest {
             },
             assertions = { projectDir ->
                 verifyAsmInjection(File(projectDir, "app"), "27D4D89A18B0426A47151D4888D4E40A")
-            }
+            },
         )
     }
 
@@ -89,7 +89,7 @@ class ReactNativeAndroidTest {
             assertions = { projectDir ->
                 verifyNoUploads()
                 verifyAsmInjection(projectDir, null)
-            }
+            },
         )
     }
 
@@ -115,7 +115,7 @@ class ReactNativeAndroidTest {
                 verifyNoHandshakes()
                 verifyNoUploads()
                 verifyJvmMappingRequestsSent(0)
-            }
+            },
         )
     }
 
@@ -137,13 +137,13 @@ class ReactNativeAndroidTest {
         // Read and parse the smali file containing the injected symbols
         val smaliFile = SmaliConfigReader().readSmaliFiles(
             buildDir,
-            listOf("/io/embrace/android/embracesdk/internal/config/instrumented/ProjectConfigImpl")
+            listOf("/io/embrace/android/embracesdk/internal/config/instrumented/ProjectConfigImpl"),
         ).first()
 
         // Get the return value of the getBase64SharedObjectFilesMap method
         val method = SmaliParser().parse(
             smaliFile,
-            listOf(SmaliMethod("getReactNativeBundleId()Ljava/lang/String;"))
+            listOf(SmaliMethod("getReactNativeBundleId()Ljava/lang/String;")),
         ).methods.first()
 
         assertEquals(expectedBundleId, method.returnValue)

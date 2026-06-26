@@ -9,10 +9,10 @@ class HucLiteInstrumentationProvider : InstrumentationProvider {
         return DataSourceState(
             factory = {
                 HucLiteDataSource(
-                    args = args
+                    args = args,
                 )
             },
-            configGate = args.configService.networkBehavior::isHucLiteInstrumentationEnabled
+            configGate = args.configService.networkBehavior::isHucLiteInstrumentationEnabled,
         )
     }
 }

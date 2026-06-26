@@ -40,7 +40,7 @@ class EmbraceSpanService(
                         canStartNewSpan = canStartNewSpan,
                         initCallback = initCallback,
                         tracer = tracerSupplier(),
-                        openTelemetry = openTelemetrySupplier()
+                        openTelemetry = openTelemetrySupplier(),
                     )
                     realSpansService.initializeService(sdkInitStartTimeMs)
                     if (realSpansService.initialized()) {
@@ -68,7 +68,7 @@ class EmbraceSpanService(
             type = type,
             internal = internal,
             private = private,
-            autoTerminationMode = autoTerminationMode
+            autoTerminationMode = autoTerminationMode,
         )
 
     override fun createSpan(otelSpanStartArgs: OtelSpanStartArgs): EmbraceSdkSpan = currentDelegate.createSpan(otelSpanStartArgs)
@@ -92,7 +92,7 @@ class EmbraceSpanService(
         attributes = attributes,
         events = events,
         autoTerminationMode = autoTerminationMode,
-        code = code
+        code = code,
     )
 
     override fun recordCompletedSpan(
@@ -116,7 +116,7 @@ class EmbraceSpanService(
         private = private,
         attributes = attributes,
         events = events,
-        errorCode = errorCode
+        errorCode = errorCode,
     )
 
     override fun getSpan(spanId: String): EmbraceSpan? = currentDelegate.getSpan(spanId = spanId)

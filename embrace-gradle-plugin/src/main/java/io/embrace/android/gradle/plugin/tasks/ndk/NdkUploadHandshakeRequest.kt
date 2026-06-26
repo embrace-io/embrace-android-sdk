@@ -13,7 +13,7 @@ data class NdkUploadHandshakeRequest(
     @Json(name = "variant")
     val variant: String?,
     @Json(name = "archs")
-    val archSymbols: Map<String, Map<String, String>>
+    val archSymbols: Map<String, Map<String, String>>,
 ) : Serializable {
 
     private companion object {

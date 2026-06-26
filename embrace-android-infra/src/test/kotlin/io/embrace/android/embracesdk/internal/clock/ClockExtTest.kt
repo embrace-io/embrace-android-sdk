@@ -22,7 +22,7 @@ internal class ClockExtTest {
             validateOffset(
                 clockDrift = clockDrift,
                 driftDuringRequest = 0L,
-                expectedOffset = clockDrift
+                expectedOffset = clockDrift,
             )
         }
     }
@@ -42,7 +42,7 @@ internal class ClockExtTest {
                     } else {
                         // clock drift should tick over if the extra drift increases the absolute magnitude of an existing drift
                         clockDrift + extraDrift
-                    }
+                    },
                 )
             }
         }
@@ -57,7 +57,7 @@ internal class ClockExtTest {
                 validateOffset(
                     clockDrift = clockDrift,
                     driftDuringRequest = extraDrift,
-                    expectedOffset = 0L
+                    expectedOffset = 0L,
                 )
             }
         }
@@ -75,13 +75,13 @@ internal class ClockExtTest {
             "For clockDrift $clockDrift and driftDuringRequest $driftDuringRequest, " +
                 "expectedOffset $expectedOffset and calculatedOffset $calculatedOffset",
             0,
-            expectedOffset + calculatedOffset
+            expectedOffset + calculatedOffset,
         )
     }
 
     private class DriftClock(
         private val baseClock: Clock,
-        var action: () -> Long = { 0L }
+        var action: () -> Long = { 0L },
     ) : Clock {
         override fun now(): Long = baseClock.now() + action()
     }

@@ -17,7 +17,7 @@ class ViewDataSource(
 ) : DataSourceImpl(
     args,
     UpToLimitStrategy { args.configService.breadcrumbBehavior.getFragmentBreadcrumbLimit() },
-    "view_data_source"
+    "view_data_source",
 ),
     Application.ActivityLifecycleCallbacks {
 

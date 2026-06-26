@@ -25,7 +25,7 @@ internal fun mapIntervalToSpan(interval: ThreadBlockageInterval, clock: Clock, r
         endTimeNanos = (interval.endTime ?: clock.now()).millisToNanos(),
         status = Span.Status.UNSET,
         attributes = attrs,
-        events = events
+        events = events,
     )
 }
 
@@ -65,15 +65,15 @@ internal fun mapSampleToSpanEvent(sample: ThreadBlockageSample): SpanEvent {
             attrs.add(
                 Attribute(
                     ExceptionAttributes.EXCEPTION_STACKTRACE,
-                    lines.joinToString("\n")
-                )
+                    lines.joinToString("\n"),
+                ),
             )
         }
     }
     return SpanEvent(
         name = "perf.thread_blockage_sample",
         timestampNanos = sample.timestamp.millisToNanos(),
-        attributes = attrs
+        attributes = attrs,
     )
 }
 
@@ -92,5 +92,5 @@ internal fun SpanEvent.toArchSpanEvent(): io.embrace.android.embracesdk.internal
     SpanEventImpl(
         name ?: "",
         timestampNanos ?: 0,
-        attributes?.toEmbracePayload() ?: emptyMap()
+        attributes?.toEmbracePayload() ?: emptyMap(),
     )

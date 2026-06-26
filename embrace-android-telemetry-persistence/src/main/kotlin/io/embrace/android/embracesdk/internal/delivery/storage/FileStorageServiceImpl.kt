@@ -55,7 +55,7 @@ class FileStorageServiceImpl(
     ) {
         if (pruneStorage(
                 newPayload = metadata,
-                cutoffMs = clock.now() - maxAgeMs
+                cutoffMs = clock.now() - maxAgeMs,
             )
         ) {
             return
@@ -141,7 +141,7 @@ class FileStorageServiceImpl(
         }
         val removals = input.sortedWith(
             compareByDescending(StoredTelemetryMetadata::envelopeType)
-                .thenBy(StoredTelemetryMetadata::timestamp)
+                .thenBy(StoredTelemetryMetadata::timestamp),
         )
             .take(removalCount)
         removals.forEach(::processDelete)

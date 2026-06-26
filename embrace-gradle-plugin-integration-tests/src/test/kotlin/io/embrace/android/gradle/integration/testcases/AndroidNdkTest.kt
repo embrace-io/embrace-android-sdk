@@ -32,14 +32,14 @@ class AndroidNdkTest {
                 setupMockResponses(
                     defaultExpectedLibs,
                     defaultExpectedArchs,
-                    defaultExpectedVariants
+                    defaultExpectedVariants,
                 )
             },
             assertions = {
                 verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
                 verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
-            }
+            },
         )
     }
 
@@ -53,14 +53,14 @@ class AndroidNdkTest {
                 setupMockResponses(
                     defaultExpectedLibs,
                     defaultExpectedArchs,
-                    defaultExpectedVariants
+                    defaultExpectedVariants,
                 )
             },
             assertions = {
                 verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
                 verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
-            }
+            },
         )
     }
 
@@ -77,13 +77,13 @@ class AndroidNdkTest {
                 // Read and parse the smali file containing the injected symbols
                 val smaliFile = SmaliConfigReader().readSmaliFiles(
                     projectDir,
-                    listOf("/io/embrace/android/embracesdk/internal/config/instrumented/Base64SharedObjectFilesMapImpl")
+                    listOf("/io/embrace/android/embracesdk/internal/config/instrumented/Base64SharedObjectFilesMapImpl"),
                 ).first()
 
                 // Get the return value of the getBase64SharedObjectFilesMap method
                 val method = SmaliParser().parse(
                     smaliFile,
-                    listOf(SmaliMethod("getBase64SharedObjectFilesMap()Ljava/lang/String;"))
+                    listOf(SmaliMethod("getBase64SharedObjectFilesMap()Ljava/lang/String;")),
                 ).methods.first()
 
                 // Decode the base64 string into a map
@@ -97,7 +97,7 @@ class AndroidNdkTest {
                         assertTrue(symbols[arch]?.containsKey(lib) ?: false)
                     }
                 }
-            }
+            },
         )
     }
 
@@ -111,14 +111,14 @@ class AndroidNdkTest {
                 setupMockResponses(
                     defaultExpectedLibs,
                     defaultExpectedArchs,
-                    defaultExpectedVariants
+                    defaultExpectedVariants,
                 )
             },
             assertions = {
                 verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
                 verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
-            }
+            },
         )
     }
 
@@ -137,7 +137,7 @@ class AndroidNdkTest {
                 verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
                 verifyHandshakes(expectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(expectedLibs, defaultExpectedArchs, defaultExpectedVariants)
-            }
+            },
         )
     }
 
@@ -151,14 +151,14 @@ class AndroidNdkTest {
                 setupMockResponses(
                     expectedLibs = emptyList(),
                     expectedArchs = emptyList(),
-                    expectedVariants = defaultExpectedVariants
+                    expectedVariants = defaultExpectedVariants,
                 )
             },
             assertions = {
                 verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
                 verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyNoUploads()
-            }
+            },
         )
     }
 
@@ -174,14 +174,14 @@ class AndroidNdkTest {
                 setupMockResponses(
                     expectedLibs = expectedLibs,
                     expectedArchs = expectedArchs,
-                    expectedVariants = defaultExpectedVariants
+                    expectedVariants = defaultExpectedVariants,
                 )
             },
             assertions = {
                 verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
                 verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(expectedLibs, expectedArchs, defaultExpectedVariants)
-            }
+            },
         )
     }
 
@@ -196,7 +196,7 @@ class AndroidNdkTest {
                 verifyNoHandshakes()
                 verifyNoUploads()
                 verifyJvmMappingRequestsSent(1)
-            }
+            },
         )
     }
 
@@ -211,7 +211,7 @@ class AndroidNdkTest {
                 verifyNoHandshakes()
                 verifyNoUploads()
                 verifyJvmMappingRequestsSent(0)
-            }
+            },
         )
     }
 }

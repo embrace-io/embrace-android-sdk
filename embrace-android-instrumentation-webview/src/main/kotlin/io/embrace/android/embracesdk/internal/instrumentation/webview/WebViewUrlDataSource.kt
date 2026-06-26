@@ -14,7 +14,7 @@ class WebViewUrlDataSource(
 ) : DataSourceImpl(
     args = args,
     limitStrategy = UpToLimitStrategy(args.configService.breadcrumbBehavior::getWebViewBreadcrumbLimit),
-    instrumentationName = "webview_url_data_source"
+    instrumentationName = "webview_url_data_source",
 ) {
 
     private val breadcrumbBehavior: BreadcrumbBehavior = args.configService.breadcrumbBehavior

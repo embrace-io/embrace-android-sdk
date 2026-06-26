@@ -9,9 +9,9 @@ import io.embrace.android.embracesdk.internal.injection.InstrumentationModule
 class FakeInstrumentationModule(
     application: Application,
     private val logger: FakeInternalLogger = FakeInternalLogger(),
-    override val instrumentationArgs: InstrumentationArgs = FakeInstrumentationArgs(application, logger = logger)
+    override val instrumentationArgs: InstrumentationArgs = FakeInstrumentationArgs(application, logger = logger),
 ) : InstrumentationModule {
     override val instrumentationRegistry: InstrumentationRegistry = InstrumentationRegistryImpl(
-        logger
+        logger,
     )
 }

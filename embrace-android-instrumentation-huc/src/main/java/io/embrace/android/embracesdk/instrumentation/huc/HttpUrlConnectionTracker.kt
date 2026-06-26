@@ -145,7 +145,7 @@ internal object HttpUrlConnectionTracker {
                                 parentHandler.javaClass,
                                 EmbraceUrlStreamHandler.METHOD_NAME_OPEN_CONNECTION,
                                 URL::class.java,
-                                Proxy::class.java
+                                Proxy::class.java,
                             )
                         method.isAccessible = true
                         val parentConnection = method.invoke(parentHandler, url, proxy) as URLConnection?
@@ -163,7 +163,7 @@ internal object HttpUrlConnectionTracker {
                                 parentHandler,
                                 parentHandler.javaClass,
                                 EmbraceUrlStreamHandler.METHOD_NAME_OPEN_CONNECTION,
-                                URL::class.java
+                                URL::class.java,
                             )
                         method.isAccessible = true
                         val parentConnection = method.invoke(parentHandler, url) as URLConnection?

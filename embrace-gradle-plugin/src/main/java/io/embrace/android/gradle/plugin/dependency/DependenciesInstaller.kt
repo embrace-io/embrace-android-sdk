@@ -37,7 +37,7 @@ fun Project.installDependenciesForVariant(
 
     val targetConfigurations = listOf(
         fetchConfiguration("${variantName}CompileClasspath", this),
-        fetchConfiguration("${variantName}RuntimeClasspath", this)
+        fetchConfiguration("${variantName}RuntimeClasspath", this),
     )
 
     targetConfigurations.forEach { targetConfiguration ->
@@ -52,7 +52,7 @@ fun Project.installDependenciesForVariant(
                         provider {
                             val embraceCoreSdkMetadata = EmbraceDependencyMetadata.Core(BuildConfig.VERSION)
                             project.dependencies.create(embraceCoreSdkMetadata.gradleShortNomenclature())
-                        }
+                        },
                     )
 
                     // true so to tell Gradle to install Embrace dependencies through ComponentMetadataRule
@@ -64,9 +64,9 @@ fun Project.installDependenciesForVariant(
                     it.attribute(
                         Attribute.of(
                             INSTALL_EMBRACE_DEPENDENCIES_ATTRIBUTE,
-                            String::class.java
+                            String::class.java,
                         ),
-                        installEmbraceDependenciesAttributeValue
+                        installEmbraceDependenciesAttributeValue,
                     )
                 }
             } catch (e: InvalidUserDataException) {
@@ -74,7 +74,7 @@ fun Project.installDependenciesForVariant(
                     "This happens because someone that gets executed before the embrace gradle plugin is resolving " +
                         "dependencies (either explicit or implicitly) at configuration time. We recommend to find who's " +
                         "doing that, and fix it. Gradle does not recommend resolving dependencies during configuration " +
-                        "phase."
+                        "phase.",
                 )
                 throw e
             }

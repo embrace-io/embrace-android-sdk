@@ -10,7 +10,7 @@ import org.objectweb.asm.MethodVisitor
 class ConfigInstrumentationClassVisitor(
     private val instrumentedConfigClass: InstrumentedConfigClass,
     api: Int,
-    cv: ClassVisitor?
+    cv: ClassVisitor?,
 ) : ClassVisitor(api, cv) {
 
     override fun visitMethod(
@@ -18,7 +18,7 @@ class ConfigInstrumentationClassVisitor(
         name: String,
         descriptor: String,
         signature: String?,
-        exceptions: Array<out String>?
+        exceptions: Array<out String>?,
     ): MethodVisitor {
         val visitor = super.visitMethod(access, name, descriptor, signature, exceptions)
         return instrumentedConfigClass.getMethodVisitor(name, descriptor, api, visitor)

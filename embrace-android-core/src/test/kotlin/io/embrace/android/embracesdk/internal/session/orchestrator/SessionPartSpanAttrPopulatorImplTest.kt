@@ -40,7 +40,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
             destination,
             { 0 },
             FakeLogLimitingService(),
-            FakeMetadataService()
+            FakeMetadataService(),
         )
     }
 
@@ -109,7 +109,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
             EmbSessionAttributes.EMB_CRASH_ID to "crashId",
             EmbSessionAttributes.EMB_SESSION_END_TYPE to "state",
             EmbSessionAttributes.EMB_ERROR_LOG_COUNT to "0",
-            EmbSessionAttributes.EMB_DISK_FREE_BYTES to "500000000"
+            EmbSessionAttributes.EMB_DISK_FREE_BYTES to "500000000",
         )
         assertEquals(expected, attrs)
     }

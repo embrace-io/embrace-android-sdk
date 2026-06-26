@@ -14,13 +14,13 @@ internal class HttpUrlConnectionUtilsTest {
             FakeURLStreamHandler(),
             WrapperURLStreamHandler(),
             NoOpenConnectionURLStreamHandler(),
-            WrapperNoOpenConnectionURLStreamHandler()
+            WrapperNoOpenConnectionURLStreamHandler(),
         ).forEach { urlStreamHandler ->
             val method = findDeclaredMethod(
                 obj = urlStreamHandler,
                 objClz = urlStreamHandler.javaClass,
                 methodName = EmbraceUrlStreamHandler.METHOD_NAME_OPEN_CONNECTION,
-                url.javaClass
+                url.javaClass,
             )
             assertNotNull(method)
         }
@@ -33,7 +33,7 @@ internal class HttpUrlConnectionUtilsTest {
             obj = urlStreamHandler,
             objClz = urlStreamHandler.javaClass,
             methodName = "nahhhh",
-            url.javaClass
+            url.javaClass,
         )
     }
 
@@ -45,7 +45,7 @@ internal class HttpUrlConnectionUtilsTest {
             objClz = urlStreamHandler.javaClass,
             methodName = EmbraceUrlStreamHandler.METHOD_NAME_OPEN_CONNECTION,
             url.javaClass,
-            url.javaClass
+            url.javaClass,
         )
     }
 

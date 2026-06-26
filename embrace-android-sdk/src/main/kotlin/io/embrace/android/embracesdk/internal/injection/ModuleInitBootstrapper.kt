@@ -46,7 +46,7 @@ internal class ModuleInitBootstrapper(
         ->
         CoreModuleImpl(
             context,
-            initModule
+            initModule,
         )
     },
     private val configServiceSupplier: ConfigServiceSupplier = {
@@ -81,7 +81,7 @@ internal class ModuleInitBootstrapper(
         val storageService = EmbraceStorageService(
             coreModule.context,
             initModule.telemetryService,
-            StatFsAvailabilityChecker(coreModule.context)
+            StatFsAvailabilityChecker(coreModule.context),
         )
         workerThreadModule
             .backgroundWorker(Worker.Background.IoRegWorker)
@@ -182,7 +182,7 @@ internal class ModuleInitBootstrapper(
             requestExecutionServiceProvider,
             payloadStorageServiceProvider,
             cacheStorageServiceProvider,
-            deliveryTracer
+            deliveryTracer,
         )
     },
     private val threadBlockageServiceSupplier: ThreadBlockageServiceSupplier = { args: InstrumentationArgs ->
@@ -306,7 +306,7 @@ internal class ModuleInitBootstrapper(
                     threadBlockageServiceSupplier,
                     logModuleSupplier,
                     userSessionOrchestrationModuleSupplier,
-                    payloadSourceModuleSupplier
+                    payloadSourceModuleSupplier,
                 )
                 return isInitialized()
             }

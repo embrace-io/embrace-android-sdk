@@ -42,7 +42,7 @@ internal class LogEnvelopeSourceImpl(
                     sessionPartId = nativeCrash?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID),
                     processIdentifier = nativeCrash?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER),
                     userSessionId = nativeCrash?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID),
-                )
+                ),
             )
 
             if (envelope != null) {
@@ -52,7 +52,7 @@ internal class LogEnvelopeSourceImpl(
 
         return payload.createLogEnvelope(
             resource = resourceSource.getEnvelopeResource(),
-            metadata = metadataSource.getEnvelopeMetadata()
+            metadata = metadataSource.getEnvelopeMetadata(),
         )
     }
 

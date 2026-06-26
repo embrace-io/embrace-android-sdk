@@ -41,18 +41,18 @@ class UserSessionOrchestrationModuleImpl(
             EmbTrace.trace("payloadMessageCollator") { payloadMessageCollator },
             EmbTrace.trace("logEnvelopeSource") { payloadSourceModule.logEnvelopeSource },
             EmbTrace.trace("configService") { configService },
-            initModule.logger
+            initModule.logger,
         )
 
         val boundaryDelegate = OrchestratorBoundaryDelegate(
-            essentialServiceModule.userSessionPropertiesService
+            essentialServiceModule.userSessionPropertiesService,
         )
 
         val sessionPartSpanAttrPopulator = SessionPartSpanAttrPopulatorImpl(
             essentialServiceModule.telemetryDestination,
             startupDurationProvider,
             logModule.logLimitingService,
-            payloadSourceModule.metadataService
+            payloadSourceModule.metadataService,
         )
 
         SessionOrchestratorImpl(

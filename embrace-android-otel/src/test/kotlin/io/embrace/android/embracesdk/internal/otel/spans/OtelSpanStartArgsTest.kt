@@ -44,7 +44,7 @@ internal class OtelSpanStartArgsTest {
             private = true,
             tracer = tracer,
             startTimeMs = originalStartTime,
-            openTelemetry = fakeOpenTelemetry()
+            openTelemetry = fakeOpenTelemetry(),
         )
         val startTime = clock.tick()
         with(args.embraceAttributes.toSet()) {
@@ -57,7 +57,7 @@ internal class OtelSpanStartArgsTest {
 
         args.startSpan(startTime).assertSpan(
             expectedName = "emb-test",
-            expectedStartTimeMs = startTime
+            expectedStartTimeMs = startTime,
         )
         assertEquals(originalStartTime, args.startTimeMs)
     }
@@ -74,7 +74,7 @@ internal class OtelSpanStartArgsTest {
             private = false,
             tracer = tracer,
             parentCtx = ctx,
-            openTelemetry = otel
+            openTelemetry = otel,
         )
         val spanContext = args.parentContext.extractSpan().spanContext
         assertEquals(parent.spanContext.traceId, spanContext.traceId)
@@ -95,13 +95,13 @@ internal class OtelSpanStartArgsTest {
             private = false,
             tracer = tracer,
             spanKind = SpanKind.CLIENT,
-            openTelemetry = fakeOpenTelemetry()
+            openTelemetry = fakeOpenTelemetry(),
         )
         val startTime = otelClock.now()
         args.startSpan(startTime).assertSpan(
             expectedName = "test",
             expectedStartTimeMs = startTime,
-            expectedSpanKind = SpanKind.CLIENT
+            expectedSpanKind = SpanKind.CLIENT,
         )
     }
 
@@ -113,7 +113,7 @@ internal class OtelSpanStartArgsTest {
             internal = false,
             private = false,
             tracer = tracer,
-            openTelemetry = fakeOpenTelemetry()
+            openTelemetry = fakeOpenTelemetry(),
         )
         args.customAttributes["test-key"] = "test-value"
         assertEquals("test-value", args.customAttributes["test-key"])
@@ -129,12 +129,12 @@ internal class OtelSpanStartArgsTest {
             internal = false,
             private = false,
             tracer = tracer,
-            openTelemetry = fakeOpenTelemetry()
+            openTelemetry = fakeOpenTelemetry(),
         )
 
         creator.startSpan(startTime).assertSpan(
             expectedName = TOO_LONG_SPAN_NAME,
-            expectedStartTimeMs = startTime
+            expectedStartTimeMs = startTime,
         )
 
         val internalSpanCreator = OtelSpanStartArgs(
@@ -143,12 +143,12 @@ internal class OtelSpanStartArgsTest {
             internal = true,
             private = false,
             tracer = tracer,
-            openTelemetry = fakeOpenTelemetry()
+            openTelemetry = fakeOpenTelemetry(),
         )
 
         internalSpanCreator.startSpan(startTime).assertSpan(
             expectedName = "emb-$TOO_LONG_INTERNAL_SPAN_NAME",
-            expectedStartTimeMs = startTime
+            expectedStartTimeMs = startTime,
         )
     }
 

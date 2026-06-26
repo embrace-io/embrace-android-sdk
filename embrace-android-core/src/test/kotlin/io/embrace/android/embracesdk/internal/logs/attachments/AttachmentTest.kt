@@ -47,7 +47,7 @@ internal class AttachmentTest {
         val attachment = EmbraceHosted(ByteArray(size), counter)
         attachment.assertEmbraceHostedAttributesMatch(
             size = size.toLong(),
-            errorCode = ATTACHMENT_TOO_LARGE
+            errorCode = ATTACHMENT_TOO_LARGE,
         )
     }
 
@@ -64,7 +64,7 @@ internal class AttachmentTest {
         val limitedAttachment = EmbraceHosted(bytes, smallCounter)
         limitedAttachment.assertEmbraceHostedAttributesMatch(
             size = size,
-            errorCode = OVER_MAX_ATTACHMENTS
+            errorCode = OVER_MAX_ATTACHMENTS,
         )
     }
 
@@ -98,7 +98,7 @@ internal class AttachmentTest {
         limit = false
         val limitedAttachment = UserHosted(ID, URL, smallCounter)
         limitedAttachment.assertUserHostedAttributesMatch(
-            errorCode = OVER_MAX_ATTACHMENTS
+            errorCode = OVER_MAX_ATTACHMENTS,
         )
     }
 

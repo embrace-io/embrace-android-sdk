@@ -7,7 +7,7 @@ import java.io.Serializable
 @JsonClass(generateAdapter = true)
 data class AppExitInfoLocalConfig(
     @Json(name = "aei_enabled")
-    val aeiCaptureEnabled: Boolean? = null
+    val aeiCaptureEnabled: Boolean? = null,
 ) : Serializable {
 
     private companion object {

@@ -37,9 +37,9 @@ internal class TapBreadcrumbDataSourceTest {
                 mapOf(
                     EmbViewAttributes.VIEW_NAME to "my-button-id",
                     EmbTapAttributes.TAP_TYPE to "tap",
-                    EmbTapAttributes.TAP_COORDS to "126,309"
+                    EmbTapAttributes.TAP_COORDS to "126,309",
                 ),
-                schemaType.attributes()
+                schemaType.attributes(),
             )
         }
     }

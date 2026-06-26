@@ -22,7 +22,7 @@ internal class ThreadBlockageServiceImplTimingTest {
     @JvmField
     val rule = ThreadBlockageServiceRule(
         clock = clock,
-        scheduledExecutorSupplier = { BlockingScheduledExecutorService(fakeClock = clock) }
+        scheduledExecutorSupplier = { BlockingScheduledExecutorService(fakeClock = clock) },
     )
 
     private lateinit var watchdogExecutorService: BlockingScheduledExecutorService

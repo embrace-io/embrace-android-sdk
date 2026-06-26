@@ -33,7 +33,7 @@ class InstrumentationTargetMethodEndVisitor(
             params.owner,
             params.name,
             params.descriptor,
-            false
+            false,
         )
     }
 

@@ -22,8 +22,8 @@ internal class SdkModeBehaviorImplTest {
     fun testDefaults() {
         with(
             createSdkModeBehavior(
-                thresholdCheck = disabled
-            )
+                thresholdCheck = disabled,
+            ),
         ) {
             assertFalse(isSdkDisabled())
         }
@@ -35,7 +35,7 @@ internal class SdkModeBehaviorImplTest {
         assertEquals(100.0f, disabled.getNormalizedDeviceId())
         var behavior = createSdkModeBehavior(
             thresholdCheck = disabled,
-            remoteCfg = RemoteConfig(threshold = 99)
+            remoteCfg = RemoteConfig(threshold = 99),
         )
         assertTrue(behavior.isSdkDisabled())
 
@@ -43,14 +43,14 @@ internal class SdkModeBehaviorImplTest {
         assertEquals(0.0f, enabled.getNormalizedDeviceId())
         behavior = createSdkModeBehavior(
             thresholdCheck = enabled,
-            remoteCfg = RemoteConfig(threshold = 0)
+            remoteCfg = RemoteConfig(threshold = 0),
         )
         assertTrue(behavior.isSdkDisabled())
 
         // SDK enabled
         behavior = createSdkModeBehavior(
             thresholdCheck = enabled,
-            remoteCfg = RemoteConfig(threshold = 100)
+            remoteCfg = RemoteConfig(threshold = 100),
         )
         assertFalse(behavior.isSdkDisabled())
 
@@ -58,14 +58,14 @@ internal class SdkModeBehaviorImplTest {
         assertEquals(50.000008f, halfEnabled.getNormalizedDeviceId())
         behavior = createSdkModeBehavior(
             thresholdCheck = halfEnabled,
-            remoteCfg = RemoteConfig(threshold = 30)
+            remoteCfg = RemoteConfig(threshold = 30),
         )
         assertTrue(behavior.isSdkDisabled())
 
         // SDK 51% enabled
         behavior = createSdkModeBehavior(
             thresholdCheck = halfEnabled,
-            remoteCfg = RemoteConfig(threshold = 51)
+            remoteCfg = RemoteConfig(threshold = 51),
         )
         assertFalse(behavior.isSdkDisabled())
     }

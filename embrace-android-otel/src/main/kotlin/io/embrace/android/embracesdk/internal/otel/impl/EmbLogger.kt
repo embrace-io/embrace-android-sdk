@@ -37,7 +37,7 @@ class EmbLogger(
             severityNumber = severityNumber,
             severityText = severityText,
             addCurrentMetadata = true,
-            eventAttributes = attributes
+            eventAttributes = attributes,
         )
     }
 }

@@ -36,7 +36,7 @@ internal class TelemetryAttributesTest {
     @Test
     fun `all attributes types`() {
         telemetryAttributes = TelemetryAttributes(
-            customAttributes = customAttributes
+            customAttributes = customAttributes,
         )
         val otelSessionIdKey = SessionAttributes.SESSION_ID
         telemetryAttributes.setAttribute(otelSessionIdKey, otelSessionId)
@@ -63,7 +63,7 @@ internal class TelemetryAttributesTest {
     fun `schema attribute values take priority if the same key is used`() {
         val newOtelSessionId = TestUuidSource().createUuid()
         telemetryAttributes = TelemetryAttributes(
-            customAttributes = mapOf(SessionAttributes.SESSION_ID to otelSessionId)
+            customAttributes = mapOf(SessionAttributes.SESSION_ID to otelSessionId),
         )
         telemetryAttributes.setAttribute(SessionAttributes.SESSION_ID, newOtelSessionId)
         val attributes = telemetryAttributes.snapshot()
@@ -74,7 +74,7 @@ internal class TelemetryAttributesTest {
     @Test
     fun `log properties and session properties are included in the attributes`() {
         telemetryAttributes = TelemetryAttributes(
-            customAttributes = customAttributes
+            customAttributes = customAttributes,
         )
         telemetryAttributes.setAttribute(SessionAttributes.SESSION_ID, otelSessionId)
 

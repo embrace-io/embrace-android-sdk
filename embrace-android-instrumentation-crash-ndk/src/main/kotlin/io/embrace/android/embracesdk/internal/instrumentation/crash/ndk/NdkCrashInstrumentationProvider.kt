@@ -27,7 +27,7 @@ class NdkCrashInstrumentationProvider : InstrumentationProvider {
                 val nativeOutputDir = StorageLocation.NATIVE.asFile(
                     logger = args.logger,
                     rootDirSupplier = { args.context.filesDir },
-                    fallbackDirSupplier = { args.context.cacheDir }
+                    fallbackDirSupplier = { args.context.cacheDir },
                 )
 
                 val processor = NativeCrashProcessorImpl(
@@ -36,7 +36,7 @@ class NdkCrashInstrumentationProvider : InstrumentationProvider {
                     delegate,
                     args.configService.nativeSymbolMap,
                     nativeOutputDir,
-                    args.priorityWorker(Worker.Priority.DataPersistenceWorker)
+                    args.priorityWorker(Worker.Priority.DataPersistenceWorker),
                 )
 
                 val nativeCrashHandlerInstaller = NativeCrashHandlerInstallerImpl(

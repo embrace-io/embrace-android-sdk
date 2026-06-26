@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.envelope.metadata
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 
 class ReactNativeSdkVersionInfo(
-    private val impl: KeyValueStore
+    private val impl: KeyValueStore,
 ) : HostedSdkVersionInfo {
 
     override var hostedSdkVersion: String?

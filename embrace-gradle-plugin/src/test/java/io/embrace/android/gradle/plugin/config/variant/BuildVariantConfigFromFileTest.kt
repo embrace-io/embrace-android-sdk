@@ -20,7 +20,7 @@ class BuildVariantConfigFromFileTest {
         buildVariantConfig(
             fakeVariantInfo,
             projectDirectory,
-            emptyList()
+            emptyList(),
         )
     }
 
@@ -29,7 +29,7 @@ class BuildVariantConfigFromFileTest {
         val variantConfiguration = buildVariantConfig(
             fakeVariantInfo,
             projectDirectory,
-            listOf(VariantConfigurationFileFinder(projectDirectory, listOf()))
+            listOf(VariantConfigurationFileFinder(projectDirectory, listOf())),
         )
 
         assertNull(variantConfiguration)
@@ -41,7 +41,7 @@ class BuildVariantConfigFromFileTest {
         buildVariantConfig(
             fakeVariantInfo,
             projectDirectory,
-            listOf(fileFinder)
+            listOf(fileFinder),
         )
     }
 
@@ -59,7 +59,7 @@ class BuildVariantConfigFromFileTest {
         val variantConfiguration = buildVariantConfig(
             fakeVariantInfo,
             projectDirectory,
-            listOf(fileFinder)
+            listOf(fileFinder),
         )
 
         assertEquals("abcde", variantConfiguration?.appId)
@@ -85,7 +85,7 @@ class BuildVariantConfigFromFileTest {
             fakeVariantInfo,
             projectDirectory,
             listOf(fileFinder),
-            fakeSystemWrapper
+            fakeSystemWrapper,
         )
 
         assertEquals("env12345678901234567890123456789", variantConfiguration?.apiToken)
@@ -108,7 +108,7 @@ class BuildVariantConfigFromFileTest {
             fakeVariantInfo,
             projectDirectory,
             listOf(fileFinder),
-            fakeSystemWrapper
+            fakeSystemWrapper,
         )
 
         assertEquals("config78901234567890123456789012", variantConfiguration?.apiToken)
@@ -132,7 +132,7 @@ class BuildVariantConfigFromFileTest {
             fakeVariantInfo,
             projectDirectory,
             listOf(fileFinder),
-            fakeSystemWrapper
+            fakeSystemWrapper,
         )
 
         assertEquals("env12", variantConfiguration?.appId)
@@ -155,7 +155,7 @@ class BuildVariantConfigFromFileTest {
             fakeVariantInfo,
             projectDirectory,
             listOf(fileFinder),
-            fakeSystemWrapper
+            fakeSystemWrapper,
         )
 
         assertEquals("confg", variantConfiguration?.appId)
@@ -226,6 +226,6 @@ class BuildVariantConfigFromFileTest {
         buildTypeName = "buildType-name",
         isBuildTypeDebuggable = false,
         productFlavors = listOf("product-flavor", "2nd-product-flavor"),
-        sourceMapPath = "source"
+        sourceMapPath = "source",
     )
 }

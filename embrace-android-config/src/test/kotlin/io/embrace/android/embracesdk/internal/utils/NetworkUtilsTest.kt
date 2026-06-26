@@ -17,7 +17,7 @@ internal class NetworkUtilsTest {
         "[::1]",
         "[2001::]",
         "[2001:4860:4860]:8888]",
-        "[2001:4860:4860:0:0:0:0]"
+        "[2001:4860:4860:0:0:0:0]",
     )
 
     private val invalidIpAddresses = arrayOf(
@@ -26,7 +26,7 @@ internal class NetworkUtilsTest {
         "foo.google.com",
         "bar.foo.google.com",
         "baz.bar.foo.google.com",
-        "baz.bar.foo.google.co.uk"
+        "baz.bar.foo.google.co.uk",
     )
 
     private val invalidURLs = arrayOf(
@@ -39,7 +39,7 @@ internal class NetworkUtilsTest {
         "http://192.168.1.256",
         "http://-1.2.3.4",
         "http://3...3",
-        "http://127.1"
+        "http://127.1",
     )
 
     private val validURLs = arrayOf(
@@ -55,7 +55,7 @@ internal class NetworkUtilsTest {
         arrayOf("http://[::1]", "::1"),
         arrayOf("http://[2001::]", "2001::"),
         arrayOf("http://[2001:4860:4860]:8888]", "2001:4860:4860"),
-        arrayOf("http://[2001:4860:4860:0:0:0:0]", "2001:4860:4860:0:0:0:0")
+        arrayOf("http://[2001:4860:4860:0:0:0:0]", "2001:4860:4860:0:0:0:0"),
     )
 
     private val urlsToStrip = arrayOf(
@@ -68,7 +68,7 @@ internal class NetworkUtilsTest {
         arrayOf("http://www.example.org/foo.html#bar", "http://www.example.org/foo.html"),
         arrayOf(
             "http://example.com/index.html#:words:some-context-for-a-(search-term)",
-            "http://example.com/index.html"
+            "http://example.com/index.html",
         ),
     )
 
@@ -91,7 +91,7 @@ internal class NetworkUtilsTest {
         for (url in invalidURLs) {
             assertNull(
                 "$url should not be a valid domain",
-                getDomain(url)
+                getDomain(url),
             )
         }
     }
@@ -109,7 +109,7 @@ internal class NetworkUtilsTest {
                 assertEquals(
                     "Domain for $url should be $expected not $domain",
                     domain,
-                    expected
+                    expected,
                 )
             }
         }
@@ -133,7 +133,7 @@ internal class NetworkUtilsTest {
 
         assertEquals(
             traceIdMoreEqualAllowedLength,
-            NetworkUtils.getValidTraceId(traceIdMoreThanAllowedLength)
+            NetworkUtils.getValidTraceId(traceIdMoreThanAllowedLength),
         )
     }
 

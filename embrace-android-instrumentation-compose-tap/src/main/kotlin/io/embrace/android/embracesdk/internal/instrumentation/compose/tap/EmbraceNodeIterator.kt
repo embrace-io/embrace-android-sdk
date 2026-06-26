@@ -13,7 +13,7 @@ import androidx.compose.ui.semantics.getOrNull
 private const val UNKNOWN_ELEMENT_NAME = "Unlabeled Compose element"
 
 internal class EmbraceNodeIterator(
-    private val dataSource: ComposeTapDataSource
+    private val dataSource: ComposeTapDataSource,
 ) {
 
     /**
@@ -29,7 +29,7 @@ internal class EmbraceNodeIterator(
             val clickedView = ClickedView(it, x, y)
             dataSource.logComposeTap(
                 Pair(clickedView.x, clickedView.y),
-                clickedView.tag
+                clickedView.tag,
             )
         }
     }

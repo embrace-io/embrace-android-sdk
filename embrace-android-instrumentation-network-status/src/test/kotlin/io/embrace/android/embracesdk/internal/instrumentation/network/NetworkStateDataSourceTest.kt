@@ -38,7 +38,7 @@ internal class NetworkStateDataSourceTest {
             assertEquals(
                 "Expected $expectedState for $connectivityStatus",
                 expectedState,
-                dataSource.getCurrentStateValue()
+                dataSource.getCurrentStateValue(),
             )
         }
     }

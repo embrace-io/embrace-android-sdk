@@ -26,20 +26,20 @@ class AsmTaskRegistration : EmbraceTaskRegistration {
             variant.instrumentation.setAsmFramesComputationMode(FramesComputationMode.COMPUTE_FRAMES_FOR_INSTRUMENTED_METHODS)
             variant.instrumentation.transformClassesWith(
                 EmbraceClassVisitorFactory::class.java,
-                InstrumentationScope.ALL
+                InstrumentationScope.ALL,
             ) { params: BytecodeInstrumentationParams ->
                 params.config.set(
                     variantConfigurationsListProperty.map { variantConfigs ->
                         variantConfigs.first { it.variantName == variant.name }
-                    }
+                    },
                 )
                 params.disabled.set(
                     project.provider {
                         behavior.isPluginDisabledForVariant(variant.name) || behavior.isInstrumentationDisabledForVariant(variant.name)
-                    }
+                    },
                 )
                 params.classInstrumentationFilter.set(
-                    ClassInstrumentationFilter(behavior.instrumentation.ignoredClasses)
+                    ClassInstrumentationFilter(behavior.instrumentation.ignoredClasses),
                 )
                 params.shouldInstrumentFirebaseMessaging.set(behavior.instrumentation.fcmPushNotificationsEnabled)
                 params.shouldInstrumentWebview.set(behavior.instrumentation.webviewEnabled)
@@ -51,23 +51,23 @@ class AsmTaskRegistration : EmbraceTaskRegistration {
                 params.variantOutputInfo.set(variant.toVariantOutputInfoProvider(project))
 
                 val encodeFileToBase64Task = project.lazyTaskLookup<EncodeFileToBase64Task>(
-                    "${EncodeFileToBase64Task.NAME}${data.name.capitalizedString()}"
+                    "${EncodeFileToBase64Task.NAME}${data.name.capitalizedString()}",
                 )
 
                 params.encodedSharedObjectFilesMap.set(
                     encodeFileToBase64Task.safeFlatMap {
                         it.outputFile
-                    }
+                    },
                 )
 
                 val reactNativeTask = project.lazyTaskLookup<GenerateRnSourcemapTask>(
-                    "${GenerateRnSourcemapTask.NAME}${data.name.capitalizedString()}"
+                    "${GenerateRnSourcemapTask.NAME}${data.name.capitalizedString()}",
                 )
 
                 params.reactNativeBundleId.set(
                     reactNativeTask.safeFlatMap {
                         it.bundleIdOutputFile
-                    }
+                    },
                 )
             }
         } catch (exception: Exception) {

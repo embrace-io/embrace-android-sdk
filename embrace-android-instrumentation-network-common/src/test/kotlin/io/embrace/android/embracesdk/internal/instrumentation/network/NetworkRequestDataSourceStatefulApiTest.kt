@@ -37,7 +37,7 @@ internal class NetworkRequestDataSourceStatefulApiTest {
             url = "www.example2.com",
             startTime = 200,
             endTime = 300,
-            statusCode = 404
+            statusCode = 404,
         )
         runRequest(
             url = "www.example3.com",
@@ -58,7 +58,7 @@ internal class NetworkRequestDataSourceStatefulApiTest {
             startTime = 600L,
             endTime = 650L,
             errorType = "RuntimeException",
-            errorMessage = "err"
+            errorMessage = "err",
         )
 
         val spans = harness.getNetworkSpans()
@@ -80,7 +80,7 @@ internal class NetworkRequestDataSourceStatefulApiTest {
                 HttpAttributes.HTTP_RESPONSE_BODY_SIZE to "1000",
                 EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT to firstRequestSpan.asW3cTraceparent(),
                 EmbNetworkRequestAttributes.EMB_TRACE_ID to "fake-trace-id",
-            )
+            ),
         )
 
         harness.assertNetworkRequest(
@@ -88,14 +88,14 @@ internal class NetworkRequestDataSourceStatefulApiTest {
             expectedName = "GET ",
             expectedStartTimeMs = 200L,
             expectedEndTimeMs = 300L,
-            expectedErrorCode = ErrorCodeAttribute.Failure
+            expectedErrorCode = ErrorCodeAttribute.Failure,
         )
         harness.assertNetworkRequest(
             spanToken = requestSpans["www.example3.com"],
             expectedName = "GET ",
             expectedStartTimeMs = 300L,
             expectedEndTimeMs = 400L,
-            expectedErrorCode = ErrorCodeAttribute.Failure
+            expectedErrorCode = ErrorCodeAttribute.Failure,
         )
         harness.assertNetworkRequest(
             spanToken = requestSpans["www.example4.com"],
@@ -112,7 +112,7 @@ internal class NetworkRequestDataSourceStatefulApiTest {
             expectedAttributes = mapOf(
                 ErrorAttributes.ERROR_TYPE to "RuntimeException",
                 ExceptionAttributes.EXCEPTION_MESSAGE to "err",
-            )
+            ),
         )
     }
 
@@ -156,7 +156,7 @@ internal class NetworkRequestDataSourceStatefulApiTest {
         with(checkNotNull(harness.getNetworkSpans().single())) {
             assertEquals(
                 NetworkUtils.stripUrl(url),
-                attributes["url.full"]
+                attributes["url.full"],
             )
         }
     }
@@ -167,7 +167,7 @@ internal class NetworkRequestDataSourceStatefulApiTest {
         val endUrl = "https://www.example1.com"
         runRequest(
             url = url,
-            endUrl = endUrl
+            endUrl = endUrl,
         )
         assertNotNull(harness.getNetworkSpans().single { it.attributes["url.full"] == endUrl })
     }
@@ -179,29 +179,29 @@ internal class NetworkRequestDataSourceStatefulApiTest {
 
         val request1 = startRequest(
             url = url,
-            startTime = 10L
+            startTime = 10L,
         )
 
         val request2 = startRequest(
             url = url,
-            startTime = 11L
+            startTime = 11L,
         )
 
         val request3 = startRequest(
             url = url,
-            startTime = 15L
+            startTime = 15L,
         )
 
         endRequest(
             callId = request2,
             url = url,
-            endTime = 1050L
+            endTime = 1050L,
         )
 
         endRequest(
             callId = request3,
             url = url,
-            endTime = 1100L
+            endTime = 1100L,
         )
 
         endRequest(
@@ -260,7 +260,7 @@ internal class NetworkRequestDataSourceStatefulApiTest {
                 endTime = endTime,
                 statusCode = statusCode,
                 errorType = errorType,
-                errorMessage = errorMessage
+                errorMessage = errorMessage,
             )
         }
     }
@@ -274,8 +274,8 @@ internal class NetworkRequestDataSourceStatefulApiTest {
             startData = RequestStartData(
                 url = url,
                 httpMethod = httpMethod,
-                sdkClockStartTime = startTime
-            )
+                sdkClockStartTime = startTime,
+            ),
         )
 
     private fun endRequest(
@@ -306,7 +306,7 @@ internal class NetworkRequestDataSourceStatefulApiTest {
                 traceId = traceId,
                 userAgentName = userAgentName,
                 userAgentVersion = userAgentVersion,
-            )
+            ),
         )
     }
 }

@@ -52,7 +52,7 @@ class PayloadSourceModuleImpl(
             coreModule.context,
             configService,
             coreModule.store,
-            workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker)
+            workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
         )
     }
 
@@ -66,7 +66,7 @@ class PayloadSourceModuleImpl(
                 otelPayloadMapper,
                 essentialServiceModule.appStateTracker,
                 initModule.clock,
-                initModule.logger
+                initModule.logger,
             )
         }
     }
@@ -121,12 +121,12 @@ class PayloadSourceModuleImpl(
                         coreModule.store,
                         workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                         initModule.systemInfo,
-                        initModule.logger
+                        initModule.logger,
                     )
                 },
                 rnBundleIdProvider = { rnBundleIdTracker.getReactNativeBundleId() },
                 versionName = BuildConfig.VERSION_NAME,
-                versionCode = BuildConfig.VERSION_CODE.toIntOrNull()
+                versionCode = BuildConfig.VERSION_CODE.toIntOrNull(),
             )
         }
     }
@@ -146,7 +146,7 @@ class PayloadSourceModuleImpl(
                 configService,
                 coreModule.store,
                 initModule.clock,
-                workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker)
+                workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
             )
         }
     }
@@ -159,7 +159,7 @@ class PayloadSourceModuleImpl(
             cacheStorageService = deliveryModule.cacheStorageService,
             cachedLogEnvelopeStore = deliveryModule.cachedLogEnvelopeStore,
             logger = initModule.logger,
-            serializer = initModule.jsonSerializer
+            serializer = initModule.jsonSerializer,
         )
     }
 }

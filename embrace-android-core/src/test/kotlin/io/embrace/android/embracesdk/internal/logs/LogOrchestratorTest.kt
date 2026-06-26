@@ -49,8 +49,8 @@ internal class LogOrchestratorTest {
             logSink,
             store,
             FakePayloadSourceModule(
-                logPayloadSource = LogPayloadSourceImpl(logSink)
-            ).logEnvelopeSource
+                logPayloadSource = LogPayloadSourceImpl(logSink),
+            ).logEnvelopeSource,
         )
         logSink.registerLogStoredCallback(logOrchestrator::onLogsAdded)
     }
@@ -171,7 +171,7 @@ internal class LogOrchestratorTest {
                     latch.countDown()
                 },
                 10L,
-                TimeUnit.MILLISECONDS
+                TimeUnit.MILLISECONDS,
             )
         }
 
@@ -181,7 +181,7 @@ internal class LogOrchestratorTest {
         assertEquals(
             "Too many logs in payload",
             50,
-            store.storedLogPayloads[0].first.data.logs?.size
+            store.storedLogPayloads[0].first.data.logs?.size,
         )
     }
 

@@ -49,7 +49,7 @@ class DataCaptureServiceModuleImpl(
         StartupTracker(
             appStartupDataCollector = appStartupDataCollector,
             activityLoadEventEmitter = activityLoadEventEmitter,
-            drawEventEmitter = createDrawEventEmitter(versionChecker, logger)
+            drawEventEmitter = createDrawEventEmitter(versionChecker, logger),
         )
     }
 
@@ -72,7 +72,7 @@ class DataCaptureServiceModuleImpl(
                 firstDrawDetector = createDrawEventEmitter(versionChecker, logger),
                 autoTraceEnabled = configService.autoDataCaptureBehavior.isUiLoadTracingTraceAll(),
                 clock = clock,
-                versionChecker = versionChecker
+                versionChecker = versionChecker,
             )
         } else {
             null

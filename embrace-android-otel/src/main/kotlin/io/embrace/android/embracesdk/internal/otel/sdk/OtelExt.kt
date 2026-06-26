@@ -31,7 +31,7 @@ fun SpanLinkData.toEmbracePayload(): Link = Link(
     spanId = spanContext.spanId,
     traceId = spanContext.traceId,
     attributes = attributes.map { Attribute(it.key, it.value.toString()) },
-    isRemote = spanContext.isRemote
+    isRemote = spanContext.isRemote,
 )
 
 fun SpanEventData.toEmbracePayload(): EmbraceSpanEvent? {

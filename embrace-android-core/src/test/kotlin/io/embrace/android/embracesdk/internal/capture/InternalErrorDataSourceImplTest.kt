@@ -25,7 +25,7 @@ internal class InternalErrorDataSourceImplTest {
     fun setUp() {
         args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
         dataSource = InternalErrorDataSourceImpl(
-            args
+            args,
         )
     }
 

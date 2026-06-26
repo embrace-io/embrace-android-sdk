@@ -105,13 +105,13 @@ internal class CurrentSessionPartSpanImpl(
                     currentSessionPartSpan.addSystemLink(
                         linkedSpanContext = spanToStopContext,
                         type = LinkType.EndedIn,
-                        attributes = linkAttrs
+                        attributes = linkAttrs,
                     )
                     if (spanToStop.hasEmbraceAttribute(EmbType.State)) {
                         currentSessionPartSpan.addSystemLink(
                             linkedSpanContext = spanToStopContext,
                             type = LinkType.State,
-                            attributes = linkAttrs
+                            attributes = linkAttrs,
                         )
                     }
                 }
@@ -121,7 +121,7 @@ internal class CurrentSessionPartSpanImpl(
                 spanToStop?.addSystemLink(
                     linkedSpanContext = sessionPartSpanContext,
                     type = LinkType.EndSessionPart,
-                    attributes = linkAttrs
+                    attributes = linkAttrs,
                 )
             }
         }
@@ -161,7 +161,7 @@ internal class CurrentSessionPartSpanImpl(
                     spanRepository.failActiveSpans(crashTime)
                     endingSessionPartSpan.setSystemAttribute(
                         appTerminationCause.key,
-                        appTerminationCause.value
+                        appTerminationCause.value,
                     )
                     endingSessionPartSpan.stop(errorCode = ErrorCode.FAILURE, endTimeMs = crashTime)
                 }
@@ -200,8 +200,8 @@ internal class CurrentSessionPartSpanImpl(
                 internal = true,
                 private = false,
                 tracer = tracerSupplier(),
-                openTelemetry = openTelemetrySupplier()
-            )
+                openTelemetry = openTelemetrySupplier(),
+            ),
         ).apply {
             start(startTimeMs = startTimeMs)
             setSystemAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionPartId)
@@ -210,7 +210,7 @@ internal class CurrentSessionPartSpanImpl(
                 addSystemLink(
                     linkedSpanContext = it,
                     type = LinkType.PreviousSessionPart,
-                    attributes = previousSessionPartSpan.partLinkAttrs()
+                    attributes = previousSessionPartSpan.partLinkAttrs(),
                 )
             }
         }

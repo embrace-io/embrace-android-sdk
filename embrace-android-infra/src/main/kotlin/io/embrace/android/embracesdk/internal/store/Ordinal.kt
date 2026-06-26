@@ -43,5 +43,5 @@ enum class Ordinal(val key: String) {
      * lifetime; seeded from [USER_SESSION] the first time it is read. Surfaced as
      * `emb.session_part_number`.
      */
-    SESSION_PART("io.embrace.sessionpartnumber")
+    SESSION_PART("io.embrace.sessionpartnumber"),
 }

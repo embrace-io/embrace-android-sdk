@@ -33,7 +33,7 @@ internal class EmbraceUrlStreamHandlerTest {
             EmbraceHttpUrlStreamHandler(
                 httpUrlStreamHandler,
                 internalApi,
-            )
+            ),
         )
         val connection = checkNotNull(url.openConnection())
         assertNull(connection.getRequestProperty(TRACEPARENT_HEADER_NAME))
@@ -48,8 +48,8 @@ internal class EmbraceUrlStreamHandlerTest {
             "secure.txt",
             EmbraceHttpsUrlStreamHandler(
                 httpsUrlStreamHandler,
-                internalApi
-            )
+                internalApi,
+            ),
         )
         val connection = checkNotNull(url.openConnection())
         assertNull(connection.getRequestProperty(TRACEPARENT_HEADER_NAME))
@@ -65,8 +65,8 @@ internal class EmbraceUrlStreamHandlerTest {
             "insecure.txt",
             EmbraceHttpUrlStreamHandler(
                 httpUrlStreamHandler,
-                internalApi
-            )
+                internalApi,
+            ),
         )
         val connection = checkNotNull(url.openConnection())
         assertNotNull(connection.getRequestProperty(TRACEPARENT_HEADER_NAME))
@@ -82,8 +82,8 @@ internal class EmbraceUrlStreamHandlerTest {
             "secure.txt",
             EmbraceHttpsUrlStreamHandler(
                 httpsUrlStreamHandler,
-                internalApi
-            )
+                internalApi,
+            ),
         )
         val connection = checkNotNull(url.openConnection())
         assertNotNull(connection.getRequestProperty(TRACEPARENT_HEADER_NAME))
@@ -98,8 +98,8 @@ internal class EmbraceUrlStreamHandlerTest {
             "insecure.txt",
             EmbraceHttpUrlStreamHandler(
                 httpUrlStreamHandler,
-                internalApi
-            )
+                internalApi,
+            ),
         )
         val connection = checkNotNull(url.openConnection())
         assertTrue(connection is EmbraceHttpUrlConnectionImpl<*>)
@@ -114,8 +114,8 @@ internal class EmbraceUrlStreamHandlerTest {
             "insecure.txt",
             EmbraceHttpsUrlStreamHandler(
                 httpsUrlStreamHandler,
-                internalApi
-            )
+                internalApi,
+            ),
         )
         val connection = checkNotNull(url.openConnection())
         assertTrue(connection is EmbraceHttpsUrlConnectionImpl<*>)

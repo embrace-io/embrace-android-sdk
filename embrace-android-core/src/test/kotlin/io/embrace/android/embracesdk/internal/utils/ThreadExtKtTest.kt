@@ -22,7 +22,7 @@ class ThreadExtKtTest {
         val threadInfo = truncateStacktrace(
             thread = targetThread,
             stackTraceElements = targetThread.stackTrace,
-            maxStacktraceSize = 4
+            maxStacktraceSize = 4,
         )
         with(threadInfo) {
             assertEquals(true, name?.contains("Main"))
@@ -37,7 +37,7 @@ class ThreadExtKtTest {
     fun `verify default stacktrace size is 200`() {
         val threadInfo = truncateStacktrace(
             thread = currentThread(),
-            stackTraceElements = fakeBigStackTrace
+            stackTraceElements = fakeBigStackTrace,
         )
         assertEquals(200, threadInfo.lines?.size)
     }
@@ -47,7 +47,7 @@ class ThreadExtKtTest {
         val threadInfo = truncateStacktrace(
             thread = currentThread(),
             stackTraceElements = fakeBigStackTrace,
-            maxStacktraceSize = 600
+            maxStacktraceSize = 600,
         )
         assertEquals(500, threadInfo.lines?.size)
     }

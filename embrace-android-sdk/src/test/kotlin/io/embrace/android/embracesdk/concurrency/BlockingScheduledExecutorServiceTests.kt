@@ -40,7 +40,7 @@ internal class BlockingScheduledExecutorServiceTests {
         executorService.schedule(
             { executorRunThread = Thread.currentThread() },
             10L,
-            TimeUnit.MILLISECONDS
+            TimeUnit.MILLISECONDS,
         )
         executorService.moveForwardAndRunBlocked(10L)
 
@@ -66,7 +66,7 @@ internal class BlockingScheduledExecutorServiceTests {
             executorService.schedule(
                 { tasksExecuted++ },
                 100L + it,
-                TimeUnit.MILLISECONDS
+                TimeUnit.MILLISECONDS,
             )
         }
 
@@ -128,7 +128,7 @@ internal class BlockingScheduledExecutorServiceTests {
         val taskStatus = executorService.schedule(
             command = { tasksExecuted++ },
             delay = 10L,
-            unit = TimeUnit.SECONDS
+            unit = TimeUnit.SECONDS,
         )
         assertFalse(taskStatus.isDone)
         assertEquals(1, executorService.scheduledTasksCount())
@@ -143,7 +143,7 @@ internal class BlockingScheduledExecutorServiceTests {
         val taskStatus = executorService.schedule(
             callable = { tasksExecuted++ },
             delay = 10L,
-            unit = TimeUnit.SECONDS
+            unit = TimeUnit.SECONDS,
         )
         assertFalse(taskStatus.isDone)
         assertEquals(1, executorService.scheduledTasksCount())
@@ -160,7 +160,7 @@ internal class BlockingScheduledExecutorServiceTests {
         val taskStatus = executorService.schedule(
             command = { tasksExecuted++ },
             delay = 10L,
-            unit = TimeUnit.SECONDS
+            unit = TimeUnit.SECONDS,
         )
         assertFalse(taskStatus.isDone)
         assertFalse(taskStatus.isCancelled)
@@ -179,7 +179,7 @@ internal class BlockingScheduledExecutorServiceTests {
             command = { tasksExecuted++ },
             initialDelay = 500L,
             period = 10L,
-            unit = TimeUnit.MILLISECONDS
+            unit = TimeUnit.MILLISECONDS,
         )
         assertFalse(taskStatus.isDone)
         executorService.runCurrentlyBlocked()
@@ -209,7 +209,7 @@ internal class BlockingScheduledExecutorServiceTests {
             command = { tasksExecuted++ },
             initialDelay = 0L,
             period = 10L,
-            unit = TimeUnit.MILLISECONDS
+            unit = TimeUnit.MILLISECONDS,
         )
         executorService.runCurrentlyBlocked()
         assertEquals(1, tasksExecuted)
@@ -226,7 +226,7 @@ internal class BlockingScheduledExecutorServiceTests {
             },
             initialDelay = 500L,
             delay = 10L,
-            unit = TimeUnit.MILLISECONDS
+            unit = TimeUnit.MILLISECONDS,
         )
         assertFalse(taskStatus.isDone)
         executorService.runCurrentlyBlocked()
@@ -259,7 +259,7 @@ internal class BlockingScheduledExecutorServiceTests {
             },
             initialDelay = 0L,
             delay = 10L,
-            unit = TimeUnit.MILLISECONDS
+            unit = TimeUnit.MILLISECONDS,
         )
         executorService.runCurrentlyBlocked()
         assertEquals(1, tasksExecuted)
@@ -350,7 +350,7 @@ internal class BlockingScheduledExecutorServiceTests {
             executorService.schedule(
                 { tasksExecuted++ },
                 100L + it,
-                TimeUnit.MILLISECONDS
+                TimeUnit.MILLISECONDS,
             )
         }
 
@@ -382,7 +382,7 @@ internal class BlockingScheduledExecutorServiceTests {
             executorService.schedule(
                 { tasksExecuted++ },
                 100L + it,
-                TimeUnit.MILLISECONDS
+                TimeUnit.MILLISECONDS,
             )
         }
 

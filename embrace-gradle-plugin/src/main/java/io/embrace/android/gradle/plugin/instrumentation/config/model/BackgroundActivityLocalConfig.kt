@@ -10,7 +10,7 @@ import java.io.Serializable
 @JsonClass(generateAdapter = true)
 data class BackgroundActivityLocalConfig(
     @Json(name = "capture_enabled")
-    val backgroundActivityCaptureEnabled: Boolean? = null
+    val backgroundActivityCaptureEnabled: Boolean? = null,
 ) : Serializable {
 
     private companion object {

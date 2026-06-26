@@ -44,7 +44,7 @@ class PowerStateDataSource(
                 } else {
                     PowerMode.NORMAL
                 },
-                transitionTimeMs = timestamp
+                transitionTimeMs = timestamp,
             )
         }
     }

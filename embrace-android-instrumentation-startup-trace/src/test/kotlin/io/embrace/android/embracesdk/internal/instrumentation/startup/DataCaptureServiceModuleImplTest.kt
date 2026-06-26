@@ -35,7 +35,7 @@ internal class DataCaptureServiceModuleImplTest {
             logger = FakeInternalLogger(),
             destination = FakeTelemetryDestination(),
             configService = FakeConfigService(
-                autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uiLoadTracingEnabled = false)
+                autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uiLoadTracingEnabled = false),
             ),
             startupClassifier = StartupClassifierImpl(),
         )
@@ -51,7 +51,7 @@ internal class DataCaptureServiceModuleImplTest {
             logger = FakeInternalLogger(),
             destination = FakeTelemetryDestination(),
             configService = FakeConfigService(
-                autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uiLoadTracingTraceAll = false)
+                autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uiLoadTracingTraceAll = false),
             ),
             startupClassifier = StartupClassifierImpl(),
         )

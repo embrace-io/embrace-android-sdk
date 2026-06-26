@@ -33,7 +33,7 @@ internal class EmbSpanTest {
         embSpan = EmbSpan(
             impl = fakeEmbraceSpan,
             clock = openTelemetryClock,
-            openTelemetry = fakeOpenTelemetry()
+            openTelemetry = fakeOpenTelemetry(),
         )
     }
 

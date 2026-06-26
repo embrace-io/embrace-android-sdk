@@ -40,9 +40,9 @@ formatting:
     maxLineLength: 140
   MaximumLineLength:
     maxLineLength: 140
-  useTrailingCommaOnCallSite:
+  TrailingCommaOnCallSite:
     active: true
-  useTrailingCommaOnDeclarationSite:
+  TrailingCommaOnDeclarationSite:
     active: true
 potential-bugs:
   ElseCaseInsteadOfExhaustiveWhen:

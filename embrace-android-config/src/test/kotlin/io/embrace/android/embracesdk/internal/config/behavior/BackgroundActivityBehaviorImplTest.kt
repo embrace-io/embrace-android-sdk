@@ -10,7 +10,7 @@ import org.junit.Test
 internal class BackgroundActivityBehaviorImplTest {
 
     private val remote = BackgroundActivityRemoteConfig(
-        0f
+        0f,
     )
 
     @Test

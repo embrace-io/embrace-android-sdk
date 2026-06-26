@@ -10,7 +10,7 @@ import org.junit.Test
 internal class AppExitInfoBehaviorImplTest {
 
     private val remote = RemoteConfig(
-        appExitInfoConfig = AppExitInfoConfig(55209, 100f)
+        appExitInfoConfig = AppExitInfoConfig(55209, 100f),
     )
 
     @Test

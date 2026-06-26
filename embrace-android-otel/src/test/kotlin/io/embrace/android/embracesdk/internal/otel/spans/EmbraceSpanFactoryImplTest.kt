@@ -39,7 +39,7 @@ internal class EmbraceSpanFactoryImplTest {
             openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository,
             dataValidator = DataValidator(telemetryService = FakeTelemetryService()),
-            telemetryService = FakeTelemetryService()
+            telemetryService = FakeTelemetryService(),
         )
     }
 
@@ -53,7 +53,7 @@ internal class EmbraceSpanFactoryImplTest {
                 private = false,
                 tracer = tracer,
                 openTelemetry = fakeOpenTelemetry(),
-            )
+            ),
         )
         assertTrue(span.start(clock.now()))
         with(span) {
@@ -76,7 +76,7 @@ internal class EmbraceSpanFactoryImplTest {
                 private = true,
                 tracer = tracer,
                 openTelemetry = fakeOpenTelemetry(),
-            )
+            ),
         )
         assertTrue(span.start(clock.now()))
         with(span) {
@@ -97,7 +97,7 @@ internal class EmbraceSpanFactoryImplTest {
                 private = false,
                 tracer = tracer,
                 openTelemetry = fakeOpenTelemetry(),
-            )
+            ),
         )
         assertTrue(span.start(clock.now()))
         with(span) {
@@ -118,7 +118,7 @@ internal class EmbraceSpanFactoryImplTest {
                 private = false,
                 tracer = tracer,
                 openTelemetry = fakeOpenTelemetry(),
-            )
+            ),
         )
         val spanBuilder = OtelSpanStartArgs(
             name = "from-span-builder",

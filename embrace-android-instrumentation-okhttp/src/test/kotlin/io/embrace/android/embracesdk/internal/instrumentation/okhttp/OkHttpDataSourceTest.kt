@@ -103,7 +103,7 @@ internal class OkHttpDataSourceTest {
         args = FakeInstrumentationArgs(
             application = ApplicationProvider.getApplicationContext(),
             configService = configService,
-            clock = sdkClock
+            clock = sdkClock,
         )
         val networkRequestDataSource = NetworkRequestDataSourceImpl(args)
         val networkCaptureDataSource = NetworkCaptureDataSourceImpl(args)
@@ -117,9 +117,9 @@ internal class OkHttpDataSourceTest {
                         duration = 0,
                         urlRegex = "^.*$",
                         expiresIn = 60000,
-                        statusCodes = setOf(200, 500)
+                        statusCodes = setOf(200, 500),
                     ),
-                )
+                ),
             )
             networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior()
         }
@@ -133,27 +133,27 @@ internal class OkHttpDataSourceTest {
         val preNetworkInterceptorTestInterceptor = TestInspectionInterceptor(
             beforeRequestSent = { request ->
                 preNetworkInterceptorBeforeRequestSupplier.invoke(
-                    request
+                    request,
                 )
             },
             afterResponseReceived = { response ->
                 preNetworkInterceptorAfterResponseSupplier.invoke(
-                    response
+                    response,
                 )
-            }
+            },
         )
         val networkInterceptor = EmbraceOkHttpInterceptor(InterceptorType.NETWORK) { dataSource }
         val postNetworkInterceptorTestInterceptor = TestInspectionInterceptor(
             beforeRequestSent = { request ->
                 postNetworkInterceptorBeforeRequestSupplier.invoke(
-                    request
+                    request,
                 )
             },
             afterResponseReceived = { response ->
                 postNetworkInterceptorAfterResponseSupplier.invoke(
-                    response
+                    response,
                 )
-            }
+            },
         )
         okHttpClient = OkHttpClient.Builder()
             .addInterceptor(applicationInterceptor)
@@ -202,7 +202,7 @@ internal class OkHttpDataSourceTest {
         server.enqueue(createBaseMockResponse(500).setGzipBody(RESPONSE_BODY))
         runAndValidatePostRequest(
             expectedResponseBodySize = RESPONSE_BODY_GZIPPED_SIZE,
-            expectedHttpStatus = 500
+            expectedHttpStatus = 500,
         )
     }
 
@@ -212,7 +212,7 @@ internal class OkHttpDataSourceTest {
         postRequestBuilder.header("x-emb-path", CUSTOM_PATH)
         runAndValidatePostRequest(
             expectedResponseBodySize = RESPONSE_BODY_GZIPPED_SIZE,
-            expectedPath = CUSTOM_PATH
+            expectedPath = CUSTOM_PATH,
         )
     }
 
@@ -222,7 +222,7 @@ internal class OkHttpDataSourceTest {
         postRequestBuilder.header("x-emb-path", CUSTOM_PATH)
         runAndValidatePostRequest(
             expectedResponseBodySize = RESPONSE_BODY_GZIPPED_SIZE,
-            expectedPath = CUSTOM_PATH
+            expectedPath = CUSTOM_PATH,
         )
     }
 
@@ -301,7 +301,7 @@ internal class OkHttpDataSourceTest {
         postNetworkInterceptorAfterResponseSupplier = ::removeContentLengthFromResponse
         server.enqueue(
             createBaseMockResponse().addHeader(CONTENT_TYPE_HEADER_NAME, CONTENT_TYPE_EVENT_STREAM)
-                .setBody(RESPONSE_BODY)
+                .setBody(RESPONSE_BODY),
         )
         runAndValidatePostRequest(0)
     }
@@ -477,8 +477,8 @@ internal class OkHttpDataSourceTest {
                         gzipStream.finish()
                     }
                     byteArrayStream.toByteArray()
-                }
-            )
+                },
+            ),
         ).addHeader(CONTENT_ENCODING_HEADER_NAME, ENCODING_GZIP)
 
     private fun runAndValidatePostRequest(
@@ -494,7 +494,7 @@ internal class OkHttpDataSourceTest {
             httpMethod = "POST",
             requestSize = REQUEST_BODY_SIZE,
             responseBody = RESPONSE_BODY,
-            systemClockTimes = runAndGetResponseTimes(::runPostRequest)
+            systemClockTimes = runAndGetResponseTimes(::runPostRequest),
         )
     }
 
@@ -509,7 +509,7 @@ internal class OkHttpDataSourceTest {
             requestSize = 0,
             responseBodySize = expectedResponseBodySize,
             responseBody = null,
-            systemClockTimes = runAndGetResponseTimes(::runGetRequest)
+            systemClockTimes = runAndGetResponseTimes(::runGetRequest),
         )
     }
 
@@ -523,7 +523,7 @@ internal class OkHttpDataSourceTest {
             timeBeforeRequest = beforeSystemTime,
             timeAfterRequest = afterSystemTime,
             minClockDrift = minClockDrift,
-            maxClockDrift = maxClockDrift
+            maxClockDrift = maxClockDrift,
         )
     }
 
@@ -551,13 +551,13 @@ internal class OkHttpDataSourceTest {
             assertTrue(
                 "SystemClock before: ${systemClockTimes.timeBeforeRequest}, " +
                     "max drift: ${systemClockTimes.maxClockDrift}, span start time: ${span.startTimeMs}",
-                systemClockTimes.timeBeforeRequest - systemClockTimes.maxClockDrift <= span.startTimeMs
+                systemClockTimes.timeBeforeRequest - systemClockTimes.maxClockDrift <= span.startTimeMs,
             )
             val endTime = checkNotNull(span.endTimeMs)
             assertTrue(
                 "SystemClock after: ${systemClockTimes.timeAfterRequest}, " +
                     "min drift: ${systemClockTimes.minClockDrift}, span end time: $endTime",
-                systemClockTimes.timeAfterRequest - systemClockTimes.minClockDrift >= endTime
+                systemClockTimes.timeAfterRequest - systemClockTimes.minClockDrift >= endTime,
             )
             val attrs = span.attributes
             assertEquals(server.url(path).toString(), attrs[UrlAttributes.URL_FULL])

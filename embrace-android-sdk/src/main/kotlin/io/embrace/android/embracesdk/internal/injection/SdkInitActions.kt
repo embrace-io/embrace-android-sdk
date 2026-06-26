@@ -27,7 +27,7 @@ internal fun ModuleGraph.postInit() {
     openTelemetryModule.applyConfiguration(
         sensitiveKeysBehavior = configService.sensitiveKeysBehavior,
         bypassValidation = configService.isOnlyUsingOtelExporters(),
-        otelBehavior = configService.otelBehavior
+        otelBehavior = configService.otelBehavior,
     )
 
     initModule.logger.errorHandlerProvider = { featureModule.internalErrorDataSource.dataSource }
@@ -97,7 +97,7 @@ internal fun ModuleGraph.loadInstrumentation() {
     threadBlockageService?.startCapture()
 
     featureModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
-        workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
+        workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
     )
 }
 
@@ -140,7 +140,7 @@ internal fun ModuleGraph.triggerPayloadSend() {
                 },
                 userSessionRestoreDecisionProvider = {
                     userSessionOrchestrationModule.sessionOrchestrator.userSessionRestoreDecision
-                }
+                },
             )
             resurrectionAttempted = true
         } else {
@@ -148,8 +148,8 @@ internal fun ModuleGraph.triggerPayloadSend() {
             initModule.logger.trackInternalError(
                 type = InternalErrorType.PayloadResurrectionFail,
                 throwable = IllegalStateException(
-                    "Resurrection service not found. Undelivered payloads not processed: $payloadCount"
-                )
+                    "Resurrection service not found. Undelivered payloads not processed: $payloadCount",
+                ),
             )
         }
 
@@ -160,7 +160,7 @@ internal fun ModuleGraph.triggerPayloadSend() {
     }
     worker.submit { // potentially trigger first delivery attempt by firing network status callback
         deliveryModule?.schedulingService?.let(
-            essentialServiceModule.networkConnectivityService::addNetworkConnectivityListener
+            essentialServiceModule.networkConnectivityService::addNetworkConnectivityListener,
         )
         deliveryModule?.schedulingService?.onPayloadIntake()
     }
@@ -175,7 +175,7 @@ internal fun ModuleGraph.markSdkInitComplete() {
         coreModule.sdkStartTime,
         initModule.clock.now(),
         essentialServiceModule.appStateTracker.getAppState(),
-        Thread.currentThread().name
+        Thread.currentThread().name,
     )
     end()
     val appId = configService.appId
@@ -200,7 +200,7 @@ private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, St
                     .getProperties()
                     .mapKeys { property ->
                         property.key.toEmbraceAttributeName()
-                    }
+                    },
             )
             instrumentationModule.instrumentationRegistry.getCurrentStates().forEach {
                 put(it.key, it.value.toString())

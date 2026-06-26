@@ -78,7 +78,7 @@ internal class EmbraceTelemetryServiceTest {
         // That method isn't in the map anymore
         assertEquals(
             null,
-            embraceTelemetryService.getAndClearTelemetryAttributes().getOrDefault("emb.storage.a_file", null)
+            embraceTelemetryService.getAndClearTelemetryAttributes().getOrDefault("emb.storage.a_file", null),
         )
     }
 
@@ -115,7 +115,7 @@ internal class EmbraceTelemetryServiceTest {
         // Given no limits have been logged
         assertEquals(
             null,
-            embraceTelemetryService.getAndClearTelemetryAttributes()["emb.private.applied_limit.error_log.truncate_attributes"]
+            embraceTelemetryService.getAndClearTelemetryAttributes()["emb.private.applied_limit.error_log.truncate_attributes"],
         )
 
         // When a limit is logged
@@ -124,7 +124,7 @@ internal class EmbraceTelemetryServiceTest {
         // Then the limit is in the map
         assertEquals(
             "1",
-            embraceTelemetryService.getAndClearTelemetryAttributes()["emb.private.applied_limit.error_log.truncate_attributes"]
+            embraceTelemetryService.getAndClearTelemetryAttributes()["emb.private.applied_limit.error_log.truncate_attributes"],
         )
     }
 
@@ -140,7 +140,7 @@ internal class EmbraceTelemetryServiceTest {
         // Then the counter is incremented
         assertEquals(
             "3",
-            embraceTelemetryService.getAndClearTelemetryAttributes()["emb.private.applied_limit.breadcrumb.truncate_string"]
+            embraceTelemetryService.getAndClearTelemetryAttributes()["emb.private.applied_limit.breadcrumb.truncate_string"],
         )
     }
 

@@ -61,7 +61,7 @@ class TelemetryDestinationImpl(
             context = null,
             severityNumber = severityNumber,
             severityText = getSeverityText(severityNumber),
-            addCurrentMetadata = addCurrentSessionInfo
+            addCurrentMetadata = addCurrentSessionInfo,
         ) {
             if (isPrivate) {
                 setStringAttribute(PrivateSpan.key, PrivateSpan.value)
@@ -94,7 +94,7 @@ class TelemetryDestinationImpl(
             startTimeMs = startTimeMs,
             autoTerminationMode = mode,
             private = private,
-            type = schemaType.telemetryType
+            type = schemaType.telemetryType,
         ).apply {
             schemaType.attributes().forEach {
                 addAttribute(it.key, it.value)
@@ -130,11 +130,11 @@ class TelemetryDestinationImpl(
         val spanToken = startSpanCapture(
             schemaType = state,
             startTimeMs = clock.now(),
-            private = true
+            private = true,
         )
 
         return SessionPartStateTokenImpl(
-            spanToken = spanToken
+            spanToken = spanToken,
         )
     }
 
@@ -171,7 +171,7 @@ class TelemetryDestinationImpl(
         return currentSession.addSystemEvent(
             schemaType.fixedObjectName.toEmbraceObjectName(),
             startTimeMs,
-            schemaType.attributes() + schemaType.telemetryType.asPair()
+            schemaType.attributes() + schemaType.telemetryType.asPair(),
         ).also {
             sessionUpdateAction?.invoke()
         }
@@ -233,7 +233,7 @@ class TelemetryDestinationImpl(
             span.addSystemEvent(
                 name = name,
                 timestampMs = eventTimeMs,
-                attributes = attributes
+                attributes = attributes,
             )
         }
     }
@@ -265,14 +265,14 @@ class TelemetryDestinationImpl(
                         if (unrecordedTransitions.droppedByInstrumentation > 0) {
                             setEmbraceAttribute(
                                 EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION,
-                                unrecordedTransitions.droppedByInstrumentation
+                                unrecordedTransitions.droppedByInstrumentation,
                             )
                         }
-                    }.toMap()
+                    }.toMap(),
             )
             spanToken.setSystemAttribute(
                 EmbStateTransitionAttributes.EMB_STATE_TRANSITION_COUNT,
-                transitionCount.incrementAndGet().toString()
+                transitionCount.incrementAndGet().toString(),
             )
             return true
         }
@@ -281,13 +281,13 @@ class TelemetryDestinationImpl(
             if (unrecordedTransitions.notInSession > 0) {
                 spanToken.setSystemAttribute(
                     EmbStateTransitionAttributes.EMB_STATE_NOT_IN_SESSION,
-                    unrecordedTransitions.notInSession.toString()
+                    unrecordedTransitions.notInSession.toString(),
                 )
             }
             if (unrecordedTransitions.droppedByInstrumentation > 0) {
                 spanToken.setSystemAttribute(
                     EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION,
-                    unrecordedTransitions.droppedByInstrumentation.toString()
+                    unrecordedTransitions.droppedByInstrumentation.toString(),
                 )
             }
             spanToken.stop()

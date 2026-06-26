@@ -209,8 +209,8 @@ internal class UiLoadTraceEmitterTest {
                 SpanEventImpl(
                     name = "custom-event",
                     timestampNanos = timestamps.first.millisToNanos(),
-                    attributes = customAttributes
-                )
+                    attributes = customAttributes,
+                ),
             )
 
             assertEmbraceSpanData(
@@ -227,7 +227,7 @@ internal class UiLoadTraceEmitterTest {
                 expectedParent = trace,
                 expectedCustomAttributes = customAttributes,
                 expectedEvents = listOf(expectedEvent),
-                expectedErrorCode = ErrorCodeAttribute.Failure
+                expectedErrorCode = ErrorCodeAttribute.Failure,
             )
 
             assertTrue(trace.attributes.keys.none { it == "before-start" || it == "after-end" })
@@ -239,7 +239,7 @@ internal class UiLoadTraceEmitterTest {
                         span = checkNotNull(spanMap["$activityName-create"]),
                         expectedStartTimeMs = startMs(),
                         expectedEndTimeMs = endMs(),
-                        expectedParent = trace
+                        expectedParent = trace,
                     )
                 }
             } else {
@@ -251,7 +251,7 @@ internal class UiLoadTraceEmitterTest {
                     span = checkNotNull(spanMap["$activityName-start"]),
                     expectedStartTimeMs = startMs(),
                     expectedEndTimeMs = endMs(),
-                    expectedParent = trace
+                    expectedParent = trace,
                 )
             }
 
@@ -261,7 +261,7 @@ internal class UiLoadTraceEmitterTest {
                         span = checkNotNull(spanMap["$activityName-resume"]),
                         expectedStartTimeMs = startMs(),
                         expectedEndTimeMs = endMs(),
-                        expectedParent = trace
+                        expectedParent = trace,
                     )
                 }
             } else {
@@ -274,7 +274,7 @@ internal class UiLoadTraceEmitterTest {
                         span = checkNotNull(spanMap["$activityName-render"]),
                         expectedStartTimeMs = startMs(),
                         expectedEndTimeMs = endMs(),
-                        expectedParent = trace
+                        expectedParent = trace,
                     )
                 }
             } else {
@@ -297,7 +297,7 @@ internal class UiLoadTraceEmitterTest {
                     span = checkNotNull(spanMap["$activityName-ready"]),
                     expectedStartTimeMs = lastEventEndTimeMs,
                     expectedEndTimeMs = traceEndTime,
-                    expectedParent = trace
+                    expectedParent = trace,
                 )
                 assertNotEquals(traceEndTime, lastEventEndTimeMs)
             } else {
@@ -325,7 +325,7 @@ internal class UiLoadTraceEmitterTest {
             PreviousState.FROM_ACTIVITY -> {
                 traceEmitter.discard(
                     instanceId = lastInstanceId,
-                    timestampMs = lastActivityExitMs
+                    timestampMs = lastActivityExitMs,
                 )
             }
 
@@ -401,11 +401,11 @@ internal class UiLoadTraceEmitterTest {
                     SpanEventImpl(
                         name = "custom-event",
                         timestampNanos = traceStartMs.millisToNanos(),
-                        attributes = customAttributes
-                    )
-                )
+                        attributes = customAttributes,
+                    ),
+                ),
             ),
-            errorCode = ErrorCodeAttribute.Failure
+            errorCode = ErrorCodeAttribute.Failure,
         )
 
         val resumeEvents = activityResume(instanceId).apply {
@@ -558,7 +558,7 @@ internal class UiLoadTraceEmitterTest {
     private enum class PreviousState {
         FROM_ACTIVITY,
         FROM_BACKGROUND,
-        FROM_INTERRUPTED_LOAD
+        FROM_INTERRUPTED_LOAD,
     }
 
     companion object {

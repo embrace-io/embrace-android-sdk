@@ -17,7 +17,9 @@ enum class SendMode {
     /**
      * Queue for delivery at the next convenient time. Used when the delivery environment is unstable, e.g. when an app is about to crash.
      */
-    DEFER;
+    DEFER,
+
+    ;
 
     companion object {
         fun fromString(value: String?): SendMode {

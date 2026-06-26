@@ -29,7 +29,7 @@ class OkHttpRemoteConfigSourceTest {
     private lateinit var source: OkHttpRemoteConfigSource
 
     private val remoteConfig = RemoteConfig(
-        backgroundActivityConfig = BackgroundActivityRemoteConfig(100f)
+        backgroundActivityConfig = BackgroundActivityRemoteConfig(100f),
     )
     private lateinit var configResponseBuffer: Buffer
 
@@ -55,18 +55,18 @@ class OkHttpRemoteConfigSourceTest {
                 FakeInstrumentedConfig(
                     baseUrls = FakeBaseUrlConfig(
                         configImpl = baseUrl,
-                    )
+                    ),
                 ),
                 "1.0.0",
-                36
-            )
+                36,
+            ),
         )
     }
 
     @Test
     fun `test config 2xx`() {
         val (cfg, request) = executeRequest(
-            MockResponse().setResponseCode(200).setBody(configResponseBuffer)
+            MockResponse().setResponseCode(200).setBody(configResponseBuffer),
         )
         assertConfigRequestReceived(request)
         assertConfigResponseDeserialized(cfg)
@@ -75,7 +75,7 @@ class OkHttpRemoteConfigSourceTest {
     @Test
     fun `test config 4xx`() {
         val (cfg, request) = executeRequest(
-            MockResponse().setResponseCode(400)
+            MockResponse().setResponseCode(400),
         )
         assertConfigRequestReceived(request)
         assertConfigResponseNotDeserialized(cfg)
@@ -84,7 +84,7 @@ class OkHttpRemoteConfigSourceTest {
     @Test
     fun `test config 5xx`() {
         val (cfg, request) = executeRequest(
-            MockResponse().setResponseCode(500)
+            MockResponse().setResponseCode(500),
         )
         assertConfigRequestReceived(request)
         assertConfigResponseNotDeserialized(cfg)
@@ -101,7 +101,7 @@ class OkHttpRemoteConfigSourceTest {
     @Test
     fun `test invalid response from server`() {
         val (cfg, request) = executeRequest(
-            MockResponse().setResponseCode(200).setBody("{")
+            MockResponse().setResponseCode(200).setBody("{"),
         )
         assertConfigRequestReceived(request)
         assertConfigResponseNotDeserialized(cfg)
@@ -113,7 +113,7 @@ class OkHttpRemoteConfigSourceTest {
         val (cfg, request) = executeRequest(
             MockResponse().setResponseCode(200)
                 .setBody(configResponseBuffer)
-                .setHeader("etag", etagValue)
+                .setHeader("etag", etagValue),
         )
         assertConfigRequestReceived(request)
         assertNull(request?.getHeader("If-None-Match"))
@@ -122,7 +122,7 @@ class OkHttpRemoteConfigSourceTest {
         // second request with etag
         val (secondCfg, secondRequest) = executeRequest(
             MockResponse().setResponseCode(304)
-                .setHeader("etag", etagValue)
+                .setHeader("etag", etagValue),
         )
         assertConfigRequestReceived(secondRequest)
         assertEquals(etagValue, secondRequest?.getHeader("If-None-Match"))

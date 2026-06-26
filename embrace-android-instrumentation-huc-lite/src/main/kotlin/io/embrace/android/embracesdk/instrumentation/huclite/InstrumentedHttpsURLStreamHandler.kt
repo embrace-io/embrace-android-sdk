@@ -29,7 +29,7 @@ internal class InstrumentedHttpsURLStreamHandler(
                     delegatedHandler.javaClass,
                     "openConnection",
                     URL::class.java,
-                    Proxy::class.java
+                    Proxy::class.java,
                 )
             method.isAccessible = true
             val httpsConnection = method.invoke(delegatedHandler, url, proxy) as HttpsURLConnection
@@ -46,7 +46,7 @@ internal class InstrumentedHttpsURLStreamHandler(
                     delegatedHandler,
                     delegatedHandler.javaClass,
                     "openConnection",
-                    URL::class.java
+                    URL::class.java,
                 )
             method.isAccessible = true
             val httpsConnection = method.invoke(delegatedHandler, url) as HttpsURLConnection
@@ -67,6 +67,6 @@ internal class InstrumentedHttpsURLStreamHandler(
 
     private class InstrumentedConnectionException(
         override val message: String?,
-        override val cause: Throwable?
+        override val cause: Throwable?,
     ) : IOException(message, cause)
 }

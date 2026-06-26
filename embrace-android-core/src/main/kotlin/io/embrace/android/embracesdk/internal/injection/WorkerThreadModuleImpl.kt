@@ -51,7 +51,7 @@ class WorkerThreadModuleImpl : WorkerThreadModule, RejectedExecutionHandler {
                     this,
                     1,
                     1,
-                    storedTelemetryRunnableComparator
+                    storedTelemetryRunnableComparator,
                 )
             } else {
                 ScheduledThreadPoolExecutor(1, threadFactory, this)

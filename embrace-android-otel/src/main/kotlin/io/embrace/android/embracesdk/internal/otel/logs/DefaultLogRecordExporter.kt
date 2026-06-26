@@ -30,7 +30,7 @@ internal class DefaultLogRecordExporter(
                         exporter.export(
                             telemetry.filterNot {
                                 it.attributes.containsKey(PrivateSpan.key)
-                            }
+                            },
                         )
                     } catch (ignored: Throwable) {
                         result = StoreDataResult.FAILURE

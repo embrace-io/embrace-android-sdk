@@ -24,7 +24,7 @@ class EmbLoggerProvider(
         val key = ApiKey(
             instrumentationScopeName = name,
             instrumentationScopeVersion = version,
-            schemaUrl = schemaUrl
+            schemaUrl = schemaUrl,
         )
 
         val logger = (
@@ -40,7 +40,7 @@ class EmbLoggerProvider(
         val loggerImpl = otelImpl.loggerProvider.getLogger(
             name = key.instrumentationScopeName,
             version = key.instrumentationScopeVersion,
-            schemaUrl = key.schemaUrl
+            schemaUrl = key.schemaUrl,
         )
         val logger = EmbLogger(loggerImpl, eventService)
         loggers[key] = logger

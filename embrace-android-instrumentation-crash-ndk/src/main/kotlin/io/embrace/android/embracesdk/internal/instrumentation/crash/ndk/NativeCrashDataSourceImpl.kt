@@ -20,7 +20,7 @@ internal class NativeCrashDataSourceImpl(
 ) : NativeCrashDataSource, DataSourceImpl(
     args = args,
     limitStrategy = NoopLimitStrategy,
-    instrumentationName = "native_crash_data_source"
+    instrumentationName = "native_crash_data_source",
 ) {
     override fun getAndSendNativeCrash(): NativeCrashData? {
         return nativeCrashProcessor.getLatestNativeCrash()?.apply {
@@ -89,7 +89,7 @@ internal class NativeCrashDataSourceImpl(
                 severity = LogSeverity.ERROR,
                 message = "",
                 addCurrentSessionInfo = false,
-                timestampMs = nativeCrash.timestamp
+                timestampMs = nativeCrash.timestamp,
             )
         }
     }

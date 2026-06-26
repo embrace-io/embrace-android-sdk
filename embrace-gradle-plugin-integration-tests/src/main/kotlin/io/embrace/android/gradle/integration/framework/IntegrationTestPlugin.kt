@@ -19,7 +19,7 @@ class IntegrationTestPlugin : Plugin<Project> {
         extension = project.extensions.create(
             "integrationTest",
             IntegrationTestExtension::class.java,
-            project.objects
+            project.objects,
         )
         extension.variantData.set(
             AndroidCompactedVariantData(
@@ -28,8 +28,8 @@ class IntegrationTestPlugin : Plugin<Project> {
                 "release",
                 false,
                 listOf("development"),
-                ""
-            )
+                "",
+            ),
         )
         project.extensions.configure(JavaPluginExtension::class.java) { java ->
             java.sourceCompatibility = JavaVersion.VERSION_11

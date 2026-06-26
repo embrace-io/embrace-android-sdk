@@ -10,7 +10,7 @@ internal class LogPayloadSourceImpl(
 
     override fun getBatchedLogPayload(): LogPayload {
         return LogPayload(
-            logs = logSink.flushBatch()
+            logs = logSink.flushBatch(),
         )
     }
 
@@ -22,8 +22,8 @@ internal class LogPayloadSourceImpl(
             logRequests.add(
                 LogRequest(
                     payload = LogPayload(logs = listOf(logRequest.payload)),
-                    defer = logRequest.defer
-                )
+                    defer = logRequest.defer,
+                ),
             )
             logRequest = if (logRequests.size < MAX_PAYLOADS) {
                 logSink.pollUnbatchedLog()

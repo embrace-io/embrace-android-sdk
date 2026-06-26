@@ -97,7 +97,7 @@ class InstrumentedConfigClassTest {
         val visitor = cfg.getMethodVisitor("getStringList", "()Ljava/util/List;", api, nextVisitor)
         assertEquals(
             listOf("hello"),
-            (visitor as io.embrace.android.gradle.plugin.instrumentation.config.StringListReturnValueMethodVisitor).replacedValue
+            (visitor as io.embrace.android.gradle.plugin.instrumentation.config.StringListReturnValueMethodVisitor).replacedValue,
         )
 
         // name doesn't match

@@ -31,7 +31,7 @@ class PriorityThreadPoolExecutor(
     TimeUnit.SECONDS,
     PriorityBlockingQueue(100, comparator),
     threadFactory,
-    handler
+    handler,
 ) {
 
     override fun <T : Any?> newTaskFor(callable: Callable<T>): RunnableFuture<T> {

@@ -27,7 +27,7 @@ class NetworkBehaviorImpl(
             "\\r",
             "\\n",
             "\\t",
-            " "
+            " ",
         )
     }
 
@@ -45,7 +45,7 @@ class NetworkBehaviorImpl(
     override val domainCountLimiter: DomainCountLimiter by lazy {
         EmbraceDomainCountLimiter(
             defaultLimitSupplier = ::getRequestLimitPerDomain,
-            domainLimitsSupplier = ::getLimitsByDomain
+            domainLimitsSupplier = ::getLimitsByDomain,
         )
     }
 
@@ -61,7 +61,7 @@ class NetworkBehaviorImpl(
 
     override fun getRequestLimitPerDomain(): Int = min(
         remote?.networkConfig?.defaultCaptureLimit ?: DEFAULT_NETWORK_CALL_LIMIT,
-        cfg.getRequestLimitPerDomain()
+        cfg.getRequestLimitPerDomain(),
     )
 
     override fun isUrlEnabled(url: String): Boolean {

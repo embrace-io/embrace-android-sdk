@@ -8,7 +8,7 @@ class NetworkStateInstrumentationProvider :
     StateInstrumentationProvider<NetworkStateDataSource, SchemaType.NetworkState.Status>(
         configGate = {
             configService.autoDataCaptureBehavior.isNetworkConnectivityCaptureEnabled()
-        }
+        },
     ) {
     override fun factoryProvider(args: InstrumentationArgs): () -> NetworkStateDataSource {
         return { NetworkStateDataSource(args) }

@@ -6,5 +6,5 @@ class TestClassData(
     override val className: String,
     override val classAnnotations: List<String> = emptyList(),
     override val interfaces: List<String> = emptyList(),
-    override val superClasses: List<String> = emptyList()
+    override val superClasses: List<String> = emptyList(),
 ) : ClassData

@@ -51,7 +51,7 @@ internal class ReactNativeInternalInterfaceImplTest {
             FakeInitModule(),
             instrumentationModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
                 FakeInstrumentationModule(ApplicationProvider.getApplicationContext())
-            }
+            },
         )
         impl = ReactNativeInternalInterfaceImpl(
             embrace,
@@ -59,7 +59,7 @@ internal class ReactNativeInternalInterfaceImplTest {
             bootstrapper,
             rnBundleIdTracker,
             hostedSdkVersionInfo,
-            logger
+            logger,
         )
     }
 
@@ -131,7 +131,7 @@ internal class ReactNativeInternalInterfaceImplTest {
             bootstrapper,
             rnBundleIdTracker,
             hostedSdkVersionInfo,
-            logger
+            logger,
         )
 
         every { embrace.isStarted } returns true
@@ -167,7 +167,7 @@ internal class ReactNativeInternalInterfaceImplTest {
                 "t\":\"type\",\"" +
                 "st\":\"" +
                 "stack\"}",
-            lastSentCrashAttributes[embAndroidReactNativeCrashJsException]
+            lastSentCrashAttributes[embAndroidReactNativeCrashJsException],
         )
     }
 

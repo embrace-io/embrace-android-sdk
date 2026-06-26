@@ -30,7 +30,7 @@ internal class InstrumentedHttpsURLConnection(
     private val requestData: RequestData? =
         hucLiteDataSource.createRequestData(
             wrappedConnection = wrappedConnection,
-            clock = clock
+            clock = clock,
         )
 
     // Overridden methods that will return when a TCP connection has been established without sending the request

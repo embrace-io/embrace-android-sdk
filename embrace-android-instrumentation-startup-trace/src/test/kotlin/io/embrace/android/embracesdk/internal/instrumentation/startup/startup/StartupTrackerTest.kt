@@ -110,7 +110,7 @@ internal class StartupTrackerTest {
                 firstActivityInitTime = createTime,
                 createTime = createTime,
                 startTime = startTime,
-                resumeTime = resumeTime
+                resumeTime = resumeTime,
             )
         }
     }
@@ -163,7 +163,7 @@ internal class StartupTrackerTest {
         val secondLaunchTimes = launchActivity()
         assertNotEquals(
             secondLaunchTimes.createTime,
-            dataCollector.startupActivityInitStartMs
+            dataCollector.startupActivityInitStartMs,
         )
     }
 
@@ -245,7 +245,7 @@ internal class StartupTrackerTest {
         postCreateTime: Long? = null,
         startTime: Long,
         resumeTime: Long,
-        renderTime: Long? = null
+        renderTime: Long? = null,
     ) {
         assertEquals(firstActivityInitTime, dataCollector.firstActivityInitMs)
         assertEquals(preCreateTime, dataCollector.startupActivityPreCreatedMs)

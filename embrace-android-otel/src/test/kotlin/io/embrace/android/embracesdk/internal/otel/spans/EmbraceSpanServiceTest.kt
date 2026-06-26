@@ -50,7 +50,7 @@ internal class EmbraceSpanServiceTest {
             packageName = "com.test.app",
             systemInfo = SystemInfo(),
             sessionIdsProvider = { FakeSessionIdsProvider(userSessionId = "fake-session-id") },
-            processIdentifierProvider = { "fake-pid" }
+            processIdentifierProvider = { "fake-pid" },
         )
         val otelSdkWrapper = OtelSdkWrapper(
             otelClock = fakeClock,
@@ -76,12 +76,12 @@ internal class EmbraceSpanServiceTest {
                     openTelemetryClock = clock,
                     spanRepository = SpanRepository(),
                     dataValidator = dataValidator,
-                    telemetryService = FakeTelemetryService()
+                    telemetryService = FakeTelemetryService(),
                 )
             },
             dataValidator = dataValidator,
             tracerSupplier = { tracer },
-            openTelemetrySupplier = { fakeOpenTelemetry() }
+            openTelemetrySupplier = { fakeOpenTelemetry() },
         )
     }
 
@@ -94,7 +94,7 @@ internal class EmbraceSpanServiceTest {
             initCallback = ::initCallback,
             embraceSpanFactorySupplier = { FakeEmbraceSpanFactory() },
             tracerSupplier = { tracer },
-            openTelemetrySupplier = { fakeOpenTelemetry() }
+            openTelemetrySupplier = { fakeOpenTelemetry() },
         )
         assertFalse(uninitializedService.initialized())
         assertEquals(NoopEmbraceSdkSpan, uninitializedService.createSpan("test-span"))
@@ -126,7 +126,7 @@ internal class EmbraceSpanServiceTest {
         val expectedType = EmbType.Performance.Default
         val expectedAttributes = mapOf(
             Pair("attribute1", "value1"),
-            Pair("attribute2", "value2")
+            Pair("attribute2", "value2"),
         )
         val expectedEvents = listOfNotNull(
             EmbraceSpanEvent.create(name = "event1", timestampMs = 1_000_000L.nanosToMillis(), expectedAttributes),

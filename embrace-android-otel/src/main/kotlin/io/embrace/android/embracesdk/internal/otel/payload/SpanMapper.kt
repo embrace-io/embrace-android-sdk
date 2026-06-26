@@ -29,13 +29,13 @@ fun EmbraceSpanData.toEmbracePayload(): Span = Span(
 fun SpanEvent.toEmbracePayload(): EmbraceSpanEvent? = EmbraceSpanEvent.create(
     name = name ?: "",
     timestampMs = (timestampNanos ?: 0).nanosToMillis(),
-    attributes = attributes?.toEmbracePayload() ?: emptyMap()
+    attributes = attributes?.toEmbracePayload() ?: emptyMap(),
 )
 
 fun EmbraceSpanEvent.toEmbracePayload(): SpanEvent = SpanEvent(
     name = name,
     timestampNanos = timestampNanos,
-    attributes = attributes.toEmbracePayload()
+    attributes = attributes.toEmbracePayload(),
 )
 
 fun Map<String, String>.toEmbracePayload(): List<Attribute> =
@@ -48,7 +48,7 @@ fun EmbraceLinkData.toEmbracePayload() = Link(
     spanId = spanContext.spanId,
     traceId = spanContext.traceId,
     attributes = attributes.toEmbracePayload(),
-    isRemote = spanContext.isRemote
+    isRemote = spanContext.isRemote,
 )
 
 fun Span.toEmbracePayload(): EmbraceSpanData {
@@ -67,6 +67,6 @@ fun Span.toEmbracePayload(): EmbraceSpanData {
         },
         events = events?.mapNotNull { it.toEmbracePayload() } ?: emptyList(),
         attributes = attributes?.toEmbracePayload() ?: emptyMap(),
-        links = links ?: emptyList()
+        links = links ?: emptyList(),
     )
 }

@@ -22,7 +22,7 @@ internal class InternalInterfaceModuleImpl(
     override val embraceInternalInterface: EmbraceInternalInterface by singleton {
         EmbraceInternalInterfaceImpl(
             configService,
-            payloadSourceModule.resourceSource
+            payloadSourceModule.resourceSource,
         )
     }
 
@@ -33,7 +33,7 @@ internal class InternalInterfaceModuleImpl(
             bootstrapper,
             payloadSourceModule.rnBundleIdTracker,
             payloadSourceModule.hostedSdkVersionInfo,
-            initModule.logger
+            initModule.logger,
         )
     }
 
@@ -42,7 +42,7 @@ internal class InternalInterfaceModuleImpl(
             embrace,
             embraceInternalInterface,
             payloadSourceModule.hostedSdkVersionInfo,
-            initModule.logger
+            initModule.logger,
         )
     }
 
@@ -51,7 +51,7 @@ internal class InternalInterfaceModuleImpl(
             embrace,
             embraceInternalInterface,
             payloadSourceModule.hostedSdkVersionInfo,
-            initModule.logger
+            initModule.logger,
         )
     }
 }

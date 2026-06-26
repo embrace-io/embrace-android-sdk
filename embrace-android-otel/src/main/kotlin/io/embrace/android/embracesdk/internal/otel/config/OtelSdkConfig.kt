@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.config
 
 import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.otel.impl.EmbAttributesMutator
 import io.embrace.android.embracesdk.internal.otel.logs.DefaultLogRecordExporter
 import io.embrace.android.embracesdk.internal.otel.logs.DefaultLogRecordProcessor
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
@@ -129,5 +130,11 @@ class OtelSdkConfig(
 
     fun setResourceAttribute(key: String, value: String) {
         customAttributes[key] = value
+    }
+
+    fun getOTelResourceAttributes(): Map<String, Any> {
+        val resourceAttrContainer = EmbAttributesMutator()
+        resourceAction(resourceAttrContainer)
+        return resourceAttrContainer.attributes
     }
 }

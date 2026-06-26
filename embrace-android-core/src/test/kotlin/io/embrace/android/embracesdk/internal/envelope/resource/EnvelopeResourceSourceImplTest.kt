@@ -46,7 +46,9 @@ internal class EnvelopeResourceSourceImplTest {
             "",
             53,
             { "fakeReactNativeBundleId" }
-        )
+        ) {
+            mapOf("resource-attr" to "foo")
+        }
         val envelope = source.getEnvelopeResource()
 
         assertEquals("2.5.1", envelope.appVersion)
@@ -73,5 +75,6 @@ internal class EnvelopeResourceSourceImplTest {
         assertEquals("26", envelope.osCode)
         assertEquals("1920x1080", envelope.screenResolution)
         assertEquals(8, envelope.numCores)
+        assertEquals("foo", envelope.extras["resource-attr"])
     }
 }

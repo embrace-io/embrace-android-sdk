@@ -20,6 +20,7 @@ internal object JsonComparator {
      */
     fun compare(expected: JSONObject, observed: JSONObject, path: String = ""): List<String> {
         val mismatches = mutableListOf<String>()
+        var findMissingKeys = true
 
         expected.keys().forEach { key ->
             val expectedValue = expected.get(key)
@@ -30,6 +31,7 @@ internal object JsonComparator {
                 else -> "$path.$key"
             }
             if (expectedValue == IGNORE_VALUE) {
+                findMissingKeys = false
                 return@forEach
             }
             if (observedValue == null) {
@@ -39,8 +41,10 @@ internal object JsonComparator {
             compareJsonValue(expectedValue, observedValue, mismatches, currentPath)
         }
 
-        // Check for keys in observed JSON that are not present in expected JSON recursively
-        findMissingExpectedKeys(observed, expected, mismatches)
+        // Check for keys in observed JSON that are not present in expected JSON recursively only if the parent value isn't ignored
+        if (findMissingKeys) {
+            findMissingExpectedKeys(observed, expected, mismatches)
+        }
         return mismatches
     }
 

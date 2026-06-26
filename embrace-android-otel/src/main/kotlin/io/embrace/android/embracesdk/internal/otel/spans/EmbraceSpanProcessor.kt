@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.export.OperationResultCode
 import io.opentelemetry.kotlin.semconv.SessionAttributes
+import io.opentelemetry.kotlin.semconv.UserAttributes
 import io.opentelemetry.kotlin.tracing.export.SpanExporter
 import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 import io.opentelemetry.kotlin.tracing.model.ReadWriteSpan
@@ -14,6 +15,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 class EmbraceSpanProcessor(
     private val sessionIdsProvider: () -> SessionIdsProvider?,
+    private val userIdProvider: () -> String? = { null },
     private val processIdentifier: String,
     private val spanExporter: SpanExporter,
 ) : SpanProcessor {
@@ -28,6 +30,9 @@ class EmbraceSpanProcessor(
             span.setStringAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, ids.sessionPartId)
             span.setStringAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, ids.userSessionId)
             span.setStringAttribute(SessionAttributes.SESSION_ID, ids.userSessionId)
+        }
+        userIdProvider()?.let { userId ->
+            span.setStringAttribute(UserAttributes.USER_ID, userId)
         }
     }
 

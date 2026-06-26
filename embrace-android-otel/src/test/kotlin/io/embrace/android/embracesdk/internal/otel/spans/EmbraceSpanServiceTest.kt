@@ -50,8 +50,7 @@ internal class EmbraceSpanServiceTest {
             packageName = "com.test.app",
             systemInfo = SystemInfo(),
             sessionIdsProvider = { FakeSessionIdsProvider(userSessionId = "fake-session-id") },
-            processIdentifierProvider = { "fake-pid" },
-        )
+        ) { "fake-pid" }
         val otelSdkWrapper = OtelSdkWrapper(
             otelClock = fakeClock,
             configuration = otelSdkConfig,

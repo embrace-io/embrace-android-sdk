@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
+import io.opentelemetry.kotlin.semconv.UserAttributes
 import java.util.ServiceLoader
 
 /**
@@ -50,6 +51,7 @@ internal fun ModuleGraph.postInit() {
         instrumentationModule.instrumentationRegistry::getCurrentStates
 
     openTelemetryModule.setSessionIdsProvider(userSessionOrchestrationModule.sessionIdsProvider)
+    openTelemetryModule.setUserIdProvider { essentialServiceModule.userService.getUserInfo().userId }
 
     // Start the orchestrator and create the first session part once all the module dependencies have been created and wired up
     userSessionOrchestrationModule.sessionOrchestrator.start()
@@ -195,6 +197,9 @@ private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, St
             put(EmbSessionAttributes.EMB_USER_SESSION_ID, sessionIds.userSessionId)
             put(SessionAttributes.SESSION_ID, sessionIds.userSessionId)
             put(EmbSessionAttributes.EMB_STATE, sessionState.description)
+            essentialServiceModule.userService.getUserInfo().userId?.let {
+                put(UserAttributes.USER_ID, it)
+            }
             putAll(
                 essentialServiceModule.userSessionPropertiesService
                     .getProperties()

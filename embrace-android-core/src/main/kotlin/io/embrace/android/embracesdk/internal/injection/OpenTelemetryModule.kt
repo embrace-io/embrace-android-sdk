@@ -76,4 +76,9 @@ interface OpenTelemetryModule {
      * Provide the session-related IDs to be stamped on OTel signals
      */
     fun setSessionIdsProvider(sessionIdsProvider: SessionIdsProvider)
+
+    /**
+     * Provide the current user ID to be stamped on OTel spans at the time they start
+     */
+    fun setUserIdProvider(userIdProvider: () -> String?)
 }

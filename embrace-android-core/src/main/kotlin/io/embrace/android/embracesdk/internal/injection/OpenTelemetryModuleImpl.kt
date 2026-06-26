@@ -34,9 +34,8 @@ class OpenTelemetryModuleImpl(
 ) : OpenTelemetryModule {
 
     private val processIdentifierProvider: () -> String by lazy { IdGenerator.Companion::generateLaunchInstanceId }
-
     private var storedSessionIdsProvider: SessionIdsProvider? = null
-
+    private var storedUserIdProvider: (() -> String?)? = null
     private var otelBehavior: OtelBehavior? = null
 
     override val spanRepository: SpanRepository by lazy {
@@ -57,6 +56,7 @@ class OpenTelemetryModuleImpl(
             packageName = initModule.instrumentedConfig.project.getPackageName() ?: "UNKNOWN",
             systemInfo = initModule.systemInfo,
             sessionIdsProvider = { storedSessionIdsProvider },
+            userIdProvider = { storedUserIdProvider?.invoke() },
             processIdentifierProvider = processIdentifierProvider,
         )
     }
@@ -93,6 +93,10 @@ class OpenTelemetryModuleImpl(
 
     override fun setSessionIdsProvider(sessionIdsProvider: SessionIdsProvider) {
         storedSessionIdsProvider = sessionIdsProvider
+    }
+
+    override fun setUserIdProvider(userIdProvider: () -> String?) {
+        storedUserIdProvider = userIdProvider
     }
 
     private fun setupOtelBehavior(otelBehavior: OtelBehavior) {

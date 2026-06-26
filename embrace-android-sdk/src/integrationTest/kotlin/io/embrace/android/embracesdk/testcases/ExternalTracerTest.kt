@@ -19,9 +19,10 @@ import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInt
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.getTracer
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
+import io.opentelemetry.kotlin.semconv.UserAttributes
+import io.opentelemetry.kotlin.tracing.StatusData
 import io.opentelemetry.kotlin.tracing.Tracer
 import io.opentelemetry.kotlin.tracing.data.SpanData
-import io.opentelemetry.kotlin.tracing.StatusData
 import io.opentelemetry.kotlin.tracing.recordException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -250,6 +251,38 @@ internal class ExternalTracerTest {
         )
     }
 
+
+    @Test
+    fun `user id on exported span reflects the value at span start`() {
+        testRule.runTest(
+            persistedRemoteConfig = remoteConfig,
+            preSdkStartAction = {
+                setupExporter()
+            },
+            testCaseAction = {
+                initializeTracer()
+                recordSession {
+                    embTracer.startSpan("no-user-span").end()
+                    embrace.setUserIdentifier("user-abc")
+                    val ongoingSpan = embTracer.startSpan("ongoing-span")
+                    embTracer.startSpan("user-span").end()
+                    embrace.setUserIdentifier("user-xyz")
+                    embTracer.startSpan("changed-user-span").end()
+                    ongoingSpan.end()
+                    embrace.setUserIdentifier(null)
+                    embTracer.startSpan("cleared-user-span").end()
+                }
+            },
+            assertAction = {
+                val spans = spanExporter.exportedSpans.associateBy { it.name }
+                assertNull(checkNotNull(spans["no-user-span"]).attributes[UserAttributes.USER_ID])
+                assertEquals("user-abc", checkNotNull(spans["user-span"]).attributes[UserAttributes.USER_ID])
+                assertEquals("user-abc", checkNotNull(spans["ongoing-span"]).attributes[UserAttributes.USER_ID])
+                assertEquals("user-xyz", checkNotNull(spans["changed-user-span"]).attributes[UserAttributes.USER_ID])
+                assertNull(checkNotNull(spans["cleared-user-span"]).attributes[UserAttributes.USER_ID])
+            }
+        )
+    }
 
     @Test
     fun `getOpenTelemetryKotlin returns noop before SDK start`() {

@@ -12,6 +12,7 @@ import io.opentelemetry.kotlin.semconv.HttpAttributes
 import io.opentelemetry.kotlin.semconv.UserAgentAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -239,6 +240,38 @@ internal class NetworkRequestDataSourceStatefulApiTest {
         )
     }
 
+    @Test
+    fun `network span adopts the span represented by the traceparent as its parent if it is in the correct format`() {
+        startRequest(
+            url = "https://www.example.com/api",
+            traceparent = "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01",
+        )
+        assertNotNull(harness.getNetworkSpans().single().parent)
+    }
+
+    @Test
+    fun `network span has no parent when inbound traceparent is absent or malformed`() {
+        val malformedTraceparents = listOf(
+            null,
+            "",
+            "not-a-traceparent",
+            "b7ad6b7169203331",
+            "0af7651916cd43dd8448eb211c80319c",
+            "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331",
+            "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01-extra",
+            "00-0af7-b7ad6b7169203331-01",
+            "00-0af7651916cd43dd8448eb211c80319c-b7ad-01",
+            "00-0AF7651916CD43DD8448EB211C80319C-B7AD6B7169203331-01",
+        )
+        malformedTraceparents.forEachIndexed { index, traceparent ->
+            startRequest(url = "https://www.example.com/$index", traceparent = traceparent)
+        }
+
+        val spans = harness.getNetworkSpans()
+        assertEquals(malformedTraceparents.size, spans.size)
+        spans.forEach { assertNull(it.parent) }
+    }
+
     private fun runRequest(
         url: String,
         httpMethod: String = "GET",
@@ -270,12 +303,14 @@ internal class NetworkRequestDataSourceStatefulApiTest {
         url: String,
         httpMethod: String = "GET",
         startTime: Long = 100,
+        traceparent: String? = null,
     ): String? =
         harness.dataSource.startRequest(
             startData = RequestStartData(
                 url = url,
                 httpMethod = httpMethod,
                 sdkClockStartTime = startTime,
+                traceparent = traceparent,
             ),
         )
 

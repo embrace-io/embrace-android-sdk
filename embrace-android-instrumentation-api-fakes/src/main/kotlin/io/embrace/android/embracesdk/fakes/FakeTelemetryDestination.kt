@@ -9,8 +9,11 @@ import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestinati
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.utils.UuidSource
 
-class FakeTelemetryDestination : TelemetryDestination {
+class FakeTelemetryDestination(
+    private val uuidSource: UuidSource = TestUuidSource(),
+) : TelemetryDestination {
 
     val logEvents: MutableList<FakeLogData> = mutableListOf()
     val addedEvents = mutableListOf<FakeSessionEvent>()
@@ -51,20 +54,40 @@ class FakeTelemetryDestination : TelemetryDestination {
         schemaType: SchemaType,
         startTimeMs: Long,
         name: String,
+        parentSpanId: String?,
         autoTerminate: Boolean,
         private: Boolean,
     ): SpanToken {
+        // Model the resolved parent as its own span token, named for the span id it represents, so the
+        // resulting span can adopt it as a parent and derive its traceparent from it.
+        val parent = parentSpanId?.let { spanId ->
+            FakeSpanToken(
+                name = spanId,
+                startTimeMs = startTimeMs,
+                endTimeMs = null,
+                errorCode = null,
+                parent = null,
+                type = schemaType.telemetryType,
+                internal = true,
+                private = false,
+                initialAttrs = emptyMap(),
+                events = mutableListOf(),
+                uuidSource = uuidSource,
+            )
+        }
+
         val token = FakeSpanToken(
             name = name,
             startTimeMs = startTimeMs,
             endTimeMs = null,
             errorCode = null,
-            parent = null,
+            parent = parent,
             type = schemaType.telemetryType,
             internal = true,
             private = false,
             initialAttrs = schemaType.attributes() + mapOf(schemaType.telemetryType.asPair()),
             events = mutableListOf(),
+            uuidSource = uuidSource,
         )
 
         createdSpans.add(token)
@@ -89,6 +112,7 @@ class FakeTelemetryDestination : TelemetryDestination {
             private = false,
             initialAttrs = emptyMap(),
             events = mutableListOf(),
+            uuidSource = uuidSource,
         )
 
         createdSpans.add(token)
@@ -118,6 +142,7 @@ class FakeTelemetryDestination : TelemetryDestination {
             private = private,
             initialAttrs = attributes,
             events = events.toMutableList(),
+            uuidSource = uuidSource,
         )
         createdSpans.add(token)
     }

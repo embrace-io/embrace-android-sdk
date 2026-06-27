@@ -2,7 +2,6 @@
 
 package io.embrace.android.embracesdk.testcases.session
 
-import android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.assertions.getLogOfType
@@ -42,9 +41,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
 
-@Config(sdk = [UPSIDE_DOWN_CAKE])
 @RunWith(AndroidJUnit4::class)
 internal class UserSessionResurrectionTest {
 

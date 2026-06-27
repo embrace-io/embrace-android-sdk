@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.testcases.features
 
-import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSpanOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -13,9 +12,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
 
-@Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
 @RunWith(AndroidJUnit4::class)
 internal class ActivityFeatureTest {
 

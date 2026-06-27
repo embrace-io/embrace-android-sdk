@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.instrumentation.androidx.navigation.internal
+package io.embrace.android.embracesdk.instrumentation.androidx.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -11,6 +11,9 @@ import androidx.navigation.NavDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.Navigator
 import androidx.navigation.compose.rememberNavController
+import io.embrace.android.embracesdk.instrumentation.androidx.navigation.internal.attachBackStack
+import io.embrace.android.embracesdk.instrumentation.androidx.navigation.internal.onBackStackDestinationChange
+import io.embrace.android.embracesdk.instrumentation.androidx.navigation.internal.trackNavigation
 import io.embrace.android.embracesdk.internal.arch.navigation.findActivity
 
 /**

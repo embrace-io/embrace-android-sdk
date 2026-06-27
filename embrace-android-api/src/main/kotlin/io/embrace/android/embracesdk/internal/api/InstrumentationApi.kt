@@ -97,4 +97,13 @@ public interface InstrumentationApi {
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     )
+
+    /**
+     * Register the given [navigationController] so that navigation it performs within the given [Activity] is observed.
+     * [navigationController] is intentionally typeless so the SDK can introspect about its capabilities and do the required
+     * wiring in order to observe and track navigation. Currently, only instance of `androidx.navigation.NavController` is supported.
+     *
+     * This method should be called during the host [Activity]'s `onResume()` callback after the starting destination is loaded.
+     */
+    public fun observeNavigation(activity: Activity, navigationController: Any)
 }

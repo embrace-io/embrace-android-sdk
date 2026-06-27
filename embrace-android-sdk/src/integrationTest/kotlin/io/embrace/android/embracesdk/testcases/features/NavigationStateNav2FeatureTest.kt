@@ -5,6 +5,7 @@ import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertNavigationStateSpan
 import io.embrace.android.embracesdk.assertions.getNavigationStateSpan
+import io.embrace.android.embracesdk.fakes.ActivityFindNavControllerActivity
 import io.embrace.android.embracesdk.fakes.ArgTemplateNavHostFragmentActivity
 import io.embrace.android.embracesdk.fakes.BasicNavHostFragmentActivity
 import io.embrace.android.embracesdk.fakes.ComposeNavHostActivity
@@ -14,6 +15,8 @@ import io.embrace.android.embracesdk.fakes.FragmentFindNavControllerActivity
 import io.embrace.android.embracesdk.fakes.HasNavController
 import io.embrace.android.embracesdk.fakes.NestedGraphNavHostFragmentActivity
 import io.embrace.android.embracesdk.fakes.SerializableRouteNavHostFragmentActivity
+import io.embrace.android.embracesdk.fakes.TestNavControllerActivity
+import io.embrace.android.embracesdk.fakes.ViewFindNavControllerActivity
 import io.embrace.android.embracesdk.fakes.WrappedContextComposeNavHostActivity
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -67,6 +70,49 @@ internal class NavigationStateNav2FeatureTest {
             routes = listOf("contacts", "about"),
             timing = NavRegistrationTiming.AT_COMPOSITION,
         ) { routes, controller ->
+            simulateNavControllerActivityNavigation(routes, controller)
+        }
+    }
+
+    @Test
+    fun `navigation of NavController tracked using public observeNavigation API creates state span`() {
+        runNavStateTest<TestNavControllerActivity>(
+            defaultDestination = "home",
+            routes = listOf("contacts", "about"),
+        ) { routes, controller ->
+            simulateNavControllerTrackingAndNavigation(routes, controller)
+        }
+    }
+
+    @Test
+    fun `observeNavigation works when NavController retrieved via findNavController on View`() {
+        runNavStateTest<ViewFindNavControllerActivity>(
+            defaultDestination = "home",
+            routes = listOf("contacts", "about"),
+        ) { routes, controller ->
+            simulateNavControllerTrackingAndNavigation(routes, controller)
+        }
+    }
+
+    @Test
+    fun `observeNavigation works when NavController retrieved via findNavController on Activity`() {
+        runNavStateTest<ActivityFindNavControllerActivity>(
+            defaultDestination = "home",
+            routes = listOf("contacts", "about"),
+        ) { routes, controller ->
+            simulateNavControllerTrackingAndNavigation(routes, controller)
+        }
+    }
+
+    @Test
+    fun `observeNavigation works when NavController retrieved from destination Fragment via findNavController`() {
+        runNavStateTest<FragmentFindNavControllerActivity>(
+            defaultDestination = "home",
+            routes = listOf("contacts", "about"),
+        ) { routes, controller ->
+            controller.get().fragmentResumeCallback = { activity, navController ->
+                embrace.observeNavigation(activity, navController)
+            }
             simulateNavControllerActivityNavigation(routes, controller)
         }
     }

@@ -79,6 +79,7 @@ internal class NetworkRequestDataSourceStatefulApiTest {
                 HttpAttributes.HTTP_REQUEST_BODY_SIZE to "100",
                 HttpAttributes.HTTP_RESPONSE_BODY_SIZE to "1000",
                 EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT to firstRequestSpan.asW3cTraceparent(),
+                EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY to "true",
                 EmbNetworkRequestAttributes.EMB_TRACE_ID to "fake-trace-id",
             ),
         )

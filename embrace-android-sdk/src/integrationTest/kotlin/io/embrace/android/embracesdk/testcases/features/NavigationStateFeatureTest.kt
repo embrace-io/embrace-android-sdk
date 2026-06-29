@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import android.app.Activity
-import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertNavigationStateSpan
 import io.embrace.android.embracesdk.assertions.getNavigationStateSpan
@@ -18,9 +17,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
-import org.robolectric.annotation.Config
 
-@Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
 @RunWith(AndroidJUnit4::class)
 internal class NavigationStateFeatureTest {
 

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.testcases.session
 
-import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.assertions.findSpanSnapshotOfType
@@ -22,13 +21,11 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
 import java.util.zip.GZIPInputStream
 
 /**
  * Asserts that the session is periodically cached.
  */
-@Config(sdk = [TIRAMISU])
 @RunWith(AndroidJUnit4::class)
 internal class PeriodicPartCacheTest {
 

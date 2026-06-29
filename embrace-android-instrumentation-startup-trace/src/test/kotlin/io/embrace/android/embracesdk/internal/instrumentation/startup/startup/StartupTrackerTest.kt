@@ -115,7 +115,6 @@ internal class StartupTrackerTest {
         }
     }
 
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `cold start with different activities being created and foregrounded first`() {
         val firstActivityInitTime = clock.now()
@@ -135,7 +134,6 @@ internal class StartupTrackerTest {
         }
     }
 
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `cold start initial activity not tracked will use the second for timing`() {
         val firstActivityInitTime = launchActivity(Robolectric.buildActivity(FakeSplashScreenActivity::class.java)).createTime
@@ -154,7 +152,6 @@ internal class StartupTrackerTest {
         }
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
     fun `verify startup tracker detached after trace recorded`() {
         val firstLaunchTimes = launchActivity()
@@ -167,7 +164,6 @@ internal class StartupTrackerTest {
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `lifecycle event emitter attached after activity launch`() {
         launchActivity()
@@ -176,7 +172,6 @@ internal class StartupTrackerTest {
         assertEquals(1, activityLifecycleListener.onCreateInvokedCount)
     }
 
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `data only collected if activity is used as startup activity`() {
         launchActivity(Robolectric.buildActivity(FakeSplashScreenActivity::class.java))
@@ -193,7 +188,6 @@ internal class StartupTrackerTest {
         assertNull(drawEventEmitter.lastFirstFrameDeliveredCallback)
     }
 
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `render time tracked if first draw event emitted`() {
         launchActivity()
@@ -201,7 +195,6 @@ internal class StartupTrackerTest {
         assertEquals(clock.now(), dataCollector.firstFrameRenderedMs)
     }
 
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `first draw event emitted detaches startup tracker and attaches lifecycle event emitter`() {
         defaultActivityController.create(null)

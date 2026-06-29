@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.instrumentation.huc
 
-import android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl.Companion.TRACEPARENT_HEADER_NAME
 import org.junit.Assert.assertNotNull
@@ -9,10 +8,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
 import java.net.URL
 
-@Config(sdk = [UPSIDE_DOWN_CAKE])
 @RunWith(AndroidJUnit4::class)
 internal class EmbraceUrlStreamHandlerTest {
 

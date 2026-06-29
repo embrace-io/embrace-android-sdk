@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.injection
 
 import android.content.Context
-import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -26,9 +25,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.Config
 
-@Config(sdk = [TIRAMISU])
 @RunWith(AndroidJUnit4::class)
 internal class ModuleInitBootstrapperTest {
 

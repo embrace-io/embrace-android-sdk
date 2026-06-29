@@ -11,7 +11,7 @@ package io.embrace.android.embracesdk.semconv
 object EmbNetworkRequestAttributes {
 
     /**
-     * IIndicates the span should be forwarded to the customer's backend.
+     * Indicates the span should be forwarded to the customer's backend.
      */
     @ExperimentalSemconv
     const val EMB_FORWARD_TELEMETRY: String = "emb.forward_telemetry"

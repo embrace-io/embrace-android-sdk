@@ -32,7 +32,7 @@ class EmbraceSpanProcessorTest {
     fun `test export`() {
         val processor = createProcessor()
         processor.onStart(span, context)
-        assertEquals("1", span.attributes[EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID], )
+        assertEquals("1", span.attributes[EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID])
         assertEquals("pid", span.attributes[EmbSessionAttributes.EMB_PROCESS_IDENTIFIER])
         assertEquals("user-sid", span.attributes[SessionAttributes.SESSION_ID])
         assertEquals("user-sid", span.attributes[EmbSessionAttributes.EMB_USER_SESSION_ID])

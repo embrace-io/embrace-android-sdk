@@ -95,6 +95,7 @@ class NetworkRequestDataSourceImpl(
                 schemaType = SchemaType.NetworkRequest(requestStartAttributes(startData)),
                 startTimeMs = startData.sdkClockStartTime,
                 name = getNetworkSpanName(startData.httpMethod, startData.url),
+                parentSpanId = startData.traceparent?.getSpanIdFromTraceparent(),
             )
 
             spanToken.asW3cTraceparent()?.also { traceparent ->
@@ -153,4 +154,14 @@ class NetworkRequestDataSourceImpl(
     ).toNonNullMap().mapValues { it.value.toString() }
 
     private fun getNetworkSpanName(httpMethod: String, url: String) = "$httpMethod ${getUrlPath(stripUrl(url))}"
+
+    /**
+     * Returns the span-id of this string if it is a valid W3C traceparent, or null if it is not.
+     */
+    private fun String.getSpanIdFromTraceparent(): String? = SPAN_ID_FROM_TRACEPARENT_REGEX.matchEntire(this)?.groupValues?.get(1)
+
+    private companion object {
+        // version(2)-traceId(32)-spanId(16)-flags(2), lowercase hex per the W3C traceparent spec.
+        private val SPAN_ID_FROM_TRACEPARENT_REGEX = Regex("[0-9a-f]{2}-[0-9a-f]{32}-([0-9a-f]{16})-[0-9a-f]{2}")
+    }
 }

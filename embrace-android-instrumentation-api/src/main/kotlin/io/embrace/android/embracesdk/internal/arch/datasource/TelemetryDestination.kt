@@ -43,12 +43,13 @@ interface TelemetryDestination {
     fun removeSessionPartAttribute(key: String)
 
     /**
-     * Starts a new span with the given [schemaType] and [startTimeMs].
+     * Starts a new span with the given parameters
      */
     fun startSpanCapture(
         schemaType: SchemaType,
         startTimeMs: Long,
         name: String = schemaType.fixedObjectName,
+        parentSpanId: String? = null,
         autoTerminate: Boolean = false,
         private: Boolean = false,
     ): SpanToken

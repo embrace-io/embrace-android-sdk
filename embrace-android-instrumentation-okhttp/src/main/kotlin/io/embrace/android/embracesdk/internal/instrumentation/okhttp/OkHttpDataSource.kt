@@ -273,12 +273,9 @@ internal class OkHttpDataSource(
             contentType != null && contentType.startsWith(CONTENT_TYPE_EVENT_STREAM)
         if (!serverSentEvent) {
             try {
-                val body = networkResponse.body
-                if (body != null) {
-                    val source = body.source()
-                    source.request(Long.MAX_VALUE)
-                    contentLength = source.buffer.size
-                }
+                val source = networkResponse.body.source()
+                source.request(Long.MAX_VALUE)
+                contentLength = source.buffer.size
             } catch (ignored: Exception) {
                 // Ignore
             }
@@ -308,12 +305,9 @@ internal class OkHttpDataSource(
             requestBodyBytes = getRequestBody(request)
             partsAcquired++
             if (response.promisesBody()) {
-                val responseBody = response.body
-                if (responseBody != null) {
-                    val okResponseBodySource = responseBody.source()
-                    okResponseBodySource.request(Int.MAX_VALUE.toLong())
-                    responseBodyBytes = okResponseBodySource.buffer.snapshot().toByteArray()
-                }
+                val okResponseBodySource = response.body.source()
+                okResponseBodySource.request(Int.MAX_VALUE.toLong())
+                responseBodyBytes = okResponseBodySource.buffer.snapshot().toByteArray()
             }
         } catch (e: Exception) {
             val errors = StringBuilder()

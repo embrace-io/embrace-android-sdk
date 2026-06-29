@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.Embrace
 @Composable
 fun EndSessionExample() {
     Button(onClick = {
-        Embrace.endSession()
+        Embrace.endUserSession()
     }) {
         Text("End Session")
     }

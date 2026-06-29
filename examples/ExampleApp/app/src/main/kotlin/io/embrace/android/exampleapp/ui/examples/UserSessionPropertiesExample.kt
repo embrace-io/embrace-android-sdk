@@ -15,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.PropertyScope
 
 @Composable
 fun UserSessionPropertiesExample() {
@@ -40,13 +41,18 @@ fun UserSessionPropertiesExample() {
 
     Spacer(Modifier.padding(8.dp))
     Button(onClick = {
-        Embrace.addSessionProperty(propKey, propValue, permValue)
+        val scope = if (permValue) {
+            PropertyScope.PERMANENT
+        } else {
+            PropertyScope.PROCESS
+        }
+        Embrace.addUserSessionProperty(propKey, propValue, scope)
     }) {
         Text("Add session property")
     }
 
     Button(onClick = {
-        Embrace.removeSessionProperty(propKey)
+        Embrace.removeUserSessionProperty(propKey)
     }) {
         Text("Remove session property")
     }

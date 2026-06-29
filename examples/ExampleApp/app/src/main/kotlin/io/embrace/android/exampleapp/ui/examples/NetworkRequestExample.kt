@@ -9,6 +9,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.exampleapp.ui.RadioButtonList
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -20,10 +22,14 @@ import java.nio.charset.StandardCharsets
 import java.util.concurrent.Executors
 import javax.net.ssl.HttpsURLConnection
 
-private enum class RequestType {
+private enum class RequestType(
+    val usePost: Boolean = false,
+    val addFakeTraceparent: Boolean = false,
+) {
     GET_REQUEST,
     REDIRECTED_GET_REQUEST,
-    POST_REQUEST,
+    POST_REQUEST(usePost = true),
+    POST_REQUEST_WITH_FAKE_TRACEPARENT(usePost = true, addFakeTraceparent = true),
     NOT_FOUND_REQUEST,
     INVALID_REQUEST,
     CRASH_DURING_GET_REQUEST,
@@ -38,62 +44,81 @@ fun NetworkRequestExample() {
 
     RadioButtonList(
         items = RequestType.entries,
-        selectedItem = requestValue
+        selectedItem = requestValue,
     ) {
         requestValue = it
     }
     Button(
         onClick = {
-            val request = prepareRequest(requestValue)
-            client.newCall(request).enqueue(object : okhttp3.Callback {
-                override fun onFailure(call: okhttp3.Call, e: IOException) {
-                    Log.i("EmbraceTestApp", "Network request failed ${e.message}")
-                }
+            val buttonClickSpan = Embrace.startSpan("okhttp-request-button-onclick")
+            runCatching {
+                val request = prepareRequest(requestValue, buttonClickSpan.toW3cTraceparent())
+                client.newCall(request).enqueue(
+                    object : okhttp3.Callback {
+                        override fun onFailure(call: okhttp3.Call, e: IOException) {
+                            Log.i("EmbraceTestApp", "Network request failed ${e.message}")
+                        }
 
-                override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
-                    Log.i("EmbraceTestApp", "Network request completed ${response.code} ${response.body.string()}")
-                }
-            })
+                        override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                            Log.i("EmbraceTestApp", "Network request completed ${response.code} ${response.body.string()}")
+                        }
+                    },
+                )
 
-            onPostRequestQueuing(requestValue)
+                onPostRequestQueuing(requestValue)
+            }.onFailure {
+                buttonClickSpan.stop(errorCode = ErrorCode.FAILURE)
+            }.onSuccess {
+                buttonClickSpan.stop()
+            }
         },
     ) {
         Text("Make OkHttp network request")
     }
     Button(
         onClick = {
-            val url = getUrl(requestValue)
-            hucExecutor.submit {
-                var connection: HttpsURLConnection? = null
-                try {
-                    connection = URL(url).openConnection() as HttpsURLConnection
-                    connection.setRequestProperty("Content-Type", String.format("application/json;charset=%s", StandardCharsets.UTF_8))
-                    connection.connectTimeout = 5000
-                    connection.readTimeout = 15000
+            val buttonClickSpan = Embrace.startSpan("huc-request-button-onclick")
+            runCatching {
+                val url = getUrl(requestValue)
+                hucExecutor.submit {
+                    var connection: HttpsURLConnection? = null
+                    try {
+                        connection = URL(url).openConnection() as HttpsURLConnection
+                        connection.setRequestProperty("Content-Type", String.format("application/json;charset=%s", StandardCharsets.UTF_8))
+                        connection.connectTimeout = 5000
+                        connection.readTimeout = 15000
 
-                    if (requestValue == RequestType.POST_REQUEST) {
-                        connection.requestMethod = "POST"
-                        connection.doInput = true
-                        connection.doOutput = true
-                        connection.outputStream.use { os ->
-                            os.write("body".toByteArray(StandardCharsets.UTF_8))
+                        if (requestValue.addFakeTraceparent && buttonClickSpan.isRecording) {
+                            connection.setRequestProperty("traceparent", buttonClickSpan.toW3cTraceparent())
                         }
-                    }
 
-                    val responseCode = connection.responseCode
-                    if (responseCode == 200) {
-                        Embrace.addBreadcrumb("Successful request to $url")
-                    } else {
-                        Embrace.addBreadcrumb("Non-successful request to $url with response code $responseCode")
+                        if (requestValue.usePost) {
+                            connection.requestMethod = "POST"
+                            connection.doInput = true
+                            connection.doOutput = true
+                            connection.outputStream.use { os ->
+                                os.write("body".toByteArray(StandardCharsets.UTF_8))
+                            }
+                        }
+
+                        val responseCode = connection.responseCode
+                        if (responseCode == 200) {
+                            Embrace.addBreadcrumb("Successful request to $url")
+                        } else {
+                            Embrace.addBreadcrumb("Non-successful request to $url with response code $responseCode")
+                        }
+                    } catch (t: Throwable) {
+                        Embrace.addBreadcrumb("Error while making HUC network request: $t")
+                    } finally {
+                        connection?.disconnect()
                     }
-                } catch (t: Throwable) {
-                    Embrace.addBreadcrumb("Error while making HUC network request: $t")
-                } finally {
-                    connection?.disconnect()
                 }
+                onPostRequestQueuing(requestValue)
+            }.onFailure {
+                buttonClickSpan.stop(errorCode = ErrorCode.FAILURE)
+            }.onSuccess {
+                buttonClickSpan.stop()
             }
-
-            onPostRequestQueuing(requestValue)
         },
     ) {
         Text("Make HUC network request")
@@ -103,15 +128,18 @@ fun NetworkRequestExample() {
 private fun getUrl(requestValue: RequestType): String = when (requestValue) {
     RequestType.GET_REQUEST -> "https://www.google.com"
     RequestType.REDIRECTED_GET_REQUEST -> "https://google.com"
-    RequestType.POST_REQUEST -> "https://httpbin.org/post"
+    RequestType.POST_REQUEST, RequestType.POST_REQUEST_WITH_FAKE_TRACEPARENT -> "https://httpbin.org/post"
     RequestType.NOT_FOUND_REQUEST -> "https://httpbin.org/status/404"
     RequestType.INVALID_REQUEST -> "https://some-invalid-url.path"
     RequestType.CRASH_DURING_GET_REQUEST -> "https://www.google.com/crash"
 }
 
-private fun prepareRequest(requestType: RequestType): Request {
+private fun prepareRequest(requestType: RequestType, traceparent: String?): Request {
     val builder = Request.Builder().url(getUrl(requestType))
-    if (requestType == RequestType.POST_REQUEST) {
+    if (requestType.addFakeTraceparent && traceparent != null) {
+        builder.addHeader("traceparent", traceparent)
+    }
+    if (requestType.usePost) {
         builder.post("{}".toRequestBody("application/json".toMediaType()))
     }
     return builder.build()
@@ -122,4 +150,10 @@ private fun onPostRequestQueuing(requestValue: RequestType) {
         Thread.sleep(10L)
         throw IllegalStateException("CRASHING")
     }
+}
+
+private fun EmbraceSpan.toW3cTraceparent(): String? = if (spanId != null && traceId != null) {
+    "00-$traceId-$spanId-01"
+} else {
+    null
 }

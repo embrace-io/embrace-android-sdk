@@ -15,7 +15,7 @@ embrace {
 
 android {
     namespace = "io.embrace.android.exampleapp"
-    compileSdk = 36
+    compileSdk = 37
     ndkVersion = "29.0.14206865"
 
     defaultConfig {

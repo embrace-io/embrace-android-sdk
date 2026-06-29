@@ -1,2 +1,7 @@
 {
+  "sdk_config": {
+    "networking": {
+      "traceparent_only_allow_domains": ["httpbin.org"]
+    }
+  }
 }

@@ -62,4 +62,8 @@ class FakeOpenTelemetryModule(
     override fun setSessionIdsProvider(sessionIdsProvider: SessionIdsProvider) {
         // no-op
     }
+
+    override fun setUserIdProvider(userIdProvider: () -> String?) {
+        // no-op
+    }
 }

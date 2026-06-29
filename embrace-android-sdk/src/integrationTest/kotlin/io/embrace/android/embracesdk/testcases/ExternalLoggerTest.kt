@@ -29,6 +29,7 @@ import io.opentelemetry.kotlin.logging.model.ReadableLogRecord
 import io.opentelemetry.kotlin.semconv.LogAttributes
 import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
+import io.opentelemetry.kotlin.semconv.UserAttributes
 import io.opentelemetry.kotlin.tracing.SpanContext
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -204,6 +205,33 @@ internal class ExternalLoggerTest {
             },
             otelExportAssertion = {
                 assertJavaOTelLogRecord(checkNotNull(exportedOTelLog))
+            }
+        )
+    }
+
+    @Test
+    fun `user id is stamped on exported log when set`() {
+        testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
+            persistedRemoteConfig = remoteConfig,
+            preSdkStartAction = {
+                setupExporter()
+            },
+            testCaseAction = {
+                initializeOTel()
+                recordSession {
+                    embLogger.emit(body = "no-user")
+                    embrace.setUserIdentifier("user-abc")
+                    embLogger.emit(body = "with-user")
+                    embrace.setUserIdentifier(null)
+                    embLogger.emit(body = "without-user")
+                }
+            },
+            assertAction = {
+                val logs = logExporter.exportedLogs.associateBy { checkNotNull(it.body) }
+                assertNull(checkNotNull(logs["no-user"]).attributes[UserAttributes.USER_ID])
+                assertEquals("user-abc",checkNotNull(logs["with-user"]).attributes[UserAttributes.USER_ID])
+                assertNull(checkNotNull(logs["without-user"]).attributes[UserAttributes.USER_ID])
             }
         )
     }

@@ -15,7 +15,8 @@ public enum class HttpMethod {
     CONNECT,
     OPTIONS,
     TRACE,
-    PATCH;
+    PATCH,
+    ;
 
     public companion object {
         /**

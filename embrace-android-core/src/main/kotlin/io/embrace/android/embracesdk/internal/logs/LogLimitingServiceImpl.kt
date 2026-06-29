@@ -9,7 +9,7 @@ class LogLimitingServiceImpl(
     private val logCounters = mapOf(
         LogSeverity.INFO to LogCounter(configService.logMessageBehavior::getInfoLogLimit),
         LogSeverity.WARNING to LogCounter(configService.logMessageBehavior::getWarnLogLimit),
-        LogSeverity.ERROR to LogCounter(configService.logMessageBehavior::getErrorLogLimit)
+        LogSeverity.ERROR to LogCounter(configService.logMessageBehavior::getErrorLogLimit),
     )
 
     override fun getCount(logSeverity: LogSeverity): Int = logCounters.getValue(logSeverity).getCount()

@@ -38,7 +38,7 @@ internal class UserSessionApiDelegateTest {
             },
             userSessionOrchestrationModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _ ->
                 fakeModule
-            }
+            },
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
         userSessionPropertiesService =

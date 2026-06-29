@@ -86,7 +86,7 @@ object NetworkUtils {
 
         return url.substring(
             0,
-            (if (pathPos < 0) 0 else pathPos) + suffix.length.coerceAtMost(terminalPos)
+            (if (pathPos < 0) 0 else pathPos) + suffix.length.coerceAtMost(terminalPos),
         )
     }
 

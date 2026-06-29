@@ -11,5 +11,5 @@ enum class LifeEventType {
 
     /* Background activity values */
     BKGND_STATE,
-    BKGND_MANUAL
+    BKGND_MANUAL,
 }

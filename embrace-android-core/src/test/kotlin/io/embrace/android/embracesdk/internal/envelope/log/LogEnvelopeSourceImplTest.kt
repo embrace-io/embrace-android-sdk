@@ -105,12 +105,12 @@ internal class LogEnvelopeSourceImplTest {
             userSessionId = expectedUserSessionId,
         )
         logSource.singleLogPayloadsSource = listOf(
-            LogRequest(crashPayload)
+            LogRequest(crashPayload),
         )
         cachedLogEnvelopeStore.create(
             storedTelemetryMetadata = cachedCrashEnvelopeMetadata,
             resource = fakeEnvelopeResource,
-            metadata = fakeEnvelopeMetadata
+            metadata = fakeEnvelopeMetadata,
         )
         with(logEnvelopeSource.getSingleLogEnvelopes().first().payload) {
             assertEquals(fakeEnvelopeResource, resource)
@@ -130,12 +130,12 @@ internal class LogEnvelopeSourceImplTest {
     @Test
     fun `check native crash envelope when no matching session found`() {
         logSource.singleLogPayloadsSource = listOf(
-            LogRequest(LogPayload(logs = listOf(nativeCrashWithoutSessionLog)))
+            LogRequest(LogPayload(logs = listOf(nativeCrashWithoutSessionLog))),
         )
         cachedLogEnvelopeStore.create(
             storedTelemetryMetadata = createNativeCrashEnvelopeMetadata(),
             resource = fakeEnvelopeResource,
-            metadata = fakeEnvelopeMetadata
+            metadata = fakeEnvelopeMetadata,
         )
         with(logEnvelopeSource.getSingleLogEnvelopes().first().payload) {
             assertEquals(fakeEnvelopeResource, resource)

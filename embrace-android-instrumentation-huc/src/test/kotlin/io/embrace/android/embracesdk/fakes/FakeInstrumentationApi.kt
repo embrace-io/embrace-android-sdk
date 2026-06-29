@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 
 class FakeInstrumentationApi(
-    var sdkTimeMs: Long = 1000
+    var sdkTimeMs: Long = 1000,
 ) : InstrumentationApi {
     override fun appReady() {
     }

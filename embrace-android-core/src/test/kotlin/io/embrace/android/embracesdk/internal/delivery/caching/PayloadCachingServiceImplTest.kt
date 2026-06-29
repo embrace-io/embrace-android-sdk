@@ -34,7 +34,7 @@ class PayloadCachingServiceImplTest {
             cacher,
             FakeClock(),
             sessionIdsProvider,
-            FakePayloadStore()
+            FakePayloadStore(),
         )
     }
 

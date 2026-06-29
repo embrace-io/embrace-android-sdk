@@ -25,7 +25,7 @@ internal class InstrumentationTargetMethodVisitor(
             params.owner,
             params.name,
             params.descriptor,
-            false
+            false,
         )
 
         // call super last to reduce chance of interference with other bytecode instrumentation

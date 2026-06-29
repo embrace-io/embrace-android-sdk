@@ -28,7 +28,7 @@ class CombinedRemoteConfigSourceTest {
         source = CombinedRemoteConfigSource(
             remoteConfigStore,
             lazy { remoteConfigSource },
-            BackgroundWorker(executorService)
+            BackgroundWorker(executorService),
         )
     }
 
@@ -43,7 +43,7 @@ class CombinedRemoteConfigSourceTest {
         source = CombinedRemoteConfigSource(
             FakeRemoteConfigStore(StoredConfigResponse(cfg, null, null)),
             lazy { remoteConfigSource },
-            BackgroundWorker(executorService)
+            BackgroundWorker(executorService),
         )
         assertEquals(cfg, source.getConfig())
     }
@@ -58,7 +58,7 @@ class CombinedRemoteConfigSourceTest {
         source = CombinedRemoteConfigSource(
             FakeRemoteConfigStore(StoredConfigResponse(RemoteConfig(), null, "cached-device-id")),
             lazy { remoteConfigSource },
-            BackgroundWorker(executorService)
+            BackgroundWorker(executorService),
         )
         assertEquals("cached-device-id", source.getDeviceId())
     }

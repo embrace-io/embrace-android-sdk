@@ -91,7 +91,7 @@ class VariantConfigFileFinderTest {
     private fun validateConfigFile(fileFinder: VariantConfigurationFileFinder, path: String) {
         assertEquals(
             "${projectDir.asFile.path}/$path/$VARIANT_CONFIG_FILE_NAME",
-            checkNotNull(fileFinder.fetchFile()).path
+            checkNotNull(fileFinder.fetchFile()).path,
         )
     }
 
@@ -102,7 +102,7 @@ class VariantConfigFileFinderTest {
             buildTypeName = "buildType-name",
             isBuildTypeDebuggable = false,
             productFlavors = listOf("product-flavor", "2nd-product-flavor"),
-            sourceMapPath = "source"
+            sourceMapPath = "source",
         )
     }
 }

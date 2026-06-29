@@ -132,7 +132,7 @@ internal class UserSessionMetadataStoreTest {
                 "embrace.user_session",
                 getRawMap().apply {
                     remove(attribute)
-                }
+                },
             )
         }
         return metadataStore.load()

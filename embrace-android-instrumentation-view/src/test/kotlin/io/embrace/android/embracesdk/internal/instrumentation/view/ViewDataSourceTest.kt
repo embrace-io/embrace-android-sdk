@@ -40,7 +40,7 @@ internal class ViewDataSourceTest {
                 EmbViewAttributes.VIEW_NAME to "my_fragment",
                 EmbType.Ux.View.asPair(),
             ),
-            span.attributes
+            span.attributes,
         )
     }
 
@@ -57,7 +57,7 @@ internal class ViewDataSourceTest {
                 it.type == EmbType.Ux.View &&
                     it.attributes[EmbViewAttributes.VIEW_NAME] == "my_fragment" &&
                     it.attributes["emb.type"] == "ux.view"
-            }
+            },
         )
 
         val firstSpan = spans.first()
@@ -80,7 +80,7 @@ internal class ViewDataSourceTest {
                 it.type == EmbType.Ux.View &&
                     it.attributes["emb.type"] == "ux.view" &&
                     it.isRecording()
-            }
+            },
         )
 
         val firstSpan = spans.first()
@@ -101,9 +101,9 @@ internal class ViewDataSourceTest {
         assertEquals(
             mapOf(
                 EmbViewAttributes.VIEW_NAME to "my_fragment",
-                EmbType.Ux.View.asPair()
+                EmbType.Ux.View.asPair(),
             ),
-            span.attributes
+            span.attributes,
         )
     }
 
@@ -125,7 +125,7 @@ internal class ViewDataSourceTest {
                 EmbViewAttributes.VIEW_NAME to "some_view",
                 EmbType.Ux.View.asPair(),
             ),
-            span.attributes
+            span.attributes,
         )
     }
 
@@ -141,7 +141,7 @@ internal class ViewDataSourceTest {
             spans.all {
                 it.type == EmbType.Ux.View &&
                     it.attributes["emb.type"] == "ux.view"
-            }
+            },
         )
 
         val firstSpan = spans.first()

@@ -7,5 +7,5 @@ enum class EmbraceEndpoint(val url: String) {
     NDK("/v2/store/ndk"),
     PROGUARD("/v2/store/proguard"),
     METHOD_MAP("/v2/store/methodmap"),
-    LINE_MAP("/v2/store/linemap")
+    LINE_MAP("/v2/store/linemap"),
 }

@@ -17,7 +17,7 @@ class ThermalStateInstrumentationProvider : InstrumentationProvider {
             },
             configGate = {
                 args.configService.autoDataCaptureBehavior.isThermalStatusCaptureEnabled()
-            }
+            },
         )
     }
 }

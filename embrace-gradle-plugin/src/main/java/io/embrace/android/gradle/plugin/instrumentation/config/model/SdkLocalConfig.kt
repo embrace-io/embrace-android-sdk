@@ -106,7 +106,7 @@ data class SdkLocalConfig(
     val appExitInfoConfig: AppExitInfoLocalConfig? = null,
 
     @Json(name = "app_framework")
-    val appFramework: String? = null
+    val appFramework: String? = null,
 ) : Serializable {
 
     private companion object {

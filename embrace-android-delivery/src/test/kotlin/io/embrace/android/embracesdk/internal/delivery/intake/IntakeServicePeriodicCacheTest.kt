@@ -27,7 +27,7 @@ class IntakeServicePeriodicCacheTest {
 
     private val serializer = TestPlatformSerializer()
     private val sessionEnvelope = Envelope(
-        data = SessionPartPayload(spans = listOf(Span(name = "session-span")))
+        data = SessionPartPayload(spans = listOf(Span(name = "session-span"))),
     )
     private val clock = FakeClock()
 
@@ -44,7 +44,7 @@ class IntakeServicePeriodicCacheTest {
             cacheStorageService,
             logger,
             serializer,
-            PriorityWorker(executorService)
+            PriorityWorker(executorService),
         )
     }
 

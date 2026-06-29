@@ -22,7 +22,7 @@ class DisablePluginTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(variants)
                 verifyJvmMappingRequestsSent(1)
-            }
+            },
         )
     }
 }

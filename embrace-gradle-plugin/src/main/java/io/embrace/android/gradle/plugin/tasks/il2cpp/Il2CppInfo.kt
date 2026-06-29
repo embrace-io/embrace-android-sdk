@@ -8,7 +8,7 @@ import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
 internal sealed class Il2CppInfo(
     name: String,
     extension: String,
-    val endpoint: EmbraceEndpoint
+    val endpoint: EmbraceEndpoint,
 ) {
 
     /**

@@ -48,7 +48,7 @@ internal class SessionPartPayloadSourceImplTest {
             FakeOtelPayloadMapper(),
             FakeAppStateTracker(),
             FakeClock(),
-            InternalLoggerImpl()
+            InternalLoggerImpl(),
         )
     }
 

@@ -24,7 +24,7 @@ sealed class Attachment(val id: String) {
         errorCode: AttachmentErrorCode? = null,
     ): Map<String, String> = mapOf(
         EmbAttachmentAttributes.EMB_ATTACHMENT_ID to id,
-        EmbAttachmentAttributes.EMB_ATTACHMENT_ERROR_CODE to errorCode?.name
+        EmbAttachmentAttributes.EMB_ATTACHMENT_ERROR_CODE to errorCode?.name,
     ).toNonNullMap()
 
     /**
@@ -34,7 +34,7 @@ sealed class Attachment(val id: String) {
         val bytes: ByteArray,
         counter: () -> Boolean,
     ) : Attachment(
-        UUID.randomUUID().toString()
+        UUID.randomUUID().toString(),
     ) {
 
         private val size: Long = bytes.size.toLong()
@@ -69,7 +69,7 @@ sealed class Attachment(val id: String) {
         }
 
         override val attributes: Map<String, String> = constructAttributes(id, errorCode).plus(
-            EmbAttachmentAttributes.EMB_ATTACHMENT_URL to url
+            EmbAttachmentAttributes.EMB_ATTACHMENT_URL to url,
         )
 
         private fun isNotUuid(): Boolean = try {

@@ -79,14 +79,14 @@ internal class AeiDataSourceImplTest {
             worker,
             mockActivityManager,
             store,
-            FakeOrdinalStore()
+            FakeOrdinalStore(),
         ).apply(AeiDataSourceImpl::onDataCaptureEnabled)
     }
 
     @Before
     fun setUp() {
         configService = FakeConfigService(
-            appExitInfoBehavior = FakeAppExitInfoBehavior()
+            appExitInfoBehavior = FakeAppExitInfoBehavior(),
         )
     }
 
@@ -96,7 +96,7 @@ internal class AeiDataSourceImplTest {
             mockActivityManager.getHistoricalProcessExitReasons(
                 any(),
                 any(),
-                any()
+                any(),
             )
         } returns listOf(mockAppExitInfo)
 
@@ -129,7 +129,7 @@ internal class AeiDataSourceImplTest {
             mockActivityManager.getHistoricalProcessExitReasons(
                 any(),
                 any(),
-                any()
+                any(),
             )
         } returns emptyList()
         startApplicationExitInfoService()
@@ -149,7 +149,7 @@ internal class AeiDataSourceImplTest {
             mockActivityManager.getHistoricalProcessExitReasons(
                 any(),
                 any(),
-                any()
+                any(),
             )
         } returns entries
 
@@ -203,7 +203,7 @@ internal class AeiDataSourceImplTest {
             mockActivityManager.getHistoricalProcessExitReasons(
                 any(),
                 any(),
-                any()
+                any(),
             )
         } returns listOf(mockAppExitInfo)
         startApplicationExitInfoService()
@@ -256,7 +256,7 @@ internal class AeiDataSourceImplTest {
             mockActivityManager.getHistoricalProcessExitReasons(
                 any(),
                 any(),
-                any()
+                any(),
             )
         } returns listOf(mockAppExitInfo)
 
@@ -275,7 +275,7 @@ internal class AeiDataSourceImplTest {
             mockActivityManager.getHistoricalProcessExitReasons(
                 any(),
                 any(),
-                any()
+                any(),
             )
         } returns listOf(mockAppExitInfo)
 
@@ -296,7 +296,7 @@ internal class AeiDataSourceImplTest {
             mockActivityManager.getHistoricalProcessExitReasons(
                 any(),
                 any(),
-                any()
+                any(),
             )
         } returns listOf(mockAppExitInfo)
 
@@ -318,7 +318,7 @@ internal class AeiDataSourceImplTest {
             mockActivityManager.getHistoricalProcessExitReasons(
                 any(),
                 any(),
-                any()
+                any(),
             )
         } returns listOf(mockAppExitInfo)
 
@@ -341,7 +341,7 @@ internal class AeiDataSourceImplTest {
             mockActivityManager.getHistoricalProcessExitReasons(
                 any(),
                 any(),
-                any()
+                any(),
             )
         } returns listOf(mockAppExitInfo)
 
@@ -359,7 +359,7 @@ internal class AeiDataSourceImplTest {
             mockActivityManager.getHistoricalProcessExitReasons(
                 any(),
                 any(),
-                any()
+                any(),
             )
         } throws NullPointerException()
 
@@ -377,7 +377,7 @@ internal class AeiDataSourceImplTest {
             mockActivityManager.getHistoricalProcessExitReasons(
                 any(),
                 any(),
-                any()
+                any(),
             )
         } returns entries
 

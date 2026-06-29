@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.handler.MainThreadHandler
 
 @RequiresApi(M)
 internal class HandlerMessageDrawDetector(
-    private val handler: MainThreadHandler
+    private val handler: MainThreadHandler,
 ) : DrawEventEmitter {
 
     override fun registerFirstDrawCallback(
@@ -20,7 +20,7 @@ internal class HandlerMessageDrawDetector(
         handler.sendMessageAtFrontOfQueue(
             Message.obtain(handler.wrappedHandler, drawCompleteCallback).apply {
                 isAsynchronous = true
-            }
+            },
         )
     }
 

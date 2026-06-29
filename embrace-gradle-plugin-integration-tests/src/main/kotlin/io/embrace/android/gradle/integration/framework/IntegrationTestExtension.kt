@@ -51,8 +51,8 @@ abstract class IntegrationTestExtension(objectFactory: ObjectFactory) {
                 endpoint = endpoint,
                 fileName = filename,
                 failBuildOnUploadErrors = true,
-                baseUrl = checkNotNull(project.findProperty("embrace.baseUrl")?.toString())
-            )
+                baseUrl = checkNotNull(project.findProperty("embrace.baseUrl")?.toString()),
+            ),
         )
     }
 
@@ -67,8 +67,8 @@ abstract class IntegrationTestExtension(objectFactory: ObjectFactory) {
                 apiToken = apiToken.get(),
                 endpoint = EmbraceEndpoint.NDK,
                 failBuildOnUploadErrors = true,
-                baseUrl = checkNotNull(project.findProperty("embrace.baseUrl")?.toString())
-            )
+                baseUrl = checkNotNull(project.findProperty("embrace.baseUrl")?.toString()),
+            ),
         )
     }
 
@@ -105,7 +105,7 @@ abstract class IntegrationTestExtension(objectFactory: ObjectFactory) {
                     isMinifyEnabled = true
                     proguardFiles(
                         getDefaultProguardFile("proguard-android-optimize.txt"),
-                        "proguard-rules.pro"
+                        "proguard-rules.pro",
                     )
                 }
             }
@@ -140,7 +140,7 @@ abstract class IntegrationTestExtension(objectFactory: ObjectFactory) {
 
         dependencies.add(
             "coreLibraryDesugaring",
-            "com.android.tools:desugar_jdk_libs:2.1.5"
+            "com.android.tools:desugar_jdk_libs:2.1.5",
         )
     }
 }

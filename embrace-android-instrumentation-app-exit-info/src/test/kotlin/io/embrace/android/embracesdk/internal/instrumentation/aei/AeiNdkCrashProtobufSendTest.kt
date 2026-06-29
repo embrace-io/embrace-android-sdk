@@ -130,7 +130,7 @@ internal class AeiNdkCrashProtobufSendTest {
         val stream = ResourceReader.readResource(resName)
         val activityManager = createMockActivityManager(
             stream,
-            reason
+            reason,
         )
         val args = FakeInstrumentationArgs(
             mockk(),
@@ -152,13 +152,13 @@ internal class AeiNdkCrashProtobufSendTest {
                 getHistoricalProcessExitReasons(
                     any(),
                     any(),
-                    any()
+                    any(),
                 )
             } returns listOf(
                 mockk(relaxed = true) {
                     every { traceInputStream } returns stream
                     every { reason } returns code
-                }
+                },
             )
         }
     }

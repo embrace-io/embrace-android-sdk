@@ -7,7 +7,7 @@ import java.io.Serializable
 @JsonClass(generateAdapter = true)
 data class NdkUploadHandshakeResponse(
     @Json(name = "archs")
-    val symbols: Map<String, List<String>>?
+    val symbols: Map<String, List<String>>?,
 ) : Serializable {
 
     private companion object {

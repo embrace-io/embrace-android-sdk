@@ -56,7 +56,7 @@ class CompressSharedObjectFilesTaskTest {
                     .sumOf { it.length() } // returns size in bytes
 
                 assertTrue(compressedSize < originalSize)
-            }
+            },
         )
     }
 
@@ -72,7 +72,7 @@ class CompressSharedObjectFilesTaskTest {
                         assertTrue(compressedFile.exists())
                     }
                 }
-            }
+            },
         )
     }
 
@@ -87,7 +87,7 @@ class CompressSharedObjectFilesTaskTest {
             expectedOutcome = TaskOutcome.NO_SOURCE,
             assertions = {
                 verifyNoUploads()
-            }
+            },
         )
     }
 
@@ -103,7 +103,7 @@ class CompressSharedObjectFilesTaskTest {
             expectedOutcome = TaskOutcome.NO_SOURCE,
             assertions = {
                 verifyNoUploads()
-            }
+            },
         )
     }
 
@@ -122,7 +122,7 @@ class CompressSharedObjectFilesTaskTest {
             expectedOutcome = TaskOutcome.NO_SOURCE,
             assertions = {
                 verifyNoUploads()
-            }
+            },
         )
     }
 
@@ -140,7 +140,7 @@ class CompressSharedObjectFilesTaskTest {
             expectedExceptionMessage = "Expected an input to be a directory but it was a file.",
             assertions = {
                 verifyNoUploads()
-            }
+            },
         )
     }
 
@@ -158,7 +158,7 @@ class CompressSharedObjectFilesTaskTest {
             expectedExceptionMessage = "Specified architectures directory does not contain any architecture directories",
             assertions = {
                 verifyNoUploads()
-            }
+            },
         )
     }
 
@@ -177,7 +177,7 @@ class CompressSharedObjectFilesTaskTest {
             expectedExceptionMessage = "No shared object files found in architecture directory someArch",
             assertions = {
                 verifyNoUploads()
-            }
+            },
         )
     }
 
@@ -199,7 +199,7 @@ class CompressSharedObjectFilesTaskTest {
             expectedExceptionMessage = "No shared object files found in architecture directory someArch",
             assertions = {
                 verifyNoUploads()
-            }
+            },
         )
     }
 
@@ -219,9 +219,9 @@ class CompressSharedObjectFilesTaskTest {
                     projectDir.file("build/compressedSharedObjectFiles/arm64-v8a/")
                         .listFiles { file -> file.name == "nestedDirectory" || file.name == "libexample.so" }
                         .orEmpty()
-                        .isEmpty()
+                        .isEmpty(),
                 )
-            }
+            },
         )
     }
 
@@ -239,7 +239,7 @@ class CompressSharedObjectFilesTaskTest {
             },
             assertions = {
                 verifyNoUploads()
-            }
+            },
         )
     }
 }

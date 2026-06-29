@@ -17,7 +17,7 @@ sealed class TestMatrix(
     val gradle: String,
     val kotlin: String,
     val jdk: JdkEnv,
-    val compileAndTargetSdk: String
+    val compileAndTargetSdk: String,
 ) {
 
     object UnsupportedOldGradleVersion : TestMatrix("8.0.0", "8.0", "2.0.0", JdkEnv.JAVA_17, "34")

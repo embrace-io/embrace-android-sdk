@@ -12,7 +12,7 @@ fun createEnabledFeatureConfigInstrumentation(cfg: VariantConfig) = modelSdkConf
         boolMethod("isViewClickCoordinateCaptureEnabled") { taps?.captureCoordinates }
         boolMethod("isPowerSaveModeCaptureEnabled") { automaticDataCaptureConfig?.powerSaveModeServiceEnabled }
         boolMethod(
-            "isNetworkConnectivityCaptureEnabled"
+            "isNetworkConnectivityCaptureEnabled",
         ) { automaticDataCaptureConfig?.networkConnectivityServiceEnabled }
         boolMethod("isThreadBlockageCaptureEnabled") { automaticDataCaptureConfig?.threadBlockageServiceEnabled }
         boolMethod("isDiskUsageCaptureEnabled") { app?.reportDiskUsage }

@@ -55,7 +55,7 @@ class SpanServiceImpl(
                         autoTerminationMode = autoTerminationMode,
                         parentCtx = (parent as? EmbraceSdkSpan)?.createContext(openTelemetry),
                         openTelemetry = openTelemetry,
-                    )
+                    ),
                 )
             } else {
                 NoopEmbraceSdkSpan
@@ -69,7 +69,7 @@ class SpanServiceImpl(
                 otelSpanStartArgs.initialSpanName.isNotBlank() &&
                 canStartNewSpan(
                     otelSpanStartArgs.parentContext.getEmbraceSpan(openTelemetry),
-                    otelSpanStartArgs.internal
+                    otelSpanStartArgs.internal,
                 )
             ) {
                 embraceSpanFactory.create(otelSpanStartArgs)
@@ -97,7 +97,7 @@ class SpanServiceImpl(
             type = type,
             internal = internal,
             private = private,
-            autoTerminationMode = autoTerminationMode
+            autoTerminationMode = autoTerminationMode,
         )
         try {
             val started = span?.start() ?: false
@@ -109,7 +109,7 @@ class SpanServiceImpl(
                     span?.addEvent(
                         event.name,
                         event.timestampNanos.nanosToMillis(),
-                        event.attributes
+                        event.attributes,
                     )
                 }
             }
@@ -154,7 +154,7 @@ class SpanServiceImpl(
                         tracer = tracer,
                         parentCtx = (parent as? EmbraceSdkSpan)?.createContext(openTelemetry),
                         openTelemetry = openTelemetry,
-                    )
+                    ),
                 )
                 if (newSpan.start(startTimeMs)) {
                     validAttributes.forEach {

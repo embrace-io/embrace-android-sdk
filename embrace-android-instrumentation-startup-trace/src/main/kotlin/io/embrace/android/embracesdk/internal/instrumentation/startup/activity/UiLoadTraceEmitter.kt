@@ -60,12 +60,12 @@ internal class UiLoadTraceEmitter(
             instanceId = instanceId,
             activityName = activityName,
             timestampMs = timestampMs,
-            manualEnd = manualEnd
+            manualEnd = manualEnd,
         )
         startChildSpan(
             instanceId = instanceId,
             timestampMs = timestampMs,
-            lifecycleStage = LifecycleStage.CREATE
+            lifecycleStage = LifecycleStage.CREATE,
         )
     }
 
@@ -73,7 +73,7 @@ internal class UiLoadTraceEmitter(
         endChildSpan(
             instanceId = instanceId,
             timestampMs = timestampMs,
-            lifecycleStage = LifecycleStage.CREATE
+            lifecycleStage = LifecycleStage.CREATE,
         )
     }
 
@@ -83,12 +83,12 @@ internal class UiLoadTraceEmitter(
             instanceId = instanceId,
             activityName = activityName,
             timestampMs = timestampMs,
-            manualEnd = manualEnd
+            manualEnd = manualEnd,
         )
         startChildSpan(
             instanceId = instanceId,
             timestampMs = timestampMs,
-            lifecycleStage = LifecycleStage.START
+            lifecycleStage = LifecycleStage.START,
         )
     }
 
@@ -96,7 +96,7 @@ internal class UiLoadTraceEmitter(
         endChildSpan(
             instanceId = instanceId,
             timestampMs = timestampMs,
-            lifecycleStage = LifecycleStage.START
+            lifecycleStage = LifecycleStage.START,
         )
     }
 
@@ -105,7 +105,7 @@ internal class UiLoadTraceEmitter(
             startChildSpan(
                 instanceId = instanceId,
                 timestampMs = timestampMs,
-                lifecycleStage = LifecycleStage.RESUME
+                lifecycleStage = LifecycleStage.RESUME,
             )
         } else {
             if (traceCompleteTrigger(instanceId) == TraceCompleteTrigger.RESUME) {
@@ -117,7 +117,7 @@ internal class UiLoadTraceEmitter(
                 startChildSpan(
                     instanceId = instanceId,
                     timestampMs = timestampMs,
-                    lifecycleStage = LifecycleStage.READY
+                    lifecycleStage = LifecycleStage.READY,
                 )
             }
         }
@@ -127,7 +127,7 @@ internal class UiLoadTraceEmitter(
         endChildSpan(
             instanceId = instanceId,
             timestampMs = timestampMs,
-            lifecycleStage = LifecycleStage.RESUME
+            lifecycleStage = LifecycleStage.RESUME,
         )
 
         val endType = traceCompleteTrigger(instanceId)
@@ -140,7 +140,7 @@ internal class UiLoadTraceEmitter(
             startChildSpan(
                 instanceId = instanceId,
                 timestampMs = timestampMs,
-                lifecycleStage = LifecycleStage.READY
+                lifecycleStage = LifecycleStage.READY,
             )
         }
     }
@@ -150,7 +150,7 @@ internal class UiLoadTraceEmitter(
             startChildSpan(
                 instanceId = instanceId,
                 timestampMs = timestampMs,
-                lifecycleStage = LifecycleStage.RENDER
+                lifecycleStage = LifecycleStage.RENDER,
             )
         }
     }
@@ -160,7 +160,7 @@ internal class UiLoadTraceEmitter(
             endChildSpan(
                 instanceId = instanceId,
                 timestampMs = timestampMs,
-                lifecycleStage = LifecycleStage.RENDER
+                lifecycleStage = LifecycleStage.RENDER,
             )
 
             val endType = traceCompleteTrigger(instanceId)
@@ -176,7 +176,7 @@ internal class UiLoadTraceEmitter(
                     startChildSpan(
                         instanceId = instanceId,
                         timestampMs = timestampMs,
-                        lifecycleStage = LifecycleStage.READY
+                        lifecycleStage = LifecycleStage.READY,
                     )
                 }
 
@@ -190,7 +190,7 @@ internal class UiLoadTraceEmitter(
             endChildSpan(
                 instanceId = instanceId,
                 timestampMs = timestampMs,
-                lifecycleStage = LifecycleStage.READY
+                lifecycleStage = LifecycleStage.READY,
             )
             endTrace(
                 instanceId = instanceId,
@@ -204,7 +204,7 @@ internal class UiLoadTraceEmitter(
         endTrace(
             instanceId = instanceId,
             timestampMs = timestampMs,
-            errorCode = ErrorCodeAttribute.UserAbandon
+            errorCode = ErrorCodeAttribute.UserAbandon,
         )
     }
 
@@ -232,7 +232,7 @@ internal class UiLoadTraceEmitter(
                 internal = false,
                 attributes = attributes,
                 events = events,
-                errorCode = errorCode
+                errorCode = errorCode,
             )
         }
     }
@@ -258,7 +258,7 @@ internal class UiLoadTraceEmitter(
                 activeTraces[instanceId] = UiLoadTrace(
                     root = root,
                     traceCompleteTrigger = determineEndEvent(manualEnd),
-                    activityName = activityName
+                    activityName = activityName,
                 )
             }
         }
@@ -296,7 +296,7 @@ internal class UiLoadTraceEmitter(
             )?.let { newSpan ->
                 val newChildren = trace.children.plus(lifecycleStage to newSpan)
                 activeTraces[instanceId] = trace.copy(
-                    children = newChildren
+                    children = newChildren,
                 )
             }
         }

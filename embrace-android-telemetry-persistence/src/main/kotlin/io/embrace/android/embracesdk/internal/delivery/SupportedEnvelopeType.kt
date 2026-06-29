@@ -18,7 +18,8 @@ enum class SupportedEnvelopeType(
     SESSION(Envelope.sessionEnvelopeSerializer as KSerializer<Envelope<*>>, "p3", Endpoint.SESSIONS),
     ATTACHMENT(null, "p4", Endpoint.ATTACHMENTS),
     LOG(Envelope.logEnvelopeSerializer as KSerializer<Envelope<*>>, "p5", Endpoint.LOGS),
-    BLOB(Envelope.logEnvelopeSerializer as KSerializer<Envelope<*>>, "p7", Endpoint.LOGS);
+    BLOB(Envelope.logEnvelopeSerializer as KSerializer<Envelope<*>>, "p7", Endpoint.LOGS),
+    ;
 
     companion object {
         private val valueMap =

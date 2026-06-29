@@ -40,7 +40,7 @@ internal class OkHttpDataSource(
 ) : DataSourceImpl(
     args = args,
     limitStrategy = NoopLimitStrategy, // always allow the OkHttp request chain to proceed
-    instrumentationName = "okhttp_data_source"
+    instrumentationName = "okhttp_data_source",
 ) {
     /**
      * A map that stashes instrumentation information for a request so that different interceptors can reference the same instance.
@@ -72,13 +72,13 @@ internal class OkHttpDataSource(
                 url = getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request)),
                 httpMethod = request.method,
                 sdkClockStartTime = sdkClockStartTime,
-            )
+            ),
         ) ?: return null
 
         return CallData(
             id = callId,
             clockOffset = clockOffset,
-            sdkClockStartTime = sdkClockStartTime
+            sdkClockStartTime = sdkClockStartTime,
         ).also {
             activeCalls[call] = it
         }
@@ -120,7 +120,7 @@ internal class OkHttpDataSource(
                     traceId = request.header(CUSTOM_TRACE_ID_HEADER_NAME),
                     userAgentName = OKHTTP_USER_AGENT_NAME,
                     userAgentVersion = OkHttp.VERSION,
-                )
+                ),
             )
         } finally {
             activeCalls.remove(call)
@@ -154,7 +154,7 @@ internal class OkHttpDataSource(
         val contentLength: Long = getContentLengthFromHeader(networkResponse)
             ?: getContentLengthFromBody(
                 networkResponse = networkResponse,
-                contentType = networkResponse.header(CONTENT_TYPE_HEADER_NAME, null)
+                contentType = networkResponse.header(CONTENT_TYPE_HEADER_NAME, null),
             ) ?: 0L
 
         var response: Response = networkResponse
@@ -167,13 +167,13 @@ internal class OkHttpDataSource(
 
         val shouldCaptureNetworkData = networkCaptureDataSourceProvider()?.shouldCaptureNetworkBody(
             request.url.toString(),
-            request.method
+            request.method,
         ) ?: false
         if (shouldCaptureNetworkData && networkCaptureDataSource != null) {
             // Decompress any response body that is gzipped so it can be captured in plain text
             if (ENCODING_GZIP.equals(
                     networkResponse.header(CONTENT_ENCODING_HEADER_NAME, null),
-                    ignoreCase = true
+                    ignoreCase = true,
                 ) && networkResponse.promisesBody()
             ) {
                 networkResponse.body?.also {
@@ -190,8 +190,8 @@ internal class OkHttpDataSource(
                     } else {
                         null
                     },
-                    networkCaptureData = networkCaptureData
-                )
+                    networkCaptureData = networkCaptureData,
+                ),
             )
         }
 
@@ -212,7 +212,7 @@ internal class OkHttpDataSource(
         statusCode = statusCode,
         traceId = traceId,
         w3cTraceparent = w3cTraceparent,
-        body = networkCaptureData
+        body = networkCaptureData,
     )
 
     private fun createRequestEndData(
@@ -244,7 +244,7 @@ internal class OkHttpDataSource(
         val realResponseBody = RealResponseBody(
             networkResponse.header(CONTENT_TYPE_HEADER_NAME, null),
             -1L,
-            GzipSource(source()).buffer()
+            GzipSource(source()).buffer(),
         )
         val responseBuilder = networkResponse.newBuilder().request(request)
         responseBuilder.headers(strippedHeaders)
@@ -331,8 +331,8 @@ internal class OkHttpDataSource(
                 InternalErrorType.DataSourceDataCaptureFail,
                 RuntimeException(
                     "Failure during the building of NetworkCaptureData. $dataCaptureErrorMessage",
-                    e
-                )
+                    e,
+                ),
             )
         }
         return HttpNetworkRequest.HttpRequestBody(
@@ -341,7 +341,7 @@ internal class OkHttpDataSource(
             capturedRequestBody = requestBodyBytes,
             responseHeaders = responseHeaders,
             capturedResponseBody = responseBodyBytes,
-            dataCaptureErrorMessage = dataCaptureErrorMessage
+            dataCaptureErrorMessage = dataCaptureErrorMessage,
         )
     }
 
@@ -369,7 +369,7 @@ internal class OkHttpDataSource(
         } catch (e: IOException) {
             logger.trackInternalError(
                 InternalErrorType.DataSourceDataCaptureFail,
-                e
+                e,
             )
         }
         return null
@@ -400,7 +400,7 @@ internal class OkHttpDataSource(
             "Request Headers",
             "Query Parameters",
             "Request Body",
-            "Response Body"
+            "Response Body",
         )
     }
 }

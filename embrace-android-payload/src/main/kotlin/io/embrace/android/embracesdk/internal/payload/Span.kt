@@ -72,6 +72,6 @@ data class Span(
         ERROR("Error"),
 
         @SerialName("Ok")
-        OK("Ok")
+        OK("Ok"),
     }
 }

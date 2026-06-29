@@ -87,7 +87,7 @@ class TaskRegistrar(
         }
 
         GenerateRnSourcemapTaskRegistration().register(
-            createRegistrationParams(variant, ref, buildIdProvider)
+            createRegistrationParams(variant, ref, buildIdProvider),
         )
     }
 
@@ -122,7 +122,7 @@ class TaskRegistrar(
             project,
             variantConfigurationsListProperty,
             behavior,
-            agpWrapper
+            agpWrapper,
         )
     }
 

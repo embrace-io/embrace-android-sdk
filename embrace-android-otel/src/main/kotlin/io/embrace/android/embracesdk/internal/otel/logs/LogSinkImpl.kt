@@ -23,8 +23,8 @@ class LogSinkImpl : LogSink {
                     logRequests.add(
                         LogRequest(
                             payload = log,
-                            defer = sendMode == SendMode.DEFER
-                        )
+                            defer = sendMode == SendMode.DEFER,
+                        ),
                     )
                 } else {
                     storedLogs.add(log)

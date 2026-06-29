@@ -8,7 +8,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 class FakeNetworkConnectivityService(
     initialConnectivityStatus: ConnectivityStatus = ConnectivityStatus.Unverified,
-    private val executor: BlockingScheduledExecutorService? = null
+    private val executor: BlockingScheduledExecutorService? = null,
 ) : NetworkConnectivityService {
 
     private val networkConnectivityListeners = CopyOnWriteArrayList<NetworkConnectivityListener>()

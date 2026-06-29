@@ -18,5 +18,5 @@ enum class LogSeverity {
     /**
      * Reports log messages with error level severity.
      */
-    ERROR
+    ERROR,
 }

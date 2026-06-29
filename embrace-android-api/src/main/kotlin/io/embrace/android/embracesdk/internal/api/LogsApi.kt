@@ -132,7 +132,7 @@ public interface LogsApi {
      */
     @Deprecated(
         "This API is deprecated and will be removed in a future release." +
-            "Use logMessage() instead."
+            "Use logMessage() instead.",
     )
     public fun logPushNotification(
         title: String?,

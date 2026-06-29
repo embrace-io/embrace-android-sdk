@@ -22,7 +22,7 @@ class DexguardTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(variants)
                 verifyJvmMappingRequestsSent(1)
-            }
+            },
         )
     }
 }

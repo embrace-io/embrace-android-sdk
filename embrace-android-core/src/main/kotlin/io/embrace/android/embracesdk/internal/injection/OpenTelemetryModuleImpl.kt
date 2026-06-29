@@ -29,8 +29,8 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace
 class OpenTelemetryModuleImpl(
     private val initModule: InitModule,
     private val openTelemetryClock: EmbClock = EmbClock(
-        embraceClock = initModule.clock
-    )
+        embraceClock = initModule.clock,
+    ),
 ) : OpenTelemetryModule {
 
     private val processIdentifierProvider: () -> String by lazy { IdGenerator.Companion::generateLaunchInstanceId }
@@ -77,7 +77,7 @@ class OpenTelemetryModuleImpl(
                     "Please enable library desugaring in your project to use the Embrace SDK. " +
                         "This is required if you target API levels below 24. For instructions, please see " +
                         "https://developer.android.com/studio/write/java8-support#library-desugaring",
-                    exc
+                    exc,
                 )
             }
         }
@@ -109,7 +109,7 @@ class OpenTelemetryModuleImpl(
 
     private val dataValidator: DataValidator = DataValidator(
         bypassValidation = ::bypassLimitsValidation,
-        telemetryService = initModule.telemetryService
+        telemetryService = initModule.telemetryService,
     )
 
     private val embraceSpanFactory: EmbraceSpanFactory by singleton {
@@ -119,7 +119,7 @@ class OpenTelemetryModuleImpl(
             dataValidator = dataValidator,
             stopCallback = ::spanStopCallbackWrapper,
             redactionFunction = ::redactionFunction,
-            telemetryService = initModule.telemetryService
+            telemetryService = initModule.telemetryService,
         )
     }
 

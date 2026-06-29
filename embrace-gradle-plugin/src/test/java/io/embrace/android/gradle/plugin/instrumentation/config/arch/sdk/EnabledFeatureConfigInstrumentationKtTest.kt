@@ -24,7 +24,7 @@ class EnabledFeatureConfigInstrumentationKtTest {
         null,
         null,
         null,
-        null
+        null,
     )
 
     private val methods = listOf(
@@ -72,13 +72,13 @@ class EnabledFeatureConfigInstrumentationKtTest {
                     true,
                     SdkLocalConfig(
                         threadBlockage = ThreadBlockageLocalConfig(
-                            captureUnityThread = true
+                            captureUnityThread = true,
                         ),
                         app = AppLocalConfig(
-                            reportDiskUsage = true
+                            reportDiskUsage = true,
                         ),
                         appExitInfoConfig = AppExitInfoLocalConfig(
-                            aeiCaptureEnabled = true
+                            aeiCaptureEnabled = true,
                         ),
                         automaticDataCaptureConfig = AutomaticDataCaptureLocalConfig(
                             powerSaveModeServiceEnabled = true,
@@ -89,40 +89,40 @@ class EnabledFeatureConfigInstrumentationKtTest {
                             endStartupWithAppReadyEnabled = true,
                         ),
                         backgroundActivityConfig = BackgroundActivityLocalConfig(
-                            backgroundActivityCaptureEnabled = true
+                            backgroundActivityCaptureEnabled = true,
                         ),
                         captureFcmPiiData = true,
                         composeConfig = ComposeLocalConfig(
-                            captureComposeOnClick = true
+                            captureComposeOnClick = true,
                         ),
                         crashHandler = CrashHandlerLocalConfig(
-                            enabled = true
+                            enabled = true,
                         ),
                         otel = OpenTelemetryLocalConfig(
-                            otelKotlinSdkEnabled = false
+                            otelKotlinSdkEnabled = false,
                         ),
                         networking = NetworkLocalConfig(
                             captureRequestContentLength = true,
                             enableNativeMonitoring = true,
                             enableHucLiteInstrumentation = true,
                             enableNetworkSpanForwarding = true,
-                            enableTraceparentInjection = true
+                            enableTraceparentInjection = true,
                         ),
                         sigHandlerDetection = true,
                         taps = TapsLocalConfig(
-                            captureCoordinates = true
+                            captureCoordinates = true,
                         ),
                         webViewConfig = WebViewLocalConfig(
                             captureWebViews = true,
-                            captureQueryParams = true
+                            captureQueryParams = true,
                         ),
                         viewConfig = ViewLocalConfig(
-                            enableAutomaticActivityCapture = true
-                        )
+                            enableAutomaticActivityCapture = true,
+                        ),
                     ),
-                    null
-                )
-            )
+                    null,
+                ),
+            ),
         )
         methods.forEach { method ->
             verifyConfigMethodVisitor(instrumentation, method)
@@ -140,11 +140,11 @@ class EnabledFeatureConfigInstrumentationKtTest {
                     SdkLocalConfig(
                         automaticDataCaptureConfig = AutomaticDataCaptureLocalConfig(
                             uiLoadPerfTracingDisabled = true,
-                        )
+                        ),
                     ),
-                    null
-                )
-            )
+                    null,
+                ),
+            ),
         )
 
         listOf(
@@ -166,11 +166,11 @@ class EnabledFeatureConfigInstrumentationKtTest {
                     SdkLocalConfig(
                         automaticDataCaptureConfig = AutomaticDataCaptureLocalConfig(
                             uiLoadPerfTracingSelectedOnly = true,
-                        )
+                        ),
                     ),
-                    null
-                )
-            )
+                    null,
+                ),
+            ),
         )
 
         listOf(
@@ -193,11 +193,11 @@ class EnabledFeatureConfigInstrumentationKtTest {
                         automaticDataCaptureConfig = AutomaticDataCaptureLocalConfig(
                             uiLoadPerfTracingDisabled = true,
                             uiLoadPerfTracingSelectedOnly = true,
-                        )
+                        ),
                     ),
-                    null
-                )
-            )
+                    null,
+                ),
+            ),
         )
 
         listOf(
@@ -217,11 +217,11 @@ class EnabledFeatureConfigInstrumentationKtTest {
                     null,
                     true,
                     SdkLocalConfig(
-                        automaticDataCaptureConfig = AutomaticDataCaptureLocalConfig()
+                        automaticDataCaptureConfig = AutomaticDataCaptureLocalConfig(),
                     ),
-                    null
-                )
-            )
+                    null,
+                ),
+            ),
         )
 
         listOf(

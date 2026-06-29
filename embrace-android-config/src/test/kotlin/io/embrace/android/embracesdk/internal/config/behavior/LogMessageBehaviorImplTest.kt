@@ -13,8 +13,8 @@ internal class LogMessageBehaviorImplTest {
             256,
             200,
             300,
-            400
-        )
+            400,
+        ),
     )
 
     @Test

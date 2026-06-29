@@ -23,7 +23,7 @@ class AndroidSimpleTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(variants)
                 verifyJvmMappingRequestsSent(1)
-            }
+            },
         )
     }
 
@@ -37,7 +37,7 @@ class AndroidSimpleTest {
                 verifyNoHandshakes()
                 verifyNoUploads()
                 verifyJvmMappingRequestsSent(0)
-            }
+            },
         )
     }
 
@@ -50,7 +50,7 @@ class AndroidSimpleTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(variants)
                 verifyJvmMappingRequestsSent(1)
-            }
+            },
         )
     }
 
@@ -63,7 +63,7 @@ class AndroidSimpleTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(variants)
                 verifyNoRequestsSent(EmbraceEndpoint.PROGUARD)
-            }
+            },
         )
     }
 
@@ -76,7 +76,7 @@ class AndroidSimpleTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(variants)
                 verifyJvmMappingRequestsSent(1)
-            }
+            },
         )
     }
 
@@ -89,7 +89,7 @@ class AndroidSimpleTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(variants)
                 verifyJvmMappingRequestsSent(1)
-            }
+            },
         )
     }
 
@@ -102,7 +102,7 @@ class AndroidSimpleTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(variants)
                 verifyNoRequestsSent(EmbraceEndpoint.PROGUARD)
-            }
+            },
         )
     }
 
@@ -115,7 +115,7 @@ class AndroidSimpleTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(variants)
                 verifyJvmMappingRequestsSent(1)
-            }
+            },
         )
     }
 }

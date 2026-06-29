@@ -7,11 +7,11 @@ import org.gradle.api.Project
 class AgpWrapperImpl(project: Project) : AgpWrapper {
 
     private val extension: CommonExtension<*, *, *, *> = checkNotNull(
-        project.extensions.findByType(CommonExtension::class.java)
+        project.extensions.findByType(CommonExtension::class.java),
     )
 
     private val componentsExtension: AndroidComponentsExtension<*, *, *> = checkNotNull(
-        project.extensions.findByType(AndroidComponentsExtension::class.java)
+        project.extensions.findByType(AndroidComponentsExtension::class.java),
     )
 
     override val version by lazy {

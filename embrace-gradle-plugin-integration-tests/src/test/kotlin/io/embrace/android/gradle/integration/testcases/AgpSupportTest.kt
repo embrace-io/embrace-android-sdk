@@ -45,7 +45,7 @@ class AgpSupportTest {
             expectedExceptionMessage = errorMessage,
             assertions = {
                 verifyNoUploads()
-            }
+            },
         )
     }
 
@@ -71,10 +71,10 @@ class AgpSupportTest {
                             assertEquals(testMatrix.kotlin, kotlinVersion)
                         }
                         assertEquals(testMatrix.jdk.name.removePrefix("JAVA_"), sourceCompatibility)
-                    }
+                    },
                 )
                 verifyJvmMappingRequestsSent(1)
-            }
+            },
         )
     }
 }

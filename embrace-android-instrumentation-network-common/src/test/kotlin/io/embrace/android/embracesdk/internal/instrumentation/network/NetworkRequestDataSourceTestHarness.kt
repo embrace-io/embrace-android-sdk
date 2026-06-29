@@ -20,9 +20,9 @@ internal class NetworkRequestDataSourceTestHarness {
         application = ApplicationProvider.getApplicationContext(),
         configService = FakeConfigService(
             networkBehavior = FakeNetworkBehavior(domainCountLimiter = domainCountLimiter),
-            networkSpanForwardingBehavior = networkSpanForwardingBehavior
+            networkSpanForwardingBehavior = networkSpanForwardingBehavior,
         ),
-        telemetryService = telemetryService
+        telemetryService = telemetryService,
     )
     val dataSource: NetworkRequestDataSource = NetworkRequestDataSourceImpl(args)
 
@@ -36,7 +36,7 @@ internal class NetworkRequestDataSourceTestHarness {
         expectedStartTimeMs: Long,
         expectedEndTimeMs: Long,
         expectedErrorCode: ErrorCodeAttribute? = null,
-        expectedAttributes: Map<String, String> = emptyMap()
+        expectedAttributes: Map<String, String> = emptyMap(),
     ) {
         with(checkNotNull(spanToken)) {
             assertEquals(expectedName, name)

@@ -36,7 +36,7 @@ internal class BreadcrumbDataSourceTest {
             assertEquals(15000000000, startTimeMs)
             assertEquals(
                 mapOf(EmbBreadcrumbAttributes.MESSAGE to "Hello, world!"),
-                schemaType.attributes()
+                schemaType.attributes(),
             )
         }
     }

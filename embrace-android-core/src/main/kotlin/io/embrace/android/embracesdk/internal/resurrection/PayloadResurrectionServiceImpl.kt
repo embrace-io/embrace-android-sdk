@@ -112,7 +112,7 @@ internal class PayloadResurrectionServiceImpl(
             }.onFailure {
                 logger.trackInternalError(
                     type = InternalErrorType.PayloadResurrectionPayloadFail,
-                    throwable = it
+                    throwable = it,
                 )
             }
 
@@ -173,7 +173,7 @@ internal class PayloadResurrectionServiceImpl(
                 } else {
                     logger.trackInternalError(
                         type = InternalErrorType.NativeCrashResurrectionError,
-                        throwable = IllegalStateException("Cached native crash envelope data not found")
+                        throwable = IllegalStateException("Cached native crash envelope data not found"),
                     )
                 }
                 nativeCrashService.sendNativeCrash(
@@ -187,7 +187,7 @@ internal class PayloadResurrectionServiceImpl(
             if (sessionlessNativeCrashes.size > 1) {
                 logger.trackInternalError(
                     type = InternalErrorType.NativeCrashResurrectionError,
-                    throwable = IllegalStateException("Multiple sessionless native crashes found.")
+                    throwable = IllegalStateException("Multiple sessionless native crashes found."),
                 )
             }
         }
@@ -329,7 +329,7 @@ internal class PayloadResurrectionServiceImpl(
                 cachedLogEnvelopeStore.create(
                     storedTelemetryMetadata = nativeCrashEnvelopeMetadata,
                     resource = deadPart.resource ?: EnvelopeResource(),
-                    metadata = deadPart.metadata ?: EnvelopeMetadata()
+                    metadata = deadPart.metadata ?: EnvelopeMetadata(),
                 )
 
                 nativeCrashService.sendNativeCrash(
@@ -338,7 +338,7 @@ internal class PayloadResurrectionServiceImpl(
                     metadata = if (appState != null) {
                         mapOf(
                             EmbSessionAttributes.EMB_STATE to appState,
-                            EmbSessionAttributes.EMB_PROCESS_IDENTIFIER to processIdentifier
+                            EmbSessionAttributes.EMB_PROCESS_IDENTIFIER to processIdentifier,
                         )
                     } else {
                         emptyMap()
@@ -356,7 +356,7 @@ internal class PayloadResurrectionServiceImpl(
             userSessionTerminationReason = userSessionTerminationReason,
             isBackgroundOnly = isBackgroundOnly,
         ) ?: throw IllegalArgumentException(
-            "Session resurrection failed. Payload does not contain exactly one session part span."
+            "Session resurrection failed. Payload does not contain exactly one session part span.",
         )
     }
 
@@ -400,7 +400,7 @@ internal class PayloadResurrectionServiceImpl(
             data = data.copy(
                 spans = spans,
                 spanSnapshots = emptyList(),
-            )
+            ),
         )
     }
 

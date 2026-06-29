@@ -5,5 +5,5 @@ package io.embrace.android.embracesdk.internal.otel.sdk
  */
 enum class StoreDataResult {
     SUCCESS,
-    FAILURE
+    FAILURE,
 }

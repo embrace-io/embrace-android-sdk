@@ -128,7 +128,7 @@ internal class AppStartupTraceEmitter(
                 startTrace(
                     isColdStart = recordColdStart,
                     sdkInitStartMs = sdkInitStartMs,
-                    activityInitTimeMs = activityInitTimeMs
+                    activityInitTimeMs = activityInitTimeMs,
                 )
             }
         }
@@ -195,8 +195,8 @@ internal class AppStartupTraceEmitter(
                 endTimeMs = endTimeMs,
                 attributes = attributes,
                 events = events,
-                errorCode = errorCode
-            )
+                errorCode = errorCode,
+            ),
         )
     }
 
@@ -250,7 +250,7 @@ internal class AppStartupTraceEmitter(
         } else {
             logger.trackInternalError(
                 type = InternalErrorType.AppLaunchTraceFail,
-                throwable = IllegalStateException("App startup trace could not be started")
+                throwable = IllegalStateException("App startup trace could not be started"),
             )
         }
     }
@@ -268,11 +268,11 @@ internal class AppStartupTraceEmitter(
                 }
                 val activityInitStartMs = cappedBy(
                     value = startupActivityPreCreatedMs ?: startupActivityInitStartMs,
-                    ceiling = uiLoadedMs
+                    ceiling = uiLoadedMs,
                 )
                 val activityInitEndMs = cappedBy(
                     value = startupActivityInitEndMs,
-                    ceiling = uiLoadedMs
+                    ceiling = uiLoadedMs,
                 )
 
                 recordTrace(
@@ -313,7 +313,7 @@ internal class AppStartupTraceEmitter(
                     internal = false,
                     attributes = trackedInterval.attributes,
                     events = trackedInterval.events,
-                    errorCode = trackedInterval.errorCode
+                    errorCode = trackedInterval.errorCode,
                 )
             }
         } while (additionalTrackedIntervals.isNotEmpty())
@@ -336,7 +336,7 @@ internal class AppStartupTraceEmitter(
 
             stop(
                 errorCode = if (!completed) ErrorCodeAttribute.UserAbandon else null,
-                endTimeMs = traceEndTimeMs
+                endTimeMs = traceEndTimeMs,
             )
 
             getStartTimeMs()?.let { traceStartTimeMs ->
@@ -435,7 +435,7 @@ internal class AppStartupTraceEmitter(
     private enum class TraceEnd {
         RESUMED,
         RENDERED,
-        READY
+        READY,
     }
 
     companion object {

@@ -83,7 +83,7 @@ class ConfigServiceImpl(
         CombinedRemoteConfigSource(
             store = remoteConfigStore,
             httpSource = lazy { checkNotNull(remoteConfigSource) },
-            worker = worker
+            worker = worker,
         )
     }
 
@@ -105,7 +105,7 @@ class ConfigServiceImpl(
                 instrumentedConfig,
                 sdkVersion,
                 apiLevel,
-            )
+            ),
         )
     }
 

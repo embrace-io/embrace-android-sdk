@@ -22,7 +22,7 @@ internal class SessionPartEnvelopeSourceImpl(
             metadataSource.getEnvelopeMetadata(),
             "0.1.0",
             "spans",
-            payloadSource.getSessionPartPayload(endType, startNewSession, crashId)
+            payloadSource.getSessionPartPayload(endType, startNewSession, crashId),
         )
     }
 }

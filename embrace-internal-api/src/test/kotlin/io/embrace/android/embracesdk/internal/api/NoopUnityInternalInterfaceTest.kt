@@ -12,7 +12,7 @@ internal class NoopUnityInternalInterfaceTest {
     @Before
     fun setUp() {
         impl = NoopUnityInternalInterface(
-            NoopEmbraceInternalInterface
+            NoopEmbraceInternalInterface,
         )
     }
 

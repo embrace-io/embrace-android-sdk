@@ -21,7 +21,7 @@ internal class EmbLoggerProviderTest {
         val otel = EmbOpenTelemetry(
             NoopOpenTelemetry,
             { FakeTracerProvider() },
-            ::sdkLoggerProvider
+            ::sdkLoggerProvider,
         )
         embLoggerProvider = EmbLoggerProvider(
             otelImpl = otel,

@@ -57,7 +57,7 @@ class OkHttpRequestExecutionService(
             if (throwable !is IOException) {
                 logger.trackInternalError(
                     type = InternalErrorType.PayloadDeliveryFail,
-                    throwable = throwable
+                    throwable = throwable,
                 )
             }
             executionError = throwable
@@ -85,7 +85,7 @@ class OkHttpRequestExecutionService(
                 apiRequest
                     .getHeaders()
                     .plus("X-EM-PAYLOAD-TYPES" to payloadType)
-                    .toHeaders()
+                    .toHeaders(),
             )
             .post(ApiRequestBody(payloadStream))
             .build()
@@ -124,7 +124,7 @@ class OkHttpRequestExecutionService(
             multipart -> "multipart/form-data"
             else -> "application/json"
         },
-        userAgent = "Embrace/a/$embraceVersionName"
+        userAgent = "Embrace/a/$embraceVersionName",
     )
 
     class ApiRequestBody(

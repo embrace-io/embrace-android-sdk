@@ -162,7 +162,7 @@ internal class AppStartupTraceEmitterTest {
         val emitter = createTraceEmitter().apply {
             initApp(
                 hasAppInitEvents = true,
-                isColdStart = true
+                isColdStart = true,
             )
             preActivityInit(false)
         }
@@ -186,7 +186,7 @@ internal class AppStartupTraceEmitterTest {
         val emitter = createTraceEmitter().apply {
             initApp(
                 hasAppInitEvents = true,
-                isColdStart = true
+                isColdStart = true,
             )
             preActivityInit(false)
             createActivity()
@@ -215,7 +215,7 @@ internal class AppStartupTraceEmitterTest {
         val emitter = createTraceEmitter(manualEnd = true).apply {
             initApp(
                 hasAppInitEvents = true,
-                isColdStart = true
+                isColdStart = true,
             )
             initActivity(
                 loadSplashScreen = false,
@@ -245,7 +245,7 @@ internal class AppStartupTraceEmitterTest {
         val emitter = createTraceEmitter().apply {
             initApp(
                 hasAppInitEvents = true,
-                isColdStart = false
+                isColdStart = false,
             )
             preActivityInit(false)
         }
@@ -264,12 +264,12 @@ internal class AppStartupTraceEmitterTest {
         val emitter = createTraceEmitter(manualEnd = true).apply {
             initApp(
                 hasAppInitEvents = true,
-                isColdStart = false
+                isColdStart = false,
             )
             initActivity(
                 loadSplashScreen = false,
                 abortFirstLoad = false,
-                activityInitOptions = ActivityInitOptions.NORMAL
+                activityInitOptions = ActivityInitOptions.NORMAL,
             )
         }
         val abandonTime = clock.tick()
@@ -352,7 +352,7 @@ internal class AppStartupTraceEmitterTest {
         createTraceEmitter()
             .simulateAppStartup(
                 isColdStart = false,
-                hasAppInitEvents = false
+                hasAppInitEvents = false,
             )
     }
 
@@ -363,7 +363,7 @@ internal class AppStartupTraceEmitterTest {
             .simulateAppStartup(
                 isColdStart = false,
                 hasAppInitEvents = false,
-                abortFirstActivityLoad = true
+                abortFirstActivityLoad = true,
             )
     }
 
@@ -378,7 +378,7 @@ internal class AppStartupTraceEmitterTest {
     fun `no crashes if startup service not available in P`() {
         startupService = null
         createTraceEmitter().simulateAppStartup(
-            verifyTrace = false
+            verifyTrace = false,
         )
     }
 
@@ -394,7 +394,7 @@ internal class AppStartupTraceEmitterTest {
     fun `verify cold start trace without application init start and end triggered in P`() {
         createTraceEmitter()
             .simulateAppStartup(
-                hasAppInitEvents = false
+                hasAppInitEvents = false,
             )
     }
 
@@ -403,7 +403,7 @@ internal class AppStartupTraceEmitterTest {
     fun `verify cold start trace aborted activity creation in P`() {
         createTraceEmitter()
             .simulateAppStartup(
-                abortFirstActivityLoad = true
+                abortFirstActivityLoad = true,
             )
     }
 
@@ -412,7 +412,7 @@ internal class AppStartupTraceEmitterTest {
     fun `verify cold start trace with splash screen in P`() {
         createTraceEmitter()
             .simulateAppStartup(
-                loadSplashScreen = true
+                loadSplashScreen = true,
             )
     }
 
@@ -421,7 +421,7 @@ internal class AppStartupTraceEmitterTest {
     fun `verify cold start trace with manual end in P`() {
         createTraceEmitter(manualEnd = true)
             .simulateAppStartup(
-                manualEnd = true
+                manualEnd = true,
             )
     }
 
@@ -431,7 +431,7 @@ internal class AppStartupTraceEmitterTest {
         createTraceEmitter()
             .simulateAppStartup(
                 isColdStart = false,
-                hasAppInitEvents = false
+                hasAppInitEvents = false,
             )
     }
 
@@ -441,7 +441,7 @@ internal class AppStartupTraceEmitterTest {
         createTraceEmitter(manualEnd = true)
             .simulateAppStartup(
                 isColdStart = false,
-                manualEnd = true
+                manualEnd = true,
             )
     }
 
@@ -450,7 +450,7 @@ internal class AppStartupTraceEmitterTest {
     fun `no crashes if startup service not available in M`() {
         startupService = null
         createTraceEmitter().simulateAppStartup(
-            verifyTrace = false
+            verifyTrace = false,
         )
     }
 
@@ -466,7 +466,7 @@ internal class AppStartupTraceEmitterTest {
     fun `verify cold start trace without application init start and end triggered in M`() {
         createTraceEmitter()
             .simulateAppStartup(
-                hasAppInitEvents = false
+                hasAppInitEvents = false,
             )
     }
 
@@ -475,7 +475,7 @@ internal class AppStartupTraceEmitterTest {
     fun `verify cold start trace aborted activity creation in M`() {
         createTraceEmitter()
             .simulateAppStartup(
-                abortFirstActivityLoad = true
+                abortFirstActivityLoad = true,
             )
     }
 
@@ -484,7 +484,7 @@ internal class AppStartupTraceEmitterTest {
     fun `verify cold start trace with splash screen in M`() {
         createTraceEmitter()
             .simulateAppStartup(
-                loadSplashScreen = true
+                loadSplashScreen = true,
             )
     }
 
@@ -493,7 +493,7 @@ internal class AppStartupTraceEmitterTest {
     fun `verify cold start trace with manual end in M`() {
         createTraceEmitter(manualEnd = true)
             .simulateAppStartup(
-                manualEnd = true
+                manualEnd = true,
             )
     }
 
@@ -527,7 +527,7 @@ internal class AppStartupTraceEmitterTest {
         createTraceEmitter()
             .simulateAppStartup(
                 isColdStart = false,
-                hasAppInitEvents = false
+                hasAppInitEvents = false,
             )
     }
 
@@ -537,7 +537,7 @@ internal class AppStartupTraceEmitterTest {
         createTraceEmitter(manualEnd = true)
             .simulateAppStartup(
                 isColdStart = false,
-                manualEnd = true
+                manualEnd = true,
             )
     }
 
@@ -546,7 +546,7 @@ internal class AppStartupTraceEmitterTest {
     fun `no crashes if startup service not available in L`() {
         startupService = null
         createTraceEmitter().simulateAppStartup(
-            verifyTrace = false
+            verifyTrace = false,
         )
     }
 
@@ -562,7 +562,7 @@ internal class AppStartupTraceEmitterTest {
     fun `verify cold start trace without application init start and end triggered in L`() {
         createTraceEmitter()
             .simulateAppStartup(
-                hasAppInitEvents = false
+                hasAppInitEvents = false,
             )
     }
 
@@ -571,7 +571,7 @@ internal class AppStartupTraceEmitterTest {
     fun `verify cold start trace aborted activity creation in L`() {
         createTraceEmitter()
             .simulateAppStartup(
-                abortFirstActivityLoad = true
+                abortFirstActivityLoad = true,
             )
     }
 
@@ -580,7 +580,7 @@ internal class AppStartupTraceEmitterTest {
     fun `verify cold start trace with splash screen in L`() {
         createTraceEmitter()
             .simulateAppStartup(
-                loadSplashScreen = true
+                loadSplashScreen = true,
             )
     }
 
@@ -589,7 +589,7 @@ internal class AppStartupTraceEmitterTest {
     fun `verify cold start trace with manual end in L`() {
         createTraceEmitter(manualEnd = true)
             .simulateAppStartup(
-                manualEnd = true
+                manualEnd = true,
             )
     }
 
@@ -599,7 +599,7 @@ internal class AppStartupTraceEmitterTest {
         createTraceEmitter()
             .simulateAppStartup(
                 isColdStart = false,
-                hasAppInitEvents = false
+                hasAppInitEvents = false,
             )
     }
 
@@ -609,7 +609,7 @@ internal class AppStartupTraceEmitterTest {
         createTraceEmitter(manualEnd = true)
             .simulateAppStartup(
                 isColdStart = false,
-                manualEnd = true
+                manualEnd = true,
             )
     }
 
@@ -630,7 +630,7 @@ internal class AppStartupTraceEmitterTest {
                     DEFAULT_FAKE_CURRENT_TIME
                 } else {
                     null
-                }
+                },
             ),
         )
 
@@ -645,7 +645,7 @@ internal class AppStartupTraceEmitterTest {
     ) {
         val appInitTimestamps = initApp(
             hasAppInitEvents = hasAppInitEvents,
-            isColdStart = isColdStart
+            isColdStart = isColdStart,
         )
 
         val customSpanStartMs = clock.now()
@@ -656,7 +656,7 @@ internal class AppStartupTraceEmitterTest {
         val activityInitTimestamps = initActivity(
             loadSplashScreen = loadSplashScreen,
             abortFirstLoad = abortFirstActivityLoad,
-            activityInitOptions = activityInitOptions
+            activityInitOptions = activityInitOptions,
         )
 
         val traceStart = if (isColdStart) {
@@ -681,11 +681,11 @@ internal class AppStartupTraceEmitterTest {
                 appInitTimestamps = appInitTimestamps,
                 customSpanTimeStamps = customSpanStartMs to customSpanEndMs,
                 activityInitTimestamps = activityInitTimestamps,
-                traceEnd = checkNotNull(traceEnd)
+                traceEnd = checkNotNull(traceEnd),
             ).verifyTrace(
                 isColdStart = isColdStart,
                 hasAppInitEvents = hasAppInitEvents,
-                manualEnd = manualEnd
+                manualEnd = manualEnd,
             )
         }
     }
@@ -717,7 +717,7 @@ internal class AppStartupTraceEmitterTest {
             input = trace,
             expectedStartTimeMs = traceStart,
             expectedEndTimeMs = traceEnd,
-            expectedCustomAttributes = mapOf("custom-attribute" to "true")
+            expectedCustomAttributes = mapOf("custom-attribute" to "true"),
         )
 
         if (!isColdStart) {
@@ -769,7 +769,7 @@ internal class AppStartupTraceEmitterTest {
             startTimeMs = start,
             endTimeMs = end,
             endState = AppState.BACKGROUND,
-            threadName = "main"
+            threadName = "main",
         )
 
         val applicationInitEnd = if (hasAppInitEvents) {
@@ -792,7 +792,7 @@ internal class AppStartupTraceEmitterTest {
             applicationInitStart = applicationInitStart,
             applicationInitEnd = applicationInitEnd,
             sdkInitStart = sdkInitStart,
-            sdkInitEnd = sdkInitEnd
+            sdkInitEnd = sdkInitEnd,
         )
     }
 
@@ -962,13 +962,13 @@ internal class AppStartupTraceEmitterTest {
         OMIT(startTime = TimestampOption.MISSING, endTime = TimestampOption.MISSING),
         OMIT_END(endTime = TimestampOption.MISSING),
         DELAY(startTime = TimestampOption.DELAY, endTime = TimestampOption.DELAY),
-        DELAY_END(endTime = TimestampOption.DELAY)
+        DELAY_END(endTime = TimestampOption.DELAY),
     }
 
     private enum class TimestampOption {
         NORMAL,
         DELAY,
-        MISSING
+        MISSING,
     }
 
     companion object {

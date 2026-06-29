@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTracking
 
 internal class NavigationTrackingServiceImpl(
     override var navigationTrackingInitListener: NavigationTrackingInitListener = NoopNavigationTrackingInitListener,
-    override var navigationControllerEventListener: NavigationControllerEventListener = NoopNavigationControllerEventListener
+    override var navigationControllerEventListener: NavigationControllerEventListener = NoopNavigationControllerEventListener,
 ) : NavigationTrackingService {
 
     override fun trackNavigation(activity: Activity, controller: Any?) {

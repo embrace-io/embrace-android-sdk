@@ -54,7 +54,7 @@ class EssentialServiceModuleImpl(
             EmbraceUserService(
                 coreModule.store,
                 initModule.clock,
-                initModule.logger
+                initModule.logger,
             )
         }
     }
@@ -84,7 +84,7 @@ class EssentialServiceModuleImpl(
     override val sessionPartTracker: SessionPartTracker by singleton {
         SessionPartTrackerImpl(
             coreModule.context.getSystemServiceSafe(Context.ACTIVITY_SERVICE),
-            initModule.logger
+            initModule.logger,
         )
     }
 
@@ -98,7 +98,7 @@ class EssentialServiceModuleImpl(
                 store = coreModule.store,
                 configService = configService,
                 destination = telemetryDestination,
-                telemetryService = initModule.telemetryService
+                telemetryService = initModule.telemetryService,
             )
         }
     }

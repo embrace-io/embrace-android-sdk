@@ -24,7 +24,7 @@ class AndroidProductFlavorTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
                 verifyJvmMappingRequestsSent(obfuscatedAppIds)
-            }
+            },
         )
     }
 
@@ -37,7 +37,7 @@ class AndroidProductFlavorTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
                 verifyJvmMappingRequestsSent(listOf("demor"))
-            }
+            },
         )
     }
 
@@ -50,7 +50,7 @@ class AndroidProductFlavorTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
                 verifyJvmMappingRequestsSent(obfuscatedAppIds)
-            }
+            },
         )
     }
 
@@ -63,7 +63,7 @@ class AndroidProductFlavorTest {
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
                 verifyJvmMappingRequestsSent(listOf("fullr"))
-            }
+            },
         )
     }
 }

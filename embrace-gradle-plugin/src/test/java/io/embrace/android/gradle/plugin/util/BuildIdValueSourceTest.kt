@@ -30,7 +30,7 @@ class BuildIdValueSourceTest {
 
         assertTrue(
             "Build ID must be 32-char uppercase hex, was: $id",
-            id.matches(Regex("[A-F0-9]{32}"))
+            id.matches(Regex("[A-F0-9]{32}")),
         )
     }
 }

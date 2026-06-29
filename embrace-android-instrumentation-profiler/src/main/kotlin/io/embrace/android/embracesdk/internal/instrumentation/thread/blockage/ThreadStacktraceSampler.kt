@@ -21,7 +21,7 @@ class ThreadStacktraceSampler(
                 truncateStacktrace(
                     targetThread,
                     targetThread.stackTrace,
-                    stacktraceFrameLimit
+                    stacktraceFrameLimit,
                 )
             } else {
                 null
@@ -31,7 +31,7 @@ class ThreadStacktraceSampler(
                     sample = trace,
                     sampleTimeMs = sampleTimeMs,
                     sampleOverheadMs = sampleTimeMs - clock.now(),
-                )
+                ),
             )
         }
     }

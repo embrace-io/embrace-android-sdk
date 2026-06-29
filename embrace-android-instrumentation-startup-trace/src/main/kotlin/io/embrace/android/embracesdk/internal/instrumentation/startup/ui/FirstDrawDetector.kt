@@ -30,7 +30,7 @@ internal class FirstDrawDetector(
     override fun registerFirstDrawCallback(
         activity: Activity,
         drawBeginCallback: () -> Unit,
-        drawCompleteCallback: () -> Unit
+        drawCompleteCallback: () -> Unit,
     ) {
         val instanceId = traceInstanceId(activity)
         if (!trackingLoad(instanceId)) {
@@ -50,8 +50,8 @@ internal class FirstDrawDetector(
                 logger.trackInternalError(
                     type = InternalErrorType.UiCallbackFail,
                     throwable = IllegalStateException(
-                        "Fail to attach frame rendering callback because the callback on Window was null"
-                    )
+                        "Fail to attach frame rendering callback because the callback on Window was null",
+                    ),
                 )
 
                 // Adding an empty function indicates that the registration has failed and no subsequent attempts should
@@ -70,7 +70,7 @@ internal class FirstDrawDetector(
             }.exceptionOrNull()?.let { exception ->
                 logger.trackInternalError(
                     type = InternalErrorType.UiCallbackFail,
-                    throwable = IllegalStateException("Failed to unregister first draw callback", exception)
+                    throwable = IllegalStateException("Failed to unregister first draw callback", exception),
                 )
             }
             loadingActivities.remove(instanceId)
@@ -81,7 +81,7 @@ internal class FirstDrawDetector(
 
     private fun View.onNextDraw(onDrawCallback: () -> Unit) {
         viewTreeObserver.addOnDrawListener(
-            PyNextDrawListener(this, onDrawCallback)
+            PyNextDrawListener(this, onDrawCallback),
         )
     }
 

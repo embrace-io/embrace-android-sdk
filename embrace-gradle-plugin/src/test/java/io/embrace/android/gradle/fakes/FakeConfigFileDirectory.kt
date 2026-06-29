@@ -9,7 +9,7 @@ import java.io.File
 
 class FakeConfigFileDirectory(
     private val dirPath: String = "root",
-    private val hasConfigFile: Boolean = false
+    private val hasConfigFile: Boolean = false,
 ) : Directory {
     var subDirectoriesWithConfigFiles: MutableSet<String> = mutableSetOf()
 
@@ -21,7 +21,7 @@ class FakeConfigFileDirectory(
 
     override fun dir(path: String): Directory = FakeConfigFileDirectory(
         "$dirPath/$path",
-        subDirectoriesWithConfigFiles.contains(path)
+        subDirectoriesWithConfigFiles.contains(path),
     )
 
     override fun dir(path: Provider<out CharSequence>): Provider<Directory> {

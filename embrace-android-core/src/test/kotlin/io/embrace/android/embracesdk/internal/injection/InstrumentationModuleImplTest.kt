@@ -23,7 +23,7 @@ internal class InstrumentationModuleImplTest {
             openTelemetryModule = FakeOpenTelemetryModule(),
             workerThreadModule = FakeWorkerThreadModule(
                 fakeInitModule = fakeInitModule,
-                testWorkers = listOf(Worker.Background.NonIoRegWorker)
+                testWorkers = listOf(Worker.Background.NonIoRegWorker),
             ),
             configService = FakeConfigService(),
             essentialServiceModule = FakeEssentialServiceModule(),

@@ -37,7 +37,7 @@ class GenerateRnSourcemapTaskRegistration : EmbraceTaskRegistration {
         project.registerTask(
             GenerateRnSourcemapTask.NAME,
             GenerateRnSourcemapTask::class.java,
-            data
+            data,
         ) { rnTask ->
             val embraceConfig = variantConfigurationsListProperty.get().first { it.variantName == variant.name }.embraceConfig
             rnTask.requestParams.set(
@@ -50,7 +50,7 @@ class GenerateRnSourcemapTaskRegistration : EmbraceTaskRegistration {
                         baseUrl = behavior.baseUrl,
                         failBuildOnUploadErrors = failBuildOnUploadErrors,
                     )
-                }
+                },
             )
 
             val variantCapitalized = variant.name.capitalizedString()
@@ -61,12 +61,12 @@ class GenerateRnSourcemapTaskRegistration : EmbraceTaskRegistration {
 
             rnTask.sourcemapAndBundleFile.set(
                 project.layout.buildDirectory.file(
-                    "outputs/embrace/${data.name}/$FILE_NAME_SOURCE_MAP_JSON"
-                )
+                    "outputs/embrace/${data.name}/$FILE_NAME_SOURCE_MAP_JSON",
+                ),
             )
 
             rnTask.bundleIdOutputFile.set(
-                project.layout.buildDirectory.file("intermediates/embrace/react/${data.name}/bundleId.txt")
+                project.layout.buildDirectory.file("intermediates/embrace/react/${data.name}/bundleId.txt"),
             )
 
             // We need an explicit dependsOn because it seems task.outputs.files.asFileTree.elements, inside getBundleFileProvider

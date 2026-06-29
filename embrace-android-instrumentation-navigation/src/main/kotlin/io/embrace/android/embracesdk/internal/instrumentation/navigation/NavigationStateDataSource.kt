@@ -20,7 +20,7 @@ class NavigationStateDataSource(
 ),
     NavigationControllerEventListener {
     private val broker = NavigationEventBroker(
-        onScreenLoad = ::onScreenLoad
+        onScreenLoad = ::onScreenLoad,
     )
 
     private val activityNavigationTracker = ActivityNavigationTracker(

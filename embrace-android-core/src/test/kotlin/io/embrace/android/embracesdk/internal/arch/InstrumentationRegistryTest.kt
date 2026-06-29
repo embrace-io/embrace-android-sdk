@@ -59,8 +59,8 @@ internal class InstrumentationRegistryTest {
                 priority = 1000,
                 action = {},
                 dataSourceState = DataSourceState(
-                    factory = { dataSource }
-                )
+                    factory = { dataSource },
+                ),
             )
 
         assertEquals(0, dataSource.sessionEnds)
@@ -68,7 +68,7 @@ internal class InstrumentationRegistryTest {
 
         registry.loadInstrumentations(
             instrumentationProviders = listOf(provider),
-            args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
+            args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext()),
         )
         registry.onPreSessionEnd()
         registry.onPostSessionChange()
@@ -86,8 +86,8 @@ internal class InstrumentationRegistryTest {
             DataSourceState(
                 factory = {
                     BlockingTestDataSource(iterationStarted, continueIteration)
-                }
-            )
+                },
+            ),
         )
 
         val executor = Executors.newSingleThreadExecutor()

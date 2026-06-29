@@ -9,7 +9,7 @@ import org.objectweb.asm.Opcodes
 class BooleanReturnValueMethodVisitor(
     val replacedValue: Boolean,
     api: Int,
-    nextVisitor: MethodVisitor
+    nextVisitor: MethodVisitor,
 ) : MethodVisitor(api, nextVisitor) {
 
     override fun visitInsn(opcode: Int) {

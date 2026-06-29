@@ -43,7 +43,7 @@ internal fun ApplicationExitInfo.constructAeiObject(
         trace = result.trace,
         description = description,
         traceStatus = result.errMsg,
-        pid = pid
+        pid = pid,
     )
 }
 

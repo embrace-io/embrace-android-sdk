@@ -13,7 +13,7 @@ data class BaseUrlLocalConfig(
     val config: String? = null,
 
     @Json(name = "data")
-    val data: String? = null
+    val data: String? = null,
 ) : Serializable {
 
     private companion object {

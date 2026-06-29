@@ -50,7 +50,7 @@ class HucLiteDataSourceTest {
             defaultLimitSupplier = { 2 },
             domainLimitsSupplier = {
                 mapOf(testUrl.host to 4)
-            }
+            },
         )
         fakeTelemetryDestination = FakeTelemetryDestination()
         fakeTelemetryService = FakeTelemetryService()
@@ -81,7 +81,7 @@ class HucLiteDataSourceTest {
         factoryInstaller = {
             factoryField = it
             attemptToSetURLStreamHandlerFactory(it)
-        }
+        },
     )
 
     @Test
@@ -137,7 +137,7 @@ class HucLiteDataSourceTest {
             networkBehavior = FakeNetworkBehavior(
                 urlEnabled = false,
                 domainCountLimiter = domainCountLimiter,
-            )
+            ),
         )
 
         ds.createRequestData(

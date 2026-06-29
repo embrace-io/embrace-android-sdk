@@ -7,7 +7,7 @@ import java.util.regex.Pattern
  * A filter that determines whether a class should be skipped, according to user-defined rules.
  */
 class ClassInstrumentationFilter(
-    internal val skipList: List<String>
+    internal val skipList: List<String>,
 ) : Serializable {
 
     private companion object {

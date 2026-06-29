@@ -42,8 +42,8 @@ internal class EnvelopeResourceAdapterTest {
         screenResolution = "1080x2400",
         numCores = 8,
         extras = mapOf(
-            "foo" to "bar"
-        )
+            "foo" to "bar",
+        ),
     )
     private val emptyResource = EnvelopeResource()
 
@@ -89,7 +89,7 @@ internal class EnvelopeResourceAdapterTest {
 
     private fun loadGoldenFile(filename: String): String {
         return checkNotNull(
-            javaClass.classLoader?.getResourceAsStream(filename)
+            javaClass.classLoader?.getResourceAsStream(filename),
         ).bufferedReader().readText()
     }
 

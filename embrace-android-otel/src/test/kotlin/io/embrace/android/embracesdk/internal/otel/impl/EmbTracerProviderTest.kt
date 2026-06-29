@@ -31,7 +31,7 @@ internal class EmbTracerProviderTest {
             impl = otel,
             spanService = spanService,
             clock = openTelemetryClock,
-            useKotlinSdk = TESTS_DEFAULT_USE_KOTLIN_SDK
+            useKotlinSdk = TESTS_DEFAULT_USE_KOTLIN_SDK,
         )
     }
 

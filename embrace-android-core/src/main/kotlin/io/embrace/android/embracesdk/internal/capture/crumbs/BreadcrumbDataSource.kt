@@ -14,7 +14,7 @@ class BreadcrumbDataSource(
 ) : DataSourceImpl(
     args = args,
     limitStrategy = UpToLimitStrategy(args.configService.breadcrumbBehavior::getCustomBreadcrumbLimit),
-    instrumentationName = "breadcrumb_data_source"
+    instrumentationName = "breadcrumb_data_source",
 ) {
 
     fun logCustom(message: String, timestamp: Long) {

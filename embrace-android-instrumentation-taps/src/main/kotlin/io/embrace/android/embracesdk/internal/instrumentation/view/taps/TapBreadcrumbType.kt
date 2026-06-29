@@ -5,5 +5,5 @@ package io.embrace.android.embracesdk.internal.instrumentation.view.taps
  */
 enum class TapBreadcrumbType(val value: String) {
     TAP("tap"),
-    LONG_PRESS("long_press")
+    LONG_PRESS("long_press"),
 }

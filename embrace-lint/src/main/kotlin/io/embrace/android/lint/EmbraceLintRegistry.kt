@@ -17,6 +17,6 @@ class EmbraceLintRegistry : IssueRegistry() {
     override val vendor: Vendor = Vendor(
         vendorName = "Embrace",
         feedbackUrl = "https://embrace.io",
-        contact = "support@embrace.io"
+        contact = "support@embrace.io",
     )
 }

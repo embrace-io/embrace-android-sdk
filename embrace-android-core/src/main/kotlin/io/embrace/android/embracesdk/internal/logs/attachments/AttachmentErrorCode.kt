@@ -6,5 +6,5 @@ package io.embrace.android.embracesdk.internal.logs.attachments
 enum class AttachmentErrorCode {
     ATTACHMENT_TOO_LARGE,
     OVER_MAX_ATTACHMENTS,
-    UNKNOWN
+    UNKNOWN,
 }

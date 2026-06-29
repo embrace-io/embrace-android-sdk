@@ -26,9 +26,9 @@ class UploadSharedObjectFilesTaskTest {
                 compareRequestBodyAgainstExpected<NdkHandshakeRequestBody>(
                     request,
                     projectDir,
-                    "expected/handshake.json"
+                    "expected/handshake.json",
                 )
-            }
+            },
         )
     }
 
@@ -41,7 +41,7 @@ class UploadSharedObjectFilesTaskTest {
             },
             assertions = { _ ->
                 verifyUploads(listOf("libemb-crisps.so"), listOf("arm64-v8a"), listOf("demoDevelopmentRelease"))
-            }
+            },
         )
     }
 
@@ -55,7 +55,7 @@ class UploadSharedObjectFilesTaskTest {
             expectedExceptionMessage = "Failed to read the architectures to hashed shared object files map: Failed to deserialize object",
             assertions = {
                 verifyNoUploads()
-            }
+            },
         )
     }
 
@@ -69,7 +69,7 @@ class UploadSharedObjectFilesTaskTest {
             expectedExceptionMessage = "Compressed file not found for requested",
             assertions = { _ ->
                 verifyNoUploads()
-            }
+            },
         )
     }
 
@@ -83,7 +83,7 @@ class UploadSharedObjectFilesTaskTest {
             expectedExceptionMessage = "Requested architecture was not found",
             assertions = { _ ->
                 verifyNoUploads()
-            }
+            },
         )
     }
 
@@ -97,7 +97,7 @@ class UploadSharedObjectFilesTaskTest {
             expectedExceptionMessage = "Exception occurred while making network request",
             assertions = {
                 verifyNoUploads()
-            }
+            },
         )
     }
 
@@ -111,7 +111,7 @@ class UploadSharedObjectFilesTaskTest {
             expectedExceptionMessage = "An arch with no symbols was requested",
             assertions = {
                 verifyNoUploads()
-            }
+            },
         )
     }
 
@@ -125,7 +125,7 @@ class UploadSharedObjectFilesTaskTest {
             },
             assertions = {
                 verifyNoUploads()
-            }
+            },
         )
     }
 }

@@ -35,7 +35,7 @@ internal class NavigationEventBroker(
                         calculateStateAndNotifyLoad(
                             activityStartTime = startTime,
                             eventTime = event.timestampMs,
-                            event = event
+                            event = event,
                         )
                     } else if (!visibleScreens.contains(event.componentId)) {
                         // If the activity has a NavController but there isn't a screen visible, the app is emerging from the background.
@@ -45,7 +45,7 @@ internal class NavigationEventBroker(
                             notifyLoad(
                                 event = event,
                                 loadTime = startTime,
-                                stateValue = lastDest
+                                stateValue = lastDest,
                             )
                         }
                     }
@@ -62,7 +62,7 @@ internal class NavigationEventBroker(
                 visibleScreens[event.componentId] = event.name
                 calculateStateAndNotifyLoad(
                     eventTime = event.timestampMs,
-                    event = event
+                    event = event,
                 )
             }
             is NavigationEvent.Backgrounded -> {

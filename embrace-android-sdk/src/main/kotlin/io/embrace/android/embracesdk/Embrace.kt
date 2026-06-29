@@ -22,7 +22,7 @@ public object Embrace : SdkApi by delegate {
     @Deprecated(
         "Calling Embrace.getInstance() is deprecated. Use the Embrace object directly instead. " +
             "For example, Embrace.getInstance().start() is now Embrace.start()",
-        replaceWith = ReplaceWith("Embrace")
+        replaceWith = ReplaceWith("Embrace"),
     )
     @JvmStatic
     public fun getInstance(): Embrace = this

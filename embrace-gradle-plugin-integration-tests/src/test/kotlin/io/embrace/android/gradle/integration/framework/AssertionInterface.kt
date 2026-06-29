@@ -20,7 +20,7 @@ import org.junit.Assert.assertTrue
 import java.io.File
 
 class AssertionInterface(
-    private val apiServer: FakeApiServer
+    private val apiServer: FakeApiServer,
 ) {
 
     private val multipartFormReader: MultipartFormReader = MultipartFormReader()
@@ -62,7 +62,7 @@ class AssertionInterface(
      */
     inline fun <reified T> deserializeExpectedRequestBody(
         projectDir: File,
-        expectedPath: String
+        expectedPath: String,
     ): T {
         val json = projectDir.file(expectedPath).readText()
         return MoshiSerializer().fromJson(json, T::class.java)
@@ -74,7 +74,7 @@ class AssertionInterface(
     inline fun <reified T> compareRequestBodyAgainstExpected(
         request: RecordedRequest,
         projectDir: File,
-        expectedPath: String
+        expectedPath: String,
     ) {
         val observed = deserializeRequestBody<T>(request)
         val expected = deserializeExpectedRequestBody<T>(projectDir, expectedPath)
@@ -185,7 +185,7 @@ class AssertionInterface(
     fun AssertionInterface.verifyHandshakes(
         expectedLibs: List<String>,
         expectedArchs: List<String>,
-        expectedVariants: List<String>
+        expectedVariants: List<String>,
     ) {
         val handshakes = fetchRequests(EmbraceEndpoint.NDK_HANDSHAKE).map {
             deserializeRequestBody<NdkUploadHandshakeRequest>(it)
@@ -197,7 +197,7 @@ class AssertionInterface(
                 handshake ?: error("Handshake not found for variant: $variant"),
                 variant,
                 expectedLibs,
-                expectedArchs
+                expectedArchs,
             )
         }
     }
@@ -206,7 +206,7 @@ class AssertionInterface(
         handshake: NdkUploadHandshakeRequest,
         expectedVariantName: String,
         expectedLibs: List<String>,
-        expectedArchs: List<String>
+        expectedArchs: List<String>,
     ) {
         assertEquals(expectedVariantName, handshake.variant)
         assertEquals(IntegrationTestDefaults.APP_ID, handshake.appId)
@@ -232,7 +232,7 @@ class AssertionInterface(
     fun AssertionInterface.verifyUploads(
         expectedLibs: List<String>,
         expectedArchs: List<String>,
-        expectedVariants: List<String>
+        expectedVariants: List<String>,
     ) {
         val uploads = fetchRequests(EmbraceEndpoint.NDK).map(::readMultipartRequest)
         val expectedLibsSize = expectedLibs.size
@@ -247,7 +247,7 @@ class AssertionInterface(
                 uploads,
                 fieldIndex = 6,
                 expectedData = it,
-                count = expectedArchsSize * expectedVariantsSize
+                count = expectedArchsSize * expectedVariantsSize,
             )
             validateUploadedFile(uploads, it)
         }
@@ -258,7 +258,7 @@ class AssertionInterface(
                 uploads,
                 fieldIndex = 3,
                 expectedData = it,
-                count = expectedLibsSize * expectedArchsSize
+                count = expectedLibsSize * expectedArchsSize,
             )
         }
 
@@ -268,7 +268,7 @@ class AssertionInterface(
                 uploads,
                 fieldIndex = 4,
                 expectedData = arch,
-                count = expectedLibsSize * expectedVariantsSize
+                count = expectedLibsSize * expectedVariantsSize,
             )
         }
 
@@ -284,13 +284,13 @@ class AssertionInterface(
         uploads: List<List<FormPart>>,
         fieldIndex: Int,
         expectedData: String,
-        count: Int
+        count: Int,
     ) {
         val filteredUploads = uploads.filter { it[fieldIndex].data == expectedData }
         assertEquals(
             "Expected $count uploads with $expectedData in field $fieldIndex",
             count,
-            filteredUploads.size
+            filteredUploads.size,
         )
     }
 

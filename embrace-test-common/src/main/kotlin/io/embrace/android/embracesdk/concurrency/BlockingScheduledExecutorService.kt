@@ -116,7 +116,7 @@ class BlockingScheduledExecutorService(
         rejectIfShutdown()
         val futureTask = BlockedFutureScheduledTask<Unit>(
             runnable = command,
-            executionTimeMs = fakeClock.now() + unit.toMillis(delay)
+            executionTimeMs = fakeClock.now() + unit.toMillis(delay),
         )
 
         submitOrQueue(delay, futureTask)
@@ -135,7 +135,7 @@ class BlockingScheduledExecutorService(
         rejectIfShutdown()
         val futureTask = BlockedFutureScheduledTask(
             callable = callable,
-            executionTimeMs = fakeClock.now() + unit.toMillis(delay)
+            executionTimeMs = fakeClock.now() + unit.toMillis(delay),
         )
 
         submitOrQueue(delay, futureTask)
@@ -157,7 +157,7 @@ class BlockingScheduledExecutorService(
         val futureTask = BlockedFutureScheduledTask<Unit>(
             runnable = command,
             executionTimeMs = fakeClock.now() + unit.toMillis(initialDelay),
-            periodMs = unit.toMillis(period)
+            periodMs = unit.toMillis(period),
         )
 
         if (initialDelay <= 0L) {
@@ -184,7 +184,7 @@ class BlockingScheduledExecutorService(
             runnable = command,
             executionTimeMs = fakeClock.now() + unit.toMillis(initialDelay),
             periodMs = unit.toMillis(delay),
-            runFromLastExecution = true
+            runFromLastExecution = true,
         )
 
         if (initialDelay <= 0L) {

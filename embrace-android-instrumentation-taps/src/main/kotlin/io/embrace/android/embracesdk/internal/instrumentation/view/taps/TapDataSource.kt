@@ -11,11 +11,11 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
  * Captures custom breadcrumbs.
  */
 class TapDataSource(
-    args: InstrumentationArgs
+    args: InstrumentationArgs,
 ) : DataSourceImpl(
     args = args,
     limitStrategy = UpToLimitStrategy(args.configService.breadcrumbBehavior::getTapBreadcrumbLimit),
-    instrumentationName = "tap_data_source"
+    instrumentationName = "tap_data_source",
 ) {
 
     companion object {

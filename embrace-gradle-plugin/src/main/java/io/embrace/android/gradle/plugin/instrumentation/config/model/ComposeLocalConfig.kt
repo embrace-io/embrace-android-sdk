@@ -7,7 +7,7 @@ import java.io.Serializable
 @JsonClass(generateAdapter = true)
 data class ComposeLocalConfig(
     @Json(name = "capture_compose_onclick")
-    val captureComposeOnClick: Boolean? = null
+    val captureComposeOnClick: Boolean? = null,
 ) : Serializable {
 
     private companion object {

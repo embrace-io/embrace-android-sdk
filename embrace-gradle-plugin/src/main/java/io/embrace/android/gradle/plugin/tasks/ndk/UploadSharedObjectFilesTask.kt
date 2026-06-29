@@ -74,7 +74,7 @@ abstract class UploadSharedObjectFilesTask @Inject constructor(
     private fun getArchToFilenameToHashMap() = try {
         serializer.fromJson(
             architecturesToHashedSharedObjectFilesMapJson.get().asFile.bufferedReader().use { it.readText() },
-            ArchitecturesToHashedSharedObjectFilesMap::class.java
+            ArchitecturesToHashedSharedObjectFilesMap::class.java,
         ).symbols
     } catch (exception: Exception) {
         error("Failed to read the architectures to hashed shared object files map: ${exception.message}")
@@ -90,7 +90,7 @@ abstract class UploadSharedObjectFilesTask @Inject constructor(
             requestParams.get().appId,
             requestParams.get().apiToken,
             variantData.get().name,
-            architecturesToHashedSharedObjectFilesMap
+            architecturesToHashedSharedObjectFilesMap,
         )
         val okHttpNetworkService = OkHttpNetworkService(requestParams.get().baseUrl)
         val handshakeResult = NdkUploadHandshake(okHttpNetworkService).getRequestedSymbols(params, failBuildOnUploadErrors.get())

@@ -38,7 +38,7 @@ class BlockedThreadDetector(
         looper = looper,
         watchdogWorker = watchdogWorker,
         clock = clock,
-        action = ::onTargetThreadProcessedMessage
+        action = ::onTargetThreadProcessedMessage,
     )
     private val started: AtomicBoolean = AtomicBoolean(false)
     private val blocked: AtomicBoolean = AtomicBoolean(false)

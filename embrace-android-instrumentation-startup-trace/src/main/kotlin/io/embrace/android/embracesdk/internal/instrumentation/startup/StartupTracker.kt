@@ -51,7 +51,7 @@ class StartupTracker(
             val activityName = activity.localClassName
             val callback = {
                 appStartupDataCollector.firstFrameRendered(
-                    activityName = activityName
+                    activityName = activityName,
                 )
             }
             drawEventEmitter?.registerFirstDrawCallback(activity, {}, callback)
@@ -73,7 +73,7 @@ class StartupTracker(
     override fun onActivityResumed(activity: Activity) {
         if (activity.observeForStartup()) {
             appStartupDataCollector.startupActivityResumed(
-                activityName = activity.localClassName
+                activityName = activity.localClassName,
             )
         }
     }

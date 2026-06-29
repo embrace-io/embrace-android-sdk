@@ -34,7 +34,7 @@ internal class EmbraceLogServiceTest {
         fakeConfigService = FakeConfigService(
             sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
                 FakeInstrumentedConfig(redaction = FakeRedactionConfig(sensitiveKeys = listOf("password"))),
-            )
+            ),
         )
         fakeUserSessionPropertiesService = FakeUserSessionPropertiesService()
         destination = FakeTelemetryDestination()
@@ -74,8 +74,8 @@ internal class EmbraceLogServiceTest {
             logMessageBehavior = FakeLogMessageBehavior(
                 infoLogLimit = testLogLimit,
                 warnLogLimit = testLogLimit,
-                errorLogLimit = testLogLimit
-            )
+                errorLogLimit = testLogLimit,
+            ),
         )
         logLimitingService = LogLimitingServiceImpl(fakeConfigService)
         logService = createEmbraceLogService()
@@ -109,7 +109,7 @@ internal class EmbraceLogServiceTest {
     fun `a max length smaller than 3 does not add ellipsis`() {
         // given a config with a log message limit smaller than 3
         fakeConfigService = FakeConfigService(
-            logMessageBehavior = FakeLogMessageBehavior(logMessageMaximumAllowedLength = 2)
+            logMessageBehavior = FakeLogMessageBehavior(logMessageMaximumAllowedLength = 2),
         )
         logService = createEmbraceLogService()
 
@@ -125,7 +125,7 @@ internal class EmbraceLogServiceTest {
     fun `a log message bigger than the max length is trimmed`() {
         // given a config with message limit
         fakeConfigService = FakeConfigService(
-            logMessageBehavior = FakeLogMessageBehavior(logMessageMaximumAllowedLength = 5)
+            logMessageBehavior = FakeLogMessageBehavior(logMessageMaximumAllowedLength = 5),
         )
         logService = createEmbraceLogService()
 
@@ -146,7 +146,7 @@ internal class EmbraceLogServiceTest {
         // given a config with message limit and app framework Unity
         fakeConfigService = FakeConfigService(
             appFramework = AppFramework.UNITY,
-            logMessageBehavior = FakeLogMessageBehavior(logMessageMaximumAllowedLength = 5)
+            logMessageBehavior = FakeLogMessageBehavior(logMessageMaximumAllowedLength = 5),
         )
         logService = createEmbraceLogService()
 
@@ -163,7 +163,7 @@ internal class EmbraceLogServiceTest {
             "a".repeat(unityMaxAllowedLength + 1),
             LogSeverity.INFO,
             emptyMap(),
-            ::Log
+            ::Log,
         )
 
         // then the message is trimmed
@@ -212,7 +212,7 @@ internal class EmbraceLogServiceTest {
         assertTrue(fakeTelemetryService.appliedLimits.contains("info_log" to AppliedLimitType.TRUNCATE_ATTRIBUTES))
         assertTrue(fakeTelemetryService.appliedLimits.contains("log_attribute_key" to AppliedLimitType.TRUNCATE_STRING))
         assertTrue(
-            fakeTelemetryService.appliedLimits.contains("log_attribute_value" to AppliedLimitType.TRUNCATE_STRING)
+            fakeTelemetryService.appliedLimits.contains("log_attribute_value" to AppliedLimitType.TRUNCATE_STRING),
         )
     }
 

@@ -40,7 +40,7 @@ class UserSessionBehaviorImpl(private val remote: RemoteConfig?) : UserSessionBe
 
     override fun getMaxUserSessionProperties(): Int = min(
         remote?.maxUserSessionProperties ?: SESSION_PROPERTY_LIMIT,
-        SESSION_PROPERTY_MAX_LIMIT
+        SESSION_PROPERTY_MAX_LIMIT,
     )
 
     override fun getMaxSessionDurationMs(): Long = maxSessionDurationSeconds * 1000L

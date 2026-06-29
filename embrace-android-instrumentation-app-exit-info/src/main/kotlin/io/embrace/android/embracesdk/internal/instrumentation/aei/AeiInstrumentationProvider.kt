@@ -23,10 +23,10 @@ class AeiInstrumentationProvider : InstrumentationProvider {
                     backgroundWorker = args.backgroundWorker(worker = Worker.Background.NonIoRegWorker),
                     activityManager = activityManager,
                     store = args.store,
-                    ordinalStore = args.ordinalStore
+                    ordinalStore = args.ordinalStore,
                 )
             },
-            configGate = { args.configService.appExitInfoBehavior.isAeiCaptureEnabled() }
+            configGate = { args.configService.appExitInfoBehavior.isAeiCaptureEnabled() },
         )
     }
 }

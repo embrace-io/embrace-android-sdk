@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.vitals.smoothness
 import android.os.SystemClock
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.vitals.VitalsScheduler
+import io.embrace.android.embracesdk.internal.vitals.fake.FakeVitalsScheduler
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -14,26 +14,7 @@ import java.time.Duration
 
 @RunWith(AndroidJUnit4::class)
 internal class FocalMomentTrackerTest {
-
-    /** Runs posted (hopped) work synchronously and lets the test fire the single pending settle. */
-    private class FakeScheduler : VitalsScheduler {
-        private var pending: Runnable? = null
-        val settleArmed: Boolean get() = pending != null
-        override fun post(action: Runnable) = action.run()
-        override fun scheduleSettle(delayMs: Long, action: Runnable) {
-            pending = action
-        }
-
-        override fun cancelSettle(action: Runnable) {
-            if (pending === action) {
-                pending = null
-            }
-        }
-
-        fun fireSettle() = pending?.run() ?: Unit
-    }
-
-    private val scheduler = FakeScheduler()
+    private val scheduler = FakeVitalsScheduler()
     private val emitted = mutableListOf<SmoothnessResult>()
 
     private val tracker = FocalMomentTracker(
@@ -49,7 +30,7 @@ internal class FocalMomentTrackerTest {
     @Test
     fun `after release the aftermath settles at the tighter threshold and emits on flush`() {
         tracker.onInteractionStart()
-        assertTrue(scheduler.settleArmed)
+        assertTrue(scheduler.scheduled)
 
         redraw(vsyncNanos = start + 16.ms, jankNanos = 4.ms)
         tracker.onInteractionEnd() // finger up -> 100ms threshold
@@ -57,12 +38,12 @@ internal class FocalMomentTrackerTest {
         // 34ms since last activity: under the tight threshold, not settled
         settleAfter(50)
         assertTrue("not settled yet", emitted.isEmpty())
-        assertTrue(scheduler.settleArmed)
+        assertTrue(scheduler.scheduled)
 
         // 134ms since last activity: past the tight threshold (a held finger would still wait on 500ms)
         settleAfter(100)
         assertTrue("held, not emitted", emitted.isEmpty())
-        assertFalse(scheduler.settleArmed)
+        assertFalse(scheduler.scheduled)
 
         // detach flushes, dated from start to last activity (16ms in)
         tracker.onScreenStop()
@@ -78,12 +59,12 @@ internal class FocalMomentTrackerTest {
 
         // 134ms since activity: past the tight threshold but the finger is still down, so not settled
         settleAfter(150)
-        assertTrue("held finger uses the longer grace", scheduler.settleArmed)
+        assertTrue("held finger uses the longer grace", scheduler.scheduled)
         assertTrue(emitted.isEmpty())
 
         // 534ms since activity: past the held grace
         settleAfter(400)
-        assertFalse(scheduler.settleArmed)
+        assertFalse(scheduler.scheduled)
 
         tracker.onScreenStop()
         assertEquals(FocalOutcome.SETTLED, emitted.single().outcome)
@@ -100,12 +81,12 @@ internal class FocalMomentTrackerTest {
 
         // without the move this would have settled by 500ms; the move pushed the baseline out
         settleAfter(100) // now 500ms; 100ms since the move
-        assertTrue("not settled: the move refreshed liveness", scheduler.settleArmed)
+        assertTrue("not settled: the move refreshed liveness", scheduler.scheduled)
         assertTrue(emitted.isEmpty())
 
         // settles 500ms after the move
         settleAfter(400) // now 900ms; 500ms since the move
-        assertFalse(scheduler.settleArmed)
+        assertFalse(scheduler.scheduled)
     }
 
     @Test
@@ -115,14 +96,14 @@ internal class FocalMomentTrackerTest {
 
         // no further activity: the held grace elapses and the focal moment enters held
         settleAfter(600)
-        assertFalse(scheduler.settleArmed)
+        assertFalse(scheduler.scheduled)
         assertTrue("held, not yet emitted", emitted.isEmpty())
 
         // the finger never lifted; resuming the drag flushes the buffered settle and opens a new one
         tracker.onInteractionMove()
         assertEquals(FocalOutcome.SETTLED, emitted.single().outcome)
         assertEquals(16L, emitted.single().durationMs)
-        assertTrue("a fresh interaction opened", scheduler.settleArmed)
+        assertTrue("a fresh interaction opened", scheduler.scheduled)
     }
 
     @Test
@@ -132,11 +113,11 @@ internal class FocalMomentTrackerTest {
 
         // 99ms: one ms short of the tight threshold (a held finger would wait 500ms)
         settleAfter(99)
-        assertTrue(scheduler.settleArmed)
+        assertTrue(scheduler.scheduled)
 
         // 100ms: at the tight threshold -> held
         settleAfter(1)
-        assertFalse(scheduler.settleArmed)
+        assertFalse(scheduler.scheduled)
     }
 
     @Test
@@ -149,7 +130,7 @@ internal class FocalMomentTrackerTest {
         val result = emitted.single()
         assertEquals(FocalOutcome.INTERRUPTED, result.outcome)
         assertEquals(40L, result.durationMs)
-        assertFalse("startup opens nothing", scheduler.settleArmed)
+        assertFalse("startup opens nothing", scheduler.scheduled)
     }
 
     @Test
@@ -163,7 +144,7 @@ internal class FocalMomentTrackerTest {
         }
 
         assertTrue("an active interaction has no cap", emitted.isEmpty())
-        assertTrue(scheduler.settleArmed)
+        assertTrue(scheduler.scheduled)
     }
 
     @Test
@@ -176,7 +157,7 @@ internal class FocalMomentTrackerTest {
         val result = emitted.single()
         assertEquals(FocalOutcome.INTERRUPTED, result.outcome)
         assertEquals(30L, result.durationMs)
-        assertFalse(scheduler.settleArmed)
+        assertFalse(scheduler.scheduled)
     }
 
     @Test
@@ -185,18 +166,18 @@ internal class FocalMomentTrackerTest {
         tracker.onInteractionEnd() // finger up -> tight threshold
         redraw(vsyncNanos = start + 16.ms) // last known frame
 
-        // The main thread was blocked building a slow frame; the settle timeout fires before that
+        // The main thread was blocked building a slow frame; the settle timeout elapses before that
         // frame's metrics are delivered.
         settleAfter(200)
-        assertFalse("held, not emitted", scheduler.settleArmed)
+        assertFalse("held, not emitted", scheduler.scheduled)
         assertTrue(emitted.isEmpty())
 
         // the slow frame's metrics finally arrive (contiguous vsync) and wake the held tracker
         redraw(vsyncNanos = start + 20.ms, jankNanos = 8.ms)
-        assertTrue("resumed", scheduler.settleArmed)
+        assertTrue("resumed", scheduler.scheduled)
 
         // it re-settles, and the flush includes the late frame's jank
-        scheduler.fireSettle()
+        scheduler.runPending()
         tracker.onScreenStop()
 
         val result = emitted.single()
@@ -220,7 +201,7 @@ internal class FocalMomentTrackerTest {
         )
 
         settleAfter(200)
-        assertFalse("held", scheduler.settleArmed)
+        assertFalse("held", scheduler.scheduled)
 
         tracker.onScreenStop()
         val result = emitted.single()
@@ -240,7 +221,7 @@ internal class FocalMomentTrackerTest {
         redraw(vsyncNanos = start + 16.ms)
         settleAfter(120) // past the tight threshold -> held
         assertTrue(emitted.isEmpty())
-        assertFalse(scheduler.settleArmed)
+        assertFalse(scheduler.scheduled)
 
         // a redraw long after the gap (e.g. an async repaint with no trigger) flushes the settle
         redraw(vsyncNanos = start + 5000.ms, jankNanos = 4.ms)
@@ -249,7 +230,7 @@ internal class FocalMomentTrackerTest {
         assertEquals(FocalOutcome.SETTLED, result.outcome)
         assertEquals(16L, result.durationMs)
         assertEquals("orphan frame is part of no focal moment", 0.0, result.normalizedDroppedFrames, 0.0)
-        assertFalse(scheduler.settleArmed)
+        assertFalse(scheduler.scheduled)
     }
 
     @Test
@@ -275,10 +256,10 @@ internal class FocalMomentTrackerTest {
 
     private fun advance(millis: Long) = ShadowSystemClock.advanceBy(Duration.ofMillis(millis))
 
-    /** Advances the clock by [millis] and then fires the pending settle check. */
+    /** Advances the clock by [millis] and then runs the pending settle check. */
     private fun settleAfter(millis: Long) {
         advance(millis)
-        scheduler.fireSettle()
+        scheduler.runPending()
     }
 
     /**

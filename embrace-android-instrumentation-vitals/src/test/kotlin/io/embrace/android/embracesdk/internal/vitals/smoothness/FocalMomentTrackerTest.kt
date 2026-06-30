@@ -24,8 +24,10 @@ internal class FocalMomentTrackerTest {
             pending = action
         }
 
-        override fun cancelSettle() {
-            pending = null
+        override fun cancelSettle(action: Runnable) {
+            if (pending === action) {
+                pending = null
+            }
         }
 
         fun fireSettle() = pending?.run() ?: Unit

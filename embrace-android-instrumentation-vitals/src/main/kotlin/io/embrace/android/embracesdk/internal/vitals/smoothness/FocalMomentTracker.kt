@@ -187,7 +187,7 @@ internal class FocalMomentTracker(
         }
         capturing = false
         held = false
-        scheduler.cancelSettle()
+        scheduler.cancelSettle(settleRunnable)
         val durationMs = (endNanos - focalMomentStartNanos) / NANOS_PER_MS
         reporter.onFocalMomentEnd(outcome, focalMomentStartEpochMs, durationMs)
     }
@@ -200,7 +200,7 @@ internal class FocalMomentTracker(
         bufferedEndNanos = endNanos
         capturing = false
         held = true
-        scheduler.cancelSettle()
+        scheduler.cancelSettle(settleRunnable)
     }
 
     private fun nowNanos(): Long = SystemClock.uptimeMillis() * NANOS_PER_MS

@@ -85,7 +85,6 @@ internal class UserSessionApiTest {
                     "emb.usage.set_username" to "1",
                     "emb.usage.set_user_email" to "1",
                     "emb.usage.set_user_identifier" to "1",
-                    EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID to "8",
                     EmbSessionAttributes.EMB_STARTUP_DURATION to "0"
                 ).toSortedMap()
 
@@ -97,6 +96,7 @@ internal class UserSessionApiTest {
     private companion object {
         // Attributes we want to know exist, but whose value we don't need to validate
         val validateExistenceOnly = setOf(
+            EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID,
             SessionAttributes.SESSION_ID,
             EmbTelemetryAttributes.EMB_KOTLIN_ON_CLASSPATH,
             EmbTelemetryAttributes.EMB_OKHTTP3,

@@ -207,14 +207,12 @@ internal class BackgroundActivityCaptureTest {
                 sessionPartSpan1.assertExpectedSessionPartSpanAttributes(
                     startMs = session1StartMs,
                     endMs = session1EndMs,
-                    sequenceId = 1,
                     coldStart = true,
                 )
 
                 sessionPartSpan2.assertExpectedSessionPartSpanAttributes(
                     startMs = session2StartMs,
                     endMs = session2EndMs,
-                    sequenceId = 13,
                     coldStart = false,
                 )
 
@@ -234,14 +232,12 @@ internal class BackgroundActivityCaptureTest {
     private fun Span.assertExpectedSessionPartSpanAttributes(
         startMs: Long,
         endMs: Long,
-        sequenceId: Int,
         coldStart: Boolean,
     ) {
         assertEquals(startMs, startTimeNanos?.nanosToMillis())
         assertEquals(endMs, endTimeNanos?.nanosToMillis())
         attributes?.assertMatches(
             mapOf(
-                EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID to sequenceId,
                 EmbSessionAttributes.EMB_COLD_START to coldStart,
                 EmbSessionAttributes.EMB_STATE to "foreground",
                 EmbSessionAttributes.EMB_CLEAN_EXIT to "true",

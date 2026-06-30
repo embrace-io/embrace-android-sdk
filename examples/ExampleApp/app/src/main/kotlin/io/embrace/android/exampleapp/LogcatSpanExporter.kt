@@ -23,9 +23,9 @@ class LogcatSpanExporter : SpanExporter {
         val type = attrs["emb.type"]
         val customMessage = when (type) {
             "ux.session" -> {
-                attrs.filter { it.key.contains("session") }.let {
+                attrs.filter { it.key.contains("session") }.let { filtered ->
                     val id = attrs.entries.single { it.key == "emb.session_part_id" }.value
-                    "`Session Part $id` $attrs"
+                    "`Session Part $id` $filtered"
                 }
             }
             else -> "`$name`, TraceId: $traceId, SpanId: $spanId, Attributes: $attrs, Events: $events, Links: $links"

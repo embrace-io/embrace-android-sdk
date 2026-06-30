@@ -20,7 +20,7 @@ internal class FocalMomentTrackerTest {
     private val tracker = FocalMomentTracker(
         scheduler = scheduler,
         reporter = SmoothnessReporter(emit = emitted::add),
-        clock = Clock { 0L },
+        clock = { 0L },
     )
 
     // The tracker reads time from SystemClock.uptimeMillis; Robolectric keeps it paused until advance()

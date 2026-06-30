@@ -60,14 +60,14 @@ internal class FocalMomentTracker(
     override fun onFrame(vsyncNanos: Long, frameDispatchNanos: Long, jankNanos: Long) {
         if (capturing) {
             recordFrame(frameDispatchNanos, jankNanos)
-            settle.notifyActivity(vsyncNanos / NANOS_PER_MS)
+            settle.notifyActivity(vsyncNanos.nanosToMillis())
         } else if (held) {
-            if (vsyncNanos - bufferedEndNanos < idleThresholdMs * NANOS_PER_MS) {
+            if (vsyncNanos - bufferedEndNanos < idleThresholdMs.millisToNanos()) {
                 // Frame is contiguous with the buffered settle: resume capturing so its jank is included.
                 held = false
                 capturing = true
                 recordFrame(frameDispatchNanos, jankNanos)
-                settle.notifyActivity(vsyncNanos / NANOS_PER_MS)
+                settle.notifyActivity(vsyncNanos.nanosToMillis())
             } else {
                 // Idle gap before this frame: emit the buffered settle and discard the orphan frame.
                 flushHeld()
@@ -112,7 +112,7 @@ internal class FocalMomentTracker(
     @WorkerThread
     private fun startFocalMoment() {
         val nowMs = nowMs()
-        focalMomentStartNanos = nowMs * NANOS_PER_MS
+        focalMomentStartNanos = nowMs.millisToNanos()
         focalMomentStartEpochMs = clock.now()
         held = false
         interacting = true
@@ -127,7 +127,7 @@ internal class FocalMomentTracker(
         // back-date the start to when the engine dispatched the frame's work, if that predates the
         // moment, shifting the reported start epoch by the same amount so the end stays put.
         if (frameDispatchNanos < focalMomentStartNanos) {
-            focalMomentStartEpochMs -= (focalMomentStartNanos - frameDispatchNanos) / NANOS_PER_MS
+            focalMomentStartEpochMs -= (focalMomentStartNanos - frameDispatchNanos).nanosToMillis()
             focalMomentStartNanos = frameDispatchNanos
         }
 
@@ -143,7 +143,7 @@ internal class FocalMomentTracker(
         if (!capturing) {
             return
         }
-        enterHeld(endNanos = lastActivityMs * NANOS_PER_MS)
+        enterHeld(endNanos = lastActivityMs.millisToNanos())
     }
 
     @WorkerThread
@@ -167,7 +167,7 @@ internal class FocalMomentTracker(
         capturing = false
         held = false
         settle.cancel()
-        val durationMs = (endNanos - focalMomentStartNanos) / NANOS_PER_MS
+        val durationMs = (endNanos - focalMomentStartNanos).nanosToMillis()
         reporter.onFocalMomentEnd(outcome, focalMomentStartEpochMs, durationMs)
     }
 
@@ -184,10 +184,15 @@ internal class FocalMomentTracker(
 
     private fun nowMs(): Long = SystemClock.uptimeMillis()
 
-    private fun nowNanos(): Long = nowMs() * NANOS_PER_MS
+    private fun nowNanos(): Long = nowMs().millisToNanos()
+
+    /** This nanosecond timestamp/duration as whole milliseconds, truncating any sub-millisecond remainder. */
+    private fun Long.nanosToMillis(): Long = this / NANOS_PER_MS
+
+    /** This millisecond timestamp/duration as nanoseconds. */
+    private fun Long.millisToNanos(): Long = this * NANOS_PER_MS
 
     private companion object {
-        const val NANOS_PER_MS = 1_000_000L
         const val IDLE_THRESHOLD_MS = 100L
 
         /**
@@ -195,5 +200,7 @@ internal class FocalMomentTracker(
          * interaction / focal moment settled.
          */
         const val HELD_IDLE_THRESHOLD_MS = 500L
+
+        const val NANOS_PER_MS = 1_000_000L
     }
 }

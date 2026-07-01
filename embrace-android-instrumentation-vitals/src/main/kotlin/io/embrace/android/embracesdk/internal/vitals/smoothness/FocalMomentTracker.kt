@@ -4,6 +4,8 @@ import android.os.SystemClock
 import androidx.annotation.MainThread
 import androidx.annotation.WorkerThread
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.vitals.FocalInteractionCallbacks
 import io.embrace.android.embracesdk.internal.vitals.SettleTracker
 import io.embrace.android.embracesdk.internal.vitals.VitalsScheduler
@@ -186,12 +188,6 @@ internal class FocalMomentTracker(
 
     private fun nowNanos(): Long = nowMs().millisToNanos()
 
-    /** This nanosecond timestamp/duration as whole milliseconds, truncating any sub-millisecond remainder. */
-    private fun Long.nanosToMillis(): Long = this / NANOS_PER_MS
-
-    /** This millisecond timestamp/duration as nanoseconds. */
-    private fun Long.millisToNanos(): Long = this * NANOS_PER_MS
-
     private companion object {
         const val IDLE_THRESHOLD_MS = 100L
 
@@ -200,7 +196,5 @@ internal class FocalMomentTracker(
          * interaction / focal moment settled.
          */
         const val HELD_IDLE_THRESHOLD_MS = 500L
-
-        const val NANOS_PER_MS = 1_000_000L
     }
 }

@@ -10,6 +10,7 @@ android {
 
 dependencies {
     implementation(libs.androidx.annotation)
+    implementation(project(":embrace-android-infra"))
     implementation(project(":embrace-android-instrumentation-api"))
 
     testImplementation(project(":embrace-android-instrumentation-api-fakes"))

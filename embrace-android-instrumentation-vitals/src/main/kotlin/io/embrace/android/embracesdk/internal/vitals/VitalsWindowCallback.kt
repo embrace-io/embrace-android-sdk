@@ -5,7 +5,6 @@ import android.view.KeyboardShortcutGroup
 import android.view.Menu
 import android.view.MotionEvent
 import android.view.Window
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 
 /**
  * Wraps a [Window.Callback] to report interactions from touch dispatch: a touch-down starts an
@@ -14,19 +13,17 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
  */
 internal class VitalsWindowCallback(
     private val delegate: Window.Callback,
-    private val logger: InternalLogger,
     private val focalCallbacks: FocalInteractionCallbacks,
 ) : Window.Callback by delegate {
 
-    override fun dispatchTouchEvent(event: MotionEvent?): Boolean {
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
         try {
-            when (event?.actionMasked) {
+            when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> focalCallbacks.onInteractionStart()
                 MotionEvent.ACTION_MOVE -> focalCallbacks.onInteractionMove()
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> focalCallbacks.onInteractionEnd()
             }
-        } catch (e: Throwable) {
-            logger.logError("Vitals touch event dispatch failed", e)
+        } catch (_: Throwable) {
         }
         return delegate.dispatchTouchEvent(event)
     }

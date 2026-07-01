@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.vitals.smoothness
 
 import android.os.SystemClock
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.vitals.fake.FakeVitalsScheduler
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

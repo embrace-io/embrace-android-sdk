@@ -50,7 +50,6 @@ internal class VitalsActivityListener(
         if (window.callback !is VitalsWindowCallback) {
             window.callback = VitalsWindowCallback(
                 delegate = window.callback,
-                logger = logger,
                 focalCallbacks = focalCallbacks,
             )
         }

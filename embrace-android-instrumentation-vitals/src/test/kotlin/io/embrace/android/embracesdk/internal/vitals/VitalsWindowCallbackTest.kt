@@ -21,6 +21,7 @@ internal class VitalsWindowCallbackTest {
     private val focalCallbacks = FakeFocalInteractionCallbacks()
     private lateinit var callback: VitalsWindowCallback
     private var delegateCalls = 0
+    private var delegateFocusChanges = 0
 
     @Before
     fun setUp() {
@@ -31,6 +32,10 @@ internal class VitalsWindowCallbackTest {
             override fun dispatchTouchEvent(event: MotionEvent?): Boolean {
                 delegateCalls++
                 return true
+            }
+
+            override fun onWindowFocusChanged(hasFocus: Boolean) {
+                delegateFocusChanges++
             }
         }
         callback = VitalsWindowCallback(delegate, focalCallbacks)
@@ -48,18 +53,36 @@ internal class VitalsWindowCallbackTest {
     }
 
     @Test
-    fun `ACTION_UP ends an interaction`() {
+    fun `ACTION_UP ends an interaction and is a committed tap`() {
         dispatch(MotionEvent.ACTION_UP)
 
         assertEquals(1, focalCallbacks.interactionEndCount)
+        assertEquals(1, focalCallbacks.tapCount)
         assertEquals(0, focalCallbacks.interactionStartCount)
     }
 
     @Test
-    fun `ACTION_CANCEL ends an interaction`() {
+    fun `ACTION_CANCEL ends an interaction but is not a tap`() {
         dispatch(MotionEvent.ACTION_CANCEL)
 
         assertEquals(1, focalCallbacks.interactionEndCount)
+        assertEquals(0, focalCallbacks.tapCount)
+    }
+
+    @Test
+    fun `gaining window focus is reported and forwards to the delegate`() {
+        callback.onWindowFocusChanged(true)
+
+        assertEquals(1, focalCallbacks.windowFocusedCount)
+        assertEquals(1, delegateFocusChanges)
+    }
+
+    @Test
+    fun `losing window focus is not reported but still forwards to the delegate`() {
+        callback.onWindowFocusChanged(false)
+
+        assertEquals(0, focalCallbacks.windowFocusedCount)
+        assertEquals(1, delegateFocusChanges)
     }
 
     @Test

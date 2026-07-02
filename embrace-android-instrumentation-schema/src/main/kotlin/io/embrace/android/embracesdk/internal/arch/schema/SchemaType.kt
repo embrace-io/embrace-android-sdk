@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.semconv.EmbNetworkStateAttributes
 import io.embrace.android.embracesdk.semconv.EmbNetworkStatusAttributes
 import io.embrace.android.embracesdk.semconv.EmbPowerStateAttributes
 import io.embrace.android.embracesdk.semconv.EmbPushNotificationAttributes
+import io.embrace.android.embracesdk.semconv.EmbScreenLoadAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSmoothnessAttributes
 import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
@@ -268,6 +269,29 @@ sealed class SchemaType(
             EmbSmoothnessAttributes.SMOOTHNESS_OUTCOME to outcome,
             EmbSmoothnessAttributes.SMOOTHNESS_FRAME_COUNT to frameCount.toString(),
             EmbSmoothnessAttributes.SMOOTHNESS_NORMALIZED_DROPPED_FRAMES to normalizedDroppedFrames.toString(),
+        )
+    }
+
+    /**
+     * Experimental screen-load vital: the time from a user's initial interaction until the destination
+     * screen settles. Recorded as a private span whose start/end bound the load.
+     */
+    class ScreenLoad(
+        screenName: String,
+        outcome: String,
+        navStartDelayMs: Long,
+        navDurationMs: Long,
+        firstFrameDurationMs: Long,
+    ) : SchemaType(
+        telemetryType = EmbType.Performance.ScreenLoad,
+        fixedObjectName = "screen-load",
+    ) {
+        override val schemaAttributes: Map<String, String> = mapOf(
+            EmbViewAttributes.VIEW_NAME to screenName,
+            EmbScreenLoadAttributes.SCREEN_LOAD_OUTCOME to outcome,
+            EmbScreenLoadAttributes.SCREEN_LOAD_NAV_START_DELAY_MS to navStartDelayMs.toString(),
+            EmbScreenLoadAttributes.SCREEN_LOAD_NAV_DURATION_MS to navDurationMs.toString(),
+            EmbScreenLoadAttributes.SCREEN_LOAD_FIRST_FRAME_DURATION_MS to firstFrameDurationMs.toString(),
         )
     }
 

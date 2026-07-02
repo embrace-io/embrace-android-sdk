@@ -33,8 +33,8 @@ internal class VitalsActivityListenerTest {
         val application: Application = ApplicationProvider.getApplicationContext()
         args = FakeInstrumentationArgs(application)
         listener = VitalsActivityListener(
-            logger = args.logger,
             focalCallbacks = focalCallbacks,
+            navSource = ActivityNavigationSource(callbacks = focalCallbacks),
             frameMetricsHandler = Handler(Looper.getMainLooper()),
             frameMetricsStrategy = fakeStrategy,
         )
@@ -70,5 +70,25 @@ internal class VitalsActivityListenerTest {
         listener.onActivityPaused(activity)
 
         assertEquals(1, focalCallbacks.screenStopCount)
+    }
+
+    @Test
+    fun `onActivityResumed reports a navigation end for the destination`() {
+        val activity = buildActivity(Activity::class.java).setup().get()
+
+        listener.onActivityResumed(activity)
+
+        assertEquals(listOf<String?>(activity.localClassName), focalCallbacks.navigationEnds)
+    }
+
+    @Test
+    fun `onActivityCreated reports a navigation start once past the cold-start activity`() {
+        val activity = buildActivity(Activity::class.java).setup().get()
+
+        listener.onActivityCreated(activity, null) // cold start: skipped
+        assertTrue(focalCallbacks.navigationStarts.isEmpty())
+
+        listener.onActivityCreated(activity, null) // a subsequent (forward) navigation
+        assertEquals(listOf<String?>(activity.localClassName), focalCallbacks.navigationStarts)
     }
 }

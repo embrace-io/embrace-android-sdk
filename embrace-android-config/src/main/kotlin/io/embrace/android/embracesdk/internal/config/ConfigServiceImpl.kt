@@ -39,7 +39,7 @@ class ConfigServiceImpl(
     worker: BackgroundWorker,
     private val serializer: PlatformSerializer,
     okHttpClient: Lazy<OkHttpClient>,
-    abis: Array<String>,
+    architecture: String,
     private val sdkVersion: String,
     private val apiLevel: Int,
     private val logger: InternalLogger,
@@ -134,7 +134,7 @@ class ConfigServiceImpl(
         AppFramework.fromString(it)
     } ?: AppFramework.NATIVE
 
-    override val cpuAbi: CpuAbi = CpuAbi.current(abis)
+    override val cpuAbi: CpuAbi = CpuAbi.fromArchName(architecture)
 
     override val nativeSymbolMap: Map<String, String>? by lazy {
         getNativeSymbols()?.let {

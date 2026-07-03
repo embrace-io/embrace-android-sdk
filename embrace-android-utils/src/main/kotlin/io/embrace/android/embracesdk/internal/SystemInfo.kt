@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal
 import android.os.Build
 
 /**
- * Information about the the device or OS that can be retrieved without disk or platform API access
+ * Information about the device or OS that can be retrieved without disk or platform API access
  */
 data class SystemInfo(
     /**
@@ -40,6 +40,13 @@ data class SystemInfo(
      * Name of the model of the device.
      */
     val deviceModel: String = getDeviceModel(),
+
+    /**
+     * The primary CPU architecture (ABI) the device supports, e.g. "arm64-v8a". This is the single source
+     * of the device architecture: [io.embrace.android.embracesdk.internal.config.CpuAbi] and the exported
+     * `host.arch` resource attribute both derive from it.
+     */
+    val architecture: String = getArchitecture(),
 )
 
 internal fun getOsBuild(): String {
@@ -78,6 +85,14 @@ internal fun getDeviceModel(): String {
     return try {
         Build.MODEL
     } catch (t: Throwable) {
+        ""
+    }
+}
+
+internal fun getArchitecture(): String {
+    return try {
+        Build.SUPPORTED_ABIS.firstOrNull() ?: ""
+    } catch (_: Throwable) {
         ""
     }
 }

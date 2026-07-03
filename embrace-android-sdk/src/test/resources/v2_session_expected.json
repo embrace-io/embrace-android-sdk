@@ -23,7 +23,7 @@
     "device.manufacturer": "Fake Manufacturer",
     "device.model.identifier": "Phake Phone Phive",
     "device.model.name": "Phake Phone Phive",
-    "telemetry.distro.name": "io.embrace.android.embracesdk.core",
+    "telemetry.distro.name": "embrace-android-sdk",
     "telemetry.distro.version": "__EMBRACE_TEST_IGNORE__",
     "app_framework": 1,
     "build_id": "fakeBuildId",

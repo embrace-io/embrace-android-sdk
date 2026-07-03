@@ -199,7 +199,6 @@ private class EmbraceSpanImpl(
 
                     successful = !isRecording
                     if (successful) {
-                        spanId?.let { spanRepository.trackedSpanStopped(it) }
                         spanEndTimeMs = attemptedEndTimeMs
                         spanRepository.notifySpanUpdate()
                     }

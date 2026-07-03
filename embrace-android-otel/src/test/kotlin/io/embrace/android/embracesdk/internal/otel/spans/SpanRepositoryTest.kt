@@ -55,30 +55,10 @@ internal class SpanRepositoryTest {
     @Test
     fun `tracked span moved to complete only if it is actually complete`() {
         val span = FakeEmbraceSdkSpan.started()
-        val spanId = checkNotNull(span.spanId)
-        repository.trackStartedSpan(span)
-        repository.trackedSpanStopped(spanId)
-        assertEquals(1, repository.getActiveSpans().size)
-        assertEquals(0, repository.getCompletedSpans().size)
-        span.stop()
-        assertEquals(1, repository.getActiveSpans().size)
-        assertEquals(0, repository.getCompletedSpans().size)
-        repository.trackedSpanStopped(spanId)
-        assertEquals(0, repository.getActiveSpans().size)
-        assertEquals(1, repository.getCompletedSpans().size)
-    }
-
-    @Test
-    fun `spans not tracked twice`() {
-        val span = FakeEmbraceSdkSpan.started()
-        val spanId = checkNotNull(span.spanId)
-        repository.trackStartedSpan(span)
         repository.trackStartedSpan(span)
         assertEquals(1, repository.getActiveSpans().size)
         assertEquals(0, repository.getCompletedSpans().size)
         span.stop()
-        repository.trackedSpanStopped(spanId)
-        repository.trackedSpanStopped(spanId)
         assertEquals(0, repository.getActiveSpans().size)
         assertEquals(1, repository.getCompletedSpans().size)
     }

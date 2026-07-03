@@ -1,20 +1,17 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.utils.lockAndRun
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.ConcurrentMap
 
 /**
  * Allows the tracking of [EmbraceSpan] instances so that their references can be retrieved with its associated spanId
  */
 class SpanRepository {
-    private val activeSpans: MutableMap<String, EmbraceSdkSpan> = ConcurrentHashMap()
-    private val completedSpans: MutableMap<String, EmbraceSdkSpan> = ConcurrentHashMap()
-    private val spanIdsInProcess: MutableMap<String, AtomicInteger> = ConcurrentHashMap()
+    private val spans: ConcurrentMap<String, EmbraceSdkSpan> = ConcurrentHashMap()
     private var spanUpdateNotifier: (() -> Unit)? = null
 
     /**
@@ -22,51 +19,26 @@ class SpanRepository {
      */
     fun trackStartedSpan(embraceSpan: EmbraceSdkSpan) {
         val spanId = embraceSpan.spanId ?: return
-
-        if (notTracked(spanId)) {
-            spanIdsInProcess.lockAndRun(spanId) {
-                if (notTracked(spanId)) {
-                    if (embraceSpan.isRecording) {
-                        activeSpans[spanId] = embraceSpan
-                    } else {
-                        completedSpans[spanId] = embraceSpan
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Transition active span to completed span if the span is tracked and the span is actually stopped.
-     */
-    fun trackedSpanStopped(spanId: String) {
-        spanIdsInProcess.lockAndRun(spanId) {
-            activeSpans[spanId]?.takeIf { !it.isRecording }?.let { activeSpans.remove(spanId) }?.let { embraceSpan ->
-                completedSpans[spanId] = embraceSpan
-            }
-        }
+        spans.putIfAbsent(spanId, embraceSpan)
     }
 
     /**
      * Return the [EmbraceSdkSpan] with the corresponding [spanId] if it's tracked. Return null otherwise.
      */
-    fun getSpan(spanId: String): EmbraceSdkSpan? =
-        spanIdsInProcess.lockAndRun(spanId) {
-            activeSpans[spanId] ?: completedSpans[spanId]
-        }
+    fun getSpan(spanId: String): EmbraceSdkSpan? = spans[spanId]
 
     /**
      * Get a list of active spans that are being tracked
      */
-    fun getActiveSpans(): List<EmbraceSdkSpan> = synchronized(spanIdsInProcess) {
-        activeSpans.values.toList()
+    fun getActiveSpans(): List<EmbraceSdkSpan> {
+        return spans.values.filter { it.isRecording }
     }
 
     /**
      * Get a list of completed spans that are being tracked.
      */
-    fun getCompletedSpans(): List<EmbraceSdkSpan> = synchronized(spanIdsInProcess) {
-        completedSpans.values.toList()
+    fun getCompletedSpans(): List<EmbraceSdkSpan> {
+        return spans.values.filterNot { it.isRecording }
     }
 
     /**
@@ -79,11 +51,15 @@ class SpanRepository {
     }
 
     /**
-     * Clear the spans this repository is tracking
+     * Clear the completed spans this repository is tracking
      */
     fun clearCompletedSpans() {
-        synchronized(spanIdsInProcess) {
-            completedSpans.clear()
+        val iterator = spans.values.iterator()
+        while (iterator.hasNext()) {
+            val candidate = iterator.next()
+            if (!candidate.isRecording) {
+                iterator.remove()
+            }
         }
     }
 
@@ -100,8 +76,6 @@ class SpanRepository {
     fun notifySpanUpdate() {
         spanUpdateNotifier?.invoke()
     }
-
-    private fun notTracked(spanId: String): Boolean = activeSpans[spanId] == null && completedSpans[spanId] == null
 
     /**
      * Automatically terminates root spans
@@ -128,12 +102,12 @@ class SpanRepository {
 
     private fun buildSpanTree(): List<SpanNode> {
         // first, create nodes individually by getting all active spans, then adding them to all completed spans
-        val spans = getCompletedSpans().plus(getActiveSpans())
-        val nodes = spans.map { SpanNode(it, mutableListOf()) }.associateBy(SpanNode::span)
+        val allSpans = spans.values
+        val nodes = allSpans.map { SpanNode(it, mutableListOf()) }.associateBy(SpanNode::span)
         val roots = mutableListOf<SpanNode>()
 
         // then build relationships between nodes
-        spans.forEach { span ->
+        allSpans.forEach { span ->
             nodes[span]?.let { node ->
                 if (span.parent != null) {
                     nodes[span.parent]?.children?.add(node)

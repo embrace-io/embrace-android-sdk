@@ -80,7 +80,7 @@ class NativeSymbolTest {
             serializer = serializer,
             store = FakeKeyValueStore(),
             okHttpClient = lazyOf(okHttpClient),
-            abis = arrayOf(arch),
+            architecture = arch,
             sdkVersion = "1.2.3",
             apiLevel = 36,
             filesDir = Files.createTempDirectory("tmp").toFile(),

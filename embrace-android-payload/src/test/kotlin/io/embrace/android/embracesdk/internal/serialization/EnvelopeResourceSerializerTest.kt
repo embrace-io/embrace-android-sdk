@@ -17,7 +17,7 @@ internal class EnvelopeResourceSerializerTest {
             "app_framework" to EnvelopeResourceValue.of(AppFramework.NATIVE.value.toLong()),
             "build_id" to EnvelopeResourceValue.of("abc123"),
             "emb.app.environment" to EnvelopeResourceValue.of("prod"),
-            "device_architecture" to EnvelopeResourceValue.of("arm64-v8a"),
+            "host.arch" to EnvelopeResourceValue.of("arm64-v8a"),
             "os.version" to EnvelopeResourceValue.of("13"),
             "jailbroken" to EnvelopeResourceValue.of(false),
             "disk_total_capacity" to EnvelopeResourceValue.of(64000000000L),

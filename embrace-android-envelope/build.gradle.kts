@@ -11,4 +11,5 @@ android {
 dependencies {
     implementation(project(":embrace-android-instrumentation-api"))
     implementation(project(":embrace-android-payload"))
+    implementation(libs.opentelemetry.kotlin.semconv)
 }

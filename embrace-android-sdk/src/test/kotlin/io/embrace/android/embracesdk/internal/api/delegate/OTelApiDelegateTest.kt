@@ -108,11 +108,11 @@ internal class OTelApiDelegateTest {
     }
 
     @Test
-    fun `override resource attribute before sdk starts`() {
+    fun `overriding an Embrace-set resource attribute is rejected by default`() {
         sdkCallChecker.started.set(false)
         delegate.setResourceAttribute(ServiceAttributes.SERVICE_NAME, "foo")
         val attrs = FakeAttributesMutator().apply(cfg.resourceAction).attributes
-        assertEquals("foo", attrs[ServiceAttributes.SERVICE_NAME])
+        assertEquals("com.test.app", attrs[ServiceAttributes.SERVICE_NAME])
     }
 
     @Test

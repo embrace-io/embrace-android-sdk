@@ -43,8 +43,13 @@ public interface OTelApi {
 
     /**
      * Set an attribute on the resource used by the OTel SDK instance with the given String key and value.
-     * The value set will override any value set previously or by the Embrace SDK.
      * This must be called before the SDK is started in order for it to take effect.
+     *
+     * Resource attributes that the Embrace SDK sets will not be overridden by this call. A configuration parameter is required
+     * for that to happen as a safety mechanism for the inadvertent use of the same resource attributes that the SDK relies on.
+     *
+     * Attributes in the 'emb.' namespace (i.e. prefixed by 'emb.') are reserved for the Embrace SDK and can never be set or
+     * overridden by this method, regardless of the override configuration.
      */
     public fun setResourceAttribute(key: String, value: String)
 }

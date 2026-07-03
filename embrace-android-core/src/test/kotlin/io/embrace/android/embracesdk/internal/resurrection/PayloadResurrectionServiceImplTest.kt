@@ -58,7 +58,10 @@ import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.opentelemetry.kotlin.semconv.OsAttributes
+import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
+import kotlinx.serialization.json.JsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -589,7 +592,13 @@ class PayloadResurrectionServiceImplTest {
             data = deadSessionEnvelope,
         )
 
-        val oldResource = fakeEnvelopeResource.copy(appVersion = "1.4", sdkVersion = "6.13", osVersion = "10")
+        val oldResource = fakeEnvelopeResource.copy(
+            attributes = fakeEnvelopeResource.attributes + mapOf(
+                ServiceAttributes.SERVICE_VERSION to JsonPrimitive("1.4"),
+                "sdk_version" to JsonPrimitive("6.13"),
+                OsAttributes.OS_VERSION to JsonPrimitive("10"),
+            ),
+        )
         val oldMetadata = fakeEnvelopeMetadata.copy(username = "old-admin")
         val earlierDeadSession = fakeIncompleteSessionEnvelope(
             userSessionId = "anotherFakeSessionId",

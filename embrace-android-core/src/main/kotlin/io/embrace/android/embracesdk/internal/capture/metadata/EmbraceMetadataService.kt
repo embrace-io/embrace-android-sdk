@@ -15,6 +15,9 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.opentelemetry.kotlin.semconv.OsAttributes
+import io.opentelemetry.kotlin.semconv.ServiceAttributes
+import kotlinx.serialization.json.contentOrNull
 
 /**
  * Provides information about the state of the device, retrieved from Android system services,
@@ -53,8 +56,8 @@ internal class EmbraceMetadataService(
      */
     override fun precomputeValues() {
         metadataBackgroundWorker.submit {
-            appVersion = res.appVersion
-            osVersion = res.osVersion
+            appVersion = res.attributes[ServiceAttributes.SERVICE_VERSION]?.contentOrNull
+            osVersion = res.attributes[OsAttributes.OS_VERSION]?.contentOrNull
             val free = statFs.freeBytes
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && configService.autoDataCaptureBehavior.isDiskUsageCaptureEnabled()) {
                 val deviceDiskAppUsage = getDeviceDiskAppUsage(

@@ -10,4 +10,9 @@ interface OtelBehavior {
      * Returns true if the Kotlin SDK should be used, false if it was disabled via remote config.
      */
     fun shouldUseKotlinSdk(): Boolean
+
+    /**
+     * Whether resource attributes that the Embrace SDK sets itself can be overridden. Defaults to false.
+     */
+    fun isResourceAttributeOverrideEnabled(): Boolean
 }

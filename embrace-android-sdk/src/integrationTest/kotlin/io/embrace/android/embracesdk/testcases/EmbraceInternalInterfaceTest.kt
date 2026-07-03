@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import kotlinx.serialization.json.contentOrNull
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Rule
@@ -58,12 +59,11 @@ internal class EmbraceInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val expected = mapOf("foo" to "bar")
                 val sessionResource = checkNotNull(getSingleSessionEnvelope().resource)
-                assertEquals(expected, sessionResource.extras)
+                assertEquals("bar", sessionResource.attributes["foo"]?.contentOrNull)
 
                 val logResource = checkNotNull(getSingleLogEnvelope().resource)
-                assertEquals(expected, logResource.extras)
+                assertEquals("bar", logResource.attributes["foo"]?.contentOrNull)
             }
         )
     }

@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeOtelJavaSpanExporter
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaSpanProcessor
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.FakeSpanProcessor
+import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -22,6 +23,7 @@ import io.embrace.android.embracesdk.otel.java.addJavaSpanProcessor
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -41,8 +43,6 @@ internal class OTelExportTest {
         val fakeSpanExporter = FakeSpanExporter()
         testRule.runTest(
             preSdkStartAction = {
-                embrace.setResourceAttribute(ServiceAttributes.SERVICE_NAME, "my.app")
-                embrace.setResourceAttribute("test", "foo")
                 embrace.addSpanExporter(fakeSpanExporter)
             },
             testCaseAction = {
@@ -56,10 +56,67 @@ internal class OTelExportTest {
                 assertNotNull(exportedSpans["emb-session"])
             },
             otelExportAssertion = {
+                awaitSpans(1) { it.name == "test-span" }
+            }
+        )
+    }
+
+    @Test
+    fun `customer resource attribute override is rejected by default`() {
+        val fakeSpanExporter = FakeSpanExporter()
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(
+                project = FakeProjectConfig(appId = "abcde", packageName = "io.embrace.test"),
+            ),
+            preSdkStartAction = {
+                embrace.setResourceAttribute(ServiceAttributes.SERVICE_NAME, "my.app")
+                embrace.setResourceAttribute("test", "foo")
+                embrace.setResourceAttribute("emb.custom", "nope")
+                embrace.addSpanExporter(fakeSpanExporter)
+            },
+            testCaseAction = {
+                recordSession {
+                    embrace.startSpan("test-span").stop()
+                }
+            },
+            otelExportAssertion = {
                 val span = awaitSpans(1) { it.name == "test-span" }
                 with(span.single()) {
-                    assertEquals("my.app", resource.attributes.toStringMap()[ServiceAttributes.SERVICE_NAME])
-                    assertEquals("foo", resource.attributes.asMap().filter { it.key.key == "test" }.values.single())
+                    val resourceAttrs = resource.attributes.toStringMap()
+                    assertEquals("io.embrace.test", resourceAttrs[ServiceAttributes.SERVICE_NAME])
+                    assertEquals("foo", resourceAttrs["test"])
+                    assertFalse(resourceAttrs.containsKey("emb.custom"))
+                }
+            }
+        )
+    }
+
+    @Test
+    fun `customer resource attribute override is applied when enabled`() {
+        val fakeSpanExporter = FakeSpanExporter()
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(resourceAttributeOverride = true),
+                project = FakeProjectConfig(appId = "abcde", packageName = "io.embrace.test"),
+            ),
+            preSdkStartAction = {
+                embrace.setResourceAttribute(ServiceAttributes.SERVICE_NAME, "my.app")
+                embrace.setResourceAttribute("test", "foo")
+                embrace.setResourceAttribute("emb.custom", "nope")
+                embrace.addSpanExporter(fakeSpanExporter)
+            },
+            testCaseAction = {
+                recordSession {
+                    embrace.startSpan("test-span").stop()
+                }
+            },
+            otelExportAssertion = {
+                val span = awaitSpans(1) { it.name == "test-span" }
+                with(span.single()) {
+                    val resourceAttrs = resource.attributes.toStringMap()
+                    assertEquals("my.app", resourceAttrs[ServiceAttributes.SERVICE_NAME])
+                    assertEquals("foo", resourceAttrs["test"])
+                    assertFalse(resourceAttrs.containsKey("emb.custom"))
                 }
             }
         )
@@ -88,10 +145,6 @@ internal class OTelExportTest {
         var logTimestampNanos = 0L
 
         testRule.runTest(
-            preSdkStartAction = {
-                embrace.setResourceAttribute(ServiceAttributes.SERVICE_NAME, "my.app")
-                embrace.setResourceAttribute("test", "foo")
-            },
             testCaseAction = {
                 recordSession {
                     logTimestampNanos = clock.now().millisToNanos()
@@ -106,8 +159,6 @@ internal class OTelExportTest {
                     assertEquals("test message", body.asString())
                     assertEquals(logTimestampNanos, timestampEpochNanos)
                     assertEquals(logTimestampNanos, observedTimestampEpochNanos)
-                    assertEquals("my.app", resource.attributes.toStringMap()[ServiceAttributes.SERVICE_NAME])
-                    assertEquals("foo", resource.attributes.asMap().filter { it.key.key == "test" }.values.single())
                 }
             }
         )

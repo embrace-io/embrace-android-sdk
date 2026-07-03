@@ -191,8 +191,8 @@ internal class BackgroundActivityCaptureTest {
 
                 assertEquals(session1.metadata, session2.metadata)
                 assertEquals(
-                    session1.resource?.copy(screenResolution = null, jailbroken = null),
-                    session2.resource?.copy(screenResolution = null, jailbroken = null)
+                    session1.resource?.let { it.copy(attributes = it.attributes - "screen_resolution" - "jailbroken") },
+                    session2.resource?.let { it.copy(attributes = it.attributes - "screen_resolution" - "jailbroken") }
                 )
                 assertEquals(session1.version, session2.version)
                 assertEquals(session1.type, session2.type)

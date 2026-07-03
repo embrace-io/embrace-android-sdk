@@ -11,6 +11,7 @@ class FakeProjectConfig(
     private val buildType: String? = base.getBuildType(),
     private val buildFlavor: String? = base.getBuildFlavor(),
     private val packageName: String? = base.getPackageName(),
+    private val versionName: String? = base.getVersionName(),
 ) : ProjectConfig {
     override fun getAppId(): String? = appId
     override fun getAppFramework(): String? = appFramework
@@ -18,4 +19,5 @@ class FakeProjectConfig(
     override fun getBuildType(): String? = buildType
     override fun getBuildFlavor(): String? = buildFlavor
     override fun getPackageName(): String? = packageName
+    override fun getVersionName(): String? = versionName
 }

@@ -93,8 +93,8 @@ class PayloadSourceModuleImpl(
                 )
             },
             rnBundleIdProvider = { rnBundleIdTracker.getReactNativeBundleId() },
-            versionName = BuildConfig.VERSION_NAME,
             versionCode = BuildConfig.VERSION_CODE.toIntOrNull(),
+            otelResourceAttributesProvider = { otelModule.otelSdkConfig.getResourceAttributes() },
         )
     }
 

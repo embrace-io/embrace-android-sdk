@@ -38,6 +38,11 @@ interface OtelBehavior {
      */
     fun getPeriodicCacheIntervalMs(): Long
 
+    /**
+     * Whether resource attributes that the Embrace SDK sets itself can be overridden. Defaults to false.
+     */
+    fun isResourceAttributeOverrideEnabled(): Boolean
+
     companion object {
 
         /**

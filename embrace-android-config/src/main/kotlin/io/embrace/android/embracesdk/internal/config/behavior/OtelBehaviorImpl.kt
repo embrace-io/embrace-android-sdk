@@ -37,5 +37,7 @@ class OtelBehaviorImpl(
         dataRemote?.periodicCacheIntervalMs?.coerceIn(MIN_PERIODIC_CACHE_INTERVAL_MS, MAX_PERIODIC_CACHE_INTERVAL_MS)
             ?: DEFAULT_PERIODIC_CACHE_INTERVAL_MS
 
+    override fun isResourceAttributeOverrideEnabled(): Boolean = local.isResourceAttributeOverrideEnabled()
+
     private fun Int?.asSpanLimit(default: Int): Int = this?.coerceAtLeast(0) ?: default
 }

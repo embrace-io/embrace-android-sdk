@@ -1,16 +1,25 @@
 package io.embrace.android.embracesdk.testcases
 
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.assertions.appFramework
+import io.embrace.android.embracesdk.testframework.assertions.hostedPlatformVersion
+import io.embrace.android.embracesdk.testframework.assertions.hostedSdkVersion
+import io.embrace.android.embracesdk.testframework.assertions.javascriptPatchNumber
+import io.embrace.android.embracesdk.testframework.assertions.reactNativeBundleId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.File
 
 /**
  * Validation of the internal API
@@ -27,7 +36,11 @@ internal class ReactNativeInternalInterfaceTest {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+        EmbraceSetupInterface(workersToFake = listOf(Worker.Background.NonIoRegWorker)).also {
+            it.getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).blockingMode = false
+        }
+    }
 
     @Test
     fun `react native without values should return defaults`() {
@@ -40,8 +53,31 @@ internal class ReactNativeInternalInterfaceTest {
                 val session = getSingleSessionEnvelope()
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.REACT_NATIVE, res.appFramework)
+                assertNull(res.hostedSdkVersion)
                 assertNull(res.hostedPlatformVersion)
                 assertNull(res.javascriptPatchNumber)
+                assertEquals("fakeRnBundleId", res.reactNativeBundleId)
+            }
+        )
+    }
+
+    @Test
+    fun `react native bundle id is derived from the set JavaScript bundle url`() {
+        val bundleFile = File.createTempFile("index.android.bundle", ".tmp").apply { deleteOnExit() }
+        testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
+            testCaseAction = {
+                recordSession {
+                    EmbraceInternalApi.reactNativeInternalInterface.setJavaScriptBundleUrl(
+                        context = ApplicationProvider.getApplicationContext(),
+                        url = bundleFile.absolutePath,
+                    )
+                }
+            },
+            assertAction = {
+                val res = checkNotNull(getSingleSessionEnvelope().resource)
+                // ID is deterministic based on the bundle file that is created in this test
+                assertEquals("D41D8CD98F00B204E9800998ECF8427E", res.reactNativeBundleId)
             }
         )
     }

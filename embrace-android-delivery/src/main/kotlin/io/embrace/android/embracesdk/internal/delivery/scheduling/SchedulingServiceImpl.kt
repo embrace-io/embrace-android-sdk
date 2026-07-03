@@ -352,9 +352,11 @@ class SchedulingServiceImpl(
          * Called on the delivery thread and must be synchronized with [unblock] which happens on the scheduling thread.
          */
         fun block(): Long {
-            synchronized(connectionUnblockTime) {
-                return clock.calculateNextRetryTime(consecutiveFailures.getAndIncrement()).apply {
-                    connectionUnblockTime.set(this)
+            while (true) {
+                val current = connectionUnblockTime.get()
+                val next = clock.calculateNextRetryTime(consecutiveFailures.getAndIncrement())
+                if (connectionUnblockTime.compareAndSet(current, next)) {
+                    return next
                 }
             }
         }
@@ -365,10 +367,15 @@ class SchedulingServiceImpl(
          * Only called on the scheduling thread. Must be synchronized with [block] which happens on the delivery thread
          */
         fun unblock() {
-            synchronized(connectionUnblockTime) {
-                if (isBlocked()) {
-                    connectionUnblockTime.set(0L)
+            while (true) {
+                val current = connectionUnblockTime.get()
+                if (current == 0L) {
+                    return
+                }
+
+                if (connectionUnblockTime.compareAndSet(current, 0L)) {
                     blockedPayloads.clear()
+                    return
                 }
             }
         }

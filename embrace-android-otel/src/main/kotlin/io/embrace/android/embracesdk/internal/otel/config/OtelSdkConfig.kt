@@ -15,6 +15,7 @@ import io.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
 import io.opentelemetry.kotlin.semconv.AndroidAttributes
 import io.opentelemetry.kotlin.semconv.DeviceAttributes
+import io.opentelemetry.kotlin.semconv.HostAttributes
 import io.opentelemetry.kotlin.semconv.OsAttributes
 import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import io.opentelemetry.kotlin.semconv.TelemetryAttributes
@@ -80,6 +81,7 @@ class OtelSdkConfig(
         put(OsAttributes.OS_TYPE, systemInfo.osType)
         put(OsAttributes.OS_BUILD_ID, systemInfo.osBuild)
         put(AndroidAttributes.ANDROID_OS_API_LEVEL, systemInfo.androidOsApiLevel)
+        put(HostAttributes.HOST_ARCH, systemInfo.architecture)
         put(DeviceAttributes.DEVICE_MANUFACTURER, systemInfo.deviceManufacturer)
         put(DeviceAttributes.DEVICE_MODEL_IDENTIFIER, systemInfo.deviceModel)
         put(DeviceAttributes.DEVICE_MODEL_NAME, systemInfo.deviceModel)

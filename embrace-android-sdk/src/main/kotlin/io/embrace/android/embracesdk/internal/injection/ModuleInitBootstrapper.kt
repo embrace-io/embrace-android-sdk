@@ -66,7 +66,7 @@ internal class ModuleInitBootstrapper(
                 apiLevel = Build.VERSION.SDK_INT,
                 filesDir = coreModule.context.filesDir,
                 store = coreModule.store,
-                abis = Build.SUPPORTED_ABIS,
+                architecture = initModule.systemInfo.architecture,
                 logger = initModule.logger,
                 uuidSource = initModule.uuidSource,
             )

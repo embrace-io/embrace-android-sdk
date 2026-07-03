@@ -116,7 +116,7 @@ internal class ConfigServiceImplTest {
         serializer = serializer,
         store = FakeKeyValueStore(),
         okHttpClient = lazyOf(okHttpClient),
-        abis = arrayOf("arm64-v8a"),
+        architecture = "arm64-v8a",
         sdkVersion = "1.2.3",
         apiLevel = 36,
         filesDir = Files.createTempDirectory("tmp").toFile(),

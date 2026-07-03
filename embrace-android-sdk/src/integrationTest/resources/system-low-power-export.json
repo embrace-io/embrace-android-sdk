@@ -12,6 +12,6 @@
     },
     "totalRecordedEvents": "0",
     "events": [],
-    "instrumentationScopeName": "io.embrace.android.embracesdk.core"
+    "instrumentationScopeName": "embrace-android-sdk"
   }
 ]

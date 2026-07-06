@@ -39,6 +39,9 @@ internal class ScreenLoadTracker(
     // When the settle was armed by navigation end; the timeout end falls back to this if no frame followed.
     private var navEndMs = 0L
 
+    // When the navigation start confirmed the candidate as a real screen load.
+    private var navStartMs = 0L
+
     /**
      * Signal a committed tap (touch up) to open a fresh **candidate** screen load (discarding any in-flight). The touch-up / tap event
      * is the "start" of a screen load duration (assuming that [onNavigationStart] confirms that this tap is a navigation event). The
@@ -75,6 +78,7 @@ internal class ScreenLoadTracker(
                 val now = uptimeMillis()
                 if (now <= startUptimeMs + NAVIGATION_TIMEOUT_MS) {
                     state = State.CONFIRMED
+                    navStartMs = now
                 } else {
                     // the previous "tap" event is too far in the past to be considered part of the screen load
                     // so we move the "start time" to now
@@ -182,6 +186,7 @@ internal class ScreenLoadTracker(
         state = State.CONFIRMED
         screenName = ""
         startUptimeMs = uptimeMillis()
+        navStartMs = startUptimeMs
         startWallMs = clock.now()
         scheduleTimeout()
     }
@@ -189,6 +194,9 @@ internal class ScreenLoadTracker(
     private fun complete(endMs: Long, outcome: ScreenLoadOutcome) {
         val result = ScreenLoadResult(
             startTimeMs = startWallMs,
+            navStartDelayMs = navStartMs - startUptimeMs,
+            navDurationMs = navEndMs - navStartMs,
+            firstFrameDurationMs = if (firstFrameAfterNavEndMs != 0L) firstFrameAfterNavEndMs - navEndMs else 0L,
             durationMs = endMs - startUptimeMs,
             screenName = screenName,
             outcome = outcome,

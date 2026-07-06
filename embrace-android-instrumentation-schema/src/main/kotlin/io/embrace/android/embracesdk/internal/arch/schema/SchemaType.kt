@@ -262,12 +262,12 @@ sealed class SchemaType(
         normalizedDroppedFrames: Double,
     ) : SchemaType(
         telemetryType = EmbType.Performance.Smoothness,
-        fixedObjectName = "smoothness"
+        fixedObjectName = "smoothness",
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
             EmbSmoothnessAttributes.SMOOTHNESS_OUTCOME to outcome,
             EmbSmoothnessAttributes.SMOOTHNESS_FRAME_COUNT to frameCount.toString(),
-            EmbSmoothnessAttributes.SMOOTHNESS_NORMALIZED_DROPPED_FRAMES to normalizedDroppedFrames.toString()
+            EmbSmoothnessAttributes.SMOOTHNESS_NORMALIZED_DROPPED_FRAMES to normalizedDroppedFrames.toString(),
         )
     }
 

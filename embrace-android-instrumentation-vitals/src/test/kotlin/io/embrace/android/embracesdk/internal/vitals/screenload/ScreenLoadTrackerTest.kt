@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.internal.vitals.screenload
 
 import android.os.SystemClock
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.vitals.fake.FakeVitalsScheduler
-import io.embrace.android.embracesdk.internal.vitals.millisToNanos
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -45,6 +45,9 @@ internal class ScreenLoadTrackerTest {
         assertEquals("home", result.screenName)
         assertEquals(ScreenLoadOutcome.SETTLED, result.outcome)
         assertEquals(30L, result.durationMs)
+        assertEquals("navigation started at t=10, 10ms after the tap", 10L, result.navStartDelayMs)
+        assertEquals("navigation start at t=10, navigation end at t=20", 10L, result.navDurationMs)
+        assertEquals("first frame at t=30, 10ms after navigation end (t=20)", 10L, result.firstFrameDurationMs)
         assertEquals(start, result.startTimeMs)
     }
 
@@ -61,6 +64,9 @@ internal class ScreenLoadTrackerTest {
         assertEquals("detail", result.screenName)
         assertEquals(ScreenLoadOutcome.SETTLED, result.outcome)
         assertEquals(15L, result.durationMs)
+        assertEquals("no preceding tap, so no delay before the navigation start", 0L, result.navStartDelayMs)
+        assertEquals(15L, result.navDurationMs)
+        assertEquals("no frame arrived before the settle", 0L, result.firstFrameDurationMs)
     }
 
     @Test
@@ -75,6 +81,9 @@ internal class ScreenLoadTrackerTest {
         val result = emitted.single()
         assertEquals(ScreenLoadOutcome.USER_INTERRUPTED, result.outcome)
         assertEquals(50L, result.durationMs)
+        assertEquals(0L, result.navStartDelayMs)
+        assertEquals("navigation ended at t=0, before the interrupting tap", 0L, result.navDurationMs)
+        assertEquals("no frame arrived before the interrupting tap", 0L, result.firstFrameDurationMs)
     }
 
     @Test
@@ -93,6 +102,9 @@ internal class ScreenLoadTrackerTest {
         val first = emitted.single()
         assertEquals("a", first.screenName)
         assertEquals("a ends at its last frame (t=30), not the interrupting navigation (t=70)", 30L, first.durationMs)
+        assertEquals(0L, first.navStartDelayMs)
+        assertEquals("a's navigation started at t=0 and ended at t=20", 20L, first.navDurationMs)
+        assertEquals("a's last frame (t=30) was 10ms after its navigation end (t=20)", 10L, first.firstFrameDurationMs)
         assertEquals(ScreenLoadOutcome.NAVIGATION_INTERRUPTED, first.outcome)
 
         // b settles normally as its own load, anchored at its navigation start.
@@ -103,6 +115,9 @@ internal class ScreenLoadTrackerTest {
         val second = emitted.last()
         assertEquals("b", second.screenName)
         assertEquals(0L, second.durationMs)
+        assertEquals(0L, second.navStartDelayMs)
+        assertEquals(0L, second.navDurationMs)
+        assertEquals("b settled with no frame ever rendered", 0L, second.firstFrameDurationMs)
         assertEquals(ScreenLoadOutcome.SETTLED, second.outcome)
         assertEquals(2, emitted.size)
     }
@@ -127,6 +142,9 @@ internal class ScreenLoadTrackerTest {
         assertEquals(ScreenLoadOutcome.TIMED_OUT, result.outcome)
         assertEquals("anim", result.screenName)
         assertEquals("ends at the first frame after navigation end (t=50)", 50L, result.durationMs)
+        assertEquals(0L, result.navStartDelayMs)
+        assertEquals("navigation ended at t=0", 0L, result.navDurationMs)
+        assertEquals("first frame at t=50, 50ms after navigation end (t=0)", 50L, result.firstFrameDurationMs)
     }
 
     @Test
@@ -152,6 +170,9 @@ internal class ScreenLoadTrackerTest {
         val result = emitted.single()
         assertEquals(ScreenLoadOutcome.SETTLED, result.outcome)
         assertEquals("ends at the focus gain (t=60), not the last content frame (t=10)", 60L, result.durationMs)
+        assertEquals(0L, result.navStartDelayMs)
+        assertEquals("navigation ended at t=0, well before the settle", 0L, result.navDurationMs)
+        assertEquals("first (and only) content frame at t=10, unaffected by the later focus gain", 10L, result.firstFrameDurationMs)
     }
 
     @Test

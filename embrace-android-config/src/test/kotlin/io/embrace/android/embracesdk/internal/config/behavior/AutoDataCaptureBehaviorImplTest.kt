@@ -160,36 +160,32 @@ internal class AutoDataCaptureBehaviorImplTest {
     @Test
     fun `isNetworkCallbackConnectivityServiceEnabled true when pct is 100`() {
         assertTrue(
-            createAutoDataCaptureBehavior(
-                remoteCfg = RemoteConfig(pctNetworkCallbackConnectivityServiceEnabled = 100.0f),
-            ).isNetworkCallbackConnectivityServiceEnabled(),
+            createAutoDataCaptureBehavior(remoteCfg = RemoteConfig(pctNetworkCallbackConnectivityServiceEnabled = 100.0f))
+                .isNetworkCallbackConnectivityServiceEnabled(),
         )
     }
 
     @Test
     fun `isNetworkCallbackConnectivityServiceEnabled false when pct is 0`() {
         assertFalse(
-            createAutoDataCaptureBehavior(
-                remoteCfg = RemoteConfig(pctNetworkCallbackConnectivityServiceEnabled = 0.0f),
-            ).isNetworkCallbackConnectivityServiceEnabled(),
+            createAutoDataCaptureBehavior(remoteCfg = RemoteConfig(pctNetworkCallbackConnectivityServiceEnabled = 0.0f))
+                .isNetworkCallbackConnectivityServiceEnabled(),
         )
     }
 
     @Test
     fun `navigation state capture enabled when pct is 100`() {
         assertTrue(
-            createBehavior(
-                remote = RemoteConfig(pctNavigationStateCaptureEnabled = 100.0f),
-            ).isNavigationStateCaptureEnabled(),
+            createBehavior(remote = RemoteConfig(pctNavigationStateCaptureEnabled = 100.0f))
+                .isNavigationStateCaptureEnabled(),
         )
     }
 
     @Test
     fun `navigation state capture disabled when pct is 0`() {
         assertFalse(
-            createBehavior(
-                remote = RemoteConfig(pctNavigationStateCaptureEnabled = 0.0f),
-            ).isNavigationStateCaptureEnabled(),
+            createBehavior(remote = RemoteConfig(pctNavigationStateCaptureEnabled = 0.0f))
+                .isNavigationStateCaptureEnabled(),
         )
     }
 
@@ -201,18 +197,16 @@ internal class AutoDataCaptureBehaviorImplTest {
     @Test
     fun `smoothness capture enabled when pct is 100`() {
         assertTrue(
-            createBehavior(
-                remote = RemoteConfig(pctSmoothnessEnabled = 100.0f)
-            ).isSmoothnessCaptureEnabled()
+            createBehavior(remote = RemoteConfig(pctSmoothnessEnabled = 100.0f))
+                .isSmoothnessCaptureEnabled(),
         )
     }
 
     @Test
     fun `smoothness capture disabled when pct is 0`() {
         assertFalse(
-            createBehavior(
-                remote = RemoteConfig(pctSmoothnessEnabled = 0.0f)
-            ).isSmoothnessCaptureEnabled()
+            createBehavior(remote = RemoteConfig(pctSmoothnessEnabled = 0.0f))
+                .isSmoothnessCaptureEnabled(),
         )
     }
 

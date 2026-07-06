@@ -51,6 +51,7 @@ class OpenTelemetryModuleImpl(
             sdkVersion = BuildConfig.VERSION_NAME,
             appVersion = initModule.instrumentedConfig.project.getVersionName() ?: "UNKNOWN",
             packageName = initModule.instrumentedConfig.project.getPackageName() ?: "UNKNOWN",
+            buildId = initModule.instrumentedConfig.project.getBuildId() ?: "UNKNOWN",
             systemInfo = initModule.systemInfo,
             uuidSource = initModule.uuidSource,
             sessionIdsProvider = { storedSessionIdsProvider },

@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.opentelemetry.kotlin.semconv.AndroidAttributes
+import io.opentelemetry.kotlin.semconv.AppAttributes
 import io.opentelemetry.kotlin.semconv.DeviceAttributes
 import io.opentelemetry.kotlin.semconv.HostAttributes
 import io.opentelemetry.kotlin.semconv.OsAttributes
@@ -37,6 +38,7 @@ internal class OtelSdkConfigTest {
             sdkVersion = "1.0",
             appVersion = "2.5.1",
             packageName = "com.test.app",
+            buildId = "fake-build-id",
             systemInfo = systemInfo,
             uuidSource = TestUuidSource(),
         )
@@ -45,6 +47,7 @@ internal class OtelSdkConfigTest {
         val expected = mapOf(
             ServiceAttributes.SERVICE_NAME to configuration.packageName,
             ServiceAttributes.SERVICE_VERSION to configuration.appVersion,
+            AppAttributes.APP_BUILD_ID to configuration.buildId,
             TelemetryAttributes.TELEMETRY_DISTRO_NAME to configuration.sdkName,
             TelemetryAttributes.TELEMETRY_DISTRO_VERSION to configuration.sdkVersion,
             OsAttributes.OS_NAME to systemInfo.osName,
@@ -133,6 +136,7 @@ internal class OtelSdkConfigTest {
         sdkVersion = "1.0",
         appVersion = "2.5.1",
         packageName = "com.test.app",
+        buildId = "fake-build-id",
         systemInfo = SystemInfo(),
         resourceAttributeOverrideEnabled = { resourceAttributeOverrideEnabled },
     )

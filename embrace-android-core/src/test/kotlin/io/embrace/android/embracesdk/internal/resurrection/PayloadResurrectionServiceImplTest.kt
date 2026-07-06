@@ -48,6 +48,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.EnvelopeResourceValue
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -61,7 +62,6 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.semconv.OsAttributes
 import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
-import kotlinx.serialization.json.JsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -594,9 +594,9 @@ class PayloadResurrectionServiceImplTest {
 
         val oldResource = fakeEnvelopeResource.copy(
             attributes = fakeEnvelopeResource.attributes + mapOf(
-                ServiceAttributes.SERVICE_VERSION to JsonPrimitive("1.4"),
-                "sdk_version" to JsonPrimitive("6.13"),
-                OsAttributes.OS_VERSION to JsonPrimitive("10"),
+                ServiceAttributes.SERVICE_VERSION to EnvelopeResourceValue.of("1.4"),
+                "sdk_version" to EnvelopeResourceValue.of("6.13"),
+                OsAttributes.OS_VERSION to EnvelopeResourceValue.of("10"),
             ),
         )
         val oldMetadata = fakeEnvelopeMetadata.copy(username = "old-admin")

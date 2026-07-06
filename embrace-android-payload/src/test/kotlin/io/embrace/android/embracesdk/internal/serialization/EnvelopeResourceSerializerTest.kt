@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.serialization
 
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
-import kotlinx.serialization.json.JsonPrimitive
+import io.embrace.android.embracesdk.internal.payload.EnvelopeResourceValue
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -12,17 +12,17 @@ internal class EnvelopeResourceSerializerTest {
 
     private val fullResource = EnvelopeResource(
         attributes = linkedMapOf(
-            "service.version" to JsonPrimitive("1.0.0"),
-            "service.name" to JsonPrimitive("io.embrace.test"),
-            "app_framework" to JsonPrimitive(AppFramework.NATIVE.value),
-            "build_id" to JsonPrimitive("abc123"),
-            "emb.app.environment" to JsonPrimitive("prod"),
-            "device_architecture" to JsonPrimitive("arm64-v8a"),
-            "os.version" to JsonPrimitive("13"),
-            "jailbroken" to JsonPrimitive(false),
-            "disk_total_capacity" to JsonPrimitive(64000000000L),
-            "num_cores" to JsonPrimitive(8),
-            "my.custom.attr" to JsonPrimitive("bar"),
+            "service.version" to EnvelopeResourceValue.of("1.0.0"),
+            "service.name" to EnvelopeResourceValue.of("io.embrace.test"),
+            "app_framework" to EnvelopeResourceValue.of(AppFramework.NATIVE.value.toLong()),
+            "build_id" to EnvelopeResourceValue.of("abc123"),
+            "emb.app.environment" to EnvelopeResourceValue.of("prod"),
+            "device_architecture" to EnvelopeResourceValue.of("arm64-v8a"),
+            "os.version" to EnvelopeResourceValue.of("13"),
+            "jailbroken" to EnvelopeResourceValue.of(false),
+            "disk_total_capacity" to EnvelopeResourceValue.of(64000000000L),
+            "num_cores" to EnvelopeResourceValue.of(8L),
+            "my.custom.attr" to EnvelopeResourceValue.of("bar"),
         ),
     )
 
@@ -43,7 +43,7 @@ internal class EnvelopeResourceSerializerTest {
     @Test
     fun `drops json null entries on read`() {
         val decoded: EnvelopeResource = serializer.fromJson("""{"service.version":"1.0.0","ignored":null}""")
-        assertEquals(mapOf("service.version" to JsonPrimitive("1.0.0")), decoded.attributes)
+        assertEquals(mapOf("service.version" to EnvelopeResourceValue.of("1.0.0")), decoded.attributes)
     }
 
     private fun loadGoldenFile(filename: String): String =

@@ -25,7 +25,6 @@ class EnvelopeResourceSourceImpl(
         // Custom envelope resource keys that are internal to Embrace and do not match attributes defined in OTel semantic conventions
         val embraceInternalAttributes = buildMap {
             putValue("app_framework", configService.appFramework.value)
-            putValue("build_id", buildInfo.buildId)
             putValue("build_type", buildInfo.buildType)
             putValue("build_flavor", buildInfo.buildFlavor)
             putValue("bundle_version", buildInfo.versionCode)

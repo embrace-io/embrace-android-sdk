@@ -846,6 +846,7 @@ internal class SpanServiceImplTest {
             sdkVersion = "1.0",
             appVersion = "1.0.0",
             packageName = "com.test.app",
+            buildId = "fake-build-id",
             systemInfo = SystemInfo(),
             uuidSource = TestUuidSource(),
             sessionIdsProvider = { FakeSessionIdsProvider(userSessionId = "fake-session-id") },

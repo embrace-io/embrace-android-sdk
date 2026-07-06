@@ -22,10 +22,10 @@ internal class EnvelopeResourceSourceImplTest {
         )
         val attrs = source.getEnvelopeResource().attributes
 
-        assertEquals("2.5.1", attrs.getValue(ServiceAttributes.SERVICE_VERSION).content)
-        assertEquals("1", attrs.getValue("my.custom.one").content)
-        assertEquals("fakeBuildId", attrs.getValue("build_id").content)
-        assertEquals("prod", attrs.getValue("emb.app.environment").content)
+        assertEquals("2.5.1", attrs.getValue(ServiceAttributes.SERVICE_VERSION).stringValue)
+        assertEquals("1", attrs.getValue("my.custom.one").stringValue)
+        assertEquals("fakeBuildId", attrs.getValue("build_id").stringValue)
+        assertEquals("prod", attrs.getValue("emb.app.environment").stringValue)
 
         // legacy bespoke keys are gone, replaced by their canonical semconv keys
         assertFalse(attrs.containsKey("app_version"))
@@ -48,8 +48,8 @@ internal class EnvelopeResourceSourceImplTest {
         }
         val attrs = source.getEnvelopeResource().attributes
 
-        assertEquals("embrace-value", attrs.getValue("my.internal.key").content)
-        assertEquals("keep", attrs.getValue("other.custom").content)
+        assertEquals("embrace-value", attrs.getValue("my.internal.key").stringValue)
+        assertEquals("keep", attrs.getValue("other.custom").stringValue)
     }
 
     private fun createSource(otelResourceAttributes: Map<String, String>) =

@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
-import kotlinx.serialization.json.JsonPrimitive
+import io.embrace.android.embracesdk.internal.payload.EnvelopeResourceValue
 import java.util.concurrent.ConcurrentHashMap
 
 class EnvelopeResourceSourceImpl(
@@ -17,7 +17,7 @@ class EnvelopeResourceSourceImpl(
     private val otelResourceAttributesProvider: () -> Map<String, String>,
 ) : EnvelopeResourceSource {
 
-    private val extras = ConcurrentHashMap<String, JsonPrimitive>()
+    private val extras = ConcurrentHashMap<String, EnvelopeResourceValue>()
 
     override fun getEnvelopeResource(): EnvelopeResource {
         val buildInfo = configService.buildInfo
@@ -51,7 +51,7 @@ class EnvelopeResourceSourceImpl(
          */
         val consolidatedAttributes = buildMap {
             otelResourceAttributesProvider().forEach { (key, value) ->
-                put(key, JsonPrimitive(value))
+                put(key, EnvelopeResourceValue.of(value))
             }
 
             embraceInternalAttributes.forEach { (legacyKey, value) ->
@@ -63,30 +63,24 @@ class EnvelopeResourceSourceImpl(
     }
 
     override fun add(key: String, value: String) {
-        extras[key] = JsonPrimitive(value)
+        extras[key] = EnvelopeResourceValue.of(value)
     }
 
-    private fun MutableMap<String, JsonPrimitive>.putValue(key: String, value: String?) {
+    private fun MutableMap<String, EnvelopeResourceValue>.putValue(key: String, value: String?) {
         if (value != null) {
-            put(key, JsonPrimitive(value))
+            put(key, EnvelopeResourceValue.of(value))
         }
     }
 
-    private fun MutableMap<String, JsonPrimitive>.putValue(key: String, value: Int?) {
+    private fun MutableMap<String, EnvelopeResourceValue>.putValue(key: String, value: Number?) {
         if (value != null) {
-            put(key, JsonPrimitive(value))
+            put(key, EnvelopeResourceValue.of(value.toLong()))
         }
     }
 
-    private fun MutableMap<String, JsonPrimitive>.putValue(key: String, value: Long?) {
+    private fun MutableMap<String, EnvelopeResourceValue>.putValue(key: String, value: Boolean?) {
         if (value != null) {
-            put(key, JsonPrimitive(value))
-        }
-    }
-
-    private fun MutableMap<String, JsonPrimitive>.putValue(key: String, value: Boolean?) {
-        if (value != null) {
-            put(key, JsonPrimitive(value))
+            put(key, EnvelopeResourceValue.of(value))
         }
     }
 

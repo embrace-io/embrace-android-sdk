@@ -4,12 +4,12 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.Envelope.Companion.createLogEnvelope
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
+import io.embrace.android.embracesdk.internal.payload.EnvelopeResourceValue
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.opentelemetry.kotlin.semconv.DeviceAttributes
 import io.opentelemetry.kotlin.semconv.OsAttributes
 import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import io.opentelemetry.kotlin.semconv.TelemetryAttributes
-import kotlinx.serialization.json.JsonPrimitive
 
 fun fakeEmptyLogEnvelope(
     resource: EnvelopeResource = fakeEnvelopeResource,
@@ -18,22 +18,22 @@ fun fakeEmptyLogEnvelope(
 
 val fakeEnvelopeResource = EnvelopeResource(
     attributes = mapOf(
-        ServiceAttributes.SERVICE_VERSION to JsonPrimitive("1.5"),
-        ServiceAttributes.SERVICE_NAME to JsonPrimitive("com.my.app"),
-        OsAttributes.OS_TYPE to JsonPrimitive("linux"),
-        OsAttributes.OS_NAME to JsonPrimitive("Android"),
-        OsAttributes.OS_VERSION to JsonPrimitive("15"),
-        TelemetryAttributes.TELEMETRY_DISTRO_VERSION to JsonPrimitive("6.14.0"),
-        DeviceAttributes.DEVICE_MANUFACTURER to JsonPrimitive("Google"),
-        DeviceAttributes.DEVICE_MODEL_IDENTIFIER to JsonPrimitive("Pixel 5"),
-        DeviceAttributes.DEVICE_MODEL_NAME to JsonPrimitive("Pixel 5"),
-        "app_framework" to JsonPrimitive(AppFramework.NATIVE.value),
-        "build_id" to JsonPrimitive("555"),
+        ServiceAttributes.SERVICE_VERSION to EnvelopeResourceValue.of("1.5"),
+        ServiceAttributes.SERVICE_NAME to EnvelopeResourceValue.of("com.my.app"),
+        OsAttributes.OS_TYPE to EnvelopeResourceValue.of("linux"),
+        OsAttributes.OS_NAME to EnvelopeResourceValue.of("Android"),
+        OsAttributes.OS_VERSION to EnvelopeResourceValue.of("15"),
+        TelemetryAttributes.TELEMETRY_DISTRO_VERSION to EnvelopeResourceValue.of("6.14.0"),
+        DeviceAttributes.DEVICE_MANUFACTURER to EnvelopeResourceValue.of("Google"),
+        DeviceAttributes.DEVICE_MODEL_IDENTIFIER to EnvelopeResourceValue.of("Pixel 5"),
+        DeviceAttributes.DEVICE_MODEL_NAME to EnvelopeResourceValue.of("Pixel 5"),
+        "app_framework" to EnvelopeResourceValue.of(AppFramework.NATIVE.value.toLong()),
+        "build_id" to EnvelopeResourceValue.of("555"),
     ),
 )
 
 val fakeLaterEnvelopeResource = fakeEnvelopeResource.copy(
-    attributes = fakeEnvelopeResource.attributes + (ServiceAttributes.SERVICE_VERSION to JsonPrimitive("1.6")),
+    attributes = fakeEnvelopeResource.attributes + (ServiceAttributes.SERVICE_VERSION to EnvelopeResourceValue.of("1.6")),
 )
 
 val fakeEnvelopeMetadata = EnvelopeMetadata(

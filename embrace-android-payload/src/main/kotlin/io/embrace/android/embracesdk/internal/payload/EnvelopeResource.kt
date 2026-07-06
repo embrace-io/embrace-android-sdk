@@ -19,14 +19,13 @@ package io.embrace.android.embracesdk.internal.payload
 
 import io.embrace.android.embracesdk.internal.serialization.EnvelopeResourceSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonPrimitive
 
 /**
  * Immutable attributes about the app, device, and Embrace SDK internal state for the duration of an app instance.
  *
- * Represented as a flat map of attribute key to value with the type preserved using [JsonPrimitive].
+ * Represented as a flat map of attribute key to a typed [EnvelopeResourceValue] (String / Boolean / Long).
  */
 @Serializable(with = EnvelopeResourceSerializer::class)
 data class EnvelopeResource(
-    val attributes: Map<String, JsonPrimitive> = emptyMap(),
+    val attributes: Map<String, EnvelopeResourceValue> = emptyMap(),
 )

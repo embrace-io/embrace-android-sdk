@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.utils.concurrent
 
+import androidx.annotation.IntRange
 import java.util.concurrent.atomic.AtomicLong
 
 /**
@@ -8,7 +9,11 @@ import java.util.concurrent.atomic.AtomicLong
 @JvmInline
 value class LimitCounter private constructor(private val combined: AtomicLong) {
 
-    constructor(capacity: Int) : this(AtomicLong(combine(capacity, 0)))
+    /**
+     * Create a new `LimitCounter` with a specified [capacity] and an initial count of `0`.
+     */
+    constructor(@IntRange(from = 0L, to = Int.MAX_VALUE.toLong()) capacity: Int) :
+        this(AtomicLong(combine(capacity.coerceAtLeast(0), 0)))
 
     val capacity: Int get() = combined.get().capacity
 
@@ -24,6 +29,10 @@ value class LimitCounter private constructor(private val combined: AtomicLong) {
             return v.capacity - v.count
         }
 
+    /**
+     * Attempt to increment the counter by `1`, returning `false` if the [capacity] has been reached and `true` if the [count] was
+     * incremented successfully.
+     */
     fun increment(): Boolean {
         // weak + clamped incrementAndGet
         while (true) {
@@ -55,7 +64,7 @@ value class LimitCounter private constructor(private val combined: AtomicLong) {
      * Reset this Limit ([count] will be `0`).
      */
     fun reset() {
-        combined.set(combine(this@LimitCounter.capacity, 0))
+        combined.set(combine(capacity, 0))
     }
 
     private val Long.count: Int

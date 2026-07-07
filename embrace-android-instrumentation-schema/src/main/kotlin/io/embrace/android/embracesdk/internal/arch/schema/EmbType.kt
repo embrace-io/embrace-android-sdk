@@ -30,6 +30,8 @@ sealed class EmbType(type: String, subtype: String?) : EmbraceAttribute {
         object UiLoad : Performance("ui_load")
 
         object Smoothness : Performance("smoothness")
+
+        object ScreenLoad : Performance("screen_load")
     }
 
     /**

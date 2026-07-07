@@ -252,6 +252,33 @@ groups:
         stability: development
         examples: [0.5, 2.0]
 
+  - id: emb.screen_load
+    type: attribute_group
+    stability: development
+    brief: "Embrace screen-load vital attributes (experimental)"
+    prefix: ""
+    attributes:
+      - id: screen_load.outcome
+        type: string
+        brief: "How the screen load ended."
+        stability: development
+        examples: ["settled", "timed_out", "user_interrupted", "navigation_interrupted"]
+      - id: screen_load.nav_start_delay_ms
+        type: int
+        brief: "Duration from the initial interaction until the navigation start event, in milliseconds."
+        stability: development
+        examples: [10, 50]
+      - id: screen_load.nav_duration_ms
+        type: int
+        brief: "Duration from the navigation start event until the navigation end event, in milliseconds."
+        stability: development
+        examples: [10, 100]
+      - id: screen_load.first_frame_duration_ms
+        type: int
+        brief: "Duration from the navigation end event until the first frame rendered on the destination, in milliseconds."
+        stability: development
+        examples: [10, 100]
+
   - id: emb.network_request
     type: attribute_group
     stability: development

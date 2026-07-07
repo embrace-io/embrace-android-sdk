@@ -28,8 +28,9 @@ internal class ScreenLoadTrackerTest {
 
     @Test
     fun `a tap, navigation, and quiet destination is a settled screen load`() {
-        val start = SystemClock.uptimeMillis()
-        tracker.onTap() // t=0
+        // the tap was 10ms ago
+        val start = SystemClock.uptimeMillis() - 10
+        tracker.onTap(start) // t=0
         advance(10)
         tracker.onNavigationStart("home")
         advance(10)
@@ -44,8 +45,8 @@ internal class ScreenLoadTrackerTest {
         val result = emitted.single()
         assertEquals("home", result.screenName)
         assertEquals(ScreenLoadOutcome.SETTLED, result.outcome)
-        assertEquals(30L, result.durationMs)
-        assertEquals("navigation started at t=10, 10ms after the tap", 10L, result.navStartDelayMs)
+        assertEquals(40L, result.durationMs)
+        assertEquals("tap was 10ms before t=0, navigation started at t=10, so the delay is 20ms", 20L, result.navStartDelayMs)
         assertEquals("navigation start at t=10, navigation end at t=20", 10L, result.navDurationMs)
         assertEquals("first frame at t=30, 10ms after navigation end (t=20)", 10L, result.firstFrameDurationMs)
         assertEquals(start, result.startTimeMs)

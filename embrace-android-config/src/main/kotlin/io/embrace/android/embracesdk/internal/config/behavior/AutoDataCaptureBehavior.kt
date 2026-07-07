@@ -84,4 +84,9 @@ interface AutoDataCaptureBehavior {
      * Whether smoothness vital capture is enabled
      */
     fun isSmoothnessCaptureEnabled(): Boolean
+
+    /**
+     * Whether screen-load vital capture is enabled
+     */
+    fun isScreenLoadCaptureEnabled(): Boolean
 }

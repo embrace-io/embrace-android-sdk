@@ -129,4 +129,10 @@ data class RemoteConfig(
      */
     @SerialName("pct_smoothness_enabled")
     val pctSmoothnessEnabled: Float? = null,
+
+    /**
+     * Percentage of devices for which the screen-load vital is captured.
+     */
+    @SerialName("pct_screen_load_enabled")
+    val pctScreenLoadEnabled: Float? = null,
 )

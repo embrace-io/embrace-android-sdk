@@ -7,7 +7,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.view.Window
 import androidx.annotation.RequiresApi
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import java.util.WeakHashMap
 
 /**
@@ -17,13 +16,21 @@ import java.util.WeakHashMap
  */
 @RequiresApi(Build.VERSION_CODES.N)
 internal class VitalsActivityListener(
-    private val logger: InternalLogger,
     private val focalCallbacks: FocalInteractionCallbacks,
+    private val navSource: ActivityNavigationSource,
     private val frameMetricsHandler: Handler,
     private val frameMetricsStrategy: FrameMetricsStrategy,
 ) : ActivityLifecycleCallbacks {
 
     private val frameListeners = WeakHashMap<Window, VitalsFrameMetricsListener>()
+
+    override fun onActivityCreated(activity: Activity, bundle: Bundle?) {
+        try {
+            // a non-null bundle means the Activity is being recreated (config change / restore), not navigated to
+            navSource.onActivityCreated(activity.localClassName, recreated = bundle != null)
+        } catch (_: Throwable) {
+        }
+    }
 
     override fun onActivityResumed(activity: Activity) {
         try {
@@ -31,8 +38,9 @@ internal class VitalsActivityListener(
             installInteractionCallback(window)
             installFrameMetricsListener(window)
             focalCallbacks.onScreenStart()
-        } catch (e: Throwable) {
-            logger.logError("Failed to register vitals listeners", e)
+            // a resumed Activity is the navigation end onto its screen
+            navSource.onActivityResumed(activity.localClassName)
+        } catch (_: Throwable) {
         }
     }
 
@@ -41,8 +49,7 @@ internal class VitalsActivityListener(
             // Close any in-flight focal moment.
             focalCallbacks.onScreenStop()
             activity.window?.let(::removeFrameMetricsListener)
-        } catch (e: Throwable) {
-            logger.logError("Failed to unregister vitals listeners", e)
+        } catch (_: Throwable) {
         }
     }
 
@@ -70,7 +77,6 @@ internal class VitalsActivityListener(
         }
     }
 
-    override fun onActivityCreated(activity: Activity, bundle: Bundle?) {}
     override fun onActivityStarted(activity: Activity) {}
     override fun onActivityStopped(activity: Activity) {}
     override fun onActivitySaveInstanceState(activity: Activity, bundle: Bundle) {}

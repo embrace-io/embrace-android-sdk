@@ -205,7 +205,7 @@ object EmbSessionAttributes {
         const val MANUAL: String = "manual"
 
         /**
-         * Background user session ended because the app entered the foreground.
+         * Background-only user session ended because the app entered the foreground.
          */
         @ExperimentalSemconv
         const val BACKGROUND_ONLY_USER_SESSION_FOREGROUNDED: String = "background_only_user_session_foregrounded"

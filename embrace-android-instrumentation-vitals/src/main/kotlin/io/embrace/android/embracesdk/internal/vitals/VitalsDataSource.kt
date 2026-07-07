@@ -10,6 +10,9 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
+import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadResult
+import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadTracker
 import io.embrace.android.embracesdk.internal.vitals.smoothness.FocalMomentTracker
 import io.embrace.android.embracesdk.internal.vitals.smoothness.SmoothnessReporter
 import io.embrace.android.embracesdk.internal.vitals.smoothness.SmoothnessResult
@@ -45,6 +48,18 @@ internal class VitalsDataSource(
     private var scheduler: HandlerVitalsScheduler? = null
     private var activityListener: VitalsActivityListener? = null
 
+    // held so the app-state listener can forward backgrounding into the tracker; nulled on disable
+    @Volatile
+    private var focalTracker: FocalMomentTracker? = null
+
+    private val appStateListener = object : AppStateListener {
+        override fun onBackground() {
+            focalTracker?.onAppBackgrounded()
+        }
+
+        override fun onForeground() {}
+    }
+
     override fun onDataCaptureEnabled() {
         val vitalsScheduler = HandlerVitalsScheduler().apply { start() }
         scheduler = vitalsScheduler
@@ -60,19 +75,27 @@ internal class VitalsDataSource(
             scheduler = vitalsScheduler,
             reporter = SmoothnessReporter(emit = ::emitSmoothnessResult),
             clock = clock,
+            screenLoadTracker = ScreenLoadTracker(
+                scheduler = vitalsScheduler,
+                clock = clock,
+                emit = ::emitScreenLoadResult,
+            ),
         )
+        focalTracker = tracker
 
         val listener = VitalsActivityListener(
-            logger = logger,
             focalCallbacks = tracker,
+            navSource = ActivityNavigationSource(callbacks = tracker),
             frameMetricsHandler = handler,
             frameMetricsStrategy = frameMetricsStrategy,
         )
         activityListener = listener
         args.application.registerActivityLifecycleCallbacks(listener)
+        args.appStateTracker.addListener(appStateListener)
     }
 
     override fun onDataCaptureDisabled() {
+        focalTracker = null
         activityListener?.let(args.application::unregisterActivityLifecycleCallbacks)
         activityListener = null
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
@@ -101,6 +124,29 @@ internal class VitalsDataSource(
         }
     }
 
+    private fun emitScreenLoadResult(result: ScreenLoadResult) {
+        if (!args.configService.autoDataCaptureBehavior.isScreenLoadCaptureEnabled()) {
+            return
+        }
+
+        captureTelemetry {
+            recordCompletedSpan(
+                name = "screen-load",
+                startTimeMs = result.startTimeMs,
+                endTimeMs = result.startTimeMs + result.durationMs,
+                type = EmbType.Performance.ScreenLoad,
+                private = true,
+                attributes = SchemaType.ScreenLoad(
+                    screenName = result.screenName,
+                    outcome = result.outcome.name.lowercase(),
+                    navStartDelayMs = result.navStartDelayMs,
+                    navDurationMs = result.navDurationMs,
+                    firstFrameDurationMs = result.firstFrameDurationMs,
+                ).attributes(),
+            )
+        }
+    }
+
     internal fun displayRefreshIntervalNanos(): Long {
         val refreshRate = runCatching {
             args.systemService<DisplayManager>(Context.DISPLAY_SERVICE)
@@ -108,6 +154,7 @@ internal class VitalsDataSource(
                 ?.refreshRate
                 ?: NORMALIZED_REFRESH_RATE
         }.getOrDefault(NORMALIZED_REFRESH_RATE)
+
         val rate = if (refreshRate > 0f) refreshRate else NORMALIZED_REFRESH_RATE
         return (NANOS_PER_SECOND / rate).toLong()
     }

@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.vitals.FocalInteractionCallbacks
 import io.embrace.android.embracesdk.internal.vitals.SettleTracker
 import io.embrace.android.embracesdk.internal.vitals.VitalsScheduler
+import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadTracker
 
 /**
  * Tracks the smoothness of a focal moment — framerate quality while the user is actively engaged. A
@@ -23,6 +24,7 @@ internal class FocalMomentTracker(
     private val scheduler: VitalsScheduler,
     private val reporter: SmoothnessReporter,
     private val clock: Clock,
+    private val screenLoadTracker: ScreenLoadTracker,
     private val idleThresholdMs: Long = IDLE_THRESHOLD_MS,
     private val heldIdleThresholdMs: Long = HELD_IDLE_THRESHOLD_MS,
 ) : FocalInteractionCallbacks {
@@ -43,21 +45,6 @@ internal class FocalMomentTracker(
     private var interacting = false
     private var bufferedEndNanos = 0L
 
-    @MainThread
-    override fun onInteractionStart() = scheduler.post(interactionRunnable)
-
-    @MainThread
-    override fun onInteractionMove() = scheduler.post(interactionRunnable)
-
-    @MainThread
-    override fun onInteractionEnd() = scheduler.post(interactionEndRunnable)
-
-    @MainThread
-    override fun onScreenStart() = scheduler.post(screenChangeRunnable)
-
-    @MainThread
-    override fun onScreenStop() = scheduler.post(screenChangeRunnable)
-
     @WorkerThread
     override fun onFrame(vsyncNanos: Long, frameDispatchNanos: Long, jankNanos: Long) {
         if (capturing) {
@@ -75,6 +62,9 @@ internal class FocalMomentTracker(
                 flushHeld()
             }
         }
+
+        // the screen load tracks its own frames, independent of the smoothness state
+        screenLoadTracker.onFrame(vsyncNanos)
     }
 
     @WorkerThread
@@ -90,6 +80,47 @@ internal class FocalMomentTracker(
             startFocalMoment()
         }
     }
+
+    @MainThread
+    override fun onInteractionStart() =
+        scheduler.post(interactionRunnable)
+
+    @MainThread
+    override fun onInteractionMove() =
+        scheduler.post(interactionRunnable)
+
+    @MainThread
+    override fun onInteractionEnd() =
+        scheduler.post(interactionEndRunnable)
+
+    @MainThread
+    override fun onScreenStart() =
+        scheduler.post(screenChangeRunnable)
+
+    @MainThread
+    override fun onScreenStop() =
+        scheduler.post(screenChangeRunnable)
+
+    // screen-load signals hop onto the Vitals thread and forward to the screen-load tracker
+
+    @MainThread
+    override fun onTap(eventTime: Long) = scheduler.post { screenLoadTracker.onTap(eventTime) }
+
+    @MainThread
+    override fun onNavigationStart(screenName: String?) =
+        scheduler.post { screenLoadTracker.onNavigationStart(screenName) }
+
+    @MainThread
+    override fun onNavigationEnd(screenName: String?) =
+        scheduler.post { screenLoadTracker.onNavigationEnd(screenName) }
+
+    @MainThread
+    override fun onWindowFocused() =
+        scheduler.post { screenLoadTracker.onWindowFocused() }
+
+    @MainThread
+    override fun onAppBackgrounded() =
+        scheduler.post { screenLoadTracker.onInterrupt() }
 
     @WorkerThread
     private fun handleInteractionEnd() {

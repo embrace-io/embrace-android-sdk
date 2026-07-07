@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.vitals.smoothness
 import android.os.SystemClock
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.internal.vitals.fake.FakeVitalsScheduler
+import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadTracker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -20,6 +21,8 @@ internal class FocalMomentTrackerTest {
         scheduler = scheduler,
         reporter = SmoothnessReporter(emit = emitted::add),
         clock = { 0L },
+        // Inert here: with no navigation signals the screen-load tracker stays idle and ignores frames.
+        screenLoadTracker = ScreenLoadTracker(scheduler = scheduler, clock = { 0L }, emit = {}),
     )
 
     // The tracker reads time from SystemClock.uptimeMillis; Robolectric keeps it paused until advance()

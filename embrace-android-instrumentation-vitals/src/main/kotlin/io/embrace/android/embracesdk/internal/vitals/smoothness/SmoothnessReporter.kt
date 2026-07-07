@@ -40,7 +40,7 @@ internal class SmoothnessReporter(
                 durationMs = durationMs,
                 frameCount = frameCount,
                 normalizedDroppedFrames = normalizedDroppedFrames,
-            )
+            ),
         )
     }
 

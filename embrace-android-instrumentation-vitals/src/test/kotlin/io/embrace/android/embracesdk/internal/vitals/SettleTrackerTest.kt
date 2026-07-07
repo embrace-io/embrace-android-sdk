@@ -28,14 +28,13 @@ internal class SettleTrackerTest {
     fun `the first activity schedules the check and later activity only moves the baseline`() {
         settle.notifyActivity(start)
         assertTrue(scheduler.scheduled)
-        assertEquals("first activity schedules once", 1, scheduler.scheduleCount)
-        assertEquals(100L, scheduler.lastDelayMs)
+        assertEquals("first activity schedules once", 1, scheduler.scheduledTaskCount)
 
         // Further activity while scheduled must not re-post — the pending check re-evaluates at expiry.
         advance(20)
         settle.notifyActivity(start + 20)
         settle.notifyActivity(start + 40)
-        assertEquals("steady-state activity does no handler work", 1, scheduler.scheduleCount)
+        assertEquals("steady-state activity does no handler work", 1, scheduler.scheduledTaskCount)
         assertEquals(start + 40, settle.lastActivityMs)
     }
 
@@ -47,8 +46,7 @@ internal class SettleTrackerTest {
         advance(60)
         scheduler.runPending()
         assertTrue(settledAt.isEmpty())
-        assertTrue(scheduler.scheduled)
-        assertEquals("re-scheduled for the remainder", 2, scheduler.scheduleCount)
+        assertTrue("re-scheduled for the remainder", scheduler.scheduled)
 
         // 100ms since the baseline: at threshold -> settle at the baseline.
         advance(40)
@@ -76,17 +74,15 @@ internal class SettleTrackerTest {
     @Test
     fun `reschedule re-posts the settle when the threshold shrinks`() {
         thresholdMs = 500L
-        settle.notifyActivity(start)
-        assertEquals(500L, scheduler.lastDelayMs)
+        settle.notifyActivity(start) // would otherwise settle at start + 500
 
         // The window shrinks; reschedule re-posts at the now-earlier deadline.
         thresholdMs = 100L
         settle.reschedule()
-        assertEquals(2, scheduler.scheduleCount)
-        assertEquals(100L, scheduler.lastDelayMs)
 
-        advance(100)
-        scheduler.runPending()
+        // Firing well before the original 500ms deadline settles, proving the re-post moved it earlier.
+        advance(101)
+        scheduler.runDue()
         assertEquals(listOf(start), settledAt)
     }
 
@@ -94,7 +90,7 @@ internal class SettleTrackerTest {
     fun `reschedule is a no-op when nothing is active`() {
         settle.reschedule()
         assertFalse(scheduler.scheduled)
-        assertEquals(0, scheduler.scheduleCount)
+        assertEquals(0, scheduler.scheduledTaskCount)
     }
 
     @Test

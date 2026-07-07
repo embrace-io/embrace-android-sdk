@@ -33,7 +33,7 @@ internal class VitalsWindowCallbackTest {
                 return true
             }
         }
-        callback = VitalsWindowCallback(delegate, args.logger, focalCallbacks)
+        callback = VitalsWindowCallback(delegate, focalCallbacks)
     }
 
     @Test

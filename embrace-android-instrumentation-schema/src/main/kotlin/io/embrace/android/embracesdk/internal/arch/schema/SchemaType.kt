@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.semconv.EmbNetworkStatusAttributes
 import io.embrace.android.embracesdk.semconv.EmbPowerStateAttributes
 import io.embrace.android.embracesdk.semconv.EmbPushNotificationAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.semconv.EmbSmoothnessAttributes
 import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
 import io.embrace.android.embracesdk.semconv.EmbTapAttributes
 import io.embrace.android.embracesdk.semconv.EmbThermalStateAttributes
@@ -248,6 +249,25 @@ sealed class SchemaType(
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
             EmbThermalStateAttributes.STATUS to status.toString(),
+        )
+    }
+
+    /**
+     * Experimental smoothness vital: framerate quality over a single focal moment. Recorded as a
+     * private span whose start/end bound the focal moment; the attributes carry the raw measures.
+     */
+    class Smoothness(
+        outcome: String,
+        frameCount: Int,
+        normalizedDroppedFrames: Double,
+    ) : SchemaType(
+        telemetryType = EmbType.Performance.Smoothness,
+        fixedObjectName = "smoothness"
+    ) {
+        override val schemaAttributes: Map<String, String> = mapOf(
+            EmbSmoothnessAttributes.SMOOTHNESS_OUTCOME to outcome,
+            EmbSmoothnessAttributes.SMOOTHNESS_FRAME_COUNT to frameCount.toString(),
+            EmbSmoothnessAttributes.SMOOTHNESS_NORMALIZED_DROPPED_FRAMES to normalizedDroppedFrames.toString()
         )
     }
 

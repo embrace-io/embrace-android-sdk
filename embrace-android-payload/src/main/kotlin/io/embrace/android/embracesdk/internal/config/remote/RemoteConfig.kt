@@ -123,4 +123,10 @@ data class RemoteConfig(
 
     @SerialName("user_session")
     val userSession: UserSessionRemoteConfig? = null,
+
+    /**
+     * Percentage of devices for which the smoothness vital is captured.
+     */
+    @SerialName("pct_smoothness_enabled")
+    val pctSmoothnessEnabled: Float? = null,
 )

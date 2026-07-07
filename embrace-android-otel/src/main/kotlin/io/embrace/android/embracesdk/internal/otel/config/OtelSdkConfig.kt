@@ -72,24 +72,24 @@ class OtelSdkConfig(
      * The semantic-convention resource attributes that Embrace itself sets. These are authoritative and
      * are kept separate from app-supplied [customAttributes] so the two can be distinguished.
      */
-    private val embraceResourceAttributes: Map<String, String>
-        get() = linkedMapOf(
-            ServiceAttributes.SERVICE_NAME to packageName,
-            ServiceAttributes.SERVICE_VERSION to appVersion,
-            OsAttributes.OS_NAME to systemInfo.osName,
-            OsAttributes.OS_VERSION to systemInfo.osVersion,
-            OsAttributes.OS_TYPE to systemInfo.osType,
-            OsAttributes.OS_BUILD_ID to systemInfo.osBuild,
-            AndroidAttributes.ANDROID_OS_API_LEVEL to systemInfo.androidOsApiLevel,
-            DeviceAttributes.DEVICE_MANUFACTURER to systemInfo.deviceManufacturer,
-            DeviceAttributes.DEVICE_MODEL_IDENTIFIER to systemInfo.deviceModel,
-            DeviceAttributes.DEVICE_MODEL_NAME to systemInfo.deviceModel,
-            TelemetryAttributes.TELEMETRY_DISTRO_NAME to sdkName,
-            TelemetryAttributes.TELEMETRY_DISTRO_VERSION to sdkVersion,
-        )
+    private val embraceResourceAttributes: Map<String, String> = LinkedHashMap<String, String>().apply {
+        put(ServiceAttributes.SERVICE_NAME, packageName)
+        put(ServiceAttributes.SERVICE_VERSION, appVersion)
+        put(OsAttributes.OS_NAME, systemInfo.osName)
+        put(OsAttributes.OS_VERSION, systemInfo.osVersion)
+        put(OsAttributes.OS_TYPE, systemInfo.osType)
+        put(OsAttributes.OS_BUILD_ID, systemInfo.osBuild)
+        put(AndroidAttributes.ANDROID_OS_API_LEVEL, systemInfo.androidOsApiLevel)
+        put(DeviceAttributes.DEVICE_MANUFACTURER, systemInfo.deviceManufacturer)
+        put(DeviceAttributes.DEVICE_MODEL_IDENTIFIER, systemInfo.deviceModel)
+        put(DeviceAttributes.DEVICE_MODEL_NAME, systemInfo.deviceModel)
+        put(TelemetryAttributes.TELEMETRY_DISTRO_NAME, sdkName)
+        put(TelemetryAttributes.TELEMETRY_DISTRO_VERSION, sdkVersion)
+    }
 
     /** Keys the SDK sets itself; app attributes that clash with these are overrides and don't count toward the cap. */
-    private val embraceResourceAttributeKeys: Set<String> by lazy { embraceResourceAttributes.keys }
+    private val embraceResourceAttributeKeys: Set<String>
+        get() = embraceResourceAttributes.keys
 
     private val externalSpanExporters = mutableListOf<SpanExporter>()
     private val externalSpanProcessors = mutableListOf<SpanProcessor>()
@@ -141,13 +141,11 @@ class OtelSdkConfig(
         // - The cap has not been reached
         if (customAttributes.containsKey(key) ||
             key in embraceResourceAttributeKeys ||
-            customResourceAttributeCount() < MAX_CUSTOM_RESOURCE_ATTRIBUTES
+            canAddNewKey()
         ) {
             customAttributes[key] = value
         }
     }
-
-    private fun customResourceAttributeCount(): Int = customAttributes.keys.count { it !in embraceResourceAttributeKeys }
 
     fun addSpanExporter(spanExporter: SpanExporter) {
         externalSpanExporters.add(spanExporter)
@@ -175,6 +173,10 @@ class OtelSdkConfig(
     fun disableDataExport() {
         exportEnabled = false
     }
+
+    private fun canAddNewKey(): Boolean =
+        customAttributes.size < MAX_CUSTOM_RESOURCE_ATTRIBUTES ||
+            customAttributes.keys.count { it !in embraceResourceAttributeKeys } < MAX_CUSTOM_RESOURCE_ATTRIBUTES
 
     private companion object {
         private const val EMB_ATTRIBUTE_PREFIX = "emb."

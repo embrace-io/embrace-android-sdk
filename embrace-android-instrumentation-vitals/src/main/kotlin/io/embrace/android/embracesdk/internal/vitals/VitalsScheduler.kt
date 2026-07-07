@@ -6,7 +6,7 @@ import android.os.HandlerThread
 internal interface VitalsScheduler {
     fun post(action: Runnable)
     fun scheduleSettle(delayMs: Long, action: Runnable)
-    fun cancelSettle()
+    fun cancelSettle(action: Runnable)
 }
 
 internal class HandlerVitalsScheduler : VitalsScheduler {
@@ -20,8 +20,6 @@ internal class HandlerVitalsScheduler : VitalsScheduler {
     lateinit var handler: Handler
         private set
 
-    private var settle: Runnable? = null
-
     /**
      * Starts the backing thread and prepares its [handler].
      */
@@ -32,11 +30,13 @@ internal class HandlerVitalsScheduler : VitalsScheduler {
     }
 
     /**
-     * Cancels any pending settle and stops the backing thread.
+     * Cancels all pending settles and stops the backing thread.
      */
     fun stop() {
-        cancelSettle()
-        handlerThread?.quitSafely()
+        handlerThread?.let { thread ->
+            handler.removeCallbacksAndMessages(null)
+            thread.quitSafely()
+        }
         handlerThread = null
     }
 
@@ -45,14 +45,12 @@ internal class HandlerVitalsScheduler : VitalsScheduler {
     }
 
     override fun scheduleSettle(delayMs: Long, action: Runnable) {
-        cancelSettle()
-        settle = action
+        handler.removeCallbacks(action)
         handler.postDelayed(action, delayMs)
     }
 
-    override fun cancelSettle() {
-        settle?.let(handler::removeCallbacks)
-        settle = null
+    override fun cancelSettle(action: Runnable) {
+        handler.removeCallbacks(action)
     }
 
     private companion object {

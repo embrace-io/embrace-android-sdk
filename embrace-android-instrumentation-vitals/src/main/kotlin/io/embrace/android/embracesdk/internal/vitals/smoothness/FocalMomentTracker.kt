@@ -5,6 +5,7 @@ import androidx.annotation.MainThread
 import androidx.annotation.WorkerThread
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.vitals.FocalInteractionCallbacks
+import io.embrace.android.embracesdk.internal.vitals.SettleTracker
 import io.embrace.android.embracesdk.internal.vitals.VitalsScheduler
 
 /**
@@ -13,30 +14,31 @@ import io.embrace.android.embracesdk.internal.vitals.VitalsScheduler
  * the idle threshold; each frame's jank is fed to [reporter], which emits a [SmoothnessResult] on close.
  *
  * The whole state machine runs on the Vitals handler thread: [onFrame] is delivered there, the settle
- * timeout fires there, and the main-thread touch/screen callbacks hop onto it via `scheduler.post`, so
+ * timeout elapses there, and the main-thread touch/screen callbacks hop onto it via `scheduler.post`, so
  * the state needs no synchronization.
  */
 internal class FocalMomentTracker(
     private val scheduler: VitalsScheduler,
     private val reporter: SmoothnessReporter,
     private val clock: Clock,
-    private val idleThresholdNanos: Long = IDLE_THRESHOLD_NANOS,
-    private val heldIdleThresholdNanos: Long = HELD_IDLE_THRESHOLD_NANOS,
+    private val idleThresholdMs: Long = IDLE_THRESHOLD_MS,
+    private val heldIdleThresholdMs: Long = HELD_IDLE_THRESHOLD_MS,
 ) : FocalInteractionCallbacks {
 
     // Reused hop Runnable instances (main thread -> Vitals thread); allocate them here to make certain they're off the hot path
     private val interactionRunnable = Runnable { startOrResume() }
     private val interactionEndRunnable = Runnable { handleInteractionEnd() }
     private val screenChangeRunnable = Runnable { handleScreenChange() }
-    private val settleRunnable = Runnable { settleCheck() }
+
+    // The settle baseline (the latest of redraw vsync / move) lives inside [settle]; we feed every activity
+    // event to it via notifyActivity rather than holding the per-source timestamps here.
+    private val settle = SettleTracker(scheduler, ::currentThresholdMs, ::onSettled)
 
     private var capturing = false
     private var held = false
     private var focalMomentStartNanos = 0L
     private var focalMomentStartEpochMs = 0L
-    private var lastRedrawVsyncNanos = 0L
     private var interacting = false
-    private var lastMoveNanos = 0L
     private var bufferedEndNanos = 0L
 
     @MainThread
@@ -57,15 +59,15 @@ internal class FocalMomentTracker(
     @WorkerThread
     override fun onFrame(vsyncNanos: Long, frameDispatchNanos: Long, jankNanos: Long) {
         if (capturing) {
-            recordFrame(vsyncNanos, frameDispatchNanos, jankNanos)
-            armSettle()
+            recordFrame(frameDispatchNanos, jankNanos)
+            settle.notifyActivity(vsyncNanos.nanosToMillis())
         } else if (held) {
-            if (vsyncNanos - bufferedEndNanos < idleThresholdNanos) {
+            if (vsyncNanos - bufferedEndNanos < idleThresholdMs.millisToNanos()) {
                 // Frame is contiguous with the buffered settle: resume capturing so its jank is included.
                 held = false
                 capturing = true
-                recordFrame(vsyncNanos, frameDispatchNanos, jankNanos)
-                armSettle()
+                recordFrame(frameDispatchNanos, jankNanos)
+                settle.notifyActivity(vsyncNanos.nanosToMillis())
             } else {
                 // Idle gap before this frame: emit the buffered settle and discard the orphan frame.
                 flushHeld()
@@ -81,8 +83,7 @@ internal class FocalMomentTracker(
             startFocalMoment()
         } else if (capturing) {
             interacting = true
-            lastMoveNanos = nowNanos()
-            armSettle()
+            settle.notifyActivity(nowMs())
         } else {
             startFocalMoment()
         }
@@ -91,8 +92,10 @@ internal class FocalMomentTracker(
     @WorkerThread
     private fun handleInteractionEnd() {
         interacting = false
+        // The threshold just dropped from held to idle, moving the deadline earlier; re-post so the settle
+        // runs on the shorter idle window rather than waiting out the original held one.
         if (capturing) {
-            armSettle()
+            settle.reschedule()
         }
     }
 
@@ -108,30 +111,23 @@ internal class FocalMomentTracker(
 
     @WorkerThread
     private fun startFocalMoment() {
-        val now = nowNanos()
-        focalMomentStartNanos = now
+        val nowMs = nowMs()
+        focalMomentStartNanos = nowMs.millisToNanos()
         focalMomentStartEpochMs = clock.now()
-        lastRedrawVsyncNanos = now
         held = false
         interacting = true
-        lastMoveNanos = now
         capturing = true
         reporter.onFocalMomentStart()
-        armSettle()
+        settle.notifyActivity(nowMs)
     }
 
     @WorkerThread
-    private fun recordFrame(vsyncNanos: Long, frameDispatchNanos: Long, jankNanos: Long) {
-        // The frame becomes visible at its vsync; that's when the user sees it, so the moment runs to there.
-        if (vsyncNanos > lastRedrawVsyncNanos) {
-            lastRedrawVsyncNanos = vsyncNanos
-        }
-
+    private fun recordFrame(frameDispatchNanos: Long, jankNanos: Long) {
         // A jank frame is counted in full, so the moment must also cover the render that produced it. We
         // back-date the start to when the engine dispatched the frame's work, if that predates the
         // moment, shifting the reported start epoch by the same amount so the end stays put.
         if (frameDispatchNanos < focalMomentStartNanos) {
-            focalMomentStartEpochMs -= (focalMomentStartNanos - frameDispatchNanos) / NANOS_PER_MS
+            focalMomentStartEpochMs -= (focalMomentStartNanos - frameDispatchNanos).nanosToMillis()
             focalMomentStartNanos = frameDispatchNanos
         }
 
@@ -139,36 +135,19 @@ internal class FocalMomentTracker(
     }
 
     /**
-     * (Re)schedules the settle check for the current activity baseline plus its threshold.
+     * Invoked by [settle] when the interaction has been quiet for the current threshold: buffer the settle
+     * at the last activity baseline. A late callback after the moment already closed is ignored.
      */
     @WorkerThread
-    private fun armSettle() {
-        val delayNanos = (lastActivityNanos() + currentThresholdNanos() - nowNanos()).coerceAtLeast(0L)
-        scheduler.scheduleSettle(delayNanos / NANOS_PER_MS, settleRunnable)
-    }
-
-    /**
-     * Fired by the scheduler: settle if the interaction is quiet enough, else re-arm for the remainder.
-     */
-    @WorkerThread
-    private fun settleCheck() {
+    private fun onSettled(lastActivityMs: Long) {
         if (!capturing) {
             return
         }
-
-        val lastActivity = lastActivityNanos()
-        if (nowNanos() - lastActivity >= currentThresholdNanos()) {
-            enterHeld(endNanos = lastActivity)
-        } else {
-            armSettle()
-        }
+        enterHeld(endNanos = lastActivityMs.millisToNanos())
     }
 
     @WorkerThread
-    private fun lastActivityNanos(): Long = maxOf(lastRedrawVsyncNanos, lastMoveNanos)
-
-    @WorkerThread
-    private fun currentThresholdNanos(): Long = if (interacting) heldIdleThresholdNanos else idleThresholdNanos
+    private fun currentThresholdMs(): Long = if (interacting) heldIdleThresholdMs else idleThresholdMs
 
     /**
      * Emits a buffered settled result if one is pending.
@@ -187,8 +166,8 @@ internal class FocalMomentTracker(
         }
         capturing = false
         held = false
-        scheduler.cancelSettle()
-        val durationMs = (endNanos - focalMomentStartNanos) / NANOS_PER_MS
+        settle.cancel()
+        val durationMs = (endNanos - focalMomentStartNanos).nanosToMillis()
         reporter.onFocalMomentEnd(outcome, focalMomentStartEpochMs, durationMs)
     }
 
@@ -200,19 +179,28 @@ internal class FocalMomentTracker(
         bufferedEndNanos = endNanos
         capturing = false
         held = true
-        scheduler.cancelSettle()
+        settle.cancel()
     }
 
-    private fun nowNanos(): Long = SystemClock.uptimeMillis() * NANOS_PER_MS
+    private fun nowMs(): Long = SystemClock.uptimeMillis()
+
+    private fun nowNanos(): Long = nowMs().millisToNanos()
+
+    /** This nanosecond timestamp/duration as whole milliseconds, truncating any sub-millisecond remainder. */
+    private fun Long.nanosToMillis(): Long = this / NANOS_PER_MS
+
+    /** This millisecond timestamp/duration as nanoseconds. */
+    private fun Long.millisToNanos(): Long = this * NANOS_PER_MS
 
     private companion object {
-        const val NANOS_PER_MS = 1_000_000L
-        const val IDLE_THRESHOLD_NANOS = 100L * 1_000_000L
+        const val IDLE_THRESHOLD_MS = 100L
 
         /**
          * The "press and hold" threshold, if we don't get a "move" event (which we really should) within this time we consider the
          * interaction / focal moment settled.
          */
-        const val HELD_IDLE_THRESHOLD_NANOS = 500L * 1_000_000L
+        const val HELD_IDLE_THRESHOLD_MS = 500L
+
+        const val NANOS_PER_MS = 1_000_000L
     }
 }

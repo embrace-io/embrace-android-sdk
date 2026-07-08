@@ -14,7 +14,6 @@ internal class EnvelopeResourceSourceImplTest {
     private val legacyKeys = listOf(
         "app_ecosystem_id",
         "app_version",
-        "environment",
         "build_id",
         "device_architecture",
         "device_manufacturer",
@@ -53,7 +52,7 @@ internal class EnvelopeResourceSourceImplTest {
         assertEquals(10000000L, attrs.getValue("disk_total_capacity").longValue)
         assertEquals("1920x1080", attrs.getValue("screen_resolution").stringValue)
         assertEquals(8, attrs.getValue("num_cores").intValue)
-        assertEquals("prod", attrs.getValue("emb.app.environment").stringValue)
+        assertEquals("prod", attrs.getValue("environment").stringValue)
 
         // legacy bespoke keys are gone, replaced by their canonical semconv keys
         legacyKeys.forEach {

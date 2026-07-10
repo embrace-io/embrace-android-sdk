@@ -17,6 +17,7 @@ otelKotlin = "0.4.0"
 kotlinxCoroutines = "1.10.2"
 kotlinxSerialization = "1.8.1"
 protobuf = "4.35.1"
+wire = "5.3.5"
 profileinstaller = "1.3.1" # version pinned to 1.3.1 because of AGP bug
 okhttp = "4.12.0"
 firebase = "25.1.0"
@@ -69,6 +70,7 @@ opentelemetry-bom = { group = "io.opentelemetry", name = "opentelemetry-bom", ve
 opentelemetry-api = { group = "io.opentelemetry", name = "opentelemetry-api" }
 opentelemetry-sdk = { group = "io.opentelemetry", name = "opentelemetry-sdk" }
 opentelemetry-context = { group = "io.opentelemetry", name = "opentelemetry-context" }
+wire-runtime = { group = "com.squareup.wire", name = "wire-runtime", version.ref = "wire" }
 protobuf-java = { group = "com.google.protobuf", name = "protobuf-java", version.ref = "protobuf" }
 protobuf-java-util = { group = "com.google.protobuf", name = "protobuf-java-util", version.ref = "protobuf" }
 profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
@@ -126,3 +128,4 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlinGradlePlugin" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "koverGradlePlugin" }
 benchmark = { id = "androidx.benchmark", version.ref = "androidxBenchmark" }
+wire = { id = "com.squareup.wire", version.ref = "wire" }

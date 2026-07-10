@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.semconv.EmbNetworkStateAttributes
 import io.embrace.android.embracesdk.semconv.EmbNetworkStatusAttributes
 import io.embrace.android.embracesdk.semconv.EmbPowerStateAttributes
 import io.embrace.android.embracesdk.semconv.EmbPushNotificationAttributes
+import io.embrace.android.embracesdk.semconv.EmbResponsivenessAttributes
 import io.embrace.android.embracesdk.semconv.EmbScreenLoadAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSmoothnessAttributes
@@ -292,6 +293,24 @@ sealed class SchemaType(
             EmbScreenLoadAttributes.SCREEN_LOAD_NAV_START_DELAY_MS to navStartDelayMs.toString(),
             EmbScreenLoadAttributes.SCREEN_LOAD_NAV_DURATION_MS to navDurationMs.toString(),
             EmbScreenLoadAttributes.SCREEN_LOAD_FIRST_FRAME_DURATION_MS to firstFrameDurationMs.toString(),
+        )
+    }
+
+    /**
+     * Experimental responsiveness vital: how long the main thread took to respond to a tap, split into
+     * time-to-next-frame and the queue drain after it. Recorded as a private span whose start/end bound
+     * the full response delay.
+     */
+    class Responsiveness(
+        tapToFrameMs: Long,
+        frameToDrainMs: Long,
+    ) : SchemaType(
+        telemetryType = EmbType.Performance.Responsiveness,
+        fixedObjectName = "responsiveness",
+    ) {
+        override val schemaAttributes: Map<String, String> = mapOf(
+            EmbResponsivenessAttributes.RESPONSIVENESS_TAP_TO_FRAME_MS to tapToFrameMs.toString(),
+            EmbResponsivenessAttributes.RESPONSIVENESS_FRAME_TO_DRAIN_MS to frameToDrainMs.toString(),
         )
     }
 

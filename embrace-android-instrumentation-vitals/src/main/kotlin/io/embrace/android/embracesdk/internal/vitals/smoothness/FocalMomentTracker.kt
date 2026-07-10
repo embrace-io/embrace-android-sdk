@@ -82,7 +82,7 @@ internal class FocalMomentTracker(
     }
 
     @MainThread
-    override fun onInteractionStart() =
+    override fun onInteractionStart(eventTime: Long) =
         scheduler.post(interactionRunnable)
 
     @MainThread

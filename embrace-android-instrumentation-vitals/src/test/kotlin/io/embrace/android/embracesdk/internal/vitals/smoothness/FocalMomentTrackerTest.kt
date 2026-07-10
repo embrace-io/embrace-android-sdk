@@ -31,7 +31,7 @@ internal class FocalMomentTrackerTest {
 
     @Test
     fun `after release the aftermath settles at the tighter threshold and emits on flush`() {
-        tracker.onInteractionStart()
+        tracker.onInteractionStart(0L)
         assertTrue(scheduler.scheduled)
 
         redraw(vsyncNanos = start + 16.ms, jankNanos = 4.ms)
@@ -56,7 +56,7 @@ internal class FocalMomentTrackerTest {
 
     @Test
     fun `a held finger uses the longer grace, not the tight threshold`() {
-        tracker.onInteractionStart()
+        tracker.onInteractionStart(0L)
         redraw(vsyncNanos = start + 16.ms)
 
         // 134ms since activity: past the tight threshold but the finger is still down, so not settled
@@ -75,7 +75,7 @@ internal class FocalMomentTrackerTest {
 
     @Test
     fun `a touch move refreshes liveness and keeps a quiescent held focal moment open`() {
-        tracker.onInteractionStart()
+        tracker.onInteractionStart(0L)
 
         // a move 400ms in (no redraws) keeps the finger "live"
         advance(400)
@@ -93,7 +93,7 @@ internal class FocalMomentTrackerTest {
 
     @Test
     fun `a move after a settle flushes the buffered result and opens a fresh interaction`() {
-        tracker.onInteractionStart()
+        tracker.onInteractionStart(0L)
         redraw(vsyncNanos = start + 16.ms, jankNanos = 4.ms) // a frame so the flush emits
 
         // no further activity: the held grace elapses and the focal moment enters held
@@ -110,7 +110,7 @@ internal class FocalMomentTrackerTest {
 
     @Test
     fun `once the finger lifts, the tight threshold applies`() {
-        tracker.onInteractionStart()
+        tracker.onInteractionStart(0L)
         tracker.onInteractionEnd()
 
         // 99ms: one ms short of the tight threshold (a held finger would wait 500ms)
@@ -124,7 +124,7 @@ internal class FocalMomentTrackerTest {
 
     @Test
     fun `a new screen interrupts the interaction immediately without opening a new focal moment`() {
-        tracker.onInteractionStart()
+        tracker.onInteractionStart(0L)
         redraw(vsyncNanos = start + 16.ms) // a frame so the interrupt emits
         advance(40)
         tracker.onScreenStart()
@@ -137,7 +137,7 @@ internal class FocalMomentTrackerTest {
 
     @Test
     fun `a continuously redrawing interaction never caps`() {
-        tracker.onInteractionStart()
+        tracker.onInteractionStart(0L)
 
         var t = start + 16.ms
         repeat(400) { // ~6.4s of unbroken frames, well past any settling cap
@@ -151,7 +151,7 @@ internal class FocalMomentTrackerTest {
 
     @Test
     fun `pause interrupts an open interaction immediately`() {
-        tracker.onInteractionStart()
+        tracker.onInteractionStart(0L)
         redraw(vsyncNanos = start + 16.ms) // a frame so the interrupt emits
         advance(30)
         tracker.onScreenStop()
@@ -164,7 +164,7 @@ internal class FocalMomentTrackerTest {
 
     @Test
     fun `a slow frame delivered after the settle is still counted, not dropped`() {
-        tracker.onInteractionStart()
+        tracker.onInteractionStart(0L)
         tracker.onInteractionEnd() // finger up -> tight threshold
         redraw(vsyncNanos = start + 16.ms) // last known frame
 
@@ -190,7 +190,7 @@ internal class FocalMomentTrackerTest {
 
     @Test
     fun `an in-flight frame back-dates the start to its render dispatch, but ends at its visible vsync`() {
-        tracker.onInteractionStart() // focal moment opens here, at start (the touch-down)
+        tracker.onInteractionStart(0L) // focal moment opens here, at start (the touch-down)
         tracker.onInteractionEnd() // finger up -> tight threshold
 
         // A frame already being rendered when the user touched: its render was dispatched 30ms before the
@@ -218,7 +218,7 @@ internal class FocalMomentTrackerTest {
 
     @Test
     fun `a frame after a real idle gap flushes the buffered settle and discards the orphan frame`() {
-        tracker.onInteractionStart()
+        tracker.onInteractionStart(0L)
         tracker.onInteractionEnd()
         redraw(vsyncNanos = start + 16.ms)
         settleAfter(120) // past the tight threshold -> held
@@ -239,7 +239,7 @@ internal class FocalMomentTrackerTest {
     fun `frames delivered before a focal moment opens are ignored`() {
         // a large-jank frame before any focal moment: must be dropped, not counted
         redraw(vsyncNanos = start, jankNanos = 1000.ms)
-        tracker.onInteractionStart()
+        tracker.onInteractionStart(0L)
         redraw(vsyncNanos = start + 10.ms, jankNanos = 5.ms)
         tracker.onScreenStop()
 
@@ -249,7 +249,7 @@ internal class FocalMomentTrackerTest {
 
     @Test
     fun `jank is forwarded per frame and normalized into the result`() {
-        tracker.onInteractionStart()
+        tracker.onInteractionStart(0L)
         redraw(vsyncNanos = start + 1.ms, jankNanos = 1000.ms / 60) // one dropped 60fps frame -> 1.0
         tracker.onScreenStop()
 

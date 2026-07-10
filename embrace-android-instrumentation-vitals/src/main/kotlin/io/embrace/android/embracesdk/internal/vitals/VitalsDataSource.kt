@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.internal.vitals
 import android.content.Context
 import android.hardware.display.DisplayManager
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.view.Display
 import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
@@ -11,6 +13,8 @@ import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
+import io.embrace.android.embracesdk.internal.vitals.responsiveness.ResponsivenessResult
+import io.embrace.android.embracesdk.internal.vitals.responsiveness.ResponsivenessTracker
 import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadResult
 import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadTracker
 import io.embrace.android.embracesdk.internal.vitals.smoothness.FocalMomentTracker
@@ -47,6 +51,7 @@ internal class VitalsDataSource(
 
     private var scheduler: HandlerVitalsScheduler? = null
     private var activityListener: VitalsActivityListener? = null
+    private var mainThreadHandler: Handler? = null
 
     // held so the app-state listener can forward backgrounding into the tracker; nulled on disable
     @Volatile
@@ -83,8 +88,17 @@ internal class VitalsDataSource(
         )
         focalTracker = tracker
 
+        val mainHandler = Handler(Looper.getMainLooper())
+        mainThreadHandler = mainHandler
+        val responsivenessTracker = ResponsivenessTracker(
+            scheduler = vitalsScheduler,
+            emit = ::emitResponsivenessResult,
+            mainThreadHandler = mainHandler,
+            clock = clock,
+        )
+
         val listener = VitalsActivityListener(
-            focalCallbacks = tracker,
+            focalCallbacks = CompositeFocalInteractionCallbacks(listOf(tracker, responsivenessTracker)),
             navSource = ActivityNavigationSource(callbacks = tracker),
             frameMetricsHandler = handler,
             frameMetricsStrategy = frameMetricsStrategy,
@@ -105,6 +119,9 @@ internal class VitalsDataSource(
         // Cancels any pending settle for an open focal moment and stops the vitals thread.
         scheduler?.stop()
         scheduler = null
+        // Cancels any pending main-thread responsiveness check.
+        mainThreadHandler?.removeCallbacksAndMessages(null)
+        mainThreadHandler = null
     }
 
     private fun emitSmoothnessResult(result: SmoothnessResult) {
@@ -142,6 +159,22 @@ internal class VitalsDataSource(
                     navStartDelayMs = result.navStartDelayMs,
                     navDurationMs = result.navDurationMs,
                     firstFrameDurationMs = result.firstFrameDurationMs,
+                ).attributes(),
+            )
+        }
+    }
+
+    private fun emitResponsivenessResult(result: ResponsivenessResult) {
+        captureTelemetry {
+            recordCompletedSpan(
+                name = "responsiveness",
+                startTimeMs = result.startTimeMs,
+                endTimeMs = result.startTimeMs + result.tapToFrameMs + result.frameToDrainMs,
+                type = EmbType.Performance.Responsiveness,
+                private = true,
+                attributes = SchemaType.Responsiveness(
+                    tapToFrameMs = result.tapToFrameMs,
+                    frameToDrainMs = result.frameToDrainMs,
                 ).attributes(),
             )
         }

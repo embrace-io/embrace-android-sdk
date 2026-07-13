@@ -8,11 +8,15 @@ import io.embrace.android.embracesdk.fakes.FakeSpanToken
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
+import io.embrace.android.embracesdk.fakes.createUrlRedactionBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
+import io.embrace.android.embracesdk.internal.config.behavior.UrlRedactionBehavior
 import org.junit.Assert.assertEquals
 
-internal class NetworkRequestDataSourceTestHarness {
+internal class NetworkRequestDataSourceTestHarness(
+    urlRedactionBehavior: UrlRedactionBehavior = createUrlRedactionBehavior(),
+) {
     val domainCountLimiter: FakeDomainCountLimiter = FakeDomainCountLimiter()
     val telemetryService: FakeTelemetryService = FakeTelemetryService()
     val networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior()
@@ -21,6 +25,7 @@ internal class NetworkRequestDataSourceTestHarness {
         configService = FakeConfigService(
             networkBehavior = FakeNetworkBehavior(domainCountLimiter = domainCountLimiter),
             networkSpanForwardingBehavior = networkSpanForwardingBehavior,
+            urlRedactionBehavior = urlRedactionBehavior,
         ),
         telemetryService = telemetryService,
     )

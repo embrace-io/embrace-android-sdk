@@ -11,4 +11,11 @@ interface RedactionConfig {
      * sdk_config.sensitive_keys_denylist
      */
     fun getSensitiveKeysDenylist(): List<String>? = null
+
+    /**
+     * Provides a list of URL patterns that should be redacted on capture
+     *
+     * sdk_config.networking.url_redaction_patterns
+     */
+    fun getUrlRedactionPatterns(): List<String>? = null
 }

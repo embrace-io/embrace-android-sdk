@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
 import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehavior
@@ -23,6 +25,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBeha
 import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.behavior.UrlRedactionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
@@ -125,6 +128,14 @@ fun createNetworkSpanForwardingBehavior(
  * A [SensitiveKeysBehaviorImpl] that returns default values.
  */
 fun createSensitiveKeysBehavior() = SensitiveKeysBehaviorImpl(InstrumentedConfigImpl)
+
+/**
+ * A [UrlRedactionBehaviorImpl] driven by the given [urlRedactionPatterns]. Defaults to a config with no
+ * patterns configured, i.e. one that redacts nothing.
+ */
+fun createUrlRedactionBehavior(urlRedactionPatterns: List<String>? = null) = UrlRedactionBehaviorImpl(
+    FakeInstrumentedConfig(redaction = FakeRedactionConfig(urlPatterns = urlRedactionPatterns)),
+)
 
 /**
  * An [OtelBehaviorImpl] that returns default values.

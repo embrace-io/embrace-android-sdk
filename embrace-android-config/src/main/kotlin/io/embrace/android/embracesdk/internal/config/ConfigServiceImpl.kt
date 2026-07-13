@@ -14,6 +14,8 @@ import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImp
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.behavior.UrlRedactionBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.UrlRedactionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -124,6 +126,7 @@ class ConfigServiceImpl(
         AutoDataCaptureBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
     override val breadcrumbBehavior = BreadcrumbBehaviorImpl(instrumentedConfig, remoteConfig)
     override val sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(instrumentedConfig)
+    override val urlRedactionBehavior: UrlRedactionBehavior = UrlRedactionBehaviorImpl(instrumentedConfig)
     override val logMessageBehavior = LogMessageBehaviorImpl(remoteConfig)
     override val threadBlockageBehavior = ThreadBlockageBehaviorImpl(thresholdCheck, remoteConfig)
     override val sessionBehavior = UserSessionBehaviorImpl(remoteConfig)

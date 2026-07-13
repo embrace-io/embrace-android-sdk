@@ -24,6 +24,7 @@ class NetworkCaptureDataSourceImpl(
     private val keyValueStore: KeyValueStore = args.store
     private val serializer: PlatformSerializer = args.serializer
     private val networkCaptureEncryptionManager = NetworkCaptureEncryptionManager()
+    private val urlRedactionBehavior = args.configService.urlRedactionBehavior
 
     internal companion object {
         const val NETWORK_ERROR_CODE = -1
@@ -93,7 +94,7 @@ class NetworkCaptureDataSourceImpl(
                     userSessionId = args.userSessionId(),
                     sessionPartId = args.sessionPartId(),
                     startTime = startTime,
-                    url = url,
+                    url = urlRedactionBehavior.redactUrl(url),
                     errorMessage = errorMessage,
                 )
 

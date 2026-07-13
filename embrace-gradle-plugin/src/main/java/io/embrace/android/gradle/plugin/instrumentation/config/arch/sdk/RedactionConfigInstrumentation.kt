@@ -6,4 +6,5 @@ import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConf
 
 fun createRedactionConfigInstrumentation(cfg: VariantConfig) = modelSdkConfigClass {
     stringListMethod("getSensitiveKeysDenylist") { cfg.embraceConfig?.sdkConfig?.sensitiveKeysDenylist }
+    stringListMethod("getUrlRedactionPatterns") { cfg.embraceConfig?.sdkConfig?.networking?.urlRedactionPatterns }
 }

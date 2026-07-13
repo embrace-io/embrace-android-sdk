@@ -39,6 +39,12 @@ data class NetworkLocalConfig(
 
     @Json(name = "traceparent_only_allow_domains")
     val traceparentOnlyAllowDomains: List<String>? = null,
+
+    /**
+     * List of regex pattern strings for URLs that should be redacted when they are sent to the server.
+     */
+    @Json(name = "url_redaction_patterns")
+    val urlRedactionPatterns: List<String>? = null,
 ) : Serializable {
 
     private companion object {

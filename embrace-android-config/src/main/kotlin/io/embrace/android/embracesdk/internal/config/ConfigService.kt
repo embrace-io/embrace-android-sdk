@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.UrlRedactionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehavior
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 
@@ -87,6 +88,11 @@ interface ConfigService {
      * Provides behavior for keys that might be sensitive and should be redacted when they are sent to the server
      */
     val sensitiveKeysBehavior: SensitiveKeysBehavior
+
+    /**
+     * Provides behavior for redacting URLs that might contain sensitive information and should be redacted when they are sent to the server
+     */
+    val urlRedactionBehavior: UrlRedactionBehavior
 
     /**
      * Provides behavior for OpenTelemetry configuration

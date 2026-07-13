@@ -165,6 +165,15 @@
               "description": "Enables network span forwarding.",
               "default": false,
               "type": "boolean"
+            },
+            "url_redaction_patterns": {
+              "description": "List of regex pattern strings for URLs that should be redacted (capturing groups are redacted).",
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "uniqueItems": true
             }
           },
           "minProperties": 1

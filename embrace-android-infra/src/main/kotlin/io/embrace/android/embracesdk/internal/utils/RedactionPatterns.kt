@@ -16,6 +16,10 @@ class RedactionPatterns(
      * returned unchanged.
      */
     fun redacted(value: String): String {
+        if (patterns.isEmpty()) {
+            return value
+        }
+
         for (p in patterns) {
             val matcher = p.matcher(value)
             if (matcher.matches()) {

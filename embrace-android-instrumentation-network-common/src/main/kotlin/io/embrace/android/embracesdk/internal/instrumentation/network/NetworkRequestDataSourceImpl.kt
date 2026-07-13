@@ -38,6 +38,7 @@ class NetworkRequestDataSourceImpl(
 ) {
     private val activeRequests: MutableMap<String, SpanToken> = ConcurrentHashMap()
     private val domainCountLimiter: DomainCountLimiter = args.configService.networkBehavior.domainCountLimiter
+    private val urlRedactionBehavior = args.configService.urlRedactionBehavior
 
     override fun recordNetworkRequest(request: HttpNetworkRequest) {
         if (!configService.networkBehavior.isUrlEnabled(request.url)) {
@@ -124,7 +125,7 @@ class NetworkRequestDataSourceImpl(
     }
 
     private fun generateSchemaAttributes(request: HttpNetworkRequest): Map<String, String> = mapOf(
-        UrlAttributes.URL_FULL to stripUrl(request.url),
+        UrlAttributes.URL_FULL to outboundUrl(request.url),
         HttpAttributes.HTTP_REQUEST_METHOD to request.httpMethod,
         HttpAttributes.HTTP_RESPONSE_STATUS_CODE to request.statusCode,
         HttpAttributes.HTTP_REQUEST_BODY_SIZE to request.bytesSent,
@@ -137,12 +138,12 @@ class NetworkRequestDataSourceImpl(
     ).toNonNullMap().mapValues { it.value.toString() }
 
     private fun requestStartAttributes(startData: RequestStartData): Map<String, String> = mapOf(
-        UrlAttributes.URL_FULL to stripUrl(startData.url),
+        UrlAttributes.URL_FULL to outboundUrl(startData.url),
         HttpAttributes.HTTP_REQUEST_METHOD to startData.httpMethod,
     ).toNonNullMap().mapValues { it.value }
 
     private fun requestEndAttributes(endData: RequestEndData): Map<String, String> = mapOf(
-        UrlAttributes.URL_FULL to stripUrl(endData.url),
+        UrlAttributes.URL_FULL to outboundUrl(endData.url),
         HttpAttributes.HTTP_RESPONSE_STATUS_CODE to endData.statusCode,
         HttpAttributes.HTTP_REQUEST_BODY_SIZE to endData.bytesSent,
         HttpAttributes.HTTP_RESPONSE_BODY_SIZE to endData.bytesReceived,
@@ -153,7 +154,14 @@ class NetworkRequestDataSourceImpl(
         EmbNetworkRequestAttributes.EMB_TRACE_ID to getValidTraceId(endData.traceId),
     ).toNonNullMap().mapValues { it.value.toString() }
 
-    private fun getNetworkSpanName(httpMethod: String, url: String) = "$httpMethod ${getUrlPath(stripUrl(url))}"
+    private fun getNetworkSpanName(httpMethod: String, url: String) = "$httpMethod ${getUrlPath(outboundUrl(url))}"
+
+    /**
+     * The URL as it appears in outbound telemetry: stripped of query/fragment, then redacted per
+     * [urlRedactionBehavior]. Callers that use the URL for internal decisions (domain limiting, filtering)
+     * should use [stripUrl]/the raw URL directly instead, since redaction must not affect those decisions.
+     */
+    private fun outboundUrl(url: String): String = urlRedactionBehavior.redactUrl(stripUrl(url))
 
     /**
      * Returns the span-id of this string if it is a valid W3C traceparent, or null if it is not.

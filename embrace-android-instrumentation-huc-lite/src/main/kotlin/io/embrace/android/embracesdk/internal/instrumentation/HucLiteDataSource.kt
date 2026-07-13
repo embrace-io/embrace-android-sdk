@@ -13,11 +13,14 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.config.behavior.UrlRedactionBehavior
 import io.embrace.android.embracesdk.internal.instrumentation.network.getOverriddenURLString
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils
+import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getUrlPath
+import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import io.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
@@ -45,6 +48,7 @@ class HucLiteDataSource(
     private val telemetryDestination = args.destination
     private val domainCountLimiter = args.configService.networkBehavior.domainCountLimiter
     private val recordForUrl = args.configService.networkBehavior::isUrlEnabled
+    private val urlRedactionBehavior = args.configService.urlRedactionBehavior
     private var initializationAttempted = false
 
     override fun onDataCaptureEnabled() {
@@ -78,6 +82,7 @@ class HucLiteDataSource(
                     clock = clock,
                     telemetryDestination = telemetryDestination,
                     errorHandler = ::errorHandler,
+                    urlRedactionBehavior = urlRedactionBehavior,
                 )
             }.onFailure {
                 errorHandler(it)
@@ -135,6 +140,7 @@ class HucLiteDataSource(
         val clock: Clock,
         val telemetryDestination: TelemetryDestination,
         val errorHandler: (t: Throwable) -> Unit,
+        val urlRedactionBehavior: UrlRedactionBehavior,
     ) {
         private val creationTimeMs = clock.now()
         private val telemetryUrlProvider = {
@@ -147,7 +153,6 @@ class HucLiteDataSource(
         }
 
         private val methodProvider = { connection.requestMethod }
-        private val pathProvider = { connection.url.path }
         private val startTimeMs = AtomicLong(INVALID_START_TIME)
         private val requestRecorded = AtomicBoolean(false)
 
@@ -167,15 +172,16 @@ class HucLiteDataSource(
                     null
                 }
                 val method = methodProvider()
+                val redactedUrl = outboundUrl(telemetryUrlProvider())
                 val networkRequestSchemaType = SchemaType.NetworkRequest(
                     completedRequestAttributes(
-                        url = telemetryUrlProvider(),
+                        url = redactedUrl,
                         httpMethod = method,
                         responseCode = responseCode,
                     ),
                 )
                 telemetryDestination.recordCompletedSpan(
-                    name = "$method ${pathProvider()}",
+                    name = "$method ${getUrlPath(redactedUrl)}",
                     startTimeMs = getValidStartTime(),
                     endTimeMs = endTimeMs,
                     errorCode = errorCode,
@@ -189,16 +195,17 @@ class HucLiteDataSource(
             recordRequest(telemetryUrlProvider) {
                 val errorTimeMs = clock.now()
                 val method = methodProvider()
+                val redactedUrl = outboundUrl(telemetryUrlProvider())
                 val networkRequestSchemaType = SchemaType.NetworkRequest(
                     incompleteRequestAttributes(
-                        url = telemetryUrlProvider(),
+                        url = redactedUrl,
                         httpMethod = method,
                         errorType = t::class.java.canonicalName ?: t::class.java.simpleName,
                         errorMessage = t.message ?: "Unexpected error",
                     ),
                 )
                 telemetryDestination.recordCompletedSpan(
-                    name = "$method ${pathProvider()}",
+                    name = "$method ${getUrlPath(redactedUrl)}",
                     startTimeMs = getValidStartTime(),
                     endTimeMs = errorTimeMs,
                     errorCode = ErrorCodeAttribute.Failure,
@@ -207,6 +214,13 @@ class HucLiteDataSource(
                 )
             }
         }
+
+        /**
+         * The URL as it appears in outbound telemetry: stripped of query/fragment, then redacted per
+         * [urlRedactionBehavior]. Callers that use the URL for internal decisions (domain limiting, filtering)
+         * should use the raw URL directly instead, since redaction must not affect those decisions.
+         */
+        private fun outboundUrl(url: String): String = urlRedactionBehavior.redactUrl(stripUrl(url))
 
         private fun completedRequestAttributes(
             url: String,

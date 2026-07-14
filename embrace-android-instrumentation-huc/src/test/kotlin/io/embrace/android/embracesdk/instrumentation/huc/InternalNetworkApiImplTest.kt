@@ -5,10 +5,12 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
+import io.embrace.android.embracesdk.fakes.createUrlRedactionBehavior
 import io.embrace.android.embracesdk.fixtures.fakeCompleteEmbraceNetworkRequest
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSourceImpl
 import io.embrace.android.embracesdk.internal.instrumentation.network.RequestEndData
 import io.embrace.android.embracesdk.internal.instrumentation.network.RequestStartData
 import org.junit.Assert.assertEquals
@@ -56,6 +58,22 @@ internal class InternalNetworkApiImplTest {
         args.clock.setCurrentTime(1000L)
         args.configService.networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior(true)
         initialize().verifyDelegation()
+    }
+
+    @Test
+    fun `url is redacted according to configured redaction patterns`() {
+        args.configService.urlRedactionBehavior = createUrlRedactionBehavior(listOf("https://(embrace)\\.io"))
+        val realNetworkRequestDataSource = NetworkRequestDataSourceImpl(args)
+        val api = InternalNetworkApiImpl(
+            args = args,
+            networkRequestDataSource = realNetworkRequestDataSource,
+            networkCaptureDataSource = null,
+        )
+
+        api.recordNetworkRequest(fakeCompleteEmbraceNetworkRequest)
+
+        val span = args.destination.createdSpans.single()
+        assertEquals("https://<redacted>.io", span.attributes["url.full"])
     }
 
     private fun initialize(): InternalNetworkApiImpl = InternalNetworkApiImpl(

@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeSpanToken
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeTraceparentInjectionBehavior
+import io.embrace.android.embracesdk.fakes.createUrlRedactionBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSourceImpl
@@ -34,6 +35,7 @@ import okhttp3.mockwebserver.MockWebServer
 import okio.Buffer
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
@@ -196,6 +198,35 @@ internal class OkHttpDataSourceTest {
 
         server.enqueue(createBaseMockResponse().setGzipBody(RESPONSE_BODY))
         runAndValidateGetRequest(RESPONSE_BODY_GZIPPED_SIZE)
+    }
+
+    @Test
+    fun `URLs are redacted according to configured redaction patterns`() {
+        // urlRedactionBehavior is read once at NetworkRequestDataSourceImpl construction time, so a fresh
+        // pipeline is built here rather than mutating the shared configService from setup().
+        val redactedArgs = FakeInstrumentationArgs(
+            application = ApplicationProvider.getApplicationContext(),
+            configService = FakeConfigService(
+                urlRedactionBehavior = createUrlRedactionBehavior(listOf(".*/test/(default-path)")),
+            ),
+            clock = sdkClock,
+        )
+        val redactedDataSource = OkHttpDataSource(
+            args = redactedArgs,
+            networkRequestDataSourceProvider = { NetworkRequestDataSourceImpl(redactedArgs) },
+            networkCaptureDataSourceProvider = { NetworkCaptureDataSourceImpl(redactedArgs) },
+        )
+        val redactedClient = OkHttpClient.Builder()
+            .addInterceptor(EmbraceOkHttpInterceptor(InterceptorType.APPLICATION) { redactedDataSource })
+            .addNetworkInterceptor(EmbraceOkHttpInterceptor(InterceptorType.NETWORK) { redactedDataSource })
+            .build()
+
+        server.enqueue(createBaseMockResponse())
+        redactedClient.newCall(postRequestBuilder.build()).execute()
+
+        val url = checkNotNull(redactedArgs.destination.createdSpans.single().attributes[UrlAttributes.URL_FULL])
+        assertTrue(url.endsWith("/test/<redacted>"))
+        assertFalse(url.contains("default-path"))
     }
 
     @Test

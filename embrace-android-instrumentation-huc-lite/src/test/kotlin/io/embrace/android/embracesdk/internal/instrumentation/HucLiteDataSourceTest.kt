@@ -10,10 +10,12 @@ import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeURLStreamHandlerFactory
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
+import io.embrace.android.embracesdk.fakes.createUrlRedactionBehavior
 import io.embrace.android.embracesdk.instrumentation.huclite.DelegatingInstrumentedURLStreamHandlerFactory
 import io.embrace.android.embracesdk.instrumentation.huclite.FAKE_TIME_MS
 import io.embrace.android.embracesdk.instrumentation.huclite.InstrumentedUrlStreamHandlerFactory
 import io.embrace.android.embracesdk.instrumentation.huclite.testUrl
+import io.embrace.android.embracesdk.internal.config.behavior.UrlRedactionBehavior
 import io.embrace.android.embracesdk.internal.network.logging.EmbraceDomainCountLimiter
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.mockk.every
@@ -68,10 +70,11 @@ class HucLiteDataSourceTest {
 
     private fun createHucLiteDataSource(
         networkBehavior: FakeNetworkBehavior = FakeNetworkBehavior(domainCountLimiter = domainCountLimiter),
+        urlRedactionBehavior: UrlRedactionBehavior = createUrlRedactionBehavior(),
     ): HucLiteDataSource = HucLiteDataSource(
         args = FakeInstrumentationArgs(
             application = ApplicationProvider.getApplicationContext(),
-            configService = FakeConfigService(networkBehavior = networkBehavior),
+            configService = FakeConfigService(networkBehavior = networkBehavior, urlRedactionBehavior = urlRedactionBehavior),
             destination = fakeTelemetryDestination,
             logger = fakeEmbLogger,
             clock = fakeClock,
@@ -129,6 +132,24 @@ class HucLiteDataSourceTest {
         // 4 spans should be recorded, 1 should be dropped
         assertEquals(4, fakeTelemetryDestination.createdSpans.size)
         assertEquals("huc_network_request" to AppliedLimitType.DROP, fakeTelemetryService.appliedLimits.first())
+    }
+
+    @Test
+    fun `URL is redacted according to configured redaction patterns`() {
+        val ds = createHucLiteDataSource(
+            urlRedactionBehavior = createUrlRedactionBehavior(listOf(".*/test/(xyz)")),
+        )
+
+        ds.createRequestData(
+            wrappedConnection = mockedConnection,
+            clock = fakeClock,
+        )?.apply {
+            startRequest()
+            completeRequest(200)
+        }
+
+        val span = fakeTelemetryDestination.createdSpans.single()
+        assertEquals("https://fakeurl.pizza/test/<redacted>", span.attributes["url.full"])
     }
 
     @Test

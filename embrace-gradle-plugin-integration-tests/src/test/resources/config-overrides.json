@@ -26,7 +26,10 @@
       ],
       "capture_request_content_length": true,
       "enable_native_monitoring": false,
-      "enable_network_span_forwarding": true
+      "enable_network_span_forwarding": true,
+      "url_redaction_patterns": [
+        "https://example.com/(secret)"
+      ]
     },
     "automatic_data_capture": {
       "network_connectivity_info": false,

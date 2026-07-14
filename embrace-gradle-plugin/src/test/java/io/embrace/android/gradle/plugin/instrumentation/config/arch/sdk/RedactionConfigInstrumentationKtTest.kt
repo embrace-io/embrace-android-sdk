@@ -1,6 +1,7 @@
 package io.embrace.android.gradle.plugin.instrumentation.config.arch.sdk
 
 import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
+Aimport io.embrace.android.gradle.plugin.instrumentation.config.model.NetworkLocalConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.SdkLocalConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import org.junit.Test
@@ -17,6 +18,7 @@ class RedactionConfigInstrumentationKtTest {
 
     private val methods = listOf(
         ConfigMethod("getSensitiveKeysDenylist", "()Ljava/util/List;", listOf("password")),
+        ConfigMethod("getUrlRedactionPatterns", "()Ljava/util/List;", listOf("https://example.com/(secret)")),
     )
 
     @Test
@@ -38,6 +40,9 @@ class RedactionConfigInstrumentationKtTest {
                     null,
                     SdkLocalConfig(
                         sensitiveKeysDenylist = listOf("password"),
+                        networking = NetworkLocalConfig(
+                            urlRedactionPatterns = listOf("https://example.com/(secret)"),
+                        ),
                     ),
                     null,
                 ),

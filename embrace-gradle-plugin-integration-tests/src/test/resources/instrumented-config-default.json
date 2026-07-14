@@ -168,6 +168,9 @@
       "methods": [
         {
           "signature": "getSensitiveKeysDenylist()Ljava/util/List;"
+        },
+        {
+          "signature": "getUrlRedactionPatterns()Ljava/util/List;"
         }
       ]
     }

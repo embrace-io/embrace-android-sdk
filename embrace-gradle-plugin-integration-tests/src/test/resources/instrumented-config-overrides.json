@@ -197,6 +197,10 @@
         {
           "signature": "getSensitiveKeysDenylist()Ljava/util/List;",
           "returnValue": "secret"
+        },
+        {
+          "signature": "getUrlRedactionPatterns()Ljava/util/List;",
+          "returnValue": "https://example.com/(secret)"
         }
       ]
     }

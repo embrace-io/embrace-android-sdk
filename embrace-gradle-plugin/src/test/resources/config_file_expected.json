@@ -7,7 +7,10 @@
       "enabled": true
     },
     "networking": {
-      "capture_request_content_length": false
+      "capture_request_content_length": false,
+      "url_redaction_patterns": [
+        "https://example.com/(secret)"
+      ]
     },
     "taps": {
       "capture_coordinates": false

@@ -92,6 +92,9 @@ attribute_groups:
       - ref: smoothness.outcome
       - ref: smoothness.frame_count
       - ref: smoothness.normalized_dropped_frames
+      - ref: smoothness.idle_threshold_ms
+      - ref: smoothness.held_idle_threshold_ms
+      - ref: smoothness.jank_heuristic_multiplier
 
   - id: emb.screen_load
     visibility: public
@@ -102,6 +105,9 @@ attribute_groups:
       - ref: screen_load.nav_start_delay_ms
       - ref: screen_load.nav_duration_ms
       - ref: screen_load.first_frame_duration_ms
+      - ref: screen_load.idle_threshold_ms
+      - ref: screen_load.timeout_ms
+      - ref: screen_load.nav_timeout_ms
 
   - id: emb.network_request
     visibility: public
@@ -421,6 +427,21 @@ attributes:
     brief: "Total jank over the focal moment, expressed in 60fps-reference frames."
     stability: development
     examples: [0.5, 2.0]
+  - key: smoothness.idle_threshold_ms
+    type: int
+    brief: "The idle threshold that was applied to determine when the focal moment had settled."
+    stability: development
+    examples: [100, 150]
+  - key: smoothness.held_idle_threshold_ms
+    type: int
+    brief: "The 'press and hold' settle threshold that was applied."
+    stability: development
+    examples: [500, 600]
+  - key: smoothness.jank_heuristic_multiplier
+    type: double
+    brief: "The grace multiplier that was applied to a frame's budget/deadline before it was considered janky."
+    stability: development
+    examples: [2.0, 2.5]
   - key: screen_load.outcome
     type: string
     brief: "How the screen load ended."
@@ -441,6 +462,21 @@ attributes:
     brief: "Duration from the navigation end event until the first frame rendered on the destination, in milliseconds."
     stability: development
     examples: [10, 100]
+  - key: screen_load.idle_threshold_ms
+    type: int
+    brief: "The idle threshold that was applied to determine when the destination screen had settled."
+    stability: development
+    examples: [1000, 1500]
+  - key: screen_load.timeout_ms
+    type: int
+    brief: "The maximum duration that was applied before the screen load was force-reported as timed out."
+    stability: development
+    examples: [30000, 45000]
+  - key: screen_load.nav_timeout_ms
+    type: int
+    brief: "The maximum tap-to-navigation-start gap that was applied to link the two events into one screen load."
+    stability: development
+    examples: [500, 750]
   - key: emb.w3c_traceparent
     type: string
     brief: "The W3C traceparent header value forwarded with the network request."

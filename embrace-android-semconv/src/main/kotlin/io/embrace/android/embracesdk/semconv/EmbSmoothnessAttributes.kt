@@ -17,6 +17,24 @@ object EmbSmoothnessAttributes {
     const val SMOOTHNESS_FRAME_COUNT: String = "smoothness.frame_count"
 
     /**
+     * The 'press and hold' settle threshold that was applied.
+     */
+    @ExperimentalSemconv
+    const val SMOOTHNESS_HELD_IDLE_THRESHOLD_MS: String = "smoothness.held_idle_threshold_ms"
+
+    /**
+     * The idle threshold that was applied to determine when the focal moment had settled.
+     */
+    @ExperimentalSemconv
+    const val SMOOTHNESS_IDLE_THRESHOLD_MS: String = "smoothness.idle_threshold_ms"
+
+    /**
+     * The grace multiplier that was applied to a frame's budget/deadline before it was considered janky.
+     */
+    @ExperimentalSemconv
+    const val SMOOTHNESS_JANK_HEURISTIC_MULTIPLIER: String = "smoothness.jank_heuristic_multiplier"
+
+    /**
      * Total jank over the focal moment, expressed in 60fps-reference frames.
      */
     @ExperimentalSemconv

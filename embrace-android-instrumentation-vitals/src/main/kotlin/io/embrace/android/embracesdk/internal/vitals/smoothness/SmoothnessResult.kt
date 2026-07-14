@@ -22,4 +22,16 @@ internal data class SmoothnessResult(
      * Total jank over the focal moment, expressed in 60fps-reference frames.
      */
     val normalizedDroppedFrames: Double,
+    /**
+     * The idle threshold that was applied to determine when the focal moment had settled.
+     */
+    val idleThresholdMs: Long,
+    /**
+     * The "press and hold" settle threshold that was applied.
+     */
+    val heldIdleThresholdMs: Long,
+    /**
+     * The grace multiplier that was applied to a frame's budget/deadline before it was considered janky.
+     */
+    val jankHeuristicMultiplier: Double,
 )

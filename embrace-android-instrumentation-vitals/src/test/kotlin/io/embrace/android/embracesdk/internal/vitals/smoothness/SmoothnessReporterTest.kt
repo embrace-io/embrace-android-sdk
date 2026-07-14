@@ -6,7 +6,12 @@ import org.junit.Test
 internal class SmoothnessReporterTest {
 
     private val emitted = mutableListOf<SmoothnessResult>()
-    private val reporter = SmoothnessReporter(emit = emitted::add)
+    private val reporter = SmoothnessReporter(
+        emit = emitted::add,
+        idleThresholdMs = 150L,
+        heldIdleThresholdMs = 600L,
+        jankHeuristicMultiplier = 2.5,
+    )
 
     @Test
     fun `normalizes jank to 60fps reference frames per the SMOOTHNESS doc examples`() {
@@ -26,6 +31,9 @@ internal class SmoothnessReporterTest {
         assertEquals(1_000L, result.startTimeMs)
         assertEquals(1_100L, result.durationMs)
         assertEquals(3, result.frameCount)
+        assertEquals(150L, result.idleThresholdMs)
+        assertEquals(600L, result.heldIdleThresholdMs)
+        assertEquals(2.5, result.jankHeuristicMultiplier, 0.0)
     }
 
     @Test

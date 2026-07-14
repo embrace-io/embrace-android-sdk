@@ -32,7 +32,10 @@ internal class VitalsDataSource(
 ) {
 
     // Extracts per-frame jank; below API 31 the budget tracks the display's refresh interval.
-    private val frameMetricsStrategy: FrameMetricsStrategy = FrameMetricsStrategy.create(displayRefreshIntervalNanos())
+    private val frameMetricsStrategy: FrameMetricsStrategy = FrameMetricsStrategy.create(
+        refreshIntervalNanos = displayRefreshIntervalNanos(),
+        jankHeuristicMultiplier = args.configService.vitalsBehavior.getJankHeuristicMultiplier(),
+    )
 
     private val displayListener = object : DisplayManager.DisplayListener {
         override fun onDisplayChanged(displayId: Int) {
@@ -71,15 +74,26 @@ internal class VitalsDataSource(
                 ?.registerDisplayListener(displayListener, handler)
         }
 
+        val vitalsBehavior = args.configService.vitalsBehavior
         val tracker = FocalMomentTracker(
             scheduler = vitalsScheduler,
-            reporter = SmoothnessReporter(emit = ::emitSmoothnessResult),
+            reporter = SmoothnessReporter(
+                emit = ::emitSmoothnessResult,
+                idleThresholdMs = vitalsBehavior.getSmoothnessIdleThresholdMs(),
+                heldIdleThresholdMs = vitalsBehavior.getSmoothnessHeldIdleThresholdMs(),
+                jankHeuristicMultiplier = vitalsBehavior.getJankHeuristicMultiplier(),
+            ),
             clock = clock,
             screenLoadTracker = ScreenLoadTracker(
                 scheduler = vitalsScheduler,
                 clock = clock,
                 emit = ::emitScreenLoadResult,
+                idleThresholdMs = vitalsBehavior.getScreenLoadIdleThresholdMs(),
+                timeoutMs = vitalsBehavior.getScreenLoadTimeoutMs(),
+                navigationTimeoutMs = vitalsBehavior.getScreenLoadNavTimeoutMs(),
             ),
+            idleThresholdMs = vitalsBehavior.getSmoothnessIdleThresholdMs(),
+            heldIdleThresholdMs = vitalsBehavior.getSmoothnessHeldIdleThresholdMs(),
         )
         focalTracker = tracker
 
@@ -119,6 +133,9 @@ internal class VitalsDataSource(
                     outcome = result.outcome.name.lowercase(),
                     frameCount = result.frameCount,
                     normalizedDroppedFrames = result.normalizedDroppedFrames,
+                    idleThresholdMs = result.idleThresholdMs,
+                    heldIdleThresholdMs = result.heldIdleThresholdMs,
+                    jankHeuristicMultiplier = result.jankHeuristicMultiplier,
                 ).attributes(),
             )
         }
@@ -142,6 +159,9 @@ internal class VitalsDataSource(
                     navStartDelayMs = result.navStartDelayMs,
                     navDurationMs = result.navDurationMs,
                     firstFrameDurationMs = result.firstFrameDurationMs,
+                    idleThresholdMs = result.idleThresholdMs,
+                    timeoutMs = result.timeoutMs,
+                    navTimeoutMs = result.navTimeoutMs,
                 ).attributes(),
             )
         }

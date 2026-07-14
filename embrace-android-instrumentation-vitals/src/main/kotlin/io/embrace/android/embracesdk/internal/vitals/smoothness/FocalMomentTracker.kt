@@ -25,8 +25,8 @@ internal class FocalMomentTracker(
     private val reporter: SmoothnessReporter,
     private val clock: Clock,
     private val screenLoadTracker: ScreenLoadTracker,
-    private val idleThresholdMs: Long = IDLE_THRESHOLD_MS,
-    private val heldIdleThresholdMs: Long = HELD_IDLE_THRESHOLD_MS,
+    private val idleThresholdMs: Long = DEFAULT_IDLE_THRESHOLD_MS,
+    private val heldIdleThresholdMs: Long = DEFAULT_HELD_IDLE_THRESHOLD_MS,
 ) : FocalInteractionCallbacks {
 
     // Reused hop Runnable instances (main thread -> Vitals thread); allocate them here to make certain they're off the hot path
@@ -219,13 +219,13 @@ internal class FocalMomentTracker(
 
     private fun nowNanos(): Long = nowMs().millisToNanos()
 
-    private companion object {
-        const val IDLE_THRESHOLD_MS = 100L
+    companion object {
+        const val DEFAULT_IDLE_THRESHOLD_MS = 100L
 
         /**
          * The "press and hold" threshold, if we don't get a "move" event (which we really should) within this time we consider the
          * interaction / focal moment settled.
          */
-        const val HELD_IDLE_THRESHOLD_MS = 500L
+        const val DEFAULT_HELD_IDLE_THRESHOLD_MS = 500L
     }
 }

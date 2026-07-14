@@ -33,4 +33,16 @@ internal data class ScreenLoadResult(
      * How the load ended.
      */
     val outcome: ScreenLoadOutcome,
+    /**
+     * The idle threshold that was applied to determine when the destination screen had settled.
+     */
+    val idleThresholdMs: Long,
+    /**
+     * The maximum duration that was applied before the screen load was force-reported as timed out.
+     */
+    val timeoutMs: Long,
+    /**
+     * The maximum tap-to-navigation-start gap that was applied to link the two events into one screen load.
+     */
+    val navTimeoutMs: Long,
 )

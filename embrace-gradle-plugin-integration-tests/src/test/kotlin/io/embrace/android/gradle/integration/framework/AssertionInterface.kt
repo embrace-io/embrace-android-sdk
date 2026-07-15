@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.validateMappingFile
 import io.embrace.android.gradle.config.TestMatrix
 import io.embrace.android.gradle.plugin.buildreporter.BuildTelemetryRequest
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
+import io.embrace.android.gradle.plugin.tasks.buildinfo.BuildInfoExport
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadHandshakeRequest
 import io.embrace.android.gradle.plugin.util.serialization.MoshiSerializer
 import okhttp3.mockwebserver.RecordedRequest
@@ -314,5 +315,21 @@ class AssertionInterface(
 
     private fun defaultAppIds(size: Int) = MutableList(size) {
         IntegrationTestDefaults.APP_ID
+    }
+
+    /**
+     * Reads and deserializes the `embrace-build-info.json` file exported for the given variant.
+     */
+    fun AssertionInterface.readBuildInfoExport(projectDir: File, variant: String): BuildInfoExport {
+        val file = projectDir.buildFile("outputs/embrace/build-info/$variant/embrace-build-info.json")
+        return MoshiSerializer().fromJson(file.readText(), BuildInfoExport::class.java)
+    }
+
+    /**
+     * Asserts that no `embrace-build-info.json` file was exported for the given variant.
+     */
+    fun AssertionInterface.verifyNoBuildInfoExported(projectDir: File, variant: String) {
+        val file = projectDir.buildFile("outputs/embrace/build-info/$variant/embrace-build-info.json")
+        assertFalse("Expected no build info file at ${file.absolutePath}", file.exists())
     }
 }

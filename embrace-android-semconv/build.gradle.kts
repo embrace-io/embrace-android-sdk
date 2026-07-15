@@ -32,7 +32,7 @@ abstract class GenerateEmbraceSemanticConventionsTask @Inject constructor(
         try {
             val result = execOps.exec {
                 commandLine(
-                    "weaver", "registry", "generate",
+                    "weaver", "registry", "generate", "--v2",
                     "-r", semconvDir.get().asFile.absolutePath,
                     "--templates", templatesDir.get().asFile.absolutePath,
                     language,

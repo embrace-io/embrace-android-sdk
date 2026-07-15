@@ -211,7 +211,7 @@ object EmbSessionAttributes {
         const val BACKGROUND_ONLY_USER_SESSION_FOREGROUNDED: String = "background_only_user_session_foregrounded"
 
         /**
-         * Session not continued because the current timestamp is before the session that was ended.
+         * The current timestamp is before the active session, so the user session cannot continue.
          */
         @ExperimentalSemconv
         const val CLOCK_MISMATCH: String = "clock_mismatch"

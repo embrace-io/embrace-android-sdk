@@ -556,7 +556,7 @@ groups:
               value: "background_only_user_session_foregrounded"
               brief: "Background-only user session ended because the app entered the foreground."
               stability: development
-            - id: background_only_user_session_foregrounded
+            - id: clock_mismatch
               value: "clock_mismatch"
               brief: "The current timestamp is before the active session, so the user session cannot continue."
               stability: development

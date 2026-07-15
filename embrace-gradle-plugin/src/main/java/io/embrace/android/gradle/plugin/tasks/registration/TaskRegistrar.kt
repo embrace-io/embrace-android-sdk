@@ -11,6 +11,7 @@ import io.embrace.android.gradle.plugin.dependency.installDependenciesForVariant
 import io.embrace.android.gradle.plugin.instrumentation.AsmTaskRegistration
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
+import io.embrace.android.gradle.plugin.tasks.buildinfo.ExportBuildInfoTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.il2cpp.Il2CppUploadTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTasksRegistration
 import io.embrace.android.gradle.plugin.tasks.r8.JvmMappingUploadTaskRegistration
@@ -68,12 +69,21 @@ class TaskRegistrar(
 
         AsmTaskRegistration().register(params)
 
-        if (shouldSkipUploadTasks(variant)) {
+        if (variant.isBuildTypeDebuggable || behavior.isPluginDisabledForVariant(variant.name)) {
+            logger.info("Skipping upload/export tasks for variant: ${variant.name}")
+            return
+        }
+
+        if (behavior.isExportBuildInfoEnabled) {
+            ExportBuildInfoTaskRegistration().register(params)
+        }
+
+        if (!shouldRegisterUploadTasks(variant, variantConfigurationsListProperty)) {
             logger.info("Skipping upload tasks for variant: ${variant.name}")
             return
-        } else {
-            registerUploadTasks(params, variant)
         }
+
+        registerUploadTasks(params, variant)
     }
 
     private fun onReactNativeVariant(variant: AndroidCompactedVariantData, ref: Variant) {

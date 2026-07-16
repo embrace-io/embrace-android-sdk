@@ -1,0 +1,16 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: emb.view
+    visibility: public
+    stability: development
+    brief: "Embrace view/screen attributes"
+    attributes:
+      - ref: view.name
+
+attributes:
+  - key: view.name
+    type: string
+    brief: "The name of the view or screen."
+    stability: development
+    examples: ["MainActivity", "LoginFragment"]

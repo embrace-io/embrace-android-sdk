@@ -1,0 +1,58 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: emb.android
+    visibility: public
+    stability: development
+    brief: "Embrace Android platform attributes"
+    attributes:
+      - ref: emb.android.threads
+      - ref: emb.android.crash_number
+      - ref: emb.android.aei_crash_number
+      - ref: emb.exception_handling
+      - ref: emb.android.crash.exception_cause
+      - ref: emb.android.react_native_crash.js_exception
+      - ref: emb.android.native_crash.exception
+      - ref: emb.android.native_crash.symbols
+
+attributes:
+  - key: emb.android.threads
+    type: string
+    brief: "A snapshot of the current call stack of the threads running in the app process."
+    stability: development
+    examples: ["[{...}]"]
+  - key: emb.android.crash_number
+    type: string
+    brief: "Sequence number for the number of crashes captured by Embrace on the device."
+    stability: development
+    examples: ["1", "42"]
+  - key: emb.android.aei_crash_number
+    type: string
+    brief: "Sequence number for the number of AEI crashes captured by Embrace on the device."
+    stability: development
+    examples: ["1", "42"]
+  - key: emb.exception_handling
+    type: string
+    brief: "The exception handling type - whether it's handled or unhandled."
+    stability: development
+    examples: ["handled", "unhandled"]
+  - key: emb.android.crash.exception_cause
+    type: string
+    brief: "The list of Throwable that caused the exception responsible for a crash."
+    stability: development
+    examples: ["cause1 -> cause2"]
+  - key: emb.android.react_native_crash.js_exception
+    type: string
+    brief: "The JavaScript unhandled exception from the ReactNative layer."
+    stability: development
+    examples: ["TypeError: undefined is not a function"]
+  - key: emb.android.native_crash.exception
+    type: string
+    brief: "Exception coming from the native layer."
+    stability: development
+    examples: ["SIGSEGV"]
+  - key: emb.android.native_crash.symbols
+    type: string
+    brief: "Native symbols used to symbolicate a native crash."
+    stability: development
+    examples: ["{\"arch\":\"arm64\"}"]

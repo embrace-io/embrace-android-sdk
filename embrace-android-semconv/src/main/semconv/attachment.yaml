@@ -1,0 +1,34 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: emb.attachment
+    visibility: public
+    stability: development
+    brief: "Embrace log message attachment attributes"
+    attributes:
+      - ref: emb.attachment_size
+      - ref: emb.attachment_url
+      - ref: emb.attachment_id
+      - ref: emb.attachment_error_code
+
+attributes:
+  - key: emb.attachment_size
+    type: string
+    brief: "The size of a log message attachment in bytes."
+    stability: development
+    examples: ["1024", "65536"]
+  - key: emb.attachment_url
+    type: string
+    brief: "The URL of a user-hosted log message attachment."
+    stability: development
+    examples: ["https://example.com/attachment"]
+  - key: emb.attachment_id
+    type: string
+    brief: "The ID of a user-hosted log message attachment."
+    stability: development
+    examples: ["abc123"]
+  - key: emb.attachment_error_code
+    type: string
+    brief: "The error code associated with a failed log message attachment."
+    stability: development
+    examples: ["404", "500"]

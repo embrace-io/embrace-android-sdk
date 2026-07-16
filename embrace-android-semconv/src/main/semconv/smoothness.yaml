@@ -1,0 +1,52 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: emb.smoothness
+    visibility: public
+    stability: development
+    brief: "Embrace smoothness vital attributes (experimental)"
+    attributes:
+      - ref: smoothness.outcome
+      - ref: smoothness.frame_count
+      - ref: smoothness.normalized_dropped_frames
+      - ref: smoothness.idle_threshold_ms
+      - ref: smoothness.held_idle_threshold_ms
+      - ref: smoothness.jank_heuristic_multiplier
+      - ref: smoothness.frame_trace
+
+attributes:
+  - key: smoothness.outcome
+    type: string
+    brief: "How the focal moment ended."
+    stability: development
+    examples: ["settled", "interrupted"]
+  - key: smoothness.frame_count
+    type: int
+    brief: "Number of frames rendered during the focal moment."
+    stability: development
+    examples: [10, 42]
+  - key: smoothness.normalized_dropped_frames
+    type: double
+    brief: "Total jank over the focal moment, expressed in 60fps-reference frames."
+    stability: development
+    examples: [0.5, 2.0]
+  - key: smoothness.idle_threshold_ms
+    type: int
+    brief: "The idle threshold that was applied to determine when the focal moment had settled."
+    stability: development
+    examples: [100, 150]
+  - key: smoothness.held_idle_threshold_ms
+    type: int
+    brief: "The 'press and hold' settle threshold that was applied."
+    stability: development
+    examples: [500, 600]
+  - key: smoothness.jank_heuristic_multiplier
+    type: double
+    brief: "The grace multiplier that was applied to a frame's budget/deadline before it was considered janky."
+    stability: development
+    examples: [2.0, 2.5]
+  - key: smoothness.frame_trace
+    type: string
+    brief: "Base64-encoded, varint-packed per-frame duration trace over the focal moment, for a sampled fraction of devices. Diagnostic aid while smoothness thresholds are being tuned."
+    stability: development
+    examples: ["AQIDBA=="]

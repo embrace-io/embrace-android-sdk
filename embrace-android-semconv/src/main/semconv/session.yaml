@@ -1,0 +1,206 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: emb.session
+    visibility: public
+    stability: development
+    brief: "Embrace session part span attributes"
+    attributes:
+      - ref: emb.state
+      - ref: emb.cold_start
+      - ref: emb.session_number
+      - ref: emb.clean_exit
+      - ref: emb.terminated
+      - ref: emb.heartbeat_time_unix_nano
+      - ref: emb.crash_id
+      - ref: emb.session_start_type
+      - ref: emb.session_end_type
+      - ref: emb.startup_duration
+      - ref: emb.error_log_count
+      - ref: emb.disk_free_bytes
+      - ref: emb.private.send_mode
+      - ref: emb.startup_activity
+      - ref: emb.process_identifier
+      - ref: emb.private.sequence_id
+      - ref: emb.user_session_id
+      - ref: emb.user_session_number
+      - ref: emb.user_session_start_ts
+      - ref: emb.session_part_id
+      - ref: emb.session_part_number
+      - ref: emb.user_session_part_index
+      - ref: emb.is_final_session_part
+      - ref: emb.is_background_only_part
+      - ref: emb.user_session_termination_reason
+      - ref: emb.user_session_max_duration_seconds
+      - ref: emb.user_session_inactivity_timeout_seconds
+      - ref: emb.clock_network_drift
+      - ref: emb.clock_gnss_drift
+
+attributes:
+  - key: emb.state
+    type: string
+    brief: "The application state (foreground/background) at the time the log was recorded."
+    stability: development
+    examples: ["foreground", "background"]
+  - key: emb.cold_start
+    type: string
+    brief: "Whether the session is a cold start."
+    stability: development
+    examples: ["true", "false"]
+  - key: emb.session_number
+    type: string
+    brief: "Session number (integer sequence ID)."
+    stability: development
+    examples: ["1", "42"]
+  - key: emb.clean_exit
+    type: string
+    brief: "Whether the session was ended by the SDK or an unexpected termination."
+    stability: development
+    examples: ["true", "false"]
+  - key: emb.terminated
+    type: string
+    brief: "Whether the session was terminated."
+    stability: development
+    examples: ["true", "false"]
+  - key: emb.heartbeat_time_unix_nano
+    type: string
+    brief: "Last known time that the session existed (nanoseconds since epoch)."
+    stability: development
+    examples: ["1617983000000000000"]
+  - key: emb.crash_id
+    type: string
+    brief: "The crash report ID tied to the session."
+    stability: development
+    examples: ["abc123"]
+  - key: emb.session_start_type
+    type: string
+    brief: "The session start type."
+    stability: development
+    examples: ["cold_start", "resume"]
+  - key: emb.session_end_type
+    type: string
+    brief: "The session end type."
+    stability: development
+    examples: ["clean_exit", "crash"]
+  - key: emb.startup_duration
+    type: string
+    brief: "The startup duration in nanoseconds."
+    stability: development
+    examples: ["1000000000"]
+  - key: emb.error_log_count
+    type: string
+    brief: "The number of error logs in a session."
+    stability: development
+    examples: ["0", "5"]
+  - key: emb.disk_free_bytes
+    type: string
+    brief: "The number of free bytes on disk."
+    stability: development
+    examples: ["1073741824"]
+  - key: emb.private.send_mode
+    type: string
+    brief: "How a signal should be delivered to the Embrace backend."
+    stability: development
+    examples: ["immediate", "DEFER"]
+  - key: emb.startup_activity
+    type: string
+    brief: "The name of the Activity that app startup completed in."
+    stability: development
+    examples: ["MainActivity"]
+  - key: emb.process_identifier
+    type: string
+    brief: "Monotonically increasing sequence ID given to completed spans expected to be sent to the server."
+    stability: development
+    examples: ["abc123"]
+  - key: emb.private.sequence_id
+    type: string
+    brief: "Unique ID assigned to each app instance."
+    stability: development
+    examples: ["1", "42"]
+  - key: emb.user_session_id
+    type: string
+    brief: "UUID identifying the session."
+    stability: development
+    examples: ["3a1c2b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"]
+  - key: emb.user_session_number
+    type: string
+    brief: "Incremental counter of sessions since SDK install."
+    stability: development
+    examples: ["1", "42"]
+  - key: emb.user_session_start_ts
+    type: string
+    brief: "Session start timestamp (milliseconds since epoch)."
+    stability: development
+    examples: ["1617983000000"]
+  - key: emb.session_part_id
+    type: string
+    brief: "UUID identifying the session part."
+    stability: development
+    examples: ["3a1c2b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"]
+  - key: emb.session_part_number
+    type: string
+    brief: "Monotonically incrementing counter of session parts since SDK install. Seeded from emb.session_number when first created; increments by 1 on each new session part. Never resets across process or session boundaries."
+    stability: development
+    examples: ["1", "2", "42"]
+  - key: emb.user_session_part_index
+    type: string
+    brief: "The index of the part within the session. 1-indexed, matching the behavior of session_number."
+    stability: development
+    examples: ["1", "2"]
+  - key: emb.is_final_session_part
+    type: string
+    brief: "Set to 1 when the SDK knows for certain this is the final part of a session (max duration reached, inactivity timeout, or manual termination). Omitted when the value would be 0."
+    stability: development
+    examples: ["1"]
+  - key: emb.is_background_only_part
+    type: string
+    brief: "Set to 1 when the session part belongs to a background user session, i.e. a user session covering a period when the app process is alive but the user is not active. Omitted for regular user sessions."
+    stability: development
+    examples: ["1"]
+  - key: emb.user_session_termination_reason
+    type:
+      allow_custom_values: false
+      members:
+        - id: max_duration_reached
+          value: "max_duration_reached"
+          brief: "Session ended because the maximum session duration was reached."
+          stability: development
+        - id: inactivity
+          value: "inactivity"
+          brief: "Session ended due to inactivity timeout."
+          stability: development
+        - id: manual
+          value: "manual"
+          brief: "Session ended by manual termination."
+          stability: development
+        - id: background_only_user_session_foregrounded
+          value: "background_only_user_session_foregrounded"
+          brief: "Background-only user session ended because the app entered the foreground."
+          stability: development
+        - id: clock_mismatch
+          value: "clock_mismatch"
+          brief: "The current timestamp is before the active session, so the user session cannot continue."
+          stability: development
+    brief: "The reason the session part was terminated."
+    stability: development
+    examples: ["max_duration_reached", "inactivity", "manual", "background_only_user_session_foregrounded"]
+  - key: emb.user_session_max_duration_seconds
+    type: string
+    brief: "The maximum session duration (in seconds) that the SDK was configured to use."
+    stability: development
+    examples: ["3600", "7200"]
+  - key: emb.user_session_inactivity_timeout_seconds
+    type: string
+    brief: "The inactivity timeout (in seconds) that the SDK was configured to use."
+    stability: development
+    examples: ["300", "1800"]
+  - key: emb.clock_network_drift
+    type: string
+    brief: "Drift in milliseconds. Positive = network clock behind wall clock. (Wall Time - Network Time)"
+    stability: development
+    examples: ["123", "-321"]
+  - key: emb.clock_gnss_drift
+    type: string
+    brief: "Drift in milliseconds. Positive = GNSS clock behind wall clock. (Wall Time - GNSS Time)"
+    stability: development
+    examples: ["987", "-789"]

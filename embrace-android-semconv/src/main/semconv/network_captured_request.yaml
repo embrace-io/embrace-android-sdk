@@ -1,0 +1,76 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: emb.network_captured_request
+    visibility: public
+    stability: development
+    brief: "Embrace network captured request attributes"
+    attributes:
+      - ref: duration
+      - ref: end-time
+      - ref: network-id
+      - ref: request-body
+      - ref: request-query
+      - ref: request-size
+      - ref: response-body
+      - ref: response-size
+      - ref: start-time
+      - ref: url
+      - ref: encrypted-payload
+
+attributes:
+  - key: duration
+    type: string
+    brief: "The duration of the network request in milliseconds."
+    stability: development
+    examples: ["1234"]
+  - key: end-time
+    type: string
+    brief: "The end time of the network request in milliseconds since epoch."
+    stability: development
+    examples: ["1617983000000"]
+  - key: network-id
+    type: string
+    brief: "The ID of the network interface used for the request."
+    stability: development
+    examples: ["wifi0"]
+  - key: request-body
+    type: string
+    brief: "The body of the network request."
+    stability: development
+    examples: ["{\"key\": \"value\"}"]
+  - key: request-query
+    type: string
+    brief: "The query parameters of the network request."
+    stability: development
+    examples: ["foo=bar&baz=qux"]
+  - key: request-size
+    type: string
+    brief: "The size of the network request body in bytes."
+    stability: development
+    examples: ["1024"]
+  - key: response-body
+    type: string
+    brief: "The body of the network response."
+    stability: development
+    examples: ["{\"result\": \"ok\"}"]
+  - key: response-size
+    type: string
+    brief: "The size of the network response body in bytes."
+    stability: development
+    examples: ["2048"]
+  - key: start-time
+    type: string
+    brief: "The start time of the network request in milliseconds since epoch."
+    stability: development
+    examples: ["1617982999000"]
+  - key: url
+    type: string
+    brief: "The URL of the network request."
+    stability: development
+    examples: ["https://example.com/api/v1/resource"]
+  - key: encrypted-payload
+    type: string
+    brief: "The encrypted payload of the network request or response."
+    stability: development
+    examples: ["abc123encrypted"]

@@ -26,9 +26,11 @@ internal class VitalsActivityListener(
     private val frameListeners = WeakHashMap<Window, VitalsFrameMetricsListener>()
 
     override fun onActivityCreated(activity: Activity, bundle: Bundle?) {
+        // captured first so the navigation-start timestamp reflects this event, not the delay until it's processed
+        val eventTime = SystemClock.uptimeMillis()
         try {
             // a non-null bundle means the Activity is being recreated (config change / restore), not navigated to
-            navSource.onActivityCreated(activity.localClassName, recreated = bundle != null)
+            navSource.onActivityCreated(activity.localClassName, recreated = bundle != null, eventTime = eventTime)
         } catch (_: Throwable) {
         }
     }

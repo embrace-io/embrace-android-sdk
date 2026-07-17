@@ -68,21 +68,22 @@ internal class ScreenLoadTracker(
 
     /**
      * Signal a navigation start, which confirms a real screen load (typically including the time since [onTap]). If the destination
-     * [screenName] is known here it should be specified as non-`null`.
+     * [screenName] is known here it should be specified as non-`null`. The [eventTime] can be specified relative to [uptimeMillis] to
+     * accurately anchor the navigation start to the underlying event (e.g. the Activity creation), rather than to whenever this call
+     * happens to run.
      */
     @WorkerThread
-    fun onNavigationStart(screenName: String? = null) {
+    fun onNavigationStart(screenName: String? = null, eventTime: Long = uptimeMillis()) {
         when (state) {
-            State.IDLE -> openLoad()
+            State.IDLE -> openLoad(eventTime)
             State.CANDIDATE -> {
-                val now = uptimeMillis()
-                if (now <= startUptimeMs + NAVIGATION_TIMEOUT_MS) {
+                if (eventTime <= startUptimeMs + NAVIGATION_TIMEOUT_MS) {
                     state = State.CONFIRMED
-                    navStartMs = now
+                    navStartMs = eventTime
                 } else {
                     // the previous "tap" event is too far in the past to be considered part of the screen load
                     // so we move the "start time" to now
-                    openLoad()
+                    openLoad(eventTime)
                 }
             }
 
@@ -90,7 +91,7 @@ internal class ScreenLoadTracker(
             State.SETTLING -> {
                 // flush the current screen load before we start another one
                 complete(endMs = settle.lastActivityMs, outcome = ScreenLoadOutcome.NAVIGATION_INTERRUPTED)
-                openLoad()
+                openLoad(eventTime)
             }
         }
 
@@ -182,12 +183,14 @@ internal class ScreenLoadTracker(
         complete(endMs = endMs, outcome = ScreenLoadOutcome.TIMED_OUT)
     }
 
-    private fun openLoad() {
+    private fun openLoad(eventTime: Long = uptimeMillis()) {
         state = State.CONFIRMED
         screenName = ""
-        startUptimeMs = uptimeMillis()
+        startUptimeMs = eventTime
         navStartMs = startUptimeMs
-        startWallMs = clock.now()
+
+        val startUptimeDelta = uptimeMillis() - startUptimeMs
+        startWallMs = clock.now() - startUptimeDelta
         scheduleTimeout()
     }
 

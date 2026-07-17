@@ -10,8 +10,8 @@ internal class FakeFocalInteractionCallbacks : FocalInteractionCallbacks {
     var tapCount = 0
     var windowFocusedCount = 0
     var appBackgroundedCount = 0
-    val navigationStarts = mutableListOf<String?>()
-    val navigationEnds = mutableListOf<String?>()
+    val navigationStarts = mutableListOf<Pair<String?, Long>>()
+    val navigationEnds = mutableListOf<Pair<String?, Long>>()
 
     override fun onFrame(vsyncNanos: Long, frameDispatchNanos: Long, jankNanos: Long) {}
     override fun onScreenStart() { screenStartCount++ }
@@ -20,8 +20,8 @@ internal class FakeFocalInteractionCallbacks : FocalInteractionCallbacks {
     override fun onInteractionMove() { interactionMoveCount++ }
     override fun onInteractionEnd() { interactionEndCount++ }
     override fun onTap(eventTime: Long) { tapCount++ }
-    override fun onNavigationStart(screenName: String?) { navigationStarts += screenName }
-    override fun onNavigationEnd(screenName: String?, eventTime: Long) { navigationEnds += screenName }
+    override fun onNavigationStart(screenName: String?, eventTime: Long) { navigationStarts += screenName to eventTime }
+    override fun onNavigationEnd(screenName: String?, eventTime: Long) { navigationEnds += screenName to eventTime }
     override fun onWindowFocused() { windowFocusedCount++ }
     override fun onAppBackgrounded() { appBackgroundedCount++ }
 }

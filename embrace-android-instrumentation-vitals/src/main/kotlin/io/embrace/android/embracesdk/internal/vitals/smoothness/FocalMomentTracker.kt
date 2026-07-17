@@ -111,8 +111,8 @@ internal class FocalMomentTracker(
         scheduler.post { screenLoadTracker.onNavigationStart(screenName) }
 
     @MainThread
-    override fun onNavigationEnd(screenName: String?) =
-        scheduler.post { screenLoadTracker.onNavigationEnd(screenName) }
+    override fun onNavigationEnd(screenName: String?, eventTime: Long) =
+        scheduler.post { screenLoadTracker.onNavigationEnd(screenName, eventTime) }
 
     @MainThread
     override fun onWindowFocused() =

@@ -24,7 +24,7 @@ internal class ActivityNavigationSource(
         }
     }
 
-    fun onActivityResumed(screenName: String) {
-        callbacks.onNavigationEnd(screenName)
+    fun onActivityResumed(screenName: String, eventTime: Long) {
+        callbacks.onNavigationEnd(screenName, eventTime)
     }
 }

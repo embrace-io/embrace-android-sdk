@@ -21,7 +21,7 @@ internal class FakeFocalInteractionCallbacks : FocalInteractionCallbacks {
     override fun onInteractionEnd() { interactionEndCount++ }
     override fun onTap(eventTime: Long) { tapCount++ }
     override fun onNavigationStart(screenName: String?) { navigationStarts += screenName }
-    override fun onNavigationEnd(screenName: String?) { navigationEnds += screenName }
+    override fun onNavigationEnd(screenName: String?, eventTime: Long) { navigationEnds += screenName }
     override fun onWindowFocused() { windowFocusedCount++ }
     override fun onAppBackgrounded() { appBackgroundedCount++ }
 }

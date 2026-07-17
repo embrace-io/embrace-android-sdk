@@ -51,9 +51,10 @@ internal interface FocalInteractionCallbacks {
     fun onNavigationStart(screenName: String?)
 
     /**
-     * A navigation reached [screenName] (if known) — arms the settle that ends the screen load.
+     * A navigation reached [screenName] (if known) — arms the settle that ends the screen load. The [eventTime] is the
+     * [android.os.SystemClock.uptimeMillis] that the event occurred.
      */
-    fun onNavigationEnd(screenName: String?)
+    fun onNavigationEnd(screenName: String?, eventTime: Long)
 
     /**
      * The window gained input focus: the open transition finished, extending an in-flight screen load past

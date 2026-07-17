@@ -100,10 +100,11 @@ internal class ScreenLoadTracker(
 
     /**
      * Signal the end of a navigation, recording that the destination has been reached (updating the screen name if [screenName] is not
-     * `null`).
+     * `null`). The [eventTime] can be specified relative to [uptimeMillis] to accurately anchor the navigation end to the underlying
+     * event (e.g. the Activity resume), rather than to whenever this call happens to run.
      */
     @WorkerThread
-    fun onNavigationEnd(screenName: String? = null) {
+    fun onNavigationEnd(screenName: String? = null, eventTime: Long = uptimeMillis()) {
         if (state != State.CONFIRMED && state != State.SETTLING) {
             return
         }
@@ -112,15 +113,14 @@ internal class ScreenLoadTracker(
             this.screenName = it
         }
 
-        val now = uptimeMillis()
         if (state == State.CONFIRMED) {
             // the screen load can now be considered "settling"
             state = State.SETTLING
-            navEndMs = now
+            navEndMs = eventTime
             firstFrameAfterNavEndMs = 0L
         }
 
-        settle.notifyActivity(now)
+        settle.notifyActivity(eventTime)
     }
 
     /** A frame on the destination pushes the settle baseline out while it keeps rendering. */

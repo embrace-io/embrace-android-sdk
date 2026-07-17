@@ -27,7 +27,7 @@ internal class ActivityNavigationSourceTest {
 
     @Test
     fun `an Activity resume reports a navigation end`() {
-        source.onActivityResumed("Detail")
+        source.onActivityResumed("Detail", eventTime = 100L)
 
         assertEquals(listOf<String?>("Detail"), callbacks.navigationEnds)
     }

@@ -1,0 +1,109 @@
+name: Semconv
+
+# Guards the semantic-convention module:
+#  - registry-check: schema + dependency-resolution validation (weaver registry check)
+#  - generated-code-drift: committed Kotlin under src/main/kotlin/.../semconv/ matches the model
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    paths:
+      - 'embrace-android-semconv/**'
+      - '.github/workflows/semconv-drift.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  registry-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install Weaver
+        run: |
+          source embrace-android-semconv/versions.env
+          mkdir -p "${RUNNER_TEMP}/semconv-tooling/scripts"
+          curl -sSfL "https://raw.githubusercontent.com/embrace-io/embrace-semconv/${EMBRACE_SEMCONV_VERSION}/scripts/install-weaver.sh" -o "${RUNNER_TEMP}/semconv-tooling/scripts/install-weaver.sh"
+          cp embrace-android-semconv/versions.env "${RUNNER_TEMP}/semconv-tooling/versions.env"
+          bash "${RUNNER_TEMP}/semconv-tooling/scripts/install-weaver.sh" "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Validate registry (schema + dependency resolution)
+        run: bash embrace-android-semconv/check.sh
+
+  generated-code-drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Setup Java
+        uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5.5.0
+        with:
+          distribution: 'adopt'
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
+
+      - name: Install Weaver
+        run: |
+          source embrace-android-semconv/versions.env
+          mkdir -p "${RUNNER_TEMP}/semconv-tooling/scripts"
+          curl -sSfL "https://raw.githubusercontent.com/embrace-io/embrace-semconv/${EMBRACE_SEMCONV_VERSION}/scripts/install-weaver.sh" -o "${RUNNER_TEMP}/semconv-tooling/scripts/install-weaver.sh"
+          cp embrace-android-semconv/versions.env "${RUNNER_TEMP}/semconv-tooling/versions.env"
+          bash "${RUNNER_TEMP}/semconv-tooling/scripts/install-weaver.sh" "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Regenerate semantic-convention source code
+        run: ./gradlew :embrace-android-semconv:generateEmbraceSemanticConventions --stacktrace
+
+      - name: Check committed generated source code are in sync
+        run: |
+          gen='embrace-android-semconv/src/main/kotlin/io/embrace/android/embracesdk/semconv'
+          untracked=$(git ls-files --others --exclude-standard -- "$gen")
+          if ! git diff --exit-code -- "$gen" || [ -n "$untracked" ]; then
+            echo "::error::Committed semantic-convention sources under $gen are out of sync with the weaver model/templates. Regenerate and commit them with your change."
+            {
+              echo "## Generated semconv drift detected"
+              echo ""
+              echo "The committed Kotlin under \`$gen\` does not match what the weaver model and templates generate."
+              echo "Regenerate it and commit the result together with your change:"
+              echo ""
+              echo '```bash'
+              echo "# ensure the pinned weaver is on PATH — see embrace-android-semconv/README.md"
+              echo "./gradlew :embrace-android-semconv:generateEmbraceSemanticConventions"
+              echo "git add $gen"
+              echo '```'
+              if [ -n "$untracked" ]; then
+                echo ""
+                echo "Untracked generated files:"
+                echo ""
+                echo '```'
+                echo "$untracked"
+                echo '```'
+              fi
+              echo ""
+              echo "<details><summary>Diff against committed sources</summary>"
+              echo ""
+              echo '```diff'
+              git diff -- "$gen"
+              echo '```'
+              echo "</details>"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo "OK: committed generated sources are up to date"

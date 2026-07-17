@@ -34,4 +34,9 @@ internal data class SmoothnessResult(
      * The grace multiplier that was applied to a frame's budget/deadline before it was considered janky.
      */
     val jankHeuristicMultiplier: Double,
+    /**
+     * Base64-encoded, varint-packed per-frame duration trace, if this device is sampled-in to record one;
+     * null otherwise.
+     */
+    val frameTraceBase64: String? = null,
 )

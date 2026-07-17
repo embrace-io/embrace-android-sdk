@@ -48,8 +48,9 @@ fun createThreadBlockageBehavior(
  * A [VitalsBehaviorImpl] that returns default values.
  */
 fun createVitalsBehavior(
+    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     remoteCfg: RemoteConfig? = null,
-): VitalsBehavior = VitalsBehaviorImpl(remoteCfg)
+): VitalsBehavior = VitalsBehaviorImpl(thresholdCheck, remoteCfg)
 
 /**
  * A [UserSessionBehaviorImpl] that returns default values.

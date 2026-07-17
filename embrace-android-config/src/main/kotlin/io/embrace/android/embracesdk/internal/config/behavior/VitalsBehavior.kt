@@ -31,4 +31,10 @@ interface VitalsBehavior {
      * Maximum time between a tap and the navigation start event for the two to be linked as one screen load.
      */
     fun getScreenLoadNavTimeoutMs(): Long
+
+    /**
+     * Whether this device is sampled-in to record a per-frame duration trace alongside the smoothness result,
+     * as a diagnostic aid while smoothness thresholds are being tuned.
+     */
+    fun isSmoothnessFrameTraceEnabled(): Boolean
 }

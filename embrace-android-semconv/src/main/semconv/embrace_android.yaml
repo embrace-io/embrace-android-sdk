@@ -95,6 +95,7 @@ attribute_groups:
       - ref: smoothness.idle_threshold_ms
       - ref: smoothness.held_idle_threshold_ms
       - ref: smoothness.jank_heuristic_multiplier
+      - ref: smoothness.frame_trace
 
   - id: emb.screen_load
     visibility: public
@@ -442,6 +443,11 @@ attributes:
     brief: "The grace multiplier that was applied to a frame's budget/deadline before it was considered janky."
     stability: development
     examples: [2.0, 2.5]
+  - key: smoothness.frame_trace
+    type: string
+    brief: "Base64-encoded, varint-packed per-frame duration trace over the focal moment, for a sampled fraction of devices. Diagnostic aid while smoothness thresholds are being tuned."
+    stability: development
+    examples: ["AQIDBA=="]
   - key: screen_load.outcome
     type: string
     brief: "How the screen load ended."

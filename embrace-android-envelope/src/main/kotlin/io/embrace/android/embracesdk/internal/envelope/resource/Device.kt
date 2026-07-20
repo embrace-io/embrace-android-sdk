@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.envelope.resource
 
-import io.embrace.android.embracesdk.internal.SystemInfo
-
 interface Device {
 
     /**
@@ -19,11 +17,6 @@ interface Device {
      * @return the device's screen resolution
      */
     val screenResolution: String
-
-    /**
-     * Get information about the device and OS known before the SDK starts up
-     */
-    val systemInfo: SystemInfo
 
     /**
      * Get the number of available cores for device info

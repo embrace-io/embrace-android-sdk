@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.pm.PackageInfo
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
-import io.embrace.android.embracesdk.internal.config.BuildInfo
+import io.embrace.android.embracesdk.fakes.fakeBuildInfo
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
@@ -33,20 +33,10 @@ class FakeCoreModule(
 
         @Suppress("DEPRECATION")
         private val fakePackageInfo = PackageInfo().apply {
-            packageName = "com.fake.package"
-            versionName = "2.5.1"
-            versionCode = 99
+            packageName = fakeBuildInfo.packageName
+            versionName = fakeBuildInfo.versionName
+            versionCode = fakeBuildInfo.versionCode.toInt()
         }
-
-        private val fakeBuildInfo = BuildInfo(
-            buildId = "fakeBuildId",
-            buildType = "fakeBuildType",
-            buildFlavor = "fakeBuildFlavor",
-            rnBundleId = "fakeRnBundleId",
-            versionName = "2.5.1",
-            versionCode = "99",
-            packageName = "com.fake.package",
-        )
 
         fun getMockedContext(): Context {
             val mockContext = mockk<Context>(relaxed = true)

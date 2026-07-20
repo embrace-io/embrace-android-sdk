@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes.config
 
+import io.embrace.android.embracesdk.fakes.fakeBuildInfo
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.Base64SharedObjectFilesMap
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
@@ -20,9 +21,9 @@ data class FakeInstrumentedConfig(
     override val project: ProjectConfig = FakeProjectConfig(
         base = base.project,
         appId = "abcde",
-        versionName = "2.5.1",
-        packageName = "com.fake.package",
-        buildId = "fakeBuildId",
+        versionName = fakeBuildInfo.versionName,
+        packageName = fakeBuildInfo.packageName,
+        buildId = fakeBuildInfo.buildId,
     ),
     override val redaction: RedactionConfig = FakeRedactionConfig(base.redaction),
     override val symbols: Base64SharedObjectFilesMap =

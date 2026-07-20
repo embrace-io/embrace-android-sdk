@@ -48,7 +48,7 @@ val fakeEnvelopeResource = EnvelopeResource(
         "disk_total_capacity" to EnvelopeResourceValue.of(FakeDeviceInfoValues.DISK_TOTAL_CAPACITY),
         "screen_resolution" to EnvelopeResourceValue.of(FakeDeviceInfoValues.SCREEN_RESOLUTION),
         "num_cores" to EnvelopeResourceValue.of(FakeDeviceInfoValues.NUMBER_OF_CORES.toLong()),
-        "emb.app.environment" to EnvelopeResourceValue.of("prod"),
+        "environment" to EnvelopeResourceValue.of("prod"),
     ),
 )
 

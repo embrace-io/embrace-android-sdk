@@ -16,7 +16,7 @@ internal class EnvelopeResourceSerializerTest {
             "service.name" to EnvelopeResourceValue.of("io.embrace.test"),
             "app_framework" to EnvelopeResourceValue.of(AppFramework.NATIVE.value.toLong()),
             "app.build_id" to EnvelopeResourceValue.of("abc123"),
-            "emb.app.environment" to EnvelopeResourceValue.of("prod"),
+            "environment" to EnvelopeResourceValue.of("prod"),
             "host.arch" to EnvelopeResourceValue.of("arm64-v8a"),
             "os.version" to EnvelopeResourceValue.of("13"),
             "jailbroken" to EnvelopeResourceValue.of(false),

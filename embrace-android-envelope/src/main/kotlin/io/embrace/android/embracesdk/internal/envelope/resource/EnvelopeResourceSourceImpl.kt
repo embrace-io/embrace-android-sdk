@@ -52,9 +52,7 @@ class EnvelopeResourceSourceImpl(
                 put(key, EnvelopeResourceValue.of(value))
             }
 
-            embraceInternalAttributes.forEach { (legacyKey, value) ->
-                put(PROPOSED_SEM_CONV_ATTRIBUTES[legacyKey] ?: legacyKey, value)
-            }
+            putAll(embraceInternalAttributes)
         }
 
         return EnvelopeResource(consolidatedAttributes)
@@ -80,15 +78,5 @@ class EnvelopeResourceSourceImpl(
         if (value != null) {
             put(key, EnvelopeResourceValue.of(value))
         }
-    }
-
-    private companion object {
-
-        /**
-         * Legacy internal Embrace attributes that should become OTel semantic conventions, but have not been accepted yet.
-         */
-        private val PROPOSED_SEM_CONV_ATTRIBUTES = mapOf(
-            "environment" to "emb.app.environment",
-        )
     }
 }

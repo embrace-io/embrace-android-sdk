@@ -17,7 +17,12 @@ data class FakeInstrumentedConfig(
     override val enabledFeatures: FakeEnabledFeatureConfig = FakeEnabledFeatureConfig(base.enabledFeatures),
     override val networkCapture: NetworkCaptureConfig = FakeNetworkCaptureConfig(base.networkCapture),
     override val otelLimits: OtelLimitsConfig = FakeOtelLimitsConfig(),
-    override val project: ProjectConfig = FakeProjectConfig(base.project, appId = "abcde"),
+    override val project: ProjectConfig = FakeProjectConfig(
+        base = base.project,
+        appId = "abcde",
+        versionName = "2.5.1",
+        packageName = "com.fake.package",
+    ),
     override val redaction: RedactionConfig = FakeRedactionConfig(base.redaction),
     override val symbols: Base64SharedObjectFilesMap =
         FakeBase64SharedObjectFilesMap(base.symbols.getBase64SharedObjectFilesMap()),

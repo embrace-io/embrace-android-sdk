@@ -20,7 +20,6 @@ import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import io.opentelemetry.kotlin.semconv.TelemetryAttributes
 import io.opentelemetry.kotlin.tracing.export.SpanExporter
 import io.opentelemetry.kotlin.tracing.export.SpanProcessor
-import java.util.concurrent.ConcurrentHashMap
 
 class OtelSdkConfig(
     spanSink: SpanSink,
@@ -32,28 +31,13 @@ class OtelSdkConfig(
     private val systemInfo: SystemInfo,
     private val sessionIdsProvider: () -> SessionIdsProvider? = { null },
     private val userIdProvider: () -> String? = { null },
+    private val resourceAttributeOverrideEnabled: () -> Boolean = { false },
     private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId,
 ) {
-
-    private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
-
     val resourceAction: AttributesMutator.() -> Unit
         get() = {
-            setStringAttribute(ServiceAttributes.SERVICE_NAME, packageName)
-            setStringAttribute(ServiceAttributes.SERVICE_VERSION, appVersion)
-            setStringAttribute(OsAttributes.OS_NAME, systemInfo.osName)
-            setStringAttribute(OsAttributes.OS_VERSION, systemInfo.osVersion)
-            setStringAttribute(OsAttributes.OS_TYPE, systemInfo.osType)
-            setStringAttribute(OsAttributes.OS_BUILD_ID, systemInfo.osBuild)
-            setStringAttribute(AndroidAttributes.ANDROID_OS_API_LEVEL, systemInfo.androidOsApiLevel)
-            setStringAttribute(DeviceAttributes.DEVICE_MANUFACTURER, systemInfo.deviceManufacturer)
-            setStringAttribute(DeviceAttributes.DEVICE_MODEL_IDENTIFIER, systemInfo.deviceModel)
-            setStringAttribute(DeviceAttributes.DEVICE_MODEL_NAME, systemInfo.deviceModel)
-            setStringAttribute(TelemetryAttributes.TELEMETRY_DISTRO_NAME, sdkName)
-            setStringAttribute(TelemetryAttributes.TELEMETRY_DISTRO_VERSION, sdkVersion)
-
-            customAttributes.forEach {
-                setStringAttribute(it.key, it.value)
+            getResourceAttributes().forEach { (key, value) ->
+                setStringAttribute(key, value)
             }
         }
 
@@ -66,6 +50,47 @@ class OtelSdkConfig(
         EmbTrace.trace("process-identifier-init", processIdentifierProvider)
     }
 
+    val spanProcessor: SpanProcessor by lazy {
+        EmbraceSpanProcessor(
+            sessionIdsProvider,
+            userIdProvider,
+            processIdentifier,
+            spanExporter,
+        )
+    }
+
+    val logRecordProcessor: LogRecordProcessor by lazy {
+        DefaultLogRecordProcessor(logRecordExporter)
+    }
+
+    /**
+     * App-supplied resource attributes, in the order they were set
+     */
+    private val customAttributes = LinkedHashMap<String, String>()
+
+    /**
+     * The semantic-convention resource attributes that Embrace itself sets. These are authoritative and
+     * are kept separate from app-supplied [customAttributes] so the two can be distinguished.
+     */
+    private val embraceResourceAttributes: Map<String, String> = LinkedHashMap<String, String>().apply {
+        put(ServiceAttributes.SERVICE_NAME, packageName)
+        put(ServiceAttributes.SERVICE_VERSION, appVersion)
+        put(OsAttributes.OS_NAME, systemInfo.osName)
+        put(OsAttributes.OS_VERSION, systemInfo.osVersion)
+        put(OsAttributes.OS_TYPE, systemInfo.osType)
+        put(OsAttributes.OS_BUILD_ID, systemInfo.osBuild)
+        put(AndroidAttributes.ANDROID_OS_API_LEVEL, systemInfo.androidOsApiLevel)
+        put(DeviceAttributes.DEVICE_MANUFACTURER, systemInfo.deviceManufacturer)
+        put(DeviceAttributes.DEVICE_MODEL_IDENTIFIER, systemInfo.deviceModel)
+        put(DeviceAttributes.DEVICE_MODEL_NAME, systemInfo.deviceModel)
+        put(TelemetryAttributes.TELEMETRY_DISTRO_NAME, sdkName)
+        put(TelemetryAttributes.TELEMETRY_DISTRO_VERSION, sdkVersion)
+    }
+
+    /** Keys the SDK sets itself; app attributes that clash with these are overrides and don't count toward the cap. */
+    private val embraceResourceAttributeKeys: Set<String>
+        get() = embraceResourceAttributes.keys
+
     private val externalSpanExporters = mutableListOf<SpanExporter>()
     private val externalSpanProcessors = mutableListOf<SpanProcessor>()
     private val externalLogExporters = mutableListOf<LogRecordExporter>()
@@ -74,23 +99,11 @@ class OtelSdkConfig(
     private var exportEnabled: Boolean = true
     private val exportCheck: () -> Boolean = { exportEnabled }
 
-    fun disableDataExport() {
-        exportEnabled = false
-    }
-
     private val spanExporter: SpanExporter by lazy {
         DefaultSpanExporter(
             spanSink = spanSink,
             externalExporters = externalSpanExporters.toList(),
             exportCheck = exportCheck,
-        )
-    }
-    val spanProcessor: SpanProcessor by lazy {
-        EmbraceSpanProcessor(
-            sessionIdsProvider,
-            userIdProvider,
-            processIdentifier,
-            spanExporter,
         )
     }
 
@@ -102,8 +115,36 @@ class OtelSdkConfig(
         )
     }
 
-    val logRecordProcessor: LogRecordProcessor by lazy {
-        DefaultLogRecordProcessor(logRecordExporter)
+    /**
+     * The resource attributes used for the OTel SDK instance that combines both the ones set by Embrace and the app.
+     * In case of a key clash, depending on value of the override feature flag, either the Embrace or the app set ones will be used.
+     */
+    fun getResourceAttributes(): Map<String, String> =
+        if (resourceAttributeOverrideEnabled()) {
+            embraceResourceAttributes + customAttributes
+        } else {
+            customAttributes + embraceResourceAttributes
+        }
+
+    /**
+     * Records an app-supplied resource attribute if it's allowed
+     */
+    fun setResourceAttribute(key: String, value: String) {
+        // Custom resource attribute keys can't start with the reserved prefix for internal Embrace attributes
+        if (key.startsWith(EMB_ATTRIBUTE_PREFIX)) {
+            return
+        }
+
+        // Allow if one of these conditions are true:
+        // - Only updating the value of an existing custom attribute
+        // - Attribute will be set by the Embrace SDK, so it's not a new attribute
+        // - The cap has not been reached
+        if (customAttributes.containsKey(key) ||
+            key in embraceResourceAttributeKeys ||
+            canAddNewKey()
+        ) {
+            customAttributes[key] = value
+        }
     }
 
     fun addSpanExporter(spanExporter: SpanExporter) {
@@ -129,7 +170,16 @@ class OtelSdkConfig(
     fun hasConfiguredOtlpExport(): Boolean = externalLogExporters.isNotEmpty() || externalLogRecordProcessors.isNotEmpty() ||
         externalSpanExporters.isNotEmpty() || externalSpanProcessors.isNotEmpty()
 
-    fun setResourceAttribute(key: String, value: String) {
-        customAttributes[key] = value
+    fun disableDataExport() {
+        exportEnabled = false
+    }
+
+    private fun canAddNewKey(): Boolean =
+        customAttributes.size < MAX_CUSTOM_RESOURCE_ATTRIBUTES ||
+            customAttributes.keys.count { it !in embraceResourceAttributeKeys } < MAX_CUSTOM_RESOURCE_ATTRIBUTES
+
+    private companion object {
+        private const val EMB_ATTRIBUTE_PREFIX = "emb."
+        private const val MAX_CUSTOM_RESOURCE_ATTRIBUTES = 20
     }
 }

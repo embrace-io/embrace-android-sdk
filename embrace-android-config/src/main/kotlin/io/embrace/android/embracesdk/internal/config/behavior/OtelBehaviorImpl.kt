@@ -18,4 +18,6 @@ class OtelBehaviorImpl(
     override fun shouldUseKotlinSdk(): Boolean {
         return thresholdCheck.isBehaviorEnabled(remote?.pctEnabled) ?: local.isOtelKotlinSdkEnabled()
     }
+
+    override fun isResourceAttributeOverrideEnabled(): Boolean = local.isResourceAttributeOverrideEnabled()
 }

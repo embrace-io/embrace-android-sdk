@@ -176,4 +176,12 @@ interface EnabledFeatureConfig {
      * sdk_config.otel.enable_otel_kotlin_sdk
      */
     fun isOtelKotlinSdkEnabled(): Boolean = false
+
+    /**
+     * Gates whether app-supplied OTel resource attributes may override attributes that the Embrace SDK sets itself.
+     * Defaults to false.
+     *
+     * sdk_config.otel.enable_resource_attribute_override
+     */
+    fun isResourceAttributeOverrideEnabled(): Boolean = false
 }

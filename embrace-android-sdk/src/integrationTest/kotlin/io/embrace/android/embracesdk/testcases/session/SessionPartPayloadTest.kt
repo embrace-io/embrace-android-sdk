@@ -26,6 +26,12 @@ import io.embrace.android.embracesdk.internal.session.getSessionProperty
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.android.embracesdk.testframework.assertions.appFramework
+import io.embrace.android.embracesdk.testframework.assertions.appVersion
+import io.embrace.android.embracesdk.testframework.assertions.deviceModel
+import io.embrace.android.embracesdk.testframework.assertions.osName
+import io.embrace.android.embracesdk.testframework.assertions.osVersion
+import io.embrace.android.embracesdk.testframework.assertions.sdkVersion
 import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

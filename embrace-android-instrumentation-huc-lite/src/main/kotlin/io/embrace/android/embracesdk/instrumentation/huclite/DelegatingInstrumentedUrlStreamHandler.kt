@@ -17,18 +17,23 @@ internal class DelegatingInstrumentedUrlStreamHandler(
     private val clock: Clock,
     private val hucLiteDataSource: HucLiteDataSource,
 ) : URLStreamHandler() {
+    private val openProxyConnectionMethod by LazyMethodLookup(
+        delegateHandler::class.java,
+        "openConnection",
+        arrayOf(URL::class.java, Proxy::class.java),
+    )
+
+    private val openConnectionMethod by LazyMethodLookup(
+        delegateHandler::class.java,
+        "openConnection",
+        arrayOf(URL::class.java),
+    )
+
     override fun openConnection(url: URL?, proxy: Proxy?): URLConnection? {
         try {
-            val method =
-                findDeclaredMethod(
-                    delegateHandler,
-                    delegateHandler.javaClass,
-                    "openConnection",
-                    URL::class.java,
-                    Proxy::class.java,
-                )
-            method.isAccessible = true
-            return wrapInstrumentedConnection(method.invoke(delegateHandler, url, proxy) as URLConnection?)
+            return wrapInstrumentedConnection(
+                openProxyConnectionMethod.invoke(delegateHandler, url, proxy) as URLConnection?,
+            )
         } catch (t: Throwable) {
             throw (t)
         }
@@ -36,15 +41,9 @@ internal class DelegatingInstrumentedUrlStreamHandler(
 
     override fun openConnection(url: URL?): URLConnection? {
         try {
-            val method =
-                findDeclaredMethod(
-                    delegateHandler,
-                    delegateHandler.javaClass,
-                    "openConnection",
-                    URL::class.java,
-                )
-            method.isAccessible = true
-            return wrapInstrumentedConnection(method.invoke(delegateHandler, url) as URLConnection?)
+            return wrapInstrumentedConnection(
+                openConnectionMethod.invoke(delegateHandler, url) as URLConnection?,
+            )
         } catch (t: Throwable) {
             throw (t)
         }

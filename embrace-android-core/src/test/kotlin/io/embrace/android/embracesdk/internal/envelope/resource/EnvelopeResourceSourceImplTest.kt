@@ -11,29 +11,41 @@ import org.junit.Test
 
 internal class EnvelopeResourceSourceImplTest {
 
+    private val legacyKeys = listOf(
+        "app_ecosystem_id",
+        "app_version",
+        "environment",
+        "build_id",
+        "device_architecture",
+        "device_manufacturer",
+        "device_model",
+        "os_code",
+        "os_type",
+        "os_name",
+        "os_version",
+        "sdk_version",
+    )
+
     @Test
     fun `getEnvelopeResource merges the OTel resource with Embrace internal attributes`() {
         val source = createSource(
             otelResourceAttributes = mapOf(
                 ServiceAttributes.SERVICE_VERSION to "2.5.1",
                 "my.custom.one" to "1",
-                "build_id" to "should-be-ignored",
+                "build_type" to "should-be-ignored",
             ),
         )
         val attrs = source.getEnvelopeResource().attributes
 
         assertEquals("2.5.1", attrs.getValue(ServiceAttributes.SERVICE_VERSION).stringValue)
         assertEquals("1", attrs.getValue("my.custom.one").stringValue)
-        assertEquals("fakeBuildId", attrs.getValue("build_id").stringValue)
+        assertEquals("fakeBuildType", attrs.getValue("build_type").stringValue)
         assertEquals("prod", attrs.getValue("emb.app.environment").stringValue)
 
         // legacy bespoke keys are gone, replaced by their canonical semconv keys
-        assertFalse(attrs.containsKey("app_version"))
-        assertFalse(attrs.containsKey("app_ecosystem_id"))
-        assertFalse(attrs.containsKey("environment"))
-        assertFalse(attrs.containsKey("sdk_version"))
-        assertFalse(attrs.containsKey("device_manufacturer"))
-        assertFalse(attrs.containsKey("device_model"))
+        legacyKeys.forEach {
+            assertFalse("'$it' should not exist in the envelope resource", attrs.containsKey(it))
+        }
     }
 
     @Test

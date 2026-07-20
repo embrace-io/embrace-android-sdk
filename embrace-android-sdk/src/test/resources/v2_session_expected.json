@@ -15,6 +15,7 @@
   "resource": {
     "service.name": "com.fake.package",
     "service.version": "2.5.1",
+    "app.build_id": "fakeBuildId",
     "os.name": "android",
     "os.type": "linux",
     "os.version": "__EMBRACE_TEST_IGNORE__",
@@ -27,7 +28,6 @@
     "telemetry.distro.name": "embrace-android-sdk",
     "telemetry.distro.version": "__EMBRACE_TEST_IGNORE__",
     "app_framework": 1,
-    "build_id": "fakeBuildId",
     "build_type": "fakeBuildType",
     "build_flavor": "fakeBuildFlavor",
     "bundle_version": "99",

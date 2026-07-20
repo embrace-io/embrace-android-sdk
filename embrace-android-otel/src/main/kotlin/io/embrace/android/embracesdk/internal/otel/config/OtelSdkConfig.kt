@@ -14,6 +14,7 @@ import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
 import io.opentelemetry.kotlin.semconv.AndroidAttributes
+import io.opentelemetry.kotlin.semconv.AppAttributes
 import io.opentelemetry.kotlin.semconv.DeviceAttributes
 import io.opentelemetry.kotlin.semconv.HostAttributes
 import io.opentelemetry.kotlin.semconv.OsAttributes
@@ -29,6 +30,7 @@ class OtelSdkConfig(
     val sdkVersion: String,
     val appVersion: String,
     val packageName: String,
+    val buildId: String,
     private val systemInfo: SystemInfo,
     private val sessionIdsProvider: () -> SessionIdsProvider? = { null },
     private val userIdProvider: () -> String? = { null },
@@ -76,6 +78,7 @@ class OtelSdkConfig(
     private val embraceResourceAttributes: Map<String, String> = LinkedHashMap<String, String>().apply {
         put(ServiceAttributes.SERVICE_NAME, packageName)
         put(ServiceAttributes.SERVICE_VERSION, appVersion)
+        put(AppAttributes.APP_BUILD_ID, buildId)
         put(OsAttributes.OS_NAME, systemInfo.osName)
         put(OsAttributes.OS_VERSION, systemInfo.osVersion)
         put(OsAttributes.OS_TYPE, systemInfo.osType)

@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResourceValue
 import io.embrace.android.embracesdk.internal.payload.LogPayload
+import io.opentelemetry.kotlin.semconv.AppAttributes
 import io.opentelemetry.kotlin.semconv.DeviceAttributes
 import io.opentelemetry.kotlin.semconv.OsAttributes
 import io.opentelemetry.kotlin.semconv.ServiceAttributes
@@ -28,7 +29,7 @@ val fakeEnvelopeResource = EnvelopeResource(
         DeviceAttributes.DEVICE_MODEL_IDENTIFIER to EnvelopeResourceValue.of("Pixel 5"),
         DeviceAttributes.DEVICE_MODEL_NAME to EnvelopeResourceValue.of("Pixel 5"),
         "app_framework" to EnvelopeResourceValue.of(AppFramework.NATIVE.value.toLong()),
-        "build_id" to EnvelopeResourceValue.of("555"),
+        AppAttributes.APP_BUILD_ID to EnvelopeResourceValue.of("555"),
     ),
 )
 

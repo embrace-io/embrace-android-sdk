@@ -22,6 +22,7 @@ data class FakeInstrumentedConfig(
         appId = "abcde",
         versionName = "2.5.1",
         packageName = "com.fake.package",
+        buildId = "fakeBuildId",
     ),
     override val redaction: RedactionConfig = FakeRedactionConfig(base.redaction),
     override val symbols: Base64SharedObjectFilesMap =

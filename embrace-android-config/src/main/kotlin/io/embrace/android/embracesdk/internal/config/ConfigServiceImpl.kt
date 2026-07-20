@@ -45,7 +45,7 @@ class ConfigServiceImpl(
     private val serializer: PlatformSerializer,
     store: KeyValueStore,
     okHttpClient: Lazy<OkHttpClient>,
-    abis: Array<String>,
+    architecture: String,
     private val sdkVersion: String,
     private val apiLevel: Int,
     private val filesDir: File,
@@ -154,7 +154,7 @@ class ConfigServiceImpl(
         AppFramework.fromString(it)
     } ?: AppFramework.NATIVE
 
-    override val cpuAbi: CpuAbi = CpuAbi.current(abis)
+    override val cpuAbi: CpuAbi = CpuAbi.fromArchName(architecture)
 
     override val nativeSymbolMap: Map<String, String>? by lazy {
         getNativeSymbols()?.let {

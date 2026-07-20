@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
 import io.opentelemetry.kotlin.semconv.AndroidAttributes
 import io.opentelemetry.kotlin.semconv.DeviceAttributes
+import io.opentelemetry.kotlin.semconv.HostAttributes
 import io.opentelemetry.kotlin.semconv.OsAttributes
 import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import io.opentelemetry.kotlin.semconv.TelemetryAttributes
@@ -25,6 +26,7 @@ internal class OtelSdkConfigTest {
             androidOsApiLevel = "99",
             deviceManufacturer = "testManufacturer",
             deviceModel = "testModel",
+            architecture = "arm64-v8a",
         )
 
         val configuration = OtelSdkConfig(
@@ -48,6 +50,7 @@ internal class OtelSdkConfigTest {
             OsAttributes.OS_TYPE to systemInfo.osType,
             OsAttributes.OS_BUILD_ID to systemInfo.osBuild,
             AndroidAttributes.ANDROID_OS_API_LEVEL to systemInfo.androidOsApiLevel,
+            HostAttributes.HOST_ARCH to systemInfo.architecture,
             DeviceAttributes.DEVICE_MANUFACTURER to systemInfo.deviceManufacturer,
             DeviceAttributes.DEVICE_MODEL_IDENTIFIER to systemInfo.deviceModel,
             DeviceAttributes.DEVICE_MODEL_NAME to systemInfo.deviceModel,

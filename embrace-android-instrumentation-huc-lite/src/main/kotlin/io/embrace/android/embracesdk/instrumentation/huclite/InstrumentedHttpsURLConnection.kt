@@ -284,26 +284,29 @@ internal class InstrumentedHttpsURLConnection(
 
     override fun getReadTimeout(): Int = wrappedConnection.readTimeout
 
-    private fun <T> invokeRequestTriggeringMethod(wrappedMethod: () -> T): T {
+    private inline fun <T> invokeRequestTriggeringMethod(wrappedMethod: () -> T): T {
         val instrument = requestTriggered.compareAndSet(false, true)
         if (instrument) {
             requestData?.startRequest()
         }
-        val returnValue = runCatching {
-            wrappedMethod().also {
+
+        try {
+            val returnValue = wrappedMethod().also {
                 if (cachedResponseStatusCode.get() == 0) {
                     cachedResponseStatusCode.compareAndSet(0, wrappedConnection.responseCode)
                 }
             }
-        }.onFailure {
-            if (instrument) {
-                requestData?.clientError(it)
-            }
-        }.getOrThrow()
 
-        if (instrument) {
-            requestData?.completeRequest(cachedResponseStatusCode.get())
+            if (instrument) {
+                requestData?.completeRequest(cachedResponseStatusCode.get())
+            }
+
+            return returnValue
+        } catch (th: Throwable) {
+            if (instrument) {
+                requestData?.clientError(th)
+            }
+            throw th
         }
-        return returnValue
     }
 }

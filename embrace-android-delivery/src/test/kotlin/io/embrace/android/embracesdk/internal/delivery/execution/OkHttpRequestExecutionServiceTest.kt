@@ -191,6 +191,45 @@ class OkHttpRequestExecutionServiceTest {
     }
 
     @Test
+    fun `connection is released back to the pool and reused across requests`() {
+        val server = MockWebServer().apply {
+            protocols = listOf(Protocol.HTTP_1_1)
+            start()
+        }
+        val client = OkHttpClient()
+            .newBuilder()
+            .protocols(listOf(Protocol.HTTP_1_1))
+            .build()
+        val service = OkHttpRequestExecutionService(
+            okHttpClient = lazyOf(client),
+            coreBaseUrl = server.url("").toString(),
+            lazyDeviceId = lazy { testDeviceId },
+            appId = testAppId,
+            embraceVersionName = testEmbraceVersionName,
+            logger = logger,
+        )
+        try {
+            repeat(2) {
+                server.enqueue(MockResponse().setResponseCode(200).setBody("response body"))
+            }
+
+            repeat(2) {
+                service.attemptHttpRequest(
+                    payloadStream = { testPostBody.byteInputStream() },
+                    envelopeType = SupportedEnvelopeType.SESSION,
+                    payloadType = PayloadType.SESSION.value,
+                )
+            }
+
+            // second request reuses the pooled connection (the first request closed its response)
+            assertEquals(0, server.takeRequest().sequenceNumber)
+            assertTrue(server.takeRequest().sequenceNumber > 0)
+        } finally {
+            server.shutdown()
+        }
+    }
+
+    @Test
     fun `headers are sent correctly`() {
         // given a server that returns a 200 response
         server.enqueue(MockResponse().setResponseCode(200))

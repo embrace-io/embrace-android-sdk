@@ -15,16 +15,16 @@ internal class ActivityNavigationSource(
      * A newly created Activity is a forward navigation start. [recreated] (a config change or process-death restore) rebuilds the same
      * screen,
      */
-    fun onActivityCreated(screenName: String, recreated: Boolean) {
+    fun onActivityCreated(screenName: String, recreated: Boolean, eventTime: Long) {
         val skip = skipNextCreate || recreated
         skipNextCreate = false
 
         if (!skip) {
-            callbacks.onNavigationStart(screenName)
+            callbacks.onNavigationStart(screenName, eventTime)
         }
     }
 
-    fun onActivityResumed(screenName: String) {
-        callbacks.onNavigationEnd(screenName)
+    fun onActivityResumed(screenName: String, eventTime: Long) {
+        callbacks.onNavigationEnd(screenName, eventTime)
     }
 }

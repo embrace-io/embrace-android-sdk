@@ -53,6 +53,28 @@ internal class ScreenLoadTrackerTest {
     }
 
     @Test
+    fun `navigation end anchors to the passed event time, not the delay until it is dispatched`() {
+        tracker.onTap() // t=0
+        tracker.onNavigationStart("home")
+        val trueResumeTime = SystemClock.uptimeMillis() // the Activity actually resumed at t=0
+        advance(9) // the hop onto the worker thread lags 9ms behind the real event
+        tracker.onNavigationEnd("home", trueResumeTime) // runs "now" (t=9), but anchored to the true event time (t=0)
+        // the destination's first frame rendered at the true event time, its FrameMetrics delivered late
+        tracker.onFrame(trueResumeTime.millisToNanos())
+
+        advance(IDLE)
+        scheduler.runDue()
+
+        val result = emitted.single()
+        assertEquals("navigation end anchored to its true event time (t=0), not the delayed dispatch (t=9)", 0L, result.navDurationMs)
+        assertEquals(
+            "first frame at the same instant as the true navigation end is a zero duration, not a negative one",
+            0L,
+            result.firstFrameDurationMs,
+        )
+    }
+
+    @Test
     fun `a touchless navigation start opens the load anchored at the navigation`() {
         tracker.onNavigationStart("detail") // t=0, no preceding tap
         advance(15)

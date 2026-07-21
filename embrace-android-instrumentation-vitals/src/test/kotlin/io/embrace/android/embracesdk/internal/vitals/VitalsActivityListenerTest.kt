@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Application
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.view.FrameMetrics
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -76,9 +77,10 @@ internal class VitalsActivityListenerTest {
     fun `onActivityResumed reports a navigation end for the destination`() {
         val activity = buildActivity(Activity::class.java).setup().get()
 
+        val eventTime = SystemClock.uptimeMillis()
         listener.onActivityResumed(activity)
 
-        assertEquals(listOf<String?>(activity.localClassName), focalCallbacks.navigationEnds)
+        assertEquals(listOf(activity.localClassName to eventTime), focalCallbacks.navigationEnds)
     }
 
     @Test
@@ -88,7 +90,8 @@ internal class VitalsActivityListenerTest {
         listener.onActivityCreated(activity, null) // cold start: skipped
         assertTrue(focalCallbacks.navigationStarts.isEmpty())
 
+        val eventTime = SystemClock.uptimeMillis()
         listener.onActivityCreated(activity, null) // a subsequent (forward) navigation
-        assertEquals(listOf<String?>(activity.localClassName), focalCallbacks.navigationStarts)
+        assertEquals(listOf(activity.localClassName to eventTime), focalCallbacks.navigationStarts)
     }
 }

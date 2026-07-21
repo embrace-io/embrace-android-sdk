@@ -129,6 +129,26 @@ class OkHttpRemoteConfigSourceTest {
         assertConfigResponseNotDeserialized(secondCfg)
     }
 
+    @Test
+    fun `test connection reused after non-2xx response`() {
+        val etagValue = "attempt_1"
+        val (_, firstRequest) = executeRequest(
+            MockResponse().setResponseCode(200)
+                .setBody(configResponseBuffer)
+                .setHeader("etag", etagValue),
+        )
+        assertConfigRequestReceived(firstRequest)
+
+        // a 304 response body must be drained/closed so the connection returns to the
+        // pool and is reused by the next poll (sequenceNumber increments)
+        val (_, secondRequest) = executeRequest(
+            MockResponse().setResponseCode(304)
+                .setHeader("etag", etagValue),
+        )
+        assertConfigRequestReceived(secondRequest)
+        assertEquals(1, secondRequest?.sequenceNumber)
+    }
+
     private fun executeRequest(response: MockResponse?): Pair<RemoteConfig?, RecordedRequest?> {
         if (response == null) {
             return Pair(null, null)

@@ -7,13 +7,14 @@ class ReflectionUtils {
      * This class is written in Java to avoid the Kotlin compiler adding an implicit `Arrays.copyOf`
      * when using the spread operator.
      */
-    private ReflectionUtils() {}
+    private ReflectionUtils() {
+    }
 
     /**
      * Search for a given declared method up the object tree.
      *
-     * @param declaringClass the base class to look for the method on
-     * @param methodName the name of the method to find
+     * @param declaringClass  the base class to look for the method on
+     * @param methodName      the name of the method to find
      * @param methodArguments the method argument types
      * @return the discovered method
      */
@@ -26,8 +27,12 @@ class ReflectionUtils {
             Method m = declaringClass.getDeclaredMethod(methodName, methodArguments);
             m.setAccessible(true);
             return m;
-        } catch (NoSuchMethodException ignored) {
-            return findDeclaredMethod(declaringClass.getSuperclass(), methodName, methodArguments);
+        } catch (NoSuchMethodException noSuchMethodException) {
+            Class<?> superclass = declaringClass.getSuperclass();
+            if (superclass == null) {
+                throw noSuchMethodException;
+            }
+            return findDeclaredMethod(superclass, methodName, methodArguments);
         }
     }
 }

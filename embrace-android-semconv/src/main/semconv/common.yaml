@@ -1,0 +1,15 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: emb.common
+    visibility: public
+    stability: development
+    brief: "Embrace attributes applicable to any telemetry"
+    attributes:
+      - ref: emb.manual_instrumentation
+
+attributes:
+  - key: emb.manual_instrumentation
+    type: boolean
+    brief: "Set this to true when the telemetry is known to have been created through a manual instrumentation API call."
+    stability: development

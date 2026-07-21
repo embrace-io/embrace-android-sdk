@@ -12,7 +12,7 @@ internal class ViewTrackingApiDelegate(
     override fun startView(name: String): Boolean {
         if (sdkCallChecker.check("start_view")) {
             val dataSource = bootstrapper.instrumentationModule.instrumentationRegistry.findByType(ViewDataSource::class)
-            return dataSource?.startView(name) ?: false
+            return dataSource?.startView(name, true) ?: false
         }
         return false
     }

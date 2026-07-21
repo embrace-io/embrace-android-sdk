@@ -10,6 +10,7 @@ class EmbraceSemConvTest {
     fun `attributes defined in the local registry are generated and accessible`() {
         assertEquals("emb.session_number", EmbSessionAttributes.EMB_SESSION_NUMBER)
         assertEquals("emb.android.native_crash.symbols", EmbAndroidAttributes.EMB_ANDROID_NATIVE_CRASH_SYMBOLS)
+        assertEquals("emb.manual_instrumentation", EmbCommonAttributes.EMB_MANUAL_INSTRUMENTATION)
     }
 
     @Test

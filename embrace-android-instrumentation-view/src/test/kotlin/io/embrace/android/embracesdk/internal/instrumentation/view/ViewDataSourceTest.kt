@@ -1,13 +1,17 @@
 package io.embrace.android.embracesdk.internal.instrumentation.view
 
+import android.app.Activity
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.fakes.FakeSpanToken
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbViewAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -21,11 +25,13 @@ internal class ViewDataSourceTest {
 
     private lateinit var dataSource: ViewDataSource
     private lateinit var args: FakeInstrumentationArgs
+    private lateinit var activity: Activity
 
     @Before
     fun setUp() {
         args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
         dataSource = ViewDataSource(args)
+        activity = Activity()
     }
 
     @Test
@@ -222,5 +228,77 @@ internal class ViewDataSourceTest {
         ender.start()
         assertTrue(latch.await(2, TimeUnit.SECONDS))
         assertEquals("ConcurrentModificationException detected", 0, errors.get())
+    }
+
+    @Test
+    fun `starting view with isManual parameter creates a span marked as manual`() {
+        dataSource.startView("my_fragment", true)
+        val span = args.destination.createdSpans.single()
+        verifyManualViewSpan(span, true)
+    }
+
+    @Test
+    fun `activity start creates a view span without manual instrumentation indicator`() {
+        dataSource.onActivityStarted(activity)
+        val span = args.destination.createdSpans.single()
+        verifyAutoCapturedViewSpan(span, true)
+    }
+
+    @Test
+    fun `manual start view replacing an auto-captured view results in proper manual attribution`() {
+        dataSource.onActivityStarted(activity)
+        dataSource.startView(activity.javaClass.name, true)
+
+        val spans = args.destination.createdSpans.filter { it.type == EmbType.Ux.View }
+        assertEquals(2, spans.size)
+
+        val firstSpan = spans.first()
+        val secondSpan = spans.last()
+        verifyAutoCapturedViewSpan(firstSpan, false)
+        verifyManualViewSpan(secondSpan, true)
+    }
+
+    @Test
+    fun `auto captured view replacing a manually started view results in proper manual attribution`() {
+        dataSource.startView(activity.javaClass.name, true)
+        dataSource.onActivityStarted(activity)
+
+        val spans = args.destination.createdSpans.filter { it.type == EmbType.Ux.View }
+        assertEquals(2, spans.size)
+
+        val firstSpan = spans.first()
+        val secondSpan = spans.last()
+        verifyManualViewSpan(firstSpan, false)
+        verifyAutoCapturedViewSpan(secondSpan, true)
+    }
+
+    @Test
+    fun `manual ending of an auto started view is not marked as manual`() {
+        dataSource.onActivityStarted(activity)
+        dataSource.endView(activity.javaClass.name)
+
+        val span = args.destination.createdSpans.single { it.type == EmbType.Ux.View }
+        verifyAutoCapturedViewSpan(span, false)
+    }
+
+    @Test
+    fun `auto ending of a manually started view is marked as manual`() {
+        dataSource.startView(activity.javaClass.name, true)
+        dataSource.onActivityStopped(activity)
+
+        val span = args.destination.createdSpans.single { it.type == EmbType.Ux.View }
+        verifyManualViewSpan(span, false)
+    }
+
+    private fun verifyManualViewSpan(span: FakeSpanToken, isRecording: Boolean) {
+        assertEquals(EmbType.Ux.View, span.type)
+        assertEquals(isRecording, span.isRecording())
+        assertEquals("true", span.attributes[EmbCommonAttributes.EMB_MANUAL_INSTRUMENTATION])
+    }
+
+    private fun verifyAutoCapturedViewSpan(span: FakeSpanToken, isRecording: Boolean) {
+        assertEquals(EmbType.Ux.View, span.type)
+        assertEquals(isRecording, span.isRecording())
+        assertNull(span.attributes[EmbCommonAttributes.EMB_MANUAL_INSTRUMENTATION])
     }
 }

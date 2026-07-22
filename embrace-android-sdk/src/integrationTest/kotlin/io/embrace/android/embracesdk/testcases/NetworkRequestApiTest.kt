@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
+import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
 import io.embrace.android.embracesdk.semconv.EmbNetworkCapturedRequestAttributes
 import io.embrace.android.embracesdk.semconv.EmbNetworkRequestAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -353,6 +354,127 @@ internal class NetworkRequestApiTest {
         )
     }
 
+    @Test
+    fun `a registered modifier alters the recorded network request`() {
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    embrace.addHttpRequestInfoModifier { info ->
+                        info.url = MODIFIED_URL
+                        info.httpMethod = "POST"
+                    }
+                    clock.tick(5)
+                    embrace.recordNetworkRequest(
+                        EmbraceNetworkRequest.fromCompletedRequest(
+                            URL,
+                            HttpMethod.GET,
+                            START_TIME,
+                            END_TIME,
+                            BYTES_SENT,
+                            BYTES_RECEIVED,
+                            200
+                        )
+                    )
+                }
+            },
+            assertAction = {
+                validateAndReturnExpectedNetworkSpan().attributes?.assertMatches(
+                    mapOf(
+                        "url.full" to MODIFIED_URL,
+                        HttpAttributes.HTTP_REQUEST_METHOD to "POST",
+                    )
+                )
+            }
+        )
+    }
+
+    @Test
+    fun `a removed modifier no longer alters the recorded network request`() {
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    val modifier = HttpRequestInfoModifier { info ->
+                        info.url = MODIFIED_URL
+                    }
+                    embrace.addHttpRequestInfoModifier(modifier)
+                    embrace.removeHttpRequestInfoModifier(modifier)
+                    clock.tick(5)
+                    embrace.recordNetworkRequest(
+                        EmbraceNetworkRequest.fromCompletedRequest(
+                            URL,
+                            HttpMethod.GET,
+                            START_TIME,
+                            END_TIME,
+                            BYTES_SENT,
+                            BYTES_RECEIVED,
+                            200
+                        )
+                    )
+                }
+            },
+            assertAction = {
+                validateAndReturnExpectedNetworkSpan().attributes?.assertMatches(
+                    mapOf("url.full" to URL)
+                )
+            }
+        )
+    }
+
+    @Test
+    fun `modifiers do not affect the captured network body payload`() {
+        testRule.runTest(
+            persistedRemoteConfig = RemoteConfig(
+                networkCaptureRules = setOf(
+                    NetworkCaptureRuleRemoteConfig(
+                        id = "test",
+                        duration = 0,
+                        method = "GET",
+                        urlRegex = "embrace.io",
+                        expiresIn = 10000,
+                        statusCodes = setOf(200),
+                    )
+                )
+            ),
+            testCaseAction = {
+                recordSession {
+                    embrace.addHttpRequestInfoModifier { info ->
+                        info.url = MODIFIED_URL
+                        info.httpMethod = "POST"
+                    }
+                    embrace.recordNetworkRequest(
+                        EmbraceNetworkRequest.fromCompletedRequest(
+                            URL,
+                            HttpMethod.GET,
+                            START_TIME,
+                            END_TIME,
+                            BYTES_SENT,
+                            BYTES_RECEIVED,
+                            200,
+                            networkCaptureData = NETWORK_CAPTURE_DATA,
+                        )
+                    )
+                }
+            },
+            assertAction = {
+                // the network span reflects the modification...
+                validateAndReturnExpectedNetworkSpan().attributes?.assertMatches(
+                    mapOf(
+                        "url.full" to MODIFIED_URL,
+                        HttpAttributes.HTTP_REQUEST_METHOD to "POST",
+                    )
+                )
+                // ...but the captured body payload retains the raw, unmodified request data.
+                val capturedLog = getSingleLogEnvelope().getLogOfType(EmbType.System.NetworkCapturedRequest)
+                checkNotNull(capturedLog.attributes).assertMatches(
+                    mapOf(
+                        EmbNetworkCapturedRequestAttributes.URL to URL,
+                        HttpAttributes.HTTP_REQUEST_METHOD to "GET",
+                    )
+                )
+            }
+        )
+    }
+
     private fun assertSingleNetworkRequestInSession(
         expectedRequest: EmbraceNetworkRequest,
         completed: Boolean = true,
@@ -434,6 +556,7 @@ internal class NetworkRequestApiTest {
 
     companion object {
         private const val URL = "https://embrace.io"
+        private const val MODIFIED_URL = "https://redacted.io"
         private const val DISABLED_URL = "https://dontlogmebro.pizza/yum"
         private const val START_TIME = 1692201601000L
         private const val END_TIME = 1692201603000L

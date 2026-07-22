@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
+import io.opentelemetry.kotlin.semconv.HttpAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -139,6 +140,29 @@ internal class NetworkRequestDataSourceTest {
                 attributes["url.full"],
             )
         }
+    }
+
+    @Test
+    fun `a registered modifier alters the recorded url and method`() {
+        harness.args.httpRequestInfoModifierChain.add {
+            it.url = "https://redacted.com/api"
+            it.httpMethod = "POST"
+        }
+        logNetworkRequest(url = "https://secret.com/api?token=abc")
+
+        with(checkNotNull(harness.getNetworkSpans().single())) {
+            assertEquals("https://redacted.com/api", attributes["url.full"])
+            assertEquals("POST", attributes[HttpAttributes.HTTP_REQUEST_METHOD])
+            assertEquals("POST /api", name)
+        }
+    }
+
+    @Test
+    fun `the modified url is used for the domain enablement check`() {
+        harness.args.httpRequestInfoModifierChain.add { it.url = "examplecom" }
+        logNetworkRequest(url = "https://www.example.com/api")
+        // the modified url has no parseable domain, so nothing is recorded
+        assertTrue(harness.getNetworkSpans().isEmpty())
     }
 
     private fun logNetworkRequest(

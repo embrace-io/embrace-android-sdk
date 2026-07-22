@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.network.http.MutableHttpRequestInfoImpl
 import io.embrace.android.embracesdk.internal.network.logging.DomainCountLimiter
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getDomain
@@ -36,17 +37,24 @@ class NetworkRequestDataSourceImpl(
     NoopLimitStrategy,
     "network_request_data_source",
 ) {
-    private val activeRequests: MutableMap<String, SpanToken> = ConcurrentHashMap()
+    private val activeRequests: MutableMap<String, ActiveRequest> = ConcurrentHashMap()
     private val domainCountLimiter: DomainCountLimiter = args.configService.networkBehavior.domainCountLimiter
+    private val httpRequestInfoModifierChain = args.httpRequestInfoModifierChain
 
     override fun recordNetworkRequest(request: HttpNetworkRequest) {
-        if (!configService.networkBehavior.isUrlEnabled(request.url)) {
+        // Apply any registered modifiers so the reported url/method reflect the consumer's changes.
+        // The underlying HTTP request is not affected.
+        val info = httpRequestInfoModifierChain.apply(MutableHttpRequestInfoImpl(request.httpMethod, request.url))
+        val url = info.url
+        val httpMethod = info.httpMethod
+
+        if (!configService.networkBehavior.isUrlEnabled(url)) {
             return
         }
 
         // Get the domain, if it can be successfully parsed. If not, don't log this call.
         val domain = getDomain(
-            stripUrl(request.url),
+            stripUrl(url),
         ) ?: return
 
         captureTelemetry(
@@ -57,7 +65,7 @@ class NetworkRequestDataSourceImpl(
                 telemetryService.trackAppliedLimit("network_request", AppliedLimitType.DROP)
             },
         ) {
-            val networkRequestSchemaType = SchemaType.NetworkRequest(generateSchemaAttributes(request))
+            val networkRequestSchemaType = SchemaType.NetworkRequest(generateSchemaAttributes(request, url, httpMethod))
             val statusCode = request.statusCode
             val errorCode = if (statusCode == null || statusCode <= 0 || statusCode >= 400) {
                 ErrorCodeAttribute.Failure
@@ -65,7 +73,7 @@ class NetworkRequestDataSourceImpl(
                 null
             }
             recordCompletedSpan(
-                name = getNetworkSpanName(request.httpMethod, request.url),
+                name = getNetworkSpanName(httpMethod, url),
                 startTimeMs = request.startTime,
                 endTimeMs = request.endTime,
                 type = EmbType.Performance.Network,
@@ -76,13 +84,19 @@ class NetworkRequestDataSourceImpl(
     }
 
     override fun startRequest(startData: RequestStartData): String? {
-        if (!configService.networkBehavior.isUrlEnabled(startData.url)) {
+        // Apply any registered modifiers so the reported url/method reflect the consumer's changes.
+        // The underlying HTTP request is not affected.
+        val info = httpRequestInfoModifierChain.apply(MutableHttpRequestInfoImpl(startData.httpMethod, startData.url))
+        val url = info.url
+        val httpMethod = info.httpMethod
+
+        if (!configService.networkBehavior.isUrlEnabled(url)) {
             return null
         }
 
         // Get the domain, if it can be successfully parsed. If not, don't log this call.
         val domain = getDomain(
-            stripUrl(startData.url),
+            stripUrl(url),
         ) ?: return null
 
         return captureTelemetry(
@@ -92,9 +106,9 @@ class NetworkRequestDataSourceImpl(
             },
         ) {
             val spanToken = destination.startSpanCapture(
-                schemaType = SchemaType.NetworkRequest(requestStartAttributes(startData)),
+                schemaType = SchemaType.NetworkRequest(requestStartAttributes(url, httpMethod)),
                 startTimeMs = startData.sdkClockStartTime,
-                name = getNetworkSpanName(startData.httpMethod, startData.url),
+                name = getNetworkSpanName(httpMethod, url),
                 parentSpanId = startData.traceparent?.getSpanIdFromTraceparent(),
             )
 
@@ -103,29 +117,41 @@ class NetworkRequestDataSourceImpl(
                     spanToken.setSystemAttribute(EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT, traceparent)
                     spanToken.setSystemAttribute(EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY, "true")
                 }
-                activeRequests[traceparent] = spanToken
+                activeRequests[traceparent] = ActiveRequest(spanToken, httpMethod)
             }
         }
     }
 
     override fun endRequest(endData: RequestEndData) {
-        activeRequests.remove(endData.id)?.apply {
-            val statusCode = endData.statusCode
-            val errorCode = if (statusCode == null || statusCode <= 0 || statusCode >= 400) {
-                ErrorCodeAttribute.Failure
-            } else {
-                null
+        activeRequests.remove(endData.id)?.let { activeRequest ->
+            // The final url is only known when the request ends (e.g. it may be overridden during
+            // execution), so apply the modifiers again to the end url. The underlying HTTP request
+            // is not affected.
+            val modifiedUrl = httpRequestInfoModifierChain.apply(
+                MutableHttpRequestInfoImpl(activeRequest.httpMethod, endData.url),
+            ).url
+            with(activeRequest.spanToken) {
+                val statusCode = endData.statusCode
+                val errorCode = if (statusCode == null || statusCode <= 0 || statusCode >= 400) {
+                    ErrorCodeAttribute.Failure
+                } else {
+                    null
+                }
+                requestEndAttributes(endData, modifiedUrl).forEach {
+                    setSystemAttribute(it.key, it.value)
+                }
+                stop(endData.sdkClockEndTime, errorCode)
             }
-            requestEndAttributes(endData).forEach {
-                setSystemAttribute(it.key, it.value)
-            }
-            stop(endData.sdkClockEndTime, errorCode)
         }
     }
 
-    private fun generateSchemaAttributes(request: HttpNetworkRequest): Map<String, String> = mapOf(
-        UrlAttributes.URL_FULL to stripUrl(request.url),
-        HttpAttributes.HTTP_REQUEST_METHOD to request.httpMethod,
+    private fun generateSchemaAttributes(
+        request: HttpNetworkRequest,
+        url: String,
+        httpMethod: String,
+    ): Map<String, String> = mapOf(
+        UrlAttributes.URL_FULL to stripUrl(url),
+        HttpAttributes.HTTP_REQUEST_METHOD to httpMethod,
         HttpAttributes.HTTP_RESPONSE_STATUS_CODE to request.statusCode,
         HttpAttributes.HTTP_REQUEST_BODY_SIZE to request.bytesSent,
         HttpAttributes.HTTP_RESPONSE_BODY_SIZE to request.bytesReceived,
@@ -136,13 +162,13 @@ class NetworkRequestDataSourceImpl(
         EmbNetworkRequestAttributes.EMB_TRACE_ID to getValidTraceId(request.traceId),
     ).toNonNullMap().mapValues { it.value.toString() }
 
-    private fun requestStartAttributes(startData: RequestStartData): Map<String, String> = mapOf(
-        UrlAttributes.URL_FULL to stripUrl(startData.url),
-        HttpAttributes.HTTP_REQUEST_METHOD to startData.httpMethod,
+    private fun requestStartAttributes(url: String, httpMethod: String): Map<String, String> = mapOf(
+        UrlAttributes.URL_FULL to stripUrl(url),
+        HttpAttributes.HTTP_REQUEST_METHOD to httpMethod,
     ).toNonNullMap().mapValues { it.value }
 
-    private fun requestEndAttributes(endData: RequestEndData): Map<String, String> = mapOf(
-        UrlAttributes.URL_FULL to stripUrl(endData.url),
+    private fun requestEndAttributes(endData: RequestEndData, url: String): Map<String, String> = mapOf(
+        UrlAttributes.URL_FULL to stripUrl(url),
         HttpAttributes.HTTP_RESPONSE_STATUS_CODE to endData.statusCode,
         HttpAttributes.HTTP_REQUEST_BODY_SIZE to endData.bytesSent,
         HttpAttributes.HTTP_RESPONSE_BODY_SIZE to endData.bytesReceived,
@@ -159,6 +185,15 @@ class NetworkRequestDataSourceImpl(
      * Returns the span-id of this string if it is a valid W3C traceparent, or null if it is not.
      */
     private fun String.getSpanIdFromTraceparent(): String? = SPAN_ID_FROM_TRACEPARENT_REGEX.matchEntire(this)?.groupValues?.get(1)
+
+    /**
+     * Tracks an in-flight request span. [httpMethod] is the post-modifier method captured at request
+     * start, retained so the modifiers can be re-applied to the final url when the request ends.
+     */
+    private class ActiveRequest(
+        val spanToken: SpanToken,
+        val httpMethod: String,
+    )
 
     private companion object {
         // version(2)-traceId(32)-spanId(16)-flags(2), lowercase hex per the W3C traceparent spec.

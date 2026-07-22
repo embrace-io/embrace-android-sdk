@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import java.io.ByteArrayOutputStream
 import java.io.FileInputStream
 import java.io.InputStream
 import java.security.MessageDigest
@@ -121,40 +120,36 @@ internal class RnBundleIdTrackerImpl(
                 return defaultBundleId
             }
 
-            val bundleStream: InputStream?
-
             // checks if the bundle url is an asset
-            if (bundleUrl.contains("assets")) {
+            val bundleStream = if (bundleUrl.contains("assets")) {
                 // looks for the bundle file in assets
-                bundleStream = getBundleAsset(context, bundleUrl)
+                getBundleAsset(context, bundleUrl)
             } else {
                 // looks for the bundle file from the custom path
-                bundleStream = getCustomBundleStream(bundleUrl)
+                getCustomBundleStream(bundleUrl)
             }
             if (bundleStream == null) {
                 return defaultBundleId
             }
             runCatching {
                 bundleStream.use { inputStream ->
-                    ByteArrayOutputStream().use { buffer ->
-                        var read: Int
-                        // The hash size for the MD5 algorithm is 128 bits - 16 bytes.
-                        val data = ByteArray(16)
-                        while (inputStream.read(data, 0, data.size).also { read = it } != -1) {
-                            buffer.write(data, 0, read)
-                        }
-                        return hashBundleToMd5(buffer.toByteArray())
+                    val md = MessageDigest.getInstance("MD5")
+                    var read: Int
+                    val data = ByteArray(8192)
+                    // Feed the bundle to the digest incrementally so the whole file is
+                    // never held in memory at once (RN bundles can be tens of MB).
+                    while (inputStream.read(data, 0, data.size).also { read = it } != -1) {
+                        md.update(data, 0, read)
                     }
+                    return formatMd5Digest(md.digest())
                 }
             }
             // if the hashing of the JS bundle URL fails, returns the default bundle ID
             return defaultBundleId
         }
 
-        private fun hashBundleToMd5(bundle: ByteArray): String {
+        private fun formatMd5Digest(bundleHashed: ByteArray): String {
             val hashBundle: String
-            val md = MessageDigest.getInstance("MD5")
-            val bundleHashed = md.digest(bundle)
             val sb = StringBuilder()
             for (b in bundleHashed) {
                 sb.append(String.format(Locale.ENGLISH, "%02x", b.toInt() and 0xff))

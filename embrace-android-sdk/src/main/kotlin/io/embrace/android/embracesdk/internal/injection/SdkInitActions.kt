@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.internal.injection
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
+import io.embrace.android.embracesdk.internal.delivery.caching.SessionPartRecorder
+import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSourceImpl
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStateDataSource
@@ -32,11 +34,19 @@ internal fun ModuleGraph.postInit() {
     )
 
     initModule.logger.errorHandlerProvider = { featureModule.internalErrorDataSource.dataSource }
+
+    val sessionPartRecorder = createSessionPartRecorder()
     deliveryModule?.payloadCachingService?.run {
         openTelemetryModule.spanRepository.setSpanUpdateNotifier {
             reportBackgroundActivityStateChange()
+            sessionPartRecorder?.onSpanUpdate()
         }
     }
+    sessionPartRecorder?.let { recorder ->
+        essentialServiceModule.userService.addUserInfoListener(recorder::onUserInfoUpdate)
+        essentialServiceModule.sessionPartTracker.addSessionPartEndListener(recorder::onSessionEnd)
+    }
+    startSessionPartRecording(sessionPartRecorder)
 
     payloadSourceModule.metadataService.precomputeValues()
 
@@ -184,6 +194,41 @@ internal fun ModuleGraph.markSdkInitComplete() {
     val startMsg = "Embrace SDK version ${BuildConfig.VERSION_NAME} started" +
         (appId?.let { " for appId = $it" } ?: " without an app ID")
     initModule.logger.logInfo(startMsg)
+}
+
+/**
+ * Builds the recorder that mirrors each session part into a directory of Wire files, or null if
+ * there is no delivery module (e.g. OTel-export-only configurations).
+ */
+private fun ModuleGraph.createSessionPartRecorder(): SessionPartRecorder? {
+    val store = deliveryModule?.sessionPartStore ?: return null
+    val metadataSource = EnvelopeMetadataSourceImpl(essentialServiceModule.userService::getUserInfo)
+    return SessionPartRecorder(
+        store = store,
+        spanRepository = openTelemetryModule.spanRepository,
+        spanSink = openTelemetryModule.spanSink,
+        resourceProvider = payloadSourceModule.resourceSource::getEnvelopeResource,
+        metadataProvider = metadataSource::getEnvelopeMetadata,
+        sessionIdsProvider = essentialServiceModule.sessionIdsProvider::getActiveSessionIds,
+        clock = initModule.clock,
+        uuidProvider = initModule.uuidSource::createUuid,
+        symbolMapProvider = configService::nativeSymbolMap,
+    )
+}
+
+/**
+ * Recovers any session-part directories left on disk by a previous process. The list is captured
+ * before the first session part of this process is created so the current part is never treated as
+ * recoverable.
+ */
+private fun ModuleGraph.startSessionPartRecording(recorder: SessionPartRecorder?) {
+    val store = deliveryModule?.sessionPartStore
+    if (recorder == null || store == null) return
+
+    val leftovers = store.incompleteDirectories()
+    workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker).submit {
+        recorder.resurrect(leftovers)
+    }
 }
 
 private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, String>> {

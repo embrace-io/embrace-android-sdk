@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.delivery.PayloadType.Companion.fro
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
+import io.embrace.android.embracesdk.internal.delivery.storage.session.SessionPartStore
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
@@ -24,12 +25,18 @@ internal class PayloadStoreImpl(
     private val processIdProvider: () -> String,
     private val uuidSource: UuidSource,
     private val sessionIdsProvider: () -> SessionIdsSnapshot,
+    private val sessionPartStore: SessionPartStore? = null,
 ) : PayloadStore {
 
     override fun storeSessionPartPayload(
         envelope: Envelope<SessionPartPayload>,
         transitionType: TransitionType,
     ) {
+        // Reconcile the session-part files into a single envelope at the point the payload would be
+        // handed to the delivery layer. Must never disrupt the real delivery pipeline.
+        runCatching {
+            sessionPartStore?.finalizeSessionPart(envelope)
+        }
         intakeService.take(
             intake = envelope,
             metadata = createMetadata(
@@ -40,6 +47,11 @@ internal class PayloadStoreImpl(
     }
 
     override fun cacheSessionPartSnapshot(envelope: Envelope<SessionPartPayload>) {
+        // Write the session span + metadata on the existing 2s cache cadence. Must never disrupt
+        // the real delivery pipeline.
+        runCatching {
+            sessionPartStore?.onCacheSnapshot(envelope)
+        }
         intakeService.take(
             intake = envelope,
             metadata = createMetadata(

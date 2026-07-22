@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStore
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
+import io.embrace.android.embracesdk.internal.delivery.storage.session.SessionPartStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 
 /**
@@ -23,4 +24,5 @@ interface DeliveryModule {
     val cachedLogEnvelopeStore: CachedLogEnvelopeStore
     val schedulingService: SchedulingService
     val deliveryTracer: DeliveryTracer?
+    val sessionPartStore: SessionPartStore
 }

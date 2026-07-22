@@ -19,12 +19,15 @@ import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageSer
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
+import io.embrace.android.embracesdk.internal.delivery.storage.session.SessionPartStore
+import io.embrace.android.embracesdk.internal.delivery.storage.session.SessionPartStoreImpl
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionPartCacher
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStoreImpl
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
+import java.io.File
 
 class DeliveryModuleImpl(
     configService: ConfigService,
@@ -48,6 +51,13 @@ class DeliveryModuleImpl(
             processIdProvider,
             initModule.uuidSource,
             essentialServiceModule.sessionIdsProvider::getActiveSessionIds,
+            sessionPartStore,
+        )
+    }
+
+    override val sessionPartStore: SessionPartStore by singleton {
+        SessionPartStoreImpl(
+            rootDir = File(coreModule.context.filesDir, "session_parts"),
         )
     }
 

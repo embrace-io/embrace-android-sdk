@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStore
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
+import io.embrace.android.embracesdk.internal.delivery.storage.session.SessionPartStore
 import io.embrace.android.embracesdk.internal.injection.DeliveryModule
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 
@@ -18,4 +19,5 @@ class FakeDeliveryModule(
     override val cachedLogEnvelopeStore: CachedLogEnvelopeStore = FakeCachedLogEnvelopeStore(),
     override val schedulingService: SchedulingService = FakeSchedulingService(),
     override val deliveryTracer: DeliveryTracer = DeliveryTracer(),
+    override val sessionPartStore: SessionPartStore = FakeSessionPartStore(),
 ) : DeliveryModule

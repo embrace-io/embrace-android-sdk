@@ -24,6 +24,8 @@ class EmbTracer(
     private val useKotlinSdk: Boolean,
 ) : Tracer {
 
+    override fun enabled(): Boolean = impl.enabled()
+
     override fun startSpan(
         name: String,
         parentContext: Context?,

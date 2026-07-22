@@ -9,4 +9,5 @@ internal class EmbSpanEvent(
     private val attrs: EmbAttributesMutator,
 ) : SpanEvent, AttributesMutator by attrs {
     override val attributes: Map<String, Any> get() = attrs.attributes
+    override val droppedAttributesCount: Int = 0
 }

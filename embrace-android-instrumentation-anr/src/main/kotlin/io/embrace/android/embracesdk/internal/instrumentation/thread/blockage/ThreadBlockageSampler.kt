@@ -56,6 +56,9 @@ class ThreadBlockageSampler(
                                 samples = sampler.getThreadBlockageSamples(),
                             ),
                         )
+                        // clear least valuable sample immediately so that stored intervals never
+                        // retain samples unnecessarily
+                        clearLeastValuableSamples(intervals)
                     }
                     currentBlockage.set(null)
                 }
@@ -64,32 +67,20 @@ class ThreadBlockageSampler(
     }
 
     /**
-     * Retrieves thread blockage intervals for the current session
+     * Retrieves thread blockage intervals for the current session.
      */
     fun getThreadBlockageIntervals(): List<ThreadBlockageInterval> {
+        val results = intervalSink.get().toMutableList()
         val blockage = currentBlockage.get()
-        var results = intervalSink.get().toMutableList()
 
-        if (blockage != null) {
-            if (currentBlockage.get() === blockage) {
-                results.add(
-                    ThreadBlockageInterval(
-                        startTime = blockage.startTime,
-                        lastKnownTime = clock.now(),
-                        samples = blockage.sampler.getThreadBlockageSamples(),
-                    ),
-                )
-            } else {
-                results = intervalSink.get().toMutableList()
-            }
-        }
-
-        while (reachedIntervalCaptureLimit(results)) {
-            findLeastValuableIntervalWithSamples(results)?.let { entry ->
-                val index = results.indexOf(entry)
-                results.remove(entry)
-                results.add(index, entry.clearSamples())
-            }
+        if (blockage != null && currentBlockage.get() === blockage) {
+            results.add(
+                ThreadBlockageInterval(
+                    startTime = blockage.startTime,
+                    lastKnownTime = clock.now(),
+                    samples = blockage.sampler.getThreadBlockageSamples(),
+                ),
+            )
         }
         return results
     }
@@ -122,6 +113,18 @@ class ThreadBlockageSampler(
                     else -> CODE_DEFAULT
                 },
             )
+        }
+    }
+
+    /**
+     * Clears samples from the least valuable interval in [intervals] (in place) while the number of
+     * intervals-with-samples exceeds [maxIntervalsPerSession]. This bounds retained samples at
+     * insertion time..
+     */
+    private fun clearLeastValuableSamples(intervals: MutableList<ThreadBlockageInterval>) {
+        while (reachedIntervalCaptureLimit(intervals)) {
+            val entry = findLeastValuableIntervalWithSamples(intervals) ?: return
+            intervals[intervals.indexOf(entry)] = entry.clearSamples()
         }
     }
 

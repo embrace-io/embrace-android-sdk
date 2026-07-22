@@ -425,6 +425,25 @@ internal class ThreadBlockageSamplerTest {
         )
     }
 
+    @Test
+    fun `stored samples are bounded at insertion time, not read time`() {
+        repeat(20) { sampler.createThreadBlockageInterval(clock, 1000L + it) }
+
+        // assert reads are stable
+        val first = sampler.getThreadBlockageIntervals()
+        val second = sampler.getThreadBlockageIntervals()
+
+        assertEquals(20, first.size)
+        assertEquals(
+            behavior.getMaxIntervalsPerSession(),
+            first.count { it.samples != null },
+        )
+        assertEquals(
+            first.map { it.samples?.size },
+            second.map { it.samples?.size },
+        )
+    }
+
     private fun ThreadBlockageSampler.createThreadBlockageInterval(clock: FakeClock, duration: Long) {
         onThreadBlockageEvent(BLOCKED, clock.now())
         onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())

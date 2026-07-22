@@ -10,7 +10,7 @@ public interface HttpRequestInfo {
     public val url: String
 
     /**
-     * The request's method. Must be one of the following: GET, PUT, POST, DELETE, PATCH.
+     * The request's method (`GET`, `PUT`, `POST`, `DELETE`, `PATCH`, etc.).
      */
     public val httpMethod: String
 }

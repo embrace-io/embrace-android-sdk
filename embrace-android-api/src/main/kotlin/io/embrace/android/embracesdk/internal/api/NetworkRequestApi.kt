@@ -21,7 +21,8 @@ public interface NetworkRequestApi {
     /**
      * Registers a [HttpRequestInfoModifier] that will be invoked to alter the HTTP request info
      * captured by network instrumentation before it is reported as telemetry. This does not modify
-     * the underlying HTTP request that is executed.
+     * the underlying HTTP request that is executed. Only requests recorded after this method returns
+     * will be modified by the given [modifier].
      */
     public fun addHttpRequestInfoModifier(modifier: HttpRequestInfoModifier)
 

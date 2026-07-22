@@ -355,8 +355,17 @@ private class EmbraceSpanImpl(
     }
 
     override fun addSystemAttribute(key: String, value: String) {
-        systemAttributes[key] = value
-        spanRepository.notifySpanUpdate()
+        val max = dataValidator.otelLimitsConfig.getMaxSystemAttributeCount()
+        if (systemAttributes.containsKey(key) || systemAttributes.size < max) {
+            synchronized(systemAttributes) {
+                if (systemAttributes.containsKey(key) || systemAttributes.size < max) {
+                    systemAttributes[key] = value
+                    spanRepository.notifySpanUpdate()
+                    return
+                }
+            }
+        }
+        telemetryService.trackAppliedLimit("span_attribute", AppliedLimitType.DROP)
     }
 
     override fun removeSystemAttribute(key: String) {

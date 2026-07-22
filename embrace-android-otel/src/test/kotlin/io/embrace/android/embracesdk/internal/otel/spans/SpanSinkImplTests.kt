@@ -45,6 +45,18 @@ internal class SpanSinkImplTests {
     }
 
     @Test
+    fun `flushing does not retain previously flushed spans`() {
+        spanSink.storeCompletedSpans(listOf(FakeSpanData(), FakeSpanData()).map(FakeSpanData::toEmbraceSpanData))
+        assertEquals(2, spanSink.flushSpans().size)
+
+        assertEquals(0, spanSink.flushSpans().size)
+        assertEquals(0, spanSink.completedSpans().size)
+
+        spanSink.storeCompletedSpans(listOf(FakeSpanData()).map(FakeSpanData::toEmbraceSpanData))
+        assertEquals(1, spanSink.flushSpans().size)
+    }
+
+    @Test
     fun `flushing does not block writing and does not clear the spans added before the flush determines what to flush`() {
         spanSink.storeCompletedSpans(
             listOf(

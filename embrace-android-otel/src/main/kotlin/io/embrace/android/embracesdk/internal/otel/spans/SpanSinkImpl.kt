@@ -4,11 +4,10 @@ import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 import io.embrace.android.embracesdk.internal.utils.threadSafeTake
 import java.util.Queue
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.atomic.AtomicReference
 
 class SpanSinkImpl : SpanSink {
     private val completedSpans: Queue<EmbraceSpanData> = ConcurrentLinkedQueue()
-    private val spansToFlush = AtomicReference<List<EmbraceSpanData>>(listOf())
+    private val flushLock = Any()
 
     override fun storeCompletedSpans(spans: List<EmbraceSpanData>): StoreDataResult {
         try {
@@ -25,10 +24,10 @@ class SpanSinkImpl : SpanSink {
     }
 
     override fun flushSpans(): List<EmbraceSpanData> {
-        synchronized(spansToFlush) {
-            spansToFlush.set(completedSpans())
-            completedSpans.removeAll(spansToFlush.get().toSet())
-            return spansToFlush.get()
+        synchronized(flushLock) {
+            val flushed = completedSpans()
+            completedSpans.removeAll(flushed.toSet())
+            return flushed
         }
     }
 }

@@ -152,9 +152,9 @@ internal class RnBundleIdTrackerImpl(
             val hashBundle: String
             val sb = StringBuilder()
             for (b in bundleHashed) {
-                sb.append(String.format(Locale.ENGLISH, "%02x", b.toInt() and 0xff))
+                sb.append(String.format(Locale.US, "%02x", b.toInt() and 0xff))
             }
-            hashBundle = sb.toString().uppercase(Locale.ENGLISH)
+            hashBundle = sb.toString().uppercase(Locale.US)
             return hashBundle
         }
     }

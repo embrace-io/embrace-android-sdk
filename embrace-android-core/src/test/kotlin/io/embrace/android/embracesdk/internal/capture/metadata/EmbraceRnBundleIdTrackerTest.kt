@@ -22,6 +22,7 @@ import java.io.FileInputStream
 import java.io.IOException
 import java.nio.file.Files
 import java.security.MessageDigest
+import java.util.Locale
 
 internal class EmbraceRnBundleIdTrackerTest {
 
@@ -178,8 +179,8 @@ internal class EmbraceRnBundleIdTrackerTest {
         bundleIdFile.writeBytes(contents)
 
         val expected = MessageDigest.getInstance("MD5").digest(contents)
-            .joinToString("") { String.format("%02x", it.toInt() and 0xff) }
-            .uppercase()
+            .joinToString("") { String.format(Locale.US, "%02x", it.toInt() and 0xff) }
+            .uppercase(Locale.US)
 
         val metadataService = createRnBundleIdTracker()
         metadataService.setReactNativeBundleId(bundleIdFile.absolutePath)

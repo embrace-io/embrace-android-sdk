@@ -64,12 +64,14 @@ class OkHttpRequestExecutionService(
             null
         }
 
-        return getResult(
-            endpoint = envelopeType.endpoint,
-            responseCode = httpCallResponse?.code,
-            headersProvider = { httpCallResponse?.headers?.toMap() ?: emptyMap() },
-            executionError = executionError,
-        ).apply {
+        return httpCallResponse.use { response ->
+            getResult(
+                endpoint = envelopeType.endpoint,
+                responseCode = response?.code,
+                headersProvider = { response?.headers?.toMap() ?: emptyMap() },
+                executionError = executionError,
+            )
+        }.apply {
             deliveryTracer?.onHttpCallEnded(this, envelopeType, payloadType)
         }
     }

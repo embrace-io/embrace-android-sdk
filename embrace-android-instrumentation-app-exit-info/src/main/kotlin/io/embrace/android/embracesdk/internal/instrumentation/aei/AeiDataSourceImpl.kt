@@ -32,7 +32,9 @@ internal class AeiDataSourceImpl(
 ) {
 
     private companion object {
-        private const val SDK_AEI_SEND_LIMIT = 64
+        // matches the default max records AOSP retains per package
+        // (config_app_exit_info_history_list_size)
+        private const val SDK_AEI_SEND_LIMIT = 16
         private const val AEI_HASH_CODES = "io.embrace.aeiHashCode"
     }
 

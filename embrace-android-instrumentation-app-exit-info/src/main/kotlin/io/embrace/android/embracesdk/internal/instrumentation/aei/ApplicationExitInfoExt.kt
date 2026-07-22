@@ -7,11 +7,15 @@ import io.embrace.android.embracesdk.internal.instrumentation.aei.TraceResult.Fa
 import io.embrace.android.embracesdk.internal.instrumentation.aei.TraceResult.Success
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
+import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.io.InputStream
+import java.io.Reader
 import java.util.regex.Pattern
 
 private val SESSION_ID_PATTERN by lazy { Pattern.compile("^[0-9a-fA-F]{32}\$").toRegex() }
 private const val SESSION_ID_LENGTH = 32
+private const val READ_BUFFER_SIZE = 8192
 
 /**
  * Constructs an [io.embrace.android.embracesdk.internal.payload.AppExitInfoData] object from an [ApplicationExitInfo] object. The trace
@@ -56,7 +60,7 @@ private fun ApplicationExitInfo.readAeiTrace(
     charLimit: Int,
 ): TraceResult? {
     return try {
-        val trace = readTraceAsString(versionChecker) ?: return null
+        val trace = readTraceAsString(versionChecker, charLimit) ?: return null
 
         when {
             trace.length > charLimit -> Success(trace.take(charLimit), "Trace was too large, sending truncated trace")
@@ -72,13 +76,47 @@ private fun ApplicationExitInfo.readAeiTrace(
 }
 
 @RequiresApi(VERSION_CODES.R)
-private fun ApplicationExitInfo.readTraceAsString(versionChecker: VersionChecker): String? {
+private fun ApplicationExitInfo.readTraceAsString(versionChecker: VersionChecker, charLimit: Int): String? {
+    val stream = traceInputStream ?: return null
     return if (isNdkProtobufFile(versionChecker)) {
-        val bytes = traceInputStream?.buffered()?.readBytes() ?: return null
-        bytes.toUTF8String()
+        stream.use { it.readBytesCapped(charLimit).toUTF8String() }
     } else {
-        traceInputStream?.bufferedReader()?.readText()
+        stream.bufferedReader().use { it.readTextCapped(charLimit) }
     }
+}
+
+/**
+ * Reads at most one buffer beyond [charLimit] bytes, so oversized traces can be detected
+ * and truncated without ever reading the entire source into memory.
+ */
+private fun InputStream.readBytesCapped(charLimit: Int): ByteArray {
+    val out = ByteArrayOutputStream(READ_BUFFER_SIZE)
+    val buffer = ByteArray(READ_BUFFER_SIZE)
+    while (out.size() <= charLimit) {
+        val count = read(buffer)
+        if (count == -1) {
+            break
+        }
+        out.write(buffer, 0, count)
+    }
+    return out.toByteArray()
+}
+
+/**
+ * Reads at most one buffer beyond [charLimit] chars, so oversized traces can be detected
+ * and truncated without ever reading the entire source into memory.
+ */
+private fun Reader.readTextCapped(charLimit: Int): String {
+    val sb = StringBuilder()
+    val buffer = CharArray(READ_BUFFER_SIZE)
+    while (sb.length <= charLimit) {
+        val count = read(buffer)
+        if (count == -1) {
+            break
+        }
+        sb.append(buffer, 0, count)
+    }
+    return sb.toString()
 }
 
 /**

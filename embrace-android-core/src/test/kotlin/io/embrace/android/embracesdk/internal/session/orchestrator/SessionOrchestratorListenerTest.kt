@@ -36,6 +36,7 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingServiceImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.session.UserSessionListener
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionPartCacher
@@ -239,6 +240,64 @@ internal class SessionOrchestratorListenerTest {
 
         assertTrue(innerRegistered)
         assertEquals(listOf(SessionStateEvent.UserSessionActive::class), innerEvents.map { it::class })
+    }
+
+    @Test
+    fun `removed listener receives no further events`() {
+        configService = sessionBehaviorConfig()
+        createOrchestrator(AppState.FOREGROUND)
+        val events = mutableListOf<SessionStateEvent>()
+        val listener = UserSessionListener { events.add(it) }
+        orchestrator.addUserSessionListener(listener)
+        assertEquals(1, events.size)
+
+        orchestrator.removeUserSessionListener(listener)
+        clock.tick(10000)
+        orchestrator.endSessionWithManual()
+
+        // no events delivered after removal
+        assertEquals(1, events.size)
+    }
+
+    @Test
+    fun `registering the same listener twice dedups and fires the immediate event only once`() {
+        configService = sessionBehaviorConfig()
+        createOrchestrator(AppState.FOREGROUND)
+        val events = mutableListOf<SessionStateEvent>()
+        val listener = UserSessionListener { events.add(it) }
+        orchestrator.addUserSessionListener(listener)
+        orchestrator.addUserSessionListener(listener)
+
+        assertEquals(listOf(SessionStateEvent.UserSessionActive::class), events.map { it::class })
+
+        clock.tick(10000)
+        orchestrator.endSessionWithManual()
+
+        assertEquals(
+            listOf(
+                SessionStateEvent.UserSessionActive::class,
+                SessionStateEvent.UserSessionEnded::class,
+                SessionStateEvent.UserSessionActive::class,
+            ),
+            events.map { it::class },
+        )
+    }
+
+    @Test
+    fun `removing an unregistered listener is a no-op`() {
+        configService = sessionBehaviorConfig()
+        createOrchestrator(AppState.FOREGROUND)
+        val events = mutableListOf<SessionStateEvent>()
+        orchestrator.addUserSessionListener { events.add(it) }
+        val sizeAfterRegistration = events.size
+
+        orchestrator.removeUserSessionListener { }
+
+        clock.tick(10000)
+        orchestrator.endSessionWithManual()
+
+        // the still-registered listener keeps receiving events
+        assertTrue(events.size > sizeAfterRegistration)
     }
 
     private fun restoredMetadataStore() = UserSessionMetadataStore(FakeKeyValueStore()).also { store ->

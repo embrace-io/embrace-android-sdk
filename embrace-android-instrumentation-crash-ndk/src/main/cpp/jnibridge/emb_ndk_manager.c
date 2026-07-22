@@ -47,11 +47,13 @@ static void JniDelegateImpl_installSignalHandlers(JNIEnv *env,
     EMB_LOGDEV("Setting up initial state.");
     const char *report_id = (*env)->GetStringUTFChars(env, _report_id, 0);
     snprintf(__emb_env->crash.report_id, EMB_REPORT_ID_SIZE, "%s", report_id);
+    emb_jni_release_string_utf_chars(env, _report_id, report_id);
 
     EMB_LOGDEV("Setting up crash marker path.");
     const char *crash_marker_path = (*env)->GetStringUTFChars(env, _crash_marker_path, 0);
     snprintf(__emb_env->crash_marker_path, EMB_PATH_SIZE, "%s", crash_marker_path);
     EMB_LOGINFO("crash marker path: %s", crash_marker_path);
+    emb_jni_release_string_utf_chars(env, _crash_marker_path, crash_marker_path);
 
     EMB_LOGDEV("Recording start timestamp.");
     struct timespec ts;
@@ -80,10 +82,13 @@ static void JniDelegateImpl_onSessionChange(JNIEnv *env,
                                             jstring _report_path) {
     const char *session_id = (*env)->GetStringUTFChars(env, _session_id, 0);
     snprintf(__emb_env->crash.session_id, EMB_SESSION_ID_SIZE, "%s", session_id);
+    emb_jni_release_string_utf_chars(env, _session_id, session_id);
     const char *user_session_id = (*env)->GetStringUTFChars(env, _user_session_id, 0);
     snprintf(__emb_env->crash.user_session_id, EMB_SESSION_ID_SIZE, "%s", user_session_id);
+    emb_jni_release_string_utf_chars(env, _user_session_id, user_session_id);
     const char *report_path = (*env)->GetStringUTFChars(env, _report_path, 0);
     snprintf(__emb_env->report_path, EMB_PATH_SIZE, "%s", report_path);
+    emb_jni_release_string_utf_chars(env, _report_path, report_path);
 }
 
 static jstring JniDelegateImpl_getCrashReport(

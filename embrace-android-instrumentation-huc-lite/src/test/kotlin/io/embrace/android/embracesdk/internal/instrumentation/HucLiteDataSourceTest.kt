@@ -14,10 +14,12 @@ import io.embrace.android.embracesdk.instrumentation.huclite.DelegatingInstrumen
 import io.embrace.android.embracesdk.instrumentation.huclite.FAKE_TIME_MS
 import io.embrace.android.embracesdk.instrumentation.huclite.InstrumentedUrlStreamHandlerFactory
 import io.embrace.android.embracesdk.instrumentation.huclite.testUrl
+import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
 import io.embrace.android.embracesdk.internal.network.logging.EmbraceDomainCountLimiter
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.mockk.every
 import io.mockk.mockk
+import io.opentelemetry.kotlin.semconv.HttpAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -68,6 +70,7 @@ class HucLiteDataSourceTest {
 
     private fun createHucLiteDataSource(
         networkBehavior: FakeNetworkBehavior = FakeNetworkBehavior(domainCountLimiter = domainCountLimiter),
+        configureModifiers: (HttpRequestInfoModifierChain) -> Unit = {},
     ): HucLiteDataSource = HucLiteDataSource(
         args = FakeInstrumentationArgs(
             application = ApplicationProvider.getApplicationContext(),
@@ -76,7 +79,7 @@ class HucLiteDataSourceTest {
             logger = fakeEmbLogger,
             clock = fakeClock,
             telemetryService = fakeTelemetryService,
-        ),
+        ).apply { configureModifiers(httpRequestInfoModifierChain) },
         streamHandlerFactoryFieldProvider = { factoryFieldRef },
         factoryInstaller = {
             factoryField = it
@@ -129,6 +132,32 @@ class HucLiteDataSourceTest {
         // 4 spans should be recorded, 1 should be dropped
         assertEquals(4, fakeTelemetryDestination.createdSpans.size)
         assertEquals("huc_network_request" to AppliedLimitType.DROP, fakeTelemetryService.appliedLimits.first())
+    }
+
+    @Test
+    fun `a registered modifier alters the reported url and method`() {
+        val ds = createHucLiteDataSource(
+            configureModifiers = { chain ->
+                chain.add {
+                    it.url = "https://redacted.burger/api"
+                    it.httpMethod = "POST"
+                }
+            },
+        )
+
+        ds.createRequestData(
+            wrappedConnection = mockedConnection,
+            clock = fakeClock,
+        )?.apply {
+            startRequest()
+            completeRequest(200)
+        }
+
+        with(fakeTelemetryDestination.createdSpans.single()) {
+            assertEquals("https://redacted.burger/api", attributes["url.full"])
+            assertEquals("POST", attributes[HttpAttributes.HTTP_REQUEST_METHOD])
+            assertTrue(name.startsWith("POST "))
+        }
     }
 
     @Test

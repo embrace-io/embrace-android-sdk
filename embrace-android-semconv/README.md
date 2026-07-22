@@ -8,7 +8,7 @@ The Kotlin under `src/main/kotlin/io/embrace/android/embracesdk/semconv/` is gen
 [weaver](https://github.com/open-telemetry/weaver), pinned by `WEAVER_VERSION` in
 [`versions.env`](versions.env). CI installs it via the shared **`setup-weaver`** GitHub Action in
 [`embrace-io/embrace-semconv`](https://github.com/embrace-io/embrace-semconv), passing this repo's
-pinned version. 
+pinned version.
 
 To run the regeneration locally, install weaver using that script, and it will put the executable in
 your `PATH`, e.g. run `.github/actions/setup-weaver/install-weaver.sh` from a checkout of

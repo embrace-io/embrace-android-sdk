@@ -36,13 +36,13 @@ jobs:
           echo "version=$WEAVER_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Install Weaver
-        # Pinned to an embrace-semconv commit for now. Will change to SHA associated with a tag in the future.
-        uses: embrace-io/embrace-semconv/.github/actions/setup-weaver@5d1157d4d3de5a145057fc2fc088a2aa0fd80713
+        # Pinned to the SHA of the embrace-semconv v0.2.0 release.
+        uses: embrace-io/embrace-semconv/.github/actions/setup-weaver@8bbae8869bba8fb883aeea73c7a2936720af7875
         with:
           version: ${{ steps.weaver.outputs.version }}
 
       - name: Validate registry (schema + dependency resolution)
-        run: bash embrace-android-semconv/check.sh
+        run: weaver registry check -r embrace-android-semconv/src/main/semconv --v2
 
   generated-code-drift:
     runs-on: ubuntu-latest
@@ -69,8 +69,8 @@ jobs:
           echo "version=$WEAVER_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Install Weaver
-        # Pinned to an embrace-semconv commit for now. Will change to SHA associated with a tag in the future.
-        uses: embrace-io/embrace-semconv/.github/actions/setup-weaver@5d1157d4d3de5a145057fc2fc088a2aa0fd80713
+        # Pinned to the SHA of the embrace-semconv v0.2.0 release.
+        uses: embrace-io/embrace-semconv/.github/actions/setup-weaver@8bbae8869bba8fb883aeea73c7a2936720af7875
         with:
           version: ${{ steps.weaver.outputs.version }}
 
@@ -78,8 +78,8 @@ jobs:
         run: ./gradlew :embrace-android-semconv:generateEmbraceSemanticConventions --stacktrace
 
       - name: Check committed generated source code is in sync
-        # Pinned to an embrace-semconv commit for now. Will change to SHA associated with a tag in the future.
-        uses: embrace-io/embrace-semconv/.github/actions/assert-no-drift@main
+        # Pinned to the SHA of the embrace-semconv v0.2.0 release.
+        uses: embrace-io/embrace-semconv/.github/actions/assert-no-drift@8bbae8869bba8fb883aeea73c7a2936720af7875
         with:
           path: embrace-android-semconv/src/main/kotlin/io/embrace/android/embracesdk/semconv
           label: generated semantic-convention sources

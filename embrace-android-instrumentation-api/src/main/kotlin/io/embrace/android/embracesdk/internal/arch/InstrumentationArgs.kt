@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
@@ -48,6 +49,13 @@ interface InstrumentationArgs {
      * A clock that can be used for time measurements in telemetry.
      */
     val clock: Clock
+
+    /**
+     * Holds the [io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier]s registered by
+     * the consumer. Network instrumentation applies these to captured HTTP request info before it is
+     * reported as telemetry.
+     */
+    val httpRequestInfoModifierChain: HttpRequestInfoModifierChain
 
     /**
      * Service for tracking telemetry usage and limits.

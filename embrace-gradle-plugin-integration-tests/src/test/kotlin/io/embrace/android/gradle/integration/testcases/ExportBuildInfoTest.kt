@@ -36,7 +36,6 @@ class ExportBuildInfoTest {
             assertions = { projectDir ->
                 val buildInfo = readBuildInfoExport(projectDir, "release")
                 assertEquals(IntegrationTestDefaults.APP_ID, buildInfo.appId)
-                assertEquals(IntegrationTestDefaults.API_TOKEN, buildInfo.apiToken)
                 assertEquals("release", buildInfo.variantName)
                 assertTrue(buildInfo.buildId.isNotBlank())
             },
@@ -66,7 +65,6 @@ class ExportBuildInfoTest {
             assertions = { projectDir ->
                 val buildInfo = readBuildInfoExport(projectDir, "release")
                 assertEquals(IntegrationTestDefaults.APP_ID, buildInfo.appId)
-                assertEquals(IntegrationTestDefaults.API_TOKEN, buildInfo.apiToken)
                 assertEquals("release", buildInfo.variantName)
                 assertTrue(buildInfo.buildId.isNotBlank())
             },

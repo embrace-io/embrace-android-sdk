@@ -6,6 +6,5 @@ import com.squareup.moshi.JsonClass
 data class BuildInfoExport(
     val buildId: String,
     val appId: String,
-    val apiToken: String,
     val variantName: String,
 )

@@ -26,7 +26,6 @@ class ExportBuildInfoTaskRegistration : MappingTaskRegistration() {
 
             task.buildId.set(params.buildIdProvider)
             task.appId.set(embraceConfig?.appId.orEmpty())
-            task.apiToken.set(embraceConfig?.apiToken.orEmpty())
 
             task.outputFile.set(
                 params.project.layout.buildDirectory.file(

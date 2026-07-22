@@ -34,9 +34,6 @@ abstract class ExportBuildInfoTask @Inject constructor(
     @get:Input
     val appId: Property<String> = objectFactory.property(String::class.java)
 
-    @get:Input
-    val apiToken: Property<String> = objectFactory.property(String::class.java)
-
     @get:OutputFile
     val outputFile: RegularFileProperty = objectFactory.fileProperty()
 
@@ -45,7 +42,6 @@ abstract class ExportBuildInfoTask @Inject constructor(
         val buildInfo = BuildInfoExport(
             buildId = buildId.get(),
             appId = appId.get(),
-            apiToken = apiToken.get(),
             variantName = variantData.get().name,
         )
         outputFile.get().asFile.apply {

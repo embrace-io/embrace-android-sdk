@@ -26,7 +26,8 @@ import okio.Buffer
 import okio.GzipSource
 import okio.buffer
 import java.io.IOException
-import java.util.concurrent.ConcurrentHashMap
+import java.util.Collections
+import java.util.WeakHashMap
 
 /**
  * Captures OkHttp requests as telemetry.
@@ -44,9 +45,17 @@ internal class OkHttpDataSource(
 ) {
     /**
      * A map that stashes instrumentation information for a request so that different interceptors can reference the same instance.
-     * The data for each call will be cleaned up when the result of the request is recorded.
+     * The data for each call will be cleaned up when the result of the request is recorded. Keys are held weakly so that a
+     * [Call] that is garbage collected cannot pin its [CallData], should any future code path fail to clean up after itself.
      */
-    private val activeCalls = ConcurrentHashMap<Call, CallData>()
+    private val activeCalls = Collections.synchronizedMap(WeakHashMap<Call, CallData>())
+
+    /**
+     * The number of calls currently being instrumented. Exists so tests can assert that tracking state is released.
+     */
+    internal val activeCallCount: Int
+        get() = activeCalls.size
+
     private val networkRequestDataSource: NetworkRequestDataSource?
         get() = networkRequestDataSourceProvider()
 

@@ -83,6 +83,7 @@ internal class OkHttpDataSourceTest {
     private lateinit var args: FakeInstrumentationArgs
     private lateinit var configService: FakeConfigService
     private lateinit var okHttpClient: OkHttpClient
+    private lateinit var dataSource: OkHttpDataSource
     private lateinit var networkRequestDataSource: RecordingNetworkRequestDataSource
     private lateinit var applicationInterceptor: EmbraceOkHttpInterceptor
     private lateinit var networkInterceptor: EmbraceOkHttpInterceptor
@@ -132,7 +133,7 @@ internal class OkHttpDataSourceTest {
             networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior()
         }
 
-        val dataSource = OkHttpDataSource(
+        dataSource = OkHttpDataSource(
             args = args,
             networkRequestDataSourceProvider = { networkRequestDataSource },
             networkCaptureDataSourceProvider = { networkCaptureDataSource },
@@ -501,6 +502,9 @@ internal class OkHttpDataSourceTest {
 
     @Test
     fun `requests that never reach the network interceptor are discarded without an app-visible failure`() {
+        // A downstream application interceptor that short-circuits with a synthetic response means the
+        // network interceptor never runs, so there is no result to record. Discard rather than record it
+        // so that no telemetry is emitted for a request the SDK didn't observe.
         val shortCircuitClient = OkHttpClient.Builder()
             .addInterceptor(applicationInterceptor)
             .addInterceptor { chain ->
@@ -518,9 +522,22 @@ internal class OkHttpDataSourceTest {
         val response = checkNotNull(shortCircuitClient.newCall(postRequestBuilder.build()).execute())
         assertEquals(200, response.code)
 
-        // the request's tracking references were released, but its span was never stopped
+        // the request was discarded and its tracking reference released
         assertEquals(1, networkRequestDataSource.discardedIds.size)
+        assertEquals(0, dataSource.activeCallCount)
+
+        // the span is still recording: discarding stops tracking it but cannot yet drop it from the
+        // SpanRepository, so it is snapshotted into session payloads. Tracked as a follow-up.
         assertTrue(args.destination.createdSpans.single().isRecording())
+    }
+
+    @Test
+    fun `state is cleaned up after a request whose network interceptor runs`() {
+        server.enqueue(createBaseMockResponse())
+        runPostRequest()
+        assertNetworkRequestReceived { span -> assertNotNull(span.endTimeMs) }
+        assertTrue(networkRequestDataSource.discardedIds.isEmpty())
+        assertEquals(0, dataSource.activeCallCount)
     }
 
     @Test
@@ -532,9 +549,10 @@ internal class OkHttpDataSourceTest {
         val response = runPostRequest()
         assertEquals(200, response.code)
 
-        // the failure was contained and the request's tracking reference released
+        // the failure was contained and the request's tracking references released
         assertEquals(1, args.logger.internalErrorMessages.size)
         assertEquals(1, networkRequestDataSource.discardedIds.size)
+        assertEquals(0, dataSource.activeCallCount)
     }
 
     private fun assertNetworkBodyNotCaptured() {

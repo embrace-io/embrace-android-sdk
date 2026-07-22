@@ -25,6 +25,9 @@ class ViewDataSource(
 
     private val viewSpans: LinkedHashMap<String, SpanToken> = LinkedHashMap()
 
+    internal val trackedViewCount: Int
+        get() = synchronized(viewSpans) { viewSpans.size }
+
     override fun onDataCaptureEnabled() {
         application.registerActivityLifecycleCallbacks(this)
     }
@@ -78,9 +81,8 @@ class ViewDataSource(
      */
     fun onViewClose() {
         synchronized(viewSpans) {
-            viewSpans.forEach { (_, span) ->
-                span.stop()
-            }
+            viewSpans.values.forEach { it.stop() }
+            viewSpans.clear()
         }
     }
 

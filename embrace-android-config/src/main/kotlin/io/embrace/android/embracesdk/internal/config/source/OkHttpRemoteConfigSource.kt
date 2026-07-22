@@ -47,20 +47,20 @@ internal class OkHttpRemoteConfigSource(
         return request
     }
 
-    private fun processResponse(response: Response): ConfigHttpResponse? {
-        response.header("etag")?.let {
-            this.etag = it
+    private fun processResponse(response: Response): ConfigHttpResponse? = response.use {
+        response.header("etag")?.let { etagHeader ->
+            this.etag = etagHeader
         }
         if (!response.isSuccessful) {
             return null
         }
         val cfg = response.body?.source()?.use { src ->
             val gzipSource = GzipSource(src)
-            gzipSource.buffer().inputStream().use {
-                serializer.fromJson<RemoteConfig>(it)
+            gzipSource.buffer().inputStream().use { stream ->
+                serializer.fromJson<RemoteConfig>(stream)
             }
         }
-        return ConfigHttpResponse(cfg, etag)
+        ConfigHttpResponse(cfg, etag)
     }
 
     private fun prepareConfigRequestHeaders(): Map<String, String> {

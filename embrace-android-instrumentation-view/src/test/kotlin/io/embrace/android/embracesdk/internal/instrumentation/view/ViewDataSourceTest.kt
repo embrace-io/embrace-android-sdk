@@ -154,6 +154,43 @@ internal class ViewDataSourceTest {
     }
 
     @Test
+    fun `onViewClose stops all spans and clears tracking`() {
+        dataSource.startView("a")
+        dataSource.startView("b")
+
+        dataSource.onViewClose()
+
+        val spans = args.destination.createdSpans
+        assertEquals(2, spans.size)
+        assertTrue(spans.none { it.isRecording() })
+        assertEquals(0, dataSource.trackedViewCount)
+    }
+
+    @Test
+    fun `repeated dynamic startView then onViewClose does not retain entries`() {
+        repeat(100) { dataSource.startView("view_$it") }
+        assertEquals(100, dataSource.trackedViewCount)
+
+        dataSource.onViewClose()
+
+        assertEquals(0, dataSource.trackedViewCount)
+    }
+
+    @Test
+    fun `changeView after onViewClose does not resurrect a stale view`() {
+        dataSource.startView("stale")
+        dataSource.onViewClose()
+
+        dataSource.changeView("fresh")
+
+        val spans = args.destination.createdSpans
+        assertEquals(2, spans.size)
+        val freshSpan = spans.single { it.attributes[EmbViewAttributes.VIEW_NAME] == "fresh" }
+        assertTrue(freshSpan.isRecording())
+        assertEquals(1, dataSource.trackedViewCount)
+    }
+
+    @Test
     fun `concurrent startView and endView does not throw ConcurrentModificationException`() {
         val iterations = 100
         val errors = AtomicInteger(0)

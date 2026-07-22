@@ -66,9 +66,9 @@ class NetworkBehaviorImpl(
     )
 
     override fun isUrlEnabled(url: String): Boolean {
-        val patterns = disabledUrlPatterns?.toSet()
+        val patterns = disabledUrlPatterns
             ?: remote?.disabledUrlPatterns
-            ?: cfg.getIgnoredRequestPatternList().toSet()
+            ?: cfg.getIgnoredRequestPatternList()
         return !patternCache.doesStringContainMatchInSet(url, patterns)
     }
 

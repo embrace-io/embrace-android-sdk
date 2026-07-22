@@ -14,23 +14,23 @@ internal class PatternCache {
         private const val MAX_CACHED_PATTERN_SETS = 1000
     }
 
-    private val memo: MutableMap<Set<String>, Collection<Pattern>> = ConcurrentHashMap()
+    private val memo: MutableMap<Collection<String>, Collection<Pattern>> = ConcurrentHashMap()
 
-    fun doesStringMatchPatternInSet(string: String, patternSet: Set<String>): Boolean =
-        compiledPatterns(patternSet).any { it.matcher(string).matches() }
+    fun doesStringMatchPatternInSet(string: String, patterns: Collection<String>): Boolean =
+        compiledPatterns(patterns).any { it.matcher(string).matches() }
 
-    fun doesStringContainMatchInSet(string: String, patternSet: Set<String>): Boolean =
-        compiledPatterns(patternSet).any { it.matcher(string).find() }
+    fun doesStringContainMatchInSet(string: String, patterns: Collection<String>): Boolean =
+        compiledPatterns(patterns).any { it.matcher(string).find() }
 
-    private fun compiledPatterns(patternSet: Set<String>): Collection<Pattern> =
-        memo[patternSet] ?: compilePatterns(patternSet).also {
+    private fun compiledPatterns(patterns: Collection<String>): Collection<Pattern> =
+        memo[patterns] ?: compilePatterns(patterns).also {
             if (memo.size < MAX_CACHED_PATTERN_SETS) {
-                memo[patternSet] = it
+                memo[patterns] = it
             }
         }
 
-    private fun compilePatterns(patternSet: Set<String>): Collection<Pattern> =
-        patternSet.mapNotNull {
+    private fun compilePatterns(patterns: Collection<String>): Collection<Pattern> =
+        patterns.toSet().mapNotNull {
             runCatching { Pattern.compile(it) }.getOrNull()
         }
 }

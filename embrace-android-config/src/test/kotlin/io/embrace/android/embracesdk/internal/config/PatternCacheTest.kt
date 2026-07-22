@@ -27,6 +27,12 @@ internal class PatternCacheTest {
     }
 
     @Test
+    fun testListsWithDuplicatesSupported() {
+        assertTrue(cache.doesStringContainMatchInSet("https://example.com/path", listOf("example.com", "example.com")))
+        assertFalse(cache.doesStringContainMatchInSet("https://google.com/path", listOf("example.com", "example.com")))
+    }
+
+    @Test
     fun testMatchingWorksBeyondCacheCap() {
         repeat(50) { k ->
             assertTrue(cache.doesStringContainMatchInSet("url$k", setOf("url$k", "other$k")))

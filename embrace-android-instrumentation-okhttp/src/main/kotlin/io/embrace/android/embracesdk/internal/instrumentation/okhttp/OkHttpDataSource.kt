@@ -88,8 +88,14 @@ internal class OkHttpDataSource(
     private fun interceptApplicationRequest(chain: Interceptor.Chain, callData: CallData?): Response? {
         val request: Request = chain.request()
         return try {
-            // we are not interested in response, just proceed
-            chain.proceed(request)
+            val response = chain.proceed(request)
+            // The network interceptor removes the call from activeCalls when it records the result.
+            // If the entry is still present here, the network interceptor never ran (e.g. a cached
+            // response, a websocket handshake, etc), so needs cleaning up to avoid leaks.
+            if (callData != null && activeCalls.containsKey(chain.call())) {
+                callData.recordSkippedNetworkInterceptorResult(chain.call(), request, response)
+            }
+            response
         } catch (e: EmbraceCustomPathException) {
             val urlString = getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request), e.customPath)
             callData?.recordNetworkError(chain.call(), urlString, request, e.cause)
@@ -118,6 +124,37 @@ internal class OkHttpDataSource(
                     statusCode = null,
                     errorType = cause?.javaClass?.canonicalName ?: UNKNOWN_EXCEPTION,
                     errorMessage = cause?.message ?: UNKNOWN_MESSAGE,
+                    traceId = request.header(CUSTOM_TRACE_ID_HEADER_NAME),
+                    userAgentName = OKHTTP_USER_AGENT_NAME,
+                    userAgentVersion = OkHttp.VERSION,
+                ),
+            )
+        } finally {
+            activeCalls.remove(call)
+        }
+    }
+
+    /**
+     * Records the result of a call whose network interceptor never ran, then removes it from
+     * [activeCalls]. Timestamps come from the SDK clock because OkHttp reports 0 for
+     * [Response.sentRequestAtMillis]/[Response.receivedResponseAtMillis] on cached responses, and
+     * the body size is read from the header only.
+     */
+    private fun CallData.recordSkippedNetworkInterceptorResult(
+        call: Call,
+        request: Request,
+        response: Response,
+    ) {
+        try {
+            networkRequestDataSource?.endRequest(
+                RequestEndData(
+                    id = id,
+                    url = getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request)),
+                    sdkClockStartTime = sdkClockStartTime,
+                    sdkClockEndTime = clock.now(),
+                    bytesSent = request.body?.contentLength() ?: 0,
+                    bytesReceived = getContentLengthFromHeader(response) ?: 0,
+                    statusCode = response.code,
                     traceId = request.header(CUSTOM_TRACE_ID_HEADER_NAME),
                     userAgentName = OKHTTP_USER_AGENT_NAME,
                     userAgentVersion = OkHttp.VERSION,

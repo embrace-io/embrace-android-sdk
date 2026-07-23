@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.arch.schema
 import io.embrace.android.embracesdk.semconv.EmbAeiAttributes
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbBreadcrumbAttributes
+import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbNetworkCapturedRequestAttributes
 import io.embrace.android.embracesdk.semconv.EmbNetworkStateAttributes
 import io.embrace.android.embracesdk.semconv.EmbNetworkStatusAttributes
@@ -52,11 +53,20 @@ sealed class SchemaType(
         override val schemaAttributes: Map<String, String> = mapOf(EmbBreadcrumbAttributes.MESSAGE to message)
     }
 
-    class View(viewName: String) : SchemaType(
+    class View(
+        viewName: String,
+        isManual: Boolean = false,
+    ) : SchemaType(
         telemetryType = EmbType.Ux.View,
         fixedObjectName = "screen-view",
     ) {
-        override val schemaAttributes: Map<String, String> = mapOf(EmbViewAttributes.VIEW_NAME to viewName)
+        override val schemaAttributes: Map<String, String> = mutableMapOf(
+            EmbViewAttributes.VIEW_NAME to viewName,
+        ).apply {
+            if (isManual) {
+                put(EmbCommonAttributes.EMB_MANUAL_INSTRUMENTATION, true.toString())
+            }
+        }
     }
 
     /**

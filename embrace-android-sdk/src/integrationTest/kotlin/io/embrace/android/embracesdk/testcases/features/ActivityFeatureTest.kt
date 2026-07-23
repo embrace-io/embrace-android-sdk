@@ -4,11 +4,14 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSpanOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.SessionPartTimestamps
 import io.embrace.android.embracesdk.assertions.assertMatches
+import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbViewAttributes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -37,6 +40,7 @@ internal class ActivityFeatureTest {
                         EmbViewAttributes.VIEW_NAME to "android.app.Activity"
                     )
                 )
+                assertNull(viewSpan.attributes?.findAttributeValue(EmbCommonAttributes.EMB_MANUAL_INSTRUMENTATION))
 
                 with(checkNotNull(timestamps)) {
                     assertEquals(foregroundTimeMs, viewSpan.startTimeNanos?.nanosToMillis())

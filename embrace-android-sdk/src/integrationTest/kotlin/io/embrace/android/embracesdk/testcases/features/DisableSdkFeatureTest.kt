@@ -26,8 +26,14 @@ internal class DisableSdkFeatureTest {
         private const val LOG_1 = "${TEST_PREFIX}1"
         private const val LOG_2 = "${TEST_PREFIX}2"
         private const val LOG_3 = "${TEST_PREFIX}3"
+        // nest the sentinel inside a subdirectory: the payload storage dirs now sweep loose
+        // files with unparseable names on startup, but leave subdirectories alone. This still
+        // verifies that disable() recursively deletes the storage directories.
+        private const val TEST_SUBDIR_NAME = "emb_test_dir"
         private const val TEST_FILE_NAME = "test_file"
         private const val DUMMY_CONTENT = "Hello, world!"
+
+        private fun File.sentinelFile(): File = File(File(this, TEST_SUBDIR_NAME), TEST_FILE_NAME)
     }
 
     @Rule
@@ -53,12 +59,15 @@ internal class DisableSdkFeatureTest {
                 getEmbLogger().throwOnInternalError = false
                 // create some dummy values in embrace directories to see if they get deleted
                 embraceDirs.forEach {
-                    File(it, TEST_FILE_NAME).writeText(DUMMY_CONTENT)
+                    it.sentinelFile().apply {
+                        parentFile?.mkdirs()
+                        writeText(DUMMY_CONTENT)
+                    }
                 }
             },
             testCaseAction = {
                 embraceDirs.forEach {
-                    assertEquals(DUMMY_CONTENT, File(it, TEST_FILE_NAME).readText())
+                    assertEquals(DUMMY_CONTENT, it.sentinelFile().readText())
                 }
                 recordSession {
                     embrace.startSpan(SPAN_1).stop()
@@ -80,7 +89,7 @@ internal class DisableSdkFeatureTest {
                     desiredValueSupplier = { true },
                     dataProvider = {
                         embraceDirs.all {
-                            !File(it, TEST_FILE_NAME).exists()
+                            !it.sentinelFile().exists()
                         }
                     },
                     condition = { true },
@@ -131,7 +140,7 @@ internal class DisableSdkFeatureTest {
                     desiredValueSupplier = { true },
                     dataProvider = {
                         embraceDirs.all {
-                            !File(it, TEST_FILE_NAME).exists()
+                            !it.sentinelFile().exists()
                         }
                     },
                     condition = { true },

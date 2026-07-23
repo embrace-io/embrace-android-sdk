@@ -9,11 +9,13 @@ import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.File
+import java.io.IOException
 import java.nio.file.Files
 
 class FileStorageServiceImplTest {
@@ -152,6 +154,38 @@ class FileStorageServiceImplTest {
         // verify that the payload is gone and the callback is fired even if the actual file delete didn't happen
         assertEquals(0, service.getStoredPayloads().size)
         assertTrue(callbackFired)
+    }
+
+    @Test
+    fun `temp file is cleaned up when write fails`() {
+        service.store(fakeSessionStoredTelemetryMetadata) {
+            throw IOException("disk full")
+        }
+
+        // no orphaned temp file remains and nothing was indexed
+        assertTrue(outputDir.listFiles()?.none { it.name.endsWith(".tmp") } ?: true)
+        assertEquals(0, service.getStoredPayloads().size)
+    }
+
+    @Test
+    fun `unparseable files are swept when building the index`() {
+        // simulate a payload written by a format this version can't parse
+        val bogus = File(outputDir, "not-a-valid-name").apply { writeText("x") }
+        // simulate a leftover temp file from a process killed mid-write
+        val orphanTmp = File(outputDir, "leftover.tmp").apply { writeText("x") }
+
+        val freshService = FileStorageServiceImpl(
+            lazy { outputDir },
+            PriorityWorker(executor),
+            logger,
+            clock,
+            maxAgeMs = MAX_AGE_MS,
+        )
+
+        // trigger the lazy index init
+        assertEquals(0, freshService.getStoredPayloads().size)
+        assertFalse(bogus.exists())
+        assertFalse(orphanTmp.exists())
     }
 
     private fun storeDummyFile(metadata: StoredTelemetryMetadata) {

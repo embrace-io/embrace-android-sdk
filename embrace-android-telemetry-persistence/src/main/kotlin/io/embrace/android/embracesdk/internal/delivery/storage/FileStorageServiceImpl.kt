@@ -35,8 +35,13 @@ class FileStorageServiceImpl(
     private val storedFiles: CopyOnWriteArraySet<StoredTelemetryMetadata> by lazy {
         val result = runCatching { payloadDir.listFiles() }.getOrNull()
         val files = result?.toList() ?: emptyList()
-        val metadata = files.mapNotNull {
-            StoredTelemetryMetadata.fromFilename(it.name).getOrNull()
+        val metadata = files.mapNotNull { file ->
+            val parsed = StoredTelemetryMetadata.fromFilename(file.name).getOrNull()
+            if (parsed == null) {
+                // delete files that can't be parsed (e.g. leftover .tmp files from killed processes)
+                runCatching { file.delete() }
+            }
+            parsed
         }
         CopyOnWriteArraySet(metadata)
     }
@@ -63,16 +68,23 @@ class FileStorageServiceImpl(
 
         // write to a temporary file then rename it, to avoid sending incomplete files
         // to the backend (i.e. where the process terminates or there isn't any disk space).
-        val tmpFile = File.createTempFile(metadata.filename, ".tmp")
-        tmpFile.outputStream().buffered().use { stream ->
-            action(stream)
-        }
+        // create temp file inside payloadDir so any orphans
+        // are co-located with payloads and swept on next startup
+        val tmpFile = File.createTempFile(metadata.filename, ".tmp", payloadDir)
+        try {
+            tmpFile.outputStream().buffered().use { stream ->
+                action(stream)
+            }
 
-        // move the complete file to its final location.
-        val dst = metadata.asFile()
-        dst.parentFile?.mkdirs()
-        if (tmpFile.renameTo(dst)) {
-            storedFiles.add(metadata)
+            // move the complete file to its final location.
+            val dst = metadata.asFile()
+            dst.parentFile?.mkdirs()
+            if (tmpFile.renameTo(dst)) {
+                storedFiles.add(metadata)
+            }
+        } finally {
+            // clean up the temp file on any failure
+            tmpFile.delete()
         }
     }
 

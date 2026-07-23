@@ -117,11 +117,6 @@ attributes:
     brief: "Unique ID assigned to each app instance."
     stability: development
     examples: ["1", "42"]
-  - key: emb.user_session_id
-    type: string
-    brief: "UUID identifying the session."
-    stability: development
-    examples: ["3a1c2b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"]
   - key: emb.user_session_number
     type: string
     brief: "Incremental counter of sessions since SDK install."
@@ -132,11 +127,6 @@ attributes:
     brief: "Session start timestamp (milliseconds since epoch)."
     stability: development
     examples: ["1617983000000"]
-  - key: emb.session_part_id
-    type: string
-    brief: "UUID identifying the session part."
-    stability: development
-    examples: ["3a1c2b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"]
   - key: emb.session_part_number
     type: string
     brief: "Monotonically incrementing counter of session parts since SDK install. Seeded from emb.session_number when first created; increments by 1 on each new session part. Never resets across process or session boundaries."

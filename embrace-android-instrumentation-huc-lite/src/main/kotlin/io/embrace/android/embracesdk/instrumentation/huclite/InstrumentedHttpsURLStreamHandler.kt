@@ -19,20 +19,22 @@ internal class InstrumentedHttpsURLStreamHandler(
     private val clock: Clock,
     private val hucLiteDataSource: HucLiteDataSource,
 ) : URLStreamHandler() {
+    private val openProxyConnectionMethod by LazyMethodLookup(
+        delegatedHandler::class.java,
+        "openConnection",
+        arrayOf(URL::class.java, Proxy::class.java),
+    )
+
+    private val openConnectionMethod by LazyMethodLookup(
+        delegatedHandler::class.java,
+        "openConnection",
+        arrayOf(URL::class.java),
+    )
 
     @SuppressLint("PrivateApi")
     override fun openConnection(url: URL?, proxy: Proxy?): URLConnection? {
         try {
-            val method =
-                findDeclaredMethod(
-                    delegatedHandler,
-                    delegatedHandler.javaClass,
-                    "openConnection",
-                    URL::class.java,
-                    Proxy::class.java,
-                )
-            method.isAccessible = true
-            val httpsConnection = method.invoke(delegatedHandler, url, proxy) as HttpsURLConnection
+            val httpsConnection = openProxyConnectionMethod.invoke(delegatedHandler, url, proxy) as HttpsURLConnection
             return httpsConnection.toWrappedConnection()
         } catch (t: Throwable) {
             throw (t.toInstrumentedConnectionException())
@@ -41,15 +43,7 @@ internal class InstrumentedHttpsURLStreamHandler(
 
     override fun openConnection(url: URL?): URLConnection? {
         try {
-            val method =
-                findDeclaredMethod(
-                    delegatedHandler,
-                    delegatedHandler.javaClass,
-                    "openConnection",
-                    URL::class.java,
-                )
-            method.isAccessible = true
-            val httpsConnection = method.invoke(delegatedHandler, url) as HttpsURLConnection
+            val httpsConnection = openConnectionMethod.invoke(delegatedHandler, url) as HttpsURLConnection
             return httpsConnection.toWrappedConnection()
         } catch (t: Throwable) {
             throw (t.toInstrumentedConnectionException())

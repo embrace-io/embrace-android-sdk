@@ -271,6 +271,23 @@ internal class SchedulingServiceImplTest {
     }
 
     @Test
+    fun `payload stream is closed when the request fails before the body is read`() {
+        // simulate failure before payload body consumption
+        logger.throwOnInternalError = false
+        executionService.exceptionOnExecution = RuntimeException("die")
+        waitForResurrectionAndDeliveryAttempt(2)
+        assertEquals(0, executionService.sendAttempts())
+        assertEquals(2, storageService.closedStreamCount.get())
+    }
+
+    @Test
+    fun `payload stream is closed after a successful delivery`() {
+        waitForResurrectionAndDeliveryAttempt(2)
+        assertEquals(2, executionService.sendAttempts())
+        assertTrue(storageService.closedStreamCount.get() >= 2)
+    }
+
+    @Test
     fun `connection failure blocks further delivery attempts`() {
         blockConnection()
         waitForResurrectionAndDeliveryAttempt(2)

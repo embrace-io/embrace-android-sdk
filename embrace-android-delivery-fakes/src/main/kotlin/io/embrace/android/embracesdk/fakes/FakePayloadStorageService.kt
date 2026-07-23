@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.FilterInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.util.Collections
@@ -36,6 +37,12 @@ class FakePayloadStorageService(
 
     val storeCount = AtomicInteger(0)
     val deleteCount = AtomicInteger(0)
+
+    /**
+     * Number of streams returned by [loadPayloadAsStream] that have since been closed.
+     * Lets tests verify that callers close the payload stream they were handed.
+     */
+    val closedStreamCount = AtomicInteger(0)
     var failStorage: Boolean = false
 
     override fun store(metadata: StoredTelemetryMetadata, action: SerializationAction) {
@@ -56,7 +63,12 @@ class FakePayloadStorageService(
     override fun loadPayloadAsStream(metadata: StoredTelemetryMetadata): InputStream? {
         return try {
             cachedPayloads[metadata]?.let { bytes ->
-                ByteArrayInputStream(bytes)
+                object : FilterInputStream(ByteArrayInputStream(bytes)) {
+                    override fun close() {
+                        closedStreamCount.incrementAndGet()
+                        super.close()
+                    }
+                }
             }
         } catch (t: Throwable) {
             null

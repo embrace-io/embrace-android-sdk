@@ -254,6 +254,12 @@ class OkHttpRequestExecutionServiceTest {
     }
 
     @Test
+    fun `request body is one-shot`() {
+        val body = OkHttpRequestExecutionService.ApiRequestBody { testPostBody.byteInputStream() }
+        assertTrue(body.isOneShot())
+    }
+
+    @Test
     fun `payload type header is sent correctly`() {
         // given a server that returns a 200 response
         server.enqueue(MockResponse().setResponseCode(200))

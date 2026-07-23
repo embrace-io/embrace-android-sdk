@@ -163,9 +163,9 @@ class SchedulingServiceImpl(
                 ExecutionResult.NetworkNotReady
             } else {
                 try {
-                    payload.toStream()?.run {
+                    payload.toStream()?.use { stream ->
                         executionService.attemptHttpRequest(
-                            payloadStream = { this },
+                            payloadStream = { stream },
                             envelopeType = payload.envelopeType,
                             payloadType = payload.payloadTypesHeader,
                         )

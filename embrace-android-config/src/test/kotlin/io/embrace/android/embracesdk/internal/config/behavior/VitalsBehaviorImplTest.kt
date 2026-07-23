@@ -4,6 +4,8 @@ import io.embrace.android.embracesdk.fakes.createVitalsBehavior
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.VitalsRemoteConfig
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 internal class VitalsBehaviorImplTest {
@@ -15,6 +17,7 @@ internal class VitalsBehaviorImplTest {
         screenLoadIdleThresholdMs = 1500,
         screenLoadTimeoutMs = 45_000,
         screenLoadNavTimeoutMs = 750,
+        smoothnessFrameTracePctEnabled = 100f,
     )
 
     @Test
@@ -26,6 +29,7 @@ internal class VitalsBehaviorImplTest {
             assertEquals(1000L, getScreenLoadIdleThresholdMs())
             assertEquals(30_000L, getScreenLoadTimeoutMs())
             assertEquals(500L, getScreenLoadNavTimeoutMs())
+            assertFalse(isSmoothnessFrameTraceEnabled())
         }
     }
 
@@ -38,6 +42,7 @@ internal class VitalsBehaviorImplTest {
             assertEquals(1500L, getScreenLoadIdleThresholdMs())
             assertEquals(45_000L, getScreenLoadTimeoutMs())
             assertEquals(750L, getScreenLoadNavTimeoutMs())
+            assertTrue(isSmoothnessFrameTraceEnabled())
         }
     }
 }

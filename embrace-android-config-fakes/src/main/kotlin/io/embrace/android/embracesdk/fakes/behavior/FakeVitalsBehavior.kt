@@ -9,6 +9,7 @@ class FakeVitalsBehavior(
     var screenLoadIdleThresholdMsImpl: Long = 1000L,
     var screenLoadTimeoutMsImpl: Long = 30_000L,
     var screenLoadNavTimeoutMsImpl: Long = 500L,
+    var smoothnessFrameTraceEnabledImpl: Boolean = false,
 ) : VitalsBehavior {
 
     override fun getSmoothnessIdleThresholdMs(): Long = smoothnessIdleThresholdMsImpl
@@ -17,4 +18,5 @@ class FakeVitalsBehavior(
     override fun getScreenLoadIdleThresholdMs(): Long = screenLoadIdleThresholdMsImpl
     override fun getScreenLoadTimeoutMs(): Long = screenLoadTimeoutMsImpl
     override fun getScreenLoadNavTimeoutMs(): Long = screenLoadNavTimeoutMsImpl
+    override fun isSmoothnessFrameTraceEnabled(): Boolean = smoothnessFrameTraceEnabledImpl
 }

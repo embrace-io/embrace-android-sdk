@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
  * Provides the behavior that the vitals (smoothness / screen-load) feature should follow.
  */
 class VitalsBehaviorImpl(
+    private val thresholdCheck: BehaviorThresholdCheck,
     remote: RemoteConfig?,
 ) : VitalsBehavior {
 
@@ -16,6 +17,7 @@ class VitalsBehaviorImpl(
         private const val DEFAULT_SCREEN_LOAD_IDLE_THRESHOLD_MS = 1000L
         private const val DEFAULT_SCREEN_LOAD_TIMEOUT_MS = 30_000L
         private const val DEFAULT_SCREEN_LOAD_NAV_TIMEOUT_MS = 500L
+        private const val DEFAULT_SMOOTHNESS_FRAME_TRACE_ENABLED = false
     }
 
     private val remote = remote?.vitalsRemoteConfig
@@ -37,4 +39,8 @@ class VitalsBehaviorImpl(
 
     override fun getScreenLoadNavTimeoutMs(): Long =
         remote?.screenLoadNavTimeoutMs ?: DEFAULT_SCREEN_LOAD_NAV_TIMEOUT_MS
+
+    override fun isSmoothnessFrameTraceEnabled(): Boolean =
+        thresholdCheck.isBehaviorEnabled(remote?.smoothnessFrameTracePctEnabled)
+            ?: DEFAULT_SMOOTHNESS_FRAME_TRACE_ENABLED
 }

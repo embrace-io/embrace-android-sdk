@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
 import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadResult
 import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadTracker
 import io.embrace.android.embracesdk.internal.vitals.smoothness.FocalMomentTracker
+import io.embrace.android.embracesdk.internal.vitals.smoothness.FrameTraceRecorder
 import io.embrace.android.embracesdk.internal.vitals.smoothness.SmoothnessReporter
 import io.embrace.android.embracesdk.internal.vitals.smoothness.SmoothnessResult
 
@@ -94,6 +95,7 @@ internal class VitalsDataSource(
             ),
             idleThresholdMs = vitalsBehavior.getSmoothnessIdleThresholdMs(),
             heldIdleThresholdMs = vitalsBehavior.getSmoothnessHeldIdleThresholdMs(),
+            frameTraceRecorder = if (vitalsBehavior.isSmoothnessFrameTraceEnabled()) FrameTraceRecorder() else null,
         )
         focalTracker = tracker
 
@@ -136,6 +138,7 @@ internal class VitalsDataSource(
                     idleThresholdMs = result.idleThresholdMs,
                     heldIdleThresholdMs = result.heldIdleThresholdMs,
                     jankHeuristicMultiplier = result.jankHeuristicMultiplier,
+                    frameTraceBase64 = result.frameTraceBase64,
                 ).attributes(),
             )
         }

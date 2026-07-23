@@ -54,6 +54,9 @@ internal class ScreenLoadTrackerTest {
         assertEquals(IDLE, result.idleThresholdMs)
         assertEquals(TIMEOUT, result.timeoutMs)
         assertEquals(NAV_TIMEOUT, result.navTimeoutMs)
+        assertEquals(IDLE, result.idleThresholdMs)
+        assertEquals(TIMEOUT, result.timeoutMs)
+        assertEquals(NAV_TIMEOUT, result.navTimeoutMs)
     }
 
     @Test

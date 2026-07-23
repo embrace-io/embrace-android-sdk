@@ -17,6 +17,12 @@ object EmbSmoothnessAttributes {
     const val SMOOTHNESS_FRAME_COUNT: String = "smoothness.frame_count"
 
     /**
+     * Base64-encoded, varint-packed per-frame duration trace over the focal moment, for a sampled fraction of devices. Diagnostic aid while smoothness thresholds are being tuned.
+     */
+    @ExperimentalSemconv
+    const val SMOOTHNESS_FRAME_TRACE: String = "smoothness.frame_trace"
+
+    /**
      * The 'press and hold' settle threshold that was applied.
      */
     @ExperimentalSemconv

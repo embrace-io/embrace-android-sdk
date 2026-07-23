@@ -32,9 +32,12 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
+import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
+import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -190,8 +193,8 @@ internal class SpanServiceImplTest {
         assertTrue(child.stop())
         with(spanSink.flushSpans().single()) {
             assertEquals("emb-child-span", name)
-            assertEquals(childStartTimeMs, startTimeNanos.nanosToMillis())
-            assertEquals(childSpanEndTimeMs, endTimeNanos.nanosToMillis())
+            assertEquals(childStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(childSpanEndTimeMs, endTimeNanos?.nanosToMillis())
             assertNotPrivateSpan()
             assertIsType(EmbType.Ux.View)
         }
@@ -200,8 +203,8 @@ internal class SpanServiceImplTest {
         assertTrue(parent.stop())
         with(spanSink.flushSpans().single()) {
             assertEquals("emb-test-span", name)
-            assertEquals(parentStartTime, startTimeNanos.nanosToMillis())
-            assertEquals(parentEndTime, endTimeNanos.nanosToMillis())
+            assertEquals(parentStartTime, startTimeNanos?.nanosToMillis())
+            assertEquals(parentEndTime, endTimeNanos?.nanosToMillis())
             assertNotPrivateSpan()
         }
     }
@@ -232,15 +235,15 @@ internal class SpanServiceImplTest {
         )
 
         with(verifyAndReturnSoleCompletedSpan("emb-$expectedName")) {
-            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
-            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
+            assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
             assertIsTypePerformance()
             assertEquals(OtelIds.INVALID_SPAN_ID, parentSpanId)
             assertNotPrivateSpan()
             expectedAttributes.forEach {
-                assertEquals(it.value, attributes[it.key])
+                assertEquals(it.value, attributes?.findAttributeValue(it.key))
             }
-            assertEquals(expectedEvents, events)
+            assertEquals(expectedEvents.map(EmbraceSpanEvent::toEmbracePayload), events)
         }
     }
 
@@ -261,8 +264,8 @@ internal class SpanServiceImplTest {
         )
 
         with(verifyAndReturnSoleCompletedSpan("emb-$expectedName")) {
-            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
-            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
+            assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
             assertNotPrivateSpan()
         }
         assertTrue(parentSpan.stop())
@@ -441,7 +444,7 @@ internal class SpanServiceImplTest {
         )
         val completedSpans = spanSink.completedSpans()
         assertEquals(6, completedSpans.size)
-        assertEquals(2, completedSpans.filter { it.name.endsWith("...") }.size)
+        assertEquals(2, completedSpans.filter { it.name?.endsWith("...") == true }.size)
     }
 
     @Test
@@ -466,7 +469,7 @@ internal class SpanServiceImplTest {
             ),
         )
 
-        assertEquals(maxEventAttrCount, spanSink.flushSpans().single { it.name == "too many events" }.events.size)
+        assertEquals(maxEventAttrCount, spanSink.flushSpans().single { it.name == "too many events" }.events?.size)
 
         val attributesMap = mutableMapOf(
             Pair(TOO_LONG_ATTRIBUTE_KEY, "value"),
@@ -492,8 +495,8 @@ internal class SpanServiceImplTest {
 
         val completedSpans = spanSink.completedSpans()
         assertEquals(1, completedSpans.size)
-        assertEquals(10, completedSpans[0].events.size)
-        assertEquals(maxEventAttrCount, completedSpans[0].events[0].attributes.size)
+        assertEquals(10, completedSpans[0].events?.size)
+        assertEquals(maxEventAttrCount, completedSpans[0].events?.get(0)?.attributes?.size)
     }
 
     @Test
@@ -539,10 +542,10 @@ internal class SpanServiceImplTest {
         )
 
         val truncatedAttributesSpan = spanSink.completedSpans().single { it.name == MAX_LENGTH_SPAN_NAME }
-        val attrs = truncatedAttributesSpan.attributes
-        val truncatedAttrCount = attrs.filter { it.key.startsWith("sss") }.size
+        val attrs = checkNotNull(truncatedAttributesSpan.attributes)
+        val truncatedAttrCount = attrs.filter { it.key?.startsWith("sss") == true }.size
         assertEquals(2, truncatedAttrCount)
-        assertEquals(98, attrs.filter { it.key.startsWith("test-key") }.size)
+        assertEquals(98, attrs.filter { it.key?.startsWith("test-key") == true }.size)
     }
 
     @Test
@@ -651,7 +654,7 @@ internal class SpanServiceImplTest {
         }
     }
 
-    private fun verifyAndReturnSoleCompletedSpan(name: String): EmbraceSpanData {
+    private fun verifyAndReturnSoleCompletedSpan(name: String): Span {
         val currentSpans = spanSink.completedSpans()
         assertEquals(1, currentSpans.size)
         assertEquals(name, currentSpans[0].name)

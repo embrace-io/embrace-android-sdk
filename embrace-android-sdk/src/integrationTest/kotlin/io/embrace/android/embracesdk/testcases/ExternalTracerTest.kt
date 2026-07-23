@@ -6,12 +6,11 @@ import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
-import io.embrace.android.embracesdk.internal.toEmbraceSpanData
+import io.embrace.android.embracesdk.internal.otel.sdk.toEmbracePayload
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
@@ -158,7 +157,7 @@ internal class ExternalTracerTest {
                 )
 
                 val exportedSpan: SpanData = spanExporter.exportedSpans.single { it.name == "external-span" }
-                assertEquals(parent.toEmbracePayload(), exportedSpan.toEmbraceSpanData())
+                assertEquals(parent, exportedSpan.toEmbracePayload())
                 with(exportedSpan.instrumentationScopeInfo) {
                     assertEquals("external-tracer", name)
                     assertNull(schemaUrl)

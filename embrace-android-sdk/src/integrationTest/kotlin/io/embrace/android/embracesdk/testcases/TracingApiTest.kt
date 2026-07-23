@@ -23,16 +23,14 @@ import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.arch.stacktrace.compatThreadId
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
-import io.embrace.android.embracesdk.internal.toEmbraceSpanData
+import io.embrace.android.embracesdk.internal.toEmbracePayload
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -171,7 +169,7 @@ internal class TracingApiTest {
                 )
                 val allSpans = getSdkInitSpanFromBackgroundActivity() +
                     checkNotNull(session.data.spans) +
-                    testRule.setup.getSpanSink().completedSpans().map(EmbraceSpanData::toEmbracePayload)
+                    testRule.setup.getSpanSink().completedSpans()
 
                 val spansMap = allSpans.associateBy { it.name }
                 val sessionPartSpan = checkNotNull(spansMap["emb-session"])
@@ -296,9 +294,9 @@ internal class TracingApiTest {
                 )
             },
             otelExportAssertion = {
-                val sessionPartSpan = awaitSpansWithType(2, EmbType.Ux.Session).last().toEmbraceSpanData().toEmbracePayload()
+                val sessionPartSpan = awaitSpansWithType(2, EmbType.Ux.Session).last().toEmbracePayload()
                 val otelSessionId = checkNotNull(sessionPartSpan.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
-                val span = awaitSpans(1) { it.name == "test-trace-root" }.single().toEmbraceSpanData().toEmbracePayload()
+                val span = awaitSpans(1) { it.name == "test-trace-root" }.single().toEmbracePayload()
                 assertEquals(otelSessionId, span.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
             }
         )
@@ -388,9 +386,9 @@ internal class TracingApiTest {
                 }
             },
             otelExportAssertion = {
-                val sessionPartSpan = awaitSpansWithType(1, EmbType.Ux.Session).single().toEmbraceSpanData().toEmbracePayload()
-                val linkedToSpan = awaitSpans(1) { it.name == "my-op" }.single().toEmbraceSpanData().toEmbracePayload()
-                val spanWithLinks = awaitSpans(1) { it.name == "my-op-2" }.single().toEmbraceSpanData().toEmbracePayload()
+                val sessionPartSpan = awaitSpansWithType(1, EmbType.Ux.Session).single().toEmbracePayload()
+                val linkedToSpan = awaitSpans(1) { it.name == "my-op" }.single().toEmbracePayload()
+                val spanWithLinks = awaitSpans(1) { it.name == "my-op-2" }.single().toEmbracePayload()
                 spanWithLinks.hasLinkToEmbraceSpan(sessionPartSpan, LinkType.EndedIn)
 
                 val links = checkNotNull(spanWithLinks.findCustomLinks())
@@ -432,10 +430,10 @@ internal class TracingApiTest {
             },
             otelExportAssertion = {
                 // Get the session ID from a session part span exported via OTel
-                val sessionPartSpan = awaitSpansWithType(2, EmbType.Ux.Session).first().toEmbraceSpanData().toEmbracePayload()
+                val sessionPartSpan = awaitSpansWithType(2, EmbType.Ux.Session).first().toEmbracePayload()
                 val expectedOtelSessionId = checkNotNull(sessionPartSpan.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
-                val span1 = awaitSpans(1) { it.name == "span1" }.single().toEmbraceSpanData().toEmbracePayload()
-                val span2 = awaitSpans(1) { it.name == "span2" }.single().toEmbraceSpanData().toEmbracePayload()
+                val span1 = awaitSpans(1) { it.name == "span1" }.single().toEmbracePayload()
+                val span2 = awaitSpans(1) { it.name == "span2" }.single().toEmbracePayload()
                 assertEquals(expectedOtelSessionId, span1.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
                 assertEquals(expectedOtelSessionId, span2.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
             }

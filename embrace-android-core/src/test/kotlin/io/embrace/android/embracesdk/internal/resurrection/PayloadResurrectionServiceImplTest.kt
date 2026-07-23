@@ -43,17 +43,15 @@ import io.embrace.android.embracesdk.internal.delivery.intake.IntakeServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.UserSessionRestoreDecision
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
-import io.embrace.android.embracesdk.internal.toEmbraceSpanData
+import io.embrace.android.embracesdk.internal.toEmbracePayload
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues
@@ -904,7 +902,7 @@ class PayloadResurrectionServiceImplTest {
     }
 
     private companion object {
-        private val startedSnapshot = perfSpanSnapshot.toEmbraceSpanData()
+        private val startedSnapshot = perfSpanSnapshot.toEmbracePayload()
         val sessionMetadata = fakeCachedSessionStoredTelemetryMetadata
         val deadSessionEnvelope = fakeIncompleteSessionEnvelope(
             startMs = sessionMetadata.timestamp,
@@ -914,9 +912,9 @@ class PayloadResurrectionServiceImplTest {
             copy(
                 data = data.copy(
                     spans = listOf(
-                        startedSnapshot.copy(endTimeNanos = startedSnapshot.startTimeNanos + 10000000L).toEmbracePayload(),
+                        startedSnapshot.copy(endTimeNanos = checkNotNull(startedSnapshot.startTimeNanos) + 10000000L),
                     ),
-                    spanSnapshots = data.spanSnapshots?.plus(listOfNotNull(startedSnapshot).map(EmbraceSpanData::toEmbracePayload)),
+                    spanSnapshots = data.spanSnapshots?.plus(listOfNotNull(startedSnapshot)),
                 ),
             )
         }

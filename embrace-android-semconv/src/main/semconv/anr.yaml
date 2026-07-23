@@ -1,0 +1,46 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: emb.anr
+    visibility: public
+    stability: development
+    brief: "Embrace ANR / thread blockage attributes"
+    attributes:
+      - ref: interval_code
+      - ref: last_known_time_unix_nano
+      - ref: sample_overhead
+      - ref: sample_code
+      - ref: thread_priority
+      - ref: frame_count
+
+attributes:
+  - key: interval_code
+    type: string
+    brief: "The ANR interval code."
+    stability: development
+    examples: ["1", "2"]
+  - key: last_known_time_unix_nano
+    type: string
+    brief: "The last known time the thread was responsive (nanoseconds since epoch)."
+    stability: development
+    examples: ["1617983000000000000"]
+  - key: sample_overhead
+    type: string
+    brief: "The overhead of collecting this sample (nanoseconds)."
+    stability: development
+    examples: ["500000"]
+  - key: sample_code
+    type: string
+    brief: "The ANR sample code."
+    stability: development
+    examples: ["1", "2"]
+  - key: thread_priority
+    type: string
+    brief: "The priority of the blocked thread."
+    stability: development
+    examples: ["5", "10"]
+  - key: frame_count
+    type: string
+    brief: "The number of stack frames in the thread sample."
+    stability: development
+    examples: ["10", "50"]

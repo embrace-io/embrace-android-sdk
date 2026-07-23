@@ -1,0 +1,22 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: emb.tap
+    visibility: public
+    stability: development
+    brief: "Embrace tap breadcrumb attributes"
+    attributes:
+      - ref: tap.type
+      - ref: tap.coords
+
+attributes:
+  - key: tap.type
+    type: string
+    brief: "The type of tap event (tap or long_press)."
+    stability: development
+    examples: ["tap", "long_press"]
+  - key: tap.coords
+    type: string
+    brief: "The coordinates of the tap event in x,y format."
+    stability: development
+    examples: ["100,200", "0,0"]

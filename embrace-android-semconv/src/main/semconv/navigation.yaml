@@ -1,0 +1,52 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: emb.screen_load
+    visibility: public
+    stability: development
+    brief: "Embrace screen-load vital attributes (experimental)"
+    attributes:
+      - ref: screen_load.outcome
+      - ref: screen_load.nav_start_delay_ms
+      - ref: screen_load.nav_duration_ms
+      - ref: screen_load.first_frame_duration_ms
+      - ref: screen_load.idle_threshold_ms
+      - ref: screen_load.timeout_ms
+      - ref: screen_load.nav_timeout_ms
+
+attributes:
+  - key: screen_load.outcome
+    type: string
+    brief: "How the screen load ended."
+    stability: development
+    examples: ["settled", "timed_out", "user_interrupted", "navigation_interrupted"]
+  - key: screen_load.nav_start_delay_ms
+    type: int
+    brief: "Duration from the initial interaction until the navigation start event, in milliseconds."
+    stability: development
+    examples: [10, 50]
+  - key: screen_load.nav_duration_ms
+    type: int
+    brief: "Duration from the navigation start event until the navigation end event, in milliseconds."
+    stability: development
+    examples: [10, 100]
+  - key: screen_load.first_frame_duration_ms
+    type: int
+    brief: "Duration from the navigation end event until the first frame rendered on the destination, in milliseconds."
+    stability: development
+    examples: [10, 100]
+  - key: screen_load.idle_threshold_ms
+    type: int
+    brief: "The idle threshold that was applied to determine when the destination screen had settled."
+    stability: development
+    examples: [ 1000, 1500 ]
+  - key: screen_load.timeout_ms
+    type: int
+    brief: "The maximum duration that was applied before the screen load was force-reported as timed out."
+    stability: development
+    examples: [ 30000, 45000 ]
+  - key: screen_load.nav_timeout_ms
+    type: int
+    brief: "The maximum tap-to-navigation-start gap that was applied to link the two events into one screen load."
+    stability: development
+    examples: [ 500, 750 ]

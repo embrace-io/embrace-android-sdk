@@ -1,0 +1,136 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: emb.network_state
+    visibility: public
+    stability: development
+    brief: "Embrace network connectivity state attributes"
+    attributes:
+      - ref: network.status
+
+  - id: emb.network_status
+    visibility: public
+    stability: development
+    brief: "Embrace network status attributes"
+    attributes:
+      - ref: network
+
+  - id: emb.power_state
+    visibility: public
+    stability: development
+    brief: "Embrace device power state attributes"
+    attributes:
+      - ref: power.mode
+
+  - id: emb.thermal_state
+    visibility: public
+    stability: development
+    brief: "Embrace thermal state attributes"
+    attributes:
+      - ref: status
+
+  - id: emb.state_transition
+    visibility: public
+    stability: development
+    brief: "Embrace state transition tracking attributes"
+    attributes:
+      - ref: emb.state.initial_value
+      - ref: emb.state.new_value
+      - ref: emb.state.transition_count
+      - ref: emb.state.not_in_session
+      - ref: emb.state.dropped_by_instrumentation
+
+attributes:
+  - key: network.status
+    type:
+      allow_custom_values: false
+      members:
+        - id: not_reachable
+          value: "none"
+          brief: "No network reachability"
+          stability: development
+        - id: unverified
+          value: "unverified"
+          brief: "Network present but not verified"
+          stability: development
+        - id: wifi
+          value: "wifi"
+          brief: "WiFi connection"
+          stability: development
+        - id: wifi_connecting
+          value: "wifi_connecting"
+          brief: "WiFi connection being established"
+          stability: development
+        - id: wan
+          value: "wan"
+          brief: "Mobile/WAN connection"
+          stability: development
+        - id: wan_connecting
+          value: "wan_connecting"
+          brief: "Mobile/WAN connection being established"
+          stability: development
+        - id: unknown
+          value: "unknown"
+          brief: "Unknown network state"
+          stability: development
+        - id: unknown_connecting
+          value: "unknown_connecting"
+          brief: "Unknown network connection being established"
+          stability: development
+    brief: "The network connectivity status."
+    stability: development
+    examples: ["wifi", "wan", "none"]
+  - key: network
+    type: string
+    brief: "The network connectivity status."
+    stability: development
+    examples: ["wifi", "cellular", "none"]
+  - key: power.mode
+    type:
+      allow_custom_values: false
+      members:
+        - id: normal
+          value: "normal"
+          brief: "Normal power mode"
+          stability: development
+        - id: low
+          value: "low"
+          brief: "Low power / battery saver mode"
+          stability: development
+        - id: unknown
+          value: "unknown"
+          brief: "Unknown power mode"
+          stability: development
+    brief: "The device power mode."
+    stability: development
+    examples: ["normal", "low"]
+  - key: status
+    type: string
+    brief: "The thermal state status of the device."
+    stability: development
+    examples: ["0", "1", "2", "3"]
+  - key: emb.state.initial_value
+    type: string
+    brief: "The initial value a state began with."
+    stability: development
+    examples: ["foreground", "wifi"]
+  - key: emb.state.new_value
+    type: string
+    brief: "The value a state transitioned into in the given event."
+    stability: development
+    examples: ["background", "wan"]
+  - key: emb.state.transition_count
+    type: string
+    brief: "The total number of transitions recorded explicitly in the given state span."
+    stability: development
+    examples: ["1", "10"]
+  - key: emb.state.not_in_session
+    type: string
+    brief: "The number of transitions dropped because they didn't occur during a session."
+    stability: development
+    examples: ["0", "3"]
+  - key: emb.state.dropped_by_instrumentation
+    type: string
+    brief: "The number of transitions dropped by the instrumentation."
+    stability: development
+    examples: ["0", "1"]

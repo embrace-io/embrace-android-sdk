@@ -49,6 +49,7 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;Ljava/util/List;)Z
 	public fun recordNetworkRequest (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
 	public fun recordSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public fun removeUserSessionListener (Lio/embrace/android/embracesdk/UserSessionListener;)V
 	public fun removeUserSessionProperty (Ljava/lang/String;)Z
 	public fun setResourceAttribute (Ljava/lang/String;Ljava/lang/String;)V
 	public fun setUserEmail (Ljava/lang/String;)V

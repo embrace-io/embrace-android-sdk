@@ -39,6 +39,11 @@ interface SessionOrchestrator : AppStateListener, CrashTeardownHandler {
     fun addUserSessionListener(listener: UserSessionListener)
 
     /**
+     * Unregisters a listener previously registered with [addUserSessionListener].
+     */
+    fun removeUserSessionListener(listener: UserSessionListener)
+
+    /**
      * The decision made at the startup of this SDK instance about whether or not a persisted user session will be continued or
      * implicitly terminated. If this is null, it means no persisted user session was found
      */

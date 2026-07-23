@@ -154,6 +154,7 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/UserS
 	public abstract fun addUserSessionListener (Lio/embrace/android/embracesdk/UserSessionListener;)V
 	public abstract fun addUserSessionProperty (Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/PropertyScope;)Z
 	public abstract fun endUserSession ()V
+	public abstract fun removeUserSessionListener (Lio/embrace/android/embracesdk/UserSessionListener;)V
 	public abstract fun removeUserSessionProperty (Ljava/lang/String;)Z
 }
 

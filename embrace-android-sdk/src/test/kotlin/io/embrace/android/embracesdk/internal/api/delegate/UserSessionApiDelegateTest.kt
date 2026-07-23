@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.api.delegate
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.PropertyScope
+import io.embrace.android.embracesdk.UserSessionListener
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
@@ -91,5 +92,28 @@ internal class UserSessionApiDelegateTest {
         sdkCallChecker.started.set(false)
         delegate.addUserSessionListener { }
         assertTrue((fakeModule.sessionOrchestrator as FakeSessionOrchestrator).userSessionListeners.isEmpty())
+    }
+
+    @Test
+    fun `remove user session listener unregisters the same instance despite wrapping`() {
+        val orchestrator = fakeModule.sessionOrchestrator as FakeSessionOrchestrator
+        val listener = UserSessionListener { }
+        delegate.addUserSessionListener(listener)
+        assertEquals(1, orchestrator.userSessionListeners.size)
+
+        delegate.removeUserSessionListener(listener)
+        assertTrue(orchestrator.userSessionListeners.isEmpty())
+    }
+
+    @Test
+    fun `remove user session listener when SDK not started`() {
+        val orchestrator = fakeModule.sessionOrchestrator as FakeSessionOrchestrator
+        val listener = UserSessionListener { }
+        delegate.addUserSessionListener(listener)
+
+        logger.throwOnInternalError = false
+        sdkCallChecker.started.set(false)
+        delegate.removeUserSessionListener(listener)
+        assertEquals(1, orchestrator.userSessionListeners.size)
     }
 }

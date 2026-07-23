@@ -21,16 +21,17 @@ internal class DefaultSpanExporter(
         if (!exportCheck()) {
             return OperationResultCode.Success
         }
+        val exportable = if (externalExporters.isEmpty()) {
+            emptyList()
+        } else {
+            telemetry.filterNot { it.attributes.containsKey(PrivateSpan.key) }
+        }
         var result = spanSink.storeCompletedSpans(telemetry.map(SpanData::toEmbracePayload))
         if (externalExporters.isNotEmpty() && result == StoreDataResult.SUCCESS) {
             EmbTrace.trace("otel-external-export") {
                 externalExporters.forEach { exporter ->
                     try {
-                        exporter.export(
-                            telemetry.filterNot {
-                                it.attributes.containsKey(PrivateSpan.key)
-                            },
-                        )
+                        exporter.export(exportable)
                     } catch (ignored: Throwable) {
                         result = StoreDataResult.FAILURE
                     }

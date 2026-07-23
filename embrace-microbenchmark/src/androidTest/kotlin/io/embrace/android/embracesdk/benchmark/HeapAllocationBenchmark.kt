@@ -143,8 +143,8 @@ class HeapAllocationBenchmark {
 
     /**
      * Allocates [firstBatch] then [secondBatch] items produced by [makeItem], snapshotting the used heap
-     * after a forced GC between the two batches. Then returns
-     * the retained bytes per item added in the second batch.
+     * after a forced GC between the two batches. Then returns the retained bytes per item added in
+     * the second batch.
      */
     private inline fun retainedBytesPerItem(
         firstBatch: Int = LIGHT_FIRST_BATCH,

@@ -3,29 +3,21 @@ package io.embrace.android.gradle.plugin.tasks.r8
 import com.android.build.api.artifact.SingleArtifact
 import com.android.build.api.variant.Variant
 import io.embrace.android.gradle.plugin.agp.AgpUtils.isDexguard
-import io.embrace.android.gradle.plugin.config.PluginBehavior
-import io.embrace.android.gradle.plugin.gradle.isTaskRegistered
 import io.embrace.android.gradle.plugin.gradle.registerTask
 import io.embrace.android.gradle.plugin.gradle.safeFlatMap
 import io.embrace.android.gradle.plugin.gradle.safeMap
-import io.embrace.android.gradle.plugin.gradle.tryGetTaskProvider
-import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
-import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
 import io.embrace.android.gradle.plugin.tasks.common.FileCompressionTask
 import io.embrace.android.gradle.plugin.tasks.common.MultipartUploadTask
 import io.embrace.android.gradle.plugin.tasks.common.RequestParams
-import io.embrace.android.gradle.plugin.tasks.registration.EmbraceTaskRegistration
+import io.embrace.android.gradle.plugin.tasks.registration.MappingTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.registration.RegistrationParams
-import io.embrace.android.gradle.plugin.util.capitalizedString
-import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskProvider
 import java.io.File
 
-class JvmMappingUploadTaskRegistration : EmbraceTaskRegistration {
+class JvmMappingUploadTaskRegistration : MappingTaskRegistration() {
 
     companion object {
         private const val COMPRESS_TASK_NAME = "jvmMappingCompressionTaskFor"
@@ -33,69 +25,44 @@ class JvmMappingUploadTaskRegistration : EmbraceTaskRegistration {
         private const val FILE_NAME_MAPPING_TXT = "mapping.txt"
     }
 
-    override fun register(params: RegistrationParams) {
-        with(params) {
-            project.afterEvaluate {
-                val tasks = fetchJvmMappingTasks(project, data)
-                tasks.forEach { task ->
-                    register(
-                        project,
-                        data,
-                        task,
-                        fetchJvmMappingFile(task, variant),
-                        behavior,
-                        variantConfigurationsListProperty,
-                        buildIdProvider,
-                    )
-                }
-            }
-        }
-    }
+    override fun registerForMappingTask(params: RegistrationParams, anchorTask: TaskProvider<Task>) {
+        val anchorTaskWithoutVariant = anchorTaskNameWithoutVariant(anchorTask, params.data)
+        val mappingFile = fetchJvmMappingFile(anchorTask, params.variant)
 
-    private fun register(
-        project: Project,
-        variant: AndroidCompactedVariantData,
-        anchorTask: TaskProvider<Task>,
-        mappingFile: Provider<File>,
-        behavior: PluginBehavior,
-        variantConfigurationsListProperty: ListProperty<VariantConfig>,
-        buildIdProvider: Provider<String>,
-    ): TaskProvider<MultipartUploadTask> {
-        val anchorTaskWithoutVariant = anchorTask.name.replace(variant.name, "", true)
         val compressionTaskName = "${COMPRESS_TASK_NAME}For${anchorTaskWithoutVariant}OnVariant"
-        val compressionTask = project.registerTask(
+        val compressionTask = params.project.registerTask(
             compressionTaskName,
             FileCompressionTask::class.java,
-            variant,
+            params.data,
         ) { task: FileCompressionTask ->
             // automatically link as a task dependency
             task.originalFile.fileProvider(mappingFile)
             task.compressedFile.convention(
-                project.layout.buildDirectory.file(
-                    "outputs/embrace/mapping/compressed/${variant.name}/$anchorTaskWithoutVariant/$FILE_NAME_MAPPING_TXT",
+                params.project.layout.buildDirectory.file(
+                    "outputs/embrace/mapping/compressed/${params.data.name}/$anchorTaskWithoutVariant/$FILE_NAME_MAPPING_TXT",
                 ),
             )
         }
 
         val uploadTaskName = "${UPLOAD_TASK_NAME}For${anchorTaskWithoutVariant}OnVariant"
-        val uploadTask = project.registerTask(
+        val uploadTask = params.project.registerTask(
             uploadTaskName,
             MultipartUploadTask::class.java,
-            variant,
+            params.data,
         ) { task ->
-            val variantConfig = variantConfigurationsListProperty.get().first { it.variantName == variant.name }
+            val variantConfig = params.variantConfigurationsListProperty.get().first { it.variantName == params.data.name }
             // buildIdProvider is ValueSource-backed: Gradle re-evaluates it on every build even
             // when the configuration cache is active, ensuring a fresh build ID each time.
             task.requestParams.set(
-                buildIdProvider.map { buildId ->
+                params.buildIdProvider.map { buildId ->
                     RequestParams(
                         appId = variantConfig.embraceConfig?.appId.orEmpty(),
                         apiToken = variantConfig.embraceConfig?.apiToken.orEmpty(),
                         endpoint = EmbraceEndpoint.PROGUARD,
                         fileName = FILE_NAME_MAPPING_TXT,
                         buildId = buildId,
-                        baseUrl = behavior.baseUrl,
-                        failBuildOnUploadErrors = behavior.failBuildOnUploadErrors.get(),
+                        baseUrl = params.behavior.baseUrl,
+                        failBuildOnUploadErrors = params.behavior.failBuildOnUploadErrors.get(),
                     )
                 },
             )
@@ -107,11 +74,7 @@ class JvmMappingUploadTaskRegistration : EmbraceTaskRegistration {
             )
         }
 
-        // set us (Embrace) as a dependency of the obfuscation task
-        anchorTask.configure { task ->
-            task.finalizedBy(uploadTask)
-        }
-        return uploadTask
+        uploadTask.finalizeAnchorTask(anchorTask)
     }
 
     private fun fetchJvmMappingFile(
@@ -136,27 +99,5 @@ class JvmMappingUploadTaskRegistration : EmbraceTaskRegistration {
                 it.firstOrNull()?.asFile
             }
         }
-    }
-
-    /**
-     * It fetches all available obfuscation tasks. In practice, a single task will be
-     * executed but multiple tasks may be registered and configured. Because of this, we are
-     * forced to return a list of tasks since we are in configuration phase.
-     */
-    private fun fetchJvmMappingTasks(
-        project: Project,
-        variant: AndroidCompactedVariantData,
-    ): List<TaskProvider<Task>> {
-        val name = variant.name.capitalizedString()
-        val targetObfuscationTasks = listOf(
-            "dexguardApk$name",
-            "dexguardAab$name",
-            "minify${name}WithProguard",
-            "minify${name}WithR8",
-        )
-        val tasks = targetObfuscationTasks.filter { taskName ->
-            isTaskRegistered(project.tryGetTaskProvider(taskName))
-        }
-        return tasks.mapNotNull { project.tryGetTaskProvider(it) }
     }
 }

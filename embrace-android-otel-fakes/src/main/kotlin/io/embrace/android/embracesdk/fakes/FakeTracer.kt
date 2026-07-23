@@ -8,6 +8,8 @@ import io.opentelemetry.kotlin.tracing.SpanCreationAction
 
 class FakeTracer : Tracer {
 
+    override fun enabled(): Boolean = true
+
     override fun startSpan(
         name: String,
         parentContext: Context?,

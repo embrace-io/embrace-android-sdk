@@ -9,4 +9,5 @@ internal class EmbLink(
     private val attrs: EmbAttributesMutator,
 ) : SpanLink, AttributesMutator by attrs {
     override val attributes: Map<String, Any> get() = attrs.attributes
+    override val droppedAttributesCount: Int = 0
 }

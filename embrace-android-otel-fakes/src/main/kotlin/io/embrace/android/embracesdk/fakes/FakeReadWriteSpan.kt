@@ -21,6 +21,9 @@ class FakeReadWriteSpan(
     override val instrumentationScopeInfo: InstrumentationScopeInfo
         get() = throw UnsupportedOperationException()
     override val links: List<SpanLinkData> = emptyList()
+    override val droppedEventsCount: Int = 0
+    override val droppedLinksCount: Int = 0
+    override val droppedAttributesCount: Int = 0
     override val resource: Resource
         get() = throw UnsupportedOperationException()
 

@@ -19,4 +19,5 @@ class FakeReadWriteLogRecord(
     override var timestamp: Long? = null,
     override var spanContext: SpanContext = FakeSpanContext(),
     override val attributes: Map<String, Any> = attributeContainer.attributes,
+    override val droppedAttributesCount: Int = 0,
 ) : ReadWriteLogRecord, AttributesMutator by attributeContainer

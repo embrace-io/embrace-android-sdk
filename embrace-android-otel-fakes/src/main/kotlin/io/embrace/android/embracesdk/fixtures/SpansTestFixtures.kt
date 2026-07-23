@@ -8,21 +8,19 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.opentelemetry.kotlin.context.ContextKey
-import io.opentelemetry.kotlin.tracing.StatusCode
 
-val testSpan: Span = EmbraceSpanData(
+val testSpan: Span = Span(
     traceId = "19bb482ec1c7e6b2f10fb89e0ccc85fa",
     spanId = "342eb9c7f8cb54ff",
     parentSpanId = OtelIds.INVALID_SPAN_ID,
     name = "emb-sdk-init",
     startTimeNanos = 1681972471806000000L,
     endTimeNanos = 1681972471871000000L,
-    status = StatusCode.UNSET,
+    status = Span.Status.UNSET,
     events = listOf(
         checkNotNull(
             EmbraceSpanEvent.create(
@@ -38,12 +36,13 @@ val testSpan: Span = EmbraceSpanData(
                 attributes = null
             )
         )
-    ),
+    ).map(EmbraceSpanEvent::toEmbracePayload),
     attributes = mapOf(
         Pair(EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID, "3"),
         EmbType.Performance.Default.asPair(),
-    )
-).toEmbracePayload()
+    ).toEmbracePayload(),
+    links = emptyList(),
+)
 
 val fakeContextKey: ContextKey<String> = fakeOpenTelemetry().context.createKey("fake-context-key")
 

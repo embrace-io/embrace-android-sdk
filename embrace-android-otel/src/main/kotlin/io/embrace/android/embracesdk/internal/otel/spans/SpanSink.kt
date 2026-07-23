@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
+import io.embrace.android.embracesdk.internal.payload.Span
 
 /**
  * A service that stores all the spans that are completed and exported via an exporter,
@@ -11,17 +12,17 @@ interface SpanSink {
     /**
      * Stores spans that have been completed. Implementations must support concurrent invocations.
      */
-    fun storeCompletedSpans(spans: List<EmbraceSpanData>): StoreDataResult
+    fun storeCompletedSpans(spans: List<Span>): StoreDataResult
 
     /**
      * Returns the list of the currently stored completed spans.
      */
-    fun completedSpans(): List<EmbraceSpanData>
+    fun completedSpans(): List<Span>
 
     /**
      * Returns and clears the currently stored completed Spans. Implementations of this method must
      * make sure the clearing and returning is
      * atomic, i.e. spans cannot be added during this operation.
      */
-    fun flushSpans(): List<EmbraceSpanData>
+    fun flushSpans(): List<Span>
 }

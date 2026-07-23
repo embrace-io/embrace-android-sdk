@@ -6,8 +6,6 @@ import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
-import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
@@ -69,15 +67,13 @@ internal class SessionPartPayloadSourceImpl(
                         else -> null
                     }
                     otelPayloadMapper?.record()
-                    val spans = currentSessionPartSpan.endSession(
+                    currentSessionPartSpan.endSession(
                         startNewSession = startNewSession,
                         appTerminationCause = appTerminationCause,
                     )
-                    spans.map(EmbraceSpanData::toEmbracePayload)
                 }
 
                 else -> spanSink.completedSpans()
-                    .map(EmbraceSpanData::toEmbracePayload)
                     .plus(otelPayloadMapper?.snapshotSpans() ?: emptyList())
             }
         }

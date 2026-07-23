@@ -107,7 +107,7 @@ private fun InputStream.readBytesCapped(charLimit: Int): ByteArray {
  * and truncated without ever reading the entire source into memory.
  */
 private fun Reader.readTextCapped(charLimit: Int): String {
-    val sb = StringBuilder()
+    val sb = StringBuilder(READ_BUFFER_SIZE)
     val buffer = CharArray(READ_BUFFER_SIZE)
     while (sb.length <= charLimit) {
         val count = read(buffer)

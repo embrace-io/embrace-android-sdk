@@ -160,11 +160,11 @@ internal class ViewDataSourceTest {
     }
 
     @Test
-    fun `onViewClose stops all spans and clears tracking`() {
+    fun `onActivityStopped stops all spans and clears tracking`() {
         dataSource.startView("a")
         dataSource.startView("b")
 
-        dataSource.onViewClose()
+        dataSource.onActivityStopped(activity)
 
         val spans = args.destination.createdSpans
         assertEquals(2, spans.size)
@@ -173,19 +173,19 @@ internal class ViewDataSourceTest {
     }
 
     @Test
-    fun `repeated dynamic startView then onViewClose does not retain entries`() {
+    fun `repeated dynamic startView then onActivityStopped does not retain entries`() {
         repeat(100) { dataSource.startView("view_$it") }
         assertEquals(100, dataSource.trackedViewCount)
 
-        dataSource.onViewClose()
+        dataSource.onActivityStopped(activity)
 
         assertEquals(0, dataSource.trackedViewCount)
     }
 
     @Test
-    fun `changeView after onViewClose does not resurrect a stale view`() {
+    fun `changeView after onActivityStopped does not resurrect a stale view`() {
         dataSource.startView("stale")
-        dataSource.onViewClose()
+        dataSource.onActivityStopped(activity)
 
         dataSource.changeView("fresh")
 

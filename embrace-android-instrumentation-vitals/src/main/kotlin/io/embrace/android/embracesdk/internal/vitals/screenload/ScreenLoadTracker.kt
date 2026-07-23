@@ -19,6 +19,7 @@ internal class ScreenLoadTracker(
     private val emit: (ScreenLoadResult) -> Unit,
     private val idleThresholdMs: Long = IDLE_THRESHOLD_MS,
     private val timeoutMs: Long = SETTLE_TIMEOUT_MS,
+    private val navigationTimeoutMs: Long = NAVIGATION_TIMEOUT_MS,
 ) {
     private val settle = SettleTracker(scheduler, { idleThresholdMs }, ::onSettled)
 
@@ -77,7 +78,7 @@ internal class ScreenLoadTracker(
         when (state) {
             State.IDLE -> openLoad(eventTime)
             State.CANDIDATE -> {
-                if (eventTime <= startUptimeMs + NAVIGATION_TIMEOUT_MS) {
+                if (eventTime <= startUptimeMs + navigationTimeoutMs) {
                     state = State.CONFIRMED
                     navStartMs = eventTime
                 } else {
@@ -203,6 +204,9 @@ internal class ScreenLoadTracker(
             durationMs = endMs - startUptimeMs,
             screenName = screenName,
             outcome = outcome,
+            idleThresholdMs = idleThresholdMs,
+            timeoutMs = timeoutMs,
+            navTimeoutMs = navigationTimeoutMs,
         )
 
         discard()

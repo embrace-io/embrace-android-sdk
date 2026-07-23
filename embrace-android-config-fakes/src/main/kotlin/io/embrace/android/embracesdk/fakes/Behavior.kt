@@ -25,6 +25,8 @@ import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjecti
 import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.behavior.VitalsBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.VitalsBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 
@@ -41,6 +43,14 @@ fun createThreadBlockageBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     remoteCfg: RemoteConfig? = null,
 ): ThreadBlockageBehavior = ThreadBlockageBehaviorImpl(thresholdCheck, remoteCfg)
+
+/**
+ * A [VitalsBehaviorImpl] that returns default values.
+ */
+fun createVitalsBehavior(
+    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
+    remoteCfg: RemoteConfig? = null,
+): VitalsBehavior = VitalsBehaviorImpl(thresholdCheck, remoteCfg)
 
 /**
  * A [UserSessionBehaviorImpl] that returns default values.

@@ -10,6 +10,9 @@ import androidx.annotation.WorkerThread
  */
 internal class SmoothnessReporter(
     private val emit: (SmoothnessResult) -> Unit,
+    private val idleThresholdMs: Long = FocalMomentTracker.DEFAULT_IDLE_THRESHOLD_MS,
+    private val heldIdleThresholdMs: Long = FocalMomentTracker.DEFAULT_HELD_IDLE_THRESHOLD_MS,
+    private val jankHeuristicMultiplier: Double = DEFAULT_JANK_HEURISTIC_MULTIPLIER,
 ) {
 
     private var frameCount = 0
@@ -28,7 +31,7 @@ internal class SmoothnessReporter(
     }
 
     @WorkerThread
-    fun onFocalMomentEnd(outcome: FocalOutcome, startTimeMs: Long, durationMs: Long) {
+    fun onFocalMomentEnd(outcome: FocalOutcome, startTimeMs: Long, durationMs: Long, frameTraceBase64: String? = null) {
         if (frameCount == 0) {
             // No frames rendered: nothing to report.
             return
@@ -40,14 +43,23 @@ internal class SmoothnessReporter(
                 durationMs = durationMs,
                 frameCount = frameCount,
                 normalizedDroppedFrames = normalizedDroppedFrames,
+                idleThresholdMs = idleThresholdMs,
+                heldIdleThresholdMs = heldIdleThresholdMs,
+                jankHeuristicMultiplier = jankHeuristicMultiplier,
+                frameTraceBase64 = frameTraceBase64,
             ),
         )
     }
 
-    private companion object {
+    internal companion object {
         /**
          * A 60fps reference frame in nanoseconds; all jank is normalized to this.
          */
         private const val REFERENCE_FRAME_NANOS = 1_000_000_000.0 / 60.0
+
+        /**
+         * A frame counts as janky once it runs this many times past its deadline; matches JankStats' default.
+         */
+        const val DEFAULT_JANK_HEURISTIC_MULTIPLIER = 2.0
     }
 }

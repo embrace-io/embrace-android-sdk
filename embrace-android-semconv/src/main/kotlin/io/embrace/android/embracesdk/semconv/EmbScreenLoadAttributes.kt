@@ -17,6 +17,12 @@ object EmbScreenLoadAttributes {
     const val SCREEN_LOAD_FIRST_FRAME_DURATION_MS: String = "screen_load.first_frame_duration_ms"
 
     /**
+     * The idle threshold that was applied to determine when the destination screen had settled.
+     */
+    @ExperimentalSemconv
+    const val SCREEN_LOAD_IDLE_THRESHOLD_MS: String = "screen_load.idle_threshold_ms"
+
+    /**
      * Duration from the navigation start event until the navigation end event, in milliseconds.
      */
     @ExperimentalSemconv
@@ -29,8 +35,20 @@ object EmbScreenLoadAttributes {
     const val SCREEN_LOAD_NAV_START_DELAY_MS: String = "screen_load.nav_start_delay_ms"
 
     /**
+     * The maximum tap-to-navigation-start gap that was applied to link the two events into one screen load.
+     */
+    @ExperimentalSemconv
+    const val SCREEN_LOAD_NAV_TIMEOUT_MS: String = "screen_load.nav_timeout_ms"
+
+    /**
      * How the screen load ended.
      */
     @ExperimentalSemconv
     const val SCREEN_LOAD_OUTCOME: String = "screen_load.outcome"
+
+    /**
+     * The maximum duration that was applied before the screen load was force-reported as timed out.
+     */
+    @ExperimentalSemconv
+    const val SCREEN_LOAD_TIMEOUT_MS: String = "screen_load.timeout_ms"
 }

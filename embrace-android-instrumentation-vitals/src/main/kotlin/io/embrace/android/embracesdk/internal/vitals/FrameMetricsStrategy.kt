@@ -5,6 +5,8 @@ import android.os.SystemClock
 import android.view.FrameMetrics
 import androidx.annotation.RequiresApi
 import androidx.annotation.WorkerThread
+import io.embrace.android.embracesdk.internal.vitals.FrameMetricsStrategy.Companion.create
+import io.embrace.android.embracesdk.internal.vitals.smoothness.SmoothnessReporter
 
 /**
  * Extracts `(vsyncNanos, frameDispatchNanos, jankNanos)` from a [FrameMetrics]. The concrete strategy is
@@ -38,11 +40,6 @@ internal interface FrameMetricsStrategy {
 
     companion object {
         /**
-         * A frame counts as janky once it runs this many times past its deadline; matches JankStats' default.
-         */
-        const val DEFAULT_JANK_HEURISTIC_MULTIPLIER = 2.0
-
-        /**
          * Create a [FrameMetricsStrategy] with a given [refreshIntervalNanos] and [jankHeuristicMultiplier].
          *
          * @param refreshIntervalNanos nanoseconds between frames at the current refresh rate (for devices < SDK_31)
@@ -51,7 +48,7 @@ internal interface FrameMetricsStrategy {
         @RequiresApi(Build.VERSION_CODES.N)
         fun create(
             refreshIntervalNanos: Long,
-            jankHeuristicMultiplier: Double = DEFAULT_JANK_HEURISTIC_MULTIPLIER,
+            jankHeuristicMultiplier: Double = SmoothnessReporter.DEFAULT_JANK_HEURISTIC_MULTIPLIER,
         ): FrameMetricsStrategy = when {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
                 Api31FrameMetricsStrategy(jankHeuristicMultiplier)

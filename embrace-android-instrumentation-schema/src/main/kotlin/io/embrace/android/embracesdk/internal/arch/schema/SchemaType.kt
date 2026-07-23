@@ -261,6 +261,10 @@ sealed class SchemaType(
         outcome: String,
         frameCount: Int,
         normalizedDroppedFrames: Double,
+        idleThresholdMs: Long,
+        heldIdleThresholdMs: Long,
+        jankHeuristicMultiplier: Double,
+        frameTraceBase64: String? = null,
     ) : SchemaType(
         telemetryType = EmbType.Performance.Smoothness,
         fixedObjectName = "smoothness",
@@ -269,7 +273,11 @@ sealed class SchemaType(
             EmbSmoothnessAttributes.SMOOTHNESS_OUTCOME to outcome,
             EmbSmoothnessAttributes.SMOOTHNESS_FRAME_COUNT to frameCount.toString(),
             EmbSmoothnessAttributes.SMOOTHNESS_NORMALIZED_DROPPED_FRAMES to normalizedDroppedFrames.toString(),
-        )
+            EmbSmoothnessAttributes.SMOOTHNESS_IDLE_THRESHOLD_MS to idleThresholdMs.toString(),
+            EmbSmoothnessAttributes.SMOOTHNESS_HELD_IDLE_THRESHOLD_MS to heldIdleThresholdMs.toString(),
+            EmbSmoothnessAttributes.SMOOTHNESS_JANK_HEURISTIC_MULTIPLIER to jankHeuristicMultiplier.toString(),
+            EmbSmoothnessAttributes.SMOOTHNESS_FRAME_TRACE to frameTraceBase64,
+        ).toNonNullMap()
     }
 
     /**
@@ -282,6 +290,9 @@ sealed class SchemaType(
         navStartDelayMs: Long,
         navDurationMs: Long,
         firstFrameDurationMs: Long,
+        idleThresholdMs: Long,
+        timeoutMs: Long,
+        navTimeoutMs: Long,
     ) : SchemaType(
         telemetryType = EmbType.Performance.ScreenLoad,
         fixedObjectName = "screen-load",
@@ -292,6 +303,9 @@ sealed class SchemaType(
             EmbScreenLoadAttributes.SCREEN_LOAD_NAV_START_DELAY_MS to navStartDelayMs.toString(),
             EmbScreenLoadAttributes.SCREEN_LOAD_NAV_DURATION_MS to navDurationMs.toString(),
             EmbScreenLoadAttributes.SCREEN_LOAD_FIRST_FRAME_DURATION_MS to firstFrameDurationMs.toString(),
+            EmbScreenLoadAttributes.SCREEN_LOAD_IDLE_THRESHOLD_MS to idleThresholdMs.toString(),
+            EmbScreenLoadAttributes.SCREEN_LOAD_TIMEOUT_MS to timeoutMs.toString(),
+            EmbScreenLoadAttributes.SCREEN_LOAD_NAV_TIMEOUT_MS to navTimeoutMs.toString(),
         )
     }
 

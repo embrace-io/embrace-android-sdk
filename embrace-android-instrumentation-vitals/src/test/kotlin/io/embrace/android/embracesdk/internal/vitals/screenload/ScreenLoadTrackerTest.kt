@@ -24,6 +24,7 @@ internal class ScreenLoadTrackerTest {
         emit = emitted::add,
         idleThresholdMs = IDLE,
         timeoutMs = TIMEOUT,
+        navigationTimeoutMs = NAV_TIMEOUT,
     )
 
     @Test
@@ -50,6 +51,12 @@ internal class ScreenLoadTrackerTest {
         assertEquals("navigation start at t=10, navigation end at t=20", 10L, result.navDurationMs)
         assertEquals("first frame at t=30, 10ms after navigation end (t=20)", 10L, result.firstFrameDurationMs)
         assertEquals(start, result.startTimeMs)
+        assertEquals(IDLE, result.idleThresholdMs)
+        assertEquals(TIMEOUT, result.timeoutMs)
+        assertEquals(NAV_TIMEOUT, result.navTimeoutMs)
+        assertEquals(IDLE, result.idleThresholdMs)
+        assertEquals(TIMEOUT, result.timeoutMs)
+        assertEquals(NAV_TIMEOUT, result.navTimeoutMs)
     }
 
     @Test
@@ -245,5 +252,6 @@ internal class ScreenLoadTrackerTest {
     private companion object {
         const val IDLE = 100L
         const val TIMEOUT = 500L
+        const val NAV_TIMEOUT = 500L
     }
 }

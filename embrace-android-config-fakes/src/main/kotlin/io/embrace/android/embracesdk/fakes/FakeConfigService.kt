@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehav
 import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.VitalsBehavior
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 
 /**
@@ -35,6 +36,7 @@ class FakeConfigService(
     override var breadcrumbBehavior: BreadcrumbBehavior = FakeBreadcrumbBehavior(),
     override var logMessageBehavior: LogMessageBehavior = createLogMessageBehavior(),
     override var threadBlockageBehavior: ThreadBlockageBehavior = createThreadBlockageBehavior(),
+    override var vitalsBehavior: VitalsBehavior = createVitalsBehavior(),
     override var sessionBehavior: UserSessionBehavior = createSessionBehavior(),
     override var networkBehavior: NetworkBehavior = FakeNetworkBehavior(),
     override var dataCaptureEventBehavior: DataCaptureEventBehavior = createDataCaptureEventBehavior(),

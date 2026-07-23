@@ -21,6 +21,8 @@ import org.junit.Test
 import java.io.FileInputStream
 import java.io.IOException
 import java.nio.file.Files
+import java.security.MessageDigest
+import java.util.Locale
 
 internal class EmbraceRnBundleIdTrackerTest {
 
@@ -166,6 +168,24 @@ internal class EmbraceRnBundleIdTrackerTest {
         metadataService.setReactNativeBundleId(bundleIdFile.absolutePath)
         assertNotEquals(buildInfo.rnBundleId, metadataService.getReactNativeBundleId())
         assertEquals("D41D8CD98F00B204E9800998ECF8427E", metadataService.getReactNativeBundleId())
+    }
+
+    @Test
+    fun `test React Native bundle ID for a bundle larger than the read buffer`() {
+        // write a bundle bigger than the 8 KB read buffer so the incremental
+        // digest loop iterates more than once
+        val contents = ByteArray(20_000) { (it % 256).toByte() }
+        val bundleIdFile = Files.createTempFile("index.android.bundle", "temp").toFile()
+        bundleIdFile.writeBytes(contents)
+
+        val expected = MessageDigest.getInstance("MD5").digest(contents)
+            .joinToString("") { String.format(Locale.US, "%02x", it.toInt() and 0xff) }
+            .uppercase(Locale.US)
+
+        val metadataService = createRnBundleIdTracker()
+        metadataService.setReactNativeBundleId(bundleIdFile.absolutePath)
+
+        assertEquals(expected, metadataService.getReactNativeBundleId())
     }
 
     @Test

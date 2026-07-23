@@ -1,0 +1,88 @@
+name: Semconv
+
+# Guards the semantic-convention module:
+#  - registry-check: schema + dependency-resolution validation (weaver registry check)
+#  - generated-code-drift: committed Kotlin under src/main/kotlin/.../semconv/ matches the model
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    paths:
+      - 'embrace-android-semconv/**'
+      - '.github/workflows/semconv-drift.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  registry-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Read pinned weaver version
+        id: weaver
+        run: |
+          source embrace-android-semconv/versions.env
+          echo "version=$WEAVER_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Install Weaver
+        # Pinned to the SHA of the embrace-semconv v0.2.0 release.
+        uses: embrace-io/embrace-semconv/.github/actions/setup-weaver@8bbae8869bba8fb883aeea73c7a2936720af7875
+        with:
+          version: ${{ steps.weaver.outputs.version }}
+
+      - name: Validate registry (schema + dependency resolution)
+        run: weaver registry check -r embrace-android-semconv/src/main/semconv --v2
+
+  generated-code-drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Setup Java
+        uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5.5.0
+        with:
+          distribution: 'adopt'
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
+
+      - name: Read pinned weaver version
+        id: weaver
+        run: |
+          source embrace-android-semconv/versions.env
+          echo "version=$WEAVER_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Install Weaver
+        # Pinned to the SHA of the embrace-semconv v0.2.0 release.
+        uses: embrace-io/embrace-semconv/.github/actions/setup-weaver@8bbae8869bba8fb883aeea73c7a2936720af7875
+        with:
+          version: ${{ steps.weaver.outputs.version }}
+
+      - name: Regenerate semantic-convention source code
+        run: ./gradlew :embrace-android-semconv:generateEmbraceSemanticConventions --stacktrace
+
+      - name: Check committed generated source code is in sync
+        # Pinned to the SHA of the embrace-semconv v0.2.0 release.
+        uses: embrace-io/embrace-semconv/.github/actions/assert-no-drift@8bbae8869bba8fb883aeea73c7a2936720af7875
+        with:
+          path: embrace-android-semconv/src/main/kotlin/io/embrace/android/embracesdk/semconv
+          label: generated semantic-convention sources
+          regenerate-hint: |
+            ./gradlew :embrace-android-semconv:generateEmbraceSemanticConventions
+            git add embrace-android-semconv/src/main/kotlin/io/embrace/android/embracesdk/semconv

@@ -5,4 +5,4 @@ dependencies:
   - name: otel
     registry_path: https://github.com/open-telemetry/semantic-conventions@v1.43.0[model]
   - name: embrace
-    registry_path: https://github.com/embrace-io/embrace-semconv@v0.1.0[model]
+    registry_path: https://github.com/embrace-io/embrace-semconv@v0.2.0[model]

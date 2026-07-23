@@ -150,7 +150,7 @@ internal class AeiFeatureTest {
 
     @Test
     fun `aei limit exceeded`() {
-        val expectedSize = 64
+        val expectedSize = 16
 
         testRule.runTest(
             setupAction = {

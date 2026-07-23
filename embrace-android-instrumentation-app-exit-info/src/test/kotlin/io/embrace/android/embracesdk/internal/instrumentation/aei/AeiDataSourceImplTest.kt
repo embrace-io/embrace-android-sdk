@@ -7,9 +7,12 @@ import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.behavior.FakeAppExitInfoBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.semconv.EmbAeiAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.mockk.every
@@ -22,6 +25,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.ByteArrayInputStream
 import java.io.IOException
 
 private const val TIMESTAMP = 15000000000L
@@ -72,7 +76,7 @@ internal class AeiDataSourceImplTest {
         }
     }
 
-    private fun startApplicationExitInfoService() {
+    private fun startApplicationExitInfoService(versionChecker: VersionChecker = BuildVersionChecker) {
         args = FakeInstrumentationArgs(mockk(), configService = configService)
         applicationExitInfoService = AeiDataSourceImpl(
             args,
@@ -80,6 +84,7 @@ internal class AeiDataSourceImplTest {
             mockActivityManager,
             store,
             FakeOrdinalStore(),
+            versionChecker,
         ).apply(AeiDataSourceImpl::onDataCaptureEnabled)
     }
 
@@ -139,10 +144,10 @@ internal class AeiDataSourceImplTest {
     }
 
     @Test
-    fun `getHistoricalProcessExitInfo should truncate to 64 entries`() {
-        // given getHistoricalProcessExitReasons returns more than 64 entries
+    fun `getHistoricalProcessExitInfo should truncate to 16 entries`() {
+        // given getHistoricalProcessExitReasons returns more than 16 entries
         val entries = mutableListOf<ApplicationExitInfo>()
-        repeat(65) {
+        repeat(17) {
             entries.add(mockAppExitInfo)
         }
         every {
@@ -155,8 +160,8 @@ internal class AeiDataSourceImplTest {
 
         startApplicationExitInfoService()
 
-        // then captured data should only have 64 entries
-        assertEquals(64, args.destination.logEvents.size)
+        // then captured data should only have 16 entries
+        assertEquals(16, args.destination.logEvents.size)
     }
 
     @Test
@@ -354,6 +359,74 @@ internal class AeiDataSourceImplTest {
     }
 
     @Test
+    fun `Truncate native tombstone if it exceeds limit`() {
+        every { mockAppExitInfo.traceInputStream } returns "a".repeat(500).byteInputStream()
+        every { mockAppExitInfo.reason } returns ApplicationExitInfo.REASON_CRASH_NATIVE
+
+        configService = FakeConfigService(
+            appExitInfoBehavior = FakeAppExitInfoBehavior(enabled = true, traceMaxLimit = 100),
+            autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(ndkEnabled = true),
+        )
+        every {
+            mockActivityManager.getHistoricalProcessExitReasons(
+                any(),
+                any(),
+                any(),
+            )
+        } returns listOf(mockAppExitInfo)
+
+        startApplicationExitInfoService(versionChecker = { true })
+
+        val logEventData = args.destination.logEvents.single()
+        assertEquals("a".repeat(100), logEventData.message)
+    }
+
+    @Test
+    fun `trace stream is closed after reading a text trace`() {
+        val stream = CloseRecordingStream(TRACE.toByteArray())
+        every { mockAppExitInfo.traceInputStream } returns stream
+        every {
+            mockActivityManager.getHistoricalProcessExitReasons(
+                any(),
+                any(),
+                any(),
+            )
+        } returns listOf(mockAppExitInfo)
+
+        startApplicationExitInfoService()
+
+        assertEquals(TRACE, args.destination.logEvents.single().message)
+        assertTrue(stream.closed)
+    }
+
+    @Test
+    fun `trace stream is closed after reading a native tombstone`() {
+        val stream = CloseRecordingStream(TRACE.toByteArray())
+        every { mockAppExitInfo.traceInputStream } returns stream
+        every { mockAppExitInfo.reason } returns ApplicationExitInfo.REASON_CRASH_NATIVE
+        every {
+            mockActivityManager.getHistoricalProcessExitReasons(
+                any(),
+                any(),
+                any(),
+            )
+        } returns listOf(mockAppExitInfo)
+
+        startApplicationExitInfoService(versionChecker = { true })
+
+        assertTrue(stream.closed)
+    }
+
+    private class CloseRecordingStream(bytes: ByteArray) : ByteArrayInputStream(bytes) {
+        var closed = false
+
+        override fun close() {
+            closed = true
+            super.close()
+        }
+    }
+
+    @Test
     fun testActivityManagerException() {
         every {
             mockActivityManager.getHistoricalProcessExitReasons(
@@ -372,7 +445,7 @@ internal class AeiDataSourceImplTest {
 
     @Test
     fun `one object sent per payload`() {
-        val entries = (0..64).map { mockAppExitInfo }
+        val entries = (0..16).map { mockAppExitInfo }
         every {
             mockActivityManager.getHistoricalProcessExitReasons(
                 any(),
@@ -384,7 +457,7 @@ internal class AeiDataSourceImplTest {
         startApplicationExitInfoService()
 
         // each AEI object with a trace should be sent in a separate payload
-        assertEquals(64, args.destination.logEvents.size)
+        assertEquals(16, args.destination.logEvents.size)
     }
 
     private fun getAeiLogAttrs(): Map<String, String> {

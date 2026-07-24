@@ -7,6 +7,7 @@ import java.util.TimeZone
 
 class EnvelopeMetadataSourceImpl(
     private val userInfoProvider: () -> UserInfo,
+    private val experimentsProvider: () -> String? = { null },
 ) : EnvelopeMetadataSource {
 
     override fun getEnvelopeMetadata(): EnvelopeMetadata {
@@ -19,6 +20,7 @@ class EnvelopeMetadataSourceImpl(
             personas = userInfo.personas ?: emptySet(),
             timezoneDescription = TimeZone.getDefault().id,
             locale = Locale.getDefault().language + "_" + Locale.getDefault().country,
+            experiments = experimentsProvider(),
         )
     }
 }

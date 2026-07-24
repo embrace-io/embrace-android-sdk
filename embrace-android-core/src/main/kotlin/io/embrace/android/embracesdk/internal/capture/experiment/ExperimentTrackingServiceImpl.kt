@@ -9,6 +9,7 @@ internal class ExperimentTrackingServiceImpl(
 
     private val lock = Any()
     private val records = mutableListOf<ExperimentRecord>()
+    private var listener: (() -> Unit)? = null
 
     override fun trackExperiments(experiments: List<TrackedExperimentData>): Boolean =
         trackRecords(
@@ -48,8 +49,17 @@ internal class ExperimentTrackingServiceImpl(
         serializeRecords()
     }
 
+    override fun addChangeListener(listener: () -> Unit) {
+        this.listener = listener
+    }
+
     private fun trackRecords(newRecords: List<ExperimentRecord>, requestedCount: Int): Boolean {
         synchronized(lock) {
+            // flush-then-mutate: cut the in-flight log batch under the OLD state before the new
+            // records become visible. Safe to re-enter this monitor from the same thread (the
+            // flush resolves envelope metadata via getRecords()); the built envelope captures
+            // the old records string.
+            listener?.invoke()
             var allAccepted = newRecords.size == requestedCount
             val trackedKeys = records.mapTo(mutableSetOf()) { it.key() }
             newRecords.forEach { record ->
@@ -67,6 +77,7 @@ internal class ExperimentTrackingServiceImpl(
 
     private fun untrackRecords(type: ExperimentRecordType, ids: List<String>, endTimeMs: Long): Boolean {
         synchronized(lock) {
+            listener?.invoke()
             var allAccepted = true
             ids.forEach { id ->
                 val key = "${type.code}:$id"

@@ -26,4 +26,7 @@ data class EnvelopeMetadata(
 
     @SerialName("locale")
     val locale: String? = null,
+
+    @SerialName("experiments")
+    val experiments: String? = null,
 )

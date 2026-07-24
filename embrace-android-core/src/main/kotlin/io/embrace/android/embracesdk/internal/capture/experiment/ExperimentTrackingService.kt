@@ -43,6 +43,12 @@ interface ExperimentTrackingService {
      * Returns the serialized experiment records, or null if nothing is tracked.
      */
     fun getRecords(): String?
+
+    /**
+     * Registers a listener invoked BEFORE each mutation of the experiment state becomes visible,
+     * so that in-flight telemetry batches can be cut while the old state still applies.
+     */
+    fun addChangeListener(listener: () -> Unit)
 }
 
 /**

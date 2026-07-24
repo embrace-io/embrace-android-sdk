@@ -1,0 +1,122 @@
+{
+  "resource": {
+    "app_version": "2.5.1",
+    "app_framework": 1,
+    "build_id": "fakeBuildId",
+    "app_ecosystem_id": "com.fake.package",
+    "build_type": "fakeBuildType",
+    "build_flavor": "fakeBuildFlavor",
+    "environment": "dev",
+    "bundle_version": "99",
+    "sdk_version": "__EMBRACE_TEST_IGNORE__",
+    "sdk_simple_version": 53,
+    "device_manufacturer": "__EMBRACE_TEST_IGNORE__",
+    "device_model": "__EMBRACE_TEST_IGNORE__",
+    "device_architecture": "__EMBRACE_TEST_IGNORE__",
+    "jailbroken": "__EMBRACE_TEST_IGNORE__",
+    "disk_total_capacity": "__EMBRACE_TEST_IGNORE__",
+    "os_type": "linux",
+    "os_name": "android",
+    "os_version": "__EMBRACE_TEST_IGNORE__",
+    "os_code": "__EMBRACE_TEST_IGNORE__",
+    "screen_resolution": "__EMBRACE_TEST_IGNORE__",
+    "num_cores": "__EMBRACE_TEST_IGNORE__"
+  },
+  "metadata": {
+    "personas": "__EMBRACE_TEST_IGNORE__",
+    "timezone_description": "__EMBRACE_TEST_IGNORE__",
+    "locale": "__EMBRACE_TEST_IGNORE__",
+    "experiments": "__EMBRACE_TEST_IGNORE__"
+  },
+  "version": "0.1.0",
+  "type": "logs",
+  "data": {
+    "logs": [
+      {
+        "time_unix_nano": 169220160030000000,
+        "severity_number": 9,
+        "severity_text": "INFO",
+        "body": "experiment log message 1",
+        "attributes": [
+          { "key": "emb.session_part_id", "value": "__EMBRACE_TEST_SESSION_PART_ID__" },
+          { "key": "emb.state", "value": "foreground" },
+          { "key": "emb.state.network", "value": "unverified" },
+          { "key": "emb.state.screen-automatic", "value": "android.app.Activity" },
+          { "key": "emb.state.test", "value": "UNKNOWN" },
+          { "key": "emb.type", "value": "sys.log" },
+          { "key": "emb.user_session_id", "value": "__EMBRACE_TEST_USER_SESSION_ID__" },
+          { "key": "log.record.uid", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "session.id", "value": "__EMBRACE_TEST_USER_SESSION_ID__" }
+        ]
+      },
+      {
+        "time_unix_nano": 169220160030000000,
+        "severity_number": 9,
+        "severity_text": "INFO",
+        "body": "experiment log message 2",
+        "attributes": [
+          { "key": "emb.session_part_id", "value": "__EMBRACE_TEST_SESSION_PART_ID__" },
+          { "key": "emb.state", "value": "foreground" },
+          { "key": "emb.state.network", "value": "unverified" },
+          { "key": "emb.state.screen-automatic", "value": "android.app.Activity" },
+          { "key": "emb.state.test", "value": "UNKNOWN" },
+          { "key": "emb.type", "value": "sys.log" },
+          { "key": "emb.user_session_id", "value": "__EMBRACE_TEST_USER_SESSION_ID__" },
+          { "key": "log.record.uid", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "session.id", "value": "__EMBRACE_TEST_USER_SESSION_ID__" }
+        ]
+      },
+      {
+        "time_unix_nano": 169220160030000000,
+        "severity_number": 9,
+        "severity_text": "INFO",
+        "body": "experiment log message 3",
+        "attributes": [
+          { "key": "emb.session_part_id", "value": "__EMBRACE_TEST_SESSION_PART_ID__" },
+          { "key": "emb.state", "value": "foreground" },
+          { "key": "emb.state.network", "value": "unverified" },
+          { "key": "emb.state.screen-automatic", "value": "android.app.Activity" },
+          { "key": "emb.state.test", "value": "UNKNOWN" },
+          { "key": "emb.type", "value": "sys.log" },
+          { "key": "emb.user_session_id", "value": "__EMBRACE_TEST_USER_SESSION_ID__" },
+          { "key": "log.record.uid", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "session.id", "value": "__EMBRACE_TEST_USER_SESSION_ID__" }
+        ]
+      },
+      {
+        "time_unix_nano": 169220160030000000,
+        "severity_number": 9,
+        "severity_text": "INFO",
+        "body": "experiment log message 4",
+        "attributes": [
+          { "key": "emb.session_part_id", "value": "__EMBRACE_TEST_SESSION_PART_ID__" },
+          { "key": "emb.state", "value": "foreground" },
+          { "key": "emb.state.network", "value": "unverified" },
+          { "key": "emb.state.screen-automatic", "value": "android.app.Activity" },
+          { "key": "emb.state.test", "value": "UNKNOWN" },
+          { "key": "emb.type", "value": "sys.log" },
+          { "key": "emb.user_session_id", "value": "__EMBRACE_TEST_USER_SESSION_ID__" },
+          { "key": "log.record.uid", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "session.id", "value": "__EMBRACE_TEST_USER_SESSION_ID__" }
+        ]
+      },
+      {
+        "time_unix_nano": 169220160030000000,
+        "severity_number": 9,
+        "severity_text": "INFO",
+        "body": "experiment log message 5",
+        "attributes": [
+          { "key": "emb.session_part_id", "value": "__EMBRACE_TEST_SESSION_PART_ID__" },
+          { "key": "emb.state", "value": "foreground" },
+          { "key": "emb.state.network", "value": "unverified" },
+          { "key": "emb.state.screen-automatic", "value": "android.app.Activity" },
+          { "key": "emb.state.test", "value": "UNKNOWN" },
+          { "key": "emb.type", "value": "sys.log" },
+          { "key": "emb.user_session_id", "value": "__EMBRACE_TEST_USER_SESSION_ID__" },
+          { "key": "log.record.uid", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "session.id", "value": "__EMBRACE_TEST_USER_SESSION_ID__" }
+        ]
+      }
+    ]
+  }
+}

@@ -33,4 +33,7 @@ class FakeExperimentTrackingService : ExperimentTrackingService {
     }
 
     override fun getRecords(): String? = fakeRecords
+
+    override fun addChangeListener(listener: () -> Unit) {
+    }
 }

@@ -45,6 +45,14 @@ internal fun ModuleGraph.postInit() {
         logModule.logOrchestrator.onLogsAdded()
     }
 
+    // Cut the in-flight log batch whenever the experiment state changes, so that every log in a
+    // batch shares the same envelope-level experiment metadata. flush() is a no-op on an empty
+    // sink, so bulk launch-time declarations before any logs cost nothing.
+    // TODO(EMBR-xxxx): reevaluate coalescing if per-call batch cuts prove wasteful
+    essentialServiceModule.experimentTrackingService.addChangeListener {
+        logModule.logOrchestrator.flush(false)
+    }
+
     essentialServiceModule.telemetryDestination.sessionUpdateAction =
         userSessionOrchestrationModule.sessionOrchestrator::onSessionDataUpdate
     essentialServiceModule.telemetryDestination.currentStatesProvider =

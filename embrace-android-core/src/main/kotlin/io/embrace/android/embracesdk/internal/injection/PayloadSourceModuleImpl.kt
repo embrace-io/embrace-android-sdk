@@ -132,7 +132,10 @@ class PayloadSourceModuleImpl(
 
     private val metadataSource by singleton {
         EmbTrace.trace("metadata-source") {
-            EnvelopeMetadataSourceImpl { essentialServiceModule.userService.getUserInfo() }
+            EnvelopeMetadataSourceImpl(
+                userInfoProvider = { essentialServiceModule.userService.getUserInfo() },
+                experimentsProvider = { essentialServiceModule.experimentTrackingService.getRecords() },
+            )
         }
     }
 

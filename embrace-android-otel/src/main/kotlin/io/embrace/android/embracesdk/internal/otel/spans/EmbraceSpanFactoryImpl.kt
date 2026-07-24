@@ -62,7 +62,7 @@ private const val SPAN_LINK_TELEMETRY_TYPE = "span_link"
 private const val SPAN_EVENT_TELEMETRY_TYPE = "span_event"
 
 private class EmbraceSpanImpl(
-    private val otelSpanStartArgs: OtelSpanStartArgs,
+    otelSpanStartArgs: OtelSpanStartArgs,
     private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
     private val dataValidator: DataValidator,
@@ -71,6 +71,11 @@ private class EmbraceSpanImpl(
     private val telemetryService: TelemetryService,
 ) : EmbraceSdkSpan {
     private val internal: Boolean = otelSpanStartArgs.internal
+
+    // Retained only until the span starts, then released to avoid duplicating data already
+    // copied into this span's own fields (attributes, name, etc.) and to drop the retained
+    // tracer/openTelemetry references.
+    private var startArgs: OtelSpanStartArgs? = otelSpanStartArgs
 
     private val startedSpan: AtomicReference<Span?> = AtomicReference(null)
 
@@ -147,11 +152,13 @@ private class EmbraceSpanImpl(
                     ?: openTelemetryClock.now().nanosToMillis()
 
             synchronized(startedSpan) {
+                val args = startArgs ?: return false
                 val newSpan = EmbTrace.trace("otel-span-start") {
-                    otelSpanStartArgs.startSpan(attemptedStartTimeMs)
+                    args.startSpan(attemptedStartTimeMs)
                 }
                 if (newSpan.isRecording()) {
                     startedSpan.set(newSpan)
+                    startArgs = null
                 } else {
                     return false
                 }
@@ -281,7 +288,7 @@ private class EmbraceSpanImpl(
                     val attribute = dataValidator.truncateAttribute(
                         key = key,
                         value = value,
-                        internal = otelSpanStartArgs.internal,
+                        internal = internal,
                     )
                     customAttributes[attribute.first] = attribute.second
                     spanRepository.notifySpanUpdate()
@@ -374,8 +381,7 @@ private class EmbraceSpanImpl(
         spanName
     }
 
-    override val spanKind: SpanKind
-        get() = otelSpanStartArgs.spanKind ?: SpanKind.INTERNAL
+    override val spanKind: SpanKind = otelSpanStartArgs.spanKind ?: SpanKind.INTERNAL
 
     override fun events(): List<SpanEvent> {
         val redactedCustomEvents = customEvents.mapNotNull {

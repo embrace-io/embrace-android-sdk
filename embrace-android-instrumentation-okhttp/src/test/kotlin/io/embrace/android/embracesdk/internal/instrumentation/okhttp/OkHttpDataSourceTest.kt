@@ -24,11 +24,14 @@ import io.opentelemetry.kotlin.semconv.HttpAttributes
 import io.opentelemetry.kotlin.semconv.UrlAttributes
 import io.opentelemetry.kotlin.semconv.UserAgentAttributes
 import okhttp3.Headers
+import okhttp3.Interceptor
 import okhttp3.OkHttp
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okio.Buffer
@@ -79,6 +82,8 @@ internal class OkHttpDataSourceTest {
     private lateinit var args: FakeInstrumentationArgs
     private lateinit var configService: FakeConfigService
     private lateinit var okHttpClient: OkHttpClient
+    private lateinit var dataSource: OkHttpDataSource
+    private lateinit var networkRequestDataSource: NetworkRequestDataSourceImpl
     private lateinit var getRequestBuilder: Request.Builder
     private lateinit var postRequestBuilder: Request.Builder
     private var preNetworkInterceptorBeforeRequestSupplier: (Request) -> Request =
@@ -106,7 +111,7 @@ internal class OkHttpDataSourceTest {
             configService = configService,
             clock = sdkClock,
         )
-        val networkRequestDataSource = NetworkRequestDataSourceImpl(args)
+        networkRequestDataSource = NetworkRequestDataSourceImpl(args)
         val networkCaptureDataSource = NetworkCaptureDataSourceImpl(args)
 
         configService.apply {
@@ -125,7 +130,7 @@ internal class OkHttpDataSourceTest {
             networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior()
         }
 
-        val dataSource = OkHttpDataSource(
+        dataSource = OkHttpDataSource(
             args = args,
             networkRequestDataSourceProvider = { networkRequestDataSource },
             networkCaptureDataSourceProvider = { networkCaptureDataSource },
@@ -490,6 +495,53 @@ internal class OkHttpDataSourceTest {
         assertNetworkRequestReceived { span ->
             assertNull(span.parent)
         }
+    }
+
+    @Test
+    fun `request that skips the network interceptor is recorded and cleaned up`() {
+        // A downstream application interceptor that short-circuits with a synthetic response means
+        // the network interceptor never runs. This request must still be recorded and cleaned up.
+        val shortCircuit = Interceptor { chain ->
+            Response.Builder()
+                .request(chain.request())
+                .protocol(Protocol.HTTP_1_1)
+                .code(200)
+                .message("OK")
+                .body("".toResponseBody())
+                .build()
+        }
+        val client = OkHttpClient.Builder()
+            .addInterceptor(EmbraceOkHttpInterceptor(InterceptorType.APPLICATION) { dataSource })
+            .addInterceptor(shortCircuit)
+            .addNetworkInterceptor(EmbraceOkHttpInterceptor(InterceptorType.NETWORK) { dataSource })
+            .build()
+
+        client.newCall(getRequestBuilder.build()).execute()
+
+        assertNetworkRequestReceived { span ->
+            assertEquals("200", span.attributes[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
+            assertNotNull(span.endTimeMs)
+        }
+        assertEquals(0, activeCallsSize())
+        assertEquals(0, activeRequestsSize())
+    }
+
+    @Test
+    fun `state is cleaned up after a request whose network interceptor runs`() {
+        server.enqueue(createBaseMockResponse())
+        runPostRequest()
+        assertNetworkRequestReceived { span -> assertNotNull(span.endTimeMs) }
+        assertEquals(0, activeCallsSize())
+        assertEquals(0, activeRequestsSize())
+    }
+
+    private fun activeCallsSize(): Int = readPrivateMapSize(dataSource, "activeCalls")
+
+    private fun activeRequestsSize(): Int = readPrivateMapSize(networkRequestDataSource, "activeRequests")
+
+    private fun readPrivateMapSize(target: Any, fieldName: String): Int {
+        val field = target.javaClass.getDeclaredField(fieldName).apply { isAccessible = true }
+        return (field.get(target) as Map<*, *>).size
     }
 
     private fun assertNetworkBodyNotCaptured() {

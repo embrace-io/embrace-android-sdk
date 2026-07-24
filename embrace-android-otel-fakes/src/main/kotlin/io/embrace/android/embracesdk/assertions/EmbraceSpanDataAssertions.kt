@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.assertions
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -12,7 +11,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 
 /**
- * Assert the [EmbraceSpanData] is as expected
+ * Assert the [Span] is as expected
  */
 fun assertEmbraceSpanData(
     span: Span?,

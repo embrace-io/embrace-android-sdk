@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.benchmark
 import androidx.benchmark.junit4.BenchmarkRule
 import androidx.benchmark.junit4.measureRepeated
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -299,7 +299,7 @@ class TracingApiBenchmarks {
         }
     }
 
-    private fun cleanup(): List<EmbraceSpanData> {
+    private fun cleanup(): List<Span> {
         spanSink.flushSpans()
         return harness.currentSessionPartSpan.endSession(true)
     }

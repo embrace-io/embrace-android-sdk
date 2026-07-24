@@ -1,9 +1,8 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
-import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -41,7 +40,7 @@ class FakeCurrentSessionPartSpan(
     override fun endSession(
         startNewSession: Boolean,
         appTerminationCause: AppTerminationCause?,
-    ): List<EmbraceSpanData> {
+    ): List<Span> {
         val endingSessionPartSpan = checkNotNull(sessionPartSpan)
         val errorCode = if (appTerminationCause != null) {
             ErrorCode.FAILURE
@@ -49,7 +48,7 @@ class FakeCurrentSessionPartSpan(
             null
         }
         endingSessionPartSpan.stop(errorCode, clock.now())
-        val payload = listOf(checkNotNull(endingSessionPartSpan.snapshot()).toEmbracePayload())
+        val payload = listOf(checkNotNull(endingSessionPartSpan.snapshot()))
         sessionIteration.incrementAndGet()
         sessionPartSpan = if (appTerminationCause == null) newSessionPartSpan(clock.now()) else null
         return payload

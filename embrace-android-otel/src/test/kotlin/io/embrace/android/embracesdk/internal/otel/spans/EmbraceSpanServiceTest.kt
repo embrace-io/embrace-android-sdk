@@ -15,8 +15,10 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
+import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
+import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.opentelemetry.kotlin.tracing.Tracer
@@ -148,13 +150,13 @@ internal class EmbraceSpanServiceTest {
 
         with(span) {
             assertEquals(name, name)
-            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
-            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
+            assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
             assertIsTypePerformance()
             expectedAttributes.forEach {
-                assertEquals(it.value, attributes[it.key])
+                assertEquals(it.value, attributes?.findAttributeValue(it.key))
             }
-            assertEquals(expectedEvents, events)
+            assertEquals(expectedEvents.map(EmbraceSpanEvent::toEmbracePayload), events)
         }
     }
 

@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.otel.spans
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeSpanData
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
-import io.embrace.android.embracesdk.internal.toEmbraceSpanData
+import io.embrace.android.embracesdk.internal.toEmbracePayload
 import io.mockk.every
 import io.mockk.spyk
 import io.mockk.unmockkObject
@@ -32,7 +32,7 @@ internal class SpanSinkImplTests {
 
     @Test
     fun `flushing clears completed spans`() {
-        spanSink.storeCompletedSpans(listOf(FakeSpanData(), FakeSpanData()).map(FakeSpanData::toEmbraceSpanData))
+        spanSink.storeCompletedSpans(listOf(FakeSpanData(), FakeSpanData()).map(FakeSpanData::toEmbracePayload))
         val snapshot = spanSink.completedSpans()
         assertEquals(2, snapshot.size)
 
@@ -46,13 +46,13 @@ internal class SpanSinkImplTests {
 
     @Test
     fun `flushing does not retain previously flushed spans`() {
-        spanSink.storeCompletedSpans(listOf(FakeSpanData(), FakeSpanData()).map(FakeSpanData::toEmbraceSpanData))
+        spanSink.storeCompletedSpans(listOf(FakeSpanData(), FakeSpanData()).map(FakeSpanData::toEmbracePayload))
         assertEquals(2, spanSink.flushSpans().size)
 
         assertEquals(0, spanSink.flushSpans().size)
         assertEquals(0, spanSink.completedSpans().size)
 
-        spanSink.storeCompletedSpans(listOf(FakeSpanData()).map(FakeSpanData::toEmbraceSpanData))
+        spanSink.storeCompletedSpans(listOf(FakeSpanData()).map(FakeSpanData::toEmbracePayload))
         assertEquals(1, spanSink.flushSpans().size)
     }
 
@@ -62,7 +62,7 @@ internal class SpanSinkImplTests {
             listOf(
                 FakeSpanData(name = "fake1"),
                 FakeSpanData(name = "fake2"),
-            ).map(FakeSpanData::toEmbraceSpanData),
+            ).map(FakeSpanData::toEmbracePayload),
         )
         val unblockCompletedSpansLatch = CountDownLatch(1)
         val unblockFlushLatch = CountDownLatch(1)
@@ -94,7 +94,7 @@ internal class SpanSinkImplTests {
         unblockFlushLatch.await(1, TimeUnit.SECONDS)
         val thread2 = SingleThreadTestScheduledExecutor()
         thread2.submit {
-            spanSink.storeCompletedSpans(listOf(FakeSpanData(name = "fake3")).map(FakeSpanData::toEmbraceSpanData))
+            spanSink.storeCompletedSpans(listOf(FakeSpanData(name = "fake3")).map(FakeSpanData::toEmbracePayload))
             unblockCompletedSpansLatch.countDown()
         }
 

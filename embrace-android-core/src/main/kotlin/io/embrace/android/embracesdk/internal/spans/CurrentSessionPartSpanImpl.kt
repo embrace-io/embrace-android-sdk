@@ -5,11 +5,11 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -135,7 +135,7 @@ internal class CurrentSessionPartSpanImpl(
     override fun endSession(
         startNewSession: Boolean,
         appTerminationCause: AppTerminationCause?,
-    ): List<EmbraceSpanData> {
+    ): List<Span> {
         synchronized(sessionTransitionLock) {
             val endingSessionPartSpan = sessionPartState?.span
             return if (endingSessionPartSpan != null && endingSessionPartSpan.isRecording) {

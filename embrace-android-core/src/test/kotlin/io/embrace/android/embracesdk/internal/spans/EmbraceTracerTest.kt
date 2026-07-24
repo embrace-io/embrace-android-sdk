@@ -9,15 +9,16 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_SPAN_NAME
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
+import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.kotlin.tracing.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
@@ -61,8 +62,8 @@ internal class EmbraceTracerTest {
         assertTrue(embraceSpan.start(startTimeMs = expectedStartTimeMs))
         assertTrue(embraceSpan.stop(endTimeMs = expectedEndTimeMs))
         with(verifyPublicSpan("test-span")) {
-            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
-            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
+            assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
         }
     }
 
@@ -95,7 +96,7 @@ internal class EmbraceTracerTest {
         assertTrue(child.stop())
         val spans = spanSink.flushSpans()
         assertEquals(2, spans.size)
-        assertEquals(childStartTimeMs, spans[1].startTimeNanos.nanosToMillis())
+        assertEquals(childStartTimeMs, spans[1].startTimeNanos?.nanosToMillis())
     }
 
     @Test
@@ -137,12 +138,12 @@ internal class EmbraceTracerTest {
         }
         val expectedEndTimeMs = clock.now()
         with(verifyPublicSpan(name = "lambda-test-span", traceRoot = false)) {
-            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
-            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
+            assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
             expectedAttributes.forEach {
-                assertEquals(it.value, attributes[it.key])
+                assertEquals(it.value, attributes?.findAttributeValue(it.key))
             }
-            assertEquals(expectedEvents, events)
+            assertEquals(expectedEvents.map(EmbraceSpanEvent::toEmbracePayload), events)
         }
         assertEquals(returnThis, lambdaReturn)
     }
@@ -162,8 +163,8 @@ internal class EmbraceTracerTest {
         )
 
         with(verifyPublicSpan(expectedName)) {
-            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
-            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
+            assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
         }
     }
 
@@ -183,9 +184,9 @@ internal class EmbraceTracerTest {
         )
 
         with(verifyPublicSpan(expectedName, true, ErrorCode.FAILURE)) {
-            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
-            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
-            assertTrue(status == StatusCode.ERROR)
+            assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
+            assertTrue(status == Span.Status.ERROR)
         }
     }
 
@@ -207,8 +208,8 @@ internal class EmbraceTracerTest {
         )
 
         with(verifyPublicSpan(expectedName, false)) {
-            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
-            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
+            assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
         }
     }
 
@@ -231,9 +232,9 @@ internal class EmbraceTracerTest {
         )
 
         with(verifyPublicSpan(expectedName, false, ErrorCode.USER_ABANDON)) {
-            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
-            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
-            assertTrue(status == StatusCode.ERROR)
+            assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
+            assertTrue(status == Span.Status.ERROR)
         }
     }
 
@@ -263,12 +264,12 @@ internal class EmbraceTracerTest {
         )
 
         with(verifyPublicSpan(expectedName)) {
-            assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
-            assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
+            assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
             expectedAttributes.forEach {
-                assertEquals(it.value, attributes[it.key])
+                assertEquals(it.value, attributes?.findAttributeValue(it.key))
             }
-            assertEquals(expectedEvents, events)
+            assertEquals(expectedEvents.map(EmbraceSpanEvent::toEmbracePayload), events)
         }
     }
 
@@ -297,9 +298,9 @@ internal class EmbraceTracerTest {
         )
         assertTrue(span.stop())
         with(verifyPublicSpan("my-span")) {
-            assertEquals(2, events.size)
-            assertEquals(eventTimeNanos, events[0].timestampNanos)
-            assertEquals(eventTimeNanos, events[1].timestampNanos)
+            assertEquals(2, events?.size)
+            assertEquals(eventTimeNanos, events?.get(0)?.timestampNanos)
+            assertEquals(eventTimeNanos, events?.get(1)?.timestampNanos)
         }
     }
 
@@ -347,7 +348,7 @@ internal class EmbraceTracerTest {
         name: String,
         traceRoot: Boolean = true,
         errorCode: ErrorCode? = null,
-    ): EmbraceSpanData {
+    ): Span {
         val currentSpans = spanSink.completedSpans()
         assertEquals(1, currentSpans.size)
         val currentSpan = currentSpans[0]

@@ -2,7 +2,6 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -69,11 +68,6 @@ interface EmbraceSdkSpan : EmbraceSpan {
         timestampMs: Long?,
         attributes: Map<String, String>?,
     ): Boolean
-
-    /**
-     * Removes all system events with the given [EmbType]
-     */
-    fun removeSystemEvents(type: EmbType): Boolean
 
     fun getStartTimeMs(): Long?
 

@@ -88,7 +88,7 @@ class OpenTelemetryModuleImpl(
     override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean, otelBehavior: OtelBehavior) {
         this.sensitiveKeysBehavior = sensitiveKeysBehavior
         this.bypassLimitsValidation = bypassValidation
-        setupOtelBehavior(otelBehavior)
+        this.otelBehavior = otelBehavior
     }
 
     override fun setSessionIdsProvider(sessionIdsProvider: SessionIdsProvider) {
@@ -97,14 +97,6 @@ class OpenTelemetryModuleImpl(
 
     override fun setUserIdProvider(userIdProvider: () -> String?) {
         storedUserIdProvider = userIdProvider
-    }
-
-    private fun setupOtelBehavior(otelBehavior: OtelBehavior) {
-        this.otelBehavior = otelBehavior
-        if (!otelBehavior.shouldUseKotlinSdk()) {
-            // Enforce the use of default OTel Java SDK ThreadLocal ContextStorage to bypass SPI looking that violates Android strict mode
-            System.setProperty("io.opentelemetry.context.contextStorageProvider", "default")
-        }
     }
 
     private var internalSpanStopCallback: ((spanId: String) -> Unit)? = null

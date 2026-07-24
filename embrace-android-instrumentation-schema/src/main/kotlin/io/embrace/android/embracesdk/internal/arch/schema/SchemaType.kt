@@ -35,16 +35,17 @@ sealed class SchemaType(
 ) {
     protected abstract val schemaAttributes: Map<String, String>
 
-    private val commonAttributes: Map<String, String> = mutableMapOf<String, String>().apply {
-        if (telemetryType.sendMode != SendMode.DEFAULT) {
-            plusAssign(EmbSessionAttributes.EMB_PRIVATE_SEND_MODE to telemetryType.sendMode.name)
-        }
-    }
-
     /**
      * The attributes defined for this schema that should be used to populate telemetry objects
      */
-    fun attributes(): Map<String, String> = schemaAttributes.plus(commonAttributes)
+    fun attributes(): Map<String, String> {
+        val sendMode = telemetryType.sendMode
+        return if (sendMode == SendMode.DEFAULT) {
+            schemaAttributes
+        } else {
+            schemaAttributes.plus(EmbSessionAttributes.EMB_PRIVATE_SEND_MODE to sendMode.name)
+        }
+    }
 
     class Breadcrumb(message: String) : SchemaType(
         telemetryType = EmbType.System.Breadcrumb,

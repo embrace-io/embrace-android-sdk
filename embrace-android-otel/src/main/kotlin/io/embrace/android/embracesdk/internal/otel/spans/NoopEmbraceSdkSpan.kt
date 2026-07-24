@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -71,8 +70,6 @@ object NoopEmbraceSdkSpan : EmbraceSdkSpan {
         timestampMs: Long?,
         attributes: Map<String, String>?,
     ): Boolean = false
-
-    override fun removeSystemEvents(type: EmbType): Boolean = false
 
     override fun getStartTimeMs(): Long? = null
 

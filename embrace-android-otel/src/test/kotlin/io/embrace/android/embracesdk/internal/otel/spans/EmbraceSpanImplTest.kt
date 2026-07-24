@@ -547,11 +547,10 @@ internal class EmbraceSpanImplTest {
     @Test
     fun `custom attributes are redacted if their key is sensitive when getting a span snapshot`() {
         // given a span with a sensitive key
-        val spanBuilder = createWrapperForInternalSpan()
-        spanBuilder.customAttributes["password"] = "123456"
-        spanBuilder.customAttributes["status"] = "ok"
-        embraceSpan = embraceSpanFactory.create(spanBuilder)
+        embraceSpan = embraceSpanFactory.create(createWrapperForInternalSpan())
         embraceSpan.start()
+        embraceSpan.addAttribute("password", "123456")
+        embraceSpan.addAttribute("status", "ok")
 
         // when getting a span snapshot
         val snapshot = embraceSpan.snapshot()

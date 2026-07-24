@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -9,7 +8,6 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
-import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
@@ -107,9 +105,7 @@ private class EmbraceSpanImpl(
     private val systemAttributes = ConcurrentHashMap<String, String>().apply {
         putAll(otelSpanStartArgs.embraceAttributes.associate { it.key to it.value })
     }
-    private val customAttributes = ConcurrentHashMap<String, String>().apply {
-        putAll(otelSpanStartArgs.customAttributes)
-    }
+    private val customAttributes = ConcurrentHashMap<String, String>()
     private val systemLinks = ConcurrentLinkedQueue<EmbraceLinkData>()
     private val customLinks = ConcurrentLinkedQueue<EmbraceLinkData>()
 
@@ -257,20 +253,6 @@ private class EmbraceSpanImpl(
                 attributes = attributes ?: emptyMap(),
             )
         }
-
-    override fun removeSystemEvents(type: EmbType): Boolean {
-        synchronized(systemEventCount) {
-            systemEvents.forEach { event ->
-                if (event.hasEmbraceAttribute(type)) {
-                    systemEvents.remove(event)
-                    systemEventCount.decrementAndGet()
-                    spanRepository.notifySpanUpdate()
-                    return true
-                }
-            }
-        }
-        return false
-    }
 
     override fun getStartTimeMs(): Long? = spanStartTimeMs
 

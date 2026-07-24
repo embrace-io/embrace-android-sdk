@@ -18,7 +18,7 @@ class TelemetryAttributes(
         val result = mutableMapOf<String, String>()
         customAttributes?.let { result.putAll(it) }
 
-        result.putAll(map.mapKeys { it.key })
+        result.putAll(map)
 
         return result
     }

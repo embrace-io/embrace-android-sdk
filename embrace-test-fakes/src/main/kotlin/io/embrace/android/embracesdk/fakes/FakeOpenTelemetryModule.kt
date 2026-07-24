@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
-import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
+import io.embrace.android.embracesdk.spans.TracingApi
 
 class FakeOpenTelemetryModule(
     override val currentSessionPartSpan: CurrentSessionPartSpan = FakeCurrentSessionPartSpan(),
@@ -52,7 +52,7 @@ class FakeOpenTelemetryModule(
             useKotlinSdk = useKotlinSdk,
         )
 
-    override val embraceTracer: EmbraceTracer
+    override val tracingApi: TracingApi
         get() = TODO()
 
     override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean, otelBehavior: OtelBehavior) {

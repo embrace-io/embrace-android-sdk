@@ -8,12 +8,14 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetwor
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
+import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
 
 internal class NetworkRequestApiDelegate(
     bootstrapper: ModuleInitBootstrapper,
     private val sdkCallChecker: SdkCallChecker,
 ) : NetworkRequestApi {
 
+    private val httpRequestInfoModifierChain = bootstrapper.initModule.httpRequestInfoModifierChain
     private val configService by embraceImplInject(sdkCallChecker) { bootstrapper.configService }
     private val registry by embraceImplInject(sdkCallChecker) {
         bootstrapper.instrumentationModule.instrumentationRegistry
@@ -26,6 +28,16 @@ internal class NetworkRequestApiDelegate(
         if (sdkCallChecker.check("record_network_request")) {
             logNetworkRequest(networkRequest)
         }
+    }
+
+    override fun addHttpRequestInfoModifier(modifier: HttpRequestInfoModifier) {
+        // Intentionally not gated on the SDK being started. Modifiers can be registrable before Embrace.start
+        // so no captured request escapes unmodified.
+        httpRequestInfoModifierChain.add(modifier)
+    }
+
+    override fun removeHttpRequestInfoModifier(modifier: HttpRequestInfoModifier) {
+        httpRequestInfoModifierChain.remove(modifier)
     }
 
     @Deprecated("This is no longer supported")

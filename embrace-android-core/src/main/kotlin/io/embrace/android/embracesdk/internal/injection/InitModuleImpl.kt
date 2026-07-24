@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedCo
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
+import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.EmbraceTelemetryService
@@ -37,6 +38,8 @@ class InitModuleImpl(
     override val jsonSerializer: PlatformSerializer by singleton {
         EmbraceSerializer()
     }
+
+    override val httpRequestInfoModifierChain: HttpRequestInfoModifierChain = HttpRequestInfoModifierChain(logger)
 
     override val instrumentedConfig: InstrumentedConfig = InstrumentedConfigImpl
 

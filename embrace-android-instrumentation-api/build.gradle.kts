@@ -10,6 +10,7 @@ android {
 }
 
 dependencies {
+    api(project(":embrace-android-api"))
     api(project(":embrace-android-instrumentation-schema"))
     api(project(":embrace-android-infra"))
     api(project(":embrace-android-utils"))

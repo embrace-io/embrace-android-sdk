@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
+import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
@@ -61,6 +62,8 @@ class FakeInstrumentationArgs(
     override val crashMarkerFile: File by lazy { File.createTempFile("crash_marker", "") }
 
     override val navigationTrackingService = FakeNavigationTrackingService()
+
+    override val httpRequestInfoModifierChain: HttpRequestInfoModifierChain = HttpRequestInfoModifierChain(logger)
 
     override fun registerSessionPartChangeListener(listener: SessionPartChangeListener) {
         sessionChangeListeners.add(listener)

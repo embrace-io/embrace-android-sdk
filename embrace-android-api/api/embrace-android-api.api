@@ -110,8 +110,10 @@ public final class io/embrace/android/embracesdk/internal/api/LogsApi$DefaultImp
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/NetworkRequestApi {
+	public abstract fun addHttpRequestInfoModifier (Lio/embrace/android/embracesdk/network/http/HttpRequestInfoModifier;)V
 	public abstract fun generateW3cTraceparent ()Ljava/lang/String;
 	public abstract fun recordNetworkRequest (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
+	public abstract fun removeHttpRequestInfoModifier (Lio/embrace/android/embracesdk/network/http/HttpRequestInfoModifier;)V
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/OTelApi {
@@ -242,6 +244,22 @@ public final class io/embrace/android/embracesdk/network/http/HttpMethod : java/
 
 public final class io/embrace/android/embracesdk/network/http/HttpMethod$Companion {
 	public final fun fromString (Ljava/lang/String;)Lio/embrace/android/embracesdk/network/http/HttpMethod;
+}
+
+public abstract interface class io/embrace/android/embracesdk/network/http/HttpRequestInfo {
+	public abstract fun getHttpMethod ()Ljava/lang/String;
+	public abstract fun getUrl ()Ljava/lang/String;
+}
+
+public abstract interface class io/embrace/android/embracesdk/network/http/HttpRequestInfoModifier {
+	public abstract fun modifyHttpRequestInfo (Lio/embrace/android/embracesdk/network/http/MutableHttpRequestInfo;)V
+}
+
+public abstract interface class io/embrace/android/embracesdk/network/http/MutableHttpRequestInfo : io/embrace/android/embracesdk/network/http/HttpRequestInfo {
+	public abstract fun getHttpMethod ()Ljava/lang/String;
+	public abstract fun getUrl ()Ljava/lang/String;
+	public abstract fun setHttpMethod (Ljava/lang/String;)V
+	public abstract fun setUrl (Ljava/lang/String;)V
 }
 
 public final class io/embrace/android/embracesdk/spans/AutoTerminationMode : java/lang/Enum {

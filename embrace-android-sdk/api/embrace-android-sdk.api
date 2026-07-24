@@ -2,6 +2,7 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public static final field INSTANCE Lio/embrace/android/embracesdk/Embrace;
 	public fun activityLoaded (Landroid/app/Activity;)V
 	public fun addBreadcrumb (Ljava/lang/String;)V
+	public fun addHttpRequestInfoModifier (Lio/embrace/android/embracesdk/network/http/HttpRequestInfoModifier;)V
 	public fun addLoadTraceAttribute (Landroid/app/Activity;Ljava/lang/String;Ljava/lang/String;)V
 	public fun addLoadTraceChildSpan (Landroid/app/Activity;Ljava/lang/String;JJ)V
 	public fun addLoadTraceChildSpan (Landroid/app/Activity;Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/ErrorCode;)V
@@ -49,6 +50,7 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;Ljava/util/List;)Z
 	public fun recordNetworkRequest (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
 	public fun recordSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public fun removeHttpRequestInfoModifier (Lio/embrace/android/embracesdk/network/http/HttpRequestInfoModifier;)V
 	public fun removeUserSessionListener (Lio/embrace/android/embracesdk/UserSessionListener;)V
 	public fun removeUserSessionProperty (Ljava/lang/String;)Z
 	public fun setResourceAttribute (Ljava/lang/String;Ljava/lang/String;)V

@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
@@ -41,6 +42,7 @@ internal class InstrumentationArgsImpl(
     override val appStateTracker: AppStateTracker,
     override val navigationTrackingService: NavigationTrackingService,
     override val telemetryService: TelemetryService,
+    override val httpRequestInfoModifierChain: HttpRequestInfoModifierChain,
     private val workerThreadModule: WorkerThreadModule,
     private val sessionPartTracker: SessionPartTracker,
     private val userSessionPropertiesService: UserSessionPropertiesService,

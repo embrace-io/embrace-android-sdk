@@ -16,9 +16,12 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.network.getOverriddenURLString
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
+import io.embrace.android.embracesdk.internal.network.http.MutableHttpRequestInfoImpl
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
+import io.embrace.android.embracesdk.network.http.HttpRequestInfo
 import io.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.HttpAttributes
@@ -78,6 +81,7 @@ class HucLiteDataSource(
                     clock = clock,
                     telemetryDestination = telemetryDestination,
                     errorHandler = ::errorHandler,
+                    httpRequestInfoModifierChain = args.httpRequestInfoModifierChain,
                 )
             }.onFailure {
                 errorHandler(it)
@@ -135,6 +139,7 @@ class HucLiteDataSource(
         val clock: Clock,
         val telemetryDestination: TelemetryDestination,
         val errorHandler: (t: Throwable) -> Unit,
+        private val httpRequestInfoModifierChain: HttpRequestInfoModifierChain,
     ) {
         private val creationTimeMs = clock.now()
         private val telemetryUrlProvider = {
@@ -159,23 +164,22 @@ class HucLiteDataSource(
             }
 
         fun completeRequest(responseCode: Int) {
-            recordRequest(telemetryUrlProvider) {
+            recordRequest { info ->
                 val endTimeMs = clock.now()
                 val errorCode = if (responseCode !in 1..<400) {
                     ErrorCodeAttribute.Failure
                 } else {
                     null
                 }
-                val method = methodProvider()
                 val networkRequestSchemaType = SchemaType.NetworkRequest(
                     completedRequestAttributes(
-                        url = telemetryUrlProvider(),
-                        httpMethod = method,
+                        url = info.url,
+                        httpMethod = info.httpMethod,
                         responseCode = responseCode,
                     ),
                 )
                 telemetryDestination.recordCompletedSpan(
-                    name = "$method ${pathProvider()}",
+                    name = "${info.httpMethod} ${pathProvider()}",
                     startTimeMs = getValidStartTime(),
                     endTimeMs = endTimeMs,
                     errorCode = errorCode,
@@ -186,19 +190,18 @@ class HucLiteDataSource(
         }
 
         fun clientError(t: Throwable) {
-            recordRequest(telemetryUrlProvider) {
+            recordRequest { info ->
                 val errorTimeMs = clock.now()
-                val method = methodProvider()
                 val networkRequestSchemaType = SchemaType.NetworkRequest(
                     incompleteRequestAttributes(
-                        url = telemetryUrlProvider(),
-                        httpMethod = method,
+                        url = info.url,
+                        httpMethod = info.httpMethod,
                         errorType = t::class.java.canonicalName ?: t::class.java.simpleName,
                         errorMessage = t.message ?: "Unexpected error",
                     ),
                 )
                 telemetryDestination.recordCompletedSpan(
-                    name = "$method ${pathProvider()}",
+                    name = "${info.httpMethod} ${pathProvider()}",
                     startTimeMs = getValidStartTime(),
                     endTimeMs = errorTimeMs,
                     errorCode = ErrorCodeAttribute.Failure,
@@ -242,14 +245,23 @@ class HucLiteDataSource(
             }
 
         private fun recordRequest(
-            urlProvider: () -> String,
-            recordingFunction: () -> Unit,
+            recordingFunction: (info: HttpRequestInfo) -> Unit,
         ) {
             runCatching {
                 if (requestRecorded.compareAndSet(false, true)) {
-                    NetworkUtils.getDomain(urlProvider())?.let { domain ->
+                    val url = telemetryUrlProvider()
+                    NetworkUtils.getDomain(url)?.let { domain ->
                         if (shouldRecord(domain)) {
-                            recordingFunction()
+                            // Apply any registered modifiers so the reported url/method reflect the
+                            // consumer's changes. The underlying HTTP request is not affected.
+                            val info = httpRequestInfoModifierChain.apply(
+                                MutableHttpRequestInfoImpl(
+                                    httpMethod = methodProvider(),
+                                    url = url,
+                                ),
+                            )
+
+                            recordingFunction(info)
                         } else {
                             onLimitReached()
                         }

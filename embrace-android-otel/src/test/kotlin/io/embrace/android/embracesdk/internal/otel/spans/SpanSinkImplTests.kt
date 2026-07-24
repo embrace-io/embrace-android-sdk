@@ -4,23 +4,19 @@ import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecut
 import io.embrace.android.embracesdk.fakes.FakeSpanData
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 import io.embrace.android.embracesdk.internal.toEmbraceSpanData
-import io.mockk.every
-import io.mockk.spyk
-import io.mockk.unmockkObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
 
 internal class SpanSinkImplTests {
     private lateinit var spanSink: SpanSink
 
     @Before
     fun setup() {
-        spanSink = spyk(SpanSinkImpl())
+        spanSink = SpanSinkImpl()
     }
 
     @Test
@@ -57,51 +53,33 @@ internal class SpanSinkImplTests {
     }
 
     @Test
-    fun `flushing does not block writing and does not clear the spans added before the flush determines what to flush`() {
-        spanSink.storeCompletedSpans(
-            listOf(
-                FakeSpanData(name = "fake1"),
-                FakeSpanData(name = "fake2"),
-            ).map(FakeSpanData::toEmbraceSpanData),
-        )
-        val unblockCompletedSpansLatch = CountDownLatch(1)
-        val unblockFlushLatch = CountDownLatch(1)
-        val checkLock = CountDownLatch(1)
-        val flushedCount = AtomicInteger(-1)
+    fun `concurrent stores and flushes neither lose nor duplicate spans`() {
+        val totalToStore = 5_000
+        val storeDoneLatch = CountDownLatch(1)
+        val flushed = ArrayList<EmbraceSpanData>(totalToStore)
 
-        // Artificially block the completedSpans() - and thus flushSpans() - from completing
-        every { spanSink.completedSpans() } answers {
-            val spans = callOriginal()
-            unblockFlushLatch.countDown()
-            unblockCompletedSpansLatch.await(1, TimeUnit.SECONDS)
-            spans
+        // store spans one at a time from another thread
+        val producer = SingleThreadTestScheduledExecutor()
+        producer.submit {
+            repeat(totalToStore) { i ->
+                spanSink.storeCompletedSpans(listOf(FakeSpanData(name = "span$i")).map(FakeSpanData::toEmbraceSpanData))
+            }
+            storeDoneLatch.countDown()
         }
 
-        // Produces this order of operations:
-        // 1. thread1 flushes spanSink and is about to return 2 spans but execution is paused
-        // 2. thread2 adds a new span to spanSink and then unblocks thread1
-        // 3. thread1 will return 2 spans despite spanSink already containing the extra span added by thread2
-        // 4. thread1 will clear the two spans that it has flushed and returns, unblocking the check
-        // 5. spanSink should have 1 span in it after the flush only removing the spans that it has flushed
-
-        val thread1 = SingleThreadTestScheduledExecutor()
-        thread1.submit {
-            val flushedSpans = spanSink.flushSpans()
-            flushedCount.set(flushedSpans.size)
-            checkLock.countDown()
+        // repeatedly flush on this thread while the producer is storing
+        while (storeDoneLatch.count > 0L) {
+            flushed += spanSink.flushSpans()
         }
+        storeDoneLatch.await(5, TimeUnit.SECONDS)
 
-        unblockFlushLatch.await(1, TimeUnit.SECONDS)
-        val thread2 = SingleThreadTestScheduledExecutor()
-        thread2.submit {
-            spanSink.storeCompletedSpans(listOf(FakeSpanData(name = "fake3")).map(FakeSpanData::toEmbraceSpanData))
-            unblockCompletedSpansLatch.countDown()
-        }
+        // final flush to drain anything stored after the last in-loop flush
+        flushed += spanSink.flushSpans()
 
-        checkLock.await(1, TimeUnit.SECONDS)
-        assertEquals(2, flushedCount.get())
-
-        unmockkObject(spanSink)
-        assertEquals(1, spanSink.completedSpans().size)
+        // every stored span should have been flushed exactly once.
+        assertEquals(0, spanSink.completedSpans().size)
+        assertEquals(totalToStore, flushed.size)
+        val distinctNames = flushed.mapTo(HashSet()) { it.name }
+        assertEquals(totalToStore, distinctNames.size)
     }
 }

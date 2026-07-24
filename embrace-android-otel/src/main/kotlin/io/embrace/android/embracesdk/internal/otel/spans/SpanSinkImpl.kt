@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
-import io.embrace.android.embracesdk.internal.utils.threadSafeTake
+import io.embrace.android.embracesdk.internal.utils.threadSafeToList
 import java.util.Queue
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -18,15 +18,13 @@ class SpanSinkImpl : SpanSink {
         return StoreDataResult.SUCCESS
     }
 
-    override fun completedSpans(): List<EmbraceSpanData> {
-        val spansToReturn = completedSpans.size
-        return completedSpans.threadSafeTake(spansToReturn)
-    }
+    override fun completedSpans(): List<EmbraceSpanData> = completedSpans.threadSafeToList()
 
     override fun flushSpans(): List<EmbraceSpanData> {
         synchronized(flushLock) {
-            val flushed = completedSpans()
-            completedSpans.removeAll(flushed.toSet())
+            val count = completedSpans.size
+            val flushed = ArrayList<EmbraceSpanData>(count)
+            repeat(count) { completedSpans.poll()?.let(flushed::add) }
             return flushed
         }
     }

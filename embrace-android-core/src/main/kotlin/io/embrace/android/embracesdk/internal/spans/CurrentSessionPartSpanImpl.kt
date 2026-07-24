@@ -95,11 +95,12 @@ internal class CurrentSessionPartSpanImpl(
     override fun getId(): String = sessionPartState?.sessionPartId ?: ""
 
     override fun spanStopCallback(spanId: String) {
-        val currentSessionPartSpan = sessionPartState?.span
+        val state = sessionPartState
+        val currentSessionPartSpan = state?.span
         val spanToStop = spanRepository.getSpan(spanId)
 
         if (currentSessionPartSpan != spanToStop) {
-            val linkAttrs = currentSessionPartSpan?.partLinkAttrs() ?: emptyMap()
+            val linkAttrs = state?.cachedPartLinkAttrs() ?: emptyMap()
             spanToStop?.spanContext?.let { spanToStopContext ->
                 if (currentSessionPartSpan != null) {
                     currentSessionPartSpan.addSystemLink(
@@ -226,7 +227,23 @@ internal class CurrentSessionPartSpanImpl(
         val traceCount: AtomicInteger = AtomicInteger(0)
         val internalTraceCount: AtomicInteger = AtomicInteger(0)
 
+        /**
+         * Memoized link attributes for this session part. Only set once the user session attributes have been populated on the
+         * span, after which the attributes referenced by [partLinkAttrs] no longer change for the lifetime of the part.
+         */
+        @Volatile
+        var linkAttrs: Map<String, String>? = null
+
         val isReady: Boolean get() = span.isRecording
+    }
+
+    private fun SessionPartState.cachedPartLinkAttrs(): Map<String, String> {
+        linkAttrs?.let { return it }
+        val attrs = span.partLinkAttrs()
+        if (attrs.containsKey(EmbSessionAttributes.EMB_USER_SESSION_ID)) {
+            linkAttrs = attrs
+        }
+        return attrs
     }
 
     /**

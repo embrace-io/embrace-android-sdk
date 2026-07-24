@@ -589,6 +589,66 @@ internal class CurrentSessionPartSpanImplTests {
     }
 
     @Test
+    fun `span stop callback link attrs pick up user session id set after an earlier span stop`() {
+        val sessionPartSpan = checkNotNull(spanRepository.getActiveSpans().single())
+        val sessionPartId = currentSessionPartSpan.getId()
+
+        val earlySpan = spanService.startSpan("early").apply {
+            stop()
+        }
+        val earlyLink = checkNotNull(checkNotNull(earlySpan.snapshot()).links).single()
+        earlyLink.validateSystemLink(
+            linkedSpan = checkNotNull(sessionPartSpan.snapshot()),
+            type = LinkType.EndSessionPart,
+            expectedAttributes = mapOf(EmbSessionAttributes.EMB_SESSION_PART_ID to sessionPartId),
+        )
+        assertTrue(
+            checkNotNull(earlyLink.attributes).none {
+                it.key == EmbSessionAttributes.EMB_USER_SESSION_ID || it.key == SessionAttributes.SESSION_ID
+            },
+        )
+
+        val userSessionId = "user-session-uuid"
+        sessionPartSpan.setSystemAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, userSessionId)
+
+        val lateSpan = spanService.startSpan("late").apply {
+            stop()
+        }
+        checkNotNull(checkNotNull(lateSpan.snapshot()).links).single().validateSystemLink(
+            linkedSpan = checkNotNull(sessionPartSpan.snapshot()),
+            type = LinkType.EndSessionPart,
+            expectedAttributes = mapOf(
+                EmbSessionAttributes.EMB_SESSION_PART_ID to sessionPartId,
+                EmbSessionAttributes.EMB_USER_SESSION_ID to userSessionId,
+                SessionAttributes.SESSION_ID to userSessionId,
+            ),
+        )
+    }
+
+    @Test
+    fun `span stop callback link attrs are identical for consecutive stops after user session id is set`() {
+        val sessionPartSpan = checkNotNull(spanRepository.getActiveSpans().single())
+        val userSessionId = "user-session-uuid"
+        sessionPartSpan.setSystemAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, userSessionId)
+        val expectedPartLinkAttrs = mapOf(
+            EmbSessionAttributes.EMB_SESSION_PART_ID to currentSessionPartSpan.getId(),
+            EmbSessionAttributes.EMB_USER_SESSION_ID to userSessionId,
+            SessionAttributes.SESSION_ID to userSessionId,
+        )
+
+        repeat(2) { count ->
+            val span = spanService.startSpan("test-$count").apply {
+                stop()
+            }
+            checkNotNull(checkNotNull(span.snapshot()).links).single().validateSystemLink(
+                linkedSpan = checkNotNull(sessionPartSpan.snapshot()),
+                type = LinkType.EndSessionPart,
+                expectedAttributes = expectedPartLinkAttrs,
+            )
+        }
+    }
+
+    @Test
     fun `session ending will not create span link to its own session part span`() {
         val sessionPartSpan = checkNotNull(spanRepository.getActiveSpans().single())
         currentSessionPartSpan.endSession(startNewSession = true)

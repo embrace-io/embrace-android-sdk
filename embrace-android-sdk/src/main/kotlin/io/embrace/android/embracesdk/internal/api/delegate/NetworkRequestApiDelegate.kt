@@ -15,12 +15,10 @@ internal class NetworkRequestApiDelegate(
     private val sdkCallChecker: SdkCallChecker,
 ) : NetworkRequestApi {
 
+    private val httpRequestInfoModifierChain = bootstrapper.initModule.httpRequestInfoModifierChain
     private val configService by embraceImplInject(sdkCallChecker) { bootstrapper.configService }
     private val registry by embraceImplInject(sdkCallChecker) {
         bootstrapper.instrumentationModule.instrumentationRegistry
-    }
-    private val httpRequestInfoModifierChain by embraceImplInject(sdkCallChecker) {
-        bootstrapper.instrumentationModule.instrumentationArgs.httpRequestInfoModifierChain
     }
     private val sessionOrchestrator by embraceImplInject(sdkCallChecker) {
         bootstrapper.userSessionOrchestrationModule.sessionOrchestrator
@@ -33,15 +31,13 @@ internal class NetworkRequestApiDelegate(
     }
 
     override fun addHttpRequestInfoModifier(modifier: HttpRequestInfoModifier) {
-        if (sdkCallChecker.check("add_http_request_info_modifier")) {
-            httpRequestInfoModifierChain?.add(modifier)
-        }
+        // Intentionally not gated on the SDK being started. Modifiers can be registrable before Embrace.start
+        // so no captured request escapes unmodified.
+        httpRequestInfoModifierChain.add(modifier)
     }
 
     override fun removeHttpRequestInfoModifier(modifier: HttpRequestInfoModifier) {
-        if (sdkCallChecker.check("remove_http_request_info_modifier")) {
-            httpRequestInfoModifierChain?.remove(modifier)
-        }
+        httpRequestInfoModifierChain.remove(modifier)
     }
 
     @Deprecated("This is no longer supported")

@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifier
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.UuidSource
@@ -29,6 +30,13 @@ interface InitModule {
      * Logger used by the SDK
      */
     val logger: InternalLogger
+
+    /**
+     * Holds the [io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier]s, so modifiers can be registered
+     * before the SDK has fully started; network instrumentation applies these to captured HTTP request info before
+     * it is reported.
+     */
+    val httpRequestInfoModifierChain: HttpRequestInfoModifierChain
 
     /**
      * Info about the system available at startup time without expensive disk or API calls

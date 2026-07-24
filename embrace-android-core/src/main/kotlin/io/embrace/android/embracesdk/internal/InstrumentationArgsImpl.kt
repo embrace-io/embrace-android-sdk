@@ -42,6 +42,7 @@ internal class InstrumentationArgsImpl(
     override val appStateTracker: AppStateTracker,
     override val navigationTrackingService: NavigationTrackingService,
     override val telemetryService: TelemetryService,
+    override val httpRequestInfoModifierChain: HttpRequestInfoModifierChain,
     private val workerThreadModule: WorkerThreadModule,
     private val sessionPartTracker: SessionPartTracker,
     private val userSessionPropertiesService: UserSessionPropertiesService,
@@ -51,8 +52,6 @@ internal class InstrumentationArgsImpl(
 ) : InstrumentationArgs {
 
     override val crashMarkerFile: File by lazy { crashMarkerFileProvider() }
-
-    override val httpRequestInfoModifierChain: HttpRequestInfoModifierChain = HttpRequestInfoModifierChain(logger)
 
     override fun backgroundWorker(worker: Worker.Background): BackgroundWorker = workerThreadModule.backgroundWorker(worker)
     override fun <T> priorityWorker(

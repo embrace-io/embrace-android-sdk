@@ -48,6 +48,7 @@ class InstrumentationModuleImpl(
             appStateTracker = essentialServiceModule.appStateTracker,
             navigationTrackingService = essentialServiceModule.navigationTrackingService,
             telemetryService = initModule.telemetryService,
+            httpRequestInfoModifierChain = initModule.httpRequestInfoModifierChain,
         )
     }
 }

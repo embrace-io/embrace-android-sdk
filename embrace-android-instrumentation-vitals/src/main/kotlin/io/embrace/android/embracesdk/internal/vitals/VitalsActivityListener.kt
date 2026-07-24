@@ -25,6 +25,8 @@ internal class VitalsActivityListener(
 
     private val frameListeners = WeakHashMap<Window, VitalsFrameMetricsListener>()
 
+    private val interactionCallbacks = WeakHashMap<Window, VitalsWindowCallback>()
+
     override fun onActivityCreated(activity: Activity, bundle: Bundle?) {
         // captured first so the navigation-start timestamp reflects this event, not the delay until it's processed
         val eventTime = SystemClock.uptimeMillis()
@@ -59,12 +61,15 @@ internal class VitalsActivityListener(
     }
 
     private fun installInteractionCallback(window: Window) {
-        if (window.callback !is VitalsWindowCallback) {
-            window.callback = VitalsWindowCallback(
-                delegate = window.callback,
-                focalCallbacks = focalCallbacks,
-            )
+        if (interactionCallbacks.containsKey(window)) {
+            return
         }
+        val callback = VitalsWindowCallback(
+            delegate = window.callback,
+            focalCallbacks = focalCallbacks,
+        )
+        window.callback = callback
+        interactionCallbacks[window] = callback
     }
 
     private fun installFrameMetricsListener(window: Window) {

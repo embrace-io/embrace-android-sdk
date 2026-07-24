@@ -6,6 +6,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.view.FrameMetrics
+import android.view.Window
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
@@ -61,6 +62,22 @@ internal class VitalsActivityListenerTest {
         listener.onActivityResumed(activity)
 
         assertSame(firstCallback, activity.window.callback)
+    }
+
+    @Test
+    fun `onActivityResumed does not re-wrap when a foreign callback sits on top`() {
+        val activity = buildActivity(Activity::class.java).setup().get()
+
+        // First resume installs our wrapper.
+        listener.onActivityResumed(activity)
+        // Another SDK (or compose-tap) then wraps our callback, so ours is no longer outermost.
+        val foreign: Window.Callback = object : Window.Callback by activity.window.callback {}
+        activity.window.callback = foreign
+
+        // A later resume must not add a second VitalsWindowCallback layer.
+        listener.onActivityResumed(activity)
+
+        assertSame(foreign, activity.window.callback)
     }
 
     @Test

@@ -241,6 +241,24 @@ internal class NetworkRequestDataSourceStatefulApiTest {
     }
 
     @Test
+    fun `discardRequest releases tracking without stopping the span`() {
+        val id = checkNotNull(startRequest(url = "https://www.example.com/api"))
+        harness.dataSource.discardRequest(id)
+
+        val span = harness.getNetworkSpans().single()
+        assertTrue(span.isRecording())
+
+        endRequest(callId = id, url = "https://www.example.com/api")
+        assertTrue(span.isRecording())
+    }
+
+    @Test
+    fun `discardRequest with an unknown id is a no-op`() {
+        harness.dataSource.discardRequest("unknown-id")
+        assertTrue(harness.getNetworkSpans().isEmpty())
+    }
+
+    @Test
     fun `network span adopts the span represented by the traceparent as its parent if it is in the correct format`() {
         startRequest(
             url = "https://www.example.com/api",

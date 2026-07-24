@@ -123,6 +123,10 @@ class NetworkRequestDataSourceImpl(
         }
     }
 
+    override fun discardRequest(id: String) {
+        activeRequests.remove(id)
+    }
+
     private fun generateSchemaAttributes(request: HttpNetworkRequest): Map<String, String> = mapOf(
         UrlAttributes.URL_FULL to stripUrl(request.url),
         HttpAttributes.HTTP_REQUEST_METHOD to request.httpMethod,

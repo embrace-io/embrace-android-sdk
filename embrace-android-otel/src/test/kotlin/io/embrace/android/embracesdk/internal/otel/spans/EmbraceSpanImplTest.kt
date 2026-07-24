@@ -41,6 +41,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.context.Context
@@ -63,6 +64,7 @@ internal class EmbraceSpanImplTest {
     private lateinit var serializer: PlatformSerializer
     private lateinit var dataValidator: DataValidator
     private lateinit var tracer: Tracer
+    private lateinit var telemetryService: FakeTelemetryService
     private lateinit var embraceSpanFactory: EmbraceSpanFactory
     private var updateNotified: Boolean = false
     private var stoppedSpanId: String? = null
@@ -74,14 +76,15 @@ internal class EmbraceSpanImplTest {
         tracer = createSdkOtelInstance(clock = otelClock, useKotlinSdk = TESTS_DEFAULT_USE_KOTLIN_SDK).getTracer("test-tracer")
         spanRepository = SpanRepository().apply { setSpanUpdateNotifier { updateNotified = true } }
         serializer = TestPlatformSerializer()
-        dataValidator = DataValidator(telemetryService = FakeTelemetryService())
+        telemetryService = FakeTelemetryService()
+        dataValidator = DataValidator(telemetryService = telemetryService)
         embraceSpanFactory = EmbraceSpanFactoryImpl(
             openTelemetryClock = otelClock,
             spanRepository = spanRepository,
             dataValidator = dataValidator,
             stopCallback = ::stopCallback,
             redactionFunction = ::redactionFunction,
-            telemetryService = FakeTelemetryService(),
+            telemetryService = telemetryService,
         )
         embraceSpan = embraceSpanFactory.create(
             otelSpanStartArgs = OtelSpanStartArgs(
@@ -378,6 +381,30 @@ internal class EmbraceSpanImplTest {
             assertNull("value", embraceSpan.snapshot()?.attributes?.findAttributeValue("system-attribute"))
             assertEquals(maxCustomAttrCount + 1, attributes().size)
             assertTrue(updateNotified)
+        }
+    }
+
+    @Test
+    fun `check system attribute count limit`() {
+        with(embraceSpan) {
+            assertTrue(start())
+            val max = dataValidator.otelLimitsConfig.getMaxSystemAttributeCount()
+            val seeded = attributes().size
+            repeat(max - seeded) {
+                addSystemAttribute(key = "system-key$it", value = "value")
+            }
+            assertEquals(max, attributes().size)
+
+            // a new key beyond the cap is dropped and the drop is tracked
+            addSystemAttribute(key = "overflow-key", value = "value")
+            assertEquals(max, attributes().size)
+            assertNull(embraceSpan.snapshot()?.attributes?.findAttributeValue("overflow-key"))
+            assertTrue(telemetryService.appliedLimits.contains("span_attribute" to AppliedLimitType.DROP))
+
+            // updates to already-present keys still succeed while at the cap
+            addSystemAttribute(key = "system-key0", value = "updated")
+            assertEquals(max, attributes().size)
+            assertEquals("updated", embraceSpan.snapshot()?.attributes?.findAttributeValue("system-key0"))
         }
     }
 

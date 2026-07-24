@@ -84,20 +84,15 @@ class NetworkRequestDataSourceImpl(
     }
 
     override fun startRequest(startData: RequestStartData): String? {
-        // Apply any registered modifiers so the reported url/method reflect the consumer's changes.
-        // The underlying HTTP request is not affected.
-        val info = httpRequestInfoModifierChain.apply(MutableHttpRequestInfoImpl(startData.httpMethod, startData.url))
-        val url = info.url
-        val httpMethod = info.httpMethod
-
+        val url = startData.url
         if (!configService.networkBehavior.isUrlEnabled(url)) {
             return null
         }
 
         // Get the domain, if it can be successfully parsed. If not, don't log this call.
-        val domain = getDomain(
-            stripUrl(url),
-        ) ?: return null
+        val strippedUrl = stripUrl(url)
+        val domain = getDomain(strippedUrl)
+            ?: return null
 
         return captureTelemetry(
             inputValidation = { domainCountLimiter.canLogNetworkRequest(domain) },
@@ -105,10 +100,13 @@ class NetworkRequestDataSourceImpl(
                 telemetryService.trackAppliedLimit("network_request", AppliedLimitType.DROP)
             },
         ) {
+            // Apply any registered modifiers so the reported url/method reflect the consumer's changes.
+            val info = httpRequestInfoModifierChain.apply(MutableHttpRequestInfoImpl(startData.httpMethod, strippedUrl))
+
             val spanToken = destination.startSpanCapture(
-                schemaType = SchemaType.NetworkRequest(requestStartAttributes(url, httpMethod)),
+                schemaType = SchemaType.NetworkRequest(requestStartAttributes(info.url, info.httpMethod)),
                 startTimeMs = startData.sdkClockStartTime,
-                name = getNetworkSpanName(httpMethod, url),
+                name = getNetworkSpanName(info.httpMethod, info.url),
                 parentSpanId = startData.traceparent?.getSpanIdFromTraceparent(),
             )
 
@@ -117,7 +115,7 @@ class NetworkRequestDataSourceImpl(
                     spanToken.setSystemAttribute(EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT, traceparent)
                     spanToken.setSystemAttribute(EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY, "true")
                 }
-                activeRequests[traceparent] = ActiveRequest(spanToken, httpMethod)
+                activeRequests[traceparent] = ActiveRequest(spanToken, info.httpMethod)
             }
         }
     }

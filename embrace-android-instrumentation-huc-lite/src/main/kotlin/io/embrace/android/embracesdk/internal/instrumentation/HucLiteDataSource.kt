@@ -249,16 +249,18 @@ class HucLiteDataSource(
         ) {
             runCatching {
                 if (requestRecorded.compareAndSet(false, true)) {
-                    // Apply any registered modifiers so the reported url/method reflect the
-                    // consumer's changes. The underlying HTTP request is not affected.
-                    val info = httpRequestInfoModifierChain.apply(
-                        MutableHttpRequestInfoImpl(
-                            httpMethod = methodProvider(),
-                            url = telemetryUrlProvider(),
-                        ),
-                    )
-                    NetworkUtils.getDomain(info.url)?.let { domain ->
+                    val url = telemetryUrlProvider()
+                    NetworkUtils.getDomain(url)?.let { domain ->
                         if (shouldRecord(domain)) {
+                            // Apply any registered modifiers so the reported url/method reflect the
+                            // consumer's changes. The underlying HTTP request is not affected.
+                            val info = httpRequestInfoModifierChain.apply(
+                                MutableHttpRequestInfoImpl(
+                                    httpMethod = methodProvider(),
+                                    url = url,
+                                ),
+                            )
+
                             recordingFunction(info)
                         } else {
                             onLimitReached()

@@ -58,6 +58,19 @@ public abstract interface annotation class io/embrace/android/embracesdk/annotat
 public abstract interface annotation class io/embrace/android/embracesdk/annotation/NotTracedActivity : java/lang/annotation/Annotation {
 }
 
+public final class io/embrace/android/embracesdk/experiments/TrackedExperiment {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;J)V
+	public final fun getExperimentId ()Ljava/lang/String;
+	public final fun getStartTimeMs ()J
+	public final fun getVariantName ()Ljava/lang/String;
+}
+
+public final class io/embrace/android/embracesdk/experiments/TrackedFeatureFlag {
+	public fun <init> (Ljava/lang/String;J)V
+	public final fun getFlagId ()Ljava/lang/String;
+	public final fun getStartTimeMs ()J
+}
+
 public abstract interface class io/embrace/android/embracesdk/internal/api/BreadcrumbApi {
 	public abstract fun addBreadcrumb (Ljava/lang/String;)V
 }
@@ -69,6 +82,13 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Embra
 	public abstract fun endView (Ljava/lang/String;)Z
 	public abstract fun start (Landroid/content/Context;)V
 	public abstract fun startView (Ljava/lang/String;)Z
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/api/ExperimentApi {
+	public abstract fun trackExperiment ([Lio/embrace/android/embracesdk/experiments/TrackedExperiment;)Z
+	public abstract fun trackFeatureFlag ([Lio/embrace/android/embracesdk/experiments/TrackedFeatureFlag;)Z
+	public abstract fun untrackExperiment ([Ljava/lang/String;J)Z
+	public abstract fun untrackFeatureFlag ([Ljava/lang/String;J)Z
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/InstrumentationApi {
@@ -123,7 +143,7 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/OTelA
 	public abstract fun setResourceAttribute (Ljava/lang/String;Ljava/lang/String;)V
 }
 
-public abstract interface class io/embrace/android/embracesdk/internal/api/SdkApi : io/embrace/android/embracesdk/internal/api/BreadcrumbApi, io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi, io/embrace/android/embracesdk/internal/api/InstrumentationApi, io/embrace/android/embracesdk/internal/api/LogsApi, io/embrace/android/embracesdk/internal/api/NetworkRequestApi, io/embrace/android/embracesdk/internal/api/OTelApi, io/embrace/android/embracesdk/internal/api/SdkStateApi, io/embrace/android/embracesdk/internal/api/UserApi, io/embrace/android/embracesdk/internal/api/UserSessionApi, io/embrace/android/embracesdk/spans/TracingApi {
+public abstract interface class io/embrace/android/embracesdk/internal/api/SdkApi : io/embrace/android/embracesdk/internal/api/BreadcrumbApi, io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi, io/embrace/android/embracesdk/internal/api/ExperimentApi, io/embrace/android/embracesdk/internal/api/InstrumentationApi, io/embrace/android/embracesdk/internal/api/LogsApi, io/embrace/android/embracesdk/internal/api/NetworkRequestApi, io/embrace/android/embracesdk/internal/api/OTelApi, io/embrace/android/embracesdk/internal/api/SdkStateApi, io/embrace/android/embracesdk/internal/api/UserApi, io/embrace/android/embracesdk/internal/api/UserSessionApi, io/embrace/android/embracesdk/spans/TracingApi {
 }
 
 public final class io/embrace/android/embracesdk/internal/api/SdkApi$DefaultImpls {

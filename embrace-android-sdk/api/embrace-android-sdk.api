@@ -58,6 +58,10 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun start (Landroid/content/Context;)V
 	public fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/Long;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun startView (Ljava/lang/String;)Z
+	public fun trackExperiment ([Lio/embrace/android/embracesdk/experiments/TrackedExperiment;)Z
+	public fun trackFeatureFlag ([Lio/embrace/android/embracesdk/experiments/TrackedFeatureFlag;)Z
+	public fun untrackExperiment ([Ljava/lang/String;J)Z
+	public fun untrackFeatureFlag ([Ljava/lang/String;J)Z
 }
 
 public final class io/embrace/android/embracesdk/internal/instrumentation/bytecode/ApplicationInitTimeBytecodeEntrypoint {

@@ -11,6 +11,8 @@ import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.capture.connectivity.EmbraceNetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkCallbackConnectivityService
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
+import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentTrackingService
+import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentTrackingServiceImpl
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesServiceImpl
 import io.embrace.android.embracesdk.internal.capture.user.EmbraceUserService
@@ -101,6 +103,12 @@ class EssentialServiceModuleImpl(
                 telemetryService = initModule.telemetryService,
             )
         }
+    }
+
+    override val experimentTrackingService: ExperimentTrackingService by singleton {
+        ExperimentTrackingServiceImpl(
+            telemetryService = initModule.telemetryService,
+        )
     }
 
     override val telemetryDestination: TelemetryDestination by singleton {

@@ -7,9 +7,15 @@ attribute_groups:
     brief: "Embrace attributes applicable to any telemetry"
     attributes:
       - ref: emb.manual_instrumentation
+      - ref: emb.experiments
 
 attributes:
   - key: emb.manual_instrumentation
     type: boolean
     brief: "Set this to true when the telemetry is known to have been created through a manual instrumentation API call."
     stability: development
+  - key: emb.experiments
+    type: string
+    brief: "The tracked experiment/feature-flag state: records delimited by ';', each record's fields delimited by ':' in the order type:ID:variant:startTime with an optional trailing endTime once untracked. The type is 'e' (experiment) or 'f' (feature flag); feature flags have a blank variant; the ID and variant are percent-escaped."
+    stability: development
+    examples: ["e:checkout-flow:variant-a:1691000000000;f:dark-mode::1691000100000;e:promo:control:1691000200000:1691000900000"]

@@ -11,6 +11,12 @@ package io.embrace.android.embracesdk.semconv
 object EmbCommonAttributes {
 
     /**
+     * The tracked experiment/feature-flag state: records delimited by ';', each record's fields delimited by ':' in the order type:ID:variant:startTime with an optional trailing endTime once untracked. The type is 'e' (experiment) or 'f' (feature flag); feature flags have a blank variant; the ID and variant are percent-escaped.
+     */
+    @ExperimentalSemconv
+    const val EMB_EXPERIMENTS: String = "emb.experiments"
+
+    /**
      * Set this to true when the telemetry is known to have been created through a manual instrumentation API call.
      */
     @ExperimentalSemconv

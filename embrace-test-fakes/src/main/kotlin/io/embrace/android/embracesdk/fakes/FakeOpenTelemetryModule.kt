@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
+import io.opentelemetry.kotlin.context.ContextKey
 
 class FakeOpenTelemetryModule(
     override val currentSessionPartSpan: CurrentSessionPartSpan = FakeCurrentSessionPartSpan(),
@@ -37,7 +38,13 @@ class FakeOpenTelemetryModule(
             appVersion = "1.0.0",
             packageName = "com.test.app",
             systemInfo = systemInfo,
+            uuidSource = FakeUuidSource(),
+            skipMetadataContextKey = { skipLogMetadataContextKey },
         )
+
+    private val skipLogMetadataContextKey: ContextKey<Boolean> by lazy {
+        otelSdkWrapper.openTelemetryKotlin.context.createKey("emb-skip-log-metadata")
+    }
 
     override val eventService: EventService = FakeEventService()
 
@@ -48,7 +55,6 @@ class FakeOpenTelemetryModule(
             otelClock = FakeOtelKotlinClock(),
             configuration = otelSdkConfig,
             spanService = spanService,
-            eventService = FakeEventService(),
             useKotlinSdk = useKotlinSdk,
         )
 

@@ -1,10 +1,8 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.otel.logs.EventService
-import io.embrace.android.embracesdk.internal.utils.Provider
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.context.Context
-import io.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.kotlin.logging.SeverityNumber
 
 class FakeEventService : EventService {
@@ -12,7 +10,6 @@ class FakeEventService : EventService {
     var initTime: Long? = null
 
     override fun log(
-        impl: Logger?,
         eventName: String?,
         body: String?,
         timestamp: Long?,
@@ -25,7 +22,6 @@ class FakeEventService : EventService {
     ) {
         eventData.add(
             FakeEventData(
-                logger = impl,
                 eventName = eventName,
                 body = body,
                 timestamp = timestamp,
@@ -39,9 +35,6 @@ class FakeEventService : EventService {
         )
     }
 
-    override fun setMetadataProvider(provider: Provider<Map<String, String>>) {
-    }
-
     override fun initializeService(sdkInitStartTimeMs: Long) {
         initTime = sdkInitStartTimeMs
     }
@@ -49,7 +42,6 @@ class FakeEventService : EventService {
     override fun initialized(): Boolean = true
 
     data class FakeEventData(
-        val logger: Logger?,
         val eventName: String?,
         val body: String?,
         val timestamp: Long?,

@@ -25,6 +25,7 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.opentelemetry.kotlin.context.ContextKey
 
 class OpenTelemetryModuleImpl(
     private val initModule: InitModule,
@@ -55,10 +56,21 @@ class OpenTelemetryModuleImpl(
             appVersion = initModule.instrumentedConfig.project.getVersionName() ?: "UNKNOWN",
             packageName = initModule.instrumentedConfig.project.getPackageName() ?: "UNKNOWN",
             systemInfo = initModule.systemInfo,
+            uuidSource = initModule.uuidSource,
+            skipMetadataContextKey = { skipLogMetadataContextKey },
             sessionIdsProvider = { storedSessionIdsProvider },
             userIdProvider = { storedUserIdProvider?.invoke() },
             processIdentifierProvider = processIdentifierProvider,
         )
+    }
+
+    /**
+     * A [ContextKey] shared with [OtelSdkConfig.internalLogRecordProcessor] to signal, per log
+     * record, that the current SDK metadata should not be stamped onto it. Created from the OTel
+     * instance so it is preserved when the log record is emitted and processed.
+     */
+    private val skipLogMetadataContextKey: ContextKey<Boolean> by lazy {
+        otelSdkWrapper.openTelemetryKotlin.context.createKey("emb-skip-log-metadata")
     }
 
     override val otelSdkWrapper: OtelSdkWrapper by lazy {
@@ -68,7 +80,6 @@ class OpenTelemetryModuleImpl(
                     otelClock = openTelemetryClock,
                     configuration = otelSdkConfig,
                     spanService = spanService,
-                    eventService = eventService,
                     // adding guard in case this is accessed before we fetch the config
                     useKotlinSdk = otelBehavior?.shouldUseKotlinSdk() ?: false,
                 )
@@ -163,7 +174,8 @@ class OpenTelemetryModuleImpl(
     override val eventService: EventService by lazy {
         EventServiceImpl(
             sdkLoggerProvider = { otelSdkWrapper.sdkLogger },
-            uuidSource = initModule.uuidSource,
+            skipMetadataContextKey = { skipLogMetadataContextKey },
+            implicitContextProvider = { otelSdkWrapper.openTelemetryKotlin.context.implicit() },
         )
     }
 

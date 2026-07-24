@@ -1,23 +1,21 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
-import io.embrace.android.embracesdk.internal.otel.impl.EmbAttributesMutator
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.context.Context
+import io.opentelemetry.kotlin.context.ContextKey
 import io.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.kotlin.logging.SeverityNumber
-import io.opentelemetry.kotlin.semconv.LogAttributes
 import java.util.concurrent.atomic.AtomicReference
 
 class EventServiceImpl(
     private val sdkLoggerProvider: Provider<Logger>,
-    private val uuidSource: UuidSource,
+    private val skipMetadataContextKey: Provider<ContextKey<Boolean>>,
+    private val implicitContextProvider: Provider<Context>,
 ) : EventService {
     private val noopLogger = NoopOpenTelemetry.loggerProvider.getLogger("noop")
     private val sdkLoggerRef: AtomicReference<Logger> = AtomicReference(noopLogger)
-    private val metadataSupplierProviderRef = AtomicReference<Provider<Map<String, String>>> { emptyMap() }
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
         sdkLoggerRef.set(sdkLoggerProvider())
@@ -26,7 +24,6 @@ class EventServiceImpl(
     override fun initialized(): Boolean = sdkLoggerRef.get() != noopLogger
 
     override fun log(
-        impl: Logger?,
         eventName: String?,
         body: String?,
         timestamp: Long?,
@@ -37,33 +34,23 @@ class EventServiceImpl(
         addCurrentMetadata: Boolean,
         eventAttributes: (AttributesMutator.() -> Unit)?,
     ) {
-        val logger = impl ?: sdkLoggerRef.get()
-        val container = EmbAttributesMutator()
-        eventAttributes?.invoke(container)
-        if (!container.attributes.containsKey(LogAttributes.LOG_RECORD_UID)) {
-            container.setStringAttribute(LogAttributes.LOG_RECORD_UID, uuidSource.createUuid())
+        // Emit with the supplied context (falling back to the current context when none is given),
+        // adding the key that signals the enrichment processor to skip stamping the current SDK
+        // metadata when metadata should not be added.
+        val emitContext = if (addCurrentMetadata) {
+            context
+        } else {
+            (context ?: implicitContextProvider()).set(skipMetadataContextKey(), true)
         }
-        if (addCurrentMetadata) {
-            getCurrentMetadata().forEach { (k, v) -> container.setStringAttribute(k, v) }
-        }
-
-        logger.emit(
+        sdkLoggerRef.get().emit(
             body = body,
             eventName = eventName,
             timestamp = timestamp,
             observedTimestamp = observedTimestamp,
-            context = context,
+            context = emitContext,
             severityNumber = severityNumber,
             severityText = severityText,
-            attributes = {
-                container.attributes.forEach { (k, v) -> setStringAttribute(k, v.toString()) }
-            },
+            attributes = eventAttributes,
         )
     }
-
-    override fun setMetadataProvider(provider: Provider<Map<String, String>>) {
-        metadataSupplierProviderRef.set(provider)
-    }
-
-    private fun getCurrentMetadata(): Map<String, String> = metadataSupplierProviderRef.get().invoke().toMap()
 }

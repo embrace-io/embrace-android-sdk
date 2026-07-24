@@ -1,9 +1,11 @@
 package io.embrace.android.embracesdk.internal.otel.config
 
 import io.embrace.android.embracesdk.fakes.FakeAttributesMutator
+import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
+import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.semconv.AndroidAttributes
 import io.opentelemetry.kotlin.semconv.DeviceAttributes
 import io.opentelemetry.kotlin.semconv.OsAttributes
@@ -34,6 +36,8 @@ internal class OtelSdkConfigTest {
             appVersion = "2.5.1",
             packageName = "com.test.app",
             systemInfo = systemInfo,
+            uuidSource = TestUuidSource(),
+            skipMetadataContextKey = { NoopOpenTelemetry.context.createKey("emb-skip-log-metadata") },
         )
 
         val attrs = FakeAttributesMutator().apply(configuration.resourceAction).attributes

@@ -7,10 +7,8 @@ import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalAttributeCo
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalEventCount
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalLinkCount
 import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
-import io.embrace.android.embracesdk.internal.otel.impl.EmbLoggerProvider
 import io.embrace.android.embracesdk.internal.otel.impl.EmbOpenTelemetry
 import io.embrace.android.embracesdk.internal.otel.impl.EmbTracerProvider
-import io.embrace.android.embracesdk.internal.otel.logs.EventService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.opentelemetry.kotlin.Clock
@@ -29,7 +27,6 @@ class OtelSdkWrapper(
     otelClock: Clock,
     configuration: OtelSdkConfig,
     spanService: SpanService,
-    eventService: EventService,
     limits: OtelLimitsConfig = InstrumentedConfigImpl.otelLimits,
     val useKotlinSdk: Boolean,
 ) {
@@ -81,7 +78,10 @@ class OtelSdkWrapper(
                     attributeCountLimit = limits.getMaxTotalAttributeCount()
                 }
                 export {
-                    val processors = listOf(configuration.logRecordProcessor) + configuration.getExternalLogRecordProcessors()
+                    val processors = listOf(
+                        configuration.internalLogRecordProcessor,
+                        configuration.logRecordProcessor,
+                    ) + configuration.getExternalLogRecordProcessors()
                     compositeLogRecordProcessor(*processors.toTypedArray())
                 }
             },
@@ -93,7 +93,7 @@ class OtelSdkWrapper(
         EmbOpenTelemetry(
             impl = kotlinApi,
             traceProviderSupplier = { EmbTracerProvider(kotlinApi, spanService, otelClock, useKotlinSdk) },
-            loggerProviderSupplier = { EmbLoggerProvider(kotlinApi, eventService) },
+            loggerProviderSupplier = { kotlinApi.loggerProvider },
         )
     }
 }

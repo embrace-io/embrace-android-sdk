@@ -1,38 +1,32 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
-import io.embrace.android.embracesdk.fakes.TestUuidSource
+import io.opentelemetry.kotlin.context.ContextKey
+import io.opentelemetry.kotlin.createOpenTelemetry
 import io.opentelemetry.kotlin.logging.SeverityNumber
-import io.opentelemetry.kotlin.semconv.LogAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
 class EventServiceImplTest {
-    val sessionAttributeName = "session-attr"
+    private val otel = createOpenTelemetry()
+    private val skipMetadataKey: ContextKey<Boolean> = otel.context.createKey("emb-skip-log-metadata")
     lateinit var sdkLogger: FakeOpenTelemetryLogger
     lateinit var impl: EventServiceImpl
 
     @Before
     fun setup() {
         sdkLogger = FakeOpenTelemetryLogger()
-        impl = EventServiceImpl(
-            sdkLoggerProvider = { sdkLogger },
-            uuidSource = TestUuidSource(),
-        )
+        impl = createEventService()
         impl.initializeService(100L)
-        impl.setMetadataProvider { mapOf(sessionAttributeName to "foo") }
     }
 
     @Test
     fun `event service needs initialization`() {
-        val notInitializedLogger = EventServiceImpl(
-            sdkLoggerProvider = { sdkLogger },
-            uuidSource = TestUuidSource(),
-        )
+        val notInitializedLogger = createEventService()
         assertFalse(notInitializedLogger.initialized())
         notInitializedLogger.log(
             eventName = null,
@@ -49,7 +43,7 @@ class EventServiceImplTest {
     }
 
     @Test
-    fun `check expected values added to every event`() {
+    fun `event values forwarded to the sdk logger`() {
         assertTrue(impl.initialized())
         impl.log(
             eventName = "my.event",
@@ -72,13 +66,11 @@ class EventServiceImplTest {
             assertEquals(SeverityNumber.ERROR, severityNumber)
             assertEquals("boo", severityText)
             assertEquals("attr", attributes["custom"])
-            assertEquals("foo", attributes[sessionAttributeName])
-            assertNotNull(attributes[LogAttributes.LOG_RECORD_UID])
         }
     }
 
     @Test
-    fun `existing log id not overridden`() {
+    fun `metadata enabled emits with the supplied context`() {
         impl.log(
             eventName = null,
             body = "test",
@@ -88,17 +80,35 @@ class EventServiceImplTest {
             severityNumber = SeverityNumber.ERROR,
             severityText = "boo",
             addCurrentMetadata = true,
-        ) {
-            setStringAttribute(LogAttributes.LOG_RECORD_UID, "foo")
-        }
+        ) { }
 
-        with(sdkLogger.logs.single()) {
-            assertEquals("foo", attributes[LogAttributes.LOG_RECORD_UID])
+        assertNull(sdkLogger.logs.single().context)
+    }
+
+    @Test
+    fun `metadata disabled adds the skip-metadata key to the supplied context`() {
+        val otherKey = otel.context.createKey<String>("other")
+        val suppliedContext = otel.context.root().set(otherKey, "value")
+
+        impl.log(
+            eventName = null,
+            body = "test",
+            timestamp = 1000L,
+            observedTimestamp = 1005L,
+            context = suppliedContext,
+            severityNumber = SeverityNumber.ERROR,
+            severityText = "boo",
+            addCurrentMetadata = false,
+        ) { }
+
+        with(sdkLogger.logs.single().context) {
+            assertEquals("value", this?.get(otherKey))
+            assertEquals(true, this?.get(skipMetadataKey))
         }
     }
 
     @Test
-    fun `current metadata added only requested`() {
+    fun `metadata disabled with no supplied context falls back to the current context and adds the key`() {
         impl.log(
             eventName = null,
             body = "test",
@@ -110,8 +120,12 @@ class EventServiceImplTest {
             addCurrentMetadata = false,
         ) { }
 
-        with(sdkLogger.logs.single()) {
-            assertFalse(attributes.containsKey(sessionAttributeName))
-        }
+        assertEquals(true, sdkLogger.logs.single().context?.get(skipMetadataKey))
     }
+
+    private fun createEventService() = EventServiceImpl(
+        sdkLoggerProvider = { sdkLogger },
+        skipMetadataContextKey = { skipMetadataKey },
+        implicitContextProvider = { otel.context.root() },
+    )
 }

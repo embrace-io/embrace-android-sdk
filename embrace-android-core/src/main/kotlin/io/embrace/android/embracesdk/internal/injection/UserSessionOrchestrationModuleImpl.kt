@@ -46,6 +46,7 @@ class UserSessionOrchestrationModuleImpl(
 
         val boundaryDelegate = OrchestratorBoundaryDelegate(
             essentialServiceModule.userSessionPropertiesService,
+            essentialServiceModule.experimentTrackingService,
         )
 
         val sessionPartSpanAttrPopulator = SessionPartSpanAttrPopulatorImpl(

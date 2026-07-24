@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
+import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentTrackingService
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
 
 /**
@@ -12,6 +13,7 @@ import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropert
  */
 internal class OrchestratorBoundaryDelegate(
     private val userSessionPropertiesService: UserSessionPropertiesService,
+    private val experimentTrackingService: ExperimentTrackingService? = null,
 ) {
 
     /**
@@ -27,5 +29,6 @@ internal class OrchestratorBoundaryDelegate(
      */
     fun prepareForNewSession() {
         userSessionPropertiesService.prepareForNewSession()
+        experimentTrackingService?.prepareForNewSessionPart()
     }
 }

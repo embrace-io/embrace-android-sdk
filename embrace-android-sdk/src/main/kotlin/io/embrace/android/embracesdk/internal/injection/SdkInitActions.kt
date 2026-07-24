@@ -3,15 +3,16 @@ package io.embrace.android.embracesdk.internal.injection
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
+import io.embrace.android.embracesdk.internal.capture.experiment.EMB_EXPERIMENTS_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStateDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.otel.logs.EventMetadataProvider
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.EmbTrace.end
 import io.embrace.android.embracesdk.internal.utils.EmbTrace.start
-import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
@@ -23,7 +24,7 @@ import java.util.ServiceLoader
  * between modules.
  */
 internal fun ModuleGraph.postInit() {
-    openTelemetryModule.eventService.setMetadataProvider(eventMetadataSupplierProvider())
+    openTelemetryModule.eventService.setMetadataProvider(eventMetadataProvider())
 
     openTelemetryModule.applyConfiguration(
         sensitiveKeysBehavior = configService.sensitiveKeysBehavior,
@@ -186,29 +187,39 @@ internal fun ModuleGraph.markSdkInitComplete() {
     initModule.logger.logInfo(startMsg)
 }
 
-private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, String>> {
-    return {
-        mutableMapOf<String, String>().apply {
-            val sessionPart = essentialServiceModule.sessionPartTracker.getActiveSessionPart()
-            val sessionState = sessionPart?.appState ?: essentialServiceModule.appStateTracker.getAppState()
-            val sessionIds = userSessionOrchestrationModule.sessionIdsProvider.getActiveSessionIds()
+private fun ModuleGraph.eventMetadataProvider(): EventMetadataProvider {
+    return object : EventMetadataProvider {
+        override fun allTelemetryAttributes(): Map<String, String> {
+            return mutableMapOf<String, String>().apply {
+                val sessionPart = essentialServiceModule.sessionPartTracker.getActiveSessionPart()
+                val sessionState = sessionPart?.appState ?: essentialServiceModule.appStateTracker.getAppState()
+                val sessionIds = userSessionOrchestrationModule.sessionIdsProvider.getActiveSessionIds()
 
-            put(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionIds.sessionPartId)
-            put(EmbSessionAttributes.EMB_USER_SESSION_ID, sessionIds.userSessionId)
-            put(SessionAttributes.SESSION_ID, sessionIds.userSessionId)
-            put(EmbSessionAttributes.EMB_STATE, sessionState.description)
-            essentialServiceModule.userService.getUserInfo().userId?.let {
-                put(UserAttributes.USER_ID, it)
+                put(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionIds.sessionPartId)
+                put(EmbSessionAttributes.EMB_USER_SESSION_ID, sessionIds.userSessionId)
+                put(SessionAttributes.SESSION_ID, sessionIds.userSessionId)
+                put(EmbSessionAttributes.EMB_STATE, sessionState.description)
+                essentialServiceModule.userService.getUserInfo().userId?.let {
+                    put(UserAttributes.USER_ID, it)
+                }
+                putAll(
+                    essentialServiceModule.userSessionPropertiesService
+                        .getProperties()
+                        .mapKeys { property ->
+                            property.key.toEmbraceAttributeName()
+                        },
+                )
+                instrumentationModule.instrumentationRegistry.getCurrentStates().forEach {
+                    put(it.key, it.value.toString())
+                }
             }
-            putAll(
-                essentialServiceModule.userSessionPropertiesService
-                    .getProperties()
-                    .mapKeys { property ->
-                        property.key.toEmbraceAttributeName()
-                    },
-            )
-            instrumentationModule.instrumentationRegistry.getCurrentStates().forEach {
-                put(it.key, it.value.toString())
+        }
+
+        override fun nonPrivateAttributes(): Map<String, String> {
+            return mutableMapOf<String, String>().apply {
+                essentialServiceModule.experimentTrackingService.getRecords()?.let {
+                    put(EMB_EXPERIMENTS_ATTRIBUTE_KEY, it)
+                }
             }
         }
     }

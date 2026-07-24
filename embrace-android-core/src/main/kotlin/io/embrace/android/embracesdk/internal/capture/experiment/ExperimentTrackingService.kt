@@ -43,6 +43,12 @@ interface ExperimentTrackingService {
      * Returns the serialized experiment records, or null if nothing is tracked.
      */
     fun getRecords(): String?
+
+    /**
+     * Re-applies the experiment records to the current session part span. Invoked after a new
+     * session part span has been created.
+     */
+    fun prepareForNewSessionPart()
 }
 
 /**

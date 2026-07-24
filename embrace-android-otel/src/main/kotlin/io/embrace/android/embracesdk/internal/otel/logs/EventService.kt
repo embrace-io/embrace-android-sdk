@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
 import io.embrace.android.embracesdk.internal.Initializable
-import io.embrace.android.embracesdk.internal.utils.Provider
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.logging.Logger
@@ -28,7 +27,8 @@ interface EventService : Initializable {
     )
 
     /**
-     * Sets a provider that supplies a snapshot of the current metadata that describes the state of the SDK
+     * Sets the provider that supplies snapshots of the current metadata that describes the state
+     * of the SDK, bundled by privacy scope.
      */
-    fun setMetadataProvider(provider: Provider<Map<String, String>>)
+    fun setMetadataProvider(provider: EventMetadataProvider)
 }

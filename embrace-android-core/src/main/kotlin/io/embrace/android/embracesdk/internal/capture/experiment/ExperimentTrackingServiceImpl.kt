@@ -1,9 +1,11 @@
 package io.embrace.android.embracesdk.internal.capture.experiment
 
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 
 internal class ExperimentTrackingServiceImpl(
+    private val destination: TelemetryDestination,
     private val telemetryService: TelemetryService,
 ) : ExperimentTrackingService {
 
@@ -48,6 +50,12 @@ internal class ExperimentTrackingServiceImpl(
         serializeRecords()
     }
 
+    override fun prepareForNewSessionPart() {
+        synchronized(lock) {
+            applyToSessionPartSpan()
+        }
+    }
+
     private fun trackRecords(newRecords: List<ExperimentRecord>, requestedCount: Int): Boolean {
         synchronized(lock) {
             var allAccepted = newRecords.size == requestedCount
@@ -61,6 +69,7 @@ internal class ExperimentTrackingServiceImpl(
                     records.add(record)
                 }
             }
+            applyToSessionPartSpan()
             return allAccepted
         }
     }
@@ -79,11 +88,21 @@ internal class ExperimentTrackingServiceImpl(
                     allAccepted = false
                 }
             }
+            applyToSessionPartSpan()
             return allAccepted
         }
     }
 
     private fun serializeRecords(): String? = records.ifEmpty { null }?.joinToString(";") { it.serialize() }
+
+    private fun applyToSessionPartSpan() {
+        val blob = serializeRecords()
+        if (blob != null) {
+            destination.addSessionPartAttribute(EMB_EXPERIMENTS_ATTRIBUTE_KEY, blob)
+        } else {
+            destination.removeSessionPartAttribute(EMB_EXPERIMENTS_ATTRIBUTE_KEY)
+        }
+    }
 
     private companion object {
 

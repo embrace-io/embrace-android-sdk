@@ -107,6 +107,7 @@ class EssentialServiceModuleImpl(
 
     override val experimentTrackingService: ExperimentTrackingService by singleton {
         ExperimentTrackingServiceImpl(
+            destination = telemetryDestination,
             telemetryService = initModule.telemetryService,
         )
     }

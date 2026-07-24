@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.internal.otel.logs.EventMetadataProvider
 import io.embrace.android.embracesdk.internal.otel.logs.EventService
-import io.embrace.android.embracesdk.internal.utils.Provider
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.logging.Logger
@@ -39,7 +39,7 @@ class FakeEventService : EventService {
         )
     }
 
-    override fun setMetadataProvider(provider: Provider<Map<String, String>>) {
+    override fun setMetadataProvider(provider: EventMetadataProvider) {
     }
 
     override fun initializeService(sdkInitStartTimeMs: Long) {

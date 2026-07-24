@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.otel.logs
 import io.embrace.android.embracesdk.internal.otel.impl.EmbAttributesMutator
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.UuidSource
+import io.embrace.android.embracesdk.semconv.EmbSpanAttributes
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.context.Context
@@ -17,7 +18,7 @@ class EventServiceImpl(
 ) : EventService {
     private val noopLogger = NoopOpenTelemetry.loggerProvider.getLogger("noop")
     private val sdkLoggerRef: AtomicReference<Logger> = AtomicReference(noopLogger)
-    private val metadataSupplierProviderRef = AtomicReference<Provider<Map<String, String>>> { emptyMap() }
+    private val metadataProviderRef = AtomicReference<EventMetadataProvider>(EventMetadataProvider { emptyMap() })
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
         sdkLoggerRef.set(sdkLoggerProvider())
@@ -44,7 +45,12 @@ class EventServiceImpl(
             container.setStringAttribute(LogAttributes.LOG_RECORD_UID, uuidSource.createUuid())
         }
         if (addCurrentMetadata) {
-            getCurrentMetadata().forEach { (k, v) -> container.setStringAttribute(k, v) }
+            val provider = metadataProviderRef.get()
+            if (!container.attributes.containsKey(EmbSpanAttributes.EMB_PRIVATE)) {
+                provider.nonPrivateAttributes().forEach { (k, v) -> container.setStringAttribute(k, v) }
+            }
+            // merged last so that these win on a key collision with scoped attributes
+            provider.allTelemetryAttributes().forEach { (k, v) -> container.setStringAttribute(k, v) }
         }
 
         logger.emit(
@@ -61,9 +67,7 @@ class EventServiceImpl(
         )
     }
 
-    override fun setMetadataProvider(provider: Provider<Map<String, String>>) {
-        metadataSupplierProviderRef.set(provider)
+    override fun setMetadataProvider(provider: EventMetadataProvider) {
+        metadataProviderRef.set(provider)
     }
-
-    private fun getCurrentMetadata(): Map<String, String> = metadataSupplierProviderRef.get().invoke().toMap()
 }

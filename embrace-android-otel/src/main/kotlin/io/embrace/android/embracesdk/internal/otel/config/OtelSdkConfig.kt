@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.sdk.IdGenerator
 import io.embrace.android.embracesdk.internal.otel.spans.DefaultSpanExporter
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanProcessor
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
+import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.opentelemetry.kotlin.attributes.AttributesMutator
@@ -23,7 +23,7 @@ import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 import java.util.concurrent.ConcurrentHashMap
 
 class OtelSdkConfig(
-    spanSink: SpanSink,
+    spanRepository: SpanRepository,
     logSink: LogSink,
     val sdkName: String,
     val sdkVersion: String,
@@ -80,7 +80,7 @@ class OtelSdkConfig(
 
     private val spanExporter: SpanExporter by lazy {
         DefaultSpanExporter(
-            spanSink = spanSink,
+            spanRepository = spanRepository,
             externalExporters = externalSpanExporters.toList(),
             exportCheck = exportCheck,
         )

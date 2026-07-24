@@ -24,7 +24,6 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -48,7 +47,6 @@ internal class UserSessionHandlerTest {
     private val initial = fakeSessionPartToken().copy(startTime = NOW)
     private val userService: FakeUserService = FakeUserService()
 
-    private lateinit var spanSink: SpanSink
     private lateinit var spanService: SpanService
     private lateinit var sessionTracker: FakeSessionPartTracker
     private lateinit var metadataService: FakeMetadataService
@@ -74,13 +72,11 @@ internal class UserSessionHandlerTest {
             sessionBehavior = createSessionBehavior(),
         )
         val initModule = FakeInitModule(clock = clock)
-        spanSink = initModule.openTelemetryModule.spanSink
         spanService = initModule.openTelemetryModule.spanService
         spanRepository = initModule.openTelemetryModule.spanRepository
         currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan
         val partPayloadSource = SessionPartPayloadSourceImpl(
             null,
-            spanSink,
             currentSessionPartSpan,
             spanRepository,
             FakeOtelPayloadMapper(),
@@ -149,7 +145,7 @@ internal class UserSessionHandlerTest {
         startFakeSession()
         initializeServices()
         spanService.recordSpan("test-span") {}
-        assertEquals(1, spanSink.completedOtelSpans().size)
+        assertEquals(1, spanRepository.completedOtelSpans().size)
 
         clock.tick(15000L)
         val envelope =
@@ -162,7 +158,7 @@ internal class UserSessionHandlerTest {
             )
         val spans = checkNotNull(envelope.data.spans)
         assertEquals(2, spans.size)
-        assertEquals(0, spanSink.completedOtelSpans().size)
+        assertEquals(0, spanRepository.completedOtelSpans().size)
     }
 
     @Test
@@ -170,10 +166,10 @@ internal class UserSessionHandlerTest {
         startFakeSession()
         initializeServices()
         spanService.recordSpan("test-span") {}
-        assertEquals(1, spanSink.completedOtelSpans().size)
+        assertEquals(1, spanRepository.completedOtelSpans().size)
 
         payloadFactory.endPayloadWithCrash(AppState.FOREGROUND, clock.now(), initial, "crashId")
-        assertEquals(0, spanSink.completedOtelSpans().size)
+        assertEquals(0, spanRepository.completedOtelSpans().size)
     }
 
     private fun startFakeSession(): SessionPartToken {

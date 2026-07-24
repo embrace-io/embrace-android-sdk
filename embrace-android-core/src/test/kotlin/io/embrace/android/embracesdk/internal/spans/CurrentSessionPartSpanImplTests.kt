@@ -23,7 +23,6 @@ import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl.Companion.MAX_INTERNAL_SPANS_PER_SESSION
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl.Companion.MAX_NON_INTERNAL_SPANS_PER_SESSION
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
@@ -46,7 +45,6 @@ import org.junit.Test
 internal class CurrentSessionPartSpanImplTests {
 
     private lateinit var spanRepository: SpanRepository
-    private lateinit var spanSink: SpanSink
     private lateinit var otelLimitsConfig: OtelLimitsConfig
     private lateinit var telemetryService: TelemetryService
     private lateinit var currentSessionPartSpan: CurrentSessionPartSpanImpl
@@ -59,7 +57,6 @@ internal class CurrentSessionPartSpanImplTests {
     fun setup() {
         val initModule = FakeInitModule(clock = clock)
         spanRepository = initModule.openTelemetryModule.spanRepository
-        spanSink = initModule.openTelemetryModule.spanSink
         telemetryService = initModule.telemetryService
         currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan as CurrentSessionPartSpanImpl
         tracer = initModule.openTelemetryModule.otelSdkWrapper.sdkTracer
@@ -325,7 +322,7 @@ internal class CurrentSessionPartSpanImplTests {
                 internal = false,
             ),
         )
-        spanSink.flushOtelSpans()
+        spanRepository.flushOtelSpans()
         assertEquals(
             2,
             spanService.recordSpan(
@@ -334,7 +331,7 @@ internal class CurrentSessionPartSpanImplTests {
                 internal = false,
             ) { 2 },
         )
-        assertEquals(0, spanSink.completedOtelSpans().size)
+        assertEquals(0, spanRepository.completedOtelSpans().size)
     }
 
     @Test
@@ -409,7 +406,7 @@ internal class CurrentSessionPartSpanImplTests {
                 assertHasEmbraceAttribute(cause)
             }
 
-            assertEquals(0, module.openTelemetryModule.spanSink.completedOtelSpans().size)
+            assertEquals(0, module.openTelemetryModule.spanRepository.completedOtelSpans().size)
         }
     }
 
@@ -450,7 +447,7 @@ internal class CurrentSessionPartSpanImplTests {
             ),
         )
 
-        assertEquals(0, spanSink.completedOtelSpans().size)
+        assertEquals(0, spanRepository.completedOtelSpans().size)
         assertEquals(0, spanRepository.getActiveEmbraceSpans().size)
     }
 
@@ -514,7 +511,6 @@ internal class CurrentSessionPartSpanImplTests {
             openTelemetryClock = FakeOtelKotlinClock(),
             telemetryService = telemetryService,
             spanRepository = spanRepository,
-            spanSink = spanSink,
             embraceSpanFactorySupplier = { FakeEmbraceSpanFactory() },
             tracerSupplier = { FakeTracer() },
             openTelemetrySupplier = ::openTelemetry,
@@ -551,7 +547,7 @@ internal class CurrentSessionPartSpanImplTests {
         // active span from before flush is still available and working
         val activeSpanFromBeforeFlush = checkNotNull(spanRepository.getEmbraceSpan(embraceSpanId))
         assertTrue(activeSpanFromBeforeFlush.stop())
-        val currentSpans = spanSink.completedOtelSpans()
+        val currentSpans = spanRepository.completedOtelSpans()
         assertEquals(1, currentSpans.size)
         assertEquals("emb-test-span", currentSpans[0].name)
     }

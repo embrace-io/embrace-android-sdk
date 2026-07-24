@@ -17,8 +17,8 @@ import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanService
+import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
@@ -35,7 +35,7 @@ internal class TelemetryDestinationHarness {
     }
 
     val logSink: LogSink = otelModule.logSink
-    val spanSink: SpanSink = otelModule.spanSink
+    val spanRepository: SpanRepository = otelModule.spanRepository
     val spanService = otelModule.spanService
     val currentSessionPartSpan = otelModule.currentSessionPartSpan
 

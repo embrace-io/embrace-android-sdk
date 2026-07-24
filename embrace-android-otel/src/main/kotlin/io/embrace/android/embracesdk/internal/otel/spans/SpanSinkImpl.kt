@@ -10,7 +10,7 @@ class SpanSinkImpl : SpanSink {
     private val completedSpans: Queue<Span> = ConcurrentLinkedQueue()
     private val flushLock = Any()
 
-    override fun storeCompletedSpans(spans: List<Span>): StoreDataResult {
+    override fun storeCompletedOtelSpans(spans: List<Span>): StoreDataResult {
         try {
             completedSpans += spans
         } catch (t: Throwable) {
@@ -19,9 +19,9 @@ class SpanSinkImpl : SpanSink {
         return StoreDataResult.SUCCESS
     }
 
-    override fun completedSpans(): List<Span> = completedSpans.threadSafeToList()
+    override fun completedOtelSpans(): List<Span> = completedSpans.threadSafeToList()
 
-    override fun flushSpans(): List<Span> {
+    override fun flushOtelSpans(): List<Span> {
         synchronized(flushLock) {
             val count = completedSpans.size
             val flushed = ArrayList<Span>(count)

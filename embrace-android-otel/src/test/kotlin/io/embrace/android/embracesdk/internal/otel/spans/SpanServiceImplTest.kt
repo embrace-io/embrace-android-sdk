@@ -142,7 +142,7 @@ internal class SpanServiceImplTest {
         assertTrue(childSpan.stop())
         assertTrue(parentSpan.stop())
 
-        val currentSpans = spanSink.completedSpans()
+        val currentSpans = spanSink.completedOtelSpans()
         assertEquals(2, currentSpans.size)
         assertTrue(currentSpans[0].traceId == currentSpans[1].traceId)
 
@@ -176,7 +176,7 @@ internal class SpanServiceImplTest {
 
     @Test
     fun `start a span directly`() {
-        spanSink.flushSpans()
+        spanSink.flushOtelSpans()
         val parentStartTime = clock.now()
         val parent = checkNotNull(spansService.startSpan(name = "test-span", private = false))
         val childStartTimeMs = clock.now() + 10L
@@ -191,7 +191,7 @@ internal class SpanServiceImplTest {
         clock.tick(40L)
         val childSpanEndTimeMs = clock.now()
         assertTrue(child.stop())
-        with(spanSink.flushSpans().single()) {
+        with(spanSink.flushOtelSpans().single()) {
             assertEquals("emb-child-span", name)
             assertEquals(childStartTimeMs, startTimeNanos?.nanosToMillis())
             assertEquals(childSpanEndTimeMs, endTimeNanos?.nanosToMillis())
@@ -201,7 +201,7 @@ internal class SpanServiceImplTest {
         clock.tick(10)
         val parentEndTime = clock.now()
         assertTrue(parent.stop())
-        with(spanSink.flushSpans().single()) {
+        with(spanSink.flushOtelSpans().single()) {
             assertEquals("emb-test-span", name)
             assertEquals(parentStartTime, startTimeNanos?.nanosToMillis())
             assertEquals(parentEndTime, endTimeNanos?.nanosToMillis())
@@ -270,7 +270,7 @@ internal class SpanServiceImplTest {
         }
         assertTrue(parentSpan.stop())
 
-        val currentSpans = spanSink.completedSpans()
+        val currentSpans = spanSink.completedOtelSpans()
         assertEquals(2, currentSpans.size)
         assertTrue(currentSpans[0].traceId == currentSpans[1].traceId)
         assertTrue(currentSpans[0].parentSpanId == currentSpans[1].spanId)
@@ -290,7 +290,7 @@ internal class SpanServiceImplTest {
             with(verifyAndReturnSoleCompletedSpan("emb-test${errorCode.name}")) {
                 assertError(errorCode)
             }
-            spanSink.flushSpans()
+            spanSink.flushOtelSpans()
         }
     }
 
@@ -330,7 +330,7 @@ internal class SpanServiceImplTest {
 
         assertTrue(parentSpan.stop())
 
-        val currentSpans = spanSink.completedSpans()
+        val currentSpans = spanSink.completedOtelSpans()
         assertEquals(2, currentSpans.size)
         assertTrue(currentSpans[0].traceId == currentSpans[1].traceId)
         assertTrue(currentSpans[0].parentSpanId == currentSpans[1].spanId)
@@ -363,7 +363,7 @@ internal class SpanServiceImplTest {
         }
 
         assertTrue(executed)
-        assertEquals(0, spanSink.completedSpans().size)
+        assertEquals(0, spanSink.completedOtelSpans().size)
     }
 
     @Test
@@ -378,7 +378,7 @@ internal class SpanServiceImplTest {
             ),
         )
         assertNotNull(spansService.recordSpan(name = TOO_LONG_SPAN_NAME, internal = false) { 1 })
-        assertEquals(2, spanSink.completedSpans().size)
+        assertEquals(2, spanSink.completedOtelSpans().size)
         assertNotNull(spansService.createSpan(name = MAX_LENGTH_SPAN_NAME, internal = false))
         assertNotNull(spansService.recordSpan(name = MAX_LENGTH_SPAN_NAME, internal = false) { 2 })
         assertTrue(
@@ -389,7 +389,7 @@ internal class SpanServiceImplTest {
                 internal = false,
             ),
         )
-        assertEquals(4, spanSink.completedSpans().size)
+        assertEquals(4, spanSink.completedOtelSpans().size)
     }
 
     @Test
@@ -442,7 +442,7 @@ internal class SpanServiceImplTest {
                 events = maxSizeSystemEvents,
             ),
         )
-        val completedSpans = spanSink.completedSpans()
+        val completedSpans = spanSink.completedOtelSpans()
         assertEquals(6, completedSpans.size)
         assertEquals(2, completedSpans.filter { it.name?.endsWith("...") == true }.size)
     }
@@ -469,7 +469,7 @@ internal class SpanServiceImplTest {
             ),
         )
 
-        assertEquals(maxEventAttrCount, spanSink.flushSpans().single { it.name == "too many events" }.events?.size)
+        assertEquals(maxEventAttrCount, spanSink.flushOtelSpans().single { it.name == "too many events" }.events?.size)
 
         val attributesMap = mutableMapOf(
             Pair(TOO_LONG_ATTRIBUTE_KEY, "value"),
@@ -493,7 +493,7 @@ internal class SpanServiceImplTest {
             ),
         )
 
-        val completedSpans = spanSink.completedSpans()
+        val completedSpans = spanSink.completedOtelSpans()
         assertEquals(1, completedSpans.size)
         assertEquals(10, completedSpans[0].events?.size)
         assertEquals(maxEventAttrCount, completedSpans[0].events?.get(0)?.attributes?.size)
@@ -520,7 +520,7 @@ internal class SpanServiceImplTest {
             ),
         )
 
-        spanSink.flushSpans()
+        spanSink.flushOtelSpans()
 
         val maxCustomAttrCount = dataValidator.otelLimitsConfig.getMaxCustomAttributeCount()
         val attributesMap = mutableMapOf(
@@ -541,7 +541,7 @@ internal class SpanServiceImplTest {
             ),
         )
 
-        val truncatedAttributesSpan = spanSink.completedSpans().single { it.name == MAX_LENGTH_SPAN_NAME }
+        val truncatedAttributesSpan = spanSink.completedOtelSpans().single { it.name == MAX_LENGTH_SPAN_NAME }
         val attrs = checkNotNull(truncatedAttributesSpan.attributes)
         val truncatedAttrCount = attrs.filter { it.key?.startsWith("sss") == true }.size
         assertEquals(2, truncatedAttrCount)
@@ -613,7 +613,7 @@ internal class SpanServiceImplTest {
             ),
         )
 
-        assertEquals(3, spanSink.completedSpans().size)
+        assertEquals(3, spanSink.completedOtelSpans().size)
     }
 
     private fun createSpanService(dataValidator: DataValidator): SpanServiceImpl {
@@ -655,7 +655,7 @@ internal class SpanServiceImplTest {
     }
 
     private fun verifyAndReturnSoleCompletedSpan(name: String): Span {
-        val currentSpans = spanSink.completedSpans()
+        val currentSpans = spanSink.completedOtelSpans()
         assertEquals(1, currentSpans.size)
         assertEquals(name, currentSpans[0].name)
         return currentSpans[0]

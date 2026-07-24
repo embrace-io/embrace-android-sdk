@@ -89,7 +89,7 @@ internal class PayloadFactorySessionPartTest {
     @Test
     fun `spanService that is not initialized will not result in any complete spans`() {
         initializeSessionService()
-        assertEquals(0, spanSink.completedSpans().size)
+        assertEquals(0, spanSink.completedOtelSpans().size)
     }
 
     private fun initializeSessionService() {

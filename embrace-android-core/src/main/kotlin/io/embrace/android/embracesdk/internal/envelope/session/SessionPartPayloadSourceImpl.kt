@@ -34,7 +34,7 @@ internal class SessionPartPayloadSourceImpl(
         val includeSnapshots = endType != SessionPartSnapshotType.JVM_CRASH
 
         if (!endType.forceQuit && appStateTracker.getAppState() == AppState.BACKGROUND) {
-            spanRepository.autoTerminateSpans(clock.now())
+            spanRepository.autoTerminateEmbraceSpans(clock.now())
         }
 
         // Snapshots should only be included if the process is expected to last beyond the current user session
@@ -73,7 +73,7 @@ internal class SessionPartPayloadSourceImpl(
                     )
                 }
 
-                else -> spanSink.completedSpans()
+                else -> spanSink.completedOtelSpans()
                     .plus(otelPayloadMapper?.snapshotSpans() ?: emptyList())
             }
         }
@@ -82,7 +82,7 @@ internal class SessionPartPayloadSourceImpl(
 
     private fun retrieveSpanSnapshots(isCacheAttempt: Boolean) = captureDataSafely(logger) {
         // Only snapshot session part spans if we are caching an in-progress session payload
-        spanRepository.getActiveSpans()
+        spanRepository.getActiveEmbraceSpans()
             .filter { isCacheAttempt || !it.hasEmbraceAttribute(EmbType.Ux.Session) }
             .mapNotNull { it.snapshot() }
     }

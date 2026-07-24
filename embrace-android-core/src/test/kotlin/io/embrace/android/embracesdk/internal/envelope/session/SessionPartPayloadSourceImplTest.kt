@@ -31,15 +31,15 @@ internal class SessionPartPayloadSourceImplTest {
     @Before
     fun setUp() {
         sink = SpanSinkImpl().apply {
-            storeCompletedSpans(listOf(cacheSpan))
+            storeCompletedOtelSpans(listOf(cacheSpan))
         }
         currentSessionPartSpan = FakeCurrentSessionPartSpan().apply {
             initializeService(1000L)
         }
         activeSpan = FakeEmbraceSdkSpan.started()
         spanRepository = SpanRepository()
-        spanRepository.trackStartedSpan(checkNotNull(currentSessionPartSpan.sessionPartSpan))
-        spanRepository.trackStartedSpan(activeSpan)
+        spanRepository.trackStartedEmbraceSpan(checkNotNull(currentSessionPartSpan.sessionPartSpan))
+        spanRepository.trackStartedEmbraceSpan(activeSpan)
         impl = SessionPartPayloadSourceImpl(
             mapOf("armeabi-v7a" to "my-symbols"),
             sink,

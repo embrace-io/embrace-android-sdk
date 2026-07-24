@@ -104,8 +104,8 @@ internal class EmbraceSpanImplTest {
             assertFalse(isRecording)
             assertFalse(addEvent("eventName"))
             assertFalse(addAttribute("first", "value"))
-            assertEquals(0, spanRepository.getActiveSpans().size)
-            assertEquals(0, spanRepository.getCompletedSpans().size)
+            assertEquals(0, spanRepository.getActiveEmbraceSpans().size)
+            assertEquals(0, spanRepository.getCompletedEmbraceSpans().size)
             assertEquals(SpanKind.INTERNAL, spanKind)
             assertNull(embraceSpan.snapshot())
             assertNull(embraceSpan.asW3cTraceParent())
@@ -137,8 +137,8 @@ internal class EmbraceSpanImplTest {
                 expectedCustomAttributeCount = 1,
             )
             assertEquals("00-$traceId-$spanId-01", embraceSpan.asW3cTraceParent())
-            assertEquals(1, spanRepository.getActiveSpans().size)
-            assertEquals(0, spanRepository.getCompletedSpans().size)
+            assertEquals(1, spanRepository.getActiveEmbraceSpans().size)
+            assertEquals(0, spanRepository.getCompletedEmbraceSpans().size)
         }
         assertTrue(updateNotified)
         assertNull(stoppedSpanId)
@@ -322,8 +322,8 @@ internal class EmbraceSpanImplTest {
             assertTrue(start())
             assertTrue(stop(ErrorCode.FAILURE))
             assertFalse(stop())
-            assertEquals(0, spanRepository.getActiveSpans().size)
-            assertEquals(1, spanRepository.getCompletedSpans().size)
+            assertEquals(0, spanRepository.getActiveEmbraceSpans().size)
+            assertEquals(1, spanRepository.getCompletedEmbraceSpans().size)
         }
     }
 
@@ -625,8 +625,8 @@ internal class EmbraceSpanImplTest {
         assertFalse(isRecording)
         assertFalse(addEvent("eventName"))
         assertFalse(addAttribute("first", "value"))
-        assertEquals(0, spanRepository.getActiveSpans().size)
-        assertEquals(1, spanRepository.getCompletedSpans().size)
+        assertEquals(0, spanRepository.getActiveEmbraceSpans().size)
+        assertEquals(1, spanRepository.getCompletedEmbraceSpans().size)
         assertTrue(updateNotified)
         assertEquals(stoppedSpanId, spanId)
     }

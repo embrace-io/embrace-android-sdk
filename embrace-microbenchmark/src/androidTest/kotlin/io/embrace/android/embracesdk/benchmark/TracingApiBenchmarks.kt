@@ -294,13 +294,13 @@ class TracingApiBenchmarks {
 
     private fun BenchmarkRule.Scope.verifyAndCleanup() {
         runWithMeasurementDisabled {
-            assertEquals(TOTAL_SPAN_COUNT, spanSink.completedSpans().size)
+            assertEquals(TOTAL_SPAN_COUNT, spanSink.completedOtelSpans().size)
             cleanup()
         }
     }
 
     private fun cleanup(): List<Span> {
-        spanSink.flushSpans()
+        spanSink.flushOtelSpans()
         return harness.currentSessionPartSpan.endSession(true)
     }
 

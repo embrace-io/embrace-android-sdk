@@ -23,67 +23,67 @@ internal class SpanRepositoryTest {
 
     @Test
     fun `new repository not tracking any spans`() {
-        assertEquals(0, repository.getActiveSpans().size)
-        assertEquals(0, repository.getCompletedSpans().size)
+        assertEquals(0, repository.getActiveEmbraceSpans().size)
+        assertEquals(0, repository.getCompletedEmbraceSpans().size)
     }
 
     @Test
     fun `started span tracked`() {
         val startedSpan = FakeEmbraceSdkSpan.started()
-        repository.trackStartedSpan(startedSpan)
-        assertSame(startedSpan, checkNotNull(repository.getSpan(checkNotNull(startedSpan.spanId))))
-        assertEquals(1, repository.getActiveSpans().size)
-        assertEquals(0, repository.getCompletedSpans().size)
+        repository.trackStartedEmbraceSpan(startedSpan)
+        assertSame(startedSpan, checkNotNull(repository.getEmbraceSpan(checkNotNull(startedSpan.spanId))))
+        assertEquals(1, repository.getActiveEmbraceSpans().size)
+        assertEquals(0, repository.getCompletedEmbraceSpans().size)
     }
 
     @Test
     fun `completed span tracked`() {
         val completedSpan = FakeEmbraceSdkSpan.stopped()
-        repository.trackStartedSpan(completedSpan)
-        assertSame(completedSpan, checkNotNull(repository.getSpan(checkNotNull(completedSpan.spanId))))
-        assertEquals(0, repository.getActiveSpans().size)
-        assertEquals(1, repository.getCompletedSpans().size)
+        repository.trackStartedEmbraceSpan(completedSpan)
+        assertSame(completedSpan, checkNotNull(repository.getEmbraceSpan(checkNotNull(completedSpan.spanId))))
+        assertEquals(0, repository.getActiveEmbraceSpans().size)
+        assertEquals(1, repository.getCompletedEmbraceSpans().size)
     }
 
     @Test
     fun `not started span not tracked`() {
-        repository.trackStartedSpan(FakeEmbraceSdkSpan.notStarted())
-        assertEquals(0, repository.getActiveSpans().size)
-        assertEquals(0, repository.getCompletedSpans().size)
+        repository.trackStartedEmbraceSpan(FakeEmbraceSdkSpan.notStarted())
+        assertEquals(0, repository.getActiveEmbraceSpans().size)
+        assertEquals(0, repository.getCompletedEmbraceSpans().size)
     }
 
     @Test
     fun `tracked span moved to complete only if it is actually complete`() {
         val span = FakeEmbraceSdkSpan.started()
-        repository.trackStartedSpan(span)
-        assertEquals(1, repository.getActiveSpans().size)
-        assertEquals(0, repository.getCompletedSpans().size)
+        repository.trackStartedEmbraceSpan(span)
+        assertEquals(1, repository.getActiveEmbraceSpans().size)
+        assertEquals(0, repository.getCompletedEmbraceSpans().size)
         span.stop()
-        assertEquals(0, repository.getActiveSpans().size)
-        assertEquals(1, repository.getCompletedSpans().size)
+        assertEquals(0, repository.getActiveEmbraceSpans().size)
+        assertEquals(1, repository.getCompletedEmbraceSpans().size)
     }
 
     @Test
     fun `completed span not available after clearing but existing reference still valid`() {
         val completedSpan = FakeEmbraceSdkSpan.stopped()
-        repository.trackStartedSpan(completedSpan)
-        checkNotNull(repository.getSpan(checkNotNull(completedSpan.spanId)))
-        assertEquals(1, repository.getCompletedSpans().size)
-        repository.clearCompletedSpans()
-        assertNull(repository.getSpan(checkNotNull(completedSpan.spanId)))
-        assertEquals(0, repository.getCompletedSpans().size)
+        repository.trackStartedEmbraceSpan(completedSpan)
+        checkNotNull(repository.getEmbraceSpan(checkNotNull(completedSpan.spanId)))
+        assertEquals(1, repository.getCompletedEmbraceSpans().size)
+        repository.clearCompletedEmbraceSpans()
+        assertNull(repository.getEmbraceSpan(checkNotNull(completedSpan.spanId)))
+        assertEquals(0, repository.getCompletedEmbraceSpans().size)
     }
 
     @Test
     fun `active spans become failed and complete when they are forced to fail`() {
         val startedSpan = FakeEmbraceSdkSpan.started()
-        repository.trackStartedSpan(startedSpan)
+        repository.trackStartedEmbraceSpan(startedSpan)
 
-        assertSame(startedSpan, repository.getActiveSpans().single())
+        assertSame(startedSpan, repository.getActiveEmbraceSpans().single())
         assertTrue(startedSpan.isRecording)
         assertNull(startedSpan.errorCode)
 
-        repository.failActiveSpans(100L)
+        repository.failActiveEmbraceSpans(100L)
 
         assertFalse(startedSpan.isRecording)
         assertEquals(ErrorCode.FAILURE, startedSpan.errorCode)

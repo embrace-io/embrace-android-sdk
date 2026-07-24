@@ -78,7 +78,7 @@ internal class PayloadFactoryBaTest {
         // there should be 1 completed span: the session part span
         checkNotNull(msg)
         assertEquals(1, msg.data.spans?.size)
-        assertEquals(0, spanSink.completedSpans().size)
+        assertEquals(0, spanSink.completedOtelSpans().size)
     }
 
     @Test
@@ -90,7 +90,7 @@ internal class PayloadFactoryBaTest {
         // there should be 1 completed span: the session part span
         checkNotNull(msg)
         assertEquals(1, msg.data.spans?.size)
-        assertEquals(0, spanSink.completedSpans().size)
+        assertEquals(0, spanSink.completedOtelSpans().size)
     }
 
     @Test
@@ -103,7 +103,7 @@ internal class PayloadFactoryBaTest {
         // there should be 1 completed span: the session part span
         checkNotNull(msg)
         assertEquals(1, msg.data.spans?.size)
-        assertEquals(0, spanSink.completedSpans().size)
+        assertEquals(0, spanSink.completedOtelSpans().size)
     }
 
     private fun createService(createInitialSession: Boolean = true): PayloadFactoryImpl {

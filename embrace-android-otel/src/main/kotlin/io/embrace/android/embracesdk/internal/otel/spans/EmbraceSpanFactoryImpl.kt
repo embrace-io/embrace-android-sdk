@@ -159,7 +159,7 @@ private class EmbraceSpanImpl(
                     return false
                 }
 
-                spanRepository.trackStartedSpan(this)
+                spanRepository.trackStartedEmbraceSpan(this)
                 newSpan.setName(spanName)
 
                 spanStartTimeMs = attemptedStartTimeMs

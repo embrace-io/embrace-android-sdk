@@ -16,7 +16,6 @@ import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
-import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -107,8 +106,8 @@ private class EmbraceSpanImpl(
 
     private val systemEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
     private val customEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
-    private val systemAttributes = ConcurrentHashMap<String, String>().apply {
-        putAll(otelSpanStartArgs.embraceAttributes.associate { it.key to it.value })
+    private val systemAttributes = ConcurrentHashMap<String, String>(otelSpanStartArgs.embraceAttributes.size).apply {
+        otelSpanStartArgs.embraceAttributes.forEach { put(it.key, it.value) }
     }
     private val customAttributes = ConcurrentHashMap<String, String>()
     private val systemLinks = ConcurrentLinkedQueue<EmbraceLinkData>()
@@ -138,78 +137,70 @@ private class EmbraceSpanImpl(
         get() = startedSpan.get()?.isRecording() == true
 
     override fun start(startTimeMs: Long?): Boolean {
-        EmbTrace.trace("span-start") {
-            if (spanStarted()) {
+        if (spanStarted()) {
+            return false
+        }
+
+        val attemptedStartTimeMs =
+            (startTimeMs?.normalizeTimestampAsMillis() ?: spanStartTimeMs)?.takeIf { it > 0 }
+                ?: openTelemetryClock.now().nanosToMillis()
+
+        synchronized(startedSpan) {
+            val args = startArgs ?: return false
+            val newSpan = args.startSpan(attemptedStartTimeMs)
+            if (newSpan.isRecording()) {
+                startedSpan.set(newSpan)
+                startArgs = null
+            } else {
                 return false
             }
 
-            val attemptedStartTimeMs =
-                (startTimeMs?.normalizeTimestampAsMillis() ?: spanStartTimeMs)?.takeIf { it > 0 }
-                    ?: openTelemetryClock.now().nanosToMillis()
+            spanRepository.trackStartedEmbraceSpan(this)
+            newSpan.setName(spanName)
 
-            synchronized(startedSpan) {
-                val args = startArgs ?: return false
-                val newSpan = EmbTrace.trace("otel-span-start") {
-                    args.startSpan(attemptedStartTimeMs)
-                }
-                if (newSpan.isRecording()) {
-                    startedSpan.set(newSpan)
-                    startArgs = null
-                } else {
-                    return false
-                }
-
-                spanRepository.trackStartedEmbraceSpan(this)
-                newSpan.setName(spanName)
-
-                spanStartTimeMs = attemptedStartTimeMs
-                spanRepository.notifySpanUpdate()
-            }
-
-            return true
+            spanStartTimeMs = attemptedStartTimeMs
+            spanRepository.notifySpanUpdate()
         }
+
+        return true
     }
 
     override fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean {
-        EmbTrace.trace("span-stop") {
+        if (!isRecording) {
+            return false
+        }
+        var successful = false
+        val attemptedEndTimeMs = endTimeMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis()
+
+        synchronized(startedSpan) {
             if (!isRecording) {
                 return false
             }
-            var successful = false
-            val attemptedEndTimeMs = endTimeMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis()
 
-            synchronized(startedSpan) {
-                if (!isRecording) {
-                    return false
+            startedSpan.get()?.let { spanToStop ->
+                spanId?.let { stopCallback?.invoke(it) }
+                if (errorCode != null) {
+                    status = StatusData.Error(null)
+                    spanToStop.setEmbraceAttribute(errorCode.toEmbraceErrorCode())
+                } else if (status is StatusData.Error) {
+                    spanToStop.setEmbraceAttribute(ErrorCodeAttribute.Failure)
                 }
 
-                startedSpan.get()?.let { spanToStop ->
-                    spanId?.let { stopCallback?.invoke(it) }
-                    if (errorCode != null) {
-                        status = StatusData.Error(null)
-                        spanToStop.setEmbraceAttribute(errorCode.toEmbraceErrorCode())
-                    } else if (status is StatusData.Error) {
-                        spanToStop.setEmbraceAttribute(ErrorCodeAttribute.Failure)
-                    }
+                populateAttributes(spanToStop)
+                populateEvents(spanToStop)
+                populateLinks(spanToStop)
 
-                    populateAttributes(spanToStop)
-                    populateEvents(spanToStop)
-                    populateLinks(spanToStop)
+                spanToStop.end(attemptedEndTimeMs.millisToNanos())
 
-                    EmbTrace.trace("otel-span-end") {
-                        spanToStop.end(attemptedEndTimeMs.millisToNanos())
-                    }
-
-                    successful = !isRecording
-                    if (successful) {
-                        spanEndTimeMs = attemptedEndTimeMs
-                        spanRepository.notifySpanUpdate()
-                    }
+                successful = !isRecording
+                if (successful) {
+                    spanEndTimeMs = attemptedEndTimeMs
+                    spanRepository.notifySpanUpdate()
                 }
             }
-
-            return successful
         }
+
+        return successful
     }
 
     private fun ErrorCode.toEmbraceErrorCode(): ErrorCodeAttribute = when (this) {

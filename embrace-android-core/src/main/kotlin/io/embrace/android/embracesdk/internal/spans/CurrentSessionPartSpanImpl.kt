@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceLinkData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
@@ -47,8 +48,11 @@ internal class CurrentSessionPartSpanImpl(
     @Volatile
     private var sessionPartState: SessionPartState? = null
 
+    /**
+     * The link data used to join a new session part span to the one that preceded it
+     */
     @Volatile
-    private var lastSessionPartSpan: EmbraceSdkSpan? = null
+    private var lastSessionPartLink: EmbraceLinkData? = null
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
         if (!initialized) {
@@ -136,8 +140,9 @@ internal class CurrentSessionPartSpanImpl(
         appTerminationCause: AppTerminationCause?,
     ): List<Span> {
         synchronized(sessionTransitionLock) {
-            val endingSessionPartSpan = sessionPartState?.span
-            return if (endingSessionPartSpan != null && endingSessionPartSpan.isRecording) {
+            val endingState = sessionPartState ?: return emptyList()
+            val endingSessionPartSpan = endingState.span
+            return if (endingSessionPartSpan.isRecording) {
                 // Right now, session part spans don't survive native crashes and sudden process terminations,
                 // so telemetry will not be recorded in those cases, for now.
                 val telemetryAttributes = telemetryService.getAndClearTelemetryAttributes()
@@ -148,7 +153,9 @@ internal class CurrentSessionPartSpanImpl(
 
                 if (appTerminationCause == null) {
                     endingSessionPartSpan.stop()
-                    lastSessionPartSpan = endingSessionPartSpan
+                    lastSessionPartLink = endingSessionPartSpan.spanContext?.let {
+                        EmbraceLinkData(it, endingState.cachedPartLinkAttrs())
+                    }
                     spanRepository.clearCompletedEmbraceSpans()
                     sessionPartState = if (startNewSession) {
                         startSessionPartSpan(openTelemetryClock.now().nanosToMillis())
@@ -204,12 +211,11 @@ internal class CurrentSessionPartSpanImpl(
         ).apply {
             start(startTimeMs = startTimeMs)
             setSystemAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionPartId)
-            val previousSessionPartSpan = lastSessionPartSpan
-            previousSessionPartSpan?.spanContext?.let {
+            lastSessionPartLink?.let {
                 addSystemLink(
-                    linkedSpanContext = it,
+                    linkedSpanContext = it.spanContext,
                     type = LinkType.PreviousSessionPart,
-                    attributes = previousSessionPartSpan.partLinkAttrs(),
+                    attributes = it.attributes,
                 )
             }
         }

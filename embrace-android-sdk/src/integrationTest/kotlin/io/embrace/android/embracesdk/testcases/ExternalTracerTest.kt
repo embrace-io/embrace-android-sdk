@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.otel.impl.EmbSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -279,6 +280,52 @@ internal class ExternalTracerTest {
                 assertEquals("user-abc", checkNotNull(spans["ongoing-span"]).attributes[UserAttributes.USER_ID])
                 assertEquals("user-xyz", checkNotNull(spans["changed-user-span"]).attributes[UserAttributes.USER_ID])
                 assertNull(checkNotNull(spans["cleared-user-span"]).attributes[UserAttributes.USER_ID])
+            }
+        )
+    }
+
+    @Test
+    fun `event and link attributes can be read back from the span`() {
+        var span: EmbSpan? = null
+        var linkedSpanId: String? = null
+
+        testRule.runTest(
+            persistedRemoteConfig = remoteConfig,
+            preSdkStartAction = {
+                setupExporter()
+            },
+            testCaseAction = {
+                initializeTracer()
+                recordSession {
+                    val linkedSpan = embTracer.startSpan("linked-span")
+                    linkedSpanId = linkedSpan.spanContext.spanId
+                    val attrSpan = embTracer.startSpan("attr-span") as EmbSpan
+                    attrSpan.addEvent("my-event") {
+                        setStringAttribute("event-key", "event-value")
+                        setLongAttribute("event-count", 3L)
+                    }
+                    attrSpan.addLink(linkedSpan.spanContext) {
+                        setBooleanAttribute("link-flag", true)
+                    }
+                    span = attrSpan
+                    linkedSpan.end()
+                    attrSpan.end()
+                }
+            },
+            assertAction = {
+                val recorded = checkNotNull(span)
+
+                // all attribute values are stringified when written, so they read back as strings
+                with(recorded.events.single { it.name == "my-event" }) {
+                    assertEquals(2, attributes.size)
+                    assertEquals("event-value", attributes["event-key"])
+                    assertEquals("3", attributes["event-count"])
+                }
+
+                with(recorded.links.single { it.spanContext.spanId == linkedSpanId }) {
+                    assertEquals(1, attributes.size)
+                    assertEquals("true", attributes["link-flag"])
+                }
             }
         )
     }

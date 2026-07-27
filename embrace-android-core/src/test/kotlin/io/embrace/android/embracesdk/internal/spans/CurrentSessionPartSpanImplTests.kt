@@ -484,6 +484,37 @@ internal class CurrentSessionPartSpanImplTests {
     }
 
     @Test
+    fun `previous session part link references the immediately preceding part`() {
+        currentSessionPartSpan.endSession(startNewSession = true)
+        val secondSessionPartSpan = checkNotNull(spanRepository.getActiveEmbraceSpans().single().snapshot())
+        val secondSessionPartId = currentSessionPartSpan.getId()
+
+        currentSessionPartSpan.endSession(startNewSession = true)
+
+        with(spanRepository.getActiveEmbraceSpans().single()) {
+            assertNotEquals(secondSessionPartSpan.spanId, spanId)
+            checkNotNull(snapshot()?.links?.single())
+                .validatePreviousSessionPartLink(secondSessionPartSpan, secondSessionPartId)
+        }
+    }
+
+    @Test
+    fun `previous session part link is applied after a delay`() {
+        val originalSessionPartSpan = checkNotNull(spanRepository.getActiveEmbraceSpans().single().snapshot())
+        val originalSessionPartId = currentSessionPartSpan.getId()
+
+        currentSessionPartSpan.endSession(startNewSession = false)
+        currentSessionPartSpan.assertNoSessionPartSpan()
+        assertTrue(currentSessionPartSpan.readySession())
+
+        with(spanRepository.getActiveEmbraceSpans().single()) {
+            assertNotEquals(originalSessionPartSpan.spanId, spanId)
+            checkNotNull(snapshot()?.links?.single())
+                .validatePreviousSessionPartLink(originalSessionPartSpan, originalSessionPartId)
+        }
+    }
+
+    @Test
     fun `new session will only start if told to`() {
         assertNotNull(spanRepository.getActiveEmbraceSpans().single())
         currentSessionPartSpan.endSession(startNewSession = false)

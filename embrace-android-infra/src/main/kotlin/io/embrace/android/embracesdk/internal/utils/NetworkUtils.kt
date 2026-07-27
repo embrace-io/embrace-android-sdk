@@ -73,21 +73,8 @@ object NetworkUtils {
      * @return the URL with the hash fragment and query string parameters removed
      */
     fun stripUrl(url: String): String {
-        val pathPos: Int = url.lastIndexOf('/')
-        val suffix: String = if (pathPos < 0) url else url.substring(pathPos)
-
-        val queryPos = suffix.indexOf('?')
-        val fragmentPos = suffix.indexOf('#')
-
-        val queryPosResult = if (queryPos < 0) Int.MAX_VALUE else queryPos
-        val fragmentPosResult = if (fragmentPos < 0) Int.MAX_VALUE else fragmentPos
-
-        val terminalPos = queryPosResult.coerceAtMost(fragmentPosResult)
-
-        return url.substring(
-            0,
-            (if (pathPos < 0) 0 else pathPos) + suffix.length.coerceAtMost(terminalPos),
-        )
+        val terminalPos = url.indexOfFirst { it == '?' || it == '#' }
+        return if (terminalPos < 0) url else url.substring(0, terminalPos)
     }
 
     fun getUrlPath(url: String?): String? = try {

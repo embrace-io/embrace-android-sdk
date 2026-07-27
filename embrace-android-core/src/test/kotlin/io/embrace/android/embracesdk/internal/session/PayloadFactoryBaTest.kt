@@ -22,7 +22,6 @@ import io.embrace.android.embracesdk.internal.envelope.session.SessionPartPayloa
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
@@ -41,7 +40,6 @@ internal class PayloadFactoryBaTest {
     private lateinit var userService: UserService
     private lateinit var configService: FakeConfigService
     private lateinit var spanRepository: SpanRepository
-    private lateinit var spanSink: SpanSink
     private lateinit var currentSessionPartSpan: CurrentSessionPartSpan
     private lateinit var spanService: SpanService
     private lateinit var blockingExecutorService: BlockingScheduledExecutorService
@@ -55,7 +53,6 @@ internal class PayloadFactoryBaTest {
         userService = FakeUserService()
         val initModule = FakeInitModule(clock = clock)
         spanRepository = initModule.openTelemetryModule.spanRepository
-        spanSink = initModule.openTelemetryModule.spanSink
         currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan
         spanService = initModule.openTelemetryModule.spanService
         configService = FakeConfigService(
@@ -78,7 +75,7 @@ internal class PayloadFactoryBaTest {
         // there should be 1 completed span: the session part span
         checkNotNull(msg)
         assertEquals(1, msg.data.spans?.size)
-        assertEquals(0, spanSink.completedOtelSpans().size)
+        assertEquals(0, spanRepository.completedOtelSpans().size)
     }
 
     @Test
@@ -90,7 +87,7 @@ internal class PayloadFactoryBaTest {
         // there should be 1 completed span: the session part span
         checkNotNull(msg)
         assertEquals(1, msg.data.spans?.size)
-        assertEquals(0, spanSink.completedOtelSpans().size)
+        assertEquals(0, spanRepository.completedOtelSpans().size)
     }
 
     @Test
@@ -103,7 +100,7 @@ internal class PayloadFactoryBaTest {
         // there should be 1 completed span: the session part span
         checkNotNull(msg)
         assertEquals(1, msg.data.spans?.size)
-        assertEquals(0, spanSink.completedOtelSpans().size)
+        assertEquals(0, spanRepository.completedOtelSpans().size)
     }
 
     private fun createService(createInitialSession: Boolean = true): PayloadFactoryImpl {
@@ -111,7 +108,6 @@ internal class PayloadFactoryBaTest {
         val payloadSourceModule = FakePayloadSourceModule(
             partPayloadSource = SessionPartPayloadSourceImpl(
                 null,
-                spanSink,
                 currentSessionPartSpan,
                 spanRepository,
                 FakeOtelPayloadMapper(),

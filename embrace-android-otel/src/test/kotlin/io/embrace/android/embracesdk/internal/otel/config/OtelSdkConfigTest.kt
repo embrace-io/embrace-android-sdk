@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.otel.config
 import io.embrace.android.embracesdk.fakes.FakeAttributesMutator
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
+import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.opentelemetry.kotlin.semconv.AndroidAttributes
 import io.opentelemetry.kotlin.semconv.DeviceAttributes
 import io.opentelemetry.kotlin.semconv.OsAttributes
@@ -27,7 +27,7 @@ internal class OtelSdkConfigTest {
         )
 
         val configuration = OtelSdkConfig(
-            spanSink = SpanSinkImpl(),
+            spanRepository = SpanRepository(),
             logSink = LogSinkImpl(),
             sdkName = "sdk",
             sdkVersion = "1.0",

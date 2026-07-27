@@ -12,8 +12,7 @@ import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.logs.EventServiceImpl
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
+import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.opentelemetry.kotlin.logging.Logger
 import org.junit.Assert.assertEquals
@@ -23,7 +22,7 @@ import org.junit.Test
 
 internal class OpenTelemetrySdkTest {
 
-    private lateinit var spanSink: SpanSink
+    private lateinit var spanRepository: SpanRepository
     private lateinit var logSink: LogSink
     private lateinit var systemInfo: SystemInfo
     private lateinit var configuration: OtelSdkConfig
@@ -33,7 +32,7 @@ internal class OpenTelemetrySdkTest {
 
     @Before
     fun setup() {
-        spanSink = SpanSinkImpl()
+        spanRepository = SpanRepository()
         logSink = LogSinkImpl()
         systemInfo = SystemInfo()
         sdk = createSdkWrapper { sdk.sdkLogger }
@@ -124,7 +123,7 @@ internal class OpenTelemetrySdkTest {
 
     private fun createOtelSdkConfig(): OtelSdkConfig {
         val configuration = OtelSdkConfig(
-            spanSink = spanSink,
+            spanRepository = spanRepository,
             logSink = logSink,
             sdkName = "sdk",
             sdkVersion = "1.0",

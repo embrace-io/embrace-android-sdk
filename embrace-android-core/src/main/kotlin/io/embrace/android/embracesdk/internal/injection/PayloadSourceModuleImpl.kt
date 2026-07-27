@@ -60,7 +60,6 @@ class PayloadSourceModuleImpl(
         EmbTrace.trace("session-payload-source") {
             SessionPartPayloadSourceImpl(
                 configService.nativeSymbolMap,
-                otelModule.spanSink,
                 otelModule.currentSessionPartSpan,
                 otelModule.spanRepository,
                 otelPayloadMapper,

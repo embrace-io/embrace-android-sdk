@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -29,7 +28,6 @@ import org.junit.Test
 
 internal class TracingApiDelegateTest {
     private lateinit var spanRepository: SpanRepository
-    private lateinit var spanSink: SpanSink
     private lateinit var spanService: SpanService
     private lateinit var tracer: TracingApi
     private val clock = FakeClock()
@@ -38,11 +36,10 @@ internal class TracingApiDelegateTest {
     fun setup() {
         val initModule = FakeInitModule(clock = clock)
         spanRepository = initModule.openTelemetryModule.spanRepository
-        spanSink = initModule.openTelemetryModule.spanSink
         spanService = initModule.openTelemetryModule.spanService
         spanService.initializeService(clock.now())
         tracer = initModule.openTelemetryModule.tracingApi
-        spanSink.flushOtelSpans()
+        spanRepository.flushOtelSpans()
     }
 
     @Test
@@ -76,13 +73,13 @@ internal class TracingApiDelegateTest {
             assertTrue(embraceSpan.start())
             assertTrue(embraceSpan.stop(errorCode))
             verifyPublicSpan(name = "test-span", errorCode = errorCode)
-            spanSink.flushOtelSpans()
+            spanRepository.flushOtelSpans()
         }
     }
 
     @Test
     fun `start a span directly`() {
-        spanSink.flushOtelSpans()
+        spanRepository.flushOtelSpans()
         val parent = checkNotNull(tracer.startSpan(name = "test-span"))
         clock.tick(20L)
         val childStartTimeMs = clock.now() - 10L
@@ -95,7 +92,7 @@ internal class TracingApiDelegateTest {
         )
         assertTrue(parent.stop())
         assertTrue(child.stop())
-        val spans = spanSink.flushOtelSpans()
+        val spans = spanRepository.flushOtelSpans()
         assertEquals(2, spans.size)
         assertEquals(childStartTimeMs, spans[1].startTimeNanos?.nanosToMillis())
     }
@@ -285,7 +282,7 @@ internal class TracingApiDelegateTest {
 
     @Test
     fun `event timestamp will be converted to millis if an inappropriate value detected`() {
-        spanSink.flushOtelSpans()
+        spanRepository.flushOtelSpans()
         val span = checkNotNull(tracer.startSpan(name = "my-span"))
         val eventTimeNanos = clock.now().millisToNanos()
         clock.tick(10L)
@@ -307,7 +304,7 @@ internal class TracingApiDelegateTest {
 
     @Test
     fun `start and stop span with nanosecond timestamp`() {
-        spanSink.flushOtelSpans()
+        spanRepository.flushOtelSpans()
         val expectedStartTimeNanos = clock.now().millisToNanos()
         val span = checkNotNull(
             tracer.startSpan(
@@ -350,7 +347,7 @@ internal class TracingApiDelegateTest {
         traceRoot: Boolean = true,
         errorCode: ErrorCode? = null,
     ): Span {
-        val currentSpans = spanSink.completedOtelSpans()
+        val currentSpans = spanRepository.completedOtelSpans()
         assertEquals(1, currentSpans.size)
         val currentSpan = currentSpans[0]
         assertEquals(name, currentSpan.name)

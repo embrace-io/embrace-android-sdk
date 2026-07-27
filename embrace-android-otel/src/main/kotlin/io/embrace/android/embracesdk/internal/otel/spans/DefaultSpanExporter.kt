@@ -9,10 +9,10 @@ import io.opentelemetry.kotlin.tracing.data.SpanData
 import io.opentelemetry.kotlin.tracing.export.SpanExporter
 
 /**
- * Exports the given completed span to the given [SpanSink] as well as any configured external exporter
+ * Exports the given completed span to the given [SpanRepository] as well as any configured external exporter
  */
 internal class DefaultSpanExporter(
-    private val spanSink: SpanSink,
+    private val spanRepository: SpanRepository,
     private val externalExporters: List<SpanExporter>,
     private val exportCheck: () -> Boolean,
 ) : SpanExporter {
@@ -26,7 +26,7 @@ internal class DefaultSpanExporter(
         } else {
             telemetry.filterNot { it.attributes.containsKey(PrivateSpan.key) }
         }
-        var result = spanSink.storeCompletedOtelSpans(telemetry.map(SpanData::toEmbracePayload))
+        var result = spanRepository.storeCompletedOtelSpans(telemetry.map(SpanData::toEmbracePayload))
         if (externalExporters.isNotEmpty() && result == StoreDataResult.SUCCESS) {
             EmbTrace.trace("otel-external-export") {
                 externalExporters.forEach { exporter ->

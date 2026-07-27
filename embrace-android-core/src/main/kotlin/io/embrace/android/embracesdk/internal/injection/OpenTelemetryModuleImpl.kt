@@ -18,8 +18,6 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl
@@ -43,13 +41,9 @@ class OpenTelemetryModuleImpl(
         SpanRepository()
     }
 
-    override val spanSink: SpanSink by lazy {
-        SpanSinkImpl()
-    }
-
     override val otelSdkConfig: OtelSdkConfig by lazy {
         OtelSdkConfig(
-            spanSink = spanSink,
+            spanRepository = spanRepository,
             logSink = logSink,
             sdkName = BuildConfig.LIBRARY_PACKAGE_NAME,
             sdkVersion = BuildConfig.VERSION_NAME,
@@ -125,7 +119,6 @@ class OpenTelemetryModuleImpl(
             openTelemetryClock = openTelemetryClock,
             telemetryService = initModule.telemetryService,
             spanRepository = spanRepository,
-            spanSink = spanSink,
             tracerSupplier = { otelSdkWrapper.sdkTracer },
             openTelemetrySupplier = { otelSdkWrapper.openTelemetryKotlin },
             embraceSpanFactorySupplier = { embraceSpanFactory },

@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
@@ -27,7 +26,6 @@ internal class CurrentSessionPartSpanImpl(
     private val openTelemetryClock: Clock,
     private val telemetryService: TelemetryService,
     private val spanRepository: SpanRepository,
-    private val spanSink: SpanSink,
     private val tracerSupplier: Provider<Tracer>,
     private val openTelemetrySupplier: Provider<OpenTelemetry>,
     private val embraceSpanFactorySupplier: Provider<EmbraceSpanFactory>,
@@ -166,7 +164,7 @@ internal class CurrentSessionPartSpanImpl(
                     )
                     endingSessionPartSpan.stop(errorCode = ErrorCode.FAILURE, endTimeMs = crashTime)
                 }
-                spanSink.flushOtelSpans()
+                spanRepository.flushOtelSpans()
             } else {
                 emptyList()
             }

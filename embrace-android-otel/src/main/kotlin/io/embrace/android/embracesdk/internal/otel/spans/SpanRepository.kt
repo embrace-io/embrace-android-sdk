@@ -1,18 +1,31 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
+import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.utils.threadSafeToList
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
+import java.util.Queue
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.ConcurrentMap
 
 /**
- * Allows the tracking of [EmbraceSpan] instances so that their references can be retrieved with its associated spanId
+ * Stores the spans of the current session. Two distinct representations are held:
+ *
+ * - [EmbraceSdkSpan] instances: the in-progress and completed Embrace span objects, tracked so their
+ *   references can be retrieved by their associated spanId. Accessed via the `*EmbraceSpan(s)` methods.
+ * - [Span]: the completed spans exported through the OTel pipeline that are pending delivery
+ *   off-device. Accessed via the `*OtelSpan(s)` methods.
  */
 class SpanRepository {
     private val spans: ConcurrentMap<String, EmbraceSdkSpan> = ConcurrentHashMap()
     private var spanUpdateNotifier: (() -> Unit)? = null
+
+    private val completedSpanData: Queue<Span> = ConcurrentLinkedQueue()
+    private val flushLock = Any()
 
     /**
      * Track the [EmbraceSpan] if it has been started and it's not already tracked.
@@ -83,6 +96,36 @@ class SpanRepository {
     fun autoTerminateEmbraceSpans(now: Long) {
         val roots = buildSpanTree()
         terminateSpansIfRequired(now, roots.filter { it.span.autoTerminationMode == AutoTerminationMode.ON_BACKGROUND })
+    }
+
+    /**
+     * Stores [Span] for spans that have been completed and exported. Supports concurrent invocations.
+     */
+    fun storeCompletedOtelSpans(spans: List<Span>): StoreDataResult {
+        try {
+            completedSpanData += spans
+        } catch (t: Throwable) {
+            return StoreDataResult.FAILURE
+        }
+        return StoreDataResult.SUCCESS
+    }
+
+    /**
+     * Returns the list of the currently stored completed [Span].
+     */
+    fun completedOtelSpans(): List<Span> = completedSpanData.threadSafeToList()
+
+    /**
+     * Returns and clears the currently stored completed [Span]. The clearing and returning is
+     * atomic, i.e. spans cannot be added during this operation.
+     */
+    fun flushOtelSpans(): List<Span> {
+        synchronized(flushLock) {
+            val count = completedSpanData.size
+            val flushed = ArrayList<Span>(count)
+            repeat(count) { completedSpanData.poll()?.let(flushed::add) }
+            return flushed
+        }
     }
 
     /**

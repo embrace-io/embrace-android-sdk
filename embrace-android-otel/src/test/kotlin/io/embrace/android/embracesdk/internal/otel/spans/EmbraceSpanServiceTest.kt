@@ -30,7 +30,7 @@ import org.junit.Before
 import org.junit.Test
 
 internal class EmbraceSpanServiceTest {
-    private lateinit var spanSink: SpanSink
+    private lateinit var spanRepository: SpanRepository
     private lateinit var spanService: SpanService
     private lateinit var clock: FakeOtelKotlinClock
     private lateinit var tracer: Tracer
@@ -41,10 +41,10 @@ internal class EmbraceSpanServiceTest {
     fun setup() {
         clock = FakeOtelKotlinClock(FakeClock(10000L))
         val fakeClock = FakeOtelKotlinClock(FakeClock())
-        spanSink = SpanSinkImpl()
+        spanRepository = SpanRepository()
 
         val otelSdkConfig = OtelSdkConfig(
-            spanSink = spanSink,
+            spanRepository = spanRepository,
             logSink = LogSinkImpl(),
             sdkName = "test-sdk",
             sdkVersion = "1.0",
@@ -69,13 +69,13 @@ internal class EmbraceSpanServiceTest {
         val dataValidator = DataValidator(telemetryService = FakeTelemetryService())
 
         return EmbraceSpanService(
-            spanRepository = SpanRepository(),
+            spanRepository = spanRepository,
             canStartNewSpan = ::canStartNewSpan,
             initCallback = ::initCallback,
             embraceSpanFactorySupplier = {
                 EmbraceSpanFactoryImpl(
                     openTelemetryClock = clock,
-                    spanRepository = SpanRepository(),
+                    spanRepository = spanRepository,
                     dataValidator = dataValidator,
                     telemetryService = FakeTelemetryService(),
                 )
@@ -115,12 +115,12 @@ internal class EmbraceSpanServiceTest {
         var lambdaRan = false
         spanService.recordSpan("test-span") { lambdaRan = true }
         assertTrue(lambdaRan)
-        assertEquals(2, spanSink.completedOtelSpans().size)
+        assertEquals(2, spanRepository.completedOtelSpans().size)
     }
 
     @Test
     fun `record internal completed span recording with all the fixings`() {
-        spanSink.flushOtelSpans()
+        spanRepository.flushOtelSpans()
         val expectedName = "test-span"
         val expectedStartTimeMs = clock.now().nanosToMillis()
         val expectedEndTimeMs = expectedStartTimeMs + 100L
@@ -144,7 +144,7 @@ internal class EmbraceSpanServiceTest {
         )
 
         val name = "emb-$expectedName"
-        val currentSpans = spanSink.completedOtelSpans()
+        val currentSpans = spanRepository.completedOtelSpans()
         assertEquals(1, currentSpans.size)
         val span = currentSpans[0]
 
@@ -167,7 +167,7 @@ internal class EmbraceSpanServiceTest {
         assertTrue(service.recordCompletedSpan("test-span", 10, 20))
         assertTrue(service.recordCompletedSpan("test-span", 15, 25))
         service.initializeService(clock.now().nanosToMillis())
-        assertEquals(2, spanSink.completedOtelSpans().size)
+        assertEquals(2, spanRepository.completedOtelSpans().size)
     }
 
     @Test

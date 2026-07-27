@@ -3,9 +3,9 @@ package io.embrace.android.embracesdk.benchmark
 import androidx.benchmark.junit4.BenchmarkRule
 import androidx.benchmark.junit4.measureRepeated
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -24,13 +24,13 @@ class TracingApiBenchmarks {
     private val extraAttributes = mapOf(attributesPairs.first().first to attributesPairs.first().second)
 
     private lateinit var harness: TelemetryDestinationHarness
-    private lateinit var spanSink: SpanSink
+    private lateinit var spanRepository: SpanRepository
     private lateinit var spanService: SpanService
 
     @Before
     fun setup() {
         harness = TelemetryDestinationHarness()
-        spanSink = harness.spanSink
+        spanRepository = harness.spanRepository
         spanService = harness.spanService
     }
 
@@ -294,13 +294,13 @@ class TracingApiBenchmarks {
 
     private fun BenchmarkRule.Scope.verifyAndCleanup() {
         runWithMeasurementDisabled {
-            assertEquals(TOTAL_SPAN_COUNT, spanSink.completedOtelSpans().size)
+            assertEquals(TOTAL_SPAN_COUNT, spanRepository.completedOtelSpans().size)
             cleanup()
         }
     }
 
     private fun cleanup(): List<Span> {
-        spanSink.flushOtelSpans()
+        spanRepository.flushOtelSpans()
         return harness.currentSessionPartSpan.endSession(true)
     }
 

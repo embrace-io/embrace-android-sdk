@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getDomain
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getUrlPath
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getValidTraceId
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
-import io.embrace.android.embracesdk.internal.utils.toNonNullMap
+import io.embrace.android.embracesdk.internal.utils.putIfNotNull
 import io.embrace.android.embracesdk.semconv.EmbNetworkRequestAttributes
 import io.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
@@ -127,35 +127,37 @@ class NetworkRequestDataSourceImpl(
         activeRequests.remove(id)
     }
 
-    private fun generateSchemaAttributes(request: HttpNetworkRequest): Map<String, String> = mapOf(
-        UrlAttributes.URL_FULL to stripUrl(request.url),
-        HttpAttributes.HTTP_REQUEST_METHOD to request.httpMethod,
-        HttpAttributes.HTTP_RESPONSE_STATUS_CODE to request.statusCode,
-        HttpAttributes.HTTP_REQUEST_BODY_SIZE to request.bytesSent,
-        HttpAttributes.HTTP_RESPONSE_BODY_SIZE to request.bytesReceived,
-        ErrorAttributes.ERROR_TYPE to request.errorType,
-        ExceptionAttributes.EXCEPTION_MESSAGE to request.errorMessage,
-        EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT to request.w3cTraceparent,
-        EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY to request.w3cTraceparent?.let { "true" },
-        EmbNetworkRequestAttributes.EMB_TRACE_ID to getValidTraceId(request.traceId),
-    ).toNonNullMap().mapValues { it.value.toString() }
+    private fun generateSchemaAttributes(request: HttpNetworkRequest): Map<String, String> = buildMap {
+        put(UrlAttributes.URL_FULL, stripUrl(request.url))
+        put(HttpAttributes.HTTP_REQUEST_METHOD, request.httpMethod)
+        putIfNotNull(HttpAttributes.HTTP_RESPONSE_STATUS_CODE, request.statusCode?.toStatusCodeString())
+        putIfNotNull(HttpAttributes.HTTP_REQUEST_BODY_SIZE, request.bytesSent?.toString())
+        putIfNotNull(HttpAttributes.HTTP_RESPONSE_BODY_SIZE, request.bytesReceived?.toString())
+        putIfNotNull(ErrorAttributes.ERROR_TYPE, request.errorType)
+        putIfNotNull(ExceptionAttributes.EXCEPTION_MESSAGE, request.errorMessage)
+        request.w3cTraceparent?.let { traceparent ->
+            put(EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT, traceparent)
+            put(EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY, "true")
+        }
+        putIfNotNull(EmbNetworkRequestAttributes.EMB_TRACE_ID, getValidTraceId(request.traceId))
+    }
 
-    private fun requestStartAttributes(startData: RequestStartData): Map<String, String> = mapOf(
-        UrlAttributes.URL_FULL to stripUrl(startData.url),
-        HttpAttributes.HTTP_REQUEST_METHOD to startData.httpMethod,
-    ).toNonNullMap().mapValues { it.value }
+    private fun requestStartAttributes(startData: RequestStartData): Map<String, String> = buildMap {
+        put(UrlAttributes.URL_FULL, stripUrl(startData.url))
+        put(HttpAttributes.HTTP_REQUEST_METHOD, startData.httpMethod)
+    }
 
-    private fun requestEndAttributes(endData: RequestEndData): Map<String, String> = mapOf(
-        UrlAttributes.URL_FULL to stripUrl(endData.url),
-        HttpAttributes.HTTP_RESPONSE_STATUS_CODE to endData.statusCode,
-        HttpAttributes.HTTP_REQUEST_BODY_SIZE to endData.bytesSent,
-        HttpAttributes.HTTP_RESPONSE_BODY_SIZE to endData.bytesReceived,
-        ErrorAttributes.ERROR_TYPE to endData.errorType,
-        ExceptionAttributes.EXCEPTION_MESSAGE to endData.errorMessage,
-        UserAgentAttributes.USER_AGENT_NAME to endData.userAgentName,
-        UserAgentAttributes.USER_AGENT_VERSION to endData.userAgentVersion,
-        EmbNetworkRequestAttributes.EMB_TRACE_ID to getValidTraceId(endData.traceId),
-    ).toNonNullMap().mapValues { it.value.toString() }
+    private fun requestEndAttributes(endData: RequestEndData): Map<String, String> = buildMap {
+        put(UrlAttributes.URL_FULL, stripUrl(endData.url))
+        putIfNotNull(HttpAttributes.HTTP_RESPONSE_STATUS_CODE, endData.statusCode?.toStatusCodeString())
+        putIfNotNull(HttpAttributes.HTTP_REQUEST_BODY_SIZE, endData.bytesSent?.toString())
+        putIfNotNull(HttpAttributes.HTTP_RESPONSE_BODY_SIZE, endData.bytesReceived?.toString())
+        putIfNotNull(ErrorAttributes.ERROR_TYPE, endData.errorType)
+        putIfNotNull(ExceptionAttributes.EXCEPTION_MESSAGE, endData.errorMessage)
+        putIfNotNull(UserAgentAttributes.USER_AGENT_NAME, endData.userAgentName)
+        putIfNotNull(UserAgentAttributes.USER_AGENT_VERSION, endData.userAgentVersion)
+        putIfNotNull(EmbNetworkRequestAttributes.EMB_TRACE_ID, getValidTraceId(endData.traceId))
+    }
 
     private fun getNetworkSpanName(httpMethod: String, url: String) = "$httpMethod ${getUrlPath(stripUrl(url))}"
 
@@ -163,6 +165,27 @@ class NetworkRequestDataSourceImpl(
      * Returns the span-id of this string if it is a valid W3C traceparent, or null if it is not.
      */
     private fun String.getSpanIdFromTraceparent(): String? = SPAN_ID_FROM_TRACEPARENT_REGEX.matchEntire(this)?.groupValues?.get(1)
+
+    /**
+     * Returns an interned string for the status codes an app is most likely to see, avoiding an
+     * allocation for the common cases. Anything else falls back to [toString].
+     *
+     * Redirects are deliberately absent: HTTP clients follow them by default, so the code that gets
+     * recorded here is the one the destination returned.
+     */
+    private fun Int.toStatusCodeString(): String = when (this) {
+        200 -> "200"
+        201 -> "201"
+        204 -> "204"
+        304 -> "304"
+        400 -> "400"
+        401 -> "401"
+        403 -> "403"
+        404 -> "404"
+        500 -> "500"
+        503 -> "503"
+        else -> toString()
+    }
 
     private companion object {
         // version(2)-traceId(32)-spanId(16)-flags(2), lowercase hex per the W3C traceparent spec.

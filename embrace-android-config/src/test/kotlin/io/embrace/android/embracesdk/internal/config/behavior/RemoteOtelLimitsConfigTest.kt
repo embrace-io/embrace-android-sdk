@@ -50,7 +50,7 @@ internal class RemoteOtelLimitsConfigTest {
     }
 
     @Test
-    fun `every remote value overrides the local limit`() {
+    fun `every remote value can lower the local limit`() {
         val remote = OtelLimitsRemoteConfig(
             maxInternalNameLength = 1,
             maxNameLength = 2,
@@ -83,6 +83,41 @@ internal class RemoteOtelLimitsConfigTest {
             assertEquals(12, getMaxCustomAttributeKeyLength())
             assertEquals(13, getMaxCustomAttributeValueLength())
             assertEquals("boom", getExceptionEventName())
+        }
+    }
+
+    @Test
+    fun `remote limits cannot raise the local limits`() {
+        val remote = OtelLimitsRemoteConfig(
+            maxInternalNameLength = Int.MAX_VALUE,
+            maxNameLength = 129,
+            maxCustomEventCount = 11,
+            maxSystemEventCount = 11001,
+            maxCustomAttributeCount = 101,
+            maxSystemAttributeCount = 301,
+            maxEventAttributeCount = 11,
+            maxCustomLinkCount = 11,
+            maxSystemLinkCount = 101,
+            maxInternalAttributeKeyLength = 1001,
+            maxInternalAttributeValueLength = 2001,
+            maxCustomAttributeKeyLength = 129,
+            maxCustomAttributeValueLength = 1025,
+        )
+
+        with(RemoteOtelLimitsConfig(local, remote)) {
+            assertEquals(local.getMaxInternalNameLength(), getMaxInternalNameLength())
+            assertEquals(local.getMaxNameLength(), getMaxNameLength())
+            assertEquals(local.getMaxCustomEventCount(), getMaxCustomEventCount())
+            assertEquals(local.getMaxSystemEventCount(), getMaxSystemEventCount())
+            assertEquals(local.getMaxCustomAttributeCount(), getMaxCustomAttributeCount())
+            assertEquals(local.getMaxSystemAttributeCount(), getMaxSystemAttributeCount())
+            assertEquals(local.getMaxEventAttributeCount(), getMaxEventAttributeCount())
+            assertEquals(local.getMaxCustomLinkCount(), getMaxCustomLinkCount())
+            assertEquals(local.getMaxSystemLinkCount(), getMaxSystemLinkCount())
+            assertEquals(local.getMaxInternalAttributeKeyLength(), getMaxInternalAttributeKeyLength())
+            assertEquals(local.getMaxInternalAttributeValueLength(), getMaxInternalAttributeValueLength())
+            assertEquals(local.getMaxCustomAttributeKeyLength(), getMaxCustomAttributeKeyLength())
+            assertEquals(local.getMaxCustomAttributeValueLength(), getMaxCustomAttributeValueLength())
         }
     }
 

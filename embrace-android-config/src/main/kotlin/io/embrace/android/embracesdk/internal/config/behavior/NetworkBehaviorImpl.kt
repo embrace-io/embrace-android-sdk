@@ -63,9 +63,9 @@ class NetworkBehaviorImpl(
         }
     }
 
-    // a remote limit takes precedence over the local one so that it can raise the limit as well as lower it
-    override fun getRequestLimitPerDomain(): Int = remote?.networkConfig?.defaultCaptureLimit ?: min(
-        DEFAULT_NETWORK_CALL_LIMIT,
+    // a remote limit can only lower the locally configured limit, never raise it
+    override fun getRequestLimitPerDomain(): Int = min(
+        remote?.networkConfig?.defaultCaptureLimit ?: DEFAULT_NETWORK_CALL_LIMIT,
         cfg.getRequestLimitPerDomain(),
     )
 

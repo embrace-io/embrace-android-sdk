@@ -4,9 +4,10 @@ import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLim
 import io.embrace.android.embracesdk.internal.config.remote.OtelLimitsRemoteConfig
 
 /**
- * Applies the remote overrides for the OTel capture limits on top of the limits declared locally. Any
- * value that is not overridden by remote config keeps the value supplied by [local], meaning the
- * limits are unchanged when no remote config is present.
+ * Applies the remote overrides for the OTel capture limits on top of the limits declared locally. A
+ * remote value can only lower the limit declared by [local], never raise it, and any value that is
+ * not overridden keeps the value supplied by [local]. The locally declared limits therefore hold
+ * whenever no remote config is present.
  */
 class RemoteOtelLimitsConfig(
     private val local: OtelLimitsConfig,
@@ -14,49 +15,53 @@ class RemoteOtelLimitsConfig(
 ) : OtelLimitsConfig {
 
     override fun getMaxInternalNameLength(): Int =
-        remote?.maxInternalNameLength.orLocal(local::getMaxInternalNameLength)
+        remote?.maxInternalNameLength.cappedBy(local::getMaxInternalNameLength)
 
     override fun getMaxNameLength(): Int =
-        remote?.maxNameLength.orLocal(local::getMaxNameLength)
+        remote?.maxNameLength.cappedBy(local::getMaxNameLength)
 
     override fun getMaxCustomEventCount(): Int =
-        remote?.maxCustomEventCount.orLocal(local::getMaxCustomEventCount)
+        remote?.maxCustomEventCount.cappedBy(local::getMaxCustomEventCount)
 
     override fun getMaxSystemEventCount(): Int =
-        remote?.maxSystemEventCount.orLocal(local::getMaxSystemEventCount)
+        remote?.maxSystemEventCount.cappedBy(local::getMaxSystemEventCount)
 
     override fun getMaxCustomAttributeCount(): Int =
-        remote?.maxCustomAttributeCount.orLocal(local::getMaxCustomAttributeCount)
+        remote?.maxCustomAttributeCount.cappedBy(local::getMaxCustomAttributeCount)
 
     override fun getMaxSystemAttributeCount(): Int =
-        remote?.maxSystemAttributeCount.orLocal(local::getMaxSystemAttributeCount)
+        remote?.maxSystemAttributeCount.cappedBy(local::getMaxSystemAttributeCount)
 
     override fun getMaxEventAttributeCount(): Int =
-        remote?.maxEventAttributeCount.orLocal(local::getMaxEventAttributeCount)
+        remote?.maxEventAttributeCount.cappedBy(local::getMaxEventAttributeCount)
 
     override fun getMaxCustomLinkCount(): Int =
-        remote?.maxCustomLinkCount.orLocal(local::getMaxCustomLinkCount)
+        remote?.maxCustomLinkCount.cappedBy(local::getMaxCustomLinkCount)
 
     override fun getMaxSystemLinkCount(): Int =
-        remote?.maxSystemLinkCount.orLocal(local::getMaxSystemLinkCount)
+        remote?.maxSystemLinkCount.cappedBy(local::getMaxSystemLinkCount)
 
     override fun getMaxInternalAttributeKeyLength(): Int =
-        remote?.maxInternalAttributeKeyLength.orLocal(local::getMaxInternalAttributeKeyLength)
+        remote?.maxInternalAttributeKeyLength.cappedBy(local::getMaxInternalAttributeKeyLength)
 
     override fun getMaxInternalAttributeValueLength(): Int =
-        remote?.maxInternalAttributeValueLength.orLocal(local::getMaxInternalAttributeValueLength)
+        remote?.maxInternalAttributeValueLength.cappedBy(local::getMaxInternalAttributeValueLength)
 
     override fun getMaxCustomAttributeKeyLength(): Int =
-        remote?.maxCustomAttributeKeyLength.orLocal(local::getMaxCustomAttributeKeyLength)
+        remote?.maxCustomAttributeKeyLength.cappedBy(local::getMaxCustomAttributeKeyLength)
 
     override fun getMaxCustomAttributeValueLength(): Int =
-        remote?.maxCustomAttributeValueLength.orLocal(local::getMaxCustomAttributeValueLength)
+        remote?.maxCustomAttributeValueLength.cappedBy(local::getMaxCustomAttributeValueLength)
 
     override fun getExceptionEventName(): String =
         remote?.exceptionEventName?.takeIf(String::isNotBlank) ?: local.getExceptionEventName()
 
     /**
-     * A non-positive limit would silently disable telemetry capture entirely, so treat it as unset.
+     * Clamps a remote limit to the local one so it can only ever be lowered. A non-positive limit would
+     * silently disable telemetry capture entirely, so it is treated as unset.
      */
-    private fun Int?.orLocal(localValue: () -> Int): Int = this?.takeIf { it > 0 } ?: localValue()
+    private fun Int?.cappedBy(localValue: () -> Int): Int {
+        val local = localValue()
+        return this?.takeIf { it > 0 }?.coerceAtMost(local) ?: local
+    }
 }

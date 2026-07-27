@@ -69,7 +69,7 @@ internal class NetworkBehaviorImplTest {
     }
 
     @Test
-    fun `remote limit can raise the limit above the local default`() {
+    fun `remote limit cannot raise the limit above the local one`() {
         val remoteCfg = RemoteConfig(
             networkConfig = NetworkRemoteConfig(
                 defaultCaptureLimit = 5000,
@@ -77,8 +77,8 @@ internal class NetworkBehaviorImplTest {
             ),
         )
         with(createNetworkBehavior(remoteCfg = remoteCfg)) {
-            assertEquals(5000, getRequestLimitPerDomain())
-            assertEquals(mapOf("google.com" to 5000), getLimitsByDomain())
+            assertEquals(1000, getRequestLimitPerDomain())
+            assertEquals(mapOf("google.com" to 1000), getLimitsByDomain())
         }
     }
 

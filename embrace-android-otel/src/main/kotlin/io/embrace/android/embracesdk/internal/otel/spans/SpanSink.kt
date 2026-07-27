@@ -12,17 +12,17 @@ interface SpanSink {
     /**
      * Stores spans that have been completed. Implementations must support concurrent invocations.
      */
-    fun storeCompletedSpans(spans: List<Span>): StoreDataResult
+    fun storeCompletedOtelSpans(spans: List<Span>): StoreDataResult
 
     /**
      * Returns the list of the currently stored completed spans.
      */
-    fun completedSpans(): List<Span>
+    fun completedOtelSpans(): List<Span>
 
     /**
      * Returns and clears the currently stored completed Spans. Implementations of this method must
      * make sure the clearing and returning is
      * atomic, i.e. spans cannot be added during this operation.
      */
-    fun flushSpans(): List<Span>
+    fun flushOtelSpans(): List<Span>
 }

@@ -149,7 +149,7 @@ internal class UserSessionHandlerTest {
         startFakeSession()
         initializeServices()
         spanService.recordSpan("test-span") {}
-        assertEquals(1, spanSink.completedSpans().size)
+        assertEquals(1, spanSink.completedOtelSpans().size)
 
         clock.tick(15000L)
         val envelope =
@@ -162,7 +162,7 @@ internal class UserSessionHandlerTest {
             )
         val spans = checkNotNull(envelope.data.spans)
         assertEquals(2, spans.size)
-        assertEquals(0, spanSink.completedSpans().size)
+        assertEquals(0, spanSink.completedOtelSpans().size)
     }
 
     @Test
@@ -170,10 +170,10 @@ internal class UserSessionHandlerTest {
         startFakeSession()
         initializeServices()
         spanService.recordSpan("test-span") {}
-        assertEquals(1, spanSink.completedSpans().size)
+        assertEquals(1, spanSink.completedOtelSpans().size)
 
         payloadFactory.endPayloadWithCrash(AppState.FOREGROUND, clock.now(), initial, "crashId")
-        assertEquals(0, spanSink.completedSpans().size)
+        assertEquals(0, spanSink.completedOtelSpans().size)
     }
 
     private fun startFakeSession(): SessionPartToken {

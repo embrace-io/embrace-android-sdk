@@ -169,7 +169,7 @@ internal class TracingApiTest {
                 )
                 val allSpans = getSdkInitSpanFromBackgroundActivity() +
                     checkNotNull(session.data.spans) +
-                    testRule.setup.getSpanSink().completedSpans()
+                    testRule.setup.getSpanSink().completedOtelSpans()
 
                 val spansMap = allSpans.associateBy { it.name }
                 val sessionPartSpan = checkNotNull(spansMap["emb-session"])

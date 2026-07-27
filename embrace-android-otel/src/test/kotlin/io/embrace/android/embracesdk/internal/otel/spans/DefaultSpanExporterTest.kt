@@ -24,7 +24,7 @@ internal class DefaultSpanExporterTest {
 
         runBlocking { exporter.export(listOf(span("public-span"))) }
 
-        assertFalse(spanSink.completedSpans().isEmpty())
+        assertFalse(spanSink.completedOtelSpans().isEmpty())
     }
 
     @Test
@@ -38,7 +38,7 @@ internal class DefaultSpanExporterTest {
 
         runBlocking { exporter.export(listOf(publicSpan, privateSpan)) }
 
-        assertEquals(2, spanSink.completedSpans().size)
+        assertEquals(2, spanSink.completedOtelSpans().size)
         assertEquals(1, externalExporter.exportedSpans.size)
         assertEquals("public-span", externalExporter.exportedSpans.first().name)
     }

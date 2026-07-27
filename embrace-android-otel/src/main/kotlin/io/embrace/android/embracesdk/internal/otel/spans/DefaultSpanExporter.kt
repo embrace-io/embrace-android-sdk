@@ -26,7 +26,7 @@ internal class DefaultSpanExporter(
         } else {
             telemetry.filterNot { it.attributes.containsKey(PrivateSpan.key) }
         }
-        var result = spanSink.storeCompletedSpans(telemetry.map(SpanData::toEmbracePayload))
+        var result = spanSink.storeCompletedOtelSpans(telemetry.map(SpanData::toEmbracePayload))
         if (externalExporters.isNotEmpty() && result == StoreDataResult.SUCCESS) {
             EmbTrace.trace("otel-external-export") {
                 externalExporters.forEach { exporter ->

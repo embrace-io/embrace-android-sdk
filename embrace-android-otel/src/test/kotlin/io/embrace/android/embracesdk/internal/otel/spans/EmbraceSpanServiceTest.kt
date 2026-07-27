@@ -115,12 +115,12 @@ internal class EmbraceSpanServiceTest {
         var lambdaRan = false
         spanService.recordSpan("test-span") { lambdaRan = true }
         assertTrue(lambdaRan)
-        assertEquals(2, spanSink.completedSpans().size)
+        assertEquals(2, spanSink.completedOtelSpans().size)
     }
 
     @Test
     fun `record internal completed span recording with all the fixings`() {
-        spanSink.flushSpans()
+        spanSink.flushOtelSpans()
         val expectedName = "test-span"
         val expectedStartTimeMs = clock.now().nanosToMillis()
         val expectedEndTimeMs = expectedStartTimeMs + 100L
@@ -144,7 +144,7 @@ internal class EmbraceSpanServiceTest {
         )
 
         val name = "emb-$expectedName"
-        val currentSpans = spanSink.completedSpans()
+        val currentSpans = spanSink.completedOtelSpans()
         assertEquals(1, currentSpans.size)
         val span = currentSpans[0]
 
@@ -167,7 +167,7 @@ internal class EmbraceSpanServiceTest {
         assertTrue(service.recordCompletedSpan("test-span", 10, 20))
         assertTrue(service.recordCompletedSpan("test-span", 15, 25))
         service.initializeService(clock.now().nanosToMillis())
-        assertEquals(2, spanSink.completedSpans().size)
+        assertEquals(2, spanSink.completedOtelSpans().size)
     }
 
     @Test

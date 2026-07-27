@@ -17,7 +17,7 @@ class SpanRepository {
     /**
      * Track the [EmbraceSpan] if it has been started and it's not already tracked.
      */
-    fun trackStartedSpan(embraceSpan: EmbraceSdkSpan) {
+    fun trackStartedEmbraceSpan(embraceSpan: EmbraceSdkSpan) {
         val spanId = embraceSpan.spanId ?: return
         spans.putIfAbsent(spanId, embraceSpan)
     }
@@ -25,27 +25,27 @@ class SpanRepository {
     /**
      * Return the [EmbraceSdkSpan] with the corresponding [spanId] if it's tracked. Return null otherwise.
      */
-    fun getSpan(spanId: String): EmbraceSdkSpan? = spans[spanId]
+    fun getEmbraceSpan(spanId: String): EmbraceSdkSpan? = spans[spanId]
 
     /**
      * Get a list of active spans that are being tracked
      */
-    fun getActiveSpans(): List<EmbraceSdkSpan> {
+    fun getActiveEmbraceSpans(): List<EmbraceSdkSpan> {
         return spans.values.filter { it.isRecording }
     }
 
     /**
      * Get a list of completed spans that are being tracked.
      */
-    fun getCompletedSpans(): List<EmbraceSdkSpan> {
+    fun getCompletedEmbraceSpans(): List<EmbraceSdkSpan> {
         return spans.values.filterNot { it.isRecording }
     }
 
     /**
      * Stop the existing active spans and mark them as failed
      */
-    fun failActiveSpans(failureTimeMs: Long) {
-        getActiveSpans().filterNot { it.hasEmbraceAttribute(EmbType.Ux.Session) }.forEach { span ->
+    fun failActiveEmbraceSpans(failureTimeMs: Long) {
+        getActiveEmbraceSpans().filterNot { it.hasEmbraceAttribute(EmbType.Ux.Session) }.forEach { span ->
             span.stop(ErrorCode.FAILURE, failureTimeMs)
         }
     }
@@ -53,7 +53,7 @@ class SpanRepository {
     /**
      * Clear the completed spans this repository is tracking
      */
-    fun clearCompletedSpans() {
+    fun clearCompletedEmbraceSpans() {
         val iterator = spans.values.iterator()
         while (iterator.hasNext()) {
             val candidate = iterator.next()
@@ -80,7 +80,7 @@ class SpanRepository {
     /**
      * Automatically terminates root spans
      */
-    fun autoTerminateSpans(now: Long) {
+    fun autoTerminateEmbraceSpans(now: Long) {
         val roots = buildSpanTree()
         terminateSpansIfRequired(now, roots.filter { it.span.autoTerminationMode == AutoTerminationMode.ON_BACKGROUND })
     }

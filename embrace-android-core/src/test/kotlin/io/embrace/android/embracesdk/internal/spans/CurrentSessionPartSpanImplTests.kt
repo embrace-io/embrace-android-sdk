@@ -325,7 +325,7 @@ internal class CurrentSessionPartSpanImplTests {
                 internal = false,
             ),
         )
-        spanSink.flushSpans()
+        spanSink.flushOtelSpans()
         assertEquals(
             2,
             spanService.recordSpan(
@@ -334,7 +334,7 @@ internal class CurrentSessionPartSpanImplTests {
                 internal = false,
             ) { 2 },
         )
-        assertEquals(0, spanSink.completedSpans().size)
+        assertEquals(0, spanSink.completedOtelSpans().size)
     }
 
     @Test
@@ -409,7 +409,7 @@ internal class CurrentSessionPartSpanImplTests {
                 assertHasEmbraceAttribute(cause)
             }
 
-            assertEquals(0, module.openTelemetryModule.spanSink.completedSpans().size)
+            assertEquals(0, module.openTelemetryModule.spanSink.completedOtelSpans().size)
         }
     }
 
@@ -450,16 +450,16 @@ internal class CurrentSessionPartSpanImplTests {
             ),
         )
 
-        assertEquals(0, spanSink.completedSpans().size)
-        assertEquals(0, spanRepository.getActiveSpans().size)
+        assertEquals(0, spanSink.completedOtelSpans().size)
+        assertEquals(0, spanRepository.getActiveEmbraceSpans().size)
     }
 
     @Test
     fun `new session started after ending has correct metadata`() {
-        val originalSessionPartSpan = checkNotNull(spanRepository.getActiveSpans().single().snapshot())
+        val originalSessionPartSpan = checkNotNull(spanRepository.getActiveEmbraceSpans().single().snapshot())
         val originalSessionId = currentSessionPartSpan.getId()
         currentSessionPartSpan.endSession(startNewSession = true)
-        with(spanRepository.getActiveSpans().single()) {
+        with(spanRepository.getActiveEmbraceSpans().single()) {
             assertTrue(hasEmbraceAttribute(EmbType.Ux.Session))
             assertNotEquals(originalSessionPartSpan.spanId, spanId)
             checkNotNull(snapshot()?.links?.single()).validatePreviousSessionPartLink(originalSessionPartSpan, originalSessionId)
@@ -468,7 +468,7 @@ internal class CurrentSessionPartSpanImplTests {
 
     @Test
     fun `previous session part link includes user session and session part ids when set`() {
-        val originalSessionPartSpan = checkNotNull(spanRepository.getActiveSpans().single())
+        val originalSessionPartSpan = checkNotNull(spanRepository.getActiveEmbraceSpans().single())
         val originalUserSessionId = "previous-user-session"
         val originalSessionPartId = "previous-session-part"
         originalSessionPartSpan.setSystemAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, originalUserSessionId)
@@ -477,7 +477,7 @@ internal class CurrentSessionPartSpanImplTests {
 
         currentSessionPartSpan.endSession(startNewSession = true)
 
-        with(spanRepository.getActiveSpans().single()) {
+        with(spanRepository.getActiveEmbraceSpans().single()) {
             checkNotNull(snapshot()?.links?.single()).validatePreviousSessionPartLink(
                 previousSessionPartSpan = originalSnapshot,
                 previousSessionPartId = originalSessionPartId,
@@ -488,9 +488,9 @@ internal class CurrentSessionPartSpanImplTests {
 
     @Test
     fun `new session will only start if told to`() {
-        assertNotNull(spanRepository.getActiveSpans().single())
+        assertNotNull(spanRepository.getActiveEmbraceSpans().single())
         currentSessionPartSpan.endSession(startNewSession = false)
-        assertTrue(spanRepository.getActiveSpans().isEmpty())
+        assertTrue(spanRepository.getActiveEmbraceSpans().isEmpty())
     }
 
     @Test
@@ -503,9 +503,9 @@ internal class CurrentSessionPartSpanImplTests {
 
     @Test
     fun `readySession will not replace existing session part span`() {
-        val originalSessionPartSpanId = spanRepository.getActiveSpans().single().spanId
+        val originalSessionPartSpanId = spanRepository.getActiveEmbraceSpans().single().spanId
         assertTrue(currentSessionPartSpan.readySession())
-        assertEquals(originalSessionPartSpanId, spanRepository.getActiveSpans().single().spanId)
+        assertEquals(originalSessionPartSpanId, spanRepository.getActiveEmbraceSpans().single().spanId)
     }
 
     @Test
@@ -533,12 +533,12 @@ internal class CurrentSessionPartSpanImplTests {
             checkNotNull(spanService.createSpan(name = "parent-span"))
         assertTrue(parentSpan.start())
         val parentSpanId = checkNotNull(parentSpan.spanId)
-        val parentSpanFromService = checkNotNull(spanRepository.getSpan(parentSpanId))
+        val parentSpanFromService = checkNotNull(spanRepository.getEmbraceSpan(parentSpanId))
         assertTrue(parentSpanFromService.stop())
         currentSessionPartSpan.endSession(startNewSession = true)
 
         // completed span not available after flush
-        assertNull(spanRepository.getSpan(parentSpanId))
+        assertNull(spanRepository.getEmbraceSpan(parentSpanId))
 
         // existing reference to completed span can still be used
         checkNotNull(
@@ -549,16 +549,16 @@ internal class CurrentSessionPartSpanImplTests {
         )
 
         // active span from before flush is still available and working
-        val activeSpanFromBeforeFlush = checkNotNull(spanRepository.getSpan(embraceSpanId))
+        val activeSpanFromBeforeFlush = checkNotNull(spanRepository.getEmbraceSpan(embraceSpanId))
         assertTrue(activeSpanFromBeforeFlush.stop())
-        val currentSpans = spanSink.completedSpans()
+        val currentSpans = spanSink.completedOtelSpans()
         assertEquals(1, currentSpans.size)
         assertEquals("emb-test-span", currentSpans[0].name)
     }
 
     @Test
     fun `span stop callback creates the correct span links`() {
-        val sessionPartSpan = checkNotNull(spanRepository.getActiveSpans().single())
+        val sessionPartSpan = checkNotNull(spanRepository.getActiveEmbraceSpans().single())
         val userSessionId = "user-session-uuid"
         val sessionPartId = "session-part-uuid"
         sessionPartSpan.setSystemAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, userSessionId)
@@ -589,7 +589,7 @@ internal class CurrentSessionPartSpanImplTests {
 
     @Test
     fun `span stop callback link attrs pick up user session id set after an earlier span stop`() {
-        val sessionPartSpan = checkNotNull(spanRepository.getActiveSpans().single())
+        val sessionPartSpan = checkNotNull(spanRepository.getActiveEmbraceSpans().single())
         val sessionPartId = currentSessionPartSpan.getId()
 
         val earlySpan = spanService.startSpan("early").apply {
@@ -626,7 +626,7 @@ internal class CurrentSessionPartSpanImplTests {
 
     @Test
     fun `span stop callback link attrs are identical for consecutive stops after user session id is set`() {
-        val sessionPartSpan = checkNotNull(spanRepository.getActiveSpans().single())
+        val sessionPartSpan = checkNotNull(spanRepository.getActiveEmbraceSpans().single())
         val userSessionId = "user-session-uuid"
         sessionPartSpan.setSystemAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, userSessionId)
         val expectedPartLinkAttrs = mapOf(
@@ -649,7 +649,7 @@ internal class CurrentSessionPartSpanImplTests {
 
     @Test
     fun `session ending will not create span link to its own session part span`() {
-        val sessionPartSpan = checkNotNull(spanRepository.getActiveSpans().single())
+        val sessionPartSpan = checkNotNull(spanRepository.getActiveEmbraceSpans().single())
         currentSessionPartSpan.endSession(startNewSession = true)
         val sessionPartSpanSnapshot = checkNotNull(sessionPartSpan.snapshot())
         assertEquals(0, sessionPartSpanSnapshot.links?.size)
@@ -657,7 +657,7 @@ internal class CurrentSessionPartSpanImplTests {
 
     @Test
     fun `span stop callback will not create links for untracked span`() {
-        val sessionPartSpan = checkNotNull(spanRepository.getActiveSpans().single())
+        val sessionPartSpan = checkNotNull(spanRepository.getActiveEmbraceSpans().single())
         currentSessionPartSpan.spanStopCallback(checkNotNull(FakeEmbraceSdkSpan.started().spanId))
 
         val sessionPartSpanSnapshot = checkNotNull(sessionPartSpan.snapshot())

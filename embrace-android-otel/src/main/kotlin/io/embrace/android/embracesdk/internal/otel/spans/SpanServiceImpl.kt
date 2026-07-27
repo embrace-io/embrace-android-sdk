@@ -171,5 +171,5 @@ class SpanServiceImpl(
         }
     }
 
-    override fun getSpan(spanId: String): EmbraceSpan? = spanRepository.getSpan(spanId = spanId)
+    override fun getSpan(spanId: String): EmbraceSpan? = spanRepository.getEmbraceSpan(spanId = spanId)
 }

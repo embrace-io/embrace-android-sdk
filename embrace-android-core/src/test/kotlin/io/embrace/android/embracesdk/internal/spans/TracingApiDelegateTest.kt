@@ -42,7 +42,7 @@ internal class TracingApiDelegateTest {
         spanService = initModule.openTelemetryModule.spanService
         spanService.initializeService(clock.now())
         tracer = initModule.openTelemetryModule.tracingApi
-        spanSink.flushSpans()
+        spanSink.flushOtelSpans()
     }
 
     @Test
@@ -76,13 +76,13 @@ internal class TracingApiDelegateTest {
             assertTrue(embraceSpan.start())
             assertTrue(embraceSpan.stop(errorCode))
             verifyPublicSpan(name = "test-span", errorCode = errorCode)
-            spanSink.flushSpans()
+            spanSink.flushOtelSpans()
         }
     }
 
     @Test
     fun `start a span directly`() {
-        spanSink.flushSpans()
+        spanSink.flushOtelSpans()
         val parent = checkNotNull(tracer.startSpan(name = "test-span"))
         clock.tick(20L)
         val childStartTimeMs = clock.now() - 10L
@@ -95,7 +95,7 @@ internal class TracingApiDelegateTest {
         )
         assertTrue(parent.stop())
         assertTrue(child.stop())
-        val spans = spanSink.flushSpans()
+        val spans = spanSink.flushOtelSpans()
         assertEquals(2, spans.size)
         assertEquals(childStartTimeMs, spans[1].startTimeNanos?.nanosToMillis())
     }
@@ -285,7 +285,7 @@ internal class TracingApiDelegateTest {
 
     @Test
     fun `event timestamp will be converted to millis if an inappropriate value detected`() {
-        spanSink.flushSpans()
+        spanSink.flushOtelSpans()
         val span = checkNotNull(tracer.startSpan(name = "my-span"))
         val eventTimeNanos = clock.now().millisToNanos()
         clock.tick(10L)
@@ -307,7 +307,7 @@ internal class TracingApiDelegateTest {
 
     @Test
     fun `start and stop span with nanosecond timestamp`() {
-        spanSink.flushSpans()
+        spanSink.flushOtelSpans()
         val expectedStartTimeNanos = clock.now().millisToNanos()
         val span = checkNotNull(
             tracer.startSpan(
@@ -350,7 +350,7 @@ internal class TracingApiDelegateTest {
         traceRoot: Boolean = true,
         errorCode: ErrorCode? = null,
     ): Span {
-        val currentSpans = spanSink.completedSpans()
+        val currentSpans = spanSink.completedOtelSpans()
         assertEquals(1, currentSpans.size)
         val currentSpan = currentSpans[0]
         assertEquals(name, currentSpan.name)

@@ -97,7 +97,7 @@ internal class CurrentSessionPartSpanImpl(
     override fun spanStopCallback(spanId: String) {
         val state = sessionPartState
         val currentSessionPartSpan = state?.span
-        val spanToStop = spanRepository.getSpan(spanId)
+        val spanToStop = spanRepository.getEmbraceSpan(spanId)
 
         if (currentSessionPartSpan != spanToStop) {
             val linkAttrs = state?.cachedPartLinkAttrs() ?: emptyMap()
@@ -151,7 +151,7 @@ internal class CurrentSessionPartSpanImpl(
                 if (appTerminationCause == null) {
                     endingSessionPartSpan.stop()
                     lastSessionPartSpan = endingSessionPartSpan
-                    spanRepository.clearCompletedSpans()
+                    spanRepository.clearCompletedEmbraceSpans()
                     sessionPartState = if (startNewSession) {
                         startSessionPartSpan(openTelemetryClock.now().nanosToMillis())
                     } else {
@@ -159,14 +159,14 @@ internal class CurrentSessionPartSpanImpl(
                     }
                 } else {
                     val crashTime = openTelemetryClock.now().nanosToMillis()
-                    spanRepository.failActiveSpans(crashTime)
+                    spanRepository.failActiveEmbraceSpans(crashTime)
                     endingSessionPartSpan.setSystemAttribute(
                         appTerminationCause.key,
                         appTerminationCause.value,
                     )
                     endingSessionPartSpan.stop(errorCode = ErrorCode.FAILURE, endTimeMs = crashTime)
                 }
-                spanSink.flushSpans()
+                spanSink.flushOtelSpans()
             } else {
                 emptyList()
             }

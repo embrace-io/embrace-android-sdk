@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 
 /**
@@ -11,6 +12,9 @@ class OtelBehaviorImpl(
     local: InstrumentedConfig,
     remote: RemoteConfig?,
 ) : OtelBehavior {
+
+    override val otelLimits: OtelLimitsConfig =
+        RemoteOtelLimitsConfig(local.otelLimits, remote?.otelLimitsConfig)
 
     private val local = local.enabledFeatures
     private val remote = remote?.otelKotlinSdkConfig

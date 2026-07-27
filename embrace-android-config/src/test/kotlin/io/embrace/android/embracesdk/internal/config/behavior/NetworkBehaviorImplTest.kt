@@ -69,6 +69,20 @@ internal class NetworkBehaviorImplTest {
     }
 
     @Test
+    fun `remote limit can raise the limit above the local default`() {
+        val remoteCfg = RemoteConfig(
+            networkConfig = NetworkRemoteConfig(
+                defaultCaptureLimit = 5000,
+                domainLimits = mapOf("google.com" to 6000),
+            ),
+        )
+        with(createNetworkBehavior(remoteCfg = remoteCfg)) {
+            assertEquals(5000, getRequestLimitPerDomain())
+            assertEquals(mapOf("google.com" to 5000), getLimitsByDomain())
+        }
+    }
+
+    @Test
     fun testNetworkingInvalidDisabledRegexIgnored() {
         with(createNetworkBehavior(disabledUrlPatterns = listOf("a.b.c", "invalid[}regex"))) {
             assertTrue(isUrlEnabled("invalid[}regex"))

@@ -11,10 +11,15 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
  * Used to validate limits and restrictions at instrumentation time imposed by Embrace before telemetry is recorded
  */
 class DataValidator(
-    val otelLimitsConfig: OtelLimitsConfig = OtelLimitsConfigImpl,
+    private val limitsProvider: () -> OtelLimitsConfig = { OtelLimitsConfigImpl },
     private val bypassValidation: (() -> Boolean) = { false },
     private val telemetryService: TelemetryService,
 ) {
+    /**
+     * Fetched on each access as the limits are only fully known once remote config has been loaded.
+     */
+    val otelLimitsConfig: OtelLimitsConfig get() = limitsProvider()
+
     fun truncateName(name: String, internal: Boolean): String {
         val maxLength = if (internal) {
             otelLimitsConfig.getMaxInternalNameLength()

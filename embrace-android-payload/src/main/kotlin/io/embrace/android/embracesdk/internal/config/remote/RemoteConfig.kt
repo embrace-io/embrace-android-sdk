@@ -109,6 +109,12 @@ data class RemoteConfig(
     @SerialName("otel_kotlin_sdk")
     val otelKotlinSdkConfig: OtelKotlinSdkConfig? = null,
 
+    /**
+     * Overrides for the limits applied to OTel data capture.
+     */
+    @SerialName("otel_limits")
+    val otelLimitsConfig: OtelLimitsRemoteConfig? = null,
+
     @SerialName("pct_state_enabled_v2")
     val pctStateCaptureEnabledV2: Float? = null,
 

@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.impl.EmbClock
 import io.embrace.android.embracesdk.internal.otel.logs.EventService
@@ -71,6 +72,7 @@ class OpenTelemetryModuleImpl(
                     spanService = spanService,
                     // adding guard in case this is accessed before we fetch the config
                     useKotlinSdk = otelBehavior?.shouldUseKotlinSdk() ?: false,
+                    limits = otelLimits,
                 )
             } catch (exc: NoClassDefFoundError) {
                 throw LinkageError(
@@ -102,9 +104,16 @@ class OpenTelemetryModuleImpl(
     }
 
     private val dataValidator: DataValidator = DataValidator(
+        limitsProvider = ::otelLimits,
         bypassValidation = ::bypassLimitsValidation,
         telemetryService = initModule.telemetryService,
     )
+
+    /**
+     * Falls back to the local limits if this is accessed before the config has been fetched.
+     */
+    private val otelLimits: OtelLimitsConfig
+        get() = otelBehavior?.otelLimits ?: initModule.instrumentedConfig.otelLimits
 
     private val embraceSpanFactory: EmbraceSpanFactory = EmbraceSpanFactoryImpl(
         openTelemetryClock = openTelemetryClock,

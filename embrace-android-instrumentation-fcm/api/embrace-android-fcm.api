@@ -1,4 +1,0 @@
-public final class io/embrace/android/embracesdk/internal/instrumentation/bytecode/FcmBytecodeEntrypoint {
-	public static final fun onMessageReceived (Lcom/google/firebase/messaging/RemoteMessage;)V
-}
-

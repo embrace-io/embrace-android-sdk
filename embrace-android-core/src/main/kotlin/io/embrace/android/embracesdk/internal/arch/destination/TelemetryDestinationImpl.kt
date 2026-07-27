@@ -187,12 +187,6 @@ class TelemetryDestinationImpl(
         }
     }
 
-    override fun removeSessionPartEvents(type: EmbType) {
-        val currentSession = currentSessionPartSpan.current() ?: return
-        currentSession.removeSystemEvents(type)
-        sessionUpdateAction?.invoke()
-    }
-
     override fun addSessionPartAttribute(key: String, value: String) {
         val currentSession = currentSessionPartSpan.current() ?: return
         currentSession.addSystemAttribute(key, value)

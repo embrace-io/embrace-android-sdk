@@ -106,20 +106,6 @@ internal class OtelSpanStartArgsTest {
     }
 
     @Test
-    fun `custom attribute setting`() {
-        val args = OtelSpanStartArgs(
-            name = "test",
-            type = EmbType.Performance.Default,
-            internal = false,
-            private = false,
-            tracer = tracer,
-            openTelemetry = fakeOpenTelemetry(),
-        )
-        args.customAttributes["test-key"] = "test-value"
-        assertEquals("test-value", args.customAttributes["test-key"])
-    }
-
-    @Test
     fun `initial name not truncated`() {
         val startTime = otelClock.now()
 

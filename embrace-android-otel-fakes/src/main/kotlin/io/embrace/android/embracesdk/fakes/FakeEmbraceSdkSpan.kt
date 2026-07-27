@@ -134,11 +134,6 @@ class FakeEmbraceSdkSpan(
     override fun addSystemEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
         addEvent(name, timestampMs, attributes ?: emptyMap())
 
-    override fun removeSystemEvents(type: EmbType): Boolean {
-        events.removeAll { it.hasEmbraceAttribute(type) }
-        return true
-    }
-
     override fun getStartTimeMs(): Long? = spanStartTimeMs
 
     override fun addAttribute(key: String, value: String): Boolean {

@@ -31,7 +31,6 @@ class OtelSpanStartArgs(
     val initialSpanName: String = name.prependEmbracePrefix(internal)
 
     val embraceAttributes = mutableListOf<EmbraceAttribute>(type)
-    val customAttributes = mutableMapOf<String, String>()
 
     init {
         if (private) {

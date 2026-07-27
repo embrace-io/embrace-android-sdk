@@ -38,10 +38,6 @@ class FakeTelemetryDestination(
         return true
     }
 
-    override fun removeSessionPartEvents(type: EmbType) {
-        addedEvents.removeAll { it.schemaType.telemetryType.key == type.key }
-    }
-
     override fun addSessionPartAttribute(key: String, value: String) {
         attributes[key] = value
     }

@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.TracingApi
 
-class EmbraceTracer(
+class TracingApiDelegate(
     private val spanService: SpanService,
 ) : TracingApi {
 

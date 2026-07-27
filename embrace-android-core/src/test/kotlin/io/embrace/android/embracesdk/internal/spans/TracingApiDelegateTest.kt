@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.spans.TracingApi
 import io.opentelemetry.kotlin.tracing.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -25,11 +26,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-internal class EmbraceTracerTest {
+internal class TracingApiDelegateTest {
     private lateinit var spanRepository: SpanRepository
     private lateinit var spanSink: SpanSink
     private lateinit var spanService: SpanService
-    private lateinit var embraceTracer: EmbraceTracer
+    private lateinit var tracer: TracingApi
     private val clock = FakeClock()
 
     @Before
@@ -39,13 +40,13 @@ internal class EmbraceTracerTest {
         spanSink = initModule.openTelemetryModule.spanSink
         spanService = initModule.openTelemetryModule.spanService
         spanService.initializeService(clock.now())
-        embraceTracer = initModule.openTelemetryModule.embraceTracer
+        tracer = initModule.openTelemetryModule.tracingApi
         spanSink.flushSpans()
     }
 
     @Test
     fun `create and use EmbraceSpan using public interface`() {
-        val embraceSpan = checkNotNull(embraceTracer.createSpan(name = "test-span"))
+        val embraceSpan = checkNotNull(tracer.createSpan(name = "test-span"))
         assertNotNull(embraceSpan)
         assertTrue(embraceSpan.start())
         assertTrue(embraceSpan.stop())
@@ -54,7 +55,7 @@ internal class EmbraceTracerTest {
 
     @Test
     fun `start and stop EmbraceSpan with specific timestamps`() {
-        val embraceSpan = checkNotNull(embraceTracer.createSpan(name = "test-span"))
+        val embraceSpan = checkNotNull(tracer.createSpan(name = "test-span"))
         assertNotNull(embraceSpan)
         val expectedStartTimeMs = clock.now() - 1L
         val expectedEndTimeMs = clock.now() + 2L
@@ -69,7 +70,7 @@ internal class EmbraceTracerTest {
     @Test
     fun `stop EmbraceSpan with different error codes`() {
         ErrorCode.entries.forEach { errorCode ->
-            val embraceSpan = checkNotNull(embraceTracer.createSpan(name = "test-span"))
+            val embraceSpan = checkNotNull(tracer.createSpan(name = "test-span"))
             assertNotNull(embraceSpan)
             assertTrue(embraceSpan.start())
             assertTrue(embraceSpan.stop(errorCode))
@@ -81,11 +82,11 @@ internal class EmbraceTracerTest {
     @Test
     fun `start a span directly`() {
         spanSink.flushSpans()
-        val parent = checkNotNull(embraceTracer.startSpan(name = "test-span"))
+        val parent = checkNotNull(tracer.startSpan(name = "test-span"))
         clock.tick(20L)
         val childStartTimeMs = clock.now() - 10L
         val child = checkNotNull(
-            embraceTracer.startSpan(
+            tracer.startSpan(
                 name = "child-span",
                 parent = parent,
                 startTimeMs = childStartTimeMs,
@@ -100,13 +101,13 @@ internal class EmbraceTracerTest {
 
     @Test
     fun `long span names truncated`() {
-        assertNotNull(embraceTracer.startSpan(name = TOO_LONG_SPAN_NAME))
+        assertNotNull(tracer.startSpan(name = TOO_LONG_SPAN_NAME))
     }
 
     @Test
     fun `cannot start a span if given parent has not started`() {
-        val notStartedParent = checkNotNull(embraceTracer.createSpan(name = "test-span"))
-        assertEquals(NoopEmbraceSdkSpan, embraceTracer.startSpan(name = "child-span", notStartedParent))
+        val notStartedParent = checkNotNull(tracer.createSpan(name = "test-span"))
+        assertEquals(NoopEmbraceSdkSpan, tracer.startSpan(name = "child-span", notStartedParent))
     }
 
     @Test
@@ -122,11 +123,11 @@ internal class EmbraceTracerTest {
                 EmbraceSpanEvent.create(name = "event2", timestampMs = 5_000_000L.nanosToMillis(), expectedAttributes),
             )
 
-        val parentSpan = checkNotNull(embraceTracer.createSpan(name = "parent-span"))
+        val parentSpan = checkNotNull(tracer.createSpan(name = "parent-span"))
         parentSpan.start()
         val returnThis = 1881L
         val expectedStartTimeMs = clock.now()
-        val lambdaReturn = embraceTracer.recordSpan(
+        val lambdaReturn = tracer.recordSpan(
             name = "lambda-test-span",
             parent = parentSpan,
             attributes = expectedAttributes,
@@ -154,7 +155,7 @@ internal class EmbraceTracerTest {
         val expectedEndTimeMs = expectedStartTimeMs + 100L
 
         assertTrue(
-            embraceTracer.recordCompletedSpan(
+            tracer.recordCompletedSpan(
                 name = expectedName,
                 startTimeMs = expectedStartTimeMs,
                 endTimeMs = expectedEndTimeMs,
@@ -174,7 +175,7 @@ internal class EmbraceTracerTest {
         val expectedEndTimeMs = expectedStartTimeMs + 100L
 
         assertTrue(
-            embraceTracer.recordCompletedSpan(
+            tracer.recordCompletedSpan(
                 name = expectedName,
                 startTimeMs = expectedStartTimeMs,
                 endTimeMs = expectedEndTimeMs,
@@ -191,14 +192,14 @@ internal class EmbraceTracerTest {
 
     @Test
     fun `record completed child span`() {
-        val parentSpan = checkNotNull(embraceTracer.createSpan(name = "parent-span"))
+        val parentSpan = checkNotNull(tracer.createSpan(name = "parent-span"))
         parentSpan.start()
         val expectedName = "child-span"
         val expectedStartTimeMs = clock.now()
         val expectedEndTimeMs = expectedStartTimeMs + 100L
 
         assertTrue(
-            embraceTracer.recordCompletedSpan(
+            tracer.recordCompletedSpan(
                 name = expectedName,
                 startTimeMs = expectedStartTimeMs,
                 endTimeMs = expectedEndTimeMs,
@@ -214,14 +215,14 @@ internal class EmbraceTracerTest {
 
     @Test
     fun `record completed abandoned child span`() {
-        val parentSpan = checkNotNull(embraceTracer.createSpan(name = "parent-span"))
+        val parentSpan = checkNotNull(tracer.createSpan(name = "parent-span"))
         parentSpan.start()
         val expectedName = "test-span"
         val expectedStartTimeMs = clock.now()
         val expectedEndTimeMs = expectedStartTimeMs + 100L
 
         assertTrue(
-            embraceTracer.recordCompletedSpan(
+            tracer.recordCompletedSpan(
                 name = expectedName,
                 startTimeMs = expectedStartTimeMs,
                 endTimeMs = expectedEndTimeMs,
@@ -253,7 +254,7 @@ internal class EmbraceTracerTest {
             )
 
         assertTrue(
-            embraceTracer.recordCompletedSpan(
+            tracer.recordCompletedSpan(
                 name = expectedName,
                 startTimeMs = expectedStartTimeMs,
                 endTimeMs = expectedEndTimeMs,
@@ -277,14 +278,14 @@ internal class EmbraceTracerTest {
         val embraceSpan = checkNotNull(spanService.createSpan("test-span"))
         assertTrue(embraceSpan.start())
         val spanId = checkNotNull(embraceSpan.spanId)
-        val spanFromTracer = checkNotNull(embraceTracer.getSpan(spanId))
+        val spanFromTracer = checkNotNull(tracer.getSpan(spanId))
         assertSame(spanFromTracer, embraceSpan)
     }
 
     @Test
     fun `event timestamp will be converted to millis if an inappropriate value detected`() {
         spanSink.flushSpans()
-        val span = checkNotNull(embraceTracer.startSpan(name = "my-span"))
+        val span = checkNotNull(tracer.startSpan(name = "my-span"))
         val eventTimeNanos = clock.now().millisToNanos()
         clock.tick(10L)
         assertTrue(span.addEvent(name = "first event", timestampMs = eventTimeNanos, attributes = emptyMap()))
@@ -308,7 +309,7 @@ internal class EmbraceTracerTest {
         spanSink.flushSpans()
         val expectedStartTimeNanos = clock.now().millisToNanos()
         val span = checkNotNull(
-            embraceTracer.startSpan(
+            tracer.startSpan(
                 name = "fallback-span",
                 parent = null,
                 startTimeMs = expectedStartTimeNanos,
@@ -330,7 +331,7 @@ internal class EmbraceTracerTest {
         val expectedEndTimeNanos = expectedStartTimeNanos + 100L.millisToNanos()
 
         assertTrue(
-            embraceTracer.recordCompletedSpan(
+            tracer.recordCompletedSpan(
                 name = expectedName,
                 startTimeMs = expectedStartTimeNanos,
                 endTimeMs = expectedEndTimeNanos,

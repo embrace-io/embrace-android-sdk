@@ -23,8 +23,9 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl
-import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
+import io.embrace.android.embracesdk.internal.spans.TracingApiDelegate
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.android.embracesdk.spans.TracingApi
 
 class OpenTelemetryModuleImpl(
     private val initModule: InitModule,
@@ -154,8 +155,8 @@ class OpenTelemetryModuleImpl(
         )
     }
 
-    override val embraceTracer: EmbraceTracer by singleton {
-        EmbraceTracer(
+    override val tracingApi: TracingApi by singleton {
+        TracingApiDelegate(
             spanService = spanService,
         )
     }

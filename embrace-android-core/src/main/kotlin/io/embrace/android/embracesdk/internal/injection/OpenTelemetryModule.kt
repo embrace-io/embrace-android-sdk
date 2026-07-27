@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
-import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
+import io.embrace.android.embracesdk.spans.TracingApi
 
 /**
  * Module that instantiates various OpenTelemetry related components
@@ -46,7 +46,7 @@ interface OpenTelemetryModule {
     /**
      * Implementation of public tracing API
      */
-    val embraceTracer: EmbraceTracer
+    val tracingApi: TracingApi
 
     /**
      * Service to record events

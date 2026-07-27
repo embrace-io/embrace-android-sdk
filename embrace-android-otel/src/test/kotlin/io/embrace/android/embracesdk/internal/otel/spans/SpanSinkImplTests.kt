@@ -3,7 +3,8 @@ package io.embrace.android.embracesdk.internal.otel.spans
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeSpanData
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
-import io.embrace.android.embracesdk.internal.toEmbraceSpanData
+import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.toEmbracePayload
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Before
@@ -28,7 +29,7 @@ internal class SpanSinkImplTests {
 
     @Test
     fun `flushing clears completed spans`() {
-        spanSink.storeCompletedSpans(listOf(FakeSpanData(), FakeSpanData()).map(FakeSpanData::toEmbraceSpanData))
+        spanSink.storeCompletedSpans(listOf(FakeSpanData(), FakeSpanData()).map(FakeSpanData::toEmbracePayload))
         val snapshot = spanSink.completedSpans()
         assertEquals(2, snapshot.size)
 
@@ -42,13 +43,13 @@ internal class SpanSinkImplTests {
 
     @Test
     fun `flushing does not retain previously flushed spans`() {
-        spanSink.storeCompletedSpans(listOf(FakeSpanData(), FakeSpanData()).map(FakeSpanData::toEmbraceSpanData))
+        spanSink.storeCompletedSpans(listOf(FakeSpanData(), FakeSpanData()).map(FakeSpanData::toEmbracePayload))
         assertEquals(2, spanSink.flushSpans().size)
 
         assertEquals(0, spanSink.flushSpans().size)
         assertEquals(0, spanSink.completedSpans().size)
 
-        spanSink.storeCompletedSpans(listOf(FakeSpanData()).map(FakeSpanData::toEmbraceSpanData))
+        spanSink.storeCompletedSpans(listOf(FakeSpanData()).map(FakeSpanData::toEmbracePayload))
         assertEquals(1, spanSink.flushSpans().size)
     }
 
@@ -56,13 +57,13 @@ internal class SpanSinkImplTests {
     fun `concurrent stores and flushes neither lose nor duplicate spans`() {
         val totalToStore = 5_000
         val storeDoneLatch = CountDownLatch(1)
-        val flushed = ArrayList<EmbraceSpanData>(totalToStore)
+        val flushed = ArrayList<Span>(totalToStore)
 
         // store spans one at a time from another thread
         val producer = SingleThreadTestScheduledExecutor()
         producer.submit {
             repeat(totalToStore) { i ->
-                spanSink.storeCompletedSpans(listOf(FakeSpanData(name = "span$i")).map(FakeSpanData::toEmbraceSpanData))
+                spanSink.storeCompletedSpans(listOf(FakeSpanData(name = "span$i")).map(FakeSpanData::toEmbracePayload))
             }
             storeDoneLatch.countDown()
         }

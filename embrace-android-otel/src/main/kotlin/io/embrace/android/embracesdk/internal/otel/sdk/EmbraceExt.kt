@@ -1,14 +1,10 @@
 package io.embrace.android.embracesdk.internal.otel.sdk
 
 import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
-
-fun EmbraceSpanData.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
-    embraceAttribute.value == attributes[embraceAttribute.key]
 
 fun EmbraceSpanEvent.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
     embraceAttribute.value == attributes[embraceAttribute.key]

@@ -18,7 +18,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
-import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
@@ -429,7 +428,7 @@ internal class CurrentSessionPartSpanImplTests {
         val flushedSpans = currentSessionPartSpan.endSession(true, AppTerminationCause.Crash).associateBy { it.name }
 
         assertEmbraceSpanData(
-            span = flushedSpans["emb-session"]?.toEmbracePayload(),
+            span = flushedSpans["emb-session"],
             expectedStartTimeMs = sessionStartTimeMs,
             expectedEndTimeMs = crashTimeMs,
             expectedParentId = OtelIds.INVALID_SPAN_ID,
@@ -441,7 +440,7 @@ internal class CurrentSessionPartSpanImplTests {
         )
 
         assertEmbraceSpanData(
-            span = flushedSpans[crashedSpanName]?.toEmbracePayload(),
+            span = flushedSpans[crashedSpanName],
             expectedStartTimeMs = crashSpanStartTimeMs,
             expectedEndTimeMs = crashTimeMs,
             expectedParentId = OtelIds.INVALID_SPAN_ID,

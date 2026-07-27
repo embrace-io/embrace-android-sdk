@@ -6,58 +6,13 @@ import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
-import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.ErrorCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-
-/**
- * Assert [EmbraceSpanData] is of type [EmbType.Performance.Default]
- */
-fun EmbraceSpanData.assertIsTypePerformance(): Unit = assertIsType(EmbType.Performance.Default)
-
-/**
- * Assert [EmbraceSpanData] is of type [telemetryType]
- */
-fun EmbraceSpanData.assertIsType(telemetryType: EmbType): Unit = assertHasEmbraceAttribute(telemetryType)
-
-fun EmbraceSpanData.assertIsPrivateSpan(): Unit = assertHasEmbraceAttribute(PrivateSpan)
-
-fun EmbraceSpanData.assertNotPrivateSpan(): Unit = assertDoesNotHaveEmbraceAttribute(PrivateSpan)
-
-/**
- * Assert [EmbraceSpanData] has the [EmbraceAttribute] defined by [embraceAttribute]
- */
-fun EmbraceSpanData.assertHasEmbraceAttribute(embraceAttribute: EmbraceAttribute) {
-    assertTrue(hasEmbraceAttribute(embraceAttribute))
-}
-
-fun EmbraceSpanData.assertDoesNotHaveEmbraceAttribute(embraceAttribute: EmbraceAttribute) {
-    assertFalse(attributes[embraceAttribute.key]?.equals(embraceAttribute.value) ?: false)
-}
-
-/**
- * Assert [EmbraceSpanData] has ended with the error defined by [errorCode]
- */
-fun EmbraceSpanData.assertError(errorCode: ErrorCode) {
-    assertEquals(Span.Status.ERROR, status.toEmbracePayload())
-    assertHasEmbraceAttribute(errorCode.fromErrorCode())
-}
-
-/**
- * Assert [EmbraceSpanData] has ended successfully
- */
-fun EmbraceSpanData.assertSuccessful() {
-    assertNotEquals(Span.Status.ERROR, status.toEmbracePayload())
-    assertNull(attributes[ErrorCodeAttribute.Failure.key])
-}
 
 fun Span.assertIsTypePerformance(): Unit = assertIsType(EmbType.Performance.Default)
 

@@ -1,18 +1,15 @@
 
 package io.embrace.android.embracesdk.internal
 
-import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.otel.sdk.toEmbracePayload
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Link
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
+import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.opentelemetry.kotlin.aliases.OtelJavaAttributes
 import io.opentelemetry.kotlin.aliases.OtelJavaEventData
 import io.opentelemetry.kotlin.aliases.OtelJavaLinkData
 import io.opentelemetry.kotlin.aliases.OtelJavaSpanData
 import io.opentelemetry.kotlin.aliases.OtelJavaStatusCode
-import io.opentelemetry.kotlin.tracing.data.SpanData
 
 fun Map<String, String>.toOtelJava(): OtelJavaAttributes {
     val builder = OtelJavaAttributes.builder()
@@ -29,7 +26,7 @@ fun OtelJavaAttributes.toStringMap(): Map<String, String> = asMap().entries.asso
     it.key.key.toString() to it.value.toString()
 }
 
-fun OtelJavaSpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
+fun OtelJavaSpanData.toEmbracePayload(): Span = Span(
     traceId = spanContext.traceId,
     spanId = spanContext.spanId,
     parentSpanId = parentSpanId,
@@ -37,26 +34,13 @@ fun OtelJavaSpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
     startTimeNanos = startEpochNanos,
     endTimeNanos = endEpochNanos,
     status = when (status.statusCode) {
-        OtelJavaStatusCode.UNSET -> io.opentelemetry.kotlin.tracing.StatusCode.UNSET
-        OtelJavaStatusCode.OK -> io.opentelemetry.kotlin.tracing.StatusCode.OK
-        OtelJavaStatusCode.ERROR -> io.opentelemetry.kotlin.tracing.StatusCode.ERROR
-        else -> io.opentelemetry.kotlin.tracing.StatusCode.UNSET
+        OtelJavaStatusCode.UNSET -> Span.Status.UNSET
+        OtelJavaStatusCode.OK -> Span.Status.OK
+        OtelJavaStatusCode.ERROR -> Span.Status.ERROR
+        else -> Span.Status.UNSET
     },
-    events = events?.mapNotNull { it.toEmbracePayload() } ?: emptyList(),
-    attributes = attributes.toStringMap(),
-    links = links.map { it.toEmbracePayload() }
-)
-
-fun SpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
-    traceId = spanContext.traceId,
-    spanId = spanContext.spanId,
-    parentSpanId = parent.spanId,
-    name = name,
-    startTimeNanos = startTimestamp,
-    endTimeNanos = endTimestamp!!,
-    status = status.statusCode,
-    events = events.mapNotNull { it.toEmbracePayload() },
-    attributes = attributes.mapValues { it.value.toString() },
+    events = events?.map { it.toEmbracePayload() } ?: emptyList(),
+    attributes = attributes.toEmbracePayload(),
     links = links.map { it.toEmbracePayload() }
 )
 
@@ -67,13 +51,11 @@ fun OtelJavaLinkData.toEmbracePayload() = Link(
     isRemote = spanContext.isRemote
 )
 
-private fun OtelJavaEventData.toEmbracePayload(): EmbraceSpanEvent? {
-    return EmbraceSpanEvent.create(
-        name = name,
-        timestampMs = epochNanos.nanosToMillis(),
-        attributes = attributes.toStringMap(),
-    )
-}
+private fun OtelJavaEventData.toEmbracePayload(): SpanEvent = SpanEvent(
+    name = name,
+    timestampNanos = epochNanos,
+    attributes = attributes.toEmbracePayload(),
+)
 
 fun OtelJavaAttributes.toEmbracePayload(): List<Attribute> =
     this.asMap().entries.map { Attribute(it.key.key, it.value.toString()) }

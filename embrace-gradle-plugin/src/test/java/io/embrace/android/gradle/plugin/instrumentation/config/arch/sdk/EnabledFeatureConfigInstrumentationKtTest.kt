@@ -44,6 +44,7 @@ class EnabledFeatureConfigInstrumentationKtTest {
         ConfigMethod("isWebViewBreadcrumbQueryParamCaptureEnabled", "()Z", true),
         ConfigMethod("isFcmPiiDataCaptureEnabled", "()Z", true),
         ConfigMethod("isRequestContentLengthCaptureEnabled", "()Z", true),
+        ConfigMethod("isOkHttpResponseBodySizeCaptureEnabled", "()Z", true),
         ConfigMethod("isHttpUrlConnectionCaptureEnabled", "()Z", true),
         ConfigMethod("isHucLiteInstrumentationEnabled", "()Z", true),
         ConfigMethod("isNetworkSpanForwardingEnabled", "()Z", true),
@@ -103,6 +104,7 @@ class EnabledFeatureConfigInstrumentationKtTest {
                         ),
                         networking = NetworkLocalConfig(
                             captureRequestContentLength = true,
+                            captureOkHttpResponseBodySize = true,
                             enableNativeMonitoring = true,
                             enableHucLiteInstrumentation = true,
                             enableNetworkSpanForwarding = true,

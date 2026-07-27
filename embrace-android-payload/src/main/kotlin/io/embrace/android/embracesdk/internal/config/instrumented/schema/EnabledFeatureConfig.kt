@@ -118,6 +118,16 @@ interface EnabledFeatureConfig {
     fun isRequestContentLengthCaptureEnabled(): Boolean = false
 
     /**
+     * Gates whether the size of an OkHttp response body is captured when the response has no
+     * Content-Length header. Determining the size in that case requires buffering the entire body
+     * into memory, which can cause excessive heap usage or OOM for large/streaming responses, so
+     * this is disabled by default.
+     *
+     * sdk_config.networking.capture_okhttp_response_body_size
+     */
+    fun isOkHttpResponseBodySizeCaptureEnabled(): Boolean = false
+
+    /**
      * Gates whether HttpUrlConnection network requests should be captured
      *
      * sdk_config.networking.enable_native_monitoring

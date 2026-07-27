@@ -147,6 +147,11 @@
               "default": true,
               "type": "boolean"
             },
+            "capture_okhttp_response_body_size": {
+              "description": "Enable capture of an OkHttp response body's size when it has no Content-Length header. This buffers the whole body into memory so is disabled by default to avoid excessive heap usage on large or streaming responses.",
+              "default": false,
+              "type": "boolean"
+            },
             "disabled_url_patterns": {
               "description": "Specify one or more regular expressions to exclude network request with URLs matching one of the regular expressions from being captured.",
               "type": "array",

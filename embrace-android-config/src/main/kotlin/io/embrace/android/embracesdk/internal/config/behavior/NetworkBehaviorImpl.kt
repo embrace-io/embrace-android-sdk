@@ -37,6 +37,9 @@ class NetworkBehaviorImpl(
     override fun isRequestContentLengthCaptureEnabled(): Boolean =
         local.enabledFeatures.isRequestContentLengthCaptureEnabled()
 
+    override fun isOkHttpResponseBodySizeCaptureEnabled(): Boolean =
+        local.enabledFeatures.isOkHttpResponseBodySizeCaptureEnabled()
+
     override fun isHttpUrlConnectionCaptureEnabled(): Boolean =
         local.enabledFeatures.isHttpUrlConnectionCaptureEnabled()
 

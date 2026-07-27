@@ -116,21 +116,8 @@ internal class OkHttpDataSourceTest {
         networkRequestDataSource = RecordingNetworkRequestDataSource(NetworkRequestDataSourceImpl(args))
         val networkCaptureDataSource = NetworkCaptureDataSourceImpl(args)
 
-        configService.apply {
-            networkBehavior = FakeNetworkBehavior(
-                rules = setOf(
-                    NetworkCaptureRuleRemoteConfig(
-                        id = "1",
-                        method = "POST",
-                        duration = 0,
-                        urlRegex = "^.*$",
-                        expiresIn = 60000,
-                        statusCodes = setOf(200, 500),
-                    ),
-                ),
-            )
-            networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior()
-        }
+        configureNetworkBehavior(okHttpResponseBodySizeCaptureEnabled = false)
+        configService.networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior()
 
         val dataSource = OkHttpDataSource(
             args = args,
@@ -183,6 +170,22 @@ internal class OkHttpDataSourceTest {
     @After
     fun teardown() {
         server.shutdown()
+    }
+
+    private fun configureNetworkBehavior(okHttpResponseBodySizeCaptureEnabled: Boolean) {
+        configService.networkBehavior = FakeNetworkBehavior(
+            okHttpResponseBodySizeCaptureEnabled = okHttpResponseBodySizeCaptureEnabled,
+            rules = setOf(
+                NetworkCaptureRuleRemoteConfig(
+                    id = "1",
+                    method = "POST",
+                    duration = 0,
+                    urlRegex = "^.*$",
+                    expiresIn = 60000,
+                    statusCodes = setOf(200, 500),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -290,6 +293,7 @@ internal class OkHttpDataSourceTest {
 
     @Test
     fun `check network interceptor can handle compressed response without content-length parameter`() {
+        configureNetworkBehavior(okHttpResponseBodySizeCaptureEnabled = true)
         postNetworkInterceptorAfterResponseSupplier = ::removeContentLengthFromResponse
         preNetworkInterceptorAfterResponseSupplier = ::consumeBody
         server.enqueue(createBaseMockResponse().setGzipBody(RESPONSE_BODY))
@@ -298,10 +302,21 @@ internal class OkHttpDataSourceTest {
 
     @Test
     fun `check network interceptor can handle uncompressed response without content-length parameter`() {
+        configureNetworkBehavior(okHttpResponseBodySizeCaptureEnabled = true)
         postNetworkInterceptorAfterResponseSupplier = ::removeContentLengthFromResponse
         preNetworkInterceptorAfterResponseSupplier = ::consumeBody
         server.enqueue(createBaseMockResponse().setBody(RESPONSE_BODY))
         runAndValidatePostRequest(RESPONSE_BODY_SIZE)
+    }
+
+    @Test
+    fun `response body is not read to measure its size when capture is disabled and content-length is absent`() {
+        // Body-size capture is disabled by default, so a response without a Content-Length header must
+        // not be buffered to measure it: the size is reported as unknown (0).
+        postNetworkInterceptorAfterResponseSupplier = ::removeContentLengthFromResponse
+        preNetworkInterceptorAfterResponseSupplier = ::consumeBody
+        server.enqueue(createBaseMockResponse().setBody(RESPONSE_BODY))
+        runAndValidateGetRequest(0)
     }
 
     @Test

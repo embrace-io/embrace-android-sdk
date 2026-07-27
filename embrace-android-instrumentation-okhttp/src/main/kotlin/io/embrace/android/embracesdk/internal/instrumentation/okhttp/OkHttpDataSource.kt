@@ -157,14 +157,14 @@ internal class OkHttpDataSource(
         // A response has been obtained, so instrumentation must not alter the app-visible result of the
         // request from here on: contain any failure and always release the call's tracking entry
         try {
-            // Get the size of the body from the response header if possible
-            // Failing that, try to count the bytes in the body itself
-            // If neither works, set the content length to 0
+            // Get the size of the body from the response header if possible.
+            // Failing that, and only when explicitly opted-in, count the bytes in the body itself.
+            // Reading the body buffers it entirely into memory, so it is gated behind config to avoid
+            // excessive heap usage / OOM on large or streaming responses.
+            // If neither works, set the content length to 0.
             val contentLength: Long = getContentLengthFromHeader(networkResponse)
-                ?: getContentLengthFromBody(
-                    networkResponse = networkResponse,
-                    contentType = networkResponse.header(CONTENT_TYPE_HEADER_NAME, null),
-                ) ?: 0L
+                ?: getContentLengthFromBodyIfEnabled(networkResponse)
+                ?: 0L
 
             val requestEndData = createRequestEndData(request, networkResponse, callData, contentLength)
             networkRequestDataSource?.endRequest(requestEndData)
@@ -273,6 +273,19 @@ internal class OkHttpDataSource(
             }
         }
         return contentLength
+    }
+
+    /**
+     * Measures the response body size by reading it if enabled.
+     */
+    private fun getContentLengthFromBodyIfEnabled(networkResponse: Response): Long? {
+        if (!configService.networkBehavior.isOkHttpResponseBodySizeCaptureEnabled()) {
+            return null
+        }
+        return getContentLengthFromBody(
+            networkResponse = networkResponse,
+            contentType = networkResponse.header(CONTENT_TYPE_HEADER_NAME, null),
+        )
     }
 
     private fun getContentLengthFromBody(networkResponse: Response, contentType: String?): Long? {

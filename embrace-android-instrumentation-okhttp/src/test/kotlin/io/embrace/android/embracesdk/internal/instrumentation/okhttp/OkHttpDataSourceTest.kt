@@ -13,7 +13,9 @@ import io.embrace.android.embracesdk.fakes.behavior.FakeTraceparentInjectionBeha
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSourceImpl
+import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSourceImpl
+import io.embrace.android.embracesdk.internal.instrumentation.network.RequestEndData
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getValidTraceId
 import io.embrace.android.embracesdk.okhttp3.EmbraceCustomPathException
 import io.embrace.android.embracesdk.semconv.EmbNetworkCapturedRequestAttributes
@@ -26,9 +28,11 @@ import io.opentelemetry.kotlin.semconv.UserAgentAttributes
 import okhttp3.Headers
 import okhttp3.OkHttp
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okio.Buffer
@@ -79,6 +83,9 @@ internal class OkHttpDataSourceTest {
     private lateinit var args: FakeInstrumentationArgs
     private lateinit var configService: FakeConfigService
     private lateinit var okHttpClient: OkHttpClient
+    private lateinit var networkRequestDataSource: RecordingNetworkRequestDataSource
+    private lateinit var applicationInterceptor: EmbraceOkHttpInterceptor
+    private lateinit var networkInterceptor: EmbraceOkHttpInterceptor
     private lateinit var getRequestBuilder: Request.Builder
     private lateinit var postRequestBuilder: Request.Builder
     private var preNetworkInterceptorBeforeRequestSupplier: (Request) -> Request =
@@ -106,7 +113,7 @@ internal class OkHttpDataSourceTest {
             configService = configService,
             clock = sdkClock,
         )
-        val networkRequestDataSource = NetworkRequestDataSourceImpl(args)
+        networkRequestDataSource = RecordingNetworkRequestDataSource(NetworkRequestDataSourceImpl(args))
         val networkCaptureDataSource = NetworkCaptureDataSourceImpl(args)
 
         configService.apply {
@@ -130,7 +137,7 @@ internal class OkHttpDataSourceTest {
             networkRequestDataSourceProvider = { networkRequestDataSource },
             networkCaptureDataSourceProvider = { networkCaptureDataSource },
         )
-        val applicationInterceptor = EmbraceOkHttpInterceptor(InterceptorType.APPLICATION) { dataSource }
+        applicationInterceptor = EmbraceOkHttpInterceptor(InterceptorType.APPLICATION) { dataSource }
         val preNetworkInterceptorTestInterceptor = TestInspectionInterceptor(
             beforeRequestSent = { request ->
                 preNetworkInterceptorBeforeRequestSupplier.invoke(
@@ -143,7 +150,7 @@ internal class OkHttpDataSourceTest {
                 )
             },
         )
-        val networkInterceptor = EmbraceOkHttpInterceptor(InterceptorType.NETWORK) { dataSource }
+        networkInterceptor = EmbraceOkHttpInterceptor(InterceptorType.NETWORK) { dataSource }
         val postNetworkInterceptorTestInterceptor = TestInspectionInterceptor(
             beforeRequestSent = { request ->
                 postNetworkInterceptorBeforeRequestSupplier.invoke(
@@ -492,6 +499,44 @@ internal class OkHttpDataSourceTest {
         }
     }
 
+    @Test
+    fun `requests that never reach the network interceptor are discarded without an app-visible failure`() {
+        val shortCircuitClient = OkHttpClient.Builder()
+            .addInterceptor(applicationInterceptor)
+            .addInterceptor { chain ->
+                Response.Builder()
+                    .request(chain.request())
+                    .protocol(Protocol.HTTP_1_1)
+                    .code(200)
+                    .message("OK")
+                    .body("short-circuited".toResponseBody())
+                    .build()
+            }
+            .addNetworkInterceptor(networkInterceptor)
+            .build()
+
+        val response = checkNotNull(shortCircuitClient.newCall(postRequestBuilder.build()).execute())
+        assertEquals(200, response.code)
+
+        // the request's tracking references were released, but its span was never stopped
+        assertEquals(1, networkRequestDataSource.discardedIds.size)
+        assertTrue(args.destination.createdSpans.single().isRecording())
+    }
+
+    @Test
+    fun `a failure recording the end of a request does not fail the app's request`() {
+        args.logger.throwOnInternalError = false
+        networkRequestDataSource.endRequestFailure = RuntimeException("instrumentation failure")
+        server.enqueue(createBaseMockResponse().setBody(RESPONSE_BODY))
+
+        val response = runPostRequest()
+        assertEquals(200, response.code)
+
+        // the failure was contained and the request's tracking reference released
+        assertEquals(1, args.logger.internalErrorMessages.size)
+        assertEquals(1, networkRequestDataSource.discardedIds.size)
+    }
+
     private fun assertNetworkBodyNotCaptured() {
         assertTrue(args.destination.logEvents.isEmpty())
     }
@@ -681,4 +726,26 @@ internal class OkHttpDataSourceTest {
         val minClockDrift: Long,
         val maxClockDrift: Long,
     )
+}
+
+/**
+ * Delegates to a real [NetworkRequestDataSource] while recording discarded requests and optionally
+ * simulating a failure when a request ends.
+ */
+private class RecordingNetworkRequestDataSource(
+    private val delegate: NetworkRequestDataSource,
+) : NetworkRequestDataSource by delegate {
+
+    val discardedIds: MutableList<String> = mutableListOf()
+    var endRequestFailure: Throwable? = null
+
+    override fun endRequest(endData: RequestEndData) {
+        endRequestFailure?.let { throw it }
+        delegate.endRequest(endData)
+    }
+
+    override fun discardRequest(id: String) {
+        discardedIds.add(id)
+        delegate.discardRequest(id)
+    }
 }

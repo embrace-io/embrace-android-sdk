@@ -84,6 +84,9 @@ internal class InternalNetworkApiImplTest {
         override fun endRequest(endData: RequestEndData) {
         }
 
+        override fun discardRequest(id: String) {
+        }
+
         override fun onDataCaptureEnabled() {
         }
 

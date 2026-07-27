@@ -258,7 +258,7 @@ internal class CurrentSessionPartSpanImpl(
     }
 
     companion object {
-        const val MAX_INTERNAL_SPANS_PER_SESSION: Int = 5000
+        const val MAX_INTERNAL_SPANS_PER_SESSION: Int = 2500
         const val MAX_NON_INTERNAL_SPANS_PER_SESSION: Int = 500
     }
 }

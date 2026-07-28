@@ -25,7 +25,6 @@ import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.serialization.fromJson
 import io.embrace.android.embracesdk.internal.session.UserSessionRestoreDecision
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.internal.session.getUserSessionProperties
@@ -154,7 +153,7 @@ internal class PayloadResurrectionServiceImpl(
                 ?.loadDecompressedPayload()
                 ?.let { payloadStream ->
                     runCatching {
-                        serializer.fromJson<Envelope<LogPayload>>(payloadStream)
+                        serializer.fromJson(payloadStream, Envelope.serializer(LogPayload.serializer()))
                     }.getOrNull()
                 }
                 ?.also { runCatching { cacheStorageService.delete(cachedCrashEnvelopeMetadata) } }
@@ -314,7 +313,7 @@ internal class PayloadResurrectionServiceImpl(
         userSessionTerminationReason: String?,
         isBackgroundOnly: Boolean,
     ): Envelope<SessionPartPayload> {
-        val deadPart = serializer.fromJson<Envelope<SessionPartPayload>>(payloadStream)
+        val deadPart = serializer.fromJson(payloadStream, Envelope.serializer(SessionPartPayload.serializer()))
         val deadSessionPartSpan = deadPart.getSessionPartSpan()
         val sessionPartId = deadSessionPartSpan?.resolveSessionPartIdForCrashMatch()
         val appState = deadSessionPartSpan?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE)

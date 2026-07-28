@@ -29,4 +29,7 @@ data class VitalsRemoteConfig(
 
     @SerialName("smoothness_frame_trace_pct_enabled")
     val smoothnessFrameTracePctEnabled: Float? = null,
+
+    @SerialName("span_limit")
+    val spanLimit: Int? = null,
 )

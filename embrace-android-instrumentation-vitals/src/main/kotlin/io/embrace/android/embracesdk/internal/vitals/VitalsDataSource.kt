@@ -7,7 +7,7 @@ import android.view.Display
 import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
-import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
+import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
@@ -28,7 +28,9 @@ internal class VitalsDataSource(
     private val args: InstrumentationArgs,
 ) : DataSourceImpl(
     args = args,
-    limitStrategy = NoopLimitStrategy,
+    // Vitals emits a span per gesture and per navigation, so it needs a ceiling: an unlimited source would
+    // exhaust the session's shared internal-span budget and starve other instrumentation. Reset per session part.
+    limitStrategy = UpToLimitStrategy(args.configService.vitalsBehavior::getSpanLimit),
     instrumentationName = "vitals_data_source",
 ) {
 

@@ -317,14 +317,14 @@ internal class ExternalTracerTest {
 
                 // all attribute values are stringified when written, so they read back as strings
                 with(recorded.events.single { it.name == "my-event" }) {
-                    assertEquals(2, attributes.size)
-                    assertEquals("event-value", attributes["event-key"])
-                    assertEquals("3", attributes["event-count"])
+                    assertEquals(2, attributes?.size)
+                    assertEquals("event-value", attributes?.single { it.key == "event-key" }?.data)
+                    assertEquals("3", attributes?.single { it.key == "event-count" }?.data)
                 }
 
-                with(recorded.links.single { it.spanContext.spanId == linkedSpanId }) {
-                    assertEquals(1, attributes.size)
-                    assertEquals("true", attributes["link-flag"])
+                with(recorded.links.single { it.spanId == linkedSpanId }) {
+                    assertEquals(1, attributes?.size)
+                    assertEquals("true", attributes?.single { it.key == "link-flag" }?.data)
                 }
             }
         )

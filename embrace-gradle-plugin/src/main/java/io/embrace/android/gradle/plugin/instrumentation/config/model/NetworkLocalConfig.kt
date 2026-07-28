@@ -22,6 +22,9 @@ data class NetworkLocalConfig(
     @Json(name = "capture_request_content_length")
     val captureRequestContentLength: Boolean? = null,
 
+    @Json(name = "capture_okhttp_response_body_size")
+    val captureOkHttpResponseBodySize: Boolean? = null,
+
     @Json(name = "disabled_url_patterns")
     val disabledUrlPatterns: List<String>? = null,
 

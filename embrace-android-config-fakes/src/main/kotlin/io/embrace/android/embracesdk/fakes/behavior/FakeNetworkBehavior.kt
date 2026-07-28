@@ -9,6 +9,7 @@ class FakeNetworkBehavior(
     private val captureLimit: Int = 1000,
     private val domains: Map<String, Int> = emptyMap(),
     private val captureHttpUrlConnectionRequests: Boolean = false,
+    private val okHttpResponseBodySizeCaptureEnabled: Boolean = false,
     private val hucLiteInstrumentationEnabled: Boolean = true,
     private val urlEnabled: Boolean = true,
     override val domainCountLimiter: DomainCountLimiter = FakeDomainCountLimiter(),
@@ -18,6 +19,7 @@ class FakeNetworkBehavior(
 ) : NetworkBehavior {
 
     override fun isRequestContentLengthCaptureEnabled(): Boolean = false
+    override fun isOkHttpResponseBodySizeCaptureEnabled(): Boolean = okHttpResponseBodySizeCaptureEnabled
     override fun isHttpUrlConnectionCaptureEnabled(): Boolean = captureHttpUrlConnectionRequests
     override fun isHucLiteInstrumentationEnabled(): Boolean = hucLiteInstrumentationEnabled
     override fun getLimitsByDomain(): Map<String, Int> = domains

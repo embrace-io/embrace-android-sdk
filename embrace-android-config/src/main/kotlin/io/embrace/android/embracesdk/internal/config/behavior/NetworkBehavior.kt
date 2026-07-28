@@ -11,6 +11,13 @@ interface NetworkBehavior {
     fun isRequestContentLengthCaptureEnabled(): Boolean
 
     /**
+     * Control whether the size of an OkHttp response body is captured when the response has no
+     * Content-Length header. Doing so requires buffering the whole body into memory, so it is
+     * disabled by default to avoid excessive heap usage on large/streaming responses.
+     */
+    fun isOkHttpResponseBodySizeCaptureEnabled(): Boolean
+
+    /**
      * Enable the native monitoring.
      */
     fun isHttpUrlConnectionCaptureEnabled(): Boolean

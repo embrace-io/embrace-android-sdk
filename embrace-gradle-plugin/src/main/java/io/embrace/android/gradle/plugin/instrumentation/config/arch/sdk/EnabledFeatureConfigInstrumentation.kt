@@ -24,6 +24,7 @@ fun createEnabledFeatureConfigInstrumentation(cfg: VariantConfig) = modelSdkConf
         boolMethod("isWebViewBreadcrumbQueryParamCaptureEnabled") { webViewConfig?.captureQueryParams }
         boolMethod("isFcmPiiDataCaptureEnabled") { captureFcmPiiData }
         boolMethod("isRequestContentLengthCaptureEnabled") { networking?.captureRequestContentLength }
+        boolMethod("isOkHttpResponseBodySizeCaptureEnabled") { networking?.captureOkHttpResponseBodySize }
         boolMethod("isHttpUrlConnectionCaptureEnabled") { networking?.enableNativeMonitoring }
         boolMethod("isHucLiteInstrumentationEnabled") { networking?.enableHucLiteInstrumentation }
         boolMethod("isNetworkSpanForwardingEnabled") { networking?.enableNetworkSpanForwarding }

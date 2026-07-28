@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.otel.spans
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
-import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -43,39 +42,35 @@ class SpanServiceImpl(
         private: Boolean,
         autoTerminationMode: AutoTerminationMode,
     ): EmbraceSdkSpan {
-        EmbTrace.trace("span-create") {
-            return if (name.isNotBlank() && canStartNewSpan(parent, internal)) {
-                embraceSpanFactory.create(
-                    OtelSpanStartArgs(
-                        name = dataValidator.truncateName(name, internal),
-                        type = type,
-                        internal = internal,
-                        private = private,
-                        tracer = tracer,
-                        autoTerminationMode = autoTerminationMode,
-                        parentCtx = (parent as? EmbraceSdkSpan)?.createContext(openTelemetry),
-                        openTelemetry = openTelemetry,
-                    ),
-                )
-            } else {
-                NoopEmbraceSdkSpan
-            }
+        return if (name.isNotBlank() && canStartNewSpan(parent, internal)) {
+            embraceSpanFactory.create(
+                OtelSpanStartArgs(
+                    name = dataValidator.truncateName(name, internal),
+                    type = type,
+                    internal = internal,
+                    private = private,
+                    tracer = tracer,
+                    autoTerminationMode = autoTerminationMode,
+                    parentCtx = (parent as? EmbraceSdkSpan)?.createContext(openTelemetry),
+                    openTelemetry = openTelemetry,
+                ),
+            )
+        } else {
+            NoopEmbraceSdkSpan
         }
     }
 
     override fun createSpan(otelSpanStartArgs: OtelSpanStartArgs): EmbraceSdkSpan {
-        EmbTrace.trace("span-create") {
-            return if (
-                otelSpanStartArgs.initialSpanName.isNotBlank() &&
-                canStartNewSpan(
-                    otelSpanStartArgs.parentContext.getEmbraceSpan(openTelemetry),
-                    otelSpanStartArgs.internal,
-                )
-            ) {
-                embraceSpanFactory.create(otelSpanStartArgs)
-            } else {
-                NoopEmbraceSdkSpan
-            }
+        return if (
+            otelSpanStartArgs.initialSpanName.isNotBlank() &&
+            canStartNewSpan(
+                otelSpanStartArgs.parentContext.getEmbraceSpan(openTelemetry),
+                otelSpanStartArgs.internal,
+            )
+        ) {
+            embraceSpanFactory.create(otelSpanStartArgs)
+        } else {
+            NoopEmbraceSdkSpan
         }
     }
 
@@ -135,40 +130,38 @@ class SpanServiceImpl(
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ): Boolean {
-        EmbTrace.trace("span-completed") {
-            if (startTimeMs > endTimeMs) {
-                return false
-            }
-
-            val validName = dataValidator.truncateName(name, internal)
-            val validEvents = dataValidator.truncateEvents(events, internal)
-            val validAttributes = dataValidator.truncateAttributes(attributes, internal)
-
-            if (canStartNewSpan(parent, internal)) {
-                val newSpan = embraceSpanFactory.create(
-                    OtelSpanStartArgs(
-                        name = validName,
-                        type = type,
-                        internal = internal,
-                        private = private,
-                        tracer = tracer,
-                        parentCtx = (parent as? EmbraceSdkSpan)?.createContext(openTelemetry),
-                        openTelemetry = openTelemetry,
-                    ),
-                )
-                if (newSpan.start(startTimeMs)) {
-                    validAttributes.forEach {
-                        newSpan.addAttribute(it.key, it.value)
-                    }
-                    validEvents.forEach {
-                        newSpan.addEvent(it.name, it.timestampNanos.nanosToMillis(), it.attributes)
-                    }
-                    return newSpan.stop(errorCode, endTimeMs)
-                }
-            }
-
+        if (startTimeMs > endTimeMs) {
             return false
         }
+
+        val validName = dataValidator.truncateName(name, internal)
+        val validEvents = dataValidator.truncateEvents(events, internal)
+        val validAttributes = dataValidator.truncateAttributes(attributes, internal)
+
+        if (canStartNewSpan(parent, internal)) {
+            val newSpan = embraceSpanFactory.create(
+                OtelSpanStartArgs(
+                    name = validName,
+                    type = type,
+                    internal = internal,
+                    private = private,
+                    tracer = tracer,
+                    parentCtx = (parent as? EmbraceSdkSpan)?.createContext(openTelemetry),
+                    openTelemetry = openTelemetry,
+                ),
+            )
+            if (newSpan.start(startTimeMs)) {
+                validAttributes.forEach {
+                    newSpan.addAttribute(it.key, it.value)
+                }
+                validEvents.forEach {
+                    newSpan.addEvent(it.name, it.timestampNanos.nanosToMillis(), it.attributes)
+                }
+                return newSpan.stop(errorCode, endTimeMs)
+            }
+        }
+
+        return false
     }
 
     override fun getSpan(spanId: String): EmbraceSpan? = spanRepository.getEmbraceSpan(spanId = spanId)

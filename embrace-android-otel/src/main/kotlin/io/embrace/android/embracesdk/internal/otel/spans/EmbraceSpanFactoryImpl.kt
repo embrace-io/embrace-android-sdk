@@ -58,6 +58,11 @@ class EmbraceSpanFactoryImpl(
 private const val SPAN_LINK_TELEMETRY_TYPE = "span_link"
 private const val SPAN_EVENT_TELEMETRY_TYPE = "span_event"
 
+/**
+ * Sentinel for a start/end time that has not been recorded.
+ */
+private const val UNSET_TIME = 0L
+
 private class EmbraceSpanImpl(
     otelSpanStartArgs: OtelSpanStartArgs,
     private val openTelemetryClock: Clock,
@@ -76,11 +81,12 @@ private class EmbraceSpanImpl(
 
     private val startedSpan: AtomicReference<Span?> = AtomicReference(null)
 
+    // stored as primitives rather than nullable Longs to avoid boxing
     @Volatile
-    private var spanStartTimeMs: Long? = otelSpanStartArgs.startTimeMs
+    private var spanStartTimeMs: Long = otelSpanStartArgs.startTimeMs ?: UNSET_TIME
 
     @Volatile
-    private var spanEndTimeMs: Long? = null
+    private var spanEndTimeMs: Long = UNSET_TIME
 
     override val autoTerminationMode: AutoTerminationMode = otelSpanStartArgs.autoTerminationMode
 
@@ -141,9 +147,12 @@ private class EmbraceSpanImpl(
             return false
         }
 
-        val attemptedStartTimeMs =
-            (startTimeMs?.normalizeTimestampAsMillis() ?: spanStartTimeMs)?.takeIf { it > 0 }
-                ?: openTelemetryClock.now().nanosToMillis()
+        val requestedStartTimeMs = startTimeMs?.normalizeTimestampAsMillis() ?: spanStartTimeMs
+        val attemptedStartTimeMs = if (requestedStartTimeMs > UNSET_TIME) {
+            requestedStartTimeMs
+        } else {
+            openTelemetryClock.now().nanosToMillis()
+        }
 
         synchronized(startedSpan) {
             val args = startArgs ?: return false
@@ -252,7 +261,7 @@ private class EmbraceSpanImpl(
             )
         }
 
-    override fun getStartTimeMs(): Long? = spanStartTimeMs
+    override fun getStartTimeMs(): Long? = spanStartTimeMs.takeIf { it > UNSET_TIME }
 
     override fun addAttribute(key: String, value: String): Boolean {
         if (customAttributes.size < dataValidator.otelLimitsConfig.getMaxCustomAttributeCount() && key.isNotBlank()) {
@@ -313,8 +322,8 @@ private class EmbraceSpanImpl(
                 spanId = spanId,
                 parentSpanId = parent?.spanId ?: OtelIds.INVALID_SPAN_ID,
                 name = name(),
-                startTimeNanos = spanStartTimeMs?.millisToNanos(),
-                endTimeNanos = spanEndTimeMs?.millisToNanos(),
+                startTimeNanos = spanStartTimeMs.takeIf { it > UNSET_TIME }?.millisToNanos(),
+                endTimeNanos = spanEndTimeMs.takeIf { it > UNSET_TIME }?.millisToNanos(),
                 status = status.toEmbracePayload(),
                 events = events(),
                 attributes = getAttributesPayload(),
@@ -376,7 +385,7 @@ private class EmbraceSpanImpl(
     private fun getAttributesPayload(): List<Attribute> =
         systemAttributes.map { Attribute(it.key, it.value) } + customAttributes.redactIfSensitive().toEmbracePayload()
 
-    private fun canSnapshot(): Boolean = spanId != null && spanStartTimeMs != null
+    private fun canSnapshot(): Boolean = spanId != null && spanStartTimeMs > UNSET_TIME
 
     private fun <T> addObject(
         queue: Queue<T>,

@@ -533,6 +533,31 @@ internal class EmbraceSpanImplTest {
     }
 
     @Test
+    fun `start and end times are unset until the span starts and stops`() {
+        assertNull(embraceSpan.getStartTimeMs())
+
+        val expectedStartTimeMs = fakeClock.now()
+        assertTrue(embraceSpan.start())
+        assertEquals(expectedStartTimeMs, embraceSpan.getStartTimeMs())
+        assertNull(embraceSpan.snapshot()?.endTimeNanos)
+
+        val expectedEndTimeMs = fakeClock.tick()
+        assertTrue(embraceSpan.stop())
+        assertEquals(expectedStartTimeMs, embraceSpan.getStartTimeMs())
+        assertEquals(expectedEndTimeMs, embraceSpan.snapshot()?.endTimeNanos?.nanosToMillis())
+    }
+
+    @Test
+    fun `start time from the span builder is reported before the span starts`() {
+        val timeOnWrapper = fakeClock.tick()
+        embraceSpan = embraceSpanFactory.create(createWrapperForInternalSpan(startTimeMs = timeOnWrapper))
+
+        assertEquals(timeOnWrapper, embraceSpan.getStartTimeMs())
+        assertTrue(embraceSpan.start())
+        assertEquals(timeOnWrapper, embraceSpan.getStartTimeMs())
+    }
+
+    @Test
     fun `validate context objects are propagated from the parent to the child span`() {
         val newParentContext = fakeOpenTelemetry().context.root().set(fakeContextKey, "fake-value")
         val wrapper = createWrapperForInternalSpan(parentContext = newParentContext)

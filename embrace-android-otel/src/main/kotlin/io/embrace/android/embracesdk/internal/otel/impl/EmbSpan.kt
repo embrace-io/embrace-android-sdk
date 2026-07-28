@@ -130,7 +130,7 @@ class EmbSpan(
 
     private fun List<Attribute>?.toEmbAttributesMutator(): EmbAttributesMutator {
         val raw = this ?: emptyList()
-        val attrs = raw.filter { entry -> entry.key == null || entry.data == null }
+        val attrs = raw.filter { entry -> entry.key != null && entry.data != null }
         val map = mutableMapOf<String, Any>()
         attrs.forEach { entry -> map[checkNotNull(entry.key)] = checkNotNull(entry.data) }
         return EmbAttributesMutator(map)

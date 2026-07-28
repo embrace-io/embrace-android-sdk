@@ -31,6 +31,7 @@ import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanEventImpl
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
@@ -309,6 +310,56 @@ internal class SpanServiceImplTest {
                 name = "test-pan",
                 startTimeMs = 500,
                 endTimeMs = 499,
+            ),
+        )
+    }
+
+    @Test
+    fun `nanosecond timestamps for a completed span are normalized to millis`() {
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
+
+        assertTrue(
+            spansService.recordCompletedSpan(
+                name = "test-span",
+                startTimeMs = expectedStartTimeMs.millisToNanos(),
+                endTimeMs = expectedEndTimeMs.millisToNanos(),
+            ),
+        )
+
+        with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
+            assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
+        }
+    }
+
+    @Test
+    fun `completed span timestamps are normalized before start and end times are validated`() {
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
+
+        // mixed units: the raw values compare as start > end, but the normalized ones do not
+        assertTrue(
+            spansService.recordCompletedSpan(
+                name = "test-span",
+                startTimeMs = expectedStartTimeMs.millisToNanos(),
+                endTimeMs = expectedEndTimeMs,
+            ),
+        )
+
+        with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
+            assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
+        }
+    }
+
+    @Test
+    fun `validate normalized start and end times for a completed span`() {
+        assertFalse(
+            spansService.recordCompletedSpan(
+                name = "test-span",
+                startTimeMs = (clock.now() + 100L).millisToNanos(),
+                endTimeMs = clock.now().millisToNanos(),
             ),
         )
     }
@@ -667,6 +718,27 @@ internal class SpanServiceImplTest {
             setOf("emb-other-span", "emb-test-span"),
             spanRepository.completedOtelSpans().map { it.name }.toSet(),
         )
+    }
+
+    @Test
+    fun `nanosecond timestamps buffered before initialization are normalized on replay`() {
+        val service = createUninitializedSpanService()
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
+        assertTrue(
+            service.recordCompletedSpan(
+                name = "test-span",
+                startTimeMs = expectedStartTimeMs.millisToNanos(),
+                endTimeMs = expectedEndTimeMs.millisToNanos(),
+            ),
+        )
+
+        service.initializeService(otelClock.now().nanosToMillis())
+
+        with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
+            assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
+        }
     }
 
     @Test

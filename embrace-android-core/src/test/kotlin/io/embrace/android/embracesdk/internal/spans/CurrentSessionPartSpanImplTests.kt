@@ -23,6 +23,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl.Companion.MAX_INTERNAL_SPANS_PER_SESSION
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl.Companion.MAX_NON_INTERNAL_SPANS_PER_SESSION
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
@@ -594,7 +595,8 @@ internal class CurrentSessionPartSpanImplTests {
             stop()
         }
 
-        val spanSnapshot = checkNotNull(span.snapshot())
+        // a stopped span releases its retained link data, so read it back from the exported payload
+        val spanSnapshot = span.exportedSpan()
         val sessionPartSpanSnapshot = checkNotNull(sessionPartSpan.snapshot())
 
         val expectedPartLinkAttrs = mapOf(
@@ -622,7 +624,7 @@ internal class CurrentSessionPartSpanImplTests {
         val earlySpan = spanService.startSpan("early").apply {
             stop()
         }
-        val earlyLink = checkNotNull(checkNotNull(earlySpan.snapshot()).links).single()
+        val earlyLink = checkNotNull(earlySpan.exportedSpan().links).single()
         earlyLink.validateSystemLink(
             linkedSpan = checkNotNull(sessionPartSpan.snapshot()),
             type = LinkType.EndSessionPart,
@@ -640,7 +642,7 @@ internal class CurrentSessionPartSpanImplTests {
         val lateSpan = spanService.startSpan("late").apply {
             stop()
         }
-        checkNotNull(checkNotNull(lateSpan.snapshot()).links).single().validateSystemLink(
+        checkNotNull(lateSpan.exportedSpan().links).single().validateSystemLink(
             linkedSpan = checkNotNull(sessionPartSpan.snapshot()),
             type = LinkType.EndSessionPart,
             expectedAttributes = mapOf(
@@ -666,7 +668,7 @@ internal class CurrentSessionPartSpanImplTests {
             val span = spanService.startSpan("test-$count").apply {
                 stop()
             }
-            checkNotNull(checkNotNull(span.snapshot()).links).single().validateSystemLink(
+            checkNotNull(span.exportedSpan().links).single().validateSystemLink(
                 linkedSpan = checkNotNull(sessionPartSpan.snapshot()),
                 type = LinkType.EndSessionPart,
                 expectedAttributes = expectedPartLinkAttrs,
@@ -711,5 +713,17 @@ internal class CurrentSessionPartSpanImplTests {
     private fun CurrentSessionPartSpan.assertSessionPartSpan() {
         assertTrue(getId().isNotBlank())
         assertTrue(canStartNewSpan(parent = null, internal = true))
+    }
+
+    /**
+     * Retrieves the exported payload for a stopped span. A stopped span releases its retained
+     * event/link collections, so the data must be read back from the exported span rather than
+     * a live [EmbraceSpan.snapshot].
+     */
+    private fun EmbraceSpan.exportedSpan(): Span {
+        val id = checkNotNull(spanId)
+        return checkNotNull(spanRepository.completedOtelSpans().singleOrNull { it.spanId == id }) {
+            "No exported span found with id $id"
+        }
     }
 }

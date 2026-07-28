@@ -104,14 +104,24 @@ private class EmbraceSpanImpl(
             }
         }
 
-    private val systemEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
-    private val customEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
+    // Retained only until the span stops, then nulled out to release the queues. Nulling rather than
+    // clearing keeps the release constant time, as clear() is O(n) on a ConcurrentLinkedQueue.
+    @Volatile
+    private var systemEvents: Queue<EmbraceSpanEvent>? = ConcurrentLinkedQueue()
+
+    @Volatile
+    private var customEvents: Queue<EmbraceSpanEvent>? = ConcurrentLinkedQueue()
+
+    @Volatile
+    private var systemLinks: Queue<EmbraceLinkData>? = ConcurrentLinkedQueue()
+
+    @Volatile
+    private var customLinks: Queue<EmbraceLinkData>? = ConcurrentLinkedQueue()
+
     private val systemAttributes = ConcurrentHashMap<String, String>(otelSpanStartArgs.embraceAttributes.size).apply {
         otelSpanStartArgs.embraceAttributes.forEach { put(it.key, it.value) }
     }
     private val customAttributes = ConcurrentHashMap<String, String>()
-    private val systemLinks = ConcurrentLinkedQueue<EmbraceLinkData>()
-    private val customLinks = ConcurrentLinkedQueue<EmbraceLinkData>()
 
     // size for ConcurrentLinkedQueues is not a constant operation, so it could be subject to race conditions
     // do the bookkeeping separately so we don't have to worry about this
@@ -196,11 +206,24 @@ private class EmbraceSpanImpl(
                 if (successful) {
                     spanEndTimeMs = attemptedEndTimeMs
                     spanRepository.notifySpanUpdate()
+                    releaseRetainedData()
                 }
             }
         }
 
         return successful
+    }
+
+    /**
+     * Once a span has stopped it has been exported to an independent [Span] payload, so its own
+     * event/link collections are redundant. Drop the references to allow GC on the collections during
+     * the remainder of the session part.
+     */
+    private fun releaseRetainedData() {
+        systemEvents = null
+        customEvents = null
+        systemLinks = null
+        customLinks = null
     }
 
     private fun ErrorCode.toEmbraceErrorCode(): ErrorCodeAttribute = when (this) {
@@ -356,22 +379,22 @@ private class EmbraceSpanImpl(
 
     override val spanKind: SpanKind = otelSpanStartArgs.spanKind ?: SpanKind.INTERNAL
 
-    override fun events(): List<SpanEvent> {
-        val redactedCustomEvents = customEvents.mapNotNull {
-            EmbraceSpanEvent.create(
-                name = it.name,
-                timestampMs = it.timestampNanos.nanosToMillis(),
-                attributes = it.attributes.redactIfSensitive(),
-            )
-        }
-        return systemEvents.map(EmbraceSpanEvent::toEmbracePayload) +
-            redactedCustomEvents.map(EmbraceSpanEvent::toEmbracePayload)
-    }
+    override fun events(): List<SpanEvent> =
+        (systemEvents.orEmpty() + redactCustomEvents()).map(EmbraceSpanEvent::toEmbracePayload)
 
-    override fun links(): List<Link> {
-        val redactedCustomLinks = customLinks.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
-        return (systemLinks + redactedCustomLinks).map(EmbraceLinkData::toEmbracePayload)
-    }
+    override fun links(): List<Link> =
+        (systemLinks.orEmpty() + redactCustomLinks()).map(EmbraceLinkData::toEmbracePayload)
+
+    private fun redactCustomEvents(): List<EmbraceSpanEvent> = customEvents?.mapNotNull {
+        EmbraceSpanEvent.create(
+            name = it.name,
+            timestampMs = it.timestampNanos.nanosToMillis(),
+            attributes = it.attributes.redactIfSensitive(),
+        )
+    }.orEmpty()
+
+    private fun redactCustomLinks(): List<EmbraceLinkData> =
+        customLinks?.map { it.copy(attributes = it.attributes.redactIfSensitive()) }.orEmpty()
 
     private fun getAttributesPayload(): List<Attribute> =
         systemAttributes.map { Attribute(it.key, it.value) } + customAttributes.redactIfSensitive().toEmbracePayload()
@@ -379,13 +402,13 @@ private class EmbraceSpanImpl(
     private fun canSnapshot(): Boolean = spanId != null && spanStartTimeMs != null
 
     private fun <T> addObject(
-        queue: Queue<T>,
+        queue: Queue<T>?,
         count: AtomicInteger,
         max: Int,
         telemetryType: String,
         objectSupplier: () -> T?,
     ): Boolean {
-        if (count.get() < max) {
+        if (queue != null && count.get() < max) {
             synchronized(count) {
                 if (count.get() < max && isRecording) {
                     objectSupplier()?.apply {
@@ -420,14 +443,7 @@ private class EmbraceSpanImpl(
     }
 
     private fun populateEvents(spanToStop: Span) {
-        val redactedCustomEvents = customEvents.mapNotNull {
-            EmbraceSpanEvent.create(
-                name = it.name,
-                timestampMs = it.timestampNanos.nanosToMillis(),
-                attributes = it.attributes.redactIfSensitive(),
-            )
-        }
-        (systemEvents + redactedCustomEvents).forEach { event ->
+        (systemEvents.orEmpty() + redactCustomEvents()).forEach { event ->
             val eventAttributes = dataValidator.truncateAttributes(event.attributes, internal)
 
             spanToStop.addEvent(
@@ -440,9 +456,7 @@ private class EmbraceSpanImpl(
     }
 
     private fun populateLinks(spanToStop: Span) {
-        val redactedCustomLinks = customLinks.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
-
-        (systemLinks + redactedCustomLinks).forEach {
+        (systemLinks.orEmpty() + redactCustomLinks()).forEach {
             val linkAttributes = dataValidator.truncateAttributes(it.attributes, false)
             spanToStop.addLink(it.spanContext) {
                 setAttributes(linkAttributes)

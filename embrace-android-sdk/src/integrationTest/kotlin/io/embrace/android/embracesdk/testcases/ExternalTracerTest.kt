@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
+import io.embrace.android.embracesdk.assertions.toMap
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
@@ -313,18 +314,24 @@ internal class ExternalTracerTest {
                 }
             },
             assertAction = {
-                val recorded = checkNotNull(span)
+                // a stopped span releases its retained event/link data, so read it back from the
+                // exported session payload rather than the live span
+                checkNotNull(span)
+                val sessionMessage = getSingleSessionEnvelope()
+                val recorded = checkNotNull(sessionMessage.data.spans?.singleOrNull { it.name == "attr-span" })
 
                 // all attribute values are stringified when written, so they read back as strings
-                with(recorded.events.single { it.name == "my-event" }) {
-                    assertEquals(2, attributes.size)
-                    assertEquals("event-value", attributes["event-key"])
-                    assertEquals("3", attributes["event-count"])
+                with(checkNotNull(recorded.events).single { it.name == "my-event" }) {
+                    val eventAttrs = checkNotNull(attributes).toMap()
+                    assertEquals(2, eventAttrs.size)
+                    assertEquals("event-value", eventAttrs["event-key"])
+                    assertEquals("3", eventAttrs["event-count"])
                 }
 
-                with(recorded.links.single { it.spanContext.spanId == linkedSpanId }) {
-                    assertEquals(1, attributes.size)
-                    assertEquals("true", attributes["link-flag"])
+                with(checkNotNull(recorded.links).single { it.spanId == linkedSpanId }) {
+                    val linkAttrs = checkNotNull(attributes).toMap()
+                    assertEquals(1, linkAttrs.size)
+                    assertEquals("true", linkAttrs["link-flag"])
                 }
             }
         )

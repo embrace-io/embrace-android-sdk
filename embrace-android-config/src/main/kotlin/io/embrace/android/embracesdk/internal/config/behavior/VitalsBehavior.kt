@@ -37,4 +37,11 @@ interface VitalsBehavior {
      * as a diagnostic aid while smoothness thresholds are being tuned.
      */
     fun isSmoothnessFrameTraceEnabled(): Boolean
+
+    /**
+     * The maximum number of vitals spans (smoothness and screen-load combined) that may be emitted per session
+     * part. Vitals emits a span per user gesture and per navigation, so this caps the share of the session's
+     * span budget that the feature can consume.
+     */
+    fun getSpanLimit(): Int
 }

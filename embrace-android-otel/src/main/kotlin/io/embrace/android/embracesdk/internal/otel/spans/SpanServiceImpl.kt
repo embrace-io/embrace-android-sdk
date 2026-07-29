@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.tracing.Tracer
 import java.util.concurrent.atomic.AtomicBoolean
@@ -81,7 +81,7 @@ class SpanServiceImpl(
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,
-        events: List<EmbraceSpanEvent>,
+        events: List<SpanEvent>,
         autoTerminationMode: AutoTerminationMode,
         code: () -> T,
     ): T {
@@ -111,7 +111,7 @@ class SpanServiceImpl(
             returnValue = code()
             span?.stop()
         } catch (t: Throwable) {
-            span?.stop(ErrorCode.FAILURE)
+            span?.stopWithErrorCode(ErrorCodeAttribute.Failure)
             throw t
         }
 
@@ -127,8 +127,8 @@ class SpanServiceImpl(
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,
-        events: List<EmbraceSpanEvent>,
-        errorCode: ErrorCode?,
+        events: List<SpanEvent>,
+        errorCode: ErrorCodeAttribute?,
     ): Boolean {
         if (startTimeMs > endTimeMs) {
             return false
@@ -157,7 +157,7 @@ class SpanServiceImpl(
                 validEvents.forEach {
                     newSpan.addEvent(it.name, it.timestampNanos.nanosToMillis(), it.attributes)
                 }
-                return newSpan.stop(errorCode, endTimeMs)
+                return newSpan.stopWithErrorCode(errorCode, endTimeMs)
             }
         }
 

@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.tracing.Tracer
 
@@ -80,7 +80,7 @@ class EmbraceSpanService(
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,
-        events: List<EmbraceSpanEvent>,
+        events: List<SpanEvent>,
         autoTerminationMode: AutoTerminationMode,
         code: () -> T,
     ): T = currentDelegate.recordSpan(
@@ -104,8 +104,8 @@ class EmbraceSpanService(
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,
-        events: List<EmbraceSpanEvent>,
-        errorCode: ErrorCode?,
+        events: List<SpanEvent>,
+        errorCode: ErrorCodeAttribute?,
     ): Boolean = currentDelegate.recordCompletedSpan(
         name = name,
         startTimeMs = startTimeMs,

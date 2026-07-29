@@ -174,7 +174,10 @@ private class EmbraceSpanImpl(
         return true
     }
 
-    override fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean {
+    override fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean =
+        stopWithErrorCode(errorCode?.toErrorCodeAttribute(), endTimeMs)
+
+    override fun stopWithErrorCode(errorCode: ErrorCodeAttribute?, endTimeMs: Long?): Boolean {
         if (!isRecording) {
             return false
         }
@@ -190,7 +193,7 @@ private class EmbraceSpanImpl(
                 spanId?.let { stopCallback?.invoke(it) }
                 if (errorCode != null) {
                     status = StatusData.Error(null)
-                    spanToStop.setEmbraceAttribute(errorCode.toEmbraceErrorCode())
+                    spanToStop.setEmbraceAttribute(errorCode)
                 } else if (status is StatusData.Error) {
                     spanToStop.setEmbraceAttribute(ErrorCodeAttribute.Failure)
                 }
@@ -210,12 +213,6 @@ private class EmbraceSpanImpl(
         }
 
         return successful
-    }
-
-    private fun ErrorCode.toEmbraceErrorCode(): ErrorCodeAttribute = when (this) {
-        ErrorCode.FAILURE -> ErrorCodeAttribute.Failure
-        ErrorCode.USER_ABANDON -> ErrorCodeAttribute.UserAbandon
-        ErrorCode.UNKNOWN -> ErrorCodeAttribute.Unknown
     }
 
     override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>): Boolean =

@@ -68,26 +68,29 @@ internal class CurrentSessionPartSpanImpl(
     override fun initialized(): Boolean = initialized
 
     /**
-     * Creating a new Span is only possible if the current session part span is active, the parent has already been started, and the total
-     * session trace limit has not been reached. Once this method returns true, a new span is assumed to have been created and will
-     * be counted as such towards the limits, so make sure there's no case afterwards where a Span is not created.
+     * Creating a new Span is only possible if the current session part span is active, the parent has already been started, and the
+     * session trace limit for the span's budget has not been reached. Network request spans draw from their own budget so that a
+     * network-heavy app cannot starve the rest of the SDK's instrumentation. Once this method returns true, a new span is assumed to
+     * have been created and will be counted as such towards the limits, so make sure there's no case afterwards where a Span is not
+     * created.
      */
-    override fun canStartNewSpan(parent: EmbraceSpan?, internal: Boolean): Boolean {
+    override fun canStartNewSpan(parent: EmbraceSpan?, internal: Boolean, type: EmbType): Boolean {
         val state = sessionPartState ?: return false
         if (!state.isReady || (parent != null && parent.spanId == null)) {
             return false
         }
 
-        return if (internal) {
-            checkTraceCount(state.internalTraceCount, MAX_INTERNAL_SPANS_PER_SESSION)
-        } else {
-            checkTraceCount(state.traceCount, MAX_NON_INTERNAL_SPANS_PER_SESSION)
+        return when {
+            !internal -> checkTraceCount(state.traceCount, MAX_NON_INTERNAL_SPANS_PER_SESSION, SPAN_LIMIT_LABEL)
+            type == EmbType.Performance.Network ->
+                checkTraceCount(state.networkTraceCount, MAX_NETWORK_SPANS_PER_SESSION, NETWORK_SPAN_LIMIT_LABEL)
+            else -> checkTraceCount(state.internalTraceCount, MAX_INTERNAL_SPANS_PER_SESSION, SPAN_LIMIT_LABEL)
         }
     }
 
-    private fun checkTraceCount(counter: AtomicInteger, limit: Int): Boolean {
+    private fun checkTraceCount(counter: AtomicInteger, limit: Int, limitLabel: String): Boolean {
         return if (counter.get() >= limit) {
-            telemetryService.trackAppliedLimit("span", AppliedLimitType.DROP)
+            telemetryService.trackAppliedLimit(limitLabel, AppliedLimitType.DROP)
             false
         } else {
             counter.getAndIncrement() < limit
@@ -230,6 +233,7 @@ internal class CurrentSessionPartSpanImpl(
     private class SessionPartState(val span: EmbraceSdkSpan, val sessionPartId: String) {
         val traceCount: AtomicInteger = AtomicInteger(0)
         val internalTraceCount: AtomicInteger = AtomicInteger(0)
+        val networkTraceCount: AtomicInteger = AtomicInteger(0)
 
         /**
          * Memoized link attributes for this session part. Only set once the user session attributes have been populated on the
@@ -264,7 +268,15 @@ internal class CurrentSessionPartSpanImpl(
     }
 
     companion object {
-        const val MAX_INTERNAL_SPANS_PER_SESSION: Int = 5000
+        /**
+         * Budget for internal spans other than network requests. Network requests dominate all other span types, so they are
+         * excluded from this budget and given [MAX_NETWORK_SPANS_PER_SESSION] instead.
+         */
+        const val MAX_INTERNAL_SPANS_PER_SESSION: Int = 1500
+        const val MAX_NETWORK_SPANS_PER_SESSION: Int = 1000
         const val MAX_NON_INTERNAL_SPANS_PER_SESSION: Int = 500
+
+        private const val SPAN_LIMIT_LABEL = "span"
+        private const val NETWORK_SPAN_LIMIT_LABEL = "network_span"
     }
 }

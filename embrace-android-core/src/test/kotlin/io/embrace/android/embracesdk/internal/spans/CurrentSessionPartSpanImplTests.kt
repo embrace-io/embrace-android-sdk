@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSpanFactory
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
+import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -24,7 +25,9 @@ import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl.Companion.MAX_INTERNAL_SPANS_PER_SESSION
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl.Companion.MAX_NETWORK_SPANS_PER_SESSION
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl.Companion.MAX_NON_INTERNAL_SPANS_PER_SESSION
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -103,18 +106,18 @@ internal class CurrentSessionPartSpanImplTests {
 
     @Test
     fun `cannot create child if parent not started`() {
-        assertFalse(currentSessionPartSpan.canStartNewSpan(FakeEmbraceSdkSpan(), false))
+        assertFalse(currentSessionPartSpan.canStartNewSpan(FakeEmbraceSdkSpan(), false, EmbType.Performance.Default))
     }
 
     @Test
     fun `can create child if parent has stopped`() {
-        assertTrue(currentSessionPartSpan.canStartNewSpan(FakeEmbraceSdkSpan.stopped(), false))
+        assertTrue(currentSessionPartSpan.canStartNewSpan(FakeEmbraceSdkSpan.stopped(), false, EmbType.Performance.Default))
     }
 
     @Test
     fun `after ending session with app termination, spans cannot be recorded`() {
         currentSessionPartSpan.endSession(true, AppTerminationCause.UserTermination)
-        assertFalse(currentSessionPartSpan.canStartNewSpan(null, true))
+        assertFalse(currentSessionPartSpan.canStartNewSpan(null, true, EmbType.Performance.Default))
     }
 
     @Test
@@ -137,7 +140,7 @@ internal class CurrentSessionPartSpanImplTests {
     }
 
     @Test
-    fun `check trace limits with maximum internal not started traces`() {
+    fun `check trace limits with maximum non-network internal not started traces`() {
         repeat(MAX_NON_INTERNAL_SPANS_PER_SESSION) {
             assertNotNull(
                 spanService.createSpan(
@@ -155,13 +158,128 @@ internal class CurrentSessionPartSpanImplTests {
         )
 
         repeat(MAX_INTERNAL_SPANS_PER_SESSION) {
-            assertNotNull(spanService.createSpan(name = "internal$it"))
+            assertNotNull(spanService.createSpan(name = "internal$it", type = EmbType.Performance.Default))
         }
         assertEquals(
             NoopEmbraceSdkSpan,
-            spanService.createSpan(name = "failed-span"),
+            spanService.createSpan(name = "failed-span", type = EmbType.Performance.Default),
         )
     }
+
+    @Test
+    fun `network request spans have their own limit`() {
+        repeat(MAX_NETWORK_SPANS_PER_SESSION) {
+            assertNotEquals(NoopEmbraceSdkSpan, createNetworkSpan(it))
+        }
+        assertEquals(NoopEmbraceSdkSpan, createNetworkSpan(MAX_NETWORK_SPANS_PER_SESSION))
+    }
+
+    @Test
+    fun `exhausting the network limit does not consume the internal span budget`() {
+        exhaustNetworkSpanBudget()
+
+        repeat(MAX_INTERNAL_SPANS_PER_SESSION) {
+            assertNotEquals(NoopEmbraceSdkSpan, createInternalSpan(it))
+        }
+        assertEquals(NoopEmbraceSdkSpan, createInternalSpan(MAX_INTERNAL_SPANS_PER_SESSION))
+    }
+
+    @Test
+    fun `exhausting the internal limit does not consume the network span budget`() {
+        repeat(MAX_INTERNAL_SPANS_PER_SESSION) {
+            assertNotEquals(NoopEmbraceSdkSpan, createInternalSpan(it))
+        }
+        assertEquals(NoopEmbraceSdkSpan, createInternalSpan(MAX_INTERNAL_SPANS_PER_SESSION))
+
+        repeat(MAX_NETWORK_SPANS_PER_SESSION) {
+            assertNotEquals(NoopEmbraceSdkSpan, createNetworkSpan(it))
+        }
+        assertEquals(NoopEmbraceSdkSpan, createNetworkSpan(MAX_NETWORK_SPANS_PER_SESSION))
+    }
+
+    @Test
+    fun `exhausting the network limit does not consume the non-internal span budget`() {
+        exhaustNetworkSpanBudget()
+
+        repeat(MAX_NON_INTERNAL_SPANS_PER_SESSION) {
+            assertNotEquals(NoopEmbraceSdkSpan, spanService.createSpan(name = "public$it", internal = false))
+        }
+        assertEquals(NoopEmbraceSdkSpan, spanService.createSpan(name = "failed-span", internal = false))
+    }
+
+    @Test
+    fun `network span limit applies to completed spans and spans created with the span builder`() {
+        repeat(MAX_NETWORK_SPANS_PER_SESSION) {
+            assertTrue(
+                spanService.recordCompletedSpan(
+                    name = "GET /network$it",
+                    startTimeMs = 100L,
+                    endTimeMs = 200L,
+                    type = EmbType.Performance.Network,
+                ),
+            )
+        }
+        assertFalse(
+            spanService.recordCompletedSpan(
+                name = "GET /failed",
+                startTimeMs = 100L,
+                endTimeMs = 200L,
+                type = EmbType.Performance.Network,
+            ),
+        )
+        assertEquals(NoopEmbraceSdkSpan, spanService.createSpan(networkSpanStartArgs()))
+
+        // the internal budget is untouched by the exhausted network budget
+        assertNotEquals(NoopEmbraceSdkSpan, createInternalSpan(0))
+    }
+
+    @Test
+    fun `network span budget resets when a new session part starts`() {
+        exhaustNetworkSpanBudget()
+
+        currentSessionPartSpan.endSession(startNewSession = true)
+
+        assertNotEquals(NoopEmbraceSdkSpan, createNetworkSpan(0))
+    }
+
+    @Test
+    fun `dropped network spans are tracked separately from other dropped spans`() {
+        val fakeTelemetryService = FakeTelemetryService()
+        val initModule = FakeInitModule(clock = clock, fakeTelemetryService = fakeTelemetryService)
+        spanService = initModule.openTelemetryModule.spanService
+        spanService.initializeService(clock.now())
+
+        exhaustNetworkSpanBudget()
+        createNetworkSpan(MAX_NETWORK_SPANS_PER_SESSION)
+
+        assertEquals(listOf("network_span" to AppliedLimitType.DROP), fakeTelemetryService.appliedLimits)
+
+        repeat(MAX_INTERNAL_SPANS_PER_SESSION + 1) { createInternalSpan(it) }
+
+        assertEquals(
+            listOf("network_span" to AppliedLimitType.DROP, "span" to AppliedLimitType.DROP),
+            fakeTelemetryService.appliedLimits,
+        )
+    }
+
+    private fun createNetworkSpan(index: Int) =
+        spanService.createSpan(name = "GET /network$index", type = EmbType.Performance.Network)
+
+    private fun createInternalSpan(index: Int) =
+        spanService.createSpan(name = "internal$index", type = EmbType.Performance.Default)
+
+    private fun exhaustNetworkSpanBudget() {
+        repeat(MAX_NETWORK_SPANS_PER_SESSION) { createNetworkSpan(it) }
+    }
+
+    private fun networkSpanStartArgs() = OtelSpanStartArgs(
+        name = "GET /builder",
+        type = EmbType.Performance.Network,
+        internal = true,
+        private = false,
+        tracer = tracer,
+        openTelemetry = openTelemetry,
+    )
 
     @Test
     fun `check trace limited applied to spans created with span builder`() {
@@ -704,12 +822,12 @@ internal class CurrentSessionPartSpanImplTests {
 
     private fun CurrentSessionPartSpan.assertNoSessionPartSpan() {
         assertEquals("", getId())
-        assertFalse(canStartNewSpan(parent = null, internal = true))
+        assertFalse(canStartNewSpan(parent = null, internal = true, type = EmbType.Performance.Default))
         assertTrue(endSession(true).isEmpty())
     }
 
     private fun CurrentSessionPartSpan.assertSessionPartSpan() {
         assertTrue(getId().isNotBlank())
-        assertTrue(canStartNewSpan(parent = null, internal = true))
+        assertTrue(canStartNewSpan(parent = null, internal = true, type = EmbType.Performance.Default))
     }
 }

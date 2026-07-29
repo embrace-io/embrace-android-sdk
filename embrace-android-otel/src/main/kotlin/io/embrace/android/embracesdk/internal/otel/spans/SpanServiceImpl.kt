@@ -19,7 +19,7 @@ class SpanServiceImpl(
     private val spanRepository: SpanRepository,
     private val embraceSpanFactory: EmbraceSpanFactory,
     private val dataValidator: DataValidator,
-    private val canStartNewSpan: (parentSpan: EmbraceSpan?, internal: Boolean) -> Boolean,
+    private val canStartNewSpan: (parentSpan: EmbraceSpan?, internal: Boolean, type: EmbType) -> Boolean,
     private val initCallback: (initTimeMs: Long) -> Unit,
     private val openTelemetry: OpenTelemetry,
 ) : SpanService {
@@ -42,7 +42,7 @@ class SpanServiceImpl(
         private: Boolean,
         autoTerminationMode: AutoTerminationMode,
     ): EmbraceSdkSpan {
-        return if (name.isNotBlank() && canStartNewSpan(parent, internal)) {
+        return if (name.isNotBlank() && canStartNewSpan(parent, internal, type)) {
             embraceSpanFactory.create(
                 OtelSpanStartArgs(
                     name = dataValidator.truncateName(name, internal),
@@ -66,6 +66,7 @@ class SpanServiceImpl(
             canStartNewSpan(
                 otelSpanStartArgs.parentContext.getEmbraceSpan(openTelemetry),
                 otelSpanStartArgs.internal,
+                otelSpanStartArgs.type,
             )
         ) {
             embraceSpanFactory.create(otelSpanStartArgs)
@@ -138,7 +139,7 @@ class SpanServiceImpl(
         val validEvents = dataValidator.truncateEvents(events, internal)
         val validAttributes = dataValidator.truncateAttributes(attributes, internal)
 
-        if (canStartNewSpan(parent, internal)) {
+        if (canStartNewSpan(parent, internal, type)) {
             val newSpan = embraceSpanFactory.create(
                 OtelSpanStartArgs(
                     name = validName,

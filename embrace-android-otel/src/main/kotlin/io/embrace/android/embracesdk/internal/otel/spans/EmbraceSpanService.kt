@@ -18,7 +18,7 @@ import io.opentelemetry.kotlin.tracing.Tracer
 class EmbraceSpanService(
     private val spanRepository: SpanRepository,
     private val dataValidator: DataValidator,
-    private val canStartNewSpan: (parentSpan: EmbraceSpan?, internal: Boolean) -> Boolean,
+    private val canStartNewSpan: (parentSpan: EmbraceSpan?, internal: Boolean, type: EmbType) -> Boolean,
     private val initCallback: (initTimeMs: Long) -> Unit,
     private val embraceSpanFactorySupplier: Provider<EmbraceSpanFactory>,
     private val tracerSupplier: Provider<Tracer>,

@@ -61,7 +61,7 @@ internal class TelemetryDestinationHarness {
         return EmbraceSpanService(
             spanRepository = otelModule.spanRepository,
             dataValidator = validator,
-            canStartNewSpan = { _, _ -> true },
+            canStartNewSpan = { _, _, _ -> true },
             initCallback = {},
             embraceSpanFactorySupplier = { factory },
             tracerSupplier = { otelModule.otelSdkWrapper.sdkTracer },

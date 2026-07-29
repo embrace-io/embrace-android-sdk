@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceBinary
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.serialization.decodeFromStream
 import io.embrace.android.embracesdk.internal.serialization.encodeToStream
-import io.embrace.android.embracesdk.internal.serialization.fromJson
 import io.embrace.android.embracesdk.internal.serialization.toJson
 import java.io.File
 
@@ -57,7 +56,7 @@ internal class RemoteConfigStoreImpl(
     private fun loadFromJson(): StoredConfigResponse? {
         return try {
             val cfg = configFile.inputStream().buffered().use {
-                serializer.fromJson<RemoteConfig>(it)
+                serializer.fromJson(it, RemoteConfig.serializer())
             }
             StoredConfigResponse(
                 cfg = cfg,

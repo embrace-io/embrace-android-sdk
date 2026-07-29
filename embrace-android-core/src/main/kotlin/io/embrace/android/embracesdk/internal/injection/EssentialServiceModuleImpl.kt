@@ -77,7 +77,7 @@ class EssentialServiceModuleImpl(
     override val telemetryDestination: TelemetryDestination = TelemetryDestinationImpl(
         clock = initModule.clock,
         spanService = openTelemetryModule.spanService,
-        eventService = openTelemetryModule.eventService,
+        loggerSupplier = { openTelemetryModule.otelSdkWrapper.sdkLogger },
         currentSessionPartSpan = openTelemetryModule.currentSessionPartSpan,
     )
 

@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.injection
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
-import io.embrace.android.embracesdk.internal.otel.logs.EventService
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
@@ -42,11 +41,6 @@ interface OpenTelemetryModule {
      * Implementation of public tracing API
      */
     val tracingApi: TracingApi
-
-    /**
-     * Service to record events
-     */
-    val eventService: EventService
 
     /**
      * Provides storage for completed logs that have not been forwarded yet to the delivery service

@@ -6,8 +6,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.impl.EmbClock
-import io.embrace.android.embracesdk.internal.otel.logs.EventService
-import io.embrace.android.embracesdk.internal.otel.logs.EventServiceImpl
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
@@ -140,10 +138,6 @@ class OpenTelemetryModuleImpl(
 
     override val tracingApi: TracingApi = TracingApiDelegate(
         spanService = spanService,
-    )
-
-    override val eventService: EventService = EventServiceImpl(
-        sdkLoggerProvider = { otelSdkWrapper.sdkLogger },
     )
 
     fun redactionFunction(key: String, value: String): String {

@@ -1,7 +1,10 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
 import android.os.Build
+import android.preference.PreferenceManager
 import androidx.lifecycle.LifecycleOwner
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
@@ -289,6 +292,8 @@ internal class ModuleInitBootstrapper(
                 if (isInitialized()) {
                     return false
                 }
+                val workerThreadModule = workerThreadModuleSupplier()
+                prewarmSharedPreferences(context, workerThreadModule)
                 delegate = InitializedModuleGraph(
                     context,
                     versionChecker,
@@ -296,7 +301,7 @@ internal class ModuleInitBootstrapper(
                     openTelemetryModule,
                     coreModuleSupplier,
                     configServiceSupplier,
-                    workerThreadModuleSupplier,
+                    { workerThreadModule },
                     storageServiceSupplier,
                     essentialServiceModuleSupplier,
                     featureModuleSupplier,
@@ -332,4 +337,17 @@ internal class ModuleInitBootstrapper(
     }
 
     private fun isInitialized(): Boolean = delegate != UninitializedModuleGraph
+
+    /**
+     * Touches the default `SharedPreferences` on a background worker as early as possible to speculatively
+     * attempt to reduce the amount of time Android blocks with `awaitLoadedLocked` later on in SDK init.
+     */
+    private fun prewarmSharedPreferences(context: Context, workerThreadModule: WorkerThreadModule) {
+        workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker).submit {
+            try {
+                PreferenceManager.getDefaultSharedPreferences(context)
+            } catch (ignored: Throwable) {
+            }
+        }
+    }
 }

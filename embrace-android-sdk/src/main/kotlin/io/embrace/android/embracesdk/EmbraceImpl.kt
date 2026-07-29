@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.InternalInterfaceApi
 import io.embrace.android.embracesdk.internal.ReactNativeInternalInterface
 import io.embrace.android.embracesdk.internal.UnityInternalInterface
 import io.embrace.android.embracesdk.internal.api.BreadcrumbApi
+import io.embrace.android.embracesdk.internal.api.ExperimentApi
 import io.embrace.android.embracesdk.internal.api.InstrumentationApi
 import io.embrace.android.embracesdk.internal.api.LogsApi
 import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
@@ -20,6 +21,7 @@ import io.embrace.android.embracesdk.internal.api.UserApi
 import io.embrace.android.embracesdk.internal.api.UserSessionApi
 import io.embrace.android.embracesdk.internal.api.ViewTrackingApi
 import io.embrace.android.embracesdk.internal.api.delegate.BreadcrumbApiDelegate
+import io.embrace.android.embracesdk.internal.api.delegate.ExperimentApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.InstrumentationApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.LogsApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.NetworkRequestApiDelegate
@@ -77,6 +79,7 @@ internal class EmbraceImpl(
     private val breadcrumbApiDelegate: BreadcrumbApiDelegate = BreadcrumbApiDelegate(bootstrapper, sdkCallChecker),
     private val instrumentationApiDelegate: InstrumentationApiDelegate =
         InstrumentationApiDelegate(bootstrapper, sdkCallChecker),
+    private val experimentApiDelegate: ExperimentApiDelegate = ExperimentApiDelegate(bootstrapper, sdkCallChecker),
 ) : SdkApi,
     LogsApi by logsApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
@@ -88,6 +91,7 @@ internal class EmbraceImpl(
     ViewTrackingApi by viewTrackingApiDelegate,
     BreadcrumbApi by breadcrumbApiDelegate,
     InstrumentationApi by instrumentationApiDelegate,
+    ExperimentApi by experimentApiDelegate,
     InternalInterfaceApi {
 
     init {
@@ -125,6 +129,7 @@ internal class EmbraceImpl(
                         // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
                         // so we allow external calls.
                         sdkCallChecker.started.set(true)
+                        experimentApiDelegate.flushPendingCalls()
                         bootstrapper.registerListeners()
                         bootstrapper.loadInstrumentation()
                         initializeHucInstrumentation(bootstrapper.configService.networkBehavior)

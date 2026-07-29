@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.fakes.injection
 
 import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
+import io.embrace.android.embracesdk.fakes.FakeExperimentTrackingService
 import io.embrace.android.embracesdk.fakes.FakeNavigationTrackingService
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
@@ -26,4 +27,5 @@ class FakeEssentialServiceModule(
     override val networkConnectivityService: NetworkConnectivityService = FakeNetworkConnectivityService(),
     override val telemetryDestination: TelemetryDestination = FakeTelemetryDestination(),
     override val userSessionPropertiesService: FakeUserSessionPropertiesService = FakeUserSessionPropertiesService(),
+    override val experimentTrackingService: FakeExperimentTrackingService = FakeExperimentTrackingService(),
 ) : EssentialServiceModule

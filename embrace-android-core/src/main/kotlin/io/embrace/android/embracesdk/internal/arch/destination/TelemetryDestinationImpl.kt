@@ -43,7 +43,6 @@ class TelemetryDestinationImpl(
         severity: LogSeverity,
         message: String,
         isPrivate: Boolean,
-        addCurrentSessionInfo: Boolean,
         timestampMs: Long?,
     ) {
         val logTimeMs = timestampMs ?: clock.now()
@@ -61,7 +60,6 @@ class TelemetryDestinationImpl(
             context = null,
             severityNumber = severityNumber,
             severityText = getSeverityText(severityNumber),
-            addCurrentMetadata = addCurrentSessionInfo,
         ) {
             if (isPrivate) {
                 setStringAttribute(PrivateSpan.key, PrivateSpan.value)

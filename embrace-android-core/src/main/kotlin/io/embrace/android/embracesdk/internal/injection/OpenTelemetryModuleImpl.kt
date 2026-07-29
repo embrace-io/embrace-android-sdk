@@ -35,6 +35,7 @@ class OpenTelemetryModuleImpl(
     private val processIdentifierProvider: () -> String by lazy { IdGenerator.Companion::generateLaunchInstanceId }
     private var storedSessionIdsProvider: SessionIdsProvider? = null
     private var storedUserIdProvider: (() -> String?)? = null
+    private var storedEventMetadataProvider: (() -> Map<String, String>)? = null
     private var otelBehavior: OtelBehavior? = null
 
     override val spanRepository: SpanRepository by lazy {
@@ -50,8 +51,10 @@ class OpenTelemetryModuleImpl(
             appVersion = initModule.instrumentedConfig.project.getVersionName() ?: "UNKNOWN",
             packageName = initModule.instrumentedConfig.project.getPackageName() ?: "UNKNOWN",
             systemInfo = initModule.systemInfo,
+            uuidSource = initModule.uuidSource,
             sessionIdsProvider = { storedSessionIdsProvider },
             userIdProvider = { storedUserIdProvider?.invoke() },
+            eventMetadataProvider = { storedEventMetadataProvider?.invoke() ?: emptyMap() },
             processIdentifierProvider = processIdentifierProvider,
         )
     }
@@ -63,7 +66,6 @@ class OpenTelemetryModuleImpl(
                     otelClock = openTelemetryClock,
                     configuration = otelSdkConfig,
                     spanService = spanService,
-                    eventService = eventService,
                     // adding guard in case this is accessed before we fetch the config
                     useKotlinSdk = otelBehavior?.shouldUseKotlinSdk() ?: false,
                 )
@@ -92,6 +94,10 @@ class OpenTelemetryModuleImpl(
 
     override fun setUserIdProvider(userIdProvider: () -> String?) {
         storedUserIdProvider = userIdProvider
+    }
+
+    override fun setEventMetadataProvider(eventMetadataProvider: () -> Map<String, String>) {
+        storedEventMetadataProvider = eventMetadataProvider
     }
 
     private var internalSpanStopCallback: ((spanId: String) -> Unit)? = null
@@ -149,7 +155,6 @@ class OpenTelemetryModuleImpl(
     override val eventService: EventService by lazy {
         EventServiceImpl(
             sdkLoggerProvider = { otelSdkWrapper.sdkLogger },
-            uuidSource = initModule.uuidSource,
         )
     }
 

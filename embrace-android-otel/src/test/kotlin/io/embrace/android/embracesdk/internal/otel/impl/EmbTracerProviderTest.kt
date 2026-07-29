@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeLoggerProvider
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.FakeTracerProvider
@@ -24,9 +23,7 @@ internal class EmbTracerProviderTest {
     fun setup() {
         spanService = FakeSpanService()
         sdkTracerProvider = FakeTracerProvider()
-        val otel = EmbOpenTelemetry(NoopOpenTelemetry, ::sdkTracerProvider) {
-            FakeLoggerProvider()
-        }
+        val otel = EmbOpenTelemetry(NoopOpenTelemetry, ::sdkTracerProvider)
         embTracerProvider = EmbTracerProvider(
             impl = otel,
             spanService = spanService,

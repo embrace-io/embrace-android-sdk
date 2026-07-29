@@ -76,4 +76,10 @@ interface OpenTelemetryModule {
      * Provide the current user ID to be stamped on OTel spans at the time they start
      */
     fun setUserIdProvider(userIdProvider: () -> String?)
+
+    /**
+     * Provide a snapshot of the metadata that describes the current state of the SDK, which is stamped on
+     * OTel log records at the time they are emitted
+     */
+    fun setEventMetadataProvider(eventMetadataProvider: () -> Map<String, String>)
 }

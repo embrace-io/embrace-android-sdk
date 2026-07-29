@@ -38,6 +38,10 @@ internal class NativeCrashDataSourceImpl(
         captureTelemetry {
             val nativeCrashNumber = args.ordinalStore.incrementAndGet(Ordinal.NATIVE_CRASH)
             val crashAttributes = TelemetryAttributes().apply {
+
+                // the session IDs are those of the session that crashed. The log pipeline should
+                // leave them alone rather than adding the current session metadata
+
                 setAttribute(
                     key = EmbSessionAttributes.EMB_SESSION_PART_ID,
                     value = nativeCrash.sessionPartId,
@@ -88,7 +92,6 @@ internal class NativeCrashDataSourceImpl(
                 schemaType = SchemaType.NativeCrash(crashAttributes),
                 severity = LogSeverity.ERROR,
                 message = "",
-                addCurrentSessionInfo = false,
                 timestampMs = nativeCrash.timestamp,
             )
         }

@@ -9,12 +9,9 @@ import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
-import io.embrace.android.embracesdk.internal.otel.logs.EventServiceImpl
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
-import io.embrace.android.embracesdk.internal.utils.Provider
-import io.opentelemetry.kotlin.logging.Logger
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -35,7 +32,7 @@ internal class OpenTelemetrySdkTest {
         spanRepository = SpanRepository()
         logSink = LogSinkImpl()
         systemInfo = SystemInfo()
-        sdk = createSdkWrapper { sdk.sdkLogger }
+        sdk = createSdkWrapper()
     }
 
     @Test
@@ -117,7 +114,7 @@ internal class OpenTelemetrySdkTest {
 
     @Test
     fun `verify that the default StorageContext is used if Java SDK is used`() {
-        sdk = createSdkWrapper { sdk.sdkLogger }
+        sdk = createSdkWrapper()
         assertEquals("default", System.getProperty("io.opentelemetry.context.contextStorageProvider"))
     }
 
@@ -130,6 +127,7 @@ internal class OpenTelemetrySdkTest {
             appVersion = "2.5.1",
             packageName = "com.test.app",
             systemInfo = systemInfo,
+            uuidSource = TestUuidSource(),
         )
         spanExporter = FakeSpanExporter()
         logExporter = FakeLogRecordExporter()
@@ -139,13 +137,12 @@ internal class OpenTelemetrySdkTest {
         return configuration
     }
 
-    private fun createSdkWrapper(sdkLoggerSupplier: Provider<Logger>): OtelSdkWrapper {
+    private fun createSdkWrapper(): OtelSdkWrapper {
         configuration = createOtelSdkConfig()
         return OtelSdkWrapper(
             otelClock = FakeOtelKotlinClock(FakeClock()),
             configuration = configuration,
             spanService = FakeSpanService(),
-            eventService = EventServiceImpl(sdkLoggerSupplier, TestUuidSource()),
             useKotlinSdk = false,
         )
     }

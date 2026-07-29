@@ -20,32 +20,29 @@ class LogModuleImpl(
     payloadSourceModule: PayloadSourceModule,
 ) : LogModule {
 
-    override val logLimitingService: LogLimitingService by singleton {
-        LogLimitingServiceImpl(
-            configService,
-        )
-    }
+    override val logLimitingService: LogLimitingService = LogLimitingServiceImpl(
+        configService,
+    )
 
-    override val logService: LogService by singleton {
+    override val logOrchestrator: LogOrchestrator = LogOrchestratorImpl(
+        workerThreadModule.backgroundWorker(Worker.Background.LogMessageWorker),
+        initModule.clock,
+        openTelemetryModule.logSink,
+        deliveryModule?.payloadStore,
+        payloadSourceModule.logEnvelopeSource,
+    )
+
+    override val attachmentService: AttachmentService = AttachmentService()
+
+    /**
+     * Deferred: only reached via the public logging API, never during SDK init.
+     */
+    override val logService: LogService by lazy(LazyThreadSafetyMode.PUBLICATION) {
         LogServiceImpl(
             essentialServiceModule.telemetryDestination,
             configService,
             logLimitingService,
             initModule.telemetryService,
         )
-    }
-
-    override val logOrchestrator: LogOrchestrator by singleton {
-        LogOrchestratorImpl(
-            workerThreadModule.backgroundWorker(Worker.Background.LogMessageWorker),
-            initModule.clock,
-            openTelemetryModule.logSink,
-            deliveryModule?.payloadStore,
-            payloadSourceModule.logEnvelopeSource,
-        )
-    }
-
-    override val attachmentService: AttachmentService by singleton {
-        AttachmentService()
     }
 }

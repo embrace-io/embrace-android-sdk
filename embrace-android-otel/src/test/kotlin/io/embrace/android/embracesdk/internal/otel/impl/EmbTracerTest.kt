@@ -1,23 +1,28 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.FakeTracer
-import io.embrace.android.embracesdk.fakes.TestConstants.TESTS_DEFAULT_USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.otel.spans.createContext
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.tracing.SpanKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 internal class EmbTracerTest {
     private val clock = FakeClock()
     private val openTelemetryClock = FakeOtelKotlinClock(clock)
+    private val openTelemetry = fakeOpenTelemetry()
 
     private lateinit var spanService: FakeSpanService
     private lateinit var sdkTracer: FakeTracer
@@ -31,8 +36,7 @@ internal class EmbTracerTest {
             impl = sdkTracer,
             spanService = spanService,
             clock = openTelemetryClock,
-            openTelemetry = fakeOpenTelemetry(),
-            useKotlinSdk = TESTS_DEFAULT_USE_KOTLIN_SDK,
+            openTelemetry = openTelemetry,
         )
     }
 
@@ -65,5 +69,31 @@ internal class EmbTracerTest {
             assertEquals(SpanKind.CLIENT, spanKind)
             assertEquals("bar", attributes["foo"])
         }
+    }
+
+    @Test
+    fun `span with no explicit parent inherits the span attached to the current thread`() {
+        val parent = FakeEmbraceSdkSpan(openTelemetry = openTelemetry)
+        val scope = parent.createContext(openTelemetry).attach()
+        try {
+            tracer.startSpan("foo").end()
+        } finally {
+            scope.detach()
+        }
+        assertSame(parent, spanService.createdSpans.single().parent)
+    }
+
+    @Test
+    fun `span with no explicit parent has no parent when nothing is attached to the current thread`() {
+        val parent = FakeEmbraceSdkSpan(openTelemetry = openTelemetry)
+        val scope = parent.createContext(openTelemetry).attach()
+        val executor = Executors.newSingleThreadExecutor()
+        try {
+            executor.submit { tracer.startSpan("foo").end() }.get(1, TimeUnit.SECONDS)
+        } finally {
+            executor.shutdown()
+            scope.detach()
+        }
+        assertNull(spanService.createdSpans.single().parent)
     }
 }

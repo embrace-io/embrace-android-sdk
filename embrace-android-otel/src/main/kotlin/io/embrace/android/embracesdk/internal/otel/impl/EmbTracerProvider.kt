@@ -16,7 +16,6 @@ class EmbTracerProvider(
     private val impl: OpenTelemetry,
     private val spanService: SpanService,
     private val clock: Clock,
-    private val useKotlinSdk: Boolean,
 ) : TracerProvider {
 
     private val tracers = ConcurrentHashMap<ApiKey, Tracer>()
@@ -53,7 +52,6 @@ class EmbTracerProvider(
             spanService = spanService,
             clock = clock,
             openTelemetry = impl,
-            useKotlinSdk = useKotlinSdk,
         )
         tracers[key] = tracer
         return tracer

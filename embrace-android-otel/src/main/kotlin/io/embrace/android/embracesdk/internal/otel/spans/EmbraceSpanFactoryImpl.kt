@@ -63,6 +63,9 @@ private const val SPAN_EVENT_TELEMETRY_TYPE = "span_event"
  */
 private const val UNSET_TIME = 0L
 
+// StatusData is immutable, so the description-less error status can be shared rather than allocated per span
+private val ERROR_STATUS = StatusData.Error(null)
+
 private class EmbraceSpanImpl(
     otelSpanStartArgs: OtelSpanStartArgs,
     private val openTelemetryClock: Clock,
@@ -192,7 +195,7 @@ private class EmbraceSpanImpl(
             startedSpan.get()?.let { spanToStop ->
                 spanId?.let { stopCallback?.invoke(it) }
                 if (errorCode != null) {
-                    status = StatusData.Error(null)
+                    status = ERROR_STATUS
                     spanToStop.setEmbraceAttribute(errorCode)
                 } else if (status is StatusData.Error) {
                     spanToStop.setEmbraceAttribute(ErrorCodeAttribute.Failure)
@@ -261,9 +264,10 @@ private class EmbraceSpanImpl(
     override fun getStartTimeMs(): Long? = spanStartTimeMs.takeIf { it > UNSET_TIME }
 
     override fun addAttribute(key: String, value: String): Boolean {
-        if (customAttributes.size < dataValidator.otelLimitsConfig.getMaxCustomAttributeCount() && key.isNotBlank()) {
+        val maxAttributeCount = dataValidator.otelLimitsConfig.getMaxCustomAttributeCount()
+        if (customAttributes.size < maxAttributeCount && key.isNotBlank()) {
             synchronized(customAttributes) {
-                if (customAttributes.size < dataValidator.otelLimitsConfig.getMaxCustomAttributeCount() && isRecording) {
+                if (customAttributes.size < maxAttributeCount && isRecording) {
                     val attribute = dataValidator.truncateAttribute(
                         key = key,
                         value = value,
@@ -297,8 +301,12 @@ private class EmbraceSpanImpl(
 
     override fun addSystemLink(linkedSpanContext: SpanContext, type: LinkType, attributes: Map<String, String>): Boolean =
         addObject(systemLinks, systemLinkCount, dataValidator.otelLimitsConfig.getMaxSystemLinkCount(), SPAN_LINK_TELEMETRY_TYPE) {
-            val attrs = mutableMapOf(type.key to type.value)
-            EmbraceLinkData(linkedSpanContext, attrs.apply { putAll(attributes) })
+            // built in place to avoid the vararg array and Pair that mutableMapOf(type.key to type.value) allocates
+            val attrs = buildMap(attributes.size + 1) {
+                put(type.key, type.value)
+                putAll(attributes)
+            }
+            EmbraceLinkData(linkedSpanContext, attrs)
         }
 
     override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>): Boolean =

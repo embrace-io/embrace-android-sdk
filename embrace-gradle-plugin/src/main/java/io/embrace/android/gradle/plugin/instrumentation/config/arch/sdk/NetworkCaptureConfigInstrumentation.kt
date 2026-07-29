@@ -1,6 +1,7 @@
 package io.embrace.android.gradle.plugin.instrumentation.config.arch.sdk
 
 import io.embrace.android.gradle.plugin.instrumentation.config.arch.intMethod
+import io.embrace.android.gradle.plugin.instrumentation.config.arch.longMethod
 import io.embrace.android.gradle.plugin.instrumentation.config.arch.mapMethod
 import io.embrace.android.gradle.plugin.instrumentation.config.arch.modelSdkConfigClass
 import io.embrace.android.gradle.plugin.instrumentation.config.arch.stringListMethod
@@ -9,6 +10,7 @@ import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConf
 
 fun createNetworkCaptureConfigInstrumentation(cfg: VariantConfig) = modelSdkConfigClass {
     intMethod("getRequestLimitPerDomain") { cfg.embraceConfig?.sdkConfig?.networking?.defaultCaptureLimit }
+    longMethod("getRequestSpanTimeoutMs") { cfg.embraceConfig?.sdkConfig?.networking?.requestSpanTimeoutMs }
     stringListMethod("getIgnoredRequestPatternList") { cfg.embraceConfig?.sdkConfig?.networking?.disabledUrlPatterns }
     stringListMethod("getTraceparentOnlyAllowDomains") {
         cfg.embraceConfig?.sdkConfig?.networking?.traceparentOnlyAllowDomains

@@ -117,7 +117,7 @@ class NetworkRequestDataSourceImpl(
                     spanToken.setSystemAttribute(EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT, traceparent)
                     spanToken.setSystemAttribute(EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY, "true")
                 }
-                activeRequests[traceparent] = ActiveRequest(spanToken, httpMethod)
+                activeRequests[traceparent] = ActiveRequest(spanToken, httpMethod, startData.timeoutMs)
             }
         }
     }
@@ -195,10 +195,13 @@ class NetworkRequestDataSourceImpl(
     /**
      * Tracks an in-flight request span. [httpMethod] is the post-modifier method captured at request
      * start, retained so the modifiers can be re-applied to the final url when the request ends.
+     * [timeoutMs] is the duration after which this in-flight span should be considered leaked and
+     * dropped (consumed by the eviction mechanism); null if no timeout could be resolved.
      */
     private class ActiveRequest(
         val spanToken: SpanToken,
         val httpMethod: String,
+        val timeoutMs: Long?,
     )
 
     private companion object {

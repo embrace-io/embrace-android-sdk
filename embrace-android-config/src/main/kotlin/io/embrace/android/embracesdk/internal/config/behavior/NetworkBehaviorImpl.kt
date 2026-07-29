@@ -68,6 +68,8 @@ class NetworkBehaviorImpl(
         cfg.getRequestLimitPerDomain(),
     )
 
+    override fun getRequestSpanTimeoutMs(): Long = cfg.getRequestSpanTimeoutMs()
+
     override fun isUrlEnabled(url: String): Boolean {
         val patterns = disabledUrlPatterns
             ?: remote?.disabledUrlPatterns

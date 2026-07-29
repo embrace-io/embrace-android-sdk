@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.config.behavior
 
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.fakes.config.FakeNetworkCaptureConfig
 import io.embrace.android.embracesdk.fakes.createNetworkBehavior
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkRemoteConfig
@@ -40,6 +41,7 @@ internal class NetworkBehaviorImplTest {
             assertFalse(isHttpUrlConnectionCaptureEnabled())
             assertTrue(isHucLiteInstrumentationEnabled())
             assertEquals(1000, getRequestLimitPerDomain())
+            assertEquals(600_000L, getRequestSpanTimeoutMs())
             assertEquals(emptyMap<String, Int>(), getLimitsByDomain())
             assertTrue(isUrlEnabled("google.com"))
             assertFalse(isCaptureBodyEncryptionEnabled())
@@ -81,6 +83,18 @@ internal class NetworkBehaviorImplTest {
             assertFalse(isUrlEnabled("https://example.com/path"))
             assertTrue(isUrlEnabled("https://google.com/path"))
         }
+    }
+
+    @Test
+    fun `request span timeout respects local config override`() {
+        val networkBehavior = NetworkBehaviorImpl(
+            local = FakeInstrumentedConfig(
+                networkCapture = FakeNetworkCaptureConfig(requestSpanTimeoutMs = 120_000L),
+            ),
+            remote = null,
+            disabledUrlPatterns = null,
+        )
+        assertEquals(120_000L, networkBehavior.getRequestSpanTimeoutMs())
     }
 
     @Test

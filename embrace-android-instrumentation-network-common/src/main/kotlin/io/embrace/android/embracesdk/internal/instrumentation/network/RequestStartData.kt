@@ -20,4 +20,10 @@ data class RequestStartData(
      * The raw value of the traceparent header found in the request
      */
     val traceparent: String? = null,
+    /**
+     * Duration in milliseconds after which the in-flight span for this request should be considered
+     * leaked and dropped. Resolved from the HTTP client's own call timeout where available, otherwise
+     * a locally configurable fallback. Null if no timeout could be resolved.
+     */
+    val timeoutMs: Long? = null,
 )

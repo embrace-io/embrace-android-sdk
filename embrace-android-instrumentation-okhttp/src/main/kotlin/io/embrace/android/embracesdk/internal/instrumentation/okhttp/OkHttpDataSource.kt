@@ -27,6 +27,7 @@ import okio.GzipSource
 import okio.buffer
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 
 /**
  * Captures OkHttp requests as telemetry.
@@ -73,6 +74,7 @@ internal class OkHttpDataSource(
                 httpMethod = request.method,
                 sdkClockStartTime = sdkClockStartTime,
                 traceparent = request.header(TRACEPARENT_HEADER_NAME),
+                timeoutMs = resolveTimeoutMs(call),
             ),
         ) ?: return null
 
@@ -82,6 +84,20 @@ internal class OkHttpDataSource(
             sdkClockStartTime = sdkClockStartTime,
         ).also {
             activeCalls[call] = it
+        }
+    }
+
+    /**
+     * Resolves how long the in-flight span for this call should be tracked before it is considered
+     * leaked and dropped. Prefers OkHttp's own call-level timeout (plus a short buffer to allow the
+     * request to genuinely time out first), then use locally configurable default.
+     */
+    private fun resolveTimeoutMs(call: Call): Long {
+        val callTimeoutMs = TimeUnit.NANOSECONDS.toMillis(call.timeout().timeoutNanos())
+        return if (callTimeoutMs > 0) {
+            callTimeoutMs + TIMEOUT_BUFFER_MS
+        } else {
+            configService.networkBehavior.getRequestSpanTimeoutMs()
         }
     }
 
@@ -409,6 +425,12 @@ internal class OkHttpDataSource(
 
     internal companion object {
         private const val TRACEPARENT_HEADER_NAME = "traceparent"
+
+        /**
+         * Grace period added to a client-provided call timeout before the in-flight span is assumed
+         * to have leaked, giving the request time to genuinely time out first.
+         */
+        private const val TIMEOUT_BUFFER_MS = 5_000L
         private const val UNKNOWN_EXCEPTION = "Unknown"
         private const val UNKNOWN_MESSAGE =
             "An error occurred during the execution of this network request"

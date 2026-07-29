@@ -6,12 +6,14 @@ import io.embrace.android.embracesdk.internal.config.instrumented.schema.Network
 class FakeNetworkCaptureConfig(
     base: NetworkCaptureConfig = InstrumentedConfigImpl.networkCapture,
     private val requestLimit: Int = base.getRequestLimitPerDomain(),
+    private val requestSpanTimeoutMs: Long = base.getRequestSpanTimeoutMs(),
     private val limits: Map<String, String> = base.getLimitsByDomain(),
     private val ignoredRequestPatterns: List<String> = base.getIgnoredRequestPatternList(),
     private val publicKey: String? = base.getNetworkBodyCapturePublicKey(),
     private val traceparentOnlyAllowDomains: List<String>? = base.getTraceparentOnlyAllowDomains(),
 ) : NetworkCaptureConfig {
     override fun getRequestLimitPerDomain(): Int = requestLimit
+    override fun getRequestSpanTimeoutMs(): Long = requestSpanTimeoutMs
     override fun getLimitsByDomain(): Map<String, String> = limits
     override fun getIgnoredRequestPatternList(): List<String> = ignoredRequestPatterns
     override fun getNetworkBodyCapturePublicKey(): String? = publicKey

@@ -44,6 +44,12 @@ interface NetworkBehavior {
     fun getRequestLimitPerDomain(): Int
 
     /**
+     * The fallback duration in milliseconds after which an in-flight network request span is assumed
+     * to have leaked and is dropped, used when the HTTP client exposes no call-level timeout of its own.
+     */
+    fun getRequestSpanTimeoutMs(): Long
+
+    /**
      * Checks if the url is allowed to be reported based on the specified disabled pattern.
      *
      * @param url the url to test

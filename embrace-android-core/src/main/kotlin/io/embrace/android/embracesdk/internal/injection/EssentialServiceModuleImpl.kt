@@ -38,28 +38,14 @@ class EssentialServiceModuleImpl(
     private val sessionOrchestratorProvider: Provider<SessionOrchestrator>,
 ) : EssentialServiceModule {
 
-    override val appStateTracker: AppStateTracker by singleton {
-        EmbTrace.trace("process-state-service-init") {
-            val lifecycleOwner = lifecycleOwnerProvider() ?: ProcessLifecycleOwner.get()
-            AppStateTrackerImpl(initModule.logger, lifecycleOwner)
-        }
+    override val appStateTracker: AppStateTracker = EmbTrace.trace("process-state-service-init") {
+        val lifecycleOwner = lifecycleOwnerProvider() ?: ProcessLifecycleOwner.get()
+        AppStateTrackerImpl(initModule.logger, lifecycleOwner)
     }
 
-    override val navigationTrackingService: NavigationTrackingService by singleton {
-        NavigationTrackingServiceImpl()
-    }
+    override val navigationTrackingService: NavigationTrackingService = NavigationTrackingServiceImpl()
 
-    override val userService: UserService by singleton {
-        EmbTrace.trace("user-service-init") {
-            EmbraceUserService(
-                coreModule.store,
-                initModule.clock,
-                initModule.logger,
-            )
-        }
-    }
-
-    override val networkConnectivityService: NetworkConnectivityService by singleton {
+    override val networkConnectivityService: NetworkConnectivityService =
         networkConnectivityServiceProvider() ?: EmbTrace.trace("network-connectivity-service-init") {
             val worker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
@@ -79,20 +65,23 @@ class EssentialServiceModuleImpl(
                 )
             }
         }
-    }
 
-    override val sessionPartTracker: SessionPartTracker by singleton {
-        SessionPartTrackerImpl(
-            coreModule.context.getSystemServiceSafe(Context.ACTIVITY_SERVICE),
-            initModule.logger,
-        )
-    }
+    override val sessionPartTracker: SessionPartTracker = SessionPartTrackerImpl(
+        coreModule.context.getSystemServiceSafe(Context.ACTIVITY_SERVICE),
+        initModule.logger,
+    )
 
-    override val sessionIdsProvider: SessionIdsProvider by singleton {
+    override val sessionIdsProvider: SessionIdsProvider =
         SessionIdsProviderImpl(sessionOrchestratorProvider, sessionPartTracker)
-    }
 
-    override val userSessionPropertiesService: UserSessionPropertiesService by singleton {
+    override val telemetryDestination: TelemetryDestination = TelemetryDestinationImpl(
+        clock = initModule.clock,
+        spanService = openTelemetryModule.spanService,
+        eventService = openTelemetryModule.eventService,
+        currentSessionPartSpan = openTelemetryModule.currentSessionPartSpan,
+    )
+
+    override val userSessionPropertiesService: UserSessionPropertiesService =
         EmbTrace.trace("session-properties-init") {
             UserSessionPropertiesServiceImpl(
                 store = coreModule.store,
@@ -101,14 +90,14 @@ class EssentialServiceModuleImpl(
                 telemetryService = initModule.telemetryService,
             )
         }
-    }
 
-    override val telemetryDestination: TelemetryDestination by singleton {
-        TelemetryDestinationImpl(
-            clock = initModule.clock,
-            spanService = openTelemetryModule.spanService,
-            eventService = openTelemetryModule.eventService,
-            currentSessionPartSpan = openTelemetryModule.currentSessionPartSpan,
-        )
+    override val userService: UserService by lazy {
+        EmbTrace.trace("user-service-init") {
+            EmbraceUserService(
+                coreModule.store,
+                initModule.clock,
+                initModule.logger,
+            )
+        }
     }
 }

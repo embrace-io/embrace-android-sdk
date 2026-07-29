@@ -17,25 +17,19 @@ class CoreModuleImpl(
 
     override val sdkStartTime: Long = initModule.clock.now()
 
-    override val context: Context by singleton {
-        when (ctx) {
-            is Application -> ctx
-            else -> ctx.applicationContext
-        }
+    override val context: Context = when (ctx) {
+        is Application -> ctx
+        else -> ctx.applicationContext
     }
 
-    override val application: Application by singleton { context as Application }
+    override val application: Application get() = context as Application
 
-    override val store: KeyValueStore by singleton {
-        SharedPrefsStore(
-            PreferenceManager.getDefaultSharedPreferences(
-                context,
-            ),
-            initModule.jsonSerializer,
-        )
-    }
+    override val store: KeyValueStore = SharedPrefsStore(
+        PreferenceManager.getDefaultSharedPreferences(
+            context,
+        ),
+        initModule.jsonSerializer,
+    )
 
-    override val ordinalStore: OrdinalStore by singleton {
-        OrdinalStoreImpl(store)
-    }
+    override val ordinalStore: OrdinalStore = OrdinalStoreImpl(store)
 }

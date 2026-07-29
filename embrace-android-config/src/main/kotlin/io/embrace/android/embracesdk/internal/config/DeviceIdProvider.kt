@@ -17,11 +17,9 @@ internal class DeviceIdProvider(
     private val uuidSource: UuidSource,
 ) {
 
-    val deviceId: String by lazy {
-        cachedDeviceId
-            ?: keyValueStore.getString(DEVICE_IDENTIFIER_KEY)
-            ?: newDeviceId()
-    }
+    val deviceId: String = cachedDeviceId
+        ?: keyValueStore.getString(DEVICE_IDENTIFIER_KEY)
+        ?: newDeviceId()
 
     private fun newDeviceId(): String {
         val newId = uuidSource.createUuid()

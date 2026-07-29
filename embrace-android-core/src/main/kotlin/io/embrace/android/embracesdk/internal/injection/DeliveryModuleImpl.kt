@@ -41,128 +41,107 @@ class DeliveryModuleImpl(
 
     private val processIdProvider = { otelModule.otelSdkConfig.processIdentifier }
 
-    override val payloadStore: PayloadStore by singleton {
-        PayloadStoreImpl(
-            intakeService,
-            initModule.clock,
-            processIdProvider,
-            initModule.uuidSource,
-            essentialServiceModule.sessionIdsProvider::getActiveSessionIds,
-        )
-    }
+    private val rootDirSupplier = { coreModule.context.filesDir }
+    private val fallbackDirSupplier = { coreModule.context.cacheDir }
 
-    private val dataPersistenceWorker: PriorityWorker<StoredTelemetryMetadata> by singleton {
+    private val dataPersistenceWorker: PriorityWorker<StoredTelemetryMetadata> =
         workerThreadModule.priorityWorker(Worker.Priority.DataPersistenceWorker)
-    }
 
-    override val intakeService: IntakeService by singleton {
-        IntakeServiceImpl(
-            schedulingService,
-            payloadStorageService,
-            cacheStorageService,
-            initModule.logger,
-            initModule.jsonSerializer,
+    override val payloadStorageService: PayloadStorageService =
+        payloadStorageServiceProvider?.invoke() ?: PayloadStorageServiceImpl(
+            StorageLocation.PAYLOAD.asFile(
+                logger = initModule.logger,
+                rootDirSupplier = rootDirSupplier,
+                fallbackDirSupplier = fallbackDirSupplier,
+            ),
             dataPersistenceWorker,
-            deliveryTracer,
-        )
-    }
-
-    private val partCacher: PeriodicSessionPartCacher by singleton {
-        PeriodicSessionPartCacher(
-            workerThreadModule.backgroundWorker(Worker.Background.PeriodicCacheWorker),
+            processIdProvider,
             initModule.logger,
-        )
-    }
-
-    override val payloadCachingService: PayloadCachingService by singleton {
-        PayloadCachingServiceImpl(
-            partCacher,
             initModule.clock,
-            essentialServiceModule.sessionIdsProvider,
-            payloadStore,
             deliveryTracer,
         )
-    }
 
-    override val payloadStorageService: PayloadStorageService by singleton {
-        payloadStorageServiceProvider?.invoke() ?: run {
-            val location = StorageLocation.PAYLOAD.asFile(
+    override val cacheStorageService: PayloadStorageService =
+        cacheStorageServiceProvider?.invoke() ?: PayloadStorageServiceImpl(
+            StorageLocation.CACHE.asFile(
                 logger = initModule.logger,
-                rootDirSupplier = { coreModule.context.filesDir },
-                fallbackDirSupplier = { coreModule.context.cacheDir },
-            )
-            PayloadStorageServiceImpl(
-                location,
-                dataPersistenceWorker,
-                processIdProvider,
-                initModule.logger,
-                initModule.clock,
-                deliveryTracer,
-            )
-        }
-    }
-
-    override val cacheStorageService: PayloadStorageService by singleton {
-        cacheStorageServiceProvider?.invoke() ?: run {
-            val location = StorageLocation.CACHE.asFile(
-                logger = initModule.logger,
-                rootDirSupplier = { coreModule.context.filesDir },
-                fallbackDirSupplier = { coreModule.context.cacheDir },
-            )
-            PayloadStorageServiceImpl(
-                location,
-                dataPersistenceWorker,
-                processIdProvider,
-                initModule.logger,
-                initModule.clock,
-                deliveryTracer,
-            )
-        }
-    }
-
-    override val cachedLogEnvelopeStore: CachedLogEnvelopeStore by singleton {
-        val location = StorageLocation.ENVELOPE.asFile(
-            logger = initModule.logger,
-            rootDirSupplier = { coreModule.context.filesDir },
-            fallbackDirSupplier = { coreModule.context.cacheDir },
+                rootDirSupplier = rootDirSupplier,
+                fallbackDirSupplier = fallbackDirSupplier,
+            ),
+            dataPersistenceWorker,
+            processIdProvider,
+            initModule.logger,
+            initModule.clock,
+            deliveryTracer,
         )
-        CachedLogEnvelopeStoreImpl(
-            outputDir = location,
-            worker = dataPersistenceWorker,
-            logger = initModule.logger,
-            serializer = initModule.jsonSerializer,
-            clock = initModule.clock,
-        )
-    }
 
-    private val requestExecutionService: RequestExecutionService by singleton {
+    private val requestExecutionService: RequestExecutionService =
         requestExecutionServiceProvider?.invoke() ?: run {
             val appId = checkNotNull(configService.appId)
             val coreBaseUrl = initModule.instrumentedConfig.baseUrls.getData() ?: "https://a-$appId.data.emb-api.com"
             val url = "$coreBaseUrl/${Endpoint.SESSIONS.version}/"
 
-            val lazyDeviceId = lazy(configService::deviceId)
             OkHttpRequestExecutionService(
                 initModule.okHttpClient,
                 url,
-                lazyDeviceId,
+                lazy(configService::deviceId),
                 appId,
                 BuildConfig.VERSION_NAME,
                 initModule.logger,
                 deliveryTracer,
             )
         }
-    }
 
-    override val schedulingService: SchedulingService by singleton {
-        SchedulingServiceImpl(
-            payloadStorageService,
-            requestExecutionService,
-            workerThreadModule.backgroundWorker(Worker.Background.DeliverySchedulingWorker),
-            workerThreadModule.backgroundWorker(Worker.Background.HttpRequestWorker),
-            initModule.clock,
-            initModule.logger,
-            deliveryTracer,
-        )
-    }
+    override val schedulingService: SchedulingService = SchedulingServiceImpl(
+        payloadStorageService,
+        requestExecutionService,
+        workerThreadModule.backgroundWorker(Worker.Background.DeliverySchedulingWorker),
+        workerThreadModule.backgroundWorker(Worker.Background.HttpRequestWorker),
+        initModule.clock,
+        initModule.logger,
+        deliveryTracer,
+    )
+
+    override val intakeService: IntakeService = IntakeServiceImpl(
+        schedulingService,
+        payloadStorageService,
+        cacheStorageService,
+        initModule.logger,
+        initModule.jsonSerializer,
+        dataPersistenceWorker,
+        deliveryTracer,
+    )
+
+    override val payloadStore: PayloadStore = PayloadStoreImpl(
+        intakeService,
+        initModule.clock,
+        processIdProvider,
+        initModule.uuidSource,
+        essentialServiceModule.sessionIdsProvider::getActiveSessionIds,
+    )
+
+    private val partCacher: PeriodicSessionPartCacher = PeriodicSessionPartCacher(
+        workerThreadModule.backgroundWorker(Worker.Background.PeriodicCacheWorker),
+        initModule.logger,
+    )
+
+    override val payloadCachingService: PayloadCachingService = PayloadCachingServiceImpl(
+        partCacher,
+        initModule.clock,
+        essentialServiceModule.sessionIdsProvider,
+        payloadStore,
+        deliveryTracer,
+    )
+
+    override val cachedLogEnvelopeStore: CachedLogEnvelopeStore = CachedLogEnvelopeStoreImpl(
+        outputDir = StorageLocation.ENVELOPE.asFile(
+            logger = initModule.logger,
+            rootDirSupplier = rootDirSupplier,
+            fallbackDirSupplier = fallbackDirSupplier,
+        ),
+        worker = dataPersistenceWorker,
+        logger = initModule.logger,
+        serializer = initModule.jsonSerializer,
+        clock = initModule.clock,
+    )
 }

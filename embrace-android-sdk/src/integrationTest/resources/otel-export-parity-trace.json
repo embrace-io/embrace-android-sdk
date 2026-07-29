@@ -1,0 +1,43 @@
+[
+  {
+    "name": "test-span",
+    "kind": "INTERNAL",
+    "status": "UNSET",
+    "startEpochNanos": "169220160030000000",
+    "endEpochNanos": "169220160030000000",
+    "hasEnded": "true",
+    "totalAttributeCount": "7",
+    "attributes": {
+      "emb.private.sequence_id": "__EMBRACE_TEST_IGNORE__",
+      "emb.process_identifier": "__EMBRACE_TEST_IGNORE__",
+      "emb.session_part_id": "__EMBRACE_TEST_IGNORE__",
+      "emb.type": "perf",
+      "emb.user_session_id": "__EMBRACE_TEST_IGNORE__",
+      "my-attribute": "my-value",
+      "session.id": "__EMBRACE_TEST_IGNORE__"
+    },
+    "totalRecordedEvents": "1",
+    "events": [
+      {
+        "name": "my-event",
+        "epochNanos": "169220160030000000",
+        "attributes": {}
+      }
+    ],
+    "instrumentationScopeName": "io.embrace.android.embracesdk.core",
+    "resourceAttributes": {
+      "android.os.api_level": "35",
+      "device.manufacturer": "Fake Manufacturer",
+      "device.model.identifier": "Phake Phone Phive",
+      "device.model.name": "Phake Phone Phive",
+      "os.build_id": "",
+      "os.name": "android",
+      "os.type": "linux",
+      "os.version": "99.0.0",
+      "service.name": "UNKNOWN",
+      "service.version": "UNKNOWN",
+      "telemetry.distro.name": "io.embrace.android.embracesdk.core",
+      "telemetry.distro.version": "9.1.0-SNAPSHOT"
+    }
+  }
+]

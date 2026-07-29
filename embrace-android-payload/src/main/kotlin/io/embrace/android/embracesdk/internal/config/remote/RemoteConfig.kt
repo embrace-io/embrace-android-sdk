@@ -86,6 +86,24 @@ data class RemoteConfig(
     @SerialName("max_session_properties")
     val maxUserSessionProperties: Int? = null,
 
+    /**
+     * The combined maximum number of tracked active experiments and feature flags.
+     */
+    @SerialName("max_experiment_count")
+    val maxExperimentCount: Int? = null,
+
+    /**
+     * The maximum length of an ID for the experiments API.
+     */
+    @SerialName("max_experiment_id_length")
+    val maxExperimentIdLength: Int? = null,
+
+    /**
+     * The maximum length of an experiment variant.
+     */
+    @SerialName("max_experiment_variant_length")
+    val maxExperimentVariantLength: Int? = null,
+
     @Deprecated("Superseded by the flat nsfPctEnabled key; retained for back-compat with persisted/old payloads.")
     @SerialName("network_span_forwarding")
     val networkSpanForwardingRemoteConfig: NetworkSpanForwardingRemoteConfig? = null,

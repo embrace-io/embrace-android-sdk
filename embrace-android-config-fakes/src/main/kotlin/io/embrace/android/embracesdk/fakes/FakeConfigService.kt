@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBeh
 import io.embrace.android.embracesdk.internal.config.behavior.BackgroundActivityBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.ExperimentBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
@@ -38,6 +39,7 @@ class FakeConfigService(
     override var threadBlockageBehavior: ThreadBlockageBehavior = createThreadBlockageBehavior(),
     override var vitalsBehavior: VitalsBehavior = createVitalsBehavior(),
     override var sessionBehavior: UserSessionBehavior = createSessionBehavior(),
+    override var experimentBehavior: ExperimentBehavior = createExperimentBehavior(),
     override var networkBehavior: NetworkBehavior = FakeNetworkBehavior(),
     override var dataCaptureEventBehavior: DataCaptureEventBehavior = createDataCaptureEventBehavior(),
     override var sdkModeBehavior: SdkModeBehavior = createSdkModeBehavior(),

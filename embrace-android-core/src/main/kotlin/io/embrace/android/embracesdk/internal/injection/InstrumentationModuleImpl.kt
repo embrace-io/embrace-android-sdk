@@ -20,34 +20,30 @@ class InstrumentationModuleImpl(
     activeSessionIdsProvider: () -> SessionIdsSnapshot,
 ) : InstrumentationModule {
 
-    override val instrumentationRegistry: InstrumentationRegistry by singleton {
-        InstrumentationRegistryImpl(
-            initModule.logger,
-        )
-    }
+    override val instrumentationRegistry: InstrumentationRegistry = InstrumentationRegistryImpl(
+        initModule.logger,
+    )
 
-    override val instrumentationArgs: InstrumentationArgs by singleton {
-        InstrumentationArgsImpl(
-            configService = configService,
-            logger = initModule.logger,
-            clock = initModule.clock,
-            context = coreModule.context,
-            application = coreModule.application,
-            destination = essentialServiceModule.telemetryDestination,
-            workerThreadModule = workerThreadModule,
-            store = coreModule.store,
-            serializer = initModule.jsonSerializer,
-            uuidSource = initModule.uuidSource,
-            sessionPartTracker = essentialServiceModule.sessionPartTracker,
-            ordinalStore = coreModule.ordinalStore,
-            userSessionPropertiesService = essentialServiceModule.userSessionPropertiesService,
-            userSessionIdsProvider = userSessionIdsProvider,
-            activeSessionIdsProvider = activeSessionIdsProvider,
-            processIdentifier = openTelemetryModule.otelSdkConfig.processIdentifier,
-            crashMarkerFileProvider = { storageService.getFileForWrite("embrace_crash_marker") },
-            appStateTracker = essentialServiceModule.appStateTracker,
-            navigationTrackingService = essentialServiceModule.navigationTrackingService,
-            telemetryService = initModule.telemetryService,
-        )
-    }
+    override val instrumentationArgs: InstrumentationArgs = InstrumentationArgsImpl(
+        configService = configService,
+        logger = initModule.logger,
+        clock = initModule.clock,
+        context = coreModule.context,
+        application = coreModule.application,
+        destination = essentialServiceModule.telemetryDestination,
+        workerThreadModule = workerThreadModule,
+        store = coreModule.store,
+        serializer = initModule.jsonSerializer,
+        uuidSource = initModule.uuidSource,
+        sessionPartTracker = essentialServiceModule.sessionPartTracker,
+        ordinalStore = coreModule.ordinalStore,
+        userSessionPropertiesService = essentialServiceModule.userSessionPropertiesService,
+        userSessionIdsProvider = userSessionIdsProvider,
+        activeSessionIdsProvider = activeSessionIdsProvider,
+        processIdentifier = openTelemetryModule.otelSdkConfig.processIdentifier,
+        crashMarkerFileProvider = { storageService.getFileForWrite("embrace_crash_marker") },
+        appStateTracker = essentialServiceModule.appStateTracker,
+        navigationTrackingService = essentialServiceModule.navigationTrackingService,
+        telemetryService = initModule.telemetryService,
+    )
 }

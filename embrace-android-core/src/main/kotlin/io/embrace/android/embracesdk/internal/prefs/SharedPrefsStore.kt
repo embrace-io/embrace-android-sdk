@@ -2,9 +2,10 @@ package io.embrace.android.embracesdk.internal.prefs
 
 import android.content.SharedPreferences
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.serialization.fromJson
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
 
 internal class SharedPrefsStore(
     private val impl: SharedPreferences,
@@ -41,7 +42,7 @@ internal class SharedPrefsStore(
 
     override fun getStringMap(key: String): Map<String, String>? {
         val mapString = impl.getString(key, null) ?: return null
-        return serializer.fromJson<Map<String, String>>(mapString)
+        return serializer.fromJson(mapString, MapSerializer(String.serializer(), String.serializer()))
     }
 
     override fun edit(action: KeyValueStoreEditor.() -> Unit) {

@@ -19,7 +19,6 @@ import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.serialization.fromJson
 import java.io.File
 
 internal data class StoredNativeCrashData(
@@ -37,8 +36,8 @@ internal data class StoredNativeCrashData(
         val outputDir = StorageLocation.NATIVE.asFile(
             logger = FakeInternalLogger(),
             rootDirSupplier = { ctx.filesDir },
-            fallbackDirSupplier = { ctx.cacheDir }
-        ) .value.apply {
+            fallbackDirSupplier = { ctx.cacheDir },
+        ).value.apply {
             mkdirs()
         }
         return File(outputDir, crashMetadata.filename)
@@ -54,8 +53,9 @@ internal fun createStoredNativeCrashData(
     envelopeResource: EnvelopeResource = fakeEnvelopeResource,
     envelopeMetadata: EnvelopeMetadata = fakeEnvelopeMetadata,
 ): StoredNativeCrashData {
-    val nativeCrashData = serializer.fromJson<NativeCrashData>(
-        ResourceReader.readResource(resourceFixtureName)
+    val nativeCrashData = serializer.fromJson(
+        ResourceReader.readResource(resourceFixtureName),
+        NativeCrashData.serializer(),
     )
     return StoredNativeCrashData(
         sessionMetadata = sessionMetadata,
@@ -80,7 +80,7 @@ internal fun createStoredNativeCrashData(
                 sessionProperties = mapOf("dead-session-prop" to "some-val"),
                 processIdentifier = sessionMetadata.processIdentifier,
                 resource = envelopeResource,
-                metadata = envelopeMetadata
+                metadata = envelopeMetadata,
             )
         } else {
             null
@@ -88,7 +88,7 @@ internal fun createStoredNativeCrashData(
         cachedCrashEnvelope = if (createCrashEnvelope) {
             fakeEmptyLogEnvelope(
                 resource = envelopeResource,
-                metadata = envelopeMetadata
+                metadata = envelopeMetadata,
             )
         } else {
             null

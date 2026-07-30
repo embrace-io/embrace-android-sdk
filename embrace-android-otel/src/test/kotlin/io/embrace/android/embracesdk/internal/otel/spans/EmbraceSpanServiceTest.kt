@@ -140,7 +140,7 @@ internal class EmbraceSpanServiceTest {
             endTimeMs = expectedEndTimeMs,
             type = expectedType,
             attributes = expectedAttributes,
-            events = expectedEvents,
+            events = expectedEvents.map { it.toSpanEvent() },
         )
 
         val name = "emb-$expectedName"

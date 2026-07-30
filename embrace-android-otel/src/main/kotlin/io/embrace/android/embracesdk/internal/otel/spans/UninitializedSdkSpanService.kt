@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.android.embracesdk.spans.ErrorCode
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -39,7 +39,7 @@ class UninitializedSdkSpanService : SpanService {
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,
-        events: List<EmbraceSpanEvent>,
+        events: List<SpanEvent>,
         autoTerminationMode: AutoTerminationMode,
         code: () -> T,
     ) = code()
@@ -53,8 +53,8 @@ class UninitializedSdkSpanService : SpanService {
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,
-        events: List<EmbraceSpanEvent>,
-        errorCode: ErrorCode?,
+        events: List<SpanEvent>,
+        errorCode: ErrorCodeAttribute?,
     ): Boolean {
         synchronized(bufferedCalls) {
             return realSpanService.get()?.recordCompletedSpan(
@@ -133,7 +133,7 @@ class UninitializedSdkSpanService : SpanService {
         val internal: Boolean,
         val private: Boolean,
         val attributes: Map<String, String>,
-        val events: List<EmbraceSpanEvent>,
-        val errorCode: ErrorCode?,
+        val events: List<SpanEvent>,
+        val errorCode: ErrorCodeAttribute?,
     )
 }

@@ -1,18 +1,33 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
+import android.os.Build
+import androidx.lifecycle.LifecycleOwner
+import io.embrace.android.embracesdk.core.BuildConfig
+import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.ConfigServiceImpl
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
+import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleImpl
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageServiceSupplier
+import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
+import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
+import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
 import io.embrace.android.embracesdk.internal.storage.StorageService
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.worker.Worker
+import java.util.concurrent.TimeUnit
 
 /**
  * Constructed module dependencies that will be used by the initialized SDK.
+ *
+ * Each supplier is a test seam and is null in production. Where it is null the real construction
+ * below runs instead; because [init] is inlined that costs no lambda allocation on the default path.
  */
 @Suppress("UseCheckOrError")
 internal class InitializedModuleGraph(
@@ -20,43 +35,54 @@ internal class InitializedModuleGraph(
     versionChecker: VersionChecker = BuildVersionChecker,
     override val initModule: InitModule,
     override val openTelemetryModule: OpenTelemetryModule,
-    private val coreModuleSupplier: CoreModuleSupplier,
-    private val configServiceSupplier: ConfigServiceSupplier,
-    private val workerThreadModuleSupplier: WorkerThreadModuleSupplier,
-    private val storageServiceSupplier: StorageServiceSupplier,
-    private val essentialServiceModuleSupplier: EssentialServiceModuleSupplier,
-    private val featureModuleSupplier: FeatureModuleSupplier,
-    private val instrumentationModuleSupplier: InstrumentationModuleSupplier,
-    private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier,
-    private val deliveryModuleSupplier: DeliveryModuleSupplier,
-    private val threadBlockageServiceSupplier: ThreadBlockageServiceSupplier,
-    private val logModuleSupplier: LogModuleSupplier,
-    private val userSessionOrchestrationModuleSupplier: UserSessionOrchestrationModuleSupplier,
-    private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier,
+    override val workerThreadModule: WorkerThreadModule,
+    private val coreModuleSupplier: CoreModuleSupplier?,
+    private val configServiceSupplier: ConfigServiceSupplier?,
+    private val storageServiceSupplier: StorageServiceSupplier?,
+    private val essentialServiceModuleSupplier: EssentialServiceModuleSupplier?,
+    private val featureModuleSupplier: FeatureModuleSupplier?,
+    private val instrumentationModuleSupplier: InstrumentationModuleSupplier?,
+    private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier?,
+    private val deliveryModuleSupplier: DeliveryModuleSupplier?,
+    private val threadBlockageServiceSupplier: ThreadBlockageServiceSupplier?,
+    private val logModuleSupplier: LogModuleSupplier?,
+    private val userSessionOrchestrationModuleSupplier: UserSessionOrchestrationModuleSupplier?,
+    private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier?,
 ) : ModuleGraph {
 
     override val coreModule: CoreModule = init {
-        coreModuleSupplier(context, initModule)
-    }
-
-    override val workerThreadModule: WorkerThreadModule = init {
-        workerThreadModuleSupplier()
+        coreModuleSupplier?.invoke(context, initModule) ?: CoreModuleImpl(context, initModule)
     }.apply {
         EmbTrace.trace("span-service-init") {
-            openTelemetryModule.spanService.initializeService(coreModule.sdkStartTime)
+            openTelemetryModule.spanService.initializeService(sdkStartTime)
         }
         EmbTrace.trace("event-service-init") {
-            openTelemetryModule.eventService.initializeService(coreModule.sdkStartTime)
+            openTelemetryModule.eventService.initializeService(sdkStartTime)
         }
     }
 
     override val configService: ConfigService = init {
-        configServiceSupplier(
+        configServiceSupplier?.invoke(
             initModule,
             coreModule,
             openTelemetryModule,
             workerThreadModule,
-        )
+        ) ?: EmbTrace.trace("config-service-init") {
+            ConfigServiceImpl(
+                instrumentedConfig = initModule.instrumentedConfig,
+                worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
+                serializer = initModule.jsonSerializer,
+                okHttpClient = initModule.okHttpClient,
+                hasConfiguredOtlpExport = openTelemetryModule.otelSdkConfig::hasConfiguredOtlpExport,
+                sdkVersion = BuildConfig.VERSION_NAME,
+                apiLevel = Build.VERSION.SDK_INT,
+                filesDir = coreModule.context.filesDir,
+                store = coreModule.store,
+                abis = Build.SUPPORTED_ABIS,
+                logger = initModule.logger,
+                uuidSource = initModule.uuidSource,
+            )
+        }
     }.apply {
         EmbTrace.trace("sdk-disable-check") {
             EmbTrace.trace("behavior-check") {
@@ -69,24 +95,50 @@ internal class InitializedModuleGraph(
     }
 
     override val essentialServiceModule: EssentialServiceModule = init {
-        essentialServiceModuleSupplier(
+        val lifecycleOwnerProvider: Provider<LifecycleOwner?> = { null }
+        val networkConnectivityServiceProvider: Provider<NetworkConnectivityService?> = { null }
+        val sessionOrchestratorProvider = { userSessionOrchestrationModule.sessionOrchestrator }
+
+        essentialServiceModuleSupplier?.invoke(
             initModule,
             configService,
             openTelemetryModule,
             coreModule,
             workerThreadModule,
-            { null },
-            { null },
-            { userSessionOrchestrationModule.sessionOrchestrator },
+            lifecycleOwnerProvider,
+            networkConnectivityServiceProvider,
+            sessionOrchestratorProvider,
+        ) ?: EssentialServiceModuleImpl(
+            initModule,
+            configService,
+            openTelemetryModule,
+            coreModule,
+            workerThreadModule,
+            lifecycleOwnerProvider,
+            networkConnectivityServiceProvider,
+            sessionOrchestratorProvider,
         )
     }
 
     override val storageService: StorageService = init {
-        storageServiceSupplier(initModule, coreModule, workerThreadModule)
+        storageServiceSupplier?.invoke(initModule, coreModule, workerThreadModule)
+            ?: EmbraceStorageService(
+                coreModule.context,
+                initModule.telemetryService,
+                StatFsAvailabilityChecker(coreModule.context),
+            ).also { storageService ->
+                workerThreadModule
+                    .backgroundWorker(Worker.Background.IoRegWorker)
+                    .schedule<Unit>({ storageService.logStorageTelemetry() }, 1, TimeUnit.MINUTES)
+            }
     }
 
     override val instrumentationModule: InstrumentationModule = init {
-        instrumentationModuleSupplier(
+        // Forward references: break the instrumentation <-> userSessionOrchestration cycle.
+        val userSessionIdsProvider = { userSessionOrchestrationModule.sessionIdsProvider.getCurrentUserSessionId() }
+        val activeSessionIdsProvider = { userSessionOrchestrationModule.sessionIdsProvider.getActiveSessionIds() }
+
+        instrumentationModuleSupplier?.invoke(
             initModule,
             openTelemetryModule,
             workerThreadModule,
@@ -94,24 +146,46 @@ internal class InitializedModuleGraph(
             essentialServiceModule,
             coreModule,
             storageService,
-            { userSessionOrchestrationModule.sessionIdsProvider.getCurrentUserSessionId() },
-            { userSessionOrchestrationModule.sessionIdsProvider.getActiveSessionIds() },
+            userSessionIdsProvider,
+            activeSessionIdsProvider,
+        ) ?: InstrumentationModuleImpl(
+            initModule,
+            openTelemetryModule,
+            workerThreadModule,
+            configService,
+            essentialServiceModule,
+            coreModule,
+            storageService,
+            userSessionIdsProvider,
+            activeSessionIdsProvider,
         )
     }
 
     override val featureModule: FeatureModule = init {
-        featureModuleSupplier(
+        featureModuleSupplier?.invoke(
             instrumentationModule,
             configService,
             storageService,
+        ) ?: FeatureModuleImpl(
+            instrumentationModule = instrumentationModule,
+            configService = configService,
+            storageService = storageService,
         )
     }
 
     override val dataCaptureServiceModule: DataCaptureServiceModule = init {
-        dataCaptureServiceModuleSupplier(
+        val destination = instrumentationModule.instrumentationArgs.destination
+        dataCaptureServiceModuleSupplier?.invoke(
             initModule.clock,
             initModule.logger,
-            instrumentationModule.instrumentationArgs.destination,
+            destination,
+            configService,
+            initModule.startupClassifier,
+            versionChecker,
+        ) ?: DataCaptureServiceModuleImpl(
+            initModule.clock,
+            initModule.logger,
+            destination,
             configService,
             initModule.startupClassifier,
             versionChecker,
@@ -122,7 +196,7 @@ internal class InitializedModuleGraph(
         if (configService.isOnlyUsingOtelExporters()) {
             null
         } else {
-            deliveryModuleSupplier(
+            deliveryModuleSupplier?.invoke(
                 configService,
                 initModule,
                 openTelemetryModule,
@@ -133,16 +207,36 @@ internal class InitializedModuleGraph(
                 null,
                 null,
                 null,
+            ) ?: DeliveryModuleImpl(
+                configService = configService,
+                initModule = initModule,
+                otelModule = openTelemetryModule,
+                workerThreadModule = workerThreadModule,
+                coreModule = coreModule,
+                essentialServiceModule = essentialServiceModule,
+                requestExecutionServiceProvider = null,
+                payloadStorageServiceProvider = null,
+                cacheStorageServiceProvider = null,
             )
         }
     }
 
     override val threadBlockageService: ThreadBlockageService? = init {
-        threadBlockageServiceSupplier(instrumentationModule.instrumentationArgs)
+        val args = instrumentationModule.instrumentationArgs
+        threadBlockageServiceSupplier?.invoke(args) ?: createThreadBlockageService(args)
     }
 
     override val payloadSourceModule: PayloadSourceModule = init {
-        payloadSourceModuleSupplier(
+        payloadSourceModuleSupplier?.invoke(
+            initModule,
+            coreModule,
+            workerThreadModule,
+            essentialServiceModule,
+            configService,
+            openTelemetryModule,
+            threadBlockageService,
+            deliveryModule,
+        ) ?: PayloadSourceModuleImpl(
             initModule,
             coreModule,
             workerThreadModule,
@@ -155,7 +249,15 @@ internal class InitializedModuleGraph(
     }
 
     override val logModule: LogModule = init {
-        logModuleSupplier(
+        logModuleSupplier?.invoke(
+            initModule,
+            openTelemetryModule,
+            essentialServiceModule,
+            configService,
+            deliveryModule,
+            workerThreadModule,
+            payloadSourceModule,
+        ) ?: LogModuleImpl(
             initModule,
             openTelemetryModule,
             essentialServiceModule,
@@ -167,7 +269,8 @@ internal class InitializedModuleGraph(
     }
 
     override val userSessionOrchestrationModule: UserSessionOrchestrationModule = init {
-        userSessionOrchestrationModuleSupplier(
+        val startupDurationProvider = dataCaptureServiceModule.startupService::getSdkStartupDuration
+        userSessionOrchestrationModuleSupplier?.invoke(
             initModule,
             openTelemetryModule,
             coreModule,
@@ -176,7 +279,19 @@ internal class InitializedModuleGraph(
             deliveryModule,
             instrumentationModule,
             payloadSourceModule,
-            dataCaptureServiceModule.startupService::getSdkStartupDuration,
+            startupDurationProvider,
+            logModule,
+            workerThreadModule,
+        ) ?: UserSessionOrchestrationModuleImpl(
+            initModule,
+            openTelemetryModule,
+            coreModule,
+            essentialServiceModule,
+            configService,
+            deliveryModule,
+            instrumentationModule,
+            payloadSourceModule,
+            startupDurationProvider,
             logModule,
             workerThreadModule,
         )

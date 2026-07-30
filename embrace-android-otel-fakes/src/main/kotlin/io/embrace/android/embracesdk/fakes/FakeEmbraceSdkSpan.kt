@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceLinkData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
+import io.embrace.android.embracesdk.internal.otel.spans.toErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
@@ -50,7 +51,7 @@ class FakeEmbraceSdkSpan(
     var spanStartTimeMs: Long? = null
     var spanEndTimeMs: Long? = null
     override var status: StatusData = StatusData.Unset
-    var errorCode: ErrorCode? = null
+    var errorCode: ErrorCodeAttribute? = null
     val attributes: MutableMap<String, String> = mutableMapOf(type.asPair())
     val events: ConcurrentLinkedQueue<EmbraceSpanEvent> = ConcurrentLinkedQueue()
     val links: ConcurrentLinkedQueue<EmbraceLinkData> = ConcurrentLinkedQueue()
@@ -93,7 +94,10 @@ class FakeEmbraceSdkSpan(
             ?: openTelemetry.spanContext.invalid
     )
 
-    override fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean {
+    override fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean =
+        stopWithErrorCode(errorCode?.toErrorCodeAttribute(), endTimeMs)
+
+    override fun stopWithErrorCode(errorCode: ErrorCodeAttribute?, endTimeMs: Long?): Boolean {
         if (isRecording) {
             this.errorCode = errorCode
             if (errorCode != null) {
@@ -101,7 +105,7 @@ class FakeEmbraceSdkSpan(
             }
 
             if (status is StatusData.Error) {
-                val error = errorCode?.fromErrorCode() ?: ErrorCodeAttribute.Failure
+                val error = errorCode ?: ErrorCodeAttribute.Failure
                 setSystemAttribute(error.key, error.value)
             }
 

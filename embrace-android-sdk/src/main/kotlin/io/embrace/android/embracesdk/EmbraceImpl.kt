@@ -93,8 +93,8 @@ internal class EmbraceImpl(
         EmbraceInternalApi.isStarted = sdkCallChecker.started::get
     }
 
-    private val logger by lazy { bootstrapper.initModule.logger }
-    private val clock by lazy { bootstrapper.initModule.clock }
+    private val logger get() = bootstrapper.initModule.logger
+    private val clock get() = bootstrapper.initModule.clock
 
     @Volatile
     private var applicationInitStartMs: Long? = null

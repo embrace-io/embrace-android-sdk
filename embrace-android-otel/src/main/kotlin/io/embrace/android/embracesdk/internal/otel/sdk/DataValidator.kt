@@ -28,7 +28,7 @@ class DataValidator(
         return truncated
     }
 
-    fun truncateEvents(events: List<EmbraceSpanEvent>, internal: Boolean): List<EmbraceSpanEvent> {
+    fun <T> truncateEvents(events: List<T>, internal: Boolean): List<T> {
         val truncatedEvents = if (internal) {
             events.take(otelLimitsConfig.getMaxSystemEventCount())
         } else if (!bypassValidation()) {

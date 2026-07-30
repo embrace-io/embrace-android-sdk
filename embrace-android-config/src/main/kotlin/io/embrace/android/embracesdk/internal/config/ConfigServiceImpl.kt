@@ -29,7 +29,6 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.NativeSymbols
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.serialization.fromJson
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -65,16 +64,15 @@ class ConfigServiceImpl(
         )
     }
 
-    override val buildInfo: BuildInfo by lazy {
-        val cfg = instrumentedConfig.project
+    override val buildInfo: BuildInfo = with(instrumentedConfig.project) {
         BuildInfo(
-            cfg.getBuildId(),
-            cfg.getBuildType(),
-            cfg.getBuildFlavor(),
-            cfg.getReactNativeBundleId(),
-            cfg.getVersionName() ?: "UNKNOWN",
-            cfg.getVersionCode() ?: "UNKNOWN",
-            cfg.getPackageName() ?: "UNKNOWN",
+            getBuildId(),
+            getBuildType(),
+            getBuildFlavor(),
+            getReactNativeBundleId(),
+            getVersionName() ?: "UNKNOWN",
+            getVersionCode() ?: "UNKNOWN",
+            getPackageName() ?: "UNKNOWN",
         )
     }
 
@@ -180,7 +178,7 @@ class ConfigServiceImpl(
         try {
             val encodedSymbols = instrumentedConfig.symbols.getBase64SharedObjectFilesMap() ?: return null
             val decodedSymbols: String = encodedSymbols.decodeBase64()?.utf8() ?: return null
-            return serializer.fromJson<NativeSymbols>(decodedSymbols)
+            return serializer.fromJson(decodedSymbols, NativeSymbols.serializer())
         } catch (ex: Exception) {
             logger.trackInternalError(InternalErrorType.InvalidNativeSymbols, ex)
         }

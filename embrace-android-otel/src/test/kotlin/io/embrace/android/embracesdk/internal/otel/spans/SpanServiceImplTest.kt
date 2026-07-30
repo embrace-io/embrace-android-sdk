@@ -28,6 +28,8 @@ import io.embrace.android.embracesdk.fixtures.tooBigCustomEvents
 import io.embrace.android.embracesdk.fixtures.tooBigSystemAttributes
 import io.embrace.android.embracesdk.fixtures.tooBigSystemEvents
 import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEventImpl
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
@@ -231,7 +233,7 @@ internal class SpanServiceImplTest {
             type = expectedType,
             private = false,
             attributes = expectedAttributes,
-            events = expectedEvents,
+            events = expectedEvents.map { it.toSpanEvent() },
         )
 
         with(verifyAndReturnSoleCompletedSpan("emb-$expectedName")) {
@@ -284,7 +286,7 @@ internal class SpanServiceImplTest {
                     name = "test${errorCode.name}",
                     startTimeMs = 0,
                     endTimeMs = 1,
-                    errorCode = errorCode,
+                    errorCode = errorCode.toErrorCodeAttribute(),
                 ),
             )
             with(verifyAndReturnSoleCompletedSpan("emb-test${errorCode.name}")) {
@@ -479,9 +481,9 @@ internal class SpanServiceImplTest {
             attributesMap["key$it"] = "value"
         }
 
-        val events = mutableListOf(checkNotNull(EmbraceSpanEvent.create("event", 100L, attributesMap)))
+        val events = mutableListOf<SpanEvent>(SpanEventImpl("event", 100L, attributesMap))
         repeat(dataValidator.otelLimitsConfig.getMaxCustomEventCount() - 1) {
-            events.add(checkNotNull(EmbraceSpanEvent.create("event", 100L, null)))
+            events.add(SpanEventImpl("event", 100L, emptyMap()))
         }
         assertTrue(
             spansService.recordCompletedSpan(

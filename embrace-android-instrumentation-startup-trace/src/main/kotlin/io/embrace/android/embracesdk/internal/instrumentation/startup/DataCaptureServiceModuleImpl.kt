@@ -23,37 +23,23 @@ class DataCaptureServiceModuleImpl(
     versionChecker: VersionChecker = BuildVersionChecker,
 ) : DataCaptureServiceModule {
 
-    override val startupService: StartupService by lazy {
-        StartupServiceImpl(destination)
-    }
+    override val startupService: StartupService = StartupServiceImpl(destination)
 
-    override val appStartupDataCollector: AppStartupDataCollector by lazy {
-        val deviceStartTimeMs = clock.now() - SystemClock.elapsedRealtime()
-
-        AppStartupTraceEmitter(
-            clock = clock,
-            startupServiceProvider = { startupService },
-            destination = destination,
+    override val appStartupDataCollector: AppStartupDataCollector = AppStartupTraceEmitter(
+        clock = clock,
+        startupServiceProvider = { startupService },
+        destination = destination,
+        versionChecker = versionChecker,
+        logger = logger,
+        startupClassifier = startupClassifier,
+        manualEnd = configService.autoDataCaptureBehavior.isEndStartupWithAppReadyEnabled(),
+        processInfo = ProcessInfoImpl(
+            deviceStartTimeMs = clock.now() - SystemClock.elapsedRealtime(),
             versionChecker = versionChecker,
-            logger = logger,
-            startupClassifier = startupClassifier,
-            manualEnd = configService.autoDataCaptureBehavior.isEndStartupWithAppReadyEnabled(),
-            processInfo = ProcessInfoImpl(
-                deviceStartTimeMs = deviceStartTimeMs,
-                versionChecker = versionChecker,
-            ),
-        )
-    }
+        ),
+    )
 
-    override val startupTracker: StartupTracker by lazy {
-        StartupTracker(
-            appStartupDataCollector = appStartupDataCollector,
-            activityLoadEventEmitter = activityLoadEventEmitter,
-            drawEventEmitter = createDrawEventEmitter(versionChecker, logger),
-        )
-    }
-
-    override val uiLoadDataListener: UiLoadDataListener? by lazy {
+    override val uiLoadDataListener: UiLoadDataListener? =
         if (configService.autoDataCaptureBehavior.isUiLoadTracingEnabled()) {
             UiLoadTraceEmitter(
                 destination = destination,
@@ -62,11 +48,9 @@ class DataCaptureServiceModuleImpl(
         } else {
             null
         }
-    }
 
-    override val activityLoadEventEmitter: Application.ActivityLifecycleCallbacks? by lazy {
-        val uiLoadEventListener = uiLoadDataListener
-        if (uiLoadEventListener != null) {
+    override val activityLoadEventEmitter: Application.ActivityLifecycleCallbacks? =
+        uiLoadDataListener?.let { uiLoadEventListener ->
             createActivityLoadEventEmitter(
                 uiLoadEventListener = uiLoadEventListener,
                 firstDrawDetector = createDrawEventEmitter(versionChecker, logger),
@@ -74,8 +58,11 @@ class DataCaptureServiceModuleImpl(
                 clock = clock,
                 versionChecker = versionChecker,
             )
-        } else {
-            null
         }
-    }
+
+    override val startupTracker: StartupTracker = StartupTracker(
+        appStartupDataCollector = appStartupDataCollector,
+        activityLoadEventEmitter = activityLoadEventEmitter,
+        drawEventEmitter = createDrawEventEmitter(versionChecker, logger),
+    )
 }

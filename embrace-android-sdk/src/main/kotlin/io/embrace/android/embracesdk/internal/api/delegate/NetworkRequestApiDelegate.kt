@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetwor
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
+import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
 
 internal class NetworkRequestApiDelegate(
     bootstrapper: ModuleInitBootstrapper,
@@ -18,6 +19,9 @@ internal class NetworkRequestApiDelegate(
     private val registry by embraceImplInject(sdkCallChecker) {
         bootstrapper.instrumentationModule.instrumentationRegistry
     }
+    private val httpRequestInfoModifierChain by embraceImplInject(sdkCallChecker) {
+        bootstrapper.instrumentationModule.instrumentationArgs.httpRequestInfoModifierChain
+    }
     private val sessionOrchestrator by embraceImplInject(sdkCallChecker) {
         bootstrapper.userSessionOrchestrationModule.sessionOrchestrator
     }
@@ -25,6 +29,18 @@ internal class NetworkRequestApiDelegate(
     override fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest) {
         if (sdkCallChecker.check("record_network_request")) {
             logNetworkRequest(networkRequest)
+        }
+    }
+
+    override fun addHttpRequestInfoModifier(modifier: HttpRequestInfoModifier) {
+        if (sdkCallChecker.check("add_http_request_info_modifier")) {
+            httpRequestInfoModifierChain?.add(modifier)
+        }
+    }
+
+    override fun removeHttpRequestInfoModifier(modifier: HttpRequestInfoModifier) {
+        if (sdkCallChecker.check("remove_http_request_info_modifier")) {
+            httpRequestInfoModifierChain?.remove(modifier)
         }
     }
 

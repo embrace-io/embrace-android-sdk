@@ -18,6 +18,7 @@ class VitalsBehaviorImpl(
         private const val DEFAULT_SCREEN_LOAD_TIMEOUT_MS = 30_000L
         private const val DEFAULT_SCREEN_LOAD_NAV_TIMEOUT_MS = 500L
         private const val DEFAULT_SMOOTHNESS_FRAME_TRACE_ENABLED = false
+        private const val DEFAULT_SPAN_LIMIT = 250
     }
 
     private val remote = remote?.vitalsRemoteConfig
@@ -43,4 +44,7 @@ class VitalsBehaviorImpl(
     override fun isSmoothnessFrameTraceEnabled(): Boolean =
         thresholdCheck.isBehaviorEnabled(remote?.smoothnessFrameTracePctEnabled)
             ?: DEFAULT_SMOOTHNESS_FRAME_TRACE_ENABLED
+
+    override fun getSpanLimit(): Int =
+        remote?.spanLimit ?: DEFAULT_SPAN_LIMIT
 }

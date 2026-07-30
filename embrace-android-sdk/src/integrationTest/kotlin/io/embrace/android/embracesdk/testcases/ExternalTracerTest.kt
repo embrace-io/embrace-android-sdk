@@ -322,16 +322,14 @@ internal class ExternalTracerTest {
 
                 // all attribute values are stringified when written, so they read back as strings
                 with(checkNotNull(recorded.events).single { it.name == "my-event" }) {
-                    val eventAttrs = checkNotNull(attributes).toMap()
-                    assertEquals(2, eventAttrs.size)
-                    assertEquals("event-value", eventAttrs["event-key"])
-                    assertEquals("3", eventAttrs["event-count"])
+                    assertEquals(2, attributes?.size)
+                    assertEquals("event-value", attributes?.single { it.key == "event-key" }?.data)
+                    assertEquals("3", attributes?.single { it.key == "event-count" }?.data)
                 }
 
                 with(checkNotNull(recorded.links).single { it.spanId == linkedSpanId }) {
-                    val linkAttrs = checkNotNull(attributes).toMap()
-                    assertEquals(1, linkAttrs.size)
-                    assertEquals("true", linkAttrs["link-flag"])
+                    assertEquals(1, attributes?.size)
+                    assertEquals("true", attributes?.single { it.key == "link-flag" }?.data)
                 }
             }
         )

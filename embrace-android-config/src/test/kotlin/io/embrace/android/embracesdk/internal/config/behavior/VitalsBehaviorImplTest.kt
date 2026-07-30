@@ -18,6 +18,7 @@ internal class VitalsBehaviorImplTest {
         screenLoadTimeoutMs = 45_000,
         screenLoadNavTimeoutMs = 750,
         smoothnessFrameTracePctEnabled = 100f,
+        spanLimit = 25,
     )
 
     @Test
@@ -30,6 +31,7 @@ internal class VitalsBehaviorImplTest {
             assertEquals(30_000L, getScreenLoadTimeoutMs())
             assertEquals(500L, getScreenLoadNavTimeoutMs())
             assertFalse(isSmoothnessFrameTraceEnabled())
+            assertEquals(250, getSpanLimit())
         }
     }
 
@@ -43,6 +45,7 @@ internal class VitalsBehaviorImplTest {
             assertEquals(45_000L, getScreenLoadTimeoutMs())
             assertEquals(750L, getScreenLoadNavTimeoutMs())
             assertTrue(isSmoothnessFrameTraceEnabled())
+            assertEquals(25, getSpanLimit())
         }
     }
 }

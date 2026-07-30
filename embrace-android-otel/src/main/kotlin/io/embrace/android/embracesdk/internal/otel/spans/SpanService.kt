@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.Initializable
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.android.embracesdk.spans.ErrorCode
 
 /**
  * Internal service that supports the creation and recording of [EmbraceSpan]
@@ -59,7 +59,8 @@ interface SpanService : Initializable {
 
     /**
      * Records a span around the execution of the given lambda. If the lambda throws an uncaught exception, it will be recorded as a
-     * [ErrorCode.FAILURE]. The span will be the provided name, and the appropriate prefix will be prepended to it if [internal] is true.
+     * [ErrorCodeAttribute.Failure]. The span will be the provided name, and the appropriate prefix will be prepended to it if [internal]
+     * is true.
      */
     fun <T> recordSpan(
         name: String,
@@ -68,7 +69,7 @@ interface SpanService : Initializable {
         internal: Boolean = true,
         private: Boolean = false,
         attributes: Map<String, String> = emptyMap(),
-        events: List<EmbraceSpanEvent> = emptyList(),
+        events: List<SpanEvent> = emptyList(),
         autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
         code: () -> T,
     ): T
@@ -86,8 +87,8 @@ interface SpanService : Initializable {
         internal: Boolean = true,
         private: Boolean = false,
         attributes: Map<String, String> = emptyMap(),
-        events: List<EmbraceSpanEvent> = emptyList(),
-        errorCode: ErrorCode? = null,
+        events: List<SpanEvent> = emptyList(),
+        errorCode: ErrorCodeAttribute? = null,
     ): Boolean
 
     /**

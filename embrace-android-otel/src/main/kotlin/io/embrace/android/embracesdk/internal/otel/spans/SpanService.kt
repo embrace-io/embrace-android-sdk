@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.Initializable
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
-import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 
 /**
@@ -22,7 +21,7 @@ interface SpanService : Initializable {
         type: EmbType = EmbType.Performance.Default,
         internal: Boolean = true,
         private: Boolean = false,
-        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
+        terminationMode: SpanTerminationMode = SpanTerminationMode.None,
     ): EmbraceSdkSpan
 
     /**
@@ -41,7 +40,7 @@ interface SpanService : Initializable {
         type: EmbType = EmbType.Performance.Default,
         internal: Boolean = true,
         private: Boolean = false,
-        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
+        terminationMode: SpanTerminationMode = SpanTerminationMode.None,
     ): EmbraceSdkSpan
 
     /**
@@ -57,7 +56,7 @@ interface SpanService : Initializable {
         private: Boolean = false,
         attributes: Map<String, String> = emptyMap(),
         events: List<SpanEvent> = emptyList(),
-        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
+        terminationMode: SpanTerminationMode = SpanTerminationMode.None,
         code: () -> T,
     ): T
 

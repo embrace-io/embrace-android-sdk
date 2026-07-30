@@ -53,6 +53,7 @@ class FakeTelemetryDestination(
         parentSpanId: String?,
         autoTerminate: Boolean,
         private: Boolean,
+        timeoutMs: Long?,
     ): SpanToken {
         // Model the resolved parent as its own span token, named for the span id it represents, so the
         // resulting span can adopt it as a parent and derive its traceparent from it.
@@ -84,6 +85,7 @@ class FakeTelemetryDestination(
             initialAttrs = schemaType.attributes() + mapOf(schemaType.telemetryType.asPair()),
             events = mutableListOf(),
             uuidSource = uuidSource,
+            timeoutMs = timeoutMs,
         )
 
         createdSpans.add(token)

@@ -1,12 +1,15 @@
 package io.embrace.android.embracesdk.internal.instrumentation.network
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
 import io.opentelemetry.kotlin.semconv.HttpAttributes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -163,6 +166,84 @@ internal class NetworkRequestDataSourceTest {
         logNetworkRequest(url = "https://www.example.com/api")
         // the modified url has no parseable domain, so nothing is recorded
         assertTrue(harness.getNetworkSpans().isEmpty())
+    }
+
+    @Test
+    fun `startRequest propagates the timeout onto the span`() {
+        val id = harness.dataSource.startRequest(
+            RequestStartData(
+                url = "https://www.example.com/api",
+                httpMethod = "GET",
+                sdkClockStartTime = 100L,
+                timeoutMs = 30_000L,
+            ),
+        )
+        assertNotNull(id)
+        assertEquals(30_000L, harness.getNetworkSpans().single().timeoutMs)
+    }
+
+    @Test
+    fun `onPreSessionEnd prunes requests whose span was stopped by the sweep`() {
+        val id = checkNotNull(
+            harness.dataSource.startRequest(
+                RequestStartData(
+                    url = "https://www.example.com/api",
+                    httpMethod = "GET",
+                    sdkClockStartTime = 100L,
+                    timeoutMs = 1000L,
+                ),
+            ),
+        )
+        val span = harness.getNetworkSpans().single()
+
+        // timeout sweep stopps span at its deadline
+        span.stop(1100L, ErrorCodeAttribute.Failure)
+        assertFalse(span.isRecording())
+
+        (harness.dataSource as SessionPartEndListener).onPreSessionEnd()
+
+        // late endRequest is a no-op and does not touch the stopped span
+        harness.dataSource.endRequest(
+            RequestEndData(
+                id = id,
+                url = "https://www.example.com/api",
+                sdkClockStartTime = 100L,
+                sdkClockEndTime = 2000L,
+                statusCode = 200,
+            ),
+        )
+        assertEquals(1100L, span.endTimeMs)
+        assertEquals(ErrorCodeAttribute.Failure, span.errorCode)
+    }
+
+    @Test
+    fun `onPreSessionEnd retains still-recording requests`() {
+        val id = checkNotNull(
+            harness.dataSource.startRequest(
+                RequestStartData(
+                    url = "https://www.example.com/api",
+                    httpMethod = "GET",
+                    sdkClockStartTime = 100L,
+                    timeoutMs = 1000L,
+                ),
+            ),
+        )
+        val span = harness.getNetworkSpans().single()
+        assertTrue(span.isRecording())
+
+        (harness.dataSource as SessionPartEndListener).onPreSessionEnd()
+
+        // request still in-flight so can be ended normally
+        harness.dataSource.endRequest(
+            RequestEndData(
+                id = id,
+                url = "https://www.example.com/api",
+                sdkClockStartTime = 100L,
+                sdkClockEndTime = 2000L,
+                statusCode = 200,
+            ),
+        )
+        assertEquals(2000L, span.endTimeMs)
     }
 
     private fun logNetworkRequest(

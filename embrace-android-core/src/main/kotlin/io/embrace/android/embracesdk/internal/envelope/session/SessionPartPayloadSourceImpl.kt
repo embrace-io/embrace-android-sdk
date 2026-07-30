@@ -31,6 +31,13 @@ internal class SessionPartPayloadSourceImpl(
         val isCacheAttempt = endType == SessionPartSnapshotType.PERIODIC_CACHE
         val includeSnapshots = endType != SessionPartSnapshotType.JVM_CRASH
 
+        // When a session part actually ends (not a periodic cache snapshot, which the dedicated
+        // background sweep already covers), fail any in-flight spans that have exceeded their
+        // timeout before the session part is finalized, regardless of app state.
+        if (!isCacheAttempt) {
+            spanRepository.stopTimedOutSpans(clock.now())
+        }
+
         if (!endType.forceQuit && appStateTracker.getAppState() == AppState.BACKGROUND) {
             spanRepository.autoTerminateEmbraceSpans(clock.now())
         }

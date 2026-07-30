@@ -21,6 +21,7 @@ object NoopEmbraceSdkSpan : EmbraceSdkSpan {
     override val spanId: String? = null
     override val isRecording: Boolean = false
     override val parent: EmbraceSpan? = null
+    override val terminationMode: SpanTerminationMode = SpanTerminationMode.None
     override val autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE
 
     override fun start(startTimeMs: Long?): Boolean = false

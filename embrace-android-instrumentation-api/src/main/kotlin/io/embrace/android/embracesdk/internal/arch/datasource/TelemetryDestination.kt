@@ -47,6 +47,7 @@ interface TelemetryDestination {
         parentSpanId: String? = null,
         autoTerminate: Boolean = false,
         private: Boolean = false,
+        timeoutMs: Long? = null,
     ): SpanToken
 
     /**

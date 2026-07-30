@@ -17,6 +17,7 @@ sealed class InternalErrorType(private val severity: Severity) {
     object NetworkStatusCaptureFail : InternalErrorType(ERROR)
     object ScreenResCaptureFail : InternalErrorType(ERROR)
     object PeriodicSessionCacheFail : InternalErrorType(ERROR)
+    object SpanTimeoutSweepFail : InternalErrorType(ERROR)
     object AppStateCallbackFail : InternalErrorType(ERROR)
     object ThreadBlockageHeartbeatCheckFail : InternalErrorType(ERROR)
     object DataSourceDataCaptureFail : InternalErrorType(ERROR)

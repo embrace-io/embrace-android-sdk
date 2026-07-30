@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.spans
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.toErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.otel.spans.toSpanEvent
+import io.embrace.android.embracesdk.internal.otel.spans.toTerminationMode
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -22,7 +23,7 @@ class TracingApiDelegate(
             name = name,
             parent = parent,
             internal = false,
-            autoTerminationMode = autoTerminationMode,
+            terminationMode = autoTerminationMode.toTerminationMode(),
         )
 
     override fun startSpan(
@@ -36,7 +37,7 @@ class TracingApiDelegate(
             parent = parent,
             startTimeMs = startTimeMs,
             internal = false,
-            autoTerminationMode = autoTerminationMode,
+            terminationMode = autoTerminationMode.toTerminationMode(),
         )
 
     override fun <T> recordSpan(
@@ -52,7 +53,7 @@ class TracingApiDelegate(
         internal = false,
         attributes = attributes,
         events = events.map { it.toSpanEvent() },
-        autoTerminationMode = autoTerminationMode,
+        terminationMode = autoTerminationMode.toTerminationMode(),
         code = code,
     )
 

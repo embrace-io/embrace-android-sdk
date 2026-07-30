@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import io.opentelemetry.kotlin.semconv.UserAttributes
 import java.util.ServiceLoader
+import java.util.concurrent.TimeUnit
 
 /**
  * Performs bootstrapping by setting required values where there is an interdependency
@@ -68,6 +69,24 @@ internal fun ModuleGraph.registerListeners() {
         workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
             essentialServiceModule.networkConnectivityService.register()
         }
+
+        // periodically fail any in-flight spans that have exceeded their timeout, so leaked spans
+        // are terminated and their memory released even during a long-running session.
+        val spanRepository = openTelemetryModule.spanRepository
+        val clock = initModule.clock
+        val logger = initModule.logger
+        workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).scheduleWithFixedDelay(
+            {
+                try {
+                    spanRepository.stopTimedOutSpans(clock.now())
+                } catch (exc: Throwable) {
+                    logger.trackInternalError(InternalErrorType.SpanTimeoutSweepFail, exc)
+                }
+            },
+            SPAN_TIMEOUT_SWEEP_INTERVAL_MS,
+            SPAN_TIMEOUT_SWEEP_INTERVAL_MS,
+            TimeUnit.MILLISECONDS,
+        )
 
         val sessionPartTracker = essentialServiceModule.sessionPartTracker
         val appStateTracker = essentialServiceModule.appStateTracker
@@ -213,3 +232,5 @@ private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, St
         }
     }
 }
+
+private const val SPAN_TIMEOUT_SWEEP_INTERVAL_MS = 30_000L

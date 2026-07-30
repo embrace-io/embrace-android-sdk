@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.network
 
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
@@ -32,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 class NetworkRequestDataSourceImpl(
     args: InstrumentationArgs,
-) : NetworkRequestDataSource, DataSourceImpl(
+) : NetworkRequestDataSource, SessionPartEndListener, DataSourceImpl(
     args,
     NoopLimitStrategy,
     "network_request_data_source",
@@ -110,6 +111,7 @@ class NetworkRequestDataSourceImpl(
                 startTimeMs = startData.sdkClockStartTime,
                 name = getNetworkSpanName(httpMethod, url),
                 parentSpanId = startData.traceparent?.getSpanIdFromTraceparent(),
+                timeoutMs = startData.timeoutMs,
             )
 
             spanToken.asW3cTraceparent()?.also { traceparent ->
@@ -117,7 +119,7 @@ class NetworkRequestDataSourceImpl(
                     spanToken.setSystemAttribute(EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT, traceparent)
                     spanToken.setSystemAttribute(EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY, "true")
                 }
-                activeRequests[traceparent] = ActiveRequest(spanToken, httpMethod, startData.timeoutMs)
+                activeRequests[traceparent] = ActiveRequest(spanToken, httpMethod)
             }
         }
     }
@@ -147,6 +149,15 @@ class NetworkRequestDataSourceImpl(
 
     override fun discardRequest(id: String) {
         activeRequests.remove(id)
+    }
+
+    /**
+     * When a session part ends, drop any tracking entries whose span has already been stopped by the
+     * timeout sweep. This releases the retained [SpanToken] (and its underlying span) for requests
+     * that leaked and were never explicitly ended.
+     */
+    override fun onPreSessionEnd() {
+        activeRequests.values.removeAll { !it.spanToken.isRecording() }
     }
 
     private fun generateSchemaAttributes(
@@ -194,14 +205,12 @@ class NetworkRequestDataSourceImpl(
 
     /**
      * Tracks an in-flight request span. [httpMethod] is the post-modifier method captured at request
-     * start, retained so the modifiers can be re-applied to the final url when the request ends.
-     * [timeoutMs] is the duration after which this in-flight span should be considered leaked and
-     * dropped (consumed by the eviction mechanism); null if no timeout could be resolved.
+     * start, retained so the modifiers can be re-applied to the final url when the request ends. Any
+     * timeout for the span is enforced by the timeout sweep via the span's own termination mode.
      */
     private class ActiveRequest(
         val spanToken: SpanToken,
         val httpMethod: String,
-        val timeoutMs: Long?,
     )
 
     private companion object {

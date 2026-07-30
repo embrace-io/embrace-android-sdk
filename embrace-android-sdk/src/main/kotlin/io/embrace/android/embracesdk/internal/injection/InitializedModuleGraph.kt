@@ -35,9 +35,9 @@ internal class InitializedModuleGraph(
     versionChecker: VersionChecker = BuildVersionChecker,
     override val initModule: InitModule,
     override val openTelemetryModule: OpenTelemetryModule,
+    override val workerThreadModule: WorkerThreadModule,
     private val coreModuleSupplier: CoreModuleSupplier?,
     private val configServiceSupplier: ConfigServiceSupplier?,
-    private val workerThreadModuleSupplier: WorkerThreadModuleSupplier?,
     private val storageServiceSupplier: StorageServiceSupplier?,
     private val essentialServiceModuleSupplier: EssentialServiceModuleSupplier?,
     private val featureModuleSupplier: FeatureModuleSupplier?,
@@ -52,16 +52,12 @@ internal class InitializedModuleGraph(
 
     override val coreModule: CoreModule = init {
         coreModuleSupplier?.invoke(context, initModule) ?: CoreModuleImpl(context, initModule)
-    }
-
-    override val workerThreadModule: WorkerThreadModule = init {
-        workerThreadModuleSupplier?.invoke() ?: WorkerThreadModuleImpl()
     }.apply {
         EmbTrace.trace("span-service-init") {
-            openTelemetryModule.spanService.initializeService(coreModule.sdkStartTime)
+            openTelemetryModule.spanService.initializeService(sdkStartTime)
         }
         EmbTrace.trace("event-service-init") {
-            openTelemetryModule.eventService.initializeService(coreModule.sdkStartTime)
+            openTelemetryModule.eventService.initializeService(sdkStartTime)
         }
     }
 

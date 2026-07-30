@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.testframework.actions
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.testframework.export.ExportedSpanValidator
+import io.embrace.android.embracesdk.testframework.export.ExportedTelemetryParityValidator
 import io.embrace.android.embracesdk.testframework.export.FilteredLogExporter
 import io.embrace.android.embracesdk.testframework.export.FilteredSpanExporter
 import io.opentelemetry.kotlin.aliases.OtelJavaLogRecordData
@@ -15,6 +16,7 @@ internal class EmbraceOtelExportAssertionInterface(
     private val spanExporter: FilteredSpanExporter,
     private val logExporter: FilteredLogExporter,
     private val validator: ExportedSpanValidator = ExportedSpanValidator(),
+    private val parityValidator: ExportedTelemetryParityValidator = ExportedTelemetryParityValidator(),
 ) {
 
     fun awaitLogs(expectedCount: Int, filter: (OtelJavaLogRecordData) -> Boolean) = logExporter.awaitLogs(expectedCount, filter)
@@ -26,5 +28,21 @@ internal class EmbraceOtelExportAssertionInterface(
      */
     fun assertSpansMatchGoldenFile(spans: List<OtelJavaSpanData>, goldenFile: String) {
         validator.validate(spans, goldenFile)
+    }
+
+    /**
+     * Asserts that the provided spans match the golden file, including the resource. Used to prove
+     * that the opentelemetry-kotlin 'compat' and 'KMP' implementations export identical telemetry.
+     */
+    fun assertSpansMatchParityGoldenFile(spans: List<OtelJavaSpanData>, goldenFile: String) {
+        parityValidator.validateSpans(spans, goldenFile)
+    }
+
+    /**
+     * Asserts that the provided logs match the golden file, including the resource. Used to prove
+     * that the opentelemetry-kotlin 'compat' and 'KMP' implementations export identical telemetry.
+     */
+    fun assertLogsMatchParityGoldenFile(logs: List<OtelJavaLogRecordData>, goldenFile: String) {
+        parityValidator.validateLogs(logs, goldenFile)
     }
 }

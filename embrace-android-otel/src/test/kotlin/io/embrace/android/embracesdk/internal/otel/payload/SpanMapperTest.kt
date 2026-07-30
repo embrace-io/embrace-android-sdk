@@ -104,6 +104,7 @@ internal class SpanMapperTest {
                 override val name: String = "test-event"
                 override val timestamp: Long = START_TIME_NANOS + 1_000_000L
                 override val attributes: Map<String, Any> = mapOf("event-key" to "event-value")
+                override val droppedAttributesCount: Int = 0
             },
         ),
         links = listOf(
@@ -111,6 +112,7 @@ internal class SpanMapperTest {
                 override val spanContext: SpanContext =
                     TestSpanContext(traceId = "032df1b0b1c1e0cbc0bd8b342a2a1f26", spanId = "b5a2c5c5b6b6f2f1")
                 override val attributes: Map<String, Any> = mapOf("link-key" to "link-value")
+                override val droppedAttributesCount: Int = 0
             },
         ),
     )
@@ -140,6 +142,9 @@ internal class SpanMapperTest {
     ) : SpanData {
         override val spanKind: SpanKind = SpanKind.INTERNAL
         override val hasEnded: Boolean = endTimestamp != null
+        override val droppedEventsCount: Int = 0
+        override val droppedLinksCount: Int = 0
+        override val droppedAttributesCount: Int = 0
         override val resource: Resource
             get() = throw UnsupportedOperationException()
         override val instrumentationScopeInfo: InstrumentationScopeInfo

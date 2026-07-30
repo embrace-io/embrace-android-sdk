@@ -28,7 +28,10 @@ import io.embrace.android.embracesdk.fixtures.tooBigCustomEvents
 import io.embrace.android.embracesdk.fixtures.tooBigSystemAttributes
 import io.embrace.android.embracesdk.fixtures.tooBigSystemEvents
 import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEventImpl
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
@@ -43,6 +46,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
@@ -50,6 +54,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
 internal class SpanServiceImplTest {
@@ -57,8 +63,11 @@ internal class SpanServiceImplTest {
     private lateinit var dataValidator: DataValidator
     private lateinit var spansService: SpanServiceImpl
     private val clock = FakeClock()
+    private val otelClock = FakeOtelKotlinClock(clock)
     private var spanCreationAllowed: Boolean = true
     private var initTimeMs: Long = 0L
+    private var initCallbackCount: Int = 0
+    private var failNextTracerLookup: Boolean = false
 
     @Before
     fun setup() {
@@ -231,7 +240,7 @@ internal class SpanServiceImplTest {
             type = expectedType,
             private = false,
             attributes = expectedAttributes,
-            events = expectedEvents,
+            events = expectedEvents.map { it.toSpanEvent() },
         )
 
         with(verifyAndReturnSoleCompletedSpan("emb-$expectedName")) {
@@ -284,7 +293,7 @@ internal class SpanServiceImplTest {
                     name = "test${errorCode.name}",
                     startTimeMs = 0,
                     endTimeMs = 1,
-                    errorCode = errorCode,
+                    errorCode = errorCode.toErrorCodeAttribute(),
                 ),
             )
             with(verifyAndReturnSoleCompletedSpan("emb-test${errorCode.name}")) {
@@ -301,6 +310,56 @@ internal class SpanServiceImplTest {
                 name = "test-pan",
                 startTimeMs = 500,
                 endTimeMs = 499,
+            ),
+        )
+    }
+
+    @Test
+    fun `nanosecond timestamps for a completed span are normalized to millis`() {
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
+
+        assertTrue(
+            spansService.recordCompletedSpan(
+                name = "test-span",
+                startTimeMs = expectedStartTimeMs.millisToNanos(),
+                endTimeMs = expectedEndTimeMs.millisToNanos(),
+            ),
+        )
+
+        with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
+            assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
+        }
+    }
+
+    @Test
+    fun `completed span timestamps are normalized before start and end times are validated`() {
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
+
+        // mixed units: the raw values compare as start > end, but the normalized ones do not
+        assertTrue(
+            spansService.recordCompletedSpan(
+                name = "test-span",
+                startTimeMs = expectedStartTimeMs.millisToNanos(),
+                endTimeMs = expectedEndTimeMs,
+            ),
+        )
+
+        with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
+            assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
+        }
+    }
+
+    @Test
+    fun `validate normalized start and end times for a completed span`() {
+        assertFalse(
+            spansService.recordCompletedSpan(
+                name = "test-span",
+                startTimeMs = (clock.now() + 100L).millisToNanos(),
+                endTimeMs = clock.now().millisToNanos(),
             ),
         )
     }
@@ -479,9 +538,9 @@ internal class SpanServiceImplTest {
             attributesMap["key$it"] = "value"
         }
 
-        val events = mutableListOf(checkNotNull(EmbraceSpanEvent.create("event", 100L, attributesMap)))
+        val events = mutableListOf<SpanEvent>(SpanEventImpl("event", 100L, attributesMap))
         repeat(dataValidator.otelLimitsConfig.getMaxCustomEventCount() - 1) {
-            events.add(checkNotNull(EmbraceSpanEvent.create("event", 100L, null)))
+            events.add(SpanEventImpl("event", 100L, emptyMap()))
         }
         assertTrue(
             spansService.recordCompletedSpan(
@@ -616,8 +675,170 @@ internal class SpanServiceImplTest {
         assertEquals(3, spanRepository.completedOtelSpans().size)
     }
 
-    private fun createSpanService(dataValidator: DataValidator): SpanServiceImpl {
-        val fakeClock = FakeOtelKotlinClock(clock)
+    @Test
+    fun `verify default behaviour before initialization`() {
+        val uninitializedService = createUninitializedSpanService()
+        assertFalse(uninitializedService.initialized())
+        assertEquals(NoopEmbraceSdkSpan, uninitializedService.createSpan("test-span"))
+        assertEquals(NoopEmbraceSdkSpan, uninitializedService.startSpan("test-span"))
+        assertTrue(uninitializedService.recordCompletedSpan("test-span", 10, 20))
+        var lambdaRan = false
+        uninitializedService.recordSpan("test-span") { lambdaRan = true }
+        assertTrue(lambdaRan)
+        assertEquals(0, spanRepository.completedOtelSpans().size)
+    }
+
+    @Test
+    fun `service works once initialized`() {
+        assertTrue(spansService.initialized())
+        assertNotEquals(NoopEmbraceSdkSpan, spansService.createSpan("test-span"))
+        assertNotEquals(NoopEmbraceSdkSpan, spansService.startSpan("test-span"))
+        assertTrue(spansService.recordCompletedSpan("test-span", 10, 20))
+        var lambdaRan = false
+        spansService.recordSpan("test-span") { lambdaRan = true }
+        assertTrue(lambdaRan)
+        assertEquals(2, spanRepository.completedOtelSpans().size)
+    }
+
+    @Test
+    fun `getSpan returns null before initialization`() {
+        assertNull(createUninitializedSpanService().getSpan("some-span-id"))
+    }
+
+    @Test
+    fun `completed spans recorded before initialization are buffered and replayed`() {
+        val service = createUninitializedSpanService()
+        assertTrue(service.recordCompletedSpan("test-span", 10, 20))
+        assertTrue(service.recordCompletedSpan("other-span", 15, 25))
+        assertEquals(0, spanRepository.completedOtelSpans().size)
+
+        service.initializeService(otelClock.now().nanosToMillis())
+
+        assertEquals(
+            setOf("emb-other-span", "emb-test-span"),
+            spanRepository.completedOtelSpans().map { it.name }.toSet(),
+        )
+    }
+
+    @Test
+    fun `nanosecond timestamps buffered before initialization are normalized on replay`() {
+        val service = createUninitializedSpanService()
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
+        assertTrue(
+            service.recordCompletedSpan(
+                name = "test-span",
+                startTimeMs = expectedStartTimeMs.millisToNanos(),
+                endTimeMs = expectedEndTimeMs.millisToNanos(),
+            ),
+        )
+
+        service.initializeService(otelClock.now().nanosToMillis())
+
+        with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
+            assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
+        }
+    }
+
+    @Test
+    fun `completed spans recorded after initialization are recorded directly`() {
+        val service = createUninitializedSpanService()
+        service.initializeService(otelClock.now().nanosToMillis())
+
+        assertTrue(service.recordCompletedSpan("after-init", 10, 20))
+        assertEquals("emb-after-init", spanRepository.completedOtelSpans().single().name)
+    }
+
+    @Test
+    fun `completed span recorded while buffered spans are replayed is not lost`() {
+        val replayStarted = CountDownLatch(1)
+        val service = createUninitializedSpanService(
+            spanFactoryDecorator = { SlowEmbraceSpanFactory(it, replayStarted) },
+        )
+        repeat(5) { i ->
+            assertTrue(service.recordCompletedSpan("pre-init-$i", 10, 20))
+        }
+
+        val initializer = Thread { service.initializeService(otelClock.now().nanosToMillis()) }
+        val recorder = Thread {
+            assertTrue(replayStarted.await(2, TimeUnit.SECONDS))
+            service.recordCompletedSpan("racing-span", 10, 20)
+        }
+        initializer.start()
+        recorder.start()
+        initializer.join(SERVICE_INIT_TIMEOUT_MS)
+        recorder.join(SERVICE_INIT_TIMEOUT_MS)
+
+        // 5 buffered spans plus the one that raced with the replay: whichever side of the handover it landed on, it must be recorded
+        val completedSpans = spanRepository.completedOtelSpans()
+        assertEquals(6, completedSpans.size)
+        assertTrue(completedSpans.any { it.name == "emb-racing-span" })
+    }
+
+    @Test
+    fun `initializeService is idempotent`() {
+        val service = createUninitializedSpanService()
+        assertTrue(service.recordCompletedSpan("test-span", 10, 20))
+        initCallbackCount = 0
+
+        service.initializeService(100L)
+        service.initializeService(200L)
+
+        assertEquals(1, initCallbackCount)
+        assertEquals(100L, initTimeMs)
+        assertEquals(1, spanRepository.completedOtelSpans().size)
+    }
+
+    @Test
+    fun `buffered spans survive a failed initializeService`() {
+        val service = createUninitializedSpanService()
+        assertTrue(service.recordCompletedSpan("test-span", 10, 20))
+        initCallbackCount = 0
+
+        failNextTracerLookup = true
+        assertThrows(IllegalStateException::class.java) {
+            service.initializeService(otelClock.now().nanosToMillis())
+        }
+        assertFalse(service.initialized())
+        assertEquals(0, initCallbackCount)
+
+        service.initializeService(otelClock.now().nanosToMillis())
+
+        assertTrue(service.initialized())
+        assertEquals("emb-test-span", spanRepository.completedOtelSpans().single().name)
+    }
+
+    @Test
+    fun `recordCompletedSpan with invalid times is buffered before initialization then dropped on replay`() {
+        val service = createUninitializedSpanService()
+        assertTrue(service.recordCompletedSpan(name = "test-span", startTimeMs = 500, endTimeMs = 499))
+
+        service.initializeService(otelClock.now().nanosToMillis())
+
+        assertEquals(0, spanRepository.completedOtelSpans().size)
+    }
+
+    @Test
+    fun `verify ceiling to how many recordCompleteSpan calls can be buffered`() {
+        val service = createUninitializedSpanService()
+        repeat(MAX_BUFFERED_CALLS) {
+            assertTrue(service.recordCompletedSpan("test-span", 10, 20))
+        }
+        assertFalse(service.recordCompletedSpan("test-span", 10, 20))
+    }
+
+    private fun createSpanService(
+        dataValidator: DataValidator = this.dataValidator,
+        spanFactoryDecorator: (EmbraceSpanFactory) -> EmbraceSpanFactory = { it },
+    ): SpanServiceImpl = createUninitializedSpanService(dataValidator, spanFactoryDecorator).apply {
+        initializeService(otelClock.now().nanosToMillis())
+    }
+
+    private fun createUninitializedSpanService(
+        dataValidator: DataValidator = this.dataValidator,
+        spanFactoryDecorator: (EmbraceSpanFactory) -> EmbraceSpanFactory = { it },
+    ): SpanServiceImpl {
         val otelSdkConfig = OtelSdkConfig(
             spanRepository = spanRepository,
             logSink = LogSinkImpl(),
@@ -629,29 +850,34 @@ internal class SpanServiceImplTest {
             sessionIdsProvider = { FakeSessionIdsProvider(userSessionId = "fake-session-id") },
         ) { "fake-pid" }
         val otelSdkWrapper = OtelSdkWrapper(
-            otelClock = fakeClock,
+            otelClock = otelClock,
             configuration = otelSdkConfig,
             spanService = FakeSpanService(),
             eventService = FakeEventService(),
             useKotlinSdk = TESTS_DEFAULT_USE_KOTLIN_SDK,
         )
+        val embraceSpanFactory = EmbraceSpanFactoryImpl(
+            openTelemetryClock = otelClock,
+            spanRepository = spanRepository,
+            dataValidator = dataValidator,
+            telemetryService = FakeTelemetryService(),
+        )
 
         return SpanServiceImpl(
-            tracer = otelSdkWrapper.sdkTracer,
             spanRepository = spanRepository,
-            embraceSpanFactory = EmbraceSpanFactoryImpl(
-                openTelemetryClock = fakeClock,
-                spanRepository = spanRepository,
-                dataValidator = dataValidator,
-                telemetryService = FakeTelemetryService(),
-            ),
             dataValidator = dataValidator,
             canStartNewSpan = ::canStartNewSpan,
             initCallback = ::initCallback,
-            openTelemetry = otelSdkWrapper.openTelemetryKotlin,
-        ).apply {
-            initializeService(fakeClock.now().nanosToMillis())
-        }
+            embraceSpanFactory = spanFactoryDecorator(embraceSpanFactory),
+            tracerSupplier = {
+                if (failNextTracerLookup) {
+                    failNextTracerLookup = false
+                    error("OTel SDK is not ready")
+                }
+                otelSdkWrapper.sdkTracer
+            },
+            openTelemetrySupplier = { otelSdkWrapper.openTelemetryKotlin },
+        )
     }
 
     private fun verifyAndReturnSoleCompletedSpan(name: String): Span {
@@ -668,5 +894,30 @@ internal class SpanServiceImplTest {
 
     private fun initCallback(initTimeMs: Long) {
         this.initTimeMs = initTimeMs
+        initCallbackCount++
+    }
+
+    /**
+     * Widens the window in which the service is replaying buffered spans, so that a racing caller can reliably be observed.
+     */
+    private class SlowEmbraceSpanFactory(
+        private val delegate: EmbraceSpanFactory,
+        private val replayStarted: CountDownLatch,
+    ) : EmbraceSpanFactory {
+        override fun create(otelSpanStartArgs: OtelSpanStartArgs): EmbraceSdkSpan {
+            if (replayStarted.count > 0) {
+                replayStarted.countDown()
+                Thread.sleep(200L)
+            }
+            return delegate.create(otelSpanStartArgs)
+        }
+    }
+
+    private companion object {
+        /**
+         * Mirrors the private cap in [SpanServiceImpl] on the number of pre-initialization calls that will be buffered.
+         */
+        private const val MAX_BUFFERED_CALLS = 1000
+        private const val SERVICE_INIT_TIMEOUT_MS = 5000L
     }
 }

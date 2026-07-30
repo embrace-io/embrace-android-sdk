@@ -19,14 +19,14 @@ internal class InternalInterfaceModuleImpl(
     bootstrapper: ModuleInitBootstrapper,
 ) : InternalInterfaceModule {
 
-    override val embraceInternalInterface: EmbraceInternalInterface by singleton {
+    override val embraceInternalInterface: EmbraceInternalInterface by lazy {
         EmbraceInternalInterfaceImpl(
             configService,
             payloadSourceModule.resourceSource,
         )
     }
 
-    override val reactNativeInternalInterface: ReactNativeInternalInterface by singleton {
+    override val reactNativeInternalInterface: ReactNativeInternalInterface by lazy {
         ReactNativeInternalInterfaceImpl(
             embrace,
             embraceInternalInterface,
@@ -37,7 +37,7 @@ internal class InternalInterfaceModuleImpl(
         )
     }
 
-    override val unityInternalInterface: UnityInternalInterface by singleton {
+    override val unityInternalInterface: UnityInternalInterface by lazy {
         UnityInternalInterfaceImpl(
             embrace,
             embraceInternalInterface,
@@ -46,7 +46,7 @@ internal class InternalInterfaceModuleImpl(
         )
     }
 
-    override val flutterInternalInterface: FlutterInternalInterface by singleton {
+    override val flutterInternalInterface: FlutterInternalInterface by lazy {
         FlutterInternalInterfaceImpl(
             embrace,
             embraceInternalInterface,

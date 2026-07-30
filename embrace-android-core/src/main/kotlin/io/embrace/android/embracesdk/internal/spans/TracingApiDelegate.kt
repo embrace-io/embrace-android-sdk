@@ -1,7 +1,8 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
+import io.embrace.android.embracesdk.internal.otel.spans.toErrorCodeAttribute
+import io.embrace.android.embracesdk.internal.otel.spans.toSpanEvent
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -33,7 +34,7 @@ class TracingApiDelegate(
         spanService.startSpan(
             name = name,
             parent = parent,
-            startTimeMs = startTimeMs?.normalizeTimestampAsMillis(),
+            startTimeMs = startTimeMs,
             internal = false,
             autoTerminationMode = autoTerminationMode,
         )
@@ -50,7 +51,7 @@ class TracingApiDelegate(
         parent = parent,
         internal = false,
         attributes = attributes,
-        events = events,
+        events = events.map { it.toSpanEvent() },
         autoTerminationMode = autoTerminationMode,
         code = code,
     )
@@ -65,13 +66,13 @@ class TracingApiDelegate(
         events: List<EmbraceSpanEvent>,
     ): Boolean = spanService.recordCompletedSpan(
         name = name,
-        startTimeMs = startTimeMs.normalizeTimestampAsMillis(),
-        endTimeMs = endTimeMs.normalizeTimestampAsMillis(),
+        startTimeMs = startTimeMs,
+        endTimeMs = endTimeMs,
         parent = parent,
         internal = false,
         attributes = attributes,
-        events = events,
-        errorCode = errorCode,
+        events = events.map { it.toSpanEvent() },
+        errorCode = errorCode?.toErrorCodeAttribute(),
     )
 
     override fun getSpan(spanId: String): EmbraceSpan? = spanService.getSpan(spanId = spanId)

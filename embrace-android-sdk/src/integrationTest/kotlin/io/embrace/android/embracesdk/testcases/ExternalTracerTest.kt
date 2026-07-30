@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
+import io.embrace.android.embracesdk.assertions.toMap
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
@@ -313,16 +314,20 @@ internal class ExternalTracerTest {
                 }
             },
             assertAction = {
-                val recorded = checkNotNull(span)
+                // a stopped span releases its retained event/link data, so read it back from the
+                // exported session payload rather than the live span
+                checkNotNull(span)
+                val sessionMessage = getSingleSessionEnvelope()
+                val recorded = checkNotNull(sessionMessage.data.spans?.singleOrNull { it.name == "attr-span" })
 
                 // all attribute values are stringified when written, so they read back as strings
-                with(recorded.events.single { it.name == "my-event" }) {
+                with(checkNotNull(recorded.events).single { it.name == "my-event" }) {
                     assertEquals(2, attributes?.size)
                     assertEquals("event-value", attributes?.single { it.key == "event-key" }?.data)
                     assertEquals("3", attributes?.single { it.key == "event-count" }?.data)
                 }
 
-                with(recorded.links.single { it.spanId == linkedSpanId }) {
+                with(checkNotNull(recorded.links).single { it.spanId == linkedSpanId }) {
                     assertEquals(1, attributes?.size)
                     assertEquals("true", attributes?.single { it.key == "link-flag" }?.data)
                 }

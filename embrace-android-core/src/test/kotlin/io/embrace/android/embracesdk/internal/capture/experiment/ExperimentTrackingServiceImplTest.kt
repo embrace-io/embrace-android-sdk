@@ -1,28 +1,35 @@
 package io.embrace.android.embracesdk.internal.capture.experiment
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.createExperimentBehavior
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
+import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
+import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
+@OptIn(ExperimentalSemconv::class)
 internal class ExperimentTrackingServiceImplTest {
 
     private lateinit var telemetryService: FakeTelemetryService
+    private lateinit var destination: FakeTelemetryDestination
     private lateinit var service: ExperimentTrackingService
 
     @Before
     fun setUp() {
         telemetryService = FakeTelemetryService()
+        destination = FakeTelemetryDestination()
         service = ExperimentTrackingServiceImpl(
             configService = FakeConfigService(),
             telemetryService = telemetryService,
+            telemetryDestination = destination,
         )
     }
 
@@ -31,7 +38,7 @@ internal class ExperimentTrackingServiceImplTest {
         service.track(
             listOf(TrackedData.Experiment(id = "id1", variant = "v1", startTimeMs = 100L)),
         )
-        assertEquals("e:id1:v1:100", service.getRecords())
+        service.assertRecordState("e:id1:v1:100")
 
         // repeated reads without a mutation return the same cached instance
         assertSame(service.getRecords(), service.getRecords())
@@ -47,7 +54,7 @@ internal class ExperimentTrackingServiceImplTest {
         service.track(
             listOf(TrackedData.Experiment(id = "id1", variant = "v2", startTimeMs = 200L)),
         )
-        assertEquals("e:id1:v1:100", service.getRecords())
+        service.assertRecordState("e:id1:v1:100")
 
         // the dropped call does not invalidate the cached serialization
         assertSame(records, service.getRecords())
@@ -61,10 +68,10 @@ internal class ExperimentTrackingServiceImplTest {
         service.track(
             listOf(TrackedData.Experiment(id = "b", variant = null, startTimeMs = 200L)),
         )
+        service.assertRecordState("e:a::100;e:b::200")
 
-        assertEquals("e:a::100;e:b::200", service.getRecords())
         service.untrack(listOf("a"), 300L)
-        assertEquals("e:a::100:300;e:b::200", service.getRecords())
+        service.assertRecordState("e:a::100:300;e:b::200")
     }
 
     @Test
@@ -75,7 +82,7 @@ internal class ExperimentTrackingServiceImplTest {
 
         val records = service.getRecords()
         service.untrack(listOf("unknown"), 200L)
-        assertEquals("e:id1::100", service.getRecords())
+        service.assertRecordState("e:id1::100")
 
         // the dropped call does not invalidate the cached serialization
         assertSame(records, service.getRecords())
@@ -88,7 +95,7 @@ internal class ExperimentTrackingServiceImplTest {
         )
         service.untrack(listOf("id1"), 200L)
         service.untrack(listOf("id1"), 300L)
-        assertEquals("e:id1::100:200", service.getRecords())
+        service.assertRecordState("e:id1::100:200")
     }
 
     @Test
@@ -97,7 +104,7 @@ internal class ExperimentTrackingServiceImplTest {
             listOf(TrackedData.FeatureFlag(id = "flag1", startTimeMs = 100L)),
         )
         service.untrack(listOf("flag1"), 200L)
-        assertEquals("f:flag1::100:200", service.getRecords())
+        service.assertRecordState("f:flag1::100:200")
     }
 
     @Test
@@ -108,7 +115,7 @@ internal class ExperimentTrackingServiceImplTest {
         service.track(
             listOf(TrackedData.FeatureFlag(id = "id1", startTimeMs = 150L)),
         )
-        assertEquals("e:id1::100", service.getRecords())
+        service.assertRecordState("e:id1::100")
     }
 
     @Test
@@ -120,7 +127,7 @@ internal class ExperimentTrackingServiceImplTest {
                 TrackedData.Experiment(id = "id3", variant = null, startTimeMs = 300L),
             ),
         )
-        assertEquals("e:id1::100;e:id2::200;e:id3::300", service.getRecords())
+        service.assertRecordState("e:id1::100;e:id2::200;e:id3::300")
     }
 
     @Test
@@ -132,7 +139,7 @@ internal class ExperimentTrackingServiceImplTest {
                 TrackedData.Experiment(id = "id2", variant = null, startTimeMs = 300L),
             ),
         )
-        assertEquals("e:id1::100;e:id2::300", service.getRecords())
+        service.assertRecordState("e:id1::100;e:id2::300")
     }
 
     @Test
@@ -140,7 +147,7 @@ internal class ExperimentTrackingServiceImplTest {
         service.track(
             listOf(TrackedData.Experiment(id = "", variant = null, startTimeMs = 100L)),
         )
-        assertNull(service.getRecords())
+        service.assertRecordState(null)
     }
 
     @Test
@@ -149,7 +156,7 @@ internal class ExperimentTrackingServiceImplTest {
         service.track(
             listOf(TrackedData.Experiment(id = "123456", variant = null, startTimeMs = 100L)),
         )
-        assertNull(service.getRecords())
+        service.assertRecordState(null)
     }
 
     @Test
@@ -158,7 +165,7 @@ internal class ExperimentTrackingServiceImplTest {
         service.track(
             listOf(TrackedData.Experiment(id = "id1", variant = "123456", startTimeMs = 100L)),
         )
-        assertNull(service.getRecords())
+        service.assertRecordState(null)
     }
 
     @Test
@@ -173,8 +180,8 @@ internal class ExperimentTrackingServiceImplTest {
         service.track(
             listOf(TrackedData.Experiment(id = "id3", variant = null, startTimeMs = 300L)),
         )
-        assertEquals("e:id1::100;e:id2::200", service.getRecords())
-        assertEquals(listOf("experiment" to AppliedLimitType.DROP), telemetryService.appliedLimits)
+        service.assertRecordState("e:id1::100;e:id2::200")
+        assertEquals(listOf("experiments" to AppliedLimitType.DROP), telemetryService.appliedLimits)
     }
 
     @Test
@@ -190,7 +197,7 @@ internal class ExperimentTrackingServiceImplTest {
         service.track(
             listOf(TrackedData.Experiment(id = "id3", variant = null, startTimeMs = 300L)),
         )
-        assertEquals("e:id1::100:150;e:id2::200;e:id3::300", service.getRecords())
+        service.assertRecordState("e:id1::100:150;e:id2::200;e:id3::300")
     }
 
     @Test
@@ -206,12 +213,12 @@ internal class ExperimentTrackingServiceImplTest {
         service.track(
             listOf(TrackedData.Experiment(id = "id1", variant = "v2", startTimeMs = 999L)),
         )
-        assertEquals("e:id1:v1:100;e:id2::200", service.getRecords())
+        service.assertRecordState("e:id1:v1:100;e:id2::200")
 
         // untracking while at the cap is never blocked
         service.untrack(listOf("id1"), 300L)
-        assertEquals("e:id1:v1:100:300;e:id2::200", service.getRecords())
-        assertTrue(telemetryService.appliedLimits.none { it.first == "experiment" })
+        service.assertRecordState("e:id1:v1:100:300;e:id2::200")
+        assertTrue(telemetryService.appliedLimits.none { it.first == "experiments" })
     }
 
     @Test
@@ -228,15 +235,12 @@ internal class ExperimentTrackingServiceImplTest {
         service.track(
             listOf(TrackedData.Experiment(id = "id3", variant = null, startTimeMs = 300L)),
         )
-        assertEquals(
-            "e:id1::100:150;e:id2::200:250;e:id3::300",
-            service.getRecords(),
-        )
+        service.assertRecordState("e:id1::100:150;e:id2::200:250;e:id3::300")
     }
 
     @Test
     fun `getRecords is null when nothing has ever been tracked`() {
-        assertNull(service.getRecords())
+        service.assertRecordState(null)
     }
 
     @Test
@@ -250,12 +254,42 @@ internal class ExperimentTrackingServiceImplTest {
         service.track(
             listOf(TrackedData.Experiment(id = "id3", variant = null, startTimeMs = 300L)),
         )
-        assertEquals("e:id1::100;f:id2::200;e:id3::300", service.getRecords())
+        service.assertRecordState("e:id1::100;f:id2::200;e:id3::300")
+    }
+
+    @Test
+    fun `total records cap will prevent new active experiment from being tracked even if there are less the max number of actives`() {
+        val service = serviceWithRemoteConfig(RemoteConfig(maxExperimentCount = 5000))
+        val bulk = (1..5000).map { index ->
+            TrackedData.Experiment(id = "id$index", variant = null, startTimeMs = index.toLong())
+        }
+        service.track(bulk)
+        assertTrue(telemetryService.appliedLimits.isEmpty())
+
+        service.untrack(listOf("id1"), 6000L)
+        assertTrue(service.getRecords()?.contains("e:id1::1:6000") == true)
+
+        service.track(
+            listOf(TrackedData.Experiment(id = "id5001", variant = null, startTimeMs = 7000L)),
+        )
+
+        assertEquals(listOf("experiments" to AppliedLimitType.DROP), telemetryService.appliedLimits)
+        assertFalse(service.getRecords()?.contains("id5001") == true)
     }
 
     private fun serviceWithRemoteConfig(remoteConfig: RemoteConfig): ExperimentTrackingService =
         ExperimentTrackingServiceImpl(
             configService = FakeConfigService(experimentBehavior = createExperimentBehavior(remoteConfig)),
             telemetryService = telemetryService,
+            telemetryDestination = destination,
         )
+
+    private fun ExperimentTrackingService.assertRecordState(expected: String?) {
+        assertEquals(expected, getRecords())
+        if (expected == null) {
+            assertFalse(destination.attributes.containsKey(EmbCommonAttributes.EMB_EXPERIMENTS))
+        } else {
+            assertEquals(expected, destination.attributes[EmbCommonAttributes.EMB_EXPERIMENTS])
+        }
+    }
 }

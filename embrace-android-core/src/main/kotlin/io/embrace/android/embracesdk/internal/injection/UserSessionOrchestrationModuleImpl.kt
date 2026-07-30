@@ -50,7 +50,9 @@ class UserSessionOrchestrationModuleImpl(
             startupDurationProvider,
             logModule.logLimitingService,
             payloadSourceModule.metadataService,
-        )
+        ) {
+            essentialServiceModule.experimentTrackingService.getRecords()
+        }
 
         SessionOrchestratorImpl(
             essentialServiceModule.appStateTracker,

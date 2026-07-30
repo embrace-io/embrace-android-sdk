@@ -1,12 +1,18 @@
+@file:OptIn(ExperimentalSemconv::class)
+
 package io.embrace.android.embracesdk.internal.capture.experiment
 
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
+import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 
 internal class ExperimentTrackingServiceImpl(
     configService: ConfigService,
     private val telemetryService: TelemetryService,
+    private val telemetryDestination: TelemetryDestination,
 ) : ExperimentTrackingService {
 
     private val maxActiveCount = configService.experimentBehavior.getMaxActiveCount()
@@ -21,18 +27,30 @@ internal class ExperimentTrackingServiceImpl(
     private var cachedRecords: String? = null
 
     override fun track(data: List<TrackedData>) {
+        var updated = false
         synchronized(lock) {
             data.forEach { entry ->
-                trackRecord(entry.toRecord())
+                if (trackRecord(entry.toRecord())) {
+                    updated = true
+                }
             }
+        }
+        if (updated) {
+            publishRecords()
         }
     }
 
     override fun untrack(ids: List<String>, endTimeMs: Long) {
+        var updated = false
         synchronized(lock) {
             ids.forEach { id ->
-                untrackRecord(id, endTimeMs)
+                if (untrackRecord(id, endTimeMs)) {
+                    updated = true
+                }
             }
+        }
+        if (updated) {
+            publishRecords()
         }
     }
 
@@ -48,34 +66,39 @@ internal class ExperimentTrackingServiceImpl(
         cachedRecords
     }
 
-    private fun trackRecord(record: ExperimentRecord) {
+    private fun trackRecord(record: ExperimentRecord): Boolean {
         synchronized(lock) {
-            if (!isValid(record)) {
-                return
+            if (!isValid(record) || records.containsKey(record.id)) {
+                return false
             }
 
-            if (records.containsKey(record.id)) {
-                return
-            }
-
-            if (activeCount >= maxActiveCount) {
-                telemetryService.trackAppliedLimit("experiment", AppliedLimitType.DROP)
-                return
+            if (activeCount >= maxActiveCount || records.size >= TOTAL_RECORD_LIMIT) {
+                telemetryService.trackAppliedLimit("experiments", AppliedLimitType.DROP)
+                return false
             }
             records[record.id] = record
             activeCount++
             cacheValid = false
+            return true
         }
     }
 
-    private fun untrackRecord(id: String, endTimeMs: Long) {
+    private fun untrackRecord(id: String, endTimeMs: Long): Boolean {
         synchronized(lock) {
-            val record = records[id] ?: return
-            if (record.endTimeMs == null) {
-                records[id] = record.copy(endTimeMs = endTimeMs)
-                activeCount--
-                cacheValid = false
+            val record = records[id]
+            if (record == null || record.endTimeMs != null) {
+                return false
             }
+            records[id] = record.copy(endTimeMs = endTimeMs)
+            activeCount--
+            cacheValid = false
+            return true
+        }
+    }
+
+    private fun publishRecords() {
+        getRecords()?.let { value ->
+            telemetryDestination.addSessionPartAttribute(EmbCommonAttributes.EMB_EXPERIMENTS, value)
         }
     }
 
@@ -98,16 +121,15 @@ internal class ExperimentTrackingServiceImpl(
     }
 
     private fun isValid(record: ExperimentRecord): Boolean {
-        if (record.id.isBlank()) {
+        if (record.id.isBlank() || record.id.length > maxIdLength) {
             return false
         }
-        if (record.id.length > maxIdLength) {
-            return false
-        }
+
         val variant = record.variant
-        if (variant != null && variant.length > maxVariantLength) {
-            return false
-        }
-        return true
+        return (variant == null || variant.length <= maxVariantLength)
+    }
+
+    private companion object {
+        private const val TOTAL_RECORD_LIMIT = 5000
     }
 }

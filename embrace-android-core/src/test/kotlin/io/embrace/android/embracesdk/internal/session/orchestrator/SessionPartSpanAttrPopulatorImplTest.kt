@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalSemconv::class)
+
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -8,8 +10,10 @@ import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
+import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues
+import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -41,6 +45,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
             { 0 },
             FakeLogLimitingService(),
             FakeMetadataService(),
+            { null },
         )
     }
 
@@ -96,6 +101,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
         assertFalse(attrs.containsKey(EmbSessionAttributes.EMB_USER_SESSION_START_TS))
         assertFalse(attrs.containsKey(EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS))
         assertFalse(attrs.containsKey(EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS))
+        assertFalse(attrs.containsKey(EmbCommonAttributes.EMB_EXPERIMENTS))
     }
 
     @Test
@@ -140,6 +146,22 @@ internal class SessionPartSpanAttrPopulatorImplTest {
     }
 
     @Test
+    fun `experiment records are appended to start attributes when the provider returns a value`() {
+        val experiments = "e:x::1"
+        populator = SessionPartSpanAttrPopulatorImpl(
+            destination = destination,
+            startupDurationProvider = { 0 },
+            logLimitingService = FakeLogLimitingService(),
+            metadataService = FakeMetadataService(),
+            experimentRecordsProvider = { experiments },
+        )
+
+        populator.populateSessionPartSpanStartAttrs(sessionPart = zygote, userSession = null)
+
+        assertEquals(experiments, destination.attributes[EmbCommonAttributes.EMB_EXPERIMENTS])
+    }
+
+    @Test
     fun `clock drift attributes populated when aux clocks available`() {
         val metadataService = FakeMetadataService(
             wallClock = FakeClock(1000L),
@@ -148,10 +170,11 @@ internal class SessionPartSpanAttrPopulatorImplTest {
         ).apply { precomputeValues() }
 
         populator = SessionPartSpanAttrPopulatorImpl(
-            destination,
-            { 0 },
-            FakeLogLimitingService(),
-            metadataService,
+            destination = destination,
+            startupDurationProvider = { 0 },
+            logLimitingService = FakeLogLimitingService(),
+            metadataService = metadataService,
+            experimentRecordsProvider = { null },
         )
 
         populator.populateSessionPartSpanEndAttrs(LifeEventType.STATE, "crashId", false, emptyMap())

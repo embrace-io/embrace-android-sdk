@@ -4,6 +4,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findEventsOfType
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior.Companion.DEFAULT_BREADCRUMB_LIMIT
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.UiRemoteConfig
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -43,9 +47,33 @@ internal class DataCaptureLimitTest {
         )
     }
 
+    /**
+     * The session span caps breadcrumbs at [BreadcrumbBehavior.getCustomBreadcrumbLimit] as well as the breadcrumb data
+     * source. Raising the remote limit above [DEFAULT_BREADCRUMB_LIMIT] proves that the session span reads the
+     * configured value rather than falling back to the default.
+     */
+    @Test
+    fun `remotely raised breadcrumb limit is honoured by the session span`() {
+        val raisedLimit = DEFAULT_BREADCRUMB_LIMIT + 50
+        testRule.runTest(
+            persistedRemoteConfig = RemoteConfig(uiConfig = UiRemoteConfig(breadcrumbs = raisedLimit)),
+            testCaseAction = {
+                recordSession {
+                    repeat(raisedLimit + 10) {
+                        embrace.addBreadcrumb("Hello, world!")
+                    }
+                }
+            },
+            assertAction = {
+                val sessionPartSpan = getSessionEnvelopes(1).single().findSessionPartSpan()
+                assertEquals(raisedLimit, sessionPartSpan.findEventsOfType(EmbType.System.Breadcrumb).size)
+            }
+        )
+    }
+
     private fun assertBreadcrumbsMatchLimit(envelope: Envelope<SessionPartPayload>) {
         val sessionPartSpan = envelope.findSessionPartSpan()
         val crumbs = sessionPartSpan.findEventsOfType(EmbType.System.Breadcrumb)
-        assertEquals(100, crumbs.size)
+        assertEquals(DEFAULT_BREADCRUMB_LIMIT, crumbs.size)
     }
 }

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
@@ -52,7 +53,12 @@ class FakeOpenTelemetryModule(
     override val tracingApi: TracingApi
         get() = TODO()
 
-    override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean, otelBehavior: OtelBehavior) {
+    override fun applyConfiguration(
+        sensitiveKeysBehavior: SensitiveKeysBehavior,
+        bypassValidation: Boolean,
+        otelBehavior: OtelBehavior,
+        breadcrumbBehavior: BreadcrumbBehavior,
+    ) {
         // no-op
     }
 

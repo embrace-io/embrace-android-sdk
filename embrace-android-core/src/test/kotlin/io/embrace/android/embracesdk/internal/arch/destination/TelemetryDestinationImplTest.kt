@@ -310,6 +310,30 @@ internal class TelemetryDestinationImplTest {
     }
 
     @Test
+    fun `session part span events are dropped when the event limit is reached`() {
+        currentSessionPartSpan.readySession()
+        val current = checkNotNull(currentSessionPartSpan.current())
+        currentSessionPartSpan.canAddEventResult = false
+
+        assertFalse(impl.addSessionPartEvent(SchemaType.Breadcrumb("Hi"), 5))
+        assertTrue((current as FakeEmbraceSdkSpan).events.isEmpty())
+        assertFalse(sessionDataUpdated)
+    }
+
+    @Test
+    fun `only breadcrumbs are counted against the breadcrumb limit`() {
+        currentSessionPartSpan.readySession()
+        impl.addSessionPartEvent(SchemaType.Breadcrumb("Hi"), 5)
+        impl.addSessionPartEvent(SchemaType.View("MyActivity"), 6)
+        impl.addSessionPartEvent(
+            SchemaType.PushNotification(title = "title", type = "notif", body = "body", id = "id", from = "from", priority = 1),
+            7,
+        )
+
+        assertEquals(listOf(true, false, false), currentSessionPartSpan.canAddEventCalls)
+    }
+
+    @Test
     fun `test session part span attributes`() {
         currentSessionPartSpan.readySession()
         val current = checkNotNull(currentSessionPartSpan.current())

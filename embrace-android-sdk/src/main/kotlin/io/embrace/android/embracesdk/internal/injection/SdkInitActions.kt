@@ -29,6 +29,7 @@ internal fun ModuleGraph.postInit() {
         sensitiveKeysBehavior = configService.sensitiveKeysBehavior,
         bypassValidation = configService.isOnlyUsingOtelExporters(),
         otelBehavior = configService.otelBehavior,
+        breadcrumbBehavior = configService.breadcrumbBehavior,
     )
 
     initModule.logger.errorHandlerProvider = { featureModule.internalErrorDataSource.dataSource }

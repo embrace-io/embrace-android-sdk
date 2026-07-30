@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeBaseUrlConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
+import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -162,7 +163,8 @@ internal class SdkIntegrationTestRule(
             bootstrapper.openTelemetryModule.applyConfiguration(
                 sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(instrumentedConfig),
                 bypassValidation = false,
-                otelBehavior = OtelBehaviorImpl(BehaviorThresholdCheck { "123456" }, instrumentedConfig, persistedRemoteConfig)
+                otelBehavior = OtelBehaviorImpl(BehaviorThresholdCheck { "123456" }, instrumentedConfig, persistedRemoteConfig),
+                breadcrumbBehavior = BreadcrumbBehaviorImpl(instrumentedConfig, persistedRemoteConfig)
             )
 
             if (startSdk) {

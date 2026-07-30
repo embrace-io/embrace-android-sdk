@@ -29,7 +29,7 @@ internal class EmbraceLogRecordProcessor(
             log.setStringAttribute(LogAttributes.LOG_RECORD_UID, uuidSource.createUuid())
         }
 
-        if (!attributes.describesADeadProcess()) {
+        if (!attributes.belongsInCurrentProcess()) {
             // never override what the instrumentation has already set. Telemetry that knows which session it
             // belongs to - such as an app exit reported by a later process - sets the session attributes
             // itself, and leaves them blank if the session it describes is unknown.
@@ -51,6 +51,6 @@ internal class EmbraceLogRecordProcessor(
      * the session that crashed - its session IDs, app state and session properties - so enriching it would
      * describe the wrong session entirely.
      */
-    private fun Map<String, Any>.describesADeadProcess(): Boolean =
+    private fun Map<String, Any>.belongsInCurrentProcess(): Boolean =
         get(EmbType.System.NativeCrash.key) == EmbType.System.NativeCrash.value
 }

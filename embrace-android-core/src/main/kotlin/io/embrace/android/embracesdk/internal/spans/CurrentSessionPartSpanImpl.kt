@@ -273,7 +273,7 @@ internal class CurrentSessionPartSpanImpl(
          * excluded from this budget and given [MAX_NETWORK_SPANS_PER_SESSION] instead.
          */
         const val MAX_INTERNAL_SPANS_PER_SESSION: Int = 1500
-        const val MAX_NETWORK_SPANS_PER_SESSION: Int = 1000
+        const val MAX_NETWORK_SPANS_PER_SESSION: Int = 2000
         const val MAX_NON_INTERNAL_SPANS_PER_SESSION: Int = 500
 
         private const val SPAN_LIMIT_LABEL = "span"

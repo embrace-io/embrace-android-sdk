@@ -9,14 +9,13 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.OrchestratorB
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestratorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSpanAttrPopulatorImpl
-import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 class UserSessionOrchestrationModuleImpl(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
-    essentialServiceModule: EssentialServiceModule,
+    private val essentialServiceModule: EssentialServiceModule,
     configService: ConfigService,
     deliveryModule: DeliveryModule?,
     instrumentationModule: InstrumentationModule,
@@ -26,21 +25,19 @@ class UserSessionOrchestrationModuleImpl(
     workerThreadModule: WorkerThreadModule,
 ) : UserSessionOrchestrationModule {
 
-    override val sessionIdsProvider: SessionIdsProvider by singleton {
-        essentialServiceModule.sessionIdsProvider
-    }
+    override val sessionIdsProvider: SessionIdsProvider get() = essentialServiceModule.sessionIdsProvider
 
-    override val sessionOrchestrator: SessionOrchestrator by singleton {
+    override val sessionOrchestrator: SessionOrchestrator = run {
         val payloadMessageCollator = PayloadMessageCollatorImpl(
-            EmbTrace.trace("sessionEnvelopeSource") { payloadSourceModule.sessionPartEnvelopeSource },
+            payloadSourceModule.sessionPartEnvelopeSource,
             openTelemetryModule.currentSessionPartSpan,
             essentialServiceModule.sessionIdsProvider,
         )
 
         val payloadFactory = PayloadFactoryImpl(
-            EmbTrace.trace("payloadMessageCollator") { payloadMessageCollator },
-            EmbTrace.trace("logEnvelopeSource") { payloadSourceModule.logEnvelopeSource },
-            EmbTrace.trace("configService") { configService },
+            payloadMessageCollator,
+            payloadSourceModule.logEnvelopeSource,
+            configService,
             initModule.logger,
         )
 
@@ -57,7 +54,7 @@ class UserSessionOrchestrationModuleImpl(
 
         SessionOrchestratorImpl(
             essentialServiceModule.appStateTracker,
-            EmbTrace.trace("payloadFactory") { payloadFactory },
+            payloadFactory,
             initModule.clock,
             configService,
             essentialServiceModule.sessionPartTracker,

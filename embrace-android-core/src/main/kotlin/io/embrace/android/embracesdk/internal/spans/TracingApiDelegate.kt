@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
+import io.embrace.android.embracesdk.internal.otel.spans.toErrorCodeAttribute
+import io.embrace.android.embracesdk.internal.otel.spans.toSpanEvent
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -50,7 +52,7 @@ class TracingApiDelegate(
         parent = parent,
         internal = false,
         attributes = attributes,
-        events = events,
+        events = events.map { it.toSpanEvent() },
         autoTerminationMode = autoTerminationMode,
         code = code,
     )
@@ -70,8 +72,8 @@ class TracingApiDelegate(
         parent = parent,
         internal = false,
         attributes = attributes,
-        events = events,
-        errorCode = errorCode,
+        events = events.map { it.toSpanEvent() },
+        errorCode = errorCode?.toErrorCodeAttribute(),
     )
 
     override fun getSpan(spanId: String): EmbraceSpan? = spanService.getSpan(spanId = spanId)

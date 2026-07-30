@@ -20,7 +20,6 @@ import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.serialization.fromJson
 import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
@@ -217,7 +216,7 @@ internal class EmbracePayloadAssertionInterface(
     private fun readRemoteConfigFile(file: File): RemoteConfig {
         try {
             return file.inputStream().buffered().use {
-                serializer.fromJson<RemoteConfig>(it)
+                serializer.fromJson(it, RemoteConfig.serializer())
             }
         } catch (exc: Throwable) {
             throw IllegalStateException("Failed to read remote config file.", exc)

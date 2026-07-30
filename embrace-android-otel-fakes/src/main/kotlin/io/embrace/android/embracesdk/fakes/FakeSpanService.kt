@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
@@ -9,8 +11,6 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.createContext
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.android.embracesdk.spans.ErrorCode
 
 class FakeSpanService : SpanService {
 
@@ -87,7 +87,7 @@ class FakeSpanService : SpanService {
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,
-        events: List<EmbraceSpanEvent>,
+        events: List<SpanEvent>,
         autoTerminationMode: AutoTerminationMode,
         code: () -> T,
     ): T {
@@ -103,8 +103,8 @@ class FakeSpanService : SpanService {
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,
-        events: List<EmbraceSpanEvent>,
-        errorCode: ErrorCode?,
+        events: List<SpanEvent>,
+        errorCode: ErrorCodeAttribute?,
     ): Boolean {
         createdSpans.add(
             FakeEmbraceSdkSpan(
@@ -119,7 +119,7 @@ class FakeSpanService : SpanService {
                 events.forEach {
                     addEvent(it.name, it.timestampNanos, it.attributes)
                 }
-                stop(errorCode, endTimeMs)
+                stopWithErrorCode(errorCode, endTimeMs)
             }
         )
         return true

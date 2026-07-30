@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.fixtures
 
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEventImpl
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
@@ -54,10 +56,10 @@ private fun createMapOfSize(size: Int): Map<String, String> {
     return mutableMap
 }
 
-private fun createEventsListOfSize(size: Int): List<EmbraceSpanEvent> {
-    val events = mutableListOf<EmbraceSpanEvent>()
+private fun createEventsListOfSize(size: Int): List<SpanEvent> {
+    val events = mutableListOf<SpanEvent>()
     repeat(size) {
-        events.add(checkNotNull(EmbraceSpanEvent.create("name $it", 1L, emptyMap())))
+        events.add(SpanEventImpl("name $it", 1L, emptyMap()))
     }
     return events
 }
@@ -97,7 +99,7 @@ val maxSizeEventAttributes: Map<String, String> = createMapOfSize(limits.getMaxE
 val tooBigEventAttributes: Map<String, String> = createMapOfSize(limits.getMaxEventAttributeCount() + 1)
 val maxSizeSystemAttributes: Map<String, String> = createMapOfSize(limits.getMaxSystemAttributeCount())
 val tooBigSystemAttributes: Map<String, String> = createMapOfSize(limits.getMaxSystemAttributeCount() + 1)
-val maxSizeCustomEvents: List<EmbraceSpanEvent> = createEventsListOfSize(limits.getMaxCustomEventCount())
-val tooBigCustomEvents: List<EmbraceSpanEvent> = createEventsListOfSize(limits.getMaxCustomEventCount() + 1)
-val maxSizeSystemEvents: List<EmbraceSpanEvent> = createEventsListOfSize(limits.getMaxSystemEventCount())
-val tooBigSystemEvents: List<EmbraceSpanEvent> = createEventsListOfSize(limits.getMaxSystemEventCount() + 1)
+val maxSizeCustomEvents: List<SpanEvent> = createEventsListOfSize(limits.getMaxCustomEventCount())
+val tooBigCustomEvents: List<SpanEvent> = createEventsListOfSize(limits.getMaxCustomEventCount() + 1)
+val maxSizeSystemEvents: List<SpanEvent> = createEventsListOfSize(limits.getMaxSystemEventCount())
+val tooBigSystemEvents: List<SpanEvent> = createEventsListOfSize(limits.getMaxSystemEventCount() + 1)

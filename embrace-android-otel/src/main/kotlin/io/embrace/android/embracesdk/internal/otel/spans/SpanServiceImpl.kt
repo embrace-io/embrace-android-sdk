@@ -1,17 +1,15 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.tracing.Tracer
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Implementation of [SpanService].
@@ -40,17 +38,15 @@ class SpanServiceImpl(
     private val initLock = Any()
 
     /**
-     * Guards the handover from buffering to recording directly. Held while [bufferedCalls] is replayed so that a caller which has
-     * already observed [otelComponents] as null cannot add to the buffer after the replay has finished.
+     * Guards [bufferedCalls], including the handover from buffering to recording directly: it is held while the buffer is replayed so
+     * that a caller which has already observed [otelComponents] as null cannot add to the buffer after the replay has finished.
      */
     private val bufferLock = Any()
 
-    private val bufferedCalls = ConcurrentLinkedQueue<BufferedRecordCompletedSpan>()
-
     /**
-     * Lifetime count of buffered calls.
+     * Buffered [recordCompletedSpan] calls awaiting replay. Only ever touched while holding [bufferLock].
      */
-    private val bufferedCallsCount = AtomicInteger(0)
+    private val bufferedCalls = ArrayDeque<BufferedRecordCompletedSpan>()
 
     /**
      * The OTel SDK components required to record spans, or null if the SDK has not started yet.
@@ -73,11 +69,8 @@ class SpanServiceImpl(
             initCallback(sdkInitStartTimeMs)
             synchronized(bufferLock) {
                 // replay before publishing, so that callers blocked on bufferLock record after the replay instead of racing it
-                var buffered = bufferedCalls.poll()
-                while (buffered != null) {
-                    components.replay(buffered)
-                    buffered = bufferedCalls.poll()
-                }
+                bufferedCalls.forEach { components.replay(it) }
+                bufferedCalls.clear()
                 otelComponents = components
             }
         }
@@ -161,7 +154,7 @@ class SpanServiceImpl(
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,
-        events: List<EmbraceSpanEvent>,
+        events: List<SpanEvent>,
         autoTerminationMode: AutoTerminationMode,
         code: () -> T,
     ): T {
@@ -190,7 +183,7 @@ class SpanServiceImpl(
             returnValue = code()
             span.stop()
         } catch (t: Throwable) {
-            span.stop(ErrorCode.FAILURE)
+            span.stopWithErrorCode(ErrorCodeAttribute.Failure)
             throw t
         }
 
@@ -206,8 +199,8 @@ class SpanServiceImpl(
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,
-        events: List<EmbraceSpanEvent>,
-        errorCode: ErrorCode?,
+        events: List<SpanEvent>,
+        errorCode: ErrorCodeAttribute?,
     ): Boolean {
         val components = otelComponents ?: synchronized(bufferLock) {
             otelComponents ?: return buffer(
@@ -254,10 +247,10 @@ class SpanServiceImpl(
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,
-        events: List<EmbraceSpanEvent>,
-        errorCode: ErrorCode?,
+        events: List<SpanEvent>,
+        errorCode: ErrorCodeAttribute?,
     ): Boolean {
-        if (bufferedCallsCount.getAndIncrement() >= MAX_BUFFERED_CALLS) {
+        if (bufferedCalls.size >= MAX_BUFFERED_CALLS) {
             return false
         }
         bufferedCalls.add(
@@ -299,8 +292,8 @@ class SpanServiceImpl(
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,
-        events: List<EmbraceSpanEvent>,
-        errorCode: ErrorCode?,
+        events: List<SpanEvent>,
+        errorCode: ErrorCodeAttribute?,
     ): Boolean {
         if (startTimeMs > endTimeMs) {
             return false
@@ -329,7 +322,7 @@ class SpanServiceImpl(
                 validEvents.forEach {
                     newSpan.addEvent(it.name, it.timestampNanos.nanosToMillis(), it.attributes)
                 }
-                return newSpan.stop(errorCode, endTimeMs)
+                return newSpan.stopWithErrorCode(errorCode, endTimeMs)
             }
         }
 
@@ -357,8 +350,8 @@ class SpanServiceImpl(
         val internal: Boolean,
         val private: Boolean,
         val attributes: Map<String, String>,
-        val events: List<EmbraceSpanEvent>,
-        val errorCode: ErrorCode?,
+        val events: List<SpanEvent>,
+        val errorCode: ErrorCodeAttribute?,
     )
 
     companion object {

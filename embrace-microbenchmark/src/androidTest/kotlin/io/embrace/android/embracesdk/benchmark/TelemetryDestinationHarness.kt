@@ -16,9 +16,9 @@ import io.embrace.android.embracesdk.internal.otel.impl.EmbClock
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
+import io.embrace.android.embracesdk.internal.otel.spans.SpanServiceImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
@@ -58,12 +58,12 @@ internal class TelemetryDestinationHarness {
             dataValidator = validator,
             telemetryService = NoopTelemetryService,
         )
-        return EmbraceSpanService(
+        return SpanServiceImpl(
             spanRepository = otelModule.spanRepository,
             dataValidator = validator,
             canStartNewSpan = { _, _ -> true },
             initCallback = {},
-            embraceSpanFactorySupplier = { factory },
+            embraceSpanFactory = factory,
             tracerSupplier = { otelModule.otelSdkWrapper.sdkTracer },
             openTelemetrySupplier = { otelModule.otelSdkWrapper.openTelemetryKotlin },
         ).apply { initializeService(0) }

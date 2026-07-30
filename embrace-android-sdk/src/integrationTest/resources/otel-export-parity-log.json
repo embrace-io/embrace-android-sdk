@@ -1,0 +1,37 @@
+[
+  {
+    "body": "test message",
+    "severityNumber": "13",
+    "severityText": "WARNING",
+    "timestampEpochNanos": "169220160030000000",
+    "observedTimestampEpochNanos": "169220160030000000",
+    "totalAttributeCount": "10",
+    "attributes": {
+      "emb.session_part_id": "__EMBRACE_TEST_IGNORE__",
+      "emb.state": "foreground",
+      "emb.state.network": "unverified",
+      "emb.state.screen-automatic": "android.app.Activity",
+      "emb.state.test": "UNKNOWN",
+      "emb.type": "sys.log",
+      "emb.user_session_id": "__EMBRACE_TEST_IGNORE__",
+      "log.record.uid": "__EMBRACE_TEST_IGNORE__",
+      "my-attribute": "my-value",
+      "session.id": "__EMBRACE_TEST_IGNORE__"
+    },
+    "instrumentationScopeName": "io.embrace.android.embracesdk.core",
+    "resourceAttributes": {
+      "android.os.api_level": "35",
+      "device.manufacturer": "Fake Manufacturer",
+      "device.model.identifier": "Phake Phone Phive",
+      "device.model.name": "Phake Phone Phive",
+      "os.build_id": "",
+      "os.name": "android",
+      "os.type": "linux",
+      "os.version": "99.0.0",
+      "service.name": "UNKNOWN",
+      "service.version": "UNKNOWN",
+      "telemetry.distro.name": "io.embrace.android.embracesdk.core",
+      "telemetry.distro.version": "9.1.0-SNAPSHOT"
+    }
+  }
+]

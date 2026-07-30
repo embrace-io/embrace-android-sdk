@@ -19,6 +19,9 @@ import org.junit.runner.RunWith
  * Verifies that AEI logs carry the session IDs of the exit they describe in aei_*_id, and leave the emb.*_id
  * attributes blank. An AEI describes the exit of a previous process, so the session that happens to be
  * active when it is sent is not stamped on it - whether or not there is one.
+ *
+ * The log does still carry the current state of the SDK in the emb.state* attributes, as that is the only
+ * state available by the time the AEI can be reported.
  */
 @RunWith(AndroidJUnit4::class)
 internal class UserSessionAeiGoldenFileTest {

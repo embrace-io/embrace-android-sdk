@@ -4,10 +4,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeSpanData
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.toEmbracePayload
-import io.embrace.android.embracesdk.spans.ErrorCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -93,7 +93,7 @@ internal class SpanRepositoryTest {
         repository.failActiveEmbraceSpans(100L)
 
         assertFalse(startedSpan.isRecording)
-        assertEquals(ErrorCode.FAILURE, startedSpan.errorCode)
+        assertEquals(ErrorCodeAttribute.Failure, startedSpan.errorCode)
     }
 
     @Test

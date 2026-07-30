@@ -42,7 +42,7 @@ internal class SharedPrefsStore(
 
     override fun getStringMap(key: String): Map<String, String>? {
         val mapString = impl.getString(key, null) ?: return null
-        return serializer.fromJson(mapString, MapSerializer(String.serializer(), String.serializer()))
+        return serializer.fromJson(mapString, mapSerializer)
     }
 
     override fun edit(action: KeyValueStoreEditor.() -> Unit) {
@@ -61,5 +61,9 @@ internal class SharedPrefsStore(
         } catch (tr: Throwable) {
             -1
         }
+    }
+
+    private companion object {
+        val mapSerializer = MapSerializer(String.serializer(), String.serializer())
     }
 }

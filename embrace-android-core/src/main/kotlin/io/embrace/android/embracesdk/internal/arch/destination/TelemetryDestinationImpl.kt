@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.logs.EventService
 import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
@@ -22,8 +21,6 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.logging.SeverityNumber
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -163,13 +160,13 @@ class TelemetryDestinationImpl(
             name = name,
             startTimeMs = startTimeMs,
             endTimeMs = endTimeMs,
-            errorCode = errorCode.toErrorCode(),
+            errorCode = errorCode,
             type = type,
             parent = parentRef,
             internal = internal,
             private = private,
             attributes = attributes,
-            events = events.mapNotNull(::toEmbraceSpanEvent),
+            events = events,
         )
         sessionUpdateAction?.invoke()
     }
@@ -199,10 +196,6 @@ class TelemetryDestinationImpl(
 
     private fun retrieveParentReference(parent: SpanToken?): EmbraceSpan? = (parent as? SpanTokenImpl)?.span
 
-    private fun toEmbraceSpanEvent(event: SpanEvent): EmbraceSpanEvent? {
-        return EmbraceSpanEvent.create(event.name, event.timestampNanos.nanosToMillis(), event.attributes)
-    }
-
     private fun getSeverityText(severity: SeverityNumber) = when (severity) {
         SeverityNumber.WARN -> "WARNING"
         else -> severity.name
@@ -213,7 +206,7 @@ class TelemetryDestinationImpl(
         private val sessionUpdateAction: () -> Unit?,
     ) : SpanToken {
         override fun stop(endTimeMs: Long?, errorCode: ErrorCodeAttribute?) {
-            span.stop(endTimeMs = endTimeMs, errorCode = errorCode?.toErrorCode())
+            span.stopWithErrorCode(errorCode = errorCode, endTimeMs = endTimeMs)
             sessionUpdateAction.invoke()
         }
 
@@ -294,14 +287,5 @@ class TelemetryDestinationImpl(
             }
             spanToken.stop()
         }
-    }
-}
-
-internal fun ErrorCodeAttribute?.toErrorCode(): ErrorCode? {
-    return when (this) {
-        ErrorCodeAttribute.Failure -> ErrorCode.FAILURE
-        ErrorCodeAttribute.Unknown -> ErrorCode.UNKNOWN
-        ErrorCodeAttribute.UserAbandon -> ErrorCode.USER_ABANDON
-        else -> null
     }
 }

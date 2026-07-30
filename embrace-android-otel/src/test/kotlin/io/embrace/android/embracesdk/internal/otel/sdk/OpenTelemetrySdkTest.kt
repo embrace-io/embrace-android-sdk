@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
+import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
@@ -16,6 +17,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 internal class OpenTelemetrySdkTest {
 
@@ -116,6 +119,31 @@ internal class OpenTelemetrySdkTest {
     fun `verify that the default StorageContext is used if Java SDK is used`() {
         sdk = createSdkWrapper()
         assertEquals("default", System.getProperty("io.opentelemetry.context.contextStorageProvider"))
+    }
+
+    @Test
+    fun `implicit context is confined to the thread that attached it if Kotlin SDK is used`() {
+        val otel = createSdkOtelInstance(useKotlinSdk = true, clock = FakeOtelKotlinClock(FakeClock()))
+        val key = otel.context.createKey<String>("test-key")
+        val root = otel.context.root()
+        val attached = root.set(key, "value")
+
+        val scope = attached.attach()
+        try {
+            assertEquals("value", otel.context.implicit().get(key))
+
+            val executor = Executors.newSingleThreadExecutor()
+            try {
+                val otherThreadValue = executor.submit<String?> { otel.context.implicit().get(key) }
+                assertNull(otherThreadValue.get(1, TimeUnit.SECONDS))
+            } finally {
+                executor.shutdown()
+            }
+        } finally {
+            scope.detach()
+        }
+
+        assertNull(otel.context.implicit().get(key))
     }
 
     private fun createOtelSdkConfig(): OtelSdkConfig {

@@ -1,36 +1,19 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
-import android.os.Build
-import androidx.lifecycle.LifecycleOwner
-import io.embrace.android.embracesdk.core.BuildConfig
-import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
-import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
-import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifier
-import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
-import io.embrace.android.embracesdk.internal.clock.Clock
+import android.preference.PreferenceManager
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.config.ConfigServiceImpl
-import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
-import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
-import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
-import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
-import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleImpl
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageServiceSupplier
-import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
-import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
-import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
 import io.embrace.android.embracesdk.internal.storage.StorageService
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.Worker
-import java.util.concurrent.TimeUnit
 
 /**
  * A class that wires together and initializes modules in a manner that makes them work as a cohesive whole.
@@ -40,221 +23,24 @@ internal class ModuleInitBootstrapper(
     override val openTelemetryModule: OpenTelemetryModule = EmbTrace.trace("otel-module") {
         OpenTelemetryModuleImpl(initModule)
     },
-    private val coreModuleSupplier: CoreModuleSupplier = {
-            context: Context,
-            initModule: InitModule,
-        ->
-        CoreModuleImpl(
-            context,
-            initModule,
-        )
-    },
-    private val configServiceSupplier: ConfigServiceSupplier = {
-            initModule: InitModule,
-            coreModule: CoreModule,
-            openTelemetryModule: OpenTelemetryModule,
-            workerThreadModule: WorkerThreadModule,
-        ->
-        EmbTrace.trace("config-service-init") {
-            ConfigServiceImpl(
-                instrumentedConfig = initModule.instrumentedConfig,
-                worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
-                serializer = initModule.jsonSerializer,
-                okHttpClient = initModule.okHttpClient,
-                hasConfiguredOtlpExport = openTelemetryModule.otelSdkConfig::hasConfiguredOtlpExport,
-                sdkVersion = BuildConfig.VERSION_NAME,
-                apiLevel = Build.VERSION.SDK_INT,
-                filesDir = coreModule.context.filesDir,
-                store = coreModule.store,
-                abis = Build.SUPPORTED_ABIS,
-                logger = initModule.logger,
-                uuidSource = initModule.uuidSource,
-            )
-        }
-    },
-    private val workerThreadModuleSupplier: WorkerThreadModuleSupplier = { WorkerThreadModuleImpl() },
-    private val storageServiceSupplier: StorageServiceSupplier = {
-            initModule: InitModule,
-            coreModule: CoreModule,
-            workerThreadModule: WorkerThreadModule,
-        ->
-        val storageService = EmbraceStorageService(
-            coreModule.context,
-            initModule.telemetryService,
-            StatFsAvailabilityChecker(coreModule.context),
-        )
-        workerThreadModule
-            .backgroundWorker(Worker.Background.IoRegWorker)
-            .schedule<Unit>({ storageService.logStorageTelemetry() }, 1, TimeUnit.MINUTES)
-        storageService
-    },
-    private val essentialServiceModuleSupplier: EssentialServiceModuleSupplier = {
-            initModule: InitModule,
-            configService: ConfigService,
-            openTelemetryModule: OpenTelemetryModule,
-            coreModule: CoreModule,
-            workerThreadModule: WorkerThreadModule,
-            lifecycleOwnerProvider: Provider<LifecycleOwner?>,
-            networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
-            sessionOrchestratorProvider,
-        ->
-        EssentialServiceModuleImpl(
-            initModule,
-            configService,
-            openTelemetryModule,
-            coreModule,
-            workerThreadModule,
-            lifecycleOwnerProvider,
-            networkConnectivityServiceProvider,
-            sessionOrchestratorProvider,
-        )
-    },
-    private val featureModuleSupplier: FeatureModuleSupplier = {
-            instrumentationModule: InstrumentationModule,
-            configService: ConfigService,
-            storageService: StorageService,
-        ->
-        FeatureModuleImpl(
-            instrumentationModule = instrumentationModule,
-            configService = configService,
-            storageService = storageService,
-        )
-    },
-    private val instrumentationModuleSupplier: InstrumentationModuleSupplier = {
-            initModule: InitModule,
-            openTelemetryModule: OpenTelemetryModule,
-            workerThreadModule: WorkerThreadModule,
-            configService: ConfigService,
-            essentialServiceModule: EssentialServiceModule,
-            coreModule: CoreModule,
-            storageService: StorageService,
-            userSessionIdsProvider,
-            activeSessionIdsProvider,
-        ->
-        InstrumentationModuleImpl(
-            initModule,
-            openTelemetryModule,
-            workerThreadModule,
-            configService,
-            essentialServiceModule,
-            coreModule,
-            storageService,
-            userSessionIdsProvider,
-            activeSessionIdsProvider,
-        )
-    },
-    private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = {
-            clock: Clock,
-            logger: InternalLogger,
-            destination: TelemetryDestination,
-            configService: ConfigService,
-            startupClassifier: StartupClassifier,
-            versionChecker: VersionChecker,
-        ->
-        DataCaptureServiceModuleImpl(
-            clock,
-            logger,
-            destination,
-            configService,
-            startupClassifier,
-            versionChecker,
-        )
-    },
-    private val deliveryModuleSupplier: DeliveryModuleSupplier = {
-            configService: ConfigService,
-            initModule: InitModule,
-            otelModule: OpenTelemetryModule,
-            workerThreadModule: WorkerThreadModule,
-            coreModule: CoreModule,
-            essentialServiceModule: EssentialServiceModule,
-            payloadStorageServiceProvider: Provider<PayloadStorageService>?,
-            cacheStorageServiceProvider: Provider<PayloadStorageService>?,
-            requestExecutionServiceProvider: Provider<RequestExecutionService>?,
-            deliveryTracer: DeliveryTracer?,
-        ->
-        DeliveryModuleImpl(
-            configService,
-            initModule,
-            otelModule,
-            workerThreadModule,
-            coreModule,
-            essentialServiceModule,
-            requestExecutionServiceProvider,
-            payloadStorageServiceProvider,
-            cacheStorageServiceProvider,
-            deliveryTracer,
-        )
-    },
-    private val threadBlockageServiceSupplier: ThreadBlockageServiceSupplier = { args: InstrumentationArgs ->
-        createThreadBlockageService(args)
-    },
-    private val logModuleSupplier: LogModuleSupplier = {
-            initModule: InitModule,
-            openTelemetryModule: OpenTelemetryModule,
-            essentialServiceModule: EssentialServiceModule,
-            configService: ConfigService,
-            deliveryModule: DeliveryModule?,
-            workerThreadModule: WorkerThreadModule,
-            payloadSourceModule: PayloadSourceModule,
-        ->
-        LogModuleImpl(
-            initModule,
-            openTelemetryModule,
-            essentialServiceModule,
-            configService,
-            deliveryModule,
-            workerThreadModule,
-            payloadSourceModule,
-        )
-    },
-    private val userSessionOrchestrationModuleSupplier: UserSessionOrchestrationModuleSupplier = {
-            initModule: InitModule,
-            openTelemetryModule: OpenTelemetryModule,
-            coreModule: CoreModule,
-            essentialServiceModule: EssentialServiceModule,
-            configService: ConfigService,
-            deliveryModule: DeliveryModule?,
-            instrumentationModule: InstrumentationModule,
-            payloadSourceModule: PayloadSourceModule,
-            startupDurationProvider: () -> Long?,
-            logModule: LogModule,
-            workerThreadModule: WorkerThreadModule,
-        ->
-        UserSessionOrchestrationModuleImpl(
-            initModule,
-            openTelemetryModule,
-            coreModule,
-            essentialServiceModule,
-            configService,
-            deliveryModule,
-            instrumentationModule,
-            payloadSourceModule,
-            startupDurationProvider,
-            logModule,
-            workerThreadModule,
-        )
-    },
-    private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier = {
-            initModule: InitModule,
-            coreModule: CoreModule,
-            workerThreadModule: WorkerThreadModule,
-            essentialServiceModule: EssentialServiceModule,
-            configService: ConfigService,
-            otelModule: OpenTelemetryModule,
-            otelPayloadMapper: OtelPayloadMapper?,
-            deliveryModule: DeliveryModule?,
-        ->
-        PayloadSourceModuleImpl(
-            initModule,
-            coreModule,
-            workerThreadModule,
-            essentialServiceModule,
-            configService,
-            otelModule,
-            otelPayloadMapper,
-            deliveryModule,
-        )
-    },
+    /*
+     * The suppliers below exist purely as a seam for tests to inject fake modules. They default to
+     * null rather than to a lambda that forwards to the real constructor as a default lambda allocates
+     * a synthetic class per supplier.
+     */
+    private val coreModuleSupplier: CoreModuleSupplier? = null,
+    private val configServiceSupplier: ConfigServiceSupplier? = null,
+    private val workerThreadModuleSupplier: WorkerThreadModuleSupplier? = null,
+    private val storageServiceSupplier: StorageServiceSupplier? = null,
+    private val essentialServiceModuleSupplier: EssentialServiceModuleSupplier? = null,
+    private val featureModuleSupplier: FeatureModuleSupplier? = null,
+    private val instrumentationModuleSupplier: InstrumentationModuleSupplier? = null,
+    private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier? = null,
+    private val deliveryModuleSupplier: DeliveryModuleSupplier? = null,
+    private val threadBlockageServiceSupplier: ThreadBlockageServiceSupplier? = null,
+    private val logModuleSupplier: LogModuleSupplier? = null,
+    private val userSessionOrchestrationModuleSupplier: UserSessionOrchestrationModuleSupplier? = null,
+    private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier? = null,
 ) : ModuleGraph {
 
     @Volatile
@@ -289,14 +75,18 @@ internal class ModuleInitBootstrapper(
                 if (isInitialized()) {
                     return false
                 }
+                val workerThreadModule = EmbTrace.trace("workerthread-init") {
+                    workerThreadModuleSupplier?.invoke() ?: WorkerThreadModuleImpl()
+                }
+                prewarmSharedPreferences(context, workerThreadModule)
                 delegate = InitializedModuleGraph(
                     context,
                     versionChecker,
                     initModule,
                     openTelemetryModule,
+                    workerThreadModule,
                     coreModuleSupplier,
                     configServiceSupplier,
-                    workerThreadModuleSupplier,
                     storageServiceSupplier,
                     essentialServiceModuleSupplier,
                     featureModuleSupplier,
@@ -332,4 +122,17 @@ internal class ModuleInitBootstrapper(
     }
 
     private fun isInitialized(): Boolean = delegate != UninitializedModuleGraph
+
+    /**
+     * Touches the default `SharedPreferences` on a background worker as early as possible to speculatively
+     * attempt to reduce the amount of time Android blocks with `awaitLoadedLocked` later on in SDK init.
+     */
+    private fun prewarmSharedPreferences(context: Context, workerThreadModule: WorkerThreadModule) {
+        workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker).submit {
+            try {
+                PreferenceManager.getDefaultSharedPreferences(context)
+            } catch (ignored: Throwable) {
+            }
+        }
+    }
 }

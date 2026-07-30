@@ -64,16 +64,15 @@ class ConfigServiceImpl(
         )
     }
 
-    override val buildInfo: BuildInfo by lazy {
-        val cfg = instrumentedConfig.project
+    override val buildInfo: BuildInfo = with(instrumentedConfig.project) {
         BuildInfo(
-            cfg.getBuildId(),
-            cfg.getBuildType(),
-            cfg.getBuildFlavor(),
-            cfg.getReactNativeBundleId(),
-            cfg.getVersionName() ?: "UNKNOWN",
-            cfg.getVersionCode() ?: "UNKNOWN",
-            cfg.getPackageName() ?: "UNKNOWN",
+            getBuildId(),
+            getBuildType(),
+            getBuildFlavor(),
+            getReactNativeBundleId(),
+            getVersionName() ?: "UNKNOWN",
+            getVersionCode() ?: "UNKNOWN",
+            getPackageName() ?: "UNKNOWN",
         )
     }
 

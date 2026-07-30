@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.UuidSource
-import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.export.OperationResultCode
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
@@ -29,9 +29,14 @@ internal class EmbraceLogRecordProcessor(
             log.setStringAttribute(LogAttributes.LOG_RECORD_UID, uuidSource.createUuid())
         }
 
-        if (!attributes.ownsSessionContext()) {
+        if (!attributes.describesADeadProcess()) {
+            // never override what the instrumentation has already set. Telemetry that knows which session it
+            // belongs to - such as an app exit reported by a later process - sets the session attributes
+            // itself, and leaves them blank if the session it describes is unknown.
             metadataProvider().forEach { (key, value) ->
-                log.setStringAttribute(key, value)
+                if (!attributes.containsKey(key)) {
+                    log.setStringAttribute(key, value)
+                }
             }
         }
 
@@ -41,11 +46,11 @@ internal class EmbraceLogRecordProcessor(
     override suspend fun shutdown(): OperationResultCode = OperationResultCode.Success
 
     /**
-     * Whether the record already carries the session it belongs to, in which case the current metadata must
-     * not be applied. Telemetry that describes a session other than the current one - a native crash or an
-     * app exit reported by a later process - sets these attributes itself, and leaves them blank if the
-     * session it describes is unknown.
+     * Whether the record describes a process that has already died, in which case none of the current
+     * metadata applies to it. A native crash is resurrected by a later process and carries the whole state of
+     * the session that crashed - its session IDs, app state and session properties - so enriching it would
+     * describe the wrong session entirely.
      */
-    private fun Map<String, Any>.ownsSessionContext(): Boolean =
-        containsKey(EmbSessionAttributes.EMB_SESSION_PART_ID)
+    private fun Map<String, Any>.describesADeadProcess(): Boolean =
+        get(EmbType.System.NativeCrash.key) == EmbType.System.NativeCrash.value
 }

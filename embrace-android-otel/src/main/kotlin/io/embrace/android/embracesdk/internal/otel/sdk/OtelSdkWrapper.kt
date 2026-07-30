@@ -89,7 +89,7 @@ class OtelSdkWrapper(
     val openTelemetryKotlin: OpenTelemetry by lazy {
         EmbOpenTelemetry(
             impl = kotlinApi,
-            traceProviderSupplier = { EmbTracerProvider(kotlinApi, spanService, otelClock, useKotlinSdk) },
+            traceProviderSupplier = { EmbTracerProvider(kotlinApi, spanService, otelClock) },
         )
     }
 }

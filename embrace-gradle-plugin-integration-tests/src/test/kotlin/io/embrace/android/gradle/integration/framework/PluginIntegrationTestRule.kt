@@ -225,6 +225,9 @@ class PluginIntegrationTestRule : ExternalResource() {
         args.addAll(
             listOf(
                 "--stacktrace",
+                // fixtures consume io.embrace:*:<version>-SNAPSHOT from mavenLocal. Force a refresh
+                // to avoid CI jobs picking up old artifacts
+                "--refresh-dependencies",
                 "-Dorg.gradle.daemon=false",
                 "-Dorg.gradle.parallel=true",
                 "-Dorg.gradle.caching=true",

@@ -275,8 +275,6 @@ internal class EmbraceSpanImplTest {
             assertTrue(recordException(exception = firstException))
             assertTrue(recordException(exception = secondException, attributes = mapOf("myKey" to "myValue")))
             assertTrue(recordException(exception = RuntimeException(), attributes = tooBigEventAttributes))
-            assertTrue(stop())
-            assertFalse(recordException(exception = IllegalStateException()))
             assertEquals(3, events().size)
             assertTrue(updateNotified)
         }
@@ -314,6 +312,47 @@ internal class EmbraceSpanImplTest {
                 )
             }
         }
+
+        with(embraceSpan) {
+            assertTrue(stop())
+            assertFalse(recordException(exception = IllegalStateException()))
+            // retained event data is released once the span is stopped and exported
+            assertEquals(0, events().size)
+        }
+    }
+
+    @Test
+    fun `retained event and link data is released when a span stops but the span remains retrievable`() {
+        with(embraceSpan) {
+            assertTrue(start())
+            setSystemAttribute("system-key", "system-value")
+            assertTrue(addAttribute("custom-key", "custom-value"))
+            assertTrue(addEvent("an-event"))
+            assertTrue(
+                addSystemLink(
+                    checkNotNull(FakeEmbraceSdkSpan.stopped().spanContext),
+                    LinkType.PreviousSessionPart,
+                ),
+            )
+            assertTrue(addLink(FakeEmbraceSdkSpan.stopped()))
+            assertEquals(1, events().size)
+            assertEquals(2, links().size)
+        }
+
+        val spanId = checkNotNull(embraceSpan.spanId)
+        assertTrue(embraceSpan.stop())
+
+        // the span is still tracked and retrievable by id, retaining its identity and attributes
+        val tracked = checkNotNull(spanRepository.getEmbraceSpan(spanId))
+        assertFalse(tracked.isRecording)
+        assertEquals(spanId, tracked.spanId)
+        assertNotNull(tracked.traceId)
+        assertEquals("system-value", tracked.getSystemAttribute("system-key"))
+        assertEquals("custom-value", tracked.attributes()["custom-key"])
+
+        // but its heavier event and link data has been released
+        assertEquals(0, tracked.events().size)
+        assertEquals(0, tracked.links().size)
     }
 
     @Test

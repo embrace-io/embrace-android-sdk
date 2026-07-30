@@ -87,9 +87,9 @@ internal class OkHttpDataSource(
 
     private fun interceptApplicationRequest(chain: Interceptor.Chain, callData: CallData?): Response? {
         val request: Request = chain.request()
-        return try {
+        try {
             // we are not interested in response, just proceed
-            chain.proceed(request)
+            return chain.proceed(request)
         } catch (e: EmbraceCustomPathException) {
             val urlString = getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request), e.customPath)
             callData?.recordNetworkError(chain.call(), urlString, request, e.cause)
@@ -99,6 +99,10 @@ internal class OkHttpDataSource(
             val urlString = getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request))
             callData?.recordNetworkError(chain.call(), urlString, request, e)
             throw e
+        } finally {
+            if (callData != null && activeCalls.remove(chain.call()) != null) {
+                networkRequestDataSource?.discardRequest(callData.id)
+            }
         }
     }
 
@@ -146,54 +150,59 @@ internal class OkHttpDataSource(
         }
         val forwardNetworkSpan = configService.networkSpanForwardingBehavior.shouldForwardForDomain(host)
 
-        // Let the request execution proceed and obs
+        // Let the request execution proceed and observe the result
         val networkResponse: Response = chain.proceed(request)
 
-        // Get the size of the body from the response header if possible
-        // Failing that, try to count the bytes in the body itself
-        // If neither works, set the content length to 0
-        val contentLength: Long = getContentLengthFromHeader(networkResponse)
-            ?: getContentLengthFromBody(
-                networkResponse = networkResponse,
-                contentType = networkResponse.header(CONTENT_TYPE_HEADER_NAME, null),
-            ) ?: 0L
-
         var response: Response = networkResponse
-        val requestEndData = createRequestEndData(request, networkResponse, callData, contentLength)
+        // A response has been obtained, so instrumentation must not alter the app-visible result of the
+        // request from here on: contain any failure and always release the call's tracking entry
         try {
+            // Get the size of the body from the response header if possible.
+            // Failing that, and only when explicitly opted-in, count the bytes in the body itself.
+            // Reading the body buffers it entirely into memory, so it is gated behind config to avoid
+            // excessive heap usage / OOM on large or streaming responses.
+            // If neither works, set the content length to 0.
+            val contentLength: Long = getContentLengthFromHeader(networkResponse)
+                ?: getContentLengthFromBodyIfEnabled(networkResponse)
+                ?: 0L
+
+            val requestEndData = createRequestEndData(request, networkResponse, callData, contentLength)
             networkRequestDataSource?.endRequest(requestEndData)
+
+            val shouldCaptureNetworkData = networkCaptureDataSourceProvider()?.shouldCaptureNetworkBody(
+                request.url.toString(),
+                request.method,
+            ) ?: false
+            if (shouldCaptureNetworkData && networkCaptureDataSource != null) {
+                // Decompress any response body that is gzipped so it can be captured in plain text
+                if (ENCODING_GZIP.equals(
+                        networkResponse.header(CONTENT_ENCODING_HEADER_NAME, null),
+                        ignoreCase = true,
+                    ) && networkResponse.promisesBody()
+                ) {
+                    networkResponse.body?.also {
+                        response = it.decompressResponseBody(networkResponse, request)
+                    }
+                }
+
+                val networkCaptureData = getNetworkCaptureData(request, response)
+                networkCaptureDataSource?.recordNetworkRequest(
+                    requestEndData.createHttpNetworkRequest(
+                        httpMethod = request.method,
+                        w3cTraceparent = if (forwardNetworkSpan) {
+                            callData.id
+                        } else {
+                            null
+                        },
+                        networkCaptureData = networkCaptureData,
+                    ),
+                )
+            }
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.DataSourceDataCaptureFail, exc)
+            networkRequestDataSource?.discardRequest(callData.id)
         } finally {
             activeCalls.remove(chain.call())
-        }
-
-        val shouldCaptureNetworkData = networkCaptureDataSourceProvider()?.shouldCaptureNetworkBody(
-            request.url.toString(),
-            request.method,
-        ) ?: false
-        if (shouldCaptureNetworkData && networkCaptureDataSource != null) {
-            // Decompress any response body that is gzipped so it can be captured in plain text
-            if (ENCODING_GZIP.equals(
-                    networkResponse.header(CONTENT_ENCODING_HEADER_NAME, null),
-                    ignoreCase = true,
-                ) && networkResponse.promisesBody()
-            ) {
-                networkResponse.body?.also {
-                    response = it.decompressResponseBody(networkResponse, request)
-                }
-            }
-
-            val networkCaptureData = getNetworkCaptureData(request, response)
-            networkCaptureDataSource?.recordNetworkRequest(
-                requestEndData.createHttpNetworkRequest(
-                    httpMethod = request.method,
-                    w3cTraceparent = if (forwardNetworkSpan) {
-                        callData.id
-                    } else {
-                        null
-                    },
-                    networkCaptureData = networkCaptureData,
-                ),
-            )
         }
 
         return response
@@ -264,6 +273,19 @@ internal class OkHttpDataSource(
             }
         }
         return contentLength
+    }
+
+    /**
+     * Measures the response body size by reading it if enabled.
+     */
+    private fun getContentLengthFromBodyIfEnabled(networkResponse: Response): Long? {
+        if (!configService.networkBehavior.isOkHttpResponseBodySizeCaptureEnabled()) {
+            return null
+        }
+        return getContentLengthFromBody(
+            networkResponse = networkResponse,
+            contentType = networkResponse.header(CONTENT_TYPE_HEADER_NAME, null),
+        )
     }
 
     private fun getContentLengthFromBody(networkResponse: Response, contentType: String?): Long? {

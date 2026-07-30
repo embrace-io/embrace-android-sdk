@@ -241,6 +241,24 @@ internal class NetworkRequestDataSourceStatefulApiTest {
     }
 
     @Test
+    fun `discardRequest releases tracking without stopping the span`() {
+        val id = checkNotNull(startRequest(url = "https://www.example.com/api"))
+        harness.dataSource.discardRequest(id)
+
+        val span = harness.getNetworkSpans().single()
+        assertTrue(span.isRecording())
+
+        endRequest(callId = id, url = "https://www.example.com/api")
+        assertTrue(span.isRecording())
+    }
+
+    @Test
+    fun `discardRequest with an unknown id is a no-op`() {
+        harness.dataSource.discardRequest("unknown-id")
+        assertTrue(harness.getNetworkSpans().isEmpty())
+    }
+
+    @Test
     fun `network span adopts the span represented by the traceparent as its parent if it is in the correct format`() {
         startRequest(
             url = "https://www.example.com/api",
@@ -270,6 +288,36 @@ internal class NetworkRequestDataSourceStatefulApiTest {
         val spans = harness.getNetworkSpans()
         assertEquals(malformedTraceparents.size, spans.size)
         spans.forEach { assertNull(it.parent) }
+    }
+
+    @Test
+    fun `a registered modifier alters the url and method of a span-based request`() {
+        harness.args.httpRequestInfoModifierChain.add {
+            it.url = "https://redacted.com/api"
+            it.httpMethod = "POST"
+        }
+        runRequest(url = "https://secret.com/api?token=abc")
+
+        with(checkNotNull(harness.getNetworkSpans().single())) {
+            assertEquals("https://redacted.com/api", attributes["url.full"])
+            assertEquals("POST", attributes[HttpAttributes.HTTP_REQUEST_METHOD])
+            assertEquals("POST /api", name)
+        }
+    }
+
+    @Test
+    fun `a modifier is applied to the final end url when it differs from the start url`() {
+        harness.args.httpRequestInfoModifierChain.add { it.url = it.url.replace("example", "redacted") }
+        runRequest(
+            url = "https://www.example.com/start",
+            endUrl = "https://www.example.com/end",
+        )
+
+        with(checkNotNull(harness.getNetworkSpans().single())) {
+            // url.full reflects the modified end url; the span name reflects the modified start url
+            assertEquals("https://www.redacted.com/end", attributes["url.full"])
+            assertEquals("GET /start", name)
+        }
     }
 
     private fun runRequest(

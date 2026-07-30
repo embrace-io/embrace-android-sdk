@@ -1,0 +1,82 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: emb.aei
+    visibility: public
+    stability: development
+    brief: "Embrace Application Exit Info attributes"
+    attributes:
+      - ref: aei_session_id
+      - ref: aei_user_session_id
+      - ref: aei_session_part_id
+      - ref: session_id_error
+      - ref: process_importance
+      - ref: pss
+      - ref: reason
+      - ref: rss
+      - ref: exit_status
+      - ref: timestamp
+      - ref: description
+      - ref: trace_status
+
+attributes:
+  - key: aei_session_id
+    type: string
+    brief: "The session ID associated with the AEI event."
+    stability: development
+    examples: ["abc123"]
+  - key: aei_user_session_id
+    type: string
+    brief: "The user session ID where the AEI occurred."
+    stability: development
+    examples: ["abc123"]
+  - key: aei_session_part_id
+    type: string
+    brief: "The session part ID where the AEI occurred."
+    stability: development
+    examples: ["abc123"]
+  - key: session_id_error
+    type: string
+    brief: "Error message if the session ID could not be determined."
+    stability: development
+    examples: ["session not found"]
+  - key: process_importance
+    type: string
+    brief: "The importance level of the process at exit."
+    stability: development
+    examples: ["100", "125"]
+  - key: pss
+    type: string
+    brief: "Proportional set size of the process at exit (bytes)."
+    stability: development
+    examples: ["12345678"]
+  - key: reason
+    type: string
+    brief: "The reason for the application exit."
+    stability: development
+    examples: ["1", "2", "6"]
+  - key: rss
+    type: string
+    brief: "Resident set size of the process at exit (bytes)."
+    stability: development
+    examples: ["23456789"]
+  - key: exit_status
+    type: string
+    brief: "The exit status code of the process."
+    stability: development
+    examples: ["0", "1"]
+  - key: timestamp
+    type: string
+    brief: "The timestamp of the application exit event."
+    stability: development
+    examples: ["1617983000000"]
+  - key: description
+    type: string
+    brief: "A description of the application exit."
+    stability: development
+    examples: ["ANR detected"]
+  - key: trace_status
+    type: string
+    brief: "The trace status at the time of exit."
+    stability: development
+    examples: ["OK", "ERROR"]

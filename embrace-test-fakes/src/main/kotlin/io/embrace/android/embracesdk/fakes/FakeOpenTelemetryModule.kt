@@ -12,14 +12,11 @@ import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
-import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
+import io.embrace.android.embracesdk.spans.TracingApi
 
 class FakeOpenTelemetryModule(
     override val currentSessionPartSpan: CurrentSessionPartSpan = FakeCurrentSessionPartSpan(),
-    override val spanSink: SpanSink = SpanSinkImpl(),
     override val logSink: LogSink = LogSinkImpl(),
     override val spanRepository: SpanRepository = SpanRepository(),
     useKotlinSdk: Boolean = true,
@@ -30,7 +27,7 @@ class FakeOpenTelemetryModule(
 
     override val otelSdkConfig: OtelSdkConfig =
         OtelSdkConfig(
-            spanSink = spanSink,
+            spanRepository = spanRepository,
             logSink = logSink,
             sdkName = sdkName,
             sdkVersion = sdkVersion,
@@ -52,7 +49,7 @@ class FakeOpenTelemetryModule(
             useKotlinSdk = useKotlinSdk,
         )
 
-    override val embraceTracer: EmbraceTracer
+    override val tracingApi: TracingApi
         get() = TODO()
 
     override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean, otelBehavior: OtelBehavior) {

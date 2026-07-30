@@ -1,0 +1,46 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: emb.push_notification
+    visibility: public
+    stability: development
+    brief: "Embrace push notification attributes"
+    attributes:
+      - ref: notification.title
+      - ref: notification.type
+      - ref: notification.body
+      - ref: notification.id
+      - ref: notification.from
+      - ref: notification.priority
+
+attributes:
+  - key: notification.title
+    type: string
+    brief: "The title of the push notification."
+    stability: development
+    examples: ["New message"]
+  - key: notification.type
+    type: string
+    brief: "The type of push notification."
+    stability: development
+    examples: ["notif", "data", "notif-data", "unknown"]
+  - key: notification.body
+    type: string
+    brief: "The body text of the push notification."
+    stability: development
+    examples: ["You have a new message"]
+  - key: notification.id
+    type: string
+    brief: "The ID of the push notification."
+    stability: development
+    examples: ["abc123"]
+  - key: notification.from
+    type: string
+    brief: "The sender of the push notification."
+    stability: development
+    examples: ["123456789"]
+  - key: notification.priority
+    type: string
+    brief: "The priority of the push notification."
+    stability: development
+    examples: ["0", "1", "2"]

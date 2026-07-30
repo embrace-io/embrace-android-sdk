@@ -9,21 +9,23 @@ import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
+import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
 import io.embrace.android.embracesdk.internal.otel.logs.EventServiceImpl
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
+import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.opentelemetry.kotlin.logging.Logger
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 internal class OpenTelemetrySdkTest {
 
-    private lateinit var spanSink: SpanSink
+    private lateinit var spanRepository: SpanRepository
     private lateinit var logSink: LogSink
     private lateinit var systemInfo: SystemInfo
     private lateinit var configuration: OtelSdkConfig
@@ -33,7 +35,7 @@ internal class OpenTelemetrySdkTest {
 
     @Before
     fun setup() {
-        spanSink = SpanSinkImpl()
+        spanRepository = SpanRepository()
         logSink = LogSinkImpl()
         systemInfo = SystemInfo()
         sdk = createSdkWrapper { sdk.sdkLogger }
@@ -122,9 +124,34 @@ internal class OpenTelemetrySdkTest {
         assertEquals("default", System.getProperty("io.opentelemetry.context.contextStorageProvider"))
     }
 
+    @Test
+    fun `implicit context is confined to the thread that attached it if Kotlin SDK is used`() {
+        val otel = createSdkOtelInstance(useKotlinSdk = true, clock = FakeOtelKotlinClock(FakeClock()))
+        val key = otel.context.createKey<String>("test-key")
+        val root = otel.context.root()
+        val attached = root.set(key, "value")
+
+        val scope = attached.attach()
+        try {
+            assertEquals("value", otel.context.implicit().get(key))
+
+            val executor = Executors.newSingleThreadExecutor()
+            try {
+                val otherThreadValue = executor.submit<String?> { otel.context.implicit().get(key) }
+                assertNull(otherThreadValue.get(1, TimeUnit.SECONDS))
+            } finally {
+                executor.shutdown()
+            }
+        } finally {
+            scope.detach()
+        }
+
+        assertNull(otel.context.implicit().get(key))
+    }
+
     private fun createOtelSdkConfig(): OtelSdkConfig {
         val configuration = OtelSdkConfig(
-            spanSink = spanSink,
+            spanRepository = spanRepository,
             logSink = logSink,
             sdkName = "sdk",
             sdkVersion = "1.0",

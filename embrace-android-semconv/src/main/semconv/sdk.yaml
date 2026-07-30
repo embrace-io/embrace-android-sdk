@@ -1,0 +1,46 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: emb.telemetry
+    visibility: public
+    stability: development
+    brief: "Embrace SDK self-telemetry and environment attributes"
+    attributes:
+      - ref: emb.okhttp3
+      - ref: emb.okhttp3_on_classpath
+      - ref: emb.kotlin_on_classpath
+      - ref: emb.is_emulator
+      - ref: emb.storage.used
+      - ref: emb.storage.available
+
+attributes:
+  - key: emb.okhttp3
+    type: string
+    brief: "Whether OkHttp3 is present on the classpath."
+    stability: development
+    examples: ["true", "false"]
+  - key: emb.okhttp3_on_classpath
+    type: string
+    brief: "The version of OkHttp3 found on the classpath."
+    stability: development
+    examples: ["4.11.0"]
+  - key: emb.kotlin_on_classpath
+    type: string
+    brief: "The version of Kotlin found on the classpath."
+    stability: development
+    examples: ["1.9.0"]
+  - key: emb.is_emulator
+    type: string
+    brief: "Whether the app is running on an emulator."
+    stability: development
+    examples: ["true", "false"]
+  - key: emb.storage.used
+    type: string
+    brief: "Storage used by Embrace in bytes."
+    stability: development
+    examples: ["102400"]
+  - key: emb.storage.available
+    type: string
+    brief: "Storage available on the device in bytes."
+    stability: development
+    examples: ["1073741824"]

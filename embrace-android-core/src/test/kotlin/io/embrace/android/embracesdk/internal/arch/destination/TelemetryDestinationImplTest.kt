@@ -307,10 +307,6 @@ internal class TelemetryDestinationImplTest {
 
         val event = (current as FakeEmbraceSdkSpan).events.single()
         assertEquals("emb-${schemaType.fixedObjectName}", event.name)
-
-        impl.removeSessionPartEvents(schemaType.telemetryType)
-        assertTrue(currentSessionPartSpan.addedEvents.isEmpty())
-        verifyAndResetSessionUpdate()
     }
 
     @Test

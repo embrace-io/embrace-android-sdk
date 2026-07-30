@@ -135,4 +135,10 @@ data class RemoteConfig(
      */
     @SerialName("pct_screen_load_enabled")
     val pctScreenLoadEnabled: Float? = null,
+
+    /**
+     * Settings defining the thresholds used by the vitals (smoothness / screen-load) feature.
+     */
+    @SerialName("vitals")
+    val vitalsRemoteConfig: VitalsRemoteConfig? = null,
 )

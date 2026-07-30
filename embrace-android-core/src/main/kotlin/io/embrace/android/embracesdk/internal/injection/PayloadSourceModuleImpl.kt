@@ -47,7 +47,7 @@ class PayloadSourceModuleImpl(
     versionChecker: VersionChecker = BuildVersionChecker,
 ) : PayloadSourceModule {
 
-    override val rnBundleIdTracker: RnBundleIdTracker by singleton {
+    override val rnBundleIdTracker: RnBundleIdTracker by lazy {
         RnBundleIdTrackerImpl(
             coreModule.context,
             configService,
@@ -56,44 +56,7 @@ class PayloadSourceModuleImpl(
         )
     }
 
-    private val partPayloadSource by singleton {
-        EmbTrace.trace("session-payload-source") {
-            SessionPartPayloadSourceImpl(
-                configService.nativeSymbolMap,
-                otelModule.spanSink,
-                otelModule.currentSessionPartSpan,
-                otelModule.spanRepository,
-                otelPayloadMapper,
-                essentialServiceModule.appStateTracker,
-                initModule.clock,
-                initModule.logger,
-            )
-        }
-    }
-
-    private val logPayloadSource by singleton {
-        LogPayloadSourceImpl(otelModule.logSink)
-    }
-
-    override val sessionPartEnvelopeSource: SessionPartEnvelopeSource by singleton {
-        SessionPartEnvelopeSourceImpl(metadataSource, resourceSource, partPayloadSource)
-    }
-
-    override val logEnvelopeSource: LogEnvelopeSource by singleton {
-        LogEnvelopeSourceImpl(metadataSource, resourceSource, logPayloadSource, deliveryModule?.cachedLogEnvelopeStore)
-    }
-
-    override val hostedSdkVersionInfo: HostedSdkVersionInfo by singleton {
-        val store = coreModule.store
-        when (configService.appFramework) {
-            AppFramework.REACT_NATIVE -> ReactNativeSdkVersionInfo(store)
-            AppFramework.UNITY -> UnitySdkVersionInfo(store)
-            AppFramework.FLUTTER -> FlutterSdkVersionInfo(store)
-            else -> NativeSdkVersionInfo()
-        }
-    }
-
-    private val storageManager: StorageStatsManager? by singleton {
+    private val storageManager: Lazy<StorageStatsManager?> = lazy {
         if (versionChecker.isAtLeast(Build.VERSION_CODES.O)) {
             coreModule.context.getSystemServiceSafe(Context.STORAGE_STATS_SERVICE) as StorageStatsManager?
         } else {
@@ -101,58 +64,78 @@ class PayloadSourceModuleImpl(
         }
     }
 
-    private val appEnvironment: AppEnvironment by lazy {
-        val context = coreModule.context
-        val isDebug: Boolean = with(context.applicationInfo) {
+    private val partPayloadSource = EmbTrace.trace("session-payload-source") {
+        SessionPartPayloadSourceImpl(
+            configService.nativeSymbolMap,
+            otelModule.currentSessionPartSpan,
+            otelModule.spanRepository,
+            otelPayloadMapper,
+            essentialServiceModule.appStateTracker,
+            initModule.clock,
+            initModule.logger,
+        )
+    }
+
+    private val logPayloadSource = LogPayloadSourceImpl(otelModule.logSink)
+
+    override val hostedSdkVersionInfo: HostedSdkVersionInfo = when (configService.appFramework) {
+        AppFramework.REACT_NATIVE -> ReactNativeSdkVersionInfo(coreModule.store)
+        AppFramework.UNITY -> UnitySdkVersionInfo(coreModule.store)
+        AppFramework.FLUTTER -> FlutterSdkVersionInfo(coreModule.store)
+        else -> NativeSdkVersionInfo()
+    }
+
+    private val appEnvironment: AppEnvironment = AppEnvironment(
+        isDebug = with(coreModule.context.applicationInfo) {
             flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
-        }
-        AppEnvironment(isDebug)
+        },
+    )
+
+    override val resourceSource: EnvelopeResourceSource = EmbTrace.trace("resource-source") {
+        EnvelopeResourceSourceImpl(
+            hosted = hostedSdkVersionInfo,
+            environment = appEnvironment.environment,
+            configService = configService,
+            device = EmbTrace.trace("deviceImpl") {
+                DeviceImpl(
+                    coreModule.context.getSystemServiceSafe(Context.WINDOW_SERVICE),
+                    coreModule.store,
+                    workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
+                    initModule.systemInfo,
+                    initModule.logger,
+                )
+            },
+            rnBundleIdProvider = { rnBundleIdTracker.getReactNativeBundleId() },
+            versionName = BuildConfig.VERSION_NAME,
+            versionCode = BuildConfig.VERSION_CODE.toIntOrNull(),
+        )
     }
 
-    override val resourceSource: EnvelopeResourceSource by singleton {
-        EmbTrace.trace("resource-source") {
-            EnvelopeResourceSourceImpl(
-                hosted = hostedSdkVersionInfo,
-                environment = appEnvironment.environment,
-                configService = configService,
-                device = EmbTrace.trace("deviceImpl") {
-                    DeviceImpl(
-                        coreModule.context.getSystemServiceSafe(Context.WINDOW_SERVICE),
-                        coreModule.store,
-                        workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
-                        initModule.systemInfo,
-                        initModule.logger,
-                    )
-                },
-                rnBundleIdProvider = { rnBundleIdTracker.getReactNativeBundleId() },
-                versionName = BuildConfig.VERSION_NAME,
-                versionCode = BuildConfig.VERSION_CODE.toIntOrNull(),
-            )
-        }
+    private val metadataSource = EmbTrace.trace("metadata-source") {
+        EnvelopeMetadataSourceImpl { essentialServiceModule.userService.getUserInfo() }
     }
 
-    private val metadataSource by singleton {
-        EmbTrace.trace("metadata-source") {
-            EnvelopeMetadataSourceImpl { essentialServiceModule.userService.getUserInfo() }
-        }
+    override val sessionPartEnvelopeSource: SessionPartEnvelopeSource =
+        SessionPartEnvelopeSourceImpl(metadataSource, resourceSource, partPayloadSource)
+
+    override val logEnvelopeSource: LogEnvelopeSource =
+        LogEnvelopeSourceImpl(metadataSource, resourceSource, logPayloadSource, deliveryModule?.cachedLogEnvelopeStore)
+
+    override val metadataService: MetadataService = EmbTrace.trace("metadata-service-init") {
+        EmbraceMetadataService(
+            lazyOf(resourceSource),
+            coreModule.context,
+            storageManager,
+            configService,
+            coreModule.store,
+            initModule.clock,
+            workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
+        )
     }
 
-    override val metadataService: MetadataService by singleton {
-        EmbTrace.trace("metadata-service-init") {
-            EmbraceMetadataService(
-                lazy { resourceSource },
-                coreModule.context,
-                lazy { storageManager },
-                configService,
-                coreModule.store,
-                initModule.clock,
-                workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
-            )
-        }
-    }
-
-    override val payloadResurrectionService: PayloadResurrectionService? by singleton {
-        deliveryModule ?: return@singleton null
+    override val payloadResurrectionService: PayloadResurrectionService? = if (deliveryModule == null) {
+        null
+    } else {
         PayloadResurrectionServiceImpl(
             intakeService = deliveryModule.intakeService,
             payloadStorageService = deliveryModule.payloadStorageService,

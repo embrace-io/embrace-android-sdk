@@ -1,0 +1,368 @@
+package io.embrace.android.embracesdk.internal.spans
+
+import io.embrace.android.embracesdk.assertions.assertError
+import io.embrace.android.embracesdk.assertions.assertIsTypePerformance
+import io.embrace.android.embracesdk.assertions.assertNotPrivateSpan
+import io.embrace.android.embracesdk.assertions.assertSuccessful
+import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fixtures.TOO_LONG_SPAN_NAME
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
+import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
+import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
+import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
+import io.embrace.android.embracesdk.internal.otel.spans.SpanService
+import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
+import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.spans.TracingApi
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+
+internal class TracingApiDelegateTest {
+    private lateinit var spanRepository: SpanRepository
+    private lateinit var spanService: SpanService
+    private lateinit var tracer: TracingApi
+    private val clock = FakeClock()
+
+    @Before
+    fun setup() {
+        val initModule = FakeInitModule(clock = clock)
+        spanRepository = initModule.openTelemetryModule.spanRepository
+        spanService = initModule.openTelemetryModule.spanService
+        spanService.initializeService(clock.now())
+        tracer = initModule.openTelemetryModule.tracingApi
+        spanRepository.flushOtelSpans()
+    }
+
+    @Test
+    fun `create and use EmbraceSpan using public interface`() {
+        val embraceSpan = checkNotNull(tracer.createSpan(name = "test-span"))
+        assertNotNull(embraceSpan)
+        assertTrue(embraceSpan.start())
+        assertTrue(embraceSpan.stop())
+        verifyPublicSpan("test-span")
+    }
+
+    @Test
+    fun `start and stop EmbraceSpan with specific timestamps`() {
+        val embraceSpan = checkNotNull(tracer.createSpan(name = "test-span"))
+        assertNotNull(embraceSpan)
+        val expectedStartTimeMs = clock.now() - 1L
+        val expectedEndTimeMs = clock.now() + 2L
+        assertTrue(embraceSpan.start(startTimeMs = expectedStartTimeMs))
+        assertTrue(embraceSpan.stop(endTimeMs = expectedEndTimeMs))
+        with(verifyPublicSpan("test-span")) {
+            assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
+        }
+    }
+
+    @Test
+    fun `stop EmbraceSpan with different error codes`() {
+        ErrorCode.entries.forEach { errorCode ->
+            val embraceSpan = checkNotNull(tracer.createSpan(name = "test-span"))
+            assertNotNull(embraceSpan)
+            assertTrue(embraceSpan.start())
+            assertTrue(embraceSpan.stop(errorCode))
+            verifyPublicSpan(name = "test-span", errorCode = errorCode)
+            spanRepository.flushOtelSpans()
+        }
+    }
+
+    @Test
+    fun `start a span directly`() {
+        spanRepository.flushOtelSpans()
+        val parent = checkNotNull(tracer.startSpan(name = "test-span"))
+        clock.tick(20L)
+        val childStartTimeMs = clock.now() - 10L
+        val child = checkNotNull(
+            tracer.startSpan(
+                name = "child-span",
+                parent = parent,
+                startTimeMs = childStartTimeMs,
+            ),
+        )
+        assertTrue(parent.stop())
+        assertTrue(child.stop())
+        val spans = spanRepository.flushOtelSpans()
+        assertEquals(2, spans.size)
+        assertEquals(childStartTimeMs, spans[1].startTimeNanos?.nanosToMillis())
+    }
+
+    @Test
+    fun `long span names truncated`() {
+        assertNotNull(tracer.startSpan(name = TOO_LONG_SPAN_NAME))
+    }
+
+    @Test
+    fun `cannot start a span if given parent has not started`() {
+        val notStartedParent = checkNotNull(tracer.createSpan(name = "test-span"))
+        assertEquals(NoopEmbraceSdkSpan, tracer.startSpan(name = "child-span", notStartedParent))
+    }
+
+    @Test
+    fun `record lambda running as span`() {
+        val expectedAttributes = mapOf(
+            Pair("attribute1", "value1"),
+            Pair("attribute2", "value2"),
+        )
+
+        val expectedEvents: List<EmbraceSpanEvent> =
+            listOfNotNull(
+                EmbraceSpanEvent.create(name = "event1", timestampMs = 1_000_000L.nanosToMillis(), expectedAttributes),
+                EmbraceSpanEvent.create(name = "event2", timestampMs = 5_000_000L.nanosToMillis(), expectedAttributes),
+            )
+
+        val parentSpan = checkNotNull(tracer.createSpan(name = "parent-span"))
+        parentSpan.start()
+        val returnThis = 1881L
+        val expectedStartTimeMs = clock.now()
+        val lambdaReturn = tracer.recordSpan(
+            name = "lambda-test-span",
+            parent = parentSpan,
+            attributes = expectedAttributes,
+            events = expectedEvents,
+        ) {
+            clock.tick(10)
+            returnThis
+        }
+        val expectedEndTimeMs = clock.now()
+        with(verifyPublicSpan(name = "lambda-test-span", traceRoot = false)) {
+            assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
+            expectedAttributes.forEach {
+                assertEquals(it.value, attributes?.findAttributeValue(it.key))
+            }
+            assertEquals(expectedEvents.map(EmbraceSpanEvent::toEmbracePayload), events)
+        }
+        assertEquals(returnThis, lambdaReturn)
+    }
+
+    @Test
+    fun `record basic completed span`() {
+        val expectedName = "test-span"
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
+
+        assertTrue(
+            tracer.recordCompletedSpan(
+                name = expectedName,
+                startTimeMs = expectedStartTimeMs,
+                endTimeMs = expectedEndTimeMs,
+            ),
+        )
+
+        with(verifyPublicSpan(expectedName)) {
+            assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
+        }
+    }
+
+    @Test
+    fun `record basic failed span`() {
+        val expectedName = "test-span"
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
+
+        assertTrue(
+            tracer.recordCompletedSpan(
+                name = expectedName,
+                startTimeMs = expectedStartTimeMs,
+                endTimeMs = expectedEndTimeMs,
+                errorCode = ErrorCode.FAILURE,
+            ),
+        )
+
+        with(verifyPublicSpan(expectedName, true, ErrorCode.FAILURE)) {
+            assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
+            assertTrue(status == Span.Status.ERROR)
+        }
+    }
+
+    @Test
+    fun `record completed child span`() {
+        val parentSpan = checkNotNull(tracer.createSpan(name = "parent-span"))
+        parentSpan.start()
+        val expectedName = "child-span"
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
+
+        assertTrue(
+            tracer.recordCompletedSpan(
+                name = expectedName,
+                startTimeMs = expectedStartTimeMs,
+                endTimeMs = expectedEndTimeMs,
+                parent = parentSpan,
+            ),
+        )
+
+        with(verifyPublicSpan(expectedName, false)) {
+            assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
+        }
+    }
+
+    @Test
+    fun `record completed abandoned child span`() {
+        val parentSpan = checkNotNull(tracer.createSpan(name = "parent-span"))
+        parentSpan.start()
+        val expectedName = "test-span"
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
+
+        assertTrue(
+            tracer.recordCompletedSpan(
+                name = expectedName,
+                startTimeMs = expectedStartTimeMs,
+                endTimeMs = expectedEndTimeMs,
+                parent = parentSpan,
+                errorCode = ErrorCode.USER_ABANDON,
+            ),
+        )
+
+        with(verifyPublicSpan(expectedName, false, ErrorCode.USER_ABANDON)) {
+            assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
+            assertTrue(status == Span.Status.ERROR)
+        }
+    }
+
+    @Test
+    fun `record completed span with all the fixings`() {
+        val expectedName = "test-span"
+        val expectedStartTimeMs = clock.now()
+        val expectedEndTimeMs = expectedStartTimeMs + 100L
+        val expectedAttributes = mapOf(
+            Pair("attribute1", "value1"),
+            Pair("attribute2", "value2"),
+        )
+        val expectedEvents: List<EmbraceSpanEvent> =
+            listOfNotNull(
+                EmbraceSpanEvent.create(name = "event1", timestampMs = 1_000_000L.nanosToMillis(), expectedAttributes),
+                EmbraceSpanEvent.create(name = "event2", timestampMs = 5_000_000L.nanosToMillis(), expectedAttributes),
+            )
+
+        assertTrue(
+            tracer.recordCompletedSpan(
+                name = expectedName,
+                startTimeMs = expectedStartTimeMs,
+                endTimeMs = expectedEndTimeMs,
+                attributes = expectedAttributes,
+                events = expectedEvents,
+            ),
+        )
+
+        with(verifyPublicSpan(expectedName)) {
+            assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
+            expectedAttributes.forEach {
+                assertEquals(it.value, attributes?.findAttributeValue(it.key))
+            }
+            assertEquals(expectedEvents.map(EmbraceSpanEvent::toEmbracePayload), events)
+        }
+    }
+
+    @Test
+    fun `get same EmbraceSpan using spanId`() {
+        val embraceSpan = checkNotNull(spanService.createSpan("test-span"))
+        assertTrue(embraceSpan.start())
+        val spanId = checkNotNull(embraceSpan.spanId)
+        val spanFromTracer = checkNotNull(tracer.getSpan(spanId))
+        assertSame(spanFromTracer, embraceSpan)
+    }
+
+    @Test
+    fun `event timestamp will be converted to millis if an inappropriate value detected`() {
+        spanRepository.flushOtelSpans()
+        val span = checkNotNull(tracer.startSpan(name = "my-span"))
+        val eventTimeNanos = clock.now().millisToNanos()
+        clock.tick(10L)
+        assertTrue(span.addEvent(name = "first event", timestampMs = eventTimeNanos, attributes = emptyMap()))
+        assertTrue(
+            span.addEvent(
+                name = "second event",
+                timestampMs = eventTimeNanos,
+                attributes = mapOf("key" to "value"),
+            ),
+        )
+        assertTrue(span.stop())
+        with(verifyPublicSpan("my-span")) {
+            assertEquals(2, events?.size)
+            assertEquals(eventTimeNanos, events?.get(0)?.timestampNanos)
+            assertEquals(eventTimeNanos, events?.get(1)?.timestampNanos)
+        }
+    }
+
+    @Test
+    fun `start and stop span with nanosecond timestamp`() {
+        spanRepository.flushOtelSpans()
+        val expectedStartTimeNanos = clock.now().millisToNanos()
+        val span = checkNotNull(
+            tracer.startSpan(
+                name = "fallback-span",
+                parent = null,
+                startTimeMs = expectedStartTimeNanos,
+            ),
+        )
+        clock.tick(10L)
+        val expectedEndTimeNanos = clock.now().millisToNanos()
+        assertTrue(span.stop(endTimeMs = expectedEndTimeNanos))
+        with(verifyPublicSpan("fallback-span")) {
+            assertEquals(expectedStartTimeNanos, startTimeNanos)
+            assertEquals(expectedEndTimeNanos, endTimeNanos)
+        }
+    }
+
+    @Test
+    fun `recording completed spans fallback normalizes timestamps to millis when appropriate`() {
+        val expectedName = "test-span"
+        val expectedStartTimeNanos = clock.now().millisToNanos()
+        val expectedEndTimeNanos = expectedStartTimeNanos + 100L.millisToNanos()
+
+        assertTrue(
+            tracer.recordCompletedSpan(
+                name = expectedName,
+                startTimeMs = expectedStartTimeNanos,
+                endTimeMs = expectedEndTimeNanos,
+            ),
+        )
+
+        with(verifyPublicSpan(expectedName)) {
+            assertEquals(expectedStartTimeNanos, startTimeNanos)
+            assertEquals(expectedEndTimeNanos, endTimeNanos)
+        }
+    }
+
+    private fun verifyPublicSpan(
+        name: String,
+        traceRoot: Boolean = true,
+        errorCode: ErrorCode? = null,
+    ): Span {
+        val currentSpans = spanRepository.completedOtelSpans()
+        assertEquals(1, currentSpans.size)
+        val currentSpan = currentSpans[0]
+        assertEquals(name, currentSpan.name)
+        currentSpan.assertIsTypePerformance()
+        if (traceRoot) {
+            assertEquals(OtelIds.INVALID_SPAN_ID, currentSpan.parentSpanId)
+        } else {
+            assertNotNull(currentSpan.parentSpanId)
+        }
+        if (errorCode == null) {
+            currentSpan.assertSuccessful()
+        } else {
+            currentSpan.assertError(errorCode)
+        }
+        currentSpan.assertNotPrivateSpan()
+        return currentSpan
+    }
+}

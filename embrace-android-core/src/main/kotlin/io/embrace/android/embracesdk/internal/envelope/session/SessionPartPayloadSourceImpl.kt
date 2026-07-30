@@ -6,10 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
-import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.captureDataSafely
@@ -18,7 +15,6 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 
 internal class SessionPartPayloadSourceImpl(
     private val symbolMap: Map<String, String>?,
-    private val spanSink: SpanSink,
     private val currentSessionPartSpan: CurrentSessionPartSpan,
     private val spanRepository: SpanRepository,
     private val otelPayloadMapper: OtelPayloadMapper?,
@@ -36,7 +32,7 @@ internal class SessionPartPayloadSourceImpl(
         val includeSnapshots = endType != SessionPartSnapshotType.JVM_CRASH
 
         if (!endType.forceQuit && appStateTracker.getAppState() == AppState.BACKGROUND) {
-            spanRepository.autoTerminateSpans(clock.now())
+            spanRepository.autoTerminateEmbraceSpans(clock.now())
         }
 
         // Snapshots should only be included if the process is expected to last beyond the current user session
@@ -69,15 +65,13 @@ internal class SessionPartPayloadSourceImpl(
                         else -> null
                     }
                     otelPayloadMapper?.record()
-                    val spans = currentSessionPartSpan.endSession(
+                    currentSessionPartSpan.endSession(
                         startNewSession = startNewSession,
                         appTerminationCause = appTerminationCause,
                     )
-                    spans.map(EmbraceSpanData::toEmbracePayload)
                 }
 
-                else -> spanSink.completedSpans()
-                    .map(EmbraceSpanData::toEmbracePayload)
+                else -> spanRepository.completedOtelSpans()
                     .plus(otelPayloadMapper?.snapshotSpans() ?: emptyList())
             }
         }
@@ -86,7 +80,7 @@ internal class SessionPartPayloadSourceImpl(
 
     private fun retrieveSpanSnapshots(isCacheAttempt: Boolean) = captureDataSafely(logger) {
         // Only snapshot session part spans if we are caching an in-progress session payload
-        spanRepository.getActiveSpans()
+        spanRepository.getActiveEmbraceSpans()
             .filter { isCacheAttempt || !it.hasEmbraceAttribute(EmbType.Ux.Session) }
             .mapNotNull { it.snapshot() }
     }

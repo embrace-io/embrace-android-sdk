@@ -39,6 +39,10 @@ class PluginBehaviorImpl(
         }
     }
 
+    override val isExportBuildInfoEnabled: Boolean by lazy {
+        project.getBoolProperty(EMBRACE_EXPORT_BUILD_INFO)
+    }
+
     override val baseUrl: String by lazy {
         val prop = project.getProperty(EMBRACE_BASE_URL)
             ?: return@lazy DEFAULT_SYMBOL_STORE_HOST_URL

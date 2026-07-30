@@ -39,12 +39,12 @@ class ViewDataSource(
     /**
      * Called when a view is started. If a view with the same name is already running, it will be ended.
      */
-    fun startView(name: String?): Boolean {
+    fun startView(name: String?, isManual: Boolean = false): Boolean {
         captureTelemetry(inputValidation = { !name.isNullOrEmpty() }) {
             synchronized(viewSpans) {
                 // Remove previous entry even if we don't replace it, like if we can't start a new view span because of limits
                 viewSpans.remove(name)?.stop()
-                startSpanCapture(SchemaType.View(checkNotNull(name)), clock.now()).apply {
+                startSpanCapture(SchemaType.View(checkNotNull(name), isManual), clock.now()).apply {
                     viewSpans[name] = this
                 }
             }
@@ -79,7 +79,7 @@ class ViewDataSource(
     /**
      * Called when the activity is closed (and therefore all views are assumed to close).
      */
-    fun onViewClose() {
+    private fun onViewClose() {
         synchronized(viewSpans) {
             viewSpans.values.forEach { it.stop() }
             viewSpans.clear()

@@ -2,7 +2,8 @@ package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
-import io.embrace.android.embracesdk.internal.payload.Attribute
+import io.embrace.android.embracesdk.internal.payload.Link
+import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.opentelemetry.kotlin.Clock
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.attributes.AnyValue
@@ -12,8 +13,6 @@ import io.opentelemetry.kotlin.tracing.SpanContext
 import io.opentelemetry.kotlin.tracing.SpanCreationAction
 import io.opentelemetry.kotlin.tracing.SpanKind
 import io.opentelemetry.kotlin.tracing.StatusData
-import io.opentelemetry.kotlin.tracing.model.SpanEvent
-import io.opentelemetry.kotlin.tracing.model.SpanLink
 
 class EmbSpan(
     private val impl: EmbraceSdkSpan,
@@ -115,34 +114,8 @@ class EmbSpan(
     }
 
     val events: List<SpanEvent>
-        get() = impl.events().map {
-            EmbSpanEvent(
-                it.name ?: "",
-                it.timestampNanos ?: 0,
-                it.attributes.toEmbAttributesMutator(),
-            )
-        }
+        get() = impl.events()
 
-    val links: List<SpanLink>
-        get() = impl.links().map {
-            EmbLink(it.retrieveSpanContext(), it.attributes.toEmbAttributesMutator())
-        }
-
-    private fun List<Attribute>?.toEmbAttributesMutator(): EmbAttributesMutator {
-        val raw = this ?: emptyList()
-        val attrs = raw.filter { entry -> entry.key == null || entry.data == null }
-        val map = mutableMapOf<String, Any>()
-        attrs.forEach { entry -> map[checkNotNull(entry.key)] = checkNotNull(entry.data) }
-        return EmbAttributesMutator(map)
-    }
-
-    private fun io.embrace.android.embracesdk.internal.payload.Link.retrieveSpanContext(): SpanContext {
-        return openTelemetry.spanContext.create(
-            traceId = checkNotNull(traceId),
-            spanId = checkNotNull(spanId),
-            traceFlags = openTelemetry.traceFlags.default,
-            traceState = openTelemetry.traceState.default,
-            isRemote = false,
-        )
-    }
+    val links: List<Link>
+        get() = impl.links()
 }

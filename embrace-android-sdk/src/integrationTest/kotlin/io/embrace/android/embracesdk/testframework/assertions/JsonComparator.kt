@@ -7,7 +7,7 @@ import org.json.JSONObject
  * Ignore any values with this key in the expected JSON, because the value is non-deterministic
  * between test runs.
  */
-private const val IGNORE_VALUE = "__EMBRACE_TEST_IGNORE__"
+internal const val IGNORE_VALUE = "__EMBRACE_TEST_IGNORE__"
 
 /**
  * Performs a comparison between two Json sources.

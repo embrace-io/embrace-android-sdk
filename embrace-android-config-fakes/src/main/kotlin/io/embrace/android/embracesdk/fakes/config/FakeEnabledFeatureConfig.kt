@@ -21,6 +21,7 @@ class FakeEnabledFeatureConfig(
     private val webviewQueryCapture: Boolean = base.isWebViewBreadcrumbQueryParamCaptureEnabled(),
     private val fcmPiiCapture: Boolean = base.isFcmPiiDataCaptureEnabled(),
     private val requestContentLengthCapture: Boolean = base.isRequestContentLengthCaptureEnabled(),
+    private val okHttpResponseBodySizeCapture: Boolean = base.isOkHttpResponseBodySizeCaptureEnabled(),
     private val httpUrlConnectionCapture: Boolean = base.isHttpUrlConnectionCaptureEnabled(),
     /**
      * Disable [hucLiteInstrumentation] by default so integration tests don't attempt to load this which will cause an error
@@ -51,6 +52,7 @@ class FakeEnabledFeatureConfig(
     override fun isWebViewBreadcrumbQueryParamCaptureEnabled(): Boolean = webviewQueryCapture
     override fun isFcmPiiDataCaptureEnabled(): Boolean = fcmPiiCapture
     override fun isRequestContentLengthCaptureEnabled(): Boolean = requestContentLengthCapture
+    override fun isOkHttpResponseBodySizeCaptureEnabled(): Boolean = okHttpResponseBodySizeCapture
     override fun isHttpUrlConnectionCaptureEnabled(): Boolean = httpUrlConnectionCapture
     override fun isHucLiteInstrumentationEnabled(): Boolean = hucLiteInstrumentation
     override fun isNetworkSpanForwardingEnabled(): Boolean = networkSpanForwarding

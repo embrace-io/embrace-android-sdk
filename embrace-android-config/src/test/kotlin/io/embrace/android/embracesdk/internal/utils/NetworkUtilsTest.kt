@@ -70,6 +70,21 @@ internal class NetworkUtilsTest {
             "http://example.com/index.html#:words:some-context-for-a-(search-term)",
             "http://example.com/index.html",
         ),
+
+        // a '/' in the query or fragment must not prevent the strip
+        arrayOf(
+            "http://foo.google.com/foo?next=https://bar.google.com/baz",
+            "http://foo.google.com/foo",
+        ),
+        arrayOf("http://foo.google.com/foo?token=ab/cd+ef", "http://foo.google.com/foo"),
+        arrayOf("http://foo.google.com/foo#frag/ment", "http://foo.google.com/foo"),
+
+        // the first delimiter wins: a '?' inside a fragment is part of the fragment
+        arrayOf("http://foo.google.com/foo#bar?color=blue", "http://foo.google.com/foo"),
+
+        // no path
+        arrayOf("http://google.com?color=blue", "http://google.com"),
+        arrayOf("http://google.com#bar", "http://google.com"),
     )
 
     @Test

@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
+import io.embrace.android.embracesdk.internal.config.PatternCache
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.network.logging.DomainCountLimiter
 import io.embrace.android.embracesdk.internal.network.logging.EmbraceDomainCountLimiter
-import java.util.regex.Pattern
 import kotlin.math.min
 
 /**
@@ -32,9 +32,13 @@ class NetworkBehaviorImpl(
     }
 
     private val cfg = local.networkCapture
+    private val patternCache = PatternCache()
 
     override fun isRequestContentLengthCaptureEnabled(): Boolean =
         local.enabledFeatures.isRequestContentLengthCaptureEnabled()
+
+    override fun isOkHttpResponseBodySizeCaptureEnabled(): Boolean =
+        local.enabledFeatures.isOkHttpResponseBodySizeCaptureEnabled()
 
     override fun isHttpUrlConnectionCaptureEnabled(): Boolean =
         local.enabledFeatures.isHttpUrlConnectionCaptureEnabled()
@@ -65,11 +69,10 @@ class NetworkBehaviorImpl(
     )
 
     override fun isUrlEnabled(url: String): Boolean {
-        val patterns = disabledUrlPatterns ?: remote?.disabledUrlPatterns ?: cfg.getIgnoredRequestPatternList()
-        val regexes = patterns.mapNotNull {
-            runCatching { Pattern.compile(it) }.getOrNull()
-        }.toSet()
-        return regexes.none { it.matcher(url).find() }
+        val patterns = disabledUrlPatterns
+            ?: remote?.disabledUrlPatterns
+            ?: cfg.getIgnoredRequestPatternList()
+        return !patternCache.doesStringContainMatchInSet(url, patterns)
     }
 
     override fun isCaptureBodyEncryptionEnabled(): Boolean =

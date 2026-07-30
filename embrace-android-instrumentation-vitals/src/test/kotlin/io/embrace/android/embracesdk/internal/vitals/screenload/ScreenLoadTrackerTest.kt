@@ -24,6 +24,7 @@ internal class ScreenLoadTrackerTest {
         emit = emitted::add,
         idleThresholdMs = IDLE,
         timeoutMs = TIMEOUT,
+        navigationTimeoutMs = NAV_TIMEOUT,
     )
 
     @Test
@@ -50,6 +51,12 @@ internal class ScreenLoadTrackerTest {
         assertEquals("navigation start at t=10, navigation end at t=20", 10L, result.navDurationMs)
         assertEquals("first frame at t=30, 10ms after navigation end (t=20)", 10L, result.firstFrameDurationMs)
         assertEquals(start, result.startTimeMs)
+        assertEquals(IDLE, result.idleThresholdMs)
+        assertEquals(TIMEOUT, result.timeoutMs)
+        assertEquals(NAV_TIMEOUT, result.navTimeoutMs)
+        assertEquals(IDLE, result.idleThresholdMs)
+        assertEquals(TIMEOUT, result.timeoutMs)
+        assertEquals(NAV_TIMEOUT, result.navTimeoutMs)
     }
 
     @Test
@@ -235,6 +242,57 @@ internal class ScreenLoadTrackerTest {
         assertTrue(emitted.isEmpty())
     }
 
+    @Test
+    fun `the timeout window runs from the tap, not from the navigation that confirms it`() {
+        val tap = SystemClock.uptimeMillis()
+        tracker.onTap(tap)
+        advance(NAV_TIMEOUT - 100) // the navigation confirms the candidate 400ms after the tap
+        tracker.onNavigationStart("home")
+        tracker.onNavigationEnd("home") // settling
+
+        // Continuously animating (a frame every 50ms, under the idle threshold) so the settle never fires
+        // and only the timeout can end the load.
+        advance(50)
+        frameNow()
+        scheduler.runDue() // t=450, still inside the tap's window
+        assertTrue("the tap's window has not elapsed yet", emitted.isEmpty())
+
+        advance(50)
+        frameNow()
+        scheduler.runDue() // t=500
+
+        assertEquals(ScreenLoadOutcome.TIMED_OUT, emitted.single().outcome)
+        assertEquals(
+            "timed out a full TIMEOUT after the tap; arming at the navigation would have been ${tap + 400 + TIMEOUT}",
+            tap + TIMEOUT,
+            SystemClock.uptimeMillis(),
+        )
+    }
+
+    @Test
+    fun `a tap abandons a load still navigating`() {
+        tracker.onTap()
+        tracker.onNavigationStart("first") // confirmed, so a timeout is armed for it
+
+        // A second tap replaces the candidate. The first load's timeout must not survive to discard it.
+        advance(10)
+        val secondTap = SystemClock.uptimeMillis()
+        tracker.onTap(secondTap)
+        advance(10)
+        tracker.onNavigationStart("second")
+        tracker.onNavigationEnd("second")
+        advance(10)
+        frameNow()
+
+        advance(IDLE)
+        scheduler.runDue()
+
+        val result = emitted.single()
+        assertEquals("only the second load reports", "second", result.screenName)
+        assertEquals(ScreenLoadOutcome.SETTLED, result.outcome)
+        assertEquals(secondTap, result.startTimeMs)
+    }
+
     private fun advance(millis: Long) = ShadowSystemClock.advanceBy(Duration.ofMillis(millis))
 
     /**
@@ -245,5 +303,6 @@ internal class ScreenLoadTrackerTest {
     private companion object {
         const val IDLE = 100L
         const val TIMEOUT = 500L
+        const val NAV_TIMEOUT = 500L
     }
 }

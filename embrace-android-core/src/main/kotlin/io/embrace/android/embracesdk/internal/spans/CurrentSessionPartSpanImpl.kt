@@ -2,21 +2,21 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceLinkData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.Clock
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.semconv.SessionAttributes
@@ -27,7 +27,6 @@ internal class CurrentSessionPartSpanImpl(
     private val openTelemetryClock: Clock,
     private val telemetryService: TelemetryService,
     private val spanRepository: SpanRepository,
-    private val spanSink: SpanSink,
     private val tracerSupplier: Provider<Tracer>,
     private val openTelemetrySupplier: Provider<OpenTelemetry>,
     private val embraceSpanFactorySupplier: Provider<EmbraceSpanFactory>,
@@ -49,8 +48,11 @@ internal class CurrentSessionPartSpanImpl(
     @Volatile
     private var sessionPartState: SessionPartState? = null
 
+    /**
+     * The link data used to join a new session part span to the one that preceded it
+     */
     @Volatile
-    private var lastSessionPartSpan: EmbraceSdkSpan? = null
+    private var lastSessionPartLink: EmbraceLinkData? = null
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
         if (!initialized) {
@@ -95,11 +97,12 @@ internal class CurrentSessionPartSpanImpl(
     override fun getId(): String = sessionPartState?.sessionPartId ?: ""
 
     override fun spanStopCallback(spanId: String) {
-        val currentSessionPartSpan = sessionPartState?.span
-        val spanToStop = spanRepository.getSpan(spanId)
+        val state = sessionPartState
+        val currentSessionPartSpan = state?.span
+        val spanToStop = spanRepository.getEmbraceSpan(spanId)
 
         if (currentSessionPartSpan != spanToStop) {
-            val linkAttrs = currentSessionPartSpan?.partLinkAttrs() ?: emptyMap()
+            val linkAttrs = state?.cachedPartLinkAttrs() ?: emptyMap()
             spanToStop?.spanContext?.let { spanToStopContext ->
                 if (currentSessionPartSpan != null) {
                     currentSessionPartSpan.addSystemLink(
@@ -135,10 +138,11 @@ internal class CurrentSessionPartSpanImpl(
     override fun endSession(
         startNewSession: Boolean,
         appTerminationCause: AppTerminationCause?,
-    ): List<EmbraceSpanData> {
+    ): List<Span> {
         synchronized(sessionTransitionLock) {
-            val endingSessionPartSpan = sessionPartState?.span
-            return if (endingSessionPartSpan != null && endingSessionPartSpan.isRecording) {
+            val endingState = sessionPartState ?: return emptyList()
+            val endingSessionPartSpan = endingState.span
+            return if (endingSessionPartSpan.isRecording) {
                 // Right now, session part spans don't survive native crashes and sudden process terminations,
                 // so telemetry will not be recorded in those cases, for now.
                 val telemetryAttributes = telemetryService.getAndClearTelemetryAttributes()
@@ -149,8 +153,10 @@ internal class CurrentSessionPartSpanImpl(
 
                 if (appTerminationCause == null) {
                     endingSessionPartSpan.stop()
-                    lastSessionPartSpan = endingSessionPartSpan
-                    spanRepository.clearCompletedSpans()
+                    lastSessionPartLink = endingSessionPartSpan.spanContext?.let {
+                        EmbraceLinkData(it, endingState.cachedPartLinkAttrs())
+                    }
+                    spanRepository.clearCompletedEmbraceSpans()
                     sessionPartState = if (startNewSession) {
                         startSessionPartSpan(openTelemetryClock.now().nanosToMillis())
                     } else {
@@ -158,14 +164,14 @@ internal class CurrentSessionPartSpanImpl(
                     }
                 } else {
                     val crashTime = openTelemetryClock.now().nanosToMillis()
-                    spanRepository.failActiveSpans(crashTime)
+                    spanRepository.failActiveEmbraceSpans(crashTime)
                     endingSessionPartSpan.setSystemAttribute(
                         appTerminationCause.key,
                         appTerminationCause.value,
                     )
-                    endingSessionPartSpan.stop(errorCode = ErrorCode.FAILURE, endTimeMs = crashTime)
+                    endingSessionPartSpan.stopWithErrorCode(errorCode = ErrorCodeAttribute.Failure, endTimeMs = crashTime)
                 }
-                spanSink.flushSpans()
+                spanRepository.flushOtelSpans()
             } else {
                 emptyList()
             }
@@ -205,12 +211,11 @@ internal class CurrentSessionPartSpanImpl(
         ).apply {
             start(startTimeMs = startTimeMs)
             setSystemAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionPartId)
-            val previousSessionPartSpan = lastSessionPartSpan
-            previousSessionPartSpan?.spanContext?.let {
+            lastSessionPartLink?.let {
                 addSystemLink(
-                    linkedSpanContext = it,
+                    linkedSpanContext = it.spanContext,
                     type = LinkType.PreviousSessionPart,
-                    attributes = previousSessionPartSpan.partLinkAttrs(),
+                    attributes = it.attributes,
                 )
             }
         }
@@ -226,7 +231,23 @@ internal class CurrentSessionPartSpanImpl(
         val traceCount: AtomicInteger = AtomicInteger(0)
         val internalTraceCount: AtomicInteger = AtomicInteger(0)
 
+        /**
+         * Memoized link attributes for this session part. Only set once the user session attributes have been populated on the
+         * span, after which the attributes referenced by [partLinkAttrs] no longer change for the lifetime of the part.
+         */
+        @Volatile
+        var linkAttrs: Map<String, String>? = null
+
         val isReady: Boolean get() = span.isRecording
+    }
+
+    private fun SessionPartState.cachedPartLinkAttrs(): Map<String, String> {
+        linkAttrs?.let { return it }
+        val attrs = span.partLinkAttrs()
+        if (attrs.containsKey(EmbSessionAttributes.EMB_USER_SESSION_ID)) {
+            linkAttrs = attrs
+        }
+        return attrs
     }
 
     /**

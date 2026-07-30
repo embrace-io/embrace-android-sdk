@@ -80,7 +80,7 @@ internal class EmbraceImpl(
     NetworkRequestApi by networkRequestApiDelegate,
     UserSessionApi by sessionApiDelegate,
     UserApi by userApiDelegate,
-    TracingApi by bootstrapper.openTelemetryModule.embraceTracer,
+    TracingApi by bootstrapper.openTelemetryModule.tracingApi,
     SdkStateApi by sdkStateApiDelegate,
     OTelApi by otelApiDelegate,
     ViewTrackingApi by viewTrackingApiDelegate,
@@ -93,8 +93,8 @@ internal class EmbraceImpl(
         EmbraceInternalApi.isStarted = sdkCallChecker.started::get
     }
 
-    private val logger by lazy { bootstrapper.initModule.logger }
-    private val clock by lazy { bootstrapper.initModule.clock }
+    private val logger get() = bootstrapper.initModule.logger
+    private val clock get() = bootstrapper.initModule.clock
 
     @Volatile
     private var applicationInitStartMs: Long? = null

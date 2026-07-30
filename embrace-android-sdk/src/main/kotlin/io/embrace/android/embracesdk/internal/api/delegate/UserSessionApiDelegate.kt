@@ -1,10 +1,12 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.PropertyScope
+import io.embrace.android.embracesdk.SessionStateEvent
 import io.embrace.android.embracesdk.UserSessionListener
 import io.embrace.android.embracesdk.internal.api.UserSessionApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
+import io.embrace.android.embracesdk.internal.session.UserSessionListener as InternalUserSessionListener
 
 internal class UserSessionApiDelegate(
     bootstrapper: ModuleInitBootstrapper,
@@ -54,9 +56,25 @@ internal class UserSessionApiDelegate(
 
     override fun addUserSessionListener(listener: UserSessionListener) {
         if (sdkCallChecker.check("add_user_session_listener")) {
-            sessionOrchestrator?.addUserSessionListener { event ->
-                listener.onSessionStateEvent(event)
-            }
+            sessionOrchestrator?.addUserSessionListener(ListenerWrapper(listener))
         }
+    }
+
+    override fun removeUserSessionListener(listener: UserSessionListener) {
+        if (sdkCallChecker.check("remove_user_session_listener")) {
+            sessionOrchestrator?.removeUserSessionListener(ListenerWrapper(listener))
+        }
+    }
+
+    /**
+     * Bridges a public [UserSessionListener] to the internal one. Delegates [equals]/[hashCode] to the wrapped listener so that a
+     * listener registered via [addUserSessionListener] can be found again (for dedup and removal) despite being wrapped.
+     */
+    private class ListenerWrapper(
+        private val delegate: UserSessionListener,
+    ) : InternalUserSessionListener {
+        override fun onSessionStateEvent(event: SessionStateEvent) = delegate.onSessionStateEvent(event)
+        override fun equals(other: Any?): Boolean = other is ListenerWrapper && other.delegate == delegate
+        override fun hashCode(): Int = delegate.hashCode()
     }
 }

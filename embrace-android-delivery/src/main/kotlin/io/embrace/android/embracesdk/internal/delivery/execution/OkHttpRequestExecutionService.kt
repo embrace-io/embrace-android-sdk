@@ -64,12 +64,14 @@ class OkHttpRequestExecutionService(
             null
         }
 
-        return getResult(
-            endpoint = envelopeType.endpoint,
-            responseCode = httpCallResponse?.code,
-            headersProvider = { httpCallResponse?.headers?.toMap() ?: emptyMap() },
-            executionError = executionError,
-        ).apply {
+        return httpCallResponse.use { response ->
+            getResult(
+                endpoint = envelopeType.endpoint,
+                responseCode = response?.code,
+                headersProvider = { response?.headers?.toMap() ?: emptyMap() },
+                executionError = executionError,
+            )
+        }.apply {
             deliveryTracer?.onHttpCallEnded(this, envelopeType, payloadType)
         }
     }
@@ -131,6 +133,13 @@ class OkHttpRequestExecutionService(
         private val payloadStream: () -> InputStream,
     ) : RequestBody() {
         override fun contentType() = mediaType
+
+        /**
+         * The payload stream can only be read once, so signal to OkHttp that it must not
+         * replay the body (e.g. on a redirect/auth challenge). Replaying would send a truncated
+         * payload.
+         */
+        override fun isOneShot(): Boolean = true
 
         override fun writeTo(sink: BufferedSink) {
             payloadStream().source().buffer().use { source ->

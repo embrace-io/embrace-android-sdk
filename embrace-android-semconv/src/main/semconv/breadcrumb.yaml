@@ -1,0 +1,16 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: emb.breadcrumb
+    visibility: public
+    stability: development
+    brief: "Embrace breadcrumb attributes"
+    attributes:
+      - ref: message
+
+attributes:
+  - key: message
+    type: string
+    brief: "The breadcrumb message."
+    stability: development
+    examples: ["User tapped login"]

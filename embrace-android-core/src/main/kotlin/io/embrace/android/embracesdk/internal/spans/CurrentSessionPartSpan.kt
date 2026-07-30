@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.spans
 import io.embrace.android.embracesdk.internal.Initializable
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 
 /**
@@ -22,7 +22,7 @@ interface CurrentSessionPartSpan : Initializable {
     fun endSession(
         startNewSession: Boolean,
         appTerminationCause: AppTerminationCause? = null,
-    ): List<EmbraceSpanData>
+    ): List<Span>
 
     /**
      * Returns true if a span with the given parameters can be started in the current session

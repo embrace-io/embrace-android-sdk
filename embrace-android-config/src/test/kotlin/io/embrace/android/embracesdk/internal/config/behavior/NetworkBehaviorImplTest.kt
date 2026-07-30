@@ -76,6 +76,14 @@ internal class NetworkBehaviorImplTest {
     }
 
     @Test
+    fun testDisabledUrlPatternMatchesSubstring() {
+        with(createNetworkBehavior(disabledUrlPatterns = listOf("example.com"))) {
+            assertFalse(isUrlEnabled("https://example.com/path"))
+            assertTrue(isUrlEnabled("https://google.com/path"))
+        }
+    }
+
+    @Test
     fun `only HUC Lite disabled when HUC is enabled`() {
         val networkBehavior = NetworkBehaviorImpl(
             local = FakeInstrumentedConfig(

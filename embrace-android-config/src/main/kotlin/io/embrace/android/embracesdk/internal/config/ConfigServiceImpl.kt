@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehav
 import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.behavior.VitalsBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.source.CombinedRemoteConfigSource
@@ -28,7 +29,6 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.NativeSymbols
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.serialization.fromJson
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -64,16 +64,15 @@ class ConfigServiceImpl(
         )
     }
 
-    override val buildInfo: BuildInfo by lazy {
-        val cfg = instrumentedConfig.project
+    override val buildInfo: BuildInfo = with(instrumentedConfig.project) {
         BuildInfo(
-            cfg.getBuildId(),
-            cfg.getBuildType(),
-            cfg.getBuildFlavor(),
-            cfg.getReactNativeBundleId(),
-            cfg.getVersionName() ?: "UNKNOWN",
-            cfg.getVersionCode() ?: "UNKNOWN",
-            cfg.getPackageName() ?: "UNKNOWN",
+            getBuildId(),
+            getBuildType(),
+            getBuildFlavor(),
+            getReactNativeBundleId(),
+            getVersionName() ?: "UNKNOWN",
+            getVersionCode() ?: "UNKNOWN",
+            getPackageName() ?: "UNKNOWN",
         )
     }
 
@@ -126,6 +125,7 @@ class ConfigServiceImpl(
     override val sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(instrumentedConfig)
     override val logMessageBehavior = LogMessageBehaviorImpl(remoteConfig)
     override val threadBlockageBehavior = ThreadBlockageBehaviorImpl(thresholdCheck, remoteConfig)
+    override val vitalsBehavior = VitalsBehaviorImpl(thresholdCheck, remoteConfig)
     override val sessionBehavior = UserSessionBehaviorImpl(remoteConfig)
     override val networkBehavior = NetworkBehaviorImpl(instrumentedConfig, remoteConfig)
     override val dataCaptureEventBehavior = DataCaptureEventBehaviorImpl(remoteConfig)
@@ -178,7 +178,7 @@ class ConfigServiceImpl(
         try {
             val encodedSymbols = instrumentedConfig.symbols.getBase64SharedObjectFilesMap() ?: return null
             val decodedSymbols: String = encodedSymbols.decodeBase64()?.utf8() ?: return null
-            return serializer.fromJson<NativeSymbols>(decodedSymbols)
+            return serializer.fromJson(decodedSymbols, NativeSymbols.serializer())
         } catch (ex: Exception) {
             logger.trackInternalError(InternalErrorType.InvalidNativeSymbols, ex)
         }

@@ -14,11 +14,14 @@ import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.network.getOverriddenURLString
+import io.embrace.android.embracesdk.internal.instrumentation.network.toStatusCodeString
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
+import io.embrace.android.embracesdk.internal.network.http.MutableHttpRequestInfoImpl
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils
-import io.embrace.android.embracesdk.internal.utils.toNonNullMap
+import io.embrace.android.embracesdk.network.http.HttpRequestInfo
 import io.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.HttpAttributes
@@ -78,6 +81,7 @@ class HucLiteDataSource(
                     clock = clock,
                     telemetryDestination = telemetryDestination,
                     errorHandler = ::errorHandler,
+                    httpRequestInfoModifierChain = args.httpRequestInfoModifierChain,
                 )
             }.onFailure {
                 errorHandler(it)
@@ -135,6 +139,7 @@ class HucLiteDataSource(
         val clock: Clock,
         val telemetryDestination: TelemetryDestination,
         val errorHandler: (t: Throwable) -> Unit,
+        private val httpRequestInfoModifierChain: HttpRequestInfoModifierChain,
     ) {
         private val creationTimeMs = clock.now()
         private val telemetryUrlProvider = {
@@ -159,23 +164,22 @@ class HucLiteDataSource(
             }
 
         fun completeRequest(responseCode: Int) {
-            recordRequest(telemetryUrlProvider) {
+            recordRequest { info ->
                 val endTimeMs = clock.now()
                 val errorCode = if (responseCode !in 1..<400) {
                     ErrorCodeAttribute.Failure
                 } else {
                     null
                 }
-                val method = methodProvider()
                 val networkRequestSchemaType = SchemaType.NetworkRequest(
                     completedRequestAttributes(
-                        url = telemetryUrlProvider(),
-                        httpMethod = method,
+                        url = info.url,
+                        httpMethod = info.httpMethod,
                         responseCode = responseCode,
                     ),
                 )
                 telemetryDestination.recordCompletedSpan(
-                    name = "$method ${pathProvider()}",
+                    name = "${info.httpMethod} ${pathProvider()}",
                     startTimeMs = getValidStartTime(),
                     endTimeMs = endTimeMs,
                     errorCode = errorCode,
@@ -186,19 +190,18 @@ class HucLiteDataSource(
         }
 
         fun clientError(t: Throwable) {
-            recordRequest(telemetryUrlProvider) {
+            recordRequest { info ->
                 val errorTimeMs = clock.now()
-                val method = methodProvider()
                 val networkRequestSchemaType = SchemaType.NetworkRequest(
                     incompleteRequestAttributes(
-                        url = telemetryUrlProvider(),
-                        httpMethod = method,
+                        url = info.url,
+                        httpMethod = info.httpMethod,
                         errorType = t::class.java.canonicalName ?: t::class.java.simpleName,
                         errorMessage = t.message ?: "Unexpected error",
                     ),
                 )
                 telemetryDestination.recordCompletedSpan(
-                    name = "$method ${pathProvider()}",
+                    name = "${info.httpMethod} ${pathProvider()}",
                     startTimeMs = getValidStartTime(),
                     endTimeMs = errorTimeMs,
                     errorCode = ErrorCodeAttribute.Failure,
@@ -212,27 +215,27 @@ class HucLiteDataSource(
             url: String,
             httpMethod: String,
             responseCode: Int,
-        ): Map<String, String> = mapOf(
-            UrlAttributes.URL_FULL to url,
-            HttpAttributes.HTTP_REQUEST_METHOD to httpMethod,
-            HttpAttributes.HTTP_RESPONSE_STATUS_CODE to responseCode,
-            UserAgentAttributes.USER_AGENT_NAME to HUC_USER_AGENT_NAME,
-            UserAgentAttributes.USER_AGENT_VERSION to Build.VERSION.SDK_INT.toString(),
-        ).toNonNullMap().mapValues { it.value.toString() }
+        ): Map<String, String> = buildMap {
+            put(UrlAttributes.URL_FULL, url)
+            put(HttpAttributes.HTTP_REQUEST_METHOD, httpMethod)
+            put(HttpAttributes.HTTP_RESPONSE_STATUS_CODE, responseCode.toStatusCodeString())
+            put(UserAgentAttributes.USER_AGENT_NAME, HUC_USER_AGENT_NAME)
+            put(UserAgentAttributes.USER_AGENT_VERSION, Build.VERSION.SDK_INT.toString())
+        }
 
         private fun incompleteRequestAttributes(
             url: String,
             httpMethod: String,
             errorType: String,
             errorMessage: String,
-        ): Map<String, String> = mapOf(
-            UrlAttributes.URL_FULL to url,
-            HttpAttributes.HTTP_REQUEST_METHOD to httpMethod,
-            ErrorAttributes.ERROR_TYPE to errorType,
-            ExceptionAttributes.EXCEPTION_MESSAGE to errorMessage,
-            UserAgentAttributes.USER_AGENT_NAME to HUC_USER_AGENT_NAME,
-            UserAgentAttributes.USER_AGENT_VERSION to Build.VERSION.SDK_INT.toString(),
-        ).toNonNullMap().mapValues { it.value }
+        ): Map<String, String> = buildMap {
+            put(UrlAttributes.URL_FULL, url)
+            put(HttpAttributes.HTTP_REQUEST_METHOD, httpMethod)
+            put(ErrorAttributes.ERROR_TYPE, errorType)
+            put(ExceptionAttributes.EXCEPTION_MESSAGE, errorMessage)
+            put(UserAgentAttributes.USER_AGENT_NAME, HUC_USER_AGENT_NAME)
+            put(UserAgentAttributes.USER_AGENT_VERSION, Build.VERSION.SDK_INT.toString())
+        }
 
         private fun getValidStartTime(): Long =
             if (startTimeMs.get() == INVALID_START_TIME) {
@@ -242,14 +245,21 @@ class HucLiteDataSource(
             }
 
         private fun recordRequest(
-            urlProvider: () -> String,
-            recordingFunction: () -> Unit,
+            recordingFunction: (info: HttpRequestInfo) -> Unit,
         ) {
             runCatching {
                 if (requestRecorded.compareAndSet(false, true)) {
-                    NetworkUtils.getDomain(urlProvider())?.let { domain ->
+                    // Apply any registered modifiers so the reported url/method reflect the
+                    // consumer's changes. The underlying HTTP request is not affected.
+                    val info = httpRequestInfoModifierChain.apply(
+                        MutableHttpRequestInfoImpl(
+                            httpMethod = methodProvider(),
+                            url = telemetryUrlProvider(),
+                        ),
+                    )
+                    NetworkUtils.getDomain(info.url)?.let { domain ->
                         if (shouldRecord(domain)) {
-                            recordingFunction()
+                            recordingFunction(info)
                         } else {
                             onLimitReached()
                         }

@@ -107,8 +107,8 @@ internal class EmbraceSpanImplTest {
             assertFalse(isRecording)
             assertFalse(addEvent("eventName"))
             assertFalse(addAttribute("first", "value"))
-            assertEquals(0, spanRepository.getActiveSpans().size)
-            assertEquals(0, spanRepository.getCompletedSpans().size)
+            assertEquals(0, spanRepository.getActiveEmbraceSpans().size)
+            assertEquals(0, spanRepository.getCompletedEmbraceSpans().size)
             assertEquals(SpanKind.INTERNAL, spanKind)
             assertNull(embraceSpan.snapshot())
             assertNull(embraceSpan.asW3cTraceParent())
@@ -140,8 +140,8 @@ internal class EmbraceSpanImplTest {
                 expectedCustomAttributeCount = 1,
             )
             assertEquals("00-$traceId-$spanId-01", embraceSpan.asW3cTraceParent())
-            assertEquals(1, spanRepository.getActiveSpans().size)
-            assertEquals(0, spanRepository.getCompletedSpans().size)
+            assertEquals(1, spanRepository.getActiveEmbraceSpans().size)
+            assertEquals(0, spanRepository.getCompletedEmbraceSpans().size)
         }
         assertTrue(updateNotified)
         assertNull(stoppedSpanId)
@@ -278,8 +278,6 @@ internal class EmbraceSpanImplTest {
             assertTrue(recordException(exception = firstException))
             assertTrue(recordException(exception = secondException, attributes = mapOf("myKey" to "myValue")))
             assertTrue(recordException(exception = RuntimeException(), attributes = tooBigEventAttributes))
-            assertTrue(stop())
-            assertFalse(recordException(exception = IllegalStateException()))
             assertEquals(3, events().size)
             assertTrue(updateNotified)
         }
@@ -317,6 +315,47 @@ internal class EmbraceSpanImplTest {
                 )
             }
         }
+
+        with(embraceSpan) {
+            assertTrue(stop())
+            assertFalse(recordException(exception = IllegalStateException()))
+            // retained event data is released once the span is stopped and exported
+            assertEquals(0, events().size)
+        }
+    }
+
+    @Test
+    fun `retained event and link data is released when a span stops but the span remains retrievable`() {
+        with(embraceSpan) {
+            assertTrue(start())
+            setSystemAttribute("system-key", "system-value")
+            assertTrue(addAttribute("custom-key", "custom-value"))
+            assertTrue(addEvent("an-event"))
+            assertTrue(
+                addSystemLink(
+                    checkNotNull(FakeEmbraceSdkSpan.stopped().spanContext),
+                    LinkType.PreviousSessionPart,
+                ),
+            )
+            assertTrue(addLink(FakeEmbraceSdkSpan.stopped()))
+            assertEquals(1, events().size)
+            assertEquals(2, links().size)
+        }
+
+        val spanId = checkNotNull(embraceSpan.spanId)
+        assertTrue(embraceSpan.stop())
+
+        // the span is still tracked and retrievable by id, retaining its identity and attributes
+        val tracked = checkNotNull(spanRepository.getEmbraceSpan(spanId))
+        assertFalse(tracked.isRecording)
+        assertEquals(spanId, tracked.spanId)
+        assertNotNull(tracked.traceId)
+        assertEquals("system-value", tracked.getSystemAttribute("system-key"))
+        assertEquals("custom-value", tracked.attributes()["custom-key"])
+
+        // but its heavier event and link data has been released
+        assertEquals(0, tracked.events().size)
+        assertEquals(0, tracked.links().size)
     }
 
     @Test
@@ -325,8 +364,8 @@ internal class EmbraceSpanImplTest {
             assertTrue(start())
             assertTrue(stop(ErrorCode.FAILURE))
             assertFalse(stop())
-            assertEquals(0, spanRepository.getActiveSpans().size)
-            assertEquals(1, spanRepository.getCompletedSpans().size)
+            assertEquals(0, spanRepository.getActiveEmbraceSpans().size)
+            assertEquals(1, spanRepository.getCompletedEmbraceSpans().size)
         }
     }
 
@@ -560,6 +599,31 @@ internal class EmbraceSpanImplTest {
     }
 
     @Test
+    fun `start and end times are unset until the span starts and stops`() {
+        assertNull(embraceSpan.getStartTimeMs())
+
+        val expectedStartTimeMs = fakeClock.now()
+        assertTrue(embraceSpan.start())
+        assertEquals(expectedStartTimeMs, embraceSpan.getStartTimeMs())
+        assertNull(embraceSpan.snapshot()?.endTimeNanos)
+
+        val expectedEndTimeMs = fakeClock.tick()
+        assertTrue(embraceSpan.stop())
+        assertEquals(expectedStartTimeMs, embraceSpan.getStartTimeMs())
+        assertEquals(expectedEndTimeMs, embraceSpan.snapshot()?.endTimeNanos?.nanosToMillis())
+    }
+
+    @Test
+    fun `start time from the span builder is reported before the span starts`() {
+        val timeOnWrapper = fakeClock.tick()
+        embraceSpan = embraceSpanFactory.create(createWrapperForInternalSpan(startTimeMs = timeOnWrapper))
+
+        assertEquals(timeOnWrapper, embraceSpan.getStartTimeMs())
+        assertTrue(embraceSpan.start())
+        assertEquals(timeOnWrapper, embraceSpan.getStartTimeMs())
+    }
+
+    @Test
     fun `validate context objects are propagated from the parent to the child span`() {
         val newParentContext = fakeOpenTelemetry().context.root().set(fakeContextKey, "fake-value")
         val wrapper = createWrapperForInternalSpan(parentContext = newParentContext)
@@ -574,11 +638,10 @@ internal class EmbraceSpanImplTest {
     @Test
     fun `custom attributes are redacted if their key is sensitive when getting a span snapshot`() {
         // given a span with a sensitive key
-        val spanBuilder = createWrapperForInternalSpan()
-        spanBuilder.customAttributes["password"] = "123456"
-        spanBuilder.customAttributes["status"] = "ok"
-        embraceSpan = embraceSpanFactory.create(spanBuilder)
+        embraceSpan = embraceSpanFactory.create(createWrapperForInternalSpan())
         embraceSpan.start()
+        embraceSpan.addAttribute("password", "123456")
+        embraceSpan.addAttribute("status", "ok")
 
         // when getting a span snapshot
         val snapshot = embraceSpan.snapshot()
@@ -653,8 +716,8 @@ internal class EmbraceSpanImplTest {
         assertFalse(isRecording)
         assertFalse(addEvent("eventName"))
         assertFalse(addAttribute("first", "value"))
-        assertEquals(0, spanRepository.getActiveSpans().size)
-        assertEquals(1, spanRepository.getCompletedSpans().size)
+        assertEquals(0, spanRepository.getActiveEmbraceSpans().size)
+        assertEquals(1, spanRepository.getCompletedEmbraceSpans().size)
         assertTrue(updateNotified)
         assertEquals(stoppedSpanId, spanId)
     }

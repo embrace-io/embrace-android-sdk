@@ -15,16 +15,15 @@ import io.embrace.android.embracesdk.internal.otel.sdk.IdGenerator
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
+import io.embrace.android.embracesdk.internal.otel.spans.SpanServiceImpl
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl
-import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
+import io.embrace.android.embracesdk.internal.spans.TracingApiDelegate
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.android.embracesdk.spans.TracingApi
 
 class OpenTelemetryModuleImpl(
     private val initModule: InitModule,
@@ -33,22 +32,21 @@ class OpenTelemetryModuleImpl(
     ),
 ) : OpenTelemetryModule {
 
-    private val processIdentifierProvider: () -> String by lazy { IdGenerator.Companion::generateLaunchInstanceId }
+    private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId
     private var storedSessionIdsProvider: SessionIdsProvider? = null
     private var storedUserIdProvider: (() -> String?)? = null
     private var otelBehavior: OtelBehavior? = null
+    private var sensitiveKeysBehavior: SensitiveKeysBehavior? = null
+    private var internalSpanStopCallback: ((spanId: String) -> Unit)? = null
+    private var bypassLimitsValidation: Boolean = false
 
-    override val spanRepository: SpanRepository by lazy {
-        SpanRepository()
-    }
+    override val spanRepository: SpanRepository = SpanRepository()
 
-    override val spanSink: SpanSink by lazy {
-        SpanSinkImpl()
-    }
+    override val logSink: LogSink = LogSinkImpl()
 
     override val otelSdkConfig: OtelSdkConfig by lazy {
         OtelSdkConfig(
-            spanSink = spanSink,
+            spanRepository = spanRepository,
             logSink = logSink,
             sdkName = BuildConfig.LIBRARY_PACKAGE_NAME,
             sdkVersion = BuildConfig.VERSION_NAME,
@@ -83,12 +81,10 @@ class OpenTelemetryModuleImpl(
         }
     }
 
-    private var sensitiveKeysBehavior: SensitiveKeysBehavior? = null
-
     override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean, otelBehavior: OtelBehavior) {
         this.sensitiveKeysBehavior = sensitiveKeysBehavior
         this.bypassLimitsValidation = bypassValidation
-        setupOtelBehavior(otelBehavior)
+        this.otelBehavior = otelBehavior
     }
 
     override fun setSessionIdsProvider(sessionIdsProvider: SessionIdsProvider) {
@@ -99,77 +95,51 @@ class OpenTelemetryModuleImpl(
         storedUserIdProvider = userIdProvider
     }
 
-    private fun setupOtelBehavior(otelBehavior: OtelBehavior) {
-        this.otelBehavior = otelBehavior
-        if (!otelBehavior.shouldUseKotlinSdk()) {
-            // Enforce the use of default OTel Java SDK ThreadLocal ContextStorage to bypass SPI looking that violates Android strict mode
-            System.setProperty("io.opentelemetry.context.contextStorageProvider", "default")
-        }
-    }
-
-    private var internalSpanStopCallback: ((spanId: String) -> Unit)? = null
-
-    private var bypassLimitsValidation: Boolean = false
-
     private val dataValidator: DataValidator = DataValidator(
         bypassValidation = ::bypassLimitsValidation,
         telemetryService = initModule.telemetryService,
     )
 
-    private val embraceSpanFactory: EmbraceSpanFactory by singleton {
-        EmbraceSpanFactoryImpl(
-            openTelemetryClock = openTelemetryClock,
-            spanRepository = spanRepository,
-            dataValidator = dataValidator,
-            stopCallback = ::spanStopCallbackWrapper,
-            redactionFunction = ::redactionFunction,
-            telemetryService = initModule.telemetryService,
-        )
+    private val embraceSpanFactory: EmbraceSpanFactory = EmbraceSpanFactoryImpl(
+        openTelemetryClock = openTelemetryClock,
+        spanRepository = spanRepository,
+        dataValidator = dataValidator,
+        stopCallback = ::spanStopCallbackWrapper,
+        redactionFunction = ::redactionFunction,
+        telemetryService = initModule.telemetryService,
+    )
+
+    override val currentSessionPartSpan: CurrentSessionPartSpan = CurrentSessionPartSpanImpl(
+        openTelemetryClock = openTelemetryClock,
+        telemetryService = initModule.telemetryService,
+        spanRepository = spanRepository,
+        tracerSupplier = { otelSdkWrapper.sdkTracer },
+        openTelemetrySupplier = { otelSdkWrapper.openTelemetryKotlin },
+        embraceSpanFactorySupplier = { embraceSpanFactory },
+        uuidSource = initModule.uuidSource,
+    ).also {
+        internalSpanStopCallback = it::spanStopCallback
     }
 
-    override val currentSessionPartSpan: CurrentSessionPartSpan by lazy {
-        CurrentSessionPartSpanImpl(
-            openTelemetryClock = openTelemetryClock,
-            telemetryService = initModule.telemetryService,
-            spanRepository = spanRepository,
-            spanSink = spanSink,
-            tracerSupplier = { otelSdkWrapper.sdkTracer },
-            openTelemetrySupplier = { otelSdkWrapper.openTelemetryKotlin },
-            embraceSpanFactorySupplier = { embraceSpanFactory },
-            uuidSource = initModule.uuidSource,
-        ).also {
-            internalSpanStopCallback = it::spanStopCallback
-        }
-    }
+    override val spanService: SpanService = SpanServiceImpl(
+        spanRepository = spanRepository,
+        canStartNewSpan = currentSessionPartSpan::canStartNewSpan,
+        initCallback = currentSessionPartSpan::initializeService,
+        dataValidator = dataValidator,
+        embraceSpanFactory = embraceSpanFactory,
+        // supplied lazily (otelSdkWrapper is constructed with a reference to this service)
+        tracerSupplier = { otelSdkWrapper.sdkTracer },
+        openTelemetrySupplier = { otelSdkWrapper.openTelemetryKotlin },
+    )
 
-    override val spanService: SpanService by singleton {
-        EmbraceSpanService(
-            spanRepository = spanRepository,
-            canStartNewSpan = currentSessionPartSpan::canStartNewSpan,
-            initCallback = currentSessionPartSpan::initializeService,
-            dataValidator = dataValidator,
-            tracerSupplier = { otelSdkWrapper.sdkTracer },
-            openTelemetrySupplier = { otelSdkWrapper.openTelemetryKotlin },
-            embraceSpanFactorySupplier = { embraceSpanFactory },
-        )
-    }
+    override val tracingApi: TracingApi = TracingApiDelegate(
+        spanService = spanService,
+    )
 
-    override val embraceTracer: EmbraceTracer by singleton {
-        EmbraceTracer(
-            spanService = spanService,
-        )
-    }
-
-    override val eventService: EventService by lazy {
-        EventServiceImpl(
-            sdkLoggerProvider = { otelSdkWrapper.sdkLogger },
-            uuidSource = initModule.uuidSource,
-        )
-    }
-
-    override val logSink: LogSink by lazy {
-        LogSinkImpl()
-    }
+    override val eventService: EventService = EventServiceImpl(
+        sdkLoggerProvider = { otelSdkWrapper.sdkLogger },
+        uuidSource = initModule.uuidSource,
+    )
 
     fun redactionFunction(key: String, value: String): String {
         return if (sensitiveKeysBehavior?.isSensitiveKey(key) == true) {

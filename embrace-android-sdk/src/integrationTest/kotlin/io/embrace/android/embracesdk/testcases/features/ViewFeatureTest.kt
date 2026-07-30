@@ -5,10 +5,12 @@ import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbViewAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -43,15 +45,20 @@ internal class ViewFeatureTest {
                 with(viewSpans.single { it.attributes?.findAttributeValue(EmbViewAttributes.VIEW_NAME) == "MyView" }) {
                     assertEquals(startTimeMs, startTimeNanos?.nanosToMillis())
                     assertEquals(startTimeMs + 3000L, endTimeNanos?.nanosToMillis())
+                    assertEquals("true", attributes?.findAttributeValue(EmbCommonAttributes.EMB_MANUAL_INSTRUMENTATION))
                 }
 
                 with(viewSpans.single { it.attributes?.findAttributeValue(EmbViewAttributes.VIEW_NAME) == "AnotherView" }) {
                     assertEquals(startTimeMs + 1000L, startTimeNanos?.nanosToMillis())
                     assertEquals(startTimeMs + 3000L, endTimeNanos?.nanosToMillis())
+                    assertEquals("true", attributes?.findAttributeValue(EmbCommonAttributes.EMB_MANUAL_INSTRUMENTATION))
                 }
 
-                assertNotNull(viewSpans.single { it.attributes?.findAttributeValue(EmbViewAttributes.VIEW_NAME) == "android.app.Activity" })
-            }
+                val autoInstrumentedViewSpan =
+                    viewSpans.single { it.attributes?.findAttributeValue(EmbViewAttributes.VIEW_NAME) == "android.app.Activity" }
+                assertNotNull(autoInstrumentedViewSpan)
+                assertNull(autoInstrumentedViewSpan.attributes?.findAttributeValue(EmbCommonAttributes.EMB_MANUAL_INSTRUMENTATION))
+            },
         )
     }
 }

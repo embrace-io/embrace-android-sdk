@@ -30,6 +30,12 @@ interface PluginBehavior {
     val failBuildOnUploadErrors: Provider<Boolean>
 
     /**
+     * Whether the parameters used to upload the mapping file and NDK symbols should be exported
+     * to an `embrace-build-info.json` file, set via `embrace.exportBuildInfo`
+     */
+    val isExportBuildInfoEnabled: Boolean
+
+    /**
      * The base URL for the Embrace API, set via `embrace.baseUrl`
      */
     val baseUrl: String
@@ -72,5 +78,6 @@ const val EMBRACE_BASE_URL = "embrace.baseUrl"
 const val EMBRACE_DISABLE_COLLECT_BUILD_DATA = "embrace.disableCollectBuildData"
 const val EMBRACE_UPLOAD_IL2CPP_MAPPING_FILES = "embrace.uploadIl2CppMappingFiles"
 const val EMBRACE_DISABLE_MAPPING_FILE_UPLOAD = "embrace.disableMappingFileUpload"
+const val EMBRACE_EXPORT_BUILD_INFO = "embrace.exportBuildInfo"
 const val EMBRACE_UNITY_EXTERNAL_DEPENDENCY_MANAGER = "embrace.externalDependencyManager"
 const val DEFAULT_SYMBOL_STORE_HOST_URL = "https://dsym-store.emb-api.com"

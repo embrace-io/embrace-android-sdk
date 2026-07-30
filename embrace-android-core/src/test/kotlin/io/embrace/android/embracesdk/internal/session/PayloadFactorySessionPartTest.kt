@@ -16,7 +16,6 @@ import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
@@ -34,7 +33,6 @@ import java.util.concurrent.ExecutorService
 
 internal class PayloadFactorySessionPartTest {
 
-    private lateinit var spanSink: SpanSink
     private lateinit var service: PayloadFactory
     private lateinit var configService: FakeConfigService
     private lateinit var clock: FakeClock
@@ -68,7 +66,6 @@ internal class PayloadFactorySessionPartTest {
     fun before() {
         configService = FakeConfigService()
         clock = FakeClock(10000L)
-        spanSink = FakeInitModule(clock = clock).openTelemetryModule.spanSink
 
         metadataService = FakeMetadataService()
         sessionTracker = FakeSessionPartTracker()
@@ -89,7 +86,7 @@ internal class PayloadFactorySessionPartTest {
     @Test
     fun `spanService that is not initialized will not result in any complete spans`() {
         initializeSessionService()
-        assertEquals(0, spanSink.completedSpans().size)
+        assertEquals(0, spanRepository.completedOtelSpans().size)
     }
 
     private fun initializeSessionService() {

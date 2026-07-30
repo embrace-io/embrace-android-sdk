@@ -19,14 +19,14 @@ class DataCaptureEventBehaviorImpl(
     override fun isEventEnabled(eventName: String): Boolean {
         return when (val disabledTypes = remote?.disabledEventAndLogPatterns) {
             null -> true
-            else -> !patternCache.doesStringMatchesPatternInSet(eventName, disabledTypes)
+            else -> !patternCache.doesStringMatchPatternInSet(eventName, disabledTypes)
         }
     }
 
     override fun isLogMessageEnabled(logMessage: String): Boolean {
         return when (val disabledTypes = remote?.disabledEventAndLogPatterns) {
             null -> true
-            else -> !patternCache.doesStringMatchesPatternInSet(logMessage, disabledTypes)
+            else -> !patternCache.doesStringMatchPatternInSet(logMessage, disabledTypes)
         }
     }
 }

@@ -39,7 +39,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jniDeleg
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.sharedObjectLoaderTestOverride
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
+import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
@@ -304,7 +304,7 @@ internal class EmbraceSetupInterface(
 
     fun getClock(): FakeClock = fakeClock
 
-    fun getSpanSink(): SpanSink = fakeInitModule.openTelemetryModule.spanSink
+    fun getSpanRepository(): SpanRepository = fakeInitModule.openTelemetryModule.spanRepository
 
     fun getCurrentSessionPartSpan(): CurrentSessionPartSpan = fakeInitModule.openTelemetryModule.currentSessionPartSpan
 

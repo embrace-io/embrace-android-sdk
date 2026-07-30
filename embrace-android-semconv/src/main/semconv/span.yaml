@@ -1,0 +1,34 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: emb.span
+    visibility: public
+    stability: development
+    brief: "Embrace span-level attributes"
+    attributes:
+      - ref: emb.error_code
+      - ref: emb.link_type
+      - ref: emb.private
+      - ref: emb.termination_cause
+
+attributes:
+  - key: emb.error_code
+    type: string
+    brief: "Error code indicating the reason a span ended unsuccessfully."
+    stability: development
+    examples: ["failure", "user_abandon", "unknown"]
+  - key: emb.link_type
+    type: string
+    brief: "Semantic meaning of a span link, defining the relationship between the containing span and the linked span."
+    stability: development
+    examples: ["PREV_SESSION", "END_SESSION", "ENDED_IN", "STATE"]
+  - key: emb.private
+    type: string
+    brief: "Denotes a private span recorded by Embrace for diagnostic or internal usage purposes."
+    stability: development
+    examples: ["true"]
+  - key: emb.termination_cause
+    type: string
+    brief: "The reason an app instance terminated."
+    stability: development
+    examples: ["crash", "user_termination", "unknown"]

@@ -42,4 +42,8 @@ class FakeSessionOrchestrator : SessionOrchestrator {
     override fun addUserSessionListener(listener: UserSessionListener) {
         userSessionListeners.add(listener)
     }
+
+    override fun removeUserSessionListener(listener: UserSessionListener) {
+        userSessionListeners.remove(listener)
+    }
 }

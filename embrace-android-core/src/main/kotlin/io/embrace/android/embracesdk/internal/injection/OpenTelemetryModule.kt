@@ -8,10 +8,9 @@ import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
-import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
+import io.embrace.android.embracesdk.spans.TracingApi
 
 /**
  * Module that instantiates various OpenTelemetry related components
@@ -24,14 +23,10 @@ interface OpenTelemetryModule {
     val otelSdkConfig: OtelSdkConfig
 
     /**
-     * Caches span instances that are in progress or completed in the current session
+     * Stores the spans of the current session: in-progress span instances as well as completed
+     * spans that have not been sent off-device
      */
     val spanRepository: SpanRepository
-
-    /**
-     * Provides storage for completed spans that have not been sent off-device
-     */
-    val spanSink: SpanSink
 
     /**
      * Component that manages and provides access to the current session part span
@@ -46,7 +41,7 @@ interface OpenTelemetryModule {
     /**
      * Implementation of public tracing API
      */
-    val embraceTracer: EmbraceTracer
+    val tracingApi: TracingApi
 
     /**
      * Service to record events

@@ -24,4 +24,10 @@ interface NetworkRequestDataSource : DataSource {
      * Stop the span that is instrumenting the network request represented by [endData].
      */
     fun endRequest(endData: RequestEndData)
+
+    /**
+     * Stop tracking the network request that [startRequest] returned [id] for,
+     * without stopping its span.
+     */
+    fun discardRequest(id: String)
 }

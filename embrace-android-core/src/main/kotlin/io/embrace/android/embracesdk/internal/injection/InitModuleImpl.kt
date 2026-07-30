@@ -28,13 +28,11 @@ class InitModuleImpl(
     override val startupClassifier: StartupClassifier = StartupClassifierImpl(),
 ) : InitModule {
 
-    override val telemetryService: TelemetryService by singleton {
-        EmbraceTelemetryService(
-            systemInfo = systemInfo,
-        )
-    }
+    override val telemetryService: TelemetryService = EmbraceTelemetryService(
+        systemInfo = systemInfo,
+    )
 
-    override val jsonSerializer: PlatformSerializer by singleton {
+    override val jsonSerializer: PlatformSerializer by lazy {
         EmbraceSerializer()
     }
 

@@ -47,4 +47,9 @@ public interface UserSessionApi {
      * Registers a listener that is invoked for user session lifecycle events.
      */
     public fun addUserSessionListener(listener: UserSessionListener)
+
+    /**
+     * Unregisters a listener previously registered with [addUserSessionListener].
+     */
+    public fun removeUserSessionListener(listener: UserSessionListener)
 }

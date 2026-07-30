@@ -12,8 +12,13 @@ import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
+import io.embrace.android.embracesdk.internal.otel.impl.EmbClock
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
+import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
+import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
+import io.embrace.android.embracesdk.internal.otel.spans.SpanService
+import io.embrace.android.embracesdk.internal.otel.spans.SpanServiceImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
@@ -30,7 +35,7 @@ internal class TelemetryDestinationHarness {
     }
 
     val logSink: LogSink = otelModule.logSink
-    val spanSink: SpanSink = otelModule.spanSink
+    val spanRepository: SpanRepository = otelModule.spanRepository
     val spanService = otelModule.spanService
     val currentSessionPartSpan = otelModule.currentSessionPartSpan
 
@@ -40,6 +45,29 @@ internal class TelemetryDestinationHarness {
         eventService = otelModule.eventService,
         currentSessionPartSpan = otelModule.currentSessionPartSpan,
     )
+
+    /**
+     * Builds a [SpanService] wired with the module's real tracer, OTel SDK, and span repository,
+     * but where no per-session span limit is applied
+     */
+    fun createUncappedSpanService(): SpanService {
+        val validator = DataValidator(telemetryService = NoopTelemetryService)
+        val factory = EmbraceSpanFactoryImpl(
+            openTelemetryClock = EmbClock(initModule.clock),
+            spanRepository = otelModule.spanRepository,
+            dataValidator = validator,
+            telemetryService = NoopTelemetryService,
+        )
+        return SpanServiceImpl(
+            spanRepository = otelModule.spanRepository,
+            dataValidator = validator,
+            canStartNewSpan = { _, _ -> true },
+            initCallback = {},
+            embraceSpanFactory = factory,
+            tracerSupplier = { otelModule.otelSdkWrapper.sdkTracer },
+            openTelemetrySupplier = { otelModule.otelSdkWrapper.openTelemetryKotlin },
+        ).apply { initializeService(0) }
+    }
 
     private class TestInitModule : InitModule {
         override val clock: io.embrace.android.embracesdk.internal.clock.Clock = NormalizedIntervalClock()

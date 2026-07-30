@@ -2,7 +2,7 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -19,6 +19,13 @@ import io.opentelemetry.kotlin.tracing.StatusData
  * An [EmbraceSpan] that has additional functionality to be used internally by the SDK
  */
 interface EmbraceSdkSpan : EmbraceSpan {
+
+    /**
+     * Stop the span with the given [ErrorCodeAttribute], the SDK's internal error-code representation. The public
+     * [EmbraceSpan.stop] converts from the public [io.embrace.android.embracesdk.spans.ErrorCode] and delegates here, so
+     * internal callers should use this directly to avoid a redundant round-trip conversion.
+     */
+    fun stopWithErrorCode(errorCode: ErrorCodeAttribute?, endTimeMs: Long? = null): Boolean
 
     /**
      * Create a new context object based in this span and its parent's context. This can be used for the parent context for a new span
@@ -69,11 +76,6 @@ interface EmbraceSdkSpan : EmbraceSpan {
         timestampMs: Long?,
         attributes: Map<String, String>?,
     ): Boolean
-
-    /**
-     * Removes all system events with the given [EmbType]
-     */
-    fun removeSystemEvents(type: EmbType): Boolean
 
     fun getStartTimeMs(): Long?
 

@@ -62,7 +62,7 @@ internal class EmbraceSpanFactoryImplTest {
             assertFalse(hasEmbraceAttribute(PrivateSpan))
             assertEquals("test", snapshot()?.name)
         }
-        assertNotNull(spanRepository.getSpan(spanId = checkNotNull(span.spanId)))
+        assertNotNull(spanRepository.getEmbraceSpan(spanId = checkNotNull(span.spanId)))
         assertTrue(updateNotified)
     }
 

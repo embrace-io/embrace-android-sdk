@@ -19,6 +19,7 @@ internal class ScreenLoadTracker(
     private val emit: (ScreenLoadResult) -> Unit,
     private val idleThresholdMs: Long = IDLE_THRESHOLD_MS,
     private val timeoutMs: Long = SETTLE_TIMEOUT_MS,
+    private val navigationTimeoutMs: Long = NAVIGATION_TIMEOUT_MS,
 ) {
     private val settle = SettleTracker(scheduler, { idleThresholdMs }, ::onSettled)
 
@@ -55,15 +56,18 @@ internal class ScreenLoadTracker(
     fun onTap(eventTime: Long = uptimeMillis()) {
         if (state == State.SETTLING) {
             complete(endMs = eventTime, outcome = ScreenLoadOutcome.USER_INTERRUPTED)
+        } else {
+            // Drop a load that is still navigating - the user is no longer waiting on it - and with it its
+            // pending timeout, which would otherwise outlive it and fire against this new candidate.
+            discard()
         }
-        settle.cancel()
+
         state = State.CANDIDATE
         screenName = ""
         startUptimeMs = eventTime
 
         val startUptimeDelta = uptimeMillis() - startUptimeMs
         startWallMs = clock.now() - startUptimeDelta
-        scheduleTimeout()
     }
 
     /**
@@ -77,9 +81,11 @@ internal class ScreenLoadTracker(
         when (state) {
             State.IDLE -> openLoad(eventTime)
             State.CANDIDATE -> {
-                if (eventTime <= startUptimeMs + NAVIGATION_TIMEOUT_MS) {
+                if (eventTime <= startUptimeMs + navigationTimeoutMs) {
                     state = State.CONFIRMED
                     navStartMs = eventTime
+                    // the candidate is now a real load, so start the clock on it reporting
+                    scheduleTimeout()
                 } else {
                     // the previous "tap" event is too far in the past to be considered part of the screen load
                     // so we move the "start time" to now
@@ -203,14 +209,24 @@ internal class ScreenLoadTracker(
             durationMs = endMs - startUptimeMs,
             screenName = screenName,
             outcome = outcome,
+            idleThresholdMs = idleThresholdMs,
+            timeoutMs = timeoutMs,
+            navTimeoutMs = navigationTimeoutMs,
         )
 
         discard()
         emit(result)
     }
 
+    /**
+     * Arms the give-up timer. The time window runs from the load's start (the tap-up that led to it).
+     * So the deadline is anchored to [startUptimeMs] rather than to now. That allows it to be armed when a
+     * load is confirmed rather than on every tap, without moving the deadline. Clamped to the window length
+     * in case an event timestamp is skewed against the current clock.
+     */
     private fun scheduleTimeout() {
-        scheduler.scheduleSettle(timeoutMs, timeoutRunnable)
+        val delayMs = (startUptimeMs + timeoutMs - uptimeMillis()).coerceIn(0L, timeoutMs)
+        scheduler.scheduleSettle(delayMs, timeoutRunnable)
     }
 
     private fun discard() {
@@ -248,7 +264,9 @@ internal class ScreenLoadTracker(
         IDLE,
 
         /**
-         * A committed tap opened a candidate; awaiting a navigation start.
+         * A committed tap opened a candidate; awaiting a navigation start. Unlike [IDLE], the start timestamp
+         * is a valid tap-up. Inert while it waits: no timeout is armed, as [onNavigationStart] rejects a tap
+         * that is too old to belong to the navigation on time.
          */
         CANDIDATE,
 

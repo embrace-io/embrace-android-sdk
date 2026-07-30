@@ -8,6 +8,7 @@ import android.os.Handler
 import android.os.SystemClock
 import android.view.Window
 import androidx.annotation.RequiresApi
+import java.util.Collections
 import java.util.WeakHashMap
 
 /**
@@ -24,6 +25,11 @@ internal class VitalsActivityListener(
 ) : ActivityLifecycleCallbacks {
 
     private val frameListeners = WeakHashMap<Window, VitalsFrameMetricsListener>()
+
+    /**
+     * Windows that already have a [VitalsWindowCallback] installed so that we don't attempt to double-install our `Callback` delegate.
+     */
+    private val interactionCallbacks: MutableSet<Window> = Collections.newSetFromMap(WeakHashMap())
 
     override fun onActivityCreated(activity: Activity, bundle: Bundle?) {
         // captured first so the navigation-start timestamp reflects this event, not the delay until it's processed
@@ -59,12 +65,13 @@ internal class VitalsActivityListener(
     }
 
     private fun installInteractionCallback(window: Window) {
-        if (window.callback !is VitalsWindowCallback) {
-            window.callback = VitalsWindowCallback(
-                delegate = window.callback,
-                focalCallbacks = focalCallbacks,
-            )
+        if (!interactionCallbacks.add(window)) {
+            return
         }
+        window.callback = VitalsWindowCallback(
+            delegate = window.callback,
+            focalCallbacks = focalCallbacks,
+        )
     }
 
     private fun installFrameMetricsListener(window: Window) {

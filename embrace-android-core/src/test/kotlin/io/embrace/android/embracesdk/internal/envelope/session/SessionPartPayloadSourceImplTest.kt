@@ -7,11 +7,10 @@ import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSnapshotType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -22,27 +21,24 @@ import org.junit.Test
 internal class SessionPartPayloadSourceImplTest {
 
     private lateinit var impl: SessionPartPayloadSourceImpl
-    private lateinit var sink: SpanSinkImpl
     private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
     private lateinit var spanRepository: SpanRepository
     private lateinit var activeSpan: FakeEmbraceSdkSpan
-    private val cacheSpan = EmbraceSpanData("", "", "", "cache-span", 0, 0)
+    private val cacheSpan = Span(name = "cache-span")
 
     @Before
     fun setUp() {
-        sink = SpanSinkImpl().apply {
-            storeCompletedSpans(listOf(cacheSpan))
-        }
         currentSessionPartSpan = FakeCurrentSessionPartSpan().apply {
             initializeService(1000L)
         }
         activeSpan = FakeEmbraceSdkSpan.started()
-        spanRepository = SpanRepository()
-        spanRepository.trackStartedSpan(checkNotNull(currentSessionPartSpan.sessionPartSpan))
-        spanRepository.trackStartedSpan(activeSpan)
+        spanRepository = SpanRepository().apply {
+            storeCompletedOtelSpans(listOf(cacheSpan))
+        }
+        spanRepository.trackStartedEmbraceSpan(checkNotNull(currentSessionPartSpan.sessionPartSpan))
+        spanRepository.trackStartedEmbraceSpan(activeSpan)
         impl = SessionPartPayloadSourceImpl(
             mapOf("armeabi-v7a" to "my-symbols"),
-            sink,
             currentSessionPartSpan,
             spanRepository,
             FakeOtelPayloadMapper(),

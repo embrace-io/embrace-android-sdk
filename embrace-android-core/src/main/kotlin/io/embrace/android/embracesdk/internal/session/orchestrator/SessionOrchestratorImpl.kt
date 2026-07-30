@@ -290,7 +290,9 @@ internal class SessionOrchestratorImpl(
 
     override fun addUserSessionListener(listener: UserSessionListener) {
         synchronized(lock) {
-            userSessionListeners.add(listener)
+            if (!userSessionListeners.addIfAbsent(listener)) {
+                return
+            }
             currentUserSession()?.let { metadata ->
                 try {
                     listener.onSessionStateEvent(UserSessionActive(metadata.userSessionId))
@@ -298,6 +300,12 @@ internal class SessionOrchestratorImpl(
                     logger.trackInternalError(InternalErrorType.UserSessionCallbackFail, e)
                 }
             }
+        }
+    }
+
+    override fun removeUserSessionListener(listener: UserSessionListener) {
+        synchronized(lock) {
+            userSessionListeners.remove(listener)
         }
     }
 

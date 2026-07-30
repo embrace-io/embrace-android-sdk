@@ -28,11 +28,6 @@ interface TelemetryDestination {
     fun addSessionPartEvent(schemaType: SchemaType, startTimeMs: Long): Boolean
 
     /**
-     * Remove all span events with the given [EmbType].
-     */
-    fun removeSessionPartEvents(type: EmbType)
-
-    /**
      * Add the given key-value pair as an Attribute to the session part span
      */
     fun addSessionPartAttribute(key: String, value: String)

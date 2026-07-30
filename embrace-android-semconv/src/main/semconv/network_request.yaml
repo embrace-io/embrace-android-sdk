@@ -1,0 +1,28 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: emb.network_request
+    visibility: public
+    stability: development
+    brief: "Embrace-specific network request attributes"
+    attributes:
+      - ref: emb.w3c_traceparent
+      - ref: emb.forward_telemetry
+      - ref: emb.trace_id
+
+attributes:
+  - key: emb.w3c_traceparent
+    type: string
+    brief: "The W3C traceparent header value forwarded with the network request."
+    stability: development
+    examples: ["00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"]
+  - key: emb.forward_telemetry
+    type: boolean
+    brief: "Indicates the span should be forwarded to the customer's backend."
+    stability: development
+    examples: [true]
+  - key: emb.trace_id
+    type: string
+    brief: "The Embrace trace ID used for correlation."
+    stability: development
+    examples: ["a3ce929d0e0e4736"]

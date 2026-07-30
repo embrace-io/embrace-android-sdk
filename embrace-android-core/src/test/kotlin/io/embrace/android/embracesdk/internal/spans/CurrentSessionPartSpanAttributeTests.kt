@@ -1,12 +1,11 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.assertions.findAttributeValue
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -16,7 +15,6 @@ import org.junit.Test
 internal class CurrentSessionPartSpanAttributeTests {
 
     private lateinit var spanRepository: SpanRepository
-    private lateinit var spanSink: SpanSink
     private lateinit var currentSessionPartSpan: CurrentSessionPartSpan
     private lateinit var spanService: SpanService
     private val clock = FakeClock(1000L)
@@ -25,7 +23,6 @@ internal class CurrentSessionPartSpanAttributeTests {
     fun setup() {
         val initModule = FakeInitModule(clock = clock)
         spanRepository = initModule.openTelemetryModule.spanRepository
-        spanSink = initModule.openTelemetryModule.spanSink
         currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan
         spanService = initModule.openTelemetryModule.spanService
         spanService.initializeService(clock.now())
@@ -51,8 +48,8 @@ internal class CurrentSessionPartSpanAttributeTests {
         span.assertCommonSessionPartSpanAttrs()
     }
 
-    private fun EmbraceSpanData.assertCommonSessionPartSpanAttrs() {
-        assertNotNull(attributes.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID))
-        assertEquals("ux.session", attributes.findAttributeValue("emb.type"))
+    private fun Span.assertCommonSessionPartSpanAttrs() {
+        assertNotNull(attributes?.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID))
+        assertEquals("ux.session", attributes?.findAttributeValue("emb.type"))
     }
 }

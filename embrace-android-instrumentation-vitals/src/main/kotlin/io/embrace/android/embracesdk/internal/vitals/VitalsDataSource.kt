@@ -7,13 +7,14 @@ import android.view.Display
 import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
-import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
+import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
 import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadResult
 import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadTracker
 import io.embrace.android.embracesdk.internal.vitals.smoothness.FocalMomentTracker
+import io.embrace.android.embracesdk.internal.vitals.smoothness.FrameTraceRecorder
 import io.embrace.android.embracesdk.internal.vitals.smoothness.SmoothnessReporter
 import io.embrace.android.embracesdk.internal.vitals.smoothness.SmoothnessResult
 
@@ -27,12 +28,17 @@ internal class VitalsDataSource(
     private val args: InstrumentationArgs,
 ) : DataSourceImpl(
     args = args,
-    limitStrategy = NoopLimitStrategy,
+    // Vitals emits a span per gesture and per navigation, so it needs a ceiling: an unlimited source would
+    // exhaust the session's shared internal-span budget and starve other instrumentation. Reset per session part.
+    limitStrategy = UpToLimitStrategy(args.configService.vitalsBehavior::getSpanLimit),
     instrumentationName = "vitals_data_source",
 ) {
 
     // Extracts per-frame jank; below API 31 the budget tracks the display's refresh interval.
-    private val frameMetricsStrategy: FrameMetricsStrategy = FrameMetricsStrategy.create(displayRefreshIntervalNanos())
+    private val frameMetricsStrategy: FrameMetricsStrategy = FrameMetricsStrategy.create(
+        refreshIntervalNanos = displayRefreshIntervalNanos(),
+        jankHeuristicMultiplier = args.configService.vitalsBehavior.getJankHeuristicMultiplier(),
+    )
 
     private val displayListener = object : DisplayManager.DisplayListener {
         override fun onDisplayChanged(displayId: Int) {
@@ -71,15 +77,27 @@ internal class VitalsDataSource(
                 ?.registerDisplayListener(displayListener, handler)
         }
 
+        val vitalsBehavior = args.configService.vitalsBehavior
         val tracker = FocalMomentTracker(
             scheduler = vitalsScheduler,
-            reporter = SmoothnessReporter(emit = ::emitSmoothnessResult),
+            reporter = SmoothnessReporter(
+                emit = ::emitSmoothnessResult,
+                idleThresholdMs = vitalsBehavior.getSmoothnessIdleThresholdMs(),
+                heldIdleThresholdMs = vitalsBehavior.getSmoothnessHeldIdleThresholdMs(),
+                jankHeuristicMultiplier = vitalsBehavior.getJankHeuristicMultiplier(),
+            ),
             clock = clock,
             screenLoadTracker = ScreenLoadTracker(
                 scheduler = vitalsScheduler,
                 clock = clock,
                 emit = ::emitScreenLoadResult,
+                idleThresholdMs = vitalsBehavior.getScreenLoadIdleThresholdMs(),
+                timeoutMs = vitalsBehavior.getScreenLoadTimeoutMs(),
+                navigationTimeoutMs = vitalsBehavior.getScreenLoadNavTimeoutMs(),
             ),
+            idleThresholdMs = vitalsBehavior.getSmoothnessIdleThresholdMs(),
+            heldIdleThresholdMs = vitalsBehavior.getSmoothnessHeldIdleThresholdMs(),
+            frameTraceRecorder = if (vitalsBehavior.isSmoothnessFrameTraceEnabled()) FrameTraceRecorder() else null,
         )
         focalTracker = tracker
 
@@ -119,6 +137,10 @@ internal class VitalsDataSource(
                     outcome = result.outcome.name.lowercase(),
                     frameCount = result.frameCount,
                     normalizedDroppedFrames = result.normalizedDroppedFrames,
+                    idleThresholdMs = result.idleThresholdMs,
+                    heldIdleThresholdMs = result.heldIdleThresholdMs,
+                    jankHeuristicMultiplier = result.jankHeuristicMultiplier,
+                    frameTraceBase64 = result.frameTraceBase64,
                 ).attributes(),
             )
         }
@@ -142,6 +164,9 @@ internal class VitalsDataSource(
                     navStartDelayMs = result.navStartDelayMs,
                     navDurationMs = result.navDurationMs,
                     firstFrameDurationMs = result.firstFrameDurationMs,
+                    idleThresholdMs = result.idleThresholdMs,
+                    timeoutMs = result.timeoutMs,
+                    navTimeoutMs = result.navTimeoutMs,
                 ).attributes(),
             )
         }

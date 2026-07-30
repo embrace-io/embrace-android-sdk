@@ -24,23 +24,35 @@ class NormalizedIntervalClock(
 ) : Clock {
 
     private val baseline = wallClock() - monotonicClock()
-    private val lastTime = AtomicLong(0L)
+
+    /**
+     * The lastTime that `now` was called - `Long.MIN_VALUE` as a "not yet tracked" sentinel.
+     */
+    private val lastTime = AtomicLong(Long.MIN_VALUE)
     private val hasLoggedDrift = AtomicBoolean(false)
 
     override fun now(): Long {
-        val newTime = baseline + monotonicClock()
-        val prev = lastTime.getAndSet(newTime)
-        if (prev > 0L && newTime < prev - driftThresholdMs) {
-            if (hasLoggedDrift.compareAndSet(false, true)) {
-                logger?.trackInternalError(
-                    InternalErrorType.InternalInterfaceFail,
-                    IllegalStateException(
-                        "NormalizedIntervalClock drifted back in time by more than threshold. Delivery is likely out-of-order.",
-                    ),
-                )
+        while (true) {
+            val prev = lastTime.get()
+            val newTime = baseline + monotonicClock()
+
+            if (prev != Long.MIN_VALUE && newTime < prev - driftThresholdMs) {
+                if (hasLoggedDrift.compareAndSet(false, true)) {
+                    logger?.trackInternalError(
+                        InternalErrorType.InternalInterfaceFail,
+                        IllegalStateException(
+                            "NormalizedIntervalClock drifted back in time by more than threshold. Delivery is likely out-of-order.",
+                        ),
+                    )
+                }
+            }
+
+            // never lower the high-water mark: a backwards reading is returned but not stored,
+            // otherwise repeated sub-threshold steps would walk the comparison baseline down.
+            if (newTime <= prev || lastTime.compareAndSet(prev, newTime)) {
+                return newTime
             }
         }
-        return newTime
     }
 
     companion object {

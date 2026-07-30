@@ -23,7 +23,7 @@ internal class NormalizedIntervalClockTest {
         clock.now()
         elapsedMs += 1_000L
         clock.now()
-        assertTrue(logger.errorMessages.isEmpty())
+        assertTrue(logger.internalErrorMessages.isEmpty())
     }
 
     @Test
@@ -33,7 +33,7 @@ internal class NormalizedIntervalClockTest {
         clock.now() // record high-water mark
         elapsedMs -= 59_999L // drift back by just under 60s
         clock.now()
-        assertTrue(logger.errorMessages.isEmpty())
+        assertTrue(logger.internalErrorMessages.isEmpty())
     }
 
     @Test
@@ -65,7 +65,7 @@ internal class NormalizedIntervalClockTest {
         clock.now()
         elapsedMs -= 500L // 500ms back, under 1s threshold
         clock.now()
-        assertTrue(logger.errorMessages.isEmpty())
+        assertTrue(logger.internalErrorMessages.isEmpty())
     }
 
     @Test
@@ -97,7 +97,7 @@ internal class NormalizedIntervalClockTest {
         val clock = buildClock()
         elapsedMs = 0L // very low elapsed time
         clock.now() // no previous value, must not log
-        assertTrue(logger.errorMessages.isEmpty())
+        assertTrue(logger.internalErrorMessages.isEmpty())
     }
 
     private fun buildClock(driftThresholdMs: Long = NormalizedIntervalClock.DEFAULT_DRIFT_THRESHOLD_MS) =

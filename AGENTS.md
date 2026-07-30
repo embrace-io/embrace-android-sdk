@@ -21,21 +21,9 @@ It is published to Maven Central under the `io.embrace` group.
 
 ## Build & Toolchain
 
-| Tool                         | Version / Notes                                                    |
-|------------------------------|--------------------------------------------------------------------|
-| Language                     | Kotlin (primary), some minimal Java/C++                            |
-| Min Supported Kotlin version | 2.0                                                                |
-| Kotlin compile-time version  | 2.4                                                                |
-| JVM target                   | 11                                                                 |
-| Android minSdk               | 21                                                                 |
-| Android compileSdk           | 36                                                                 |
-| Build system                 | Gradle (Kotlin DSL) with convention plugins in `buildSrc/`         |
-| Dependency catalog           | `gradle/libs.versions.toml`                                        |
-| Java                         | 21 (CI), 11 (target compatibility)                                 |
-| Serialization                | Moshi (with KSP codegen)                                           |
-| OTel                         | `io.opentelemetry.kotlin` (Kotlin-friendly OpenTelemetry wrappers) |
-| HTTP                         | OkHttp 4.x                                                         |
-| Configuration cache          | Enabled, problems=fail                                             |
+Gradle (Kotlin DSL) with convention plugins in `buildSrc/`. All versions — Kotlin, JVM target, minSdk/compileSdk, and every dependency
+— live in `gradle/libs.versions.toml` and `gradle.properties`; read those rather than a copy here. The SDK targets an older Kotlin and
+JVM level than it compiles with, so check `kotlinCoreLibrariesVersion` before using recent stdlib APIs.
 
 ### Key Commands
 
@@ -66,105 +54,33 @@ cd examples/ExampleApp && ./gradlew bundleRelease
 
 ## Module Architecture
 
-The project has several modules organized into layers:
+See `settings.gradle.kts` for the module list and each module's `README.md` for its purpose. Layering conventions worth knowing up
+front:
 
-### Public API Modules
-
-These use the `embrace-public-api-conventions` plugin, which enforces `kotlin.explicitApi()`,
-binary compatibility validation, and Dokka documentation.
-
-- **`embrace-android-api`** - Public API surface for SDK consumers (spans, logs, network, user, session APIs)
-- **`embrace-android-sdk`** - Main SDK entrypoint; aggregates all instrumentation and wires everything together
-- **`embrace-android-otel-java`** - Java-compatible OTel bindings
-
-### Core Implementation
-
-- **`embrace-android-core`** - Main implementation module; hidden from library consumers via `embrace-android-sdk`
-- **`embrace-android-infra`** - JVM-only core infrastructure types used across most modules (e.g., `InternalLogger`, `BackgroundWorker`,
-  `Clock`)
-- **`embrace-android-utils`** - Android Framework utilities
-- **`embrace-internal-api`** - APIs shared across Embrace modules and Embrace's React Native/Unity/Flutter SDKs, but not exposed to
-  consumers
-
-### Data & Delivery
-
-- **`embrace-android-payload`** - Data models for HTTP payloads (Moshi `@JsonClass` data classes)
-- **`embrace-android-envelope`** - Envelope wrapping for payloads
-- **`embrace-android-delivery`** - Telemetry delivery mechanism
-- **`embrace-android-config`** - Configuration management and remote config
-- **`embrace-android-telemetry-persistence`** - Disk persistence for telemetry data
-
-### OpenTelemetry
-
-- **`embrace-android-otel`** - OTel Kotlin SDK integration (spans, logs, exporters)
-
-### Instrumentation Modules (`embrace-android-instrumentation-*`)
-
-Each captures a specific type of telemetry. These include:
-`anr`, `app-exit-info`, `compose-tap`, `crash-jvm`, `crash-ndk`, `fcm`, `huc`, `huc-lite`,
-`network-common`, `network-status`, `okhttp`, `power-save`, `profiler`, `startup-trace`,
-`taps`, `thermal-state`, `view`, `webview`
-
-Instrumentation modules broadly follow this pattern:
-
-- Implement a data source class that extends framework types from `embrace-android-instrumentation-api`
-- Register with the `InstrumentationRegistry` in `embrace-android-core`
-- Use `SchemaType` from `embrace-android-instrumentation-schema` for telemetry attributes
-
-### Test Modules
-
-- **`embrace-test-common`** - Common test utilities
-- **`embrace-test-fakes`** - Shared fake implementations (see Testing section)
-- **`embrace-android-*-fakes`** - Module-specific fakes for `config`, `delivery`, `otel`, `instrumentation-api`
-
-### Build Tooling
-
-- **`embrace-gradle-plugin`** - Gradle plugin for bytecode instrumentation and uploading R8/Dexguard/SO/JS mapping files for getting
-  readable production stacktraces
-- **`embrace-gradle-plugin-integration-tests`** - Gradle TestKit-based integration tests
-- **`embrace-bytecode-instrumentation-tests`** - Bytecode instrumentation verification
-- **`embrace-lint`** - Custom Android Lint checks (applied via `lintChecks`)
+- `embrace-android-core` is the main implementation module and is hidden from library consumers behind `embrace-android-sdk`.
+- Modules using `embrace-public-api-conventions` are the consumer-facing surface, with `kotlin.explicitApi()`, binary compatibility
+  validation, and Dokka enforced.
+- `embrace-internal-api` is shared with Embrace's React Native/Unity/Flutter SDKs but is not exposed to app developers.
+- Each `embrace-android-instrumentation-*` module captures one type of telemetry, and they broadly follow this pattern:
+    - Implement a data source class that extends framework types from `embrace-android-instrumentation-api`
+    - Register with the `InstrumentationRegistry` in `embrace-android-core`
+    - Use `SchemaType` from `embrace-android-instrumentation-schema` for telemetry attributes
 
 ---
 
 ## Convention Plugins (`buildSrc/`)
 
-All modules use convention plugins instead of duplicating build configuration:
-
-| Plugin                             | Applies to                  | What it does                                                   |
-|------------------------------------|-----------------------------|----------------------------------------------------------------|
-| `embrace-common-conventions`       | All modules                 | Detekt, compiler settings, JVM target                          |
-| `embrace-android-conventions`      | Android library modules     | compileSdk, minSdk, lint, test config, Kotlin compiler options |
-| `embrace-jvm-conventions`          | JVM-only modules            | JVM compiler settings, test config                             |
-| `embrace-prod-android-conventions` | Publishable Android modules | Adds publishing + Kover on top of android-conventions          |
-| `embrace-prod-jvm-conventions`     | Publishable JVM modules     | Adds publishing + Kover on top of jvm-conventions              |
-| `embrace-public-api-conventions`   | Public API modules          | Explicit API mode, binary compatibility validator, Dokka       |
-| `embrace-publishing-conventions`   | All published modules       | Maven Central publishing via vanniktech plugin                 |
-
-When creating a new module, apply the appropriate convention plugin rather than configuring build settings directly.
+All modules use convention plugins instead of duplicating build configuration. When creating a new module, apply the appropriate
+convention plugin rather than configuring build settings directly — see `buildSrc/src/main/kotlin/embrace-*-conventions.gradle.kts`
+for the available plugins and what each applies.
 
 ---
 
 ## Code Style & Formatting
 
-### Enforced by Tooling
-
-- **Max line length**: 140 characters
-- **Detekt**: Zero-tolerance (`maxIssues: 0`), auto-correct enabled
-- **Kotlin compiler**: `allWarningsAsErrors = true`
-- **Android Lint**: `warningsAsErrors = true`, `abortOnError = true`
-- **Trailing commas**: Preferred on declaration sites and call sites
-
-### Key Detekt Rules
-
-- `BracesOnIfStatements`: Always required on multiline, consistent on single-line
-- `MandatoryBracesLoops`: Always required
-- `ForbiddenImport`: `android.util.Pair` is forbidden (use `kotlin.Pair`)
-- `ElseCaseInsteadOfExhaustiveWhen`: Prefer exhaustive `when` expressions
-- `DataClassShouldBeImmutable` / `DataClassContainsFunctions`: Enforced in `**/payload/**` packages
-- `UnusedImports`: Enforced
-- `SpacingBetweenPackageAndImports`: Enforced
-- Each module may have a `config/detekt/baseline.xml` for suppressed legacy issues
+> Formatting and style are enforced mechanically and the build fails on any violation: detekt (`config/detekt/`, zero-tolerance with
+> auto-correct), `.editorconfig`, `allWarningsAsErrors`, and Android Lint. Read those configs for the current rule set rather than
+> relying on a copy here.
 
 ### Conventions
 
@@ -243,14 +159,6 @@ InitModule -> CoreModule -> EssentialServiceModule -> ...
 - Each module's tests may also have local fakes in `src/test/kotlin/.../fakes/`
 - Mocks should not be used unless they are unavoidable
 
-### Test Configuration
-
-- `unitTests.isReturnDefaultValues = true` (Android methods return defaults instead of throwing)
-- `unitTests.isIncludeAndroidResources = true`
-- Max parallel forks: `(availableProcessors / 3) + 1`
-- Max heap: 2g
-- Uses AndroidX Test Orchestrator
-
 ### Integration-Test Flake Patterns
 
 Two recurring causes of intermittent failures in the `embrace-android-sdk` integration tests. Check for both when a test is flaky, and avoid them when writing new ones.
@@ -270,31 +178,6 @@ Payload **delivery order** is decided by `StoredTelemetryComparator` over the st
 - Any change to public API signatures will fail CI until `./gradlew apiDump` is run
 - Public API modules must have Dokka documentation; build fails on Dokka warnings
 - `internal` packages are suppressed in generated docs
-
----
-
-## Versioning & Publishing
-
-- Version is in `gradle.properties` (currently `8.2.0-SNAPSHOT`)
-- Published to Maven Central via vanniktech maven-publish plugin
-- Group ID: `io.embrace`
-- Artifact IDs match module names (e.g., `embrace-android-sdk`, `embrace-android-api`)
-- Snapshot publishing runs daily via CI
-- Release workflow: `create-release-branch.yml` -> `pre-release-workflow.yml` -> `upload-artifacts-to-maven-central.yml`
-
----
-
-## CI/CD
-
-- **Platform**: GitHub Actions
-- **Main CI** (`ci-gradle.yml`): Runs on push to `main` and all PRs
-    - Runs `./gradlew build` (includes compile, lint, detekt, unit tests)
-    - Runs `koverXmlReport` for code coverage
-    - Uploads coverage to Codecov
-    - Builds example app
-- **Java 21** on CI, uses Depot runners for non-dependabot builds
-- **Robolectric dependencies** are pre-fetched and cached
-- **Configuration cache** is enabled
 
 ---
 

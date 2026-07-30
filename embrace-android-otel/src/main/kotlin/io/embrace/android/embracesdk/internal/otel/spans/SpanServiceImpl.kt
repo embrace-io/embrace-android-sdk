@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
@@ -295,7 +296,11 @@ class SpanServiceImpl(
         events: List<SpanEvent>,
         errorCode: ErrorCodeAttribute?,
     ): Boolean {
-        if (startTimeMs > endTimeMs) {
+        // callers may supply nanosecond timestamps - normalize before validating so that the check below compares like with like
+        val validStartTimeMs = startTimeMs.normalizeTimestampAsMillis()
+        val validEndTimeMs = endTimeMs.normalizeTimestampAsMillis()
+
+        if (validStartTimeMs > validEndTimeMs) {
             return false
         }
 
@@ -315,7 +320,7 @@ class SpanServiceImpl(
                     openTelemetry = openTelemetry,
                 ),
             )
-            if (newSpan.start(startTimeMs)) {
+            if (newSpan.start(validStartTimeMs)) {
                 validAttributes.forEach {
                     newSpan.addAttribute(it.key, it.value)
                 }

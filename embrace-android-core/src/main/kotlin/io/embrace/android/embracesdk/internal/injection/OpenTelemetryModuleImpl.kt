@@ -15,9 +15,9 @@ import io.embrace.android.embracesdk.internal.otel.sdk.IdGenerator
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
+import io.embrace.android.embracesdk.internal.otel.spans.SpanServiceImpl
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl
@@ -121,14 +121,15 @@ class OpenTelemetryModuleImpl(
         internalSpanStopCallback = it::spanStopCallback
     }
 
-    override val spanService: SpanService = EmbraceSpanService(
+    override val spanService: SpanService = SpanServiceImpl(
         spanRepository = spanRepository,
         canStartNewSpan = currentSessionPartSpan::canStartNewSpan,
         initCallback = currentSessionPartSpan::initializeService,
         dataValidator = dataValidator,
+        embraceSpanFactory = embraceSpanFactory,
+        // supplied lazily (otelSdkWrapper is constructed with a reference to this service)
         tracerSupplier = { otelSdkWrapper.sdkTracer },
         openTelemetrySupplier = { otelSdkWrapper.openTelemetryKotlin },
-        embraceSpanFactorySupplier = { embraceSpanFactory },
     )
 
     override val tracingApi: TracingApi = TracingApiDelegate(

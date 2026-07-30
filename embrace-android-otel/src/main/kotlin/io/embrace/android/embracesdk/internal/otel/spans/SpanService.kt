@@ -42,20 +42,7 @@ interface SpanService : Initializable {
         internal: Boolean = true,
         private: Boolean = false,
         autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
-    ): EmbraceSdkSpan {
-        val newSpan = createSpan(
-            name = name,
-            parent = parent,
-            type = type,
-            internal = internal,
-            private = private,
-            autoTerminationMode = autoTerminationMode,
-        )
-        return when {
-            newSpan.start(startTimeMs) -> newSpan
-            else -> NoopEmbraceSdkSpan
-        }
-    }
+    ): EmbraceSdkSpan
 
     /**
      * Records a span around the execution of the given lambda. If the lambda throws an uncaught exception, it will be recorded as a

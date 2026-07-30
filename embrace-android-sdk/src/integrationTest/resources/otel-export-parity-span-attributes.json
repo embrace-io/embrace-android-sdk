@@ -1,30 +1,34 @@
 [
   {
-    "name": "test-span",
-    "kind": "INTERNAL",
-    "status": "UNSET",
+    "name": "renamed-span",
+    "kind": "CLIENT",
+    "status": "OK",
     "startEpochNanos": "169220160030000000",
-    "endEpochNanos": "169220160030000000",
+    "endEpochNanos": "169220161030000000",
     "hasEnded": "true",
     "parentSpanName": "",
-    "totalAttributeCount": "7",
+    "totalAttributeCount": "17",
     "attributes": {
+      "any-value-attr": "StringValue(value=wrapped)",
+      "boolean-attr": "true",
+      "boolean-list-attr": "[true, false]",
+      "byte-array-attr": "[1, 2, 3]",
+      "created-with": "attribute",
+      "double-attr": "1.5",
+      "double-list-attr": "[1.5, 2.5]",
       "emb.private.sequence_id": "__EMBRACE_TEST_IGNORE__",
       "emb.process_identifier": "__EMBRACE_TEST_IGNORE__",
       "emb.session_part_id": "__EMBRACE_TEST_IGNORE__",
       "emb.type": "perf",
       "emb.user_session_id": "__EMBRACE_TEST_IGNORE__",
-      "my-attribute": "my-value",
-      "session.id": "__EMBRACE_TEST_IGNORE__"
+      "long-attr": "42",
+      "long-list-attr": "[1, 2]",
+      "session.id": "__EMBRACE_TEST_IGNORE__",
+      "string-attr": "value",
+      "string-list-attr": "[a, b]"
     },
-    "totalRecordedEvents": "1",
-    "events": [
-      {
-        "name": "my-event",
-        "epochNanos": "169220160030000000",
-        "attributes": {}
-      }
-    ],
+    "totalRecordedEvents": "0",
+    "events": [],
     "totalRecordedLinks": "1",
     "links": [
       {
@@ -37,7 +41,7 @@
         }
       }
     ],
-    "instrumentationScopeName": "io.embrace.android.embracesdk.core",
+    "instrumentationScopeName": "external-tracer",
     "resourceAttributes": {
       "android.os.api_level": "35",
       "device.manufacturer": "Fake Manufacturer",

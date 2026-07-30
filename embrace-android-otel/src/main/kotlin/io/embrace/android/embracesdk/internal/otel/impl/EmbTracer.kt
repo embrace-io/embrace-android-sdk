@@ -21,8 +21,9 @@ class EmbTracer(
     private val openTelemetry: OpenTelemetry,
     private val spanService: SpanService,
     private val clock: Clock,
-    private val useKotlinSdk: Boolean,
 ) : Tracer {
+
+    override fun enabled(): Boolean = impl.enabled()
 
     override fun startSpan(
         name: String,
@@ -37,7 +38,7 @@ class EmbTracer(
             internal = false,
             private = false,
             tracer = impl,
-            parentCtx = parentContext ?: openTelemetry.getDefaultContext(useKotlinSdk),
+            parentCtx = parentContext ?: openTelemetry.getDefaultContext(),
             openTelemetry = openTelemetry,
             spanKind = spanKind,
             startTimeMs = startTimestamp?.nanosToMillis(),

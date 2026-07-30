@@ -1,47 +1,16 @@
 package io.embrace.android.embracesdk.testframework.export
 
-import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.aliases.OtelJavaSpanData
 import io.opentelemetry.kotlin.semconv.SessionAttributes
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.booleanOrNull
-import kotlinx.serialization.json.doubleOrNull
-import kotlinx.serialization.json.longOrNull
 import org.junit.Assert.assertEquals
 
 internal class ExportedSpanValidator {
 
     fun validate(spanDataList: List<OtelJavaSpanData>, goldenFile: String) {
-        val expected: List<Map<String, Any>> = readExpectedSpan(goldenFile)
+        val expected: List<Map<String, Any>> = readGoldenFile(goldenFile)
         val actual = spanDataList.map { it.representAsMap() }
         assertEquals(expected, actual)
-    }
-
-    private fun readExpectedSpan(goldenFile: String): List<Map<String, Any>> {
-        val text = ResourceReader.readResource(goldenFile).bufferedReader().use { it.readText() }
-        @Suppress("UNCHECKED_CAST")
-        return Json.parseToJsonElement(text).toAny() as List<Map<String, Any>>
-    }
-
-    /**
-     * Recursively unwrap a [JsonElement] tree into plain Kotlin types (`String`, `Long`, `Double`,
-     * `Boolean`, `Map<String, Any>`, `List<Any>`). JSON nulls are rendered as the string `"null"`
-     * to preserve `Map<String, Any>` non-nullability.
-     */
-    private fun JsonElement.toAny(): Any = when (this) {
-        JsonNull -> "null"
-        is JsonObject -> mapValues { (_, v) -> v.toAny() }
-        is JsonArray -> map { it.toAny() }
-        is JsonPrimitive -> when {
-            isString -> content
-            else -> booleanOrNull ?: longOrNull ?: doubleOrNull ?: content
-        }
     }
 
     private fun OtelJavaSpanData.representAsMap(): Map<String, Any> {

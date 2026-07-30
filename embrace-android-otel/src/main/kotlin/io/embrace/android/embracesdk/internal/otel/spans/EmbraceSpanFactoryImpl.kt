@@ -36,16 +36,15 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 class EmbraceSpanFactoryImpl(
-    private val openTelemetryClock: Clock,
-    private val spanRepository: SpanRepository,
-    private val dataValidator: DataValidator,
-    private val stopCallback: ((spanId: String) -> Unit)? = null,
-    private var redactionFunction: ((key: String, value: String) -> String)? = null,
-    private val telemetryService: TelemetryService,
+    openTelemetryClock: Clock,
+    spanRepository: SpanRepository,
+    dataValidator: DataValidator,
+    stopCallback: ((spanId: String) -> Unit)? = null,
+    redactionFunction: ((key: String, value: String) -> String)? = null,
+    telemetryService: TelemetryService,
 ) : EmbraceSpanFactory {
 
-    override fun create(otelSpanStartArgs: OtelSpanStartArgs): EmbraceSdkSpan = EmbraceSpanImpl(
-        otelSpanStartArgs = otelSpanStartArgs,
+    private val deps = SpanDependencies(
         openTelemetryClock = openTelemetryClock,
         spanRepository = spanRepository,
         dataValidator = dataValidator,
@@ -53,19 +52,40 @@ class EmbraceSpanFactoryImpl(
         redactionFunction = redactionFunction,
         telemetryService = telemetryService,
     )
+
+    override fun create(otelSpanStartArgs: OtelSpanStartArgs): EmbraceSdkSpan = EmbraceSpanImpl(
+        otelSpanStartArgs = otelSpanStartArgs,
+        deps = deps,
+    )
 }
+
+/**
+ * Optimization so that each span only carries a single reference in memory rather than one for
+ * each field
+ */
+private class SpanDependencies(
+    val openTelemetryClock: Clock,
+    val spanRepository: SpanRepository,
+    val dataValidator: DataValidator,
+    val stopCallback: ((spanId: String) -> Unit)?,
+    val redactionFunction: ((key: String, value: String) -> String)?,
+    val telemetryService: TelemetryService,
+)
 
 private const val SPAN_LINK_TELEMETRY_TYPE = "span_link"
 private const val SPAN_EVENT_TELEMETRY_TYPE = "span_event"
 
+/**
+ * Sentinel for a start/end time that has not been recorded.
+ */
+private const val UNSET_TIME = 0L
+
+// StatusData is immutable, so the description-less error status can be shared rather than allocated per span
+private val ERROR_STATUS = StatusData.Error(null)
+
 private class EmbraceSpanImpl(
     otelSpanStartArgs: OtelSpanStartArgs,
-    private val openTelemetryClock: Clock,
-    private val spanRepository: SpanRepository,
-    private val dataValidator: DataValidator,
-    private val stopCallback: ((spanId: String) -> Unit)?,
-    private val redactionFunction: ((key: String, value: String) -> String)?,
-    private val telemetryService: TelemetryService,
+    private val deps: SpanDependencies,
 ) : EmbraceSdkSpan {
     private val internal: Boolean = otelSpanStartArgs.internal
 
@@ -76,11 +96,12 @@ private class EmbraceSpanImpl(
 
     private val startedSpan: AtomicReference<Span?> = AtomicReference(null)
 
+    // stored as primitives rather than nullable Longs to avoid boxing
     @Volatile
-    private var spanStartTimeMs: Long? = otelSpanStartArgs.startTimeMs
+    private var spanStartTimeMs: Long = otelSpanStartArgs.startTimeMs ?: UNSET_TIME
 
     @Volatile
-    private var spanEndTimeMs: Long? = null
+    private var spanEndTimeMs: Long = UNSET_TIME
 
     override val autoTerminationMode: AutoTerminationMode = otelSpanStartArgs.autoTerminationMode
 
@@ -99,19 +120,29 @@ private class EmbraceSpanImpl(
                 synchronized(startedSpan) {
                     sdkSpan.setStatus(value)
                     currentStatus = value
-                    spanRepository.notifySpanUpdate()
+                    deps.spanRepository.notifySpanUpdate()
                 }
             }
         }
 
-    private val systemEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
-    private val customEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
+    // Retained only until the span stops, then nulled out to release the queues. Nulling rather than
+    // clearing keeps the release constant time, as clear() is O(n) on a ConcurrentLinkedQueue.
+    @Volatile
+    private var systemEvents: Queue<EmbraceSpanEvent>? = ConcurrentLinkedQueue()
+
+    @Volatile
+    private var customEvents: Queue<EmbraceSpanEvent>? = ConcurrentLinkedQueue()
+
+    @Volatile
+    private var systemLinks: Queue<EmbraceLinkData>? = ConcurrentLinkedQueue()
+
+    @Volatile
+    private var customLinks: Queue<EmbraceLinkData>? = ConcurrentLinkedQueue()
+
     private val systemAttributes = ConcurrentHashMap<String, String>(otelSpanStartArgs.embraceAttributes.size).apply {
         otelSpanStartArgs.embraceAttributes.forEach { put(it.key, it.value) }
     }
     private val customAttributes = ConcurrentHashMap<String, String>()
-    private val systemLinks = ConcurrentLinkedQueue<EmbraceLinkData>()
-    private val customLinks = ConcurrentLinkedQueue<EmbraceLinkData>()
 
     // size for ConcurrentLinkedQueues is not a constant operation, so it could be subject to race conditions
     // do the bookkeeping separately so we don't have to worry about this
@@ -141,9 +172,12 @@ private class EmbraceSpanImpl(
             return false
         }
 
-        val attemptedStartTimeMs =
-            (startTimeMs?.normalizeTimestampAsMillis() ?: spanStartTimeMs)?.takeIf { it > 0 }
-                ?: openTelemetryClock.now().nanosToMillis()
+        val requestedStartTimeMs = startTimeMs?.normalizeTimestampAsMillis() ?: spanStartTimeMs
+        val attemptedStartTimeMs = if (requestedStartTimeMs > UNSET_TIME) {
+            requestedStartTimeMs
+        } else {
+            deps.openTelemetryClock.now().nanosToMillis()
+        }
 
         synchronized(startedSpan) {
             val args = startArgs ?: return false
@@ -155,22 +189,25 @@ private class EmbraceSpanImpl(
                 return false
             }
 
-            spanRepository.trackStartedEmbraceSpan(this)
+            deps.spanRepository.trackStartedEmbraceSpan(this)
             newSpan.setName(spanName)
 
             spanStartTimeMs = attemptedStartTimeMs
-            spanRepository.notifySpanUpdate()
+            deps.spanRepository.notifySpanUpdate()
         }
 
         return true
     }
 
-    override fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean {
+    override fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean =
+        stopWithErrorCode(errorCode?.toErrorCodeAttribute(), endTimeMs)
+
+    override fun stopWithErrorCode(errorCode: ErrorCodeAttribute?, endTimeMs: Long?): Boolean {
         if (!isRecording) {
             return false
         }
         var successful = false
-        val attemptedEndTimeMs = endTimeMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis()
+        val attemptedEndTimeMs = endTimeMs?.normalizeTimestampAsMillis() ?: deps.openTelemetryClock.now().nanosToMillis()
 
         synchronized(startedSpan) {
             if (!isRecording) {
@@ -178,10 +215,10 @@ private class EmbraceSpanImpl(
             }
 
             startedSpan.get()?.let { spanToStop ->
-                spanId?.let { stopCallback?.invoke(it) }
+                spanId?.let { deps.stopCallback?.invoke(it) }
                 if (errorCode != null) {
-                    status = StatusData.Error(null)
-                    spanToStop.setEmbraceAttribute(errorCode.toEmbraceErrorCode())
+                    status = ERROR_STATUS
+                    spanToStop.setEmbraceAttribute(errorCode)
                 } else if (status is StatusData.Error) {
                     spanToStop.setEmbraceAttribute(ErrorCodeAttribute.Failure)
                 }
@@ -195,7 +232,8 @@ private class EmbraceSpanImpl(
                 successful = !isRecording
                 if (successful) {
                     spanEndTimeMs = attemptedEndTimeMs
-                    spanRepository.notifySpanUpdate()
+                    deps.spanRepository.notifySpanUpdate()
+                    releaseRetainedData()
                 }
             }
         }
@@ -203,24 +241,40 @@ private class EmbraceSpanImpl(
         return successful
     }
 
-    private fun ErrorCode.toEmbraceErrorCode(): ErrorCodeAttribute = when (this) {
-        ErrorCode.FAILURE -> ErrorCodeAttribute.Failure
-        ErrorCode.USER_ABANDON -> ErrorCodeAttribute.UserAbandon
-        ErrorCode.UNKNOWN -> ErrorCodeAttribute.Unknown
+    /**
+     * Once a span has stopped it has been exported to an independent [Span] payload, so its own
+     * event/link collections are redundant. Drop the references to allow GC on the collections during
+     * the remainder of the session part.
+     */
+    private fun releaseRetainedData() {
+        systemEvents = null
+        customEvents = null
+        systemLinks = null
+        customLinks = null
     }
 
     override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>): Boolean =
-        addObject(customEvents, customEventCount, dataValidator.otelLimitsConfig.getMaxCustomEventCount(), SPAN_EVENT_TELEMETRY_TYPE) {
-            dataValidator.createTruncatedSpanEvent(
+        addObject(
+            queue = customEvents,
+            count = customEventCount,
+            max = deps.dataValidator.otelLimitsConfig.getMaxCustomEventCount(),
+            telemetryType = SPAN_EVENT_TELEMETRY_TYPE,
+        ) {
+            deps.dataValidator.createTruncatedSpanEvent(
                 name = name,
-                timestampMs = timestampMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis(),
+                timestampMs = timestampMs?.normalizeTimestampAsMillis() ?: deps.openTelemetryClock.now().nanosToMillis(),
                 internal = internal,
                 attributes = attributes,
             )
         }
 
     override fun recordException(exception: Throwable, attributes: Map<String, String>): Boolean =
-        addObject(customEvents, customEventCount, dataValidator.otelLimitsConfig.getMaxCustomEventCount(), SPAN_EVENT_TELEMETRY_TYPE) {
+        addObject(
+            queue = customEvents,
+            count = customEventCount,
+            max = deps.dataValidator.otelLimitsConfig.getMaxCustomEventCount(),
+            telemetryType = SPAN_EVENT_TELEMETRY_TYPE,
+        ) {
             val eventAttributes = mutableMapOf<String, String>()
             eventAttributes.putAll(attributes)
 
@@ -234,43 +288,49 @@ private class EmbraceSpanImpl(
 
             eventAttributes[ExceptionAttributes.EXCEPTION_STACKTRACE] = exception.truncatedStacktraceText()
 
-            dataValidator.createTruncatedSpanEvent(
-                name = dataValidator.otelLimitsConfig.getExceptionEventName(),
-                timestampMs = openTelemetryClock.now().nanosToMillis(),
+            deps.dataValidator.createTruncatedSpanEvent(
+                name = deps.dataValidator.otelLimitsConfig.getExceptionEventName(),
+                timestampMs = deps.openTelemetryClock.now().nanosToMillis(),
                 internal = internal,
                 attributes = eventAttributes,
             )
         }
 
     override fun addSystemEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
-        addObject(systemEvents, systemEventCount, dataValidator.otelLimitsConfig.getMaxSystemEventCount(), SPAN_EVENT_TELEMETRY_TYPE) {
-            dataValidator.createTruncatedSpanEvent(
+        addObject(
+            queue = systemEvents,
+            count = systemEventCount,
+            max = deps.dataValidator.otelLimitsConfig.getMaxSystemEventCount(),
+            telemetryType = SPAN_EVENT_TELEMETRY_TYPE,
+        ) {
+            deps.dataValidator.createTruncatedSpanEvent(
                 name = name,
-                timestampMs = timestampMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis(),
+                timestampMs = timestampMs?.normalizeTimestampAsMillis() ?: deps.openTelemetryClock.now().nanosToMillis(),
                 internal = internal,
                 attributes = attributes ?: emptyMap(),
             )
         }
 
-    override fun getStartTimeMs(): Long? = spanStartTimeMs
+    override fun getStartTimeMs(): Long? = spanStartTimeMs.takeIf { it > UNSET_TIME }
 
     override fun addAttribute(key: String, value: String): Boolean {
-        if (customAttributes.size < dataValidator.otelLimitsConfig.getMaxCustomAttributeCount() && key.isNotBlank()) {
+        val maxAttributeCount = deps.dataValidator.otelLimitsConfig.getMaxCustomAttributeCount()
+        if (customAttributes.size < maxAttributeCount && key.isNotBlank()) {
             synchronized(customAttributes) {
-                if (customAttributes.size < dataValidator.otelLimitsConfig.getMaxCustomAttributeCount() && isRecording) {
-                    val attribute = dataValidator.truncateAttribute(
+                if (customAttributes.size < maxAttributeCount && isRecording) {
+                    val attribute = deps.dataValidator.truncateAttribute(
                         key = key,
                         value = value,
                         internal = internal,
                     )
                     customAttributes[attribute.first] = attribute.second
-                    spanRepository.notifySpanUpdate()
+                    deps.spanRepository.notifySpanUpdate()
                     return true
                 }
             }
         }
 
-        telemetryService.trackAppliedLimit("span_attribute", AppliedLimitType.DROP)
+        deps.telemetryService.trackAppliedLimit("span_attribute", AppliedLimitType.DROP)
         return false
     }
 
@@ -280,7 +340,7 @@ private class EmbraceSpanImpl(
                 if (!spanStarted() || isRecording) {
                     spanName = newName
                     startedSpan.get()?.setName(spanName)
-                    spanRepository.notifySpanUpdate()
+                    deps.spanRepository.notifySpanUpdate()
                     return true
                 }
             }
@@ -290,13 +350,17 @@ private class EmbraceSpanImpl(
     }
 
     override fun addSystemLink(linkedSpanContext: SpanContext, type: LinkType, attributes: Map<String, String>): Boolean =
-        addObject(systemLinks, systemLinkCount, dataValidator.otelLimitsConfig.getMaxSystemLinkCount(), SPAN_LINK_TELEMETRY_TYPE) {
-            val attrs = mutableMapOf(type.key to type.value)
-            EmbraceLinkData(linkedSpanContext, attrs.apply { putAll(attributes) })
+        addObject(systemLinks, systemLinkCount, deps.dataValidator.otelLimitsConfig.getMaxSystemLinkCount(), SPAN_LINK_TELEMETRY_TYPE) {
+            // built in place to avoid the vararg array and Pair that mutableMapOf(type.key to type.value) allocates
+            val attrs = buildMap(attributes.size + 1) {
+                put(type.key, type.value)
+                putAll(attributes)
+            }
+            EmbraceLinkData(linkedSpanContext, attrs)
         }
 
     override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>): Boolean =
-        addObject(customLinks, customLinkCount, dataValidator.otelLimitsConfig.getMaxCustomLinkCount(), SPAN_LINK_TELEMETRY_TYPE) {
+        addObject(customLinks, customLinkCount, deps.dataValidator.otelLimitsConfig.getMaxCustomLinkCount(), SPAN_LINK_TELEMETRY_TYPE) {
             EmbraceLinkData(linkedSpanContext, attributes)
         }
 
@@ -313,8 +377,8 @@ private class EmbraceSpanImpl(
                 spanId = spanId,
                 parentSpanId = parent?.spanId ?: OtelIds.INVALID_SPAN_ID,
                 name = name(),
-                startTimeNanos = spanStartTimeMs?.millisToNanos(),
-                endTimeNanos = spanEndTimeMs?.millisToNanos(),
+                startTimeNanos = spanStartTimeMs.takeIf { it > UNSET_TIME }?.millisToNanos(),
+                endTimeNanos = spanEndTimeMs.takeIf { it > UNSET_TIME }?.millisToNanos(),
                 status = status.toEmbracePayload(),
                 events = events(),
                 attributes = getAttributesPayload(),
@@ -336,12 +400,12 @@ private class EmbraceSpanImpl(
 
     override fun addSystemAttribute(key: String, value: String) {
         systemAttributes[key] = value
-        spanRepository.notifySpanUpdate()
+        deps.spanRepository.notifySpanUpdate()
     }
 
     override fun removeSystemAttribute(key: String) {
         systemAttributes.remove(key)
-        spanRepository.notifySpanUpdate()
+        deps.spanRepository.notifySpanUpdate()
     }
 
     override fun attributes(): Map<String, Any> {
@@ -356,49 +420,49 @@ private class EmbraceSpanImpl(
 
     override val spanKind: SpanKind = otelSpanStartArgs.spanKind ?: SpanKind.INTERNAL
 
-    override fun events(): List<SpanEvent> {
-        val redactedCustomEvents = customEvents.mapNotNull {
-            EmbraceSpanEvent.create(
-                name = it.name,
-                timestampMs = it.timestampNanos.nanosToMillis(),
-                attributes = it.attributes.redactIfSensitive(),
-            )
-        }
-        return systemEvents.map(EmbraceSpanEvent::toEmbracePayload) +
-            redactedCustomEvents.map(EmbraceSpanEvent::toEmbracePayload)
-    }
+    override fun events(): List<SpanEvent> =
+        (systemEvents.orEmpty() + redactCustomEvents()).map(EmbraceSpanEvent::toEmbracePayload)
 
-    override fun links(): List<Link> {
-        val redactedCustomLinks = customLinks.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
-        return (systemLinks + redactedCustomLinks).map(EmbraceLinkData::toEmbracePayload)
-    }
+    override fun links(): List<Link> =
+        (systemLinks.orEmpty() + redactCustomLinks()).map(EmbraceLinkData::toEmbracePayload)
+
+    private fun redactCustomEvents(): List<EmbraceSpanEvent> = customEvents?.mapNotNull {
+        EmbraceSpanEvent.create(
+            name = it.name,
+            timestampMs = it.timestampNanos.nanosToMillis(),
+            attributes = it.attributes.redactIfSensitive(),
+        )
+    }.orEmpty()
+
+    private fun redactCustomLinks(): List<EmbraceLinkData> =
+        customLinks?.map { it.copy(attributes = it.attributes.redactIfSensitive()) }.orEmpty()
 
     private fun getAttributesPayload(): List<Attribute> =
         systemAttributes.map { Attribute(it.key, it.value) } + customAttributes.redactIfSensitive().toEmbracePayload()
 
-    private fun canSnapshot(): Boolean = spanId != null && spanStartTimeMs != null
+    private fun canSnapshot(): Boolean = spanId != null && spanStartTimeMs > UNSET_TIME
 
     private fun <T> addObject(
-        queue: Queue<T>,
+        queue: Queue<T>?,
         count: AtomicInteger,
         max: Int,
         telemetryType: String,
         objectSupplier: () -> T?,
     ): Boolean {
-        if (count.get() < max) {
+        if (queue != null && count.get() < max) {
             synchronized(count) {
                 if (count.get() < max && isRecording) {
                     objectSupplier()?.apply {
                         queue.add(this)
                         count.incrementAndGet()
-                        spanRepository.notifySpanUpdate()
+                        deps.spanRepository.notifySpanUpdate()
                         return true
                     }
                 }
             }
         }
 
-        telemetryService.trackAppliedLimit(telemetryType, AppliedLimitType.DROP)
+        deps.telemetryService.trackAppliedLimit(telemetryType, AppliedLimitType.DROP)
         return false
     }
 
@@ -406,7 +470,7 @@ private class EmbraceSpanImpl(
 
     private fun Map<String, String>.redactIfSensitive(): Map<String, String> {
         return mapValues {
-            redactionFunction?.invoke(it.key, it.value) ?: it.value
+            deps.redactionFunction?.invoke(it.key, it.value) ?: it.value
         }
     }
 
@@ -420,15 +484,15 @@ private class EmbraceSpanImpl(
     }
 
     private fun populateEvents(spanToStop: Span) {
-        val redactedCustomEvents = customEvents.mapNotNull {
+        val redactedCustomEvents = customEvents.orEmpty().mapNotNull {
             EmbraceSpanEvent.create(
                 name = it.name,
                 timestampMs = it.timestampNanos.nanosToMillis(),
                 attributes = it.attributes.redactIfSensitive(),
             )
         }
-        (systemEvents + redactedCustomEvents).forEach { event ->
-            val eventAttributes = dataValidator.truncateAttributes(event.attributes, internal)
+        (systemEvents.orEmpty() + redactedCustomEvents).forEach { event ->
+            val eventAttributes = deps.dataValidator.truncateAttributes(event.attributes, internal)
 
             spanToStop.addEvent(
                 name = event.name,
@@ -440,10 +504,10 @@ private class EmbraceSpanImpl(
     }
 
     private fun populateLinks(spanToStop: Span) {
-        val redactedCustomLinks = customLinks.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
+        val redactedCustomLinks = customLinks.orEmpty().map { it.copy(attributes = it.attributes.redactIfSensitive()) }
 
-        (systemLinks + redactedCustomLinks).forEach {
-            val linkAttributes = dataValidator.truncateAttributes(it.attributes, false)
+        (systemLinks.orEmpty() + redactedCustomLinks).forEach {
+            val linkAttributes = deps.dataValidator.truncateAttributes(it.attributes, false)
             spanToStop.addLink(it.spanContext) {
                 setAttributes(linkAttributes)
             }
@@ -451,7 +515,7 @@ private class EmbraceSpanImpl(
     }
 
     private fun validateName(name: String) =
-        dataValidator.truncateName(
+        deps.dataValidator.truncateName(
             name = name,
             internal = internal,
         )

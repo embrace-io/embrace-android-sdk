@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceLinkData
@@ -16,7 +17,6 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.Clock
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.semconv.SessionAttributes
@@ -169,7 +169,7 @@ internal class CurrentSessionPartSpanImpl(
                         appTerminationCause.key,
                         appTerminationCause.value,
                     )
-                    endingSessionPartSpan.stop(errorCode = ErrorCode.FAILURE, endTimeMs = crashTime)
+                    endingSessionPartSpan.stopWithErrorCode(errorCode = ErrorCodeAttribute.Failure, endTimeMs = crashTime)
                 }
                 spanRepository.flushOtelSpans()
             } else {

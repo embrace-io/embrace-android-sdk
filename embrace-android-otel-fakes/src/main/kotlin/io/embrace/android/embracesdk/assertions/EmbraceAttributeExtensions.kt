@@ -1,12 +1,12 @@
 
 package io.embrace.android.embracesdk.assertions
 
-import io.embrace.android.embracesdk.fakes.fromErrorCode
 import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.payload.Attribute
+import io.embrace.android.embracesdk.internal.otel.spans.toErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.ErrorCode
 import org.junit.Assert.assertEquals
@@ -41,7 +41,7 @@ fun Span.assertDoesNotHaveEmbraceAttribute(embraceAttribute: EmbraceAttribute) {
 
 fun Span.assertError(errorCode: ErrorCode) {
     assertEquals(Span.Status.ERROR, status)
-    assertHasEmbraceAttribute(errorCode.fromErrorCode())
+    assertHasEmbraceAttribute(errorCode.toErrorCodeAttribute())
 }
 
 fun Span.assertSuccessful() {

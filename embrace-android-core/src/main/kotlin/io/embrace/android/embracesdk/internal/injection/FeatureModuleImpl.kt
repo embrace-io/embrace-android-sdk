@@ -16,7 +16,7 @@ class FeatureModuleImpl(
     storageService: StorageService,
 ) : FeatureModule {
 
-    override val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource> by singleton {
+    override val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource> by lazy {
         DataSourceState(
             factory = {
                 BreadcrumbDataSource(instrumentationModule.instrumentationArgs)
@@ -26,7 +26,7 @@ class FeatureModuleImpl(
         }
     }
 
-    override val internalErrorDataSource: DataSourceState<InternalErrorDataSource> by singleton {
+    override val internalErrorDataSource: DataSourceState<InternalErrorDataSource> by lazy {
         DataSourceState<InternalErrorDataSource>(
             factory = {
                 InternalErrorDataSourceImpl(instrumentationModule.instrumentationArgs)
@@ -37,14 +37,9 @@ class FeatureModuleImpl(
         }
     }
 
-    override val lastRunCrashVerifier: LastRunCrashVerifier by singleton {
-        LastRunCrashVerifier(crashMarker)
-    }
+    override val crashMarker: CrashFileMarker = CrashFileMarkerImpl(
+        lazy { storageService.getFileForWrite(CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME) },
+    )
 
-    override val crashMarker: CrashFileMarker by singleton {
-        val markerFile = lazy {
-            storageService.getFileForWrite(CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME)
-        }
-        CrashFileMarkerImpl(markerFile)
-    }
+    override val lastRunCrashVerifier: LastRunCrashVerifier = LastRunCrashVerifier(crashMarker)
 }

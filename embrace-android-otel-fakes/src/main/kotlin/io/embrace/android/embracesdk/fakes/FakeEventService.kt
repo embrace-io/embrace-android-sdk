@@ -1,10 +1,8 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.otel.logs.EventService
-import io.embrace.android.embracesdk.internal.utils.Provider
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.context.Context
-import io.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.kotlin.logging.SeverityNumber
 
 class FakeEventService : EventService {
@@ -12,7 +10,6 @@ class FakeEventService : EventService {
     var initTime: Long? = null
 
     override fun log(
-        impl: Logger?,
         eventName: String?,
         body: String?,
         timestamp: Long?,
@@ -20,12 +17,10 @@ class FakeEventService : EventService {
         context: Context?,
         severityNumber: SeverityNumber?,
         severityText: String?,
-        addCurrentMetadata: Boolean,
         eventAttributes: (AttributesMutator.() -> Unit)?,
     ) {
         eventData.add(
             FakeEventData(
-                logger = impl,
                 eventName = eventName,
                 body = body,
                 timestamp = timestamp,
@@ -33,13 +28,9 @@ class FakeEventService : EventService {
                 context = context,
                 severityNumber = severityNumber,
                 severityText = severityText,
-                addCurrentMetadata = addCurrentMetadata,
                 attributes = eventAttributes
             )
         )
-    }
-
-    override fun setMetadataProvider(provider: Provider<Map<String, String>>) {
     }
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
@@ -49,7 +40,6 @@ class FakeEventService : EventService {
     override fun initialized(): Boolean = true
 
     data class FakeEventData(
-        val logger: Logger?,
         val eventName: String?,
         val body: String?,
         val timestamp: Long?,
@@ -57,7 +47,6 @@ class FakeEventService : EventService {
         val context: Context?,
         val severityNumber: SeverityNumber?,
         val severityText: String?,
-        val addCurrentMetadata: Boolean,
         val attributes: (AttributesMutator.() -> Unit)?,
     )
 }

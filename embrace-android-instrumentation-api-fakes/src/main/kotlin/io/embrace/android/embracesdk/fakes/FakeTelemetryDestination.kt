@@ -27,7 +27,6 @@ class FakeTelemetryDestination(
         severity: LogSeverity,
         message: String,
         isPrivate: Boolean,
-        addCurrentSessionInfo: Boolean,
         timestampMs: Long?,
     ) {
         logEvents.add(FakeLogData(schemaType, severity, message))

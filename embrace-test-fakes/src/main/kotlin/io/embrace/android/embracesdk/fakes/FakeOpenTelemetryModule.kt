@@ -34,6 +34,7 @@ class FakeOpenTelemetryModule(
             appVersion = "1.0.0",
             packageName = "com.test.app",
             systemInfo = systemInfo,
+            uuidSource = TestUuidSource(),
         )
 
     override val eventService: EventService = FakeEventService()
@@ -45,7 +46,6 @@ class FakeOpenTelemetryModule(
             otelClock = FakeOtelKotlinClock(),
             configuration = otelSdkConfig,
             spanService = spanService,
-            eventService = FakeEventService(),
             useKotlinSdk = useKotlinSdk,
         )
 
@@ -61,6 +61,10 @@ class FakeOpenTelemetryModule(
     }
 
     override fun setUserIdProvider(userIdProvider: () -> String?) {
+        // no-op
+    }
+
+    override fun setEventMetadataProvider(eventMetadataProvider: () -> Map<String, String>) {
         // no-op
     }
 }

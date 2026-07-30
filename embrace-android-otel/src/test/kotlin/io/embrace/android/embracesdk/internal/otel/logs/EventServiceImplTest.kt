@@ -1,38 +1,27 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
-import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.opentelemetry.kotlin.logging.SeverityNumber
-import io.opentelemetry.kotlin.semconv.LogAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
 class EventServiceImplTest {
-    val sessionAttributeName = "session-attr"
     lateinit var sdkLogger: FakeOpenTelemetryLogger
     lateinit var impl: EventServiceImpl
 
     @Before
     fun setup() {
         sdkLogger = FakeOpenTelemetryLogger()
-        impl = EventServiceImpl(
-            sdkLoggerProvider = { sdkLogger },
-            uuidSource = TestUuidSource(),
-        )
+        impl = EventServiceImpl(sdkLoggerProvider = { sdkLogger })
         impl.initializeService(100L)
-        impl.setMetadataProvider { mapOf(sessionAttributeName to "foo") }
     }
 
     @Test
     fun `event service needs initialization`() {
-        val notInitializedLogger = EventServiceImpl(
-            sdkLoggerProvider = { sdkLogger },
-            uuidSource = TestUuidSource(),
-        )
+        val notInitializedLogger = EventServiceImpl(sdkLoggerProvider = { sdkLogger })
         assertFalse(notInitializedLogger.initialized())
         notInitializedLogger.log(
             eventName = null,
@@ -42,14 +31,13 @@ class EventServiceImplTest {
             context = null,
             severityNumber = SeverityNumber.ERROR,
             severityText = "boo",
-            addCurrentMetadata = true,
         ) { }
 
         assertTrue(sdkLogger.logs.isEmpty())
     }
 
     @Test
-    fun `check expected values added to every event`() {
+    fun `event emitted with the given values`() {
         assertTrue(impl.initialized())
         impl.log(
             eventName = "my.event",
@@ -59,7 +47,6 @@ class EventServiceImplTest {
             context = null,
             severityNumber = SeverityNumber.ERROR,
             severityText = "boo",
-            addCurrentMetadata = true,
         ) {
             setStringAttribute("custom", "attr")
         }
@@ -72,46 +59,6 @@ class EventServiceImplTest {
             assertEquals(SeverityNumber.ERROR, severityNumber)
             assertEquals("boo", severityText)
             assertEquals("attr", attributes["custom"])
-            assertEquals("foo", attributes[sessionAttributeName])
-            assertNotNull(attributes[LogAttributes.LOG_RECORD_UID])
-        }
-    }
-
-    @Test
-    fun `existing log id not overridden`() {
-        impl.log(
-            eventName = null,
-            body = "test",
-            timestamp = 1000L,
-            observedTimestamp = 1005L,
-            context = null,
-            severityNumber = SeverityNumber.ERROR,
-            severityText = "boo",
-            addCurrentMetadata = true,
-        ) {
-            setStringAttribute(LogAttributes.LOG_RECORD_UID, "foo")
-        }
-
-        with(sdkLogger.logs.single()) {
-            assertEquals("foo", attributes[LogAttributes.LOG_RECORD_UID])
-        }
-    }
-
-    @Test
-    fun `current metadata added only requested`() {
-        impl.log(
-            eventName = null,
-            body = "test",
-            timestamp = 1000L,
-            observedTimestamp = 1005L,
-            context = null,
-            severityNumber = SeverityNumber.ERROR,
-            severityText = "boo",
-            addCurrentMetadata = false,
-        ) { }
-
-        with(sdkLogger.logs.single()) {
-            assertFalse(attributes.containsKey(sessionAttributeName))
         }
     }
 }

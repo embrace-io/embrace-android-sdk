@@ -28,6 +28,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehavio
 import io.embrace.android.embracesdk.internal.config.behavior.VitalsBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.VitalsBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 
 const val FAKE_DEVICE_ID = "D586C4E25C064764BF53A808A38B92FE"
@@ -140,6 +141,5 @@ fun createSensitiveKeysBehavior() = SensitiveKeysBehaviorImpl(InstrumentedConfig
  * An [OtelBehaviorImpl] that returns default values.
  */
 fun createOtelBehavior(
-    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: RemoteConfig? = null,
-) = OtelBehaviorImpl(thresholdCheck, InstrumentedConfigImpl, remoteCfg)
+    instrumentedConfig: InstrumentedConfig = InstrumentedConfigImpl,
+) = OtelBehaviorImpl(instrumentedConfig)

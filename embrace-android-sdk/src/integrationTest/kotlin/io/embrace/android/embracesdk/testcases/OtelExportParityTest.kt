@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Severity
+import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.toStringMap
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Rule
@@ -44,7 +44,7 @@ internal class OtelExportParityTest {
 
     private fun assertTraceExport(useKotlinSdk: Boolean) {
         testRule.runTest(
-            persistedRemoteConfig = remoteConfig(useKotlinSdk),
+            instrumentedConfig = instrumentedConfig(useKotlinSdk),
             testCaseAction = {
                 recordSession {
                     embrace.startSpan(SPAN_NAME).apply {
@@ -64,7 +64,7 @@ internal class OtelExportParityTest {
 
     private fun assertLogExport(useKotlinSdk: Boolean) {
         testRule.runTest(
-            persistedRemoteConfig = remoteConfig(useKotlinSdk),
+            instrumentedConfig = instrumentedConfig(useKotlinSdk),
             testCaseAction = {
                 recordSession {
                     embrace.logMessage(LOG_MESSAGE, Severity.WARNING, mapOf("my-attribute" to "my-value"))
@@ -82,8 +82,8 @@ internal class OtelExportParityTest {
     /**
      * Selects the implementation under test.
      */
-    private fun remoteConfig(useKotlinSdk: Boolean) = RemoteConfig(
-        otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = if (useKotlinSdk) 100.0f else 0.0f)
+    private fun instrumentedConfig(useKotlinSdk: Boolean) = FakeInstrumentedConfig(
+        enabledFeatures = FakeEnabledFeatureConfig(otelKotlinSdkEnabled = useKotlinSdk)
     )
 
     private companion object {

@@ -12,8 +12,6 @@ import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.toStringMap
 import io.embrace.android.embracesdk.otel.java.addJavaLogRecordExporter
@@ -51,6 +49,7 @@ internal class ExternalOtelJavaLoggerTest {
     private val instrumentedConfig = FakeInstrumentedConfig(
         enabledFeatures = FakeEnabledFeatureConfig(
             bgActivityCapture = true,
+            otelKotlinSdkEnabled = false,
         ),
         project = FakeProjectConfig(
             appId = "abcde",
@@ -61,10 +60,6 @@ internal class ExternalOtelJavaLoggerTest {
     private lateinit var logExporter: FakeOtelJavaLogRecordExporter
     private lateinit var embOpenTelemetry: OtelJavaOpenTelemetry
     private lateinit var otelLogger: OtelJavaLogger
-
-    private val remoteConfig = RemoteConfig(
-        otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = 0.0f)
-    )
 
     @Before
     fun setup() {
@@ -78,7 +73,6 @@ internal class ExternalOtelJavaLoggerTest {
         var exportedOTelLog: OtelJavaLogRecordData?
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
-            persistedRemoteConfig = remoteConfig,
             preSdkStartAction = {
                 setupExporter()
                 embrace.setResourceAttribute("my-resource-attr", "foo")
@@ -142,7 +136,6 @@ internal class ExternalOtelJavaLoggerTest {
         var exportedOTelLog: OtelJavaLogRecordData?
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
-            persistedRemoteConfig = remoteConfig,
             preSdkStartAction = {
                 setupExporter()
                 embrace.setResourceAttribute("my-resource-attr", "foo")

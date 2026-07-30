@@ -106,9 +106,6 @@ data class RemoteConfig(
     @SerialName("ui_load_instrumentation_enabled_v2")
     val uiLoadInstrumentationEnabled: Boolean? = null,
 
-    @SerialName("otel_kotlin_sdk")
-    val otelKotlinSdkConfig: OtelKotlinSdkConfig? = null,
-
     @SerialName("pct_state_enabled_v2")
     val pctStateCaptureEnabledV2: Float? = null,
 

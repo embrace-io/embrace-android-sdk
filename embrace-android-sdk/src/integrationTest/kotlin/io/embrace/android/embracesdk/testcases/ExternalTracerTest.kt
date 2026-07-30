@@ -4,9 +4,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.assertions.toMap
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
+import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.impl.EmbSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.payload.Attribute
@@ -46,8 +46,8 @@ internal class ExternalTracerTest {
     private lateinit var embOpenTelemetry: OpenTelemetry
     private lateinit var embTracer: Tracer
 
-    private val remoteConfig = RemoteConfig(
-        otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = 100.0f) // Enable Kotlin SDK
+    private val instrumentedConfig = FakeInstrumentedConfig(
+        enabledFeatures = FakeEnabledFeatureConfig(otelKotlinSdkEnabled = true)
     )
 
     @Before
@@ -58,7 +58,7 @@ internal class ExternalTracerTest {
     @Test
     fun `record a span with getTracer`() {
         testRule.runTest(
-            persistedRemoteConfig = remoteConfig,
+            instrumentedConfig = instrumentedConfig,
             preSdkStartAction = {
                 setupExporter()
             },
@@ -80,7 +80,7 @@ internal class ExternalTracerTest {
         var stacktrace: String? = null
 
         testRule.runTest(
-            persistedRemoteConfig = remoteConfig,
+            instrumentedConfig = instrumentedConfig,
             preSdkStartAction = {
                 setupExporter()
             },
@@ -171,7 +171,7 @@ internal class ExternalTracerTest {
     @Test
     fun `span with explicit parent`() {
         testRule.runTest(
-            persistedRemoteConfig = remoteConfig,
+            instrumentedConfig = instrumentedConfig,
             preSdkStartAction = {
                 setupExporter()
             },
@@ -204,7 +204,7 @@ internal class ExternalTracerTest {
         var endTimeMs: Long? = null
 
         testRule.runTest(
-            persistedRemoteConfig = remoteConfig,
+            instrumentedConfig = instrumentedConfig,
             preSdkStartAction = {
                 setupExporter()
             },
@@ -256,7 +256,7 @@ internal class ExternalTracerTest {
     @Test
     fun `user id on exported span reflects the value at span start`() {
         testRule.runTest(
-            persistedRemoteConfig = remoteConfig,
+            instrumentedConfig = instrumentedConfig,
             preSdkStartAction = {
                 setupExporter()
             },
@@ -291,7 +291,7 @@ internal class ExternalTracerTest {
         var linkedSpanId: String? = null
 
         testRule.runTest(
-            persistedRemoteConfig = remoteConfig,
+            instrumentedConfig = instrumentedConfig,
             preSdkStartAction = {
                 setupExporter()
             },
@@ -338,7 +338,7 @@ internal class ExternalTracerTest {
     @Test
     fun `getOpenTelemetryKotlin returns noop before SDK start`() {
         testRule.runTest(
-            persistedRemoteConfig = remoteConfig,
+            instrumentedConfig = instrumentedConfig,
             preSdkStartAction = {
                 val otelKotlin = embrace.getOpenTelemetryKotlin()
                 val tracer = otelKotlin.getTracer("test-tracer")

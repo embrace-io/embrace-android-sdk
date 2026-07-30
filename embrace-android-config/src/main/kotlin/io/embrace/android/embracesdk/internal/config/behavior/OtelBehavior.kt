@@ -7,7 +7,7 @@ interface OtelBehavior {
 
     /**
      * Whether the Kotlin OpenTelemetry SDK should be used instead of the Java one.
-     * Returns true if the Kotlin SDK should be used, false if it was disabled via remote config.
+     * Returns true if the Kotlin SDK should be used, as configured via local config.
      */
     fun shouldUseKotlinSdk(): Boolean
 }

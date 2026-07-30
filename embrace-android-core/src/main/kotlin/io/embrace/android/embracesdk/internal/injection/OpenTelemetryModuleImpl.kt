@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.OtelBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
@@ -35,7 +36,13 @@ class OpenTelemetryModuleImpl(
     private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId
     private var storedSessionIdsProvider: SessionIdsProvider? = null
     private var storedUserIdProvider: (() -> String?)? = null
-    private var otelBehavior: OtelBehavior? = null
+
+    /**
+     * Derived purely from local config so the OTel SDK choice is available before the span service
+     * forces [otelSdkWrapper] to initialise. This happens during module graph construction, which
+     * is before [applyConfiguration] runs, so it cannot depend on the config service.
+     */
+    private val otelBehavior: OtelBehavior = OtelBehaviorImpl(initModule.instrumentedConfig)
     private var sensitiveKeysBehavior: SensitiveKeysBehavior? = null
     private var internalSpanStopCallback: ((spanId: String) -> Unit)? = null
     private var bypassLimitsValidation: Boolean = false
@@ -67,8 +74,7 @@ class OpenTelemetryModuleImpl(
                     configuration = otelSdkConfig,
                     spanService = spanService,
                     eventService = eventService,
-                    // adding guard in case this is accessed before we fetch the config
-                    useKotlinSdk = otelBehavior?.shouldUseKotlinSdk() ?: false,
+                    useKotlinSdk = otelBehavior.shouldUseKotlinSdk(),
                 )
             } catch (exc: NoClassDefFoundError) {
                 throw LinkageError(
@@ -81,10 +87,9 @@ class OpenTelemetryModuleImpl(
         }
     }
 
-    override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean, otelBehavior: OtelBehavior) {
+    override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean) {
         this.sensitiveKeysBehavior = sensitiveKeysBehavior
         this.bypassLimitsValidation = bypassValidation
-        this.otelBehavior = otelBehavior
     }
 
     override fun setSessionIdsProvider(sessionIdsProvider: SessionIdsProvider) {

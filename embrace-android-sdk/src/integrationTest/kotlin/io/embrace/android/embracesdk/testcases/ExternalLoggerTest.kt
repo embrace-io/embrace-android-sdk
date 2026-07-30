@@ -12,8 +12,6 @@ import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.toStringMap
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -51,6 +49,7 @@ internal class ExternalLoggerTest {
     private val instrumentedConfig = FakeInstrumentedConfig(
         enabledFeatures = FakeEnabledFeatureConfig(
             bgActivityCapture = true,
+            otelKotlinSdkEnabled = true, // Enable Kotlin SDK
         ),
         project = FakeProjectConfig(
             appId = "abcde",
@@ -61,10 +60,6 @@ internal class ExternalLoggerTest {
     private lateinit var logExporter: FakeLogRecordExporter
     private lateinit var embOpenTelemetry: OpenTelemetry
     private lateinit var embLogger: Logger
-
-    private val remoteConfig = RemoteConfig(
-        otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = 100.0f) // Enable Kotlin SDK
-    )
 
     @Before
     fun setup() {
@@ -78,7 +73,6 @@ internal class ExternalLoggerTest {
         var exportedOTelLog: ReadableLogRecord? = null
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
-            persistedRemoteConfig = remoteConfig,
             preSdkStartAction = {
                 setupExporter()
                 embrace.setResourceAttribute("my-resource-attr", "foo")
@@ -148,7 +142,6 @@ internal class ExternalLoggerTest {
         var exportedOTelLog: ReadableLogRecord? = null
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
-            persistedRemoteConfig = remoteConfig,
             preSdkStartAction = {
                 setupExporter()
                 embrace.setResourceAttribute("my-resource-attr", "foo")
@@ -213,7 +206,6 @@ internal class ExternalLoggerTest {
     fun `user id is stamped on exported log when set`() {
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
-            persistedRemoteConfig = remoteConfig,
             preSdkStartAction = {
                 setupExporter()
             },

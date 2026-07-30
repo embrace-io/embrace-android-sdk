@@ -1,31 +1,36 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.fakes.createOtelBehavior
-import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 internal class OtelBehaviorImplTest {
 
-    private val remoteEnabled = RemoteConfig(otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = 100.0f))
-    private val remoteDisabled = RemoteConfig(otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = 0.0f))
-
     @Test
     fun testDefault() {
-        with(createOtelBehavior()) {
+        with(OtelBehaviorImpl(FakeInstrumentedConfig())) {
             assertFalse(shouldUseKotlinSdk())
         }
     }
 
     @Test
-    fun testRemote() {
-        with(createOtelBehavior(remoteCfg = remoteEnabled)) {
+    fun testLocalEnabled() {
+        val config = FakeInstrumentedConfig(
+            enabledFeatures = FakeEnabledFeatureConfig(otelKotlinSdkEnabled = true)
+        )
+        with(OtelBehaviorImpl(config)) {
             assertTrue(shouldUseKotlinSdk())
         }
+    }
 
-        with(createOtelBehavior(remoteCfg = remoteDisabled)) {
+    @Test
+    fun testLocalDisabled() {
+        val config = FakeInstrumentedConfig(
+            enabledFeatures = FakeEnabledFeatureConfig(otelKotlinSdkEnabled = false)
+        )
+        with(OtelBehaviorImpl(config)) {
             assertFalse(shouldUseKotlinSdk())
         }
     }

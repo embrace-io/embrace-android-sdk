@@ -6,6 +6,7 @@ import io.opentelemetry.kotlin.aliases.OtelJavaAttributes
 import io.opentelemetry.kotlin.aliases.OtelJavaEventData
 import io.opentelemetry.kotlin.aliases.OtelJavaLogRecordData
 import io.opentelemetry.kotlin.aliases.OtelJavaSpanData
+import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 
@@ -19,7 +20,8 @@ import org.junit.Assert.assertEquals
 internal class ExportedTelemetryParityValidator {
 
     fun validateSpans(spans: List<OtelJavaSpanData>, goldenFile: String) {
-        validate(spans.map { it.representAsMap() }, goldenFile)
+        val spanNames = spans.associate { it.spanId to it.name }
+        validate(spans.map { it.representAsMap(spanNames) }, goldenFile)
     }
 
     fun validateLogs(logs: List<OtelJavaLogRecordData>, goldenFile: String) {
@@ -35,7 +37,11 @@ internal class ExportedTelemetryParityValidator {
         )
     }
 
-    private fun OtelJavaSpanData.representAsMap(): Map<String, Any> {
+    /**
+     * Represents a span as a map. Trace & span IDs are random on every run, so any reference to
+     * another span is represented by that span's name, resolved via [spanNames].
+     */
+    private fun OtelJavaSpanData.representAsMap(spanNames: Map<String, String>): Map<String, Any> {
         val attrs = attributes.representAsMap()
         return mapOf(
             "name" to name,
@@ -44,10 +50,21 @@ internal class ExportedTelemetryParityValidator {
             "startEpochNanos" to startEpochNanos.toString(),
             "endEpochNanos" to endEpochNanos.toString(),
             "hasEnded" to hasEnded().toString(),
+            "parentSpanName" to when {
+                !parentSpanContext.isValid -> NO_SPAN
+                else -> spanNames[parentSpanId] ?: UNRESOLVED_SPAN
+            },
             "totalAttributeCount" to attrs.size.toString(),
             "attributes" to attrs,
             "totalRecordedEvents" to totalRecordedEvents.toString(),
             "events" to events.map { it.representAsMap() },
+            "totalRecordedLinks" to totalRecordedLinks.toString(),
+            "links" to links.map { link ->
+                mapOf(
+                    "spanName" to (spanNames[link.spanContext.spanId] ?: UNRESOLVED_SPAN),
+                    "attributes" to link.attributes.representAsMap(),
+                )
+            },
             "instrumentationScopeName" to instrumentationScopeInfo.name,
             "resourceAttributes" to resource.attributes.representAsMap(),
         )
@@ -93,6 +110,17 @@ internal class ExportedTelemetryParityValidator {
     private companion object {
 
         /**
+         * Represents a span reference that points at no span at all, e.g. the parent of a root span.
+         */
+        private const val NO_SPAN = ""
+
+        /**
+         * Represents a span reference that points at a span which wasn't part of the validated set,
+         * and whose name therefore couldn't be resolved.
+         */
+        private const val UNRESOLVED_SPAN = "<not exported>"
+
+        /**
          * Attributes that are legitimately allowed to differ between the two implementations, and
          * are therefore dropped altogether.
          */
@@ -114,6 +142,7 @@ internal class ExportedTelemetryParityValidator {
             EmbSessionAttributes.EMB_PROCESS_IDENTIFIER,
             EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID,
             "log.record.uid",
+            ExceptionAttributes.EXCEPTION_STACKTRACE,
         )
     }
 }

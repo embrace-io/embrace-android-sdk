@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.fakes.fakeBuildInfo
 import io.embrace.android.embracesdk.fakes.fakeIncompleteSessionEnvelope
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -333,15 +334,7 @@ internal class EmbraceSetupInterface(
     }
 
     private class DecoratedConfigService(private val impl: ConfigService) : ConfigService by impl {
-        override val buildInfo: BuildInfo = BuildInfo(
-            "fakeBuildId",
-            "fakeBuildType",
-            "fakeBuildFlavor",
-            "fakeRnBundleId",
-            "2.5.1",
-            "99",
-            "com.fake.package",
-        )
+        override val buildInfo: BuildInfo = fakeBuildInfo
         override val cpuAbi: CpuAbi = CpuAbi.ARM64_V8A
     }
 }

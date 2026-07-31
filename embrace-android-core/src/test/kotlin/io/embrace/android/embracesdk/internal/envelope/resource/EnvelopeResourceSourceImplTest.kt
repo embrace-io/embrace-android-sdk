@@ -37,9 +37,22 @@ internal class EnvelopeResourceSourceImplTest {
         )
         val attrs = source.getEnvelopeResource().attributes
 
+        // OTel resource attributes pass through, and a customer-supplied attribute is kept
         assertEquals("2.5.1", attrs.getValue(ServiceAttributes.SERVICE_VERSION).stringValue)
         assertEquals("1", attrs.getValue("my.custom.one").stringValue)
+
+        // the internal build_type wins over the colliding OTel value
         assertEquals("fakeBuildType", attrs.getValue("build_type").stringValue)
+
+        // Embrace internal-only attribute values from fakes exist
+        assertEquals(1, attrs.getValue("app_framework").intValue)
+        assertEquals("fakeBuildFlavor", attrs.getValue("build_flavor").stringValue)
+        assertEquals("99", attrs.getValue("bundle_version").stringValue)
+        assertEquals(53, attrs.getValue("sdk_simple_version").intValue)
+        assertEquals(false, attrs.getValue("jailbroken").booleanValue)
+        assertEquals(10000000L, attrs.getValue("disk_total_capacity").longValue)
+        assertEquals("1920x1080", attrs.getValue("screen_resolution").stringValue)
+        assertEquals(8, attrs.getValue("num_cores").intValue)
         assertEquals("prod", attrs.getValue("emb.app.environment").stringValue)
 
         // legacy bespoke keys are gone, replaced by their canonical semconv keys

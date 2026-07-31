@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.assertNoPreviousSessionPart
 import io.embrace.android.embracesdk.assertions.assertPreviousSessionPart
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
-import io.embrace.android.embracesdk.assertions.getOtelSessionId
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.hasLinkToEmbraceSpan
 import io.embrace.android.embracesdk.assertions.hasSpanSnapshotsOfType
@@ -17,22 +16,14 @@ import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.LifeEventType
-import io.embrace.android.embracesdk.internal.session.getSessionProperty
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
+import io.embrace.android.embracesdk.internal.session.getSessionProperty
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.testframework.assertions.appFramework
-import io.embrace.android.embracesdk.testframework.assertions.appVersion
-import io.embrace.android.embracesdk.testframework.assertions.deviceModel
-import io.embrace.android.embracesdk.testframework.assertions.osName
-import io.embrace.android.embracesdk.testframework.assertions.osVersion
-import io.embrace.android.embracesdk.testframework.assertions.sdkVersion
-import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -41,6 +32,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.Locale
 
 /**
  * Asserts the shape and structure of session part payloads: device/app envelope attributes, session-scoped
@@ -51,30 +43,6 @@ internal class SessionPartPayloadTest {
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
-
-    @Test
-    fun `device and app attributes are present in session envelope`() {
-        testRule.runTest(
-            testCaseAction = {
-                recordSession()
-
-            },
-            assertAction = {
-                with(getSingleSessionEnvelope()) {
-                    assertEquals("spans", type)
-                    with(checkNotNull(resource)) {
-                        assertTrue(checkNotNull(appVersion).isNotBlank())
-                        assertTrue(checkNotNull(sdkVersion).isNotBlank())
-                        assertTrue(checkNotNull(osVersion).isNotBlank())
-                        assertTrue(checkNotNull(osName).isNotBlank())
-                        assertTrue(checkNotNull(deviceModel).isNotBlank())
-                        assertEquals(AppFramework.NATIVE, appFramework)
-                    }
-                    assertTrue(getOtelSessionId().isNotBlank())
-                }
-            }
-        )
-    }
 
     /**
      * Sets some data on the first session, and asserts that it is not present on the second

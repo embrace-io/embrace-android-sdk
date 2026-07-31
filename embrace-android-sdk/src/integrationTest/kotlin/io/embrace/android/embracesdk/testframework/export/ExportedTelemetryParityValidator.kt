@@ -131,9 +131,15 @@ internal class ExportedTelemetryParityValidator {
         )
 
         /**
-         * Attributes whose values are non-deterministic between test runs, regardless of which
-         * implementation is in use. The value is replaced with a placeholder rather than dropped so
-         * that the presence of the attribute is still asserted.
+         * Attributes whose values can't be asserted: either they are non-deterministic between test
+         * runs, or the two implementations represent them differently. The value is replaced with a
+         * placeholder rather than dropped so that the presence of the attribute is still asserted.
+         *
+         * 'any-value-attr' falls in the latter camp. The KMP implementation stringifies every
+         * attribute value when telemetry is handed to an opentelemetry-java exporter, whereas the
+         * compat implementation passes it to the Java SDK with its type intact. That is invisible for
+         * the primitive types, whose stringified form is identical either way, but an AnyValue
+         * stringifies as its wrapper - 'LongValue(value=3)' rather than '3'.
          */
         private val REDACTED_ATTRIBUTES = setOf(
             SessionAttributes.SESSION_ID,
@@ -142,6 +148,7 @@ internal class ExportedTelemetryParityValidator {
             EmbSessionAttributes.EMB_PROCESS_IDENTIFIER,
             EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID,
             "log.record.uid",
+            "any-value-attr",
             ExceptionAttributes.EXCEPTION_STACKTRACE,
         )
     }

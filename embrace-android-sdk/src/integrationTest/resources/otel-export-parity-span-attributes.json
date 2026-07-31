@@ -9,7 +9,7 @@
     "parentSpanName": "",
     "totalAttributeCount": "17",
     "attributes": {
-      "any-value-attr": "StringValue(value=wrapped)",
+      "any-value-attr": "__EMBRACE_TEST_IGNORE__",
       "boolean-attr": "true",
       "boolean-list-attr": "[true, false]",
       "byte-array-attr": "[1, 2, 3]",

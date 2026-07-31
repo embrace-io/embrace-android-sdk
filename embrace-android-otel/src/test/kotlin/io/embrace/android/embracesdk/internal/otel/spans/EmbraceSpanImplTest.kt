@@ -42,6 +42,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
+import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.getTracer
@@ -64,6 +65,7 @@ internal class EmbraceSpanImplTest {
     private lateinit var dataValidator: DataValidator
     private lateinit var tracer: Tracer
     private lateinit var embraceSpanFactory: EmbraceSpanFactory
+    private lateinit var telemetryService: FakeTelemetryService
     private var updateNotified: Boolean = false
     private var stoppedSpanId: String? = null
 
@@ -75,13 +77,14 @@ internal class EmbraceSpanImplTest {
         spanRepository = SpanRepository().apply { setSpanUpdateNotifier { updateNotified = true } }
         serializer = TestPlatformSerializer()
         dataValidator = DataValidator(telemetryService = FakeTelemetryService())
+        telemetryService = FakeTelemetryService()
         embraceSpanFactory = EmbraceSpanFactoryImpl(
             openTelemetryClock = otelClock,
             spanRepository = spanRepository,
             dataValidator = dataValidator,
             stopCallback = ::stopCallback,
             redactionFunction = ::redactionFunction,
-            telemetryService = FakeTelemetryService(),
+            telemetryService = telemetryService,
         )
         embraceSpan = embraceSpanFactory.create(
             otelSpanStartArgs = OtelSpanStartArgs(
@@ -458,6 +461,18 @@ internal class EmbraceSpanImplTest {
             with(combinedAttributes) {
                 assertEquals("long-key-value", combinedAttributes[TRUNCATED_TOO_LONG_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN])
                 assertEquals(TRUNCATED_TOO_LONG_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN, combinedAttributes["long-value-key"])
+            }
+        }
+    }
+
+    @Test
+    fun `reserved experiment key attribute is not settable on internal and public spans via the addAttribute method`() {
+        listOf(embraceSpan, createInternalEmbraceSdkSpan()).forEach { span ->
+            with(span) {
+                assertTrue(start())
+                assertFalse(addAttribute(key = EmbCommonAttributes.EMB_EXPERIMENTS, value = "spoof"))
+                assertNull(attributes()[EmbCommonAttributes.EMB_EXPERIMENTS])
+                assertNull(embraceSpan.snapshot()?.attributes?.findAttributeValue(EmbCommonAttributes.EMB_EXPERIMENTS))
             }
         }
     }

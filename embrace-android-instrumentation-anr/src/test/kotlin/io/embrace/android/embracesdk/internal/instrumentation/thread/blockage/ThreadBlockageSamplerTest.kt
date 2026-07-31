@@ -3,9 +3,6 @@ package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.behavior.FakeThreadBlockageBehavior
-import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED
-import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED_INTERVAL
-import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.UNBLOCKED
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -23,6 +20,7 @@ internal class ThreadBlockageSamplerTest {
     private val clock = FakeClock()
     private val behavior = FakeConfigService().threadBlockageBehavior
     private lateinit var sampler: ThreadBlockageSampler
+    private lateinit var blockages: TestThreadBlockageDriver
 
     @Before
     fun setup() {
@@ -34,6 +32,7 @@ internal class ThreadBlockageSamplerTest {
             behavior.getMaxStacktracesPerInterval(),
             behavior.getStacktraceFrameLimit(),
         )
+        blockages = TestThreadBlockageDriver(sampler)
     }
 
     @Test
@@ -67,14 +66,14 @@ internal class ThreadBlockageSamplerTest {
         val intervalMs: Long = 100
 
         // simulate one thread blockage with 100 intervals
-        sampler.onThreadBlockageEvent(BLOCKED, clock.now())
+        blockages.start(clock.now())
 
         repeat(repeatCount) {
-            sampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
+            blockages.ongoing(clock.now())
             clock.tick(intervalMs)
         }
 
-        sampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
+        blockages.end(clock.now())
 
         // verify one interval recorded
         val intervals = sampler.getThreadBlockageIntervals()
@@ -114,13 +113,13 @@ internal class ThreadBlockageSamplerTest {
 
         // simulate multiple thread blockages
         repeat(threadBlockageRepeatCount) { index ->
-            sampler.onThreadBlockageEvent(BLOCKED, clock.now())
+            blockages.start(clock.now())
 
             repeat(intervalRepeatCount + index) {
-                sampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
+                blockages.ongoing(clock.now())
                 clock.tick(intervalMs)
             }
-            sampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
+            blockages.end(clock.now())
         }
 
         // verify 15 intervals were recorded
@@ -154,10 +153,10 @@ internal class ThreadBlockageSamplerTest {
 
         // simulate 110 intervals
         repeat(intervalRepeatCount) {
-            sampler.onThreadBlockageEvent(BLOCKED, clock.now())
-            sampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
+            blockages.start(clock.now())
+            blockages.ongoing(clock.now())
             clock.tick(intervalMs)
-            sampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
+            blockages.end(clock.now())
         }
 
         // verify maximum of 100 intervals were recorded
@@ -175,11 +174,12 @@ internal class ThreadBlockageSamplerTest {
             behavior.getMaxStacktracesPerInterval(),
             behavior.getStacktraceFrameLimit(),
         )
+        val blockages = TestThreadBlockageDriver(sampler)
 
-        sampler.onThreadBlockageEvent(BLOCKED, clock.now())
-        sampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
+        blockages.start(clock.now())
+        blockages.ongoing(clock.now())
         clock.tick(5000)
-        sampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
+        blockages.end(clock.now())
         val intervals = sampler.getThreadBlockageIntervals()
         val interval = intervals.single()
         interval.samples?.forEach { sample ->
@@ -193,7 +193,7 @@ internal class ThreadBlockageSamplerTest {
 
     @Test
     fun `reader after BLOCKED sees valid in-progress interval`() {
-        sampler.onThreadBlockageEvent(BLOCKED, clock.now())
+        blockages.start(clock.now())
         val intervals = sampler.getThreadBlockageIntervals()
         assertEquals(1, intervals.size)
         val interval = intervals.single()
@@ -209,7 +209,7 @@ internal class ThreadBlockageSamplerTest {
         assertEquals(0, sampler.getThreadBlockageIntervals().size)
 
         // Phase 2: BLOCKED
-        sampler.onThreadBlockageEvent(BLOCKED, clock.now())
+        blockages.start(clock.now())
         val afterBlocked = sampler.getThreadBlockageIntervals()
         assertEquals(1, afterBlocked.size)
         assertNull(afterBlocked[0].endTime)
@@ -218,7 +218,7 @@ internal class ThreadBlockageSamplerTest {
 
         // Phase 3: BLOCKED_INTERVAL (capture a sample)
         clock.tick(100)
-        sampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
+        blockages.ongoing(clock.now())
         val afterInterval = sampler.getThreadBlockageIntervals()
         assertEquals(1, afterInterval.size)
         assertNull(afterInterval[0].endTime)
@@ -226,13 +226,13 @@ internal class ThreadBlockageSamplerTest {
 
         // Phase 4: More samples
         clock.tick(100)
-        sampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
+        blockages.ongoing(clock.now())
         val afterMoreIntervals = sampler.getThreadBlockageIntervals()
         assertEquals(2, afterMoreIntervals[0].samples?.size)
 
         // Phase 5: UNBLOCKED
         clock.tick(1000)
-        sampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
+        blockages.end(clock.now())
         val afterUnblocked = sampler.getThreadBlockageIntervals()
         assertEquals(1, afterUnblocked.size)
         assertNotNull(afterUnblocked[0].endTime)
@@ -248,9 +248,9 @@ internal class ThreadBlockageSamplerTest {
     @Test
     fun `concurrent UNBLOCKED and read produces correct result`() {
         val unblockedTime = BASELINE_MS + 1100
-        sampler.onThreadBlockageEvent(BLOCKED, BASELINE_MS)
+        blockages.start(BASELINE_MS)
         clock.setCurrentTime(BASELINE_MS + 100)
-        sampler.onThreadBlockageEvent(BLOCKED_INTERVAL, BASELINE_MS + 100)
+        blockages.ongoing(BASELINE_MS + 100)
         clock.setCurrentTime(unblockedTime)
 
         val barrier = CountDownLatch(1)
@@ -258,7 +258,7 @@ internal class ThreadBlockageSamplerTest {
 
         Thread {
             barrier.await()
-            sampler.onThreadBlockageEvent(UNBLOCKED, unblockedTime)
+            blockages.end(unblockedTime)
             writerDone.countDown()
         }.start()
 
@@ -282,9 +282,9 @@ internal class ThreadBlockageSamplerTest {
     fun `concurrent UNBLOCKED plus new BLOCKED and read produces correct result`() {
         val b1UnblockedTime = BASELINE_MS + 1100
         val b2BlockedTime = BASELINE_MS + 1150
-        sampler.onThreadBlockageEvent(BLOCKED, BASELINE_MS)
+        blockages.start(BASELINE_MS)
         clock.setCurrentTime(BASELINE_MS + 100)
-        sampler.onThreadBlockageEvent(BLOCKED_INTERVAL, BASELINE_MS + 100)
+        blockages.ongoing(BASELINE_MS + 100)
         clock.setCurrentTime(b1UnblockedTime)
 
         val barrier = CountDownLatch(1)
@@ -292,8 +292,8 @@ internal class ThreadBlockageSamplerTest {
 
         Thread {
             barrier.await()
-            sampler.onThreadBlockageEvent(UNBLOCKED, b1UnblockedTime)
-            sampler.onThreadBlockageEvent(BLOCKED, b2BlockedTime)
+            blockages.end(b1UnblockedTime)
+            blockages.start(b2BlockedTime)
             writerDone.countDown()
         }.start()
 
@@ -320,9 +320,9 @@ internal class ThreadBlockageSamplerTest {
 
     @Test
     fun `reader returns in-progress interval when validation passes`() {
-        sampler.onThreadBlockageEvent(BLOCKED, clock.now())
+        blockages.start(clock.now())
         clock.tick(100)
-        sampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
+        blockages.ongoing(clock.now())
         clock.tick(500)
 
         // No hook — validation will pass (currentBlockage unchanged)
@@ -338,15 +338,15 @@ internal class ThreadBlockageSamplerTest {
 
     @Test
     fun `writer on separate thread publishes completed interval to reader`() {
-        sampler.onThreadBlockageEvent(BLOCKED, clock.now())
+        blockages.start(clock.now())
         clock.tick(100)
-        sampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
+        blockages.ongoing(clock.now())
         clock.tick(1000)
 
         val writerDone = CountDownLatch(1)
 
         Thread {
-            sampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
+            blockages.end(clock.now())
             writerDone.countDown()
         }.start()
         assertTrue(writerDone.await(1, TimeUnit.SECONDS))
@@ -359,9 +359,9 @@ internal class ThreadBlockageSamplerTest {
 
     @Test
     fun `sample snapshot is not mutated by subsequent captureSample calls`() {
-        sampler.onThreadBlockageEvent(BLOCKED, clock.now())
+        blockages.start(clock.now())
         clock.tick(100)
-        sampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
+        blockages.ongoing(clock.now())
 
         // Snapshot 1: one sample
         val snapshot1 = sampler.getThreadBlockageIntervals()
@@ -369,9 +369,9 @@ internal class ThreadBlockageSamplerTest {
 
         // Capture two more samples
         clock.tick(100)
-        sampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
+        blockages.ongoing(clock.now())
         clock.tick(100)
-        sampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
+        blockages.ongoing(clock.now())
 
         // Snapshot 1 is unchanged (snapshot isolation)
         assertEquals(1, checkNotNull(snapshot1[0].samples).size)
@@ -383,7 +383,7 @@ internal class ThreadBlockageSamplerTest {
 
     @Test
     fun `concurrent captureSample and getThreadBlockageIntervals does not throw`() {
-        sampler.onThreadBlockageEvent(BLOCKED, clock.now())
+        blockages.start(clock.now())
 
         val startBarrier = CountDownLatch(1)
         val writerDone = CountDownLatch(1)
@@ -395,7 +395,7 @@ internal class ThreadBlockageSamplerTest {
             startBarrier.await()
             repeat(50) {
                 clock.tick(100)
-                sampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
+                blockages.ongoing(clock.now())
             }
             writerDone.countDown()
         }.start()
@@ -445,9 +445,9 @@ internal class ThreadBlockageSamplerTest {
     }
 
     private fun ThreadBlockageSampler.createThreadBlockageInterval(clock: FakeClock, duration: Long) {
-        onThreadBlockageEvent(BLOCKED, clock.now())
-        onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
+        blockages.start(clock.now())
+        blockages.ongoing(clock.now())
         clock.tick(duration)
-        onThreadBlockageEvent(UNBLOCKED, clock.now())
+        blockages.end(clock.now())
     }
 }

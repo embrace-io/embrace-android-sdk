@@ -34,6 +34,12 @@ internal class ThreadBlockageServiceRule<T : ScheduledExecutorService>(
     lateinit var watchdogExecutorService: T
     lateinit var watchdogMonitorThread: AtomicReference<Thread>
     lateinit var stacktraceSampler: ThreadBlockageSampler
+
+    /**
+     * Drives [stacktraceSampler] as [blockedThreadDetector] would, for tests that simulate blockages
+     * rather than provoking real ones.
+     */
+    lateinit var blockages: TestThreadBlockageDriver
     lateinit var looper: Looper
     lateinit var worker: BackgroundWorker
     lateinit var args: FakeInstrumentationArgs
@@ -55,6 +61,11 @@ internal class ThreadBlockageServiceRule<T : ScheduledExecutorService>(
             maxIntervalsPerSession = fakeConfigService.threadBlockageBehavior.getMaxIntervalsPerSession(),
             maxSamplesPerInterval = fakeConfigService.threadBlockageBehavior.getMaxStacktracesPerInterval(),
             stacktraceFrameLimit = fakeConfigService.threadBlockageBehavior.getStacktraceFrameLimit(),
+        )
+        blockages = TestThreadBlockageDriver(
+            listener = stacktraceSampler,
+            thresholdMs = fakeConfigService.threadBlockageBehavior.getMinDuration(),
+            pollIntervalMs = fakeConfigService.threadBlockageBehavior.getSamplingIntervalMs(),
         )
         blockedThreadDetector = BlockedThreadDetector(
             watchdogWorker = worker,

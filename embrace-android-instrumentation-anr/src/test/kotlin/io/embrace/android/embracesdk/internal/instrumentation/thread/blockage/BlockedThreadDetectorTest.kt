@@ -92,6 +92,71 @@ internal class BlockedThreadDetectorTest {
     }
 
     @Test
+    fun `reported blockage starts when the thread was last responsive, not when it was detected`() {
+        detector.onTargetThreadProcessedMessage(BASELINE_MS)
+        detector.onMonitorThreadInterval(BASELINE_MS + 1500)
+
+        val blockage = listener.started.single()
+        assertEquals(BASELINE_MS, blockage.startTimeMs)
+        assertEquals(BASELINE_MS + 1500, blockage.lastKnownTimeMs)
+        assertEquals(1500, blockage.durationMs)
+    }
+
+    @Test
+    fun `reported blockage carries the detection parameters in force`() {
+        detector.onTargetThreadProcessedMessage(BASELINE_MS)
+        detector.onMonitorThreadInterval(BASELINE_MS + 1500)
+
+        val blockage = listener.started.single()
+        assertEquals(configService.threadBlockageBehavior.getMinDuration(), blockage.thresholdMs)
+        assertEquals(configService.threadBlockageBehavior.getSamplingIntervalMs(), blockage.pollIntervalMs)
+    }
+
+    @Test
+    fun `last known time advances while blocked and is final once the thread responds`() {
+        detector.onTargetThreadProcessedMessage(BASELINE_MS)
+        detector.onMonitorThreadInterval(BASELINE_MS + 1500)
+        detector.onMonitorThreadInterval(BASELINE_MS + 2000)
+        detector.onTargetThreadProcessedMessage(BASELINE_MS + 2500)
+
+        // every callback describes the same blockage, with a later last known time each time
+        assertEquals(
+            listOf(BASELINE_MS + 1500, BASELINE_MS + 2000),
+            listener.ongoing.map { it.lastKnownTimeMs },
+        )
+        listener.ongoing.forEach { assertEquals(BASELINE_MS, it.startTimeMs) }
+
+        val ended = listener.ended.single()
+        assertEquals(BASELINE_MS, ended.startTimeMs)
+        assertEquals(BASELINE_MS + 2500, ended.lastKnownTimeMs)
+        assertEquals(2500, ended.durationMs)
+    }
+
+    @Test
+    fun `a second blockage does not report the first blockage's start time`() {
+        detector.onTargetThreadProcessedMessage(BASELINE_MS)
+        detector.onMonitorThreadInterval(BASELINE_MS + 1500)
+        detector.onTargetThreadProcessedMessage(BASELINE_MS + 2000)
+
+        detector.onMonitorThreadInterval(BASELINE_MS + 3500)
+        detector.onTargetThreadProcessedMessage(BASELINE_MS + 4500)
+
+        assertEquals(listOf(BASELINE_MS, BASELINE_MS + 2000), listener.started.map { it.startTimeMs })
+        // each blockage runs from the previous response to the next one: 0 -> 2000, 2000 -> 4500
+        assertEquals(listOf(2000L, 2500L), listener.ended.map { it.durationMs })
+    }
+
+    @Test
+    fun `no blockage is reported when the thread responds within the threshold`() {
+        detector.onTargetThreadProcessedMessage(BASELINE_MS)
+        detector.onMonitorThreadInterval(BASELINE_MS + 500)
+        detector.onTargetThreadProcessedMessage(BASELINE_MS + 900)
+
+        assertEquals(0, listener.started.size)
+        assertEquals(0, listener.ended.size)
+    }
+
+    @Test
     fun testListenerFired() {
         val now = BASELINE_MS + 3000
         clock.setCurrentTime(now)

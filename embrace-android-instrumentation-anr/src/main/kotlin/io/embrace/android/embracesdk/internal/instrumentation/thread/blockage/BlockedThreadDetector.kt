@@ -5,9 +5,6 @@ import android.os.Handler
 import android.os.Looper
 import android.os.Message
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED
-import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED_INTERVAL
-import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.UNBLOCKED
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -44,6 +41,22 @@ class BlockedThreadDetector(
     private val blocked: AtomicBoolean = AtomicBoolean(false)
     private val lastWatchdogThreadResponse: AtomicLong = AtomicLong(clock.now())
     private val lastTargetThreadResponse: AtomicLong = AtomicLong(clock.now())
+
+    /**
+     * The blockage reported to [listener]. One instance is reused for every callback, and for every
+     * blockage, because listeners are not expected to hold onto it once their callback has returned.
+     * Only ever read and written on the watchdog thread, so it needs no synchronization.
+     *
+     * This also holds when the current blockage began, which cannot be read from
+     * [lastTargetThreadResponse] at report time because that is updated to the recovery time before the
+     * end of a blockage is reported.
+     */
+    private val blockage = ThreadBlockage(
+        startTimeMs = 0,
+        lastKnownTimeMs = 0,
+        thresholdMs = blockedDurationThreshold,
+        pollIntervalMs = intervalMs,
+    )
     private var monitorFuture: ScheduledFuture<*>? = null
 
     /**
@@ -87,7 +100,7 @@ class BlockedThreadDetector(
 
         // thread was blocked but recovered
         if (blocked.getAndSet(false)) {
-            listener.onThreadBlockageEvent(UNBLOCKED, timestamp)
+            listener.onBlockageEnd(blockageAt(timestamp))
         }
     }
 
@@ -101,12 +114,22 @@ class BlockedThreadDetector(
         }
 
         if (isThreadBlockageThresholdExceeded(timestamp) && !blocked.getAndSet(true)) {
-            listener.onThreadBlockageEvent(BLOCKED, lastTargetThreadResponse.get())
+            blockage.startTimeMs = lastTargetThreadResponse.get()
+            listener.onBlockageStart(blockageAt(timestamp))
         }
         if (blocked.get() && shouldSampleBlockedThread(timestamp)) {
-            listener.onThreadBlockageEvent(BLOCKED_INTERVAL, timestamp)
+            listener.onBlockageOngoing(blockageAt(timestamp))
         }
         lastWatchdogThreadResponse.set(clock.now())
+    }
+
+    /**
+     * Records that the current blockage was last observed to still be in progress at [timeMs], and
+     * returns it so that it can be reported.
+     */
+    private fun blockageAt(timeMs: Long): ThreadBlockage {
+        blockage.lastKnownTimeMs = timeMs
+        return blockage
     }
 
     /**

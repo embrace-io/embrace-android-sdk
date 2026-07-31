@@ -3,9 +3,6 @@ package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED
-import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED_INTERVAL
-import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.UNBLOCKED
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.semconv.EmbAnrAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
@@ -68,8 +65,8 @@ internal class ThreadBlockageServiceImplTest {
             createThreadBlockageInterval()
 
             // create in progress interval
-            stacktraceSampler.onThreadBlockageEvent(BLOCKED, clock.now())
-            stacktraceSampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
+            blockages.start(clock.now())
+            blockages.ongoing(clock.now())
 
             val intervals = stacktraceSampler.getThreadBlockageIntervals()
             assertEquals(2, intervals.size)
@@ -124,8 +121,8 @@ internal class ThreadBlockageServiceImplTest {
         with(rule) {
             clock.setCurrentTime(15020000L)
 
-            stacktraceSampler.onThreadBlockageEvent(BLOCKED, clock.now())
-            stacktraceSampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
+            blockages.start(clock.now())
+            blockages.ongoing(clock.now())
             assertEquals(1, stacktraceSampler.getThreadBlockageIntervals().size)
 
             // assert only one interval was added
@@ -214,12 +211,12 @@ internal class ThreadBlockageServiceImplTest {
                 val extra = 10
                 val count = defaultLimit + extra
 
-                stacktraceSampler.onThreadBlockageEvent(BLOCKED, clock.now())
+                blockages.start(clock.now())
 
                 repeat(count) {
-                    stacktraceSampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
+                    blockages.ongoing(clock.now())
                 }
-                stacktraceSampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
+                blockages.end(clock.now())
 
                 assertEquals(1, stacktraceSampler.getThreadBlockageIntervals().size)
 
@@ -313,12 +310,12 @@ internal class ThreadBlockageServiceImplTest {
     }
 
     private fun ThreadBlockageServiceRule<*>.createThreadBlockageInterval(duration: Long = 1000, complete: Boolean = true) {
-        stacktraceSampler.onThreadBlockageEvent(BLOCKED, clock.now())
-        stacktraceSampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
+        blockages.start(clock.now())
+        blockages.ongoing(clock.now())
 
         if (complete) {
             clock.tick(duration)
-            stacktraceSampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
+            blockages.end(clock.now())
         }
     }
 

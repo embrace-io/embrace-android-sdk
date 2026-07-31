@@ -24,45 +24,40 @@ class ThreadBlockageSampler(
     private val intervalSink = AtomicReference(CopyOnWriteArrayList<ThreadBlockageInterval>())
     private val currentBlockage = AtomicReference<CurrentBlockage?>(null)
 
-    override fun onThreadBlockageEvent(
-        event: ThreadBlockageEvent,
-        timestamp: Long,
-    ) {
-        when (event) {
-            ThreadBlockageEvent.BLOCKED -> {
-                currentBlockage.set(
-                    CurrentBlockage(
-                        sampler = ThreadStacktraceSampler(
-                            clock = clock,
-                            targetThread = targetThread,
-                            sampleLimit = maxSamplesPerInterval,
-                            stacktraceFrameLimit = stacktraceFrameLimit,
-                        ),
-                        startTime = timestamp,
+    override fun onBlockageStart(blockage: ThreadBlockage) {
+        currentBlockage.set(
+            CurrentBlockage(
+                sampler = ThreadStacktraceSampler(
+                    clock = clock,
+                    targetThread = targetThread,
+                    sampleLimit = maxSamplesPerInterval,
+                    stacktraceFrameLimit = stacktraceFrameLimit,
+                ),
+                startTime = blockage.startTimeMs,
+            ),
+        )
+    }
+
+    override fun onBlockageOngoing(blockage: ThreadBlockage) {
+        currentBlockage.get()?.sampler?.captureSample()
+    }
+
+    override fun onBlockageEnd(blockage: ThreadBlockage) {
+        currentBlockage.get()?.apply {
+            val intervals = intervalSink.get()
+            if (intervals.size < MAX_INTERVAL_COUNT) {
+                intervals.add(
+                    ThreadBlockageInterval(
+                        startTime = blockage.startTimeMs,
+                        endTime = blockage.lastKnownTimeMs,
+                        samples = sampler.getThreadBlockageSamples(),
                     ),
                 )
+                // clear least valuable sample immediately so that stored intervals never
+                // retain samples unnecessarily
+                clearLeastValuableSamples(intervals)
             }
-            ThreadBlockageEvent.BLOCKED_INTERVAL -> {
-                currentBlockage.get()?.sampler?.captureSample()
-            }
-            ThreadBlockageEvent.UNBLOCKED -> {
-                currentBlockage.get()?.apply {
-                    val intervals = intervalSink.get()
-                    if (intervals.size < MAX_INTERVAL_COUNT) {
-                        intervals.add(
-                            ThreadBlockageInterval(
-                                startTime = startTime,
-                                endTime = timestamp,
-                                samples = sampler.getThreadBlockageSamples(),
-                            ),
-                        )
-                        // clear least valuable sample immediately so that stored intervals never
-                        // retain samples unnecessarily
-                        clearLeastValuableSamples(intervals)
-                    }
-                    currentBlockage.set(null)
-                }
-            }
+            currentBlockage.set(null)
         }
     }
 

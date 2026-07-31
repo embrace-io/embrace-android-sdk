@@ -47,7 +47,7 @@ class OpenTelemetryModuleImpl(
         OtelSdkConfig(
             spanRepository = spanRepository,
             logSink = logSink,
-            sdkName = BuildConfig.LIBRARY_PACKAGE_NAME,
+            sdkName = "embrace-android-sdk",
             sdkVersion = BuildConfig.VERSION_NAME,
             appVersion = initModule.instrumentedConfig.project.getVersionName() ?: "UNKNOWN",
             packageName = initModule.instrumentedConfig.project.getPackageName() ?: "UNKNOWN",

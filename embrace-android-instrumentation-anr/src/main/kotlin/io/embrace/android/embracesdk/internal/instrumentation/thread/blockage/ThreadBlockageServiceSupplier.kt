@@ -10,7 +10,13 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 typealias ThreadBlockageServiceSupplier = (args: InstrumentationArgs) -> ThreadBlockageService?
 
 fun createThreadBlockageService(args: InstrumentationArgs): ThreadBlockageService? {
-    if (!args.configService.autoDataCaptureBehavior.isThreadBlockageCaptureEnabled()) {
+    val autoDataCaptureBehavior = args.configService.autoDataCaptureBehavior
+    val threadBlockageCaptureEnabled = autoDataCaptureBehavior.isThreadBlockageCaptureEnabled()
+
+    // One detector serves both features, so either one wanting it is reason enough to run it. Gating on
+    // thread blockage capture alone would leave the responsiveness vital silently dead wherever the
+    // thread blockage rollout excludes a device, which is invisible in the resulting data.
+    if (!threadBlockageCaptureEnabled && !autoDataCaptureBehavior.isResponsivenessCaptureEnabled()) {
         return null
     }
 
@@ -35,8 +41,13 @@ fun createThreadBlockageService(args: InstrumentationArgs): ThreadBlockageServic
             logger = args.logger,
             intervalMs = anrBehavior.getSamplingIntervalMs(),
             blockedDurationThreshold = anrBehavior.getMinDuration(),
-            listener = stacktraceSampler,
         )
+    }
+
+    // The stacktrace sampler is the first listener, and only when thread blockage capture is enabled.
+    // Left unregistered it is never told about a blockage, so the service reports no intervals.
+    if (threadBlockageCaptureEnabled) {
+        blockedThreadDetector.addListener(stacktraceSampler)
     }
     return ThreadBlockageServiceImpl(
         args = args,

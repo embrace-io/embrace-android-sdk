@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.createThreadBlockageBehavior
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.ThreadBlockageRemoteConfig
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.every
@@ -51,18 +52,19 @@ internal class BlockedThreadDetectorTest {
             every { thread } returns Thread.currentThread()
         }
         listener = FakeThreadBlockageListener()
-        detector = BlockedThreadDetector(
-            watchdogWorker = BackgroundWorker(watchdogExecutorService),
-            clock = clock,
-            looper = mockk {
-                every { thread } returns Thread.currentThread()
-            },
-            blockedDurationThreshold = configService.threadBlockageBehavior.getMinDuration(),
-            intervalMs = configService.threadBlockageBehavior.getSamplingIntervalMs(),
-            logger = logger,
-            listener = listener,
-        )
+        detector = createDetector(logger).apply { addListener(listener) }
     }
+
+    private fun createDetector(logger: InternalLogger): BlockedThreadDetector = BlockedThreadDetector(
+        watchdogWorker = BackgroundWorker(watchdogExecutorService),
+        clock = clock,
+        looper = mockk {
+            every { thread } returns Thread.currentThread()
+        },
+        blockedDurationThreshold = configService.threadBlockageBehavior.getMinDuration(),
+        intervalMs = configService.threadBlockageBehavior.getSamplingIntervalMs(),
+        logger = logger,
+    )
 
     @Test
     fun testShouldSampleBlockedThread() {
@@ -194,5 +196,79 @@ internal class BlockedThreadDetectorTest {
             watchdogExecutorService.runCurrentlyBlocked()
             assertEquals(1, watchdogExecutorService.scheduledTasksCount())
         }
+    }
+
+    @Test
+    fun `every registered listener receives every callback`() {
+        val second = FakeThreadBlockageListener()
+        detector.addListener(second)
+
+        detector.onTargetThreadProcessedMessage(BASELINE_MS)
+        detector.onMonitorThreadInterval(BASELINE_MS + 1500)
+        detector.onMonitorThreadInterval(BASELINE_MS + 2000)
+        detector.onTargetThreadProcessedMessage(BASELINE_MS + 2500)
+
+        listOf(listener, second).forEach { registered ->
+            assertEquals(BASELINE_MS, registered.started.single().startTimeMs)
+            assertEquals(
+                listOf(BASELINE_MS + 1500, BASELINE_MS + 2000),
+                registered.ongoing.map { it.lastKnownTimeMs },
+            )
+            assertEquals(2500L, registered.ended.single().durationMs)
+        }
+    }
+
+    @Test
+    fun `registering the same listener twice delivers one callback`() {
+        detector.addListener(listener)
+
+        detector.onTargetThreadProcessedMessage(BASELINE_MS)
+        detector.onMonitorThreadInterval(BASELINE_MS + 1500)
+
+        assertEquals(1, listener.started.size)
+    }
+
+    @Test
+    fun `a removed listener stops receiving callbacks`() {
+        val second = FakeThreadBlockageListener()
+        detector.addListener(second)
+
+        detector.onTargetThreadProcessedMessage(BASELINE_MS)
+        detector.onMonitorThreadInterval(BASELINE_MS + 1500)
+        detector.removeListener(second)
+        detector.onTargetThreadProcessedMessage(BASELINE_MS + 2500)
+
+        // removed mid-blockage: it saw the start but not the end, while the other listener saw both
+        assertEquals(1, second.started.size)
+        assertEquals(0, second.ended.size)
+        assertEquals(1, listener.ended.size)
+    }
+
+    @Test
+    fun `a listener that throws does not stop the others being told`() {
+        val errorLogger = FakeInternalLogger(throwOnInternalError = false)
+        val isolated = createDetector(errorLogger)
+        val survivor = FakeThreadBlockageListener()
+        isolated.addListener(ThrowingThreadBlockageListener())
+        isolated.addListener(survivor)
+
+        isolated.onTargetThreadProcessedMessage(BASELINE_MS)
+        isolated.onMonitorThreadInterval(BASELINE_MS + 1500)
+        isolated.onTargetThreadProcessedMessage(BASELINE_MS + 2500)
+
+        assertEquals(BASELINE_MS, survivor.started.single().startTimeMs)
+        assertEquals(2500L, survivor.ended.single().durationMs)
+
+        // every failure is reported, and nothing else is
+        assertEquals(
+            listOf(InternalErrorType.ThreadBlockageListenerFail.toString()),
+            errorLogger.internalErrorMessages.map { it.msg }.distinct(),
+        )
+    }
+
+    private class ThrowingThreadBlockageListener : ThreadBlockageListener {
+        override fun onBlockageStart(blockage: ThreadBlockage): Unit = error("listener failure")
+        override fun onBlockageOngoing(blockage: ThreadBlockage): Unit = error("listener failure")
+        override fun onBlockageEnd(blockage: ThreadBlockage): Unit = error("listener failure")
     }
 }

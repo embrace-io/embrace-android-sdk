@@ -44,6 +44,14 @@ internal class ThreadBlockageServiceImpl(
         blockedThreadDetector.onTargetThreadProcessedMessage(clock.now())
     }
 
+    override fun addListener(listener: ThreadBlockageListener) {
+        blockedThreadDetector.addListener(listener)
+    }
+
+    override fun removeListener(listener: ThreadBlockageListener) {
+        blockedThreadDetector.removeListener(listener)
+    }
+
     override fun handleCrash(crashId: String) {
         blockedThreadDetector.stop()
     }

@@ -89,4 +89,11 @@ interface AutoDataCaptureBehavior {
      * Whether screen-load vital capture is enabled
      */
     fun isScreenLoadCaptureEnabled(): Boolean
+
+    /**
+     * Whether responsiveness vital capture is enabled. This observes the same main-thread blockages that
+     * [isThreadBlockageCaptureEnabled] samples stacktraces for, so either flag on its own is enough to
+     * start the blockage detector.
+     */
+    fun isResponsivenessCaptureEnabled(): Boolean
 }

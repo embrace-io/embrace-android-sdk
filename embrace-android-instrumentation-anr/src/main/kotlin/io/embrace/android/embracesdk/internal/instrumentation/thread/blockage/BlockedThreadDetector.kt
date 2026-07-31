@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -26,7 +27,6 @@ class BlockedThreadDetector(
     private val clock: Clock,
     private val looper: Looper,
     private val logger: InternalLogger,
-    private val listener: ThreadBlockageListener,
     private val intervalMs: Long,
     private val blockedDurationThreshold: Int,
 ) {
@@ -43,7 +43,15 @@ class BlockedThreadDetector(
     private val lastTargetThreadResponse: AtomicLong = AtomicLong(clock.now())
 
     /**
-     * The blockage reported to [listener]. One instance is reused for every callback, and for every
+     * Everything that wants to know about blockages. Registration is rare and arrives on arbitrary
+     * threads, while dispatch happens on the watchdog thread for as long as a blockage lasts, so a
+     * copy-on-write list keeps dispatch cheap and lets a listener be added or removed while a blockage is
+     * being reported.
+     */
+    private val listeners = CopyOnWriteArrayList<ThreadBlockageListener>()
+
+    /**
+     * The blockage reported to the listeners. One instance is reused for every callback, and for every
      * blockage, because listeners are not expected to hold onto it once their callback has returned.
      * Only ever read and written on the watchdog thread, so it needs no synchronization.
      *
@@ -58,6 +66,20 @@ class BlockedThreadDetector(
         pollIntervalMs = intervalMs,
     )
     private var monitorFuture: ScheduledFuture<*>? = null
+
+    /**
+     * Registers [listener] to receive blockages. Registering the same listener twice has no effect.
+     */
+    fun addListener(listener: ThreadBlockageListener) {
+        listeners.addIfAbsent(listener)
+    }
+
+    /**
+     * Stops [listener] receiving blockages.
+     */
+    fun removeListener(listener: ThreadBlockageListener) {
+        listeners.remove(listener)
+    }
 
     /**
      * Starts monitoring the target thread for blockages.
@@ -100,7 +122,8 @@ class BlockedThreadDetector(
 
         // thread was blocked but recovered
         if (blocked.getAndSet(false)) {
-            listener.onBlockageEnd(blockageAt(timestamp))
+            blockage.lastKnownTimeMs = timestamp
+            dispatch { it.onBlockageEnd(blockage) }
         }
     }
 
@@ -115,21 +138,28 @@ class BlockedThreadDetector(
 
         if (isThreadBlockageThresholdExceeded(timestamp) && !blocked.getAndSet(true)) {
             blockage.startTimeMs = lastTargetThreadResponse.get()
-            listener.onBlockageStart(blockageAt(timestamp))
+            blockage.lastKnownTimeMs = timestamp
+            dispatch { it.onBlockageStart(blockage) }
         }
         if (blocked.get() && shouldSampleBlockedThread(timestamp)) {
-            listener.onBlockageOngoing(blockageAt(timestamp))
+            blockage.lastKnownTimeMs = timestamp
+            dispatch { it.onBlockageOngoing(blockage) }
         }
         lastWatchdogThreadResponse.set(clock.now())
     }
 
     /**
-     * Records that the current blockage was last observed to still be in progress at [timeMs], and
-     * returns it so that it can be reported.
+     * Reports the current [blockage] to every listener, isolating them from each other: one that throws
+     * must not stop the rest from being told, or a bug in one feature becomes an outage in another.
      */
-    private fun blockageAt(timeMs: Long): ThreadBlockage {
-        blockage.lastKnownTimeMs = timeMs
-        return blockage
+    private inline fun dispatch(action: (ThreadBlockageListener) -> Unit) {
+        listeners.forEach { listener ->
+            try {
+                action(listener)
+            } catch (exc: Exception) {
+                logger.trackInternalError(InternalErrorType.ThreadBlockageListenerFail, exc)
+            }
+        }
     }
 
     /**

@@ -73,9 +73,11 @@ internal class ThreadBlockageServiceRule<T : ScheduledExecutorService>(
             looper = looper,
             blockedDurationThreshold = fakeConfigService.threadBlockageBehavior.getMinDuration(),
             intervalMs = fakeConfigService.threadBlockageBehavior.getSamplingIntervalMs(),
-            listener = stacktraceSampler,
             logger = logger,
-        )
+        ).apply {
+            // the sampler is listener #1, as createThreadBlockageService registers it in production
+            addListener(stacktraceSampler)
+        }
         args = FakeInstrumentationArgs(
             mockk(),
             configService = fakeConfigService,

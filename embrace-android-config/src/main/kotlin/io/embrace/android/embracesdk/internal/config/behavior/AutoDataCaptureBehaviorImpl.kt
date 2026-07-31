@@ -20,6 +20,7 @@ class AutoDataCaptureBehaviorImpl(
         const val NAVIGATION_STATE_CAPTURE_ENABLED_DEFAULT = true
         const val SMOOTHNESS_CAPTURE_ENABLED_DEFAULT = false
         const val SCREEN_LOAD_CAPTURE_ENABLED_DEFAULT = false
+        const val RESPONSIVENESS_CAPTURE_ENABLED_DEFAULT = false
     }
 
     private val local = local.enabledFeatures
@@ -64,4 +65,7 @@ class AutoDataCaptureBehaviorImpl(
 
     override fun isScreenLoadCaptureEnabled(): Boolean =
         thresholdCheck.isBehaviorEnabled(remote?.pctScreenLoadEnabled) ?: SCREEN_LOAD_CAPTURE_ENABLED_DEFAULT
+
+    override fun isResponsivenessCaptureEnabled(): Boolean =
+        thresholdCheck.isBehaviorEnabled(remote?.pctResponsivenessEnabled) ?: RESPONSIVENESS_CAPTURE_ENABLED_DEFAULT
 }

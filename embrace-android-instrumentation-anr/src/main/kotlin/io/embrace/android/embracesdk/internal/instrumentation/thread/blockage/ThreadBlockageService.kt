@@ -24,4 +24,19 @@ interface ThreadBlockageService :
      * again (and therefore ending an ANR).
      */
     fun simulateTargetThreadResponse()
+
+    /**
+     * Registers [listener] to receive the thread blockages that this service detects. Registering the
+     * same listener twice has no effect, and a listener may be added at any point — it receives every
+     * blockage reported after it was added.
+     *
+     * Callbacks are delivered on the watchdog thread, and the [ThreadBlockage] they carry is reused, so a
+     * listener that retains one must retain [ThreadBlockage.copy] instead.
+     */
+    fun addListener(listener: ThreadBlockageListener)
+
+    /**
+     * Stops [listener] receiving thread blockages.
+     */
+    fun removeListener(listener: ThreadBlockageListener)
 }

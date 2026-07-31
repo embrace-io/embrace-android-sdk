@@ -210,6 +210,27 @@ internal class AutoDataCaptureBehaviorImplTest {
         )
     }
 
+    @Test
+    fun `responsiveness capture disabled when remote field null`() {
+        assertFalse(createAutoDataCaptureBehavior(remoteCfg = null).isResponsivenessCaptureEnabled())
+    }
+
+    @Test
+    fun `responsiveness capture enabled when pct is 100`() {
+        assertTrue(
+            createBehavior(remote = RemoteConfig(pctResponsivenessEnabled = 100.0f))
+                .isResponsivenessCaptureEnabled(),
+        )
+    }
+
+    @Test
+    fun `responsiveness capture disabled when pct is 0`() {
+        assertFalse(
+            createBehavior(remote = RemoteConfig(pctResponsivenessEnabled = 0.0f))
+                .isResponsivenessCaptureEnabled(),
+        )
+    }
+
     private fun createBehavior(
         localUiLoadTracingEnabled: Boolean = true,
         localUiLoadTracingTraceAllEnabled: Boolean = true,

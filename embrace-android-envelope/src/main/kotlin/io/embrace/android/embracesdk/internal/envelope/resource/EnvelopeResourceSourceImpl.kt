@@ -39,7 +39,6 @@ class EnvelopeResourceSourceImpl(
             putValue("disk_total_capacity", device.internalStorageTotalCapacity.value)
             putValue("screen_resolution", device.screenResolution)
             putValue("num_cores", device.numberOfCores)
-            putValue("device_architecture", configService.cpuAbi.archName)
             putValue("environment", environment.value)
 
             // attributes set by hosted SDKs or other parts of the SDK that are not always present

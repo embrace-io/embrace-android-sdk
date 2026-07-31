@@ -3,7 +3,7 @@
   "service.name": "io.embrace.test",
   "app_framework": 1,
   "app.build_id": "abc123",
-  "emb.app.environment": "prod",
+  "environment": "prod",
   "host.arch": "arm64-v8a",
   "os.version": "13",
   "jailbroken": false,

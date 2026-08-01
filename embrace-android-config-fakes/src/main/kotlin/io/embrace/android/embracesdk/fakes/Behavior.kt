@@ -9,6 +9,8 @@ import io.embrace.android.embracesdk.internal.config.behavior.BackgroundActivity
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
 import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.behavior.ExperimentBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.ExperimentBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
@@ -58,6 +60,13 @@ fun createVitalsBehavior(
 fun createSessionBehavior(
     remoteCfg: RemoteConfig? = null,
 ): UserSessionBehavior = UserSessionBehaviorImpl(remoteCfg)
+
+/**
+ * An [ExperimentBehaviorImpl] that returns default values.
+ */
+fun createExperimentBehavior(
+    remoteCfg: RemoteConfig? = null,
+): ExperimentBehavior = ExperimentBehaviorImpl(remoteCfg)
 
 /**
  * A [NetworkBehaviorImpl] that returns default values.

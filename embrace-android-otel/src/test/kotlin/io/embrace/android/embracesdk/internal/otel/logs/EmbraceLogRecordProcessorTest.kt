@@ -1,10 +1,15 @@
+@file:OptIn(ExperimentalSemconv::class)
+
 package io.embrace.android.embracesdk.internal.otel.logs
 
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeReadWriteLogRecord
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
+import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.semconv.LogAttributes
 import org.junit.Assert.assertEquals
@@ -38,7 +43,7 @@ internal class EmbraceLogRecordProcessorTest {
     }
 
     @Test
-    fun `expected attributes added to every log record`() {
+    fun `expected attributes added to every non-private log record`() {
         val log = FakeReadWriteLogRecord().apply {
             setStringAttribute("custom", "attr")
         }
@@ -48,7 +53,44 @@ internal class EmbraceLogRecordProcessorTest {
             assertEquals("attr", get("custom"))
             assertNotNull(get(LogAttributes.LOG_RECORD_UID))
             assertEquals("foo", get(SESSION_ATTRIBUTE_NAME))
+            assertEquals(EXPERIMENT_RECORDS, get(EmbCommonAttributes.EMB_EXPERIMENTS))
         }
+    }
+
+    @Test
+    fun `experiment records are not stamped on private logs`() {
+        val log = FakeReadWriteLogRecord().apply {
+            setStringAttribute(PrivateSpan.key, PrivateSpan.value)
+        }
+        processor.onEmit(log)
+
+        assertFalse(log.attributes.containsKey(EmbCommonAttributes.EMB_EXPERIMENTS))
+    }
+
+    @Test
+    fun `an experiment records attribute value on logs that are not native crashes is erased if set`() {
+        val noExperimentsProcessor = EmbraceLogRecordProcessor(
+            uuidSource = TestUuidSource(),
+            metadataProvider = { METADATA - EmbCommonAttributes.EMB_EXPERIMENTS },
+            logRecordExporter = logRecordExporter,
+        )
+        val log = FakeReadWriteLogRecord().apply {
+            setStringAttribute(EmbCommonAttributes.EMB_EXPERIMENTS, "spoofed")
+        }
+        noExperimentsProcessor.onEmit(log)
+
+        assertEquals("", log.attributes[EmbCommonAttributes.EMB_EXPERIMENTS])
+    }
+
+    @Test
+    fun `a pre-set experiment records value is preserved native crash log`() {
+        val log = FakeReadWriteLogRecord().apply {
+            setStringAttribute(EmbType.System.NativeCrash.key, EmbType.System.NativeCrash.value)
+            setStringAttribute(EmbCommonAttributes.EMB_EXPERIMENTS, DEAD_PROCESS_EXPERIMENT_RECORDS)
+        }
+        processor.onEmit(log)
+
+        assertEquals(DEAD_PROCESS_EXPERIMENT_RECORDS, log.attributes[EmbCommonAttributes.EMB_EXPERIMENTS])
     }
 
     @Test
@@ -112,6 +154,7 @@ internal class EmbraceLogRecordProcessorTest {
         with(log.attributes) {
             assertEquals("crashed-session-part", get(EmbSessionAttributes.EMB_SESSION_PART_ID))
             assertFalse(containsKey(SESSION_ATTRIBUTE_NAME))
+            assertFalse(containsKey(EmbCommonAttributes.EMB_EXPERIMENTS))
             // the log ID is still stamped on it
             assertNotNull(get(LogAttributes.LOG_RECORD_UID))
         }
@@ -132,9 +175,12 @@ internal class EmbraceLogRecordProcessorTest {
 
     private companion object {
         const val SESSION_ATTRIBUTE_NAME = "session-attr"
+        const val EXPERIMENT_RECORDS = "e:checkout-flow:variant-a:1000;f:dark-mode::2000"
+        const val DEAD_PROCESS_EXPERIMENT_RECORDS = "e:dead-exp:variant-z:500"
         val METADATA = mapOf(
             SESSION_ATTRIBUTE_NAME to "foo",
             EmbSessionAttributes.EMB_SESSION_PART_ID to "my-session-part",
+            EmbCommonAttributes.EMB_EXPERIMENTS to EXPERIMENT_RECORDS,
         )
     }
 }

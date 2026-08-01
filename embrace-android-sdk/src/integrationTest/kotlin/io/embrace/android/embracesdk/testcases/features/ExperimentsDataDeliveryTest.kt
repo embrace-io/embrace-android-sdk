@@ -1,16 +1,22 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.assertions.findSessionPartSpan
+import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.assertions.findSpanByName
+import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.experiments.TrackedExperiment
 import io.embrace.android.embracesdk.experiments.TrackedFeatureFlag
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.opentelemetry.kotlin.getTracer
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
@@ -21,7 +27,13 @@ internal class ExperimentsDataDeliveryTest {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+        EmbraceSetupInterface(
+            workersToFake = listOf(Worker.Background.LogMessageWorker),
+        ).apply {
+            getFakedWorkerExecutor(Worker.Background.LogMessageWorker).blockingMode = false
+        }
+    }
 
     @Test
     fun `session part envelope with experiment records matches golden file`() {
@@ -53,14 +65,25 @@ internal class ExperimentsDataDeliveryTest {
     }
 
     @Test
-    fun `experiments attribute not on session part span when API not used`() {
+    fun `log records carry the current experiment records`() {
+        var trackStartMs: Long = -1
         testRule.runTest(
             testCaseAction = {
-                recordSession()
+                recordSession {
+                    trackStartMs = clock.now()
+                    embrace.trackExperiment(
+                        TrackedExperiment(id = "checkout-flow", startTimeMs = trackStartMs, variant = "variant-a"),
+                    )
+                    embrace.logMessage("log with experiments", Severity.INFO)
+                    flushLogBatch()
+                }
             },
             assertAction = {
-                val attrs = checkNotNull(getSingleSessionEnvelope().findSessionPartSpan().attributes)
-                assertNull(attrs.findAttributeValue(EmbCommonAttributes.EMB_EXPERIMENTS))
+                val log = getSingleLogEnvelope().getLogOfType(EmbType.System.Log)
+                assertEquals(
+                    "e:checkout-flow:variant-a:$trackStartMs",
+                    log.attributes?.findAttributeValue(EmbCommonAttributes.EMB_EXPERIMENTS),
+                )
             },
         )
     }
@@ -83,6 +106,26 @@ internal class ExperimentsDataDeliveryTest {
     }
 
     @Test
+    fun `experiments attribute value is erased if set on a log`() {
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    embrace.logMessage(
+                        "loggy log",
+                        Severity.INFO,
+                        mapOf(EmbCommonAttributes.EMB_EXPERIMENTS to "spoof"),
+                    )
+                    flushLogBatch()
+                }
+            },
+            assertAction = {
+                val log = getSingleLogEnvelope().getLogOfType(EmbType.System.Log)
+                assertEquals("", log.attributes?.findAttributeValue(EmbCommonAttributes.EMB_EXPERIMENTS))
+            },
+        )
+    }
+
+    @Test
     fun `cannot add experiments attribute on spans through the external tracer`() {
         testRule.runTest(
             testCaseAction = {
@@ -98,5 +141,14 @@ internal class ExperimentsDataDeliveryTest {
                 assertNull(spanAttrs.findAttributeValue(EmbCommonAttributes.EMB_EXPERIMENTS))
             },
         )
+    }
+
+    private fun EmbraceActionInterface.flushLogBatch() {
+        clock.tick(LOG_BATCH_FLUSH_MS)
+        testRule.setup.getFakedWorkerExecutor(Worker.Background.LogMessageWorker).moveForwardAndRunBlocked(LOG_BATCH_FLUSH_MS)
+    }
+
+    private companion object {
+        private const val LOG_BATCH_FLUSH_MS = 2000L
     }
 }

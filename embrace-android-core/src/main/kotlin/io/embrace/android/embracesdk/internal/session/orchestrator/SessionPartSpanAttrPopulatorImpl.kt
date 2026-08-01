@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalSemconv::class)
+
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
@@ -7,7 +9,9 @@ import io.embrace.android.embracesdk.internal.logs.LogLimitingService
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
+import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import java.util.Locale
 
@@ -16,6 +20,7 @@ internal class SessionPartSpanAttrPopulatorImpl(
     private val startupDurationProvider: () -> Long?,
     private val logLimitingService: LogLimitingService,
     private val metadataService: MetadataService,
+    private val experimentRecordsProvider: () -> String?,
 ) : SessionPartSpanAttrPopulator {
 
     override fun populateSessionPartSpanStartAttrs(sessionPart: SessionPartToken, userSession: UserSessionMetadata?) {
@@ -40,6 +45,10 @@ internal class SessionPartSpanAttrPopulatorImpl(
                 addSessionPartAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, "")
                 addSessionPartAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, "")
                 addSessionPartAttribute(SessionAttributes.SESSION_ID, "")
+            }
+
+            experimentRecordsProvider()?.let { records ->
+                addSessionPartAttribute(EmbCommonAttributes.EMB_EXPERIMENTS, records)
             }
         }
     }

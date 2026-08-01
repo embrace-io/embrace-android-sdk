@@ -1,9 +1,14 @@
+@file:OptIn(ExperimentalSemconv::class)
+
 package io.embrace.android.embracesdk.internal.otel.logs
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.export.InlineExporter
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.UuidSource
+import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
+import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.export.OperationResultCode
 import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
@@ -29,13 +34,24 @@ internal class EmbraceLogRecordProcessor(
             log.setStringAttribute(LogAttributes.LOG_RECORD_UID, uuidSource.createUuid())
         }
 
-        if (!attributes.belongsInCurrentProcess()) {
-            // never override what the instrumentation has already set. Telemetry that knows which session it
-            // belongs to - such as an app exit reported by a later process - sets the session attributes
-            // itself, and leaves them blank if the session it describes is unknown.
+        if (!attributes.ignoreCurrentProcessMetadata()) {
+            // the experiment records attribute is reserved for the SDK, so any value found here should be erased.
+            if (attributes.containsKey(EmbCommonAttributes.EMB_EXPERIMENTS)) {
+                log.setStringAttribute(EmbCommonAttributes.EMB_EXPERIMENTS, "")
+            }
+
             metadataProvider().forEach { (key, value) ->
-                if (!attributes.containsKey(key)) {
-                    log.setStringAttribute(key, value)
+                when {
+                    // the reserved experiments value always wins, but only non-private logs carry it
+                    key == EmbCommonAttributes.EMB_EXPERIMENTS -> {
+                        if (!attributes.isPrivate()) {
+                            log.setStringAttribute(key, value)
+                        }
+                    }
+                    // never override what the instrumentation has already set. Telemetry that knows which
+                    // session it belongs to - such as an app exit reported by a later process - sets the
+                    // session attributes itself, and leaves them blank if the session it describes is unknown.
+                    !attributes.containsKey(key) -> log.setStringAttribute(key, value)
                 }
             }
         }
@@ -53,6 +69,9 @@ internal class EmbraceLogRecordProcessor(
      * the session that crashed - its session IDs, app state and session properties - so enriching it would
      * describe the wrong session entirely.
      */
-    private fun Map<String, Any>.belongsInCurrentProcess(): Boolean =
+    private fun Map<String, Any>.ignoreCurrentProcessMetadata(): Boolean =
         get(EmbType.System.NativeCrash.key) == EmbType.System.NativeCrash.value
+
+    private fun Map<String, Any>.isPrivate(): Boolean =
+        get(PrivateSpan.key) == PrivateSpan.value
 }

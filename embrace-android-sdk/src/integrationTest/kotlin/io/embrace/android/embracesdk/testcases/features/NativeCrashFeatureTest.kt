@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalSemconv::class)
+
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -5,6 +7,7 @@ import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.experiments.TrackedExperiment
 import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
@@ -20,10 +23,13 @@ import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
@@ -31,6 +37,7 @@ import io.embrace.android.embracesdk.testframework.actions.StoredNativeCrashData
 import io.embrace.android.embracesdk.testframework.actions.createStoredNativeCrashData
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -128,16 +135,23 @@ internal class NativeCrashFeatureTest {
     @Test
     fun `native crash with foreground session`() {
         val newSessionProperty = "new-session-prop"
+        lateinit var ioWorker: BlockingScheduledExecutorService
         testRule.runTest(
             instrumentedConfig = config,
             setupAction = {
+                ioWorker = getFakedWorkerExecutor(Worker.Background.IoRegWorker)
+                ioWorker.blockingMode = true
                 setupPermanentUserSessionProperties(mapOf(newSessionProperty to "foo"))
                 setupCachedDataFromNativeCrash(
                     crashData = crashData
                 )
                 setupFakeNativeCrash(serializer, crashData)
             },
-            testCaseAction = {},
+            testCaseAction = {
+                embrace.trackExperiment(TrackedExperiment(id = "current-exp", startTimeMs = clock.now()))
+                ioWorker.blockingMode = false
+                ioWorker.runCurrentlyBlocked()
+            },
             assertAction = {
                 with(getSingleSessionEnvelope()) {
                     assertDeadPartResurrected(crashData)
@@ -152,6 +166,38 @@ internal class NativeCrashFeatureTest {
                 assertEquals(1, log.attributes?.filter { it.key?.isEmbraceAttributeName() == true }?.size)
                 assertEquals(0, log.attributes?.filter { it.key == newSessionProperty.toEmbraceAttributeName() }?.size)
                 assertEquals(0, log.attributes?.filter { it.key == "emb.state.test" }?.size)
+
+                // experiments on the current app instance should not be sent in a native crash that happened in a previous app instance.
+                assertNull(log.attributes?.findAttributeValue(EmbCommonAttributes.EMB_EXPERIMENTS))
+            }
+        )
+    }
+
+    @Test
+    fun `native crash carries the experiment records of the dead process`() {
+        val deadProcessExperiments = "e:dead-exp:variant-z:168000000000"
+        val seededCrashData = crashData.withExperimentsOnDeadSessionPartSpan(deadProcessExperiments)
+        lateinit var ioWorker: BlockingScheduledExecutorService
+        testRule.runTest(
+            instrumentedConfig = config,
+            setupAction = {
+                ioWorker = getFakedWorkerExecutor(Worker.Background.IoRegWorker)
+                ioWorker.blockingMode = true
+                setupCachedDataFromNativeCrash(
+                    crashData = seededCrashData
+                )
+                setupFakeNativeCrash(serializer, seededCrashData)
+            },
+            testCaseAction = {
+                ioWorker.blockingMode = false
+                ioWorker.runCurrentlyBlocked()
+            },
+            assertAction = {
+                val log = getSingleLogEnvelope().getLogOfType(EmbType.System.NativeCrash)
+                assertEquals(
+                    deadProcessExperiments,
+                    log.attributes?.findAttributeValue(EmbCommonAttributes.EMB_EXPERIMENTS),
+                )
             }
         )
     }
@@ -422,5 +468,27 @@ internal class NativeCrashFeatureTest {
     ) {
         assertEquals(0, getLogEnvelopes(0).size)
         assertNativeCrashDoesNotExist(crashData)
+    }
+
+    /**
+     * Returns a copy of the cached data whose dead session part span carries the given serialized experiment
+     */
+    private fun StoredNativeCrashData.withExperimentsOnDeadSessionPartSpan(records: String): StoredNativeCrashData {
+        val envelope = checkNotNull(partEnvelope)
+        return copy(
+            partEnvelope = envelope.copy(
+                data = envelope.data.copy(
+                    spanSnapshots = envelope.data.spanSnapshots?.map { span ->
+                        if (span.name == "emb-session") {
+                            span.copy(
+                                attributes = span.attributes?.plus(Attribute(EmbCommonAttributes.EMB_EXPERIMENTS, records)),
+                            )
+                        } else {
+                            span
+                        }
+                    },
+                ),
+            ),
+        )
     }
 }

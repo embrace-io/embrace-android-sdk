@@ -2,7 +2,9 @@ package io.embrace.android.embracesdk.internal.config
 
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.TestUuidSource
+import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -13,10 +15,23 @@ internal class DeviceIdProviderTest {
     @Test
     fun `cached device id is preferred and nothing is persisted`() {
         val store = FakeKeyValueStore()
-        val provider = DeviceIdProvider(store, cachedDeviceId = "cached-id", uuidSource = TestUuidSource())
+        val provider = DeviceIdProvider(lazyOf(store), cachedDeviceId = "cached-id", uuidSource = TestUuidSource())
 
         assertEquals("cached-id", provider.deviceId)
         assertTrue(store.values().isEmpty())
+    }
+
+    @Test
+    fun `store is never resolved when a cached device id is supplied`() {
+        var resolved = false
+        val store = lazy<KeyValueStore> {
+            resolved = true
+            FakeKeyValueStore()
+        }
+        val provider = DeviceIdProvider(store, cachedDeviceId = "cached-id", uuidSource = TestUuidSource())
+
+        assertEquals("cached-id", provider.deviceId)
+        assertFalse(resolved)
     }
 
     @Test
@@ -24,7 +39,7 @@ internal class DeviceIdProviderTest {
         val store = FakeKeyValueStore().apply {
             edit { putString(key, "persisted-id") }
         }
-        val provider = DeviceIdProvider(store, cachedDeviceId = null, uuidSource = TestUuidSource())
+        val provider = DeviceIdProvider(lazyOf(store), cachedDeviceId = null, uuidSource = TestUuidSource())
 
         assertEquals("persisted-id", provider.deviceId)
     }
@@ -32,7 +47,7 @@ internal class DeviceIdProviderTest {
     @Test
     fun `generates and persists a new id when nothing is stored`() {
         val store = FakeKeyValueStore()
-        val provider = DeviceIdProvider(store, cachedDeviceId = null, uuidSource = TestUuidSource())
+        val provider = DeviceIdProvider(lazyOf(store), cachedDeviceId = null, uuidSource = TestUuidSource())
 
         val generated = provider.deviceId
         assertTrue(generated.isNotEmpty())

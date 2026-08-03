@@ -23,7 +23,7 @@ import java.util.ServiceLoader
  * between modules.
  */
 internal fun ModuleGraph.postInit() {
-    openTelemetryModule.eventService.setMetadataProvider(eventMetadataSupplierProvider())
+    openTelemetryModule.setEventMetadataProvider(eventMetadataSupplierProvider())
 
     openTelemetryModule.applyConfiguration(
         sensitiveKeysBehavior = configService.sensitiveKeysBehavior,

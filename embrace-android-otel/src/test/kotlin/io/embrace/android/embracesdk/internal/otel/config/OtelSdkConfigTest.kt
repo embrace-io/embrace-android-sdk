@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.config
 
 import io.embrace.android.embracesdk.fakes.FakeAttributesMutator
+import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
@@ -34,6 +35,7 @@ internal class OtelSdkConfigTest {
             appVersion = "2.5.1",
             packageName = "com.test.app",
             systemInfo = systemInfo,
+            uuidSource = TestUuidSource(),
         )
 
         val attrs = FakeAttributesMutator().apply(configuration.resourceAction).attributes

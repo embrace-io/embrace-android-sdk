@@ -18,7 +18,7 @@ internal class OtelBehaviorImplTest {
     @Test
     fun testLocalEnabled() {
         val config = FakeInstrumentedConfig(
-            enabledFeatures = FakeEnabledFeatureConfig(otelKotlinSdkEnabled = true)
+            enabledFeatures = FakeEnabledFeatureConfig(otelKotlinSdkEnabled = true),
         )
         with(OtelBehaviorImpl(config)) {
             assertTrue(shouldUseKotlinSdk())
@@ -28,7 +28,7 @@ internal class OtelBehaviorImplTest {
     @Test
     fun testLocalDisabled() {
         val config = FakeInstrumentedConfig(
-            enabledFeatures = FakeEnabledFeatureConfig(otelKotlinSdkEnabled = false)
+            enabledFeatures = FakeEnabledFeatureConfig(otelKotlinSdkEnabled = false),
         )
         with(OtelBehaviorImpl(config)) {
             assertFalse(shouldUseKotlinSdk())

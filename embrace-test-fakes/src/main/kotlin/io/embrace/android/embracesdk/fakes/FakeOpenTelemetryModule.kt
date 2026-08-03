@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehav
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
-import io.embrace.android.embracesdk.internal.otel.logs.EventService
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
@@ -33,9 +32,8 @@ class FakeOpenTelemetryModule(
             appVersion = "1.0.0",
             packageName = "com.test.app",
             systemInfo = systemInfo,
+            uuidSource = TestUuidSource(),
         )
-
-    override val eventService: EventService = FakeEventService()
 
     override val spanService: SpanService = FakeSpanService()
 
@@ -44,7 +42,6 @@ class FakeOpenTelemetryModule(
             otelClock = FakeOtelKotlinClock(),
             configuration = otelSdkConfig,
             spanService = spanService,
-            eventService = FakeEventService(),
             useKotlinSdk = useKotlinSdk,
         )
 
@@ -60,6 +57,10 @@ class FakeOpenTelemetryModule(
     }
 
     override fun setUserIdProvider(userIdProvider: () -> String?) {
+        // no-op
+    }
+
+    override fun setEventMetadataProvider(eventMetadataProvider: () -> Map<String, String>) {
         // no-op
     }
 }

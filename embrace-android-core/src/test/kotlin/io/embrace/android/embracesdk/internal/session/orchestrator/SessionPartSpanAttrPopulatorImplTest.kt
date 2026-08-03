@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
+import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues
 import io.opentelemetry.kotlin.semconv.SessionAttributes
@@ -39,6 +40,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
         populator = SessionPartSpanAttrPopulatorImpl(
             destination,
             { 0 },
+            { 7 },
             FakeLogLimitingService(),
             FakeMetadataService(),
         )
@@ -99,7 +101,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
     }
 
     @Test
-    fun `end attributes populated`() {
+    fun `end attributes populated for non-cold start`() {
         populator.populateSessionPartSpanEndAttrs(LifeEventType.STATE, "crashId", false, emptyMap())
 
         val attrs = destination.attributes
@@ -108,6 +110,23 @@ internal class SessionPartSpanAttrPopulatorImplTest {
             EmbSessionAttributes.EMB_TERMINATED to "false",
             EmbSessionAttributes.EMB_CRASH_ID to "crashId",
             EmbSessionAttributes.EMB_SESSION_END_TYPE to "state",
+            EmbSessionAttributes.EMB_ERROR_LOG_COUNT to "0",
+            EmbSessionAttributes.EMB_DISK_FREE_BYTES to "500000000",
+        )
+        assertEquals(expected, attrs)
+    }
+
+    @Test
+    fun `end attributes populated for cold start`() {
+        populator.populateSessionPartSpanEndAttrs(LifeEventType.STATE, null, true, emptyMap())
+
+        val attrs = destination.attributes
+        val expected = mapOf(
+            EmbSessionAttributes.EMB_CLEAN_EXIT to "true",
+            EmbSessionAttributes.EMB_TERMINATED to "false",
+            EmbSessionAttributes.EMB_SESSION_END_TYPE to "state",
+            EmbSessionAttributes.EMB_STARTUP_DURATION to "0",
+            EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER to "7",
             EmbSessionAttributes.EMB_ERROR_LOG_COUNT to "0",
             EmbSessionAttributes.EMB_DISK_FREE_BYTES to "500000000",
         )
@@ -150,6 +169,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
         populator = SessionPartSpanAttrPopulatorImpl(
             destination,
             { 0 },
+            { 7 },
             FakeLogLimitingService(),
             metadataService,
         )

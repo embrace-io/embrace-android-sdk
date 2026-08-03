@@ -32,6 +32,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.h
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.hasRenderEvent
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.supportFrameCommitCallback
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -699,6 +700,10 @@ internal class AppStartupTraceEmitterTest {
         val trace = if (isColdStart) {
             with(appInitTimestamps) {
                 assertChildSpan(spanMap.embraceInitSpan(), sdkInitStart, sdkInitEnd)
+                assertEquals(
+                    APP_VERSION_STARTUP_COUNTER.toString(),
+                    spanMap.embraceInitSpan()?.attributes?.get(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER),
+                )
                 val gapStart = if (hasAppInitEvents) {
                     applicationInitEnd
                 } else {
@@ -770,6 +775,7 @@ internal class AppStartupTraceEmitterTest {
             endTimeMs = end,
             endState = AppState.BACKGROUND,
             threadName = "main",
+            appVersionStartupCounter = APP_VERSION_STARTUP_COUNTER,
         )
 
         val applicationInitEnd = if (hasAppInitEvents) {
@@ -973,5 +979,6 @@ internal class AppStartupTraceEmitterTest {
 
     companion object {
         private const val STARTUP_ACTIVITY_NAME = "StartupActivity"
+        private const val APP_VERSION_STARTUP_COUNTER = 3
     }
 }

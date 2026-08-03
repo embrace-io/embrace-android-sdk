@@ -25,6 +25,7 @@ import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
+import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -193,6 +194,12 @@ internal class TracingApiTest {
                 expectedSpanName.forEach {
                     checkNotNull(spansMap[it]) { "$it not found: $results" }
                 }
+
+                assertEquals(
+                    "1",
+                    checkNotNull(spansMap["emb-sdk-init"]).attributes
+                        ?.findAttributeValue(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER)
+                )
 
                 assertEmbraceSpanData(
                     span = traceRootSpan,

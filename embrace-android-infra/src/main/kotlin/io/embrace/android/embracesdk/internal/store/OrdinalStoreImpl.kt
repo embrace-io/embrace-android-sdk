@@ -4,10 +4,23 @@ class OrdinalStoreImpl(
     private val impl: KeyValueStore,
 ) : OrdinalStore {
 
-    override fun incrementAndGet(ordinal: Ordinal, seed: () -> Int): Int {
-        val key = sanitize(ordinal).key
-        seedIfAbsent(key, seed)
-        return impl.incrementAndGet(key)
+    override fun incrementAndGet(ordinal: Ordinal, scope: String?, seed: () -> Int): Int {
+        val sanitized = sanitize(ordinal)
+        val scopeKey = sanitized.scopeKey
+        if (scopeKey == null) {
+            seedIfAbsent(sanitized.key, seed)
+        } else {
+            if (scope == null) {
+                return -1
+            }
+            if (impl.getString(scopeKey) != scope) {
+                impl.edit {
+                    putString(scopeKey, scope)
+                    putInt(sanitized.key, seed() - 1)
+                }
+            }
+        }
+        return impl.incrementAndGet(sanitized.key)
     }
 
     private fun seedIfAbsent(key: String, seed: () -> Int) {

@@ -7,7 +7,9 @@ import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupService
 import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupServiceImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -38,6 +40,7 @@ internal class StartupServiceImplTest {
             endTimeMs = endTimeMillis,
             endState = AppState.BACKGROUND,
             threadName = "main",
+            appVersionStartupCounter = 3,
         )
         val currentSpans = destination.completedSpans()
         assertEquals(1, currentSpans.size)
@@ -49,7 +52,23 @@ internal class StartupServiceImplTest {
             assertTrue(private)
             assertEquals("false", attributes["ended-in-foreground"])
             assertEquals("main", attributes["thread-name"])
+            assertEquals("3", attributes[EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER])
         }
+        assertEquals(3, startupService.getAppVersionStartupCounter())
+    }
+
+    @Test
+    fun `invalid app version startup counter omitted from SDK startup span`() {
+        startupService.setSdkStartupInfo(
+            startTimeMs = 10,
+            endTimeMs = 20,
+            endState = AppState.BACKGROUND,
+            threadName = "main",
+            appVersionStartupCounter = -1,
+        )
+        val span = destination.completedSpans().single()
+        assertFalse(span.attributes.containsKey(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER))
+        assertNull(startupService.getAppVersionStartupCounter())
     }
 
     @Test
@@ -60,6 +79,7 @@ internal class StartupServiceImplTest {
                 endTimeMs = 20,
                 endState = AppState.BACKGROUND,
                 threadName = "main",
+                appVersionStartupCounter = 1,
             )
         }
         assertEquals(1, destination.completedSpans().size)
@@ -69,6 +89,7 @@ internal class StartupServiceImplTest {
                 endTimeMs = 20,
                 endState = AppState.BACKGROUND,
                 threadName = "main",
+                appVersionStartupCounter = 1,
             )
         }
         assertEquals(1, destination.completedSpans().size)
@@ -76,9 +97,10 @@ internal class StartupServiceImplTest {
 
     @Test
     fun `startup info available right after setting on the service`() {
-        startupService.setSdkStartupInfo(1111L, 3222L, AppState.BACKGROUND, "main")
+        startupService.setSdkStartupInfo(1111L, 3222L, AppState.BACKGROUND, "main", 4)
         assertEquals(1111L, startupService.getSdkInitStartMs())
         assertEquals(3222L, startupService.getSdkInitEndMs())
         assertEquals(2111L, startupService.getSdkStartupDuration())
+        assertEquals(4, startupService.getAppVersionStartupCounter())
     }
 }

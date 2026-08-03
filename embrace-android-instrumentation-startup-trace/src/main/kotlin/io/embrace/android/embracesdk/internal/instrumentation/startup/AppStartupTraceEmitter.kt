@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -356,6 +357,7 @@ internal class AppStartupTraceEmitter(
                     startTimeMs = sdkInitStartMs,
                     endTimeMs = sdkInitEndMs,
                     parent = this,
+                    attributes = appVersionStartupCounterAttributes(),
                 )
             }
 
@@ -408,6 +410,11 @@ internal class AppStartupTraceEmitter(
     }
 
     private fun nowMs(): Long = clock.now()
+
+    private fun appVersionStartupCounterAttributes(): Map<String, String> =
+        startupServiceProvider()?.getAppVersionStartupCounter()?.let { counter ->
+            mapOf(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER to counter.toString())
+        } ?: emptyMap()
 
     private fun SpanToken.addTraceMetadata() {
         addCustomAttributes()

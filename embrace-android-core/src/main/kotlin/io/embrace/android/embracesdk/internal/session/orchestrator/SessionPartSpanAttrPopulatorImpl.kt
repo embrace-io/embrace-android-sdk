@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.logs.LogLimitingService
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
+import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import java.util.Locale
@@ -14,6 +15,7 @@ import java.util.Locale
 internal class SessionPartSpanAttrPopulatorImpl(
     private val destination: TelemetryDestination,
     private val startupDurationProvider: () -> Long?,
+    private val appVersionStartupCounterProvider: () -> Int?,
     private val logLimitingService: LogLimitingService,
     private val metadataService: MetadataService,
 ) : SessionPartSpanAttrPopulator {
@@ -62,6 +64,9 @@ internal class SessionPartSpanAttrPopulatorImpl(
             if (coldStart) {
                 startupDurationProvider()?.let { duration ->
                     addSessionPartAttribute(EmbSessionAttributes.EMB_STARTUP_DURATION, duration.toString())
+                }
+                appVersionStartupCounterProvider()?.let { counter ->
+                    addSessionPartAttribute(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER, counter.toString())
                 }
             }
 

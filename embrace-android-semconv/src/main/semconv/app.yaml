@@ -1,0 +1,16 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: emb.app
+    visibility: public
+    stability: development
+    brief: "Embrace application-level attributes"
+    attributes:
+      - ref: emb.app.version_startup_counter
+
+attributes:
+  - key: emb.app.version_startup_counter
+    type: string
+    brief: "The number of times the SDK has begun startup since the app updated to the current app version, whether or not startup completed. Resets to 1 on the first SDK startup after the app version changes."
+    stability: development
+    examples: ["1", "42"]

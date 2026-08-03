@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbTelemetryAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -85,7 +86,8 @@ internal class UserSessionApiTest {
                     "emb.usage.set_username" to "1",
                     "emb.usage.set_user_email" to "1",
                     "emb.usage.set_user_identifier" to "1",
-                    EmbSessionAttributes.EMB_STARTUP_DURATION to "0"
+                    EmbSessionAttributes.EMB_STARTUP_DURATION to "0",
+                    EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER to "1"
                 ).toSortedMap()
 
                 assertEquals(expected, attributesToCheck)

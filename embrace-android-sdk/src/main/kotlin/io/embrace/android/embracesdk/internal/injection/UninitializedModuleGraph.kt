@@ -16,6 +16,7 @@ internal object UninitializedModuleGraph : ModuleGraph {
     override val openTelemetryModule: OpenTelemetryModule get() = throwSdkNotInitialized()
     override val coreModule: CoreModule get() = throwSdkNotInitialized()
     override val configService: ConfigService get() = throwSdkNotInitialized()
+    override val appVersionStartupCounter: Int get() = throwSdkNotInitialized()
     override val workerThreadModule: WorkerThreadModule get() = throwSdkNotInitialized()
     override val storageService: StorageService get() = throwSdkNotInitialized()
     override val essentialServiceModule: EssentialServiceModule get() = throwSdkNotInitialized()

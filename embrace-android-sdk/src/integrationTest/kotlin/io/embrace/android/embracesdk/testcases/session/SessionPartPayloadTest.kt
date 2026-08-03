@@ -23,7 +23,9 @@ import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.getSessionProperty
+import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
+import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import java.util.Locale
@@ -308,6 +310,13 @@ internal class SessionPartPayloadTest {
                     EmbSessionAttributes.EMB_COLD_START to isColdStart
                 )
             )
+
+            val startupCounter = checkNotNull(attributes).findAttributeValue(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER)
+            if (isColdStart) {
+                assertEquals("1", startupCounter)
+            } else {
+                assertNull(startupCounter)
+            }
 
             if (previousSessionPartSpan != null && previousSessionPartId != null) {
                 assertPreviousSessionPart(previousSessionPartSpan, previousSessionPartId)

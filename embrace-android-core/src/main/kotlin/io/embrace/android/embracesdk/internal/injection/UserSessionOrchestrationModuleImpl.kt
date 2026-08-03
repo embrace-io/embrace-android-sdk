@@ -21,6 +21,7 @@ class UserSessionOrchestrationModuleImpl(
     instrumentationModule: InstrumentationModule,
     payloadSourceModule: PayloadSourceModule,
     startupDurationProvider: () -> Long?,
+    appVersionStartupCounterProvider: () -> Int?,
     logModule: LogModule,
     workerThreadModule: WorkerThreadModule,
 ) : UserSessionOrchestrationModule {
@@ -48,6 +49,7 @@ class UserSessionOrchestrationModuleImpl(
         val sessionPartSpanAttrPopulator = SessionPartSpanAttrPopulatorImpl(
             essentialServiceModule.telemetryDestination,
             startupDurationProvider,
+            appVersionStartupCounterProvider,
             logModule.logLimitingService,
             payloadSourceModule.metadataService,
         )

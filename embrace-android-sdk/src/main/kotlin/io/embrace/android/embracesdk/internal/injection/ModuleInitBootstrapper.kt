@@ -50,6 +50,7 @@ internal class ModuleInitBootstrapper(
     override val sdkStartTimeMs: Long get() = delegate.sdkStartTimeMs
     override val coreModule: CoreModule get() = delegate.coreModule
     override val configService: ConfigService get() = delegate.configService
+    override val appVersionStartupCounter: Int get() = delegate.appVersionStartupCounter
     override val workerThreadModule: WorkerThreadModule get() = delegate.workerThreadModule
     override val storageService: StorageService get() = delegate.storageService
     override val essentialServiceModule: EssentialServiceModule get() = delegate.essentialServiceModule

@@ -1,77 +1,65 @@
 package io.embrace.android.embracesdk.internal.envelope.resource
 
-import android.os.Environment
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDevice
-import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
+import io.embrace.android.embracesdk.fakes.FakeHostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
-import io.embrace.android.embracesdk.internal.envelope.metadata.UnitySdkVersionInfo
-import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.mockk.every
-import io.mockk.mockkStatic
-import io.mockk.unmockkAll
-import org.junit.After
+import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import org.junit.Assert.assertEquals
-import org.junit.BeforeClass
+import org.junit.Assert.assertFalse
 import org.junit.Test
-import java.io.File
 
 internal class EnvelopeResourceSourceImplTest {
 
-    companion object {
-        @BeforeClass
-        @JvmStatic
-        fun beforeClass() {
-            mockkStatic(Environment::class)
-            every { Environment.getDataDirectory() }.returns(File("ANDROID_DATA"))
-        }
+    @Test
+    fun `getEnvelopeResource merges the OTel resource with Embrace internal attributes`() {
+        val source = createSource(
+            otelResourceAttributes = mapOf(
+                ServiceAttributes.SERVICE_VERSION to "2.5.1",
+                "my.custom.one" to "1",
+                "build_id" to "should-be-ignored",
+            ),
+        )
+        val attrs = source.getEnvelopeResource().attributes
 
-        @After
-        fun tearDown() {
-            unmockkAll()
-        }
+        assertEquals("2.5.1", attrs.getValue(ServiceAttributes.SERVICE_VERSION).stringValue)
+        assertEquals("1", attrs.getValue("my.custom.one").stringValue)
+        assertEquals("fakeBuildId", attrs.getValue("build_id").stringValue)
+        assertEquals("prod", attrs.getValue("emb.app.environment").stringValue)
+
+        // legacy bespoke keys are gone, replaced by their canonical semconv keys
+        assertFalse(attrs.containsKey("app_version"))
+        assertFalse(attrs.containsKey("app_ecosystem_id"))
+        assertFalse(attrs.containsKey("environment"))
+        assertFalse(attrs.containsKey("sdk_version"))
+        assertFalse(attrs.containsKey("device_manufacturer"))
+        assertFalse(attrs.containsKey("device_model"))
     }
 
     @Test
-    fun getEnvelopeResource() {
-        val hostedSdkVersionInfo = UnitySdkVersionInfo(FakeKeyValueStore())
-        hostedSdkVersionInfo.hostedSdkVersion = "1.2.0"
-        hostedSdkVersionInfo.hostedPlatformVersion = "19"
-        hostedSdkVersionInfo.unityBuildIdNumber = "5092abc"
-        val source = EnvelopeResourceSourceImpl(
-            FakeConfigService(),
-            hostedSdkVersionInfo,
-            AppEnvironment.Environment.PROD,
-            FakeDevice(),
-            "",
-            53,
-            { "fakeReactNativeBundleId" },
-        )
-        val envelope = source.getEnvelopeResource()
+    fun `internal attributes added via add() are not overridable by customer attributes`() {
+        val source = createSource(
+            otelResourceAttributes = mapOf(
+                "my.internal.key" to "customer-value",
+                "other.custom" to "keep",
+            ),
+        ).apply {
+            add("my.internal.key", "embrace-value")
+        }
+        val attrs = source.getEnvelopeResource().attributes
 
-        assertEquals("2.5.1", envelope.appVersion)
-        assertEquals(AppFramework.NATIVE, envelope.appFramework)
-        assertEquals("com.fake.package", envelope.appEcosystemId)
-        assertEquals("fakeBuildId", envelope.buildId)
-        assertEquals("fakeBuildType", envelope.buildType)
-        assertEquals("fakeBuildFlavor", envelope.buildFlavor)
-        assertEquals("prod", envelope.environment)
-        assertEquals("99", envelope.bundleVersion)
-        assertEquals(53, envelope.sdkSimpleVersion)
-        assertEquals("fakeReactNativeBundleId", envelope.reactNativeBundleId)
-        assertEquals("1.2.0", envelope.hostedSdkVersion)
-        assertEquals("19", envelope.hostedPlatformVersion)
-        assertEquals("5092abc", envelope.unityBuildId)
-        assertEquals("Samsung", envelope.deviceManufacturer)
-        assertEquals("Galaxy S10", envelope.deviceModel)
-        assertEquals("arm64-v8a", envelope.deviceArchitecture)
-        assertEquals(false, envelope.jailbroken)
-        assertEquals(10000000L, envelope.diskTotalCapacity)
-        assertEquals("linux", envelope.osType)
-        assertEquals("android", envelope.osName)
-        assertEquals("8.0.0", envelope.osVersion)
-        assertEquals("26", envelope.osCode)
-        assertEquals("1920x1080", envelope.screenResolution)
-        assertEquals(8, envelope.numCores)
+        assertEquals("embrace-value", attrs.getValue("my.internal.key").stringValue)
+        assertEquals("keep", attrs.getValue("other.custom").stringValue)
     }
+
+    private fun createSource(otelResourceAttributes: Map<String, String>) =
+        EnvelopeResourceSourceImpl(
+            configService = FakeConfigService(),
+            hosted = FakeHostedSdkVersionInfo(),
+            environment = AppEnvironment.Environment.PROD,
+            device = FakeDevice(),
+            versionCode = 53,
+            rnBundleIdProvider = { null },
+            otelResourceAttributesProvider = { otelResourceAttributes },
+        )
 }

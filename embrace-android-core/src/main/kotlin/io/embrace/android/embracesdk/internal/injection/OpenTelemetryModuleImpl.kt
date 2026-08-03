@@ -57,6 +57,7 @@ class OpenTelemetryModuleImpl(
             userIdProvider = { storedUserIdProvider?.invoke() },
             eventMetadataProvider = { storedEventMetadataProvider?.invoke() ?: emptyMap() },
             processIdentifierProvider = processIdentifierProvider,
+            resourceAttributeOverrideEnabled = { otelBehavior?.isResourceAttributeOverrideEnabled() ?: false },
         )
     }
 

@@ -6,6 +6,9 @@ import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.android.embracesdk.testframework.assertions.appFramework
+import io.embrace.android.embracesdk.testframework.assertions.hostedPlatformVersion
+import io.embrace.android.embracesdk.testframework.assertions.hostedSdkVersion
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before

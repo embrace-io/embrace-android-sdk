@@ -13,6 +13,10 @@ import io.embrace.android.embracesdk.internal.logs.LogExceptionType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.android.embracesdk.testframework.assertions.appFramework
+import io.embrace.android.embracesdk.testframework.assertions.hostedPlatformVersion
+import io.embrace.android.embracesdk.testframework.assertions.hostedSdkVersion
+import io.embrace.android.embracesdk.testframework.assertions.unityBuildId
 import io.opentelemetry.kotlin.logging.SeverityNumber
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -50,6 +54,7 @@ internal class UnityInternalInterfaceTest {
                 assertEquals(AppFramework.UNITY, res.appFramework)
                 assertNull(res.hostedSdkVersion)
                 assertNull(res.hostedPlatformVersion)
+                assertNull(res.unityBuildId)
             }
         )
     }

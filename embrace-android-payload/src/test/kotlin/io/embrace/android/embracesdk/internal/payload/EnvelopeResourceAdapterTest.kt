@@ -42,6 +42,7 @@ internal class EnvelopeResourceAdapterTest {
         screenResolution = "1080x2400",
         numCores = 8,
         usesEmmcStorage = true,
+        deviceSocModel = "SM8450",
         extras = mapOf(
             "foo" to "bar",
         ),
@@ -126,6 +127,7 @@ internal class EnvelopeResourceAdapterTest {
         assertEquals(expected.screenResolution, observed.screenResolution)
         assertEquals(expected.numCores, observed.numCores)
         assertEquals(expected.usesEmmcStorage, observed.usesEmmcStorage)
+        assertEquals(expected.deviceSocModel, observed.deviceSocModel)
         assertEquals(expected.extras, observed.extras)
     }
 }

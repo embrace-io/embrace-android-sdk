@@ -49,6 +49,7 @@ class EnvelopeResourceSourceImpl(
             screenResolution = device.screenResolution,
             numCores = device.numberOfCores,
             usesEmmcStorage = device.usesEmmcStorage,
+            deviceSocModel = device.socModel,
             extras = extras.toMap(),
         )
     }

@@ -46,4 +46,11 @@ interface Device {
      * @return true/false, null if unkown/inconclusive
      */
     val usesEmmcStorage: Boolean?
+
+    /**
+     * The model name of the SoC the device is built around, e.g. `SM8450`.
+     *
+     * @return the SoC model name, null if the platform doesn't report one
+     */
+    val socModel: String?
 }

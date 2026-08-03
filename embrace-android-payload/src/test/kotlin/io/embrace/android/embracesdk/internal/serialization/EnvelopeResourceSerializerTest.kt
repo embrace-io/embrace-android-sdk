@@ -37,6 +37,7 @@ internal class EnvelopeResourceSerializerTest {
         screenResolution = "1080x2400",
         numCores = 8,
         usesEmmcStorage = true,
+        deviceSocModel = "SM8450",
         extras = mapOf("foo" to "bar"),
     )
 
@@ -51,7 +52,7 @@ internal class EnvelopeResourceSerializerTest {
                 """"device_model":"Pixel 6","device_architecture":"arm64-v8a","jailbroken":false,""" +
                 """"disk_total_capacity":64000000000,"os_type":"android","os_name":"android","os_version":"13",""" +
                 """"os_code":"33","screen_resolution":"1080x2400","num_cores":8,"uses_emmc_storage":true,""" +
-                """"foo":"bar"}"""
+                """"device_soc_model":"SM8450","foo":"bar"}"""
         assertEquals(expected, embraceJson.encodeToString(EnvelopeResourceSerializer, fullResource))
     }
 

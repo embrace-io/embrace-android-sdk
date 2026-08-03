@@ -27,5 +27,6 @@
   "screen_resolution": "1080x2400",
   "num_cores": 8,
   "uses_emmc_storage": true,
+  "device_soc_model": "SM8450",
   "foo": "bar"
 }

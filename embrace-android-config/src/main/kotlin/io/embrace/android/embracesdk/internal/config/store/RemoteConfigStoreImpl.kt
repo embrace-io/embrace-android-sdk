@@ -12,25 +12,16 @@ import java.io.File
 
 internal class RemoteConfigStoreImpl(
     private val serializer: PlatformSerializer,
-    storageDir: File,
+    private val storageDir: File,
     private val deviceIdProvider: () -> String,
 ) : RemoteConfigStore {
 
-    init {
-        storageDir.mkdirs()
-    }
-
-    private val configFile = File(storageDir, "most_recent_response").apply {
-        createNewFile()
-    }
-
-    private val etagFile = File(storageDir, "etag").apply {
-        createNewFile()
-    }
+    private val configFile by lazy { File(storageDir, "most_recent_response") }
+    private val etagFile by lazy { File(storageDir, "etag") }
 
     // binary fast-path cache. Not created up-front: its absence is a clean cache miss that falls
     // back to [configFile]/[etagFile].
-    private val cachedConfigFile = File(storageDir, "cached_config")
+    private val cachedConfigFile by lazy { File(storageDir, "cached_config") }
 
     override fun loadResponse(): StoredConfigResponse? = loadFromCache() ?: loadFromJson()
 
@@ -60,9 +51,7 @@ internal class RemoteConfigStoreImpl(
             }
             StoredConfigResponse(
                 cfg = cfg,
-                etag = etagFile.readText().ifEmpty {
-                    null
-                },
+                etag = readEtag(),
                 deviceId = null,
             )
         } catch (_: IllegalArgumentException) {
@@ -74,8 +63,11 @@ internal class RemoteConfigStoreImpl(
         }
     }
 
+    private fun readEtag(): String? = runCatching { etagFile.readText() }.getOrNull()?.ifEmpty { null }
+
     override fun saveResponse(response: ConfigHttpResponse) {
         try {
+            storageDir.mkdirs()
             configFile.outputStream().buffered().use { stream ->
                 serializer.toJson<RemoteConfig?>(response.cfg, stream)
             }

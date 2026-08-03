@@ -22,6 +22,8 @@ class DeviceImpl(
 ) : Device {
     override var isJailbroken: Boolean? = false
     override var screenResolution: String = ""
+    override var usesEmmcStorage: Boolean? = null
+
     private val jailbreakLocations: List<String> = listOf(
         "/sbin/",
         "/system/bin/",
@@ -36,6 +38,13 @@ class DeviceImpl(
     init {
         asyncRetrieveIsJailbroken()
         asyncRetrieveScreenResolution()
+        asyncRetrieveUsesEmmcStorage()
+    }
+
+    private fun asyncRetrieveUsesEmmcStorage() {
+        backgroundWorker.submit {
+            usesEmmcStorage = detectUsesEmmcStorage()
+        }
     }
 
     private fun asyncRetrieveScreenResolution() {

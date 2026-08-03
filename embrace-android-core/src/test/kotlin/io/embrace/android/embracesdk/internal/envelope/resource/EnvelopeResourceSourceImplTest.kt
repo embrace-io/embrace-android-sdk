@@ -73,5 +73,6 @@ internal class EnvelopeResourceSourceImplTest {
         assertEquals("26", envelope.osCode)
         assertEquals("1920x1080", envelope.screenResolution)
         assertEquals(8, envelope.numCores)
+        assertEquals(true, envelope.usesEmmcStorage)
     }
 }

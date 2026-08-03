@@ -24,11 +24,11 @@ import kotlinx.serialization.json.put
  * Serializer for [EnvelopeResource] that flattens [EnvelopeResource.extras] into the JSON object
  * alongside the known fields.
  *
- * On write, the 27 known fields are emitted in declaration order (nulls omitted), followed by the
+ * On write, the 28 known fields are emitted in declaration order (nulls omitted), followed by the
  * [EnvelopeResource.extras] entries as additional top-level keys (insertion order preserved).
  * [EnvelopeResource.appFramework] is encoded as its integer [AppFramework.value].
  *
- * On read, the 27 known keys are extracted and any remaining (non-null) key is folded back into
+ * On read, the 28 known keys are extracted and any remaining (non-null) key is folded back into
  * [EnvelopeResource.extras] as a stringified value. An unknown `app_framework` integer decodes to
  * null via [AppFramework.fromInt].
  */
@@ -68,6 +68,7 @@ internal object EnvelopeResourceSerializer : KSerializer<EnvelopeResource> {
             putIfPresent(KEY_OS_CODE, value.osCode)
             putIfPresent(KEY_SCREEN_RESOLUTION, value.screenResolution)
             putIfPresent(KEY_NUM_CORES, value.numCores)
+            putIfPresent(KEY_USES_EMMC_STORAGE, value.usesEmmcStorage)
             value.extras.forEach { (key, entry) -> put(key, entry) }
         }
         jsonEncoder.encodeJsonElement(obj)
@@ -114,6 +115,7 @@ internal object EnvelopeResourceSerializer : KSerializer<EnvelopeResource> {
             osCode = obj.string(KEY_OS_CODE),
             screenResolution = obj.string(KEY_SCREEN_RESOLUTION),
             numCores = obj.int(KEY_NUM_CORES),
+            usesEmmcStorage = obj.boolean(KEY_USES_EMMC_STORAGE),
             extras = extras,
         )
     }
@@ -169,6 +171,7 @@ internal object EnvelopeResourceSerializer : KSerializer<EnvelopeResource> {
     private const val KEY_OS_CODE = "os_code"
     private const val KEY_SCREEN_RESOLUTION = "screen_resolution"
     private const val KEY_NUM_CORES = "num_cores"
+    private const val KEY_USES_EMMC_STORAGE = "uses_emmc_storage"
 
     private val KNOWN_KEYS = setOf(
         KEY_APP_VERSION,
@@ -198,5 +201,6 @@ internal object EnvelopeResourceSerializer : KSerializer<EnvelopeResource> {
         KEY_OS_CODE,
         KEY_SCREEN_RESOLUTION,
         KEY_NUM_CORES,
+        KEY_USES_EMMC_STORAGE,
     )
 }

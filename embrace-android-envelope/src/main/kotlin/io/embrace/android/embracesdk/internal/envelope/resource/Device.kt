@@ -39,4 +39,11 @@ interface Device {
      * @return the total free capacity of the internal storage of the device in bytes
      */
     val internalStorageTotalCapacity: Lazy<Long>
+
+    /**
+     * Whether the device appears to use an eMMC module for its primary storage.
+     *
+     * @return true/false, null if unkown/inconclusive
+     */
+    val usesEmmcStorage: Boolean?
 }

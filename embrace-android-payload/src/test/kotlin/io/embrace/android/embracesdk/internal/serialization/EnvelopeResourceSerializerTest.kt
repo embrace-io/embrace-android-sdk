@@ -36,6 +36,7 @@ internal class EnvelopeResourceSerializerTest {
         osCode = "33",
         screenResolution = "1080x2400",
         numCores = 8,
+        usesEmmcStorage = true,
         extras = mapOf("foo" to "bar"),
     )
 
@@ -49,7 +50,8 @@ internal class EnvelopeResourceSerializerTest {
                 """"hosted_sdk_version":"1.0.0","unity_build_id":"unity-123","device_manufacturer":"Google",""" +
                 """"device_model":"Pixel 6","device_architecture":"arm64-v8a","jailbroken":false,""" +
                 """"disk_total_capacity":64000000000,"os_type":"android","os_name":"android","os_version":"13",""" +
-                """"os_code":"33","screen_resolution":"1080x2400","num_cores":8,"foo":"bar"}"""
+                """"os_code":"33","screen_resolution":"1080x2400","num_cores":8,"uses_emmc_storage":true,""" +
+                """"foo":"bar"}"""
         assertEquals(expected, embraceJson.encodeToString(EnvelopeResourceSerializer, fullResource))
     }
 

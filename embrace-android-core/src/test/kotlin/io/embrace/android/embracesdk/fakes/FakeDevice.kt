@@ -8,6 +8,7 @@ class FakeDevice(
     override var screenResolution: String = "1920x1080",
     override val numberOfCores: Int = 8,
     override val internalStorageTotalCapacity: Lazy<Long> = lazy { 10000000L },
+    override val usesEmmcStorage: Boolean? = true,
     override val systemInfo: SystemInfo = SystemInfo().copy(
         deviceManufacturer = "Samsung",
         deviceModel = "Galaxy S10",

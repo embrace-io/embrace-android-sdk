@@ -9,8 +9,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkSta
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.android.embracesdk.internal.utils.EmbTrace.end
-import io.embrace.android.embracesdk.internal.utils.EmbTrace.start
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -172,14 +170,14 @@ internal fun ModuleGraph.triggerPayloadSend() {
  * Mark SDK initialization as complete.
  */
 internal fun ModuleGraph.markSdkInitComplete() {
-    start("startup-tracking")
-    dataCaptureServiceModule.startupService.setSdkStartupInfo(
-        coreModule.sdkStartTime,
-        initModule.clock.now(),
-        essentialServiceModule.appStateTracker.getAppState(),
-        Thread.currentThread().name,
-    )
-    end()
+    EmbTrace.trace("startup-tracking") {
+        dataCaptureServiceModule.startupService.setSdkStartupInfo(
+            coreModule.sdkStartTime,
+            initModule.clock.now(),
+            essentialServiceModule.appStateTracker.getAppState(),
+            Thread.currentThread().name,
+        )
+    }
     val appId = configService.appId
     val startMsg = "Embrace SDK version ${BuildConfig.VERSION_NAME} started" +
         (appId?.let { " for appId = $it" } ?: " without an app ID")

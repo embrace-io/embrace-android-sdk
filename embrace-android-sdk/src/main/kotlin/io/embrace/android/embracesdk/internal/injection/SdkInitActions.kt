@@ -93,14 +93,29 @@ internal fun ModuleGraph.registerListeners() {
  */
 internal fun ModuleGraph.loadInstrumentation() {
     val registry = instrumentationModule.instrumentationRegistry
-    val instrumentationProviders = ServiceLoader.load(InstrumentationProvider::class.java)
-    registry.loadInstrumentations(instrumentationProviders, instrumentationModule.instrumentationArgs)
+    registry.loadInstrumentations(loadInstrumentationProviders(), instrumentationModule.instrumentationArgs)
 
     threadBlockageService?.startCapture()
 
     featureModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
         workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
     )
+}
+
+/**
+ * Loads the [InstrumentationProvider] implementations declared via SPI. Before making changes
+ * to this function please study R8, as currently it optimizes out lookup and reflection from
+ * the startup path.
+ *
+ * See R8 for further details on how ServiceLoaderRewriter optimizes SPI:
+ * https://r8.googlesource.com/r8/+/refs/heads/main/src/main/java/com/android/tools/r8/ir/optimize/ServiceLoaderRewriter.java
+ */
+private fun loadInstrumentationProviders(): List<InstrumentationProvider> {
+    val providers = mutableListOf<InstrumentationProvider>()
+    for (provider in ServiceLoader.load(InstrumentationProvider::class.java, InstrumentationProvider::class.java.classLoader)) {
+        providers.add(provider)
+    }
+    return providers
 }
 
 /**

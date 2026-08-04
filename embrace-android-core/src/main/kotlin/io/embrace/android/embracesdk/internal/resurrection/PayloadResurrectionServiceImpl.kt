@@ -33,8 +33,6 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import java.io.InputStream
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 import java.util.zip.GZIPInputStream
 import java.util.zip.ZipException
 import kotlin.math.max
@@ -290,18 +288,15 @@ internal class PayloadResurrectionServiceImpl(
             else -> null
         }
 
-        // Synchronously provide the payload to the IntakeService, blocking on the returned Future
+        // Hand the payload to the IntakeService without blocking. The write is queued on the data
+        // persistence worker while this thread moves on to the next payload; the envelope is already
+        // fully in memory, so we assume the cached copy is reasonably safe to delete.
         if (resurrectedPayload != null) {
-            val task = intakeService.take(
+            intakeService.take(
                 intake = resurrectedPayload,
                 metadata = copy(complete = true),
                 staleEntry = this,
             )
-            try {
-                task.get(5, TimeUnit.SECONDS)
-            } catch (e: TimeoutException) {
-                logger.trackInternalError(InternalErrorType.IntakeFail, e)
-            }
         }
     }
 

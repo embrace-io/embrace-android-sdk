@@ -60,6 +60,7 @@ import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import java.io.ByteArrayInputStream
@@ -67,7 +68,6 @@ import java.io.InputStream
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 import java.util.zip.GZIPInputStream
 
 class PayloadResurrectionServiceImplTest {
@@ -758,25 +758,28 @@ class PayloadResurrectionServiceImplTest {
     }
 
     @Test
-    fun `resurrection timeout logged when future throws timeout on get`() {
-        val hangingIntakeService = object : IntakeService {
+    fun `resurrection does not wait for the intake service to persist the payload`() {
+        var takeCount = 0
+        val neverCompletingIntakeService = object : IntakeService {
             override fun shutdown() {}
             override fun take(
                 intake: Envelope<*>,
                 metadata: StoredTelemetryMetadata,
                 staleEntry: StoredTelemetryMetadata?,
             ): Future<*> {
+                takeCount++
                 return object : Future<Unit> {
                     override fun cancel(mayInterruptIfRunning: Boolean) = false
                     override fun isCancelled() = false
                     override fun isDone() = false
-                    override fun get() = throw TimeoutException("test")
-                    override fun get(timeout: Long, unit: TimeUnit) = throw TimeoutException("test")
+                    override fun get(): Unit = fail("resurrection must not block on the intake future")
+                    override fun get(timeout: Long, unit: TimeUnit): Unit =
+                        fail("resurrection must not block on the intake future")
                 }
             }
         }
         val service = PayloadResurrectionServiceImpl(
-            intakeService = hangingIntakeService,
+            intakeService = neverCompletingIntakeService,
             payloadStorageService = payloadStorageService,
             cacheStorageService = cacheStorageService,
             cachedLogEnvelopeStore = cachedLogEnvelopeStore,
@@ -790,12 +793,9 @@ class PayloadResurrectionServiceImplTest {
         service.addResurrectionCompleteListener { listenerCalled = true }
         service.resurrectOldPayloads(nativeCrashServiceProvider = { nativeCrashService })
 
+        assertEquals(1, takeCount)
         assertTrue(listenerCalled)
-        assertTrue(
-            logger.internalErrorMessages.any {
-                it.throwable is TimeoutException
-            },
-        )
+        assertEquals(0, cacheStorageService.storedPayloadCount())
     }
 
     /**

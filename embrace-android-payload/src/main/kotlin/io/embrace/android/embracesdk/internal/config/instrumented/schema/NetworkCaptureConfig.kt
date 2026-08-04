@@ -14,15 +14,6 @@ interface NetworkCaptureConfig {
     fun getRequestLimitPerDomain(): Int = 1000
 
     /**
-     * The fallback duration in milliseconds after which an in-flight network request span is assumed
-     * to have leaked and is dropped. Used when the HTTP client exposes no call-level timeout of its
-     * own. Defaults to 10 minutes.
-     *
-     * sdk_config.networking.request_span_timeout_ms
-     */
-    fun getRequestSpanTimeoutMs(): Long = 600_000L
-
-    /**
      * Declares a Map of domain names to the maximum number of requests
      *
      * sdk_config.networking.domains

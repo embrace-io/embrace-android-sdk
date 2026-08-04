@@ -42,9 +42,6 @@ data class NetworkLocalConfig(
 
     @Json(name = "traceparent_only_allow_domains")
     val traceparentOnlyAllowDomains: List<String>? = null,
-
-    @Json(name = "request_span_timeout_ms")
-    val requestSpanTimeoutMs: Long? = null,
 ) : Serializable {
 
     private companion object {

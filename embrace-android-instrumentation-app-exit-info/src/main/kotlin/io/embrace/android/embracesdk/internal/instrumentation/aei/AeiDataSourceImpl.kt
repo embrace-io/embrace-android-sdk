@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
@@ -21,7 +22,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 internal class AeiDataSourceImpl(
     args: InstrumentationArgs,
     private val backgroundWorker: BackgroundWorker,
-    private val activityManager: ActivityManager,
+    private val activityManagerProvider: Provider<ActivityManager?>,
     private val store: KeyValueStore,
     private val ordinalStore: OrdinalStore,
     private val versionChecker: VersionChecker = BuildVersionChecker,
@@ -49,6 +50,7 @@ internal class AeiDataSourceImpl(
     }
 
     private fun processAeiRecords() {
+        val activityManager = activityManagerProvider() ?: return
         val maxNum = configService.appExitInfoBehavior.appExitInfoMaxNum()
         val records = activityManager.getHistoricalProcessExitReasons(null, 0, maxNum).take(SDK_AEI_SEND_LIMIT)
         val deliveredIds = store.deliveredAeiIds

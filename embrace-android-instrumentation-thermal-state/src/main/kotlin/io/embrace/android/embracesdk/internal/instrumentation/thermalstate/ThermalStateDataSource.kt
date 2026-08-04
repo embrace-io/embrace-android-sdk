@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.concurrent.Executor
 
@@ -26,7 +27,9 @@ class ThermalStateDataSource(
     }
 
     private val backgroundWorker = args.backgroundWorker(Worker.Background.NonIoRegWorker)
-    private val powerManager: PowerManager? = args.systemService(Context.POWER_SERVICE)
+
+    // fetched lazily so the system service isn't retrieved on the main thread during SDK startup
+    private val powerManagerProvider: Provider<PowerManager?> = { args.systemService(Context.POWER_SERVICE) }
 
     private var thermalStatusListener: PowerManager.OnThermalStatusChangedListener? = null
 
@@ -35,21 +38,19 @@ class ThermalStateDataSource(
     override fun onDataCaptureEnabled() {
         backgroundWorker.submit {
             EmbTrace.trace("thermal-service-registration") {
-                thermalStatusListener = PowerManager.OnThermalStatusChangedListener {
+                val pm = powerManagerProvider() ?: return@trace
+                val listener = PowerManager.OnThermalStatusChangedListener {
                     handleThermalStateChange(it)
                 }
-                val pm = powerManager
-                if (pm != null) {
-                    // Android API only accepts an executor. We don't want to directly expose those
-                    // to everything in the codebase so we decorate the BackgroundWorker here as an
-                    // alternative
-                    val executor = Executor {
-                        backgroundWorker.submit(runnable = it)
-                    }
-                    thermalStatusListener?.let {
-                        pm.addThermalStatusListener(executor, it)
-                    }
+                thermalStatusListener = listener
+
+                // Android API only accepts an executor. We don't want to directly expose those
+                // to everything in the codebase so we decorate the BackgroundWorker here as an
+                // alternative
+                val executor = Executor {
+                    backgroundWorker.submit(runnable = it)
                 }
+                pm.addThermalStatusListener(executor, listener)
             }
         }
     }
@@ -57,7 +58,7 @@ class ThermalStateDataSource(
     override fun onDataCaptureDisabled() {
         backgroundWorker.submit {
             thermalStatusListener?.let {
-                powerManager?.removeThermalStatusListener(it)
+                powerManagerProvider()?.removeThermalStatusListener(it)
                 thermalStatusListener = null
             }
         }

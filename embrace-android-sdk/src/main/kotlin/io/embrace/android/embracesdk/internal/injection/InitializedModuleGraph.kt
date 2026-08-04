@@ -67,7 +67,7 @@ internal class InitializedModuleGraph(
         ) ?: EmbTrace.trace("config-service-init") {
             ConfigServiceImpl(
                 instrumentedConfig = initModule.instrumentedConfig,
-                worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
+                worker = workerThreadModule.backgroundWorker(Worker.Background.HttpRequestWorker),
                 serializer = initModule.jsonSerializer,
                 okHttpClient = initModule.okHttpClient,
                 hasConfiguredOtlpExport = openTelemetryModule.otelSdkConfig::hasConfiguredOtlpExport,

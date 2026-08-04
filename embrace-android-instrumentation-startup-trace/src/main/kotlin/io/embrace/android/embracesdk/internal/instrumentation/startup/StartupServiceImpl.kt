@@ -6,7 +6,10 @@ import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 
 internal class StartupServiceImpl(
     private val destination: TelemetryDestination,
+    appVersionStartupCounter: Int?,
 ) : StartupService {
+
+    private val appVersionStartupCounter: Int? = appVersionStartupCounter?.takeIf { it > 0 }
 
     @Volatile
     private var sdkInitStartMs: Long? = null
@@ -23,25 +26,20 @@ internal class StartupServiceImpl(
     @Volatile
     private var sdkStartupDurationMs: Long? = null
 
-    @Volatile
-    private var appVersionStartupCounter: Int? = null
-
     override fun setSdkStartupInfo(
         startTimeMs: Long,
         endTimeMs: Long,
         endState: AppState,
         threadName: String,
-        appVersionStartupCounter: Int?,
     ) {
         val foregroundEnd = endState == AppState.FOREGROUND
-        val validCounter = appVersionStartupCounter?.takeIf { it > 0 }
         if (sdkStartupDurationMs == null) {
-            val attributes = mutableMapOf(
-                "ended-in-foreground" to foregroundEnd.toString(),
-                "thread-name" to threadName,
-            )
-            validCounter?.let {
-                attributes[EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER] = it.toString()
+            val attributes = buildMap {
+                put("ended-in-foreground", foregroundEnd.toString())
+                put("thread-name", threadName)
+                if (appVersionStartupCounter != null) {
+                    put(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER, appVersionStartupCounter.toString())
+                }
             }
             destination.recordCompletedSpan(
                 name = "sdk-init",
@@ -54,7 +52,6 @@ internal class StartupServiceImpl(
         sdkInitStartMs = startTimeMs
         sdkInitEndMs = endTimeMs
         this.threadName = threadName
-        this.appVersionStartupCounter = validCounter
         sdkStartupDurationMs = endTimeMs - startTimeMs
     }
 

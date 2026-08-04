@@ -15,12 +15,10 @@ class FakeStartupService : StartupService {
         endTimeMs: Long,
         endState: AppState,
         threadName: String,
-        appVersionStartupCounter: Int?,
     ) {
         sdkStartupDurationImpl = endTimeMs - startTimeMs
         this.appState = endState
         this.threadName = threadName
-        this.appVersionStartupCounterImpl = appVersionStartupCounter
     }
 
     override fun getSdkStartupDuration(): Long? {

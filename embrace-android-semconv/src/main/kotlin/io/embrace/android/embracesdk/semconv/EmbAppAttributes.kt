@@ -11,7 +11,7 @@ package io.embrace.android.embracesdk.semconv
 object EmbAppAttributes {
 
     /**
-     * The number of times the SDK has begun startup since the app updated to the current app version, whether or not startup completed. Resets to 1 on the first SDK startup after the app version changes.
+     * The number of times the app has started up for the current app version.
      */
     @ExperimentalSemconv
     const val EMB_APP_VERSION_STARTUP_COUNTER: String = "emb.app.version_startup_counter"

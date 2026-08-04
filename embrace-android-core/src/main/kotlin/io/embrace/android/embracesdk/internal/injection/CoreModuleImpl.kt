@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.internal.prefs.createKeyValueStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStoreImpl
 
@@ -23,4 +24,11 @@ class CoreModuleImpl(
     override val store: KeyValueStore by (keyValueStore ?: lazy { createKeyValueStore(context, initModule.jsonSerializer) })
 
     override val ordinalStore: OrdinalStore by lazy { OrdinalStoreImpl(store) }
+
+    override val appVersionStartupCounter: Int by lazy {
+        ordinalStore.incrementAndGet(
+            ordinal = Ordinal.APP_VERSION_STARTUP,
+            scope = initModule.instrumentedConfig.project.getVersionName() ?: "UNKNOWN",
+        )
+    }
 }

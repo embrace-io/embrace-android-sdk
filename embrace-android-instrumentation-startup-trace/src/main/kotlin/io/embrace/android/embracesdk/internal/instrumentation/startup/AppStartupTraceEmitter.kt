@@ -352,12 +352,19 @@ internal class AppStartupTraceEmitter(
             }
 
             if (sdkInitStartMs != null && sdkInitEndMs != null) {
+                val counter = startupServiceProvider()?.getAppVersionStartupCounter()
+                val attributes = if (counter != null) {
+                    mapOf(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER to counter.toString())
+                } else {
+                    emptyMap()
+                }
+
                 destination.recordCompletedSpan(
                     name = EMBRACE_INIT_SPAN,
                     startTimeMs = sdkInitStartMs,
                     endTimeMs = sdkInitEndMs,
                     parent = this,
-                    attributes = appVersionStartupCounterAttributes(),
+                    attributes = attributes,
                 )
             }
 
@@ -410,11 +417,6 @@ internal class AppStartupTraceEmitter(
     }
 
     private fun nowMs(): Long = clock.now()
-
-    private fun appVersionStartupCounterAttributes(): Map<String, String> =
-        startupServiceProvider()?.getAppVersionStartupCounter()?.let { counter ->
-            mapOf(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER to counter.toString())
-        } ?: emptyMap()
 
     private fun SpanToken.addTraceMetadata() {
         addCustomAttributes()

@@ -14,13 +14,6 @@ internal interface ModuleGraph {
     val openTelemetryModule: OpenTelemetryModule
     val coreModule: CoreModule
     val configService: ConfigService
-
-    /**
-     * The number of times the SDK has begun startup on the current app version, including this
-     * startup. Incremented as soon as the module graph is being constructed so that startups
-     * that never complete are still counted. -1 if the counter could not be determined.
-     */
-    val appVersionStartupCounter: Int
     val workerThreadModule: WorkerThreadModule
     val storageService: StorageService
     val essentialServiceModule: EssentialServiceModule

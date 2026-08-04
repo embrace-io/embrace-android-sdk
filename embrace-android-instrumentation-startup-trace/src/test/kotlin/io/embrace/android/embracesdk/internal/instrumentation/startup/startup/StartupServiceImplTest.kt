@@ -27,7 +27,7 @@ internal class StartupServiceImplTest {
         clock = FakeClock(10000000)
         backgroundWorker = fakeBackgroundWorker()
         destination = FakeTelemetryDestination()
-        startupService = StartupServiceImpl(destination)
+        startupService = StartupServiceImpl(destination, appVersionStartupCounter = 3)
     }
 
     @Test
@@ -40,7 +40,6 @@ internal class StartupServiceImplTest {
             endTimeMs = endTimeMillis,
             endState = AppState.BACKGROUND,
             threadName = "main",
-            appVersionStartupCounter = 3,
         )
         val currentSpans = destination.completedSpans()
         assertEquals(1, currentSpans.size)
@@ -59,12 +58,12 @@ internal class StartupServiceImplTest {
 
     @Test
     fun `invalid app version startup counter omitted from SDK startup span`() {
+        startupService = StartupServiceImpl(destination, appVersionStartupCounter = -1)
         startupService.setSdkStartupInfo(
             startTimeMs = 10,
             endTimeMs = 20,
             endState = AppState.BACKGROUND,
             threadName = "main",
-            appVersionStartupCounter = -1,
         )
         val span = destination.completedSpans().single()
         assertFalse(span.attributes.containsKey(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER))
@@ -79,7 +78,6 @@ internal class StartupServiceImplTest {
                 endTimeMs = 20,
                 endState = AppState.BACKGROUND,
                 threadName = "main",
-                appVersionStartupCounter = 1,
             )
         }
         assertEquals(1, destination.completedSpans().size)
@@ -89,7 +87,6 @@ internal class StartupServiceImplTest {
                 endTimeMs = 20,
                 endState = AppState.BACKGROUND,
                 threadName = "main",
-                appVersionStartupCounter = 1,
             )
         }
         assertEquals(1, destination.completedSpans().size)
@@ -97,10 +94,10 @@ internal class StartupServiceImplTest {
 
     @Test
     fun `startup info available right after setting on the service`() {
-        startupService.setSdkStartupInfo(1111L, 3222L, AppState.BACKGROUND, "main", 4)
+        startupService.setSdkStartupInfo(1111L, 3222L, AppState.BACKGROUND, "main")
         assertEquals(1111L, startupService.getSdkInitStartMs())
         assertEquals(3222L, startupService.getSdkInitEndMs())
         assertEquals(2111L, startupService.getSdkStartupDuration())
-        assertEquals(4, startupService.getAppVersionStartupCounter())
+        assertEquals(3, startupService.getAppVersionStartupCounter())
     }
 }

@@ -192,7 +192,6 @@ internal fun ModuleGraph.markSdkInitComplete() {
             initModule.clock.now(),
             essentialServiceModule.appStateTracker.getAppState(),
             Thread.currentThread().name,
-            appVersionStartupCounter,
         )
     }
     val appId = configService.appId

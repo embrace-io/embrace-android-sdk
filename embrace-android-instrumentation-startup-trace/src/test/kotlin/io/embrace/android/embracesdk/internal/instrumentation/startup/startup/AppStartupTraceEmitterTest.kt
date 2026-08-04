@@ -71,7 +71,7 @@ internal class AppStartupTraceEmitterTest {
     fun setUp() {
         clock = FakeClock(processInitTime)
         destination = FakeTelemetryDestination()
-        startupService = StartupServiceImpl(destination)
+        startupService = StartupServiceImpl(destination, APP_VERSION_STARTUP_COUNTER)
         clock.tick(100L)
         logger = FakeInternalLogger(false)
         firePreAndPostCreate = hasPrePostEvents(BuildVersionChecker)
@@ -775,7 +775,6 @@ internal class AppStartupTraceEmitterTest {
             endTimeMs = end,
             endState = AppState.BACKGROUND,
             threadName = "main",
-            appVersionStartupCounter = APP_VERSION_STARTUP_COUNTER,
         )
 
         val applicationInitEnd = if (hasAppInitEvents) {

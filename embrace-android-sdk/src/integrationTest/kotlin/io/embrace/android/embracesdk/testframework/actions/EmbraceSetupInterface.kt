@@ -130,7 +130,7 @@ internal class EmbraceSetupInterface(
             val impl = ConfigServiceImpl(
                 instrumentedConfig = initModule.instrumentedConfig,
                 persistedConfig = persistedConfig,
-                worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
+                worker = workerThreadModule.backgroundWorker(Worker.Background.HttpRequestWorker),
                 serializer = initModule.jsonSerializer,
                 okHttpClient = initModule.okHttpClient,
                 hasConfiguredOtlpExport = openTelemetryModule.otelSdkConfig::hasConfiguredOtlpExport,

@@ -5,8 +5,8 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 
@@ -23,7 +23,7 @@ fun assertEmbraceSpanData(
     expectedErrorCode: ErrorCode? = null,
     expectedCustomAttributes: Map<String, String> = emptyMap(),
     expectedEvents: List<SpanEvent> = emptyList(),
-    expectedOtelSessionId: String? = null,
+    expectedUserSessionId: String? = null,
     private: Boolean = false,
 ) {
     checkNotNull(span)
@@ -49,8 +49,8 @@ fun assertEmbraceSpanData(
         }
         assertEquals(expectedEvents, events)
 
-        if (expectedOtelSessionId != null) {
-            assertEquals(expectedOtelSessionId, attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
+        if (expectedUserSessionId != null) {
+            assertEquals(expectedUserSessionId, attributes?.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID))
         }
 
         if (private) {

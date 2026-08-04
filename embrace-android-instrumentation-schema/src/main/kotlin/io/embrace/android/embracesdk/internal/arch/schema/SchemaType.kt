@@ -18,7 +18,6 @@ import io.embrace.android.embracesdk.semconv.EmbThermalStateAttributes
 import io.embrace.android.embracesdk.semconv.EmbViewAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.HttpAttributes
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import io.opentelemetry.kotlin.semconv.UrlAttributes
 
 /**
@@ -148,7 +147,6 @@ sealed class SchemaType(
             // keep session IDs empty as AEI is recorded in a different process
             EmbSessionAttributes.EMB_SESSION_PART_ID to "",
             EmbSessionAttributes.EMB_USER_SESSION_ID to "",
-            SessionAttributes.SESSION_ID to "",
             EmbAeiAttributes.SESSION_ID_ERROR to sessionIdError,
             EmbAeiAttributes.PROCESS_IMPORTANCE to importance.toString(),
             EmbAeiAttributes.PSS to pss.toString(),

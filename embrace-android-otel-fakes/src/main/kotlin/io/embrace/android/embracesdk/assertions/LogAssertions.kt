@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.opentelemetry.kotlin.logging.SeverityNumber
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.LogAttributes
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -41,10 +40,10 @@ fun assertOtelLogReceived(
         assertEquals(expectedSeverityText ?: expectedSeverityNumber.name, log.severityText)
         assertEquals(expectedTimeMs.millisToNanos(), log.timeUnixNano)
         if (hasSession) {
-            assertFalse(log.attributes?.findAttributeValue(SessionAttributes.SESSION_ID).isNullOrBlank())
+            assertFalse(log.attributes?.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID).isNullOrBlank())
         } else {
-            val otelSessionId = log.attributes?.findAttributeValue(SessionAttributes.SESSION_ID)
-            assertEquals("", otelSessionId ?: "")
+            val userSessionId = log.attributes?.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID)
+            assertEquals("", userSessionId ?: "")
         }
         expectedType?.let { assertAttribute(log, EmbAndroidAttributes.EMB_EXCEPTION_HANDLING, it) }
         assertEquals(expectedState, log.attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE))

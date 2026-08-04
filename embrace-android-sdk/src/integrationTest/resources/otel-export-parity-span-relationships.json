@@ -7,14 +7,13 @@
     "endEpochNanos": "169220160030000000",
     "hasEnded": "true",
     "parentSpanName": "",
-    "totalAttributeCount": "6",
+    "totalAttributeCount": "5",
     "attributes": {
       "emb.private.sequence_id": "__EMBRACE_TEST_IGNORE__",
       "emb.process_identifier": "__EMBRACE_TEST_IGNORE__",
       "emb.session_part_id": "__EMBRACE_TEST_IGNORE__",
       "emb.type": "perf",
-      "emb.user_session_id": "__EMBRACE_TEST_IGNORE__",
-      "session.id": "__EMBRACE_TEST_IGNORE__"
+      "emb.user_session_id": "__EMBRACE_TEST_IGNORE__"
     },
     "totalRecordedEvents": "0",
     "events": [],
@@ -25,8 +24,7 @@
         "attributes": {
           "emb.link_type": "END_SESSION_PART",
           "emb.session_part_id": "__EMBRACE_TEST_IGNORE__",
-          "emb.user_session_id": "__EMBRACE_TEST_IGNORE__",
-          "session.id": "__EMBRACE_TEST_IGNORE__"
+          "emb.user_session_id": "__EMBRACE_TEST_IGNORE__"
         }
       }
     ],
@@ -54,14 +52,13 @@
     "endEpochNanos": "169220160030000000",
     "hasEnded": "true",
     "parentSpanName": "aaa-parent-span",
-    "totalAttributeCount": "6",
+    "totalAttributeCount": "5",
     "attributes": {
       "emb.private.sequence_id": "__EMBRACE_TEST_IGNORE__",
       "emb.process_identifier": "__EMBRACE_TEST_IGNORE__",
       "emb.session_part_id": "__EMBRACE_TEST_IGNORE__",
       "emb.type": "perf",
-      "emb.user_session_id": "__EMBRACE_TEST_IGNORE__",
-      "session.id": "__EMBRACE_TEST_IGNORE__"
+      "emb.user_session_id": "__EMBRACE_TEST_IGNORE__"
     },
     "totalRecordedEvents": "0",
     "events": [],
@@ -72,8 +69,7 @@
         "attributes": {
           "emb.link_type": "END_SESSION_PART",
           "emb.session_part_id": "__EMBRACE_TEST_IGNORE__",
-          "emb.user_session_id": "__EMBRACE_TEST_IGNORE__",
-          "session.id": "__EMBRACE_TEST_IGNORE__"
+          "emb.user_session_id": "__EMBRACE_TEST_IGNORE__"
         }
       }
     ],
@@ -101,14 +97,13 @@
     "endEpochNanos": "169220160030000000",
     "hasEnded": "true",
     "parentSpanName": "",
-    "totalAttributeCount": "6",
+    "totalAttributeCount": "5",
     "attributes": {
       "emb.private.sequence_id": "__EMBRACE_TEST_IGNORE__",
       "emb.process_identifier": "__EMBRACE_TEST_IGNORE__",
       "emb.session_part_id": "__EMBRACE_TEST_IGNORE__",
       "emb.type": "perf",
-      "emb.user_session_id": "__EMBRACE_TEST_IGNORE__",
-      "session.id": "__EMBRACE_TEST_IGNORE__"
+      "emb.user_session_id": "__EMBRACE_TEST_IGNORE__"
     },
     "totalRecordedEvents": "0",
     "events": [],
@@ -119,8 +114,7 @@
         "attributes": {
           "emb.link_type": "END_SESSION_PART",
           "emb.session_part_id": "__EMBRACE_TEST_IGNORE__",
-          "emb.user_session_id": "__EMBRACE_TEST_IGNORE__",
-          "session.id": "__EMBRACE_TEST_IGNORE__"
+          "emb.user_session_id": "__EMBRACE_TEST_IGNORE__"
         }
       },
       {

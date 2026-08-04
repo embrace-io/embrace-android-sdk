@@ -7,7 +7,7 @@
     "endEpochNanos": "169220161030000000",
     "hasEnded": "true",
     "parentSpanName": "",
-    "totalAttributeCount": "17",
+    "totalAttributeCount": "16",
     "attributes": {
       "any-value-attr": "__EMBRACE_TEST_IGNORE__",
       "boolean-attr": "true",
@@ -23,7 +23,6 @@
       "emb.user_session_id": "__EMBRACE_TEST_IGNORE__",
       "long-attr": "42",
       "long-list-attr": "[1, 2]",
-      "session.id": "__EMBRACE_TEST_IGNORE__",
       "string-attr": "value",
       "string-list-attr": "[a, b]"
     },
@@ -36,8 +35,7 @@
         "attributes": {
           "emb.link_type": "END_SESSION_PART",
           "emb.session_part_id": "__EMBRACE_TEST_IGNORE__",
-          "emb.user_session_id": "__EMBRACE_TEST_IGNORE__",
-          "session.id": "__EMBRACE_TEST_IGNORE__"
+          "emb.user_session_id": "__EMBRACE_TEST_IGNORE__"
         }
       }
     ],

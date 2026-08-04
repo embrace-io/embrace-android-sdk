@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbTelemetryAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -61,7 +60,7 @@ internal class UserSessionApiTest {
                 val spans = checkNotNull(message.data.spans)
                 val sessionPartSpan = spans.single { it.name == "emb-session" }
                 assertEquals(startTime, sessionPartSpan.startTimeNanos?.nanosToMillis())
-                assertNotNull(sessionPartSpan.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
+                assertNotNull(sessionPartSpan.attributes?.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID))
 
                 val attrs = checkNotNull(sessionPartSpan.attributes)
                 val attributeKeys = attrs.map { it.key }
@@ -97,7 +96,6 @@ internal class UserSessionApiTest {
         // Attributes we want to know exist, but whose value we don't need to validate
         val validateExistenceOnly = setOf(
             EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID,
-            SessionAttributes.SESSION_ID,
             EmbTelemetryAttributes.EMB_KOTLIN_ON_CLASSPATH,
             EmbTelemetryAttributes.EMB_OKHTTP3,
             EmbSessionAttributes.EMB_PROCESS_IDENTIFIER,

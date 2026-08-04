@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.arch.schema
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -12,24 +11,24 @@ internal class TelemetryAttributesTest {
 
     private lateinit var customAttributes: Map<String, String>
     private lateinit var telemetryAttributes: TelemetryAttributes
-    private lateinit var otelSessionId: String
+    private lateinit var userSessionId: String
 
     @Before
     fun setup() {
         customAttributes = mapOf("custom" to "attributeValue")
-        otelSessionId = TestUuidSource().createUuid()
+        userSessionId = TestUuidSource().createUuid()
     }
 
     @Test
     fun `only schema properties`() {
         telemetryAttributes = TelemetryAttributes()
-        telemetryAttributes.setAttribute(SessionAttributes.SESSION_ID, otelSessionId)
+        telemetryAttributes.setAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, userSessionId)
         telemetryAttributes.setAttribute(ExceptionAttributes.EXCEPTION_TYPE, "exceptionValue")
         val attributes = telemetryAttributes.snapshot()
         assertEquals(2, attributes.size)
-        assertEquals(otelSessionId, attributes[SessionAttributes.SESSION_ID])
+        assertEquals(userSessionId, attributes[EmbSessionAttributes.EMB_USER_SESSION_ID])
         assertEquals("exceptionValue", attributes[ExceptionAttributes.EXCEPTION_TYPE])
-        assertEquals(otelSessionId, telemetryAttributes.getAttribute(SessionAttributes.SESSION_ID))
+        assertEquals(userSessionId, telemetryAttributes.getAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID))
         assertEquals("exceptionValue", telemetryAttributes.getAttribute(ExceptionAttributes.EXCEPTION_TYPE))
     }
 
@@ -38,37 +37,37 @@ internal class TelemetryAttributesTest {
         telemetryAttributes = TelemetryAttributes(
             customAttributes = customAttributes,
         )
-        val otelSessionIdKey = SessionAttributes.SESSION_ID
-        telemetryAttributes.setAttribute(otelSessionIdKey, otelSessionId)
+        val userSessionIdKey = EmbSessionAttributes.EMB_USER_SESSION_ID
+        telemetryAttributes.setAttribute(userSessionIdKey, userSessionId)
 
         val attributes = telemetryAttributes.snapshot()
         assertEquals("attributeValue", attributes["custom"])
-        assertEquals(otelSessionId, attributes[otelSessionIdKey])
+        assertEquals(userSessionId, attributes[userSessionIdKey])
     }
 
     @Test
     fun `overwritten values returned`() {
-        val newOtelSessionId = TestUuidSource().createUuid()
+        val newUserSessionId = TestUuidSource().createUuid()
         telemetryAttributes = TelemetryAttributes()
-        val otelSessionIdKey = SessionAttributes.SESSION_ID
-        telemetryAttributes.setAttribute(otelSessionIdKey, otelSessionId)
-        telemetryAttributes.setAttribute(otelSessionIdKey, newOtelSessionId)
+        val userSessionIdKey = EmbSessionAttributes.EMB_USER_SESSION_ID
+        telemetryAttributes.setAttribute(userSessionIdKey, userSessionId)
+        telemetryAttributes.setAttribute(userSessionIdKey, newUserSessionId)
 
         val attributes = telemetryAttributes.snapshot()
         assertEquals(1, attributes.size)
-        assertEquals(newOtelSessionId, attributes[otelSessionIdKey])
+        assertEquals(newUserSessionId, attributes[userSessionIdKey])
     }
 
     @Test
     fun `schema attribute values take priority if the same key is used`() {
-        val newOtelSessionId = TestUuidSource().createUuid()
+        val newUserSessionId = TestUuidSource().createUuid()
         telemetryAttributes = TelemetryAttributes(
-            customAttributes = mapOf(SessionAttributes.SESSION_ID to otelSessionId),
+            customAttributes = mapOf(EmbSessionAttributes.EMB_USER_SESSION_ID to userSessionId),
         )
-        telemetryAttributes.setAttribute(SessionAttributes.SESSION_ID, newOtelSessionId)
+        telemetryAttributes.setAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, newUserSessionId)
         val attributes = telemetryAttributes.snapshot()
         assertEquals(1, attributes.size)
-        assertEquals(newOtelSessionId, attributes[SessionAttributes.SESSION_ID])
+        assertEquals(newUserSessionId, attributes[EmbSessionAttributes.EMB_USER_SESSION_ID])
     }
 
     @Test
@@ -76,7 +75,7 @@ internal class TelemetryAttributesTest {
         telemetryAttributes = TelemetryAttributes(
             customAttributes = customAttributes,
         )
-        telemetryAttributes.setAttribute(SessionAttributes.SESSION_ID, otelSessionId)
+        telemetryAttributes.setAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, userSessionId)
 
         val attributes = telemetryAttributes.snapshot()
         assertEquals(2, attributes.size)
@@ -88,17 +87,17 @@ internal class TelemetryAttributesTest {
         val blankishValues = listOf("", " ", "null", "NULL")
 
         // Give me Union types, plz
-        val otelSessionIdKey = SessionAttributes.SESSION_ID
+        val userSessionIdKey = EmbSessionAttributes.EMB_USER_SESSION_ID
         blankishValues.forEach { value ->
-            telemetryAttributes.setAttribute(otelSessionIdKey, value, true)
-            assertEquals(value, telemetryAttributes.getAttribute(otelSessionIdKey))
+            telemetryAttributes.setAttribute(userSessionIdKey, value, true)
+            assertEquals(value, telemetryAttributes.getAttribute(userSessionIdKey))
         }
 
-        telemetryAttributes.setAttribute(otelSessionIdKey, "test")
+        telemetryAttributes.setAttribute(userSessionIdKey, "test")
 
         blankishValues.forEach { value ->
-            telemetryAttributes.setAttribute(otelSessionIdKey, value, false)
-            assertEquals("test", telemetryAttributes.getAttribute(otelSessionIdKey))
+            telemetryAttributes.setAttribute(userSessionIdKey, value, false)
+            assertEquals("test", telemetryAttributes.getAttribute(userSessionIdKey))
         }
 
         blankishValues.forEach { value ->

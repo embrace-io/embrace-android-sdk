@@ -30,7 +30,6 @@ import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.internal.session.getUserSessionProperties
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import java.io.InputStream
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
@@ -441,13 +440,11 @@ internal class PayloadResurrectionServiceImpl(
     /**
      * Resolves the session part id used to match a native crash to this session part.
      *
-     * A current-SDK session part span always has [EmbSessionAttributes.EMB_SESSION_PART_ID] so its presence means no fallback, so we take
-     * whatever value it defines. Lacking that, it means it was created with a version of the SDK that predates user session, so we
-     * get the ID defined in [SessionAttributes.SESSION_ID]. If neither exists, this session part span is not valid, so we return null.
+     * A session part span always has [EmbSessionAttributes.EMB_SESSION_PART_ID], so we take whatever value it defines. If it does not
+     * exist, this session part span is not valid, so we return null.
      */
     private fun Span.resolveSessionPartIdForCrashMatch(): String? =
         attributes?.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID)
-            ?: attributes?.findAttributeValue(SessionAttributes.SESSION_ID)
 
     private fun StoredTelemetryMetadata.loadDecompressedPayload(): InputStream? =
         cacheStorageService.loadPayloadAsStream(this)?.let {

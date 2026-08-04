@@ -117,6 +117,7 @@ internal class SdkIntegrationTestRule(
         instrumentedConfig: FakeInstrumentedConfig = FakeInstrumentedConfig(),
         persistedRemoteConfig: RemoteConfig = RemoteConfig(),
         serverResponseConfig: RemoteConfig = persistedRemoteConfig,
+        serverResponseConfigJson: String? = null,
         expectSdkToStart: Boolean = startSdk,
         setupAction: EmbraceSetupInterface.() -> Unit = {},
         preSdkStartAction: EmbracePreSdkStartInterface.() -> Unit = {},
@@ -126,7 +127,7 @@ internal class SdkIntegrationTestRule(
     ) {
         setup = embraceSetupInterfaceSupplier()
         val deliveryTracer = DeliveryTracer()
-        val apiServer = FakeApiServer(serverResponseConfig, deliveryTracer)
+        val apiServer = FakeApiServer(serverResponseConfig, deliveryTracer, serverResponseConfigJson)
         val server: MockWebServer = MockWebServer().apply {
             protocols = listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
             dispatcher = apiServer

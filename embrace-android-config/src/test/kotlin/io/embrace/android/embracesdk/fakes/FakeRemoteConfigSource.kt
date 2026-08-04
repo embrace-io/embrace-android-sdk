@@ -5,6 +5,12 @@ import io.embrace.android.embracesdk.internal.config.source.RemoteConfigSource
 
 class FakeRemoteConfigSource(
     var cfg: ConfigHttpResponse? = null,
+
+    /**
+     * Invoked on every [getConfig] call after [callCount] is incremented. Lets a test observe calls
+     * as they happen, or make a chosen call fail.
+     */
+    var onCall: () -> Unit = {},
 ) : RemoteConfigSource {
 
     var callCount: Int = 0
@@ -12,6 +18,7 @@ class FakeRemoteConfigSource(
 
     override fun getConfig(): ConfigHttpResponse? {
         callCount++
+        onCall()
         return cfg
     }
 

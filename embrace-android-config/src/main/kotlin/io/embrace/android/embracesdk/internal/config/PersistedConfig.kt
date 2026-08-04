@@ -44,7 +44,7 @@ class PersistedConfig(
         )
     }
 
-    internal val response: StoredConfigResponse? = store?.loadResponse()
+    internal val response: StoredConfigResponse? = runCatching { store?.loadResponse() }.getOrNull()
 
     internal val remoteConfig: RemoteConfig? = response?.cfg
 

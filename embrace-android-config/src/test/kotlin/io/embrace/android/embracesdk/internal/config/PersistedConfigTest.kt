@@ -112,6 +112,20 @@ internal class PersistedConfigTest {
     }
 
     @Test
+    fun `corrupt config on disk degrades to no config rather than throwing`() {
+        val filesDir = temporaryFolder.newFolder()
+        val storageDir = File(filesDir, PersistedConfig.STORAGE_DIR_NAME).apply { mkdirs() }
+        File(storageDir, "most_recent_response").writeText("!!! not json !!!")
+        File(storageDir, "cached_config").writeBytes(ByteArray(8))
+
+        val persistedConfig = createPersistedConfig(filesDir = filesDir)
+
+        assertNull(persistedConfig.response)
+        assertNull(persistedConfig.remoteConfig)
+        assertFalse(persistedConfig.otelBehavior.shouldUseKotlinSdk())
+    }
+
+    @Test
     fun `key value store is not touched when the config is never read`() {
         var resolved = false
         val store = lazy {
@@ -145,8 +159,8 @@ internal class PersistedConfigTest {
         appId: String? = "abcde",
         store: Lazy<FakeKeyValueStore> = lazyOf(FakeKeyValueStore()),
         cachedDeviceId: String? = null,
+        filesDir: File = temporaryFolder.newFolder(),
     ): PersistedConfig {
-        val filesDir = temporaryFolder.newFolder()
         if (persisted != null && cachedDeviceId != null) {
             RemoteConfigStoreImpl(
                 serializer = serializer,

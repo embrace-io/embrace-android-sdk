@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.store
 
+import io.embrace.android.embracesdk.fakes.FakeThrowingSerializer
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
@@ -182,6 +183,18 @@ internal class RemoteConfigStoreImplTest {
         // the load fails...
         assertNull(store.loadResponse())
         // ...but the file is intact so a later attempt can succeed once the error clears.
+        assertTrue(configFile().exists())
+    }
+
+    @Test
+    fun `a non-Exception failure while loading degrades to no config`() {
+        val config = RemoteConfig(50)
+        store.saveResponse(ConfigHttpResponse(config, "etag"))
+        cachedConfigFile().delete()
+
+        store = RemoteConfigStoreImpl(FakeThrowingSerializer(StackOverflowError()), dir) { deviceId }
+
+        assertNull(store.loadResponse())
         assertTrue(configFile().exists())
     }
 

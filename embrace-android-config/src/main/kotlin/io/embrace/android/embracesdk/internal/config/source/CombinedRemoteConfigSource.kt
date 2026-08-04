@@ -25,11 +25,13 @@ internal class CombinedRemoteConfigSource(
     }
 
     private fun attemptConfigRequest() {
-        response?.etag?.let {
-            httpSource.setInitialEtag(it)
-        }
-        httpSource.getConfig()?.let {
-            store.saveResponse(it)
+        runCatching {
+            response?.etag?.let {
+                httpSource.setInitialEtag(it)
+            }
+            httpSource.getConfig()?.let {
+                store.saveResponse(it)
+            }
         }
     }
 }

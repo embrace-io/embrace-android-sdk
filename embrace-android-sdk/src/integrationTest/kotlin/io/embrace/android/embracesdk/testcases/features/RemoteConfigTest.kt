@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -57,6 +58,24 @@ internal class RemoteConfigTest {
             assertAction = {
                 assertConfigRequested(1)
                 assertConfigStored(100)
+            })
+    }
+
+    @Test
+    fun `a malformed config response leaves the persisted config intact`() {
+        testRule.runTest(
+            persistedRemoteConfig = sdkEnabledConfig,
+            serverResponseConfigJson = """{"threshold":"not-a-number"}""",
+            testCaseAction = {
+                assertTrue(embrace.isStarted)
+            },
+            assertAction = {
+                assertConfigRequested(1)
+
+                // good config already on disk is not overwritten
+                val persisted = readPersistedConfigResponse()
+                assertEquals(100, persisted.cfg?.threshold)
+                assertEquals("persisted_etag", persisted.etag)
             })
     }
 

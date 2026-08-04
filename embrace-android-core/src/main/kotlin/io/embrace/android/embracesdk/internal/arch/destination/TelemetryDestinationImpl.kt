@@ -12,15 +12,16 @@ import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.otel.logs.EventService
 import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanTerminationMode
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.kotlin.logging.SeverityNumber
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -28,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class TelemetryDestinationImpl(
     private val clock: Clock,
     private val spanService: SpanService,
-    private val eventService: EventService,
+    private val loggerSupplier: Provider<Logger>,
     private val currentSessionPartSpan: CurrentSessionPartSpan,
 ) : TelemetryDestination {
 
@@ -40,7 +41,6 @@ class TelemetryDestinationImpl(
         severity: LogSeverity,
         message: String,
         isPrivate: Boolean,
-        addCurrentSessionInfo: Boolean,
         timestampMs: Long?,
     ) {
         val logTimeMs = timestampMs ?: clock.now()
@@ -50,15 +50,12 @@ class TelemetryDestinationImpl(
             LogSeverity.ERROR -> SeverityNumber.ERROR
         }
         val logTimeNanos = TimeUnit.MILLISECONDS.toNanos(logTimeMs)
-        eventService.log(
-            eventName = null,
+        loggerSupplier().emit(
             body = message,
             timestamp = logTimeNanos,
             observedTimestamp = logTimeNanos,
-            context = null,
             severityNumber = severityNumber,
             severityText = getSeverityText(severityNumber),
-            addCurrentMetadata = addCurrentSessionInfo,
         ) {
             if (isPrivate) {
                 setStringAttribute(PrivateSpan.key, PrivateSpan.value)

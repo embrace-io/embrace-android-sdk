@@ -19,7 +19,6 @@ class NetworkCaptureConfigInstrumentationKtTest {
 
     private val methods = listOf(
         ConfigMethod("getRequestLimitPerDomain", "()I", 567),
-        ConfigMethod("getRequestSpanTimeoutMs", "()J", 120_000L),
         ConfigMethod("getIgnoredRequestPatternList", "()Ljava/util/List;", listOf("pattern1", "pattern2")),
         ConfigMethod("getNetworkBodyCapturePublicKey", "()Ljava/lang/String;", "my_key"),
         ConfigMethod("getLimitsByDomain", "()Ljava/util/Map;", mapOf("domain1" to "1", "domain2" to "2")),
@@ -48,7 +47,6 @@ class NetworkCaptureConfigInstrumentationKtTest {
                             capturePublicKey = "my_key",
                             networking = NetworkLocalConfig(
                                 defaultCaptureLimit = 567,
-                                requestSpanTimeoutMs = 120_000L,
                                 disabledUrlPatterns = listOf("pattern1", "pattern2"),
                                 domains = listOf(
                                     DomainLocalConfig("domain1", 1),

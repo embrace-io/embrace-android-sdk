@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.internal.config.behavior
 
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.fakes.config.FakeNetworkCaptureConfig
 import io.embrace.android.embracesdk.fakes.createNetworkBehavior
+import io.embrace.android.embracesdk.internal.config.remote.DataRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -23,6 +23,7 @@ internal class NetworkBehaviorImplTest {
                 "google.com" to 50,
             ),
         ),
+        dataConfig = DataRemoteConfig(networkRequestSpanTimeoutMs = 120_000L),
         disabledUrlPatterns = setOf("example.com"),
         networkCaptureRules = setOf(
             NetworkCaptureRuleRemoteConfig(
@@ -55,6 +56,7 @@ internal class NetworkBehaviorImplTest {
     fun testRemoteOnly() {
         with(createNetworkBehavior(remoteCfg = remote)) {
             assertEquals(409, getRequestLimitPerDomain())
+            assertEquals(120_000L, getRequestSpanTimeoutMs())
             assertEquals(mapOf("google.com" to 50), getLimitsByDomain())
             assertTrue(isUrlEnabled("google.com"))
             assertFalse(isUrlEnabled("example.com"))
@@ -83,18 +85,6 @@ internal class NetworkBehaviorImplTest {
             assertFalse(isUrlEnabled("https://example.com/path"))
             assertTrue(isUrlEnabled("https://google.com/path"))
         }
-    }
-
-    @Test
-    fun `request span timeout respects local config override`() {
-        val networkBehavior = NetworkBehaviorImpl(
-            local = FakeInstrumentedConfig(
-                networkCapture = FakeNetworkCaptureConfig(requestSpanTimeoutMs = 120_000L),
-            ),
-            remote = null,
-            disabledUrlPatterns = null,
-        )
-        assertEquals(120_000L, networkBehavior.getRequestSpanTimeoutMs())
     }
 
     @Test

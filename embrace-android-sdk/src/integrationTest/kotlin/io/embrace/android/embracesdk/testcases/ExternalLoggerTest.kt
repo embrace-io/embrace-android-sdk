@@ -26,6 +26,7 @@ import io.opentelemetry.kotlin.getTracer
 import io.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.kotlin.logging.SeverityNumber
 import io.opentelemetry.kotlin.logging.model.ReadableLogRecord
+import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.LogAttributes
 import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
@@ -232,6 +233,33 @@ internal class ExternalLoggerTest {
                 assertNull(checkNotNull(logs["no-user"]).attributes[UserAttributes.USER_ID])
                 assertEquals("user-abc",checkNotNull(logs["with-user"]).attributes[UserAttributes.USER_ID])
                 assertNull(checkNotNull(logs["without-user"]).attributes[UserAttributes.USER_ID])
+            }
+        )
+    }
+
+    @Test
+    fun `exception passed to the otel logging API is recorded on the exported log`() {
+        testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
+            persistedRemoteConfig = remoteConfig,
+            preSdkStartAction = {
+                setupExporter()
+            },
+            testCaseAction = {
+                initializeOTel()
+                recordSession {
+                    embLogger.emit(body = "boom", exception = IllegalStateException("kaboom"))
+                }
+            },
+            assertAction = {
+                with(logExporter.exportedLogs.single().attributes) {
+                    assertEquals(
+                        IllegalStateException::class.java.name,
+                        get(ExceptionAttributes.EXCEPTION_TYPE)
+                    )
+                    assertEquals("kaboom", get(ExceptionAttributes.EXCEPTION_MESSAGE))
+                    assertNotNull(get(ExceptionAttributes.EXCEPTION_STACKTRACE))
+                }
             }
         )
     }

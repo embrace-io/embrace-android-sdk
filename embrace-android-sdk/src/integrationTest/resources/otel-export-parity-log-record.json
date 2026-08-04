@@ -29,7 +29,7 @@
       "service.name": "UNKNOWN",
       "service.version": "UNKNOWN",
       "telemetry.distro.name": "io.embrace.android.embracesdk.core",
-      "telemetry.distro.version": "9.1.0-SNAPSHOT"
+      "telemetry.distro.version": "__EMBRACE_TEST_IGNORE__"
     }
   },
   {
@@ -64,7 +64,7 @@
       "service.name": "UNKNOWN",
       "service.version": "UNKNOWN",
       "telemetry.distro.name": "io.embrace.android.embracesdk.core",
-      "telemetry.distro.version": "9.1.0-SNAPSHOT"
+      "telemetry.distro.version": "__EMBRACE_TEST_IGNORE__"
     }
   },
   {
@@ -100,7 +100,7 @@
       "service.name": "UNKNOWN",
       "service.version": "UNKNOWN",
       "telemetry.distro.name": "io.embrace.android.embracesdk.core",
-      "telemetry.distro.version": "9.1.0-SNAPSHOT"
+      "telemetry.distro.version": "__EMBRACE_TEST_IGNORE__"
     }
   }
 ]

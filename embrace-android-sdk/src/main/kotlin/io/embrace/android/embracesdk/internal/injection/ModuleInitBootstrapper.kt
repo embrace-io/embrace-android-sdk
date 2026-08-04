@@ -47,6 +47,7 @@ internal class ModuleInitBootstrapper(
 
     @Volatile
     private var delegate: ModuleGraph = UninitializedModuleGraph
+    override val sdkStartTimeMs: Long get() = delegate.sdkStartTimeMs
     override val coreModule: CoreModule get() = delegate.coreModule
     override val configService: ConfigService get() = delegate.configService
     override val workerThreadModule: WorkerThreadModule get() = delegate.workerThreadModule
@@ -76,7 +77,8 @@ internal class ModuleInitBootstrapper(
                 if (isInitialized()) {
                     return@trace false
                 }
-
+                // stamped before anything else so that the SDK init span covers all the work below
+                val startTimeMs = initModule.clock.now()
                 val keyValueStore = lazy { createKeyValueStore(context, initModule.jsonSerializer) }
                 val persistedConfig = EmbTrace.trace("persisted-config-load") {
                     PersistedConfig(
@@ -96,6 +98,7 @@ internal class ModuleInitBootstrapper(
                 delegate = InitializedModuleGraph(
                     context,
                     versionChecker,
+                    startTimeMs,
                     initModule,
                     openTelemetryModule,
                     workerThreadModule,

@@ -13,8 +13,6 @@ class CoreModuleImpl(
     keyValueStore: Lazy<KeyValueStore>? = null,
 ) : CoreModule {
 
-    override val sdkStartTime: Long = initModule.clock.now()
-
     override val context: Context = when (ctx) {
         is Application -> ctx
         else -> ctx.applicationContext

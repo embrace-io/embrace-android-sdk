@@ -188,7 +188,7 @@ internal fun ModuleGraph.triggerPayloadSend() {
 internal fun ModuleGraph.markSdkInitComplete() {
     EmbTrace.trace("startup-tracking") {
         dataCaptureServiceModule.startupService.setSdkStartupInfo(
-            coreModule.sdkStartTime,
+            sdkStartTimeMs,
             initModule.clock.now(),
             essentialServiceModule.appStateTracker.getAppState(),
             Thread.currentThread().name,

@@ -148,7 +148,6 @@ internal class ExportedTelemetryParityValidator {
             EmbSessionAttributes.EMB_USER_SESSION_ID,
             EmbSessionAttributes.EMB_SESSION_PART_ID,
             EmbSessionAttributes.EMB_PROCESS_IDENTIFIER,
-            EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID,
             "log.record.uid",
             "any-value-attr",
             ExceptionAttributes.EXCEPTION_STACKTRACE,

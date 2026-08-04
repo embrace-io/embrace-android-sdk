@@ -7,10 +7,9 @@
     "endEpochNanos": "169220160530000000",
     "hasEnded": "true",
     "parentSpanName": "",
-    "totalAttributeCount": "7",
+    "totalAttributeCount": "6",
     "attributes": {
       "emb.error_code": "failure",
-      "emb.private.sequence_id": "__EMBRACE_TEST_IGNORE__",
       "emb.process_identifier": "__EMBRACE_TEST_IGNORE__",
       "emb.session_part_id": "__EMBRACE_TEST_IGNORE__",
       "emb.type": "perf",

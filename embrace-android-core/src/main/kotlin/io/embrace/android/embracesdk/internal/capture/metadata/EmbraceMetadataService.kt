@@ -13,6 +13,7 @@ import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
+import io.embrace.android.embracesdk.internal.injection.getSystemServiceSafe
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
@@ -23,7 +24,6 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 internal class EmbraceMetadataService(
     resourceSource: Lazy<EnvelopeResourceSource>,
     private val context: Context,
-    private val storageStatsManager: Lazy<StorageStatsManager?>,
     private val configService: ConfigService,
     private val store: KeyValueStore,
     private val clock: Clock,
@@ -58,7 +58,7 @@ internal class EmbraceMetadataService(
             val free = statFs.freeBytes
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && configService.autoDataCaptureBehavior.isDiskUsageCaptureEnabled()) {
                 val deviceDiskAppUsage = getDeviceDiskAppUsage(
-                    storageStatsManager.value,
+                    context.getSystemServiceSafe(Context.STORAGE_STATS_SERVICE),
                     context.packageManager,
                     context.packageName,
                 )

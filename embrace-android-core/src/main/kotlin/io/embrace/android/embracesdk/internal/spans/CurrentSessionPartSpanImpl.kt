@@ -32,6 +32,7 @@ internal class CurrentSessionPartSpanImpl(
     private val embraceSpanFactorySupplier: Provider<EmbraceSpanFactory>,
     private val uuidSource: UuidSource,
     private val customBreadcrumbLimitSupplier: Provider<Int>,
+    private val maxSpanEventsSupplier: Provider<Int>,
 ) : CurrentSessionPartSpan {
 
     /**
@@ -87,8 +88,8 @@ internal class CurrentSessionPartSpanImpl(
     }
 
     /**
-     * Breadcrumbs get their own budget so that a flood of other telemetry can't starve them, and vice versa. The
-     * breadcrumb limit is read on each call so a remote config change takes effect immediately.
+     * Breadcrumbs get their own budget so that a flood of other telemetry can't starve them, and vice versa. Both
+     * limits are read on each call so a remote config change takes effect immediately.
      */
     override fun canAddEvent(isBreadcrumb: Boolean): Boolean {
         val state = sessionPartState ?: return false
@@ -99,7 +100,7 @@ internal class CurrentSessionPartSpanImpl(
         return if (isBreadcrumb) {
             checkCount(state.breadcrumbCount, customBreadcrumbLimitSupplier(), SPAN_EVENT_LIMIT_TYPE)
         } else {
-            checkCount(state.eventCount, MAX_EVENTS_PER_SESSION_PART, SPAN_EVENT_LIMIT_TYPE)
+            checkCount(state.eventCount, maxSpanEventsSupplier(), SPAN_EVENT_LIMIT_TYPE)
         }
     }
 
@@ -286,11 +287,6 @@ internal class CurrentSessionPartSpanImpl(
     companion object {
         const val MAX_INTERNAL_SPANS_PER_SESSION: Int = 5000
         const val MAX_NON_INTERNAL_SPANS_PER_SESSION: Int = 500
-
-        /**
-         * The maximum number of non-breadcrumb span events that can be added to a session part span.
-         */
-        const val MAX_EVENTS_PER_SESSION_PART: Int = 1000
 
         private const val SPAN_LIMIT_TYPE = "span"
         private const val SPAN_EVENT_LIMIT_TYPE = "span_event"

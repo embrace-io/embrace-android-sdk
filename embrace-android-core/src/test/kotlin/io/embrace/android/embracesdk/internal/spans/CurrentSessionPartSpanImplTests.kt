@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior.Companion.DEFAULT_BREADCRUMB_LIMIT
+import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior.Companion.DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
@@ -28,7 +29,6 @@ import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl.Companion.MAX_EVENTS_PER_SESSION_PART
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl.Companion.MAX_INTERNAL_SPANS_PER_SESSION
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl.Companion.MAX_NON_INTERNAL_SPANS_PER_SESSION
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
@@ -172,7 +172,7 @@ internal class CurrentSessionPartSpanImplTests {
 
     @Test
     fun `check non-breadcrumb span event limit`() {
-        repeat(MAX_EVENTS_PER_SESSION_PART) {
+        repeat(DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART) {
             assertTrue(currentSessionPartSpan.canAddEvent(isBreadcrumb = false))
         }
         assertFalse(currentSessionPartSpan.canAddEvent(isBreadcrumb = false))
@@ -191,7 +191,7 @@ internal class CurrentSessionPartSpanImplTests {
         assertTrue(telemetryService.appliedLimits.contains("span_event" to AppliedLimitType.DROP))
 
         // the non-breadcrumb budget is untouched
-        repeat(MAX_EVENTS_PER_SESSION_PART) {
+        repeat(DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART) {
             assertTrue(currentSessionPartSpan.canAddEvent(isBreadcrumb = false))
         }
         assertFalse(currentSessionPartSpan.canAddEvent(isBreadcrumb = false))
@@ -199,7 +199,7 @@ internal class CurrentSessionPartSpanImplTests {
 
     @Test
     fun `span event limits reset when a new session part starts`() {
-        repeat(MAX_EVENTS_PER_SESSION_PART) {
+        repeat(DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART) {
             currentSessionPartSpan.canAddEvent(isBreadcrumb = false)
         }
         repeat(DEFAULT_BREADCRUMB_LIMIT) {
@@ -224,7 +224,7 @@ internal class CurrentSessionPartSpanImplTests {
     @Test
     fun `breadcrumb limit is read on each call so config changes take effect immediately`() {
         var limit = 1
-        val sessionPartSpan = createSessionPartSpan { limit }
+        val sessionPartSpan = createSessionPartSpan(customBreadcrumbLimitSupplier = { limit })
         assertTrue(sessionPartSpan.canAddEvent(isBreadcrumb = true))
         assertFalse(sessionPartSpan.canAddEvent(isBreadcrumb = true))
 
@@ -234,11 +234,27 @@ internal class CurrentSessionPartSpanImplTests {
         assertFalse(sessionPartSpan.canAddEvent(isBreadcrumb = true))
     }
 
+    @Test
+    fun `span event limit is read on each call so config changes take effect immediately`() {
+        var limit = 1
+        val sessionPartSpan = createSessionPartSpan(maxSpanEventsSupplier = { limit })
+        assertTrue(sessionPartSpan.canAddEvent(isBreadcrumb = false))
+        assertFalse(sessionPartSpan.canAddEvent(isBreadcrumb = false))
+
+        limit = 3
+        assertTrue(sessionPartSpan.canAddEvent(isBreadcrumb = false))
+        assertTrue(sessionPartSpan.canAddEvent(isBreadcrumb = false))
+        assertFalse(sessionPartSpan.canAddEvent(isBreadcrumb = false))
+    }
+
     /**
      * Creates a session part span that records into a repository of its own, so the limit counters are isolated from
      * the instance created in [setup].
      */
-    private fun createSessionPartSpan(customBreadcrumbLimitSupplier: Provider<Int>): CurrentSessionPartSpanImpl {
+    private fun createSessionPartSpan(
+        customBreadcrumbLimitSupplier: Provider<Int> = { DEFAULT_BREADCRUMB_LIMIT },
+        maxSpanEventsSupplier: Provider<Int> = { DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART },
+    ): CurrentSessionPartSpanImpl {
         val repository = SpanRepository()
         val otelClock = FakeOtelKotlinClock()
         return CurrentSessionPartSpanImpl(
@@ -257,6 +273,7 @@ internal class CurrentSessionPartSpanImplTests {
             },
             uuidSource = TestUuidSource(),
             customBreadcrumbLimitSupplier = customBreadcrumbLimitSupplier,
+            maxSpanEventsSupplier = maxSpanEventsSupplier,
         ).apply { initializeService(clock.now()) }
     }
 
@@ -644,6 +661,7 @@ internal class CurrentSessionPartSpanImplTests {
             openTelemetrySupplier = ::openTelemetry,
             uuidSource = TestUuidSource(),
             customBreadcrumbLimitSupplier = { DEFAULT_BREADCRUMB_LIMIT },
+            maxSpanEventsSupplier = { DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART },
         )
         assertFalse(sessionPartSpan.readySession())
     }

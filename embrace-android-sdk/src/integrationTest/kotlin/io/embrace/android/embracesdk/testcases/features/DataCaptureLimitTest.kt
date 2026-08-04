@@ -6,6 +6,8 @@ import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior.Companion.DEFAULT_BREADCRUMB_LIMIT
+import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
+import io.embrace.android.embracesdk.internal.config.remote.DataRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.UiRemoteConfig
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -67,6 +69,28 @@ internal class DataCaptureLimitTest {
             assertAction = {
                 val sessionPartSpan = getSessionEnvelopes(1).single().findSessionPartSpan()
                 assertEquals(raisedLimit, sessionPartSpan.findEventsOfType(EmbType.System.Breadcrumb).size)
+            }
+        )
+    }
+
+    @Suppress("DEPRECATION")
+    @Test
+    fun `low span event limit is honoured by the session span`() {
+        val limit = 20
+        testRule.runTest(
+            persistedRemoteConfig = RemoteConfig(
+                dataConfig = DataRemoteConfig(maxSpanEventsPerSessionPart = limit)
+            ),
+            testCaseAction = {
+                recordSession {
+                    repeat(limit + 30) {
+                        embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, true)
+                    }
+                }
+            },
+            assertAction = {
+                val sessionPartSpan = getSessionEnvelopes(1).single().findSessionPartSpan()
+                assertEquals(limit, checkNotNull(sessionPartSpan.events).size)
             }
         )
     }

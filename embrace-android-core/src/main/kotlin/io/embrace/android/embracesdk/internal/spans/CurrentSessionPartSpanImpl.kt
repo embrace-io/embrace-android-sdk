@@ -5,6 +5,10 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_MAX_CUSTOM_SPANS_PER_SESSION_PART
+import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_MAX_INTERNAL_SPANS_PER_SESSION_PART
+import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_MAX_NETWORK_SPANS_PER_SESSION_PART
+import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceLinkData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
@@ -31,6 +35,7 @@ internal class CurrentSessionPartSpanImpl(
     private val openTelemetrySupplier: Provider<OpenTelemetry>,
     private val embraceSpanFactorySupplier: Provider<EmbraceSpanFactory>,
     private val uuidSource: UuidSource,
+    private val otelBehaviorSupplier: Provider<OtelBehavior?>,
 ) : CurrentSessionPartSpan {
 
     /**
@@ -80,11 +85,25 @@ internal class CurrentSessionPartSpanImpl(
             return false
         }
 
+        val behavior = otelBehaviorSupplier()
         return when {
-            !internal -> checkTraceCount(state.traceCount, MAX_NON_INTERNAL_SPANS_PER_SESSION, SPAN_LIMIT_LABEL)
-            type == EmbType.Performance.Network ->
-                checkTraceCount(state.networkTraceCount, MAX_NETWORK_SPANS_PER_SESSION, NETWORK_SPAN_LIMIT_LABEL)
-            else -> checkTraceCount(state.internalTraceCount, MAX_INTERNAL_SPANS_PER_SESSION, SPAN_LIMIT_LABEL)
+            !internal -> checkTraceCount(
+                state.traceCount,
+                behavior?.getMaxCustomSpansPerSessionPart() ?: DEFAULT_MAX_CUSTOM_SPANS_PER_SESSION_PART,
+                SPAN_LIMIT_LABEL,
+            )
+
+            type == EmbType.Performance.Network -> checkTraceCount(
+                state.networkTraceCount,
+                behavior?.getMaxNetworkSpansPerSessionPart() ?: DEFAULT_MAX_NETWORK_SPANS_PER_SESSION_PART,
+                NETWORK_SPAN_LIMIT_LABEL,
+            )
+
+            else -> checkTraceCount(
+                state.internalTraceCount,
+                behavior?.getMaxInternalSpansPerSessionPart() ?: DEFAULT_MAX_INTERNAL_SPANS_PER_SESSION_PART,
+                SPAN_LIMIT_LABEL,
+            )
         }
     }
 
@@ -268,14 +287,6 @@ internal class CurrentSessionPartSpanImpl(
     }
 
     companion object {
-        /**
-         * Budget for internal spans other than network requests. Network requests dominate all other span types, so they are
-         * excluded from this budget and given [MAX_NETWORK_SPANS_PER_SESSION] instead.
-         */
-        const val MAX_INTERNAL_SPANS_PER_SESSION: Int = 1500
-        const val MAX_NETWORK_SPANS_PER_SESSION: Int = 2000
-        const val MAX_NON_INTERNAL_SPANS_PER_SESSION: Int = 500
-
         private const val SPAN_LIMIT_LABEL = "span"
         private const val NETWORK_SPAN_LIMIT_LABEL = "network_span"
     }

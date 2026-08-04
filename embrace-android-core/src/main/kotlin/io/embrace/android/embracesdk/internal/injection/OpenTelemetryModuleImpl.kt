@@ -117,6 +117,7 @@ class OpenTelemetryModuleImpl(
         openTelemetrySupplier = { otelSdkWrapper.openTelemetryKotlin },
         embraceSpanFactorySupplier = { embraceSpanFactory },
         uuidSource = initModule.uuidSource,
+        otelBehaviorSupplier = { otelBehavior },
     ).also {
         internalSpanStopCallback = it::spanStopCallback
     }

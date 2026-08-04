@@ -13,21 +13,26 @@ import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.fakes.TestUuidSource
+import io.embrace.android.embracesdk.fakes.createOtelBehavior
+import io.embrace.android.embracesdk.fakes.createSensitiveKeysBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
+import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_MAX_CUSTOM_SPANS_PER_SESSION_PART
+import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_MAX_INTERNAL_SPANS_PER_SESSION_PART
+import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_MAX_NETWORK_SPANS_PER_SESSION_PART
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
+import io.embrace.android.embracesdk.internal.config.remote.DataRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl.Companion.MAX_INTERNAL_SPANS_PER_SESSION
-import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl.Companion.MAX_NETWORK_SPANS_PER_SESSION
-import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl.Companion.MAX_NON_INTERNAL_SPANS_PER_SESSION
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -53,6 +58,7 @@ internal class CurrentSessionPartSpanImplTests {
     private lateinit var telemetryService: TelemetryService
     private lateinit var currentSessionPartSpan: CurrentSessionPartSpanImpl
     private lateinit var spanService: SpanService
+    private lateinit var otelModule: OpenTelemetryModule
     private lateinit var tracer: Tracer
     private lateinit var openTelemetry: OpenTelemetry
     private val clock = FakeClock(1000L)
@@ -60,6 +66,7 @@ internal class CurrentSessionPartSpanImplTests {
     @Before
     fun setup() {
         val initModule = FakeInitModule(clock = clock)
+        otelModule = initModule.openTelemetryModule
         spanRepository = initModule.openTelemetryModule.spanRepository
         telemetryService = initModule.telemetryService
         currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan as CurrentSessionPartSpanImpl
@@ -123,7 +130,7 @@ internal class CurrentSessionPartSpanImplTests {
 
     @Test
     fun `check trace limits with maximum not started traces`() {
-        repeat(MAX_NON_INTERNAL_SPANS_PER_SESSION) {
+        repeat(DEFAULT_MAX_CUSTOM_SPANS_PER_SESSION_PART) {
             assertNotNull(
                 spanService.createSpan(
                     name = "spanzzz$it",
@@ -142,7 +149,7 @@ internal class CurrentSessionPartSpanImplTests {
 
     @Test
     fun `check trace limits with maximum non-network internal not started traces`() {
-        repeat(MAX_NON_INTERNAL_SPANS_PER_SESSION) {
+        repeat(DEFAULT_MAX_CUSTOM_SPANS_PER_SESSION_PART) {
             assertNotNull(
                 spanService.createSpan(
                     name = "spanzzz$it",
@@ -158,7 +165,7 @@ internal class CurrentSessionPartSpanImplTests {
             ),
         )
 
-        repeat(MAX_INTERNAL_SPANS_PER_SESSION) {
+        repeat(DEFAULT_MAX_INTERNAL_SPANS_PER_SESSION_PART) {
             assertNotNull(spanService.createSpan(name = "internal$it", type = EmbType.Performance.Default))
         }
         assertEquals(
@@ -169,40 +176,40 @@ internal class CurrentSessionPartSpanImplTests {
 
     @Test
     fun `network request spans have their own limit`() {
-        repeat(MAX_NETWORK_SPANS_PER_SESSION) {
+        repeat(DEFAULT_MAX_NETWORK_SPANS_PER_SESSION_PART) {
             assertNotEquals(NoopEmbraceSdkSpan, createNetworkSpan(it))
         }
-        assertEquals(NoopEmbraceSdkSpan, createNetworkSpan(MAX_NETWORK_SPANS_PER_SESSION))
+        assertEquals(NoopEmbraceSdkSpan, createNetworkSpan(DEFAULT_MAX_NETWORK_SPANS_PER_SESSION_PART))
     }
 
     @Test
     fun `exhausting the network limit does not consume the internal span budget`() {
         exhaustNetworkSpanBudget()
 
-        repeat(MAX_INTERNAL_SPANS_PER_SESSION) {
+        repeat(DEFAULT_MAX_INTERNAL_SPANS_PER_SESSION_PART) {
             assertNotEquals(NoopEmbraceSdkSpan, createInternalSpan(it))
         }
-        assertEquals(NoopEmbraceSdkSpan, createInternalSpan(MAX_INTERNAL_SPANS_PER_SESSION))
+        assertEquals(NoopEmbraceSdkSpan, createInternalSpan(DEFAULT_MAX_INTERNAL_SPANS_PER_SESSION_PART))
     }
 
     @Test
     fun `exhausting the internal limit does not consume the network span budget`() {
-        repeat(MAX_INTERNAL_SPANS_PER_SESSION) {
+        repeat(DEFAULT_MAX_INTERNAL_SPANS_PER_SESSION_PART) {
             assertNotEquals(NoopEmbraceSdkSpan, createInternalSpan(it))
         }
-        assertEquals(NoopEmbraceSdkSpan, createInternalSpan(MAX_INTERNAL_SPANS_PER_SESSION))
+        assertEquals(NoopEmbraceSdkSpan, createInternalSpan(DEFAULT_MAX_INTERNAL_SPANS_PER_SESSION_PART))
 
-        repeat(MAX_NETWORK_SPANS_PER_SESSION) {
+        repeat(DEFAULT_MAX_NETWORK_SPANS_PER_SESSION_PART) {
             assertNotEquals(NoopEmbraceSdkSpan, createNetworkSpan(it))
         }
-        assertEquals(NoopEmbraceSdkSpan, createNetworkSpan(MAX_NETWORK_SPANS_PER_SESSION))
+        assertEquals(NoopEmbraceSdkSpan, createNetworkSpan(DEFAULT_MAX_NETWORK_SPANS_PER_SESSION_PART))
     }
 
     @Test
     fun `exhausting the network limit does not consume the non-internal span budget`() {
         exhaustNetworkSpanBudget()
 
-        repeat(MAX_NON_INTERNAL_SPANS_PER_SESSION) {
+        repeat(DEFAULT_MAX_CUSTOM_SPANS_PER_SESSION_PART) {
             assertNotEquals(NoopEmbraceSdkSpan, spanService.createSpan(name = "public$it", internal = false))
         }
         assertEquals(NoopEmbraceSdkSpan, spanService.createSpan(name = "failed-span", internal = false))
@@ -210,7 +217,7 @@ internal class CurrentSessionPartSpanImplTests {
 
     @Test
     fun `network span limit applies to completed spans and spans created with the span builder`() {
-        repeat(MAX_NETWORK_SPANS_PER_SESSION) {
+        repeat(DEFAULT_MAX_NETWORK_SPANS_PER_SESSION_PART) {
             assertTrue(
                 spanService.recordCompletedSpan(
                     name = "GET /network$it",
@@ -251,15 +258,98 @@ internal class CurrentSessionPartSpanImplTests {
         spanService.initializeService(clock.now())
 
         exhaustNetworkSpanBudget()
-        createNetworkSpan(MAX_NETWORK_SPANS_PER_SESSION)
+        createNetworkSpan(DEFAULT_MAX_NETWORK_SPANS_PER_SESSION_PART)
 
         assertEquals(listOf("network_span" to AppliedLimitType.DROP), fakeTelemetryService.appliedLimits)
 
-        repeat(MAX_INTERNAL_SPANS_PER_SESSION + 1) { createInternalSpan(it) }
+        repeat(DEFAULT_MAX_INTERNAL_SPANS_PER_SESSION_PART + 1) { createInternalSpan(it) }
 
         assertEquals(
             listOf("network_span" to AppliedLimitType.DROP, "span" to AppliedLimitType.DROP),
             fakeTelemetryService.appliedLimits,
+        )
+    }
+
+    @Test
+    fun `remote config overrides the network span limit`() {
+        otelModule.applyRemoteConfig(DataRemoteConfig(maxNetworkSpansPerSession = 2))
+
+        repeat(2) { assertNotEquals(NoopEmbraceSdkSpan, createNetworkSpan(it)) }
+        assertEquals(NoopEmbraceSdkSpan, createNetworkSpan(2))
+
+        // the other budgets keep their defaults
+        assertNotEquals(NoopEmbraceSdkSpan, createInternalSpan(0))
+        assertNotEquals(NoopEmbraceSdkSpan, spanService.createSpan(name = "public", internal = false))
+    }
+
+    @Test
+    fun `remote config overrides the internal span limit`() {
+        otelModule.applyRemoteConfig(DataRemoteConfig(maxInternalSpansPerSession = 3))
+
+        repeat(3) { assertNotEquals(NoopEmbraceSdkSpan, createInternalSpan(it)) }
+        assertEquals(NoopEmbraceSdkSpan, createInternalSpan(3))
+
+        // network spans keep their default budget
+        assertNotEquals(NoopEmbraceSdkSpan, createNetworkSpan(0))
+    }
+
+    @Test
+    fun `remote config overrides the non-internal span limit`() {
+        otelModule.applyRemoteConfig(DataRemoteConfig(maxCustomSpansPerSession = 1))
+
+        assertNotEquals(NoopEmbraceSdkSpan, spanService.createSpan(name = "public0", internal = false))
+        assertEquals(NoopEmbraceSdkSpan, spanService.createSpan(name = "public1", internal = false))
+
+        // internal spans keep their default budget
+        assertNotEquals(NoopEmbraceSdkSpan, createInternalSpan(0))
+    }
+
+    @Test
+    fun `a remote span limit takes effect as soon as config is applied`() {
+        repeat(2) { assertNotEquals(NoopEmbraceSdkSpan, createNetworkSpan(it)) }
+
+        otelModule.applyRemoteConfig(DataRemoteConfig(maxNetworkSpansPerSession = 2))
+
+        assertEquals(NoopEmbraceSdkSpan, createNetworkSpan(2))
+    }
+
+    @Test
+    fun `a remote span limit of zero drops every span of that type and is tracked`() {
+        val fakeTelemetryService = FakeTelemetryService()
+        val initModule = FakeInitModule(clock = clock, fakeTelemetryService = fakeTelemetryService)
+        spanService = initModule.openTelemetryModule.spanService
+        spanService.initializeService(clock.now())
+        initModule.openTelemetryModule.applyRemoteConfig(
+            DataRemoteConfig(
+                maxCustomSpansPerSession = 0,
+                maxInternalSpansPerSession = 0,
+                maxNetworkSpansPerSession = 0,
+            ),
+        )
+
+        assertEquals(NoopEmbraceSdkSpan, createNetworkSpan(0))
+        assertEquals(NoopEmbraceSdkSpan, createInternalSpan(0))
+        assertEquals(NoopEmbraceSdkSpan, spanService.createSpan(name = "public", internal = false))
+
+        assertEquals(
+            listOf(
+                "network_span" to AppliedLimitType.DROP,
+                "span" to AppliedLimitType.DROP,
+                "span" to AppliedLimitType.DROP,
+            ),
+            fakeTelemetryService.appliedLimits,
+        )
+    }
+
+    /**
+     * Hands the module a remote config, mimicking how the SDK supplies config to the OTel module after it has
+     * already been constructed.
+     */
+    private fun OpenTelemetryModule.applyRemoteConfig(dataConfig: DataRemoteConfig) {
+        applyConfiguration(
+            sensitiveKeysBehavior = createSensitiveKeysBehavior(),
+            bypassValidation = false,
+            otelBehavior = createOtelBehavior(remoteCfg = RemoteConfig(dataConfig = dataConfig)),
         )
     }
 
@@ -270,7 +360,7 @@ internal class CurrentSessionPartSpanImplTests {
         spanService.createSpan(name = "internal$index", type = EmbType.Performance.Default)
 
     private fun exhaustNetworkSpanBudget() {
-        repeat(MAX_NETWORK_SPANS_PER_SESSION) { createNetworkSpan(it) }
+        repeat(DEFAULT_MAX_NETWORK_SPANS_PER_SESSION_PART) { createNetworkSpan(it) }
     }
 
     private fun networkSpanStartArgs() = OtelSpanStartArgs(
@@ -284,7 +374,7 @@ internal class CurrentSessionPartSpanImplTests {
 
     @Test
     fun `check trace limited applied to spans created with span builder`() {
-        repeat(MAX_NON_INTERNAL_SPANS_PER_SESSION) {
+        repeat(DEFAULT_MAX_CUSTOM_SPANS_PER_SESSION_PART) {
             assertNotNull(
                 spanService.createSpan(
                     otelSpanStartArgs = OtelSpanStartArgs(
@@ -327,7 +417,7 @@ internal class CurrentSessionPartSpanImplTests {
 
     @Test
     fun `check trace limits with maximum traces recorded around a lambda`() {
-        repeat(MAX_NON_INTERNAL_SPANS_PER_SESSION) {
+        repeat(DEFAULT_MAX_CUSTOM_SPANS_PER_SESSION_PART) {
             assertEquals(
                 "derp",
                 spanService.recordSpan(
@@ -347,7 +437,7 @@ internal class CurrentSessionPartSpanImplTests {
 
     @Test
     fun `check trace limits with maximum completed traces`() {
-        repeat(MAX_NON_INTERNAL_SPANS_PER_SESSION) {
+        repeat(DEFAULT_MAX_CUSTOM_SPANS_PER_SESSION_PART) {
             assertTrue(
                 spanService.recordCompletedSpan(
                     name = "complete$it",
@@ -375,7 +465,7 @@ internal class CurrentSessionPartSpanImplTests {
             ),
         )
         assertTrue(parent.start())
-        repeat(MAX_NON_INTERNAL_SPANS_PER_SESSION - 1) {
+        repeat(DEFAULT_MAX_CUSTOM_SPANS_PER_SESSION_PART - 1) {
             assertNotNull(
                 "Adding span $it failed",
                 spanService.createSpan(
@@ -415,7 +505,7 @@ internal class CurrentSessionPartSpanImplTests {
     @Test
     fun `check total limit can be reached with descendant spans`() {
         var parentSpan: EmbraceSpan? = null
-        repeat(MAX_NON_INTERNAL_SPANS_PER_SESSION) {
+        repeat(DEFAULT_MAX_CUSTOM_SPANS_PER_SESSION_PART) {
             val span = spanService.createSpan(
                 name = "spanzzz$it",
                 parent = parentSpan,
@@ -482,7 +572,7 @@ internal class CurrentSessionPartSpanImplTests {
             ),
         )
 
-        repeat(MAX_NON_INTERNAL_SPANS_PER_SESSION) {
+        repeat(DEFAULT_MAX_CUSTOM_SPANS_PER_SESSION_PART) {
             assertNotNull(
                 spanService.createSpan(
                     name = "spanzzz$it",
@@ -665,6 +755,7 @@ internal class CurrentSessionPartSpanImplTests {
             tracerSupplier = { FakeTracer() },
             openTelemetrySupplier = ::openTelemetry,
             uuidSource = TestUuidSource(),
+            otelBehaviorSupplier = { null },
         )
         assertFalse(sessionPartSpan.readySession())
     }

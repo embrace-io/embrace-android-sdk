@@ -13,8 +13,10 @@ import android.net.NetworkCapabilities.TRANSPORT_WIFI
 import android.net.NetworkInfo
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -33,6 +35,7 @@ internal class NetworkCallbackConnectivityServiceTest {
 
     private lateinit var service: NetworkCallbackConnectivityService
     private lateinit var connectivityManager: ConnectivityManager
+    private lateinit var lazyConnectivityManager: Lazy<ConnectivityManager?>
     private lateinit var shadowConnectivityManager: ShadowConnectivityManager
     private lateinit var receivedConnectivityStatuses: MutableList<ConnectivityStatus>
     private val networkConnectivityListener =
@@ -45,11 +48,38 @@ internal class NetworkCallbackConnectivityServiceTest {
             setActiveNetworkInfo(null)
         }
         receivedConnectivityStatuses = mutableListOf()
+        lazyConnectivityManager = lazy { connectivityManager }
         service = NetworkCallbackConnectivityService(
             fakeBackgroundWorker(),
             InternalLoggerImpl(),
-            connectivityManager,
+            lazyConnectivityManager,
         )
+    }
+
+    @Test
+    fun `connectivity manager is not obtained when service is constructed`() {
+        val lazyManager = lazy { connectivityManager }
+        NetworkCallbackConnectivityService(
+            fakeBackgroundWorker(),
+            InternalLoggerImpl(),
+            lazyManager,
+        )
+        assertFalse(lazyManager.isInitialized())
+    }
+
+    @Test
+    fun `connectivity manager is obtained on the background worker rather than the calling thread`() {
+        val executor = BlockingScheduledExecutorService()
+        val lazyManager = lazy { connectivityManager }
+        NetworkCallbackConnectivityService(
+            BackgroundWorker(executor),
+            InternalLoggerImpl(),
+            lazyManager,
+        ).register()
+
+        assertFalse(lazyManager.isInitialized())
+        executor.runCurrentlyBlocked()
+        assertTrue(lazyManager.isInitialized())
     }
 
     @Test
@@ -85,7 +115,7 @@ internal class NetworkCallbackConnectivityServiceTest {
         NetworkCallbackConnectivityService(
             fakeBackgroundWorker(),
             InternalLoggerImpl(),
-            connectivityManager = null,
+            connectivityManager = lazyOf<ConnectivityManager?>(null),
         ).apply {
             register()
         }

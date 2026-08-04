@@ -17,6 +17,8 @@ import io.mockk.verify
 import org.junit.After
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
@@ -69,7 +71,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
             context,
             worker,
             logger,
-            mockConnectivityManager,
+            lazyOf<ConnectivityManager?>(mockConnectivityManager),
         )
 
         testListener = NetworkConnectivityListener { status -> this@EmbraceNetworkConnectivityServiceTest.status = status }
@@ -152,4 +154,35 @@ internal class EmbraceNetworkConnectivityServiceTest {
 
         assertEquals(OptimisticWan, status)
     }
+
+    @Test
+    fun `network is assumed available when connectivity manager is unavailable`() {
+        var observed: ConnectivityStatus? = null
+        createService(lazyOf<ConnectivityManager?>(null)).apply {
+            addNetworkConnectivityListener { observed = it }
+            assertEquals(ConnectivityStatus.Unverified, observed)
+            assertTrue(checkNotNull(observed).isConnected)
+
+            // a broadcast must not downgrade the status to None
+            onReceive(context, mockk<Intent>())
+            assertEquals(ConnectivityStatus.Unverified, observed)
+        }
+    }
+
+    @Test
+    fun `close without register does not unregister the receiver`() {
+        val service = createService(lazyOf<ConnectivityManager?>(mockConnectivityManager))
+        service.close()
+        verify(exactly = 0) { context.unregisterReceiver(service) }
+    }
+
+    @Test
+    fun `connectivity manager is not obtained when service is constructed`() {
+        val lazyManager = lazy<ConnectivityManager?> { mockConnectivityManager }
+        createService(lazyManager)
+        assertFalse(lazyManager.isInitialized())
+    }
+
+    private fun createService(connectivityManager: Lazy<ConnectivityManager?>) =
+        EmbraceNetworkConnectivityService(context, worker, logger, connectivityManager)
 }

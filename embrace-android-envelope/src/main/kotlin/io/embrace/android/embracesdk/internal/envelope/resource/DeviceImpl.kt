@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.envelope.resource
 
+import android.os.Build
 import android.os.Environment
 import android.os.StatFs
 import android.util.DisplayMetrics
@@ -22,6 +23,8 @@ class DeviceImpl(
 ) : Device {
     override var isJailbroken: Boolean? = false
     override var screenResolution: String = ""
+    override var usesEmmcStorage: Boolean? = null
+
     private val jailbreakLocations: List<String> = listOf(
         "/sbin/",
         "/system/bin/",
@@ -36,6 +39,13 @@ class DeviceImpl(
     init {
         asyncRetrieveIsJailbroken()
         asyncRetrieveScreenResolution()
+        asyncRetrieveUsesEmmcStorage()
+    }
+
+    private fun asyncRetrieveUsesEmmcStorage() {
+        backgroundWorker.submit {
+            usesEmmcStorage = detectUsesEmmcStorage()
+        }
     }
 
     private fun asyncRetrieveScreenResolution() {
@@ -115,6 +125,13 @@ class DeviceImpl(
      */
     override val internalStorageTotalCapacity: Lazy<Long> =
         lazy { StatFs(Environment.getDataDirectory().path).totalBytes }
+
+    override val socModel: String? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            Build.SOC_MODEL.trim().takeIf { it.isNotEmpty() && !it.equals(Build.UNKNOWN, ignoreCase = true) }
+        } else {
+            null
+        }
 
     private var persistedJailbroken: Boolean?
         get() = store.getBoolean(

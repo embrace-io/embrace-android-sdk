@@ -42,6 +42,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
+import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.context.Context
@@ -56,6 +57,10 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.util.Queue
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicInteger
 
 internal class EmbraceSpanImplTest {
     private lateinit var fakeClock: FakeClock
@@ -671,6 +676,71 @@ internal class EmbraceSpanImplTest {
         assertTrue(anotherEvent?.attributes?.any { it.key == "someKey" && it.data == "someValue" } ?: false)
     }
 
+    /**
+     * The event and link counts are plain volatile Ints incremented under a lock rather than
+     * AtomicIntegers, so this guards against a lost increment letting the limit be overrun, and against
+     * the counters and the collections themselves diverging.
+     */
+    @Test
+    fun `concurrent system event adds respect the limit exactly`() {
+        val telemetryService = ConcurrentTelemetryService()
+        embraceSpanFactory = EmbraceSpanFactoryImpl(
+            openTelemetryClock = FakeOtelKotlinClock(fakeClock),
+            spanRepository = spanRepository,
+            dataValidator = DataValidator(telemetryService = telemetryService),
+            stopCallback = ::stopCallback,
+            redactionFunction = ::redactionFunction,
+            telemetryService = telemetryService,
+        )
+        embraceSpan = createInternalEmbraceSdkSpan()
+        assertTrue(embraceSpan.start())
+
+        val max = dataValidator.otelLimitsConfig.getMaxSystemEventCount()
+        val attemptsPerThread = max / THREAD_COUNT + 1000
+        val successes = AtomicInteger(0)
+        val startSignal = CountDownLatch(1)
+        val threads = (0 until THREAD_COUNT).map { threadIndex ->
+            Thread {
+                startSignal.await()
+                repeat(attemptsPerThread) { attempt ->
+                    if (embraceSpan.addSystemEvent("event-$threadIndex-$attempt", null, null)) {
+                        successes.incrementAndGet()
+                    }
+                }
+            }.apply { start() }
+        }
+
+        startSignal.countDown()
+        threads.forEach { it.join(THREAD_JOIN_TIMEOUT_MS) }
+
+        assertEquals(max, successes.get())
+        assertEquals(max, embraceSpan.events().size)
+        assertEquals(max, checkNotNull(embraceSpan.snapshot()?.events).size)
+
+        // every add that lost the race to the limit reported the drop exactly once
+        val expectedDrops = THREAD_COUNT * attemptsPerThread - max
+        assertEquals(expectedDrops, telemetryService.appliedLimits.size)
+        assertTrue(telemetryService.appliedLimits.all { it == "span_event" to AppliedLimitType.DROP })
+    }
+
+    /**
+     * The fakes back their state with non-thread-safe collections, which the thousands of concurrent
+     * dropped adds in the test above would corrupt.
+     */
+    private class ConcurrentTelemetryService : TelemetryService {
+        val appliedLimits: Queue<Pair<String, AppliedLimitType>> = ConcurrentLinkedQueue()
+
+        override fun onPublicApiCalled(name: String) {}
+
+        override fun logStorageTelemetry(storageTelemetry: Map<String, String>) {}
+
+        override fun trackAppliedLimit(telemetryType: String, limitType: AppliedLimitType) {
+            appliedLimits.add(telemetryType to limitType)
+        }
+
+        override fun getAndClearTelemetryAttributes(): Map<String, String> = emptyMap()
+    }
+
     private fun createInternalEmbraceSdkSpan() = embraceSpanFactory.create(createWrapperForInternalSpan())
 
     private fun createWrapperForInternalSpan(startTimeMs: Long? = null, parentContext: Context? = null) = OtelSpanStartArgs(
@@ -740,5 +810,7 @@ internal class EmbraceSpanImplTest {
         private const val EXPECTED_ATTRIBUTE_NAME = "attribute-key"
         private const val EXPECTED_ATTRIBUTE_VALUE = "harharhar"
         private const val REDACTED_LABEL = "<redacted>"
+        private const val THREAD_COUNT = 4
+        private const val THREAD_JOIN_TIMEOUT_MS = 30_000L
     }
 }

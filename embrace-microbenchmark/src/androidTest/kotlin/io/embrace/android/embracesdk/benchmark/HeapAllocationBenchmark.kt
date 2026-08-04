@@ -124,7 +124,6 @@ class HeapAllocationBenchmark {
             schemaType = SchemaType.Log(TelemetryAttributes()),
             severity = LogSeverity.INFO,
             message = "user reached the checkout screen $index",
-            addCurrentSessionInfo = false,
         )
     }
 
@@ -134,7 +133,6 @@ class HeapAllocationBenchmark {
             severity = LogSeverity.WARNING,
             message = "checkout flow failed at the payment step for order $index with a retryable gateway error",
             isPrivate = true,
-            addCurrentSessionInfo = false,
         )
     }
 

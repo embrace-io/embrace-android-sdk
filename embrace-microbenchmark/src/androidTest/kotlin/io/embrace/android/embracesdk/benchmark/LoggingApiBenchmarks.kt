@@ -69,7 +69,6 @@ class LoggingApiBenchmarks {
             ),
             severity = LogSeverity.INFO,
             message = message,
-            addCurrentSessionInfo = false
         )
     }
 

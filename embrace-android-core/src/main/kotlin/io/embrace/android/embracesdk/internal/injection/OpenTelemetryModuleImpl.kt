@@ -8,8 +8,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.impl.EmbClock
-import io.embrace.android.embracesdk.internal.otel.logs.EventService
-import io.embrace.android.embracesdk.internal.otel.logs.EventServiceImpl
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
@@ -37,6 +35,7 @@ class OpenTelemetryModuleImpl(
     private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId
     private var storedSessionIdsProvider: SessionIdsProvider? = null
     private var storedUserIdProvider: (() -> String?)? = null
+    private var storedEventMetadataProvider: (() -> Map<String, String>)? = null
     private var otelBehavior: OtelBehavior? = null
     private var sensitiveKeysBehavior: SensitiveKeysBehavior? = null
     private var breadcrumbBehavior: BreadcrumbBehavior? = null
@@ -56,8 +55,10 @@ class OpenTelemetryModuleImpl(
             appVersion = initModule.instrumentedConfig.project.getVersionName() ?: "UNKNOWN",
             packageName = initModule.instrumentedConfig.project.getPackageName() ?: "UNKNOWN",
             systemInfo = initModule.systemInfo,
+            uuidSource = initModule.uuidSource,
             sessionIdsProvider = { storedSessionIdsProvider },
             userIdProvider = { storedUserIdProvider?.invoke() },
+            eventMetadataProvider = { storedEventMetadataProvider?.invoke() ?: emptyMap() },
             processIdentifierProvider = processIdentifierProvider,
         )
     }
@@ -69,7 +70,6 @@ class OpenTelemetryModuleImpl(
                     otelClock = openTelemetryClock,
                     configuration = otelSdkConfig,
                     spanService = spanService,
-                    eventService = eventService,
                     // adding guard in case this is accessed before we fetch the config
                     useKotlinSdk = otelBehavior?.shouldUseKotlinSdk() ?: false,
                 )
@@ -102,6 +102,10 @@ class OpenTelemetryModuleImpl(
 
     override fun setUserIdProvider(userIdProvider: () -> String?) {
         storedUserIdProvider = userIdProvider
+    }
+
+    override fun setEventMetadataProvider(eventMetadataProvider: () -> Map<String, String>) {
+        storedEventMetadataProvider = eventMetadataProvider
     }
 
     private val dataValidator: DataValidator = DataValidator(
@@ -148,11 +152,6 @@ class OpenTelemetryModuleImpl(
 
     override val tracingApi: TracingApi = TracingApiDelegate(
         spanService = spanService,
-    )
-
-    override val eventService: EventService = EventServiceImpl(
-        sdkLoggerProvider = { otelSdkWrapper.sdkLogger },
-        uuidSource = initModule.uuidSource,
     )
 
     fun redactionFunction(key: String, value: String): String {

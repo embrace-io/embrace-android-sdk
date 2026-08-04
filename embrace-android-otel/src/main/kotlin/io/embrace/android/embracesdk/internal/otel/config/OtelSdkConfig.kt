@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.otel.config
 
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.otel.logs.DefaultLogRecordExporter
-import io.embrace.android.embracesdk.internal.otel.logs.DefaultLogRecordProcessor
+import io.embrace.android.embracesdk.internal.otel.logs.EmbraceLogRecordProcessor
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.sdk.IdGenerator
 import io.embrace.android.embracesdk.internal.otel.spans.DefaultSpanExporter
@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanProcessor
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
@@ -30,8 +31,10 @@ class OtelSdkConfig(
     val appVersion: String,
     val packageName: String,
     private val systemInfo: SystemInfo,
+    private val uuidSource: UuidSource,
     private val sessionIdsProvider: () -> SessionIdsProvider? = { null },
     private val userIdProvider: () -> String? = { null },
+    private val eventMetadataProvider: () -> Map<String, String> = { emptyMap() },
     private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId,
 ) {
 
@@ -103,7 +106,11 @@ class OtelSdkConfig(
     }
 
     val logRecordProcessor: LogRecordProcessor by lazy {
-        DefaultLogRecordProcessor(logRecordExporter)
+        EmbraceLogRecordProcessor(
+            uuidSource,
+            eventMetadataProvider,
+            logRecordExporter,
+        )
     }
 
     fun addSpanExporter(spanExporter: SpanExporter) {

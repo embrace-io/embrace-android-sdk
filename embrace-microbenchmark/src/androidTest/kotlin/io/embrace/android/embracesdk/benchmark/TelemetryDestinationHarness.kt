@@ -42,7 +42,7 @@ internal class TelemetryDestinationHarness {
     val destination: TelemetryDestination = TelemetryDestinationImpl(
         clock = initModule.clock,
         spanService = spanService,
-        eventService = otelModule.eventService,
+        loggerSupplier = { otelModule.otelSdkWrapper.sdkLogger },
         currentSessionPartSpan = otelModule.currentSessionPartSpan,
     )
 

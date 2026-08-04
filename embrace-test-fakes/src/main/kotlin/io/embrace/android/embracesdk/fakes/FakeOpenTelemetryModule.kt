@@ -49,7 +49,11 @@ class FakeOpenTelemetryModule(
     override val tracingApi: TracingApi
         get() = TODO()
 
-    override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean, otelBehavior: OtelBehavior) {
+    override fun setOtelBehavior(otelBehavior: OtelBehavior) {
+        // no-op
+    }
+
+    override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean) {
         // no-op
     }
 

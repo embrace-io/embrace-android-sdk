@@ -12,18 +12,18 @@ import io.embrace.android.embracesdk.internal.utils.UuidSource
  * 3. a freshly generated UUID, persisted to the [KeyValueStore] so it is stable across launches.
  */
 internal class DeviceIdProvider(
-    private val keyValueStore: KeyValueStore,
+    private val keyValueStore: Lazy<KeyValueStore>,
     private val cachedDeviceId: String?,
     private val uuidSource: UuidSource,
 ) {
 
     val deviceId: String = cachedDeviceId
-        ?: keyValueStore.getString(DEVICE_IDENTIFIER_KEY)
+        ?: keyValueStore.value.getString(DEVICE_IDENTIFIER_KEY)
         ?: newDeviceId()
 
     private fun newDeviceId(): String {
         val newId = uuidSource.createUuid()
-        keyValueStore.edit {
+        keyValueStore.value.edit {
             putString(DEVICE_IDENTIFIER_KEY, newId)
         }
         return newId

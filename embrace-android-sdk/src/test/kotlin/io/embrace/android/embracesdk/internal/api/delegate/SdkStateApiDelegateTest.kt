@@ -37,7 +37,7 @@ internal class SdkStateApiDelegateTest {
         sessionIdsProvider = FakeSessionIdsProvider()
         val moduleInitBootstrapper = ModuleInitBootstrapper(
             FakeInitModule(),
-            configServiceSupplier = { _, _, _, _ ->
+            configServiceSupplier = { _, _, _, _, _ ->
                 configService
             },
             essentialServiceModuleSupplier = { _, _, _, _, _, _, _, _ ->

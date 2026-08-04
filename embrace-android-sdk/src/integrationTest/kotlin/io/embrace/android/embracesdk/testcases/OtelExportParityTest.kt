@@ -43,6 +43,21 @@ internal class OtelExportParityTest {
     private lateinit var tracer: Tracer
     private lateinit var logger: Logger
 
+    /**
+     * The rest of this class relies on [remoteConfig] actually switching the implementation under test.
+     * Without these two, a regression that stopped the persisted config reaching the OTel module would
+     * silently run every 'kmp implementation' case against the compat implementation and still pass.
+     */
+    @Test
+    fun `persisted config selects the compat implementation`() {
+        assertSdkImplementationSelected(useKotlinSdk = false)
+    }
+
+    @Test
+    fun `persisted config selects the kmp implementation`() {
+        assertSdkImplementationSelected(useKotlinSdk = true)
+    }
+
     @Test
     fun `trace export matches golden file using compat implementation`() {
         assertTraceExport(useKotlinSdk = false)
@@ -113,6 +128,23 @@ internal class OtelExportParityTest {
     @Test
     fun `log span context export matches golden file using kmp implementation`() {
         assertLogSpanContextExport(useKotlinSdk = true)
+    }
+
+    private fun assertSdkImplementationSelected(useKotlinSdk: Boolean) {
+        testRule.runTest(
+            persistedRemoteConfig = remoteConfig(useKotlinSdk),
+            testCaseAction = {
+                recordSession {
+                    embrace.startSpan(SPAN_NAME)?.stop()
+                }
+            },
+            assertAction = {
+                assertEquals(
+                    useKotlinSdk,
+                    testRule.bootstrapper.openTelemetryModule.otelSdkWrapper.useKotlinSdk,
+                )
+            },
+        )
     }
 
     private fun assertTraceExport(useKotlinSdk: Boolean) {

@@ -10,9 +10,7 @@ import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeBaseUrlConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
-import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
-import io.embrace.android.embracesdk.internal.config.behavior.OtelBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.injection.CoreModule
@@ -157,13 +155,8 @@ internal class SdkIntegrationTestRule(
             embraceImpl.addSpanExporter(spanExporter.toOtelKotlinSpanExporter())
             embraceImpl.addLogRecordExporter(logExporter.toOtelKotlinLogRecordExporter())
 
-            // persist config here before the SDK starts up
+            // persist config here before the SDK starts up: the SDK reads it during start()
             persistConfig(persistedRemoteConfig)
-            bootstrapper.openTelemetryModule.applyConfiguration(
-                sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(instrumentedConfig),
-                bypassValidation = false,
-                otelBehavior = OtelBehaviorImpl(BehaviorThresholdCheck { "123456" }, instrumentedConfig, persistedRemoteConfig)
-            )
 
             if (startSdk) {
                 embraceImpl.start(ApplicationProvider.getApplicationContext())
@@ -186,7 +179,7 @@ internal class SdkIntegrationTestRule(
      */
     private fun persistConfig(persistedRemoteConfig: RemoteConfig) {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
-        val storageDir = File(ctx.filesDir, "embrace_remote_config").apply {
+        val storageDir = File(ctx.filesDir, PersistedConfig.STORAGE_DIR_NAME).apply {
             mkdirs()
         }
         File(storageDir, "etag").writeText("persisted_etag")

@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SendMode
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Log
-import io.embrace.android.embracesdk.internal.utils.threadSafeTake
+import io.embrace.android.embracesdk.internal.utils.threadSafeToList
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -38,14 +38,18 @@ class LogSinkImpl : LogSink {
     }
 
     override fun logsForNextBatch(): List<Log> {
-        return storedLogs.toList()
+        return storedLogs.threadSafeToList()
     }
+
+    override fun storedLogCount(): Int = storedLogs.size
 
     override fun flushBatch(): List<Log> {
         synchronized(flushLock) {
-            val batchSize = minOf(storedLogs.size, MAX_LOGS_PER_BATCH)
-            val flushedLogs = storedLogs.threadSafeTake(batchSize)
-            storedLogs.removeAll(flushedLogs.toSet())
+            val flushedLogs = ArrayList<Log>(MAX_LOGS_PER_BATCH)
+            while (flushedLogs.size < MAX_LOGS_PER_BATCH) {
+                val log = storedLogs.poll() ?: break
+                flushedLogs.add(log)
+            }
             return flushedLogs
         }
     }

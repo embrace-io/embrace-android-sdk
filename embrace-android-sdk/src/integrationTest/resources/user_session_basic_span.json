@@ -119,10 +119,6 @@
     {
       "key": "emb.user_session_start_ts",
       "value": "169220160000"
-    },
-    {
-      "key": "session.id",
-      "value": "__EMBRACE_TEST_USER_SESSION_ID__"
     }
   ],
   "links": "__EMBRACE_TEST_IGNORE__"

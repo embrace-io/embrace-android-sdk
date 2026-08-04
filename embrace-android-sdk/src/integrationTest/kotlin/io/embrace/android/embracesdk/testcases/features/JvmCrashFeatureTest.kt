@@ -37,7 +37,6 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule.Compan
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.opentelemetry.kotlin.logging.SeverityNumber
 import io.opentelemetry.kotlin.semconv.LogAttributes
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -140,7 +139,6 @@ internal class JvmCrashFeatureTest {
                 val attrs = checkNotNull(crashLog.attributes)
                 val userSessionId = attrs.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID)
                 assertFalse(userSessionId.isNullOrBlank())
-                assertEquals(userSessionId, attrs.findAttributeValue(SessionAttributes.SESSION_ID))
                 assertEquals("", attrs.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID) ?: "")
             }
         )
@@ -171,7 +169,6 @@ internal class JvmCrashFeatureTest {
                     hasSession = false,
                 )
                 val attrs = checkNotNull(crashLog.attributes)
-                assertEquals("", attrs.findAttributeValue(SessionAttributes.SESSION_ID) ?: "")
                 assertEquals("", attrs.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID) ?: "")
                 assertEquals("", attrs.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID) ?: "")
             }

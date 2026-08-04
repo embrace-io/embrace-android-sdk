@@ -5,8 +5,8 @@ import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findEventsOfType
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.assertions.getLogsOfType
-import io.embrace.android.embracesdk.assertions.getOtelSessionId
 import io.embrace.android.embracesdk.assertions.getSessionPartId
+import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.assertions.hasSpanSnapshotsOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
@@ -20,7 +20,6 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.assertions.assertSessionIds
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -109,7 +108,7 @@ internal class BackgroundActivityCaptureTest {
                             EmbSessionAttributes.EMB_STATE to "background"
                         )
                     )
-                    val sid = attributes?.findAttributeValue(SessionAttributes.SESSION_ID)
+                    val sid = attributes?.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID)
                     assertFalse(sid.isNullOrBlank())
                 }
                 with(logs[1]) {
@@ -119,14 +118,14 @@ internal class BackgroundActivityCaptureTest {
                             EmbSessionAttributes.EMB_STATE to "background"
                         )
                     )
-                    assertFalse(attributes?.findAttributeValue(SessionAttributes.SESSION_ID).isNullOrBlank())
+                    assertFalse(attributes?.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID).isNullOrBlank())
                 }
                 with(logs[2]) {
                     assertEquals("warning", body)
                     attributes?.assertMatches(
                         mapOf(
                             EmbSessionAttributes.EMB_STATE to "foreground",
-                            SessionAttributes.SESSION_ID to sessions[1].getOtelSessionId()
+                            EmbSessionAttributes.EMB_USER_SESSION_ID to sessions[1].getUserSessionId()
                         )
                     )
                 }
@@ -137,7 +136,7 @@ internal class BackgroundActivityCaptureTest {
                     attributes?.assertMatches(
                         mapOf(
                             EmbSessionAttributes.EMB_STATE to "foreground",
-                            SessionAttributes.SESSION_ID to secondSession.getOtelSessionId()
+                            EmbSessionAttributes.EMB_USER_SESSION_ID to secondSession.getUserSessionId()
                         )
                     )
                 }
@@ -248,7 +247,7 @@ internal class BackgroundActivityCaptureTest {
         )
         with(checkNotNull(attributes)) {
             assertFalse(findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER).isNullOrBlank())
-            assertFalse(findAttributeValue(SessionAttributes.SESSION_ID).isNullOrBlank())
+            assertFalse(findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID).isNullOrBlank())
         }
     }
 }

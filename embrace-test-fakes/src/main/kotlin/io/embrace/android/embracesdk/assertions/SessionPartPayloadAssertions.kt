@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.internal.session.getStateSpan
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 
 /**
  * Returns the Session Part Span
@@ -18,15 +17,6 @@ import io.opentelemetry.kotlin.semconv.SessionAttributes
 fun Envelope<SessionPartPayload>.findSessionPartSpan(): Span {
     return checkNotNull(getSessionPartSpan()) {
         "No session part span found in session payload"
-    }
-}
-
-/**
- * Return the user session ID from the session part span in the payload
- */
-fun Envelope<SessionPartPayload>.getOtelSessionId(): String {
-    return checkNotNull(findSessionPartSpan().attributes?.findAttributeValue(SessionAttributes.SESSION_ID)) {
-        "No session id found in session payload"
     }
 }
 

@@ -5,7 +5,7 @@
     "severityText": "FATAL",
     "timestampEpochNanos": "169220160330000000",
     "observedTimestampEpochNanos": "169220160030000000",
-    "totalAttributeCount": "8",
+    "totalAttributeCount": "7",
     "attributes": {
       "emb.session_part_id": "__EMBRACE_TEST_IGNORE__",
       "emb.state": "foreground",
@@ -13,8 +13,7 @@
       "emb.state.screen-automatic": "android.app.Activity",
       "emb.state.test": "UNKNOWN",
       "emb.user_session_id": "__EMBRACE_TEST_IGNORE__",
-      "log.record.uid": "__EMBRACE_TEST_IGNORE__",
-      "session.id": "__EMBRACE_TEST_IGNORE__"
+      "log.record.uid": "__EMBRACE_TEST_IGNORE__"
     },
     "instrumentationScopeName": "external-logger",
     "resourceAttributes": {
@@ -38,7 +37,7 @@
     "severityText": "TRACE",
     "timestampEpochNanos": "169220160130000000",
     "observedTimestampEpochNanos": "169220160030000000",
-    "totalAttributeCount": "10",
+    "totalAttributeCount": "9",
     "attributes": {
       "emb.session_part_id": "__EMBRACE_TEST_IGNORE__",
       "emb.state": "foreground",
@@ -48,7 +47,6 @@
       "emb.user_session_id": "__EMBRACE_TEST_IGNORE__",
       "log.record.uid": "__EMBRACE_TEST_IGNORE__",
       "long-attr": "42",
-      "session.id": "__EMBRACE_TEST_IGNORE__",
       "string-attr": "value"
     },
     "instrumentationScopeName": "external-logger",
@@ -73,7 +71,7 @@
     "severityText": "INFO",
     "timestampEpochNanos": "169220160230000000",
     "observedTimestampEpochNanos": "169220160030000000",
-    "totalAttributeCount": "11",
+    "totalAttributeCount": "10",
     "attributes": {
       "any-value-attr": "__EMBRACE_TEST_IGNORE__",
       "boolean-list-attr": "[true, false]",
@@ -84,8 +82,7 @@
       "emb.state.screen-automatic": "android.app.Activity",
       "emb.state.test": "UNKNOWN",
       "emb.user_session_id": "__EMBRACE_TEST_IGNORE__",
-      "log.record.uid": "__EMBRACE_TEST_IGNORE__",
-      "session.id": "__EMBRACE_TEST_IGNORE__"
+      "log.record.uid": "__EMBRACE_TEST_IGNORE__"
     },
     "instrumentationScopeName": "external-logger",
     "resourceAttributes": {

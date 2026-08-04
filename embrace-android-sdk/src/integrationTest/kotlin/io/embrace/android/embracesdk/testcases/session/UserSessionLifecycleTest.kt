@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.testcases.session
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.assertions.findSpansOfType
-import io.embrace.android.embracesdk.assertions.getOtelSessionId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.assertions.getUserSessionTerminationReason
 import io.embrace.android.embracesdk.assertions.isBackgroundOnlyPart
@@ -89,7 +88,6 @@ internal class UserSessionLifecycleTest {
 
                 val fgSessionPartSpan = fgSession.findSessionPartSpan()
                 assertNotNull(fgSession.getUserSessionId())
-                assertEquals(fgSession.getUserSessionId(), fgSession.getOtelSessionId())
                 assertEquals("1", fgSessionPartSpan.attributes?.findAttributeValue(EMB_USER_SESSION_NUMBER))
                 fgSession.assertNotFinalPart()
 
@@ -359,7 +357,6 @@ internal class UserSessionLifecycleTest {
             assertAction = {
                 val session = getSingleSessionEnvelope()
                 assertEquals(persistedId, session.getUserSessionId())
-                assertEquals(persistedId, session.getOtelSessionId())
                 session.assertNotFinalPart()
             }
         )
@@ -380,7 +377,6 @@ internal class UserSessionLifecycleTest {
             assertAction = {
                 val session = getSingleSessionEnvelope()
                 assertNotEquals(persistedId, session.getUserSessionId())
-                assertNotEquals(persistedId, session.getOtelSessionId())
                 session.assertNotFinalPart()
             }
         )
@@ -402,7 +398,6 @@ internal class UserSessionLifecycleTest {
             assertAction = {
                 val session = getSingleSessionEnvelope()
                 assertNotEquals(persistedId, session.getUserSessionId())
-                assertNotEquals(persistedId, session.getOtelSessionId())
                 session.assertNotFinalPart()
             }
         )

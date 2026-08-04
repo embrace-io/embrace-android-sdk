@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.NoopOpenTelemetry
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import io.opentelemetry.kotlin.semconv.UserAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -34,7 +33,6 @@ class EmbraceSpanProcessorTest {
         processor.onStart(span, context)
         assertEquals("1", span.attributes[EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID])
         assertEquals("pid", span.attributes[EmbSessionAttributes.EMB_PROCESS_IDENTIFIER])
-        assertEquals("user-sid", span.attributes[SessionAttributes.SESSION_ID])
         assertEquals("user-sid", span.attributes[EmbSessionAttributes.EMB_USER_SESSION_ID])
         assertEquals("part-sid", span.attributes[EmbSessionAttributes.EMB_SESSION_PART_ID])
         processor.onEnd(span)
@@ -50,7 +48,6 @@ class EmbraceSpanProcessorTest {
 
         assertEquals("", span.attributes[EmbSessionAttributes.EMB_SESSION_PART_ID])
         assertEquals("", span.attributes[EmbSessionAttributes.EMB_USER_SESSION_ID])
-        assertEquals("", span.attributes[SessionAttributes.SESSION_ID])
     }
 
     @Test
@@ -61,7 +58,6 @@ class EmbraceSpanProcessorTest {
 
         assertEquals("part-sid", span.attributes[EmbSessionAttributes.EMB_SESSION_PART_ID])
         assertEquals("", span.attributes[EmbSessionAttributes.EMB_USER_SESSION_ID])
-        assertEquals("", span.attributes[SessionAttributes.SESSION_ID])
     }
 
     @Test

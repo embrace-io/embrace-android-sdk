@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.session
 
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 
 /**
  * Holds metadata about the user session. Creating new instances with updated attributes is only permitted to support specific
@@ -44,7 +43,6 @@ sealed interface UserSessionMetadata {
             put(EmbSessionAttributes.EMB_USER_SESSION_NUMBER, userSessionNumber)
             put(EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS, maxDurationSecs)
             put(EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS, inactivityTimeoutSecs)
-            put(SessionAttributes.SESSION_ID, userSessionId)
             if (isBackgroundOnly == true) {
                 put(EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART, BACKGROUND_ONLY_MARKER)
             }

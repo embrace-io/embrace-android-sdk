@@ -45,7 +45,6 @@ import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterfac
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.mockk.every
 import io.mockk.mockk
-import io.opentelemetry.kotlin.semconv.SessionAttributes.SESSION_ID
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -307,14 +306,12 @@ internal class UserSessionIdPropagationTest {
                 val logAttrs = checkNotNull(getSingleLogEnvelope().getLogOfType(EmbType.System.NativeCrash).attributes)
                 assertEquals(sessionPartId, logAttrs.findAttributeValue(EMB_SESSION_PART_ID))
                 assertEquals(userSessionId, logAttrs.findAttributeValue(EMB_USER_SESSION_ID))
-                assertEquals(userSessionId, logAttrs.findAttributeValue(SESSION_ID))
             },
             otelExportAssertion = {
                 val log = awaitLogs(1) { it.attributes.toStringMap().containsKey(EmbType.System.NativeCrash.key) }.single()
                 val logAttrs = log.attributes.toStringMap()
                 assertEquals(sessionPartId, logAttrs[EMB_SESSION_PART_ID])
                 assertEquals(userSessionId, logAttrs[EMB_USER_SESSION_ID])
-                assertEquals(userSessionId, logAttrs[SESSION_ID])
             },
         )
     }
@@ -352,7 +349,6 @@ internal class UserSessionIdPropagationTest {
                 assertEquals(userSessionId, logAttrs.findAttributeValue(AEI_USER_SESSION_ID))
                 assertEquals("", logAttrs.findAttributeValue(EMB_SESSION_PART_ID))
                 assertEquals("", logAttrs.findAttributeValue(EMB_USER_SESSION_ID))
-                assertEquals("", logAttrs.findAttributeValue(SESSION_ID))
             },
             otelExportAssertion = {
                 val log = awaitLogs(1) { it.attributes.toStringMap().containsKey(EmbType.System.Exit.key) }.single()
@@ -361,7 +357,6 @@ internal class UserSessionIdPropagationTest {
                 assertEquals(userSessionId, logAttrs[AEI_USER_SESSION_ID])
                 assertEquals("", logAttrs[EMB_SESSION_PART_ID])
                 assertEquals("", logAttrs[EMB_USER_SESSION_ID])
-                assertEquals("", logAttrs[SESSION_ID])
             },
         )
     }
@@ -433,7 +428,7 @@ internal class UserSessionIdPropagationTest {
                 val newUserSessionId = sessions[1].getUserSessionId()
                 assertNotEquals(oldUserSessionId, newUserSessionId)
 
-                val logSessionId = getSingleLogEnvelope().getLastLog().attributes?.findAttributeValue(SESSION_ID)
+                val logSessionId = getSingleLogEnvelope().getLastLog().attributes?.findAttributeValue(EMB_USER_SESSION_ID)
                 assertEquals(newUserSessionId, logSessionId)
             },
         )
@@ -474,7 +469,7 @@ internal class UserSessionIdPropagationTest {
                 assertNotEquals(oldUserSessionId, newUserSessionId)
 
                 val log = getSingleLogEnvelope().getLastLog()
-                val logSessionId = log.attributes?.findAttributeValue(SESSION_ID)
+                val logSessionId = log.attributes?.findAttributeValue(EMB_USER_SESSION_ID)
                 assertEquals(oldUserSessionId, logSessionId)
                 assertTrue(checkNotNull(log.timeUnixNano) <= checkNotNull(sessionPartSpanFromOldPart.endTimeNanos))
             },
@@ -504,7 +499,7 @@ internal class UserSessionIdPropagationTest {
                 val newUserSessionId = sessions[1].getUserSessionId()
                 assertNotEquals(oldUserSessionId, newUserSessionId)
 
-                val logSessionId = getSingleLogEnvelope().getLastLog().attributes?.findAttributeValue(SESSION_ID)
+                val logSessionId = getSingleLogEnvelope().getLastLog().attributes?.findAttributeValue(EMB_USER_SESSION_ID)
                 assertEquals(newUserSessionId, logSessionId)
             },
         )

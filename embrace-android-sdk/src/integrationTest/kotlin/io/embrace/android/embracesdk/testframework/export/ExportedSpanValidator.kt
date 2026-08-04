@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.testframework.export
 
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.aliases.OtelJavaSpanData
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 
 internal class ExportedSpanValidator {
@@ -36,7 +35,6 @@ internal class ExportedSpanValidator {
             EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID,
             EmbSessionAttributes.EMB_SESSION_PART_ID,
             EmbSessionAttributes.EMB_USER_SESSION_ID,
-            SessionAttributes.SESSION_ID,
         )
         val attrs: Map<String, String> = attributes.asMap().map {
             it.key.key to it.value.toString()

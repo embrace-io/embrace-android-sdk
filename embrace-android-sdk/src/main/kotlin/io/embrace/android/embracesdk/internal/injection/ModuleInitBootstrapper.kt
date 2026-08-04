@@ -65,15 +65,14 @@ internal class ModuleInitBootstrapper(
     fun init(
         context: Context,
         versionChecker: VersionChecker = BuildVersionChecker,
-    ): Boolean {
+    ): Boolean = EmbTrace.trace("modules-init") {
         try {
-            EmbTrace.start("modules-init")
             if (isInitialized()) {
-                return false
+                return@trace false
             }
             synchronized(delegate) {
                 if (isInitialized()) {
-                    return false
+                    return@trace false
                 }
                 val workerThreadModule = EmbTrace.trace("workerthread-init") {
                     workerThreadModuleSupplier?.invoke() ?: WorkerThreadModuleImpl()
@@ -98,13 +97,11 @@ internal class ModuleInitBootstrapper(
                     userSessionOrchestrationModuleSupplier,
                     payloadSourceModuleSupplier,
                 )
-                return isInitialized()
+                isInitialized()
             }
         } catch (ignored: SdkDisabledException) {
             // do nothing - avoid instantiating SDK code any more than necessary.
-            return false
-        } finally {
-            EmbTrace.end()
+            false
         }
     }
 

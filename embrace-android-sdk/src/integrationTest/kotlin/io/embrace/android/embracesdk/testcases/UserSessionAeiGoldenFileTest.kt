@@ -10,13 +10,18 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertLogPayloadMatchesGoldenFile
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Verifies that AEI logs contain the active session IDs in emb.*_id and the AEI session IDs in aei_*_id.
- * If no user session is active at the time of sending, the emb.*_id attributes should be empty.
+ * Verifies that AEI logs carry the session IDs of the exit they describe in aei_*_id, and leave the emb.*_id
+ * attributes blank. An AEI describes the exit of a previous process, so the session that happens to be
+ * active when it is sent is not stamped on it - whether or not there is one.
+ *
+ * The log does still carry the current state of the SDK in the emb.state* attributes, as that is the only
+ * state available by the time the AEI can be reported.
  */
 @RunWith(AndroidJUnit4::class)
 internal class UserSessionAeiGoldenFileTest {
@@ -38,12 +43,16 @@ internal class UserSessionAeiGoldenFileTest {
             },
             assertAction = {
                 val sessionEnvelope = getSingleSessionEnvelope()
+                val aeiLog = getSingleLogEnvelope()
                 assertLogPayloadMatchesGoldenFile(
-                    envelope = getSingleLogEnvelope(),
+                    envelope = aeiLog,
                     expectedUserSessionId = sessionEnvelope.getUserSessionId(),
                     expectedSessionPartId = sessionEnvelope.getSessionPartId(),
                     goldenFile = "user_session_aei_log_active.json",
                 )
+                // the golden file pins these blank, so the active session cannot have leaked onto the log
+                assertTrue(sessionEnvelope.getUserSessionId().isNotBlank())
+                assertTrue(sessionEnvelope.getSessionPartId().isNotBlank())
             }
         )
     }

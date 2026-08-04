@@ -1,28 +1,47 @@
 [
   {
-    "name": "test-span",
+    "name": "event-span",
     "kind": "INTERNAL",
-    "status": "UNSET",
+    "status": "ERROR",
     "startEpochNanos": "169220160030000000",
-    "endEpochNanos": "169220160030000000",
+    "endEpochNanos": "169220160530000000",
     "hasEnded": "true",
     "parentSpanName": "",
     "totalAttributeCount": "7",
     "attributes": {
+      "emb.error_code": "failure",
       "emb.private.sequence_id": "__EMBRACE_TEST_IGNORE__",
       "emb.process_identifier": "__EMBRACE_TEST_IGNORE__",
       "emb.session_part_id": "__EMBRACE_TEST_IGNORE__",
       "emb.type": "perf",
       "emb.user_session_id": "__EMBRACE_TEST_IGNORE__",
-      "my-attribute": "my-value",
       "session.id": "__EMBRACE_TEST_IGNORE__"
     },
-    "totalRecordedEvents": "1",
+    "totalRecordedEvents": "3",
     "events": [
       {
-        "name": "my-event",
+        "name": "plain-event",
         "epochNanos": "169220160030000000",
         "attributes": {}
+      },
+      {
+        "name": "detailed-event",
+        "epochNanos": "169220160530000000",
+        "attributes": {
+          "event-boolean": "false",
+          "event-long": "7",
+          "event-string": "value"
+        }
+      },
+      {
+        "name": "exception",
+        "epochNanos": "169220160530000000",
+        "attributes": {
+          "exception.message": "something broke",
+          "exception.stacktrace": "__EMBRACE_TEST_IGNORE__",
+          "exception.type": "java.lang.IllegalStateException",
+          "handled": "true"
+        }
       }
     ],
     "totalRecordedLinks": "1",
@@ -37,7 +56,7 @@
         }
       }
     ],
-    "instrumentationScopeName": "io.embrace.android.embracesdk.core",
+    "instrumentationScopeName": "external-tracer",
     "resourceAttributes": {
       "android.os.api_level": "35",
       "device.manufacturer": "Fake Manufacturer",

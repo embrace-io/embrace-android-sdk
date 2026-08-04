@@ -56,9 +56,6 @@ internal class InitializedModuleGraph(
         EmbTrace.trace("span-service-init") {
             openTelemetryModule.spanService.initializeService(sdkStartTime)
         }
-        EmbTrace.trace("event-service-init") {
-            openTelemetryModule.eventService.initializeService(sdkStartTime)
-        }
     }
 
     override val configService: ConfigService = init {

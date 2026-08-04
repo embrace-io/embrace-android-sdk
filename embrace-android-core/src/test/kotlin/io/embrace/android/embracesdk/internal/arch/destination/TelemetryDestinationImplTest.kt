@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal.arch.destination
 
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.fakes.FakeAttributesMutator
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
-import io.embrace.android.embracesdk.fakes.FakeEventService
+import io.embrace.android.embracesdk.fakes.FakeLogRecord
+import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.getTraceIdFromTraceparent
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
@@ -36,7 +36,7 @@ internal class TelemetryDestinationImplTest {
     private lateinit var impl: TelemetryDestination
     private lateinit var clock: FakeClock
     private lateinit var spanService: FakeSpanService
-    private lateinit var eventService: FakeEventService
+    private lateinit var logger: FakeOpenTelemetryLogger
     private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
     private var sessionDataUpdated = false
 
@@ -44,7 +44,7 @@ internal class TelemetryDestinationImplTest {
     fun setup() {
         clock = FakeClock()
         spanService = FakeSpanService()
-        eventService = FakeEventService()
+        logger = FakeOpenTelemetryLogger()
         currentSessionPartSpan = FakeCurrentSessionPartSpan()
         impl = createDestination()
     }
@@ -53,7 +53,7 @@ internal class TelemetryDestinationImplTest {
         TelemetryDestinationImpl(
             clock = clock,
             spanService = spanService,
-            eventService = eventService,
+            loggerSupplier = { logger },
             currentSessionPartSpan = currentSessionPartSpan,
         ).also {
             it.sessionUpdateAction = { sessionDataUpdated = true }
@@ -72,7 +72,7 @@ internal class TelemetryDestinationImplTest {
             severity = LogSeverity.ERROR,
             message = "test",
         )
-        eventService.eventData.single().assertFakeEvent(
+        logger.logs.single().assertFakeEvent(
             expectedTimestamp = clock.now().millisToNanos(),
             expectedMessage = "test",
             expectedSeverity = Severity.ERROR,
@@ -82,7 +82,7 @@ internal class TelemetryDestinationImplTest {
         verifyAndResetSessionUpdate()
     }
 
-    private fun FakeEventService.FakeEventData.assertFakeEvent(
+    private fun FakeLogRecord.assertFakeEvent(
         expectedTimestamp: Long,
         expectedMessage: String?,
         expectedSeverity: Severity,
@@ -102,13 +102,11 @@ internal class TelemetryDestinationImplTest {
         )
     }
 
-    private fun FakeEventService.FakeEventData.assertAttributes(
+    private fun FakeLogRecord.assertAttributes(
         expectedSchemaType: SchemaType,
         expectedAdditionalAttributes: Map<String, String>,
     ) {
-        val attrContainer = FakeAttributesMutator()
-        checkNotNull(attributes).invoke(attrContainer)
-        val logAttributes = attrContainer.attributes.mapValues { it.value.toString() }
+        val logAttributes = attributes.mapValues { it.value.toString() }
         (expectedSchemaType.attributes() + expectedAdditionalAttributes).forEach { attr ->
             assertEquals(attr.value, logAttributes[attr.key])
         }
@@ -124,7 +122,7 @@ internal class TelemetryDestinationImplTest {
             message = "test",
             isPrivate = true,
         )
-        eventService.eventData.single().assertFakeEvent(
+        logger.logs.single().assertFakeEvent(
             expectedTimestamp = clock.now().millisToNanos(),
             expectedMessage = "test",
             expectedSeverity = Severity.ERROR,
@@ -138,7 +136,7 @@ internal class TelemetryDestinationImplTest {
             message = "test",
             isPrivate = false,
         )
-        eventService.eventData.last().assertFakeEvent(
+        logger.logs.last().assertFakeEvent(
             expectedTimestamp = clock.now().millisToNanos(),
             expectedMessage = "test",
             expectedSeverity = Severity.ERROR,
@@ -158,7 +156,7 @@ internal class TelemetryDestinationImplTest {
             timestampMs = fakeTimeMs,
         )
 
-        eventService.eventData.single().assertFakeEvent(
+        logger.logs.single().assertFakeEvent(
             expectedTimestamp = fakeTimeMs.millisToNanos(),
             expectedMessage = "test",
             expectedSeverity = Severity.ERROR,

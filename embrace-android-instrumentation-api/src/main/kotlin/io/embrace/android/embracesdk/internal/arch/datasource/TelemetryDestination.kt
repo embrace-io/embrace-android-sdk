@@ -17,7 +17,6 @@ interface TelemetryDestination {
         severity: LogSeverity,
         message: String,
         isPrivate: Boolean = false,
-        addCurrentSessionInfo: Boolean = true,
         timestampMs: Long? = null,
     )
 

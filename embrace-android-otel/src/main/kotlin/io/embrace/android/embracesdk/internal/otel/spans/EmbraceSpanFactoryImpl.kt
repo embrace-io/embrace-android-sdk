@@ -144,16 +144,12 @@ private class EmbraceSpanImpl(
     // the span stops. Plain ArrayList rather than ConcurrentLinkedQueue: a queue node costs 16 bytes per
     // element against ~4 for an array slot, and every read and write is already serialised by
     // collectionLock.
-    @Volatile
     private var systemEvents: MutableList<EmbraceSpanEvent>? = null
 
-    @Volatile
     private var customEvents: MutableList<EmbraceSpanEvent>? = null
 
-    @Volatile
     private var systemLinks: MutableList<EmbraceLinkData>? = null
 
-    @Volatile
     private var customLinks: MutableList<EmbraceLinkData>? = null
 
     private val systemAttributes = ConcurrentHashMap<String, String>(otelSpanStartArgs.embraceAttributes.size).apply {

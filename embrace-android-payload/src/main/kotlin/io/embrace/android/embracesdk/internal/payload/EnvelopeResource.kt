@@ -64,6 +64,8 @@ import kotlinx.serialization.Serializable
  * @param osCode (Android) The OS version code. Previous name: d.oc
  * @param screenResolution The screen resolution. Previous name: d.sr
  * @param numCores (Android) The number of CPU cores the device has. Previous name: d.nc
+ * @param usesEmmcStorage (Android) Whether the device appears to use an eMMC module for its primary storage.
+ * @param deviceSocModel (Android) The model name of the SoC the device is built around.
  */
 
 @Serializable(with = EnvelopeResourceSerializer::class)
@@ -153,6 +155,12 @@ data class EnvelopeResource(
 
     /* (Android) The number of CPU cores the device has. Previous name: d.nc */
     val numCores: Int? = null,
+
+    /* (Android) Whether the device appears to use an eMMC module for its primary storage. */
+    val usesEmmcStorage: Boolean? = null,
+
+    /* The model name of the SoC (System on a Chip) the device is built around. */
+    val deviceSocModel: String? = null,
 
     val extras: Map<String, String> = emptyMap(),
 )

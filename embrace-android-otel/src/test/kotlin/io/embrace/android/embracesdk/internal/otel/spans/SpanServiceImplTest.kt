@@ -7,12 +7,12 @@ import io.embrace.android.embracesdk.assertions.assertIsType
 import io.embrace.android.embracesdk.assertions.assertIsTypePerformance
 import io.embrace.android.embracesdk.assertions.assertNotPrivateSpan
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.TestConstants.TESTS_DEFAULT_USE_KOTLIN_SDK
+import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_INTERNAL_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
@@ -847,13 +847,13 @@ internal class SpanServiceImplTest {
             appVersion = "1.0.0",
             packageName = "com.test.app",
             systemInfo = SystemInfo(),
+            uuidSource = TestUuidSource(),
             sessionIdsProvider = { FakeSessionIdsProvider(userSessionId = "fake-session-id") },
         ) { "fake-pid" }
         val otelSdkWrapper = OtelSdkWrapper(
             otelClock = otelClock,
             configuration = otelSdkConfig,
             spanService = FakeSpanService(),
-            eventService = FakeEventService(),
             useKotlinSdk = TESTS_DEFAULT_USE_KOTLIN_SDK,
         )
         val embraceSpanFactory = EmbraceSpanFactoryImpl(

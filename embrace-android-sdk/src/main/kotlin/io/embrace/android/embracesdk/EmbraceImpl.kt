@@ -46,8 +46,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCap
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.android.embracesdk.internal.utils.EmbTrace.end
-import io.embrace.android.embracesdk.internal.utils.EmbTrace.start
 import io.embrace.android.embracesdk.spans.TracingApi
 import java.util.concurrent.Executors
 
@@ -108,25 +106,25 @@ internal class EmbraceImpl(
             }
             bootstrapper.postInit()
 
-            start("post-services-setup")
-            internalInterfaceModule = InternalInterfaceModuleImpl(
-                bootstrapper.initModule,
-                bootstrapper.configService,
-                bootstrapper.payloadSourceModule,
-                this,
-                bootstrapper,
-            )
+            EmbTrace.trace("post-services-setup") {
+                internalInterfaceModule = InternalInterfaceModuleImpl(
+                    bootstrapper.initModule,
+                    bootstrapper.configService,
+                    bootstrapper.payloadSourceModule,
+                    this,
+                    bootstrapper,
+                )
 
-            // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
-            // so we allow external calls.
-            sdkCallChecker.started.set(true)
-            bootstrapper.registerListeners()
-            bootstrapper.loadInstrumentation()
-            initializeHucInstrumentation(bootstrapper.configService.networkBehavior)
-            bootstrapper.postLoadInstrumentation()
-            bootstrapper.triggerPayloadSend()
-            bootstrapper.markSdkInitComplete()
-            end()
+                // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
+                // so we allow external calls.
+                sdkCallChecker.started.set(true)
+                bootstrapper.registerListeners()
+                bootstrapper.loadInstrumentation()
+                initializeHucInstrumentation(bootstrapper.configService.networkBehavior)
+                bootstrapper.postLoadInstrumentation()
+                bootstrapper.triggerPayloadSend()
+                bootstrapper.markSdkInitComplete()
+            }
         } catch (ignored: Throwable) {
             Log.w("Embrace", "Failed to initialize Embrace SDK", ignored)
         }

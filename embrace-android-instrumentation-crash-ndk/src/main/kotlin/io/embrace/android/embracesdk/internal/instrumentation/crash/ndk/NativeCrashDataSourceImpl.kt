@@ -88,7 +88,6 @@ internal class NativeCrashDataSourceImpl(
                 schemaType = SchemaType.NativeCrash(crashAttributes),
                 severity = LogSeverity.ERROR,
                 message = "",
-                addCurrentSessionInfo = false,
                 timestampMs = nativeCrash.timestamp,
             )
         }

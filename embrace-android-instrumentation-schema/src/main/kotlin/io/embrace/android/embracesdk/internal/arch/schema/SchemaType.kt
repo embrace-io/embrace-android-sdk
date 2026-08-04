@@ -145,6 +145,7 @@ sealed class SchemaType(
         override val schemaAttributes: Map<String, String> = mapOf(
             EmbAeiAttributes.AEI_SESSION_PART_ID to sessionPartId,
             EmbAeiAttributes.AEI_USER_SESSION_ID to userSessionId,
+            // keep session IDs empty as AEI is recorded in a different process
             EmbSessionAttributes.EMB_SESSION_PART_ID to "",
             EmbSessionAttributes.EMB_USER_SESSION_ID to "",
             SessionAttributes.SESSION_ID to "",

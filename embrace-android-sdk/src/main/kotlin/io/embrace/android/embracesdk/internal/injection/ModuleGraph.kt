@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.storage.StorageService
  * Contains all the dependency modules that are required by the initialized SDK.
  */
 internal interface ModuleGraph {
+    val sdkStartTimeMs: Long
     val initModule: InitModule
     val openTelemetryModule: OpenTelemetryModule
     val coreModule: CoreModule

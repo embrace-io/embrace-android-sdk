@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit
 internal class InitializedModuleGraph(
     context: Context,
     versionChecker: VersionChecker = BuildVersionChecker,
+    override val sdkStartTimeMs: Long,
     override val initModule: InitModule,
     override val openTelemetryModule: OpenTelemetryModule,
     override val workerThreadModule: WorkerThreadModule,
@@ -93,7 +94,7 @@ internal class InitializedModuleGraph(
         // configService so that the otel behavior set in ModuleInitBootstrapper.init has been read
         // from the same persisted config this service uses.
         EmbTrace.trace("span-service-init") {
-            openTelemetryModule.spanService.initializeService(coreModule.sdkStartTime)
+            openTelemetryModule.spanService.initializeService(sdkStartTimeMs)
         }
     }
 

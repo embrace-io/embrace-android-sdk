@@ -20,6 +20,7 @@ attribute_groups:
       - ref: emb.disk_free_bytes
       - ref: emb.private.send_mode
       - ref: emb.startup_activity
+      - ref: emb.startup_launch_reason
       - ref: emb.process_identifier
       - ref: emb.private.sequence_id
       - ref: emb.user_session_id
@@ -107,6 +108,61 @@ attributes:
     brief: "The name of the Activity that app startup completed in."
     stability: development
     examples: ["MainActivity"]
+  - key: emb.startup_launch_reason
+    type:
+      allow_custom_values: false
+      members:
+        - id: alarm
+          value: "alarm"
+          brief: "The process was started to deliver an alarm."
+          stability: development
+        - id: backup
+          value: "backup"
+          brief: "The process was started to run a backup or restore operation."
+          stability: development
+        - id: boot_complete
+          value: "boot_complete"
+          brief: "The process was started in response to the device finishing booting."
+          stability: development
+        - id: broadcast
+          value: "broadcast"
+          brief: "The process was started to receive a broadcast."
+          stability: development
+        - id: content_provider
+          value: "content_provider"
+          brief: "The process was started because one of its content providers was accessed."
+          stability: development
+        - id: job
+          value: "job"
+          brief: "The process was started to run a scheduled job."
+          stability: development
+        - id: launcher
+          value: "launcher"
+          brief: "The process was started because the app was launched from the launcher."
+          stability: development
+        - id: launcher_recents
+          value: "launcher_recents"
+          brief: "The process was started because the app was launched from the recents screen."
+          stability: development
+        - id: other
+          value: "other"
+          brief: "The process was started for a reason the platform does not categorise further."
+          stability: development
+        - id: push
+          value: "push"
+          brief: "The process was started to handle a push message."
+          stability: development
+        - id: service
+          value: "service"
+          brief: "The process was started because one of its services was bound or started."
+          stability: development
+        - id: start_activity
+          value: "start_activity"
+          brief: "The process was started because another component started one of its activities."
+          stability: development
+    brief: "Why the OS started the app process that the startup trace was recorded in. Reported by the platform from Android 15 onwards, and omitted where it is unavailable. This describes the creation of the process, which is not necessarily what the user did to launch the app: a process forked to handle a push message and subsequently used for a user launch is reported as `push`."
+    stability: development
+    examples: ["launcher", "push", "job"]
   - key: emb.process_identifier
     type: string
     brief: "Monotonically increasing sequence ID given to completed spans expected to be sent to the server."

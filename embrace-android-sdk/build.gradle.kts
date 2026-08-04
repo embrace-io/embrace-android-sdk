@@ -83,5 +83,19 @@ dependencies {
     testImplementation(libs.opentelemetry.kotlin.compat)
     testImplementation(libs.kotlinx.serialization.core)
 
+    // instrumented tests. StrictMode can only observe real disk I/O on a device, so these tests
+    // cannot be written against Robolectric. See StrictModeStartupTest for detail.
+    androidTestImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.annotation)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    // the module's project deps are 'implementation', so anything androidTest needs to name
+    // directly has to be declared again here.
+    androidTestImplementation(project(":embrace-android-core"))
+    androidTestImplementation(project(":embrace-android-config-fakes"))
+    // required because embrace-android-conventions sets execution = ANDROIDX_TEST_ORCHESTRATOR
+    androidTestUtil(libs.androidx.test.orchestrator)
+
     lintChecks(project(":embrace-lint"))
 }

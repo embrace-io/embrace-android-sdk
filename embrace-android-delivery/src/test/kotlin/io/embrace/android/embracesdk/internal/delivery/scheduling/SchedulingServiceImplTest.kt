@@ -230,6 +230,25 @@ internal class SchedulingServiceImplTest {
     }
 
     @Test
+    fun `orphaned retry entry from a silently pruned payload does not block later payloads of the same type`() {
+        resetToSingleSessionPartPayload()
+        allSendsFail()
+        waitForResurrectionAndDeliveryAttempt()
+        assertEquals(1, executionService.sendAttempts())
+
+        // simulate the storage layer pruning the payload off disk without going through delete(),
+        // leaving it orphaned in payloadsToRetry/payloadsInProgress
+        storageService.removePayloadSilently(fakeSessionStoredTelemetryMetadata)
+        assertEquals(0, storageService.storedPayloadCount())
+
+        // a new payload of the same envelope type should still be deliverable
+        allSendsSucceed()
+        storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
+        waitForPayloadIntakeAndDeliveryAttempt()
+        assertEquals(2, executionService.sendAttempts())
+    }
+
+    @Test
     fun `losing network will cause payload sends to stop and reconnection makes it start again`() {
         allSendsFail()
         switchToConnectionType(ConnectionType.WAN, 2)

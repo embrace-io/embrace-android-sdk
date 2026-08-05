@@ -15,7 +15,9 @@ import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceLinkData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
+import io.embrace.android.embracesdk.internal.otel.spans.SpanTerminationMode
 import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
+import io.embrace.android.embracesdk.internal.otel.spans.toAutoTerminationMode
 import io.embrace.android.embracesdk.internal.otel.spans.toErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Link
@@ -42,10 +44,12 @@ class FakeEmbraceSdkSpan(
     val type: EmbType = EmbType.Performance.Default,
     val internal: Boolean = false,
     val private: Boolean = internal,
-    override val autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
+    override val terminationMode: SpanTerminationMode = SpanTerminationMode.None,
     private val fakeClock: FakeClock = FakeClock(),
     private val otelSpanStartArgs: OtelSpanStartArgs? = null,
 ) : EmbraceSdkSpan {
+
+    override val autoTerminationMode: AutoTerminationMode get() = terminationMode.toAutoTerminationMode()
 
     private var sdkSpan: Span? = null
     var spanStartTimeMs: Long? = null

@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.tracing.Tracer
@@ -85,7 +84,7 @@ class SpanServiceImpl(
         type: EmbType,
         internal: Boolean,
         private: Boolean,
-        autoTerminationMode: AutoTerminationMode,
+        terminationMode: SpanTerminationMode,
     ): EmbraceSdkSpan {
         val components = otelComponents ?: return NoopEmbraceSdkSpan
         return if (name.isNotBlank() && canStartNewSpan(parent, internal, type)) {
@@ -96,7 +95,7 @@ class SpanServiceImpl(
                     internal = internal,
                     private = private,
                     tracer = components.tracer,
-                    autoTerminationMode = autoTerminationMode,
+                    terminationMode = terminationMode,
                     parentCtx = (parent as? EmbraceSdkSpan)?.createContext(components.openTelemetry),
                     openTelemetry = components.openTelemetry,
                 ),
@@ -129,7 +128,7 @@ class SpanServiceImpl(
         type: EmbType,
         internal: Boolean,
         private: Boolean,
-        autoTerminationMode: AutoTerminationMode,
+        terminationMode: SpanTerminationMode,
     ): EmbraceSdkSpan {
         val newSpan = createSpan(
             name = name,
@@ -137,7 +136,7 @@ class SpanServiceImpl(
             type = type,
             internal = internal,
             private = private,
-            autoTerminationMode = autoTerminationMode,
+            terminationMode = terminationMode,
         )
         return when {
             newSpan.start(startTimeMs) -> newSpan
@@ -157,7 +156,7 @@ class SpanServiceImpl(
         private: Boolean,
         attributes: Map<String, String>,
         events: List<SpanEvent>,
-        autoTerminationMode: AutoTerminationMode,
+        terminationMode: SpanTerminationMode,
         code: () -> T,
     ): T {
         val returnValue: T
@@ -167,7 +166,7 @@ class SpanServiceImpl(
             type = type,
             internal = internal,
             private = private,
-            autoTerminationMode = autoTerminationMode,
+            terminationMode = terminationMode,
         )
         try {
             if (span.start()) {

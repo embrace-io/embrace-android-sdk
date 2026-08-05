@@ -97,6 +97,51 @@ internal class SpanRepositoryTest {
     }
 
     @Test
+    fun `timed out span is failed at its deadline once the timeout elapses`() {
+        val span = FakeEmbraceSdkSpan(terminationMode = SpanTerminationMode.Timeout(1000L)).apply { start(100L) }
+        repository.trackStartedEmbraceSpan(span)
+
+        // before the deadline the span is left
+        repository.stopTimedOutSpans(now = 1099L)
+        assertTrue(span.isRecording)
+        assertNull(span.errorCode)
+
+        // at/after the deadline the span is failed, with an end time equal to the deadline
+        repository.stopTimedOutSpans(now = 1100L)
+        assertFalse(span.isRecording)
+        assertEquals(ErrorCodeAttribute.Failure, span.errorCode)
+        assertEquals(1100L, span.spanEndTimeMs)
+    }
+
+    @Test
+    fun `spans without a timeout are not affected by the sweep`() {
+        val onBackground = FakeEmbraceSdkSpan(terminationMode = SpanTerminationMode.OnBackground).apply { start(0L) }
+        val none = FakeEmbraceSdkSpan(terminationMode = SpanTerminationMode.None).apply { start(0L) }
+        repository.trackStartedEmbraceSpan(onBackground)
+        repository.trackStartedEmbraceSpan(none)
+
+        repository.stopTimedOutSpans(now = Long.MAX_VALUE)
+
+        assertTrue(onBackground.isRecording)
+        assertTrue(none.isRecording)
+    }
+
+    @Test
+    fun `already stopped timed out spans are not stopped again`() {
+        val span = FakeEmbraceSdkSpan(terminationMode = SpanTerminationMode.Timeout(1000L)).apply {
+            start(100L)
+            stop(endTimeMs = 500L)
+        }
+        repository.trackStartedEmbraceSpan(span)
+
+        repository.stopTimedOutSpans(now = Long.MAX_VALUE)
+
+        // original end time is retained
+        assertEquals(500L, span.spanEndTimeMs)
+        assertNull(span.errorCode)
+    }
+
+    @Test
     fun `verify default completed otel span state`() {
         assertEquals(0, repository.completedOtelSpans().size)
         assertEquals(0, repository.flushOtelSpans().size)

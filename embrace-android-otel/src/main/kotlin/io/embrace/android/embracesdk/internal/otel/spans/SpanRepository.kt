@@ -55,6 +55,24 @@ class SpanRepository {
     }
 
     /**
+     * Stop any active span whose timeout deadline has passed, marking it as failed. The span's end
+     * time is set to its deadline (start + timeout) so its duration reflects the configured timeout
+     * regardless of when the sweep runs. Spans with no timeout are untouched.
+     */
+    fun stopTimedOutSpans(now: Long) {
+        getActiveEmbraceSpans().forEach { span ->
+            val mode = span.terminationMode
+            val startTimeMs = span.getStartTimeMs()
+            if (mode is SpanTerminationMode.Timeout && startTimeMs != null) {
+                val deadlineMs = startTimeMs + mode.timeoutMs
+                if (now >= deadlineMs) {
+                    span.stopWithErrorCode(ErrorCodeAttribute.Failure, deadlineMs)
+                }
+            }
+        }
+    }
+
+    /**
      * Stop the existing active spans and mark them as failed
      */
     fun failActiveEmbraceSpans(failureTimeMs: Long) {

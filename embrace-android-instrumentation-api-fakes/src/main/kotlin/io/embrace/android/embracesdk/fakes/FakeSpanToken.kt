@@ -20,6 +20,7 @@ class FakeSpanToken(
     initialAttrs: Map<String, String>,
     val events: MutableList<SpanEvent>,
     uuidSource: UuidSource,
+    val timeoutMs: Long? = null,
 ) : SpanToken {
 
     val attributes: Map<String, String>

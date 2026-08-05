@@ -6,13 +6,16 @@ import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
+import io.embrace.android.embracesdk.internal.otel.spans.SpanTerminationMode
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSnapshotType
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -68,6 +71,33 @@ internal class SessionPartPayloadSourceImplTest {
         val payload = impl.getSessionPartPayload(SessionPartSnapshotType.NORMAL_END, true)
         assertPayloadPopulated(payload = payload, hasSessionSnapshot = false, hasNonSessionSnapshots = true)
         assertNotNull(payload.spans?.single())
+    }
+
+    @Test
+    fun `timed out spans are failed when the session part ends regardless of app state`() {
+        val clock = FakeClock()
+        val timedOutSpan = FakeEmbraceSdkSpan(terminationMode = SpanTerminationMode.Timeout(1000L)).apply {
+            start(clock.now())
+        }
+        val repository = SpanRepository().apply {
+            trackStartedEmbraceSpan(checkNotNull(currentSessionPartSpan.sessionPartSpan))
+            trackStartedEmbraceSpan(timedOutSpan)
+        }
+        val source = SessionPartPayloadSourceImpl(
+            null,
+            currentSessionPartSpan,
+            repository,
+            FakeOtelPayloadMapper(),
+            FakeAppStateTracker(),
+            clock,
+            InternalLoggerImpl(),
+        )
+
+        clock.tick(2000L)
+        source.getSessionPartPayload(SessionPartSnapshotType.NORMAL_END, true)
+
+        assertFalse(timedOutSpan.isRecording)
+        assertEquals(ErrorCodeAttribute.Failure, timedOutSpan.errorCode)
     }
 
     private fun assertPayloadPopulated(

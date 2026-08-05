@@ -16,10 +16,10 @@ import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
+import io.embrace.android.embracesdk.internal.otel.spans.SpanTerminationMode
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
-import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.kotlin.logging.SeverityNumber
@@ -79,10 +79,12 @@ class TelemetryDestinationImpl(
         parentSpanId: String?,
         autoTerminate: Boolean,
         private: Boolean,
+        timeoutMs: Long?,
     ): SpanToken {
         val mode = when {
-            autoTerminate -> AutoTerminationMode.ON_BACKGROUND
-            else -> AutoTerminationMode.NONE
+            timeoutMs != null -> SpanTerminationMode.Timeout(timeoutMs)
+            autoTerminate -> SpanTerminationMode.OnBackground
+            else -> SpanTerminationMode.None
         }
 
         val parent = if (parentSpanId != null) {
@@ -96,7 +98,7 @@ class TelemetryDestinationImpl(
             name = name,
             parent = parent,
             startTimeMs = startTimeMs,
-            autoTerminationMode = mode,
+            terminationMode = mode,
             private = private,
             type = schemaType.telemetryType,
         ).apply {

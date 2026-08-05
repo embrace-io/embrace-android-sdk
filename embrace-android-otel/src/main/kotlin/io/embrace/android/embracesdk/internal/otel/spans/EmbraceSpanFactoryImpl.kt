@@ -106,7 +106,9 @@ private class EmbraceSpanImpl(
     @Volatile
     private var spanEndTimeMs: Long = UNSET_TIME
 
-    override val autoTerminationMode: AutoTerminationMode = otelSpanStartArgs.autoTerminationMode
+    override val terminationMode: SpanTerminationMode = otelSpanStartArgs.terminationMode
+
+    override val autoTerminationMode: AutoTerminationMode get() = terminationMode.toAutoTerminationMode()
 
     private var spanName: String = validateName(otelSpanStartArgs.initialSpanName)
         set(name) {

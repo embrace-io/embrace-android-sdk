@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
-import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.tracing.Span
@@ -21,7 +20,7 @@ class OtelSpanStartArgs(
     val internal: Boolean,
     private: Boolean,
     private val tracer: Tracer,
-    val autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
+    val terminationMode: SpanTerminationMode = SpanTerminationMode.None,
     parentCtx: Context? = null,
     val startTimeMs: Long? = null,
     val spanKind: SpanKind? = null,

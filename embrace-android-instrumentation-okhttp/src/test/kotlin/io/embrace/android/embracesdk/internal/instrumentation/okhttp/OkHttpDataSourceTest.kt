@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCap
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSourceImpl
 import io.embrace.android.embracesdk.internal.instrumentation.network.RequestEndData
+import io.embrace.android.embracesdk.internal.instrumentation.network.RequestStartData
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getValidTraceId
 import io.embrace.android.embracesdk.okhttp3.EmbraceCustomPathException
 import io.embrace.android.embracesdk.semconv.EmbNetworkCapturedRequestAttributes
@@ -47,6 +48,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.ByteArrayOutputStream
 import java.net.SocketException
+import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPOutputStream
 
 @RunWith(AndroidJUnit4::class)
@@ -552,6 +554,24 @@ internal class OkHttpDataSourceTest {
         assertEquals(1, networkRequestDataSource.discardedIds.size)
     }
 
+    @Test
+    fun `resolved timeout falls back to config default when no call timeout is set`() {
+        configService.networkBehavior = FakeNetworkBehavior(requestSpanTimeoutMs = 300_000L)
+        server.enqueue(createBaseMockResponse())
+        runPostRequest()
+        assertEquals(300_000L, networkRequestDataSource.startedRequests.single().timeoutMs)
+    }
+
+    @Test
+    fun `resolved timeout uses call timeout plus buffer when set`() {
+        val timedClient = okHttpClient.newBuilder()
+            .callTimeout(30, TimeUnit.SECONDS)
+            .build()
+        server.enqueue(createBaseMockResponse())
+        timedClient.newCall(postRequestBuilder.build()).execute()
+        assertEquals(35_000L, networkRequestDataSource.startedRequests.single().timeoutMs)
+    }
+
     private fun assertNetworkBodyNotCaptured() {
         assertTrue(args.destination.logEvents.isEmpty())
     }
@@ -752,7 +772,13 @@ private class RecordingNetworkRequestDataSource(
 ) : NetworkRequestDataSource by delegate {
 
     val discardedIds: MutableList<String> = mutableListOf()
+    val startedRequests: MutableList<RequestStartData> = mutableListOf()
     var endRequestFailure: Throwable? = null
+
+    override fun startRequest(startData: RequestStartData): String? {
+        startedRequests.add(startData)
+        return delegate.startRequest(startData)
+    }
 
     override fun endRequest(endData: RequestEndData) {
         endRequestFailure?.let { throw it }

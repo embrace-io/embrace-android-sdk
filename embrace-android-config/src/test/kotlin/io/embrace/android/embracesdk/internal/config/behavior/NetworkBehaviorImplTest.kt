@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.config.behavior
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.createNetworkBehavior
+import io.embrace.android.embracesdk.internal.config.remote.DataRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -22,6 +23,7 @@ internal class NetworkBehaviorImplTest {
                 "google.com" to 50,
             ),
         ),
+        dataConfig = DataRemoteConfig(networkRequestSpanTimeoutMs = 120_000L),
         disabledUrlPatterns = setOf("example.com"),
         networkCaptureRules = setOf(
             NetworkCaptureRuleRemoteConfig(
@@ -40,6 +42,7 @@ internal class NetworkBehaviorImplTest {
             assertFalse(isHttpUrlConnectionCaptureEnabled())
             assertTrue(isHucLiteInstrumentationEnabled())
             assertEquals(1000, getRequestLimitPerDomain())
+            assertEquals(600_000L, getRequestSpanTimeoutMs())
             assertEquals(emptyMap<String, Int>(), getLimitsByDomain())
             assertTrue(isUrlEnabled("google.com"))
             assertFalse(isCaptureBodyEncryptionEnabled())
@@ -53,6 +56,7 @@ internal class NetworkBehaviorImplTest {
     fun testRemoteOnly() {
         with(createNetworkBehavior(remoteCfg = remote)) {
             assertEquals(409, getRequestLimitPerDomain())
+            assertEquals(120_000L, getRequestSpanTimeoutMs())
             assertEquals(mapOf("google.com" to 50), getLimitsByDomain())
             assertTrue(isUrlEnabled("google.com"))
             assertFalse(isUrlEnabled("example.com"))

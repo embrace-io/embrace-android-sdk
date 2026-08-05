@@ -21,6 +21,8 @@ class NetworkBehaviorImpl(
 
         const val DEFAULT_NETWORK_CALL_LIMIT: Int = 1000
 
+        const val DEFAULT_REQUEST_SPAN_TIMEOUT_MS: Long = 600_000L
+
         private val dirtyKeyList = listOf(
             "-----BEGIN PUBLIC KEY-----",
             "-----END PUBLIC KEY-----",
@@ -67,6 +69,9 @@ class NetworkBehaviorImpl(
         remote?.networkConfig?.defaultCaptureLimit ?: DEFAULT_NETWORK_CALL_LIMIT,
         cfg.getRequestLimitPerDomain(),
     )
+
+    override fun getRequestSpanTimeoutMs(): Long =
+        remote?.dataConfig?.networkRequestSpanTimeoutMs ?: DEFAULT_REQUEST_SPAN_TIMEOUT_MS
 
     override fun isUrlEnabled(url: String): Boolean {
         val patterns = disabledUrlPatterns

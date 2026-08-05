@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.network.logging.DomainCountLimiter
 
 class FakeNetworkBehavior(
     private val captureLimit: Int = 1000,
+    private val requestSpanTimeoutMs: Long = 600_000L,
     private val domains: Map<String, Int> = emptyMap(),
     private val captureHttpUrlConnectionRequests: Boolean = false,
     private val okHttpResponseBodySizeCaptureEnabled: Boolean = false,
@@ -24,6 +25,7 @@ class FakeNetworkBehavior(
     override fun isHucLiteInstrumentationEnabled(): Boolean = hucLiteInstrumentationEnabled
     override fun getLimitsByDomain(): Map<String, Int> = domains
     override fun getRequestLimitPerDomain(): Int = captureLimit
+    override fun getRequestSpanTimeoutMs(): Long = requestSpanTimeoutMs
     override fun isUrlEnabled(url: String): Boolean = urlEnabled
     override fun isCaptureBodyEncryptionEnabled(): Boolean = captureBodyEncryptionEnabled
     override fun getNetworkBodyCapturePublicKey(): String? = publicKey

@@ -123,6 +123,7 @@ class DeliveryModuleImpl(
     private val partCacher: PeriodicSessionPartCacher = PeriodicSessionPartCacher(
         workerThreadModule.backgroundWorker(Worker.Background.PeriodicCacheWorker),
         initModule.logger,
+        configService.otelBehavior.getPeriodicCacheIntervalMs(),
     )
 
     override val payloadCachingService: PayloadCachingService = PayloadCachingServiceImpl(

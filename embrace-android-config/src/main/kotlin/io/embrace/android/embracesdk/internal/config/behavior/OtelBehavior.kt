@@ -32,6 +32,12 @@ interface OtelBehavior {
      */
     fun getMaxSpanEventsPerSessionPart(): Int
 
+    /**
+     * The interval in milliseconds between periodic caching of the in-progress session part to disk.
+     * This is clamped to the range [MIN_PERIODIC_CACHE_INTERVAL_MS]..[MAX_PERIODIC_CACHE_INTERVAL_MS].
+     */
+    fun getPeriodicCacheIntervalMs(): Long
+
     companion object {
 
         /**
@@ -44,3 +50,6 @@ interface OtelBehavior {
 const val DEFAULT_MAX_CUSTOM_SPANS_PER_SESSION_PART: Int = 500
 const val DEFAULT_MAX_INTERNAL_SPANS_PER_SESSION_PART: Int = 1500
 const val DEFAULT_MAX_NETWORK_SPANS_PER_SESSION_PART: Int = 2000
+const val DEFAULT_PERIODIC_CACHE_INTERVAL_MS: Long = 2000L
+const val MIN_PERIODIC_CACHE_INTERVAL_MS: Long = 2000L
+const val MAX_PERIODIC_CACHE_INTERVAL_MS: Long = 120000L

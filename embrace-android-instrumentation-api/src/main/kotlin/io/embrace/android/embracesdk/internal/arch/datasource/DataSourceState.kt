@@ -23,10 +23,19 @@ class DataSourceState<T : DataSource>(
 
     private val factoryRef = lazy(factory)
 
+    /**
+     * The data source, or null if [configGate] disabled data capture. A non-null value means data
+     * capture is enabled, but does not imply [enableDataCapture] has run yet.
+     */
     var dataSource: T? = when {
-        configGate() -> factoryRef.value?.apply {
-            onDataCaptureEnabled()
-        }
+        configGate() -> factoryRef.value
         else -> null
+    }
+
+    /**
+     * Invokes [DataSource.onDataCaptureEnabled] if data capture is enabled, otherwise does nothing.
+     */
+    fun enableDataCapture() {
+        dataSource?.onDataCaptureEnabled()
     }
 }

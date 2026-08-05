@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.arch.datasource.StateDataSource
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.reflect.KClass
 
@@ -40,6 +41,8 @@ class InstrumentationRegistryImpl(
 
     override fun add(state: DataSourceState<*>) {
         dataSourceStates.add(state)
+        // enable data capture once the state is registered
+        state.enableDataCapture()
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -61,13 +64,23 @@ class InstrumentationRegistryImpl(
     ) {
         val loader = instrumentationProviders.sortedBy { it.priority }
         loader.forEach { provider ->
-            try {
-                provider.register(args)?.let { dataSourceState ->
-                    add(dataSourceState)
+            if (provider.asyncInit) {
+                args.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
+                    registerProvider(provider, args)
                 }
-            } catch (exc: Throwable) {
-                logger.trackInternalError(InternalErrorType.InstrumentationRegFail, exc)
+            } else {
+                registerProvider(provider, args)
             }
+        }
+    }
+
+    private fun registerProvider(provider: InstrumentationProvider, args: InstrumentationArgs) {
+        try {
+            provider.register(args)?.let { dataSourceState ->
+                add(dataSourceState)
+            }
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.InstrumentationRegFail, exc)
         }
     }
 

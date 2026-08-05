@@ -7,7 +7,8 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 class FakeInstrumentationProvider(
     override val priority: Int = 10000,
     private val action: (k: Int) -> Unit,
-    private val dataSourceState: DataSourceState<*>? = null
+    private val dataSourceState: DataSourceState<*>? = null,
+    override val asyncInit: Boolean = false,
 ) : InstrumentationProvider {
 
     override fun register(args: InstrumentationArgs): DataSourceState<*>? {

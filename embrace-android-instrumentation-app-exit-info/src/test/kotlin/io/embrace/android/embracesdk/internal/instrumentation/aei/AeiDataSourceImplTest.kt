@@ -4,6 +4,7 @@ import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.behavior.FakeAppExitInfoBehavior
@@ -11,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
@@ -80,8 +82,9 @@ internal class AeiDataSourceImplTest {
     private fun startApplicationExitInfoService(
         versionChecker: VersionChecker = BuildVersionChecker,
         activityManagerProvider: Provider<ActivityManager?> = { mockActivityManager },
+        logger: FakeInternalLogger = FakeInternalLogger(),
     ) {
-        args = FakeInstrumentationArgs(mockk(), configService = configService)
+        args = FakeInstrumentationArgs(mockk(), configService = configService, logger = logger)
         applicationExitInfoService = AeiDataSourceImpl(
             args,
             worker,
@@ -468,10 +471,14 @@ internal class AeiDataSourceImplTest {
         } throws NullPointerException()
 
         // when the service is started
-        startApplicationExitInfoService()
+        val logger = FakeInternalLogger(throwOnInternalError = false)
+        startApplicationExitInfoService(logger = logger)
 
-        // no logs were sent
+        // no logs were sent, and the failure was tracked as an internal error
         assertTrue(args.destination.logEvents.isEmpty())
+        val internalError = logger.internalErrorMessages.single()
+        assertEquals(InternalErrorType.ProcessAeiRecords.toString(), internalError.msg)
+        assertTrue(internalError.throwable is NullPointerException)
     }
 
     @Test

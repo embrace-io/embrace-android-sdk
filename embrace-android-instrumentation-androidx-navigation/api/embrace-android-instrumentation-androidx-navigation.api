@@ -6,6 +6,7 @@ public final class io/embrace/android/embracesdk/instrumentation/androidx/naviga
 public final class io/embrace/android/embracesdk/instrumentation/androidx/navigation/internal/AndroidxNavigationInstrumentationProvider : io/embrace/android/embracesdk/internal/arch/InstrumentationProvider {
 	public static final field $stable I
 	public fun <init> ()V
+	public fun getAsyncInit ()Z
 	public fun getPriority ()I
 	public fun register (Lio/embrace/android/embracesdk/internal/arch/InstrumentationArgs;)Lio/embrace/android/embracesdk/internal/arch/datasource/DataSourceState;
 }

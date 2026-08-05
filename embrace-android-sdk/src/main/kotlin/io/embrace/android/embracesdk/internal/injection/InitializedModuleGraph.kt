@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.ConfigServiceImpl
+import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleImpl
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleSupplier
@@ -16,6 +17,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.cr
 import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
 import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
 import io.embrace.android.embracesdk.internal.storage.StorageService
+import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -33,9 +35,12 @@ import java.util.concurrent.TimeUnit
 internal class InitializedModuleGraph(
     context: Context,
     versionChecker: VersionChecker = BuildVersionChecker,
+    override val sdkStartTimeMs: Long,
     override val initModule: InitModule,
     override val openTelemetryModule: OpenTelemetryModule,
     override val workerThreadModule: WorkerThreadModule,
+    private val keyValueStore: Lazy<KeyValueStore>,
+    private val persistedConfig: PersistedConfig,
     private val coreModuleSupplier: CoreModuleSupplier?,
     private val configServiceSupplier: ConfigServiceSupplier?,
     private val storageServiceSupplier: StorageServiceSupplier?,
@@ -51,11 +56,8 @@ internal class InitializedModuleGraph(
 ) : ModuleGraph {
 
     override val coreModule: CoreModule = init("core") {
-        coreModuleSupplier?.invoke(context, initModule) ?: CoreModuleImpl(context, initModule)
-    }.apply {
-        EmbTrace.trace("span-service-init") {
-            openTelemetryModule.spanService.initializeService(sdkStartTime)
-        }
+        coreModuleSupplier?.invoke(context, initModule, keyValueStore)
+            ?: CoreModuleImpl(context, initModule, keyValueStore)
     }
 
     override val configService: ConfigService = init("config") {
@@ -64,20 +66,19 @@ internal class InitializedModuleGraph(
             coreModule,
             openTelemetryModule,
             workerThreadModule,
+            persistedConfig,
         ) ?: EmbTrace.trace("config-service-init") {
             ConfigServiceImpl(
                 instrumentedConfig = initModule.instrumentedConfig,
-                worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
+                persistedConfig = persistedConfig,
+                worker = workerThreadModule.backgroundWorker(Worker.Background.HttpRequestWorker),
                 serializer = initModule.jsonSerializer,
                 okHttpClient = initModule.okHttpClient,
                 hasConfiguredOtlpExport = openTelemetryModule.otelSdkConfig::hasConfiguredOtlpExport,
                 sdkVersion = BuildConfig.VERSION_NAME,
                 apiLevel = Build.VERSION.SDK_INT,
-                filesDir = coreModule.context.filesDir,
-                store = coreModule.store,
                 abis = Build.SUPPORTED_ABIS,
                 logger = initModule.logger,
-                uuidSource = initModule.uuidSource,
             )
         }
     }.apply {
@@ -88,6 +89,12 @@ internal class InitializedModuleGraph(
                     throw SdkDisabledException()
                 }
             }
+        }
+        // Deliberately after the disable check so a disabled SDK never builds the OTel SDK, and after
+        // configService so that the otel behavior set in ModuleInitBootstrapper.init has been read
+        // from the same persisted config this service uses.
+        EmbTrace.trace("span-service-init") {
+            openTelemetryModule.spanService.initializeService(sdkStartTimeMs)
         }
     }
 

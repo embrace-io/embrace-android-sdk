@@ -55,7 +55,9 @@ sealed class Worker(val threadName: String) {
         object DeliverySchedulingWorker : Background("delivery-scheduling")
 
         /**
-         * Worker that performs HTTP requests that push data to the server.
+         * Worker that performs blocking HTTP requests against the Embrace API: payload upload and
+         * remote config fetch. Network work belongs here rather than on a worker shared with
+         * latency-sensitive registration tasks such as [IoRegWorker].
          */
         object HttpRequestWorker : Background("http-request")
     }

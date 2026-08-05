@@ -349,8 +349,8 @@ internal class CurrentSessionPartSpanImplTests {
         applyConfiguration(
             sensitiveKeysBehavior = createSensitiveKeysBehavior(),
             bypassValidation = false,
-            otelBehavior = createOtelBehavior(remoteCfg = RemoteConfig(dataConfig = dataConfig)),
         )
+        setOtelBehavior(createOtelBehavior(remoteCfg = RemoteConfig(dataConfig = dataConfig)))
     }
 
     private fun createNetworkSpan(index: Int) =

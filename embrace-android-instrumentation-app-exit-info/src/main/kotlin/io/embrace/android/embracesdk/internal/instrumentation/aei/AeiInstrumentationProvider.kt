@@ -11,8 +11,7 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 class AeiInstrumentationProvider : InstrumentationProvider {
 
     override fun register(args: InstrumentationArgs): DataSourceState<*>? {
-        val activityManager = args.systemService<ActivityManager>(Context.ACTIVITY_SERVICE)
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || activityManager == null) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
             return null
         }
 
@@ -21,7 +20,8 @@ class AeiInstrumentationProvider : InstrumentationProvider {
                 AeiDataSourceImpl(
                     args = args,
                     backgroundWorker = args.backgroundWorker(worker = Worker.Background.NonIoRegWorker),
-                    activityManager = activityManager,
+                    // fetched lazily so the system service isn't retrieved on the main thread during SDK startup
+                    activityManagerProvider = { args.systemService<ActivityManager>(Context.ACTIVITY_SERVICE) },
                     store = args.store,
                     ordinalStore = args.ordinalStore,
                 )

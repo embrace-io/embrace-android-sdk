@@ -91,7 +91,7 @@ internal class LogOrchestratorImpl(
     }
 
     private fun isMaxLogsPerBatchReached(): Boolean =
-        sink.logsForNextBatch().size >= MAX_LOGS_PER_BATCH
+        sink.storedLogCount() >= MAX_LOGS_PER_BATCH
 
     private fun isMaxInactivityTimeReached(now: Long): Boolean =
         now - lastLogTime.get() >= MAX_INACTIVITY_TIME

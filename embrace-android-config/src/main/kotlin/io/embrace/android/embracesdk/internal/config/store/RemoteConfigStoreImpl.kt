@@ -37,9 +37,10 @@ internal class RemoteConfigStoreImpl(
             )
         } catch (_: IllegalArgumentException) {
             // delete the cache file if it appears to be corrupted
-            cachedConfigFile.delete()
+            deleteQuietly(cachedConfigFile)
             null
-        } catch (exc: Exception) {
+        } catch (_: Throwable) {
+            // assume error may be recoverable (e.g. transient IO)
             null
         }
     }
@@ -56,9 +57,10 @@ internal class RemoteConfigStoreImpl(
             )
         } catch (_: IllegalArgumentException) {
             // delete the cache file if it appears to be corrupted
-            configFile.delete()
+            deleteQuietly(configFile)
             null
-        } catch (exc: Exception) {
+        } catch (_: Throwable) {
+            // assume error may be recoverable (e.g. transient IO)
             null
         }
     }
@@ -90,7 +92,7 @@ internal class RemoteConfigStoreImpl(
         try {
             // nothing to cache without a config; remove any stale blob so the fast path is skipped.
             val cfg = response.cfg ?: run {
-                cachedConfigFile.delete()
+                deleteQuietly(cachedConfigFile)
                 return
             }
             val cached = CachedConfiguration(
@@ -104,16 +106,17 @@ internal class RemoteConfigStoreImpl(
         } catch (exc: Exception) {
             // a partially-written or failed blob must not be read back: delete it and rely on the
             // fallback path that was already written successfully.
-            runCatching { cachedConfigFile.delete() }
+            deleteQuietly(cachedConfigFile)
         }
     }
 
     private fun purgeCache() {
-        try {
-            configFile.delete()
-            etagFile.delete()
-            cachedConfigFile.delete()
-        } catch (ignored: Exception) {
-        }
+        deleteQuietly(configFile)
+        deleteQuietly(etagFile)
+        deleteQuietly(cachedConfigFile)
+    }
+
+    private fun deleteQuietly(file: File) {
+        runCatching { file.delete() }
     }
 }

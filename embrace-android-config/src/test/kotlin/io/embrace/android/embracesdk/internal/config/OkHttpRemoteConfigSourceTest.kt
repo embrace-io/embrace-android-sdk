@@ -107,6 +107,24 @@ class OkHttpRemoteConfigSourceTest {
         assertConfigResponseNotDeserialized(cfg)
     }
 
+    /**
+     * A backend schema regression produces a 200 with valid gzip that cannot be deserialized. The
+     * resulting SerializationException is an IllegalArgumentException, so it used to escape
+     * [OkHttpRemoteConfigSource.getConfig] and cancel the caller's recurring schedule for the whole
+     * process.
+     */
+    @Test
+    fun `a schema-mismatched response does not propagate`() {
+        val body = Buffer()
+        GzipSink(body).buffer().use { it.writeUtf8("""{"threshold":"not-a-number"}""") }
+
+        val (cfg, request) = executeRequest(
+            MockResponse().setResponseCode(200).setBody(body),
+        )
+        assertConfigRequestReceived(request)
+        assertConfigResponseNotDeserialized(cfg)
+    }
+
     @Test
     fun `test etag header respected`() {
         val etagValue = "attempt_1"

@@ -33,7 +33,6 @@ internal class ExportedSpanValidator {
     private fun OtelJavaSpanData.representAttributes(): Map<String, String> {
         val ignoreList = listOf(
             EmbSessionAttributes.EMB_PROCESS_IDENTIFIER,
-            EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID,
             EmbSessionAttributes.EMB_SESSION_PART_ID,
             EmbSessionAttributes.EMB_USER_SESSION_ID,
             SessionAttributes.SESSION_ID,

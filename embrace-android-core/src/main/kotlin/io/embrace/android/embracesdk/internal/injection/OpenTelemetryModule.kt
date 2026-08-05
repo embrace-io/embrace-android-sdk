@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
@@ -63,6 +64,8 @@ interface OpenTelemetryModule {
     fun applyConfiguration(
         sensitiveKeysBehavior: SensitiveKeysBehavior,
         bypassValidation: Boolean,
+        otelBehavior: OtelBehavior,
+        breadcrumbBehavior: BreadcrumbBehavior,
     )
 
     /**

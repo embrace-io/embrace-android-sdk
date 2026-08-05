@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_MAX_CUSTOM
 import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_MAX_INTERNAL_SPANS_PER_SESSION_PART
 import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_MAX_NETWORK_SPANS_PER_SESSION_PART
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior.Companion.DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceLinkData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
@@ -36,6 +37,7 @@ internal class CurrentSessionPartSpanImpl(
     private val embraceSpanFactorySupplier: Provider<EmbraceSpanFactory>,
     private val uuidSource: UuidSource,
     private val otelBehaviorSupplier: Provider<OtelBehavior?>,
+    private val customBreadcrumbLimitSupplier: Provider<Int>,
 ) : CurrentSessionPartSpan {
 
     /**
@@ -87,29 +89,50 @@ internal class CurrentSessionPartSpanImpl(
 
         val behavior = otelBehaviorSupplier()
         return when {
-            !internal -> checkTraceCount(
+            !internal -> checkCount(
                 state.traceCount,
                 behavior?.getMaxCustomSpansPerSessionPart() ?: DEFAULT_MAX_CUSTOM_SPANS_PER_SESSION_PART,
-                SPAN_LIMIT_LABEL,
+                SPAN_LIMIT_TYPE,
             )
 
-            type == EmbType.Performance.Network -> checkTraceCount(
+            type == EmbType.Performance.Network -> checkCount(
                 state.networkTraceCount,
                 behavior?.getMaxNetworkSpansPerSessionPart() ?: DEFAULT_MAX_NETWORK_SPANS_PER_SESSION_PART,
-                NETWORK_SPAN_LIMIT_LABEL,
+                NETWORK_SPAN_LIMIT_TYPE,
             )
 
-            else -> checkTraceCount(
+            else -> checkCount(
                 state.internalTraceCount,
                 behavior?.getMaxInternalSpansPerSessionPart() ?: DEFAULT_MAX_INTERNAL_SPANS_PER_SESSION_PART,
-                SPAN_LIMIT_LABEL,
+                SPAN_LIMIT_TYPE,
             )
         }
     }
 
-    private fun checkTraceCount(counter: AtomicInteger, limit: Int, limitLabel: String): Boolean {
+    /**
+     * Breadcrumbs get their own budget so that a flood of other telemetry can't starve them, and vice versa. Both
+     * limits are read on each call so a remote config change takes effect immediately.
+     */
+    override fun canAddEvent(isBreadcrumb: Boolean): Boolean {
+        val state = sessionPartState ?: return false
+        if (!state.isReady) {
+            return false
+        }
+
+        return if (isBreadcrumb) {
+            checkCount(state.breadcrumbCount, customBreadcrumbLimitSupplier(), SPAN_EVENT_LIMIT_TYPE)
+        } else {
+            checkCount(
+                state.eventCount,
+                otelBehaviorSupplier()?.getMaxSpanEventsPerSessionPart() ?: DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART,
+                SPAN_EVENT_LIMIT_TYPE,
+            )
+        }
+    }
+
+    private fun checkCount(counter: AtomicInteger, limit: Int, limitType: String): Boolean {
         return if (counter.get() >= limit) {
-            telemetryService.trackAppliedLimit(limitLabel, AppliedLimitType.DROP)
+            telemetryService.trackAppliedLimit(limitType, AppliedLimitType.DROP)
             false
         } else {
             counter.getAndIncrement() < limit
@@ -253,6 +276,8 @@ internal class CurrentSessionPartSpanImpl(
         val traceCount: AtomicInteger = AtomicInteger(0)
         val internalTraceCount: AtomicInteger = AtomicInteger(0)
         val networkTraceCount: AtomicInteger = AtomicInteger(0)
+        val eventCount: AtomicInteger = AtomicInteger(0)
+        val breadcrumbCount: AtomicInteger = AtomicInteger(0)
 
         /**
          * Memoized link attributes for this session part. Only set once the user session attributes have been populated on the
@@ -287,7 +312,8 @@ internal class CurrentSessionPartSpanImpl(
     }
 
     companion object {
-        private const val SPAN_LIMIT_LABEL = "span"
-        private const val NETWORK_SPAN_LIMIT_LABEL = "network_span"
+        private const val SPAN_LIMIT_TYPE = "span"
+        private const val NETWORK_SPAN_LIMIT_TYPE = "network_span"
+        private const val SPAN_EVENT_LIMIT_TYPE = "span_event"
     }
 }

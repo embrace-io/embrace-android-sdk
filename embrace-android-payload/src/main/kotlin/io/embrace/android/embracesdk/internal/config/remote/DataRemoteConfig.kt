@@ -30,4 +30,11 @@ data class DataRemoteConfig(
      */
     @SerialName("max_network_spans_per_session")
     val maxNetworkSpansPerSession: Int? = null,
+
+    /**
+     * The maximum number of non-breadcrumb span events that may be added to a session part span.
+     * Breadcrumbs are counted against a separate limit - see [UiRemoteConfig.breadcrumbs].
+     */
+    @SerialName("max_span_events_per_session_part")
+    val maxSpanEventsPerSessionPart: Int? = null,
 )

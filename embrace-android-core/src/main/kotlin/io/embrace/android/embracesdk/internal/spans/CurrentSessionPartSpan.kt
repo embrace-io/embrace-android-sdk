@@ -31,6 +31,13 @@ interface CurrentSessionPartSpan : Initializable {
     fun canStartNewSpan(parent: EmbraceSpan?, internal: Boolean, type: EmbType): Boolean
 
     /**
+     * Returns true if a span event can be added to the current session part span. Breadcrumbs are counted against a
+     * separate, remotely configurable limit. Once this method returns true, the event is assumed to have been added and
+     * will be counted towards the limits, so make sure there's no case afterwards where an event is not added.
+     */
+    fun canAddEvent(isBreadcrumb: Boolean): Boolean
+
+    /**
      * Returns the current session part ID
      */
     fun getId(): String

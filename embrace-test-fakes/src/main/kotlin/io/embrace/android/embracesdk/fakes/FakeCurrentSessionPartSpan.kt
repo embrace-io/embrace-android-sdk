@@ -18,6 +18,12 @@ class FakeCurrentSessionPartSpan(
     var initializedCallCount: Int = 0
     var sessionPartSpan: FakeEmbraceSdkSpan? = null
 
+    /**
+     * Records the [canAddEvent] arg for each call, so tests can assert how an event was classified.
+     */
+    val canAddEventCalls = mutableListOf<Boolean>()
+    var canAddEventResult: Boolean = true
+
     private val sessionIteration = AtomicInteger(1)
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
@@ -57,6 +63,11 @@ class FakeCurrentSessionPartSpan(
 
     override fun canStartNewSpan(parent: EmbraceSpan?, internal: Boolean, type: EmbType): Boolean {
         return true
+    }
+
+    override fun canAddEvent(isBreadcrumb: Boolean): Boolean {
+        canAddEventCalls.add(isBreadcrumb)
+        return canAddEventResult
     }
 
     override fun getId(): String {

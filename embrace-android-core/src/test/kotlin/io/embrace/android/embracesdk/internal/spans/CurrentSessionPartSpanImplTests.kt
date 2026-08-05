@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.fakes.TestUuidSource
+import io.embrace.android.embracesdk.fakes.behavior.FakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.fakes.createOtelBehavior
 import io.embrace.android.embracesdk.fakes.createSensitiveKeysBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -20,21 +21,26 @@ import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
+import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior.Companion.DEFAULT_BREADCRUMB_LIMIT
 import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_MAX_CUSTOM_SPANS_PER_SESSION_PART
 import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_MAX_INTERNAL_SPANS_PER_SESSION_PART
 import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_MAX_NETWORK_SPANS_PER_SESSION_PART
+import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior.Companion.DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
 import io.embrace.android.embracesdk.internal.config.remote.DataRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
+import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
-import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -55,7 +61,7 @@ internal class CurrentSessionPartSpanImplTests {
 
     private lateinit var spanRepository: SpanRepository
     private lateinit var otelLimitsConfig: OtelLimitsConfig
-    private lateinit var telemetryService: TelemetryService
+    private lateinit var telemetryService: FakeTelemetryService
     private lateinit var currentSessionPartSpan: CurrentSessionPartSpanImpl
     private lateinit var spanService: SpanService
     private lateinit var otelModule: OpenTelemetryModule
@@ -65,10 +71,10 @@ internal class CurrentSessionPartSpanImplTests {
 
     @Before
     fun setup() {
-        val initModule = FakeInitModule(clock = clock)
+        telemetryService = FakeTelemetryService()
+        val initModule = FakeInitModule(clock = clock, fakeTelemetryService = telemetryService)
         otelModule = initModule.openTelemetryModule
         spanRepository = initModule.openTelemetryModule.spanRepository
-        telemetryService = initModule.telemetryService
         currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan as CurrentSessionPartSpanImpl
         tracer = initModule.openTelemetryModule.otelSdkWrapper.sdkTracer
         openTelemetry = initModule.openTelemetryModule.otelSdkWrapper.openTelemetryKotlin
@@ -349,8 +355,9 @@ internal class CurrentSessionPartSpanImplTests {
         applyConfiguration(
             sensitiveKeysBehavior = createSensitiveKeysBehavior(),
             bypassValidation = false,
+            otelBehavior = createOtelBehavior(remoteCfg = RemoteConfig(dataConfig = dataConfig)),
+            breadcrumbBehavior = FakeBreadcrumbBehavior(),
         )
-        setOtelBehavior(createOtelBehavior(remoteCfg = RemoteConfig(dataConfig = dataConfig)))
     }
 
     private fun createNetworkSpan(index: Int) =
@@ -371,6 +378,117 @@ internal class CurrentSessionPartSpanImplTests {
         tracer = tracer,
         openTelemetry = openTelemetry,
     )
+
+    @Test
+    fun `check non-breadcrumb span event limit`() {
+        repeat(DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART) {
+            assertTrue(currentSessionPartSpan.canAddEvent(isBreadcrumb = false))
+        }
+        assertFalse(currentSessionPartSpan.canAddEvent(isBreadcrumb = false))
+        assertTrue(telemetryService.appliedLimits.contains("span_event" to AppliedLimitType.DROP))
+
+        // the breadcrumb budget is untouched
+        assertTrue(currentSessionPartSpan.canAddEvent(isBreadcrumb = true))
+    }
+
+    @Test
+    fun `check breadcrumb span event limit`() {
+        repeat(DEFAULT_BREADCRUMB_LIMIT) {
+            assertTrue(currentSessionPartSpan.canAddEvent(isBreadcrumb = true))
+        }
+        assertFalse(currentSessionPartSpan.canAddEvent(isBreadcrumb = true))
+        assertTrue(telemetryService.appliedLimits.contains("span_event" to AppliedLimitType.DROP))
+
+        // the non-breadcrumb budget is untouched
+        repeat(DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART) {
+            assertTrue(currentSessionPartSpan.canAddEvent(isBreadcrumb = false))
+        }
+        assertFalse(currentSessionPartSpan.canAddEvent(isBreadcrumb = false))
+    }
+
+    @Test
+    fun `span event limits reset when a new session part starts`() {
+        repeat(DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART) {
+            currentSessionPartSpan.canAddEvent(isBreadcrumb = false)
+        }
+        repeat(DEFAULT_BREADCRUMB_LIMIT) {
+            currentSessionPartSpan.canAddEvent(isBreadcrumb = true)
+        }
+        assertFalse(currentSessionPartSpan.canAddEvent(isBreadcrumb = false))
+        assertFalse(currentSessionPartSpan.canAddEvent(isBreadcrumb = true))
+
+        currentSessionPartSpan.endSession(startNewSession = true)
+
+        assertTrue(currentSessionPartSpan.canAddEvent(isBreadcrumb = false))
+        assertTrue(currentSessionPartSpan.canAddEvent(isBreadcrumb = true))
+    }
+
+    @Test
+    fun `no span events can be added after the session part span ends`() {
+        currentSessionPartSpan.endSession(startNewSession = false)
+        assertFalse(currentSessionPartSpan.canAddEvent(isBreadcrumb = false))
+        assertFalse(currentSessionPartSpan.canAddEvent(isBreadcrumb = true))
+    }
+
+    @Test
+    fun `breadcrumb limit is read on each call so config changes take effect immediately`() {
+        var limit = 1
+        val sessionPartSpan = createSessionPartSpan(customBreadcrumbLimitSupplier = { limit })
+        assertTrue(sessionPartSpan.canAddEvent(isBreadcrumb = true))
+        assertFalse(sessionPartSpan.canAddEvent(isBreadcrumb = true))
+
+        limit = 3
+        assertTrue(sessionPartSpan.canAddEvent(isBreadcrumb = true))
+        assertTrue(sessionPartSpan.canAddEvent(isBreadcrumb = true))
+        assertFalse(sessionPartSpan.canAddEvent(isBreadcrumb = true))
+    }
+
+    @Test
+    fun `span event limit is read on each call so config changes take effect immediately`() {
+        var limit = 1
+        val sessionPartSpan = createSessionPartSpan(
+            otelBehaviorSupplier = {
+                createOtelBehavior(remoteCfg = RemoteConfig(dataConfig = DataRemoteConfig(maxSpanEventsPerSessionPart = limit)))
+            },
+        )
+        assertTrue(sessionPartSpan.canAddEvent(isBreadcrumb = false))
+        assertFalse(sessionPartSpan.canAddEvent(isBreadcrumb = false))
+
+        limit = 3
+        assertTrue(sessionPartSpan.canAddEvent(isBreadcrumb = false))
+        assertTrue(sessionPartSpan.canAddEvent(isBreadcrumb = false))
+        assertFalse(sessionPartSpan.canAddEvent(isBreadcrumb = false))
+    }
+
+    /**
+     * Creates a session part span that records into a repository of its own, so the limit counters are isolated from
+     * the instance created in [setup].
+     */
+    private fun createSessionPartSpan(
+        otelBehaviorSupplier: Provider<OtelBehavior?> = { null },
+        customBreadcrumbLimitSupplier: Provider<Int> = { DEFAULT_BREADCRUMB_LIMIT },
+    ): CurrentSessionPartSpanImpl {
+        val repository = SpanRepository()
+        val otelClock = FakeOtelKotlinClock()
+        return CurrentSessionPartSpanImpl(
+            openTelemetryClock = otelClock,
+            telemetryService = telemetryService,
+            spanRepository = repository,
+            tracerSupplier = { tracer },
+            openTelemetrySupplier = ::openTelemetry,
+            embraceSpanFactorySupplier = {
+                EmbraceSpanFactoryImpl(
+                    openTelemetryClock = otelClock,
+                    spanRepository = repository,
+                    dataValidator = DataValidator(telemetryService = telemetryService),
+                    telemetryService = telemetryService,
+                )
+            },
+            uuidSource = TestUuidSource(),
+            otelBehaviorSupplier = otelBehaviorSupplier,
+            customBreadcrumbLimitSupplier = customBreadcrumbLimitSupplier,
+        ).apply { initializeService(clock.now()) }
+    }
 
     @Test
     fun `check trace limited applied to spans created with span builder`() {
@@ -756,6 +874,7 @@ internal class CurrentSessionPartSpanImplTests {
             openTelemetrySupplier = ::openTelemetry,
             uuidSource = TestUuidSource(),
             otelBehaviorSupplier = { null },
+            customBreadcrumbLimitSupplier = { DEFAULT_BREADCRUMB_LIMIT },
         )
         assertFalse(sessionPartSpan.readySession())
     }

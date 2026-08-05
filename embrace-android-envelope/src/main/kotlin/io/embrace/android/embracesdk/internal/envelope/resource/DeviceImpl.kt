@@ -10,12 +10,13 @@ import io.embrace.android.embracesdk.internal.isEmulator
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.File
 import java.util.Locale
 
 class DeviceImpl(
-    private val windowManager: WindowManager?,
+    private val windowManagerProvider: Provider<WindowManager?>,
     private val store: KeyValueStore,
     private val backgroundWorker: BackgroundWorker,
     override val systemInfo: SystemInfo,
@@ -59,7 +60,7 @@ class DeviceImpl(
             if (storedScreenResolution != null) {
                 screenResolution = storedScreenResolution
             } else {
-                screenResolution = getScreenResolution(windowManager)
+                screenResolution = getScreenResolution(windowManagerProvider())
                 persistedScreenResolution = screenResolution
             }
         }

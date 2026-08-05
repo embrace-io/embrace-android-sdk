@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import android.app.ActivityManager
 import android.content.Context
 import android.net.ConnectivityManager
 import android.os.Build
@@ -71,8 +72,12 @@ class EssentialServiceModuleImpl(
             }
         }
 
+    private val activityManager: Lazy<ActivityManager?> = lazy {
+        coreModule.context.getSystemServiceSafe<ActivityManager>(Context.ACTIVITY_SERVICE)
+    }
+
     override val sessionPartTracker: SessionPartTracker = SessionPartTrackerImpl(
-        coreModule.context.getSystemServiceSafe(Context.ACTIVITY_SERVICE),
+        activityManager,
         initModule.logger,
     )
 

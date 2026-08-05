@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.id
 
+import android.app.ActivityManager
 import io.embrace.android.embracesdk.fakes.fakeSessionPartToken
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
@@ -15,7 +16,7 @@ internal class SessionPartTrackerImplTest {
 
     @Before
     fun setUp() {
-        tracker = SessionPartTrackerImpl(null, InternalLoggerImpl())
+        tracker = SessionPartTrackerImpl(lazyOf<ActivityManager?>(null), InternalLoggerImpl())
     }
 
     @Test

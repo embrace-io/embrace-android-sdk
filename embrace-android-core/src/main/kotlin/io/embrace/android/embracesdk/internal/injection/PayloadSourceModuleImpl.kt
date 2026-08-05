@@ -85,7 +85,7 @@ class PayloadSourceModuleImpl(
             configService = configService,
             device = EmbTrace.trace("deviceImpl") {
                 DeviceImpl(
-                    coreModule.context.getSystemServiceSafe(Context.WINDOW_SERVICE),
+                    windowManagerProvider = { coreModule.context.getSystemServiceSafe(Context.WINDOW_SERVICE) },
                     coreModule.store,
                     workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                     initModule.systemInfo,

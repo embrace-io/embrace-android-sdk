@@ -17,7 +17,7 @@ import io.opentelemetry.kotlin.tracing.Tracer
  */
 class OtelSpanStartArgs(
     name: String,
-    type: EmbType,
+    val type: EmbType,
     val internal: Boolean,
     private: Boolean,
     private val tracer: Tracer,

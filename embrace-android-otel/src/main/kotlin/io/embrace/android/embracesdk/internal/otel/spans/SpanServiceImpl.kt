@@ -25,7 +25,7 @@ import io.opentelemetry.kotlin.tracing.Tracer
 class SpanServiceImpl(
     private val spanRepository: SpanRepository,
     private val dataValidator: DataValidator,
-    private val canStartNewSpan: (parentSpan: EmbraceSpan?, internal: Boolean) -> Boolean,
+    private val canStartNewSpan: (parentSpan: EmbraceSpan?, internal: Boolean, type: EmbType) -> Boolean,
     private val initCallback: (initTimeMs: Long) -> Unit,
     private val embraceSpanFactory: EmbraceSpanFactory,
     private val tracerSupplier: Provider<Tracer>,
@@ -88,7 +88,7 @@ class SpanServiceImpl(
         autoTerminationMode: AutoTerminationMode,
     ): EmbraceSdkSpan {
         val components = otelComponents ?: return NoopEmbraceSdkSpan
-        return if (name.isNotBlank() && canStartNewSpan(parent, internal)) {
+        return if (name.isNotBlank() && canStartNewSpan(parent, internal, type)) {
             embraceSpanFactory.create(
                 OtelSpanStartArgs(
                     name = dataValidator.truncateName(name, internal),
@@ -113,6 +113,7 @@ class SpanServiceImpl(
             canStartNewSpan(
                 otelSpanStartArgs.parentContext.getEmbraceSpan(components.openTelemetry),
                 otelSpanStartArgs.internal,
+                otelSpanStartArgs.type,
             )
         ) {
             embraceSpanFactory.create(otelSpanStartArgs)
@@ -308,7 +309,7 @@ class SpanServiceImpl(
         val validEvents = dataValidator.truncateEvents(events, internal)
         val validAttributes = dataValidator.truncateAttributes(attributes, internal)
 
-        if (canStartNewSpan(parent, internal)) {
+        if (canStartNewSpan(parent, internal, type)) {
             val newSpan = embraceSpanFactory.create(
                 OtelSpanStartArgs(
                     name = validName,

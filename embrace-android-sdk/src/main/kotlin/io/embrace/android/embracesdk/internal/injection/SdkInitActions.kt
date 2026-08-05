@@ -28,6 +28,8 @@ internal fun ModuleGraph.postInit() {
     openTelemetryModule.applyConfiguration(
         sensitiveKeysBehavior = configService.sensitiveKeysBehavior,
         bypassValidation = configService.isOnlyUsingOtelExporters(),
+        otelBehavior = configService.otelBehavior,
+        breadcrumbBehavior = configService.breadcrumbBehavior,
     )
 
     initModule.logger.errorHandlerProvider = { featureModule.internalErrorDataSource.dataSource }

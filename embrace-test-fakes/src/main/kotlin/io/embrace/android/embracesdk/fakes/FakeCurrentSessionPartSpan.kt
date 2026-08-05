@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
@@ -16,6 +17,12 @@ class FakeCurrentSessionPartSpan(
     val stoppedSpans = mutableSetOf<String>()
     var initializedCallCount: Int = 0
     var sessionPartSpan: FakeEmbraceSdkSpan? = null
+
+    /**
+     * Records the [canAddEvent] arg for each call, so tests can assert how an event was classified.
+     */
+    val canAddEventCalls = mutableListOf<Boolean>()
+    var canAddEventResult: Boolean = true
 
     private val sessionIteration = AtomicInteger(1)
 
@@ -54,8 +61,13 @@ class FakeCurrentSessionPartSpan(
         return payload
     }
 
-    override fun canStartNewSpan(parent: EmbraceSpan?, internal: Boolean): Boolean {
+    override fun canStartNewSpan(parent: EmbraceSpan?, internal: Boolean, type: EmbType): Boolean {
         return true
+    }
+
+    override fun canAddEvent(isBreadcrumb: Boolean): Boolean {
+        canAddEventCalls.add(isBreadcrumb)
+        return canAddEventResult
     }
 
     override fun getId(): String {

@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.worker
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
+import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
 /**
@@ -33,6 +34,21 @@ class PriorityWorker<T>(
         callable: Callable<R>,
     ): Future<R> {
         return impl.submit(PriorityCallable(priorityInfo as Any, callable))
+    }
+
+    /**
+     * Cancels [future] and, if cancellation succeeds (i.e. the task hadn't already started
+     * running), removes it from the executor's task queue so it doesn't linger there until the
+     * executor drains it.
+     */
+    fun cancelAndRemove(future: Future<*>): Boolean {
+        val cancelled = future.cancel(false)
+        if (cancelled) {
+            (future as? Runnable)?.let { task ->
+                (impl as? ThreadPoolExecutor)?.remove(task)
+            }
+        }
+        return cancelled
     }
 
     /**

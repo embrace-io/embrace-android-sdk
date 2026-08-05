@@ -95,11 +95,12 @@ class IntakeServiceImpl(
             )
         }
 
-        // cancel any cache attempts that are already pending to avoid unnecessary I/O.
+        // cancel any cache attempts that are already pending to avoid unnecessary I/O, and evict
+        // from the queue so superseded envelopes aren't retained until the worker drains the runnable
         if (!metadata.complete) {
             val prev = cachingTasks[metadata.envelopeType]
             cachingTasks[metadata.envelopeType] = future
-            prev?.cancel(false)
+            prev?.let { worker.cancelAndRemove(it) }
         }
 
         return future

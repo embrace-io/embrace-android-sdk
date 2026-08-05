@@ -54,7 +54,9 @@ class WorkerThreadModuleImpl : WorkerThreadModule, RejectedExecutionHandler {
                     storedTelemetryRunnableComparator,
                 )
             } else {
-                ScheduledThreadPoolExecutor(1, threadFactory, this)
+                ScheduledThreadPoolExecutor(1, threadFactory, this).apply {
+                    removeOnCancelPolicy = true
+                }
             }
         }
     }

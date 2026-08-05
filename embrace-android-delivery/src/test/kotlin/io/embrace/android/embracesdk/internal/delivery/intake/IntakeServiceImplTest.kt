@@ -284,6 +284,43 @@ class IntakeServiceImplTest {
     }
 
     @Test
+    fun `cancelled cache future is removed from the executor queue`() {
+        val executor = PriorityThreadPoolExecutor(
+            Executors.defaultThreadFactory(),
+            { _, _ -> },
+            1,
+            1,
+            storedTelemetryRunnableComparator,
+        )
+        val latch = CountDownLatch(1)
+        executor.submit(
+            PriorityRunnable(sessionMetadata) {
+                latch.await(1000, TimeUnit.MILLISECONDS)
+            },
+        )
+        val worker = PriorityWorker<StoredTelemetryMetadata>(executor)
+        intakeService = IntakeServiceImpl(
+            schedulingService,
+            payloadStorageService,
+            cacheStorageService,
+            logger,
+            TestPlatformSerializer(),
+            worker,
+        )
+
+        val f1 = intakeService.take(sessionEnvelope, sessionMetadata.copy(complete = false))
+        val f2 = intakeService.take(sessionEnvelope, sessionMetadata.copy(complete = false))
+
+        assertTrue(f1.isCancelled)
+        assertFalse(executor.queue.contains(f1 as Runnable))
+        assertTrue(executor.queue.contains(f2 as Runnable))
+
+        latch.countDown()
+        worker.shutdownAndWait(1000)
+        assertEquals(1, cacheStorageService.storedPayloadCount())
+    }
+
+    @Test
     fun `previous cached session snapshot is cleaned up automatically by IntakeServiceImpl`() {
         executorService.blockingMode = false
         val snapshot1 = StoredTelemetryMetadata(

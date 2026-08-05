@@ -34,6 +34,8 @@ class OpenTelemetryModuleImpl(
     private var storedSessionIdsProvider: SessionIdsProvider? = null
     private var storedUserIdProvider: (() -> String?)? = null
     private var storedEventMetadataProvider: (() -> Map<String, String>)? = null
+
+    @Volatile
     private var otelBehavior: OtelBehavior? = null
     private var sensitiveKeysBehavior: SensitiveKeysBehavior? = null
     private var internalSpanStopCallback: ((spanId: String) -> Unit)? = null
@@ -81,10 +83,13 @@ class OpenTelemetryModuleImpl(
         }
     }
 
-    override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean, otelBehavior: OtelBehavior) {
+    override fun setOtelBehavior(otelBehavior: OtelBehavior) {
+        this.otelBehavior = otelBehavior
+    }
+
+    override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean) {
         this.sensitiveKeysBehavior = sensitiveKeysBehavior
         this.bypassLimitsValidation = bypassValidation
-        this.otelBehavior = otelBehavior
     }
 
     override fun setSessionIdsProvider(sessionIdsProvider: SessionIdsProvider) {

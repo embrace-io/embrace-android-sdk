@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
+import android.net.ConnectivityManager
 import android.os.Build
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
@@ -45,6 +46,10 @@ class EssentialServiceModuleImpl(
 
     override val navigationTrackingService: NavigationTrackingService = NavigationTrackingServiceImpl()
 
+    private val connectivityManager: Lazy<ConnectivityManager?> = lazy {
+        coreModule.context.getSystemServiceSafe<ConnectivityManager>(Context.CONNECTIVITY_SERVICE)
+    }
+
     override val networkConnectivityService: NetworkConnectivityService =
         networkConnectivityServiceProvider() ?: EmbTrace.trace("network-connectivity-service-init") {
             val worker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker)
@@ -54,14 +59,14 @@ class EssentialServiceModuleImpl(
                 NetworkCallbackConnectivityService(
                     worker,
                     initModule.logger,
-                    coreModule.context.getSystemServiceSafe(Context.CONNECTIVITY_SERVICE),
+                    connectivityManager,
                 )
             } else {
                 EmbraceNetworkConnectivityService(
                     coreModule.context,
                     worker,
                     initModule.logger,
-                    coreModule.context.getSystemServiceSafe(Context.CONNECTIVITY_SERVICE),
+                    connectivityManager,
                 )
             }
         }

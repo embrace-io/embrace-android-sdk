@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.ConfigServiceImpl
+import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleImpl
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleSupplier
@@ -16,6 +17,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.cr
 import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
 import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
 import io.embrace.android.embracesdk.internal.storage.StorageService
+import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -33,9 +35,12 @@ import java.util.concurrent.TimeUnit
 internal class InitializedModuleGraph(
     context: Context,
     versionChecker: VersionChecker = BuildVersionChecker,
+    override val sdkStartTimeMs: Long,
     override val initModule: InitModule,
     override val openTelemetryModule: OpenTelemetryModule,
     override val workerThreadModule: WorkerThreadModule,
+    private val keyValueStore: Lazy<KeyValueStore>,
+    private val persistedConfig: PersistedConfig,
     private val coreModuleSupplier: CoreModuleSupplier?,
     private val configServiceSupplier: ConfigServiceSupplier?,
     private val storageServiceSupplier: StorageServiceSupplier?,
@@ -50,34 +55,30 @@ internal class InitializedModuleGraph(
     private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier?,
 ) : ModuleGraph {
 
-    override val coreModule: CoreModule = init {
-        coreModuleSupplier?.invoke(context, initModule) ?: CoreModuleImpl(context, initModule)
-    }.apply {
-        EmbTrace.trace("span-service-init") {
-            openTelemetryModule.spanService.initializeService(sdkStartTime)
-        }
+    override val coreModule: CoreModule = init("core") {
+        coreModuleSupplier?.invoke(context, initModule, keyValueStore)
+            ?: CoreModuleImpl(context, initModule, keyValueStore)
     }
 
-    override val configService: ConfigService = init {
+    override val configService: ConfigService = init("config") {
         configServiceSupplier?.invoke(
             initModule,
             coreModule,
             openTelemetryModule,
             workerThreadModule,
+            persistedConfig,
         ) ?: EmbTrace.trace("config-service-init") {
             ConfigServiceImpl(
                 instrumentedConfig = initModule.instrumentedConfig,
-                worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
+                persistedConfig = persistedConfig,
+                worker = workerThreadModule.backgroundWorker(Worker.Background.HttpRequestWorker),
                 serializer = initModule.jsonSerializer,
                 okHttpClient = initModule.okHttpClient,
                 hasConfiguredOtlpExport = openTelemetryModule.otelSdkConfig::hasConfiguredOtlpExport,
                 sdkVersion = BuildConfig.VERSION_NAME,
                 apiLevel = Build.VERSION.SDK_INT,
-                filesDir = coreModule.context.filesDir,
-                store = coreModule.store,
                 abis = Build.SUPPORTED_ABIS,
                 logger = initModule.logger,
-                uuidSource = initModule.uuidSource,
             )
         }
     }.apply {
@@ -89,9 +90,15 @@ internal class InitializedModuleGraph(
                 }
             }
         }
+        // Deliberately after the disable check so a disabled SDK never builds the OTel SDK, and after
+        // configService so that the otel behavior set in ModuleInitBootstrapper.init has been read
+        // from the same persisted config this service uses.
+        EmbTrace.trace("span-service-init") {
+            openTelemetryModule.spanService.initializeService(sdkStartTimeMs)
+        }
     }
 
-    override val essentialServiceModule: EssentialServiceModule = init {
+    override val essentialServiceModule: EssentialServiceModule = init("essential-service") {
         val lifecycleOwnerProvider: Provider<LifecycleOwner?> = { null }
         val networkConnectivityServiceProvider: Provider<NetworkConnectivityService?> = { null }
         val sessionOrchestratorProvider = { userSessionOrchestrationModule.sessionOrchestrator }
@@ -117,7 +124,7 @@ internal class InitializedModuleGraph(
         )
     }
 
-    override val storageService: StorageService = init {
+    override val storageService: StorageService = init("storage") {
         storageServiceSupplier?.invoke(initModule, coreModule, workerThreadModule)
             ?: EmbraceStorageService(
                 coreModule.context,
@@ -130,7 +137,7 @@ internal class InitializedModuleGraph(
             }
     }
 
-    override val instrumentationModule: InstrumentationModule = init {
+    override val instrumentationModule: InstrumentationModule = init("instrumentation") {
         // Forward references: break the instrumentation <-> userSessionOrchestration cycle.
         val userSessionIdsProvider = { userSessionOrchestrationModule.sessionIdsProvider.getCurrentUserSessionId() }
         val activeSessionIdsProvider = { userSessionOrchestrationModule.sessionIdsProvider.getActiveSessionIds() }
@@ -158,7 +165,7 @@ internal class InitializedModuleGraph(
         )
     }
 
-    override val featureModule: FeatureModule = init {
+    override val featureModule: FeatureModule = init("feature") {
         featureModuleSupplier?.invoke(
             instrumentationModule,
             configService,
@@ -170,7 +177,7 @@ internal class InitializedModuleGraph(
         )
     }
 
-    override val dataCaptureServiceModule: DataCaptureServiceModule = init {
+    override val dataCaptureServiceModule: DataCaptureServiceModule = init("data-capture-service") {
         val destination = instrumentationModule.instrumentationArgs.destination
         dataCaptureServiceModuleSupplier?.invoke(
             initModule.clock,
@@ -189,7 +196,7 @@ internal class InitializedModuleGraph(
         )
     }
 
-    override val deliveryModule: DeliveryModule? = init {
+    override val deliveryModule: DeliveryModule? = init("delivery") {
         if (configService.isOnlyUsingOtelExporters()) {
             null
         } else {
@@ -218,12 +225,12 @@ internal class InitializedModuleGraph(
         }
     }
 
-    override val threadBlockageService: ThreadBlockageService? = init {
+    override val threadBlockageService: ThreadBlockageService? = init("thread-blockage") {
         val args = instrumentationModule.instrumentationArgs
         threadBlockageServiceSupplier?.invoke(args) ?: createThreadBlockageService(args)
     }
 
-    override val payloadSourceModule: PayloadSourceModule = init {
+    override val payloadSourceModule: PayloadSourceModule = init("payload-source") {
         payloadSourceModuleSupplier?.invoke(
             initModule,
             coreModule,
@@ -245,7 +252,7 @@ internal class InitializedModuleGraph(
         )
     }
 
-    override val logModule: LogModule = init {
+    override val logModule: LogModule = init("log") {
         logModuleSupplier?.invoke(
             initModule,
             openTelemetryModule,
@@ -265,7 +272,7 @@ internal class InitializedModuleGraph(
         )
     }
 
-    override val userSessionOrchestrationModule: UserSessionOrchestrationModule = init {
+    override val userSessionOrchestrationModule: UserSessionOrchestrationModule = init("user-session-orchestration") {
         val startupDurationProvider = dataCaptureServiceModule.startupService::getSdkStartupDuration
         userSessionOrchestrationModuleSupplier?.invoke(
             initModule,
@@ -294,9 +301,6 @@ internal class InitializedModuleGraph(
         )
     }
 
-    private inline fun <reified T> init(supplier: () -> T): T {
-        val module = T::class
-        val name = module.simpleName?.removeSuffix("Module")?.lowercase() ?: "module"
-        return EmbTrace.trace("$name-init") { supplier() }
-    }
+    private inline fun <T> init(name: String, supplier: () -> T): T =
+        EmbTrace.trace("$name-init") { supplier() }
 }

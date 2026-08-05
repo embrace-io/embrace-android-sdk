@@ -11,7 +11,6 @@ import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 import io.opentelemetry.kotlin.tracing.model.ReadWriteSpan
 import io.opentelemetry.kotlin.tracing.model.ReadableSpan
 import kotlinx.coroutines.runBlocking
-import java.util.concurrent.atomic.AtomicLong
 
 class EmbraceSpanProcessor(
     private val sessionIdsProvider: () -> SessionIdsProvider?,
@@ -20,10 +19,7 @@ class EmbraceSpanProcessor(
     private val spanExporter: SpanExporter,
 ) : SpanProcessor {
 
-    private val counter = AtomicLong(1)
-
     override fun onStart(span: ReadWriteSpan, parentContext: Context) {
-        span.setStringAttribute(EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID, counter.getAndIncrement().toString())
         span.setStringAttribute(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER, processIdentifier)
         sessionIdsProvider()?.let { provider ->
             val ids = provider.getActiveSessionIds()

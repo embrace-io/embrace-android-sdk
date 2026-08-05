@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBe
 import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.behavior.OtelBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehaviorImpl
@@ -22,47 +21,30 @@ import io.embrace.android.embracesdk.internal.config.source.CombinedRemoteConfig
 import io.embrace.android.embracesdk.internal.config.source.ConfigEndpoint
 import io.embrace.android.embracesdk.internal.config.source.OkHttpRemoteConfigSource
 import io.embrace.android.embracesdk.internal.config.source.RemoteConfigSource
-import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStore
-import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStoreImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.NativeSymbols
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.store.KeyValueStore
-import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import okhttp3.OkHttpClient
 import okio.ByteString.Companion.decodeBase64
-import java.io.File
 
 /**
  * Loads configuration for the app from the Embrace API.
  */
 class ConfigServiceImpl(
     private val instrumentedConfig: InstrumentedConfig,
+    private val persistedConfig: PersistedConfig,
     worker: BackgroundWorker,
     private val serializer: PlatformSerializer,
-    store: KeyValueStore,
     okHttpClient: Lazy<OkHttpClient>,
     abis: Array<String>,
     private val sdkVersion: String,
     private val apiLevel: Int,
-    private val filesDir: File,
     private val logger: InternalLogger,
     private val hasConfiguredOtlpExport: () -> Boolean,
-    private val uuidSource: UuidSource,
 ) : ConfigService {
-
-    private val onlyOtelExportEnabled: Boolean = instrumentedConfig.project.getAppId() == null
-
-    private val remoteConfigStore: RemoteConfigStore = run {
-        RemoteConfigStoreImpl(
-            serializer = serializer,
-            storageDir = File(filesDir, "embrace_remote_config"),
-            deviceIdProvider = { deviceId },
-        )
-    }
 
     override val buildInfo: BuildInfo = with(instrumentedConfig.project) {
         BuildInfo(
@@ -76,24 +58,22 @@ class ConfigServiceImpl(
         )
     }
 
-    // the stored || http proxy; lazy-loads the cached config from the store on first access.
     private val combinedRemoteConfigSource: CombinedRemoteConfigSource? = run {
-        if (onlyOtelExportEnabled) return@run null
+        val store = persistedConfig.store ?: return@run null
         CombinedRemoteConfigSource(
-            store = remoteConfigStore,
+            store = store,
+            response = persistedConfig.response,
             httpSource = lazy { checkNotNull(remoteConfigSource) },
             worker = worker,
         )
     }
 
-    // the device ID co-cached with the remote config feeds the fast path; on a cache hit nothing
-    // is read from the KeyValueStore.
-    private val deviceIdProvider = DeviceIdProvider(store, combinedRemoteConfigSource?.getDeviceId(), uuidSource)
-
-    override val deviceId: String = deviceIdProvider.deviceId
+    override val deviceId: String = persistedConfig.deviceId
 
     private val remoteConfigSource: RemoteConfigSource? = run {
-        if (onlyOtelExportEnabled) return@run null
+        if (persistedConfig.onlyOtelExportEnabled) {
+            return@run null
+        }
 
         OkHttpRemoteConfigSource(
             okhttpClient = okHttpClient,
@@ -108,7 +88,7 @@ class ConfigServiceImpl(
         )
     }
 
-    private val remoteConfig: RemoteConfig? = combinedRemoteConfigSource?.getConfig()
+    private val remoteConfig: RemoteConfig? = persistedConfig.remoteConfig
 
     // kick off config HTTP request early so the SDK can't get in a permanently disabled state.
     // scheduled only after deviceId is resolved, since the request reads it.
@@ -116,7 +96,7 @@ class ConfigServiceImpl(
         combinedRemoteConfigSource?.scheduleConfigRequests()
     }
 
-    private val thresholdCheck: BehaviorThresholdCheck = BehaviorThresholdCheck(::deviceId)
+    private val thresholdCheck: BehaviorThresholdCheck = persistedConfig.thresholdCheck
     override val backgroundActivityBehavior =
         BackgroundActivityBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
     override val autoDataCaptureBehavior =
@@ -136,7 +116,7 @@ class ConfigServiceImpl(
         TraceparentInjectionBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
     override val networkSpanForwardingBehavior =
         NetworkSpanForwardingBehaviorImpl(traceparentInjectionBehavior, thresholdCheck, instrumentedConfig, remoteConfig)
-    override val otelBehavior = OtelBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
+    override val otelBehavior = persistedConfig.otelBehavior
 
     override val appId: String? = run {
         val id = instrumentedConfig.project.getAppId()

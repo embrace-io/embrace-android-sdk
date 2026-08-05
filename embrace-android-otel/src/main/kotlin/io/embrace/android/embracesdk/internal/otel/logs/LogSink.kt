@@ -15,13 +15,18 @@ interface LogSink {
     fun storeLogs(logs: List<Log>): StoreDataResult
 
     /**
-     * Returns the list of currently stored [Log] objects, waiting to be sent in the next batch
+     * Returns a snapshot of the currently stored [Log] objects waiting to be sent in the next batch.
      */
     fun logsForNextBatch(): List<Log>
 
     /**
-     * Returns and clears the currently stored [Log] objects, to be used when the next batch is to be sent.
-     * Implementations of this method must make sure the clearing and returning is atomic, i.e. logs cannot be added during this operation.
+     * Returns the number of stored [Log] objects waiting to be sent in the next batch.
+     */
+    fun storedLogCount(): Int
+
+    /**
+     * Removes and returns the stored [Log] objects to be sent in the next batch, in the order they were stored, up
+     * to an implementation-defined maximum batch size.
      */
     fun flushBatch(): List<Log>
 

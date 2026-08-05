@@ -7,7 +7,6 @@ import okhttp3.Request
 import okhttp3.Response
 import okio.GzipSource
 import okio.buffer
-import java.io.IOException
 
 internal class OkHttpRemoteConfigSource(
     private val okhttpClient: Lazy<OkHttpClient>,
@@ -15,11 +14,9 @@ internal class OkHttpRemoteConfigSource(
     private val configEndpoint: ConfigEndpoint,
 ) : RemoteConfigSource {
 
-    override fun getConfig(): ConfigHttpResponse? = try {
+    override fun getConfig(): ConfigHttpResponse? = runCatching {
         fetchConfigImpl()
-    } catch (exc: IOException) {
-        null
-    }
+    }.getOrNull()
 
     override fun setInitialEtag(etag: String) {
         this.etag = etag

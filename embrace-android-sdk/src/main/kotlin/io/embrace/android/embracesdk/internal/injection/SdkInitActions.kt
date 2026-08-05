@@ -9,8 +9,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkSta
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.android.embracesdk.internal.utils.EmbTrace.end
-import io.embrace.android.embracesdk.internal.utils.EmbTrace.start
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -26,10 +24,11 @@ import java.util.concurrent.TimeUnit
 internal fun ModuleGraph.postInit() {
     openTelemetryModule.setEventMetadataProvider(eventMetadataSupplierProvider())
 
+    // note: otelBehavior is not applied here - it decides which OTel SDK is built, so it is set
+    // right after the persisted config is read in ModuleInitBootstrapper.init.
     openTelemetryModule.applyConfiguration(
         sensitiveKeysBehavior = configService.sensitiveKeysBehavior,
         bypassValidation = configService.isOnlyUsingOtelExporters(),
-        otelBehavior = configService.otelBehavior,
     )
 
     initModule.logger.errorHandlerProvider = { featureModule.internalErrorDataSource.dataSource }
@@ -112,14 +111,29 @@ internal fun ModuleGraph.registerListeners() {
  */
 internal fun ModuleGraph.loadInstrumentation() {
     val registry = instrumentationModule.instrumentationRegistry
-    val instrumentationProviders = ServiceLoader.load(InstrumentationProvider::class.java)
-    registry.loadInstrumentations(instrumentationProviders, instrumentationModule.instrumentationArgs)
+    registry.loadInstrumentations(loadInstrumentationProviders(), instrumentationModule.instrumentationArgs)
 
     threadBlockageService?.startCapture()
 
     featureModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
         workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
     )
+}
+
+/**
+ * Loads the [InstrumentationProvider] implementations declared via SPI. Before making changes
+ * to this function please study R8, as currently it optimizes out lookup and reflection from
+ * the startup path.
+ *
+ * See R8 for further details on how ServiceLoaderRewriter optimizes SPI:
+ * https://r8.googlesource.com/r8/+/refs/heads/main/src/main/java/com/android/tools/r8/ir/optimize/ServiceLoaderRewriter.java
+ */
+private fun loadInstrumentationProviders(): List<InstrumentationProvider> {
+    val providers = mutableListOf<InstrumentationProvider>()
+    for (provider in ServiceLoader.load(InstrumentationProvider::class.java, InstrumentationProvider::class.java.classLoader)) {
+        providers.add(provider)
+    }
+    return providers
 }
 
 /**
@@ -191,14 +205,14 @@ internal fun ModuleGraph.triggerPayloadSend() {
  * Mark SDK initialization as complete.
  */
 internal fun ModuleGraph.markSdkInitComplete() {
-    start("startup-tracking")
-    dataCaptureServiceModule.startupService.setSdkStartupInfo(
-        coreModule.sdkStartTime,
-        initModule.clock.now(),
-        essentialServiceModule.appStateTracker.getAppState(),
-        Thread.currentThread().name,
-    )
-    end()
+    EmbTrace.trace("startup-tracking") {
+        dataCaptureServiceModule.startupService.setSdkStartupInfo(
+            sdkStartTimeMs,
+            initModule.clock.now(),
+            essentialServiceModule.appStateTracker.getAppState(),
+            Thread.currentThread().name,
+        )
+    }
     val appId = configService.appId
     val startMsg = "Embrace SDK version ${BuildConfig.VERSION_NAME} started" +
         (appId?.let { " for appId = $it" } ?: " without an app ID")

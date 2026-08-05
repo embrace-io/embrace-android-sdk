@@ -30,6 +30,7 @@ import org.junit.Assert.assertNotNull
 internal class FakeApiServer(
     private val remoteConfig: RemoteConfig,
     private val deliveryTracer: DeliveryTracer,
+    private val configResponseJson: String? = null,
 ) : Dispatcher() {
 
     private val serializer by threadLocal { TestPlatformSerializer() }
@@ -131,7 +132,11 @@ internal class FakeApiServer(
         // serialize the config response
         val configResponseBuffer = Buffer()
         val gzipSink = GzipSink(configResponseBuffer).buffer()
-        serializer.toJson(remoteConfig, gzipSink.outputStream())
+        if (configResponseJson != null) {
+            gzipSink.use { it.writeUtf8(configResponseJson) }
+        } else {
+            serializer.toJson(remoteConfig, gzipSink.outputStream())
+        }
         val response = MockResponse()
             .setBody(configResponseBuffer)
             .addHeader("etag", "server_etag_value")

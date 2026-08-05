@@ -52,10 +52,6 @@
       "value": "__EMBRACE_TEST_IGNORE__"
     },
     {
-      "key": "emb.private.sequence_id",
-      "value": "__EMBRACE_TEST_IGNORE__"
-    },
-    {
       "key": "emb.process_identifier",
       "value": "__EMBRACE_TEST_IGNORE__"
     },

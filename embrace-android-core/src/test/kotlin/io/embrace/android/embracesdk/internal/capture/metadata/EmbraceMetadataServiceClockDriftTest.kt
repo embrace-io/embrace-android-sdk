@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.capture.metadata
 
 import android.app.Application
-import android.app.usage.StorageStatsManager
 import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -35,7 +34,6 @@ internal class EmbraceMetadataServiceClockDriftTest {
         service = EmbraceMetadataService(
             resourceSource = lazy { FakeEnvelopeResourceSource() },
             context = ApplicationProvider.getApplicationContext<Application>(),
-            storageStatsManager = lazy<StorageStatsManager?> { null },
             configService = FakeConfigService(),
             store = FakeKeyValueStore(),
             clock = FakeClock(currentTime = wallTimeMillis),

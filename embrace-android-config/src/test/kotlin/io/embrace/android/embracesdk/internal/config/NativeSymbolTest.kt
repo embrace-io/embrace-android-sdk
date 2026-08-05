@@ -76,17 +76,21 @@ class NativeSymbolTest {
 
         return ConfigServiceImpl(
             instrumentedConfig = cfg,
+            persistedConfig = PersistedConfig(
+                serializer = serializer,
+                filesDir = Files.createTempDirectory("tmp").toFile(),
+                instrumentedConfig = cfg,
+                keyValueStore = lazyOf(FakeKeyValueStore()),
+                uuidSource = TestUuidSource(),
+            ),
             worker = fakeBackgroundWorker(),
             serializer = serializer,
-            store = FakeKeyValueStore(),
             okHttpClient = lazyOf(okHttpClient),
             abis = arrayOf(arch),
             sdkVersion = "1.2.3",
             apiLevel = 36,
-            filesDir = Files.createTempDirectory("tmp").toFile(),
             logger = FakeInternalLogger(),
             hasConfiguredOtlpExport = { false },
-            uuidSource = TestUuidSource(),
         )
     }
 }

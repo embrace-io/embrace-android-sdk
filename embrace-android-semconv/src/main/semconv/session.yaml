@@ -21,7 +21,6 @@ attribute_groups:
       - ref: emb.private.send_mode
       - ref: emb.startup_activity
       - ref: emb.process_identifier
-      - ref: emb.private.sequence_id
       - ref: emb.user_session_id
       - ref: emb.user_session_number
       - ref: emb.user_session_start_ts
@@ -112,11 +111,6 @@ attributes:
     brief: "Monotonically increasing sequence ID given to completed spans expected to be sent to the server."
     stability: development
     examples: ["abc123"]
-  - key: emb.private.sequence_id
-    type: string
-    brief: "Unique ID assigned to each app instance."
-    stability: development
-    examples: ["1", "42"]
   - key: emb.user_session_number
     type: string
     brief: "Incremental counter of sessions since SDK install."

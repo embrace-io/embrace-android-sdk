@@ -43,6 +43,9 @@ class BehaviorThresholdCheck(
         if (pctEnabled <= 0 || pctEnabled > 100) {
             return false
         }
+        if (pctEnabled == 100f) {
+            return true
+        }
         val deviceId = getNormalizedDeviceId()
         return pctEnabled >= deviceId
     }

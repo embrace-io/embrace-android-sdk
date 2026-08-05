@@ -28,4 +28,12 @@ interface BreadcrumbBehavior {
     fun isWebViewBreadcrumbQueryParamCaptureEnabled(): Boolean
 
     fun isFcmPiiDataCaptureEnabled(): Boolean
+
+    companion object {
+
+        /**
+         * The default breadcrumbs capture limit.
+         */
+        const val DEFAULT_BREADCRUMB_LIMIT: Int = 100
+    }
 }

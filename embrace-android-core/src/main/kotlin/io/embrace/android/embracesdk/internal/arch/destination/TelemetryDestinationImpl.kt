@@ -174,6 +174,9 @@ class TelemetryDestinationImpl(
 
     override fun addSessionPartEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {
         val currentSession = currentSessionPartSpan.current() ?: return false
+        if (!currentSessionPartSpan.canAddEvent(schemaType.telemetryType == EmbType.System.Breadcrumb)) {
+            return false
+        }
         return currentSession.addSystemEvent(
             schemaType.fixedObjectName.toEmbraceObjectName(),
             startTimeMs,

@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.Initializable
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -27,7 +28,14 @@ interface CurrentSessionPartSpan : Initializable {
     /**
      * Returns true if a span with the given parameters can be started in the current session
      */
-    fun canStartNewSpan(parent: EmbraceSpan?, internal: Boolean): Boolean
+    fun canStartNewSpan(parent: EmbraceSpan?, internal: Boolean, type: EmbType): Boolean
+
+    /**
+     * Returns true if a span event can be added to the current session part span. Breadcrumbs are counted against a
+     * separate, remotely configurable limit. Once this method returns true, the event is assumed to have been added and
+     * will be counted towards the limits, so make sure there's no case afterwards where an event is not added.
+     */
+    fun canAddEvent(isBreadcrumb: Boolean): Boolean
 
     /**
      * Returns the current session part ID

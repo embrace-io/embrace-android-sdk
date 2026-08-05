@@ -52,6 +52,23 @@ internal class ThermalStateDataSourceTest {
     }
 
     @Test
+    fun `power manager is not retrieved until data capture is enabled`() {
+        var systemServiceLookups = 0
+        val countingArgs = FakeInstrumentationArgs(
+            mockk(),
+            systemServiceSupplier = {
+                systemServiceLookups++
+                mockPowerManager
+            },
+        )
+        val source = ThermalStateDataSource(countingArgs)
+        assertEquals(0, systemServiceLookups)
+
+        source.onDataCaptureEnabled()
+        assertEquals(1, systemServiceLookups)
+    }
+
+    @Test
     fun onEnableAndDisable() {
         verify(exactly = 0) { mockPowerManager.addThermalStatusListener(any(), any()) }
         dataSource.onDataCaptureEnabled()

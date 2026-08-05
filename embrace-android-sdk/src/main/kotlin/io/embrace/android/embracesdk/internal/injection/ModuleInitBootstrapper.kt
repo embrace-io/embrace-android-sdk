@@ -5,10 +5,12 @@ package io.embrace.android.embracesdk.internal.injection
 import android.content.Context
 import android.preference.PreferenceManager
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageServiceSupplier
+import io.embrace.android.embracesdk.internal.prefs.createKeyValueStore
 import io.embrace.android.embracesdk.internal.storage.StorageService
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
@@ -45,6 +47,7 @@ internal class ModuleInitBootstrapper(
 
     @Volatile
     private var delegate: ModuleGraph = UninitializedModuleGraph
+    override val sdkStartTimeMs: Long get() = delegate.sdkStartTimeMs
     override val coreModule: CoreModule get() = delegate.coreModule
     override val configService: ConfigService get() = delegate.configService
     override val workerThreadModule: WorkerThreadModule get() = delegate.workerThreadModule
@@ -65,16 +68,29 @@ internal class ModuleInitBootstrapper(
     fun init(
         context: Context,
         versionChecker: VersionChecker = BuildVersionChecker,
-    ): Boolean {
+    ): Boolean = EmbTrace.trace("modules-init") {
         try {
-            EmbTrace.start("modules-init")
             if (isInitialized()) {
-                return false
+                return@trace false
             }
             synchronized(delegate) {
                 if (isInitialized()) {
-                    return false
+                    return@trace false
                 }
+                // stamped before anything else so that the SDK init span covers all the work below
+                val startTimeMs = initModule.clock.now()
+                val keyValueStore = lazy { createKeyValueStore(context, initModule.jsonSerializer) }
+                val persistedConfig = EmbTrace.trace("persisted-config-load") {
+                    PersistedConfig(
+                        serializer = initModule.jsonSerializer,
+                        filesDir = context.filesDir,
+                        instrumentedConfig = initModule.instrumentedConfig,
+                        keyValueStore = keyValueStore,
+                        uuidSource = initModule.uuidSource,
+                    )
+                }
+                openTelemetryModule.setOtelBehavior(persistedConfig.otelBehavior)
+
                 val workerThreadModule = EmbTrace.trace("workerthread-init") {
                     workerThreadModuleSupplier?.invoke() ?: WorkerThreadModuleImpl()
                 }
@@ -82,9 +98,12 @@ internal class ModuleInitBootstrapper(
                 delegate = InitializedModuleGraph(
                     context,
                     versionChecker,
+                    startTimeMs,
                     initModule,
                     openTelemetryModule,
                     workerThreadModule,
+                    keyValueStore,
+                    persistedConfig,
                     coreModuleSupplier,
                     configServiceSupplier,
                     storageServiceSupplier,
@@ -98,13 +117,11 @@ internal class ModuleInitBootstrapper(
                     userSessionOrchestrationModuleSupplier,
                     payloadSourceModuleSupplier,
                 )
-                return isInitialized()
+                isInitialized()
             }
         } catch (ignored: SdkDisabledException) {
             // do nothing - avoid instantiating SDK code any more than necessary.
-            return false
-        } finally {
-            EmbTrace.end()
+            false
         }
     }
 

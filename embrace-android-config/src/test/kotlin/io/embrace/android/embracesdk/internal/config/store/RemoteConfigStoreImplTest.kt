@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.store
 
+import io.embrace.android.embracesdk.fakes.FakeThrowingSerializer
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
@@ -21,7 +22,46 @@ internal class RemoteConfigStoreImplTest {
     @Before
     fun setUp() {
         dir = Files.createTempDirectory("test").toFile()
-        store = RemoteConfigStoreImpl(TestPlatformSerializer(), dir, { deviceId })
+        store = RemoteConfigStoreImpl(TestPlatformSerializer(), dir) { deviceId }
+    }
+
+    @Test
+    fun `construction does not touch the filesystem`() {
+        val emptyDir = Files.createTempDirectory("empty").toFile()
+        RemoteConfigStoreImpl(TestPlatformSerializer(), emptyDir) { deviceId }
+
+        assertFalse(File(emptyDir, "most_recent_response").exists())
+        assertFalse(File(emptyDir, "etag").exists())
+        assertFalse(File(emptyDir, "cached_config").exists())
+    }
+
+    @Test
+    fun `storage dir is created on first save`() {
+        val nestedDir = File(dir, "nested/config")
+        assertFalse(nestedDir.exists())
+        store = RemoteConfigStoreImpl(TestPlatformSerializer(), nestedDir) { deviceId }
+        assertFalse(nestedDir.exists())
+
+        val config = RemoteConfig(50)
+        store.saveResponse(ConfigHttpResponse(config, "etag"))
+
+        val loaded = checkNotNull(store.loadResponse())
+        assertEquals(config, loaded.cfg)
+        assertEquals("etag", loaded.etag)
+    }
+
+    @Test
+    fun `config without an etag loads from the json path`() {
+        val config = RemoteConfig(50)
+        store.saveResponse(ConfigHttpResponse(config, null))
+        assertFalse(etagFile().exists())
+
+        // force the slow path: a missing binary cache is a clean miss that falls back to json.
+        cachedConfigFile().delete()
+
+        val loaded = checkNotNull(store.loadResponse())
+        assertEquals(config, loaded.cfg)
+        assertNull(loaded.etag)
     }
 
     @Test
@@ -128,7 +168,7 @@ internal class RemoteConfigStoreImplTest {
     @Test
     fun `unreadable json config is preserved as the error may be recoverable`() {
         val serializer = TestPlatformSerializer()
-        store = RemoteConfigStoreImpl(serializer, dir, { deviceId })
+        store = RemoteConfigStoreImpl(serializer, dir) { deviceId }
 
         val config = RemoteConfig(50)
         store.saveResponse(ConfigHttpResponse(config, "etag"))
@@ -147,13 +187,24 @@ internal class RemoteConfigStoreImplTest {
     }
 
     @Test
+    fun `a non-Exception failure while loading degrades to no config`() {
+        val config = RemoteConfig(50)
+        store.saveResponse(ConfigHttpResponse(config, "etag"))
+        cachedConfigFile().delete()
+
+        store = RemoteConfigStoreImpl(FakeThrowingSerializer(StackOverflowError()), dir) { deviceId }
+
+        assertNull(store.loadResponse())
+        assertTrue(configFile().exists())
+    }
+
+    @Test
     fun `binary cache only written after json files succeed`() {
         // force the binary write to fail while the canonical json + etag files still succeed
         store = RemoteConfigStoreImpl(
             TestPlatformSerializer(),
             dir,
-            { error("device id unavailable") },
-        )
+        ) { error("device id unavailable") }
 
         val config = RemoteConfig(50)
         store.saveResponse(ConfigHttpResponse(config, "etag"))
@@ -171,4 +222,6 @@ internal class RemoteConfigStoreImplTest {
     private fun cachedConfigFile() = File(dir, "cached_config")
 
     private fun configFile() = File(dir, "most_recent_response")
+
+    private fun etagFile() = File(dir, "etag")
 }

@@ -8,6 +8,7 @@ import io.opentelemetry.kotlin.aliases.OtelJavaLogRecordData
 import io.opentelemetry.kotlin.aliases.OtelJavaSpanData
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
+import io.opentelemetry.kotlin.semconv.TelemetryAttributes
 import org.junit.Assert.assertEquals
 
 /**
@@ -142,11 +143,11 @@ internal class ExportedTelemetryParityValidator {
          * stringifies as its wrapper - 'LongValue(value=3)' rather than '3'.
          */
         private val REDACTED_ATTRIBUTES = setOf(
+            TelemetryAttributes.TELEMETRY_DISTRO_VERSION,
             SessionAttributes.SESSION_ID,
             EmbSessionAttributes.EMB_USER_SESSION_ID,
             EmbSessionAttributes.EMB_SESSION_PART_ID,
             EmbSessionAttributes.EMB_PROCESS_IDENTIFIER,
-            EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID,
             "log.record.uid",
             "any-value-attr",
             ExceptionAttributes.EXCEPTION_STACKTRACE,

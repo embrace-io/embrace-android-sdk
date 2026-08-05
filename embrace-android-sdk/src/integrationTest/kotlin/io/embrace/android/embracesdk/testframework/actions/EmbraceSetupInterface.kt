@@ -40,6 +40,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.sharedOb
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
+import io.embrace.android.embracesdk.internal.prefs.createKeyValueStore
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
@@ -102,7 +103,15 @@ internal class EmbraceSetupInterface(
     )
 
     private val fakeCoreModule: CoreModule = FakeCoreModule()
-    private val coreModule: CoreModule by lazy { CoreModuleImpl(fakeCoreModule.context, fakeInitModule) }
+
+    /**
+     * The SDK's store, backed by the same `SharedPreferences` the bootstrapper will use. Owned here
+     * rather than read off [CoreModule] because tests write to it in `setupAction`, before the module
+     * graph exists.
+     */
+    private val keyValueStore: KeyValueStore by lazy {
+        createKeyValueStore(fakeCoreModule.context, fakeInitModule.jsonSerializer)
+    }
 
     fun createBootstrapper(
         instrumentedConfig: FakeInstrumentedConfig,
@@ -112,22 +121,23 @@ internal class EmbraceSetupInterface(
             this.instrumentedConfig = instrumentedConfig
         },
         openTelemetryModule = fakeInitModule.openTelemetryModule,
-        coreModuleSupplier = { _, _ -> coreModule },
+        // forwards the supplied store so the module shares one instance with PersistedConfig, as in production
+        coreModuleSupplier = { _, _, suppliedStore ->
+            CoreModuleImpl(fakeCoreModule.context, fakeInitModule, suppliedStore)
+        },
         workerThreadModuleSupplier = { workerThreadModule },
-        configServiceSupplier = { initModule, coreModule, openTelemetryModule, workerThreadModule ->
+        configServiceSupplier = { initModule, _, openTelemetryModule, workerThreadModule, persistedConfig ->
             val impl = ConfigServiceImpl(
                 instrumentedConfig = initModule.instrumentedConfig,
-                worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
+                persistedConfig = persistedConfig,
+                worker = workerThreadModule.backgroundWorker(Worker.Background.HttpRequestWorker),
                 serializer = initModule.jsonSerializer,
                 okHttpClient = initModule.okHttpClient,
                 hasConfiguredOtlpExport = openTelemetryModule.otelSdkConfig::hasConfiguredOtlpExport,
                 sdkVersion = BuildConfig.VERSION_NAME,
                 apiLevel = Build.VERSION.SDK_INT,
-                filesDir = coreModule.context.filesDir,
-                store = coreModule.store,
                 abis = Build.SUPPORTED_ABIS,
                 logger = initModule.logger,
-                uuidSource = initModule.uuidSource,
             )
             DecoratedConfigService(impl)
         },
@@ -313,7 +323,7 @@ internal class EmbraceSetupInterface(
     fun getFakedWorkerExecutor(worker: Worker.Background): BlockingScheduledExecutorService =
         (workerThreadModule as FakeWorkerThreadModule).executorFor(worker)
 
-    fun getStore(): KeyValueStore = coreModule.store
+    fun getStore(): KeyValueStore = keyValueStore
 
     private companion object {
         fun initWorkerThreadModule(

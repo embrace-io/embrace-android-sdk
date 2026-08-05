@@ -7,9 +7,8 @@
     "endEpochNanos": "169220160030000000",
     "hasEnded": "true",
     "parentSpanName": "",
-    "totalAttributeCount": "6",
+    "totalAttributeCount": "5",
     "attributes": {
-      "emb.private.sequence_id": "__EMBRACE_TEST_IGNORE__",
       "emb.process_identifier": "__EMBRACE_TEST_IGNORE__",
       "emb.session_part_id": "__EMBRACE_TEST_IGNORE__",
       "emb.type": "perf",
@@ -43,7 +42,7 @@
       "service.name": "UNKNOWN",
       "service.version": "UNKNOWN",
       "telemetry.distro.name": "io.embrace.android.embracesdk.core",
-      "telemetry.distro.version": "9.1.0-SNAPSHOT"
+      "telemetry.distro.version": "__EMBRACE_TEST_IGNORE__"
     }
   },
   {
@@ -54,9 +53,8 @@
     "endEpochNanos": "169220160030000000",
     "hasEnded": "true",
     "parentSpanName": "aaa-parent-span",
-    "totalAttributeCount": "6",
+    "totalAttributeCount": "5",
     "attributes": {
-      "emb.private.sequence_id": "__EMBRACE_TEST_IGNORE__",
       "emb.process_identifier": "__EMBRACE_TEST_IGNORE__",
       "emb.session_part_id": "__EMBRACE_TEST_IGNORE__",
       "emb.type": "perf",
@@ -90,7 +88,7 @@
       "service.name": "UNKNOWN",
       "service.version": "UNKNOWN",
       "telemetry.distro.name": "io.embrace.android.embracesdk.core",
-      "telemetry.distro.version": "9.1.0-SNAPSHOT"
+      "telemetry.distro.version": "__EMBRACE_TEST_IGNORE__"
     }
   },
   {
@@ -101,9 +99,8 @@
     "endEpochNanos": "169220160030000000",
     "hasEnded": "true",
     "parentSpanName": "",
-    "totalAttributeCount": "6",
+    "totalAttributeCount": "5",
     "attributes": {
-      "emb.private.sequence_id": "__EMBRACE_TEST_IGNORE__",
       "emb.process_identifier": "__EMBRACE_TEST_IGNORE__",
       "emb.session_part_id": "__EMBRACE_TEST_IGNORE__",
       "emb.type": "perf",
@@ -147,7 +144,7 @@
       "service.name": "UNKNOWN",
       "service.version": "UNKNOWN",
       "telemetry.distro.name": "io.embrace.android.embracesdk.core",
-      "telemetry.distro.version": "9.1.0-SNAPSHOT"
+      "telemetry.distro.version": "__EMBRACE_TEST_IGNORE__"
     }
   }
 ]

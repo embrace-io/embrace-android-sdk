@@ -29,10 +29,7 @@ import io.opentelemetry.kotlin.tracing.Span
 import io.opentelemetry.kotlin.tracing.SpanContext
 import io.opentelemetry.kotlin.tracing.SpanKind
 import io.opentelemetry.kotlin.tracing.StatusData
-import java.util.Queue
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 class EmbraceSpanFactoryImpl(
@@ -80,6 +77,12 @@ private const val SPAN_EVENT_TELEMETRY_TYPE = "span_event"
  */
 private const val UNSET_TIME = 0L
 
+/**
+ * Initial capacity for the lazily created event/link collections that aims
+ * for a reasonable capacity most spans wouldn't fill.
+ */
+private const val INITIAL_COLLECTION_CAPACITY = 4
+
 // StatusData is immutable, so the description-less error status can be shared rather than allocated per span
 private val ERROR_STATUS = StatusData.Error(null)
 
@@ -125,31 +128,51 @@ private class EmbraceSpanImpl(
             }
         }
 
-    // Retained only until the span stops, then nulled out to release the queues. Nulling rather than
-    // clearing keeps the release constant time, as clear() is O(n) on a ConcurrentLinkedQueue.
-    @Volatile
-    private var systemEvents: Queue<EmbraceSpanEvent>? = ConcurrentLinkedQueue()
+    /**
+     * Guards mutation and snapshotting of the lazily created event/link collections and their counters.
+     *
+     * Deliberately not [startedSpan]: adding an event must not block behind a stop(), which holds
+     * [startedSpan] while it copies every event and link onto the OTel span. Keeping the monitors
+     * distinct also means a stop() that links into another span can never form a cycle.
+     *
+     * Lock order is always [startedSpan] then [collectionLock], never the reverse. Nothing invoked while
+     * holding [collectionLock] may acquire [startedSpan].
+     */
+    private val collectionLock = Any()
 
-    @Volatile
-    private var customEvents: Queue<EmbraceSpanEvent>? = ConcurrentLinkedQueue()
+    // Created on first successful add, as most spans never record an event or a link, and nulled out once
+    // the span stops. Plain ArrayList rather than ConcurrentLinkedQueue: a queue node costs 16 bytes per
+    // element against ~4 for an array slot, and every read and write is already serialised by
+    // collectionLock.
+    private var systemEvents: MutableList<EmbraceSpanEvent>? = null
 
-    @Volatile
-    private var systemLinks: Queue<EmbraceLinkData>? = ConcurrentLinkedQueue()
+    private var customEvents: MutableList<EmbraceSpanEvent>? = null
 
-    @Volatile
-    private var customLinks: Queue<EmbraceLinkData>? = ConcurrentLinkedQueue()
+    private var systemLinks: MutableList<EmbraceLinkData>? = null
+
+    private var customLinks: MutableList<EmbraceLinkData>? = null
 
     private val systemAttributes = ConcurrentHashMap<String, String>(otelSpanStartArgs.embraceAttributes.size).apply {
         otelSpanStartArgs.embraceAttributes.forEach { put(it.key, it.value) }
     }
     private val customAttributes = ConcurrentHashMap<String, String>()
 
-    // size for ConcurrentLinkedQueues is not a constant operation, so it could be subject to race conditions
-    // do the bookkeeping separately so we don't have to worry about this
-    private val systemEventCount = AtomicInteger(0)
-    private val customEventCount = AtomicInteger(0)
-    private val systemLinkCount = AtomicInteger(0)
-    private val customLinkCount = AtomicInteger(0)
+    // Counted separately rather than read from the lists so the "already at the limit" fast path can skip
+    // the lock. Plain volatile Ints rather than AtomicIntegers saves four objects per span: every write
+    // happens under collectionLock, and the unsynchronized read is only a fast path for a limit that can
+    // never decrease. Do not substitute List.size here, as that is a non-volatile field that can be
+    // observed mid-grow().
+    @Volatile
+    private var systemEventCount: Int = 0
+
+    @Volatile
+    private var customEventCount: Int = 0
+
+    @Volatile
+    private var systemLinkCount: Int = 0
+
+    @Volatile
+    private var customLinkCount: Int = 0
 
     private val parentContext = otelSpanStartArgs.parentContext
 
@@ -247,18 +270,18 @@ private class EmbraceSpanImpl(
      * the remainder of the session part.
      */
     private fun releaseRetainedData() {
-        systemEvents = null
-        customEvents = null
-        systemLinks = null
-        customLinks = null
+        synchronized(collectionLock) {
+            systemEvents = null
+            customEvents = null
+            systemLinks = null
+            customLinks = null
+        }
     }
 
     override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>): Boolean =
-        addObject(
-            queue = customEvents,
-            count = customEventCount,
+        recordEvent(
+            system = false,
             max = deps.dataValidator.otelLimitsConfig.getMaxCustomEventCount(),
-            telemetryType = SPAN_EVENT_TELEMETRY_TYPE,
         ) {
             deps.dataValidator.createTruncatedSpanEvent(
                 name = name,
@@ -269,11 +292,9 @@ private class EmbraceSpanImpl(
         }
 
     override fun recordException(exception: Throwable, attributes: Map<String, String>): Boolean =
-        addObject(
-            queue = customEvents,
-            count = customEventCount,
+        recordEvent(
+            system = false,
             max = deps.dataValidator.otelLimitsConfig.getMaxCustomEventCount(),
-            telemetryType = SPAN_EVENT_TELEMETRY_TYPE,
         ) {
             val eventAttributes = mutableMapOf<String, String>()
             eventAttributes.putAll(attributes)
@@ -297,11 +318,9 @@ private class EmbraceSpanImpl(
         }
 
     override fun addSystemEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
-        addObject(
-            queue = systemEvents,
-            count = systemEventCount,
+        recordEvent(
+            system = true,
             max = deps.dataValidator.otelLimitsConfig.getMaxSystemEventCount(),
-            telemetryType = SPAN_EVENT_TELEMETRY_TYPE,
         ) {
             deps.dataValidator.createTruncatedSpanEvent(
                 name = name,
@@ -350,7 +369,7 @@ private class EmbraceSpanImpl(
     }
 
     override fun addSystemLink(linkedSpanContext: SpanContext, type: LinkType, attributes: Map<String, String>): Boolean =
-        addObject(systemLinks, systemLinkCount, deps.dataValidator.otelLimitsConfig.getMaxSystemLinkCount(), SPAN_LINK_TELEMETRY_TYPE) {
+        recordLink(system = true, max = deps.dataValidator.otelLimitsConfig.getMaxSystemLinkCount()) {
             // built in place to avoid the vararg array and Pair that mutableMapOf(type.key to type.value) allocates
             val attrs = buildMap(attributes.size + 1) {
                 put(type.key, type.value)
@@ -360,7 +379,7 @@ private class EmbraceSpanImpl(
         }
 
     override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>): Boolean =
-        addObject(customLinks, customLinkCount, deps.dataValidator.otelLimitsConfig.getMaxCustomLinkCount(), SPAN_LINK_TELEMETRY_TYPE) {
+        recordLink(system = false, max = deps.dataValidator.otelLimitsConfig.getMaxCustomLinkCount()) {
             EmbraceLinkData(linkedSpanContext, attributes)
         }
 
@@ -420,41 +439,79 @@ private class EmbraceSpanImpl(
 
     override val spanKind: SpanKind = otelSpanStartArgs.spanKind ?: SpanKind.INTERNAL
 
-    override fun events(): List<SpanEvent> =
-        (systemEvents.orEmpty() + redactCustomEvents()).map(EmbraceSpanEvent::toEmbracePayload)
+    override fun events(): List<SpanEvent> = withEventCopies { system, custom ->
+        (system + redactCustomEvents(custom)).map(EmbraceSpanEvent::toEmbracePayload)
+    }
 
-    override fun links(): List<Link> =
-        (systemLinks.orEmpty() + redactCustomLinks()).map(EmbraceLinkData::toEmbracePayload)
+    override fun links(): List<Link> = withLinkCopies { system, custom ->
+        (system + redactCustomLinks(custom)).map(EmbraceLinkData::toEmbracePayload)
+    }
 
-    private fun redactCustomEvents(): List<EmbraceSpanEvent> = customEvents?.mapNotNull {
-        EmbraceSpanEvent.create(
-            name = it.name,
-            timestampMs = it.timestampNanos.nanosToMillis(),
-            attributes = it.attributes.redactIfSensitive(),
-        )
-    }.orEmpty()
+    /**
+     * Copies both event collections in a single [collectionLock] acquisition so the caller can map and
+     * redact outside the lock, which matters because the redaction function is supplied by the host app.
+     * Taking both at once also means a concurrent stop() cannot release one collection between the reads.
+     */
+    private inline fun <R> withEventCopies(
+        block: (system: List<EmbraceSpanEvent>, custom: List<EmbraceSpanEvent>) -> R,
+    ): R {
+        val system: List<EmbraceSpanEvent>
+        val custom: List<EmbraceSpanEvent>
+        synchronized(collectionLock) {
+            system = systemEvents?.toList().orEmpty()
+            custom = customEvents?.toList().orEmpty()
+        }
+        return block(system, custom)
+    }
 
-    private fun redactCustomLinks(): List<EmbraceLinkData> =
-        customLinks?.map { it.copy(attributes = it.attributes.redactIfSensitive()) }.orEmpty()
+    /**
+     * Link equivalent of [withEventCopies].
+     */
+    private inline fun <R> withLinkCopies(
+        block: (system: List<EmbraceLinkData>, custom: List<EmbraceLinkData>) -> R,
+    ): R {
+        val system: List<EmbraceLinkData>
+        val custom: List<EmbraceLinkData>
+        synchronized(collectionLock) {
+            system = systemLinks?.toList().orEmpty()
+            custom = customLinks?.toList().orEmpty()
+        }
+        return block(system, custom)
+    }
+
+    private fun redactCustomEvents(customEvents: List<EmbraceSpanEvent>): List<EmbraceSpanEvent> =
+        customEvents.mapNotNull {
+            EmbraceSpanEvent.create(
+                name = it.name,
+                timestampMs = it.timestampNanos.nanosToMillis(),
+                attributes = it.attributes.redactIfSensitive(),
+            )
+        }
+
+    private fun redactCustomLinks(customLinks: List<EmbraceLinkData>): List<EmbraceLinkData> =
+        customLinks.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
 
     private fun getAttributesPayload(): List<Attribute> =
         systemAttributes.map { Attribute(it.key, it.value) } + customAttributes.redactIfSensitive().toEmbracePayload()
 
     private fun canSnapshot(): Boolean = spanId != null && spanStartTimeMs > UNSET_TIME
 
-    private fun <T> addObject(
-        queue: Queue<T>?,
-        count: AtomicInteger,
-        max: Int,
-        telemetryType: String,
-        objectSupplier: () -> T?,
-    ): Boolean {
-        if (queue != null && count.get() < max) {
-            synchronized(count) {
-                if (count.get() < max && isRecording) {
-                    objectSupplier()?.apply {
-                        queue.add(this)
-                        count.incrementAndGet()
+    /**
+     * Adds the event from [eventSupplier] to the system or custom event collection, unless the span is not
+     * recording or that collection has reached [max]. Inlined so no closure is allocated on this hot path.
+     */
+    private inline fun recordEvent(system: Boolean, max: Int, eventSupplier: () -> EmbraceSpanEvent?): Boolean {
+        if (isRecording && eventCount(system) < max) {
+            synchronized(collectionLock) {
+                if (eventCount(system) < max && isRecording) {
+                    eventSupplier()?.let { event ->
+                        if (system) {
+                            systemEvents().add(event)
+                            systemEventCount++
+                        } else {
+                            customEvents().add(event)
+                            customEventCount++
+                        }
                         deps.spanRepository.notifySpanUpdate()
                         return true
                     }
@@ -462,9 +519,51 @@ private class EmbraceSpanImpl(
             }
         }
 
-        deps.telemetryService.trackAppliedLimit(telemetryType, AppliedLimitType.DROP)
+        deps.telemetryService.trackAppliedLimit(SPAN_EVENT_TELEMETRY_TYPE, AppliedLimitType.DROP)
         return false
     }
+
+    /**
+     * Link equivalent of [recordEvent].
+     */
+    private inline fun recordLink(system: Boolean, max: Int, linkSupplier: () -> EmbraceLinkData): Boolean {
+        if (isRecording && linkCount(system) < max) {
+            synchronized(collectionLock) {
+                if (linkCount(system) < max && isRecording) {
+                    val link = linkSupplier()
+                    if (system) {
+                        systemLinks().add(link)
+                        systemLinkCount++
+                    } else {
+                        customLinks().add(link)
+                        customLinkCount++
+                    }
+                    deps.spanRepository.notifySpanUpdate()
+                    return true
+                }
+            }
+        }
+
+        deps.telemetryService.trackAppliedLimit(SPAN_LINK_TELEMETRY_TYPE, AppliedLimitType.DROP)
+        return false
+    }
+
+    private fun eventCount(system: Boolean): Int = if (system) systemEventCount else customEventCount
+
+    private fun linkCount(system: Boolean): Int = if (system) systemLinkCount else customLinkCount
+
+    // the get-or-create accessors below must only be called while holding collectionLock
+    private fun systemEvents(): MutableList<EmbraceSpanEvent> =
+        systemEvents ?: ArrayList<EmbraceSpanEvent>(INITIAL_COLLECTION_CAPACITY).also { systemEvents = it }
+
+    private fun customEvents(): MutableList<EmbraceSpanEvent> =
+        customEvents ?: ArrayList<EmbraceSpanEvent>(INITIAL_COLLECTION_CAPACITY).also { customEvents = it }
+
+    private fun systemLinks(): MutableList<EmbraceLinkData> =
+        systemLinks ?: ArrayList<EmbraceLinkData>(INITIAL_COLLECTION_CAPACITY).also { systemLinks = it }
+
+    private fun customLinks(): MutableList<EmbraceLinkData> =
+        customLinks ?: ArrayList<EmbraceLinkData>(INITIAL_COLLECTION_CAPACITY).also { customLinks = it }
 
     private fun spanStarted() = startedSpan.get() != null
 
@@ -484,32 +583,27 @@ private class EmbraceSpanImpl(
     }
 
     private fun populateEvents(spanToStop: Span) {
-        val redactedCustomEvents = customEvents.orEmpty().mapNotNull {
-            EmbraceSpanEvent.create(
-                name = it.name,
-                timestampMs = it.timestampNanos.nanosToMillis(),
-                attributes = it.attributes.redactIfSensitive(),
-            )
-        }
-        (systemEvents.orEmpty() + redactedCustomEvents).forEach { event ->
-            val eventAttributes = deps.dataValidator.truncateAttributes(event.attributes, internal)
+        withEventCopies { system, custom ->
+            (system + redactCustomEvents(custom)).forEach { event ->
+                val eventAttributes = deps.dataValidator.truncateAttributes(event.attributes, internal)
 
-            spanToStop.addEvent(
-                name = event.name,
-                timestamp = event.timestampNanos,
-            ) {
-                setAttributes(eventAttributes)
+                spanToStop.addEvent(
+                    name = event.name,
+                    timestamp = event.timestampNanos,
+                ) {
+                    setAttributes(eventAttributes)
+                }
             }
         }
     }
 
     private fun populateLinks(spanToStop: Span) {
-        val redactedCustomLinks = customLinks.orEmpty().map { it.copy(attributes = it.attributes.redactIfSensitive()) }
-
-        (systemLinks.orEmpty() + redactedCustomLinks).forEach {
-            val linkAttributes = deps.dataValidator.truncateAttributes(it.attributes, false)
-            spanToStop.addLink(it.spanContext) {
-                setAttributes(linkAttributes)
+        withLinkCopies { system, custom ->
+            (system + redactCustomLinks(custom)).forEach {
+                val linkAttributes = deps.dataValidator.truncateAttributes(it.attributes, false)
+                spanToStop.addLink(it.spanContext) {
+                    setAttributes(linkAttributes)
+                }
             }
         }
     }

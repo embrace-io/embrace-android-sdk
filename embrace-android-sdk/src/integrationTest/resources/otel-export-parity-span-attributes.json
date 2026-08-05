@@ -7,7 +7,7 @@
     "endEpochNanos": "169220161030000000",
     "hasEnded": "true",
     "parentSpanName": "",
-    "totalAttributeCount": "17",
+    "totalAttributeCount": "16",
     "attributes": {
       "any-value-attr": "__EMBRACE_TEST_IGNORE__",
       "boolean-attr": "true",
@@ -16,7 +16,6 @@
       "created-with": "attribute",
       "double-attr": "1.5",
       "double-list-attr": "[1.5, 2.5]",
-      "emb.private.sequence_id": "__EMBRACE_TEST_IGNORE__",
       "emb.process_identifier": "__EMBRACE_TEST_IGNORE__",
       "emb.session_part_id": "__EMBRACE_TEST_IGNORE__",
       "emb.type": "perf",
@@ -54,7 +53,7 @@
       "service.name": "UNKNOWN",
       "service.version": "UNKNOWN",
       "telemetry.distro.name": "io.embrace.android.embracesdk.core",
-      "telemetry.distro.version": "9.1.0-SNAPSHOT"
+      "telemetry.distro.version": "__EMBRACE_TEST_IGNORE__"
     }
   }
 ]

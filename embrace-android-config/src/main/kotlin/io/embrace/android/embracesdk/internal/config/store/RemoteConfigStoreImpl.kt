@@ -12,25 +12,16 @@ import java.io.File
 
 internal class RemoteConfigStoreImpl(
     private val serializer: PlatformSerializer,
-    storageDir: File,
+    private val storageDir: File,
     private val deviceIdProvider: () -> String,
 ) : RemoteConfigStore {
 
-    init {
-        storageDir.mkdirs()
-    }
-
-    private val configFile = File(storageDir, "most_recent_response").apply {
-        createNewFile()
-    }
-
-    private val etagFile = File(storageDir, "etag").apply {
-        createNewFile()
-    }
+    private val configFile by lazy { File(storageDir, "most_recent_response") }
+    private val etagFile by lazy { File(storageDir, "etag") }
 
     // binary fast-path cache. Not created up-front: its absence is a clean cache miss that falls
     // back to [configFile]/[etagFile].
-    private val cachedConfigFile = File(storageDir, "cached_config")
+    private val cachedConfigFile by lazy { File(storageDir, "cached_config") }
 
     override fun loadResponse(): StoredConfigResponse? = loadFromCache() ?: loadFromJson()
 
@@ -46,9 +37,10 @@ internal class RemoteConfigStoreImpl(
             )
         } catch (_: IllegalArgumentException) {
             // delete the cache file if it appears to be corrupted
-            cachedConfigFile.delete()
+            deleteQuietly(cachedConfigFile)
             null
-        } catch (exc: Exception) {
+        } catch (_: Throwable) {
+            // assume error may be recoverable (e.g. transient IO)
             null
         }
     }
@@ -60,22 +52,24 @@ internal class RemoteConfigStoreImpl(
             }
             StoredConfigResponse(
                 cfg = cfg,
-                etag = etagFile.readText().ifEmpty {
-                    null
-                },
+                etag = readEtag(),
                 deviceId = null,
             )
         } catch (_: IllegalArgumentException) {
             // delete the cache file if it appears to be corrupted
-            configFile.delete()
+            deleteQuietly(configFile)
             null
-        } catch (exc: Exception) {
+        } catch (_: Throwable) {
+            // assume error may be recoverable (e.g. transient IO)
             null
         }
     }
 
+    private fun readEtag(): String? = runCatching { etagFile.readText() }.getOrNull()?.ifEmpty { null }
+
     override fun saveResponse(response: ConfigHttpResponse) {
         try {
+            storageDir.mkdirs()
             configFile.outputStream().buffered().use { stream ->
                 serializer.toJson<RemoteConfig?>(response.cfg, stream)
             }
@@ -98,7 +92,7 @@ internal class RemoteConfigStoreImpl(
         try {
             // nothing to cache without a config; remove any stale blob so the fast path is skipped.
             val cfg = response.cfg ?: run {
-                cachedConfigFile.delete()
+                deleteQuietly(cachedConfigFile)
                 return
             }
             val cached = CachedConfiguration(
@@ -112,16 +106,17 @@ internal class RemoteConfigStoreImpl(
         } catch (exc: Exception) {
             // a partially-written or failed blob must not be read back: delete it and rely on the
             // fallback path that was already written successfully.
-            runCatching { cachedConfigFile.delete() }
+            deleteQuietly(cachedConfigFile)
         }
     }
 
     private fun purgeCache() {
-        try {
-            configFile.delete()
-            etagFile.delete()
-            cachedConfigFile.delete()
-        } catch (ignored: Exception) {
-        }
+        deleteQuietly(configFile)
+        deleteQuietly(etagFile)
+        deleteQuietly(cachedConfigFile)
+    }
+
+    private fun deleteQuietly(file: File) {
+        runCatching { file.delete() }
     }
 }

@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.semconv.EmbAeiAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -76,12 +77,15 @@ internal class AeiDataSourceImplTest {
         }
     }
 
-    private fun startApplicationExitInfoService(versionChecker: VersionChecker = BuildVersionChecker) {
+    private fun startApplicationExitInfoService(
+        versionChecker: VersionChecker = BuildVersionChecker,
+        activityManagerProvider: Provider<ActivityManager?> = { mockActivityManager },
+    ) {
         args = FakeInstrumentationArgs(mockk(), configService = configService)
         applicationExitInfoService = AeiDataSourceImpl(
             args,
             worker,
-            mockActivityManager,
+            activityManagerProvider,
             store,
             FakeOrdinalStore(),
             versionChecker,
@@ -141,6 +145,33 @@ internal class AeiDataSourceImplTest {
 
         // no logs delivered
         assertTrue(args.destination.logEvents.isEmpty())
+    }
+
+    @Test
+    fun `no telemetry captured when ActivityManager is unavailable`() {
+        startApplicationExitInfoService(activityManagerProvider = { null })
+
+        assertTrue(args.destination.logEvents.isEmpty())
+    }
+
+    @Test
+    fun `activity manager is not retrieved until data capture is enabled`() {
+        var systemServiceLookups = 0
+        args = FakeInstrumentationArgs(mockk(), configService = configService)
+        val source = AeiDataSourceImpl(
+            args,
+            worker,
+            {
+                systemServiceLookups++
+                mockActivityManager
+            },
+            store,
+            FakeOrdinalStore(),
+        )
+        assertEquals(0, systemServiceLookups)
+
+        source.onDataCaptureEnabled()
+        assertEquals(1, systemServiceLookups)
     }
 
     @Test

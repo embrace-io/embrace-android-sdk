@@ -110,18 +110,25 @@ internal class ConfigServiceImplTest {
     private fun createService(
         hasConfiguredExporters: () -> Boolean = { false },
         appId: String? = "AbCdE",
-    ): ConfigServiceImpl = ConfigServiceImpl(
-        instrumentedConfig = FakeInstrumentedConfig(project = FakeProjectConfig(appId = appId)),
-        worker = fakeBackgroundWorker(),
-        serializer = serializer,
-        store = FakeKeyValueStore(),
-        okHttpClient = lazyOf(okHttpClient),
-        abis = arrayOf("arm64-v8a"),
-        sdkVersion = "1.2.3",
-        apiLevel = 36,
-        filesDir = Files.createTempDirectory("tmp").toFile(),
-        logger = FakeInternalLogger(),
-        hasConfiguredOtlpExport = hasConfiguredExporters,
-        uuidSource = TestUuidSource(),
-    )
+    ): ConfigServiceImpl {
+        val instrumentedConfig = FakeInstrumentedConfig(project = FakeProjectConfig(appId = appId))
+        return ConfigServiceImpl(
+            instrumentedConfig = instrumentedConfig,
+            persistedConfig = PersistedConfig(
+                serializer = serializer,
+                filesDir = Files.createTempDirectory("tmp").toFile(),
+                instrumentedConfig = instrumentedConfig,
+                keyValueStore = lazyOf(FakeKeyValueStore()),
+                uuidSource = TestUuidSource(),
+            ),
+            worker = fakeBackgroundWorker(),
+            serializer = serializer,
+            okHttpClient = lazyOf(okHttpClient),
+            abis = arrayOf("arm64-v8a"),
+            sdkVersion = "1.2.3",
+            apiLevel = 36,
+            logger = FakeInternalLogger(),
+            hasConfiguredOtlpExport = hasConfiguredExporters,
+        )
+    }
 }

@@ -93,6 +93,7 @@ internal class EmbraceImpl(
 
     private val logger get() = bootstrapper.initModule.logger
     private val clock get() = bootstrapper.initModule.clock
+    private val startStopLock = Any()
 
     @Volatile
     private var applicationInitStartMs: Long? = null
@@ -100,33 +101,35 @@ internal class EmbraceImpl(
     private var internalInterfaceModule: InternalInterfaceModule? = null
 
     override fun start(context: Context) {
-        try {
-            if (!bootstrapper.init(context)) {
-                return
-            }
-            bootstrapper.postInit()
+        synchronized(startStopLock) {
+            try {
+                if (!bootstrapper.init(context)) {
+                    return
+                }
+                bootstrapper.postInit()
 
-            EmbTrace.trace("post-services-setup") {
-                internalInterfaceModule = InternalInterfaceModuleImpl(
-                    bootstrapper.initModule,
-                    bootstrapper.configService,
-                    bootstrapper.payloadSourceModule,
-                    this,
-                    bootstrapper,
-                )
+                EmbTrace.trace("post-services-setup") {
+                    internalInterfaceModule = InternalInterfaceModuleImpl(
+                        bootstrapper.initModule,
+                        bootstrapper.configService,
+                        bootstrapper.payloadSourceModule,
+                        this,
+                        bootstrapper,
+                    )
 
-                // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
-                // so we allow external calls.
-                sdkCallChecker.started.set(true)
-                bootstrapper.registerListeners()
-                bootstrapper.loadInstrumentation()
-                initializeHucInstrumentation(bootstrapper.configService.networkBehavior)
-                bootstrapper.postLoadInstrumentation()
-                bootstrapper.triggerPayloadSend()
-                bootstrapper.markSdkInitComplete()
+                    // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
+                    // so we allow external calls.
+                    sdkCallChecker.started.set(true)
+                    bootstrapper.registerListeners()
+                    bootstrapper.loadInstrumentation()
+                    initializeHucInstrumentation(bootstrapper.configService.networkBehavior)
+                    bootstrapper.postLoadInstrumentation()
+                    bootstrapper.triggerPayloadSend()
+                    bootstrapper.markSdkInitComplete()
+                }
+            } catch (ignored: Throwable) {
+                Log.w("Embrace", "Failed to initialize Embrace SDK", ignored)
             }
-        } catch (ignored: Throwable) {
-            Log.w("Embrace", "Failed to initialize Embrace SDK", ignored)
         }
     }
 
@@ -161,29 +164,33 @@ internal class EmbraceImpl(
      * Shuts down the Embrace SDK.
      */
     fun stop() {
-        sdkCallChecker.started.set(false)
-        bootstrapper.stop()
+        synchronized(startStopLock) {
+            sdkCallChecker.started.set(false)
+            bootstrapper.stop()
+        }
     }
 
     override fun disable() {
-        if (sdkCallChecker.started.get()) {
-            bootstrapper.openTelemetryModule.otelSdkConfig.disableDataExport()
-            val rootDir = bootstrapper.coreModule.context.filesDir
-            val fallbackDir = bootstrapper.coreModule.context.cacheDir
-            stop()
-            Executors.newSingleThreadExecutor().execute {
-                runCatching {
-                    StorageLocation.entries.map {
-                        it.asFile(
-                            logger = null,
-                            rootDirSupplier = { rootDir },
-                            fallbackDirSupplier = { fallbackDir },
-                        ).value
-                    }.forEach {
-                        it.deleteRecursively()
+        synchronized(startStopLock) {
+            if (sdkCallChecker.started.get()) {
+                bootstrapper.openTelemetryModule.otelSdkConfig.disableDataExport()
+                val rootDir = bootstrapper.coreModule.context.filesDir
+                val fallbackDir = bootstrapper.coreModule.context.cacheDir
+                stop()
+                Executors.newSingleThreadExecutor().execute {
+                    runCatching {
+                        StorageLocation.entries.map {
+                            it.asFile(
+                                logger = null,
+                                rootDirSupplier = { rootDir },
+                                fallbackDirSupplier = { fallbackDir },
+                            ).value
+                        }.forEach {
+                            it.deleteRecursively()
+                        }
+                    }.onFailure { exception ->
+                        Log.e("[Embrace]", "An error occurred while trying to disable Embrace SDK.", exception)
                     }
-                }.onFailure { exception ->
-                    Log.e("[Embrace]", "An error occurred while trying to disable Embrace SDK.", exception)
                 }
             }
         }

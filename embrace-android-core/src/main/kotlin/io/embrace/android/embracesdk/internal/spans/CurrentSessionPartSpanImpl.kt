@@ -31,6 +31,8 @@ internal class CurrentSessionPartSpanImpl(
     private val openTelemetrySupplier: Provider<OpenTelemetry>,
     private val embraceSpanFactorySupplier: Provider<EmbraceSpanFactory>,
     private val uuidSource: UuidSource,
+    private val customBreadcrumbLimitSupplier: Provider<Int>,
+    private val maxSpanEventsSupplier: Provider<Int>,
 ) : CurrentSessionPartSpan {
 
     /**
@@ -79,15 +81,32 @@ internal class CurrentSessionPartSpanImpl(
         }
 
         return if (internal) {
-            checkTraceCount(state.internalTraceCount, MAX_INTERNAL_SPANS_PER_SESSION)
+            checkCount(state.internalTraceCount, MAX_INTERNAL_SPANS_PER_SESSION, SPAN_LIMIT_TYPE)
         } else {
-            checkTraceCount(state.traceCount, MAX_NON_INTERNAL_SPANS_PER_SESSION)
+            checkCount(state.traceCount, MAX_NON_INTERNAL_SPANS_PER_SESSION, SPAN_LIMIT_TYPE)
         }
     }
 
-    private fun checkTraceCount(counter: AtomicInteger, limit: Int): Boolean {
+    /**
+     * Breadcrumbs get their own budget so that a flood of other telemetry can't starve them, and vice versa. Both
+     * limits are read on each call so a remote config change takes effect immediately.
+     */
+    override fun canAddEvent(isBreadcrumb: Boolean): Boolean {
+        val state = sessionPartState ?: return false
+        if (!state.isReady) {
+            return false
+        }
+
+        return if (isBreadcrumb) {
+            checkCount(state.breadcrumbCount, customBreadcrumbLimitSupplier(), SPAN_EVENT_LIMIT_TYPE)
+        } else {
+            checkCount(state.eventCount, maxSpanEventsSupplier(), SPAN_EVENT_LIMIT_TYPE)
+        }
+    }
+
+    private fun checkCount(counter: AtomicInteger, limit: Int, limitType: String): Boolean {
         return if (counter.get() >= limit) {
-            telemetryService.trackAppliedLimit("span", AppliedLimitType.DROP)
+            telemetryService.trackAppliedLimit(limitType, AppliedLimitType.DROP)
             false
         } else {
             counter.getAndIncrement() < limit
@@ -230,6 +249,8 @@ internal class CurrentSessionPartSpanImpl(
     private class SessionPartState(val span: EmbraceSdkSpan, val sessionPartId: String) {
         val traceCount: AtomicInteger = AtomicInteger(0)
         val internalTraceCount: AtomicInteger = AtomicInteger(0)
+        val eventCount: AtomicInteger = AtomicInteger(0)
+        val breadcrumbCount: AtomicInteger = AtomicInteger(0)
 
         /**
          * Memoized link attributes for this session part. Only set once the user session attributes have been populated on the
@@ -266,5 +287,8 @@ internal class CurrentSessionPartSpanImpl(
     companion object {
         const val MAX_INTERNAL_SPANS_PER_SESSION: Int = 5000
         const val MAX_NON_INTERNAL_SPANS_PER_SESSION: Int = 500
+
+        private const val SPAN_LIMIT_TYPE = "span"
+        private const val SPAN_EVENT_LIMIT_TYPE = "span_event"
     }
 }

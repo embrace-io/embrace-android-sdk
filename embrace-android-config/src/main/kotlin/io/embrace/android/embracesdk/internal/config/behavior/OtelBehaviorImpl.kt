@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
+import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior.Companion.DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 
@@ -13,9 +14,13 @@ class OtelBehaviorImpl(
 ) : OtelBehavior {
 
     private val local = local.enabledFeatures
-    private val remote = remote?.otelKotlinSdkConfig
+    private val otelKotlinRemote = remote?.otelKotlinSdkConfig
+    private val dataRemote = remote?.dataConfig
 
     override fun shouldUseKotlinSdk(): Boolean {
-        return thresholdCheck.isBehaviorEnabled(remote?.pctEnabled) ?: local.isOtelKotlinSdkEnabled()
+        return thresholdCheck.isBehaviorEnabled(otelKotlinRemote?.pctEnabled) ?: local.isOtelKotlinSdkEnabled()
     }
+
+    override fun getMaxSpanEventsPerSessionPart(): Int =
+        dataRemote?.maxSpanEventsPerSessionPart ?: DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART
 }

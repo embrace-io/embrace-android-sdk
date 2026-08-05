@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.core.BuildConfig
+import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior.Companion.DEFAULT_BREADCRUMB_LIMIT
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
@@ -38,6 +40,7 @@ class OpenTelemetryModuleImpl(
     @Volatile
     private var otelBehavior: OtelBehavior? = null
     private var sensitiveKeysBehavior: SensitiveKeysBehavior? = null
+    private var breadcrumbBehavior: BreadcrumbBehavior? = null
     private var internalSpanStopCallback: ((spanId: String) -> Unit)? = null
     private var bypassLimitsValidation: Boolean = false
 
@@ -83,13 +86,20 @@ class OpenTelemetryModuleImpl(
         }
     }
 
-    override fun setOtelBehavior(otelBehavior: OtelBehavior) {
-        this.otelBehavior = otelBehavior
-    }
-
-    override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean) {
+    override fun applyConfiguration(
+        sensitiveKeysBehavior: SensitiveKeysBehavior,
+        bypassValidation: Boolean,
+        otelBehavior: OtelBehavior,
+        breadcrumbBehavior: BreadcrumbBehavior,
+    ) {
         this.sensitiveKeysBehavior = sensitiveKeysBehavior
         this.bypassLimitsValidation = bypassValidation
+        this.otelBehavior = otelBehavior
+        this.breadcrumbBehavior = breadcrumbBehavior
+    }
+
+    override fun setOtelBehavior(otelBehavior: OtelBehavior) {
+        this.otelBehavior = otelBehavior
     }
 
     override fun setSessionIdsProvider(sessionIdsProvider: SessionIdsProvider) {
@@ -126,6 +136,11 @@ class OpenTelemetryModuleImpl(
         openTelemetrySupplier = { otelSdkWrapper.openTelemetryKotlin },
         embraceSpanFactorySupplier = { embraceSpanFactory },
         uuidSource = initModule.uuidSource,
+        // adding guard in case this is accessed before we fetch the config
+        customBreadcrumbLimitSupplier = { breadcrumbBehavior?.getCustomBreadcrumbLimit() ?: DEFAULT_BREADCRUMB_LIMIT },
+        maxSpanEventsSupplier = {
+            otelBehavior?.getMaxSpanEventsPerSessionPart() ?: OtelBehavior.DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART
+        },
     ).also {
         internalSpanStopCallback = it::spanStopCallback
     }

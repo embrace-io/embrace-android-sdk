@@ -32,7 +32,7 @@ class InstrumentationModuleImpl(
         application = coreModule.application,
         destination = essentialServiceModule.telemetryDestination,
         workerThreadModule = workerThreadModule,
-        store = coreModule.store,
+        storeProvider = { coreModule.store },
         serializer = initModule.jsonSerializer,
         uuidSource = initModule.uuidSource,
         sessionPartTracker = essentialServiceModule.sessionPartTracker,

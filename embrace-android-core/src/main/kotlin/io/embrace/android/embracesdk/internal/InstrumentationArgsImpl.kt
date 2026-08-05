@@ -34,7 +34,7 @@ internal class InstrumentationArgsImpl(
     override val clock: Clock,
     override val context: Context,
     override val application: Application,
-    override val store: KeyValueStore,
+    storeProvider: () -> KeyValueStore,
     override val serializer: PlatformSerializer,
     override val uuidSource: UuidSource,
     override val ordinalStore: OrdinalStore,
@@ -51,6 +51,8 @@ internal class InstrumentationArgsImpl(
 ) : InstrumentationArgs {
 
     override val crashMarkerFile: File by lazy { crashMarkerFileProvider() }
+
+    override val store: KeyValueStore by lazy { storeProvider() }
 
     override val httpRequestInfoModifierChain: HttpRequestInfoModifierChain = HttpRequestInfoModifierChain(logger)
 

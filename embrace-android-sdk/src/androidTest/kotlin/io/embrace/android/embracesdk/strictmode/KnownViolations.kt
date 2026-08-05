@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.strictmode
 
 import android.os.Build
 import android.os.strictmode.DiskReadViolation
-import android.os.strictmode.DiskWriteViolation
 import android.os.strictmode.Violation
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -29,17 +28,6 @@ internal val KNOWN_VIOLATIONS: List<KnownViolation> = listOf(
             "stats the directory on every call",
     ),
     KnownViolation(
-        signature = "internal.injection.CoreModuleImpl.<init>",
-        violation = DiskReadViolation::class,
-        reason = "CoreModuleImpl.store eagerly opens the default SharedPreferences. Only fires when it beats " +
-            "ModuleInitBootstrapper.prewarmSharedPreferences, which it usually doesn't",
-    ),
-    KnownViolation(
-        signature = "internal.injection.CoreModuleImpl.<init>",
-        violation = DiskWriteViolation::class,
-        reason = "First launch has to mkdir shared_prefs",
-    ),
-    KnownViolation(
         signature = "internal.config.store.RemoteConfigStoreImpl.loadFromCache",
         violation = DiskReadViolation::class,
         reason = "PersistedConfig's ctor loads the persisted response from the config store",
@@ -60,16 +48,6 @@ internal val KNOWN_VIOLATIONS: List<KnownViolation> = listOf(
         signature = "internal.injection.SdkInitActionsKt.loadInstrumentationProviders",
         violation = DiskReadViolation::class,
         reason = "ServiceLoader reads META-INF/services out of the APK. R8 rewrites this away in release builds",
-    ),
-    KnownViolation(
-        signature = "internal.storage.EmbraceStorageService.getOrCreateEmbraceFilesDir",
-        violation = DiskWriteViolation::class,
-        reason = "Resolving the filesDirectory lazy calls File(filesDir, \"embrace\").mkdirs()",
-    ),
-    KnownViolation(
-        signature = "internal.storage.EmbraceStorageService.getOrCreateEmbraceFilesDir",
-        violation = DiskReadViolation::class,
-        reason = "As above - the mkdirs() is followed by an exists() check",
     ),
 )
 

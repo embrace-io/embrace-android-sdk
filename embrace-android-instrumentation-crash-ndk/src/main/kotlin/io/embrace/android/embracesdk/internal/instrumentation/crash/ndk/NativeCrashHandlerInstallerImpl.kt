@@ -28,7 +28,6 @@ internal class NativeCrashHandlerInstallerImpl(
 ) : NativeCrashHandlerInstaller {
 
     private val processIdentifier = args.processIdentifier
-    private val markerFilePath = args.crashMarkerFile.absolutePath
 
     private val configService: ConfigService = args.configService
     private val logger: InternalLogger = args.logger
@@ -48,8 +47,9 @@ internal class NativeCrashHandlerInstallerImpl(
     private fun startNativeCrashMonitoring() {
         try {
             if (sharedObjectLoader.loadEmbraceNative()) {
+                val markerFilePath = args.crashMarkerFile.absolutePath
                 updateSessionIds()
-                mainThreadHandler.postAtFrontOfQueue { installSignals() }
+                mainThreadHandler.postAtFrontOfQueue { installSignals(markerFilePath) }
                 mainThreadHandler.postDelayed(
                     Runnable(::checkSignalHandlersOverwritten),
                     HANDLER_CHECK_DELAY_MS,
@@ -103,7 +103,7 @@ internal class NativeCrashHandlerInstallerImpl(
         return allowList.any(culprit::contains)
     }
 
-    private fun installSignals() {
+    private fun installSignals(markerFilePath: String) {
         EmbTrace.trace("native-install-handlers") {
             delegate.installSignalHandlers(
                 markerFilePath,

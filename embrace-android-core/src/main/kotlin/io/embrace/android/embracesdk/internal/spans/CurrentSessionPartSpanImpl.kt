@@ -5,6 +5,11 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_MAX_CUSTOM_SPANS_PER_SESSION_PART
+import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_MAX_INTERNAL_SPANS_PER_SESSION_PART
+import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_MAX_NETWORK_SPANS_PER_SESSION_PART
+import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior.Companion.DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceLinkData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
@@ -31,8 +36,8 @@ internal class CurrentSessionPartSpanImpl(
     private val openTelemetrySupplier: Provider<OpenTelemetry>,
     private val embraceSpanFactorySupplier: Provider<EmbraceSpanFactory>,
     private val uuidSource: UuidSource,
+    private val otelBehaviorSupplier: Provider<OtelBehavior?>,
     private val customBreadcrumbLimitSupplier: Provider<Int>,
-    private val maxSpanEventsSupplier: Provider<Int>,
 ) : CurrentSessionPartSpan {
 
     /**
@@ -70,20 +75,37 @@ internal class CurrentSessionPartSpanImpl(
     override fun initialized(): Boolean = initialized
 
     /**
-     * Creating a new Span is only possible if the current session part span is active, the parent has already been started, and the total
-     * session trace limit has not been reached. Once this method returns true, a new span is assumed to have been created and will
-     * be counted as such towards the limits, so make sure there's no case afterwards where a Span is not created.
+     * Creating a new Span is only possible if the current session part span is active, the parent has already been started, and the
+     * session trace limit for the span's budget has not been reached. Network request spans draw from their own budget so that a
+     * network-heavy app cannot starve the rest of the SDK's instrumentation. Once this method returns true, a new span is assumed to
+     * have been created and will be counted as such towards the limits, so make sure there's no case afterwards where a Span is not
+     * created.
      */
-    override fun canStartNewSpan(parent: EmbraceSpan?, internal: Boolean): Boolean {
+    override fun canStartNewSpan(parent: EmbraceSpan?, internal: Boolean, type: EmbType): Boolean {
         val state = sessionPartState ?: return false
         if (!state.isReady || (parent != null && parent.spanId == null)) {
             return false
         }
 
-        return if (internal) {
-            checkCount(state.internalTraceCount, MAX_INTERNAL_SPANS_PER_SESSION, SPAN_LIMIT_TYPE)
-        } else {
-            checkCount(state.traceCount, MAX_NON_INTERNAL_SPANS_PER_SESSION, SPAN_LIMIT_TYPE)
+        val behavior = otelBehaviorSupplier()
+        return when {
+            !internal -> checkCount(
+                state.traceCount,
+                behavior?.getMaxCustomSpansPerSessionPart() ?: DEFAULT_MAX_CUSTOM_SPANS_PER_SESSION_PART,
+                SPAN_LIMIT_TYPE,
+            )
+
+            type == EmbType.Performance.Network -> checkCount(
+                state.networkTraceCount,
+                behavior?.getMaxNetworkSpansPerSessionPart() ?: DEFAULT_MAX_NETWORK_SPANS_PER_SESSION_PART,
+                NETWORK_SPAN_LIMIT_TYPE,
+            )
+
+            else -> checkCount(
+                state.internalTraceCount,
+                behavior?.getMaxInternalSpansPerSessionPart() ?: DEFAULT_MAX_INTERNAL_SPANS_PER_SESSION_PART,
+                SPAN_LIMIT_TYPE,
+            )
         }
     }
 
@@ -100,7 +122,11 @@ internal class CurrentSessionPartSpanImpl(
         return if (isBreadcrumb) {
             checkCount(state.breadcrumbCount, customBreadcrumbLimitSupplier(), SPAN_EVENT_LIMIT_TYPE)
         } else {
-            checkCount(state.eventCount, maxSpanEventsSupplier(), SPAN_EVENT_LIMIT_TYPE)
+            checkCount(
+                state.eventCount,
+                otelBehaviorSupplier()?.getMaxSpanEventsPerSessionPart() ?: DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART,
+                SPAN_EVENT_LIMIT_TYPE,
+            )
         }
     }
 
@@ -249,6 +275,7 @@ internal class CurrentSessionPartSpanImpl(
     private class SessionPartState(val span: EmbraceSdkSpan, val sessionPartId: String) {
         val traceCount: AtomicInteger = AtomicInteger(0)
         val internalTraceCount: AtomicInteger = AtomicInteger(0)
+        val networkTraceCount: AtomicInteger = AtomicInteger(0)
         val eventCount: AtomicInteger = AtomicInteger(0)
         val breadcrumbCount: AtomicInteger = AtomicInteger(0)
 
@@ -285,10 +312,8 @@ internal class CurrentSessionPartSpanImpl(
     }
 
     companion object {
-        const val MAX_INTERNAL_SPANS_PER_SESSION: Int = 5000
-        const val MAX_NON_INTERNAL_SPANS_PER_SESSION: Int = 500
-
         private const val SPAN_LIMIT_TYPE = "span"
+        private const val NETWORK_SPAN_LIMIT_TYPE = "network_span"
         private const val SPAN_EVENT_LIMIT_TYPE = "span_event"
     }
 }

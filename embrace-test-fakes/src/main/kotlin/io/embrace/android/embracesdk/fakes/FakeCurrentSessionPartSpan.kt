@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
@@ -60,7 +61,7 @@ class FakeCurrentSessionPartSpan(
         return payload
     }
 
-    override fun canStartNewSpan(parent: EmbraceSpan?, internal: Boolean): Boolean {
+    override fun canStartNewSpan(parent: EmbraceSpan?, internal: Boolean, type: EmbType): Boolean {
         return true
     }
 

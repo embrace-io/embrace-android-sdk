@@ -888,7 +888,7 @@ internal class SpanServiceImplTest {
     }
 
     @Suppress("UNUSED_PARAMETER")
-    private fun canStartNewSpan(parentSpan: EmbraceSpan?, internal: Boolean): Boolean {
+    private fun canStartNewSpan(parentSpan: EmbraceSpan?, internal: Boolean, type: EmbType): Boolean {
         return spanCreationAllowed
     }
 

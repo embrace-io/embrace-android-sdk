@@ -136,11 +136,9 @@ class OpenTelemetryModuleImpl(
         openTelemetrySupplier = { otelSdkWrapper.openTelemetryKotlin },
         embraceSpanFactorySupplier = { embraceSpanFactory },
         uuidSource = initModule.uuidSource,
+        otelBehaviorSupplier = { otelBehavior },
         // adding guard in case this is accessed before we fetch the config
         customBreadcrumbLimitSupplier = { breadcrumbBehavior?.getCustomBreadcrumbLimit() ?: DEFAULT_BREADCRUMB_LIMIT },
-        maxSpanEventsSupplier = {
-            otelBehavior?.getMaxSpanEventsPerSessionPart() ?: OtelBehavior.DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART
-        },
     ).also {
         internalSpanStopCallback = it::spanStopCallback
     }

@@ -46,7 +46,7 @@ internal class SdkStateApiDelegateTest {
             logModuleSupplier = { _, _, _, _, _, _, _ ->
                 FakeLogModule(logService = logService)
             },
-            userSessionOrchestrationModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _ ->
+            userSessionOrchestrationModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _, _ ->
                 FakeUserSessionOrchestrationModule(sessionIdsProvider = sessionIdsProvider)
             },
         )

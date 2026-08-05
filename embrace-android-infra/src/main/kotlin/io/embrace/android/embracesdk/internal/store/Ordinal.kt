@@ -1,6 +1,17 @@
 package io.embrace.android.embracesdk.internal.store
 
-enum class Ordinal(val key: String) {
+enum class Ordinal(
+    /**
+     * The key under which the ordinal's current value is persisted.
+     */
+    val key: String,
+
+    /**
+     * The key under which the ordinal's current scope is persisted, for ordinals whose value
+     * resets when the scope changes. Null for ordinals that don't support scoping.
+     */
+    val scopeKey: String? = null,
+) {
 
     /**
      * Increments on every crash. It allows us to check the % of crashes that
@@ -44,4 +55,14 @@ enum class Ordinal(val key: String) {
      * `emb.session_part_number`.
      */
     SESSION_PART("io.embrace.sessionpartnumber"),
+
+    /**
+     * Increments every time the SDK begins startup in a new app process, even if startup never
+     * completes, and resets when the app version changes, so it counts the number of SDK startups
+     * on the current app version. Surfaced as `emb.app.version_startup_counter`.
+     */
+    APP_VERSION_STARTUP(
+        key = "io.embrace.appversionstartupcounter",
+        scopeKey = "io.embrace.appversionstartupcounterscope",
+    ),
 }

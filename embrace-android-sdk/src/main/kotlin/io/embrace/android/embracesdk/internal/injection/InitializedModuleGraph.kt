@@ -184,6 +184,7 @@ internal class InitializedModuleGraph(
             initModule.logger,
             destination,
             configService,
+            coreModule.appVersionStartupCounter,
             initModule.startupClassifier,
             versionChecker,
         ) ?: DataCaptureServiceModuleImpl(
@@ -191,6 +192,7 @@ internal class InitializedModuleGraph(
             initModule.logger,
             destination,
             configService,
+            coreModule.appVersionStartupCounter,
             initModule.startupClassifier,
             versionChecker,
         )
@@ -274,6 +276,7 @@ internal class InitializedModuleGraph(
 
     override val userSessionOrchestrationModule: UserSessionOrchestrationModule = init("user-session-orchestration") {
         val startupDurationProvider = dataCaptureServiceModule.startupService::getSdkStartupDuration
+        val appVersionStartupCounterProvider = dataCaptureServiceModule.startupService::getAppVersionStartupCounter
         userSessionOrchestrationModuleSupplier?.invoke(
             initModule,
             openTelemetryModule,
@@ -284,6 +287,7 @@ internal class InitializedModuleGraph(
             instrumentationModule,
             payloadSourceModule,
             startupDurationProvider,
+            appVersionStartupCounterProvider,
             logModule,
             workerThreadModule,
         ) ?: UserSessionOrchestrationModuleImpl(
@@ -296,6 +300,7 @@ internal class InitializedModuleGraph(
             instrumentationModule,
             payloadSourceModule,
             startupDurationProvider,
+            appVersionStartupCounterProvider,
             logModule,
             workerThreadModule,
         )

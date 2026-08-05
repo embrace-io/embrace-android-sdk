@@ -7,7 +7,9 @@ import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupService
 import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupServiceImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -25,7 +27,7 @@ internal class StartupServiceImplTest {
         clock = FakeClock(10000000)
         backgroundWorker = fakeBackgroundWorker()
         destination = FakeTelemetryDestination()
-        startupService = StartupServiceImpl(destination)
+        startupService = StartupServiceImpl(destination, appVersionStartupCounter = 3)
     }
 
     @Test
@@ -49,7 +51,23 @@ internal class StartupServiceImplTest {
             assertTrue(private)
             assertEquals("false", attributes["ended-in-foreground"])
             assertEquals("main", attributes["thread-name"])
+            assertEquals("3", attributes[EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER])
         }
+        assertEquals(3, startupService.getAppVersionStartupCounter())
+    }
+
+    @Test
+    fun `invalid app version startup counter omitted from SDK startup span`() {
+        startupService = StartupServiceImpl(destination, appVersionStartupCounter = -1)
+        startupService.setSdkStartupInfo(
+            startTimeMs = 10,
+            endTimeMs = 20,
+            endState = AppState.BACKGROUND,
+            threadName = "main",
+        )
+        val span = destination.completedSpans().single()
+        assertFalse(span.attributes.containsKey(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER))
+        assertNull(startupService.getAppVersionStartupCounter())
     }
 
     @Test
@@ -80,5 +98,6 @@ internal class StartupServiceImplTest {
         assertEquals(1111L, startupService.getSdkInitStartMs())
         assertEquals(3222L, startupService.getSdkInitEndMs())
         assertEquals(2111L, startupService.getSdkStartupDuration())
+        assertEquals(3, startupService.getAppVersionStartupCounter())
     }
 }

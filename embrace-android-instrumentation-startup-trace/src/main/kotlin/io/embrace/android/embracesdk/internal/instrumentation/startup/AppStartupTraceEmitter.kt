@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -351,11 +352,19 @@ internal class AppStartupTraceEmitter(
             }
 
             if (sdkInitStartMs != null && sdkInitEndMs != null) {
+                val counter = startupServiceProvider()?.getAppVersionStartupCounter()
+                val attributes = if (counter != null) {
+                    mapOf(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER to counter.toString())
+                } else {
+                    emptyMap()
+                }
+
                 destination.recordCompletedSpan(
                     name = EMBRACE_INIT_SPAN,
                     startTimeMs = sdkInitStartMs,
                     endTimeMs = sdkInitEndMs,
                     parent = this,
+                    attributes = attributes,
                 )
             }
 

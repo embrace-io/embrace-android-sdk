@@ -9,6 +9,10 @@
   "events": [],
   "attributes": [
     {
+      "key": "emb.app.version_startup_counter",
+      "value": "1"
+    },
+    {
       "key": "emb.clean_exit",
       "value": "true"
     },

@@ -19,11 +19,15 @@ class DataCaptureServiceModuleImpl(
     logger: InternalLogger,
     destination: TelemetryDestination,
     configService: ConfigService,
+    appVersionStartupCounter: Int?,
     private val startupClassifier: StartupClassifier,
     versionChecker: VersionChecker = BuildVersionChecker,
 ) : DataCaptureServiceModule {
 
-    override val startupService: StartupService = StartupServiceImpl(destination)
+    override val startupService: StartupService = StartupServiceImpl(
+        destination = destination,
+        appVersionStartupCounter = appVersionStartupCounter,
+    )
 
     override val appStartupDataCollector: AppStartupDataCollector = AppStartupTraceEmitter(
         clock = clock,

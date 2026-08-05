@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -19,11 +20,13 @@ internal class DataCaptureServiceModuleImplTest {
             logger = FakeInternalLogger(),
             destination = FakeTelemetryDestination(),
             configService = FakeConfigService(),
+            appVersionStartupCounter = 1,
             startupClassifier = StartupClassifierImpl(),
         )
 
         assertNotNull(module.appStartupDataCollector)
         assertNotNull(module.startupService)
+        assertEquals(1, module.startupService.getAppVersionStartupCounter())
         assertNotNull(module.activityLoadEventEmitter)
         assertNotNull(module.uiLoadDataListener)
     }
@@ -37,6 +40,7 @@ internal class DataCaptureServiceModuleImplTest {
             configService = FakeConfigService(
                 autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uiLoadTracingEnabled = false),
             ),
+            appVersionStartupCounter = 1,
             startupClassifier = StartupClassifierImpl(),
         )
 
@@ -53,6 +57,7 @@ internal class DataCaptureServiceModuleImplTest {
             configService = FakeConfigService(
                 autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uiLoadTracingTraceAll = false),
             ),
+            appVersionStartupCounter = 1,
             startupClassifier = StartupClassifierImpl(),
         )
 

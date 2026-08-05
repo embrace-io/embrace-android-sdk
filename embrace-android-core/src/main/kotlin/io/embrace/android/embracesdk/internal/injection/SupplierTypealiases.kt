@@ -102,6 +102,7 @@ typealias UserSessionOrchestrationModuleSupplier = (
     instrumentationModule: InstrumentationModule,
     payloadSourceModule: PayloadSourceModule,
     startupDurationProvider: () -> Long?,
+    appVersionStartupCounterProvider: () -> Int?,
     logModule: LogModule,
     workerThreadModule: WorkerThreadModule,
 ) -> UserSessionOrchestrationModule

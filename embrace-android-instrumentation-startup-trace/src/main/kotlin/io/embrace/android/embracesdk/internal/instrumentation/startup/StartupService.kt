@@ -36,4 +36,10 @@ interface StartupService {
      * Returns the name of the thread on which the SDK init was run. Returns null if startup info was not recorded yet.
      */
     fun getInitThreadName(): String?
+
+    /**
+     * Returns the number of SDK startups on the current app version, including this one.
+     * Returns null if the counter could not be determined.
+     */
+    fun getAppVersionStartupCounter(): Int?
 }

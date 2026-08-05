@@ -23,6 +23,7 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.internal.toEmbracePayload
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -110,7 +111,11 @@ internal class AppStartupTraceTest {
             otelExportAssertion = {
                 with(awaitSpansWithType(7, EmbType.Performance.Default).associateBy { it.name }) {
                     assertEquals("yes", coldAppStartupRootSpan().attributes.toEmbracePayload().findAttributeValue("custom-attribute"))
-                    assertNotNull(embraceInitSpan())
+                    assertEquals(
+                        "1",
+                        embraceInitSpan().attributes.toEmbracePayload()
+                            .findAttributeValue(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER)
+                    )
                     with(initGapSpan()) {
                         assertEquals(sdkStartTimeMs, startEpochNanos.nanosToMillis())
                         assertEquals(activityInitStartMs, endEpochNanos.nanosToMillis())

@@ -1037,6 +1037,7 @@ internal class SessionOrchestratorTest {
             SessionPartSpanAttrPopulatorImpl(
                 destination,
                 { 0 },
+                { null },
                 FakeLogLimitingService(),
                 FakeMetadataService(),
             ),

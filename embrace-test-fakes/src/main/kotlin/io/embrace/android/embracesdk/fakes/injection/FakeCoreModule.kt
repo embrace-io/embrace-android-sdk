@@ -26,6 +26,7 @@ class FakeCoreModule(
         if (isMockKMock(application)) getMockedContext() else application.applicationContext,
     override val store: KeyValueStore = FakeKeyValueStore(),
     override val ordinalStore: OrdinalStore = FakeOrdinalStore(),
+    override val appVersionStartupCounter: Int = 1,
 ) : CoreModule {
 
     companion object {

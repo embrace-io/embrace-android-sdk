@@ -1,0 +1,16 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: emb.app
+    visibility: public
+    stability: development
+    brief: "Embrace application-level attributes"
+    attributes:
+      - ref: emb.app.version_startup_counter
+
+attributes:
+  - key: emb.app.version_startup_counter
+    type: string
+    brief: "The number of times the app has started up for the current app version."
+    stability: development
+    examples: ["1", "42"]

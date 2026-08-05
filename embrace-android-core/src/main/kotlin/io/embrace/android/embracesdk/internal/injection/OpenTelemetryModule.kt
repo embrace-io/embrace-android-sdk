@@ -54,6 +54,11 @@ interface OpenTelemetryModule {
     val otelSdkWrapper: OtelSdkWrapper
 
     /**
+     * Supplies the behavior that decides which OpenTelemetry SDK implementation is used.
+     */
+    fun setOtelBehavior(otelBehavior: OtelBehavior)
+
+    /**
      * Setup configuration configuration-dependent behavior
      */
     fun applyConfiguration(

@@ -1,19 +1,23 @@
 package io.embrace.android.embracesdk.internal.config.source
 
+import io.embrace.android.embracesdk.assertions.assertCountedDown
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeRemoteConfigSource
 import io.embrace.android.embracesdk.fakes.FakeRemoteConfigStore
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.store.StoredConfigResponse
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import kotlinx.serialization.SerializationException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ScheduledThreadPoolExecutor
 
 class CombinedRemoteConfigSourceTest {
 
-    private lateinit var source: CombinedRemoteConfigSource
     private lateinit var remoteConfig: RemoteConfig
     private lateinit var executorService: BlockingScheduledExecutorService
     private lateinit var remoteConfigSource: FakeRemoteConfigSource
@@ -25,46 +29,11 @@ class CombinedRemoteConfigSourceTest {
         executorService = BlockingScheduledExecutorService()
         remoteConfigSource = FakeRemoteConfigSource(ConfigHttpResponse(remoteConfig, "another"))
         remoteConfigStore = FakeRemoteConfigStore()
-        source = CombinedRemoteConfigSource(
-            remoteConfigStore,
-            lazy { remoteConfigSource },
-            BackgroundWorker(executorService),
-        )
-    }
-
-    @Test
-    fun `test initial config null`() {
-        assertNull(source.getConfig())
-    }
-
-    @Test
-    fun `test initial config populated`() {
-        val cfg = RemoteConfig(100)
-        source = CombinedRemoteConfigSource(
-            FakeRemoteConfigStore(StoredConfigResponse(cfg, null, null)),
-            lazy { remoteConfigSource },
-            BackgroundWorker(executorService),
-        )
-        assertEquals(cfg, source.getConfig())
-    }
-
-    @Test
-    fun `test device id null when not cached`() {
-        assertNull(source.getDeviceId())
-    }
-
-    @Test
-    fun `test device id sourced from cache`() {
-        source = CombinedRemoteConfigSource(
-            FakeRemoteConfigStore(StoredConfigResponse(RemoteConfig(), null, "cached-device-id")),
-            lazy { remoteConfigSource },
-            BackgroundWorker(executorService),
-        )
-        assertEquals("cached-device-id", source.getDeviceId())
     }
 
     @Test
     fun `test requests scheduled`() {
+        val source = createSource(response = null)
         assertEquals(0, remoteConfigSource.callCount)
         source.scheduleConfigRequests()
         executorService.runCurrentlyBlocked()
@@ -74,7 +43,7 @@ class CombinedRemoteConfigSourceTest {
 
     @Test
     fun `test persisted etag value populated`() {
-        remoteConfigStore.impl = StoredConfigResponse(RemoteConfig(), "etag", null)
+        val source = createSource(response = StoredConfigResponse(RemoteConfig(), "etag", null))
         assertEquals(0, remoteConfigSource.callCount)
         source.scheduleConfigRequests()
         executorService.runCurrentlyBlocked()
@@ -82,4 +51,38 @@ class CombinedRemoteConfigSourceTest {
         assertEquals(1, remoteConfigSource.callCount)
         assertEquals(1, remoteConfigStore.saveCount)
     }
+
+    @Test
+    fun `a throwing request does not stop the recurring schedule`() {
+        val worker = BackgroundWorker(ScheduledThreadPoolExecutor(1))
+        val latch = CountDownLatch(3)
+        remoteConfigSource.onCall = {
+            latch.countDown()
+            if (remoteConfigSource.callCount == 1) {
+                throw SerializationException("schema mismatch")
+            }
+        }
+
+        try {
+            createSource(response = null, worker = worker, intervalMs = 1).scheduleConfigRequests()
+            latch.assertCountedDown(waitTimeMs = 5000)
+        } finally {
+            worker.shutdownAndWait(timeoutMs = 1000)
+        }
+
+        // the config that arrived after the failure was still persisted
+        assertTrue("expected at least one config to be saved", remoteConfigStore.saveCount > 0)
+    }
+
+    private fun createSource(
+        response: StoredConfigResponse?,
+        worker: BackgroundWorker = BackgroundWorker(executorService),
+        intervalMs: Long = 60 * 60 * 1000,
+    ) = CombinedRemoteConfigSource(
+        remoteConfigStore,
+        response,
+        lazy { remoteConfigSource },
+        worker,
+        intervalMs,
+    )
 }

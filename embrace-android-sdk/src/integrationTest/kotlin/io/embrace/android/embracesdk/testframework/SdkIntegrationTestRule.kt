@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeBaseUrlConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
+import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
 import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehaviorImpl
@@ -120,6 +121,7 @@ internal class SdkIntegrationTestRule(
         instrumentedConfig: FakeInstrumentedConfig = FakeInstrumentedConfig(),
         persistedRemoteConfig: RemoteConfig = RemoteConfig(),
         serverResponseConfig: RemoteConfig = persistedRemoteConfig,
+        serverResponseConfigJson: String? = null,
         expectSdkToStart: Boolean = startSdk,
         setupAction: EmbraceSetupInterface.() -> Unit = {},
         preSdkStartAction: EmbracePreSdkStartInterface.() -> Unit = {},
@@ -129,7 +131,7 @@ internal class SdkIntegrationTestRule(
     ) {
         setup = embraceSetupInterfaceSupplier()
         val deliveryTracer = DeliveryTracer()
-        val apiServer = FakeApiServer(serverResponseConfig, deliveryTracer)
+        val apiServer = FakeApiServer(serverResponseConfig, deliveryTracer, serverResponseConfigJson)
         val server: MockWebServer = MockWebServer().apply {
             protocols = listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
             dispatcher = apiServer
@@ -158,7 +160,7 @@ internal class SdkIntegrationTestRule(
             embraceImpl.addSpanExporter(spanExporter.toOtelKotlinSpanExporter())
             embraceImpl.addLogRecordExporter(logExporter.toOtelKotlinLogRecordExporter())
 
-            // persist config here before the SDK starts up
+            // persist config here before the SDK starts up: the SDK reads it during start()
             persistConfig(persistedRemoteConfig)
             bootstrapper.openTelemetryModule.applyConfiguration(
                 sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(instrumentedConfig),
@@ -188,7 +190,7 @@ internal class SdkIntegrationTestRule(
      */
     private fun persistConfig(persistedRemoteConfig: RemoteConfig) {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
-        val storageDir = File(ctx.filesDir, "embrace_remote_config").apply {
+        val storageDir = File(ctx.filesDir, PersistedConfig.STORAGE_DIR_NAME).apply {
             mkdirs()
         }
         File(storageDir, "etag").writeText("persisted_etag")

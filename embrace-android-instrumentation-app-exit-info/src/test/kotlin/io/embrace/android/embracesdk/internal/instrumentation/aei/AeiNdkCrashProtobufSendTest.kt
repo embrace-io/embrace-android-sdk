@@ -139,7 +139,7 @@ internal class AeiNdkCrashProtobufSendTest {
         AeiDataSourceImpl(
             args,
             fakeBackgroundWorker(),
-            activityManager,
+            { activityManager },
             FakeKeyValueStore(),
             FakeOrdinalStore(),
         ) { ndkTraceFile }.onDataCaptureEnabled()

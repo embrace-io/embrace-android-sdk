@@ -36,6 +36,8 @@ class OpenTelemetryModuleImpl(
     private var storedSessionIdsProvider: SessionIdsProvider? = null
     private var storedUserIdProvider: (() -> String?)? = null
     private var storedEventMetadataProvider: (() -> Map<String, String>)? = null
+
+    @Volatile
     private var otelBehavior: OtelBehavior? = null
     private var sensitiveKeysBehavior: SensitiveKeysBehavior? = null
     private var breadcrumbBehavior: BreadcrumbBehavior? = null
@@ -94,6 +96,10 @@ class OpenTelemetryModuleImpl(
         this.bypassLimitsValidation = bypassValidation
         this.otelBehavior = otelBehavior
         this.breadcrumbBehavior = breadcrumbBehavior
+    }
+
+    override fun setOtelBehavior(otelBehavior: OtelBehavior) {
+        this.otelBehavior = otelBehavior
     }
 
     override fun setSessionIdsProvider(sessionIdsProvider: SessionIdsProvider) {

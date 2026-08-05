@@ -59,6 +59,10 @@ class FakeOpenTelemetryModule(
         // no-op
     }
 
+    override fun setOtelBehavior(otelBehavior: OtelBehavior) {
+        // no-op
+    }
+
     override fun setSessionIdsProvider(sessionIdsProvider: SessionIdsProvider) {
         // no-op
     }

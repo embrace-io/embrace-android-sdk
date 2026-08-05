@@ -1,11 +1,24 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.embracesdk.internal.prefs
 
+import android.content.Context
 import android.content.SharedPreferences
+import android.preference.PreferenceManager
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
+
+/**
+ * Creates the SDK's [KeyValueStore], backed by the default [SharedPreferences].
+ *
+ * Loading the underlying preferences blocks on disk, so callers should hold this behind a [Lazy] and
+ * share that one instance rather than resolving it eagerly.
+ */
+fun createKeyValueStore(context: Context, serializer: PlatformSerializer): KeyValueStore =
+    SharedPrefsStore(PreferenceManager.getDefaultSharedPreferences(context), serializer)
 
 internal class SharedPrefsStore(
     private val impl: SharedPreferences,

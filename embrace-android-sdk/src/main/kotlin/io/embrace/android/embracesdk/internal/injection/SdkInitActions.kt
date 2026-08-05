@@ -23,6 +23,8 @@ import java.util.ServiceLoader
 internal fun ModuleGraph.postInit() {
     openTelemetryModule.setEventMetadataProvider(eventMetadataSupplierProvider())
 
+    // note: otelBehavior is not applied here - it decides which OTel SDK is built, so it is set
+    // right after the persisted config is read in ModuleInitBootstrapper.init.
     openTelemetryModule.applyConfiguration(
         sensitiveKeysBehavior = configService.sensitiveKeysBehavior,
         bypassValidation = configService.isOnlyUsingOtelExporters(),
@@ -188,7 +190,7 @@ internal fun ModuleGraph.triggerPayloadSend() {
 internal fun ModuleGraph.markSdkInitComplete() {
     EmbTrace.trace("startup-tracking") {
         dataCaptureServiceModule.startupService.setSdkStartupInfo(
-            coreModule.sdkStartTime,
+            sdkStartTimeMs,
             initModule.clock.now(),
             essentialServiceModule.appStateTracker.getAppState(),
             Thread.currentThread().name,

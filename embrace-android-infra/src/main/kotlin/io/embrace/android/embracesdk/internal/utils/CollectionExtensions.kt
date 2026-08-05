@@ -47,33 +47,6 @@ fun <T> MutableMap<String, AtomicInteger>.lockAndRun(key: String, code: () -> T)
 }
 
 /**
- * A version of [take] that is useful for a [Collection] expected to be threadsafe but doesn't synchronize the reads with writes such
- * that the underlying data change during iteration. [take] has an optimization that returns the whole [Collection] if the size is less than
- * or equal to the size of the number of elements requested, but since the underlying data can change after the size check, you can
- * get more elements than requested if they were added during the [toList] call.
- */
-fun <T> Collection<T>.threadSafeTake(n: Int): List<T> {
-    return if (n == 0) {
-        emptyList()
-    } else {
-        val returnList = ArrayList<T>(n)
-
-        for ((count, item) in this.withIndex()) {
-            returnList.add(item)
-            if (count + 1 == n) {
-                break
-            }
-        }
-
-        return if (returnList.size <= 1) {
-            take(returnList.size)
-        } else {
-            returnList
-        }
-    }
-}
-
-/**
  * A stable and thread-safe implementation of [toList]. [toList] has a race between a `size` check and an unprotected `get(0)` or
  * `iterator().next()` call which can fail if the last item it removed from the collection after the `size == 1` check.
  */

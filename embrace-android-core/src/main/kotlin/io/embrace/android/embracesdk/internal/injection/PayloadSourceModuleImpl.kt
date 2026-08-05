@@ -1,9 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import android.app.usage.StorageStatsManager
 import android.content.Context
 import android.content.pm.ApplicationInfo
-import android.os.Build
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.capture.metadata.EmbraceMetadataService
@@ -30,9 +28,7 @@ import io.embrace.android.embracesdk.internal.envelope.session.SessionPartPayloa
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionService
 import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionServiceImpl
-import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 class PayloadSourceModuleImpl(
@@ -44,7 +40,6 @@ class PayloadSourceModuleImpl(
     otelModule: OpenTelemetryModule,
     otelPayloadMapper: OtelPayloadMapper?,
     deliveryModule: DeliveryModule?,
-    versionChecker: VersionChecker = BuildVersionChecker,
 ) : PayloadSourceModule {
 
     override val rnBundleIdTracker: RnBundleIdTracker by lazy {
@@ -54,14 +49,6 @@ class PayloadSourceModuleImpl(
             coreModule.store,
             workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
         )
-    }
-
-    private val storageManager: Lazy<StorageStatsManager?> = lazy {
-        if (versionChecker.isAtLeast(Build.VERSION_CODES.O)) {
-            coreModule.context.getSystemServiceSafe(Context.STORAGE_STATS_SERVICE) as StorageStatsManager?
-        } else {
-            null
-        }
     }
 
     private val partPayloadSource = EmbTrace.trace("session-payload-source") {
@@ -125,7 +112,6 @@ class PayloadSourceModuleImpl(
         EmbraceMetadataService(
             lazyOf(resourceSource),
             coreModule.context,
-            storageManager,
             configService,
             coreModule.store,
             initModule.clock,

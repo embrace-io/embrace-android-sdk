@@ -12,11 +12,6 @@ import io.embrace.android.embracesdk.internal.store.OrdinalStore
 interface CoreModule {
 
     /**
-     * Start time in milliseconds at which SDK initialization started
-     */
-    val sdkStartTime: Long
-
-    /**
      * Reference to the context. This will always return the application context so won't leak.
      */
     val context: Context

@@ -9,18 +9,20 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicBoolean
 
 @Suppress("DEPRECATION") // uses deprecated APIs for backwards compat
 internal class EmbraceNetworkConnectivityService(
     private val context: Context,
     private val backgroundWorker: BackgroundWorker,
     private val logger: InternalLogger,
-    private val connectivityManager: ConnectivityManager?,
+    private val connectivityManager: Lazy<ConnectivityManager?>,
 ) : BroadcastReceiver(), NetworkConnectivityService {
 
     private val intentFilter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
     private var lastConnectivityStatus: ConnectivityStatus = ConnectivityStatus.Unverified
     private val networkConnectivityListeners = CopyOnWriteArrayList<NetworkConnectivityListener>()
+    private val registered = AtomicBoolean(false)
 
     override fun onReceive(context: Context, intent: Intent) {
         try {
@@ -35,10 +37,11 @@ internal class EmbraceNetworkConnectivityService(
     }
 
     private fun getCurrentConnectivityStatus(): ConnectivityStatus {
-        var status: ConnectivityStatus
-        try {
-            val networkInfo = connectivityManager?.activeNetworkInfo
-            status = if (networkInfo != null && networkInfo.isConnected) {
+        return try {
+            // if ConnectivityManager is unavailable, assume the network is reachable
+            val manager = connectivityManager.value ?: return ConnectivityStatus.Unverified
+            val networkInfo = manager.activeNetworkInfo
+            if (networkInfo != null && networkInfo.isConnected) {
                 // Network is reachable
                 when (networkInfo.type) {
                     ConnectivityManager.TYPE_WIFI -> OptimisticWifi
@@ -51,21 +54,28 @@ internal class EmbraceNetworkConnectivityService(
             }
         } catch (e: Exception) {
             logger.trackInternalError(InternalErrorType.NetworkStatusCaptureFail, e)
-            status = OptimisticUnknown
+            OptimisticUnknown
         }
-        return status
     }
 
     override fun register() {
         backgroundWorker.submit {
-            runCatching {
-                context.registerReceiver(this, intentFilter)
+            if (connectivityManager.value != null && !registered.getAndSet(true)) {
+                runCatching {
+                    context.registerReceiver(this, intentFilter)
+                }.onFailure {
+                    registered.set(false)
+                }
             }
         }
     }
 
     override fun close() {
-        context.unregisterReceiver(this)
+        if (registered.getAndSet(false)) {
+            runCatching {
+                context.unregisterReceiver(this)
+            }
+        }
     }
 
     /**

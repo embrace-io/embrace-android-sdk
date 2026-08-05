@@ -77,12 +77,6 @@ object EmbSessionAttributes {
     const val EMB_PRIVATE_SEND_MODE: String = "emb.private.send_mode"
 
     /**
-     * Unique ID assigned to each app instance.
-     */
-    @ExperimentalSemconv
-    const val EMB_PRIVATE_SEQUENCE_ID: String = "emb.private.sequence_id"
-
-    /**
      * Monotonically increasing sequence ID given to completed spans expected to be sent to the server.
      */
     @ExperimentalSemconv

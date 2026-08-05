@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicReference
 internal class NetworkCallbackConnectivityService(
     private val backgroundWorker: BackgroundWorker,
     private val logger: InternalLogger,
-    private val connectivityManager: ConnectivityManager?,
+    private val connectivityManager: Lazy<ConnectivityManager?>,
 ) : NetworkConnectivityService, ConnectivityManager.NetworkCallback() {
 
     private var currentNetwork: AtomicReference<Network?> = AtomicReference(null)
@@ -45,18 +45,19 @@ internal class NetworkCallbackConnectivityService(
 
     override fun register() {
         backgroundWorker.submit {
-            if (connectivityManager != null && !registered.getAndSet(true)) {
+            val manager = connectivityManager.value
+            if (manager != null && !registered.getAndSet(true)) {
                 updateSafely {
-                    connectivityManager.activeNetwork?.let { defaultNetwork ->
+                    manager.activeNetwork?.let { defaultNetwork ->
                         synchronized(currentNetwork) {
                             updateNetwork(defaultNetwork)
                             updateStatus(
                                 updatedNetwork = defaultNetwork,
-                                networkCapabilities = connectivityManager.getNetworkCapabilities(defaultNetwork),
+                                networkCapabilities = manager.getNetworkCapabilities(defaultNetwork),
                             )
                         }
                     }
-                    connectivityManager.registerDefaultNetworkCallback(this)
+                    manager.registerDefaultNetworkCallback(this)
                 }
             }
         }
@@ -65,8 +66,8 @@ internal class NetworkCallbackConnectivityService(
     override fun close() {
         backgroundWorker.submit {
             updateSafely {
-                if (connectivityManager != null && registered.getAndSet(false)) {
-                    connectivityManager.unregisterNetworkCallback(this)
+                if (registered.getAndSet(false)) {
+                    connectivityManager.value?.unregisterNetworkCallback(this)
                 }
             }
         }

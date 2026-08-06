@@ -650,7 +650,6 @@ internal class SessionOrchestratorTest {
                     error("simulated store failure")
 
                 override fun edit(action: KeyValueStoreEditor.() -> Unit) = FakeKeyValueStore().edit(action)
-                override fun incrementAndGet(key: String): Int = 0
             },
         )
 

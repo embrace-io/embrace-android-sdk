@@ -30,6 +30,13 @@ internal class SdkModeBehaviorImplTest {
     }
 
     @Test
+    fun testDefaultThresholdDoesNotResolveDeviceId() {
+        val neverResolve = BehaviorThresholdCheck { error("device ID should not be resolved for a 100% threshold") }
+        val behavior = createSdkModeBehavior(thresholdCheck = neverResolve)
+        assertFalse(behavior.isSdkDisabled())
+    }
+
+    @Test
     fun testSdkEnabled() {
         // Device disabled
         assertEquals(100.0f, disabled.getNormalizedDeviceId())

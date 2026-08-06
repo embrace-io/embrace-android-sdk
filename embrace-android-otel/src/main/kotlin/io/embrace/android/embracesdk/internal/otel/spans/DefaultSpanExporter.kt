@@ -1,9 +1,10 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
+import io.embrace.android.embracesdk.internal.otel.export.ExternalExportDispatcher
+import io.embrace.android.embracesdk.internal.otel.export.InlineExporter
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbracePayload
-import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.opentelemetry.kotlin.export.OperationResultCode
 import io.opentelemetry.kotlin.tracing.data.SpanData
 import io.opentelemetry.kotlin.tracing.export.SpanExporter
@@ -15,28 +16,18 @@ internal class DefaultSpanExporter(
     private val spanRepository: SpanRepository,
     private val externalExporters: List<SpanExporter>,
     private val exportCheck: () -> Boolean,
-) : SpanExporter {
+    private val externalExportDispatcher: ExternalExportDispatcher,
+) : SpanExporter, InlineExporter<SpanData> {
 
-    override suspend fun export(telemetry: List<SpanData>): OperationResultCode {
+    override fun exportInline(telemetry: List<SpanData>): OperationResultCode {
         if (!exportCheck()) {
             return OperationResultCode.Success
         }
-        val exportable = if (externalExporters.isEmpty()) {
-            emptyList()
-        } else {
-            telemetry.filterNot { it.attributes.containsKey(PrivateSpan.key) }
-        }
-        var result = spanRepository.storeCompletedOtelSpans(telemetry.map(SpanData::toEmbracePayload))
-        if (externalExporters.isNotEmpty() && result == StoreDataResult.SUCCESS) {
-            EmbTrace.trace("otel-external-export") {
-                externalExporters.forEach { exporter ->
-                    try {
-                        exporter.export(exportable)
-                    } catch (ignored: Throwable) {
-                        result = StoreDataResult.FAILURE
-                    }
-                }
-            }
+        val result = spanRepository.storeCompletedOtelSpans(telemetry.map(SpanData::toEmbracePayload))
+
+        if (result == StoreDataResult.SUCCESS && externalExporters.isNotEmpty()) {
+            val exportable = telemetry.filterNot { it.attributes.containsKey(PrivateSpan.key) }
+            externalExportDispatcher.dispatch(externalExporters) { it.export(exportable) }
         }
 
         return when (result) {
@@ -45,7 +36,12 @@ internal class DefaultSpanExporter(
         }
     }
 
-    override suspend fun forceFlush(): OperationResultCode = OperationResultCode.Success
+    override suspend fun export(telemetry: List<SpanData>): OperationResultCode = exportInline(telemetry)
+
+    override suspend fun forceFlush(): OperationResultCode {
+        externalExportDispatcher.awaitPendingExports()
+        return OperationResultCode.Success
+    }
 
     override suspend fun shutdown(): OperationResultCode = OperationResultCode.Success
 }

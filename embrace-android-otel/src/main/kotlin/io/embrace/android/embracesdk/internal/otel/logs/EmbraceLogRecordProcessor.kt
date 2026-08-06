@@ -1,15 +1,15 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.export.InlineExporter
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.export.OperationResultCode
-import io.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
 import io.opentelemetry.kotlin.logging.model.ReadWriteLogRecord
+import io.opentelemetry.kotlin.logging.model.ReadableLogRecord
 import io.opentelemetry.kotlin.semconv.LogAttributes
-import kotlinx.coroutines.runBlocking
 
 /**
  * A [LogRecordProcessor] that adds the attributes Embrace requires on every log record, then exports it.
@@ -17,10 +17,10 @@ import kotlinx.coroutines.runBlocking
 internal class EmbraceLogRecordProcessor(
     private val uuidSource: UuidSource,
     private val metadataProvider: Provider<Map<String, String>>,
-    private val logRecordExporter: LogRecordExporter,
+    private val logRecordExporter: InlineExporter<ReadableLogRecord>,
 ) : LogRecordProcessor {
 
-    override suspend fun forceFlush(): OperationResultCode = OperationResultCode.Success
+    override suspend fun forceFlush(): OperationResultCode = logRecordExporter.forceFlush()
 
     override fun onEmit(log: ReadWriteLogRecord, context: Context) {
         val attributes = log.attributes
@@ -40,7 +40,9 @@ internal class EmbraceLogRecordProcessor(
             }
         }
 
-        runBlocking { logRecordExporter.export(mutableListOf(log)) }
+        // exported on the calling thread: a crash log has to reach the sink before crash teardown
+        // persists the payload and the process dies. See [InlineExporter].
+        logRecordExporter.exportInline(listOf(log))
     }
 
     override suspend fun shutdown(): OperationResultCode = OperationResultCode.Success

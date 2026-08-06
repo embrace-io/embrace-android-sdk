@@ -11,7 +11,9 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -74,6 +76,47 @@ internal class InstrumentationRegistryTest {
         registry.onPostSessionChange()
         assertEquals(1, dataSource.sessionEnds)
         assertEquals(1, dataSource.sessionChanges)
+    }
+
+    @Test
+    fun `async provider registers and enables capture on a worker, not the calling thread`() {
+        val executor = BlockingScheduledExecutorService(blockingMode = true)
+        val args = FakeInstrumentationArgs(
+            application = ApplicationProvider.getApplicationContext(),
+            backgroundWorkerSupplier = { BackgroundWorker(executor) },
+        )
+        var registerCount = 0
+        val provider = FakeInstrumentationProvider(
+            action = { registerCount++ },
+            dataSourceState = DataSourceState(factory = { dataSource }),
+            asyncInit = true,
+        )
+
+        registry.loadInstrumentations(listOf(provider), args)
+
+        // nothing ran on the calling thread - it was all deferred to the worker
+        assertEquals(0, registerCount)
+        assertNull(registry.findByType(FakeDataSource::class))
+        assertEquals(0, dataSource.enableDataCaptureCount)
+
+        // register and the enable callback both happen in a single worker task
+        executor.runCurrentlyBlocked()
+        assertEquals(1, registerCount)
+        assertEquals(dataSource, registry.findByType(FakeDataSource::class))
+        assertEquals(1, dataSource.enableDataCaptureCount)
+    }
+
+    @Test
+    fun `sync provider enables capture on the calling thread`() {
+        val args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
+        val provider = FakeInstrumentationProvider(
+            action = {},
+            dataSourceState = DataSourceState(factory = { dataSource }),
+        )
+
+        registry.loadInstrumentations(listOf(provider), args)
+        assertEquals(dataSource, registry.findByType(FakeDataSource::class))
+        assertEquals(1, dataSource.enableDataCaptureCount)
     }
 
     @Test

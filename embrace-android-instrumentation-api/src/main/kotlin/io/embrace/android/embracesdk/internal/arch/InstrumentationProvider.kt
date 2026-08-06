@@ -25,4 +25,11 @@ interface InstrumentationProvider {
      */
     val priority: Int
         get() = 10000
+
+    /**
+     * Whether this instrumentation's [register] call should be executed on a background worker
+     * rather than on the main thread. Defaults to false.
+     */
+    val asyncInit: Boolean
+        get() = false
 }

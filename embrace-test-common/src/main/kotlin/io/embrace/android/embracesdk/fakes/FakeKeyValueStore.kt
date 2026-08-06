@@ -7,6 +7,13 @@ class FakeKeyValueStore : KeyValueStore {
 
     private val map = mutableMapOf<String, Any?>()
 
+    /**
+     * The number of times [edit] has been called, i.e. the number of commits that a real store
+     * would have performed.
+     */
+    var editCount: Int = 0
+        private set
+
     fun values(): Map<String, Any?> = map.toMap()
 
     override fun getString(key: String): String? {
@@ -36,13 +43,8 @@ class FakeKeyValueStore : KeyValueStore {
     }
 
     override fun edit(action: KeyValueStoreEditor.() -> Unit) {
+        editCount++
         FakeEditor(map).action()
-    }
-
-    override fun incrementAndGet(key: String): Int {
-        val newValue = (map[key] as? Int ?: 0) + 1
-        map[key] = newValue
-        return newValue
     }
 
     private class FakeEditor(private val map: MutableMap<String, Any?>) : KeyValueStoreEditor {

@@ -73,52 +73,47 @@ internal class ModuleInitBootstrapper(
             if (isInitialized()) {
                 return@trace false
             }
-            synchronized(delegate) {
-                if (isInitialized()) {
-                    return@trace false
-                }
-                // stamped before anything else so that the SDK init span covers all the work below
-                val startTimeMs = initModule.clock.now()
-                val keyValueStore = lazy { createKeyValueStore(context, initModule.jsonSerializer) }
-                val persistedConfig = EmbTrace.trace("persisted-config-load") {
-                    PersistedConfig(
-                        serializer = initModule.jsonSerializer,
-                        filesDir = context.filesDir,
-                        instrumentedConfig = initModule.instrumentedConfig,
-                        keyValueStore = keyValueStore,
-                        uuidSource = initModule.uuidSource,
-                    )
-                }
-                openTelemetryModule.setOtelBehavior(persistedConfig.otelBehavior)
-
-                val workerThreadModule = EmbTrace.trace("workerthread-init") {
-                    workerThreadModuleSupplier?.invoke() ?: WorkerThreadModuleImpl()
-                }
-                prewarmSharedPreferences(context, workerThreadModule)
-                delegate = InitializedModuleGraph(
-                    context,
-                    versionChecker,
-                    startTimeMs,
-                    initModule,
-                    openTelemetryModule,
-                    workerThreadModule,
-                    keyValueStore,
-                    persistedConfig,
-                    coreModuleSupplier,
-                    configServiceSupplier,
-                    storageServiceSupplier,
-                    essentialServiceModuleSupplier,
-                    featureModuleSupplier,
-                    instrumentationModuleSupplier,
-                    dataCaptureServiceModuleSupplier,
-                    deliveryModuleSupplier,
-                    threadBlockageServiceSupplier,
-                    logModuleSupplier,
-                    userSessionOrchestrationModuleSupplier,
-                    payloadSourceModuleSupplier,
+            // stamped before anything else so that the SDK init span covers all the work below
+            val startTimeMs = initModule.clock.now()
+            val keyValueStore = lazy { createKeyValueStore(context, initModule.jsonSerializer) }
+            val persistedConfig = EmbTrace.trace("persisted-config-load") {
+                PersistedConfig(
+                    serializer = initModule.jsonSerializer,
+                    filesDir = context.filesDir,
+                    instrumentedConfig = initModule.instrumentedConfig,
+                    keyValueStore = keyValueStore,
+                    uuidSource = initModule.uuidSource,
                 )
-                isInitialized()
             }
+            openTelemetryModule.setOtelBehavior(persistedConfig.otelBehavior)
+
+            val workerThreadModule = EmbTrace.trace("workerthread-init") {
+                workerThreadModuleSupplier?.invoke() ?: WorkerThreadModuleImpl()
+            }
+            prewarmSharedPreferences(context, workerThreadModule)
+            delegate = InitializedModuleGraph(
+                context,
+                versionChecker,
+                startTimeMs,
+                initModule,
+                openTelemetryModule,
+                workerThreadModule,
+                keyValueStore,
+                persistedConfig,
+                coreModuleSupplier,
+                configServiceSupplier,
+                storageServiceSupplier,
+                essentialServiceModuleSupplier,
+                featureModuleSupplier,
+                instrumentationModuleSupplier,
+                dataCaptureServiceModuleSupplier,
+                deliveryModuleSupplier,
+                threadBlockageServiceSupplier,
+                logModuleSupplier,
+                userSessionOrchestrationModuleSupplier,
+                payloadSourceModuleSupplier,
+            )
+            isInitialized()
         } catch (ignored: SdkDisabledException) {
             // do nothing - avoid instantiating SDK code any more than necessary.
             false
@@ -129,13 +124,9 @@ internal class ModuleInitBootstrapper(
         if (!isInitialized()) {
             return
         }
-        synchronized(delegate) {
-            if (isInitialized()) {
-                essentialServiceModule.networkConnectivityService.close()
-                workerThreadModule.close()
-                delegate = UninitializedModuleGraph
-            }
-        }
+        essentialServiceModule.networkConnectivityService.close()
+        workerThreadModule.close()
+        delegate = UninitializedModuleGraph
     }
 
     private fun isInitialized(): Boolean = delegate != UninitializedModuleGraph

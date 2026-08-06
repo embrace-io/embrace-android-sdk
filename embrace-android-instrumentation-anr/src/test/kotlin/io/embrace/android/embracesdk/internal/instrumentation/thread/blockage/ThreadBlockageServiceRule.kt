@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 import android.os.Looper
+import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
-import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.fakes.behavior.FakeThreadBlockageBehavior
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.utils.Provider

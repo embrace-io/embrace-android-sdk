@@ -4,9 +4,9 @@ import android.app.Application
 import android.os.Looper
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.testing.TestLifecycleOwner
+import io.embrace.android.embracesdk.fakes.FakeProcessStateListener
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
-import io.embrace.android.embracesdk.fakes.FakeProcessStateListener
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener

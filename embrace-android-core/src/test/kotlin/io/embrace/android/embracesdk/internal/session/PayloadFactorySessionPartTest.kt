@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.session
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeSessionPartTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService

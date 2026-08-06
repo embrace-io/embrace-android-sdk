@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.envelope.session
 
+import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
-import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl

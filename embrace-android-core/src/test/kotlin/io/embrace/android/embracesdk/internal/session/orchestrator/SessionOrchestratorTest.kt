@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
+import android.app.ActivityManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
@@ -990,7 +991,7 @@ internal class SessionOrchestratorTest {
         )
         userSessionPropertiesService = FakeUserSessionPropertiesService()
         sessionTracker = SessionPartTrackerImpl(
-            activityManager = null,
+            activityManager = lazyOf<ActivityManager?>(null),
             logger = logger,
         )
         sessionCacheExecutor = BlockingScheduledExecutorService(clock, true)

@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import java.util.concurrent.CopyOnWriteArraySet
 
 internal class SessionPartTrackerImpl(
-    private val activityManager: ActivityManager?,
+    private val activityManager: Lazy<ActivityManager?>,
     private val logger: InternalLogger,
 ) : SessionPartTracker {
 
@@ -54,7 +54,7 @@ internal class SessionPartTrackerImpl(
     override fun setProcessStateSummary(sessionPartId: String, userSessionId: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             try {
-                activityManager?.setProcessStateSummary("${sessionPartId}_$userSessionId".toByteArray())
+                activityManager.value?.setProcessStateSummary("${sessionPartId}_$userSessionId".toByteArray())
             } catch (e: Throwable) {
                 logger.trackInternalError(InternalErrorType.ProcessStateSummaryFail, e)
             }

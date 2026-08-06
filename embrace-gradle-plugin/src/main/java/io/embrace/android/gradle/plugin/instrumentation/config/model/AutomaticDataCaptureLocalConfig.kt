@@ -24,6 +24,9 @@ data class AutomaticDataCaptureLocalConfig(
 
     @Json(name = "end_startup_with_app_ready")
     val endStartupWithAppReadyEnabled: Boolean? = null,
+
+    @Json(name = "activity_process_lifecycle_tracker_enabled")
+    val activityProcessLifecycleTrackerEnabled: Boolean? = null,
 ) : Serializable {
 
     private companion object {

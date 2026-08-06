@@ -42,6 +42,7 @@ internal class AutoDataCaptureBehaviorImplTest {
             assertFalse(isNetworkCallbackConnectivityServiceEnabled())
             assertTrue(isNavigationStateCaptureEnabled())
             assertFalse(isSmoothnessCaptureEnabled())
+            assertFalse(isActivityProcessLifecycleTrackerEnabled())
         }
     }
 
@@ -210,9 +211,41 @@ internal class AutoDataCaptureBehaviorImplTest {
         )
     }
 
+    @Test
+    fun `activity process lifecycle tracker disabled by default`() {
+        assertFalse(createAutoDataCaptureBehavior(remoteCfg = null).isActivityProcessLifecycleTrackerEnabled())
+    }
+
+    @Test
+    fun `activity process lifecycle tracker falls back to local flag when remote field null`() {
+        assertTrue(
+            createBehavior(localActivityProcessLifecycleTrackerEnabled = true, remote = RemoteConfig())
+                .isActivityProcessLifecycleTrackerEnabled(),
+        )
+    }
+
+    @Test
+    fun `activity process lifecycle tracker enabled when pct is 100`() {
+        assertTrue(
+            createBehavior(remote = RemoteConfig(pctActivityProcessLifecycleTrackerEnabled = 100.0f))
+                .isActivityProcessLifecycleTrackerEnabled(),
+        )
+    }
+
+    @Test
+    fun `activity process lifecycle tracker remote pct of 0 overrides enabled local flag`() {
+        assertFalse(
+            createBehavior(
+                localActivityProcessLifecycleTrackerEnabled = true,
+                remote = RemoteConfig(pctActivityProcessLifecycleTrackerEnabled = 0.0f),
+            ).isActivityProcessLifecycleTrackerEnabled(),
+        )
+    }
+
     private fun createBehavior(
         localUiLoadTracingEnabled: Boolean = true,
         localUiLoadTracingTraceAllEnabled: Boolean = true,
+        localActivityProcessLifecycleTrackerEnabled: Boolean = false,
         remote: RemoteConfig,
     ) = AutoDataCaptureBehaviorImpl(
         thresholdCheck = BehaviorThresholdCheck { FAKE_DEVICE_ID },
@@ -220,6 +253,7 @@ internal class AutoDataCaptureBehaviorImplTest {
             enabledFeatures = FakeEnabledFeatureConfig(
                 uiLoadTracingTraceAll = localUiLoadTracingTraceAllEnabled,
                 uiLoadTracingEnabled = localUiLoadTracingEnabled,
+                activityProcessLifecycleTracker = localActivityProcessLifecycleTrackerEnabled,
             ),
         ),
         remote = remote,

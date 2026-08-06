@@ -142,13 +142,14 @@ internal class EmbraceSetupInterface(
             )
             DecoratedConfigService(impl)
         },
-        essentialServiceModuleSupplier = { initModule, configService, openTelemetryModule, coreModule, workerThreadModule, _, _, sessionOrchestratorProvider ->
+        essentialServiceModuleSupplier = { initModule, configService, openTelemetryModule, coreModule, workerThreadModule, startupContext, _, _, sessionOrchestratorProvider ->
             EssentialServiceModuleImpl(
                 initModule = initModule,
                 configService = configService,
                 openTelemetryModule = openTelemetryModule,
                 coreModule = coreModule,
                 workerThreadModule = workerThreadModule,
+                startupContext = startupContext,
                 lifecycleTrackerProvider = { AndroidxProcessLifecycleTracker(fakeLifecycleOwner) },
                 networkConnectivityServiceProvider = { fakeNetworkConnectivityService },
                 sessionOrchestratorProvider = sessionOrchestratorProvider,

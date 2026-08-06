@@ -121,6 +121,13 @@ data class RemoteConfig(
     @SerialName("pct_screen_tracking_enabled")
     val pctNavigationStateCaptureEnabled: Float? = null,
 
+    /**
+     * Percentage of devices for which the activity-callback-based process lifecycle tracker is used
+     * instead of the androidx ProcessLifecycleOwner implementation.
+     */
+    @SerialName("pct_activity_process_lifecycle_tracker_enabled")
+    val pctActivityProcessLifecycleTrackerEnabled: Float? = null,
+
     @SerialName("user_session")
     val userSession: UserSessionRemoteConfig? = null,
 

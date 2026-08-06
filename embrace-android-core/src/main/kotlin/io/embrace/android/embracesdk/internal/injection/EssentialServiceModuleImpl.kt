@@ -4,7 +4,6 @@ import android.app.ActivityManager
 import android.content.Context
 import android.net.ConnectivityManager
 import android.os.Build
-import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.destination.TelemetryDestinationImpl
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
@@ -22,9 +21,9 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProviderImpl
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
-import io.embrace.android.embracesdk.internal.session.lifecycle.AndroidxProcessLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateTrackerImpl
+import io.embrace.android.embracesdk.internal.session.lifecycle.createLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -36,6 +35,7 @@ class EssentialServiceModuleImpl(
     openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
+    startupContext: Context?,
     lifecycleTrackerProvider: Provider<LifecycleTracker?>,
     networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
     private val sessionOrchestratorProvider: Provider<SessionOrchestrator>,
@@ -43,7 +43,7 @@ class EssentialServiceModuleImpl(
 
     override val processStateTracker: ProcessStateTracker = EmbTrace.trace("process-state-service-init") {
         val lifecycleTracker = lifecycleTrackerProvider()
-            ?: AndroidxProcessLifecycleTracker(ProcessLifecycleOwner.get())
+            ?: createLifecycleTracker(configService, coreModule.application, startupContext)
         ProcessStateTrackerImpl(initModule.logger, lifecycleTracker)
             .apply { register() }
     }

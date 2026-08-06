@@ -68,11 +68,11 @@ class ConfigServiceImpl(
         )
     }
 
-    override val deviceId: String = persistedConfig.deviceId
+    override val deviceId: String by lazy { persistedConfig.deviceId }
 
-    private val remoteConfigSource: RemoteConfigSource? = run {
+    private val remoteConfigSource: RemoteConfigSource? by lazy {
         if (persistedConfig.onlyOtelExportEnabled) {
-            return@run null
+            return@lazy null
         }
 
         OkHttpRemoteConfigSource(

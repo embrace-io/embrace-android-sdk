@@ -33,7 +33,7 @@ internal class UserSessionPropertiesServiceImplTest {
         destination = FakeTelemetryDestination()
         telemetryService = FakeTelemetryService()
         service = UserSessionPropertiesServiceImpl(
-            FakeKeyValueStore(),
+            lazyOf(FakeKeyValueStore()),
             fakeConfigService,
             destination,
             telemetryService,

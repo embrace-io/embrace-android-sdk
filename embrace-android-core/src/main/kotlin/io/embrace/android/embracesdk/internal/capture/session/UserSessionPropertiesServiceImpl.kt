@@ -9,14 +9,17 @@ import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils
 
 internal class UserSessionPropertiesServiceImpl(
-    private val store: KeyValueStore,
+    private val store: Lazy<KeyValueStore>,
     private val configService: ConfigService,
     destination: TelemetryDestination,
     private val telemetryService: TelemetryService,
 ) : UserSessionPropertiesService {
 
     private var listener: ((Map<String, String>) -> Unit)? = null
-    private val props = EmbraceUserSessionProperties(store, configService, destination, telemetryService)
+
+    private val props by lazy {
+        EmbraceUserSessionProperties(store.value, configService, destination, telemetryService)
+    }
 
     override fun addProperty(originalKey: String, originalValue: String, scope: PropertyScope): Boolean {
         if (!isValidKey(originalKey)) {

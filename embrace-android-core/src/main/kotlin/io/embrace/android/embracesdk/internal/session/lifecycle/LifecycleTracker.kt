@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
 /**
  * Detects when the app process moves between the foreground and the background by observing and reporting transitions.
  */
-internal interface LifecycleTracker {
+interface LifecycleTracker {
 
     /**
      * Returns the process state as currently reported by the platform.

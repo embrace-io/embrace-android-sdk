@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
 /**
  * Reports process state transitions as observed by androidx's ProcessLifecycleOwner.
  */
-internal class AndroidxProcessLifecycleTracker(
+class AndroidxProcessLifecycleTracker(
     private val lifecycleOwner: LifecycleOwner,
 ) : LifecycleTracker, LifecycleEventObserver {
 

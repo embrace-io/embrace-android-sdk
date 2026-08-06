@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.assertions.getUserSessionTerminationReason
 import io.embrace.android.embracesdk.assertions.isBackgroundOnlyPart
 import io.embrace.android.embracesdk.assertions.isFinalSessionPart
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -73,8 +73,8 @@ internal class UserSessionLifecycleTest {
                 recordSession()
             },
             assertAction = {
-                val bgSession = getSingleSessionEnvelope(AppState.BACKGROUND)
-                val fgSession = getSingleSessionEnvelope(AppState.FOREGROUND)
+                val bgSession = getSingleSessionEnvelope(ProcessState.BACKGROUND)
+                val fgSession = getSingleSessionEnvelope(ProcessState.FOREGROUND)
 
                 // the pre-foreground part belongs to the user session created eagerly at process start and classified as regular
                 // when the app entered the foreground
@@ -111,8 +111,8 @@ internal class UserSessionLifecycleTest {
                 recordSession()
             },
             assertAction = {
-                val bgSession = getSingleSessionEnvelope(AppState.BACKGROUND)
-                val fgSession = getSingleSessionEnvelope(AppState.FOREGROUND)
+                val bgSession = getSingleSessionEnvelope(ProcessState.BACKGROUND)
+                val fgSession = getSingleSessionEnvelope(ProcessState.FOREGROUND)
 
                 // The pre-foreground part is the background-only session (number 1): it carries the
                 // marker and ends with the background-only termination reason when the app foregrounds.
@@ -153,8 +153,8 @@ internal class UserSessionLifecycleTest {
             },
             testCaseAction = { recordSession() },
             assertAction = {
-                val bgSession = getSingleSessionEnvelope(AppState.BACKGROUND)
-                val fgSession = getSingleSessionEnvelope(AppState.FOREGROUND)
+                val bgSession = getSingleSessionEnvelope(ProcessState.BACKGROUND)
+                val fgSession = getSingleSessionEnvelope(ProcessState.FOREGROUND)
 
                 assertEquals(persistedId, bgSession.getUserSessionId())
                 assertTrue(bgSession.isBackgroundOnlyPart())
@@ -217,8 +217,8 @@ internal class UserSessionLifecycleTest {
                 recordSession()
             },
             assertAction = {
-                val fgSessions = getSessionEnvelopes(2, AppState.FOREGROUND)
-                val bgSessions = getSessionEnvelopes(2, AppState.BACKGROUND)
+                val fgSessions = getSessionEnvelopes(2, ProcessState.FOREGROUND)
+                val bgSessions = getSessionEnvelopes(2, ProcessState.BACKGROUND)
 
                 assertDistinctUserSessions(fgSessions[0], fgSessions[1])
                 bgSessions[1].assertFinalPart(INACTIVITY)
@@ -291,8 +291,8 @@ internal class UserSessionLifecycleTest {
                 recordSession()
             },
             assertAction = {
-                val fgSessions = getSessionEnvelopes(2, AppState.FOREGROUND)
-                val bgSessionPart = getSessionEnvelopes(expectedSize = 3, state = AppState.BACKGROUND).last()
+                val fgSessions = getSessionEnvelopes(2, ProcessState.FOREGROUND)
+                val bgSessionPart = getSessionEnvelopes(expectedSize = 3, state = ProcessState.BACKGROUND).last()
                 assertDistinctUserSessions(fgSessions[0], bgSessionPart)
                 assertDistinctUserSessions(bgSessionPart, fgSessions[1])
                 assertDistinctUserSessions(fgSessions[0], fgSessions[1])
@@ -333,7 +333,7 @@ internal class UserSessionLifecycleTest {
                 recordSession()
             },
             assertAction = {
-                val sessions = getSessionEnvelopes(2, AppState.FOREGROUND)
+                val sessions = getSessionEnvelopes(2, ProcessState.FOREGROUND)
 
                 assertSameUserSession(sessions[0], sessions[1])
                 assertUserSessionNumbers(
@@ -430,7 +430,7 @@ internal class UserSessionLifecycleTest {
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
-                val bgActivities = getSessionEnvelopes(2, state = AppState.BACKGROUND)
+                val bgActivities = getSessionEnvelopes(2, state = ProcessState.BACKGROUND)
                 val firstBg = bgActivities[0].findSessionPartSpan()
                 val secondBg = bgActivities[1].findSessionPartSpan()
                 val firstSession = sessions[0].findSessionPartSpan()
@@ -468,8 +468,8 @@ internal class UserSessionLifecycleTest {
                 recordSession()
             },
             assertAction = {
-                val fgSessions = getSessionEnvelopes(2, AppState.FOREGROUND)
-                val bgSessions = getSessionEnvelopes(3, AppState.BACKGROUND)
+                val fgSessions = getSessionEnvelopes(2, ProcessState.FOREGROUND)
+                val bgSessions = getSessionEnvelopes(3, ProcessState.BACKGROUND)
 
                 // exactly one part is background-only: the long-lived middle session S2
                 val backgroundOnlyParts = bgSessions.filter {

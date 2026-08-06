@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes.injection
 
-import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
+import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.fakes.FakeNavigationTrackingService
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
-import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
+import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
@@ -18,7 +18,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 
 class FakeEssentialServiceModule(
-    override val appStateTracker: AppStateTracker = FakeAppStateTracker(),
+    override val processStateTracker: ProcessStateTracker = FakeProcessStateTracker(),
     override val navigationTrackingService: NavigationTrackingService = FakeNavigationTrackingService(),
     override val sessionPartTracker: SessionPartTracker = FakeSessionPartTracker(),
     override val sessionIdsProvider: SessionIdsProvider = FakeSessionIdsProvider(),

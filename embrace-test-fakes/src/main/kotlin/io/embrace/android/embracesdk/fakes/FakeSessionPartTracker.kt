@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 
@@ -24,7 +24,7 @@ class FakeSessionPartTracker : SessionPartTracker {
     override fun newActiveSessionPart(
         endSessionPartCallback: SessionPartToken.() -> Unit,
         startSessionPartCallback: () -> SessionPartToken?,
-        postTransitionAppState: AppState,
+        postTransitionProcessState: ProcessState,
     ): SessionPartToken? {
         currentSession = startSessionPartCallback()
         sessionChangeListeners.forEach(SessionPartChangeListener::onPostSessionChange)

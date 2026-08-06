@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.assertions.toMap
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.toStringMap
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS
@@ -235,7 +235,7 @@ internal class SessionPartIdentityTest {
                 val ids = messages.map { it.getSessionPartId() }.toSet()
                 assertEquals(SESSION_COUNT, ids.size)
 
-                val bas = getSessionEnvelopes(SESSION_COUNT, AppState.BACKGROUND, waitTimeMs = 10000)
+                val bas = getSessionEnvelopes(SESSION_COUNT, ProcessState.BACKGROUND, waitTimeMs = 10000)
                 val baIds = bas.map { it.getSessionPartId() }.toSet()
                 assertEquals(SESSION_COUNT, baIds.size)
             }

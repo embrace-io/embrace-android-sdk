@@ -57,7 +57,7 @@ class PayloadSourceModuleImpl(
             otelModule.currentSessionPartSpan,
             otelModule.spanRepository,
             otelPayloadMapper,
-            essentialServiceModule.appStateTracker,
+            essentialServiceModule.processStateTracker,
             initModule.clock,
             initModule.logger,
         )

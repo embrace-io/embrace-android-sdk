@@ -3,14 +3,14 @@ package io.embrace.android.embracesdk.internal.arch.state
 /**
  * Service which handles Android process lifecycle callbacks.
  */
-interface AppStateTracker {
+interface ProcessStateTracker {
 
     /**
      * Adds an observer of the application's process lifecycle events.
      *
      * @param listener the observer to register
      */
-    fun addListener(listener: AppStateListener)
+    fun addListener(listener: ProcessStateListener)
 
     /**
      * Returns 'foreground' if the application is in the foreground, or 'background' if the app is in
@@ -18,5 +18,5 @@ interface AppStateTracker {
      *
      * @return the current state of the app
      */
-    fun getAppState(): AppState
+    fun getAppState(): ProcessState
 }

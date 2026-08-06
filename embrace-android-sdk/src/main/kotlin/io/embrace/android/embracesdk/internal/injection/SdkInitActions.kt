@@ -90,7 +90,7 @@ internal fun ModuleGraph.registerListeners() {
         )
 
         val sessionPartTracker = essentialServiceModule.sessionPartTracker
-        val appStateTracker = essentialServiceModule.appStateTracker
+        val appStateTracker = essentialServiceModule.processStateTracker
 
         sessionPartTracker.addSessionPartChangeListener {
             configService.networkBehavior.domainCountLimiter.reset()
@@ -211,7 +211,7 @@ internal fun ModuleGraph.markSdkInitComplete() {
         dataCaptureServiceModule.startupService.setSdkStartupInfo(
             sdkStartTimeMs,
             initModule.clock.now(),
-            essentialServiceModule.appStateTracker.getAppState(),
+            essentialServiceModule.processStateTracker.getAppState(),
             Thread.currentThread().name,
         )
     }
@@ -225,7 +225,7 @@ private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, St
     return {
         mutableMapOf<String, String>().apply {
             val sessionPart = essentialServiceModule.sessionPartTracker.getActiveSessionPart()
-            val sessionState = sessionPart?.appState ?: essentialServiceModule.appStateTracker.getAppState()
+            val sessionState = sessionPart?.processState ?: essentialServiceModule.processStateTracker.getAppState()
             val sessionIds = userSessionOrchestrationModule.sessionIdsProvider.getActiveSessionIds()
 
             put(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionIds.sessionPartId)

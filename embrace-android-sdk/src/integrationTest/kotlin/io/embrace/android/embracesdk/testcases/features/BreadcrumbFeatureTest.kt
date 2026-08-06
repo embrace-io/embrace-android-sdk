@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRe
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.semconv.EmbBreadcrumbAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Rule
@@ -38,7 +38,7 @@ internal class BreadcrumbFeatureTest {
             assertAction = {
                 val message = getSessionEnvelopes(2)
                 message.first().assertBreadcrumbWithMessage("Hello, world!")
-                val bas = getSessionEnvelopes(2, AppState.BACKGROUND)
+                val bas = getSessionEnvelopes(2, ProcessState.BACKGROUND)
                 bas.last().assertBreadcrumbWithMessage("Bye, world!")
             }
         )

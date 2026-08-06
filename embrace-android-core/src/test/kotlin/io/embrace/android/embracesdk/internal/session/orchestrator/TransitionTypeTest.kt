@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -73,14 +73,14 @@ internal class TransitionTypeTest {
     fun `validate post-transition end state for every relevant transition type and current state combination`() {
         // transitions that always leave the SDK in a specific state regardless of current state
         mapOf(
-            TransitionType.ON_FOREGROUND to AppState.FOREGROUND,
-            TransitionType.INACTIVITY_FOREGROUND to AppState.FOREGROUND,
-            TransitionType.BACKGROUND_ONLY_SESSION_END to AppState.FOREGROUND,
-            TransitionType.ON_BACKGROUND to AppState.BACKGROUND,
-            TransitionType.INACTIVITY_TIMEOUT to AppState.BACKGROUND,
+            TransitionType.ON_FOREGROUND to ProcessState.FOREGROUND,
+            TransitionType.INACTIVITY_FOREGROUND to ProcessState.FOREGROUND,
+            TransitionType.BACKGROUND_ONLY_SESSION_END to ProcessState.FOREGROUND,
+            TransitionType.ON_BACKGROUND to ProcessState.BACKGROUND,
+            TransitionType.INACTIVITY_TIMEOUT to ProcessState.BACKGROUND,
         ).forEach { (type, expected) ->
-            assertEquals(expected, type.postTransitionEndState(AppState.FOREGROUND))
-            assertEquals(expected, type.postTransitionEndState(AppState.BACKGROUND))
+            assertEquals(expected, type.postTransitionEndState(ProcessState.FOREGROUND))
+            assertEquals(expected, type.postTransitionEndState(ProcessState.BACKGROUND))
         }
 
         // transitions that don't alter the current states
@@ -90,8 +90,8 @@ internal class TransitionTypeTest {
             TransitionType.CRASH,
             TransitionType.MAX_DURATION,
         ).forEach { type ->
-            assertEquals(AppState.FOREGROUND, type.postTransitionEndState(AppState.FOREGROUND))
-            assertEquals(AppState.BACKGROUND, type.postTransitionEndState(AppState.BACKGROUND))
+            assertEquals(ProcessState.FOREGROUND, type.postTransitionEndState(ProcessState.FOREGROUND))
+            assertEquals(ProcessState.BACKGROUND, type.postTransitionEndState(ProcessState.BACKGROUND))
         }
     }
 }

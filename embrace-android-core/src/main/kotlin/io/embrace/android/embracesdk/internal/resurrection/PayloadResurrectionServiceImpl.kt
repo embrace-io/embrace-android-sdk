@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.resurrection
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
@@ -179,7 +179,7 @@ internal class PayloadResurrectionServiceImpl(
                     nativeCrash = nativeCrash,
                     userSessionProperties = emptyMap(),
                     metadata = mapOf(
-                        EmbSessionAttributes.EMB_STATE to AppState.BACKGROUND.description,
+                        EmbSessionAttributes.EMB_STATE to ProcessState.BACKGROUND.description,
                     ),
                 )
             }

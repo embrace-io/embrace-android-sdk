@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.startup
 
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 
 internal class StartupServiceImpl(
@@ -29,10 +29,10 @@ internal class StartupServiceImpl(
     override fun setSdkStartupInfo(
         startTimeMs: Long,
         endTimeMs: Long,
-        endState: AppState,
+        endState: ProcessState,
         threadName: String,
     ) {
-        val foregroundEnd = endState == AppState.FOREGROUND
+        val foregroundEnd = endState == ProcessState.FOREGROUND
         if (sdkStartupDurationMs == null) {
             val attributes = buildMap {
                 put("ended-in-foreground", foregroundEnd.toString())

@@ -87,4 +87,59 @@ internal class OtelBehaviorImplTest {
             assertEquals(0, getMaxNetworkSpansPerSessionPart())
         }
     }
+
+    @Test
+    fun `periodic cache interval defaults when no remote config supplied`() {
+        with(createOtelBehavior()) {
+            assertEquals(DEFAULT_PERIODIC_CACHE_INTERVAL_MS, getPeriodicCacheIntervalMs())
+        }
+    }
+
+    @Test
+    fun `periodic cache interval defaults when remote config omits it`() {
+        with(createOtelBehavior(remoteCfg = RemoteConfig(dataConfig = DataRemoteConfig()))) {
+            assertEquals(DEFAULT_PERIODIC_CACHE_INTERVAL_MS, getPeriodicCacheIntervalMs())
+        }
+    }
+
+    @Test
+    fun `periodic cache interval is read from remote config`() {
+        val remote = RemoteConfig(dataConfig = DataRemoteConfig(periodicCacheIntervalMs = 5000L))
+        with(createOtelBehavior(remoteCfg = remote)) {
+            assertEquals(5000L, getPeriodicCacheIntervalMs())
+        }
+    }
+
+    @Test
+    fun `periodic cache interval is clamped to the minimum`() {
+        listOf(-1L, 0L, 1999L).forEach { interval ->
+            val remote = RemoteConfig(dataConfig = DataRemoteConfig(periodicCacheIntervalMs = interval))
+            with(createOtelBehavior(remoteCfg = remote)) {
+                assertEquals(MIN_PERIODIC_CACHE_INTERVAL_MS, getPeriodicCacheIntervalMs())
+            }
+        }
+    }
+
+    @Test
+    fun `periodic cache interval is clamped to the maximum`() {
+        listOf(120001L, Long.MAX_VALUE).forEach { interval ->
+            val remote = RemoteConfig(dataConfig = DataRemoteConfig(periodicCacheIntervalMs = interval))
+            with(createOtelBehavior(remoteCfg = remote)) {
+                assertEquals(MAX_PERIODIC_CACHE_INTERVAL_MS, getPeriodicCacheIntervalMs())
+            }
+        }
+    }
+
+    @Test
+    fun `periodic cache interval bounds are honored`() {
+        assertEquals(2000L, MIN_PERIODIC_CACHE_INTERVAL_MS)
+        assertEquals(120000L, MAX_PERIODIC_CACHE_INTERVAL_MS)
+
+        listOf(MIN_PERIODIC_CACHE_INTERVAL_MS, MAX_PERIODIC_CACHE_INTERVAL_MS).forEach { interval ->
+            val remote = RemoteConfig(dataConfig = DataRemoteConfig(periodicCacheIntervalMs = interval))
+            with(createOtelBehavior(remoteCfg = remote)) {
+                assertEquals(interval, getPeriodicCacheIntervalMs())
+            }
+        }
+    }
 }

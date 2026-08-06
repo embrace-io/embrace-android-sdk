@@ -33,5 +33,9 @@ class OtelBehaviorImpl(
     override fun getMaxSpanEventsPerSessionPart(): Int =
         dataRemote?.maxSpanEventsPerSessionPart ?: DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART
 
+    override fun getPeriodicCacheIntervalMs(): Long =
+        dataRemote?.periodicCacheIntervalMs?.coerceIn(MIN_PERIODIC_CACHE_INTERVAL_MS, MAX_PERIODIC_CACHE_INTERVAL_MS)
+            ?: DEFAULT_PERIODIC_CACHE_INTERVAL_MS
+
     private fun Int?.asSpanLimit(default: Int): Int = this?.coerceAtLeast(0) ?: default
 }

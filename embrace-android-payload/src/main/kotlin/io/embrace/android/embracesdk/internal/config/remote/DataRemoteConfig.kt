@@ -44,4 +44,11 @@ data class DataRemoteConfig(
      */
     @SerialName("max_span_events_per_session_part")
     val maxSpanEventsPerSessionPart: Int? = null,
+
+    /**
+     * The interval in milliseconds between periodic caching of the in-progress session part to disk.
+     * Values are clamped to the range 2000..120000 when this config is read.
+     */
+    @SerialName("periodic_cache_interval_ms")
+    val periodicCacheIntervalMs: Long? = null,
 )

@@ -23,6 +23,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProviderImpl
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
+import io.embrace.android.embracesdk.internal.session.lifecycle.AndroidxProcessLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateTrackerImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
@@ -42,7 +43,8 @@ class EssentialServiceModuleImpl(
 
     override val processStateTracker: ProcessStateTracker = EmbTrace.trace("process-state-service-init") {
         val lifecycleOwner = lifecycleOwnerProvider() ?: ProcessLifecycleOwner.get()
-        ProcessStateTrackerImpl(initModule.logger, lifecycleOwner)
+        ProcessStateTrackerImpl(initModule.logger, AndroidxProcessLifecycleTracker(lifecycleOwner))
+            .apply { register() }
     }
 
     override val navigationTrackingService: NavigationTrackingService = NavigationTrackingServiceImpl()

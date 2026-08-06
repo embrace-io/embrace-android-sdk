@@ -10,6 +10,8 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 
 class AeiInstrumentationProvider : InstrumentationProvider {
 
+    override val asyncInit: Boolean = true
+
     override fun register(args: InstrumentationArgs): DataSourceState<*>? {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
             return null

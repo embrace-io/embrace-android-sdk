@@ -176,7 +176,7 @@ internal class SdkIntegrationTestRule(
                     expectSdkToStart,
                     embraceImpl.isStarted
                 )
-
+                awaitAsyncInstrumentation()
             }
         }
         testCaseAction(action)

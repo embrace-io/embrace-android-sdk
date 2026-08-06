@@ -4,6 +4,7 @@ import android.app.ApplicationExitInfo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.TestAeiData
 import io.embrace.android.embracesdk.fakes.setupFakeAeiData
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -38,7 +39,7 @@ internal class UserSessionAeiGoldenFileTest {
             setupAction = { setupFakeAeiData(listOf(anr.toAeiObject())) },
             testCaseAction = {
                 recordSession {
-                    testRule.setup.getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).runCurrentlyBlocked()
+                    drainAeiInstrumentation()
                 }
             },
             assertAction = {
@@ -63,7 +64,7 @@ internal class UserSessionAeiGoldenFileTest {
         testRule.runTest(
             setupAction = { setupFakeAeiData(listOf(anr.toAeiObject())) },
             testCaseAction = {
-                testRule.setup.getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).runCurrentlyBlocked()
+                drainAeiInstrumentation()
                 pendingUserSessionId = checkNotNull(
                     testRule.bootstrapper.userSessionOrchestrationModule.sessionOrchestrator.currentUserSession()
                 ).userSessionId
@@ -79,6 +80,13 @@ internal class UserSessionAeiGoldenFileTest {
                 )
             }
         )
+    }
+
+    private fun drainAeiInstrumentation() {
+        val executor = testRule.setup.getFakedWorkerExecutor(Worker.Background.NonIoRegWorker)
+        repeat(2) {
+            executor.runCurrentlyBlocked()
+        }
     }
 
     private companion object {

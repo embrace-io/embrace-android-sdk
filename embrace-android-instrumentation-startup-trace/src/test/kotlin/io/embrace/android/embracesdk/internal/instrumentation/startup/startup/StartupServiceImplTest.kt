@@ -27,7 +27,7 @@ internal class StartupServiceImplTest {
         clock = FakeClock(10000000)
         backgroundWorker = fakeBackgroundWorker()
         destination = FakeTelemetryDestination()
-        startupService = StartupServiceImpl(destination, appVersionStartupCounter = 3)
+        startupService = StartupServiceImpl(destination, appVersionStartupCounterProvider = { 3 })
     }
 
     @Test
@@ -58,7 +58,7 @@ internal class StartupServiceImplTest {
 
     @Test
     fun `invalid app version startup counter omitted from SDK startup span`() {
-        startupService = StartupServiceImpl(destination, appVersionStartupCounter = -1)
+        startupService = StartupServiceImpl(destination, appVersionStartupCounterProvider = { -1 })
         startupService.setSdkStartupInfo(
             startTimeMs = 10,
             endTimeMs = 20,

@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.internal.envelope.session
 
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.arch.state.AppState
-import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
@@ -18,7 +18,7 @@ internal class SessionPartPayloadSourceImpl(
     private val currentSessionPartSpan: CurrentSessionPartSpan,
     private val spanRepository: SpanRepository,
     private val otelPayloadMapper: OtelPayloadMapper?,
-    private val appStateTracker: AppStateTracker,
+    private val processStateTracker: ProcessStateTracker,
     private val clock: Clock,
     private val logger: InternalLogger,
 ) : SessionPartPayloadSource {
@@ -38,7 +38,7 @@ internal class SessionPartPayloadSourceImpl(
             spanRepository.stopTimedOutSpans(clock.now())
         }
 
-        if (!endType.forceQuit && appStateTracker.getAppState() == AppState.BACKGROUND) {
+        if (!endType.forceQuit && processStateTracker.getAppState() == ProcessState.BACKGROUND) {
             spanRepository.autoTerminateEmbraceSpans(clock.now())
         }
 

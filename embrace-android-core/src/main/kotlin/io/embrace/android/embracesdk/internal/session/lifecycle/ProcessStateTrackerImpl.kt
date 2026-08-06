@@ -5,9 +5,9 @@ import android.os.Looper
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
-import io.embrace.android.embracesdk.internal.arch.state.AppState
-import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
-import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
+import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
@@ -17,15 +17,15 @@ import java.util.concurrent.CopyOnWriteArrayList
  * Service tracking the app's current process state (foreground or background) as reported
  * by ProcessLifecycleOwner.
  */
-internal class AppStateTrackerImpl(
+internal class ProcessStateTrackerImpl(
     private val logger: InternalLogger,
     private val lifecycleOwner: LifecycleOwner,
-) : AppStateTracker, LifecycleEventObserver {
+) : ProcessStateTracker, LifecycleEventObserver {
 
     /**
      * List of listeners that subscribe to process lifecycle events.
      */
-    val listeners: CopyOnWriteArrayList<AppStateListener> = CopyOnWriteArrayList<AppStateListener>()
+    val listeners: CopyOnWriteArrayList<ProcessStateListener> = CopyOnWriteArrayList<ProcessStateListener>()
 
     private var sessionOrchestrator: SessionOrchestrator? = null
 
@@ -33,9 +33,9 @@ internal class AppStateTrackerImpl(
      * Returns if the app's in background or not.
      */
     @Volatile
-    private var state: AppState = when {
-        lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED) -> AppState.FOREGROUND
-        else -> AppState.BACKGROUND
+    private var state: ProcessState = when {
+        lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED) -> ProcessState.FOREGROUND
+        else -> ProcessState.BACKGROUND
     }
 
     private val mainLooper = Looper.getMainLooper()
@@ -72,11 +72,11 @@ internal class AppStateTrackerImpl(
      * ON START.
      */
     internal fun onForeground() {
-        state = AppState.FOREGROUND
+        state = ProcessState.FOREGROUND
 
         invokeCallbackSafely { sessionOrchestrator?.onForeground() }
 
-        listeners.toList().forEach { listener: AppStateListener ->
+        listeners.toList().forEach { listener: ProcessStateListener ->
             invokeCallbackSafely {
                 listener.onForeground()
             }
@@ -88,9 +88,9 @@ internal class AppStateTrackerImpl(
      * ON STOP.
      */
     internal fun onBackground() {
-        state = AppState.BACKGROUND
+        state = ProcessState.BACKGROUND
 
-        listeners.toList().forEach { listener: AppStateListener ->
+        listeners.toList().forEach { listener: ProcessStateListener ->
             invokeCallbackSafely {
                 listener.onBackground()
             }
@@ -107,12 +107,12 @@ internal class AppStateTrackerImpl(
         }
     }
 
-    override fun addListener(listener: AppStateListener) {
+    override fun addListener(listener: ProcessStateListener) {
         when (listener) {
             is SessionOrchestrator -> sessionOrchestrator = listener
             else -> listeners.addIfAbsent(listener)
         }
     }
 
-    override fun getAppState(): AppState = state
+    override fun getAppState(): ProcessState = state
 }

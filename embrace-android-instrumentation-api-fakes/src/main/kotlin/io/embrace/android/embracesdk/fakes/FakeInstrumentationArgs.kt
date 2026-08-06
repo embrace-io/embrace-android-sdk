@@ -5,7 +5,7 @@ import android.content.Context
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
-import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
+import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
 import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
@@ -29,7 +29,7 @@ class FakeInstrumentationArgs(
     override val uuidSource: UuidSource = TestUuidSource(),
     override val ordinalStore: OrdinalStore = FakeOrdinalStore(),
     override val processIdentifier: String = "fake-process-id",
-    override val appStateTracker: AppStateTracker = FakeAppStateTracker(),
+    override val processStateTracker: ProcessStateTracker = FakeProcessStateTracker(),
     override val telemetryService: TelemetryService = FakeTelemetryService(),
     val backgroundWorkerSupplier: (worker: Worker.Background) -> BackgroundWorker = { fakeBackgroundWorker() },
     val priorityWorkerSupplier: (worker: Worker.Priority) -> PriorityWorker<*> = { fakePriorityWorker<Any>() },

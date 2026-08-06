@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.startup.startup
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupService
 import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupServiceImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -38,7 +38,7 @@ internal class StartupServiceImplTest {
         startupService.setSdkStartupInfo(
             startTimeMs = startTimeMillis,
             endTimeMs = endTimeMillis,
-            endState = AppState.BACKGROUND,
+            endState = ProcessState.BACKGROUND,
             threadName = "main",
         )
         val currentSpans = destination.completedSpans()
@@ -62,7 +62,7 @@ internal class StartupServiceImplTest {
         startupService.setSdkStartupInfo(
             startTimeMs = 10,
             endTimeMs = 20,
-            endState = AppState.BACKGROUND,
+            endState = ProcessState.BACKGROUND,
             threadName = "main",
         )
         val span = destination.completedSpans().single()
@@ -76,7 +76,7 @@ internal class StartupServiceImplTest {
             setSdkStartupInfo(
                 startTimeMs = 10,
                 endTimeMs = 20,
-                endState = AppState.BACKGROUND,
+                endState = ProcessState.BACKGROUND,
                 threadName = "main",
             )
         }
@@ -85,7 +85,7 @@ internal class StartupServiceImplTest {
             setSdkStartupInfo(
                 startTimeMs = 10,
                 endTimeMs = 20,
-                endState = AppState.BACKGROUND,
+                endState = ProcessState.BACKGROUND,
                 threadName = "main",
             )
         }
@@ -94,7 +94,7 @@ internal class StartupServiceImplTest {
 
     @Test
     fun `startup info available right after setting on the service`() {
-        startupService.setSdkStartupInfo(1111L, 3222L, AppState.BACKGROUND, "main")
+        startupService.setSdkStartupInfo(1111L, 3222L, ProcessState.BACKGROUND, "main")
         assertEquals(1111L, startupService.getSdkInitStartMs())
         assertEquals(3222L, startupService.getSdkInitEndMs())
         assertEquals(2111L, startupService.getSdkStartupDuration())

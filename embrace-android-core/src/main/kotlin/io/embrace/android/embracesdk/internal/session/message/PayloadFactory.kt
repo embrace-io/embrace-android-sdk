@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.message
 
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
@@ -15,7 +15,7 @@ interface PayloadFactory {
      * Starts a session in response to a state event.
      */
     fun startPayloadWithState(
-        state: AppState,
+        state: ProcessState,
         timestamp: Long,
         coldStart: Boolean,
         userSessionPartIndex: () -> Int,
@@ -26,7 +26,7 @@ interface PayloadFactory {
      * Ends a session in response to a state event.
      */
     fun endPayloadWithState(
-        state: AppState,
+        state: ProcessState,
         timestamp: Long,
         initial: SessionPartToken,
     ): Envelope<SessionPartPayload>?
@@ -35,7 +35,7 @@ interface PayloadFactory {
      * Handles an uncaught exception, ending the session and saving the session to disk.
      */
     fun endPayloadWithCrash(
-        state: AppState,
+        state: ProcessState,
         timestamp: Long,
         initial: SessionPartToken,
         crashId: String,
@@ -44,13 +44,13 @@ interface PayloadFactory {
     /**
      * Provides a snapshot of the active session
      */
-    fun snapshotPayload(state: AppState, timestamp: Long, initial: SessionPartToken): Envelope<SessionPartPayload>?
+    fun snapshotPayload(state: ProcessState, timestamp: Long, initial: SessionPartToken): Envelope<SessionPartPayload>?
 
     /**
      * Starts a session manually.
      */
     fun startSessionWithManual(
-        state: AppState,
+        state: ProcessState,
         timestamp: Long,
         userSessionPartIndex: () -> Int,
         sessionPartNumber: () -> Int,

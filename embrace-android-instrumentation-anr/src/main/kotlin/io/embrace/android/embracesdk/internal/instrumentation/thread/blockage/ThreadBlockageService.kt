@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
-import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
+import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
 import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 
 /**
@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 interface ThreadBlockageService :
     SessionPartChangeListener,
     CrashTeardownHandler,
-    AppStateListener,
+    ProcessStateListener,
     OtelPayloadMapper {
 
     /**

@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.assertions.getOtelSessionId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
@@ -129,7 +129,7 @@ internal class EmbracePayloadAssertionInterface(
      */
     internal fun getSessionEnvelopes(
         expectedSize: Int,
-        state: AppState = AppState.FOREGROUND,
+        state: ProcessState = ProcessState.FOREGROUND,
         waitTimeMs: Int = WAIT_TIME_MS,
         assertOrdering: Boolean = true,
     ): List<Envelope<SessionPartPayload>> {
@@ -140,15 +140,15 @@ internal class EmbracePayloadAssertionInterface(
      * Asserts a single session was completed by the SDK.
      */
     internal fun getSingleSessionEnvelope(
-        state: AppState = AppState.FOREGROUND,
+        state: ProcessState = ProcessState.FOREGROUND,
     ): Envelope<SessionPartPayload> = getSessionEnvelopes(1, state).single()
 
     private fun retrieveSessionEnvelopes(
-        expectedSize: Int, appState: AppState, waitTimeMs: Int, assertOrdering: Boolean,
+        expectedSize: Int, processState: ProcessState, waitTimeMs: Int, assertOrdering: Boolean,
     ): List<Envelope<SessionPartPayload>> {
         val supplier = {
             checkNotNull(apiServer).getSessionEnvelopes()
-                .filter { it.findAppState() == appState }
+                .filter { it.findAppState() == processState }
         }
         try {
             val envelopes = retrievePayload(expectedSize, waitTimeMs, supplier)
@@ -163,17 +163,17 @@ internal class EmbracePayloadAssertionInterface(
                     "state" to it.findSessionPartSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE)
                 )
             }
-            throwPayloadErrMsg(expectedSize, envelopes.filter { it.findAppState() == appState }.size, sessions, exc)
+            throwPayloadErrMsg(expectedSize, envelopes.filter { it.findAppState() == processState }.size, sessions, exc)
         }
     }
 
-    private fun Envelope<SessionPartPayload>.findAppState(): AppState {
+    private fun Envelope<SessionPartPayload>.findAppState(): ProcessState {
         val attrs = findSessionPartSpan().attributes
         val state = checkNotNull(attrs?.findAttributeValue(EmbSessionAttributes.EMB_STATE)) {
             "AppState not found in session payload."
         }
         val value = state.uppercase(Locale.ENGLISH)
-        return AppState.valueOf(value)
+        return ProcessState.valueOf(value)
     }
 
     /*** Config ***/

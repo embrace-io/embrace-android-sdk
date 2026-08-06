@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.startup
 
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 
 /**
  * Service to track the SDK startup time.
@@ -13,7 +13,7 @@ interface StartupService {
     fun setSdkStartupInfo(
         startTimeMs: Long,
         endTimeMs: Long,
-        endState: AppState,
+        endState: ProcessState,
         threadName: String,
     )
 

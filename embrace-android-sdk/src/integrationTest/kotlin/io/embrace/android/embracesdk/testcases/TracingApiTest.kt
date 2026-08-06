@@ -21,7 +21,7 @@ import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.arch.stacktrace.compatThreadId
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
@@ -448,7 +448,7 @@ internal class TracingApiTest {
     }
 
     private fun EmbracePayloadAssertionInterface.getSdkInitSpanFromBackgroundActivity(): List<Span> {
-        val lastSentBackgroundActivity = getSingleSessionEnvelope(AppState.BACKGROUND)
+        val lastSentBackgroundActivity = getSingleSessionEnvelope(ProcessState.BACKGROUND)
         val spans = checkNotNull(lastSentBackgroundActivity.data.spans)
         return spans.filter { it.name == "emb-sdk-init" }
     }

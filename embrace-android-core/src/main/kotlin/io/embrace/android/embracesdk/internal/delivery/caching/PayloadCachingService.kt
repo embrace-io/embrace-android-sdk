@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk.internal.delivery.caching
 
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.delivery.Shutdownable
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 
 typealias SessionPartPayloadSupplier = (
-    state: AppState,
+    state: ProcessState,
     timestamp: Long,
     initial: SessionPartToken,
 ) -> Envelope<SessionPartPayload>?
@@ -23,7 +23,7 @@ interface PayloadCachingService : Shutdownable {
      */
     fun startCaching(
         initial: SessionPartToken,
-        state: AppState,
+        state: ProcessState,
         supplier: SessionPartPayloadSupplier,
     )
 

@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.api.SdkApi
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.getSessionProperty
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -38,7 +38,7 @@ internal class UserSessionPropertiesTest {
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(3)
-                val bas = getSessionEnvelopes(3, AppState.BACKGROUND)
+                val bas = getSessionEnvelopes(3, ProcessState.BACKGROUND)
 
                 bas[0].findSessionPartSpan().assertPropertyExistence(
                     exist = listOf(EXISTING_KEY_2, EXISTING_KEY_3, PERM_KEY, TEMP_KEY),

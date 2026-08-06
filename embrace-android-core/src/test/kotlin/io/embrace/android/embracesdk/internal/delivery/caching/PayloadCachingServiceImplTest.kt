@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.fakes.fakeSessionPartToken
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionPartCacher
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
@@ -41,7 +41,7 @@ class PayloadCachingServiceImplTest {
     @Test(expected = RejectedExecutionException::class)
     fun rejection() {
         service.shutdown()
-        service.startCaching(zygote, AppState.FOREGROUND) { _, _, _ ->
+        service.startCaching(zygote, ProcessState.FOREGROUND) { _, _, _ ->
             null
         }
     }
@@ -50,7 +50,7 @@ class PayloadCachingServiceImplTest {
     fun `session id mismatch does not cache`() {
         sessionIdsProvider.sessionPartId = "someOtherId"
         var count = 0
-        service.startCaching(zygote, AppState.FOREGROUND) { _, _, _ ->
+        service.startCaching(zygote, ProcessState.FOREGROUND) { _, _, _ ->
             count++
             fakeSessionEnvelope()
         }
@@ -61,7 +61,7 @@ class PayloadCachingServiceImplTest {
     @Test
     fun `start caching`() {
         var count = 0
-        service.startCaching(zygote, AppState.FOREGROUND) { _, _, _ ->
+        service.startCaching(zygote, ProcessState.FOREGROUND) { _, _, _ ->
             count++
             fakeSessionEnvelope()
         }
@@ -72,7 +72,7 @@ class PayloadCachingServiceImplTest {
     @Test
     fun `stop caching`() {
         var count = 0
-        service.startCaching(zygote, AppState.FOREGROUND) { _, _, _ ->
+        service.startCaching(zygote, ProcessState.FOREGROUND) { _, _, _ ->
             count++
             fakeSessionEnvelope()
         }

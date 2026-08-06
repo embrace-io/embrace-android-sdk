@@ -55,7 +55,10 @@ class PersistedConfig(
         DeviceIdProvider(keyValueStore, response?.deviceId, uuidSource).deviceId
     }
 
-    internal val thresholdCheck: BehaviorThresholdCheck = BehaviorThresholdCheck(::deviceId)
+    internal val thresholdCheck: BehaviorThresholdCheck = BehaviorThresholdCheck {
+        // don't use reference as this eagerly inits deviceId
+        deviceId
+    }
 
     val otelBehavior: OtelBehavior = OtelBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
 

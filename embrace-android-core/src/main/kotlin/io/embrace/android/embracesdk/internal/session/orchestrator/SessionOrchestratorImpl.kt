@@ -600,9 +600,8 @@ internal class SessionOrchestratorImpl(
             // User session being ended explicitly - end current one and start a new one based on the expected endAppState.
             transitionType.endsUserSession -> {
                 clearBackgroundStartupWindowTimer()
-                if (endProcessState == ProcessState.BACKGROUND &&
-                    !configService.backgroundActivityBehavior.isBackgroundActivityCaptureEnabled()
-                ) {
+                val backgroundCaptureDisabled = !configService.backgroundActivityBehavior.isBackgroundActivityCaptureEnabled()
+                if (endProcessState == ProcessState.BACKGROUND && backgroundCaptureDisabled) {
                     terminateActiveUserSession()
                 } else {
                     transitionToNewUserSession(timestamp, endProcessState)

@@ -115,6 +115,10 @@ class FakePayloadStorageService(
         cachedPayloads.clear()
     }
 
+    fun removePayloadSilently(metadata: StoredTelemetryMetadata) {
+        cachedPayloads.remove(metadata)
+    }
+
     private fun createFakePayload(metadata: StoredTelemetryMetadata) =
         when (metadata.envelopeType) {
             SupportedEnvelopeType.SESSION -> Envelope(data = SessionPartPayload())

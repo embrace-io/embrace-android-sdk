@@ -139,6 +139,7 @@ class SchedulingServiceImpl(
 
     private fun findNextPayload(): StoredTelemetryMetadata? {
         val payloadsByPriority = storageService.getPayloadsByPriority()
+        reconcileRetryState(payloadsByPriority)
         val payloadToSend = payloadsByPriority
             .filter { !connectionStatus.isPayloadBlocked(it) && it.eligibleForSending() }
             .sortedWith(storedTelemetryComparator)
@@ -148,6 +149,22 @@ class SchedulingServiceImpl(
             payloadToSend,
         )
         return payloadToSend
+    }
+
+    /**
+     * Payloads can be removed from disk by the storage layer (e.g. age/count-based pruning) without
+     * [processDeliveryResult] ever running. Drop any entries that are no longer around
+     * to free up memory.
+     */
+    private fun reconcileRetryState(payloadsOnDisk: List<StoredTelemetryMetadata>) {
+        if (payloadsToRetry.isEmpty()) {
+            return
+        }
+        val onDisk = payloadsOnDisk.toHashSet()
+        payloadsToRetry.keys.filterNot(onDisk::contains).forEach { orphaned ->
+            payloadsToRetry.remove(orphaned)
+            payloadsInProgress.remove(orphaned.envelopeType, orphaned)
+        }
     }
 
     /**

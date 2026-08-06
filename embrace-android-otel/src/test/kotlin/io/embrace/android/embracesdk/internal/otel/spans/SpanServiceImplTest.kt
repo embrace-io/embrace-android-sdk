@@ -849,7 +849,8 @@ internal class SpanServiceImplTest {
             systemInfo = SystemInfo(),
             uuidSource = TestUuidSource(),
             sessionIdsProvider = { FakeSessionIdsProvider(userSessionId = "fake-session-id") },
-        ) { "fake-pid" }
+            processIdentifierProvider = { "fake-pid" },
+        )
         val otelSdkWrapper = OtelSdkWrapper(
             otelClock = otelClock,
             configuration = otelSdkConfig,

@@ -408,6 +408,7 @@ internal class SessionOrchestratorListenerTest {
                 FakeMetadataService(),
             ),
             ordinalStoreOverride ?: FakeOrdinalStore(),
+            FakeKeyValueStore(),
             metadataStoreOverride ?: UserSessionMetadataStore(FakeKeyValueStore()),
             logger,
             fakeBackgroundWorker(),

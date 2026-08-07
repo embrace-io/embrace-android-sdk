@@ -18,6 +18,8 @@ class UnitySdkVersionInfo(
         get() = impl.getString(UNITY_SDK_VERSION_NUMBER_KEY)
         set(value) = impl.edit { putString(UNITY_SDK_VERSION_NUMBER_KEY, value) }
 
+    override fun batch(action: () -> Unit) = impl.batch(action)
+
     private companion object {
         private const val UNITY_VERSION_NUMBER_KEY = "io.embrace.unity.version"
         private const val UNITY_BUILD_ID_NUMBER_KEY = "io.embrace.unity.build.id"

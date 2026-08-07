@@ -85,11 +85,8 @@ class DeviceImpl(
     }
 
     private fun asyncRetrieveIsJailbroken() {
-        // if the isJailbroken property exists in memory, don't try to retrieve it
         backgroundWorker.submit {
-            isJailbroken = persistedJailbroken
             isJailbroken = checkIfIsJailbroken()
-            persistedJailbroken = isJailbroken
         }
     }
 
@@ -134,19 +131,11 @@ class DeviceImpl(
             null
         }
 
-    private var persistedJailbroken: Boolean?
-        get() = store.getBoolean(
-            IS_JAILBROKEN_KEY,
-            false,
-        )
-        set(value) = store.edit { putBoolean(IS_JAILBROKEN_KEY, value) }
-
     private var persistedScreenResolution: String?
         get() = store.getString(SCREEN_RESOLUTION_KEY)
         set(value) = store.edit { putString(SCREEN_RESOLUTION_KEY, value) }
 
     private companion object {
-        private const val IS_JAILBROKEN_KEY = "io.embrace.is_jailbroken"
         private const val SCREEN_RESOLUTION_KEY = "io.embrace.screen.resolution"
     }
 }

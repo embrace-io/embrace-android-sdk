@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package embrace.session.persistence;
+
+option java_package = "io.embrace.android.embracesdk.internal.session.persistence";
+
+message ScratchRecord {
+  string id = 1;
+  int64 timestamp_ms = 2;
+}

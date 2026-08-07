@@ -39,4 +39,11 @@ interface KeyValueStore {
      * Performs a batch edit of values in the key-value store.
      */
     fun edit(action: KeyValueStoreEditor.() -> Unit)
+
+    /**
+     * Coalesces every [edit] performed on the calling thread inside [action] into a single commit,
+     * which is issued when the outermost [batch] returns. As with [edit], the commit happens even if
+     * [action] throws.
+     */
+    fun batch(action: () -> Unit) = action()
 }

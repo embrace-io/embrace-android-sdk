@@ -117,7 +117,9 @@ internal class EmbraceUserServiceTest {
     fun testClearAllUserInfo() {
         with(service) {
             getUserInfo().verifyExpectedUserInfo()
+            val editCount = store.editCount
             service.clearAllUserInfo()
+            assertEquals(editCount + 1, store.editCount)
             assertNull(getUserInfo().email)
             assertNull(getUserInfo().userId)
             assertNull(getUserInfo().username)

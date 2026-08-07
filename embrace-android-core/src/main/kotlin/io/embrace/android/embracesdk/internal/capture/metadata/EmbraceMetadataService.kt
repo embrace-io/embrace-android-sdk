@@ -53,8 +53,10 @@ internal class EmbraceMetadataService(
      */
     override fun precomputeValues() {
         metadataBackgroundWorker.submit {
-            appVersion = res.appVersion
-            osVersion = res.osVersion
+            store.batch {
+                appVersion = res.appVersion
+                osVersion = res.osVersion
+            }
             val free = statFs.freeBytes
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && configService.autoDataCaptureBehavior.isDiskUsageCaptureEnabled()) {
                 val deviceDiskAppUsage = getDeviceDiskAppUsage(

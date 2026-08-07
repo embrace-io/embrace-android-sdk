@@ -162,10 +162,12 @@ internal class EmbraceUserService(
     }
 
     override fun clearAllUserInfo() {
-        clearUserIdentifier()
-        clearUserEmail()
-        clearUsername()
-        clearAllUserPersonas()
+        impl.batch {
+            clearUserIdentifier()
+            clearUserEmail()
+            clearUsername()
+            clearAllUserPersonas()
+        }
     }
 
     override fun addUserInfoListener(listener: () -> Unit) {

@@ -25,44 +25,132 @@ internal class SharedPrefsStore(
     private val serializer: PlatformSerializer,
 ) : KeyValueStore {
 
+    private val openBatch = ThreadLocal<Batch?>()
+
     override fun getString(key: String): String? {
-        return impl.getString(key, null)
+        return pending(key) { impl.getString(key, null) }
     }
 
     override fun getInt(key: String): Int? {
-        val defaultValue: Int = -1
-        return when (val value = impl.getInt(key, defaultValue)) {
-            defaultValue -> null
-            else -> value
+        return pending(key) {
+            val defaultValue: Int = -1
+            when (val value = impl.getInt(key, defaultValue)) {
+                defaultValue -> null
+                else -> value
+            }
         }
     }
 
     override fun getLong(key: String): Long? {
-        val defaultValue: Long = -1L
-        return when (val value = impl.getLong(key, defaultValue)) {
-            defaultValue -> null
-            else -> value
+        return pending(key) {
+            val defaultValue: Long = -1L
+            when (val value = impl.getLong(key, defaultValue)) {
+                defaultValue -> null
+                else -> value
+            }
         }
     }
 
     override fun getBoolean(key: String, defaultValue: Boolean): Boolean {
-        return impl.getBoolean(key, defaultValue)
+        return pending<Boolean>(key) { impl.getBoolean(key, defaultValue) } ?: defaultValue
     }
 
     override fun getStringSet(key: String): Set<String>? {
-        return impl.getStringSet(key, null)
+        return pending(key) { impl.getStringSet(key, null) }
     }
 
     override fun getStringMap(key: String): Map<String, String>? {
-        val mapString = impl.getString(key, null) ?: return null
-        return serializer.fromJson(mapString, mapSerializer)
+        return pending(key) {
+            val mapString = impl.getString(key, null) ?: return@pending null
+            serializer.fromJson(mapString, mapSerializer)
+        }
     }
 
     override fun edit(action: KeyValueStoreEditor.() -> Unit) {
-        SharedPrefsStoreEditor(impl.edit(), serializer).use {
-            it.action()
+        val batch = openBatch.get()
+        if (batch != null) {
+            batch.action()
+        } else {
+            SharedPrefsStoreEditor(impl.edit(), serializer).use {
+                it.action()
+            }
         }
     }
+
+    override fun batch(action: () -> Unit) {
+        if (openBatch.get() != null) { // a batch is already open on this thread, so it owns the commit
+            action()
+            return
+        }
+        val batch = Batch()
+        openBatch.set(batch)
+        try {
+            action()
+        } finally {
+            openBatch.remove()
+            batch.flush()
+        }
+    }
+
+    /**
+     * Returns the value buffered by the batch open on this thread, falling back to [read] if there
+     * is no open batch or the batch hasn't written [key].
+     */
+    private inline fun <reified T> pending(key: String, read: () -> T?): T? {
+        val batch = openBatch.get() ?: return read()
+        val write = batch.writes[key] ?: return read()
+        return write.value as? T
+    }
+
+    private fun Batch.flush() {
+        if (writes.isEmpty()) {
+            return
+        }
+        SharedPrefsStoreEditor(impl.edit(), serializer).use { editor ->
+            writes.values.forEach { it.write(editor) }
+        }
+    }
+
+    /**
+     * Buffers writes so they can be replayed against a real editor in one commit.
+     */
+    private class Batch : KeyValueStoreEditor {
+
+        val writes = LinkedHashMap<String, PendingWrite>()
+
+        override fun putString(key: String, value: String?) {
+            writes[key] = PendingWrite(value) { it.putString(key, value) }
+        }
+
+        override fun putInt(key: String, value: Int?) {
+            writes[key] = PendingWrite(value) { it.putInt(key, value) }
+        }
+
+        override fun putLong(key: String, value: Long?) {
+            writes[key] = PendingWrite(value) { it.putLong(key, value) }
+        }
+
+        override fun putBoolean(key: String, value: Boolean?) {
+            writes[key] = PendingWrite(value ?: false) { it.putBoolean(key, value) }
+        }
+
+        override fun putStringSet(key: String, value: Set<String>?) {
+            writes[key] = PendingWrite(value) { it.putStringSet(key, value) }
+        }
+
+        override fun putStringMap(key: String, value: Map<String, String>?) {
+            writes[key] = PendingWrite(value) { it.putStringMap(key, value) }
+        }
+
+        override fun close() {
+            // the batch is committed when the outermost batch block exits, not per edit
+        }
+    }
+
+    private class PendingWrite(
+        val value: Any?,
+        val write: (KeyValueStoreEditor) -> Unit,
+    )
 
     private companion object {
         val mapSerializer = MapSerializer(String.serializer(), String.serializer())

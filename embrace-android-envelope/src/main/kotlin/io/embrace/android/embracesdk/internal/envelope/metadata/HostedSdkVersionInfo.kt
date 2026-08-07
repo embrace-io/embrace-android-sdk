@@ -10,4 +10,5 @@ interface HostedSdkVersionInfo {
     var javaScriptPatchNumber: String?
         get() = null
         set(value) {}
+    fun batch(action: () -> Unit) = action()
 }

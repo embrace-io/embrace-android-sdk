@@ -49,6 +49,8 @@ import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
+import io.embrace.android.embracesdk.internal.store.OrdinalStore
+import io.embrace.android.embracesdk.internal.store.OrdinalStoreImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues
@@ -127,6 +129,30 @@ internal class SessionOrchestratorTest {
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
         // starting in fg produces user session
         assertNotNull(orchestrator.currentUserSession())
+    }
+
+    @Test
+    fun `each transition performs a single commit to the key-value store`() {
+        val kvStore = FakeKeyValueStore()
+        createOrchestrator(
+            startingAppState = AppState.FOREGROUND,
+            ordinalStoreOverride = OrdinalStoreImpl(kvStore),
+            metadataStoreOverride = UserSessionMetadataStore(kvStore),
+            keyValueStoreOverride = kvStore,
+        )
+
+        // the user session ordinal, the session part ordinal, and both saves of the user session
+        // metadata all land in one commit
+        assertEquals(1, kvStore.editCount)
+        assertNotNull(orchestrator.currentUserSession())
+
+        clock.tick(10_000)
+        orchestrator.onBackground()
+        assertEquals(2, kvStore.editCount)
+
+        clock.tick(10_000)
+        orchestrator.onForeground()
+        assertEquals(3, kvStore.editCount)
     }
 
     @Test
@@ -972,8 +998,9 @@ internal class SessionOrchestratorTest {
         startingAppState: AppState,
         configService: FakeConfigService =
             FakeConfigService(backgroundActivityBehavior = backgroundActivityBehavior(true)),
-        ordinalStoreOverride: FakeOrdinalStore? = null,
+        ordinalStoreOverride: OrdinalStore? = null,
         metadataStoreOverride: UserSessionMetadataStore? = null,
+        keyValueStoreOverride: KeyValueStore? = null,
     ) {
         store = FakePayloadStore()
         appStateTracker = FakeAppStateTracker(startingAppState)
@@ -1042,6 +1069,7 @@ internal class SessionOrchestratorTest {
                 FakeMetadataService(),
             ),
             ordinalStoreOverride ?: FakeOrdinalStore(),
+            keyValueStoreOverride ?: FakeKeyValueStore(),
             metadataStoreOverride ?: UserSessionMetadataStore(FakeKeyValueStore()),
             logger,
             BackgroundWorker(inactivityWorkerExecutor),

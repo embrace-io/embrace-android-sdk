@@ -117,6 +117,28 @@ class OrdinalStoreImplTest {
     }
 
     @Test
+    fun `increments of different ordinals in a batch share one commit`() {
+        kvStore.batch {
+            assertEquals(1, store.incrementAndGet(Ordinal.SESSION))
+            assertEquals(1, store.incrementAndGet(Ordinal.SESSION_PART))
+        }
+        assertEquals(1, kvStore.editCount)
+        assertEquals(2, store.incrementAndGet(Ordinal.SESSION))
+        assertEquals(2, store.incrementAndGet(Ordinal.SESSION_PART))
+    }
+
+    @Test
+    fun `repeated increments of one ordinal in a batch observe pending writes`() {
+        kvStore.batch {
+            assertEquals(1, store.incrementAndGet(Ordinal.SESSION_PART))
+            assertEquals(2, store.incrementAndGet(Ordinal.SESSION_PART))
+            assertEquals(3, store.incrementAndGet(Ordinal.SESSION_PART))
+        }
+        assertEquals(1, kvStore.editCount)
+        assertEquals(4, store.incrementAndGet(Ordinal.SESSION_PART))
+    }
+
+    @Test
     fun `a failure in the underlying store returns -1`() {
         val throwingStore = OrdinalStoreImpl(ThrowingKeyValueStore())
         assertEquals(-1, throwingStore.incrementAndGet(Ordinal.SESSION))

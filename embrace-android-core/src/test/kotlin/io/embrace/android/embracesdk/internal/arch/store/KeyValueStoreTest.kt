@@ -13,6 +13,8 @@ import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -63,5 +65,119 @@ internal class KeyValueStoreTest {
         assertEquals(boolValue, store.getBoolean("bool", false))
         assertEquals(setValue, store.getStringSet("set"))
         assertEquals(mapValue, store.getStringMap("map"))
+    }
+
+    @Test
+    fun `values written in a batch are readable before and after it commits`() {
+        val setValue = setOf("a", "b")
+        val mapValue = mapOf("a" to "b")
+
+        store.batch {
+            store.edit { putString("string", "value") }
+            store.edit { putInt("int", 1) }
+            store.edit { putLong("long", 2L) }
+            store.edit { putBoolean("bool", true) }
+            store.edit { putStringSet("set", setValue) }
+            store.edit { putStringMap("map", mapValue) }
+
+            assertEquals("value", store.getString("string"))
+            assertEquals(1, store.getInt("int"))
+            assertEquals(2L, store.getLong("long"))
+            assertTrue(store.getBoolean("bool", false))
+            assertEquals(setValue, store.getStringSet("set"))
+            assertEquals(mapValue, store.getStringMap("map"))
+        }
+
+        assertEquals("value", store.getString("string"))
+        assertEquals(1, store.getInt("int"))
+        assertEquals(2L, store.getLong("long"))
+        assertTrue(store.getBoolean("bool", false))
+        assertEquals(setValue, store.getStringSet("set"))
+        assertEquals(mapValue, store.getStringMap("map"))
+    }
+
+    @Test
+    fun `a batch reads through to committed values it has not written`() {
+        store.edit { putString("string", "committed") }
+
+        store.batch {
+            assertEquals("committed", store.getString("string"))
+            store.edit { putString("other", "pending") }
+            assertEquals("committed", store.getString("string"))
+        }
+    }
+
+    @Test
+    fun `a null written in a batch shadows a committed value`() {
+        store.edit {
+            putString("string", "committed")
+            putStringSet("set", setOf("a"))
+            putStringMap("map", mapOf("a" to "b"))
+            putInt("int", 1)
+            putLong("long", 2L)
+            putBoolean("bool", true)
+        }
+
+        store.batch {
+            store.edit {
+                putString("string", null)
+                putStringSet("set", null)
+                putStringMap("map", null)
+                putInt("int", null)
+                putLong("long", null)
+                putBoolean("bool", null)
+            }
+            assertNull(store.getString("string"))
+            assertNull(store.getStringSet("set"))
+            assertNull(store.getStringMap("map"))
+            assertNull(store.getInt("int"))
+            assertNull(store.getLong("long"))
+            assertFalse(store.getBoolean("bool", true))
+        }
+
+        assertNull(store.getString("string"))
+        assertNull(store.getStringSet("set"))
+        assertNull(store.getStringMap("map"))
+        assertNull(store.getInt("int"))
+        assertNull(store.getLong("long"))
+        assertFalse(store.getBoolean("bool", true))
+    }
+
+    @Test
+    fun `the last write to a key in a batch wins`() {
+        store.batch {
+            store.edit { putStringMap("map", mapOf("a" to "b")) }
+            store.edit { putStringMap("map", mapOf("c" to "d")) }
+        }
+        assertEquals(mapOf("c" to "d"), store.getStringMap("map"))
+    }
+
+    @Test
+    fun `a nested batch defers its commit to the outer batch`() {
+        store.batch {
+            store.edit { putString("outer", "a") }
+            store.batch {
+                store.edit { putString("inner", "b") }
+            }
+            // the inner batch joined the outer one, so nothing has been committed yet
+            assertEquals("b", store.getString("inner"))
+        }
+        assertEquals("a", store.getString("outer"))
+        assertEquals("b", store.getString("inner"))
+    }
+
+    @Test
+    fun `a batch commits what it buffered even if the action throws`() {
+        assertThrows(IllegalStateException::class.java) {
+            store.batch {
+                store.edit { putString("string", "value") }
+                error("boom")
+            }
+        }
+        assertEquals("value", store.getString("string"))
+
+        // the failed batch was cleaned up, so subsequent edits commit immediately again
+        store.edit { putString("other", "value") }
+        assertEquals("value", store.getString("other"))
     }
 }

@@ -15,7 +15,6 @@ interface Device {
     /**
      * Gets the device's screen resolution.
      *
-     * @param windowManager the {@link WindowManager} from the {@link Context}
      * @return the device's screen resolution
      */
     val screenResolution: String

@@ -39,9 +39,4 @@ interface KeyValueStore {
      * Performs a batch edit of values in the key-value store.
      */
     fun edit(action: KeyValueStoreEditor.() -> Unit)
-
-    /**
-     * Increments an int from the key-value store then returns it.
-     */
-    fun incrementAndGet(key: String): Int
 }

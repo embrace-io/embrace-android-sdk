@@ -124,13 +124,14 @@ internal class OtelSdkConfigTest {
     }
 
     private fun createConfig(resourceAttributeOverrideEnabled: Boolean) = OtelSdkConfig(
-        spanSink = SpanSinkImpl(),
+        spanRepository = SpanRepository(),
         logSink = LogSinkImpl(),
         sdkName = "sdk",
         sdkVersion = "1.0",
         appVersion = "2.5.1",
         packageName = "com.test.app",
         systemInfo = SystemInfo(),
+        uuidSource = TestUuidSource(),
         resourceAttributeOverrideEnabled = { resourceAttributeOverrideEnabled },
     )
 }

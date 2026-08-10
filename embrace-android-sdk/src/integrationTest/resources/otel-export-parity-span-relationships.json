@@ -39,8 +39,8 @@
       "os.name": "android",
       "os.type": "linux",
       "os.version": "99.0.0",
-      "service.name": "UNKNOWN",
-      "service.version": "UNKNOWN",
+      "service.name": "com.fake.package",
+      "service.version": "2.5.1",
       "telemetry.distro.name": "io.embrace.android.embracesdk.core",
       "telemetry.distro.version": "__EMBRACE_TEST_IGNORE__"
     }
@@ -85,8 +85,8 @@
       "os.name": "android",
       "os.type": "linux",
       "os.version": "99.0.0",
-      "service.name": "UNKNOWN",
-      "service.version": "UNKNOWN",
+      "service.name": "com.fake.package",
+      "service.version": "2.5.1",
       "telemetry.distro.name": "io.embrace.android.embracesdk.core",
       "telemetry.distro.version": "__EMBRACE_TEST_IGNORE__"
     }
@@ -141,8 +141,8 @@
       "os.name": "android",
       "os.type": "linux",
       "os.version": "99.0.0",
-      "service.name": "UNKNOWN",
-      "service.version": "UNKNOWN",
+      "service.name": "com.fake.package",
+      "service.version": "2.5.1",
       "telemetry.distro.name": "io.embrace.android.embracesdk.core",
       "telemetry.distro.version": "__EMBRACE_TEST_IGNORE__"
     }

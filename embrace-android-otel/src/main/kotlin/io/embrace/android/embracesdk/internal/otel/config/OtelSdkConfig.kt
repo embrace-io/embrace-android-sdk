@@ -62,10 +62,6 @@ class OtelSdkConfig(
         )
     }
 
-    val logRecordProcessor: LogRecordProcessor by lazy {
-        DefaultLogRecordProcessor(logRecordExporter)
-    }
-
     /**
      * App-supplied resource attributes, in the order they were set
      */

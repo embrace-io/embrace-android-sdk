@@ -36,7 +36,7 @@
         }
       }
     ],
-    "instrumentationScopeName": "io.embrace.android.embracesdk.core",
+    "instrumentationScopeName": "embrace-android-sdk",
     "resourceAttributes": {
       "android.os.api_level": "35",
       "device.manufacturer": "Fake Manufacturer",
@@ -48,7 +48,7 @@
       "os.version": "99.0.0",
       "service.name": "com.fake.package",
       "service.version": "2.5.1",
-      "telemetry.distro.name": "io.embrace.android.embracesdk.core",
+      "telemetry.distro.name": "embrace-android-sdk",
       "telemetry.distro.version": "__EMBRACE_TEST_IGNORE__"
     }
   }

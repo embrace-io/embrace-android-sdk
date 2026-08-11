@@ -67,10 +67,6 @@ internal fun ModuleGraph.registerListeners() {
         val ctx = coreModule.application
         ctx.registerActivityLifecycleCallbacks(dataCaptureServiceModule.startupTracker)
 
-        workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
-            essentialServiceModule.networkConnectivityService.register()
-        }
-
         // periodically fail any in-flight spans that have exceeded their timeout, so leaked spans
         // are terminated and their memory released even during a long-running session.
         val spanRepository = openTelemetryModule.spanRepository
@@ -151,11 +147,12 @@ internal fun ModuleGraph.postLoadInstrumentation() {
         addCrashTeardownHandler(featureModule.crashMarker)
         deliveryModule?.payloadStore?.let(::addCrashTeardownHandler)
     }
-    registry.findByType(NetworkStatusDataSource::class)?.let {
-        essentialServiceModule.networkConnectivityService.addNetworkConnectivityListener(it)
-    }
-    registry.findByType(NetworkStateDataSource::class)?.let {
-        essentialServiceModule.networkConnectivityService.addNetworkConnectivityListener(it)
+    workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
+        with(essentialServiceModule.networkConnectivityService) {
+            registry.findByType(NetworkStatusDataSource::class)?.let(::addNetworkConnectivityListener)
+            registry.findByType(NetworkStateDataSource::class)?.let(::addNetworkConnectivityListener)
+            register()
+        }
     }
 }
 

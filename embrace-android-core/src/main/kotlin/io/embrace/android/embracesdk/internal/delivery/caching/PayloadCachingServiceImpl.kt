@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.delivery.caching
 
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -33,12 +33,12 @@ internal class PayloadCachingServiceImpl(
 
     override fun startCaching(
         initial: SessionPartToken,
-        state: AppState,
+        state: ProcessState,
         supplier: SessionPartPayloadSupplier,
     ) {
         deliveryTracer?.onCachingStarted()
         partCacher.start {
-            if (state == AppState.BACKGROUND) {
+            if (state == ProcessState.BACKGROUND) {
                 if (stateChanged.getAndSet(false)) {
                     onSessionCache(initial, state, supplier)
                 } else {
@@ -52,7 +52,7 @@ internal class PayloadCachingServiceImpl(
 
     private fun onSessionCache(
         initial: SessionPartToken,
-        endAppState: AppState,
+        endProcessState: ProcessState,
         supplier: SessionPartPayloadSupplier,
     ): Envelope<SessionPartPayload>? {
         deliveryTracer?.onSessionCache()
@@ -61,7 +61,7 @@ internal class PayloadCachingServiceImpl(
             if (initial.sessionPartId != sessionIdsProvider.getCurrentSessionPartId()) {
                 return null
             }
-            return supplier(endAppState, clock.now(), initial)?.apply {
+            return supplier(endProcessState, clock.now(), initial)?.apply {
                 payloadStore.cacheSessionPartSnapshot(this)
             }
         }

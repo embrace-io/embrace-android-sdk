@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.session.id
 
 import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 
 interface SessionPartTracker {
@@ -23,7 +23,7 @@ interface SessionPartTracker {
     fun newActiveSessionPart(
         endSessionPartCallback: SessionPartToken.() -> Unit,
         startSessionPartCallback: () -> SessionPartToken?,
-        postTransitionAppState: AppState,
+        postTransitionProcessState: ProcessState,
     ): SessionPartToken?
 
     /**

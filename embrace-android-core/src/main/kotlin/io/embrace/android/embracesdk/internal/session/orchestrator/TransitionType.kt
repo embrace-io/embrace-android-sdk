@@ -2,7 +2,7 @@
 
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues
@@ -19,35 +19,35 @@ enum class TransitionType(
     val userSessionTerminationReason: String? = null,
 
     /**
-     * The [AppState] the SDK will be in once this transition completes, or null if the transition doesn't change the [AppState]
+     * The [ProcessState] the SDK will be in once this transition completes, or null if the transition doesn't change the [ProcessState]
      */
-    private val nextAppState: AppState? = null,
+    private val nextProcessState: ProcessState? = null,
 ) {
     INITIAL,
     END_MANUAL(
         userSessionTerminationReason = EmbUserSessionTerminationReasonValues.MANUAL,
     ),
     ON_FOREGROUND(
-        nextAppState = AppState.FOREGROUND,
+        nextProcessState = ProcessState.FOREGROUND,
     ),
     ON_BACKGROUND(
-        nextAppState = AppState.BACKGROUND,
+        nextProcessState = ProcessState.BACKGROUND,
     ),
     CRASH,
     INACTIVITY_TIMEOUT(
         userSessionTerminationReason = EmbUserSessionTerminationReasonValues.INACTIVITY,
-        nextAppState = AppState.BACKGROUND,
+        nextProcessState = ProcessState.BACKGROUND,
     ),
     INACTIVITY_FOREGROUND(
         userSessionTerminationReason = EmbUserSessionTerminationReasonValues.INACTIVITY,
-        nextAppState = AppState.FOREGROUND,
+        nextProcessState = ProcessState.FOREGROUND,
     ),
     MAX_DURATION(
         userSessionTerminationReason = EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED,
     ),
     BACKGROUND_ONLY_SESSION_END(
         userSessionTerminationReason = EmbUserSessionTerminationReasonValues.BACKGROUND_ONLY_USER_SESSION_FOREGROUNDED,
-        nextAppState = AppState.FOREGROUND,
+        nextProcessState = ProcessState.FOREGROUND,
     ),
     ;
 
@@ -70,21 +70,21 @@ enum class TransitionType(
     }
 
     /**
-     * The [AppState] the SDK will be in after transitioning into this stage, given the current state.
+     * The [ProcessState] the SDK will be in after transitioning into this stage, given the current state.
      */
-    fun postTransitionEndState(currentState: AppState): AppState = nextAppState ?: currentState
+    fun postTransitionEndState(currentState: ProcessState): ProcessState = nextProcessState ?: currentState
 
     /**
      * The [LifeEventType] that triggered this transition
      */
-    fun lifeEventType(currentState: AppState): LifeEventType = when (this) {
+    fun lifeEventType(currentState: ProcessState): LifeEventType = when (this) {
         END_MANUAL -> when (currentState) {
-            AppState.FOREGROUND -> LifeEventType.MANUAL
+            ProcessState.FOREGROUND -> LifeEventType.MANUAL
             else -> LifeEventType.BKGND_MANUAL
         }
 
         else -> when (currentState) {
-            AppState.FOREGROUND -> LifeEventType.STATE
+            ProcessState.FOREGROUND -> LifeEventType.STATE
             else -> LifeEventType.BKGND_STATE
         }
     }

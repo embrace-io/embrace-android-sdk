@@ -9,7 +9,7 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.destination.TelemetryDestinationImpl
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
-import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
+import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
 import io.embrace.android.embracesdk.internal.capture.connectivity.EmbraceNetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkCallbackConnectivityService
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
@@ -23,7 +23,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProviderImpl
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateTrackerImpl
+import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateTrackerImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -40,9 +40,9 @@ class EssentialServiceModuleImpl(
     private val sessionOrchestratorProvider: Provider<SessionOrchestrator>,
 ) : EssentialServiceModule {
 
-    override val appStateTracker: AppStateTracker = EmbTrace.trace("process-state-service-init") {
+    override val processStateTracker: ProcessStateTracker = EmbTrace.trace("process-state-service-init") {
         val lifecycleOwner = lifecycleOwnerProvider() ?: ProcessLifecycleOwner.get()
-        AppStateTrackerImpl(initModule.logger, lifecycleOwner)
+        ProcessStateTrackerImpl(initModule.logger, lifecycleOwner)
     }
 
     override val navigationTrackingService: NavigationTrackingService = NavigationTrackingServiceImpl()

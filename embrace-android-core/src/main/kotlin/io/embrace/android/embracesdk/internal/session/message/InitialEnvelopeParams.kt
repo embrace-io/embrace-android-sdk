@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.message
 
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 
 /**
@@ -10,7 +10,7 @@ class InitialEnvelopeParams(
     val coldStart: Boolean,
     val startType: LifeEventType,
     val startTime: Long,
-    val appState: AppState,
+    val processState: ProcessState,
     val userSessionPartIndex: Int,
     val sessionPartNumber: Int,
 )

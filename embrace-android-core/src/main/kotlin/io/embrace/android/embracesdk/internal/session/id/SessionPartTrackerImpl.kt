@@ -4,7 +4,7 @@ import android.app.ActivityManager
 import android.os.Build
 import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
@@ -34,7 +34,7 @@ internal class SessionPartTrackerImpl(
     override fun newActiveSessionPart(
         endSessionPartCallback: SessionPartToken.() -> Unit,
         startSessionPartCallback: () -> SessionPartToken?,
-        postTransitionAppState: AppState,
+        postTransitionProcessState: ProcessState,
     ): SessionPartToken? {
         activeSession?.let { endingSession ->
             runCatching {

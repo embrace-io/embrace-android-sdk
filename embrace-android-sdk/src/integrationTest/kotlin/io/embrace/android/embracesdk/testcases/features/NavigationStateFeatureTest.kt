@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.assertions.assertNavigationStateSpan
 import io.embrace.android.embracesdk.assertions.getNavigationStateSpan
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.AppExecutionTimestamps
@@ -141,7 +141,7 @@ internal class NavigationStateFeatureTest {
             },
             assertAction = {
                 val sessionPayloads = getSessionEnvelopes(2)
-                val baPayloads = getSessionEnvelopes(2, AppState.BACKGROUND)
+                val baPayloads = getSessionEnvelopes(2, ProcessState.BACKGROUND)
 
                 val baStateSpan1 = checkNotNull(baPayloads[0].getNavigationStateSpan())
                 baStateSpan1.assertNavigationStateSpan()

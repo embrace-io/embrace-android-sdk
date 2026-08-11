@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 import android.os.Looper
-import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.fakes.behavior.FakeThreadBlockageBehavior
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.every
@@ -27,7 +27,7 @@ internal class ThreadBlockageServiceRule<T : ScheduledExecutorService>(
     val logger = FakeInternalLogger()
 
     lateinit var fakeConfigService: FakeConfigService
-    lateinit var fakeAppStateTracker: FakeAppStateTracker
+    lateinit var fakeAppStateTracker: FakeProcessStateTracker
     lateinit var service: ThreadBlockageServiceImpl
     lateinit var blockedThreadDetector: BlockedThreadDetector
     lateinit var behavior: FakeThreadBlockageBehavior
@@ -46,7 +46,7 @@ internal class ThreadBlockageServiceRule<T : ScheduledExecutorService>(
         behavior = FakeThreadBlockageBehavior()
         watchdogMonitorThread = AtomicReference(Thread.currentThread())
         fakeConfigService = FakeConfigService(threadBlockageBehavior = behavior)
-        fakeAppStateTracker = FakeAppStateTracker(AppState.FOREGROUND)
+        fakeAppStateTracker = FakeProcessStateTracker(ProcessState.FOREGROUND)
         watchdogExecutorService = scheduledExecutorSupplier.invoke()
         worker = BackgroundWorker(watchdogExecutorService)
         stacktraceSampler = ThreadBlockageSampler(
@@ -70,7 +70,7 @@ internal class ThreadBlockageServiceRule<T : ScheduledExecutorService>(
             configService = fakeConfigService,
             logger = logger,
             clock = clock,
-            appStateTracker = fakeAppStateTracker,
+            processStateTracker = fakeAppStateTracker,
         )
         service = ThreadBlockageServiceImpl(
             args = args,

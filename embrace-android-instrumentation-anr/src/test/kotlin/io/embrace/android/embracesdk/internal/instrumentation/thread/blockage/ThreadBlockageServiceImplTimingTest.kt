@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
@@ -54,7 +54,7 @@ internal class ThreadBlockageServiceImplTimingTest {
     fun `test delayed background check stops monitoring when app remains in background`() {
         with(rule) {
             // Set background state and recreate service
-            fakeAppStateTracker.state = AppState.BACKGROUND
+            fakeAppStateTracker.state = ProcessState.BACKGROUND
             recreateService()
 
             // Start capture - this should trigger scheduleDelayedBackgroundCheck
@@ -73,7 +73,7 @@ internal class ThreadBlockageServiceImplTimingTest {
     fun `test delayed background check does not stop monitoring when app transitions to foreground`() {
         with(rule) {
             // Set background state and recreate service
-            fakeAppStateTracker.state = AppState.BACKGROUND
+            fakeAppStateTracker.state = ProcessState.BACKGROUND
             recreateService()
 
             // Start capture - this should trigger scheduleDelayedBackgroundCheck
@@ -84,7 +84,7 @@ internal class ThreadBlockageServiceImplTimingTest {
             watchdogExecutorService.moveForwardAndRunBlocked(TimeUnit.SECONDS.toMillis(5))
 
             // Transition to foreground before the 10-second delay
-            fakeAppStateTracker.state = AppState.FOREGROUND
+            fakeAppStateTracker.state = ProcessState.FOREGROUND
             service.onForeground()
             watchdogExecutorService.runCurrentlyBlocked()
 

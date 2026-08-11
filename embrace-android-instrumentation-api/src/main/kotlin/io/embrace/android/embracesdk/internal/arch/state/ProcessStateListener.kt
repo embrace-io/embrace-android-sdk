@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.arch.state
 
 /**
- * Listener implemented by observers of the [AppStateTracker].
+ * Listener implemented by observers of the [ProcessStateTracker].
  */
-interface AppStateListener {
+interface ProcessStateListener {
 
     /**
      * Triggered when the app enters the background.

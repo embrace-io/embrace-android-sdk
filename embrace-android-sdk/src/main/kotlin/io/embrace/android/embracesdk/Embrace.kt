@@ -4,7 +4,7 @@ import android.annotation.SuppressLint
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 
-private val delegate = EmbTrace.trace("embrace-impl-init") { EmbraceImpl() }
+private val delegate = EmbTrace.trace(sectionName = "embrace-impl-init", recordDuration = true) { EmbraceImpl() }
 
 /**
  * Entry point for the SDK. This class is part of the Embrace Public API.

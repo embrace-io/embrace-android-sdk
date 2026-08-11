@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
+import io.embrace.android.embracesdk.assertions.assertSdkInitSectionDurationsRecorded
 import io.embrace.android.embracesdk.assertions.assertIsTypePerformance
 import io.embrace.android.embracesdk.assertions.findCustomLinks
 import io.embrace.android.embracesdk.assertions.findSpanByName
@@ -25,13 +26,13 @@ import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
-import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.internal.toEmbracePayload
+import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -195,11 +196,13 @@ internal class TracingApiTest {
                     checkNotNull(spansMap[it]) { "$it not found: $results" }
                 }
 
+                val sdkInitSpan = checkNotNull(spansMap["emb-sdk-init"])
                 assertEquals(
                     "1",
-                    checkNotNull(spansMap["emb-sdk-init"]).attributes
-                        ?.findAttributeValue(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER)
+                    sdkInitSpan.attributes?.findAttributeValue(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER)
                 )
+
+                sdkInitSpan.attributes.assertSdkInitSectionDurationsRecorded()
 
                 assertEmbraceSpanData(
                     span = traceRootSpan,

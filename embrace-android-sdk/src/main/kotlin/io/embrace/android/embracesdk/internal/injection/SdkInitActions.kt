@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
  * Performs bootstrapping by setting required values where there is an interdependency
  * between modules.
  */
-internal fun ModuleGraph.postInit() {
+internal fun ModuleGraph.postInit() = EmbTrace.trace(sectionName = "post-init", recordDuration = true) {
     openTelemetryModule.setEventMetadataProvider(eventMetadataSupplierProvider())
 
     // note: otelBehavior is not applied here - it decides which OTel SDK is built, so it is set
@@ -202,13 +202,14 @@ internal fun ModuleGraph.triggerPayloadSend() {
 /**
  * Mark SDK initialization as complete.
  */
-internal fun ModuleGraph.markSdkInitComplete() {
+internal fun ModuleGraph.markSdkInitComplete(sdkInitDurations: Map<String, Long>) {
     EmbTrace.trace("startup-tracking") {
         dataCaptureServiceModule.startupService.setSdkStartupInfo(
-            sdkStartTimeMs,
-            initModule.clock.now(),
-            essentialServiceModule.processStateTracker.getAppState(),
-            Thread.currentThread().name,
+            startTimeMs = sdkStartTimeMs,
+            endTimeMs = initModule.clock.now(),
+            endState = essentialServiceModule.processStateTracker.getAppState(),
+            threadName = Thread.currentThread().name,
+            sdkInitDurations = sdkInitDurations,
         )
     }
     val appId = configService.appId

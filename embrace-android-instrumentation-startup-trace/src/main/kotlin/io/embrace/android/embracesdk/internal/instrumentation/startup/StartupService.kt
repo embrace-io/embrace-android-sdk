@@ -15,6 +15,7 @@ interface StartupService {
         endTimeMs: Long,
         endState: ProcessState,
         threadName: String,
+        sdkInitDurations: Map<String, Long> = emptyMap(),
     )
 
     /**
@@ -42,4 +43,20 @@ interface StartupService {
      * Returns null if the counter could not be determined.
      */
     fun getAppVersionStartupCounter(): Int?
+
+    /**
+     * Durations in milliseconds of the instrumented SDK init sections, keyed by section name.
+     * Empty until startup info is recorded.
+     */
+    fun getSdkInitDurations(): Map<String, Long>
+}
+
+/**
+ * Add an entry to the map given a map of sdk init durations where the key name comprises the
+ * section name with an additional suffix.
+ */
+internal fun MutableMap<String, String>.putSdkInitDurations(durations: Map<String, Long>) {
+    durations.forEach { (sectionName, durationMs) ->
+        put("$sectionName-duration-ms", durationMs.toString())
+    }
 }

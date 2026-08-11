@@ -58,7 +58,11 @@ import java.util.concurrent.Executors
  */
 @SuppressLint("EmbracePublicApiPackageRule")
 internal class EmbraceImpl(
-    private val bootstrapper: ModuleInitBootstrapper = EmbTrace.trace("bootstrapper-init", ::ModuleInitBootstrapper),
+    private val bootstrapper: ModuleInitBootstrapper = EmbTrace.trace(
+        sectionName = "bootstrapper-init",
+        recordDuration = true,
+        code = ::ModuleInitBootstrapper,
+    ),
     private val sdkCallChecker: SdkCallChecker =
         SdkCallChecker(bootstrapper.initModule.logger, bootstrapper.initModule.telemetryService),
     private val userApiDelegate: UserApiDelegate = UserApiDelegate(bootstrapper, sdkCallChecker),
@@ -108,7 +112,7 @@ internal class EmbraceImpl(
                 }
                 bootstrapper.postInit()
 
-                EmbTrace.trace("post-services-setup") {
+                EmbTrace.trace(sectionName = "post-services-setup", recordDuration = true) {
                     internalInterfaceModule = InternalInterfaceModuleImpl(
                         bootstrapper.initModule,
                         bootstrapper.configService,
@@ -125,8 +129,8 @@ internal class EmbraceImpl(
                     initializeHucInstrumentation(bootstrapper.configService.networkBehavior)
                     bootstrapper.postLoadInstrumentation()
                     bootstrapper.triggerPayloadSend()
-                    bootstrapper.markSdkInitComplete()
                 }
+                bootstrapper.markSdkInitComplete(EmbTrace.durationTracker.flush())
             } catch (ignored: Throwable) {
                 Log.w("Embrace", "Failed to initialize Embrace SDK", ignored)
             }

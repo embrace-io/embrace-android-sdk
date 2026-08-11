@@ -40,6 +40,7 @@ internal class StartupServiceImplTest {
             endTimeMs = endTimeMillis,
             endState = ProcessState.BACKGROUND,
             threadName = "main",
+            sdkInitDurations = mapOf("modules-init" to 100L),
         )
         val currentSpans = destination.completedSpans()
         assertEquals(1, currentSpans.size)
@@ -51,6 +52,7 @@ internal class StartupServiceImplTest {
             assertTrue(private)
             assertEquals("false", attributes["ended-in-foreground"])
             assertEquals("main", attributes["thread-name"])
+            assertEquals("100", attributes["modules-init-duration-ms"])
             assertEquals("3", attributes[EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER])
         }
         assertEquals(3, startupService.getAppVersionStartupCounter())
@@ -94,10 +96,11 @@ internal class StartupServiceImplTest {
 
     @Test
     fun `startup info available right after setting on the service`() {
-        startupService.setSdkStartupInfo(1111L, 3222L, ProcessState.BACKGROUND, "main")
+        startupService.setSdkStartupInfo(1111L, 3222L, ProcessState.BACKGROUND, "main", mapOf("modules-init" to 100L))
         assertEquals(1111L, startupService.getSdkInitStartMs())
         assertEquals(3222L, startupService.getSdkInitEndMs())
         assertEquals(2111L, startupService.getSdkStartupDuration())
+        assertEquals(mapOf("modules-init" to 100L), startupService.getSdkInitDurations())
         assertEquals(3, startupService.getAppVersionStartupCounter())
     }
 }

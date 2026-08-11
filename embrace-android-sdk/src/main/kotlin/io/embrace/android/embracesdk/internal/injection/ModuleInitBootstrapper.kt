@@ -21,7 +21,7 @@ import io.embrace.android.embracesdk.internal.worker.Worker
  * A class that wires together and initializes modules in a manner that makes them work as a cohesive whole.
  */
 internal class ModuleInitBootstrapper(
-    override val initModule: InitModule = EmbTrace.trace("init-module", ::InitModuleImpl),
+    override val initModule: InitModule = EmbTrace.trace("init-module", code = ::InitModuleImpl),
     override val openTelemetryModule: OpenTelemetryModule = EmbTrace.trace("otel-module") {
         OpenTelemetryModuleImpl(initModule)
     },
@@ -68,7 +68,7 @@ internal class ModuleInitBootstrapper(
     fun init(
         context: Context,
         versionChecker: VersionChecker = BuildVersionChecker,
-    ): Boolean = EmbTrace.trace("modules-init") {
+    ): Boolean = EmbTrace.trace(sectionName = "modules-init", recordDuration = true) {
         try {
             if (isInitialized()) {
                 return@trace false

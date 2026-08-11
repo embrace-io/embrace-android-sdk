@@ -20,6 +20,7 @@ dependencies {
     implementation(libs.asm.util)
 
     testImplementation(libs.agp.api)
+    kspTest(libs.moshi.kotlin.codegen)
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.mockwebserver)

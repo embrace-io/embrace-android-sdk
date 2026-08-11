@@ -154,6 +154,7 @@ internal class OpenTelemetrySdkTest {
             sdkVersion = "1.0",
             appVersion = "2.5.1",
             packageName = "com.test.app",
+            buildId = "fake-build-id",
             systemInfo = systemInfo,
             uuidSource = TestUuidSource(),
         )

@@ -39,7 +39,6 @@ class EnvelopeResourceSourceImpl(
             putValue("disk_total_capacity", device.internalStorageTotalCapacity.value)
             putValue("screen_resolution", device.screenResolution)
             putValue("num_cores", device.numberOfCores)
-            putValue("device_architecture", configService.cpuAbi.archName)
             putValue("environment", environment.value)
             putValue("uses_emmc_storage", device.usesEmmcStorage)
             putValue("device_soc_model", device.socModel)

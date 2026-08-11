@@ -42,6 +42,7 @@
       "device.manufacturer": "Fake Manufacturer",
       "device.model.identifier": "Phake Phone Phive",
       "device.model.name": "Phake Phone Phive",
+      "host.arch": "armeabi-v7a",
       "os.build_id": "",
       "os.name": "android",
       "os.type": "linux",

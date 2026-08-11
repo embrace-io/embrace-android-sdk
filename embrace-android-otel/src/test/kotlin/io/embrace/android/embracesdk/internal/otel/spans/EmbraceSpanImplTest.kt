@@ -72,7 +72,6 @@ internal class EmbraceSpanImplTest {
     private lateinit var tracer: Tracer
     private lateinit var telemetryService: FakeTelemetryService
     private lateinit var embraceSpanFactory: EmbraceSpanFactory
-    private lateinit var telemetryService: FakeTelemetryService
     private var updateNotified: Boolean = false
     private var stoppedSpanId: String? = null
 

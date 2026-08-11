@@ -41,7 +41,6 @@
         "status": "Unset",
         "events": [],
         "attributes": [
-          { "key": "emb.private.sequence_id", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.process_identifier", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.session_part_id", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.type", "value": "ux.view" },
@@ -62,7 +61,6 @@
         "events": [],
         "attributes": [
           { "key": "emb.error_code", "value": "user_abandon" },
-          { "key": "emb.private.sequence_id", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.process_identifier", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.session_part_id", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.startup_activity", "value": "android.app.Activity" },
@@ -82,7 +80,7 @@
         "status": "Unset",
         "events": [],
         "attributes": [
-          { "key": "emb.private.sequence_id", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.app.version_startup_counter", "value": "1" },
           { "key": "emb.process_identifier", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.session_part_id", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.type", "value": "perf" },
@@ -101,7 +99,6 @@
         "status": "Unset",
         "events": [],
         "attributes": [
-          { "key": "emb.private.sequence_id", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.process_identifier", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.session_part_id", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.type", "value": "perf" },
@@ -120,7 +117,6 @@
         "status": "Unset",
         "events": [],
         "attributes": [
-          { "key": "emb.private.sequence_id", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.process_identifier", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.session_part_id", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.type", "value": "perf" },
@@ -139,7 +135,6 @@
         "status": "Unset",
         "events": [],
         "attributes": [
-          { "key": "emb.private.sequence_id", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.process_identifier", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.session_part_id", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.state.initial_value", "value": "UNKNOWN" },
@@ -174,7 +169,6 @@
           }
         ],
         "attributes": [
-          { "key": "emb.private.sequence_id", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.process_identifier", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.session_part_id", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.state.initial_value", "value": "Initializing" },
@@ -195,7 +189,6 @@
         "status": "Unset",
         "events": [],
         "attributes": [
-          { "key": "emb.private.sequence_id", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.process_identifier", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.session_part_id", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.state.initial_value", "value": "unverified" },
@@ -215,6 +208,7 @@
         "status": "Unset",
         "events": [],
         "attributes": [
+          { "key": "emb.app.version_startup_counter", "value": "1" },
           { "key": "emb.clean_exit", "value": "true" },
           { "key": "emb.clock_gnss_drift", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.clock_network_drift", "value": "__EMBRACE_TEST_IGNORE__" },
@@ -227,7 +221,6 @@
           { "key": "emb.kotlin_on_classpath", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.okhttp3", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.okhttp3_on_classpath", "value": "__EMBRACE_TEST_IGNORE__" },
-          { "key": "emb.private.sequence_id", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.process_identifier", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.session_end_type", "value": "state" },
           { "key": "emb.session_part_id", "value": "__EMBRACE_TEST_IGNORE__" },

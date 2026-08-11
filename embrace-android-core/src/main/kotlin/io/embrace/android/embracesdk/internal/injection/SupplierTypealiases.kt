@@ -48,6 +48,7 @@ typealias EssentialServiceModuleSupplier = (
     openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
+    startupContext: Context?,
     lifecycleTrackerProvider: Provider<LifecycleTracker?>,
     networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
     sessionOrchestratorProvider: Provider<SessionOrchestrator>,

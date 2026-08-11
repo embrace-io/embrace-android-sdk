@@ -64,18 +64,6 @@ internal class SharedPrefsStore(
         }
     }
 
-    override fun incrementAndGet(key: String): Int {
-        return try {
-            val ordinal = (getInt(key) ?: 0) + 1
-            edit {
-                putInt(key, ordinal)
-            }
-            ordinal
-        } catch (tr: Throwable) {
-            -1
-        }
-    }
-
     private companion object {
         val mapSerializer = MapSerializer(String.serializer(), String.serializer())
     }

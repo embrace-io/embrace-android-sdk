@@ -94,4 +94,45 @@ class OrdinalStoreImplTest {
         assertEquals(-1, store.incrementAndGet(Ordinal.APP_VERSION_STARTUP))
         assertEquals(1, store.incrementAndGet(Ordinal.APP_VERSION_STARTUP, "1.0.0"))
     }
+
+    @Test
+    fun `seeding an ordinal only costs one commit`() {
+        assertEquals(1, store.incrementAndGet(Ordinal.SESSION_PART))
+        assertEquals(1, kvStore.editCount)
+
+        assertEquals(2, store.incrementAndGet(Ordinal.SESSION_PART))
+        assertEquals(2, kvStore.editCount)
+    }
+
+    @Test
+    fun `seeding a scoped ordinal only costs one commit`() {
+        assertEquals(1, store.incrementAndGet(Ordinal.APP_VERSION_STARTUP, "1.0.0"))
+        assertEquals(1, kvStore.editCount)
+
+        assertEquals(2, store.incrementAndGet(Ordinal.APP_VERSION_STARTUP, "1.0.0"))
+        assertEquals(2, kvStore.editCount)
+
+        assertEquals(1, store.incrementAndGet(Ordinal.APP_VERSION_STARTUP, "1.0.1"))
+        assertEquals(3, kvStore.editCount)
+    }
+
+    @Test
+    fun `a failure in the underlying store returns -1`() {
+        val throwingStore = OrdinalStoreImpl(ThrowingKeyValueStore())
+        assertEquals(-1, throwingStore.incrementAndGet(Ordinal.SESSION))
+        assertEquals(-1, throwingStore.incrementAndGet(Ordinal.APP_VERSION_STARTUP, "1.0.0"))
+    }
+
+    /**
+     * Mimics [android.content.SharedPreferences] throwing when a key holds a value of another type.
+     */
+    private class ThrowingKeyValueStore : KeyValueStore {
+        override fun getString(key: String): String? = error("simulated store failure")
+        override fun getInt(key: String): Int? = error("simulated store failure")
+        override fun getLong(key: String): Long? = error("simulated store failure")
+        override fun getBoolean(key: String, defaultValue: Boolean): Boolean = error("simulated store failure")
+        override fun getStringSet(key: String): Set<String>? = error("simulated store failure")
+        override fun getStringMap(key: String): Map<String, String>? = error("simulated store failure")
+        override fun edit(action: KeyValueStoreEditor.() -> Unit) = error("simulated store failure")
+    }
 }

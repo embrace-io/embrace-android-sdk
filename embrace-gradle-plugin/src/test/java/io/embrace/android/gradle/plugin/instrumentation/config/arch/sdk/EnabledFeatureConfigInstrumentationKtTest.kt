@@ -52,6 +52,7 @@ class EnabledFeatureConfigInstrumentationKtTest {
         ConfigMethod("isUiLoadTracingEnabled", "()Z", true),
         ConfigMethod("isUiLoadTracingTraceAll", "()Z", true),
         ConfigMethod("isEndStartupWithAppReadyEnabled", "()Z", true),
+        ConfigMethod("isActivityProcessLifecycleTrackerEnabled", "()Z", true),
     )
 
     @Test
@@ -88,6 +89,7 @@ class EnabledFeatureConfigInstrumentationKtTest {
                             uiLoadPerfTracingDisabled = false,
                             uiLoadPerfTracingSelectedOnly = false,
                             endStartupWithAppReadyEnabled = true,
+                            activityProcessLifecycleTrackerEnabled = true,
                         ),
                         backgroundActivityConfig = BackgroundActivityLocalConfig(
                             backgroundActivityCaptureEnabled = true,

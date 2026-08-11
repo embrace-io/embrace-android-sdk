@@ -64,4 +64,8 @@ class AutoDataCaptureBehaviorImpl(
 
     override fun isScreenLoadCaptureEnabled(): Boolean =
         thresholdCheck.isBehaviorEnabled(remote?.pctScreenLoadEnabled) ?: SCREEN_LOAD_CAPTURE_ENABLED_DEFAULT
+
+    override fun isActivityProcessLifecycleTrackerEnabled(): Boolean =
+        thresholdCheck.isBehaviorEnabled(remote?.pctActivityProcessLifecycleTrackerEnabled)
+            ?: local.isActivityProcessLifecycleTrackerEnabled()
 }

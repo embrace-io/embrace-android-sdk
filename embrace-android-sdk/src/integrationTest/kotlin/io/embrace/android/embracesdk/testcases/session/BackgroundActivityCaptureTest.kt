@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.assertions.getOtelSessionId
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.hasSpanSnapshotsOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -52,7 +52,7 @@ internal class BackgroundActivityCaptureTest {
             },
             assertAction = {
                 // filter out dupes from overwritten saves
-                val bgActivities = getSessionEnvelopes(2, AppState.BACKGROUND).distinctBy { it.getSessionPartId() }
+                val bgActivities = getSessionEnvelopes(2, ProcessState.BACKGROUND).distinctBy { it.getSessionPartId() }
                 assertEquals(2, bgActivities.size)
 
                 val first = bgActivities[0]
@@ -99,7 +99,7 @@ internal class BackgroundActivityCaptureTest {
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
-                getSessionEnvelopes(0, AppState.BACKGROUND)
+                getSessionEnvelopes(0, ProcessState.BACKGROUND)
 
                 val logs = getLogEnvelopes(2).flatMap { it.getLogsOfType(EmbType.System.Log) }
                 with(logs[0]) {
@@ -187,7 +187,7 @@ internal class BackgroundActivityCaptureTest {
                 val session1 = sessions[0]
                 val session2 = sessions[1]
                 assertEquals(2, sessions.size)
-                assertEquals(0, getSessionEnvelopes(0, AppState.BACKGROUND).size)
+                assertEquals(0, getSessionEnvelopes(0, ProcessState.BACKGROUND).size)
 
                 assertEquals(session1.metadata, session2.metadata)
                 assertEquals(

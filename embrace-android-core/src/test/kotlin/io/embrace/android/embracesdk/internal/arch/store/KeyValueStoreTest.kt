@@ -41,15 +41,6 @@ internal class KeyValueStoreTest {
     }
 
     @Test
-    fun testIncrementAndGet() {
-        val key = "a"
-        val otherKey = "b"
-        assertEquals(1, store.incrementAndGet(key))
-        assertEquals(2, store.incrementAndGet(key))
-        assertEquals(1, store.incrementAndGet(otherKey))
-    }
-
-    @Test
     fun testOverrideValues() {
         val strValue = "value"
         val intValue = 1

@@ -4,12 +4,10 @@ import android.app.ActivityManager
 import android.content.Context
 import android.net.ConnectivityManager
 import android.os.Build
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.destination.TelemetryDestinationImpl
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
-import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
+import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
 import io.embrace.android.embracesdk.internal.capture.connectivity.EmbraceNetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkCallbackConnectivityService
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
@@ -23,7 +21,9 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProviderImpl
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateTrackerImpl
+import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
+import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateTrackerImpl
+import io.embrace.android.embracesdk.internal.session.lifecycle.createLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -35,14 +35,17 @@ class EssentialServiceModuleImpl(
     openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
-    lifecycleOwnerProvider: Provider<LifecycleOwner?>,
+    startupContext: Context?,
+    lifecycleTrackerProvider: Provider<LifecycleTracker?>,
     networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
     private val sessionOrchestratorProvider: Provider<SessionOrchestrator>,
 ) : EssentialServiceModule {
 
-    override val appStateTracker: AppStateTracker = EmbTrace.trace("process-state-service-init") {
-        val lifecycleOwner = lifecycleOwnerProvider() ?: ProcessLifecycleOwner.get()
-        AppStateTrackerImpl(initModule.logger, lifecycleOwner)
+    override val processStateTracker: ProcessStateTracker = EmbTrace.trace("process-state-service-init") {
+        val lifecycleTracker = lifecycleTrackerProvider()
+            ?: createLifecycleTracker(configService, coreModule.application, startupContext)
+        ProcessStateTrackerImpl(initModule.logger, lifecycleTracker)
+            .apply { register() }
     }
 
     override val navigationTrackingService: NavigationTrackingService = NavigationTrackingServiceImpl()
@@ -94,7 +97,7 @@ class EssentialServiceModuleImpl(
     override val userSessionPropertiesService: UserSessionPropertiesService =
         EmbTrace.trace("session-properties-init") {
             UserSessionPropertiesServiceImpl(
-                store = coreModule.store,
+                store = lazy { coreModule.store },
                 configService = configService,
                 destination = telemetryDestination,
                 telemetryService = initModule.telemetryService,

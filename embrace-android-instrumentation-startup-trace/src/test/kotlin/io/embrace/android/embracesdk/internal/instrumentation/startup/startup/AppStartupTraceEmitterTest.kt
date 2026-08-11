@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.internal.arch.startup.MAX_COLD_STARTUP_INIT
 import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifier
 import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
 import io.embrace.android.embracesdk.internal.arch.startup.StartupType
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupTraceEmitter
 import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupTraceEmitter.Companion.ACTIVITY_FIRST_DRAW_SPAN
 import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupTraceEmitter.Companion.ACTIVITY_INIT_DELAY_SPAN
@@ -71,7 +71,7 @@ internal class AppStartupTraceEmitterTest {
     fun setUp() {
         clock = FakeClock(processInitTime)
         destination = FakeTelemetryDestination()
-        startupService = StartupServiceImpl(destination, APP_VERSION_STARTUP_COUNTER)
+        startupService = StartupServiceImpl(destination) { APP_VERSION_STARTUP_COUNTER }
         clock.tick(100L)
         logger = FakeInternalLogger(false)
         firePreAndPostCreate = hasPrePostEvents(BuildVersionChecker)
@@ -773,7 +773,7 @@ internal class AppStartupTraceEmitterTest {
         startupService?.setSdkStartupInfo(
             startTimeMs = start,
             endTimeMs = end,
-            endState = AppState.BACKGROUND,
+            endState = ProcessState.BACKGROUND,
             threadName = "main",
         )
 

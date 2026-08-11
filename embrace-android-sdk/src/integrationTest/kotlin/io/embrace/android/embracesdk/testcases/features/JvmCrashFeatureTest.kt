@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.UserSessionRemoteConfig
@@ -113,7 +113,7 @@ internal class JvmCrashFeatureTest {
                 simulateJvmUncaughtException(testException)
             },
             assertAction = {
-                val ba = payloadStorageService.getPersistedSession(AppState.BACKGROUND)
+                val ba = payloadStorageService.getPersistedSession(ProcessState.BACKGROUND)
                 assertEquals(0, ba.data.spanSnapshots?.size)
                 payloadStorageService.getPersistedCrashLog().getLastLog().assertCrash(
                     crashIdFromSession = ba.getCrashedId(),
@@ -204,12 +204,12 @@ internal class JvmCrashFeatureTest {
             },
             assertAction = {
                 // The resurrected session is delivered normally and is not associated with the crash.
-                val resurrectedSession = getSingleSessionEnvelope(AppState.FOREGROUND)
+                val resurrectedSession = getSingleSessionEnvelope(ProcessState.FOREGROUND)
                 assertEquals(resurrectedSessionId, resurrectedSession.getUserSessionId())
                 assertNull(resurrectedSession.getSessionPartSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID))
 
                 // The crashing process's own session part is held back during teardown, persisted, and carries the crash id.
-                val ba = payloadStorageService.getPersistedSession(AppState.BACKGROUND)
+                val ba = payloadStorageService.getPersistedSession(ProcessState.BACKGROUND)
                 assertEquals(crashTimeMs, ba.getStartTime())
                 payloadStorageService.getPersistedCrashLog().getLastLog().assertCrash(
                     crashIdFromSession = ba.getCrashedId(),
@@ -313,7 +313,7 @@ internal class JvmCrashFeatureTest {
     }
 
     private fun FakePayloadStorageService.getPersistedSession(
-        state: AppState = AppState.FOREGROUND,
+        state: ProcessState = ProcessState.FOREGROUND,
     ): Envelope<SessionPartPayload> {
         val expectedState = state.name.lowercase()
         return storedPayloadMetadata()

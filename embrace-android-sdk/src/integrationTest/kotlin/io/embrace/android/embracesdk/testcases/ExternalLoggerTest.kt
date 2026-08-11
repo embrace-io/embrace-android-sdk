@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -126,7 +126,7 @@ internal class ExternalLoggerTest {
                         expectedSeverityText = "DANG",
                         expectedUserSessionId = userSessionId,
                         expectedSessionPartId = session.getSessionPartId(),
-                        expectedAppState = AppState.FOREGROUND,
+                        expectedProcessState = ProcessState.FOREGROUND,
                         expectedSessionProperties = mapOf("session-attr" to "blah"),
                         expectedAttributes = mapOf("foo" to "bar"),
                     )
@@ -197,7 +197,7 @@ internal class ExternalLoggerTest {
                         expectedSeverityText = "",
                         expectedUserSessionId = userSessionId,
                         expectedSessionPartId = sessionPartId,
-                        expectedAppState = AppState.BACKGROUND,
+                        expectedProcessState = ProcessState.BACKGROUND,
                         expectedSessionProperties = mapOf("bg-attr" to "blah"),
                         expectedAttributes = mapOf("foo" to "bar"),
                     )
@@ -286,7 +286,7 @@ internal class ExternalLoggerTest {
         expectedSeverityText: String?,
         expectedUserSessionId: String?,
         expectedSessionPartId: String?,
-        expectedAppState: AppState,
+        expectedProcessState: ProcessState,
         expectedSessionProperties: Map<String, String>,
         expectedAttributes: Map<String, String>,
     ) {
@@ -321,7 +321,7 @@ internal class ExternalLoggerTest {
                 assertFalse(containsKey(EmbSessionAttributes.EMB_USER_SESSION_ID))
             }
             assertEquals(expectedSessionPartId, this[EmbSessionAttributes.EMB_SESSION_PART_ID])
-            assertEquals(expectedAppState.description, this[EmbSessionAttributes.EMB_STATE])
+            assertEquals(expectedProcessState.description, this[EmbSessionAttributes.EMB_STATE])
             assertTrue(containsKey("emb.state.test"))
             expectedSessionProperties.forEach { prop ->
                 assertEquals(prop.value, this[prop.key.toEmbraceAttributeName()])

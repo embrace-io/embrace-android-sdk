@@ -45,6 +45,11 @@
               "description": "Enables ANR capture.",
               "default": true,
               "type": "boolean"
+            },
+            "activity_process_lifecycle_tracker_enabled": {
+              "description": "Detect foreground/background transitions by observing activity lifecycle callbacks directly, instead of using androidx's ProcessLifecycleOwner. Can be overridden by remote config.",
+              "default": false,
+              "type": "boolean"
             }
           },
           "minProperties": 1

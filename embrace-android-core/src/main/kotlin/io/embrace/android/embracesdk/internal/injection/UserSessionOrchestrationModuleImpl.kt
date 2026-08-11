@@ -55,7 +55,7 @@ class UserSessionOrchestrationModuleImpl(
         )
 
         SessionOrchestratorImpl(
-            essentialServiceModule.appStateTracker,
+            essentialServiceModule.processStateTracker,
             payloadFactory,
             initModule.clock,
             configService,

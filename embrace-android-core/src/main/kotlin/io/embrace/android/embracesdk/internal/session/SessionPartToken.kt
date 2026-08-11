@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.session
 
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 
 /**
  * An object that holds immutable state associated with a started session.
@@ -26,7 +26,7 @@ data class SessionPartToken(
     /**
      * Process state for this session (foreground or background)
      */
-    val appState: AppState,
+    val processState: ProcessState,
 
     /**
      * Whether the session is a cold start or not.

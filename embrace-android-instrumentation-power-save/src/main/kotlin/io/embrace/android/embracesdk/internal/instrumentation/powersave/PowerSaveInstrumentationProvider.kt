@@ -7,6 +7,9 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 class PowerSaveInstrumentationProvider : InstrumentationProvider {
+
+    override val asyncInit: Boolean = true
+
     override fun register(args: InstrumentationArgs): DataSourceState<*>? {
         return DataSourceState(
             factory = {

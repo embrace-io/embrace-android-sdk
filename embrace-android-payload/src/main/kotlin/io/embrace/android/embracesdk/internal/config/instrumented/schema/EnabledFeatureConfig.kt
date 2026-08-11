@@ -186,4 +186,12 @@ interface EnabledFeatureConfig {
      * sdk_config.otel.enable_otel_kotlin_sdk
      */
     fun isOtelKotlinSdkEnabled(): Boolean = false
+
+    /**
+     * Gates whether the activity-callback-based process lifecycle tracker is used to detect
+     * foreground/background transitions instead of the androidx ProcessLifecycleOwner implementation.
+     *
+     * sdk_config.automatic_data_capture.activity_process_lifecycle_tracker_enabled
+     */
+    fun isActivityProcessLifecycleTrackerEnabled(): Boolean = false
 }

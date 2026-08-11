@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -113,7 +113,7 @@ internal class StateFeatureTest {
                 recordSession { }
             },
             assertAction = {
-                val background = getSessionEnvelopes(2, state = AppState.BACKGROUND)
+                val background = getSessionEnvelopes(2, state = ProcessState.BACKGROUND)
                 val foreground = getSessionEnvelopes(2)
 
                 val sessions = listOf(background.first(), foreground.first(), background.last())

@@ -1,23 +1,23 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupService
 
 class FakeStartupService : StartupService {
 
     var sdkStartupDurationImpl: Long? = null
-    var appState: AppState? = null
+    var processState: ProcessState? = null
     var threadName: String? = null
     var appVersionStartupCounterImpl: Int? = null
 
     override fun setSdkStartupInfo(
         startTimeMs: Long,
         endTimeMs: Long,
-        endState: AppState,
+        endState: ProcessState,
         threadName: String,
     ) {
         sdkStartupDurationImpl = endTimeMs - startTimeMs
-        this.appState = endState
+        this.processState = endState
         this.threadName = threadName
     }
 

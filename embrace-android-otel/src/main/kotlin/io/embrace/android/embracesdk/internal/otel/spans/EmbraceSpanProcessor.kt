@@ -1,22 +1,22 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
+import io.embrace.android.embracesdk.internal.otel.export.InlineExporter
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.export.OperationResultCode
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import io.opentelemetry.kotlin.semconv.UserAttributes
-import io.opentelemetry.kotlin.tracing.export.SpanExporter
+import io.opentelemetry.kotlin.tracing.data.SpanData
 import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 import io.opentelemetry.kotlin.tracing.model.ReadWriteSpan
 import io.opentelemetry.kotlin.tracing.model.ReadableSpan
-import kotlinx.coroutines.runBlocking
 
-class EmbraceSpanProcessor(
+internal class EmbraceSpanProcessor(
     private val sessionIdsProvider: () -> SessionIdsProvider?,
     private val userIdProvider: () -> String? = { null },
     private val processIdentifier: String,
-    private val spanExporter: SpanExporter,
+    private val spanExporter: InlineExporter<SpanData>,
 ) : SpanProcessor {
 
     override fun onStart(span: ReadWriteSpan, parentContext: Context) {
@@ -36,11 +36,11 @@ class EmbraceSpanProcessor(
     }
 
     override fun onEnd(span: ReadableSpan) {
-        runBlocking { spanExporter.export(mutableListOf(span)) }
+        spanExporter.exportInline(listOf(span))
     }
 
     override fun isStartRequired() = true
     override fun isEndRequired() = true
-    override suspend fun forceFlush(): OperationResultCode = OperationResultCode.Success
+    override suspend fun forceFlush(): OperationResultCode = spanExporter.forceFlush()
     override suspend fun shutdown(): OperationResultCode = OperationResultCode.Success
 }

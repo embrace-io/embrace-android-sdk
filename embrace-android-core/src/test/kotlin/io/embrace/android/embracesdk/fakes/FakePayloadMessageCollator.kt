@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
@@ -19,16 +19,16 @@ class FakePayloadMessageCollator(
     val baCount: AtomicInteger = AtomicInteger(0)
 
     override fun buildInitialPart(params: InitialEnvelopeParams): SessionPartToken = with(params) {
-        when (appState) {
-            AppState.FOREGROUND -> sessionCount.incrementAndGet()
-            AppState.BACKGROUND -> baCount.incrementAndGet()
+        when (processState) {
+            ProcessState.FOREGROUND -> sessionCount.incrementAndGet()
+            ProcessState.BACKGROUND -> baCount.incrementAndGet()
         }
         SessionPartToken(
             sessionPartId = currentSessionPartSpan.getId(),
             userSessionId = userSessionId,
             startTime = startTime,
             isColdStart = coldStart,
-            appState = appState,
+            processState = processState,
             startType = startType,
             userSessionPartIndex = userSessionPartIndex,
             sessionPartNumber = sessionPartNumber,

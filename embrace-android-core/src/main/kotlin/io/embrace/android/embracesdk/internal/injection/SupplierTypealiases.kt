@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
-import androidx.lifecycle.LifecycleOwner
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
@@ -10,6 +9,7 @@ import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutio
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
+import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.storage.StorageService
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
@@ -48,7 +48,8 @@ typealias EssentialServiceModuleSupplier = (
     openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
-    lifecycleOwnerProvider: Provider<LifecycleOwner?>,
+    startupContext: Context?,
+    lifecycleTrackerProvider: Provider<LifecycleTracker?>,
     networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
     sessionOrchestratorProvider: Provider<SessionOrchestrator>,
 ) -> EssentialServiceModule

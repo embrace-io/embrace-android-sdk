@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.config
 
 import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.otel.export.ExternalExportDispatcher
 import io.embrace.android.embracesdk.internal.otel.logs.DefaultLogRecordExporter
 import io.embrace.android.embracesdk.internal.otel.logs.EmbraceLogRecordProcessor
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
@@ -36,6 +37,7 @@ class OtelSdkConfig(
     private val userIdProvider: () -> String? = { null },
     private val eventMetadataProvider: () -> Map<String, String> = { emptyMap() },
     private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId,
+    private val externalExportDispatcher: ExternalExportDispatcher = ExternalExportDispatcher(),
 ) {
 
     private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
@@ -81,11 +83,16 @@ class OtelSdkConfig(
         exportEnabled = false
     }
 
-    private val spanExporter: SpanExporter by lazy {
+    fun shutdownExport() {
+        externalExportDispatcher.shutdown()
+    }
+
+    private val spanExporter: DefaultSpanExporter by lazy {
         DefaultSpanExporter(
             spanRepository = spanRepository,
             externalExporters = externalSpanExporters.toList(),
             exportCheck = exportCheck,
+            externalExportDispatcher = externalExportDispatcher,
         )
     }
     val spanProcessor: SpanProcessor by lazy {
@@ -97,11 +104,12 @@ class OtelSdkConfig(
         )
     }
 
-    private val logRecordExporter: LogRecordExporter by lazy {
+    private val logRecordExporter: DefaultLogRecordExporter by lazy {
         DefaultLogRecordExporter(
             logSink = logSink,
             externalExporters = externalLogExporters.toList(),
             exportCheck = exportCheck,
+            externalExportDispatcher = externalExportDispatcher,
         )
     }
 

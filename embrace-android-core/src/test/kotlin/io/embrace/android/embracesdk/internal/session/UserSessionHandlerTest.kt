@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk.internal.session
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
+import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeSessionPartTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
@@ -16,7 +16,7 @@ import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionPartToken
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPartEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPartPayloadSourceImpl
@@ -80,7 +80,7 @@ internal class UserSessionHandlerTest {
             currentSessionPartSpan,
             spanRepository,
             FakeOtelPayloadMapper(),
-            FakeAppStateTracker(),
+            FakeProcessStateTracker(),
             FakeClock(),
             logger,
         )
@@ -107,7 +107,7 @@ internal class UserSessionHandlerTest {
             // do nothing
         }
         clock.tick(30000)
-        val msg = payloadFactory.endPayloadWithState(AppState.FOREGROUND, 10L, initial)
+        val msg = payloadFactory.endPayloadWithState(ProcessState.FOREGROUND, 10L, initial)
         assertSpanInSessionEnvelope(msg)
     }
 
@@ -115,7 +115,7 @@ internal class UserSessionHandlerTest {
     fun `clearing user info disallowed for state sessions`() {
         startFakeSession()
         clock.tick(30000)
-        payloadFactory.endPayloadWithState(AppState.FOREGROUND, 10L, initial)
+        payloadFactory.endPayloadWithState(ProcessState.FOREGROUND, 10L, initial)
         assertEquals(0, userService.clearedCount)
     }
 
@@ -127,7 +127,7 @@ internal class UserSessionHandlerTest {
             // do nothing
         }
         val msg = payloadFactory.endPayloadWithCrash(
-            AppState.FOREGROUND,
+            ProcessState.FOREGROUND,
             clock.now(),
             initial,
             "fakeCrashId",
@@ -151,7 +151,7 @@ internal class UserSessionHandlerTest {
         val envelope =
             checkNotNull(
                 payloadFactory.endPayloadWithState(
-                    AppState.FOREGROUND,
+                    ProcessState.FOREGROUND,
                     clock.now(),
                     initial,
                 ),
@@ -168,14 +168,14 @@ internal class UserSessionHandlerTest {
         spanService.recordSpan("test-span") {}
         assertEquals(1, spanRepository.completedOtelSpans().size)
 
-        payloadFactory.endPayloadWithCrash(AppState.FOREGROUND, clock.now(), initial, "crashId")
+        payloadFactory.endPayloadWithCrash(ProcessState.FOREGROUND, clock.now(), initial, "crashId")
         assertEquals(0, spanRepository.completedOtelSpans().size)
     }
 
     private fun startFakeSession(): SessionPartToken {
         return checkNotNull(
             payloadFactory.startPayloadWithState(
-                AppState.FOREGROUND,
+                ProcessState.FOREGROUND,
                 NOW,
                 true,
                 { 1 },

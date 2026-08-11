@@ -8,6 +8,9 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 var fcmDataSource: PushNotificationDataSource? = null
 
 class PushNotificationInstrumentationProvider : InstrumentationProvider {
+
+    override val asyncInit: Boolean = true
+
     override fun register(args: InstrumentationArgs): DataSourceState<*>? {
         return DataSourceState(
             factory = {

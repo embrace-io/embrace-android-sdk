@@ -16,7 +16,7 @@ typealias DataCaptureServiceModuleSupplier = (
     logger: InternalLogger,
     destination: TelemetryDestination,
     configService: ConfigService,
-    appVersionStartupCounter: Int?,
+    appVersionStartupCounterProvider: () -> Int?,
     startupClassifier: StartupClassifier,
     versionChecker: VersionChecker,
 ) -> DataCaptureServiceModule

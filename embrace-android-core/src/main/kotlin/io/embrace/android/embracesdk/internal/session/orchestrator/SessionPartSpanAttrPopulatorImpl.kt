@@ -23,7 +23,7 @@ internal class SessionPartSpanAttrPopulatorImpl(
     override fun populateSessionPartSpanStartAttrs(sessionPart: SessionPartToken, userSession: UserSessionMetadata?) {
         with(destination) {
             addSessionPartAttribute(EmbSessionAttributes.EMB_COLD_START, sessionPart.isColdStart.toString())
-            addSessionPartAttribute(EmbSessionAttributes.EMB_STATE, sessionPart.appState.name.lowercase(Locale.US))
+            addSessionPartAttribute(EmbSessionAttributes.EMB_STATE, sessionPart.processState.name.lowercase(Locale.US))
             addSessionPartAttribute(EmbSessionAttributes.EMB_CLEAN_EXIT, false.toString())
             addSessionPartAttribute(EmbSessionAttributes.EMB_TERMINATED, true.toString())
 

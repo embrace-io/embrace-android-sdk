@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -223,7 +223,7 @@ internal class SessionPartPayloadTest {
                 recordSession()
             },
             assertAction = {
-                val bas = getSessionEnvelopes(expectedSize = 3, state = AppState.BACKGROUND)
+                val bas = getSessionEnvelopes(expectedSize = 3, state = ProcessState.BACKGROUND)
                 val sessions = getSessionEnvelopes(3)
                 val firstBa = bas[0]
                 val secondBa = bas[1]

@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
+import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
 import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadResult
 import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadTracker
 import io.embrace.android.embracesdk.internal.vitals.smoothness.FocalMomentTracker
@@ -58,7 +58,7 @@ internal class VitalsDataSource(
     @Volatile
     private var focalTracker: FocalMomentTracker? = null
 
-    private val appStateListener = object : AppStateListener {
+    private val processStateListener = object : ProcessStateListener {
         override fun onBackground() {
             focalTracker?.onAppBackgrounded()
         }
@@ -109,7 +109,7 @@ internal class VitalsDataSource(
         )
         activityListener = listener
         args.application.registerActivityLifecycleCallbacks(listener)
-        args.appStateTracker.addListener(appStateListener)
+        args.processStateTracker.addListener(processStateListener)
     }
 
     override fun onDataCaptureDisabled() {

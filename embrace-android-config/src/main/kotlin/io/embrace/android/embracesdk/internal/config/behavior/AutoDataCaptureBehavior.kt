@@ -89,4 +89,10 @@ interface AutoDataCaptureBehavior {
      * Whether screen-load vital capture is enabled
      */
     fun isScreenLoadCaptureEnabled(): Boolean
+
+    /**
+     * Whether the activity-callback-based process lifecycle tracker should be used instead of the
+     * androidx ProcessLifecycleOwner implementation.
+     */
+    fun isActivityProcessLifecycleTrackerEnabled(): Boolean
 }

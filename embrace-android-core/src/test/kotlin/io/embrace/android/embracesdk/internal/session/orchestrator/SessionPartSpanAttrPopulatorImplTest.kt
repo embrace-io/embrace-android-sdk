@@ -166,6 +166,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
         populator = SessionPartSpanAttrPopulatorImpl(
             destination = destination,
             startupDurationProvider = { 0 },
+            appVersionStartupCounterProvider = { 7 },
             logLimitingService = FakeLogLimitingService(),
             metadataService = FakeMetadataService(),
             experimentRecordsProvider = { experiments },

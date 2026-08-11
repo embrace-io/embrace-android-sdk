@@ -10,6 +10,7 @@ class FakeStartupService : StartupService {
     var threadName: String? = null
     var appVersionStartupCounterImpl: Int? = null
     var sdkInitDurationsImpl: Map<String, Long> = emptyMap()
+    var sdkInitSpanRecordedCount: Int = 0
 
     override fun setSdkStartupInfo(
         startTimeMs: Long,
@@ -22,6 +23,10 @@ class FakeStartupService : StartupService {
         this.processState = endState
         this.threadName = threadName
         sdkInitDurationsImpl = sdkInitDurations
+    }
+
+    override fun recordSdkInitSpan() {
+        sdkInitSpanRecordedCount++
     }
 
     override fun getSdkStartupDuration(): Long? {

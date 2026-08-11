@@ -19,6 +19,13 @@ interface StartupService {
     )
 
     /**
+     * Records a private span representing the timing of SDK initialization. Does nothing if
+     * [setSdkStartupInfo] has not been called, and will only ever record one span regardless
+     * of the number of invocations.
+     */
+    fun recordSdkInitSpan()
+
+    /**
      * Returns the SDK startup duration.
      */
     fun getSdkStartupDuration(): Long?

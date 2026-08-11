@@ -27,7 +27,7 @@ class OrdinalStoreImplTest {
 
     @Test
     fun `user session counter seeded from legacy session counter on upgrade`() {
-        kvStore.edit { putInt(Ordinal.SESSION.key, 42) }
+        kvStore.editAndCommit { putInt(Ordinal.SESSION.key, 42) }
         assertEquals(43, store.incrementAndGet(Ordinal.USER_SESSION))
         assertEquals(44, store.incrementAndGet(Ordinal.USER_SESSION))
     }
@@ -98,22 +98,44 @@ class OrdinalStoreImplTest {
     @Test
     fun `seeding an ordinal only costs one commit`() {
         assertEquals(1, store.incrementAndGet(Ordinal.SESSION_PART))
-        assertEquals(1, kvStore.editCount)
+        assertEquals(1, kvStore.commitCount)
 
         assertEquals(2, store.incrementAndGet(Ordinal.SESSION_PART))
-        assertEquals(2, kvStore.editCount)
+        assertEquals(2, kvStore.commitCount)
     }
 
     @Test
     fun `seeding a scoped ordinal only costs one commit`() {
         assertEquals(1, store.incrementAndGet(Ordinal.APP_VERSION_STARTUP, "1.0.0"))
-        assertEquals(1, kvStore.editCount)
+        assertEquals(1, kvStore.commitCount)
 
         assertEquals(2, store.incrementAndGet(Ordinal.APP_VERSION_STARTUP, "1.0.0"))
-        assertEquals(2, kvStore.editCount)
+        assertEquals(2, kvStore.commitCount)
 
         assertEquals(1, store.incrementAndGet(Ordinal.APP_VERSION_STARTUP, "1.0.1"))
-        assertEquals(3, kvStore.editCount)
+        assertEquals(3, kvStore.commitCount)
+    }
+
+    @Test
+    fun `increments of different ordinals in a batch share one commit`() {
+        kvStore.batch {
+            assertEquals(1, store.incrementAndGet(Ordinal.SESSION))
+            assertEquals(1, store.incrementAndGet(Ordinal.SESSION_PART))
+        }
+        assertEquals(1, kvStore.commitCount)
+        assertEquals(2, store.incrementAndGet(Ordinal.SESSION))
+        assertEquals(2, store.incrementAndGet(Ordinal.SESSION_PART))
+    }
+
+    @Test
+    fun `repeated increments of one ordinal in a batch observe pending writes`() {
+        kvStore.batch {
+            assertEquals(1, store.incrementAndGet(Ordinal.SESSION_PART))
+            assertEquals(2, store.incrementAndGet(Ordinal.SESSION_PART))
+            assertEquals(3, store.incrementAndGet(Ordinal.SESSION_PART))
+        }
+        assertEquals(1, kvStore.commitCount)
+        assertEquals(4, store.incrementAndGet(Ordinal.SESSION_PART))
     }
 
     @Test
@@ -133,6 +155,6 @@ class OrdinalStoreImplTest {
         override fun getBoolean(key: String, defaultValue: Boolean): Boolean = error("simulated store failure")
         override fun getStringSet(key: String): Set<String>? = error("simulated store failure")
         override fun getStringMap(key: String): Map<String, String>? = error("simulated store failure")
-        override fun edit(action: KeyValueStoreEditor.() -> Unit) = error("simulated store failure")
+        override fun editAndCommit(action: KeyValueStoreEditor.() -> Unit) = error("simulated store failure")
     }
 }

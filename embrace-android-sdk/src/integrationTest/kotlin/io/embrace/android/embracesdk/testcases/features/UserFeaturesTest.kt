@@ -21,7 +21,7 @@ internal class UserFeaturesTest {
     fun `user info setting and clearing`() {
         testRule.runTest(
             setupAction = {
-                getStore().edit {
+                getStore().editAndCommit {
                     putString("io.embrace.userid", "customId")
                     putString("io.embrace.username", "customUserName")
                     putString("io.embrace.useremail", "custom@domain.com")

@@ -239,7 +239,7 @@ internal class EmbraceSetupInterface(
      * Setup permanent session properties without using the SDK interfaces
      */
     fun setupPermanentUserSessionProperties(properties: Map<String, String>) {
-        getStore().edit {
+        getStore().editAndCommit {
             putStringMap(
                 "io.embrace.session.properties", properties
             )
@@ -261,7 +261,7 @@ internal class EmbraceSetupInterface(
         inactivityTimeoutSeconds: Int = 1800,
         isBackgroundOnly: Boolean = false,
     ) {
-        getStore().edit {
+        getStore().editAndCommit {
             putStringMap(
                 "embrace.user_session",
                 buildMap {

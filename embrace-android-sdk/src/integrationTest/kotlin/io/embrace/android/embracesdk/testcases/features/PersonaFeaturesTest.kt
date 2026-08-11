@@ -19,7 +19,7 @@ internal class PersonaFeaturesTest {
     fun `personas found in metadata`() {
         testRule.runTest(
             setupAction = {
-                getStore().edit {
+                getStore().editAndCommit {
                     putStringSet("io.embrace.userpersonas", setOf("preloaded"))
                 }
             },

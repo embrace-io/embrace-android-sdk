@@ -66,7 +66,7 @@ internal class PersistedConfigTest {
     @Test
     fun `device id sourced from key value store when not co-cached`() {
         val store = FakeKeyValueStore().apply {
-            edit { putString("io.embrace.deviceid", "persisted-device-id") }
+            editAndCommit { putString("io.embrace.deviceid", "persisted-device-id") }
         }
         val persistedConfig = createPersistedConfig(store = lazyOf(store))
         assertEquals("persisted-device-id", persistedConfig.deviceId)

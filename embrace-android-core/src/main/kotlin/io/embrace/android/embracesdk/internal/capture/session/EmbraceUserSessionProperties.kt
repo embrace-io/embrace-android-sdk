@@ -26,7 +26,7 @@ internal class EmbraceUserSessionProperties(
     }
 
     private fun persistPermanentProperties() {
-        store.edit {
+        store.editAndCommit {
             putStringMap(
                 SESSION_PROPERTIES_KEY,
                 properties.entries

@@ -37,7 +37,7 @@ internal class DeviceIdProviderTest {
     @Test
     fun `falls back to the persisted store value when there is no cached id`() {
         val store = FakeKeyValueStore().apply {
-            edit { putString(key, "persisted-id") }
+            editAndCommit { putString(key, "persisted-id") }
         }
         val provider = DeviceIdProvider(lazyOf(store), cachedDeviceId = null, uuidSource = TestUuidSource())
 

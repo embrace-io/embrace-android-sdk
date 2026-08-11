@@ -220,7 +220,7 @@ internal class AeiDataSourceImplTest {
         every { mockActivityManager.getHistoricalProcessExitReasons(any(), any(), any()) } returns
             listOf(appExitInfo1, appExitInfo2, appExitInfo3)
 
-        store.edit {
+        store.editAndCommit {
             putStringSet("io.embrace.aeiHashCode", setOf(appExitInfo1Hash, appExitInfo2Hash))
         }
 

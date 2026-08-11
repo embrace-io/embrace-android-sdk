@@ -105,7 +105,7 @@ internal class AeiDataSourceImpl(
 
     private var KeyValueStore.deliveredAeiIds: Set<String>
         get() = store.getStringSet(AEI_HASH_CODES) ?: emptySet()
-        set(value) = store.edit { putStringSet(AEI_HASH_CODES, value) }
+        set(value) = store.editAndCommit { putStringSet(AEI_HASH_CODES, value) }
 
     private fun ApplicationExitInfo.getAeiId(): String = "${timestamp}_$pid"
     private fun AppExitInfoData.getAeiId(): String = "${timestamp}_$pid"

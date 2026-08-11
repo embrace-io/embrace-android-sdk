@@ -45,4 +45,15 @@ internal class UnityInternalInterfaceImplTest {
         impl.setUnityMetaData(null, null, "unitySdkVersion")
         assertEquals(emptyMap<String, Any?>(), store.values())
     }
+
+    @Test
+    fun testSetUnityMetaDataUsesSingleCommit() {
+        every { embrace.isStarted } returns true
+        impl.setUnityMetaData("unityVersion", "buildGuid", "unitySdkVersion")
+
+        assertEquals(1, store.commitCount)
+        assertEquals("unityVersion", hostedSdkVersionInfo.hostedPlatformVersion)
+        assertEquals("unitySdkVersion", hostedSdkVersionInfo.hostedSdkVersion)
+        assertEquals("buildGuid", hostedSdkVersionInfo.unityBuildIdNumber)
+    }
 }

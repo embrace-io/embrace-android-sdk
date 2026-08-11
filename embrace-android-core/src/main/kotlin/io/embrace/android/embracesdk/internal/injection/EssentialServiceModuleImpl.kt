@@ -97,7 +97,7 @@ class EssentialServiceModuleImpl(
     override val userSessionPropertiesService: UserSessionPropertiesService =
         EmbTrace.trace("session-properties-init") {
             UserSessionPropertiesServiceImpl(
-                store = coreModule.store,
+                store = lazy { coreModule.store },
                 configService = configService,
                 destination = telemetryDestination,
                 telemetryService = initModule.telemetryService,

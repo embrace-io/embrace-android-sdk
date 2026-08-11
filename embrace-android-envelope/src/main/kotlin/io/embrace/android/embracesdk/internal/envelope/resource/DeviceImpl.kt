@@ -19,7 +19,7 @@ class DeviceImpl(
     private val windowManagerProvider: Provider<WindowManager?>,
     private val store: KeyValueStore,
     private val backgroundWorker: BackgroundWorker,
-    override val systemInfo: SystemInfo,
+    private val systemInfo: SystemInfo,
     private val logger: InternalLogger,
 ) : Device {
     override var isJailbroken: Boolean? = false

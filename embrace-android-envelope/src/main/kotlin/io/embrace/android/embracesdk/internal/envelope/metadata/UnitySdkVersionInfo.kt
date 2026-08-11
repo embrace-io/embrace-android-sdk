@@ -8,15 +8,15 @@ class UnitySdkVersionInfo(
 
     override var hostedPlatformVersion: String?
         get() = impl.getString(UNITY_VERSION_NUMBER_KEY)
-        set(value) = impl.edit { putString(UNITY_VERSION_NUMBER_KEY, value) }
+        set(value) = impl.editAndCommit { putString(UNITY_VERSION_NUMBER_KEY, value) }
 
     override var unityBuildIdNumber: String?
         get() = impl.getString(UNITY_BUILD_ID_NUMBER_KEY)
-        set(value) = impl.edit { putString(UNITY_BUILD_ID_NUMBER_KEY, value) }
+        set(value) = impl.editAndCommit { putString(UNITY_BUILD_ID_NUMBER_KEY, value) }
 
     override var hostedSdkVersion: String?
         get() = impl.getString(UNITY_SDK_VERSION_NUMBER_KEY)
-        set(value) = impl.edit { putString(UNITY_SDK_VERSION_NUMBER_KEY, value) }
+        set(value) = impl.editAndCommit { putString(UNITY_SDK_VERSION_NUMBER_KEY, value) }
 
     override fun batch(action: () -> Unit) = impl.batch(action)
 

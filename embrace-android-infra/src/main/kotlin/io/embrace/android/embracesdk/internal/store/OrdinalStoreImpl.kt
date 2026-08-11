@@ -25,7 +25,7 @@ class OrdinalStoreImpl(
                 null -> impl.getInt(sanitized.key)?.plus(1) ?: seed()
                 else -> seed()
             }
-            impl.edit {
+            impl.editAndCommit {
                 if (scopeKey != null && newScope != null) {
                     putString(scopeKey, newScope)
                 }

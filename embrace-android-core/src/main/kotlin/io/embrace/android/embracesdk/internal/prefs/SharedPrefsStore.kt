@@ -66,7 +66,7 @@ internal class SharedPrefsStore(
         }
     }
 
-    override fun edit(action: KeyValueStoreEditor.() -> Unit) {
+    override fun editAndCommit(action: KeyValueStoreEditor.() -> Unit) {
         val batch = openBatch.get()
         if (batch != null) {
             batch.action()

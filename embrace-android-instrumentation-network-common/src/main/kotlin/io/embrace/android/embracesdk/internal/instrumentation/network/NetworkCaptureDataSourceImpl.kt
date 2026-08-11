@@ -177,7 +177,7 @@ class NetworkCaptureDataSourceImpl(
     }
 
     private fun decreaseNetworkCaptureRuleRemainingCount(id: String, maxCount: Int) {
-        keyValueStore.edit {
+        keyValueStore.editAndCommit {
             putInt(NETWORK_CAPTURE_RULE_PREFIX_KEY + id, getNetworkCaptureRuleRemainingCount(id, maxCount) - 1)
         }
     }

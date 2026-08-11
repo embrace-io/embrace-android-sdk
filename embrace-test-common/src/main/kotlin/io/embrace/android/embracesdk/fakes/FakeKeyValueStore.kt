@@ -14,10 +14,10 @@ class FakeKeyValueStore : KeyValueStore {
     private var openBatch: MutableMap<String, Any?>? = null
 
     /**
-     * The number of commits that a real store would have performed. Every [edit] outside a [batch]
-     * counts as one, and a [batch] counts as one no matter how many [edit] calls it contains.
+     * The number of commits that a real store would have performed. Every [editAndCommit] outside a [batch]
+     * counts as one, and a [batch] counts as one no matter how many [editAndCommit] calls it contains.
      */
-    var editCount: Int = 0
+    var commitCount: Int = 0
         private set
 
     fun values(): Map<String, Any?> = map.toMap()
@@ -48,12 +48,12 @@ class FakeKeyValueStore : KeyValueStore {
         return read(key) as? Map<String, String>
     }
 
-    override fun edit(action: KeyValueStoreEditor.() -> Unit) {
+    override fun editAndCommit(action: KeyValueStoreEditor.() -> Unit) {
         val batch = openBatch
         if (batch != null) {
             FakeEditor(batch).action()
         } else {
-            editCount++
+            commitCount++
             FakeEditor(map).action()
         }
     }
@@ -70,7 +70,7 @@ class FakeKeyValueStore : KeyValueStore {
         } finally {
             openBatch = null
             if (batch.isNotEmpty()) {
-                editCount++
+                commitCount++
                 map.putAll(batch)
             }
         }

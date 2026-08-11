@@ -51,7 +51,7 @@ internal class UnityInternalInterfaceImplTest {
         every { embrace.isStarted } returns true
         impl.setUnityMetaData("unityVersion", "buildGuid", "unitySdkVersion")
 
-        assertEquals(1, store.editCount)
+        assertEquals(1, store.commitCount)
         assertEquals("unityVersion", hostedSdkVersionInfo.hostedPlatformVersion)
         assertEquals("unitySdkVersion", hostedSdkVersionInfo.hostedSdkVersion)
         assertEquals("buildGuid", hostedSdkVersionInfo.unityBuildIdNumber)

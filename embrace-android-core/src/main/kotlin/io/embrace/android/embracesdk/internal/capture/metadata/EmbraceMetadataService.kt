@@ -42,11 +42,11 @@ internal class EmbraceMetadataService(
 
     private var appVersion: String?
         get() = store.getString(PREVIOUS_APP_VERSION_KEY)
-        set(value) = store.edit { putString(PREVIOUS_APP_VERSION_KEY, value) }
+        set(value) = store.editAndCommit { putString(PREVIOUS_APP_VERSION_KEY, value) }
 
     private var osVersion: String?
         get() = store.getString(PREVIOUS_OS_VERSION_KEY)
-        set(value) = store.edit { putString(PREVIOUS_OS_VERSION_KEY, value) }
+        set(value) = store.editAndCommit { putString(PREVIOUS_OS_VERSION_KEY, value) }
 
     /**
      * Queues in a single thread executor callables to retrieve values in background

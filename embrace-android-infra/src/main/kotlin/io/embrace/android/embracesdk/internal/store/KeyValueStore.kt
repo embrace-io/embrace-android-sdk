@@ -36,13 +36,16 @@ interface KeyValueStore {
     fun getStringMap(key: String): Map<String, String>?
 
     /**
-     * Performs a batch edit of values in the key-value store.
+     * Edits values in the key-value store, then commits them.
+     *
+     * Each call costs its own commit, and therefore its own disk write, so only reach for this
+     * directly when writing a single key. Wrap multiple writes in [batch] so they share one commit.
      */
-    fun edit(action: KeyValueStoreEditor.() -> Unit)
+    fun editAndCommit(action: KeyValueStoreEditor.() -> Unit)
 
     /**
-     * Coalesces every [edit] performed on the calling thread inside [action] into a single commit,
-     * which is issued when the outermost [batch] returns. As with [edit], the commit happens even if
+     * Coalesces every [editAndCommit] performed on the calling thread inside [action] into a single commit,
+     * which is issued when the outermost [batch] returns. As with [editAndCommit], the commit happens even if
      * [action] throws.
      */
     fun batch(action: () -> Unit) = action()

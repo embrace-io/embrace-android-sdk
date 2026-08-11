@@ -117,9 +117,9 @@ internal class EmbraceUserServiceTest {
     fun testClearAllUserInfo() {
         with(service) {
             getUserInfo().verifyExpectedUserInfo()
-            val editCount = store.editCount
+            val commitCount = store.commitCount
             service.clearAllUserInfo()
-            assertEquals(editCount + 1, store.editCount)
+            assertEquals(commitCount + 1, store.commitCount)
             assertNull(getUserInfo().email)
             assertNull(getUserInfo().userId)
             assertNull(getUserInfo().username)
@@ -174,7 +174,7 @@ internal class EmbraceUserServiceTest {
         firstDay: Boolean? = null,
         suppliedPersonas: Set<String> = userPersonas,
     ) {
-        store.edit {
+        store.editAndCommit {
             putString("io.embrace.userid", id)
             putString("io.embrace.useremail", email)
             putString("io.embrace.username", name)

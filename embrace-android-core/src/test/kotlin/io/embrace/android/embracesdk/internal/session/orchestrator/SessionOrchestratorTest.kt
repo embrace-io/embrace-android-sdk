@@ -135,7 +135,7 @@ internal class SessionOrchestratorTest {
     fun `each transition performs a single commit to the key-value store`() {
         val kvStore = FakeKeyValueStore()
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             ordinalStoreOverride = OrdinalStoreImpl(kvStore),
             metadataStoreOverride = UserSessionMetadataStore(kvStore),
             keyValueStoreOverride = kvStore,
@@ -143,16 +143,16 @@ internal class SessionOrchestratorTest {
 
         // the user session ordinal, the session part ordinal, and both saves of the user session
         // metadata all land in one commit
-        assertEquals(1, kvStore.editCount)
+        assertEquals(1, kvStore.commitCount)
         assertNotNull(orchestrator.currentUserSession())
 
         clock.tick(10_000)
         orchestrator.onBackground()
-        assertEquals(2, kvStore.editCount)
+        assertEquals(2, kvStore.commitCount)
 
         clock.tick(10_000)
         orchestrator.onForeground()
-        assertEquals(3, kvStore.editCount)
+        assertEquals(3, kvStore.commitCount)
     }
 
     @Test
@@ -675,7 +675,7 @@ internal class SessionOrchestratorTest {
                 override fun getStringMap(key: String): Map<String, String> =
                     error("simulated store failure")
 
-                override fun edit(action: KeyValueStoreEditor.() -> Unit) = FakeKeyValueStore().edit(action)
+                override fun editAndCommit(action: KeyValueStoreEditor.() -> Unit) = FakeKeyValueStore().editAndCommit(action)
             },
         )
 

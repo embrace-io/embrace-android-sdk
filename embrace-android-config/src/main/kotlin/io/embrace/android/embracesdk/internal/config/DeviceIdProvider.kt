@@ -23,7 +23,7 @@ internal class DeviceIdProvider(
 
     private fun newDeviceId(): String {
         val newId = uuidSource.createUuid()
-        keyValueStore.value.edit {
+        keyValueStore.value.editAndCommit {
             putString(DEVICE_IDENTIFIER_KEY, newId)
         }
         return newId

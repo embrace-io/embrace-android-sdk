@@ -51,7 +51,7 @@ internal class KeyValueStoreTest {
         val setValue = setOf("a", "b")
         val mapValue = mapOf("a" to "b")
 
-        store.edit {
+        store.editAndCommit {
             putString("string", strValue)
             putInt("int", intValue)
             putLong("long", longValue)
@@ -73,12 +73,12 @@ internal class KeyValueStoreTest {
         val mapValue = mapOf("a" to "b")
 
         store.batch {
-            store.edit { putString("string", "value") }
-            store.edit { putInt("int", 1) }
-            store.edit { putLong("long", 2L) }
-            store.edit { putBoolean("bool", true) }
-            store.edit { putStringSet("set", setValue) }
-            store.edit { putStringMap("map", mapValue) }
+            store.editAndCommit { putString("string", "value") }
+            store.editAndCommit { putInt("int", 1) }
+            store.editAndCommit { putLong("long", 2L) }
+            store.editAndCommit { putBoolean("bool", true) }
+            store.editAndCommit { putStringSet("set", setValue) }
+            store.editAndCommit { putStringMap("map", mapValue) }
 
             assertEquals("value", store.getString("string"))
             assertEquals(1, store.getInt("int"))
@@ -98,18 +98,18 @@ internal class KeyValueStoreTest {
 
     @Test
     fun `a batch reads through to committed values it has not written`() {
-        store.edit { putString("string", "committed") }
+        store.editAndCommit { putString("string", "committed") }
 
         store.batch {
             assertEquals("committed", store.getString("string"))
-            store.edit { putString("other", "pending") }
+            store.editAndCommit { putString("other", "pending") }
             assertEquals("committed", store.getString("string"))
         }
     }
 
     @Test
     fun `a null written in a batch shadows a committed value`() {
-        store.edit {
+        store.editAndCommit {
             putString("string", "committed")
             putStringSet("set", setOf("a"))
             putStringMap("map", mapOf("a" to "b"))
@@ -119,7 +119,7 @@ internal class KeyValueStoreTest {
         }
 
         store.batch {
-            store.edit {
+            store.editAndCommit {
                 putString("string", null)
                 putStringSet("set", null)
                 putStringMap("map", null)
@@ -146,8 +146,8 @@ internal class KeyValueStoreTest {
     @Test
     fun `the last write to a key in a batch wins`() {
         store.batch {
-            store.edit { putStringMap("map", mapOf("a" to "b")) }
-            store.edit { putStringMap("map", mapOf("c" to "d")) }
+            store.editAndCommit { putStringMap("map", mapOf("a" to "b")) }
+            store.editAndCommit { putStringMap("map", mapOf("c" to "d")) }
         }
         assertEquals(mapOf("c" to "d"), store.getStringMap("map"))
     }
@@ -155,9 +155,9 @@ internal class KeyValueStoreTest {
     @Test
     fun `a nested batch defers its commit to the outer batch`() {
         store.batch {
-            store.edit { putString("outer", "a") }
+            store.editAndCommit { putString("outer", "a") }
             store.batch {
-                store.edit { putString("inner", "b") }
+                store.editAndCommit { putString("inner", "b") }
             }
             // the inner batch joined the outer one, so nothing has been committed yet
             assertEquals("b", store.getString("inner"))
@@ -170,14 +170,14 @@ internal class KeyValueStoreTest {
     fun `a batch commits what it buffered even if the action throws`() {
         assertThrows(IllegalStateException::class.java) {
             store.batch {
-                store.edit { putString("string", "value") }
+                store.editAndCommit { putString("string", "value") }
                 error("boom")
             }
         }
         assertEquals("value", store.getString("string"))
 
         // the failed batch was cleaned up, so subsequent edits commit immediately again
-        store.edit { putString("other", "value") }
+        store.editAndCommit { putString("other", "value") }
         assertEquals("value", store.getString("other"))
     }
 }

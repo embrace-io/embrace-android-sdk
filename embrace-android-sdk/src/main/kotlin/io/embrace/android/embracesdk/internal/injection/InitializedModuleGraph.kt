@@ -186,7 +186,7 @@ internal class InitializedModuleGraph(
             initModule.logger,
             destination,
             configService,
-            coreModule.appVersionStartupCounter,
+            { coreModule.appVersionStartupCounter },
             initModule.startupClassifier,
             versionChecker,
         ) ?: DataCaptureServiceModuleImpl(
@@ -194,7 +194,7 @@ internal class InitializedModuleGraph(
             initModule.logger,
             destination,
             configService,
-            coreModule.appVersionStartupCounter,
+            { coreModule.appVersionStartupCounter },
             initModule.startupClassifier,
             versionChecker,
         )

@@ -35,6 +35,7 @@ import io.embrace.android.embracesdk.testframework.export.FilteredSpanExporter
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import io.opentelemetry.kotlin.logging.export.toOtelKotlinLogRecordExporter
 import io.opentelemetry.kotlin.tracing.export.toOtelKotlinSpanExporter
+import kotlinx.coroutines.runBlocking
 import okhttp3.Protocol
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.Assert.assertEquals
@@ -180,9 +181,18 @@ internal class SdkIntegrationTestRule(
             }
         }
         testCaseAction(action)
+        drainExternalExports()
         assertAction(payloadAssertion)
         spanExporter.failOnDuplicate()
         otelExportAssertion(otelAssertion)
+    }
+
+    private fun drainExternalExports() {
+        val otelSdkConfig = bootstrapper.openTelemetryModule.otelSdkConfig
+        runBlocking {
+            otelSdkConfig.spanProcessor.forceFlush()
+            otelSdkConfig.logRecordProcessor.forceFlush()
+        }
     }
 
     /**

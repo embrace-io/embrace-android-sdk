@@ -125,6 +125,7 @@ internal class ModuleInitBootstrapper(
             return
         }
         essentialServiceModule.networkConnectivityService.close()
+        openTelemetryModule.otelSdkConfig.shutdownExport()
         workerThreadModule.close()
         delegate = UninitializedModuleGraph
     }

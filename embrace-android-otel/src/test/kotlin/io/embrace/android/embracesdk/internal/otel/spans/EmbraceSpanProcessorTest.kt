@@ -5,8 +5,10 @@ import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.NoopOpenTelemetry
+import io.opentelemetry.kotlin.export.OperationResultCode
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import io.opentelemetry.kotlin.semconv.UserAttributes
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Before
@@ -75,6 +77,27 @@ class EmbraceSpanProcessorTest {
         val processor = createProcessor()
         processor.onStart(span, context)
         assertFalse(span.attributes.containsKey(UserAttributes.USER_ID))
+    }
+
+    @Test
+    fun `onEnd() exports before returning, so ending a session part can drain the spans immediately`() {
+        val processor = createProcessor()
+
+        processor.onEnd(span)
+
+        // no drain and no waiting: the span has to be with the exporter by the time onEnd returns,
+        // otherwise a session payload can ship without its own session span
+        assertEquals(span, spanExporter.exportedSpans.single())
+    }
+
+    @Test
+    fun `forceFlush() flushes the exporter, which is what drains export dispatched off-thread`() {
+        val processor = createProcessor()
+
+        val result = runBlocking { processor.forceFlush() }
+
+        assertEquals(OperationResultCode.Success, result)
+        assertEquals(1, spanExporter.forceFlushCount)
     }
 
     private fun createProcessor(userIdProvider: () -> String? = { null }) =

@@ -6,7 +6,9 @@ import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.NoopOpenTelemetry
+import io.opentelemetry.kotlin.export.OperationResultCode
 import io.opentelemetry.kotlin.semconv.LogAttributes
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -125,6 +127,25 @@ internal class EmbraceLogRecordProcessorTest {
         processor.onEmit(log)
 
         assertEquals("foo", log.attributes[SESSION_ATTRIBUTE_NAME])
+    }
+
+    @Test
+    fun `onEmit() exports before returning, so a crash log reaches the sink before the process dies`() {
+        val log = FakeReadWriteLogRecord()
+
+        processor.onEmit(log)
+
+        // no drain and no waiting: crash teardown persists the payload on the crashing thread
+        // straight after the log is emitted, so anything not yet in the sink is lost
+        assertEquals(log, logRecordExporter.exportedLogs.single())
+    }
+
+    @Test
+    fun `forceFlush() flushes the exporter, which is what drains export dispatched off-thread`() {
+        val result = runBlocking { processor.forceFlush() }
+
+        assertEquals(OperationResultCode.Success, result)
+        assertEquals(1, logRecordExporter.forceFlushCount)
     }
 
     private fun EmbraceLogRecordProcessor.onEmit(log: FakeReadWriteLogRecord) =

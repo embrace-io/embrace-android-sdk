@@ -22,7 +22,7 @@ internal class PayloadMessageCollatorImpl(
             sessionPartId = currentSessionPartSpan.getId(),
             userSessionId = sessionIdsProvider.getCurrentUserSessionId(),
             startTime = startTime,
-            appState = appState,
+            processState = processState,
             isColdStart = coldStart,
             startType = startType,
             userSessionPartIndex = userSessionPartIndex,

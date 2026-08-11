@@ -57,7 +57,7 @@ class PayloadSourceModuleImpl(
             otelModule.currentSessionPartSpan,
             otelModule.spanRepository,
             otelPayloadMapper,
-            essentialServiceModule.appStateTracker,
+            essentialServiceModule.processStateTracker,
             initModule.clock,
             initModule.logger,
         )
@@ -86,10 +86,9 @@ class PayloadSourceModuleImpl(
             device = EmbTrace.trace("deviceImpl") {
                 DeviceImpl(
                     windowManagerProvider = { coreModule.context.getSystemServiceSafe(Context.WINDOW_SERVICE) },
-                    coreModule.store,
-                    workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
-                    initModule.systemInfo,
-                    initModule.logger,
+                    backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
+                    systemInfo = initModule.systemInfo,
+                    logger = initModule.logger,
                 )
             },
             rnBundleIdProvider = { rnBundleIdTracker.getReactNativeBundleId() },

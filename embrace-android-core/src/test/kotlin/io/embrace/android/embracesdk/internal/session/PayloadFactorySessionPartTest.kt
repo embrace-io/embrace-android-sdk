@@ -1,16 +1,16 @@
 package io.embrace.android.embracesdk.internal.session
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
+import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeSessionPartTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
@@ -38,7 +38,7 @@ internal class PayloadFactorySessionPartTest {
     private lateinit var clock: FakeClock
     private lateinit var metadataService: MetadataService
     private lateinit var sessionTracker: FakeSessionPartTracker
-    private lateinit var activityService: FakeAppStateTracker
+    private lateinit var activityService: FakeProcessStateTracker
     private lateinit var userService: UserService
     private lateinit var spanRepository: SpanRepository
     private lateinit var currentSessionPartSpan: CurrentSessionPartSpan
@@ -47,7 +47,7 @@ internal class PayloadFactorySessionPartTest {
 
     companion object {
 
-        private val appStateTracker = FakeAppStateTracker()
+        private val appStateTracker = FakeProcessStateTracker()
 
         @BeforeClass
         @JvmStatic
@@ -69,7 +69,7 @@ internal class PayloadFactorySessionPartTest {
 
         metadataService = FakeMetadataService()
         sessionTracker = FakeSessionPartTracker()
-        activityService = FakeAppStateTracker(AppState.BACKGROUND)
+        activityService = FakeProcessStateTracker(ProcessState.BACKGROUND)
         userService = FakeUserService()
         val initModule = FakeInitModule(clock = clock)
         spanRepository = initModule.openTelemetryModule.spanRepository
@@ -90,7 +90,7 @@ internal class PayloadFactorySessionPartTest {
     }
 
     private fun initializeSessionService() {
-        appStateTracker.state = AppState.BACKGROUND
+        appStateTracker.state = ProcessState.BACKGROUND
 
         val payloadSourceModule = FakePayloadSourceModule()
         val logger = InternalLoggerImpl()

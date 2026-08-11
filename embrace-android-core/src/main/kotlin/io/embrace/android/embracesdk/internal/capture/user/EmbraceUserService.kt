@@ -26,23 +26,23 @@ internal class EmbraceUserService(
 
     private var userPayer: Boolean
         get() = impl.getBoolean(USER_IS_PAYER_KEY, false)
-        set(value) = impl.edit { putBoolean(USER_IS_PAYER_KEY, value) }
+        set(value) = impl.editAndCommit { putBoolean(USER_IS_PAYER_KEY, value) }
 
     private var userId: String?
         get() = impl.getString(USER_IDENTIFIER_KEY)
-        set(value) = impl.edit { putString(USER_IDENTIFIER_KEY, value) }
+        set(value) = impl.editAndCommit { putString(USER_IDENTIFIER_KEY, value) }
 
     private var userEmailAddress: String?
         get() = impl.getString(USER_EMAIL_ADDRESS_KEY)
-        set(value) = impl.edit { putString(USER_EMAIL_ADDRESS_KEY, value) }
+        set(value) = impl.editAndCommit { putString(USER_EMAIL_ADDRESS_KEY, value) }
 
     private var userPersonas: Set<String>?
         get() = impl.getStringSet(USER_PERSONAS_KEY)
-        set(value) = impl.edit { putStringSet(USER_PERSONAS_KEY, value) }
+        set(value) = impl.editAndCommit { putStringSet(USER_PERSONAS_KEY, value) }
 
     private var name: String?
         get() = impl.getString(USER_USERNAME_KEY)
-        set(value) = impl.edit { putString(USER_USERNAME_KEY, value) }
+        set(value) = impl.editAndCommit { putString(USER_USERNAME_KEY, value) }
 
     private fun isUsersFirstDay(): Boolean {
         val installDate = installDate
@@ -51,7 +51,7 @@ internal class EmbraceUserService(
 
     private var installDate: Long?
         get() = impl.getLong(INSTALL_DATE_KEY)
-        set(value) = impl.edit { putLong(INSTALL_DATE_KEY, value) }
+        set(value) = impl.editAndCommit { putLong(INSTALL_DATE_KEY, value) }
 
     init {
         if (installDate == null) {
@@ -162,10 +162,12 @@ internal class EmbraceUserService(
     }
 
     override fun clearAllUserInfo() {
-        clearUserIdentifier()
-        clearUserEmail()
-        clearUsername()
-        clearAllUserPersonas()
+        impl.batch {
+            clearUserIdentifier()
+            clearUserEmail()
+            clearUsername()
+            clearAllUserPersonas()
+        }
     }
 
     override fun addUserInfoListener(listener: () -> Unit) {

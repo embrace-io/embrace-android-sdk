@@ -1,77 +1,36 @@
 package io.embrace.android.embracesdk.internal.session
 
-import android.app.Application
-import android.os.Looper
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.testing.TestLifecycleOwner
-import io.embrace.android.embracesdk.fakes.FakeAppStateListener
-import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeLifecycleTracker
+import io.embrace.android.embracesdk.fakes.FakeProcessStateListener
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
-import io.embrace.android.embracesdk.internal.arch.state.AppState
-import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateTrackerImpl
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
+import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateTrackerImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkStatic
-import io.mockk.unmockkAll
-import org.junit.AfterClass
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.BeforeClass
 import org.junit.Test
 
-internal class AppStateTrackerTest {
+internal class ProcessStateTrackerTest {
 
-    private lateinit var stateService: AppStateTrackerImpl
-
-    companion object {
-        private lateinit var looper: Looper
-        private lateinit var mockApplication: Application
-        private val fakeClock = FakeClock()
-
-        @BeforeClass
-        @JvmStatic
-        fun beforeClass() {
-            looper = mockk(relaxed = true)
-            mockkStatic(Looper::class)
-            mockApplication = mockk(relaxed = true)
-
-            fakeClock.setCurrentTime(1234)
-            every { mockApplication.registerActivityLifecycleCallbacks(any()) } returns Unit
-            every { Looper.getMainLooper() } returns looper
-        }
-
-        @JvmStatic
-        @AfterClass
-        fun tearDown() {
-            unmockkAll()
-        }
-    }
-
+    private lateinit var stateService: ProcessStateTrackerImpl
+    private lateinit var lifecycleTracker: FakeLifecycleTracker
     private lateinit var fakeEmbLogger: FakeInternalLogger
 
     @Before
     fun before() {
-        clearAllMocks(
-            answers = false,
-            objectMocks = false,
-            constructorMocks = false,
-            staticMocks = false,
-        )
         fakeEmbLogger = FakeInternalLogger()
-        stateService = AppStateTrackerImpl(
-            fakeEmbLogger,
-            TestLifecycleOwner(Lifecycle.State.INITIALIZED),
-        )
+        lifecycleTracker = FakeLifecycleTracker()
+        stateService = ProcessStateTrackerImpl(fakeEmbLogger, lifecycleTracker)
     }
 
     @Test
     fun `verify on activity foreground for cold start triggers listeners`() {
-        val listener = FakeAppStateListener()
+        val listener = FakeProcessStateListener()
         stateService.addListener(listener)
         stateService.onForeground()
         assertEquals(1, listener.foregroundCount.get())
@@ -79,7 +38,7 @@ internal class AppStateTrackerTest {
 
     @Test
     fun `verify on activity foreground called twice is not a cold start`() {
-        val listener = FakeAppStateListener()
+        val listener = FakeProcessStateListener()
         stateService.addListener(listener)
         stateService.onForeground()
         stateService.onForeground()
@@ -88,27 +47,26 @@ internal class AppStateTrackerTest {
 
     @Test
     fun `verify on activity background triggers listeners`() {
-        val listener = FakeAppStateListener()
+        val listener = FakeProcessStateListener()
         stateService.addListener(listener)
         stateService.onBackground()
         assertEquals(1, listener.backgroundCount.get())
     }
 
     @Test
-    fun `verify isInBackground returns true by default`() {
-        assertEquals(AppState.BACKGROUND, stateService.getAppState())
+    fun `register subscribes to the lifecycle tracker`() {
+        assertNull(lifecycleTracker.listener)
+        stateService.register()
+        assertSame(stateService, lifecycleTracker.listener)
     }
 
     @Test
-    fun `verify isInBackground returns false if it was previously on foreground`() {
-        stateService.onForeground()
-        assertEquals(AppState.FOREGROUND, stateService.getAppState())
-    }
+    fun `app state is whatever the lifecycle tracker reports`() {
+        lifecycleTracker.state = ProcessState.BACKGROUND
+        assertEquals(ProcessState.BACKGROUND, stateService.getAppState())
 
-    @Test
-    fun `verify isInBackground returns true if it was previously on background`() {
-        stateService.onBackground()
-        assertEquals(AppState.BACKGROUND, stateService.getAppState())
+        lifecycleTracker.state = ProcessState.FOREGROUND
+        assertEquals(ProcessState.FOREGROUND, stateService.getAppState())
     }
 
     @Test
@@ -116,14 +74,14 @@ internal class AppStateTrackerTest {
         // assert empty list first
         assertEquals(0, stateService.listeners.size)
 
-        val listener = FakeAppStateListener()
+        val listener = FakeProcessStateListener()
         stateService.addListener(listener)
         assertEquals(1, stateService.listeners.size)
     }
 
     @Test
     fun `verify if listener is already present, then it does not add anything`() {
-        val listener = FakeAppStateListener()
+        val listener = FakeProcessStateListener()
         stateService.addListener(listener)
         // add it for a 2nd time
         stateService.addListener(listener)
@@ -132,8 +90,8 @@ internal class AppStateTrackerTest {
 
     @Test
     fun `verify a listener is added with priority`() {
-        stateService.addListener(FakeAppStateListener())
-        val listener = FakeAppStateListener()
+        stateService.addListener(FakeProcessStateListener())
+        val listener = FakeProcessStateListener()
         stateService.addListener(listener)
         assertEquals(2, stateService.listeners.size)
         assertEquals(listener, stateService.listeners[1])
@@ -203,42 +161,9 @@ internal class AppStateTrackerTest {
         assertTrue(messages.isEmpty())
     }
 
-    @Test
-    fun `launched in background`() {
-        stateService = AppStateTrackerImpl(
-            fakeEmbLogger,
-            mockk {
-                every { lifecycle } returns mockk<Lifecycle> {
-                    every { currentState } returns Lifecycle.State.INITIALIZED
-                }
-            },
-        )
-        assertEquals(AppState.BACKGROUND, stateService.getAppState())
-    }
-
-    @Test
-    fun `launched in foreground`() {
-        stateService = AppStateTrackerImpl(
-            fakeEmbLogger,
-            mockk {
-                every { lifecycle } returns mockk<Lifecycle> {
-                    every { currentState } returns Lifecycle.State.STARTED
-                }
-            },
-        )
-        assertEquals(AppState.FOREGROUND, stateService.getAppState())
-    }
-
-    @Test
-    fun `verify app state`() {
-        assertEquals(AppState.BACKGROUND, stateService.getAppState())
-        stateService.onForeground()
-        assertEquals(AppState.FOREGROUND, stateService.getAppState())
-    }
-
     private class DecoratedListener(
         private val invocations: MutableList<String>,
-    ) : AppStateListener {
+    ) : ProcessStateListener {
 
         override fun onBackground() {
             invocations.add(javaClass.simpleName)

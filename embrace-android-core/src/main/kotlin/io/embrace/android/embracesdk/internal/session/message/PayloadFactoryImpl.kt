@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.message
 
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
@@ -19,66 +19,66 @@ internal class PayloadFactoryImpl(
 ) : PayloadFactory {
 
     override fun startPayloadWithState(
-        state: AppState,
+        state: ProcessState,
         timestamp: Long,
         coldStart: Boolean,
         userSessionPartIndex: () -> Int,
         sessionPartNumber: () -> Int,
     ): SessionPartToken? =
         when (state) {
-            AppState.FOREGROUND -> startSessionWithState(timestamp, coldStart, userSessionPartIndex, sessionPartNumber)
-            AppState.BACKGROUND -> startBackgroundActivityWithState(timestamp, coldStart, userSessionPartIndex, sessionPartNumber)
+            ProcessState.FOREGROUND -> startSessionWithState(timestamp, coldStart, userSessionPartIndex, sessionPartNumber)
+            ProcessState.BACKGROUND -> startBackgroundActivityWithState(timestamp, coldStart, userSessionPartIndex, sessionPartNumber)
         }
 
     override fun endPayloadWithState(
-        state: AppState,
+        state: ProcessState,
         timestamp: Long,
         initial: SessionPartToken,
     ): Envelope<SessionPartPayload>? =
         when (state) {
-            AppState.FOREGROUND -> endSessionWithState(initial)
-            AppState.BACKGROUND -> endBackgroundActivityWithState(initial)
+            ProcessState.FOREGROUND -> endSessionWithState(initial)
+            ProcessState.BACKGROUND -> endBackgroundActivityWithState(initial)
         }
 
     override fun endPayloadWithCrash(
-        state: AppState,
+        state: ProcessState,
         timestamp: Long,
         initial: SessionPartToken,
         crashId: String,
     ): Envelope<SessionPartPayload>? = when (state) {
-        AppState.FOREGROUND -> endSessionWithCrash(initial, crashId)
-        AppState.BACKGROUND -> endBackgroundActivityWithCrash(initial, crashId)
+        ProcessState.FOREGROUND -> endSessionWithCrash(initial, crashId)
+        ProcessState.BACKGROUND -> endBackgroundActivityWithCrash(initial, crashId)
     }
 
     override fun snapshotPayload(
-        state: AppState,
+        state: ProcessState,
         timestamp: Long,
         initial: SessionPartToken,
     ): Envelope<SessionPartPayload>? =
         when (state) {
-            AppState.FOREGROUND -> snapshotSession(initial)
-            AppState.BACKGROUND -> snapshotBackgroundActivity(initial)
+            ProcessState.FOREGROUND -> snapshotSession(initial)
+            ProcessState.BACKGROUND -> snapshotBackgroundActivity(initial)
         }
 
     override fun startSessionWithManual(
-        state: AppState,
+        state: ProcessState,
         timestamp: Long,
         userSessionPartIndex: () -> Int,
         sessionPartNumber: () -> Int,
     ): SessionPartToken? {
-        if (state == AppState.BACKGROUND && !isBackgroundActivityEnabled()) {
+        if (state == ProcessState.BACKGROUND && !isBackgroundActivityEnabled()) {
             return null
         }
         val startType = when (state) {
-            AppState.FOREGROUND -> LifeEventType.MANUAL
-            AppState.BACKGROUND -> LifeEventType.BKGND_MANUAL
+            ProcessState.FOREGROUND -> LifeEventType.MANUAL
+            ProcessState.BACKGROUND -> LifeEventType.BKGND_MANUAL
         }
         return payloadMessageCollator.buildInitialPart(
             InitialEnvelopeParams(
                 coldStart = false,
                 startType = startType,
                 startTime = timestamp,
-                appState = state,
+                processState = state,
                 userSessionPartIndex = userSessionPartIndex(),
                 sessionPartNumber = sessionPartNumber(),
             ),
@@ -111,7 +111,7 @@ internal class PayloadFactoryImpl(
                 coldStart = coldStart,
                 startType = LifeEventType.STATE,
                 startTime = timestamp,
-                appState = AppState.FOREGROUND,
+                processState = ProcessState.FOREGROUND,
                 userSessionPartIndex = userSessionPartIndex(),
                 sessionPartNumber = sessionPartNumber(),
             ),
@@ -139,7 +139,7 @@ internal class PayloadFactoryImpl(
                 coldStart = coldStart,
                 startType = LifeEventType.BKGND_STATE,
                 startTime = time,
-                appState = AppState.BACKGROUND,
+                processState = ProcessState.BACKGROUND,
                 userSessionPartIndex = userSessionPartIndex(),
                 sessionPartNumber = sessionPartNumber(),
             ),

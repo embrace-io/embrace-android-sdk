@@ -1,9 +1,10 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
+import io.embrace.android.embracesdk.internal.otel.export.ExternalExportDispatcher
+import io.embrace.android.embracesdk.internal.otel.export.InlineExporter
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
-import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.opentelemetry.kotlin.export.OperationResultCode
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.opentelemetry.kotlin.logging.model.ReadableLogRecord
@@ -15,36 +16,32 @@ internal class DefaultLogRecordExporter(
     private val logSink: LogSink,
     private val externalExporters: List<LogRecordExporter>,
     private val exportCheck: () -> Boolean,
-) : LogRecordExporter {
+    private val externalExportDispatcher: ExternalExportDispatcher,
+) : LogRecordExporter, InlineExporter<ReadableLogRecord> {
 
-    override suspend fun export(telemetry: List<ReadableLogRecord>): OperationResultCode {
+    override fun exportInline(telemetry: List<ReadableLogRecord>): OperationResultCode {
         if (!exportCheck()) {
             return OperationResultCode.Success
         }
-        val exportable = if (externalExporters.isEmpty()) {
-            emptyList()
-        } else {
-            telemetry.filterNot { it.attributes.containsKey(PrivateSpan.key) }
-        }
-        var result = logSink.storeLogs(telemetry.map(ReadableLogRecord::toEmbracePayload))
+        val result = logSink.storeLogs(telemetry.map(ReadableLogRecord::toEmbracePayload))
 
-        if (externalExporters.isNotEmpty() && result == StoreDataResult.SUCCESS) {
-            EmbTrace.trace("otel-external-export") {
-                externalExporters.forEach { exporter ->
-                    try {
-                        exporter.export(exportable)
-                    } catch (ignored: Throwable) {
-                        result = StoreDataResult.FAILURE
-                    }
-                }
-            }
+        if (result == StoreDataResult.SUCCESS && externalExporters.isNotEmpty()) {
+            val exportable = telemetry.filterNot { it.attributes.containsKey(PrivateSpan.key) }
+            externalExportDispatcher.dispatch(externalExporters) { it.export(exportable) }
         }
+
         return when (result) {
             StoreDataResult.SUCCESS -> OperationResultCode.Success
             StoreDataResult.FAILURE -> OperationResultCode.Failure
         }
     }
 
-    override suspend fun forceFlush(): OperationResultCode = OperationResultCode.Success
+    override suspend fun export(telemetry: List<ReadableLogRecord>): OperationResultCode = exportInline(telemetry)
+
+    override suspend fun forceFlush(): OperationResultCode {
+        externalExportDispatcher.awaitPendingExports()
+        return OperationResultCode.Success
+    }
+
     override suspend fun shutdown(): OperationResultCode = OperationResultCode.Success
 }

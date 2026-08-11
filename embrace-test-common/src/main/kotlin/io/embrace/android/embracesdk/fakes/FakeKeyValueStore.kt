@@ -7,42 +7,78 @@ class FakeKeyValueStore : KeyValueStore {
 
     private val map = mutableMapOf<String, Any?>()
 
+    /**
+     * Writes buffered by an open [batch]. Reads consult this first so the fake models the
+     * read-your-writes behaviour of the real store.
+     */
+    private var openBatch: MutableMap<String, Any?>? = null
+
+    /**
+     * The number of commits that a real store would have performed. Every [editAndCommit] outside a [batch]
+     * counts as one, and a [batch] counts as one no matter how many [editAndCommit] calls it contains.
+     */
+    var commitCount: Int = 0
+        private set
+
     fun values(): Map<String, Any?> = map.toMap()
 
     override fun getString(key: String): String? {
-        return map[key] as? String
+        return read(key) as? String
     }
 
     override fun getInt(key: String): Int? {
-        return map[key] as? Int
+        return read(key) as? Int
     }
 
     override fun getLong(key: String): Long? {
-        return map[key] as? Long
+        return read(key) as? Long
     }
 
     override fun getBoolean(key: String, defaultValue: Boolean): Boolean {
-        return map[key] as? Boolean ?: defaultValue
+        return read(key) as? Boolean ?: defaultValue
     }
 
     @Suppress("UNCHECKED_CAST")
     override fun getStringSet(key: String): Set<String>? {
-        return map[key] as? Set<String>
+        return read(key) as? Set<String>
     }
 
     @Suppress("UNCHECKED_CAST")
     override fun getStringMap(key: String): Map<String, String>? {
-        return map[key] as? Map<String, String>
+        return read(key) as? Map<String, String>
     }
 
-    override fun edit(action: KeyValueStoreEditor.() -> Unit) {
-        FakeEditor(map).action()
+    override fun editAndCommit(action: KeyValueStoreEditor.() -> Unit) {
+        val batch = openBatch
+        if (batch != null) {
+            FakeEditor(batch).action()
+        } else {
+            commitCount++
+            FakeEditor(map).action()
+        }
     }
 
-    override fun incrementAndGet(key: String): Int {
-        val newValue = (map[key] as? Int ?: 0) + 1
-        map[key] = newValue
-        return newValue
+    override fun batch(action: () -> Unit) {
+        if (openBatch != null) { // a batch is already open, so it owns the commit
+            action()
+            return
+        }
+        val batch = mutableMapOf<String, Any?>()
+        openBatch = batch
+        try {
+            action()
+        } finally {
+            openBatch = null
+            if (batch.isNotEmpty()) {
+                commitCount++
+                map.putAll(batch)
+            }
+        }
+    }
+
+    private fun read(key: String): Any? {
+        val batch = openBatch ?: return map[key]
+        return if (batch.containsKey(key)) batch[key] else map[key]
     }
 
     private class FakeEditor(private val map: MutableMap<String, Any?>) : KeyValueStoreEditor {

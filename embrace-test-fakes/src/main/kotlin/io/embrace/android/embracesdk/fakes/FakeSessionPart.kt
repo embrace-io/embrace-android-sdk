@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.fixtures.testSpan
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
@@ -13,7 +13,7 @@ fun fakeSessionPartToken(): SessionPartToken = SessionPartToken(
     sessionPartId = "fakeSessionPartId",
     userSessionId = "fakeUserSessionId",
     startTime = 160000000000L,
-    appState = AppState.FOREGROUND,
+    processState = ProcessState.FOREGROUND,
     isColdStart = true,
     startType = LifeEventType.STATE,
     userSessionPartIndex = 1,

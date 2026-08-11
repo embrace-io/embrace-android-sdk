@@ -17,7 +17,7 @@ internal class UserSessionMetadataStore(private val store: KeyValueStore) {
      * Persists the given [UserSessionMetadata.Classified] to the store.
      */
     fun save(metadata: UserSessionMetadata.Classified) {
-        store.edit {
+        store.editAndCommit {
             val map = metadata.attributes.mapValues { it.value.toString() }.toMutableMap()
             map[EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX] = metadata.partIndex.toString()
             map[KEY_LAST_ACTIVITY_TS] = metadata.lastActivityMs.toString()
@@ -29,7 +29,7 @@ internal class UserSessionMetadataStore(private val store: KeyValueStore) {
      * Clears the persisted session from the store.
      */
     fun clear() {
-        store.edit {
+        store.editAndCommit {
             putStringMap(KEY_SESSION, null)
         }
     }

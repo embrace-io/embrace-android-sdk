@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeSessionPartPayloadSource
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPartEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.CoreModuleImpl
@@ -56,7 +56,7 @@ internal class PayloadMessageCollatorImplTest {
                 false,
                 LifeEventType.BKGND_STATE,
                 5,
-                AppState.BACKGROUND,
+                ProcessState.BACKGROUND,
                 1,
                 1,
             ),
@@ -71,7 +71,7 @@ internal class PayloadMessageCollatorImplTest {
                 false,
                 LifeEventType.STATE,
                 5,
-                AppState.FOREGROUND,
+                ProcessState.FOREGROUND,
                 1,
                 1,
             ),
@@ -87,7 +87,7 @@ internal class PayloadMessageCollatorImplTest {
                 false,
                 LifeEventType.BKGND_STATE,
                 5,
-                AppState.BACKGROUND,
+                ProcessState.BACKGROUND,
                 1,
                 1,
             ),
@@ -115,7 +115,7 @@ internal class PayloadMessageCollatorImplTest {
                 false,
                 LifeEventType.STATE,
                 5,
-                AppState.FOREGROUND,
+                ProcessState.FOREGROUND,
                 1,
                 1,
             ),
@@ -140,7 +140,7 @@ internal class PayloadMessageCollatorImplTest {
         currentSessionPartSpan.endSession(startNewSession = false)
         listOf(true, false).forEach { startupTemperature ->
             LifeEventType.entries.forEach { lifeEventType ->
-                AppState.entries.forEach { previousState ->
+                ProcessState.entries.forEach { previousState ->
                     collator.buildInitialPart(
                         InitialEnvelopeParams(
                             startupTemperature,

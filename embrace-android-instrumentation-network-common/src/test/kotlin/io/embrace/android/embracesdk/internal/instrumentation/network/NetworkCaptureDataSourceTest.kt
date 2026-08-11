@@ -83,7 +83,7 @@ internal class NetworkCaptureDataSourceTest {
 
         val result = service.getNetworkCaptureRules("https://embrace.io/changelog", "GET")
         assertEquals(1, result.size)
-        args.store.edit {
+        args.store.editAndCommit {
             putInt(NetworkCaptureDataSourceImpl.NETWORK_CAPTURE_RULE_PREFIX_KEY + rule.id, 0)
         }
         val emptyRule = service.getNetworkCaptureRules("https://embrace.io/changelog", "GET")
@@ -95,7 +95,7 @@ internal class NetworkCaptureDataSourceTest {
         val rule = getDefaultRule()
         cfg = RemoteConfig(networkCaptureRules = setOf(rule))
         val service = getService()
-        args.store.edit {
+        args.store.editAndCommit {
             putInt(NetworkCaptureDataSourceImpl.NETWORK_CAPTURE_RULE_PREFIX_KEY + rule.id, 0)
         }
         val emptyRule = service.getNetworkCaptureRules("https://embrace.io/changelog", "GET")

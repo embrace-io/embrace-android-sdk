@@ -79,11 +79,11 @@ internal class RnBundleIdTrackerImpl(
 
     private var javaScriptBundleURL: String?
         get() = store.getString(JAVA_SCRIPT_BUNDLE_URL_KEY)
-        set(value) = store.edit { putString(JAVA_SCRIPT_BUNDLE_URL_KEY, value) }
+        set(value) = store.editAndCommit { putString(JAVA_SCRIPT_BUNDLE_URL_KEY, value) }
 
     private var javaScriptBundleId: String?
         get() = store.getString(JAVA_SCRIPT_BUNDLE_ID_KEY)
-        set(value) = store.edit { putString(JAVA_SCRIPT_BUNDLE_ID_KEY, value) }
+        set(value) = store.editAndCommit { putString(JAVA_SCRIPT_BUNDLE_ID_KEY, value) }
 
     companion object {
         private const val JAVA_SCRIPT_BUNDLE_URL_KEY = "io.embrace.jsbundle.url"

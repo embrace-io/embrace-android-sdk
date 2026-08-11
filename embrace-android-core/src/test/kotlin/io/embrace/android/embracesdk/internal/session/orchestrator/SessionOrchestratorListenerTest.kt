@@ -4,7 +4,6 @@ import android.app.ActivityManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.SessionStateEvent
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
@@ -17,6 +16,7 @@ import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakePayloadMessageCollator
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
+import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
@@ -29,7 +29,7 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.capture.session.PropertyScope
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
@@ -62,7 +62,7 @@ internal class SessionOrchestratorListenerTest {
     private lateinit var payloadFactory: PayloadFactoryImpl
     private lateinit var payloadCollator: FakePayloadMessageCollator
     private lateinit var logEnvelopeSource: FakeLogEnvelopeSource
-    private lateinit var appStateTracker: FakeAppStateTracker
+    private lateinit var appStateTracker: FakeProcessStateTracker
     private lateinit var clock: FakeClock
     private lateinit var configService: FakeConfigService
     private lateinit var userService: FakeUserService
@@ -97,7 +97,7 @@ internal class SessionOrchestratorListenerTest {
     @Test
     fun `USER_SESSION_ACTIVE fired on fresh session transitions`() {
         configService = sessionBehaviorConfig()
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(ProcessState.FOREGROUND)
         // registration fires immediately since a session is already active
         val events = collectEvents(SessionStateEvent.UserSessionActive::class)
         assertEquals(1, events.size)
@@ -125,7 +125,7 @@ internal class SessionOrchestratorListenerTest {
     @Test
     fun `USER_SESSION_ACTIVE not fired by session part transitions when restored session continues`() {
         configService = sessionBehaviorConfig()
-        createOrchestrator(AppState.FOREGROUND, metadataStoreOverride = restoredMetadataStore())
+        createOrchestrator(ProcessState.FOREGROUND, metadataStoreOverride = restoredMetadataStore())
         // registration fires immediately since the restored session is still active
         val events = collectEvents(SessionStateEvent.UserSessionActive::class)
         assertEquals(1, events.size)
@@ -139,7 +139,7 @@ internal class SessionOrchestratorListenerTest {
     @Test
     fun `USER_SESSION_ENDED fired when user session terminates`() {
         configService = sessionBehaviorConfig()
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(ProcessState.FOREGROUND)
         val events = collectEvents(SessionStateEvent.UserSessionEnded::class)
 
         // manual end terminates then creates a new session
@@ -165,7 +165,7 @@ internal class SessionOrchestratorListenerTest {
     @Test
     fun `event order on manual end is USER_SESSION_ACTIVE then USER_SESSION_ENDED then USER_SESSION_ACTIVE then NEW_SESSION_PART`() {
         configService = sessionBehaviorConfig()
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(ProcessState.FOREGROUND)
         val events = mutableListOf<SessionStateEvent>()
         // registration fires USER_SESSION_ACTIVE immediately
         orchestrator.addUserSessionListener { event -> events.add(event) }
@@ -186,7 +186,7 @@ internal class SessionOrchestratorListenerTest {
     @Test
     fun `multiple listeners all notified`() {
         configService = sessionBehaviorConfig()
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(ProcessState.FOREGROUND)
 
         val events1 = mutableListOf<SessionStateEvent>()
         val events2 = mutableListOf<SessionStateEvent>()
@@ -202,7 +202,7 @@ internal class SessionOrchestratorListenerTest {
     @Test
     fun `adding a listener fires USER_SESSION_ACTIVE immediately when a session is active`() {
         configService = sessionBehaviorConfig()
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(ProcessState.FOREGROUND)
         val events = mutableListOf<SessionStateEvent>()
         orchestrator.addUserSessionListener { event -> events.add(event) }
         assertEquals(listOf(SessionStateEvent.UserSessionActive::class), events.map { it::class })
@@ -211,7 +211,7 @@ internal class SessionOrchestratorListenerTest {
     @Test
     fun `exception in listener is swallowed and does not prevent other listeners from being notified`() {
         configService = sessionBehaviorConfig()
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(ProcessState.FOREGROUND)
 
         var secondListenerInvoked = false
         orchestrator.addUserSessionListener { error("simulated listener failure") }
@@ -226,7 +226,7 @@ internal class SessionOrchestratorListenerTest {
     @Test
     fun `registering a listener from within a listener callback does not deadlock`() {
         configService = sessionBehaviorConfig()
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(ProcessState.FOREGROUND)
 
         val innerEvents = mutableListOf<SessionStateEvent>()
         var innerRegistered = false
@@ -246,7 +246,7 @@ internal class SessionOrchestratorListenerTest {
     @Test
     fun `removed listener receives no further events`() {
         configService = sessionBehaviorConfig()
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(ProcessState.FOREGROUND)
         val events = mutableListOf<SessionStateEvent>()
         val listener = UserSessionListener { events.add(it) }
         orchestrator.addUserSessionListener(listener)
@@ -263,7 +263,7 @@ internal class SessionOrchestratorListenerTest {
     @Test
     fun `registering the same listener twice dedups and fires the immediate event only once`() {
         configService = sessionBehaviorConfig()
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(ProcessState.FOREGROUND)
         val events = mutableListOf<SessionStateEvent>()
         val listener = UserSessionListener { events.add(it) }
         orchestrator.addUserSessionListener(listener)
@@ -287,7 +287,7 @@ internal class SessionOrchestratorListenerTest {
     @Test
     fun `removing an unregistered listener is a no-op`() {
         configService = sessionBehaviorConfig()
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(ProcessState.FOREGROUND)
         val events = mutableListOf<SessionStateEvent>()
         orchestrator.addUserSessionListener { events.add(it) }
         val sizeAfterRegistration = events.size
@@ -337,12 +337,12 @@ internal class SessionOrchestratorListenerTest {
     }
 
     private fun createOrchestrator(
-        state: AppState,
+        state: ProcessState,
         ordinalStoreOverride: FakeOrdinalStore? = null,
         metadataStoreOverride: UserSessionMetadataStore? = null,
     ) {
         store = FakePayloadStore()
-        appStateTracker = FakeAppStateTracker(state)
+        appStateTracker = FakeProcessStateTracker(state)
         currentSessionPartSpan = FakeCurrentSessionPartSpan(clock).apply { initializeService(clock.now()) }
         destination = FakeTelemetryDestination()
         payloadCollator = FakePayloadMessageCollator(currentSessionPartSpan = currentSessionPartSpan)
@@ -408,6 +408,7 @@ internal class SessionOrchestratorListenerTest {
                 FakeMetadataService(),
             ),
             ordinalStoreOverride ?: FakeOrdinalStore(),
+            FakeKeyValueStore(),
             metadataStoreOverride ?: UserSessionMetadataStore(FakeKeyValueStore()),
             logger,
             fakeBackgroundWorker(),

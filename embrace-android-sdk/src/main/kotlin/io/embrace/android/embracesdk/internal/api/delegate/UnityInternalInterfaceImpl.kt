@@ -34,9 +34,11 @@ internal class UnityInternalInterfaceImpl(
                 return
             }
             if (unitySdkVersion != null) {
-                hostedSdkVersionInfo.hostedPlatformVersion = unityVersion
-                hostedSdkVersionInfo.hostedSdkVersion = unitySdkVersion
-                hostedSdkVersionInfo.unityBuildIdNumber = buildGuid
+                hostedSdkVersionInfo.batch {
+                    hostedSdkVersionInfo.hostedPlatformVersion = unityVersion
+                    hostedSdkVersionInfo.hostedSdkVersion = unitySdkVersion
+                    hostedSdkVersionInfo.unityBuildIdNumber = buildGuid
+                }
             }
         } else {
             logger.logSdkNotInitialized("set Unity metadata")

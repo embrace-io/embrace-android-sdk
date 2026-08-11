@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 import android.app.ActivityManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
@@ -16,6 +15,7 @@ import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakePayloadMessageCollator
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
+import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.TestUuidSource
@@ -27,7 +27,7 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
 import io.embrace.android.embracesdk.internal.arch.startup.StartupType
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.capture.session.PropertyScope
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -49,6 +49,8 @@ import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
+import io.embrace.android.embracesdk.internal.store.OrdinalStore
+import io.embrace.android.embracesdk.internal.store.OrdinalStoreImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues
@@ -72,7 +74,7 @@ internal class SessionOrchestratorTest {
     private lateinit var payloadFactory: PayloadFactoryImpl
     private lateinit var payloadCollator: FakePayloadMessageCollator
     private lateinit var logEnvelopeSource: FakeLogEnvelopeSource
-    private lateinit var appStateTracker: FakeAppStateTracker
+    private lateinit var appStateTracker: FakeProcessStateTracker
     private lateinit var clock: FakeClock
     private lateinit var store: FakePayloadStore
     private lateinit var userSessionPropertiesService: UserSessionPropertiesService
@@ -100,7 +102,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `test initial behavior in background`() {
-        createOrchestrator(AppState.BACKGROUND)
+        createOrchestrator(ProcessState.BACKGROUND)
         assertEquals(orchestrator, appStateTracker.listeners.single())
         assertEquals(0, payloadCollator.sessionCount.get())
         assertEquals(1, payloadCollator.baCount.get())
@@ -117,7 +119,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `test initial behavior in foreground`() {
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(ProcessState.FOREGROUND)
         assertEquals(orchestrator, appStateTracker.listeners.single())
         assertEquals(1, payloadCollator.sessionCount.get())
         assertEquals(0, payloadCollator.baCount.get())
@@ -130,8 +132,32 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
+    fun `each transition performs a single commit to the key-value store`() {
+        val kvStore = FakeKeyValueStore()
+        createOrchestrator(
+            startingProcessState = ProcessState.FOREGROUND,
+            ordinalStoreOverride = OrdinalStoreImpl(kvStore),
+            metadataStoreOverride = UserSessionMetadataStore(kvStore),
+            keyValueStoreOverride = kvStore,
+        )
+
+        // the user session ordinal, the session part ordinal, and both saves of the user session
+        // metadata all land in one commit
+        assertEquals(1, kvStore.commitCount)
+        assertNotNull(orchestrator.currentUserSession())
+
+        clock.tick(10_000)
+        orchestrator.onBackground()
+        assertEquals(2, kvStore.commitCount)
+
+        clock.tick(10_000)
+        orchestrator.onForeground()
+        assertEquals(3, kvStore.commitCount)
+    }
+
+    @Test
     fun `test on foreground call after starting in background`() {
-        createOrchestrator(AppState.BACKGROUND)
+        createOrchestrator(ProcessState.BACKGROUND)
         clock.tick()
         val foregroundTime = clock.now()
         val sessionPartSpan = currentSessionPartSpan.sessionPartSpan
@@ -152,7 +178,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `test on background call after starting in foreground`() {
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(ProcessState.FOREGROUND)
         clock.tick()
         val backgroundTime = clock.now()
         val sessionPartSpan = currentSessionPartSpan.sessionPartSpan
@@ -167,7 +193,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `saved background activity save overridden after is sent`() {
-        createOrchestrator(AppState.BACKGROUND)
+        createOrchestrator(ProcessState.BACKGROUND)
         clock.tick()
         orchestrator.onSessionDataUpdate()
         sessionCacheExecutor.runCurrentlyBlocked()
@@ -181,7 +207,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `background activity save invoked after ending will not save it again`() {
-        createOrchestrator(AppState.BACKGROUND)
+        createOrchestrator(ProcessState.BACKGROUND)
         clock.tick()
         orchestrator.onForeground()
         clock.tick()
@@ -192,7 +218,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `saved session overridden after it is sent`() {
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(ProcessState.FOREGROUND)
         clock.tick()
         sessionCacheExecutor.runCurrentlyBlocked()
         assertEquals(1, store.cachedSessionPartPayloads.size)
@@ -204,7 +230,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `session save invoked after ending will not save it again`() {
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(ProcessState.FOREGROUND)
         clock.tick()
         orchestrator.onBackground()
         clock.tick()
@@ -215,7 +241,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `end session with manual in foreground`() {
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(ProcessState.FOREGROUND)
         clock.tick(10000)
         val endTimeMs = clock.now()
         val sessionPartSpan = currentSessionPartSpan.sessionPartSpan
@@ -231,7 +257,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `end session with manual in background rotates user session and stores payload`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
         )
         val firstUserSession = activeUserSession()
@@ -250,7 +276,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `backgrounding with background activity enabled does not cache empty crash envelope`() {
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(ProcessState.FOREGROUND)
         orchestrator.onBackground()
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
     }
@@ -258,7 +284,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `backgrounding with background activity disabled caches empty crash envelope`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = FakeConfigService(backgroundActivityBehavior = backgroundActivityBehavior(false)),
         )
         orchestrator.onBackground()
@@ -268,7 +294,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `foregrounding with background activity disabled does not cache empty crash envelope`() {
         createOrchestrator(
-            startingAppState = AppState.BACKGROUND,
+            startingProcessState = ProcessState.BACKGROUND,
             configService = FakeConfigService(backgroundActivityBehavior = backgroundActivityBehavior(false)),
         )
         orchestrator.onForeground()
@@ -278,7 +304,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `test manual session end disabled for session gating`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = FakeConfigService(
                 sessionBehavior = FakeUserSessionBehavior(sessionControlEnabled = true),
             ),
@@ -294,7 +320,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `ending session manually above time threshold succeeds`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = FakeConfigService(),
         )
         clock.tick(10000)
@@ -307,7 +333,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `first manual end always succeeds regardless of time since session start`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = FakeConfigService(),
         )
         clock.tick(1000)
@@ -321,7 +347,7 @@ internal class SessionOrchestratorTest {
     fun `cool-off window is measured from last manual end`() {
         val maxDuration = 2000L
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(customMaxSessionDurationMs = maxDuration),
         )
 
@@ -345,7 +371,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `rate limit of manual end`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = FakeConfigService(),
         )
 
@@ -365,7 +391,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `ending session manually when no session exists does not start a new session`() {
         createOrchestrator(
-            startingAppState = AppState.BACKGROUND,
+            startingProcessState = ProcessState.BACKGROUND,
             configService = FakeConfigService(),
         )
         clock.tick(1000)
@@ -375,7 +401,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `end with crash in background`() {
-        createOrchestrator(AppState.BACKGROUND)
+        createOrchestrator(ProcessState.BACKGROUND)
         orchestrator.handleCrash("crashId")
         assertEquals("crashId", destination.attributes[EmbSessionAttributes.EMB_CRASH_ID])
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
@@ -383,7 +409,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `end with crash in foreground`() {
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(ProcessState.FOREGROUND)
         orchestrator.handleCrash("crashId")
         assertEquals("crashId", destination.attributes[EmbSessionAttributes.EMB_CRASH_ID])
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
@@ -391,7 +417,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `periodic caching started with initial session`() {
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(ProcessState.FOREGROUND)
         assertEquals(0, store.cachedSessionPartPayloads.size)
         sessionCacheExecutor.runCurrentlyBlocked()
         assertEquals(1, store.cachedSessionPartPayloads.size)
@@ -399,14 +425,14 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `test session part span cold start`() {
-        createOrchestrator(AppState.BACKGROUND)
+        createOrchestrator(ProcessState.BACKGROUND)
         orchestrator.onForeground()
         checkNotNull(store.storedSessionPartPayloads.last().first)
     }
 
     @Test
     fun `test session part span non cold start`() {
-        createOrchestrator(AppState.BACKGROUND)
+        createOrchestrator(ProcessState.BACKGROUND)
         orchestrator.onForeground()
         orchestrator.onBackground()
         checkNotNull(store.storedSessionPartPayloads.last().first)
@@ -414,7 +440,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `test session part span with crash`() {
-        createOrchestrator(AppState.BACKGROUND)
+        createOrchestrator(ProcessState.BACKGROUND)
         orchestrator.onForeground()
         orchestrator.handleCrash("my-crash-id")
         checkNotNull(store.storedSessionPartPayloads.last().first)
@@ -422,7 +448,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `test foreground session part span heartbeat`() {
-        createOrchestrator(AppState.BACKGROUND)
+        createOrchestrator(ProcessState.BACKGROUND)
         orchestrator.onForeground()
         assertHeartbeatMatchesClock()
         assertEquals("true", destination.attributes[EmbSessionAttributes.EMB_TERMINATED])
@@ -440,7 +466,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `test background session part span heartbeat`() {
-        createOrchestrator(AppState.BACKGROUND)
+        createOrchestrator(ProcessState.BACKGROUND)
         assertHeartbeatMatchesClock()
         assertEquals("true", destination.attributes[EmbSessionAttributes.EMB_TERMINATED])
 
@@ -458,7 +484,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `user session last activity time is updated every minute for default inactivity timeout`() {
-        createOrchestrator(startingAppState = AppState.FOREGROUND)
+        createOrchestrator(startingProcessState = ProcessState.FOREGROUND)
         val initial = activeUserSession().lastActivityMs
 
         clock.tick(59_000)
@@ -473,7 +499,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `user session last activity time is updated every 20s for short inactivity timeouts`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(customInactivityTimeoutMs = 60_000L),
         )
         val initial = activeUserSession().lastActivityMs
@@ -490,7 +516,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `user session last activity time does not update when app in the background`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = FakeConfigService(
                 backgroundActivityBehavior = backgroundActivityBehavior(true),
             ),
@@ -506,7 +532,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `user session max duration boundary`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
         )
 
@@ -546,7 +572,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `user session manual end`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(),
         )
 
@@ -566,7 +592,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `part index increments within user session`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
         )
 
@@ -589,7 +615,7 @@ internal class SessionOrchestratorTest {
         val sharedOrdinalStore = FakeOrdinalStore()
 
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(),
             ordinalStoreOverride = sharedOrdinalStore,
         )
@@ -597,7 +623,7 @@ internal class SessionOrchestratorTest {
 
         // New orchestrator with shared ordinal store but fresh metadata store
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(),
             ordinalStoreOverride = sharedOrdinalStore,
             metadataStoreOverride = UserSessionMetadataStore(FakeKeyValueStore()),
@@ -608,7 +634,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `user session metadata attributes`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(),
         )
 
@@ -626,7 +652,7 @@ internal class SessionOrchestratorTest {
         val prePopulated = storeWithUserSession(userSessionId = "restored-id", userSessionNumber = 7L)
 
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(),
             metadataStoreOverride = prePopulated,
         )
@@ -649,13 +675,12 @@ internal class SessionOrchestratorTest {
                 override fun getStringMap(key: String): Map<String, String> =
                     error("simulated store failure")
 
-                override fun edit(action: KeyValueStoreEditor.() -> Unit) = FakeKeyValueStore().edit(action)
-                override fun incrementAndGet(key: String): Int = 0
+                override fun editAndCommit(action: KeyValueStoreEditor.() -> Unit) = FakeKeyValueStore().editAndCommit(action)
             },
         )
 
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(),
             metadataStoreOverride = throwingStore,
         )
@@ -668,7 +693,7 @@ internal class SessionOrchestratorTest {
 
         clock.tick(maxDurationMs)
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(),
             metadataStoreOverride = expiredStore,
         )
@@ -685,7 +710,7 @@ internal class SessionOrchestratorTest {
         // simulate process restart after inactivity timeout
         clock.tick(inactivityMs + 1)
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(),
             metadataStoreOverride = store,
         )
@@ -701,7 +726,7 @@ internal class SessionOrchestratorTest {
         // simulate process restart before inactivity timeout
         clock.tick(inactivityMs - 1)
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(),
             metadataStoreOverride = store,
         )
@@ -714,7 +739,7 @@ internal class SessionOrchestratorTest {
     fun `session is persisted when started`() {
         val freshStore = UserSessionMetadataStore(FakeKeyValueStore())
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(),
             metadataStoreOverride = freshStore,
         )
@@ -730,7 +755,7 @@ internal class SessionOrchestratorTest {
     fun `store is overridden for new user session`() {
         val sharedStore = UserSessionMetadataStore(FakeKeyValueStore())
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(),
             metadataStoreOverride = sharedStore,
         )
@@ -748,7 +773,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `crash does not advance user session`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(),
         )
 
@@ -769,7 +794,7 @@ internal class SessionOrchestratorTest {
         )
 
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(customMaxSessionDurationMs = configMaxMs),
             metadataStoreOverride = persistedStore,
         )
@@ -796,7 +821,7 @@ internal class SessionOrchestratorTest {
         )
 
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(
                 customInactivityTimeoutMs = TimeUnit.SECONDS.toMillis(configInactivitySecs),
             ),
@@ -825,7 +850,7 @@ internal class SessionOrchestratorTest {
         )
 
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(),
             metadataStoreOverride = store,
         )
@@ -841,7 +866,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `clock shifted backwards during new session part terminates and restarts user session`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
         )
 
@@ -865,7 +890,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `exceeding inactivity timeout creates a background-only user session that ends on foreground`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
         )
 
@@ -905,7 +930,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `inactivity timeout not exceeded keeps existing user session`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundDisabledConfigService(),
         )
 
@@ -927,7 +952,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `inactivity deadline elapsed before timer fires still creates new user session`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundDisabledConfigService(),
         )
 
@@ -948,7 +973,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `user session start time matches initial session part start time`() {
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(ProcessState.FOREGROUND)
         val userSession = activeUserSession()
         val sessionPart = checkNotNull(sessionTracker.getActiveSessionPart())
         assertEquals(userSession.startTimeMs, sessionPart.startTime)
@@ -956,7 +981,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `user session start time matches session part start time after manual end`() {
-        createOrchestrator(AppState.FOREGROUND)
+        createOrchestrator(ProcessState.FOREGROUND)
         clock.tick(5000)
         orchestrator.endSessionWithManual()
         val userSession = activeUserSession()
@@ -970,14 +995,15 @@ internal class SessionOrchestratorTest {
     }
 
     private fun createOrchestrator(
-        startingAppState: AppState,
+        startingProcessState: ProcessState,
         configService: FakeConfigService =
             FakeConfigService(backgroundActivityBehavior = backgroundActivityBehavior(true)),
-        ordinalStoreOverride: FakeOrdinalStore? = null,
+        ordinalStoreOverride: OrdinalStore? = null,
         metadataStoreOverride: UserSessionMetadataStore? = null,
+        keyValueStoreOverride: KeyValueStore? = null,
     ) {
         store = FakePayloadStore()
-        appStateTracker = FakeAppStateTracker(startingAppState)
+        appStateTracker = FakeProcessStateTracker(startingProcessState)
         currentSessionPartSpan = FakeCurrentSessionPartSpan(clock).apply { initializeService(clock.now()) }
         destination = FakeTelemetryDestination()
         payloadCollator = FakePayloadMessageCollator(currentSessionPartSpan = currentSessionPartSpan)
@@ -1043,6 +1069,7 @@ internal class SessionOrchestratorTest {
                 FakeMetadataService(),
             ),
             ordinalStoreOverride ?: FakeOrdinalStore(),
+            keyValueStoreOverride ?: FakeKeyValueStore(),
             metadataStoreOverride ?: UserSessionMetadataStore(FakeKeyValueStore()),
             logger,
             BackgroundWorker(inactivityWorkerExecutor),
@@ -1058,7 +1085,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `max duration timeout creates new session`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
         )
 
@@ -1075,7 +1102,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `max duration timer not scheduled when starting in background`() {
         createOrchestrator(
-            startingAppState = AppState.BACKGROUND,
+            startingProcessState = ProcessState.BACKGROUND,
             configService = backgroundEnabledConfigService(),
         )
         val initialUserSession = activeUserSession()
@@ -1091,7 +1118,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `max duration timer cancelled on manual session end and rescheduled for new session`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(),
         )
 
@@ -1126,7 +1153,7 @@ internal class SessionOrchestratorTest {
         )
 
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
             metadataStoreOverride = restoredStore,
         )
@@ -1147,7 +1174,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `max duration timer fires while backgrounded and rotates user session`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
         )
 
@@ -1170,7 +1197,7 @@ internal class SessionOrchestratorTest {
 
         // The session part created by the BG max-duration rotation must remain BG.
         val activePart = checkNotNull(sessionTracker.getActiveSessionPart())
-        assertEquals(AppState.BACKGROUND, activePart.appState)
+        assertEquals(ProcessState.BACKGROUND, activePart.processState)
 
         // Two extra parts are persisted: end of FG session at onBackground, and end of BG session at max-duration.
         assertEquals(storedBefore + 2, store.storedSessionPartPayloads.size)
@@ -1179,7 +1206,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `manual session end in background with capture disabled terminates without creating a new user session or session part`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(),
         )
         val first = activeUserSession()
@@ -1202,7 +1229,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `inactivity timer fires in background with capture disabled terminates without a phantom user session`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundDisabledConfigService(),
         )
         val first = activeUserSession()
@@ -1226,7 +1253,7 @@ internal class SessionOrchestratorTest {
     fun `max duration timer not cancelled when transitioning to background`() {
         // Long inactivity so it can't fire before the max-duration timer and confound the result.
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = FakeConfigService(
                 backgroundActivityBehavior = backgroundActivityBehavior(true),
                 sessionBehavior = FakeUserSessionBehavior(
@@ -1252,7 +1279,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `max duration timer not rescheduled when foregrounding before it has fired`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
         )
 
@@ -1279,7 +1306,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `max duration timer not scheduled for user session started in background`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
         )
 
@@ -1306,7 +1333,7 @@ internal class SessionOrchestratorTest {
         // session. The inactivity timer scheduled by the late onBackground anchors on the to-be-terminated
         // session — if it survives, it incorrectly rotates the freshly-created BG session.
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
         )
         val first = activeUserSession()
@@ -1335,7 +1362,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `only background-only user session carries the marker attribute in its metadata`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
         )
 
@@ -1353,7 +1380,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `manual end while in background creates a background-only user session`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
         )
 
@@ -1384,7 +1411,7 @@ internal class SessionOrchestratorTest {
         // Starting with the clock beyond the inactivity time should not result in a new background only session
         clock.tick(inactivityMs * 1)
         createOrchestrator(
-            startingAppState = AppState.BACKGROUND,
+            startingProcessState = ProcessState.BACKGROUND,
             configService = backgroundEnabledConfigService(),
             metadataStoreOverride = store,
         )
@@ -1408,7 +1435,7 @@ internal class SessionOrchestratorTest {
 
         clock.tick(maxDurationMs + 1)
         createOrchestrator(
-            startingAppState = AppState.BACKGROUND,
+            startingProcessState = ProcessState.BACKGROUND,
             configService = backgroundEnabledConfigService(),
             metadataStoreOverride = store,
         )
@@ -1434,7 +1461,7 @@ internal class SessionOrchestratorTest {
 
         clock.tick(1000)
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
             metadataStoreOverride = store,
         )
@@ -1449,7 +1476,7 @@ internal class SessionOrchestratorTest {
         val store = storeWithUserSession(userSessionId = "expired-id", isBackgroundOnly = false)
         clock.tick(maxDurationMs + 1)
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
             metadataStoreOverride = store,
         )
@@ -1469,7 +1496,7 @@ internal class SessionOrchestratorTest {
         val store = storeWithUserSession(userSessionId = "inactive-id", isBackgroundOnly = false)
         clock.tick(inactivityMs + 1)
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
             metadataStoreOverride = store,
         )
@@ -1489,7 +1516,7 @@ internal class SessionOrchestratorTest {
         val store = storeWithUserSession(userSessionId = "bg-expired", isBackgroundOnly = true)
         clock.tick(maxDurationMs + 1)
         createOrchestrator(
-            startingAppState = AppState.BACKGROUND,
+            startingProcessState = ProcessState.BACKGROUND,
             configService = backgroundEnabledConfigService(),
             metadataStoreOverride = store,
         )
@@ -1508,7 +1535,7 @@ internal class SessionOrchestratorTest {
     fun `userSessionRestoreDecision is restored for a continued regular session`() {
         val store = storeWithUserSession(userSessionId = "live-id", isBackgroundOnly = false)
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
             metadataStoreOverride = store,
         )
@@ -1524,7 +1551,7 @@ internal class SessionOrchestratorTest {
     fun `userSessionRestoreDecision is restored and background-only for a continued background-only session`() {
         val store = storeWithUserSession(userSessionId = "bg-live", isBackgroundOnly = true)
         createOrchestrator(
-            startingAppState = AppState.BACKGROUND,
+            startingProcessState = ProcessState.BACKGROUND,
             configService = backgroundEnabledConfigService(),
             metadataStoreOverride = store,
         )
@@ -1539,7 +1566,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `userSessionRestoreDecision is null when there is no persisted session`() {
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
         )
 
@@ -1550,7 +1577,7 @@ internal class SessionOrchestratorTest {
     fun `userSessionRestoreDecision is terminated with clock mismatch reason if the current timestamp is before the persisted session`() {
         val store = storeWithUserSession(userSessionId = "future-id", startTimeMs = clock.now() + 10_000L)
         createOrchestrator(
-            startingAppState = AppState.FOREGROUND,
+            startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
             metadataStoreOverride = store,
         )
@@ -1568,7 +1595,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `background-startup window elapsing resolves unclassified session to background-only`() {
         createOrchestrator(
-            startingAppState = AppState.BACKGROUND,
+            startingProcessState = ProcessState.BACKGROUND,
             configService = backgroundEnabledConfigService(),
         )
 
@@ -1596,7 +1623,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `foregrounding within background-startup window does not resolve the startup classification`() {
         createOrchestrator(
-            startingAppState = AppState.BACKGROUND,
+            startingProcessState = ProcessState.BACKGROUND,
             configService = backgroundEnabledConfigService(),
         )
         val initialUserSession = activeUserSession()
@@ -1619,7 +1646,7 @@ internal class SessionOrchestratorTest {
     fun `unclassified user session is persisted as background-only during the window`() {
         val store = UserSessionMetadataStore(FakeKeyValueStore())
         createOrchestrator(
-            startingAppState = AppState.BACKGROUND,
+            startingProcessState = ProcessState.BACKGROUND,
             configService = backgroundEnabledConfigService(),
             metadataStoreOverride = store,
         )
@@ -1642,7 +1669,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `manual end during the background-startup window terminates the pending session`() {
         createOrchestrator(
-            startingAppState = AppState.BACKGROUND,
+            startingProcessState = ProcessState.BACKGROUND,
             configService = backgroundEnabledConfigService(),
         )
         val pending = activeUserSession()
@@ -1664,7 +1691,7 @@ internal class SessionOrchestratorTest {
     fun `crash during the background-startup window leaves the pending session untouched`() {
         val store = UserSessionMetadataStore(FakeKeyValueStore())
         createOrchestrator(
-            startingAppState = AppState.BACKGROUND,
+            startingProcessState = ProcessState.BACKGROUND,
             configService = backgroundEnabledConfigService(),
             metadataStoreOverride = store,
         )
@@ -1682,7 +1709,7 @@ internal class SessionOrchestratorTest {
 
         clock.tick(1000)
         createOrchestrator(
-            startingAppState = AppState.BACKGROUND,
+            startingProcessState = ProcessState.BACKGROUND,
             configService = backgroundEnabledConfigService(),
             metadataStoreOverride = store,
         )
@@ -1705,7 +1732,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `cold start foregrounding within the background-startup window is classified regular`() {
         createOrchestrator(
-            startingAppState = AppState.BACKGROUND,
+            startingProcessState = ProcessState.BACKGROUND,
             configService = backgroundEnabledConfigService(),
         )
         val initialUserSession = activeUserSession()
@@ -1733,7 +1760,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `background startup timer doesn't reclassify startup if already classified`() {
         createOrchestrator(
-            startingAppState = AppState.BACKGROUND,
+            startingProcessState = ProcessState.BACKGROUND,
             configService = backgroundEnabledConfigService(),
         )
         val initialUserSession = activeUserSession()

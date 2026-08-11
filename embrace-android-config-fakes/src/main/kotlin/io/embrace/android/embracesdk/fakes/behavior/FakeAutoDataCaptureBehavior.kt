@@ -20,6 +20,7 @@ class FakeAutoDataCaptureBehavior(
     private val navigationStateCaptureEnabled: Boolean = true,
     private val smoothnessCaptureEnabled: Boolean = false,
     private val screenLoadCaptureEnabled: Boolean = false,
+    private val activityProcessLifecycleTrackerEnabled: Boolean = false,
 ) : AutoDataCaptureBehavior {
 
     override fun isThermalStatusCaptureEnabled(): Boolean = thermalStatusCaptureEnabled
@@ -39,4 +40,5 @@ class FakeAutoDataCaptureBehavior(
     override fun isNavigationStateCaptureEnabled(): Boolean = navigationStateCaptureEnabled
     override fun isSmoothnessCaptureEnabled(): Boolean = smoothnessCaptureEnabled
     override fun isScreenLoadCaptureEnabled(): Boolean = screenLoadCaptureEnabled
+    override fun isActivityProcessLifecycleTrackerEnabled(): Boolean = activityProcessLifecycleTrackerEnabled
 }

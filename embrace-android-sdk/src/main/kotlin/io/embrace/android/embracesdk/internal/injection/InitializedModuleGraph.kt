@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
 import android.os.Build
-import androidx.lifecycle.LifecycleOwner
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -14,6 +13,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptur
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageServiceSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
+import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
 import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
 import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
 import io.embrace.android.embracesdk.internal.storage.StorageService
@@ -99,7 +99,7 @@ internal class InitializedModuleGraph(
     }
 
     override val essentialServiceModule: EssentialServiceModule = init("essential-service") {
-        val lifecycleOwnerProvider: Provider<LifecycleOwner?> = { null }
+        val lifecycleTrackerProvider: Provider<LifecycleTracker?> = { null }
         val networkConnectivityServiceProvider: Provider<NetworkConnectivityService?> = { null }
         val sessionOrchestratorProvider = { userSessionOrchestrationModule.sessionOrchestrator }
 
@@ -109,7 +109,8 @@ internal class InitializedModuleGraph(
             openTelemetryModule,
             coreModule,
             workerThreadModule,
-            lifecycleOwnerProvider,
+            context,
+            lifecycleTrackerProvider,
             networkConnectivityServiceProvider,
             sessionOrchestratorProvider,
         ) ?: EssentialServiceModuleImpl(
@@ -118,7 +119,8 @@ internal class InitializedModuleGraph(
             openTelemetryModule,
             coreModule,
             workerThreadModule,
-            lifecycleOwnerProvider,
+            context,
+            lifecycleTrackerProvider,
             networkConnectivityServiceProvider,
             sessionOrchestratorProvider,
         )
@@ -184,7 +186,7 @@ internal class InitializedModuleGraph(
             initModule.logger,
             destination,
             configService,
-            coreModule.appVersionStartupCounter,
+            { coreModule.appVersionStartupCounter },
             initModule.startupClassifier,
             versionChecker,
         ) ?: DataCaptureServiceModuleImpl(
@@ -192,7 +194,7 @@ internal class InitializedModuleGraph(
             initModule.logger,
             destination,
             configService,
-            coreModule.appVersionStartupCounter,
+            { coreModule.appVersionStartupCounter },
             initModule.startupClassifier,
             versionChecker,
         )

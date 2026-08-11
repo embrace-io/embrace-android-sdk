@@ -8,6 +8,9 @@ class PowerStateInstrumentationProvider :
     StateInstrumentationProvider<PowerStateDataSource, SchemaType.PowerState.PowerMode>(
         configGate = { configService.autoDataCaptureBehavior.isPowerSaveModeCaptureEnabled() },
     ) {
+
+    override val asyncInit: Boolean = true
+
     override fun factoryProvider(args: InstrumentationArgs): () -> PowerStateDataSource {
         return { PowerStateDataSource(args) }
     }

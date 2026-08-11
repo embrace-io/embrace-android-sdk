@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -63,8 +63,8 @@ internal class UserSessionInactivityTimeoutGoldenFileTest {
                 recordSession()
             },
             assertAction = {
-                val sessionPartEnvelopes = getSessionEnvelopes(2, AppState.FOREGROUND)
-                val bgPartEnvelopes = getSessionEnvelopes(3, AppState.BACKGROUND)
+                val sessionPartEnvelopes = getSessionEnvelopes(2, ProcessState.FOREGROUND)
+                val bgPartEnvelopes = getSessionEnvelopes(3, ProcessState.BACKGROUND)
 
                 assertPayloadsMatchGoldenFiles(
                     UserSessionDiff(

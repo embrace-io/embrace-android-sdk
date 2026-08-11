@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 
@@ -21,13 +21,13 @@ internal fun shouldEndManualSession(
 }
 
 internal fun shouldRunOnBackground(
-    state: AppState,
+    state: ProcessState,
 ): Boolean {
-    return state == AppState.BACKGROUND
+    return state == ProcessState.BACKGROUND
 }
 
 internal fun shouldRunOnForeground(
-    state: AppState,
+    state: ProcessState,
 ): Boolean {
-    return state == AppState.FOREGROUND
+    return state == ProcessState.FOREGROUND
 }

@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
+import io.embrace.android.embracesdk.internal.otel.export.immediateExportDispatcher
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
@@ -156,6 +157,7 @@ internal class OpenTelemetrySdkTest {
             packageName = "com.test.app",
             systemInfo = systemInfo,
             uuidSource = TestUuidSource(),
+            externalExportDispatcher = immediateExportDispatcher(),
         )
         spanExporter = FakeSpanExporter()
         logExporter = FakeLogRecordExporter()

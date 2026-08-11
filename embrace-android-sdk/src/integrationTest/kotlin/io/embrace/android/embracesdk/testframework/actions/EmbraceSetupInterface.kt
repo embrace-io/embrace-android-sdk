@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.fixtures.fakeCachedSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.config.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -43,23 +44,26 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.prefs.createKeyValueStore
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.serialization.toJson
+import io.embrace.android.embracesdk.internal.session.lifecycle.AndroidxProcessLifecycleTracker
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.internal.worker.Worker.Background.NonIoRegWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.robolectric.Shadows
 import org.robolectric.shadows.ShadowLooper
+import java.util.concurrent.TimeUnit.MILLISECONDS
 import kotlin.time.Duration.Companion.seconds
 
 /**
  * Test harness for which an instance is generated each test run and provided to the test by the Rule
  */
 internal class EmbraceSetupInterface(
-    workersToFake: List<Worker.Background> = emptyList(),
+    private val workersToFake: List<Worker.Background> = emptyList(),
     private val threadBlockageWatchdogThread: Thread? = null,
     fakeStorageLayer: Boolean = false,
     ignoredInternalErrors: List<InternalErrorType> = listOf(),
@@ -141,14 +145,15 @@ internal class EmbraceSetupInterface(
             )
             DecoratedConfigService(impl)
         },
-        essentialServiceModuleSupplier = { initModule, configService, openTelemetryModule, coreModule, workerThreadModule, _, _, sessionOrchestratorProvider ->
+        essentialServiceModuleSupplier = { initModule, configService, openTelemetryModule, coreModule, workerThreadModule, startupContext, _, _, sessionOrchestratorProvider ->
             EssentialServiceModuleImpl(
                 initModule = initModule,
                 configService = configService,
                 openTelemetryModule = openTelemetryModule,
                 coreModule = coreModule,
                 workerThreadModule = workerThreadModule,
-                lifecycleOwnerProvider = { fakeLifecycleOwner },
+                startupContext = startupContext,
+                lifecycleTrackerProvider = { AndroidxProcessLifecycleTracker(fakeLifecycleOwner) },
                 networkConnectivityServiceProvider = { fakeNetworkConnectivityService },
                 sessionOrchestratorProvider = sessionOrchestratorProvider,
             )
@@ -234,7 +239,7 @@ internal class EmbraceSetupInterface(
      * Setup permanent session properties without using the SDK interfaces
      */
     fun setupPermanentUserSessionProperties(properties: Map<String, String>) {
-        getStore().edit {
+        getStore().editAndCommit {
             putStringMap(
                 "io.embrace.session.properties", properties
             )
@@ -256,7 +261,7 @@ internal class EmbraceSetupInterface(
         inactivityTimeoutSeconds: Int = 1800,
         isBackgroundOnly: Boolean = false,
     ) {
-        getStore().edit {
+        getStore().editAndCommit {
             putStringMap(
                 "embrace.user_session",
                 buildMap {
@@ -325,7 +330,23 @@ internal class EmbraceSetupInterface(
 
     fun getStore(): KeyValueStore = keyValueStore
 
+    /**
+     * Waits for instrumentation that opts into [InstrumentationProvider.asyncInit] to finish registering,
+     * so tests can rely on its data sources existing once the SDK has started.
+     */
+    fun awaitAsyncInstrumentation() {
+        if (NonIoRegWorker in workersToFake) {
+            return
+        }
+        val worker = workerThreadModule.backgroundWorker(NonIoRegWorker)
+        repeat(2) {
+            worker.submit {}.get(ASYNC_INSTRUMENTATION_TIMEOUT_MS, MILLISECONDS)
+        }
+    }
+
     private companion object {
+        private const val ASYNC_INSTRUMENTATION_TIMEOUT_MS = 5000L
+
         fun initWorkerThreadModule(
             fakeInitModule: FakeInitModule,
             workersToFake: List<Worker.Background>,

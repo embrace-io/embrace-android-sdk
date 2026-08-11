@@ -67,10 +67,6 @@ internal fun ModuleGraph.registerListeners() {
         val ctx = coreModule.application
         ctx.registerActivityLifecycleCallbacks(dataCaptureServiceModule.startupTracker)
 
-        workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
-            essentialServiceModule.networkConnectivityService.register()
-        }
-
         // periodically fail any in-flight spans that have exceeded their timeout, so leaked spans
         // are terminated and their memory released even during a long-running session.
         val spanRepository = openTelemetryModule.spanRepository
@@ -90,7 +86,7 @@ internal fun ModuleGraph.registerListeners() {
         )
 
         val sessionPartTracker = essentialServiceModule.sessionPartTracker
-        val appStateTracker = essentialServiceModule.appStateTracker
+        val appStateTracker = essentialServiceModule.processStateTracker
 
         sessionPartTracker.addSessionPartChangeListener {
             configService.networkBehavior.domainCountLimiter.reset()
@@ -151,11 +147,12 @@ internal fun ModuleGraph.postLoadInstrumentation() {
         addCrashTeardownHandler(featureModule.crashMarker)
         deliveryModule?.payloadStore?.let(::addCrashTeardownHandler)
     }
-    registry.findByType(NetworkStatusDataSource::class)?.let {
-        essentialServiceModule.networkConnectivityService.addNetworkConnectivityListener(it)
-    }
-    registry.findByType(NetworkStateDataSource::class)?.let {
-        essentialServiceModule.networkConnectivityService.addNetworkConnectivityListener(it)
+    workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
+        with(essentialServiceModule.networkConnectivityService) {
+            registry.findByType(NetworkStatusDataSource::class)?.let(::addNetworkConnectivityListener)
+            registry.findByType(NetworkStateDataSource::class)?.let(::addNetworkConnectivityListener)
+            register()
+        }
     }
 }
 
@@ -211,7 +208,7 @@ internal fun ModuleGraph.markSdkInitComplete() {
         dataCaptureServiceModule.startupService.setSdkStartupInfo(
             sdkStartTimeMs,
             initModule.clock.now(),
-            essentialServiceModule.appStateTracker.getAppState(),
+            essentialServiceModule.processStateTracker.getAppState(),
             Thread.currentThread().name,
         )
     }
@@ -225,7 +222,7 @@ private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, St
     return {
         mutableMapOf<String, String>().apply {
             val sessionPart = essentialServiceModule.sessionPartTracker.getActiveSessionPart()
-            val sessionState = sessionPart?.appState ?: essentialServiceModule.appStateTracker.getAppState()
+            val sessionState = sessionPart?.processState ?: essentialServiceModule.processStateTracker.getAppState()
             val sessionIds = userSessionOrchestrationModule.sessionIdsProvider.getActiveSessionIds()
 
             put(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionIds.sessionPartId)

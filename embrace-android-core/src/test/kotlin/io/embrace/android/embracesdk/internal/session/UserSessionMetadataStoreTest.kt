@@ -127,7 +127,7 @@ internal class UserSessionMetadataStoreTest {
         attribute: String,
     ): UserSessionMetadata? {
         metadataStore.save(sessionMetadata)
-        kvStore.edit {
+        kvStore.editAndCommit {
             putStringMap(
                 "embrace.user_session",
                 getRawMap().apply {

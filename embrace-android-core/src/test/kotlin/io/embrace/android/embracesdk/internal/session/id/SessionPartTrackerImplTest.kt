@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.session.id
 
 import android.app.ActivityManager
 import io.embrace.android.embracesdk.fakes.fakeSessionPartToken
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
@@ -28,7 +28,7 @@ internal class SessionPartTrackerImplTest {
         tracker.newActiveSessionPart(
             endSessionPartCallback = {},
             startSessionPartCallback = { newSession },
-            postTransitionAppState = AppState.FOREGROUND,
+            postTransitionProcessState = ProcessState.FOREGROUND,
         )
 
         assertEquals(newSession, tracker.getActiveSessionPart())
@@ -38,14 +38,14 @@ internal class SessionPartTrackerImplTest {
             sessionPartId = "fake",
             userSessionId = "fake-user-session-id",
             startTime = 11L,
-            appState = AppState.BACKGROUND,
+            processState = ProcessState.BACKGROUND,
             isColdStart = false,
             startType = LifeEventType.MANUAL,
         )
         tracker.newActiveSessionPart(
             endSessionPartCallback = {},
             startSessionPartCallback = { anotherSession },
-            postTransitionAppState = AppState.BACKGROUND,
+            postTransitionProcessState = ProcessState.BACKGROUND,
         )
 
         assertEquals(anotherSession, tracker.getActiveSessionPart())
@@ -54,7 +54,7 @@ internal class SessionPartTrackerImplTest {
         tracker.newActiveSessionPart(
             endSessionPartCallback = {},
             startSessionPartCallback = { null },
-            postTransitionAppState = AppState.FOREGROUND,
+            postTransitionProcessState = ProcessState.FOREGROUND,
         )
 
         assertNull(tracker.getActiveSessionPart())
@@ -81,7 +81,7 @@ internal class SessionPartTrackerImplTest {
                     callbackInvocations.add("new-session")
                     newSessions[i]
                 },
-                postTransitionAppState = AppState.FOREGROUND,
+                postTransitionProcessState = ProcessState.FOREGROUND,
             )
         }
 

@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeLogLimitingService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
-import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
@@ -23,7 +23,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
         sessionPartId = "id",
         userSessionId = "fake-user-session-id",
         startTime = 1,
-        appState = AppState.FOREGROUND,
+        processState = ProcessState.FOREGROUND,
         isColdStart = false,
         startType = LifeEventType.STATE,
         userSessionPartIndex = 5,

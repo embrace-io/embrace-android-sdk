@@ -55,7 +55,7 @@ class UserSessionOrchestrationModuleImpl(
         )
 
         SessionOrchestratorImpl(
-            essentialServiceModule.appStateTracker,
+            essentialServiceModule.processStateTracker,
             payloadFactory,
             initModule.clock,
             configService,
@@ -67,6 +67,7 @@ class UserSessionOrchestrationModuleImpl(
             essentialServiceModule.telemetryDestination,
             sessionPartSpanAttrPopulator,
             coreModule.ordinalStore,
+            coreModule.store,
             UserSessionMetadataStore(coreModule.store),
             initModule.logger,
             workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),

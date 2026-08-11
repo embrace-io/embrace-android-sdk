@@ -4,28 +4,36 @@ class OrdinalStoreImpl(
     private val impl: KeyValueStore,
 ) : OrdinalStore {
 
-    override fun incrementAndGet(ordinal: Ordinal, scope: String?, seed: () -> Int): Int {
+    private val lock = Any()
+
+    /**
+     * The read-modify-write is performed under [lock] and persisted in a single edit, so that seeding
+     * an ordinal doesn't cost an extra commit and concurrent increments can't lose an update.
+     */
+    override fun incrementAndGet(ordinal: Ordinal, scope: String?, seed: () -> Int): Int = synchronized(lock) {
         val sanitized = sanitize(ordinal)
         val scopeKey = sanitized.scopeKey
-        if (scopeKey == null) {
-            seedIfAbsent(sanitized.key, seed)
-        } else {
-            if (scope == null) {
-                return -1
-            }
-            if (impl.getString(scopeKey) != scope) {
-                impl.edit {
-                    putString(scopeKey, scope)
-                    putInt(sanitized.key, seed() - 1)
-                }
-            }
+        if (scopeKey != null && scope == null) {
+            return -1
         }
-        return impl.incrementAndGet(sanitized.key)
-    }
-
-    private fun seedIfAbsent(key: String, seed: () -> Int) {
-        if (impl.getInt(key) == null) {
-            impl.edit { putInt(key, seed() - 1) }
+        try {
+            val newScope = when {
+                scopeKey != null && impl.getString(scopeKey) != scope -> scope
+                else -> null
+            }
+            val next = when (newScope) {
+                null -> impl.getInt(sanitized.key)?.plus(1) ?: seed()
+                else -> seed()
+            }
+            impl.editAndCommit {
+                if (scopeKey != null && newScope != null) {
+                    putString(scopeKey, newScope)
+                }
+                putInt(sanitized.key, next)
+            }
+            next
+        } catch (tr: Throwable) {
+            -1
         }
     }
 

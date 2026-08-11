@@ -70,7 +70,7 @@ internal class EmbraceRnBundleIdTrackerTest {
 
     @Test
     fun `test React Native bundle ID from preference if jsBundleIdUrl is the same as the value persisted `() {
-        store.edit {
+        store.editAndCommit {
             putString(JAVA_SCRIPT_BUNDLE_URL_KEY, "javaScriptBundleURL")
         }
         val metadataService = createRnBundleIdTracker()
@@ -81,7 +81,7 @@ internal class EmbraceRnBundleIdTrackerTest {
 
     @Test
     fun `test React Native bundle ID from preference if jsBundleIdUrl is a new value`() {
-        store.edit {
+        store.editAndCommit {
             putString(JAVA_SCRIPT_BUNDLE_URL_KEY, "oldJavaScriptBundleURL")
         }
         val metadataService = createRnBundleIdTracker()
@@ -129,7 +129,7 @@ internal class EmbraceRnBundleIdTrackerTest {
     fun `test React Native bundle ID url as Asset with forceUpdate param in false`() {
         val bundleIdFile = Files.createTempFile("bundle-test", ".temp").toFile()
         val inputStream = FileInputStream(bundleIdFile)
-        store.edit {
+        store.editAndCommit {
             putString(JAVA_SCRIPT_BUNDLE_URL_KEY, "assets://index.android.bundle")
             putString(JAVA_SCRIPT_BUNDLE_ID_KEY, "persistedBundleId")
         }
@@ -190,7 +190,7 @@ internal class EmbraceRnBundleIdTrackerTest {
 
     @Test
     fun `test computeReactNativeBundleId with wrong assets path`() {
-        store.edit {
+        store.editAndCommit {
             putString(JAVA_SCRIPT_BUNDLE_URL_KEY, "assets")
         }
         every { context.assets } returns assetManager
@@ -203,7 +203,7 @@ internal class EmbraceRnBundleIdTrackerTest {
 
     @Test
     fun `test computeReactNativeBundleId with wrong custom bundle stream`() {
-        store.edit {
+        store.editAndCommit {
             putString(JAVA_SCRIPT_BUNDLE_URL_KEY, "wrongFilePath")
         }
 

@@ -76,7 +76,10 @@ internal class ModuleInitBootstrapper(
             // stamped before anything else so that the SDK init span covers all the work below
             val startTimeMs = initModule.clock.now()
             val keyValueStore = lazy { createKeyValueStore(context, initModule.jsonSerializer) }
-            val persistedConfig = EmbTrace.trace("persisted-config-load") {
+            val persistedConfig = EmbTrace.trace(
+                sectionName = "persisted-config-load",
+                recordDuration = true,
+            ) {
                 PersistedConfig(
                     serializer = initModule.jsonSerializer,
                     filesDir = context.filesDir,

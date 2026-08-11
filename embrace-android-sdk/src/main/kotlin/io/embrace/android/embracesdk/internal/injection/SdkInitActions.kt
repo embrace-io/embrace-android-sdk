@@ -106,16 +106,17 @@ internal fun ModuleGraph.registerListeners() {
 /**
  * Loads instrumentation via SPI and legacy methods.
  */
-internal fun ModuleGraph.loadInstrumentation() {
-    val registry = instrumentationModule.instrumentationRegistry
-    registry.loadInstrumentations(loadInstrumentationProviders(), instrumentationModule.instrumentationArgs)
+internal fun ModuleGraph.loadInstrumentation() =
+    EmbTrace.trace(sectionName = "load-instrumentation", recordDuration = true) {
+        val registry = instrumentationModule.instrumentationRegistry
+        registry.loadInstrumentations(loadInstrumentationProviders(), instrumentationModule.instrumentationArgs)
 
-    threadBlockageService?.startCapture()
+        threadBlockageService?.startCapture()
 
-    featureModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
-        workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
-    )
-}
+        featureModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
+            workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
+        )
+    }
 
 /**
  * Loads the [InstrumentationProvider] implementations declared via SPI. Before making changes

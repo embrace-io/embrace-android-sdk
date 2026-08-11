@@ -39,7 +39,7 @@ class OtelSdkWrapper(
     }
 
     val sdkTracer: Tracer by lazy {
-        EmbTrace.trace("otel-tracer-init") {
+        EmbTrace.trace(sectionName = "otel-tracer-init", recordDuration = true) {
             kotlinApi.tracerProvider.getTracer(
                 name = configuration.sdkName,
                 version = configuration.sdkVersion,

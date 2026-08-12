@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.startup
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.semconv.EmbAppAttributes
+import java.util.concurrent.atomic.AtomicBoolean
 
 internal class StartupServiceImpl(
     private val destination: TelemetryDestination,
@@ -29,6 +30,11 @@ internal class StartupServiceImpl(
     @Volatile
     private var sdkInitDurations: Map<String, Long> = emptyMap()
 
+    @Volatile
+    private var endedInForeground: Boolean = false
+
+    private val sdkInitSpanRecorded = AtomicBoolean(false)
+
     override fun setSdkStartupInfo(
         startTimeMs: Long,
         endTimeMs: Long,
@@ -36,15 +42,26 @@ internal class StartupServiceImpl(
         threadName: String,
         sdkInitDurations: Map<String, Long>,
     ) {
-        val foregroundEnd = endState == ProcessState.FOREGROUND
-        if (sdkStartupDurationMs == null) {
-            val attributes = buildMap(sdkInitDurations.size + 3) {
-                put("ended-in-foreground", foregroundEnd.toString())
+        sdkInitStartMs = startTimeMs
+        sdkInitEndMs = endTimeMs
+        this.threadName = threadName
+        endedInForeground = endState == ProcessState.FOREGROUND
+        sdkStartupDurationMs = endTimeMs - startTimeMs
+        this.sdkInitDurations = sdkInitDurations
+    }
+
+    override fun recordSdkInitSpan() {
+        val startTimeMs = sdkInitStartMs ?: return
+        val endTimeMs = sdkInitEndMs ?: return
+        if (sdkInitSpanRecorded.compareAndSet(false, true)) {
+            val initDurations = sdkInitDurations
+            val attributes = buildMap(initDurations.size + 3) {
+                put("ended-in-foreground", endedInForeground.toString())
                 put("thread-name", threadName)
                 startupCounter?.let { counter ->
                     put(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER, counter.toString())
                 }
-                putSdkInitDurations(sdkInitDurations)
+                putSdkInitDurations(initDurations)
             }
             destination.recordCompletedSpan(
                 name = "sdk-init",
@@ -54,11 +71,6 @@ internal class StartupServiceImpl(
                 attributes = attributes,
             )
         }
-        sdkInitStartMs = startTimeMs
-        sdkInitEndMs = endTimeMs
-        this.threadName = threadName
-        sdkStartupDurationMs = endTimeMs - startTimeMs
-        this.sdkInitDurations = sdkInitDurations
     }
 
     override fun getSdkStartupDuration(): Long? = sdkStartupDurationMs

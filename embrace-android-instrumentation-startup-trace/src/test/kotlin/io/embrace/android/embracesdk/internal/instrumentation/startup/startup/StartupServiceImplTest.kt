@@ -42,6 +42,8 @@ internal class StartupServiceImplTest {
             threadName = "main",
             sdkInitDurations = mapOf("modules-init" to 100L),
         )
+        assertTrue(destination.completedSpans().isEmpty())
+        startupService.recordSdkInitSpan()
         val currentSpans = destination.completedSpans()
         assertEquals(1, currentSpans.size)
         with(currentSpans[0]) {
@@ -67,13 +69,14 @@ internal class StartupServiceImplTest {
             endState = ProcessState.BACKGROUND,
             threadName = "main",
         )
+        startupService.recordSdkInitSpan()
         val span = destination.completedSpans().single()
         assertFalse(span.attributes.containsKey(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER))
         assertNull(startupService.getAppVersionStartupCounter())
     }
 
     @Test
-    fun `second sdk startup span will not be recorded if you try to set the startup info twice`() {
+    fun `second sdk startup span will not be recorded if you try to record it twice`() {
         startupService.run {
             setSdkStartupInfo(
                 startTimeMs = 10,
@@ -81,16 +84,32 @@ internal class StartupServiceImplTest {
                 endState = ProcessState.BACKGROUND,
                 threadName = "main",
             )
+            recordSdkInitSpan()
         }
         assertEquals(1, destination.completedSpans().size)
         startupService.run {
             setSdkStartupInfo(
-                startTimeMs = 10,
-                endTimeMs = 20,
-                endState = ProcessState.BACKGROUND,
+                startTimeMs = 20,
+                endTimeMs = 30,
+                endState = ProcessState.FOREGROUND,
                 threadName = "main",
             )
+            recordSdkInitSpan()
         }
+        assertEquals(1, destination.completedSpans().size)
+    }
+
+    @Test
+    fun `sdk startup span not recorded before startup info is set`() {
+        startupService.recordSdkInitSpan()
+        assertTrue(destination.completedSpans().isEmpty())
+        startupService.setSdkStartupInfo(
+            startTimeMs = 10,
+            endTimeMs = 20,
+            endState = ProcessState.BACKGROUND,
+            threadName = "main",
+        )
+        startupService.recordSdkInitSpan()
         assertEquals(1, destination.completedSpans().size)
     }
 

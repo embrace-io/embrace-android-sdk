@@ -204,14 +204,18 @@ internal fun ModuleGraph.triggerPayloadSend() {
  * Mark SDK initialization as complete.
  */
 internal fun ModuleGraph.markSdkInitComplete(sdkInitDurations: Map<String, Long>) {
+    val startupService = dataCaptureServiceModule.startupService
     EmbTrace.trace("startup-tracking") {
-        dataCaptureServiceModule.startupService.setSdkStartupInfo(
+        startupService.setSdkStartupInfo(
             startTimeMs = sdkStartTimeMs,
             endTimeMs = initModule.clock.now(),
             endState = essentialServiceModule.processStateTracker.getAppState(),
             threadName = Thread.currentThread().name,
             sdkInitDurations = sdkInitDurations,
         )
+    }
+    workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
+        startupService.recordSdkInitSpan()
     }
     val appId = configService.appId
     val startMsg = "Embrace SDK version ${BuildConfig.VERSION_NAME} started" +

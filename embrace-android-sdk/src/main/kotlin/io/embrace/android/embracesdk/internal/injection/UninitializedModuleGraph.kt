@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
 import io.embrace.android.embracesdk.internal.storage.StorageService
 
@@ -12,6 +13,7 @@ internal class SdkDisabledException : IllegalStateException()
  */
 internal object UninitializedModuleGraph : ModuleGraph {
     override val sdkStartTimeMs: Long get() = throwSdkNotInitialized()
+    override val sdkInitResourceUsageTracker: SdkInitResourceUsageTracker get() = throwSdkNotInitialized()
     override val initModule: InitModule get() = throwSdkNotInitialized()
     override val openTelemetryModule: OpenTelemetryModule get() = throwSdkNotInitialized()
     override val coreModule: CoreModule get() = throwSdkNotInitialized()

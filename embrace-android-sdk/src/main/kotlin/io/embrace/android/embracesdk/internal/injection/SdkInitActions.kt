@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrash
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStateDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStatusDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.startup.toSdkInitDurationAttributes
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -206,12 +207,16 @@ internal fun ModuleGraph.triggerPayloadSend() {
 internal fun ModuleGraph.markSdkInitComplete(sdkInitDurations: Map<String, Long>) {
     val startupService = dataCaptureServiceModule.startupService
     EmbTrace.trace("startup-tracking") {
+        val resourceUsageTracker = sdkInitResourceUsageTracker
+        resourceUsageTracker.captureEnd()
         startupService.setSdkStartupInfo(
             startTimeMs = sdkStartTimeMs,
             endTimeMs = initModule.clock.now(),
             endState = essentialServiceModule.processStateTracker.getAppState(),
             threadName = Thread.currentThread().name,
-            sdkInitDurations = sdkInitDurations,
+            attributesProvider = {
+                sdkInitDurations.toSdkInitDurationAttributes() + resourceUsageTracker.buildAttributes()
+            },
         )
     }
     workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {

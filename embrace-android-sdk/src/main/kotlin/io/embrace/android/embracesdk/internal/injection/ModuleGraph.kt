@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
 import io.embrace.android.embracesdk.internal.storage.StorageService
 
@@ -10,6 +11,7 @@ import io.embrace.android.embracesdk.internal.storage.StorageService
  */
 internal interface ModuleGraph {
     val sdkStartTimeMs: Long
+    val sdkInitResourceUsageTracker: SdkInitResourceUsageTracker
     val initModule: InitModule
     val openTelemetryModule: OpenTelemetryModule
     val coreModule: CoreModule

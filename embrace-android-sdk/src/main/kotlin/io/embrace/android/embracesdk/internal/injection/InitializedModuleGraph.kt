@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleImpl
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleSupplier
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageServiceSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
@@ -36,6 +37,7 @@ internal class InitializedModuleGraph(
     context: Context,
     versionChecker: VersionChecker = BuildVersionChecker,
     override val sdkStartTimeMs: Long,
+    override val sdkInitResourceUsageTracker: SdkInitResourceUsageTracker,
     override val initModule: InitModule,
     override val openTelemetryModule: OpenTelemetryModule,
     override val workerThreadModule: WorkerThreadModule,

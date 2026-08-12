@@ -9,20 +9,20 @@ class FakeStartupService : StartupService {
     var processState: ProcessState? = null
     var threadName: String? = null
     var appVersionStartupCounterImpl: Int? = null
-    var sdkInitDurationsImpl: Map<String, Long> = emptyMap()
     var sdkInitSpanRecordedCount: Int = 0
+    var attributesProvider: (() -> Map<String, String>)? = null
 
     override fun setSdkStartupInfo(
         startTimeMs: Long,
         endTimeMs: Long,
         endState: ProcessState,
         threadName: String,
-        sdkInitDurations: Map<String, Long>,
+        attributesProvider: (() -> Map<String, String>)?,
     ) {
         sdkStartupDurationImpl = endTimeMs - startTimeMs
         this.processState = endState
         this.threadName = threadName
-        sdkInitDurationsImpl = sdkInitDurations
+        this.attributesProvider = attributesProvider
     }
 
     override fun recordSdkInitSpan() {
@@ -45,5 +45,5 @@ class FakeStartupService : StartupService {
 
     override fun getAppVersionStartupCounter(): Int? = appVersionStartupCounterImpl
 
-    override fun getSdkInitDurations(): Map<String, Long> = sdkInitDurationsImpl
+    override fun getSdkInitAttributes(): Map<String, String> = attributesProvider?.invoke() ?: emptyMap()
 }

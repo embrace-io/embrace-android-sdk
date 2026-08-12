@@ -106,4 +106,18 @@ fun List<Attribute>?.assertSdkInitSectionDurationsRecorded() {
     }
 }
 
-private val expectedSdkInitSections = listOf("modules-init", "post-init", "post-services-setup")
+/**
+ * Sections known to run within the SDK init flow during integration tests.
+ */
+private val expectedSdkInitSections = listOf(
+    "modules-init",
+    "persisted-config-load",
+    "span-service-init",
+    "essential-service-init",
+    "delivery-init",
+    "payload-source-init",
+    "otel-tracer-init",
+    "post-init",
+    "load-instrumentation",
+    "post-services-setup",
+)

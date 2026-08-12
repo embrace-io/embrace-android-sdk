@@ -71,6 +71,40 @@ integration-test concern, not this skill's.
   (`StartupTimingMetric` only) and is NOT the source of any reported number — it never needs to
   track SDK sections.
 
+## Run shape policy
+
+- **Default: 4 passes × 50 iterations** per device. Four passes balances two-state devices
+  (some devices alternate a fast/slow pass state per benchmark cycle — always use an even
+  pass count and judge on fast-state passes) and yields four first-post-install samples;
+  50 iterations gives churn-driven outliers (e.g. system_server GC, which starts firing
+  after ~10–15 iterations of accumulated load) enough runway to appear.
+- **Targeted or time-constrained runs may use 4 × 25 — never go below that.** Fewer
+  iterations under-samples mid-pass outliers; fewer passes breaks state balance and
+  first-launch sampling.
+- Report tails, not just medians: p90/p95/max/top-3 and the slow-iteration rate (threshold
+  = max(4 ms, 10% of the pass median)). With ≤200 samples, do not quote a p99.
+
+## Compilation-mode arms
+
+The compilation state is a measured ~2× lever on SDK-init time and MUST be explicit:
+
+- `StartupBenchmarks` exposes: `coldStartup` (CompilationMode.DEFAULT — fresh-install
+  `verify` state; the historical-continuity arm), `coldStartupBaselineProfile`
+  (Partial/Require — what Play-installed users with profiles experience; **fails if no
+  baseline profile is packaged, which is itself the packaging check**), and
+  `coldStartupNoAot` / `coldStartupFullAot` (canary/diagnostic arms). Select with
+  `#methodName` appended to the instrumentation `class` filter.
+- **A standard analysis runs TWO arms: `coldStartup` and `coldStartupBaselineProfile`**,
+  and reports both (with the delta). Default-mode-only runs never exercise the shipped
+  profile, so profile-coverage regressions are invisible to them. Run `coldStartupNoAot`
+  occasionally as the what-is-the-profile-worth canary.
+- **Arm-ordering bias is real**: back-to-back arms self-heat the device, disadvantaging
+  whichever runs second (measured: a fixed order inflated an apparent +23% effect to
+  +43% on a thermally-sensitive device). Between arms, cool the device back to its
+  pre-arm silicon temperature (`dumpsys thermalservice`, NOT battery temp — silicon runs
+  30 °C+ hotter under load), or counterbalance order across passes; cross-arm claims
+  should survive the boundary comparison (last iterations of arm A vs first of arm B).
+
 ## Choosing the SDK under test
 
 Do NOT assume the version already in `examples/ExampleApp/gradle/libs.versions.toml` is correct —
@@ -158,6 +192,17 @@ always set it explicitly for the run, note the value you replaced, and restore i
 - Confirm which sections a public version *should* emit with
   `git grep -n "EmbTrace.trace" <version-tag> -- "*.kt"` — and beware pathspec globs: `*` does
   not cross directory separators, so use the bare `"*.kt"` form over module-scoped globs.
+
+## Pre-flight checks (cheap, prevent unsalvageable runs)
+
+- **Verify the SDK pin resolves to what you intend** (`embrace =` in the ExampleApp
+  catalog) — repo syncs/rebases silently revert uncommitted pins, after which the app
+  builds against a released SDK from mavenCentral and the whole run measures the wrong
+  thing. Symptom check: the first pass's traces must contain `emb-sdk-start` (9.2.0+) and
+  familiar section names.
+- **Verify iter000 freshness per pass**: `persisted-config-load` must be fast (~2–5 ms) on
+  a true first launch. A slow iter000 (~cached-mode cost) means app data survived a failed
+  harness uninstall and the pass's first-launch sample is poisoned.
 
 ## Interpretation gotchas
 

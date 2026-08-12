@@ -29,7 +29,7 @@ References:
 - `references/sections.md` — section nesting/execution order, which environments each section
   appears in, reference numbers, and the two slow-pass signatures (contention vs slow
   execution) for judging noisy passes.
-- `references/report-template.html` — the report page to adapt (a real past report; see the
+- `references/report-template.html` — the report page to adapt (a filled example; see the
   comment at the top for what to replace vs keep). Write each analysis's report to
   `claude-output/startup-analysis-<YYYY-MM-DD-HHMMSS>.html` using the SAME timestamp as that
   analysis's summary .txt, so the pair is uniquely referencable and never clobbered.

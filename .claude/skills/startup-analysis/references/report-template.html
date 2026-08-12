@@ -1,0 +1,244 @@
+<!--
+  TEMPLATE for the startup-analysis report.            (FYI: template last updated 2026-08-12)
+
+  Each generated report covers exactly one skill invocation — every pass run during that
+  invocation, on the same device/SDK build — not the status of any broader investigation.
+
+  Identity fields are placeholders in ⟨angle brackets⟩: ANY device meeting the skill's
+  prerequisites works — the report must state which device was used and its important
+  attributes (manufacturer, model, device code, Android version/API level), all obtainable
+  via the adb command in the skill. The numeric values below are ILLUSTRATIVE ONLY — they show
+  the expected shape/precision of each cell, not expected magnitudes (real numbers vary by an
+  order of magnitude across device tiers).
+
+  SDK version: report it because it determines WHICH trace data exists, not as an identity —
+  it fixes the window source (emb-sdk-start slice on newer SDKs; composed
+  modules-init→post-services-setup fallback on older ones; analyze_startup.py names which) and
+  the set of emb-* sections present. State the expected-vs-found section set; drop table rows
+  for sections the SDK under test lacks and say so (see SKILL.md "Handling missing data").
+
+  Keep: the CSS tokens (both light/dark themes), layout, tiles row, table structure including
+  the nest1/nest2 indentation markers, and the standing footnotes (nesting/percentage caveats,
+  the class-load-section star note, the method paragraph). The report's filename timestamp must
+  match its paired summary .txt from the same invocation.
+
+  Replace: every number and every ⟨placeholder⟩, the verdict, the section rows, and the
+  "Reading the breakdown" prose — written about this invocation's own runs only (spread across
+  iterations, contention flags), never comparing to other analyses. Remove the perfetto link
+  unless you minted one for this run.
+-->
+<title>SDK Init Timing — ⟨YYYY-MM-DD⟩ (⟨SDK version under test⟩)</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #FFFFFF;
+    --ink: #1C1E21;
+    --ink-secondary: #55524B;
+    --muted: #8A8577;
+    --line: #E5E2D9;
+    --accent: #D9930D;
+    --accent-soft: #F5E3BC;
+    --good: #3E7C4F;
+    --good-soft: #E4EFE6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #16181C;
+      --surface: #1E2126;
+      --ink: #ECEAE4;
+      --ink-secondary: #B5B1A6;
+      --muted: #7D796E;
+      --line: #33363C;
+      --accent: #E8B04B;
+      --accent-soft: #3A3123;
+      --good: #7FBB8E;
+      --good-soft: #24352A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #16181C;
+    --surface: #1E2126;
+    --ink: #ECEAE4;
+    --ink-secondary: #B5B1A6;
+    --muted: #7D796E;
+    --line: #33363C;
+    --accent: #E8B04B;
+    --accent-soft: #3A3123;
+    --good: #7FBB8E;
+    --good-soft: #24352A;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.55;
+    margin: 0;
+    padding: 40px 24px 72px;
+  }
+  main { max-width: 920px; margin: 0 auto; }
+  h1 { font-size: 1.7rem; letter-spacing: -0.01em; margin: 0 0 4px; text-wrap: balance; }
+  h2 { font-size: 1.05rem; margin: 44px 0 12px; letter-spacing: -0.005em; }
+  .context { color: var(--ink-secondary); font-size: 0.9rem; margin: 0 0 20px; }
+  .verdict {
+    background: var(--good-soft);
+    color: var(--good);
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    margin-bottom: 28px;
+  }
+  .tiles { display: flex; gap: 12px; flex-wrap: wrap; }
+  .tile {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px 18px;
+    flex: 1 1 150px;
+  }
+  .tile .label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+  .tile .value {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 1.55rem;
+    font-weight: 650;
+  }
+  .tile .unit { font-size: 0.85rem; color: var(--ink-secondary); font-weight: 400; }
+  .tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.86rem; }
+  th {
+    text-align: left;
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted);
+    font-weight: 600;
+    padding: 10px 12px 6px;
+    border-bottom: 1px solid var(--line);
+  }
+  th.num, td.num {
+    text-align: right;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  td { padding: 7px 12px; border-bottom: 1px solid var(--line); }
+  tr:last-child td { border-bottom: none; }
+  td.section { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.82rem; white-space: nowrap; }
+  .nest1 { padding-left: 28px; }
+  .nest2 { padding-left: 44px; }
+  .nest1::before, .nest2::before { content: "↳ "; color: var(--muted); }
+  td.pct { font-weight: 650; }
+  td.pct-outside { color: var(--muted); font-style: italic; }
+  td.barcell { width: 26%; min-width: 120px; }
+  .bar {
+    height: 10px;
+    background: var(--accent);
+    border-radius: 0 4px 4px 0;
+    min-width: 2px;
+  }
+  .note { color: var(--ink-secondary); font-size: 0.84rem; margin-top: 10px; }
+  .runs { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.8rem; color: var(--ink-secondary); overflow-x: auto; white-space: nowrap; padding: 4px 0; }
+  code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.85em;
+    background: var(--accent-soft);
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+  a { color: var(--accent); font-weight: 600; }
+  footer { margin-top: 48px; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--line); padding-top: 16px; }
+  footer p { margin: 4px 0; }
+</style>
+
+<main>
+  <h1>SDK Init Timing — ⟨YYYY-MM-DD⟩ (⟨SDK version under test⟩)</h1>
+  <p class="context">⟨Manufacturer⟩ ⟨Model⟩ (⟨device code⟩) · Android ⟨version⟩ (API ⟨level⟩) · Embrace SDK ⟨version under test⟩ · ExampleApp benchmark variant, R8-minified, no baseline profile · ⟨analysis date⟩ · ⟨N⟩ cold-start iterations</p>
+
+  <div class="verdict">✓ All ⟨M⟩ sections expected for this SDK version recorded on ⟨N⟩/⟨N⟩ runs (window source: ⟨emb-sdk-start | composed fallback⟩). SDK-init window median ⟨X⟩ ms; ⟨0⟩/⟨N⟩ iterations flagged CONTENDED. ⟨If any sections expected for this SDK version were absent, or iterations were contended, say so here.⟩</div>
+
+  <div class="tiles">
+    <div class="tile">
+      <div class="label">Cold start (TTID) · median</div>
+      <div class="value">948 <span class="unit">ms</span></div>
+    </div>
+    <div class="tile">
+      <div class="label">SDK-init span · median</div>
+      <div class="value">48 <span class="unit">ms</span></div>
+    </div>
+    <div class="tile">
+      <div class="label">SDK share of startup</div>
+      <div class="value">~5.1 <span class="unit">%</span></div>
+    </div>
+    <div class="tile">
+      <div class="label">Measured iterations</div>
+      <div class="value">20</div>
+    </div>
+  </div>
+
+  <h2>Init sections, in execution order</h2>
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Section</th>
+          <th class="num">min</th>
+          <th class="num">median</th>
+          <th class="num">max</th>
+          <th class="num">% of span</th>
+          <th>Median (ms)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="section">embrace-impl-init</td><td class="num">3.47</td><td class="num">4.87</td><td class="num">8.08</td><td class="num pct pct-outside">10.1*</td><td class="barcell"><div class="bar" style="width:10.9%"></div></td></tr>
+        <tr><td class="section nest1">bootstrapper-init</td><td class="num">2.22</td><td class="num">3.22</td><td class="num">6.51</td><td class="num pct pct-outside">6.7*</td><td class="barcell"><div class="bar" style="width:7.2%"></div></td></tr>
+        <tr><td class="section">modules-init</td><td class="num">36.53</td><td class="num">44.53</td><td class="num">66.76</td><td class="num pct">92.8</td><td class="barcell"><div class="bar" style="width:100%"></div></td></tr>
+        <tr><td class="section nest1">persisted-config-load</td><td class="num">1.91</td><td class="num">13.20</td><td class="num">20.45</td><td class="num pct">27.5</td><td class="barcell"><div class="bar" style="width:29.6%"></div></td></tr>
+        <tr><td class="section nest1">config-service-init</td><td class="num">1.43</td><td class="num">1.93</td><td class="num">4.59</td><td class="num pct">4.0</td><td class="barcell"><div class="bar" style="width:4.3%"></div></td></tr>
+        <tr><td class="section nest1">span-service-init</td><td class="num">13.53</td><td class="num">15.46</td><td class="num">20.86</td><td class="num pct">32.2</td><td class="barcell"><div class="bar" style="width:34.7%"></div></td></tr>
+        <tr><td class="section nest2">otel-tracer-init</td><td class="num">9.99</td><td class="num">12.22</td><td class="num">15.72</td><td class="num pct">25.5</td><td class="barcell"><div class="bar" style="width:27.4%"></div></td></tr>
+        <tr><td class="section nest1">essential-service-init</td><td class="num">0.87</td><td class="num">1.27</td><td class="num">2.76</td><td class="num pct">2.6</td><td class="barcell"><div class="bar" style="width:2.8%"></div></td></tr>
+        <tr><td class="section nest1">delivery-init</td><td class="num">2.03</td><td class="num">2.27</td><td class="num">5.33</td><td class="num pct">4.7</td><td class="barcell"><div class="bar" style="width:5.1%"></div></td></tr>
+        <tr><td class="section nest1">payload-source-init</td><td class="num">4.27</td><td class="num">6.06</td><td class="num">9.79</td><td class="num pct">12.6</td><td class="barcell"><div class="bar" style="width:13.6%"></div></td></tr>
+        <tr><td class="section">post-init</td><td class="num">0.68</td><td class="num">0.97</td><td class="num">2.24</td><td class="num pct">2.0</td><td class="barcell"><div class="bar" style="width:2.2%"></div></td></tr>
+        <tr><td class="section">post-services-setup</td><td class="num">2.71</td><td class="num">3.26</td><td class="num">9.77</td><td class="num pct">6.8</td><td class="barcell"><div class="bar" style="width:7.3%"></div></td></tr>
+        <tr><td class="section nest1">load-instrumentation</td><td class="num">2.54</td><td class="num">3.06</td><td class="num">8.08</td><td class="num pct">6.4</td><td class="barcell"><div class="bar" style="width:6.9%"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">Perfetto trace-slice medians over 20 runs; <strong>% of span</strong> = section median ÷ SDK-init span median (48 ms). Indentation shows nesting — a parent's time includes its children, so percentages deliberately do not sum to 100. *Starred sections run at class-load, <em>before</em> the span window opens: their % is scale context relative to the span, not a share of it. The three top-level window sections (<code>modules-init</code> 92.8% + <code>post-init</code> 2.0% + <code>post-services-setup</code> 6.8%) tile the span (≈101.6%, within rounding of the whole-ms attribute values).</p>
+
+  <h2>SDK-init span timing</h2>
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr>
+          <th class="num">min</th>
+          <th class="num">median</th>
+          <th class="num">mean</th>
+          <th class="num">max</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="num">44</td><td class="num">48</td><td class="num">51.2</td><td class="num">74</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="runs">Runs (ms): 48 · 59 · 44 · 47 · 46 · 48 · 46 · 52 · 74 · 48 · 47 · 46 · 53 · 51 · 48 · 52 · 58 · 55 · 48 · 53</div>
+  <p class="note">Span duration = <code>EndNanos − StartNanos</code> of the exported <code>emb-embrace-init</code> span; the private <code>emb-sdk-init</code> span covers the identical interval by construction.</p>
+
+  <h2>Reading the breakdown</h2>
+  <p class="note" style="margin-top:0">
+    The span decomposes into three big costs plus a tail: <strong><code>persisted-config-load</code> (27.5%)</strong> — cached-config read, the most variable section in this run (1.9–20.4 ms); <strong><code>otel-tracer-init</code> (25.5%)</strong> — assembling the OTel SDK instance (tracer provider, resource, processors); and <strong><code>payload-source-init</code> (12.6%)</strong>. Everything else is ≤ 7% each. All 20 iterations in this pass came in clean (0/20 flagged CONTENDED in the scheduling table), so the 44–74 ms spread across runs reflects section-level variance rather than scheduling noise.
+  </p>
+
+  <footer>
+    <p><strong>Method.</strong> androidx.macrobenchmark, <code>StartupMode.COLD</code>, ⟨N⟩ measured iterations, 0 warm-up, dry-run disabled, default CompilationMode, no baseline profile. Section durations from perfetto trace slices; span timing from the SDK's own <code>SystemClock.elapsedRealtime()</code>-based timestamps. Runbook: <code>.claude/skills/startup-analysis</code> (<code>/startup-analysis</code>).</p>
+    <p><strong>Representative trace</strong> (median-window iteration from this pass): ⟨Perfetto UI local_cache_key link — include only if minted for this run, else remove this sentence⟩. Raw traces + JSON: <code>…/app/benchmark/build/outputs/connected_android_test_additional_output/benchmark/connected/⟨device model - API⟩/</code></p>
+  </footer>
+</main>

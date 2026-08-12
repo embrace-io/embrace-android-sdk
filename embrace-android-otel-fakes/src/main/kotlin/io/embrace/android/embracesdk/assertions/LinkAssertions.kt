@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import io.opentelemetry.kotlin.tracing.SpanContext
 import org.junit.Assert.assertTrue
 
@@ -19,7 +18,6 @@ fun Link.validatePreviousSessionPartLink(
         put(EmbSessionAttributes.EMB_SESSION_PART_ID, previousSessionPartId)
         previousUserSessionId?.let {
             put(EmbSessionAttributes.EMB_USER_SESSION_ID, it)
-            put(SessionAttributes.SESSION_ID, it)
         }
     }
     validateSystemLink(

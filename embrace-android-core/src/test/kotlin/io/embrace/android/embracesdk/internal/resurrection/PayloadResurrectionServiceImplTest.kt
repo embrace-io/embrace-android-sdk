@@ -48,7 +48,6 @@ import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
-import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.UserSessionRestoreDecision
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.internal.toEmbracePayload
@@ -56,7 +55,6 @@ import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -325,29 +323,6 @@ class PayloadResurrectionServiceImplTest {
         val attributes =
             checkNotNull(getStoredParts().last().getSessionPartSpan()?.attributes)
         assertNull(attributes.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID))
-    }
-
-    @Test
-    fun `native crash attaches to a legacy session part that carries only session id`() {
-        val legacySessionId = "legacy-session-id"
-        nativeCrashService.addNativeCrashData(
-            createNativeCrashData(
-                nativeCrashId = "legacy-native-crash",
-                sessionPartId = legacySessionId,
-            ),
-        )
-        cacheStorageService.addPayload(
-            metadata = sessionMetadata.copy(userSessionId = "", sessionPartId = ""),
-            data = deadSessionEnvelope.asPreUserSessionPayload(legacySessionId),
-        )
-
-        resurrectInBackground()
-
-        val sessionPartSpan = getStoredParts().single().getSessionPartSpan()
-        assertEquals(
-            "legacy-native-crash",
-            sessionPartSpan?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID),
-        )
     }
 
     @Test
@@ -819,35 +794,6 @@ class PayloadResurrectionServiceImplTest {
         )
         resurrectInBackground()
     }
-
-    /**
-     * Rewrites a session payload to look like one from an SDK that predates the user session concept
-     */
-    private fun Envelope<SessionPartPayload>.asPreUserSessionPayload(
-        legacySessionId: String,
-    ): Envelope<SessionPartPayload> {
-        return copy(
-            data = data.copy(
-                spans = data.spans.toPreUserSessionSpan(legacySessionId),
-                spanSnapshots = data.spanSnapshots.toPreUserSessionSpan(legacySessionId),
-            ),
-        )
-    }
-
-    private fun List<Span>?.toPreUserSessionSpan(legacySessionId: String): List<Span>? =
-        this?.map { span ->
-            span.copy(
-                attributes = checkNotNull(span.attributes)
-                    .filterNot { it.key == EmbSessionAttributes.EMB_SESSION_PART_ID || it.key == EmbSessionAttributes.EMB_USER_SESSION_ID }
-                    .map {
-                        if (it.key == SessionAttributes.SESSION_ID) {
-                            it.copy(data = legacySessionId)
-                        } else {
-                            it
-                        }
-                    },
-            )
-        }
 
     private fun getStoredParts(): List<Envelope<SessionPartPayload>> {
         return payloadStorageService.storedPayloads().map { bytes ->

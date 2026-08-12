@@ -29,7 +29,6 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.factory.toHexString
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import io.opentelemetry.kotlin.tracing.StatusData
 import io.opentelemetry.kotlin.tracing.Span
 import io.opentelemetry.kotlin.tracing.SpanContext
@@ -270,7 +269,6 @@ class FakeEmbraceSdkSpan(
                     )
                 }
 
-                setSystemAttribute(SessionAttributes.SESSION_ID, userSessionId)
                 setSystemAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, userSessionId)
                 setSystemAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionPartId)
                 setSystemAttribute(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER, processIdentifier)

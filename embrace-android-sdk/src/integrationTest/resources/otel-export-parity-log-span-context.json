@@ -5,7 +5,7 @@
     "severityText": "WARN",
     "timestampEpochNanos": "169220160030000000",
     "observedTimestampEpochNanos": "169220160030000000",
-    "totalAttributeCount": "9",
+    "totalAttributeCount": "8",
     "attributes": {
       "emb.session_part_id": "__EMBRACE_TEST_IGNORE__",
       "emb.state": "foreground",
@@ -14,7 +14,6 @@
       "emb.state.test": "UNKNOWN",
       "emb.user_session_id": "__EMBRACE_TEST_IGNORE__",
       "log.record.uid": "__EMBRACE_TEST_IGNORE__",
-      "session.id": "__EMBRACE_TEST_IGNORE__",
       "string-attr": "value"
     },
     "instrumentationScopeName": "external-logger",
@@ -39,7 +38,7 @@
     "severityText": "WARN",
     "timestampEpochNanos": "169220160030000000",
     "observedTimestampEpochNanos": "169220160030000000",
-    "totalAttributeCount": "8",
+    "totalAttributeCount": "7",
     "attributes": {
       "emb.session_part_id": "__EMBRACE_TEST_IGNORE__",
       "emb.state": "foreground",
@@ -47,8 +46,7 @@
       "emb.state.screen-automatic": "android.app.Activity",
       "emb.state.test": "UNKNOWN",
       "emb.user_session_id": "__EMBRACE_TEST_IGNORE__",
-      "log.record.uid": "__EMBRACE_TEST_IGNORE__",
-      "session.id": "__EMBRACE_TEST_IGNORE__"
+      "log.record.uid": "__EMBRACE_TEST_IGNORE__"
     },
     "instrumentationScopeName": "external-logger",
     "resourceAttributes": {

@@ -24,7 +24,6 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.kotlin.Clock
 import io.opentelemetry.kotlin.OpenTelemetry
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import io.opentelemetry.kotlin.tracing.Tracer
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -307,7 +306,6 @@ internal class CurrentSessionPartSpanImpl(
         }
         getSystemAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID)?.let {
             put(EmbSessionAttributes.EMB_USER_SESSION_ID, it)
-            put(SessionAttributes.SESSION_ID, it)
         }
     }
 

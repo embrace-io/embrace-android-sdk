@@ -5,7 +5,6 @@ import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
-import io.embrace.android.embracesdk.assertions.getOtelSessionId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -28,7 +27,6 @@ import io.embrace.android.embracesdk.testframework.assertions.JsonComparator.com
 import io.embrace.android.embracesdk.testframework.assertions.Placeholder
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import io.embrace.android.embracesdk.testframework.server.FormPart
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -158,7 +156,7 @@ internal class EmbracePayloadAssertionInterface(
             val envelopes = checkNotNull(apiServer).getSessionEnvelopes()
             val sessions: List<Map<String, String?>> = envelopes.map {
                 mapOf(
-                    "otelSessionId" to it.getOtelSessionId(),
+                    "userSessionId" to it.getUserSessionId(),
                     "cleanExit" to it.findSessionPartSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_CLEAN_EXIT),
                     "state" to it.findSessionPartSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE)
                 )
@@ -271,7 +269,7 @@ internal class EmbracePayloadAssertionInterface(
         assertNotNull(attrs.findAttributeValue("log.record.uid"))
         assertNotNull(attrs.findAttributeValue(EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER))
         assertEquals(crashData.nativeCrash.sessionPartId, attrs.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID))
-        assertEquals(crashData.nativeCrash.userSessionId, attrs.findAttributeValue(SessionAttributes.SESSION_ID))
+        assertEquals(crashData.nativeCrash.userSessionId, attrs.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID))
         assertNativeCrashDoesNotExist(crashData)
     }
 
@@ -292,8 +290,8 @@ internal class EmbracePayloadAssertionInterface(
             val nextEnd = next.findSessionPartSpan().startTimeNanos ?: return@zipWithNext
             assertTrue(
                 "Session payloads delivered out of order. " +
-                    "Previous (id=${prev.getOtelSessionId()}) startTimeNanos=$prevEnd, " +
-                    "next (id=${next.getOtelSessionId()}) startTimeNanos=$nextEnd",
+                    "Previous (id=${prev.getUserSessionId()}) startTimeNanos=$prevEnd, " +
+                    "next (id=${next.getUserSessionId()}) startTimeNanos=$nextEnd",
                 nextEnd >= prevEnd
             )
         }

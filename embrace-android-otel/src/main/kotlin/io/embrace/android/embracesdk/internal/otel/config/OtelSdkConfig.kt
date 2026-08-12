@@ -68,7 +68,7 @@ class OtelSdkConfig(
      * this out by proximity for stitched sessions.
      */
     val processIdentifier: String by lazy {
-        EmbTrace.trace("process-identifier-init", processIdentifierProvider)
+        EmbTrace.trace(sectionName = "process-identifier-init", code = processIdentifierProvider)
     }
 
     private val externalSpanExporters = mutableListOf<SpanExporter>()

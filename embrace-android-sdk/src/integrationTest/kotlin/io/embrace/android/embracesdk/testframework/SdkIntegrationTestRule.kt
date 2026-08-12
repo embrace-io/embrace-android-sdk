@@ -24,6 +24,7 @@ import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleIm
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.serialization.toJson
+import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceOtelExportAssertionInterface
@@ -216,6 +217,7 @@ internal class SdkIntegrationTestRule(
      */
     override fun before() {
         Thread.setDefaultUncaughtExceptionHandler(null)
+        EmbTrace.durationTracker.reset()
     }
 
     /**

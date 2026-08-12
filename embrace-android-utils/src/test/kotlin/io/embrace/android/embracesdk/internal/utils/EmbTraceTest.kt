@@ -18,11 +18,13 @@ internal class EmbTraceTest {
     fun setUp() {
         ShadowTrace.reset()
         ShadowTrace.setEnabled(true)
+        EmbTrace.durationTracker.reset()
     }
 
     @After
     fun tearDown() {
         ShadowTrace.reset()
+        EmbTrace.durationTracker.reset()
     }
 
     @Test
@@ -32,23 +34,39 @@ internal class EmbTraceTest {
 
     @Test
     fun `trace records a section prefixed with emb-`() {
-        EmbTrace.trace("test 屈福特") { }
+        EmbTrace.trace(sectionName = "test 屈福特", recordDuration = true) { }
         assertEquals("emb-test 屈福特", ShadowTrace.getPreviousSections().single())
+        assertEquals(setOf("test 屈福特"), EmbTrace.durationTracker.flush().keys)
     }
 
     @Test
     fun `trace truncates long section names to 127 characters`() {
-        EmbTrace.trace(longName) { }
+        EmbTrace.trace(sectionName = longName, recordDuration = true) { }
         val section = ShadowTrace.getPreviousSections().single()
         assertEquals(127, section.length)
         assertTrue(section.startsWith("emb-a"))
+        assertEquals(setOf(longName), EmbTrace.durationTracker.flush().keys)
     }
 
     @Test
-    fun `trace runs the lambda but records nothing when tracing is disabled`() {
+    fun `trace runs the lambda and records a duration when tracing is disabled`() {
         ShadowTrace.setEnabled(false)
-        assertEquals(2, EmbTrace.trace("test") { 1 + 1 })
+        assertEquals(2, EmbTrace.trace(sectionName = "test", recordDuration = true) { 1 + 1 })
         assertTrue(ShadowTrace.getPreviousSections().isEmpty())
+        assertEquals(setOf("test"), EmbTrace.durationTracker.flush().keys)
+    }
+
+    @Test
+    fun `trace does not record a duration by default`() {
+        EmbTrace.trace("test") { }
+        assertTrue(EmbTrace.durationTracker.flush().isEmpty())
+    }
+
+    @Test
+    fun `trace does not record a duration after the tracker is flushed`() {
+        EmbTrace.durationTracker.flush()
+        EmbTrace.trace(sectionName = "test", recordDuration = true) { }
+        assertTrue(EmbTrace.durationTracker.flush().isEmpty())
     }
 
     @Config(sdk = [VERSION_CODES.Q])
@@ -60,9 +78,10 @@ internal class EmbTraceTest {
 
     @Config(sdk = [VERSION_CODES.P])
     @Test
-    fun `trace runs the lambda but records nothing below the supported API version`() {
-        assertEquals(2, EmbTrace.trace("test") { 1 + 1 })
+    fun `trace runs the lambda and records a duration below the supported API version`() {
+        assertEquals(2, EmbTrace.trace(sectionName = "test", recordDuration = true) { 1 + 1 })
         assertTrue(ShadowTrace.getPreviousSections().isEmpty())
+        assertEquals(setOf("test"), EmbTrace.durationTracker.flush().keys)
     }
 
     private companion object {

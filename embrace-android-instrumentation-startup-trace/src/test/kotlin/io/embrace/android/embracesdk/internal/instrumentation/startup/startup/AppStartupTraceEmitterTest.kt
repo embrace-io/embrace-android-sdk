@@ -700,6 +700,7 @@ internal class AppStartupTraceEmitterTest {
         val trace = if (isColdStart) {
             with(appInitTimestamps) {
                 assertChildSpan(spanMap.embraceInitSpan(), sdkInitStart, sdkInitEnd)
+                assertEquals("30", spanMap.embraceInitSpan()?.attributes?.get("modules-init-duration-ms"))
                 assertEquals(
                     APP_VERSION_STARTUP_COUNTER.toString(),
                     spanMap.embraceInitSpan()?.attributes?.get(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER),
@@ -775,6 +776,7 @@ internal class AppStartupTraceEmitterTest {
             endTimeMs = end,
             endState = ProcessState.BACKGROUND,
             threadName = "main",
+            sdkInitDurations = mapOf("modules-init" to 30L),
         )
 
         val applicationInitEnd = if (hasAppInitEvents) {

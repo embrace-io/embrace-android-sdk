@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.assertions.getOtelSessionId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -66,7 +65,6 @@ internal class UserSessionClockAnomalyTest {
             assertAction = {
                 val session = getSingleSessionEnvelope()
                 assertNotEquals(staleUserSessionId, session.getUserSessionId())
-                assertNotEquals(staleUserSessionId, session.getOtelSessionId())
 
                 val logger = testRule.bootstrapper.initModule.logger as FakeInternalLogger
                 assertTrue(logger.internalErrorMessages.any {

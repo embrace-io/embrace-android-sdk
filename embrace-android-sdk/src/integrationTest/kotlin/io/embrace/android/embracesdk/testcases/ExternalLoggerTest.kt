@@ -29,7 +29,6 @@ import io.opentelemetry.kotlin.logging.model.ReadableLogRecord
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.LogAttributes
 import io.opentelemetry.kotlin.semconv.ServiceAttributes
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import io.opentelemetry.kotlin.semconv.UserAttributes
 import io.opentelemetry.kotlin.tracing.SpanContext
 import org.junit.Assert.assertEquals
@@ -314,10 +313,8 @@ internal class ExternalLoggerTest {
         with(checkNotNull(attributes.mapValues { it.value.toString() })) {
             assertNotNull(filter { it.key == LogAttributes.LOG_RECORD_UID }.size)
             if (expectedUserSessionId != null) {
-                assertEquals(expectedUserSessionId, this[SessionAttributes.SESSION_ID])
                 assertEquals(expectedUserSessionId, this[EmbSessionAttributes.EMB_USER_SESSION_ID])
             } else {
-                assertFalse(containsKey(SessionAttributes.SESSION_ID))
                 assertFalse(containsKey(EmbSessionAttributes.EMB_USER_SESSION_ID))
             }
             assertEquals(expectedSessionPartId, this[EmbSessionAttributes.EMB_SESSION_PART_ID])

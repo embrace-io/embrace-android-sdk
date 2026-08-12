@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Before
@@ -63,7 +62,6 @@ internal class SessionPartSpanAttrPopulatorImplTest {
         assertEquals("3", attrs[EmbSessionAttributes.EMB_USER_SESSION_NUMBER])
         assertEquals("43200", attrs[EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS])
         assertEquals("1800", attrs[EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS])
-        assertEquals("user-session-uuid", attrs[SessionAttributes.SESSION_ID])
         assertEquals("id", attrs[EmbSessionAttributes.EMB_SESSION_PART_ID])
         assertFalse(attrs.containsKey(EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART))
     }
@@ -75,7 +73,6 @@ internal class SessionPartSpanAttrPopulatorImplTest {
         val attrs = destination.attributes
         assertEquals("1", attrs[EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART])
         assertEquals("user-session-uuid", attrs[EmbSessionAttributes.EMB_USER_SESSION_ID])
-        assertEquals("user-session-uuid", attrs[SessionAttributes.SESSION_ID])
     }
 
     @Test
@@ -91,7 +88,6 @@ internal class SessionPartSpanAttrPopulatorImplTest {
         assertEquals("state", attrs[EmbSessionAttributes.EMB_SESSION_START_TYPE])
         assertEquals("", attrs[EmbSessionAttributes.EMB_SESSION_PART_ID])
         assertEquals("", attrs[EmbSessionAttributes.EMB_USER_SESSION_ID])
-        assertEquals("", attrs[SessionAttributes.SESSION_ID])
 
         assertFalse(attrs.containsKey(EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX))
         assertFalse(attrs.containsKey(EmbSessionAttributes.EMB_USER_SESSION_NUMBER))

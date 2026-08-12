@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import io.opentelemetry.kotlin.semconv.UserAttributes
 import java.util.ServiceLoader
 import java.util.concurrent.TimeUnit
@@ -227,7 +226,6 @@ private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, St
 
             put(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionIds.sessionPartId)
             put(EmbSessionAttributes.EMB_USER_SESSION_ID, sessionIds.userSessionId)
-            put(SessionAttributes.SESSION_ID, sessionIds.userSessionId)
             put(EmbSessionAttributes.EMB_STATE, sessionState.description)
             essentialServiceModule.userService.getUserInfo().userId?.let {
                 put(UserAttributes.USER_ID, it)

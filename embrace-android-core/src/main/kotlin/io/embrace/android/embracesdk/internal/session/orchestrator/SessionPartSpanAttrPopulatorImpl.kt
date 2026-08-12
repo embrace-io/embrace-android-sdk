@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import java.util.Locale
 
 internal class SessionPartSpanAttrPopulatorImpl(
@@ -41,7 +40,6 @@ internal class SessionPartSpanAttrPopulatorImpl(
             } else {
                 addSessionPartAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, "")
                 addSessionPartAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, "")
-                addSessionPartAttribute(SessionAttributes.SESSION_ID, "")
             }
         }
     }

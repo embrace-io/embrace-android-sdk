@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.testframework.assertions
 
 import io.embrace.android.embracesdk.assertions.SessionIds
-import io.embrace.android.embracesdk.assertions.getOtelSessionId
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.getSessionPartNumber
 import io.embrace.android.embracesdk.assertions.getUserSessionId
@@ -14,7 +13,6 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -99,40 +97,34 @@ fun assertUserSessionNumbers(
 }
 
 /**
- * Asserts the session-id attributes on a log/crash record: both the OTel `session.id` and `emb.user_session_id`
- * carry [expectedUserSessionId], and `emb.session_part_id` equals [expectedSessionPartId]. Pass empty strings or
- * the native `"null"` sentinel to assert the no-part / no-session cases.
+ * Asserts the session-id attributes on a log/crash record: `emb.user_session_id` carries [expectedUserSessionId],
+ * and `emb.session_part_id` equals [expectedSessionPartId]. Pass empty strings or the native `"null"` sentinel to
+ * assert the no-part / no-session cases.
  */
 fun Log.assertSessionIds(expectedUserSessionId: String, expectedSessionPartId: String) {
     val attrs = checkNotNull(attributes) { "no attributes found on log" }
-    assertEquals(expectedUserSessionId, attrs.findAttributeValue(SessionAttributes.SESSION_ID))
     assertEquals(expectedUserSessionId, attrs.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID))
     assertEquals(expectedSessionPartId, attrs.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID))
 }
 
 /**
- * Asserts the session part payload's session part span has all session-related IDs: emb.user_session_id, session.id, and emb.session_part_id
- * The first two are always equal, while the session part ID should not equal the other two.
+ * Asserts the session part payload's session part span has the session-related IDs: emb.user_session_id and
+ * emb.session_part_id, which must not be equal.
  */
 fun Envelope<SessionPartPayload>.assertSessionIds(): SessionIds {
-    val otelSessionId = getOtelSessionId()
     val userSessionId = getUserSessionId()
     val sessionPartId = getSessionPartId()
-    assertEquals("session.id must equal emb.user_session_id", userSessionId, otelSessionId)
     assertNotEquals("emb.session_part_id must not equal emb.user_session_id", sessionPartId, userSessionId)
     return SessionIds(userSessionId = userSessionId, partId = sessionPartId)
 }
 
 /**
- * Asserts a log has session.id and emb.user_session_id which are the same value.
+ * Asserts a log has a non-blank emb.user_session_id.
  */
 fun Log.assertSessionIdsConsistent() {
     val attrs = checkNotNull(attributes) { "no attributes found on log" }
-    val otelSessionId = attrs.findAttributeValue(SessionAttributes.SESSION_ID)
-    assertFalse("session.id must be present on the log", otelSessionId.isNullOrBlank())
-    assertEquals(
-        "session.id must equal emb.user_session_id on the log",
-        otelSessionId,
-        attrs.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID)
+    assertFalse(
+        "emb.user_session_id must be present on the log",
+        attrs.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID).isNullOrBlank()
     )
 }

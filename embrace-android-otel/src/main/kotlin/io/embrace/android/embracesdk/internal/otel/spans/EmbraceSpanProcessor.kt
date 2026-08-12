@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.export.OperationResultCode
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import io.opentelemetry.kotlin.semconv.UserAttributes
 import io.opentelemetry.kotlin.tracing.data.SpanData
 import io.opentelemetry.kotlin.tracing.export.SpanProcessor
@@ -25,7 +24,6 @@ internal class EmbraceSpanProcessor(
             val ids = provider.getActiveSessionIds()
             span.setStringAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, ids.sessionPartId)
             span.setStringAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, ids.userSessionId)
-            span.setStringAttribute(SessionAttributes.SESSION_ID, ids.userSessionId)
         }
         userIdProvider()?.let { userId ->
             span.setStringAttribute(UserAttributes.USER_ID, userId)

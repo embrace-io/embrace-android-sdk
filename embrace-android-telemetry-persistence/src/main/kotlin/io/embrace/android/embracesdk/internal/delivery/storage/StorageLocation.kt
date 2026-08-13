@@ -21,4 +21,9 @@ enum class StorageLocation(val dir: String) {
      * Cached envelopes
      */
     ENVELOPE("embrace_envelopes"),
+
+    /**
+     * Session telemetry grouped under one directory per session part
+     */
+    SESSION("embrace_sessions"),
 }

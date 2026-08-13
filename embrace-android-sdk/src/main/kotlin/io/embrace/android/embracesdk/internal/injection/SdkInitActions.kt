@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import android.content.Context
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
@@ -7,6 +8,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrash
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStateDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStatusDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.startup.sdkInitEnvironmentAttributes
 import io.embrace.android.embracesdk.internal.instrumentation.startup.toSdkInitDurationAttributes
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
@@ -215,7 +217,15 @@ internal fun ModuleGraph.markSdkInitComplete(sdkInitDurations: Map<String, Long>
             endState = essentialServiceModule.processStateTracker.getAppState(),
             threadName = Thread.currentThread().name,
             attributesProvider = {
-                sdkInitDurations.toSdkInitDurationAttributes() + resourceUsageTracker.buildAttributes()
+                sdkInitDurations.toSdkInitDurationAttributes() +
+                    resourceUsageTracker.buildAttributes() +
+                    sdkInitEnvironmentAttributes(
+                        powerManagerProvider = {
+                            instrumentationModule.instrumentationArgs.systemService(Context.POWER_SERVICE)
+                        },
+                        packageInfo = instrumentationModule.instrumentationArgs.packageInfo,
+                        nowMs = initModule.clock.now(),
+                    )
             },
         )
     }

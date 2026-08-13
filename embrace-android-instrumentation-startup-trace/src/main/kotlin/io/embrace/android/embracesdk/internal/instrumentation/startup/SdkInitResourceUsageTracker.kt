@@ -91,16 +91,28 @@ class SdkInitResourceUsageTracker(
                 if (cpuStart != null && cpuEnd != null && cpuEnd >= cpuStart) {
                     put(INIT_CPU_PCT, wholePercent(cpuEnd - cpuStart, wallMs).toString())
                 }
-                val runDelayStartNs = startSchedstat?.let(::parseRunDelayNs)
-                val runDelayEndNs = endSchedstat?.let(::parseRunDelayNs)
+                val runDelayStartNs = startSchedstat?.let { parseRunDelayNs(it) }
+                val runDelayEndNs = endSchedstat?.let { parseRunDelayNs(it) }
                 if (runDelayStartNs != null && runDelayEndNs != null && runDelayEndNs >= runDelayStartNs) {
-                    val runDelayMs = (runDelayEndNs - runDelayStartNs) / NANOS_PER_MS
+                    val runDelayMs = (runDelayEndNs - runDelayStartNs) / 1_000_000L
                     put(INIT_RUN_DELAY_PCT, wholePercent(runDelayMs, wallMs).toString())
                 }
             }
         }
     } catch (_: Throwable) {
         emptyMap()
+    }
+
+    private fun wholePercent(part: Long, whole: Long): Long = (100.0 * part / whole).roundToLong()
+
+    /**
+     * Extracts the cumulative run-delay (second field, in nanoseconds) from raw
+     * /proc/<pid>/task/<tid>/schedstat contents: "<running_ns> <run_delay_ns> <timeslices>".
+     */
+    private fun parseRunDelayNs(raw: ByteArray): Long? = try {
+        raw.decodeToString().trim().split(' ').getOrNull(1)?.toLong()
+    } catch (_: Throwable) {
+        null
     }
 
     companion object {
@@ -116,18 +128,6 @@ class SdkInitResourceUsageTracker(
          */
         const val INIT_RUN_DELAY_PCT: String = "init-run-delay-pct"
     }
-}
-
-private fun wholePercent(part: Long, whole: Long): Long = (100.0 * part / whole).roundToLong()
-
-/**
- * Extracts the cumulative run-delay (second field, in nanoseconds) from raw
- * /proc/<pid>/task/<tid>/schedstat contents: "<running_ns> <run_delay_ns> <timeslices>".
- */
-private fun parseRunDelayNs(raw: ByteArray): Long? = try {
-    raw.decodeToString().trim().split(' ').getOrNull(1)?.toLong()
-} catch (_: Throwable) {
-    null
 }
 
 /**
@@ -149,4 +149,3 @@ private fun readProcFile(path: String): ByteArray? = try {
 }
 
 private const val PROC_READ_BUFFER_BYTES = 128
-private const val NANOS_PER_MS = 1_000_000L

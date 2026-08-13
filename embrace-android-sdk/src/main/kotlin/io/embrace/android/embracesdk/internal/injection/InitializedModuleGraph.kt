@@ -142,7 +142,7 @@ internal class InitializedModuleGraph(
             }
     }
 
-    override val instrumentationModule: InstrumentationModule = init("instrumentation") {
+    override val instrumentationModule: InstrumentationModule = init(name = "instrumentation", recordDuration = true) {
         // Forward references: break the instrumentation <-> userSessionOrchestration cycle.
         val userSessionIdsProvider = { userSessionOrchestrationModule.sessionIdsProvider.getCurrentUserSessionId() }
         val activeSessionIdsProvider = { userSessionOrchestrationModule.sessionIdsProvider.getActiveSessionIds() }
@@ -279,37 +279,38 @@ internal class InitializedModuleGraph(
         )
     }
 
-    override val userSessionOrchestrationModule: UserSessionOrchestrationModule = init("user-session-orchestration") {
-        val startupDurationProvider = dataCaptureServiceModule.startupService::getSdkStartupDuration
-        val appVersionStartupCounterProvider = dataCaptureServiceModule.startupService::getAppVersionStartupCounter
-        userSessionOrchestrationModuleSupplier?.invoke(
-            initModule,
-            openTelemetryModule,
-            coreModule,
-            essentialServiceModule,
-            configService,
-            deliveryModule,
-            instrumentationModule,
-            payloadSourceModule,
-            startupDurationProvider,
-            appVersionStartupCounterProvider,
-            logModule,
-            workerThreadModule,
-        ) ?: UserSessionOrchestrationModuleImpl(
-            initModule,
-            openTelemetryModule,
-            coreModule,
-            essentialServiceModule,
-            configService,
-            deliveryModule,
-            instrumentationModule,
-            payloadSourceModule,
-            startupDurationProvider,
-            appVersionStartupCounterProvider,
-            logModule,
-            workerThreadModule,
-        )
-    }
+    override val userSessionOrchestrationModule: UserSessionOrchestrationModule =
+        init(name = "user-session-orchestration", recordDuration = true) {
+            val startupDurationProvider = dataCaptureServiceModule.startupService::getSdkStartupDuration
+            val appVersionStartupCounterProvider = dataCaptureServiceModule.startupService::getAppVersionStartupCounter
+            userSessionOrchestrationModuleSupplier?.invoke(
+                initModule,
+                openTelemetryModule,
+                coreModule,
+                essentialServiceModule,
+                configService,
+                deliveryModule,
+                instrumentationModule,
+                payloadSourceModule,
+                startupDurationProvider,
+                appVersionStartupCounterProvider,
+                logModule,
+                workerThreadModule,
+            ) ?: UserSessionOrchestrationModuleImpl(
+                initModule,
+                openTelemetryModule,
+                coreModule,
+                essentialServiceModule,
+                configService,
+                deliveryModule,
+                instrumentationModule,
+                payloadSourceModule,
+                startupDurationProvider,
+                appVersionStartupCounterProvider,
+                logModule,
+                workerThreadModule,
+            )
+        }
 
     private inline fun <T> init(name: String, recordDuration: Boolean = false, supplier: () -> T): T =
         EmbTrace.trace("$name-init", recordDuration) { supplier() }

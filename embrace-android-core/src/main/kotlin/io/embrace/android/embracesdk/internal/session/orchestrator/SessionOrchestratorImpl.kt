@@ -95,7 +95,7 @@ internal class SessionOrchestratorImpl(
     }
 
     override fun start() {
-        EmbTrace.trace("start-first-session") { createInitialSessionPart() }
+        EmbTrace.trace(sectionName = "start-first-session", recordDuration = true) { createInitialSessionPart() }
     }
 
     private fun loadPersistedUserSession() {

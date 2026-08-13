@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.testframework.server
 
-import io.embrace.android.embracesdk.assertions.getOtelSessionId
+import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -102,7 +102,7 @@ internal class FakeApiServer(
     private fun handleSessionRequest(endpoint: Endpoint, envelope: Envelope<*>) {
         val obj = envelope as Envelope<SessionPartPayload>
         sessionRequests.add(obj)
-        deliveryTracer.onServerCompletedRequest(endpoint.name, obj.getOtelSessionId())
+        deliveryTracer.onServerCompletedRequest(endpoint.name, obj.getUserSessionId())
     }
 
     @Suppress("UNCHECKED_CAST")

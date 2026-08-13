@@ -53,7 +53,6 @@ import io.embrace.android.embracesdk.internal.worker.Worker.Background.NonIoRegW
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.robolectric.Shadows
 import org.robolectric.shadows.ShadowLooper
 import java.util.concurrent.TimeUnit.MILLISECONDS
@@ -270,7 +269,6 @@ internal class EmbraceSetupInterface(
                     put(EmbSessionAttributes.EMB_USER_SESSION_NUMBER, sessionNumber.toString())
                     put(EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS, maxDurationSeconds.toString())
                     put(EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS, inactivityTimeoutSeconds.toString())
-                    put(SessionAttributes.SESSION_ID, userSessionId)
                     put(EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX, partIndex.toString())
                     put("emb.user_session_last_activity_ts", lastActivityMs.toString())
                     if (isBackgroundOnly) {

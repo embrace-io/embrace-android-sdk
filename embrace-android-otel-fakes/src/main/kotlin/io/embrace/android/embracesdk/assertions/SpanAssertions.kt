@@ -2,15 +2,18 @@ package io.embrace.android.embracesdk.assertions
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
+import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttributeValue
+import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.semconv.EmbSpanAttributes
 import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes.EMB_STATE_INITIAL_VALUE
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 
 /**
@@ -93,3 +96,28 @@ fun Span.assertStateSpan(
         }
     }
 }
+
+fun List<Attribute>?.assertSdkInitSectionDurationsRecorded() {
+    expectedSdkInitSections.forEach { section ->
+        assertNotNull(
+            "duration for init section `$section` not found",
+            this?.findAttributeValue("$section-duration-ms")
+        )
+    }
+}
+
+/**
+ * Sections known to run within the SDK init flow during integration tests.
+ */
+private val expectedSdkInitSections = listOf(
+    "modules-init",
+    "persisted-config-load",
+    "span-service-init",
+    "essential-service-init",
+    "delivery-init",
+    "payload-source-init",
+    "otel-tracer-init",
+    "post-init",
+    "load-instrumentation",
+    "post-services-setup",
+)

@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -65,10 +64,6 @@ internal class NativeCrashDataSourceImplTest {
             )
             assertEquals(
                 testNativeCrashData.userSessionId,
-                attributes[SessionAttributes.SESSION_ID],
-            )
-            assertEquals(
-                testNativeCrashData.userSessionId,
                 attributes[EmbSessionAttributes.EMB_USER_SESSION_ID],
             )
             assertEquals("1", attributes[EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER])
@@ -101,7 +96,6 @@ internal class NativeCrashDataSourceImplTest {
             assertEquals(EmbType.System.NativeCrash, schemaType.telemetryType)
             assertEquals("1", attributes[EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER])
             assertEquals("", attributes[EmbSessionAttributes.EMB_SESSION_PART_ID])
-            assertEquals("", attributes[SessionAttributes.SESSION_ID])
             assertEquals("", attributes[EmbSessionAttributes.EMB_USER_SESSION_ID])
             assertNull(attributes[embNativeCrashException])
             assertNull(attributes[embNativeCrashSymbols])
@@ -128,7 +122,6 @@ internal class NativeCrashDataSourceImplTest {
             assertEquals(EmbType.System.NativeCrash, schemaType.telemetryType)
             assertEquals("1", attributes[EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER])
             assertEquals("", attributes[EmbSessionAttributes.EMB_SESSION_PART_ID])
-            assertEquals("", attributes[SessionAttributes.SESSION_ID])
             assertEquals("", attributes[EmbSessionAttributes.EMB_USER_SESSION_ID])
             assertNull(attributes[EmbSessionAttributes.EMB_STATE])
             assertNull(attributes[embNativeCrashException])

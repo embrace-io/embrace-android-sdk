@@ -37,10 +37,6 @@
         {
           "key": "log.record.uid",
           "value": "__EMBRACE_TEST_IGNORE__"
-        },
-        {
-          "key": "session.id",
-          "value": "__EMBRACE_TEST_USER_SESSION_ID__"
         }
       ]
     }

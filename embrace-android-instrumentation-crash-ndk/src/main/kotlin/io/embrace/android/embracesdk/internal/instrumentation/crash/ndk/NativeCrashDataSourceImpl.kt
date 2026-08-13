@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 
 internal class NativeCrashDataSourceImpl(
     private val nativeCrashProcessor: NativeCrashProcessor,
@@ -41,11 +40,6 @@ internal class NativeCrashDataSourceImpl(
                 setAttribute(
                     key = EmbSessionAttributes.EMB_SESSION_PART_ID,
                     value = nativeCrash.sessionPartId,
-                )
-
-                setAttribute(
-                    key = SessionAttributes.SESSION_ID,
-                    value = nativeCrash.userSessionId,
                 )
 
                 setAttribute(

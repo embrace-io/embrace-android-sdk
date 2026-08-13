@@ -5,7 +5,7 @@
     "severityText": "WARNING",
     "timestampEpochNanos": "169220160030000000",
     "observedTimestampEpochNanos": "169220160030000000",
-    "totalAttributeCount": "10",
+    "totalAttributeCount": "9",
     "attributes": {
       "emb.session_part_id": "__EMBRACE_TEST_IGNORE__",
       "emb.state": "foreground",
@@ -15,8 +15,7 @@
       "emb.type": "sys.log",
       "emb.user_session_id": "__EMBRACE_TEST_IGNORE__",
       "log.record.uid": "__EMBRACE_TEST_IGNORE__",
-      "my-attribute": "my-value",
-      "session.id": "__EMBRACE_TEST_IGNORE__"
+      "my-attribute": "my-value"
     },
     "instrumentationScopeName": "io.embrace.android.embracesdk.core",
     "resourceAttributes": {

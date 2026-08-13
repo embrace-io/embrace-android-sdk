@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.assertNoPreviousSessionPart
 import io.embrace.android.embracesdk.assertions.assertPreviousSessionPart
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
-import io.embrace.android.embracesdk.assertions.getOtelSessionId
+import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.hasLinkToEmbraceSpan
 import io.embrace.android.embracesdk.assertions.hasSpanSnapshotsOfType
@@ -66,7 +66,7 @@ internal class SessionPartPayloadTest {
                         assertTrue(checkNotNull(deviceModel).isNotBlank())
                         assertEquals(AppFramework.NATIVE, appFramework)
                     }
-                    assertTrue(getOtelSessionId().isNotBlank())
+                    assertTrue(getUserSessionId().isNotBlank())
                 }
             }
         )

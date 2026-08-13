@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import io.opentelemetry.kotlin.semconv.UserAttributes
 import java.util.ServiceLoader
 import java.util.concurrent.TimeUnit
@@ -21,7 +20,7 @@ import java.util.concurrent.TimeUnit
  * Performs bootstrapping by setting required values where there is an interdependency
  * between modules.
  */
-internal fun ModuleGraph.postInit() {
+internal fun ModuleGraph.postInit() = EmbTrace.trace(sectionName = "post-init", recordDuration = true) {
     openTelemetryModule.setEventMetadataProvider(eventMetadataSupplierProvider())
 
     // note: otelBehavior is not applied here - it decides which OTel SDK is built, so it is set
@@ -107,16 +106,17 @@ internal fun ModuleGraph.registerListeners() {
 /**
  * Loads instrumentation via SPI and legacy methods.
  */
-internal fun ModuleGraph.loadInstrumentation() {
-    val registry = instrumentationModule.instrumentationRegistry
-    registry.loadInstrumentations(loadInstrumentationProviders(), instrumentationModule.instrumentationArgs)
+internal fun ModuleGraph.loadInstrumentation() =
+    EmbTrace.trace(sectionName = "load-instrumentation", recordDuration = true) {
+        val registry = instrumentationModule.instrumentationRegistry
+        registry.loadInstrumentations(loadInstrumentationProviders(), instrumentationModule.instrumentationArgs)
 
-    threadBlockageService?.startCapture()
+        threadBlockageService?.startCapture()
 
-    featureModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
-        workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
-    )
-}
+        featureModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
+            workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
+        )
+    }
 
 /**
  * Loads the [InstrumentationProvider] implementations declared via SPI. Before making changes
@@ -203,14 +203,19 @@ internal fun ModuleGraph.triggerPayloadSend() {
 /**
  * Mark SDK initialization as complete.
  */
-internal fun ModuleGraph.markSdkInitComplete() {
+internal fun ModuleGraph.markSdkInitComplete(sdkInitDurations: Map<String, Long>) {
+    val startupService = dataCaptureServiceModule.startupService
     EmbTrace.trace("startup-tracking") {
-        dataCaptureServiceModule.startupService.setSdkStartupInfo(
-            sdkStartTimeMs,
-            initModule.clock.now(),
-            essentialServiceModule.processStateTracker.getAppState(),
-            Thread.currentThread().name,
+        startupService.setSdkStartupInfo(
+            startTimeMs = sdkStartTimeMs,
+            endTimeMs = initModule.clock.now(),
+            endState = essentialServiceModule.processStateTracker.getAppState(),
+            threadName = Thread.currentThread().name,
+            sdkInitDurations = sdkInitDurations,
         )
+    }
+    workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
+        startupService.recordSdkInitSpan()
     }
     val appId = configService.appId
     val startMsg = "Embrace SDK version ${BuildConfig.VERSION_NAME} started" +
@@ -227,7 +232,6 @@ private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, St
 
             put(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionIds.sessionPartId)
             put(EmbSessionAttributes.EMB_USER_SESSION_ID, sessionIds.userSessionId)
-            put(SessionAttributes.SESSION_ID, sessionIds.userSessionId)
             put(EmbSessionAttributes.EMB_STATE, sessionState.description)
             essentialServiceModule.userService.getUserInfo().userId?.let {
                 put(UserAttributes.USER_ID, it)

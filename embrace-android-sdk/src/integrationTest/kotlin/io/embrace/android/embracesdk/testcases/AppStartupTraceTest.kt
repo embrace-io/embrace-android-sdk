@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.testcases
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertError
+import io.embrace.android.embracesdk.assertions.assertSdkInitSectionDurationsRecorded
 import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.fakes.FakeActivity
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
@@ -111,11 +112,10 @@ internal class AppStartupTraceTest {
             otelExportAssertion = {
                 with(awaitSpansWithType(7, EmbType.Performance.Default).associateBy { it.name }) {
                     assertEquals("yes", coldAppStartupRootSpan().attributes.toEmbracePayload().findAttributeValue("custom-attribute"))
-                    assertEquals(
-                        "1",
-                        embraceInitSpan().attributes.toEmbracePayload()
-                            .findAttributeValue(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER)
-                    )
+                    with(embraceInitSpan().attributes.toEmbracePayload()) {
+                        assertEquals("1", findAttributeValue(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER))
+                        assertSdkInitSectionDurationsRecorded()
+                    }
                     with(initGapSpan()) {
                         assertEquals(sdkStartTimeMs, startEpochNanos.nanosToMillis())
                         assertEquals(activityInitStartMs, endEpochNanos.nanosToMillis())

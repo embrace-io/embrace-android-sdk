@@ -13,7 +13,7 @@ dependencies {
 
     // JSON construction and parsing
     implementation(libs.moshi)
-    ksp(libs.moshi.kotlin.codegen)
+    kspTest(libs.moshi.kotlin.codegen)
 
     implementation(libs.junit)
     implementation(platform(libs.okhttp.bom))

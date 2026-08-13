@@ -21,3 +21,6 @@
 #-renamesourcefileattribute SourceFile
 
 -dontwarn javax.lang.model.element.Modifier
+
+# delete after embrace 9.2.0
+-dontwarn io.opentelemetry.api.incubator.**

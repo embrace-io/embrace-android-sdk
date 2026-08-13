@@ -45,7 +45,6 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.OpenTelemetry
-import io.opentelemetry.kotlin.semconv.SessionAttributes
 import io.opentelemetry.kotlin.tracing.Tracer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -930,7 +929,6 @@ internal class CurrentSessionPartSpanImplTests {
         val expectedPartLinkAttrs = mapOf(
             EmbSessionAttributes.EMB_SESSION_PART_ID to sessionPartId,
             EmbSessionAttributes.EMB_USER_SESSION_ID to userSessionId,
-            SessionAttributes.SESSION_ID to userSessionId,
         )
         checkNotNull(spanSnapshot.links).single().validateSystemLink(
             linkedSpan = sessionPartSpanSnapshot,
@@ -960,7 +958,7 @@ internal class CurrentSessionPartSpanImplTests {
         )
         assertTrue(
             checkNotNull(earlyLink.attributes).none {
-                it.key == EmbSessionAttributes.EMB_USER_SESSION_ID || it.key == SessionAttributes.SESSION_ID
+                it.key == EmbSessionAttributes.EMB_USER_SESSION_ID
             },
         )
 
@@ -976,7 +974,6 @@ internal class CurrentSessionPartSpanImplTests {
             expectedAttributes = mapOf(
                 EmbSessionAttributes.EMB_SESSION_PART_ID to sessionPartId,
                 EmbSessionAttributes.EMB_USER_SESSION_ID to userSessionId,
-                SessionAttributes.SESSION_ID to userSessionId,
             ),
         )
     }
@@ -989,7 +986,6 @@ internal class CurrentSessionPartSpanImplTests {
         val expectedPartLinkAttrs = mapOf(
             EmbSessionAttributes.EMB_SESSION_PART_ID to currentSessionPartSpan.getId(),
             EmbSessionAttributes.EMB_USER_SESSION_ID to userSessionId,
-            SessionAttributes.SESSION_ID to userSessionId,
         )
 
         repeat(2) { count ->

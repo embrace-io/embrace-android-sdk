@@ -57,6 +57,10 @@
           "returnValue": "false"
         },
         {
+          "signature": "isMultiFilePersistenceEnabled()Z",
+          "returnValue": "true"
+        },
+        {
           "signature": "isNativeCrashCaptureEnabled()Z",
           "returnValue": "false"
         },

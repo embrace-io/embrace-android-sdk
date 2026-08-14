@@ -43,5 +43,6 @@ fun createEnabledFeatureConfigInstrumentation(cfg: VariantConfig) = modelSdkConf
         boolMethod("isActivityProcessLifecycleTrackerEnabled") {
             automaticDataCaptureConfig?.activityProcessLifecycleTrackerEnabled
         }
+        boolMethod("isMultiFilePersistenceEnabled") { multiFilePersistenceEnabled }
     }
 }

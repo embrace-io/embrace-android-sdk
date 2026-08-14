@@ -29,6 +29,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartup
 import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupService
 import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupServiceImpl
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.hasPrePostEvents
+import io.embrace.android.embracesdk.internal.instrumentation.startup.toSdkInitDurationAttributes
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.hasRenderEvent
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.supportFrameCommitCallback
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
@@ -776,7 +777,7 @@ internal class AppStartupTraceEmitterTest {
             endTimeMs = end,
             endState = ProcessState.BACKGROUND,
             threadName = "main",
-            sdkInitDurations = mapOf("modules-init" to 30L),
+            attributesProvider = { mapOf("modules-init" to 30L).toSdkInitDurationAttributes() },
         )
 
         val applicationInitEnd = if (hasAppInitEvents) {

@@ -280,7 +280,7 @@ internal class AppStartupTraceEmitter(
                     applicationInitEndMs = if (recordColdStart) applicationInitEndMs else null,
                     sdkInitStartMs = if (recordColdStart) startupService.getSdkInitStartMs() else null,
                     sdkInitEndMs = if (recordColdStart) sdkInitEndMs else null,
-                    sdkInitDurations = if (recordColdStart) startupService.getSdkInitDurations() else emptyMap(),
+                    sdkInitAttributes = if (recordColdStart) startupService.getSdkInitAttributes() else emptyMap(),
                     firstActivityInitMs = firstActivityInitStartMs,
                     activityInitStartMs = activityInitStartMs,
                     activityInitEndMs = activityInitEndMs,
@@ -326,7 +326,7 @@ internal class AppStartupTraceEmitter(
         applicationInitEndMs: Long?,
         sdkInitStartMs: Long?,
         sdkInitEndMs: Long?,
-        sdkInitDurations: Map<String, Long>,
+        sdkInitAttributes: Map<String, String>,
         firstActivityInitMs: Long?,
         activityInitStartMs: Long?,
         activityInitEndMs: Long?,
@@ -355,11 +355,11 @@ internal class AppStartupTraceEmitter(
 
             if (sdkInitStartMs != null && sdkInitEndMs != null) {
                 val counter = startupServiceProvider()?.getAppVersionStartupCounter()
-                val attributes = buildMap(sdkInitDurations.size + 1) {
+                val attributes = buildMap(sdkInitAttributes.size + 1) {
                     if (counter != null) {
                         put(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER, counter.toString())
                     }
-                    putSdkInitDurations(sdkInitDurations)
+                    putAll(sdkInitAttributes)
                 }
 
                 destination.recordCompletedSpan(

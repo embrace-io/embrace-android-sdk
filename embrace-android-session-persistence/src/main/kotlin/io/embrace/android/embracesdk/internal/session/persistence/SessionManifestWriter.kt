@@ -47,8 +47,7 @@ class SessionManifestWriter(
             return false
         }
 
-        val dst = File(partDir, MANIFEST_FILE_NAME)
-        if (dst.exists()) {
+        if (File(partDir, MANIFEST_FILE_NAME).exists()) {
             return true
         }
 
@@ -65,20 +64,10 @@ class SessionManifestWriter(
             resource = resource.toProto(),
         )
 
-        // write to a temporary file then rename it, so partial manifests aren't observed
-        val tmpFile = File.createTempFile(MANIFEST_FILE_NAME, ".tmp", partDir)
-        try {
-            tmpFile.outputStream().buffered().use { stream ->
-                SessionManifest.ADAPTER.encode(stream, manifest)
-            }
-            if (tmpFile.renameTo(dst)) {
-                return true
-            }
-            trackFailure(IOException("Failed to rename manifest"))
-            return false
-        } finally {
-            tmpFile.delete()
+        writeAtomically(partDir, MANIFEST_FILE_NAME) { stream ->
+            SessionManifest.ADAPTER.encode(stream, manifest)
         }
+        return true
     }
 
     private fun trackFailure(exc: Throwable) {

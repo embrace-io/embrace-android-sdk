@@ -53,10 +53,55 @@ and SELinux-blocked on the next despite identical file modes.
   `emb-sdk-start` slice, unfamiliar/obfuscated section names). After ANY repo state change:
   verify the `embrace =` pin, and sanity-check the first pass's traces for `emb-sdk-start`
   before continuing. A wrong-SDK campaign is unsalvageable — quarantine and rerun.
+- **Cached-payload telemetry verification does NOT work on unattended devices.** Pulling
+  `files/embrace_cache/*session*` requires (a) a debuggable build for `run-as`, and (b) a
+  FOREGROUND user session — a launch behind the keyguard caches a background-activity payload
+  named `p1_…_unknown_…_none_v2.json` that contains **zero spans**. Devices left plugged in
+  overnight lock themselves (and `wm dismiss-keyguard` + swipes often fail to clear it), so an
+  overnight harness that verifies telemetry this way fails 100% of launches while the SDK is
+  perfectly healthy. Use the verification tap instead (see methodology.md → Telemetry
+  verification channel). Observed 2026-08-14: payload path 0/42, tap 42/42 on the same devices
+  in the same locked state.
+- **Multiple concurrent drivers on one device destroy a run silently.** A second driver's
+  `am force-stop`/install cycles kill the app mid-init and its perfetto session competes for
+  buffer space; symptoms are missing `emb-sdk-start` slices and arms that silently switch build
+  type mid-pass. Before launching anything unattended, verify no other driver process is alive
+  (`pgrep -fl python3`) — a harness task list is NOT proof — and give long-running masters a
+  pidfile singleton lock that refuses to start when a live PID holds it.
 - Harness `cat`/device-state reads appear as small competitor processes in early iterations
   of a pass — expected, not a foreign process.
 - The trace output dir under `connected/` is per-device-model and WIPED by the next run on
   that device: copy each pass's traces aside before starting the next.
+
+## Trace-capture and trace_processor traps
+
+Every item below produced *plausible-looking wrong numbers* rather than an error. All were
+found on 2026-08-14; in every case the SDK attribute was right and the tooling was wrong.
+
+- **`perfetto --txt` configs accept `#` comments ONLY.** A `//` line is a parse error that
+  makes perfetto exit instantly. If the previous iteration's output file is still on the
+  device, `adb pull` then silently returns THAT file — 24 iterations reported byte-identical
+  traces and identical stats. Guards: `rm -f` the device-side trace before each iteration,
+  capture perfetto's stderr, and flag any trace whose byte size equals an earlier one.
+- **SQLite `LIKE` is case-insensitive**, so `name LIKE '%GC%'` also matches class-loading
+  slices for obfuscated classes (`VerifyClass gc`, `Lgc0;`) and invents garbage collections.
+  Use `GLOB '*GC*'` (case-sensitive) plus a concurrent/HeapTaskDaemon qualifier.
+- **Scope per-process counts by `upid`, never by process NAME.** `process_stats` frequently
+  fails to resolve names under buffer pressure: a trace can hold 105 `emb-*` slices while
+  `SELECT … WHERE process.name = 'io.embrace.android.exampleapp'` returns nothing, silently
+  discarding good traces. Anchor on the unique slice name and take `utid`/`upid` from that row.
+  Conversely, an unscoped count credits *other* processes' work (a foreign GC) to your app.
+- **Derive the window and the thread from the SAME slice row.** Resolving them with
+  independent subqueries lets a trace containing two launches pair one launch's window with
+  the other's thread → impossible outputs (133% CPU, 33 ms walls).
+- **Clip `thread_state` intervals to the window** (`MIN(end, win_end) - MAX(start, win_start)`);
+  summing whole overlapping intervals reports >100% CPU shares.
+- **`RING_BUFFER` evicts the data you want** when the window sits at the start of the trace and
+  hogs flood the buffer with sched events (only 6/24 traces retained the window). Use
+  `fill_policy: DISCARD` with a modest buffer (64 MB was ample) and a short duration.
+- **`atrace_categories: "dalvik"` is required for ART GC slices.** Without it GC ground truth
+  is empty *by construction*, and any GC-attribute comparison is meaningless rather than
+  negative.
 
 ## Measurement-context artifacts
 

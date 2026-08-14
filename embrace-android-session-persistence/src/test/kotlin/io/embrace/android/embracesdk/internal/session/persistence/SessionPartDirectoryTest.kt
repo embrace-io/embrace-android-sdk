@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.session.persistence
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 internal class SessionPartDirectoryTest {
@@ -16,7 +17,7 @@ internal class SessionPartDirectoryTest {
     @Test
     fun `construct dirname with session ids`() {
         assertEquals(
-            "${TIMESTAMP}_${UUID}_${USER_SESSION_ID}_$SESSION_PART_ID",
+            "v1_${TIMESTAMP}_${UUID}_${USER_SESSION_ID}_$SESSION_PART_ID",
             SessionPartDirectory(
                 timestamp = TIMESTAMP,
                 uuid = UUID,
@@ -29,7 +30,7 @@ internal class SessionPartDirectoryTest {
     @Test
     fun `construct dirname with empty session ids encodes none`() {
         assertEquals(
-            "${TIMESTAMP}_${UUID}_none_none",
+            "v1_${TIMESTAMP}_${UUID}_none_none",
             SessionPartDirectory(
                 timestamp = TIMESTAMP,
                 uuid = UUID,
@@ -40,7 +41,7 @@ internal class SessionPartDirectoryTest {
     @Test
     fun `construct dirname with only one empty session id`() {
         assertEquals(
-            "${TIMESTAMP}_${UUID}_${USER_SESSION_ID}_none",
+            "v1_${TIMESTAMP}_${UUID}_${USER_SESSION_ID}_none",
             SessionPartDirectory(
                 timestamp = TIMESTAMP,
                 uuid = UUID,
@@ -51,20 +52,44 @@ internal class SessionPartDirectoryTest {
     }
 
     @Test
+    fun `construct dirname defaults to the first version`() {
+        assertEquals(
+            SessionPartDirectoryVersion.V1,
+            SessionPartDirectory(timestamp = TIMESTAMP, uuid = UUID).version,
+        )
+    }
+
+    @Test
+    fun `construct dirname prefixes the version token`() {
+        SessionPartDirectoryVersion.entries.forEach { version ->
+            val dirName = SessionPartDirectory(
+                timestamp = TIMESTAMP,
+                uuid = UUID,
+                version = version,
+            ).dirName
+            assertTrue(
+                "Dirname should start with the version token: $dirName",
+                dirName.startsWith("${version.token}_"),
+            )
+        }
+    }
+
+    @Test
     fun `from valid dirname`() {
-        val input = "${TIMESTAMP}_${UUID}_${USER_SESSION_ID}_$SESSION_PART_ID"
+        val input = "v1_${TIMESTAMP}_${UUID}_${USER_SESSION_ID}_$SESSION_PART_ID"
         with(checkNotNull(SessionPartDirectory.fromDirName(input))) {
             assertEquals(input, dirName)
             assertEquals(TIMESTAMP, timestamp)
             assertEquals(UUID, uuid)
             assertEquals(USER_SESSION_ID, userSessionId)
             assertEquals(SESSION_PART_ID, sessionPartId)
+            assertEquals(SessionPartDirectoryVersion.V1, version)
         }
     }
 
     @Test
     fun `from valid dirname with none decodes to empty session ids`() {
-        with(checkNotNull(SessionPartDirectory.fromDirName("${TIMESTAMP}_${UUID}_none_none"))) {
+        with(checkNotNull(SessionPartDirectory.fromDirName("v1_${TIMESTAMP}_${UUID}_none_none"))) {
             assertEquals(TIMESTAMP, timestamp)
             assertEquals(UUID, uuid)
             assertEquals("", userSessionId)
@@ -92,10 +117,17 @@ internal class SessionPartDirectoryTest {
             "",
             "foo",
             "embrace_payloads",
-            "${TIMESTAMP}_$UUID",
-            "${TIMESTAMP}_${UUID}_${USER_SESSION_ID}_${SESSION_PART_ID}_extra",
-            "notATimestamp_${UUID}_none_none",
-            "${TIMESTAMP}__none_none",
+            "v1_${TIMESTAMP}_$UUID",
+            "v1_${TIMESTAMP}_${UUID}_${USER_SESSION_ID}_${SESSION_PART_ID}_extra",
+            "v1_notATimestamp_${UUID}_none_none",
+            "v1_${TIMESTAMP}__none_none",
+            // an unversioned name uses an encoding this SDK cannot interpret
+            "${TIMESTAMP}_${UUID}_${USER_SESSION_ID}_$SESSION_PART_ID",
+            "${TIMESTAMP}_${UUID}_none_none",
+            // unknown or absent version tokens
+            "v2_${TIMESTAMP}_${UUID}_none_none",
+            "_${TIMESTAMP}_${UUID}_none_none",
+            "V1_${TIMESTAMP}_${UUID}_none_none",
         )
         badDirNames.forEach { dirName ->
             assertNull("Dirname should fail: $dirName", SessionPartDirectory.fromDirName(dirName))
@@ -113,6 +145,24 @@ internal class SessionPartDirectoryTest {
         val decoded = checkNotNull(SessionPartDirectory.fromDirName(original.dirName))
         assertEquals(original, decoded)
         assertEquals(original.dirName, decoded.dirName)
+    }
+
+    @Test
+    fun `round trip preserves every version`() {
+        SessionPartDirectoryVersion.entries.forEach { version ->
+            val original = SessionPartDirectory(
+                timestamp = TIMESTAMP,
+                uuid = UUID,
+                userSessionId = USER_SESSION_ID,
+                sessionPartId = SESSION_PART_ID,
+                version = version,
+            )
+            val decoded = checkNotNull(SessionPartDirectory.fromDirName(original.dirName)) {
+                "Dirname should round trip for $version"
+            }
+            assertEquals(original, decoded)
+            assertEquals(version, decoded.version)
+        }
     }
 
     @Test

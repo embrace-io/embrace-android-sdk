@@ -37,4 +37,15 @@ internal class SpanSnapshotsTest {
         val decoded = SpanSnapshots.ADAPTER.decode(SpanSnapshots.ADAPTER.encode(shard))
         assertNull(decoded.spans.single().end_time_unix_nano)
     }
+
+    @Test
+    fun `format version survives on an otherwise empty shard`() {
+        val shard = SpanSnapshots(format_version = 3)
+        assertEquals(3, SpanSnapshots.ADAPTER.decode(SpanSnapshots.ADAPTER.encode(shard)).format_version)
+    }
+
+    @Test
+    fun `a message holding no data at all decodes to format version zero`() {
+        assertEquals(0, SpanSnapshots.ADAPTER.decode(ByteArray(0)).format_version)
+    }
 }

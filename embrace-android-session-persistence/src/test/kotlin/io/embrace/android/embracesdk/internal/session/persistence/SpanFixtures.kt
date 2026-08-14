@@ -67,3 +67,30 @@ internal val fullyPopulatedSessionSpanProto = SessionSpan(
     format_version = FORMAT_VERSION,
     span = fullyPopulatedSpanProto,
 )
+
+internal val inFlightSpan = Span(
+    traceId = "6c9b1f2ec1d34f3c9a7d0b8e5f2a4c13",
+    spanId = "aaaaaaaaaaaaaaa4",
+    parentSpanId = "aaaaaaaaaaaaaaa1",
+    name = "emb-network-request",
+    startTimeNanos = 1726739283200000000L,
+    endTimeNanos = null,
+    status = Span.Status.UNSET,
+    attributes = listOf(Attribute(key = "url.full", data = "https://example.com")),
+)
+
+internal val inFlightSpanProto = SpanProto(
+    trace_id = "6c9b1f2ec1d34f3c9a7d0b8e5f2a4c13",
+    span_id = "aaaaaaaaaaaaaaa4",
+    parent_span_id = "aaaaaaaaaaaaaaa1",
+    name = "emb-network-request",
+    start_time_unix_nano = 1726739283200000000L,
+    end_time_unix_nano = null,
+    status = SpanProto.Status.UNSET,
+    attributes = listOf(AttributeProto(key = "url.full", value_ = "https://example.com")),
+)
+
+internal val fullyPopulatedSpanSnapshotsProto = SpanSnapshots(
+    format_version = FORMAT_VERSION,
+    spans = listOf(fullyPopulatedSpanProto, inFlightSpanProto),
+)

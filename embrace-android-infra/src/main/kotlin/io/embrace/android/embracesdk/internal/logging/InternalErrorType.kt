@@ -39,6 +39,7 @@ sealed class InternalErrorType(private val severity: Severity) {
     object SessionMetadataWriteFail : InternalErrorType(ERROR)
     object SessionReconstructionFail : InternalErrorType(ERROR)
     object SessionSpanWriteFail : InternalErrorType(ERROR)
+    object SpanSnapshotsWriteFail : InternalErrorType(ERROR)
     object InternalInterfaceFail : InternalErrorType(ERROR)
     object NativeReadFail : InternalErrorType(Severity.WARNING)
     object AppLaunchTraceFail : InternalErrorType(Severity.WARNING)

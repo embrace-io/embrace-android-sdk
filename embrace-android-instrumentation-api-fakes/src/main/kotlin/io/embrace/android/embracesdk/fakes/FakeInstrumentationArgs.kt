@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import android.app.Application
 import android.content.Context
+import android.content.pm.PackageInfo
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
@@ -31,6 +32,7 @@ class FakeInstrumentationArgs(
     override val processIdentifier: String = "fake-process-id",
     override val processStateTracker: ProcessStateTracker = FakeProcessStateTracker(),
     override val telemetryService: TelemetryService = FakeTelemetryService(),
+    override val packageInfo: PackageInfo? = null,
     val backgroundWorkerSupplier: (worker: Worker.Background) -> BackgroundWorker = { fakeBackgroundWorker() },
     val priorityWorkerSupplier: (worker: Worker.Priority) -> PriorityWorker<*> = { fakePriorityWorker<Any>() },
     val sessionPartIdSupplier: () -> String? = { null },

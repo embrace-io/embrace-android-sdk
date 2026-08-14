@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal
 
 import android.app.Application
 import android.content.Context
+import android.content.pm.PackageInfo
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
@@ -53,6 +54,10 @@ internal class InstrumentationArgsImpl(
     override val crashMarkerFile: File by lazy { crashMarkerFileProvider() }
 
     override val store: KeyValueStore by lazy { storeProvider() }
+
+    override val packageInfo: PackageInfo? by lazy {
+        runCatching { context.packageManager.getPackageInfo(context.packageName, 0) }.getOrNull()
+    }
 
     override val httpRequestInfoModifierChain: HttpRequestInfoModifierChain = HttpRequestInfoModifierChain(logger)
 

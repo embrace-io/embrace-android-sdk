@@ -8,6 +8,7 @@ import android.preference.PreferenceManager
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
+import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 
@@ -18,7 +19,9 @@ import kotlinx.serialization.builtins.serializer
  * share that one instance rather than resolving it eagerly.
  */
 fun createKeyValueStore(context: Context, serializer: PlatformSerializer): KeyValueStore =
-    SharedPrefsStore(PreferenceManager.getDefaultSharedPreferences(context), serializer)
+    EmbTrace.trace(sectionName = "key-value-store-init", recordDuration = true) {
+        SharedPrefsStore(PreferenceManager.getDefaultSharedPreferences(context), serializer)
+    }
 
 internal class SharedPrefsStore(
     private val impl: SharedPreferences,

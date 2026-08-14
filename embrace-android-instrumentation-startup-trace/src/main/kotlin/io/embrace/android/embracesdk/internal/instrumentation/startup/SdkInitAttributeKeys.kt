@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAtt
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.INIT_RUN_DELAY_PCT
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.THERMAL_STATUS
 
-
 /**
  * Keys of the attributes recorded on the SDK init spans to contextualize and explain
  * performance anomalies. [SdkInitResourceUsageTracker] produces the ones measured as deltas across

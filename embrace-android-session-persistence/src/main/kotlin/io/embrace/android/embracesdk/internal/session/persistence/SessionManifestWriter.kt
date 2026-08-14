@@ -14,11 +14,6 @@ class SessionManifestWriter(
     private val logger: InternalLogger,
 ) {
 
-    private companion object {
-        const val FORMAT_VERSION = 1
-        const val MANIFEST_FILE_NAME = "manifest.pb"
-    }
-
     /**
      * Writes the manifest for the given session part, unless one already exists.
      *

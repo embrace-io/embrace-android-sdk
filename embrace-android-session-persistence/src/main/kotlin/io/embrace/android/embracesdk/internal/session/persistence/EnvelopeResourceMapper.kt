@@ -45,3 +45,44 @@ internal fun AppFramework.toProto(): EnvelopeResourceProto.AppFramework = when (
     AppFramework.UNITY -> EnvelopeResourceProto.AppFramework.UNITY
     AppFramework.FLUTTER -> EnvelopeResourceProto.AppFramework.FLUTTER
 }
+
+internal fun EnvelopeResourceProto.toPayload(): EnvelopeResource = EnvelopeResource(
+    appVersion = app_version,
+    appFramework = app_framework?.toPayload(),
+    buildId = build_id,
+    appEcosystemId = app_ecosystem_id,
+    buildType = build_type,
+    buildFlavor = build_flavor,
+    environment = environment,
+    bundleVersion = bundle_version,
+    sdkVersion = sdk_version,
+    sdkSimpleVersion = sdk_simple_version,
+    reactNativeBundleId = react_native_bundle_id,
+    reactNativeVersion = react_native_version,
+    javascriptPatchNumber = javascript_patch_number,
+    hostedPlatformVersion = hosted_platform_version,
+    hostedSdkVersion = hosted_sdk_version,
+    unityBuildId = unity_build_id,
+    deviceManufacturer = device_manufacturer,
+    deviceModel = device_model,
+    deviceArchitecture = device_architecture,
+    jailbroken = jailbroken,
+    diskTotalCapacity = disk_total_capacity,
+    osType = os_type,
+    osName = os_name,
+    osVersion = os_version,
+    osCode = os_code,
+    screenResolution = screen_resolution,
+    numCores = num_cores,
+    usesEmmcStorage = uses_emmc_storage,
+    deviceSocModel = device_soc_model,
+    extras = extras,
+)
+
+internal fun EnvelopeResourceProto.AppFramework.toPayload(): AppFramework? = when (this) {
+    EnvelopeResourceProto.AppFramework.UNSPECIFIED -> null
+    EnvelopeResourceProto.AppFramework.NATIVE -> AppFramework.NATIVE
+    EnvelopeResourceProto.AppFramework.REACT_NATIVE -> AppFramework.REACT_NATIVE
+    EnvelopeResourceProto.AppFramework.UNITY -> AppFramework.UNITY
+    EnvelopeResourceProto.AppFramework.FLUTTER -> AppFramework.FLUTTER
+}

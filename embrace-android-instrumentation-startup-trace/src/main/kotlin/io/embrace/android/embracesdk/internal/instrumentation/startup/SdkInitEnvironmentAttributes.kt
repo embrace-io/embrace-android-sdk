@@ -4,8 +4,10 @@ import android.app.ActivityManager
 import android.content.pm.PackageInfo
 import android.os.Build.VERSION_CODES
 import android.os.PowerManager
+import android.os.SystemClock
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.LOW_MEMORY
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.MEM_AVAILABLE_PCT
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.SECONDS_SINCE_BOOT
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.SECONDS_SINCE_INSTALL
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.SECONDS_SINCE_UPDATE
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.THERMAL_HEADROOM_PCT
@@ -32,11 +34,13 @@ fun sdkInitEnvironmentAttributes(
     packageInfo: PackageInfo?,
     nowMs: Long,
     versionChecker: VersionChecker = BuildVersionChecker,
+    uptimeMs: () -> Long = { SystemClock.uptimeMillis() },
 ): Map<String, String> = try {
     buildMap {
         putThermalAttributes(powerManagerProvider, versionChecker)
         putInstallRecencyAttributes(packageInfo, nowMs)
         putMemoryAttributes(activityManagerProvider)
+        put(SECONDS_SINCE_BOOT, (uptimeMs() / 1000L).toString())
     }
 } catch (_: Throwable) {
     emptyMap()

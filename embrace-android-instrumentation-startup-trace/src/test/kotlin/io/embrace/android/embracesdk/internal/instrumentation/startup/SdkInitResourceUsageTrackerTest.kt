@@ -52,8 +52,7 @@ internal class SdkInitResourceUsageTrackerTest {
         tracker.captureStart()
         tracker.captureEnd()
         // window = 60 ms wall; cpu delta = 30 ms -> 50%; run delay = 7 ms -> 12%;
-        // majflt 55-40 = 15; read_bytes delta 49152 B -> 48 KB; gc 5-3 = 2 taking 40-12 = 28 ms;
-        // wall start 5000 ms since boot -> 5 s
+        // majflt 55-40 = 15; read_bytes delta 49152 B -> 48 KB; gc 5-3 = 2 taking 40-12 = 28 ms
         assertEquals(
             mapOf(
                 SdkInitAttributeKeys.INIT_CPU_PCT to "50",
@@ -61,7 +60,6 @@ internal class SdkInitResourceUsageTrackerTest {
                 SdkInitAttributeKeys.INIT_MAJ_FAULTS to "15",
                 SdkInitAttributeKeys.INIT_DISK_READ_KB to "48",
                 SdkInitAttributeKeys.INIT_GC_COUNT to "2",
-                SdkInitAttributeKeys.SECONDS_SINCE_BOOT to "5",
             ),
             tracker.buildAttributes(),
         )

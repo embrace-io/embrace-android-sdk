@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAtt
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.INIT_GC_COUNT
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.INIT_MAJ_FAULTS
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.INIT_RUN_DELAY_PCT
-import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.SECONDS_SINCE_BOOT
 import java.io.FileInputStream
 import kotlin.math.roundToLong
 
@@ -124,7 +123,6 @@ class SdkInitResourceUsageTracker(
             if (wallStart != null && wallEnd != null && wallEnd > wallStart) {
                 putSchedulingAttributes(wallMs = wallEnd - wallStart)
                 putResourceAttributes()
-                put(SECONDS_SINCE_BOOT, (wallStart / 1000L).toString())
             }
         }
     } catch (_: Throwable) {

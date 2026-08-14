@@ -1,7 +1,8 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
-import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
+import io.embrace.android.embracesdk.internal.payload.Attribute
+import io.embrace.android.embracesdk.internal.payload.Span
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -11,10 +12,10 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
 
-internal class SessionReconstructionServiceMetadataTest {
+internal class SessionReconstructionServiceSessionSpanTest {
 
     private companion object {
-        private const val METADATA_FILE_NAME = "metadata.pb"
+        private const val SESSION_SPAN_FILE_NAME = "session_span.pb"
         private const val ENVELOPE_VERSION = "0.1.0"
         private const val ENVELOPE_TYPE = "spans"
         private const val TIMESTAMP = 1726739283136L
@@ -41,7 +42,7 @@ internal class SessionReconstructionServiceMetadataTest {
     private lateinit var service: SessionReconstructionService
 
     @Volatile
-    private var metadataProvider: () -> EnvelopeMetadata = { fullyPopulatedMetadata }
+    private var spanProvider: () -> Span = { fullyPopulatedSpan }
 
     @Volatile
     private var activePart: SessionPartDirectory? = partDirectory
@@ -50,45 +51,79 @@ internal class SessionReconstructionServiceMetadataTest {
     fun setUp() {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
         logger = FakeInternalLogger(throwOnInternalError = false)
-        metadataProvider = { fullyPopulatedMetadata }
+        spanProvider = { fullyPopulatedSpan }
         activePart = partDirectory
         manifestWriter = SessionManifestWriter(lazy { sessionsDir }, logger)
-        metadataWriter = SessionMetadataWriter(lazy { sessionsDir }, { activePart }, { metadataProvider() }, logger)
+        metadataWriter = SessionMetadataWriter(lazy { sessionsDir }, { activePart }, { fullyPopulatedMetadata }, logger)
         sessionSpanWriter = SessionSpanWriter(lazy { sessionsDir }, { activePart }, logger)
         service = SessionReconstructionService(lazy { sessionsDir }, logger)
         createPartDir(partDirectory)
     }
 
     @Test
-    fun `metadata is reconstructed from the session part directory`() {
+    fun `the session span is reconstructed from the session part directory`() {
         write()
-        assertEquals(fullyPopulatedMetadata, service.reconstruct(partDirectory)?.metadata)
+        assertEquals(listOf(fullyPopulatedSpan), service.reconstruct(partDirectory)?.data?.spans)
         assertNoInternalErrors()
     }
 
     @Test
-    fun `metadata with no populated fields is reconstructed`() {
-        metadataProvider = { EnvelopeMetadata() }
+    fun `a complete session span is not reconstructed as a span snapshot`() {
         write()
-        assertEquals(EnvelopeMetadata(), service.reconstruct(partDirectory)?.metadata)
+        assertNull(service.reconstruct(partDirectory)?.data?.spanSnapshots)
         assertNoInternalErrors()
     }
 
     @Test
-    fun `the latest metadata is reconstructed after the user info changes`() {
+    fun `an incomplete session span is reconstructed as a span snapshot`() {
+        val incomplete = fullyPopulatedSpan.copy(endTimeNanos = null)
+        spanProvider = { incomplete }
         write()
-        metadataProvider = { fullyPopulatedMetadata.copy(userId = "newUserId", personas = linkedSetOf("payer")) }
-        writeMetadata()
 
-        with(checkNotNull(service.reconstruct(partDirectory)?.metadata)) {
-            assertEquals("newUserId", userId)
-            assertEquals(setOf("payer"), personas)
-        }
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(listOf(incomplete), payload.spanSnapshots)
+        assertNull(payload.spans)
         assertNoInternalErrors()
     }
 
     @Test
-    fun `each session part directory reconstructs its own metadata`() {
+    fun `a session span that ended at zero is reconstructed as a completed span`() {
+        val ended = fullyPopulatedSpan.copy(endTimeNanos = 0)
+        spanProvider = { ended }
+        write()
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(listOf(ended), payload.spans)
+        assertNull(payload.spanSnapshots)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a span with no populated fields is reconstructed as a span snapshot`() {
+        spanProvider = { Span() }
+        write()
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(listOf(Span(status = Span.Status.UNSET)), payload.spanSnapshots)
+        assertNull(payload.spans)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `the latest session span is reconstructed after its attributes change`() {
+        write()
+        val updated = fullyPopulatedSpan.copy(
+            attributes = listOf(Attribute(key = "emb.heartbeat_time_unix_nano", data = "1726739286136000000")),
+        )
+        spanProvider = { updated }
+        writeSessionSpan()
+
+        assertEquals(listOf(updated), service.reconstruct(partDirectory)?.data?.spans)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `each session part directory reconstructs its own session span`() {
         val other = SessionPartDirectory(
             timestamp = TIMESTAMP + 1,
             uuid = "d3721de2-490a-533b-cacd-36423d8b6aab",
@@ -97,72 +132,81 @@ internal class SessionReconstructionServiceMetadataTest {
         )
         createPartDir(other)
         write()
-        metadataProvider = { fullyPopulatedMetadata.copy(userId = "otherUserId") }
+        spanProvider = { fullyPopulatedSpan.copy(spanId = "aaaaaaaaaaaaaaa9") }
         write(other)
 
-        assertEquals("userId", service.reconstruct(partDirectory)?.metadata?.userId)
-        assertEquals("otherUserId", service.reconstruct(other)?.metadata?.userId)
+        assertEquals("aaaaaaaaaaaaaaa1", service.reconstruct(partDirectory)?.data?.spans?.single()?.spanId)
+        assertEquals("aaaaaaaaaaaaaaa9", service.reconstruct(other)?.data?.spans?.single()?.spanId)
         assertNoInternalErrors()
     }
 
     @Test
-    fun `missing metadata is reported`() {
+    fun `a missing session span is reported`() {
         writeManifest()
+        writeMetadata()
 
         assertNull(service.reconstruct(partDirectory))
         assertReconstructionFailureTracked()
     }
 
     @Test
-    fun `a directory occupying the metadata path is reported`() {
+    fun `a directory occupying the session span path is reported`() {
         writeManifest()
-        metadataFile().mkdirs()
+        writeMetadata()
+        sessionSpanFile().mkdirs()
 
         assertNull(service.reconstruct(partDirectory))
         assertReconstructionFailureTracked()
     }
 
     @Test
-    fun `truncated metadata is reported and does not throw`() {
+    fun `a truncated session span is reported and does not throw`() {
         write()
-        val bytes = metadataFile().readBytes()
-        metadataFile().writeBytes(bytes.copyOf(bytes.size / 2))
+        val bytes = sessionSpanFile().readBytes()
+        sessionSpanFile().writeBytes(bytes.copyOf(bytes.size / 2))
+        assertNull(service.reconstruct(partDirectory))
+        assertReconstructionFailureTracked()
+    }
+
+    @Test
+    fun `a session span holding arbitrary bytes is reported and does not throw`() {
+        write()
+        sessionSpanFile().writeBytes(byteArrayOf(-1, -1, -1, -1, -1, -1))
+        assertNull(service.reconstruct(partDirectory))
+        assertReconstructionFailureTracked()
+    }
+
+    @Test
+    fun `an empty session span file is reported`() {
+        write()
+        sessionSpanFile().writeBytes(byteArrayOf())
 
         assertNull(service.reconstruct(partDirectory))
         assertReconstructionFailureTracked()
     }
 
     @Test
-    fun `metadata holding arbitrary bytes is reported and does not throw`() {
+    fun `a session span holding no format version is reported`() {
         write()
-        metadataFile().writeBytes(byteArrayOf(-1, -1, -1, -1, -1, -1))
+        writeSessionSpanBytes(fullyPopulatedSessionSpanProto.copy(format_version = 0))
 
         assertNull(service.reconstruct(partDirectory))
         assertReconstructionFailureTracked()
     }
 
     @Test
-    fun `an empty metadata file is reported`() {
+    fun `an unsupported session span format version is reported`() {
         write()
-        metadataFile().writeBytes(byteArrayOf())
+        writeSessionSpanBytes(fullyPopulatedSessionSpanProto.copy(format_version = FORMAT_VERSION + 1))
 
         assertNull(service.reconstruct(partDirectory))
         assertReconstructionFailureTracked()
     }
 
     @Test
-    fun `metadata holding no format version is reported`() {
+    fun `a session span file holding no span is reported`() {
         write()
-        writeMetadataBytes(fullyPopulatedMetadataProto.copy(format_version = 0))
-
-        assertNull(service.reconstruct(partDirectory))
-        assertReconstructionFailureTracked()
-    }
-
-    @Test
-    fun `an unsupported metadata format version is reported`() {
-        write()
-        writeMetadataBytes(fullyPopulatedMetadataProto.copy(format_version = FORMAT_VERSION + 1))
+        writeSessionSpanBytes(SessionSpan(format_version = FORMAT_VERSION, span = null))
 
         assertNull(service.reconstruct(partDirectory))
         assertReconstructionFailureTracked()
@@ -174,8 +218,8 @@ internal class SessionReconstructionServiceMetadataTest {
     private fun partDir(directory: SessionPartDirectory = partDirectory): File =
         File(sessionsDir, directory.dirName)
 
-    private fun metadataFile(directory: SessionPartDirectory = partDirectory): File =
-        File(partDir(directory), METADATA_FILE_NAME)
+    private fun sessionSpanFile(directory: SessionPartDirectory = partDirectory): File =
+        File(partDir(directory), SESSION_SPAN_FILE_NAME)
 
     private fun write(directory: SessionPartDirectory = partDirectory) {
         writeManifest(directory)
@@ -194,11 +238,11 @@ internal class SessionReconstructionServiceMetadataTest {
 
     private fun writeSessionSpan(directory: SessionPartDirectory = partDirectory) {
         activePart = directory
-        assertTrue(sessionSpanWriter.write(fullyPopulatedSpan))
+        assertTrue(sessionSpanWriter.write(spanProvider()))
     }
 
-    private fun writeMetadataBytes(metadata: EnvelopeMetadataProto, directory: SessionPartDirectory = partDirectory) {
-        metadataFile(directory).writeBytes(EnvelopeMetadataProto.ADAPTER.encode(metadata))
+    private fun writeSessionSpanBytes(sessionSpan: SessionSpan, directory: SessionPartDirectory = partDirectory) {
+        sessionSpanFile(directory).writeBytes(SessionSpan.ADAPTER.encode(sessionSpan))
     }
 
     private fun assertNoInternalErrors() {

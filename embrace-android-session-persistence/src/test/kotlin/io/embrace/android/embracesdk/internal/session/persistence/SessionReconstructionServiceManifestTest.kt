@@ -38,6 +38,7 @@ internal class SessionReconstructionServiceManifestTest {
     private lateinit var logger: FakeInternalLogger
     private lateinit var writer: SessionManifestWriter
     private lateinit var metadataWriter: SessionMetadataWriter
+    private lateinit var sessionSpanWriter: SessionSpanWriter
     private lateinit var service: SessionReconstructionService
 
     @Volatile
@@ -50,6 +51,7 @@ internal class SessionReconstructionServiceManifestTest {
         activePart = partDirectory
         writer = SessionManifestWriter(lazy { sessionsDir }, logger)
         metadataWriter = SessionMetadataWriter(lazy { sessionsDir }, { activePart }, { fullyPopulatedMetadata }, logger)
+        sessionSpanWriter = SessionSpanWriter(lazy { sessionsDir }, { activePart }, logger)
         service = SessionReconstructionService(lazy { sessionsDir }, logger)
         createPartDir(partDirectory)
     }
@@ -73,6 +75,7 @@ internal class SessionReconstructionServiceManifestTest {
         assertTrue(writer.write(directory, resource, envelopeVersion, envelopeType, sharedLibSymbolMapping))
         activePart = directory
         assertTrue(metadataWriter.write())
+        assertTrue(sessionSpanWriter.write(fullyPopulatedSpan))
     }
 
     private fun writeManifestBytes(manifest: SessionManifest, directory: SessionPartDirectory = partDirectory) {
@@ -100,11 +103,11 @@ internal class SessionReconstructionServiceManifestTest {
     }
 
     @Test
-    fun `telemetry that is not persisted yet is absent`() {
+    fun `the session span is the only telemetry reconstructed so far`() {
         write()
 
         val envelope = checkNotNull(service.reconstruct(partDirectory))
-        assertNull(envelope.data.spans)
+        assertEquals(listOf(fullyPopulatedSpan), envelope.data.spans)
         assertNull(envelope.data.spanSnapshots)
     }
 

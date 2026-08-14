@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
-import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys
 import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupService
 import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupServiceImpl
 import io.embrace.android.embracesdk.internal.instrumentation.startup.toSdkInitDurationAttributes
@@ -47,8 +47,8 @@ internal class StartupServiceImplTest {
                 providerInvocationCount++
                 mapOf("modules-init" to 100L).toSdkInitDurationAttributes() +
                     mapOf(
-                        SdkInitResourceUsageTracker.INIT_CPU_PCT to "85",
-                        SdkInitResourceUsageTracker.INIT_RUN_DELAY_PCT to "10",
+                        SdkInitAttributeKeys.INIT_CPU_PCT to "85",
+                        SdkInitAttributeKeys.INIT_RUN_DELAY_PCT to "10",
                     )
             },
         )
@@ -66,8 +66,8 @@ internal class StartupServiceImplTest {
             assertEquals("main", attributes["thread-name"])
             assertEquals("100", attributes["modules-init-duration-ms"])
             assertEquals("3", attributes[EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER])
-            assertEquals("85", attributes[SdkInitResourceUsageTracker.INIT_CPU_PCT])
-            assertEquals("10", attributes[SdkInitResourceUsageTracker.INIT_RUN_DELAY_PCT])
+            assertEquals("85", attributes[SdkInitAttributeKeys.INIT_CPU_PCT])
+            assertEquals("10", attributes[SdkInitAttributeKeys.INIT_RUN_DELAY_PCT])
         }
         assertEquals(3, startupService.getAppVersionStartupCounter())
 

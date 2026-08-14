@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package embrace.session.persistence;
+
+option java_package = "io.embrace.android.embracesdk.internal.session.persistence";
+
+// Mirrors EnvelopeMetadata. Rewritten whenever user info changes.
+message EnvelopeMetadataProto {
+  optional string user_id = 1;
+  optional string email = 2;
+  optional string username = 3;
+
+  // a Set in the payload, so the mapper dedupes on read.
+  repeated string personas = 4;
+
+  string timezone_description = 5;
+  string locale = 6;
+}

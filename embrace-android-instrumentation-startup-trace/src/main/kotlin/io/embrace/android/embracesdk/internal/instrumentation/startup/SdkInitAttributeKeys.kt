@@ -1,5 +1,9 @@
 package io.embrace.android.embracesdk.internal.instrumentation.startup
 
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.INIT_MAJ_FAULTS
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.INIT_RUN_DELAY_PCT
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.THERMAL_STATUS
+
 /**
  * Keys of the attributes recorded on the SDK init spans to contextualize and explain
  * performance anomalies. [SdkInitResourceUsageTracker] produces the ones measured as deltas across
@@ -63,8 +67,9 @@ object SdkInitAttributeKeys {
     const val INIT_GC_COUNT: String = "init-gc-count"
 
     /**
-     * Seconds between device boot and SDK init. Small values indicate a recently rebooted
-     * device: cold caches everywhere plus post-boot system activity.
+     * Seconds of non deep-sleep time between device boot and SDK init
+     * (i.e. [android.os.SystemClock.uptimeMillis]). Small values indicate a device that has
+     * not yet had the running time to finish its post-boot work.
      */
     const val SECONDS_SINCE_BOOT: String = "seconds-since-boot"
 

@@ -17,6 +17,8 @@ internal class SdkInitEnvironmentAttributesTest {
 
     private lateinit var context: Context
 
+    private var fakeUptimeMs: Long = 45_000L
+
     @Before
     fun setUp() {
         context = ApplicationProvider.getApplicationContext()
@@ -62,6 +64,11 @@ internal class SdkInitEnvironmentAttributesTest {
     }
 
     @Test
+    fun `seconds since boot reported from awake time, not wall time since boot`() {
+        assertEquals("45", environmentAttributes()[SdkInitAttributeKeys.SECONDS_SINCE_BOOT])
+    }
+
+    @Test
     fun `low memory flag emitted only when the system reports it`() {
         val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         val memoryInfo = ActivityManager.MemoryInfo().apply {
@@ -78,6 +85,7 @@ internal class SdkInitEnvironmentAttributesTest {
         activityManagerProvider = { context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager },
         packageInfo = context.packageManager.getPackageInfo(context.packageName, 0),
         nowMs = NOW_MS,
+        uptimeMs = { fakeUptimeMs },
     )
 
     private companion object {

@@ -75,6 +75,14 @@ internal class SessionMetadataWriterTest {
     }
 
     @Test
+    fun `the format version is persisted even when nothing else is populated`() {
+        metadataProvider = { EnvelopeMetadata() }
+        write()
+
+        assertEquals(FORMAT_VERSION, readMetadata().format_version)
+    }
+
+    @Test
     fun `null user fields are persisted as absent`() {
         metadataProvider = { EnvelopeMetadata(timezoneDescription = "Europe/London", locale = "en_GB") }
         write()

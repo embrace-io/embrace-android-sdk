@@ -12,6 +12,7 @@ internal val fullyPopulatedMetadata = EnvelopeMetadata(
 )
 
 internal val fullyPopulatedMetadataProto = EnvelopeMetadataProto(
+    format_version = FORMAT_VERSION,
     user_id = "userId",
     email = "email@example.com",
     username = "username",

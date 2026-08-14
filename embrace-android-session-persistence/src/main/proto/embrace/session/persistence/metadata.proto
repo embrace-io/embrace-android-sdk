@@ -6,13 +6,15 @@ option java_package = "io.embrace.android.embracesdk.internal.session.persistenc
 
 // Mirrors EnvelopeMetadata. Rewritten whenever user info changes.
 message EnvelopeMetadataProto {
-  optional string user_id = 1;
-  optional string email = 2;
-  optional string username = 3;
+  uint32 format_version = 1;
+
+  optional string user_id = 2;
+  optional string email = 3;
+  optional string username = 4;
 
   // a Set in the payload, so the mapper dedupes on read.
-  repeated string personas = 4;
+  repeated string personas = 5;
 
-  string timezone_description = 5;
-  string locale = 6;
+  string timezone_description = 6;
+  string locale = 7;
 }

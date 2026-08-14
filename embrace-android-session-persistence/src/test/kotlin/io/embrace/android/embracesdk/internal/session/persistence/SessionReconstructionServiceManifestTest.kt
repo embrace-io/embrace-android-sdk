@@ -37,13 +37,19 @@ internal class SessionReconstructionServiceManifestTest {
     private lateinit var sessionsDir: File
     private lateinit var logger: FakeInternalLogger
     private lateinit var writer: SessionManifestWriter
+    private lateinit var metadataWriter: SessionMetadataWriter
     private lateinit var service: SessionReconstructionService
+
+    @Volatile
+    private var activePart: SessionPartDirectory? = partDirectory
 
     @Before
     fun setUp() {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
         logger = FakeInternalLogger(throwOnInternalError = false)
+        activePart = partDirectory
         writer = SessionManifestWriter(lazy { sessionsDir }, logger)
+        metadataWriter = SessionMetadataWriter(lazy { sessionsDir }, { activePart }, { fullyPopulatedMetadata }, logger)
         service = SessionReconstructionService(lazy { sessionsDir }, logger)
         createPartDir(partDirectory)
     }
@@ -65,6 +71,8 @@ internal class SessionReconstructionServiceManifestTest {
         sharedLibSymbolMapping: Map<String, String>? = null,
     ) {
         assertTrue(writer.write(directory, resource, envelopeVersion, envelopeType, sharedLibSymbolMapping))
+        activePart = directory
+        assertTrue(metadataWriter.write())
     }
 
     private fun writeManifestBytes(manifest: SessionManifest, directory: SessionPartDirectory = partDirectory) {
@@ -96,7 +104,6 @@ internal class SessionReconstructionServiceManifestTest {
         write()
 
         val envelope = checkNotNull(service.reconstruct(partDirectory))
-        assertNull(envelope.metadata)
         assertNull(envelope.data.spans)
         assertNull(envelope.data.spanSnapshots)
     }

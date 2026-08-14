@@ -28,6 +28,15 @@ object SdkInitAttributeKeys {
      * while init waited. Bench-measured as the strongest single correlate of slow inits -
      * a high value means "the device was busy", which is diagnostic (not our code) and
      * should be excluded from regression comparisons.
+     *
+     * This is the only CPU-contention signal available to us, so do not expect to corroborate it
+     * with a device-wide one. The kernel's PSI counters (/proc/pressure/cpu) are the obvious
+     * candidate and are unreachable: AOSP labels them with their own SELinux types and grants read
+     * access to lmkd and system_server only - no app domain has it, on any Android version since
+     * the types were introduced in Android 10. An attribute reading them was implemented, measured
+     * across 12 launches on 4 devices spanning API 29-35 and two vendors, populated zero times,
+     * and removed. Note that it reads fine from `adb shell`, whose domain has broad legacy /proc
+     * access an app never gets - so verify any such idea with `run-as <pkg>`, never a plain shell.
      */
     const val INIT_RUN_DELAY_PCT: String = "init-run-delay-pct"
 
@@ -105,13 +114,4 @@ object SdkInitAttributeKeys {
      * and the OS is actively reclaiming memory. The presence of this indicates memory pressure.
      */
     const val LOW_MEMORY: String = "low-memory"
-
-    /**
-     * The kernel's Pressure Stall Information indicating that there is some CPU pressure over the
-     * last 10 seconds on the device, as reported in /proc/pressure/cpu, rounded to a whole
-     * percentage. Corroborates a high run-delay reading with a device-wide view that its CPUs
-     * have been busy. Not always available, so the absence of this should not be seen as
-     * evidence, but the presence is.
-     */
-    const val PSI_CPU_SOME_AVG10: String = "psi-cpu-some-avg10"
 }

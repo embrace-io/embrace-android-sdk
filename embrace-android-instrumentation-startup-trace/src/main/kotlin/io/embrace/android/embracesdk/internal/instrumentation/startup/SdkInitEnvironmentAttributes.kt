@@ -6,14 +6,12 @@ import android.os.Build.VERSION_CODES
 import android.os.PowerManager
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.LOW_MEMORY
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.MEM_AVAILABLE_PCT
-import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.PSI_CPU_SOME_AVG10
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.SECONDS_SINCE_INSTALL
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.SECONDS_SINCE_UPDATE
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.THERMAL_HEADROOM_PCT
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.THERMAL_STATUS
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import java.io.File
 import kotlin.math.roundToLong
 
 /**
@@ -39,7 +37,6 @@ fun sdkInitEnvironmentAttributes(
         putThermalAttributes(powerManagerProvider, versionChecker)
         putInstallRecencyAttributes(packageInfo, nowMs)
         putMemoryAttributes(activityManagerProvider)
-        psiCpuSomeAvg10()?.let { put(PSI_CPU_SOME_AVG10, it) }
     }
 } catch (_: Throwable) {
     emptyMap()
@@ -103,21 +100,6 @@ private fun secondsBetween(thenMs: Long, nowMs: Long): Long? = if (thenMs in 1..
 } else {
     null
 }
-
-/**
- * First line of /proc/pressure/cpu looks like "some avg10=1.23 avg60=0.80 avg300=0.40 total=…".
- */
-private fun psiCpuSomeAvg10(): String? = runCatching {
-    File("/proc/pressure/cpu")
-        .readText()
-        .lineSequence()
-        .firstOrNull { it.startsWith("some") }
-        ?.substringAfter("avg10=")
-        ?.substringBefore(' ')
-        ?.toDoubleOrNull()
-        ?.roundToLong()
-        ?.toString()
-}.getOrNull()
 
 /**
  * At and beyond the severe-throttling threshold the headroom scale is not calibrated across

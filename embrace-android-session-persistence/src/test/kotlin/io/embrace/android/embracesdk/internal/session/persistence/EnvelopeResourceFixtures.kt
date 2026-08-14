@@ -1,0 +1,73 @@
+package io.embrace.android.embracesdk.internal.session.persistence
+
+import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
+
+/**
+ * An [EnvelopeResource] with every property populated, and its expected protobuf equivalent.
+ */
+internal val fullyPopulatedResource = EnvelopeResource(
+    appVersion = "appVersion",
+    appFramework = AppFramework.UNITY,
+    buildId = "buildId",
+    appEcosystemId = "appEcosystemId",
+    buildType = "buildType",
+    buildFlavor = "buildFlavor",
+    environment = "environment",
+    bundleVersion = "bundleVersion",
+    sdkVersion = "sdkVersion",
+    sdkSimpleVersion = 53,
+    reactNativeBundleId = "reactNativeBundleId",
+    reactNativeVersion = "reactNativeVersion",
+    javascriptPatchNumber = "javascriptPatchNumber",
+    hostedPlatformVersion = "hostedPlatformVersion",
+    hostedSdkVersion = "hostedSdkVersion",
+    unityBuildId = "unityBuildId",
+    deviceManufacturer = "deviceManufacturer",
+    deviceModel = "deviceModel",
+    deviceArchitecture = "deviceArchitecture",
+    jailbroken = true,
+    diskTotalCapacity = 123456789L,
+    osType = "osType",
+    osName = "osName",
+    osVersion = "osVersion",
+    osCode = "osCode",
+    screenResolution = "screenResolution",
+    numCores = 8,
+    usesEmmcStorage = true,
+    deviceSocModel = "deviceSocModel",
+    extras = mapOf("custom.key" to "custom.value", "other.key" to "other.value"),
+)
+
+internal val fullyPopulatedResourceProto = EnvelopeResourceProto(
+    app_version = "appVersion",
+    app_framework = EnvelopeResourceProto.AppFramework.UNITY,
+    build_id = "buildId",
+    app_ecosystem_id = "appEcosystemId",
+    build_type = "buildType",
+    build_flavor = "buildFlavor",
+    environment = "environment",
+    bundle_version = "bundleVersion",
+    sdk_version = "sdkVersion",
+    sdk_simple_version = 53,
+    react_native_bundle_id = "reactNativeBundleId",
+    react_native_version = "reactNativeVersion",
+    javascript_patch_number = "javascriptPatchNumber",
+    hosted_platform_version = "hostedPlatformVersion",
+    hosted_sdk_version = "hostedSdkVersion",
+    unity_build_id = "unityBuildId",
+    device_manufacturer = "deviceManufacturer",
+    device_model = "deviceModel",
+    device_architecture = "deviceArchitecture",
+    jailbroken = true,
+    disk_total_capacity = 123456789L,
+    os_type = "osType",
+    os_name = "osName",
+    os_version = "osVersion",
+    os_code = "osCode",
+    screen_resolution = "screenResolution",
+    num_cores = 8,
+    uses_emmc_storage = true,
+    device_soc_model = "deviceSocModel",
+    extras = mapOf("custom.key" to "custom.value", "other.key" to "other.value"),
+)

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.startup
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Test
 
@@ -9,6 +10,9 @@ internal class SdkInitResourceUsageTrackerTest {
     private lateinit var cpuTimesMs: ArrayDeque<Long>
     private lateinit var wallTimesMs: ArrayDeque<Long>
     private lateinit var schedstatContents: ArrayDeque<ByteArray?>
+    private lateinit var procStatContents: ArrayDeque<ByteArray?>
+    private lateinit var procIoContents: ArrayDeque<ByteArray?>
+    private lateinit var runtimeStats: MutableMap<String, ArrayDeque<String?>>
     private lateinit var readPaths: MutableList<String>
 
     @Before
@@ -22,25 +26,69 @@ internal class SdkInitResourceUsageTrackerTest {
                 "800000000 12000000 150\n".toByteArray(),
             ),
         )
+        // comm "(fake app) 1)" deliberately contains a space and an extra ')' so field counting
+        // must start after the LAST paren; majflt (field 12) is 40 -> 55
+        procStatContents = ArrayDeque(
+            listOf(
+                "123 (fake app) 1) S 1 2 3 4 5 6 100 200 40 0 30 10".toByteArray(),
+                "123 (fake app) 1) S 1 2 3 4 5 6 150 300 55 0 60 20".toByteArray(),
+            ),
+        )
+        procIoContents = ArrayDeque(
+            listOf(
+                "rchar: 900\nwchar: 100\nsyscr: 5\nsyscw: 2\nread_bytes: 4096\nwrite_bytes: 0\n".toByteArray(),
+                "rchar: 9000\nwchar: 400\nsyscr: 15\nsyscw: 4\nread_bytes: 53248\nwrite_bytes: 0\n".toByteArray(),
+            ),
+        )
+        runtimeStats = mutableMapOf(
+            "art.gc.gc-count" to ArrayDeque(listOf("3", "5")),
+        )
         readPaths = mutableListOf()
     }
 
     @Test
-    fun `cpu and run delay reported as whole percentages of the captured window`() {
+    fun `window metrics reported from captured deltas`() {
         val tracker = createTracker()
         tracker.captureStart()
         tracker.captureEnd()
-        // window = 60 ms wall
-        // cpu delta = 30 ms
-        // run delay = 7 ms
+        // window = 60 ms wall; cpu delta = 30 ms -> 50%; run delay = 7 ms -> 12%;
+        // majflt 55-40 = 15; read_bytes delta 49152 B -> 48 KB; gc 5-3 = 2 taking 40-12 = 28 ms;
+        // wall start 5000 ms since boot -> 5 s
         assertEquals(
             mapOf(
-                SdkInitResourceUsageTracker.INIT_CPU_PCT to "50",
-                SdkInitResourceUsageTracker.INIT_RUN_DELAY_PCT to "12",
+                SdkInitAttributeKeys.INIT_CPU_PCT to "50",
+                SdkInitAttributeKeys.INIT_RUN_DELAY_PCT to "12",
+                SdkInitAttributeKeys.INIT_MAJ_FAULTS to "15",
+                SdkInitAttributeKeys.INIT_DISK_READ_KB to "48",
+                SdkInitAttributeKeys.INIT_GC_COUNT to "2",
+                SdkInitAttributeKeys.SECONDS_SINCE_BOOT to "5",
             ),
             tracker.buildAttributes(),
         )
-        assertEquals(listOf(SCHEDSTAT_PATH, SCHEDSTAT_PATH), readPaths)
+        assertEquals(listOf(SCHEDSTAT_PATH, SCHEDSTAT_PATH), readPaths.filter { it.endsWith("schedstat") })
+    }
+
+    @Test
+    fun `missing proc stat only drops major faults`() {
+        procStatContents = ArrayDeque(listOf(null, null))
+        val tracker = createTracker()
+        tracker.captureStart()
+        tracker.captureEnd()
+        val attributes = tracker.buildAttributes()
+        assertFalse(attributes.containsKey(SdkInitAttributeKeys.INIT_MAJ_FAULTS))
+        assertEquals("50", attributes[SdkInitAttributeKeys.INIT_CPU_PCT])
+        assertEquals("48", attributes[SdkInitAttributeKeys.INIT_DISK_READ_KB])
+    }
+
+    @Test
+    fun `missing runtime stats only drops GC count`() {
+        runtimeStats = mutableMapOf()
+        val tracker = createTracker()
+        tracker.captureStart()
+        tracker.captureEnd()
+        val attributes = tracker.buildAttributes()
+        assertFalse(attributes.containsKey(SdkInitAttributeKeys.INIT_GC_COUNT))
+        assertEquals("50", attributes[SdkInitAttributeKeys.INIT_CPU_PCT])
     }
 
     @Test
@@ -49,10 +97,9 @@ internal class SdkInitResourceUsageTrackerTest {
         val tracker = createTracker()
         tracker.captureStart()
         tracker.captureEnd()
-        assertEquals(
-            mapOf(SdkInitResourceUsageTracker.INIT_CPU_PCT to "50"),
-            tracker.buildAttributes(),
-        )
+        val attributes = tracker.buildAttributes()
+        assertFalse(attributes.containsKey(SdkInitAttributeKeys.INIT_RUN_DELAY_PCT))
+        assertEquals("50", attributes[SdkInitAttributeKeys.INIT_CPU_PCT])
     }
 
     @Test
@@ -61,10 +108,9 @@ internal class SdkInitResourceUsageTrackerTest {
         val tracker = createTracker()
         tracker.captureStart()
         tracker.captureEnd()
-        assertEquals(
-            mapOf(SdkInitResourceUsageTracker.INIT_CPU_PCT to "50"),
-            tracker.buildAttributes(),
-        )
+        val attributes = tracker.buildAttributes()
+        assertFalse(attributes.containsKey(SdkInitAttributeKeys.INIT_RUN_DELAY_PCT))
+        assertEquals("50", attributes[SdkInitAttributeKeys.INIT_CPU_PCT])
     }
 
     @Test
@@ -72,10 +118,9 @@ internal class SdkInitResourceUsageTrackerTest {
         val tracker = createTracker(procFileReader = { error("SELinux says no") })
         tracker.captureStart()
         tracker.captureEnd()
-        assertEquals(
-            mapOf(SdkInitResourceUsageTracker.INIT_CPU_PCT to "50"),
-            tracker.buildAttributes(),
-        )
+        val attributes = tracker.buildAttributes()
+        assertFalse(attributes.containsKey(SdkInitAttributeKeys.INIT_RUN_DELAY_PCT))
+        assertEquals("50", attributes[SdkInitAttributeKeys.INIT_CPU_PCT])
     }
 
     @Test
@@ -89,7 +134,7 @@ internal class SdkInitResourceUsageTrackerTest {
         val tracker = createTracker()
         tracker.captureStart()
         tracker.captureEnd()
-        assertEquals("20", tracker.buildAttributes()[SdkInitResourceUsageTracker.INIT_RUN_DELAY_PCT])
+        assertEquals("20", tracker.buildAttributes()[SdkInitAttributeKeys.INIT_RUN_DELAY_PCT])
     }
 
     @Test
@@ -103,7 +148,7 @@ internal class SdkInitResourceUsageTrackerTest {
         val tracker = createTracker()
         tracker.captureStart()
         tracker.captureEnd()
-        assertEquals("12", tracker.buildAttributes()[SdkInitResourceUsageTracker.INIT_RUN_DELAY_PCT])
+        assertEquals("12", tracker.buildAttributes()[SdkInitAttributeKeys.INIT_RUN_DELAY_PCT])
     }
 
     @Test
@@ -112,10 +157,9 @@ internal class SdkInitResourceUsageTrackerTest {
         val tracker = createTracker()
         tracker.captureStart()
         tracker.captureEnd()
-        assertEquals(
-            mapOf(SdkInitResourceUsageTracker.INIT_CPU_PCT to "50"),
-            tracker.buildAttributes(),
-        )
+        val attributes = tracker.buildAttributes()
+        assertFalse(attributes.containsKey(SdkInitAttributeKeys.INIT_RUN_DELAY_PCT))
+        assertEquals("50", attributes[SdkInitAttributeKeys.INIT_CPU_PCT])
     }
 
     @Test
@@ -130,7 +174,7 @@ internal class SdkInitResourceUsageTrackerTest {
         val tracker = createTracker()
         tracker.captureStart()
         tracker.captureEnd()
-        assertEquals("20", tracker.buildAttributes()[SdkInitResourceUsageTracker.INIT_RUN_DELAY_PCT])
+        assertEquals("20", tracker.buildAttributes()[SdkInitAttributeKeys.INIT_RUN_DELAY_PCT])
     }
 
     @Test
@@ -140,7 +184,9 @@ internal class SdkInitResourceUsageTrackerTest {
         val tracker = createTracker()
         tracker.captureStart()
         tracker.captureEnd()
-        assertEquals(emptyMap<String, String>(), tracker.buildAttributes())
+        val attributes = tracker.buildAttributes()
+        assertFalse(attributes.containsKey(SdkInitAttributeKeys.INIT_CPU_PCT))
+        assertFalse(attributes.containsKey(SdkInitAttributeKeys.INIT_RUN_DELAY_PCT))
     }
 
     @Test
@@ -160,13 +206,19 @@ internal class SdkInitResourceUsageTrackerTest {
     private fun createTracker(
         procFileReader: (String) -> ByteArray? = { path ->
             readPaths.add(path)
-            schedstatContents.removeFirst()
+            when {
+                path.endsWith("schedstat") -> schedstatContents.removeFirst()
+                path.endsWith("/stat") -> procStatContents.removeFirst()
+                path.endsWith("/io") -> procIoContents.removeFirst()
+                else -> null
+            }
         },
     ) = SdkInitResourceUsageTracker(
         threadCpuTimeMs = { cpuTimesMs.removeFirst() },
         elapsedRealtimeMs = { wallTimesMs.removeFirst() },
         schedstatPathProvider = { SCHEDSTAT_PATH },
         procFileReader = procFileReader,
+        runtimeStatReader = { statName -> runtimeStats[statName]?.removeFirstOrNull() },
     )
 
     private companion object {

@@ -1,10 +1,19 @@
 package io.embrace.android.embracesdk.internal.instrumentation.startup
 
+import android.app.ActivityManager
 import android.content.pm.PackageInfo
 import android.os.Build.VERSION_CODES
 import android.os.PowerManager
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.LOW_MEMORY
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.MEM_AVAILABLE_PCT
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.PSI_CPU_SOME_AVG10
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.SECONDS_SINCE_INSTALL
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.SECONDS_SINCE_UPDATE
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.THERMAL_HEADROOM_PCT
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.THERMAL_STATUS
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import java.io.File
 import kotlin.math.roundToLong
 
 /**
@@ -21,67 +30,62 @@ import kotlin.math.roundToLong
  */
 fun sdkInitEnvironmentAttributes(
     powerManagerProvider: () -> PowerManager?,
+    activityManagerProvider: () -> ActivityManager?,
     packageInfo: PackageInfo?,
     nowMs: Long,
     versionChecker: VersionChecker = BuildVersionChecker,
 ): Map<String, String> = try {
     buildMap {
-        if (versionChecker.isAtLeast(VERSION_CODES.Q)) {
-            val powerManager = powerManagerProvider()
-            if (powerManager != null) {
-                put(THERMAL_STATUS_ATTR, thermalStatusName(powerManager.currentThermalStatus))
-                if (versionChecker.isAtLeast(VERSION_CODES.R)) {
-                    val headroom = runCatching { powerManager.getThermalHeadroom(0) }.getOrNull()
-                    if (headroom != null && headroom.isFinite()) {
-                        val headroomPct = (headroom * 100).roundToLong().coerceAtMost(MAX_THERMAL_HEADROOM_PCT)
-                        put(THERMAL_HEADROOM_PCT_ATTR, headroomPct.toString())
-                    }
-                }
-            }
-        }
-        if (packageInfo != null) {
-            secondsBetween(packageInfo.firstInstallTime, nowMs)?.let { seconds ->
-                put(SECONDS_SINCE_INSTALL_ATTR, seconds.toString())
-            }
-            secondsBetween(packageInfo.lastUpdateTime, nowMs)?.let { seconds ->
-                put(SECONDS_SINCE_UPDATE_ATTR, seconds.toString())
-            }
-        }
+        putThermalAttributes(powerManagerProvider, versionChecker)
+        putInstallRecencyAttributes(packageInfo, nowMs)
+        putMemoryAttributes(activityManagerProvider)
+        psiCpuSomeAvg10()?.let { put(PSI_CPU_SOME_AVG10, it) }
     }
 } catch (_: Throwable) {
     emptyMap()
 }
 
-/**
- * The device's overall thermal throttling status at record time, as reported by
- * [PowerManager.getCurrentThermalStatus] (API 29+): none/light/moderate/severe/critical/
- * emergency/shutdown.
- */
-const val THERMAL_STATUS_ATTR: String = "thermal-status"
+private fun MutableMap<String, String>.putThermalAttributes(
+    powerManagerProvider: () -> PowerManager?,
+    versionChecker: VersionChecker,
+) {
+    if (versionChecker.isAtLeast(VERSION_CODES.Q)) {
+        val powerManager = powerManagerProvider() ?: return
+        put(THERMAL_STATUS, thermalStatusName(powerManager.currentThermalStatus))
+        if (versionChecker.isAtLeast(VERSION_CODES.R)) {
+            val headroom = runCatching { powerManager.getThermalHeadroom(0) }.getOrNull()
+            if (headroom != null && headroom.isFinite()) {
+                val headroomPct = (headroom * 100).roundToLong().coerceAtMost(MAX_THERMAL_HEADROOM_PCT)
+                put(THERMAL_HEADROOM_PCT, headroomPct.toString())
+            }
+        }
+    }
+}
 
-/**
- * How far the device's thermal forecast is toward the severe-throttling threshold, as a whole
- * percentage per [PowerManager.getThermalHeadroom] (API 30+). Note the polarity: 100 means AT
- * or beyond the severe-throttling threshold and low values mean cool. Forecasts beyond severe
- * are capped into the single 100 group - the headroom scale is uncalibrated up there, and
- * [THERMAL_STATUS_ATTR]'s severe/critical/emergency/shutdown levels are the calibrated signal
- * for that region. Omitted where the device does not support forecasting.
- */
-const val THERMAL_HEADROOM_PCT_ATTR: String = "thermal-headroom-pct"
+private fun MutableMap<String, String>.putInstallRecencyAttributes(packageInfo: PackageInfo?, nowMs: Long) {
+    if (packageInfo != null) {
+        secondsBetween(packageInfo.firstInstallTime, nowMs)?.let { seconds ->
+            put(SECONDS_SINCE_INSTALL, seconds.toString())
+        }
+        secondsBetween(packageInfo.lastUpdateTime, nowMs)?.let { seconds ->
+            put(SECONDS_SINCE_UPDATE, seconds.toString())
+        }
+    }
+}
 
-/**
- * Seconds between the app's first install and SDK init. Small values indicate init ran close
- * to when install happened, when there could be more concurrent work vying for CPU and RAM,
- * like dexopt or app-specific tasks.
- */
-const val SECONDS_SINCE_INSTALL_ATTR: String = "seconds-since-install"
-
-/**
- * Seconds between the app's last update and SDK init. Small values indicate init ran close
- * to when app update happened, when there could be similar factors to slow down init we see
- * in fresh installs, as well as post-update tasks like DB migrations.
- */
-const val SECONDS_SINCE_UPDATE_ATTR: String = "seconds-since-update"
+private fun MutableMap<String, String>.putMemoryAttributes(activityManagerProvider: () -> ActivityManager?) {
+    val memoryInfo = runCatching {
+        activityManagerProvider()?.let { activityManager ->
+            ActivityManager.MemoryInfo().also(activityManager::getMemoryInfo)
+        }
+    }.getOrNull()
+    if (memoryInfo != null && memoryInfo.totalMem > 0) {
+        put(MEM_AVAILABLE_PCT, (100.0 * memoryInfo.availMem / memoryInfo.totalMem).roundToLong().toString())
+        if (memoryInfo.lowMemory) {
+            put(LOW_MEMORY, "true")
+        }
+    }
+}
 
 private fun thermalStatusName(status: Int): String = when (status) {
     PowerManager.THERMAL_STATUS_NONE -> "none"
@@ -99,6 +103,21 @@ private fun secondsBetween(thenMs: Long, nowMs: Long): Long? = if (thenMs in 1..
 } else {
     null
 }
+
+/**
+ * First line of /proc/pressure/cpu looks like "some avg10=1.23 avg60=0.80 avg300=0.40 total=…".
+ */
+private fun psiCpuSomeAvg10(): String? = runCatching {
+    File("/proc/pressure/cpu")
+        .readText()
+        .lineSequence()
+        .firstOrNull { it.startsWith("some") }
+        ?.substringAfter("avg10=")
+        ?.substringBefore(' ')
+        ?.toDoubleOrNull()
+        ?.roundToLong()
+        ?.toString()
+}.getOrNull()
 
 /**
  * At and beyond the severe-throttling threshold the headroom scale is not calibrated across

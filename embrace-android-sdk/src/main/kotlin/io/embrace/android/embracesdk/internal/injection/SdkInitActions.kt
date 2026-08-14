@@ -220,6 +220,9 @@ internal fun ModuleGraph.markSdkInitComplete(sdkInitDurations: Map<String, Long>
                 sdkInitDurations.toSdkInitDurationAttributes() +
                     resourceUsageTracker.buildAttributes() +
                     sdkInitEnvironmentAttributes(
+                        activityManagerProvider = {
+                            instrumentationModule.instrumentationArgs.systemService(Context.ACTIVITY_SERVICE)
+                        },
                         powerManagerProvider = {
                             instrumentationModule.instrumentationArgs.systemService(Context.POWER_SERVICE)
                         },

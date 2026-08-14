@@ -15,8 +15,11 @@ import json
 import pathlib
 import statistics
 import subprocess
+import sys
+import tempfile
 
-TP = pathlib.Path(__file__).parent / "trace_processor"
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "_shared"))
+from tooling import ensure_trace_processor  # noqa: E402  (path set above)
 
 WINDOW_SQL = """
 WITH win AS (
@@ -28,11 +31,11 @@ SELECT (SELECT dur / 1e6 FROM win) AS window_ms;
 """
 
 
-def query_one(trace, sql_text):
+def query_one(tp, trace, sql_text):
     """Run one query against one trace; returns the first numeric value or None."""
-    qf = pathlib.Path("/tmp/vfm_q.sql")
+    qf = pathlib.Path(tempfile.gettempdir()) / "vfm_q.sql"
     qf.write_text(sql_text)
-    cp = subprocess.run([str(TP), "-q", str(qf), str(trace)],
+    cp = subprocess.run([str(tp), "-q", str(qf), str(trace)],
                         capture_output=True, text=True, timeout=600)
     for line in reversed(cp.stdout.strip().splitlines()):
         val = line.strip().strip('"')
@@ -43,12 +46,12 @@ def query_one(trace, sql_text):
     return None
 
 
-def cell_windows(cell_dir, slice_name):
+def cell_windows(tp, cell_dir, slice_name):
     """Per-pass lists of window values, so pass-state stays visible instead of pooled away."""
     passes = {}
     for trace in sorted(cell_dir.rglob("*.perfetto-trace")):
         pass_key = next((p for p in trace.parts if p.startswith("pass")), trace.parent.name)
-        val = query_one(trace, WINDOW_SQL.format(slice=slice_name))
+        val = query_one(tp, trace, WINDOW_SQL.format(slice=slice_name))
         if val:
             passes.setdefault(pass_key, []).append(val)
     return passes
@@ -73,14 +76,16 @@ def main():
     ap.add_argument("run_dir")
     ap.add_argument("--slice", default="app-embrace-start")
     ap.add_argument("--json")
+    ap.add_argument("--trace-processor", help="explicit path; otherwise the shared pinned cache")
     args = ap.parse_args()
 
+    tp = ensure_trace_processor(args.trace_processor)
     run_dir = pathlib.Path(args.run_dir)
     cells = {}
     for state_file in sorted(run_dir.rglob("cell-state.json")):
         state = json.loads(state_file.read_text())
         cell = state["cell"]
-        summary = summarize(cell_windows(state_file.parent, args.slice))
+        summary = summarize(cell_windows(tp, state_file.parent, args.slice))
         if summary is None:
             print(f"SKIP {cell['id']}: no window values ({args.slice} missing?)")
             continue

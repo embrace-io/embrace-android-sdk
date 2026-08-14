@@ -13,8 +13,8 @@ starts. The **reference cell** fixes every factor at its prod-representative lev
 | CPU contention | quiet | isolates SDK cost from environment |
 | thermal | cool (device-specific gate) | removes the largest environmental modifier |
 | memory | normal (no induced pressure) | avoids a hard-to-control confound |
-| build type | benchmark (profileable, non-debuggable) | matches what users run; debug is up to ~8x slower |
-| device | A14 primary; P7P and A01 as tier replication | A14 is the volume-representative mid/entry tier |
+| build type | benchmark (profileable, non-debuggable) | matches what users run; debug builds can be several times slower and never AOT-compile |
+| device | one primary device, others as tier replication | pick the primary to be volume-representative of your app's users, not the newest handset you own |
 
 Everything reported as "version X vs version Y" comes from this cell. If you change the
 reference cell, every historical comparison in the docs becomes incomparable — treat it as a
@@ -34,13 +34,34 @@ question you can state in one sentence.
 **Do not** run full factorial. If a suspected interaction matters enough to need it, run the 2x2
 for that pair only (4 cells) and say why.
 
+## Choosing your device set
+
+The matrix is only as interpretable as the devices under it. Choose deliberately rather than
+using whatever is on the desk, and record each device's profile (`api_level`, `tier`, `vendor`,
+`soc_family`, `ram_class`) in the plan — the profile travels with every result and is what makes
+runs comparable across time, machines, and people.
+
+- **Minimum**: one device. It answers "did this version change on this device", nothing more.
+- **Recommended**: three, spanning **tier** (include one entry/low-RAM device — outlier classes
+  like memory pressure and GC competition are tier-specific, and that is where user pain
+  concentrates), **vendor** (install-time compile policy and thermal governors are OEM
+  decisions), and **ART generation** (AOT/JIT trade-offs shift between Android releases, so a
+  compile-state finding on one generation may not hold on another).
+- **Practical floor**: API 29, below which a profileable non-debuggable target cannot be traced.
+- Physical devices only; emulator clocks, scheduling, and IO are host artefacts.
+
+What each missing axis costs you: single-vendor sets cannot separate OEM policy from silicon;
+single-tier sets cannot tell you whether a regression matters where users actually feel it;
+single-generation sets cannot tell you whether a compile-state effect will survive the next
+Android release.
+
 ## Combinations that DO make sense beyond OFAT
 
 Three deliberate multi-factor cells, because each represents a real user population rather than
 an experimental convenience:
 
-1. **Worst realistic case** — no profile + fresh-install first launch + entry-tier device (A01).
-   This is a real first-run on a sideloaded/entry device and it is where the tail lives.
+1. **Worst realistic case** — no profile + fresh-install first launch, on your entry-tier device.
+   This is a real first run on a low-end or sideloaded install, and it is where the tail lives.
 2. **Prod-typical heavy app** — baseline profile + heavy app + settled. Most real hosts do
    substantial work in `Application.onCreate`; this measures the SDK's cost *in company*.
 3. **Bad day** — profile + settled + hot + contention. Answers "when the device is already
@@ -51,11 +72,15 @@ delta is interpretable even though several dimensions moved.
 
 ## Budgets and the priority ladder
 
-Per-cell wall clock on the A14, benchmark build: 200 launches x ~8 s + pass overhead + cool
-gates ~= **35-45 min**. Entry-tier devices (A01) run ~2-3x slower per launch: budget ~90 min.
+Per-cell wall clock on a mid-tier device, benchmark build: 200 launches plus pass overhead and
+cool gates lands around **35-45 min**. Entry-tier devices run several times slower per launch —
+budget roughly double to triple. Calibrate from your own first cell; `matrix_plan.py` prints an
+estimate from the tier you declare, purely so you do not plan 20 h of cells into an 8 h window.
 
-A realistic night (8 h unattended) is therefore **10-12 A14 cells**, or 5-6 on the A01. Plan in
-nights, and never shrink 4x50 to fit — shrink the cell count.
+Plan in nights, and never shrink the run shape to fit — shrink the cell count. Cutting passes is
+the one economy that cannot be recovered in analysis: it lowers the ceiling on what any test can
+resolve, so a shrunken cell may be unable to answer its own question no matter how the data is
+treated afterwards.
 
 Ladder (each rung is a night, each depends on the previous):
 
@@ -67,34 +92,29 @@ Ladder (each rung is a night, each depends on the previous):
 3. **App-weight factor at 3 anchors** (3 cells) — requires the heavy app variant to exist
    (see factors.md); this is the "is our cost still small in a real app" question.
 4. **Contention and thermal at HEAD + oldest** (4 cells) — degradation-under-stress comparison.
-5. **The three deliberate combos** (3 cells) + tier replication of the reference sweep on P7P
-   and A01 for the versions that matter most.
+5. **The three deliberate combos** (3 cells) + tier replication of the reference sweep on your
+   other devices, for the versions that matter most.
 
 ## Plan file schema
 
-`matrix_plan.py` reads a JSON plan:
+`matrix_plan.py` reads a JSON plan — copy `plan-example.json` and fill in your own devices.
+Required keys: `run_id`, `primary_device` (a key into `devices`), `devices` (each with a serial
+plus its profile), `passes`, `iterations`, `reference`, `versions`, `anchors`. Optional:
+`factor_levels`, `combos` (each may name a different `device`), `build_type`,
+`night_budget_hours`.
+
+Each `devices` entry carries the profile, not just a serial:
 
 ```json
-{
-  "run_id": "vfm-2026-08-20",
-  "device": {"name": "a14", "serial": "R58W211D4ZD", "cool_gate_c": 32.0},
-  "passes": 4,
-  "iterations": 50,
-  "build_type": "benchmark",
-  "reference": {"compile": "profile", "install": "settled", "app": "light",
-                 "contention": "quiet", "thermal": "cool", "memory": "normal"},
-  "versions": ["6.14.0", "7.5.0", "7.9.3", "8.3.0", "9.1.0", "local"],
-  "anchors": ["6.14.0", "8.3.0", "local"],
-  "factor_levels": {"compile": ["none"], "install": ["fresh"], "contention": ["hog8"]},
-  "combos": [
-    {"id": "worst-realistic", "version": "local",
-     "levels": {"compile": "none", "install": "fresh"}, "device": "a01"}
-  ]
-}
+"mid": {"serial": "<from adb devices -l>", "api_level": 34, "tier": "mid",
+        "vendor": "<oem>", "soc_family": "<from device_probe.py>",
+        "ram_class": "4-6GB", "cool_gate_c": 32.0}
 ```
 
-`"local"` means the working-tree SDK published to mavenLocal; the runner records the resolved
-version string and the repo HEAD sha for provenance.
+The planner warns when a profile field is blank, because a result without a profile cannot be
+compared to anything later. Version strings are whatever releases you care about; `"local"` means
+the working-tree SDK published to mavenLocal, and the runner records the resolved version string
+and the repo HEAD sha for provenance.
 
 ## Reading the output
 

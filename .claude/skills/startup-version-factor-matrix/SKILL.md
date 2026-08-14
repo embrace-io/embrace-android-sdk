@@ -4,7 +4,7 @@ description: >-
   Benchmark SDK-init startup performance across Embrace SDK VERSIONS under controlled,
   deliberately varied conditions (baseline profile vs none, light vs heavy host app, fresh
   install/post-update vs settled, CPU contention, thermal state) using one-factor-at-a-time
-  cells of 4x50 iterations, so that every version-to-version difference is attributable to the
+  cells of 10x20 (ten passes of twenty iterations), so that every version-to-version difference is attributable to the
   SDK rather than to the app or the environment. Use when asked how SDK versions compare, or
   whether a version's behaviour depends on conditions; for forensics on a single build use
   startup-multi-device-analysis, for a quick timing check use startup-analysis.
@@ -16,7 +16,16 @@ This skill exists to answer one question without lying: **does the SDK version c
 performance, and does the answer depend on the situation?** Everything here is machinery for
 making version comparisons trustworthy — the measurement itself is delegated to
 `startup-multi-device-analysis` (campaign execution, per-iteration forensics) and
-`startup-analysis` (trace-derived section/window analysis).
+`startup-analysis` (trace-derived section/window analysis). It also assumes
+`startup-analysis/references/interpreting-results.md` — trace query traps, the verification tap,
+harness traps, install-time compile state, run shape and tail statistics — and does not repeat
+it.
+
+**Where this sits.** The single-device layer interprets one run; the multi-device layer compares
+runs and *flags* differences; this layer **explains a flagged difference** by moving one factor at
+a time until the difference follows the factor. That is why every cell fixes everything except one
+dimension: attribution is the deliverable, and an uncontrolled delta cannot supply it. A flagged
+regression from the longitudinal layer arrives here for the same reason.
 
 The central risk is not measurement noise, it is **confounding**: a version comparison that
 accidentally varies compile state, install state, app workload, device temperature, or even the
@@ -61,12 +70,17 @@ instead of `V*F`. Full rationale, cell budgets, and the priority ladder are in
 
 ## Run shape (non-negotiable parts)
 
-- **4 passes x 50 iterations per cell.** 50 catches the outlier tail that 25 misses; 4 passes
-  make pass-level state (Samsung's install-parity compile toggle, thermal drift) visible instead
-  of averaged in. Fewer than 4x50 is a different, weaker experiment — say so if you run it.
+- **10 passes x 20 iterations per cell.** The pass is the unit of evidence, so pass count is what
+  buys precision and inferential resolution: at a fixed launch budget the within-pass term is a
+  constant, and the permutation floor is set by pass count alone. Ten passes also means ten
+  independent installs, which is the only thing that averages down per-install state such as
+  compile-state parity. Fewer passes is a weaker experiment — say so if you run it, and note that
+  below four the floor p exceeds 0.05 and no result can reach significance at all. See
+  `_shared/STATISTICS.md`, "Spend the budget on PASSES, not iterations".
 - **Interleave passes across the arms being compared** (A B B A), never all of A then all of B.
-  Ordering bias has already produced a fully retracted conclusion in this project (the Pixel 3
-  "profile inversion" survived a fixed-order design and died under ABBA).
+  Ordering bias is not hypothetical: a fixed-order design can manufacture an effect that
+  disappears entirely under counterbalancing, because self-heating and churn accumulate in
+  whichever arm runs later.
 - **Cool gate before every pass**, per-device threshold, driven by thermalservice sensors — not
   `dumpsys battery` (two fleet devices report unusable battery temperatures).
 - **One cell at a time, one driver at a time.** `cell_runner.py` takes a pidfile lock; a second
@@ -75,8 +89,8 @@ instead of `V*F`. Full rationale, cell budgets, and the priority ladder are in
 
 ## Procedure
 
-1. **Plan.** Write a plan file (see `references/design.md` for the schema and a ready-made
-   default), then `python3 scripts/matrix_plan.py plan.json` — it prints the ordered cell list,
+1. **Plan.** Copy `plan-example.json`, fill in your own devices with their profiles (schema in
+   `references/design.md`), then `python3 scripts/matrix_plan.py plan.json` — it prints the ordered cell list,
    the wall-clock estimate, and what it will change on the device/repo. Confirm the estimate
    fits the window you actually have; trim cells, never trim iterations.
 2. **Probe devices once** with `startup-multi-device-analysis/scripts/device_probe.py` (cluster
@@ -93,14 +107,15 @@ instead of `V*F`. Full rationale, cell budgets, and the priority ladder are in
 
 ## Invariants the runner enforces (and why each one exists)
 
-Every item below has already caused a wasted or wrong campaign in this project.
+Each of these has a track record of quietly invalidating whole campaigns, which is why they are
+checked mechanically rather than trusted to discipline.
 
 - **Resolved SDK version matches the cell** — read back from the built APK/dependency report,
   not from the catalog file. A repo sync silently reverted an uncommitted version pin and an
   entire campaign measured a released SDK instead of the local build.
-- **Compile state matches the cell** (`dumpsys package dexopt`, recorded per cell). Samsung's
-  SPEG alternates install parity deterministically across same-APK reinstalls, and a byte-new
-  APK resets to `verify` — so compile state must be pinned or parity-paired, never assumed.
+- **Compile state matches the cell** (`dumpsys package dexopt`, recorded per cell). Some OEM
+  builds alternate install-time compilation across same-APK reinstalls, and a byte-new APK
+  resets to `verify` — so compile state must be pinned or parity-paired, never assumed.
 - **App APK identical across cells except the SDK dependency.** The ExampleApp build derives a
   build id from git state, so any commit/sync mid-campaign changes APK bytes; the runner records
   the APK sha256 per cell and flags mismatches beyond the expected SDK delta.
@@ -127,7 +142,9 @@ Every item below has already caused a wasted or wrong campaign in this project.
   8.3.0-to-HEAD window improvement of 26-39% turned out to be work *moved* off the window, with
   pre-TTID main-thread CPU flat and whole-process CPU up. Report window, TTID, and pre-TTID CPU
   together or the number is misleading.
-- **Judge medians on same-parity passes** where a device has pass-state (Samsung), and always
+- **Judge medians on same-parity passes** where a device shows pass-state, and always
   report p90/max alongside — outlier behaviour is often where versions actually differ.
-- **Absolute values are build-type-specific.** Benchmark (profileable) and debug builds differ by
-  up to ~8x on entry-tier devices; only compare like with like, and prefer the benchmark build.
+- **Absolute values are build-type-specific.** Debug builds can be several times slower than the
+  benchmark (profileable) build and never AOT-compile; only compare like with like, and prefer the
+  benchmark build. There are no portable reference numbers — establish your own baselines, and see
+  the `startup-longitudinal-tracking` skill for keeping them comparable across runs and releases.

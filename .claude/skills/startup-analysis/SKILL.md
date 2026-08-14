@@ -26,9 +26,16 @@ Primary analysis:
   (`python3 serve_trace.py <dir> [port]`).
 
 References:
+- `references/interpreting-results.md` — **the foundation for interpreting any run, and the
+  first thing to read before you trust a number.** Trace_processor query traps that yield
+  plausible-but-wrong numbers; the telemetry verification tap contract; harness traps that
+  poison a run before analysis; which run conditions to record and how to use them to explain
+  your own outliers; the install-time compile-state pass toggle; run shape and tail statistics;
+  within-device comparison hygiene; and the five outlier classes with their single-trace
+  signatures. Every other startup skill assumes this file and none of them repeat it.
 - `references/sections.md` — section nesting/execution order, which environments each section
-  appears in, reference numbers, and the two slow-pass signatures (contention vs slow
-  execution) for judging noisy passes.
+  appears in, how to establish your own baseline (there are no portable reference numbers), and
+  the two slow-pass signatures (contention vs slow execution) for judging noisy passes.
 - `references/report-template.html` — the report page to adapt (a filled example; see the
   comment at the top for what to replace vs keep). Write each analysis's report to
   `claude-output/startup-analysis-<YYYY-MM-DD-HHMMSS>.html` using the SAME timestamp as that
@@ -49,8 +56,7 @@ locked/unattended devices. Do NOT verify via the cached payload
 session, so it returns zero-span background payloads on an idle/locked device. And note the tap
 must be a *processor*, not an exporter — exporters never see `emb.private` spans, and sdk-init is
 private. Full contract + the trace_processor query traps that produce plausible-but-wrong numbers
-are in the multi-device skill's `references/methodology.md` (Telemetry verification channel) and
-`references/device-gotchas.md` (Trace-capture and trace_processor traps).
+are in `references/interpreting-results.md`.
 
 ## What you get (all from the traces)
 
@@ -66,38 +72,81 @@ are in the multi-device skill's `references/methodology.md` (Telemetry verificat
   exported span interval by construction. The output states which source was used; never
   compare windows across sources.
 - TTID per iteration from trace_processor's `android.startup` stdlib module. Its anchor differs
-  from macrobenchmark's `timeToInitialDisplayMs` by a few ms (consistently, e.g. +6–7 ms on the
-  Galaxy A14) — fine for comparisons as long as both sides come from the same source.
+  from macrobenchmark's `timeToInitialDisplayMs` by a few ms — a fixed offset on a given device,
+  so it is fine for comparisons as long as both sides come from the same source.
 - Per-iteration main-thread scheduling inside the window: Running time, runnable-wait (R/R+)
   time, distinct CPUs — flags CONTENDED iterations and distinguishes the two slow signatures
   (see references/sections.md).
 
 ## Prerequisites
 
-- Physical device on `adb devices`, booted (`adb shell getprop sys.boot_completed` → 1),
-  screen on/unlocked.
+- **Physical device** on `adb devices`, booted (`adb shell getprop sys.boot_completed` → 1),
+  screen on/unlocked. Emulators are NOT valid for these measurements: their clocks, scheduler,
+  and IO are host artefacts, so neither absolute timings nor variance mean anything.
+- **API 29 or newer** — the practical floor, because perfetto tracing of a *profileable,
+  non-debuggable* app (which is what the benchmark variant is) requires it. Below that the
+  harness cannot produce the traces this skill analyzes.
 - `examples/ExampleApp/app/benchmark/src/main/java/io/embrace/android/benchmark/StartupBenchmarks.kt`
   is purely the harness: it drives N instrumented cold starts so each iteration records a
   perfetto trace. Its metric list is the minimum `measureRepeated` requires
   (`StartupTimingMetric` only) and is NOT the source of any reported number — it never needs to
   track SDK sections.
 
+## Choosing a device, and recording its profile
+
+Any device meeting the prerequisites works. What it can tell you is bounded, and the bound is the
+main reason to be careful about how far you generalise:
+
+- **A single device answers "did this change move SDK-init time here, on this build?"** — that is
+  a real and useful answer, and it is the question this skill is for.
+- **It cannot separate SDK effects from device-class effects.** Tier, ART generation, vendor
+  install-time compile policy and thermal governor all shift both the absolute numbers and the
+  variance, and one device holds all of them fixed. A section that dominates on an entry-tier
+  device may be noise on a flagship, and vice versa.
+- **Conclusions from one device are provisional.** Before treating a result as a property of the
+  SDK, re-check it on a device with a *different* profile — different tier and, ideally, a
+  different vendor and ART generation. Use the multi-device skill
+  (`startup-multi-device-analysis`) for that: it does the coordinated cross-device runs and the
+  forensics that attribute a difference to tier, thermal, or scheduling rather than to SDK code.
+- **Prefer the profile that matches the question.** Judging a regression that would hurt
+  low-end users? Measure on an entry-tier device, where init cost and tails are largest. Checking
+  that a change is neutral on modern hardware? A flagship is the right instrument. One device
+  cannot do both jobs.
+
+**Record the device profile in every report** — this is what makes results comparable later, and
+it is exactly what the longitudinal skill consumes:
+
+| Field | How to get it |
+|---|---|
+| `api_level` + Android release | `getprop ro.build.version.sdk`, `getprop ro.build.version.release` (drives ART generation and tracing capability) |
+| `tier` — entry / mid / flagship | your judgement, proxied by RAM class and SoC class |
+| `vendor` / OEM | `getprop ro.product.manufacturer` (drives install-time compile policy, thermal governor, SELinux readability of sysfs) |
+| `soc_family` + cluster topology | CPU part ids from `/proc/cpuinfo` and the `cpufreq` policies — the multi-device skill's `scripts/device_probe.py` collects and summarises these |
+| `ram_class`, `storage_class` | where detectable |
+
+A number without its profile is not reusable by anyone, including you next month.
+
 ## Run shape policy
 
 - **Default: 4 passes × 50 iterations** per device. Four passes balances two-state devices
   (some devices alternate a fast/slow pass state per benchmark cycle — always use an even
   pass count and judge on fast-state passes) and yields four first-post-install samples;
-  50 iterations gives churn-driven outliers (e.g. system_server GC, which starts firing
-  after ~10–15 iterations of accumulated load) enough runway to appear.
+  50 iterations gives churn-driven outliers enough runway to appear (system_server GC and
+  similar competitors typically only start firing once a pass has accumulated a dozen-plus
+  iterations of load, so short passes systematically miss them).
 - **Targeted or time-constrained runs may use 4 × 25 — never go below that.** Fewer
   iterations under-samples mid-pass outliers; fewer passes breaks state balance and
   first-launch sampling.
 - Report tails, not just medians: p90/p95/max/top-3 and the slow-iteration rate (threshold
   = max(4 ms, 10% of the pass median)). With ≤200 samples, do not quote a p99.
+- Full rationale, event-count sizing, the scheduling-table triage, and the within-device
+  comparison rules (matching pass states, matching window sources, iter000 as its own cohort)
+  are in `references/interpreting-results.md`.
 
 ## Compilation-mode arms
 
-The compilation state is a measured ~2× lever on SDK-init time and MUST be explicit:
+The compilation state is a first-order lever on SDK-init time — commonly on the order of 2×,
+though the ratio is device-specific, so establish it on yours — and MUST be explicit:
 
 - `StartupBenchmarks` exposes: `coldStartup` (CompilationMode.DEFAULT — fresh-install
   `verify` state; the historical-continuity arm), `coldStartupBaselineProfile`
@@ -110,11 +159,15 @@ The compilation state is a measured ~2× lever on SDK-init time and MUST be expl
   profile, so profile-coverage regressions are invisible to them. Run `coldStartupNoAot`
   occasionally as the what-is-the-profile-worth canary.
 - **Arm-ordering bias is real**: back-to-back arms self-heat the device, disadvantaging
-  whichever runs second (measured: a fixed order inflated an apparent +23% effect to
-  +43% on a thermally-sensitive device). Between arms, cool the device back to its
-  pre-arm silicon temperature (`dumpsys thermalservice`, NOT battery temp — silicon runs
-  30 °C+ hotter under load), or counterbalance order across passes; cross-arm claims
+  whichever runs second. On a thermally-sensitive device a fixed arm order can inflate the
+  apparent effect size by roughly half again — enough to change a conclusion — so never
+  report a cross-arm delta from a single fixed order. Between arms, cool the device back to
+  its pre-arm silicon temperature (`dumpsys thermalservice`, NOT battery temp — silicon runs
+  tens of °C hotter under load), or counterbalance order across passes; cross-arm claims
   should survive the boundary comparison (last iterations of arm A vs first of arm B).
+  How sensitive your device is to this is itself something to measure: thermal response
+  varies with vendor governor and tier, and the effect can be negligible on one profile and
+  dominant on another.
 
 ## Choosing the SDK under test
 
@@ -164,11 +217,13 @@ always set it explicitly for the run, note the value you replaced, and restore i
    `--output-dir` overrides) — so successive runs never clobber each other; cite that file
    in reports and keep it as the per-pass record (the traces themselves get wiped by the
    next benchmark run).
-   Every analysis/report must state the test context up front: device manufacturer + model and
-   Android version (via
-   `adb shell "getprop ro.product.manufacturer; getprop ro.product.model; getprop ro.build.version.release"`
-   — `getprop` takes ONE property per call; the model also appears in the results directory
-   name), the SDK version under test, iteration count, and date.
+   Every analysis/report must state the test context up front: the full device profile
+   (see "Choosing a device" — manufacturer, model, api level + Android release, tier, SoC
+   family) via
+   `adb shell "getprop ro.product.manufacturer; getprop ro.product.model; getprop ro.build.version.release; getprop ro.build.version.sdk"`
+   (`getprop` takes ONE property per call, so chain them in one `adb shell`; the model also
+   appears in the results directory name), plus the SDK version under test, the build type and
+   compilation arm, and the iteration count.
 4. **Interpret**: present the canonical sections in execution order with nesting; children
    overlap parents, so percentages do not sum to 100; the class-load sections
    (`embrace-impl-init`, `bootstrapper-init`) run BEFORE the window opens, so their % is context
@@ -214,9 +269,21 @@ always set it explicitly for the run, note the value you replaced, and restore i
 - **Verify iter000 freshness per pass**: `persisted-config-load` must be fast (~2–5 ms) on
   a true first launch. A slow iter000 (~cached-mode cost) means app data survived a failed
   harness uninstall and the pass's first-launch sample is poisoned.
+- **Record the compile state** (`dumpsys package dexopt` after each install) and this device's
+  silicon temperature per pass. Both are conditions you will need to explain outliers later,
+  and compile state can flip pass medians by tens of percent on its own.
+- These and the remaining harness traps (SDK-pin reverts, APK-bytes changes, the wiped trace
+  output dir) are detailed in `references/interpreting-results.md`.
 
 ## Interpretation gotchas
 
+- **Absolute timings are build-type-specific.** This skill measures the *benchmark* variant:
+  R8-minified and profileable-but-NOT-debuggable. A debuggable build is materially slower (JIT
+  and debug-path overhead inflate init), so its numbers are not interchangeable with these, in
+  either direction. Never compare a benchmark-build measurement against a debuggable-build one,
+  and always state which build type produced a number. Only the benchmark variant is a
+  defensible proxy for what users experience; a debuggable build is for behavioural checks
+  (e.g. reading cached payloads), not for timing.
 - **Section counts differ by environment**: sections behind supplier fallbacks
   (`config-service-init`) and the class-load sections (`embrace-impl-init`, `bootstrapper-init`)
   appear on-device but not in the Robolectric integration harness — the authoritative

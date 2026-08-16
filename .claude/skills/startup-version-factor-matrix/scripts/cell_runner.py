@@ -3,7 +3,7 @@
 passes to the multi-device skill's fleet_campaign.py and record provenance.
 
 A failed invariant is a STOP, not a warning: every one of them has already caused a wasted or
-wrong campaign in this project. Nothing here is a substitute for reading references/factors.md.
+wrong campaign. Nothing here is a substitute for reading references/factors.md.
 
 Usage:
   python3 cell_runner.py --cells cells.json --cell "a14|local|reference" --out <run-dir>
@@ -16,13 +16,25 @@ import os
 import pathlib
 import subprocess
 import sys
+import tempfile
 import time
 
-REPO = pathlib.Path("/Users/hansonho/work/embrace-android-sdk")
+def repo_root():
+    """Locate the SDK repo without hardcoding anyone's home directory: prefer git, fall back to
+    walking up from this script (it lives at <repo>/.claude/skills/<skill>/scripts/)."""
+    cp = subprocess.run(["git", "rev-parse", "--show-toplevel"],
+                        capture_output=True, text=True, timeout=60,
+                        cwd=str(pathlib.Path(__file__).resolve().parent))
+    if cp.returncode == 0 and cp.stdout.strip():
+        return pathlib.Path(cp.stdout.strip())
+    return pathlib.Path(__file__).resolve().parents[3]
+
+
+REPO = repo_root()
 EXAMPLE = REPO / "examples/ExampleApp"
 CATALOG = EXAMPLE / "gradle/libs.versions.toml"
 PKG = "io.embrace.android.exampleapp"
-LOCK = pathlib.Path("/tmp/startup-matrix-cell.pid")
+LOCK = pathlib.Path(tempfile.gettempdir()) / "startup-matrix-cell.pid"
 MULTI_DEVICE = REPO / ".claude/skills/startup-multi-device-analysis/scripts"
 WRAPPER_SLICE = "app-embrace-start"
 
@@ -76,8 +88,8 @@ def check_host_quiet():
 
 
 def check_temperature(serial, gate_c, band=None):
-    """thermalservice first; dumpsys battery is NOT trustworthy on all devices (a fleet Pixel 3
-    reports a constant 37.7 C, which stalls any band logic silently)."""
+    """thermalservice first; dumpsys battery is NOT trustworthy as a control input - some devices
+    report a frozen value, which stalls band/gate logic silently and forever."""
     out = shell(serial, "dumpsys thermalservice", timeout=60).stdout
     temps = []
     for line in out.splitlines():
@@ -161,24 +173,31 @@ def apk_sha256(build_type):
 
 
 def check_instrument(trace_dir):
-    """The wrapper slice must exist in the first pass, else the SDK/patch is wrong - fail fast
-    rather than leave a hole in the matrix."""
+    """Two failures look identical in the output and must be told apart: a wrong SDK/patch (the
+    window instrument does not exist) and a saturated capture (it existed but got evicted). So
+    check the canary AND perfetto's own loss counters."""
     traces = sorted(pathlib.Path(trace_dir).rglob("*.perfetto-trace"))
     if not traces:
         return False, "no traces produced"
-    tp = pathlib.Path(__file__).parent / "trace_processor"
-    if not tp.exists():
-        return True, f"{len(traces)} traces (trace_processor absent; instrument unverified)"
-    q = f"SELECT COUNT(*) AS n FROM slice WHERE name = '{WRAPPER_SLICE}';"
-    qf = pathlib.Path("/tmp/vfm_instrument.sql")
-    qf.write_text(q)
-    cp = run([str(tp), "-q", str(qf), str(traces[0])], timeout=600)
-    n = 0
-    for line in cp.stdout.splitlines():
-        line = line.strip().strip('"')
-        if line.isdigit():
-            n = int(line)
-    return (n > 0), f"{WRAPPER_SLICE} slices in pass-1 trace: {n}"
+    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "_shared"))
+    try:
+        from tooling import ensure_trace_processor
+        from trace_health import check_trace, summarize
+        tp_path = ensure_trace_processor()
+    except (ImportError, RuntimeError, FileNotFoundError) as exc:
+        return True, f"{len(traces)} traces (trace_processor unavailable: {exc}; UNVERIFIED)"
+
+    # sample the ends of the cell: saturation usually worsens as a pass accumulates load
+    sample = traces[:5] + traces[-5:] if len(traces) > 10 else traces
+    verdicts = [check_trace(tp_path, trace, WRAPPER_SLICE) for trace in sample]
+    report = summarize(verdicts)
+    if any(v["verdict"] == "unusable" for v in verdicts):
+        return False, (f"{report} | capture saturated and evicted the window - fix the trace "
+                       f"config (buffer size / DISCARD / narrower events) before re-running")
+    if all(v["verdict"] == "missing-canary" for v in verdicts):
+        return False, (f"{report} | no data loss but no '{WRAPPER_SLICE}' anywhere - wrong SDK, "
+                       f"wrong build, or a missing atrace category")
+    return True, report
 
 
 # --------------------------------------------------------------------------- factor state
@@ -195,7 +214,18 @@ def apply_factor_state(serial, levels, logfile):
     shell(serial, "input keyevent 224")
     shell(serial, "wm dismiss-keyguard")
     if levels.get("contention", "quiet") != "quiet":
-        n = 8 if levels["contention"] == "hog8" else 4
+        # Scale the load to the device, not to a remembered number: "queueing" must exceed the
+        # core count to fill the run queue, while "bandwidth" stays below it and pressures the
+        # memory system without queueing. Verify per iteration that run-delay actually moved -
+        # these are different mechanisms, not different intensities.
+        cores = 8
+        out = shell(serial, "cat /sys/devices/system/cpu/present", timeout=30).stdout.strip()
+        if "-" in out:
+            try:
+                cores = int(out.split("-")[1]) + 1
+            except (ValueError, IndexError):
+                pass
+        n = cores * 2 if levels["contention"] == "queueing" else max(2, cores // 2)
         procs = [subprocess.Popen(["adb", "-s", serial, "shell", "dd if=/dev/zero of=/dev/null"],
                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                  for _ in range(n)]
@@ -238,7 +268,7 @@ def main():
 
     # resolve the serial for THIS cell's device: combo cells deliberately run elsewhere, and
     # defaulting to the primary serial would silently measure the wrong device
-    devices = plan.get("devices") or {plan["device"]["name"]: plan["device"]}
+    devices = plan.get("devices") or {}
     dev_cfg = devices.get(cell["device"])
     if not dev_cfg or not dev_cfg.get("serial"):
         sys.exit(f"ABORT: no serial configured for device '{cell['device']}' "
@@ -270,6 +300,9 @@ def main():
         sha = apk_sha256(build_type)
         provenance = {
             "cell": cell, "plan_run_id": plan["run_id"], "serial": serial,
+            # the device PROFILE travels with every result: comparability across runs, machines
+            # and people depends on it (and the longitudinal skill consumes it)
+            "device_profile": {k: v for k, v in dev_cfg.items() if k != "serial"},
             "build_type": build_type, "apk_sha256": sha,
             "repo_head": run(["git", "-C", str(REPO), "rev-parse", "HEAD"]).stdout.strip(),
             "repo_dirty": bool(run(["git", "-C", str(REPO), "status", "--short"]).stdout.strip()),

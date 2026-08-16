@@ -9,7 +9,9 @@ benchmark-JSON involvement. The window is the emb-sdk-start slice when the SDK e
 
 The summary is also written to a uniquely named file,
 <output-dir>/startup-analysis-<YYYY-MM-DD-HHMMSS>.txt (analysis start time), so successive
-runs never clobber each other; --output-dir overrides the default <repo>/claude-output.
+runs never clobber each other. The default output dir is claude-output/ under the SDK repo root,
+discovered at runtime (git rev-parse, else the nearest ancestor with .git); --repo and
+--output-dir override. No path is hardcoded — the skill works from any checkout location.
 
 Usage:
   python3 analyze_startup.py --trace-processor <path-to-launcher-or-binary> <traces-dir>
@@ -69,15 +71,16 @@ def main() -> int:
                         help="list every emb-* section (default: canonical + top 15 others)")
     parser.add_argument("--output-dir", default=None,
                         help="directory for the timestamped summary file "
-                             "(default: <repo>/claude-output)")
+                             "(default: <repo root>/claude-output)")
+    parser.add_argument("--repo", default=None,
+                        help="SDK repo root; defaults to git rev-parse --show-toplevel, else the "
+                             "nearest ancestor of this script containing .git")
     args = parser.parse_args()
 
     start = datetime.datetime.now()
     script_dir = os.path.dirname(os.path.abspath(__file__))
     sql = os.path.join(script_dir, "startup_metrics.sql")
-    # scripts/ -> startup-analysis/ -> skills/ -> .claude/ -> repo root
-    repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(script_dir))))
-    out_dir = args.output_dir or os.path.join(repo_root, "claude-output")
+    out_dir = args.output_dir or os.path.join(args.repo or repo_root(script_dir), "claude-output")
     traces = sorted(
         (f for f in os.listdir(args.traces_dir) if f.endswith(".perfetto-trace")),
         key=iter_index,
@@ -226,6 +229,30 @@ def fmt_stats(vals: list) -> str:
         return "no data"
     return (f"n={len(vals)}  min={min(vals):.1f}  median={statistics.median(vals):.1f}  "
             f"mean={statistics.mean(vals):.1f}  max={max(vals):.1f}")
+
+
+def repo_root(script_dir: str) -> str:
+    """Locate the SDK repo root without any hardcoded path.
+
+    Prefers `git rev-parse --show-toplevel` (correct even when this skill lives in a worktree or
+    a submodule); falls back to the nearest ancestor directory containing .git, then to the
+    current working directory, so the script still runs outside a checkout.
+    """
+    try:
+        proc = subprocess.run(["git", "-C", script_dir, "rev-parse", "--show-toplevel"],
+                              capture_output=True, text=True)
+        if proc.returncode == 0 and proc.stdout.strip():
+            return proc.stdout.strip()
+    except OSError:
+        pass
+    d = script_dir
+    while True:
+        if os.path.exists(os.path.join(d, ".git")):
+            return d
+        parent = os.path.dirname(d)
+        if parent == d:
+            return os.getcwd()
+        d = parent
 
 
 def iter_index(filename: str) -> int:

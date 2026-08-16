@@ -2,10 +2,17 @@
 """Side-by-side per-section comparison across devices: median / max / % of window,
 pooled over every available pass's variance JSON (variance_analysis.py --json output).
 
+This is the workload-identity check: compare section SHARES (%win), not absolute ms.
+Matching shares across devices mean the SDK is doing identical work everywhere and the
+differences are device effects; diverging shares mean the code path itself differs
+(ART/OS generation, config) and that is the lead to chase.
+
 Usage: python3 cross_device_sections.py <label>=<dir-with-passN.json> [more...]
-Example:
-  python3 cross_device_sections.py A14=.../campaign A14b=.../a14-campaign2 ...
-Dirs given the same label are pooled together.
+Example (labels are yours — use the device-profile name you probed with, and give
+each device a label that encodes the axis it covers, e.g. tier/vendor/api):
+  python3 cross_device_sections.py entry-vendorA-api29=.../campaign1 \
+      mid-vendorB-api33=.../campaign2 flagship-vendorB-api35=.../campaign3
+Dirs given the same label are pooled together (e.g. repeat campaigns on one device).
 """
 
 import json

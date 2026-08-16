@@ -17,6 +17,17 @@ Re-verify each recipe when the app's AGP/Gradle/Kotlin versions move.
 **Consequence:** the wrapper span is mandatory for this skill. Add it to the app once, keep it
 byte-identical across all cells, and calibrate it (below) whenever a new version pair allows.
 
+**Reading attribute values** (needed to verify factor levels such as compile/install/contention)
+requires the app-side verification tap. Its full contract — processor-not-exporter, the
+Kotlin-typed registration, the startup-scoped deferred flush, and why cached payload pulls fail
+unattended — is in `startup-analysis/references/interpreting-results.md` → Telemetry verification
+channel. Two consequences specific to this skill:
+
+- The tap is **mandatory** here and must be byte-identical across all cells, since a change to it
+  changes the window it is measuring.
+- Cached payload pulls are unavailable to you by construction: they need a debuggable build,
+  which this skill forbids.
+
 ## Bridge calibration (how old and new windows become comparable)
 
 1. Choose a version that carries **both** the wrapper span and a native window (e.g. 9.2+, or
@@ -50,19 +61,44 @@ byte-identical across all cells, and calibrate it (below) whenever a new version
 traces contain the expected wrapper slice. A repo sync silently reverting an uncommitted pin once
 caused a whole campaign to measure a released SDK; the symptom was a missing expected slice.
 
-## Version-line facts worth knowing before you interpret
+## Missing signals across versions are capability differences, never results
 
-- Fresh, byte-unique APK builds do **not** exhibit the Samsung install-parity alternation (no prior
-  same-dex profile exists) — so ancient-version passes land in `verify` state, and must be compared
-  against modern **slow-parity/verify** passes, not modern fast-parity ones, unless compile state is
-  pinned.
-- Prior verify-state window medians on the A14 (for sanity-checking a new sweep, not as targets):
-  6.14.0 ~43 ms, 7.5.0 ~70, 7.9.3 ~76, 8.3.0 ~76, 9.1 ~66, working tree ~52. The 7.5->7.9 gap is
-  where the remote-config store load appeared (`config-service-init` 1.1 -> 2.1 -> 19.1 ms), the
-  arc that 9.0+ then unwound.
-- The 8.3.0-to-HEAD window improvement (-26..-39%) coincided with **flat** main-thread pre-TTID CPU
-  and *higher* whole-process CPU: historical "improvements" were substantially work moved off the
-  window. Always pair window deltas with the pre-TTID CPU check before calling a version faster.
+The version axis *is* the axis that adds and removes instruments, so absences line up perfectly
+with your comparison and look exactly like effects. An older version lacking a section, an
+attribute, or a window instrument tells you **nothing** about whether it was faster or slower.
+
+- Never score a version better because a signal is missing there, or worse because a signal only
+  appears there. Compare on the intersection of what both sides emit, and name the drift.
+- A section that does not exist yet is not a section that costs zero. If a later version splits one
+  section into three, the parent total is the only comparable quantity.
+- Falling back to a different window source for the versions that lack the primary one silently
+  changes the metric mid-sweep — this is why the app-side wrapper span exists and is mandatory here.
+- Record missing signals in a capability column labelled `n/a (not in this version)`, never as `0`
+  or a blank in a results column.
+
+The single case where an absence *is* informative: a signal that this version emitted in previous
+runs, on this device and recipe, and does not emit now. That is a regression in instrumentation or
+a code path that stopped executing — and detecting it requires a baseline of presence, which is
+what the longitudinal layer keeps.
+
+## Interpretation traps specific to a version sweep
+
+- **Old-version builds are byte-unique**, so on OEMs that alternate install-time compilation they
+  never enter the compiled parity at all — they land in `verify`. Comparing an old version's
+  `verify` passes against a current version's *compiled* passes measures the compiler, not the
+  SDK. Pin compile state, or compare parity-matched passes.
+- **A window improvement can be work moved rather than work removed.** Deferring work off the
+  measured window shrinks the window while leaving the user's actual startup unchanged — or worse,
+  raising total process CPU. Pair every version delta with main-thread pre-TTID CPU and
+  whole-process CPU before calling a version faster; if the window fell while pre-TTID CPU stayed
+  flat, you have re-attribution, not an improvement.
+- **The version line is rarely monotonic.** Expect eras: a cost appears in one release, grows, and
+  is later unwound. Read the per-section table across versions rather than the window alone —
+  that is what tells you *which* subsystem moved and when, and it survives even when absolute
+  numbers do not transfer between device profiles.
+- **Establish your own baseline numbers.** Window medians depend on device profile, build type,
+  and compile state, so no published figure is a target. Record your first sweep as the reference
+  and compare subsequent sweeps to it (this is exactly what the longitudinal skill automates).
 
 ## Restoring the tree
 

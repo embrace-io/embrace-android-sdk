@@ -99,6 +99,11 @@ dependencies {
     implementation(libs.opentelemetry.sdk)
     implementation(libs.firebase.messaging)
     implementation(libs.embrace.android.otel.java)
+    // opentelemetry-kotlin processor API used by TelemetryVerificationTap; the Embrace SDK already
+    // ships these at runtime, this just makes them visible at compile time. Keep the version in
+    // sync with the SDK's otelKotlin version.
+    implementation("io.opentelemetry.kotlin:api:0.6.0")
+    implementation("io.opentelemetry.kotlin:sdk-api:0.6.0")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 
     // uncomment to enable debugging through source contained in those modules

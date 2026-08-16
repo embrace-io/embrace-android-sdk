@@ -63,10 +63,46 @@
 - A conclusion is order-robust only if the disadvantaged-arm-first ordering still shows it,
   or the boundary comparison preserves its sign.
 
+## Telemetry verification channel
+
+Verifying what the SDK *logged* (span attributes, section durations) is a separate problem from
+measuring how long things took. Ranked by reliability, learned the hard way 2026-08-14:
+
+1. **Verification tap (preferred).** A gated `SpanProcessor` registered by the app before
+   `start()`, emitting chunked JSON to a logcat tag. Works on ANY build type (including the
+   non-debuggable benchmark build), on locked/unattended devices, and regardless of session
+   state; the sdk-init span arrives ~ms after init. Read it with one `adb logcat -d -s <TAG>`
+   and wait for the batch's flush marker rather than sleeping a guessed interval.
+   - It must be a **processor**, not an exporter: `DefaultSpanExporter` filters out `emb.private`
+     spans and **sdk-init is private**, so no exporter can ever see it.
+   - Register the KOTLIN-typed processor (`addSpanProcessor`) — it is invoked with full fidelity
+     in both engine modes; the java-typed one goes silent if the KMP OTel SDK is enabled.
+   - In perf-sensitive runs use a startup-scoped mode: allowlist the startup span names, capture
+     immutable snapshots at `onEnd`, and defer all serialization/logging to one flush after the
+     window closes — otherwise the verification itself perturbs what it measures.
+2. **Cached payload pull** (`run-as … cat files/embrace_cache/*session*`): debuggable builds
+   only, and needs a foreground user session — see device-gotchas.md. Use only interactively.
+3. Trace slices: prove *timing*, never attribute *values*.
+
+Grade attributes per iteration against that same iteration's trace (internal consistency), and
+prefer checks that need no ground truth at all: `init-cpu-pct + init-run-delay-pct` must sum to
+~100% minus blocked share, and that closure held on 24/24 iterations when the attributes were
+verified.
+
 ## Temperature discipline
 
 - Battery temperature understates silicon by 30 °C+ under load; log thermalservice AP /
   per-CPU sensors around every pass (fleet_campaign does).
+- **Do not drive thermal band logic from `dumpsys battery`.** Two of four fleet devices are
+  unusable that way: the Pixel 3 reports a *constant* 37.7 °C (its staircase never advanced,
+  wasting a whole night), and a plugged-in device's warm idle floor can sit above a cool gate
+  forever — cap cooling gates in minutes and allow per-device thresholds. Drive bands from
+  thermalservice AP/skin sensors (Pixel 3 exposes 26, P7P 74), and treat the SDK's own
+  `thermal-headroom-pct` as a cross-check: on the Pixel 3 it varied (46–87) while battery temp
+  was pinned, i.e. it carried more information than the battery sensor.
+- Reference magnitudes (2026-08-14, counterbalanced staircases, debug build — relative response
+  only): **P7P +10% median from ≤33 °C to ≥38 °C**, arms agreeing within 1–4 ms per band, so
+  "immune below ~35 °C, ~+6–10% by 38 °C".
 - Devices can be thermally clean in paced 4×50 campaigns yet throttle under rapid-fire
   probing (launch loops without benchmark pacing) — check silicon temps whenever a probe
   loop replaces the harness.

@@ -1,0 +1,19 @@
+# Runtime artifacts produced by running or syntax-checking the skill scripts. None of these are
+# skill content: a skill is its SKILL.md, references/, and the scripts themselves.
+__pycache__/
+*.pyc
+
+# Shared, gitignored tool cache (see _shared/tooling.py). Binaries are fetched once per machine
+# into a version-pinned subdir; the preferred location is outside the repo entirely
+# (~/.cache/embrace-startup-tools), and this is the in-repo fallback.
+.tools/
+trace_processor
+
+# Local run output: stores, plans with real device serials, probe results, and captured traces.
+# Keep these next to your run artifacts, not in the skill definition.
+*-topology.json
+reference-set.json
+store.jsonl
+plan.json
+*.pftrace
+*.perfetto-trace

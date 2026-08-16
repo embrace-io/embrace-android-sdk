@@ -46,6 +46,9 @@ class MainApplication : Application(), ImageLoaderFactory {
         // preinstall an existing URLStreamFactory to ensure the wrapping factor for instrumentation works
         val error = installFakeURLStreamHandlerFactory()
 
+        // mirror telemetry to logcat for host-side verification when enabled for this run
+        TelemetryVerificationTap.registerIfEnabled(this)
+
         // add OTel exporters to send data to 3rd party destinations
         Embrace.addJavaSpanExporter(LogcatSpanExporter())
         Embrace.addJavaLogRecordExporter(LogcatLogRecordExporter())

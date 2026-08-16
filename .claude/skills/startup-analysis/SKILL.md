@@ -36,10 +36,21 @@ References:
   Publishing a new path mints a new artifact URL per analysis — reuse a previous report's
   exact file path only when intentionally updating that report (and its URL) in place.
 
-There is deliberately no logcat/jq/grep/benchmark-JSON path — the traces are the single source
-of truth. The one thing traces cannot verify is the `<section>-duration-ms` attributes on the
-exported span (`recordDuration`); if that mechanism ever needs validating, it is an SDK
-integration-test concern, not this skill's.
+There is deliberately no jq/grep/benchmark-JSON path — the traces are the single source of truth
+for *timing*.
+
+**Verifying what the SDK logged is a different job with a different instrument.** Traces cannot
+show attribute VALUES (`init-cpu-pct`, `<section>-duration-ms`, thermal state). For that, use the
+app-side verification tap: a gated Kotlin `SpanProcessor` in ExampleApp that emits each completed
+span as chunked JSON to logcat (`adb logcat -d -s EmbVerify:I`, then reassemble and wait for the
+flush marker). It works on any build type — including the non-debuggable benchmark build — and on
+locked/unattended devices. Do NOT verify via the cached payload
+(`run-as … files/embrace_cache/*session*`): that needs a debuggable build AND a foreground user
+session, so it returns zero-span background payloads on an idle/locked device. And note the tap
+must be a *processor*, not an exporter — exporters never see `emb.private` spans, and sdk-init is
+private. Full contract + the trace_processor query traps that produce plausible-but-wrong numbers
+are in the multi-device skill's `references/methodology.md` (Telemetry verification channel) and
+`references/device-gotchas.md` (Trace-capture and trace_processor traps).
 
 ## What you get (all from the traces)
 

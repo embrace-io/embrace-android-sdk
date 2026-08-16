@@ -119,4 +119,15 @@ object SdkInitAttributeKeys {
      * and the OS is actively reclaiming memory. The presence of this indicates memory pressure.
      */
     const val LOW_MEMORY: String = "low-memory"
+
+    /**
+     * Size in bytes of the HOST APP's default `SharedPreferences` file, which the SDK's key-value
+     * store is backed by, used to explain the `prefs-first-read` duration. The bigger the file,
+     * the longer it takes to load and parse its data, as Android needs to load the whole thing
+     * before reading even one value from it.
+     *
+     * This should be obtained by reading looking at the file without opening it and incurring
+     * the costs that this measurement is trying to quantify.
+     */
+    const val PREFS_FILE_BYTES: String = "prefs-file-bytes"
 }

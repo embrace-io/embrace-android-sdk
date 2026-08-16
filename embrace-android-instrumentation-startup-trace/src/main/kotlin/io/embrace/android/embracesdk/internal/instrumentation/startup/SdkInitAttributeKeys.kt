@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.startup
 
-import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.INIT_MAJ_FAULTS
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.INIT_RUN_DELAY_PCT
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.THERMAL_STATUS
 
@@ -45,17 +44,10 @@ object SdkInitAttributeKeys {
     const val INIT_RUN_DELAY_PCT: String = "init-run-delay-pct"
 
     /**
-     * Major page faults taken by the process during the init window - reads that had to go
-     * to storage (cold code pages, cold files), including flash contention from concurrent
-     * installs.
-     */
-    const val INIT_MAJ_FAULTS: String = "init-maj-faults"
-
-    /**
      * Kilobytes actually read from storage by the process during the init window. Normal
      * inits read little (config file + cold pages); elevated values mark storage-bound
      * runs - cold caches after reboot/update, slow flash, or IO contention from concurrent
-     * installs - and pair with [INIT_MAJ_FAULTS] to confirm an IO-class slow run.
+     * installs.
      */
     const val INIT_DISK_READ_KB: String = "init-disk-read-kb"
 

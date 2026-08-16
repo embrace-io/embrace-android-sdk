@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.UserAttributes
+import java.io.File
 import java.util.ServiceLoader
 import java.util.concurrent.TimeUnit
 
@@ -228,6 +229,7 @@ internal fun ModuleGraph.markSdkInitComplete(sdkInitDurations: Map<String, Long>
                         },
                         packageInfo = instrumentationModule.instrumentationArgs.packageInfo,
                         nowMs = initModule.clock.now(),
+                        prefsFileSizeProvider = { defaultPrefsFile(coreModule.context)?.length() },
                     )
             },
         )
@@ -269,3 +271,14 @@ private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, St
 }
 
 private const val SPAN_TIMEOUT_SWEEP_INTERVAL_MS = 30_000L
+
+/**
+ * Attempt to identify the size of the host app's default `SharedPreferences` file without actually opening it.
+ * This file currently hosts the SDK's key-value store, and the bigger it is, the more impact it will have on
+ * SDK init time if the SDK is the thing that opens it first.
+ *
+ * Returns null if the file is absent, so a missing file is not reported.
+ */
+private fun defaultPrefsFile(context: Context): File? =
+    File(File(context.applicationInfo.dataDir, "shared_prefs"), "${context.packageName}_preferences.xml")
+        .takeIf(File::exists)

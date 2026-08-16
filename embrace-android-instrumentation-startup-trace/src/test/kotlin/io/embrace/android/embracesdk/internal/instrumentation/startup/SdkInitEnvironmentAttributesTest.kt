@@ -80,12 +80,42 @@ internal class SdkInitEnvironmentAttributesTest {
         assertEquals("true", environmentAttributes()[SdkInitAttributeKeys.LOW_MEMORY])
     }
 
-    private fun environmentAttributes(): Map<String, String> = sdkInitEnvironmentAttributes(
+    @Test
+    fun `prefs file size reported when the host app has a default prefs file`() {
+        assertEquals(
+            "63070",
+            environmentAttributes(prefsFileSizeProvider = { 63_070L })[SdkInitAttributeKeys.PREFS_FILE_BYTES],
+        )
+    }
+
+    @Test
+    fun `prefs file size omitted when there is no file or has zero length`() {
+        assertFalse(
+            environmentAttributes(prefsFileSizeProvider = { null })
+                .containsKey(SdkInitAttributeKeys.PREFS_FILE_BYTES),
+        )
+        assertFalse(
+            environmentAttributes(prefsFileSizeProvider = { 0L })
+                .containsKey(SdkInitAttributeKeys.PREFS_FILE_BYTES),
+        )
+    }
+
+    @Test
+    fun `a failing prefs size read drops only that attribute, never the whole map`() {
+        val attributes = environmentAttributes(prefsFileSizeProvider = { error("stat failed") })
+        assertFalse(attributes.containsKey(SdkInitAttributeKeys.PREFS_FILE_BYTES))
+        assertEquals("45", attributes[SdkInitAttributeKeys.SECONDS_SINCE_BOOT])
+    }
+
+    private fun environmentAttributes(
+        prefsFileSizeProvider: () -> Long? = { null },
+    ): Map<String, String> = sdkInitEnvironmentAttributes(
         powerManagerProvider = { context.getSystemService(Context.POWER_SERVICE) as? PowerManager },
         activityManagerProvider = { context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager },
         packageInfo = context.packageManager.getPackageInfo(context.packageName, 0),
         nowMs = NOW_MS,
         uptimeMs = { fakeUptimeMs },
+        prefsFileSizeProvider = prefsFileSizeProvider,
     )
 
     private companion object {

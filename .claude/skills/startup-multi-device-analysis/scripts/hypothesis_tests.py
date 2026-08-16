@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
-"""Cross-pass hypothesis tests for the startup-variance assertions (2026-08-11 doc).
+"""Cross-pass hypothesis tests for one device's campaign.
 
 Consumes the per-iteration JSON dumps produced by variance_analysis.py --json for each
 campaign pass, plus the campaign log (battery temps), and prints the evidence for/against:
 
-  H1  within-pass outliers = little-core placement (per-cluster DVFS on identical A55s)
+  H1  within-pass outliers = little-core placement (needs the device's real cluster map)
   H2  pass-level fast/slow alternation, uniform CPU inflation, block-resume sections ~2x
   H3  persisted-config-load bimodal: iter000 (fresh install, no cached config) fast
   H4  off-window fluctuators: power-service-registration binder stalls; native-lib IO
 
+Run this per device BEFORE any cross-device or cross-arm comparison: if H2 fires, only
+matching-state passes may be compared.
+
 Usage: python3 hypothesis_tests.py <campaign-dir>   (expects pass1.json..passN.json + campaign.log)
 
 Set LITTLE_CPUS (comma-separated cpu ids, default "0,1,2,3") to the little cluster's cpu
-ids from device_probe.py's topology JSON if the target device differs from the default.
+ids from device_probe.py's topology JSON. The default is wrong on any device whose little
+cluster is not cpu0-3 and it fails silently, so set it explicitly per device.
 """
 
 import json
@@ -22,8 +26,8 @@ import statistics
 import sys
 
 SLOW_DELTA_MS = 4.0        # floor; effective threshold is max(this, 10% of pass median)
-                           # so "slow" scales across device tiers (P7P ~11 ms medians vs
-                           # A01 ~100 ms medians)
+                           # so "slow" scales across device tiers, whose median windows can
+                           # differ by an order of magnitude between flagship and entry
 CL0_MAJORITY = 0.5
 CL0_ABSENT = 0.10          # H1 falsifier: slow iteration with <10% cluster-0 residency
 CFGLOAD_FAST_MS = 5.0      # H3: below this = "no cached config" fast path

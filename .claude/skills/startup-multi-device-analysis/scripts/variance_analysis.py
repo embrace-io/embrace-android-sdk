@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Per-iteration variance analysis over macrobenchmark .perfetto-trace files.
 
-Companion to variance_metrics.sql (same directory); produced the dataset in
-startup-variance-analysis-2026-08-11.txt. Usage:
+Companion to variance_metrics.sql (same directory). Usage:
   python3 variance_analysis.py <trace_processor> <traces-dir> [--json PATH] [--out PATH]
       [--little-cpus CPU,CPU,...]
 
 --little-cpus sets the cpu ids that make up the little cluster for the section-E residency
 split (default "0,1,2,3"); pass the little_cpus value from device_probe.py's topology JSON
-for the target device rather than assuming the default.
+for the target device rather than assuming the default — the default is wrong on any device
+whose little cluster is not cpu0-3, and it fails silently by reporting a meaningless share.
 
 --json dumps the raw per-iteration dataset (window, section durations, per-CPU residency,
 thread states) for downstream aggregation; --out tees the printed report to a file.
@@ -165,8 +165,10 @@ def report(data, little_cpus) -> None:
               + "  |" + "".join(f"{v:>7.2f}" for v in slow_split[:3]) + f"{slow_split[3]:>6.2f}")
     print()
 
-    # E: per-cluster residency inside window (SM-A145M: cluster0 = cpu0-3, cluster1 = cpu4-7,
-    # identical A55 cores, independent cpufreq policies)
+    # E: per-cluster residency inside the window. "little" membership comes from
+    # --little-cpus (device_probe.py's little_cpus); everything else is reported as
+    # "cluster1". On homogeneous parts with independent cpufreq policies per group the
+    # probe reports homogeneous=true and this split still shows placement effects.
     cpus = sorted({int(k) for _, m in data for k in m["cpu_ms"]})
     print("E. main-thread CPU residency inside window, ms per cpu")
     print("  it   window " + " ".join(f"cpu{c:>4}" for c in cpus) + "   little-share")

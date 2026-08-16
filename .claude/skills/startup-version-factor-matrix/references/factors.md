@@ -1,8 +1,8 @@
 # Factors: levels, how to set them, how to VERIFY them, and what each one hides
 
 Every factor below lists a verification step. **A factor level you did not verify is a factor
-level you did not set** — most confounds in this project's history were unverified assumptions
-about compile state, install state, or device temperature.
+level you did not set** — the confounds that survive longest are unverified assumptions about
+compile state, install state, and device temperature, because each one looks fine in the logs.
 
 ---
 
@@ -18,18 +18,24 @@ about compile state, install state, or device temperature.
 `[status=speed-profile] [reason=install-dm|install-speg|bg-dexopt]` for `profile`, `[status=verify]`
 for `none`. Record the line in the cell's provenance file.
 
-**Known magnitude:** profile vs none is **-42..-47% median and -47..-52% max on ART 14/15**;
-**neutral on ART 12** (Pixel 3) — the once-suspected "inversion" there was refuted by a
-counterbalanced re-test.
+**Expected magnitude:** on recent ART generations this is usually the single largest factor in
+the whole matrix — a large fraction off both the median and the tail. On older ART generations
+the same profile can be **neutral**, so never assume the effect transfers across Android
+versions; measure it per device. Beware the mirror-image error too: an apparent *penalty* from a
+profile is far more often an ordering/thermal artefact than a real inversion — re-test
+counterbalanced before believing it.
 
 **Traps.**
-- The benchmark's *default* CompilationMode resets to fresh-install state and **never exercises
-  a packaged profile** — a with/without comparison run in default mode measures nothing.
-  `Partial(Require)` fails loudly when no profile is packaged; that failure is the packaging check.
-- On Samsung, install-time SPEG compilation **alternates deterministically across same-APK
-  reinstalls** (`speed-profile [install-speg]` / `verify [install]`), independent of launches; a
-  byte-new APK resets to `verify`. So either pin state with `pm compile` or pair arms across an
-  even number of installs. This alternation once masqueraded as a +45% TTID regression.
+- The benchmark's *default* CompilationMode never exercises a packaged profile, so a
+  with/without comparison run in default mode measures nothing (mechanics:
+  `startup-analysis/references/interpreting-results.md` → Install-time compile state). For cells,
+  always name the mode explicitly rather than relying on the default.
+- **Some OEM builds compile at install time on an alternating schedule**, which can masquerade as
+  a large regression or win at whole-app-launch scale. Mechanism, the disproved hypotheses, and
+  detection via `dumpsys package dexopt` are in
+  `startup-analysis/references/interpreting-results.md` → Install-time compile state. For cells:
+  pin state with `pm compile` or pair arms across an even number of installs, and never compare a
+  freshly built (byte-new) APK against a reinstalled one.
 - ART never dexopts **debuggable** builds (always `run-from-apk`): compile-state work requires
   the benchmark build.
 
@@ -43,9 +49,10 @@ counterbalanced re-test.
 
 **Verify:** the SDK's own attributes on 9.2+ (`seconds-since-install`, `seconds-since-update`,
 `emb.app.version_startup_counter`) read via the verification tap; on older versions, track install
-epoch host-side. A `version_startup_counter` of 156 on a "fresh" cell means the uninstall silently
-failed — which happened, because `adb uninstall` can fail while `install -r` then preserves all app
-data (auto-backup/in-place update).
+epoch host-side. A launch counter well above 1 in a "fresh" cell means the uninstall silently
+failed: `adb uninstall` can fail while the subsequent `install -r` updates in place and preserves
+the entire app data directory. Check uninstall exit codes; do not infer freshness from the fact
+that you asked for it.
 
 **Known magnitude:** first launch runs inside a measured 2-3x concurrent-CPU burst (dexopt and app
 first-run work); prod outlier populations are enriched with it. This is why prod dashboards segment
@@ -67,7 +74,9 @@ init call site, same config. Diff the integration code between variants before t
 
 **Why it matters:** it answers whether the SDK's cost stays small *in company*, measures the
 realistic (rather than injected-load) inflation of the window, and shows which sections inflate
-under genuine app concurrency — the P9-class wait-prone sections should inflate most.
+under genuine app concurrency — expect the sections that block and resume (lock handoffs, first
+worker-thread creation, first shared-preferences read) to inflate most, and the purely CPU-bound
+ones to inflate least.
 
 **Trap.** The heavy variant is app-side work, so its own variance can swamp the SDK delta. Compare
 heavy-vs-light **at the same version** to get the interference magnitude, then version-vs-version
@@ -78,13 +87,16 @@ heavy-vs-light **at the same version** to get the interference magnitude, then v
 | level | meaning | how to set |
 |---|---|---|
 | `quiet` (reference) | no injected load | — |
-| `hog8` | genuine run-queue contention | 8 concurrent `adb shell dd if=/dev/zero of=/dev/null` |
-| `hog4-bandwidth` | memory-bandwidth pressure without much queueing | 4 hogs |
+| `queueing` | genuine run-queue contention | enough concurrent busy-loops (`adb shell dd if=/dev/zero of=/dev/null`) to exceed the device's core count |
+| `bandwidth` | memory-system pressure without much queueing | a lighter load, below the core count |
 
-**Verify:** on 9.2+ read `init-run-delay-pct` from the tap — `hog8` should show tens of percent,
-`quiet` ~0. This is measured, not assumed: **4 hogs tripled the window while producing ~0
-runnable-wait** (slow execution, not queueing), whereas **8 hogs produced 32-92% run-delay**. The
-two levels are therefore different mechanisms, not different doses.
+**Verify by measurement, and name the level after its effect, not its knob.** Read the run-delay
+attribute (or the trace's runnable-wait) per iteration: the queueing level must actually move it
+into the tens of percent, while the bandwidth level inflates the window with run-delay staying
+near zero. **These are different mechanisms, not different intensities** — a load that merely
+slows execution proves nothing about contention handling, and reporting it as "contention" is a
+false result. The threshold is device-specific (core count, cluster topology, memory system), so
+calibrate it per device rather than importing a hog count.
 
 **Traps.** Hogs heat the device — pair contention cells with a temperature check per pass or the
 thermal factor contaminates them. Kill hogs on the host *and* `pkill -9 dd` on the device when a
@@ -97,17 +109,20 @@ cell ends; a stray hog silently poisons every later cell.
 | `cool` (reference) | at/below the device's cool gate | idle + screen-off cooling until the gate passes (cap the wait) |
 | `hot` | a defined warm band | duty-cycled hog heating with a pre-launch quiesce so the heater is not itself a contention confound |
 
-**Verify:** thermalservice AP/skin sensors (Pixel 3 exposes 26, P7P 74) — **not** `dumpsys battery`:
-the Pixel 3 reports a constant 37.7 °C, which silently stalls any band logic, and a plugged-in
-device's warm idle floor can sit above a naive cool gate forever. On 9.2+, cross-check with the
-SDK's `thermal-status` / `thermal-headroom-pct` (headroom tracked measured temperature at r=+0.98
-on the P7P, and on the Pixel 3 it varied while battery temp was pinned — it is the better sensor
-there).
+**Verify:** drive band logic from `dumpsys thermalservice` AP/skin sensors (devices expose
+anywhere from a handful to dozens), **not** `dumpsys battery`. Battery temperature is unreliable
+as a control input: some devices report a frozen value, which silently stalls any band logic
+forever, and a plugged-in device's warm idle floor can sit permanently above a naive cool gate —
+so cap every cooling wait in minutes and allow per-device thresholds. Where the SDK exposes
+thermal attributes, cross-check with them: they track measured temperature closely and, on a
+device with a broken battery sensor, carry more information than the battery reading does.
 
-**Known magnitude:** P7P **+10% median from <=33 °C to >=38 °C** (ascending and descending arms
-agreeing within 1-4 ms per band); Pixel 3 shows a much larger memory-bus-throttle effect at
-constant CPU clock. Always counterbalance ascending/descending — heat effects and drift are
-otherwise indistinguishable.
+**Expected magnitude:** strongly tier- and SoC-dependent. Flagship-class devices often shrug off
+moderate heat and then show a modest penalty once past their throttle onset; devices that throttle
+memory/bus domains rather than CPU clocks can degrade much harder, and the giveaway is a window
+that grows while delivered CPU clock stays flat. Establish the onset and slope per device rather
+than importing a number. Always counterbalance ascending/descending bands — heat effects and
+drift are otherwise indistinguishable.
 
 ## 6. Memory pressure (advanced; optional)
 
@@ -118,10 +133,11 @@ otherwise indistinguishable.
 
 **Verify:** the tap's `low-memory` / `mem-available-pct` attributes on 9.2+.
 
-**Traps.** Hard to hold steady and the OS may kill the app mid-measurement, which biases the
-sample toward survivors. Own-process GC is allocation-driven, so CPU hogs do **not** induce it —
-on a 4 GB device init simply does not collect (`init-gc-count` 0 across 24 iterations), whereas the
-1 GB A01 collects during ~82% of outlier windows. Treat this factor as A01-only.
+**Traps.** Hard to hold steady, and the OS may kill the app mid-measurement, which biases the
+sample toward survivors. Own-process GC is allocation-driven, so CPU hogs do **not** induce it:
+on a device with comfortable RAM, init may not collect at all, while on a low-RAM device
+collections during init are common and dominate its outlier population. Treat this as an
+entry/low-RAM-tier factor — running it on a roomy device usually measures nothing.
 
 ---
 

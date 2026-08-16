@@ -18,7 +18,16 @@ import re
 import subprocess
 import sys
 
-REPO = pathlib.Path("/Users/hansonho/work/embrace-android-sdk")
+def repo_root():
+    """Locate the SDK repo without hardcoding a home directory."""
+    cp = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True,
+                        timeout=60, cwd=str(pathlib.Path(__file__).resolve().parent))
+    if cp.returncode == 0 and cp.stdout.strip():
+        return pathlib.Path(cp.stdout.strip())
+    return pathlib.Path(__file__).resolve().parents[3]
+
+
+REPO = repo_root()
 EXAMPLE = REPO / "examples/ExampleApp"
 CATALOG = EXAMPLE / "gradle/libs.versions.toml"
 JOURNAL = EXAMPLE / ".vfm-compat-journal.json"

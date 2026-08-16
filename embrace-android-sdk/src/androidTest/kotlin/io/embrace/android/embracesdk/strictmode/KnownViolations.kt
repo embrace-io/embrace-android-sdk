@@ -28,6 +28,16 @@ internal val KNOWN_VIOLATIONS: List<KnownViolation> = listOf(
             "stats the directory on every call",
     ),
     KnownViolation(
+        signature = "internal.instrumentation.startup.SdkInitResourceUsageTrackerKt.readProcFile",
+        violation = DiskReadViolation::class,
+        reason = "SdkInitResourceUsageTracker samples /proc/self/task/<tid>/schedstat, /proc/self/stat and " +
+            "/proc/self/io at both edges of the init window. These cannot be moved off the main thread: " +
+            "schedstat is per-TID and only means anything when read from the thread being measured, and the " +
+            "other two have to be sampled at the window's edges to give a delta across it. procfs is " +
+            "memory-backed, so the cost is microseconds rather than real disk I/O — StrictMode instruments " +
+            "the syscall and cannot tell the two apart",
+    ),
+    KnownViolation(
         signature = "internal.config.store.RemoteConfigStoreImpl.loadFromCache",
         violation = DiskReadViolation::class,
         reason = "PersistedConfig's ctor loads the persisted response from the config store",

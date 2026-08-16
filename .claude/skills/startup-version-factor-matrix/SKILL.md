@@ -146,4 +146,5 @@ checked mechanically rather than trusted to discipline.
   report p90/max alongside — outlier behaviour is often where versions actually differ.
 - **Absolute values are build-type-specific.** Debug builds can be several times slower than the
   benchmark (profileable) build and never AOT-compile; only compare like with like, and prefer the
-  benchmark build. There are no portable reference numbers — establish your own baselines.
+  benchmark build. There are no portable reference numbers — establish your own baselines, and see
+  the `startup-longitudinal-tracking` skill for keeping them comparable across runs and releases.

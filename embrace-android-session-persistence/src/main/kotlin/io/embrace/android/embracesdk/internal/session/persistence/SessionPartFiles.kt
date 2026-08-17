@@ -14,6 +14,8 @@ internal const val MANIFEST_FILE_NAME = "manifest.pb"
 
 internal const val METADATA_FILE_NAME = "metadata.pb"
 
+internal const val SESSION_SPAN_FILE_NAME = "session_span.pb"
+
 /**
  * Writes [fileName] into [partDir] by encoding to a temporary file and then renaming it, so a
  * partially written file is never observed. Any file already at that path is replaced.

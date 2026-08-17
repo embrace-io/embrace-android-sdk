@@ -54,15 +54,15 @@ internal class ExperimentRecordTest {
     }
 
     @Test
-    fun `percent-escapes id and variant while leaving a ampersand unchanged`() {
+    fun `percent-escapes id and variant while leaving ampersand and pipe unchanged`() {
         val record = ExperimentRecord(
             kind = ExperimentKind.EXPERIMENT,
-            id = "id%:;&",
-            variant = "variant%:;&",
+            id = "id%:;&|",
+            variant = "50%",
             startTimeMs = 100L,
             endTimeMs = null,
         )
-        assertEquals("e:id%25%3A%3B&:variant%25%3A%3B&:100", record.serialize())
+        assertEquals("e:id%25%3A%3B&|:50%25:100", record.serialize())
     }
 
     @Test

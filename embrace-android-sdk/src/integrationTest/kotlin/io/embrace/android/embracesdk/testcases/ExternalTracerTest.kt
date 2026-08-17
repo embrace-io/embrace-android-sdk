@@ -78,6 +78,7 @@ internal class ExternalTracerTest {
         var endTimeMs: Long? = null
         var childEndTimeMs: Long? = null
         var stacktrace: String? = null
+        var trackStartMs: Long = -1L
 
         testRule.runTest(
             persistedRemoteConfig = remoteConfig,
@@ -88,6 +89,8 @@ internal class ExternalTracerTest {
                 embOpenTelemetry = embrace.getOpenTelemetryKotlin()
                 initializeTracer()
                 recordSession {
+                    trackStartMs = clock.now()
+                    embrace.trackExperiment(id = "checkout-flow", variant = "variant-a", startedAt = trackStartMs)
                     val span = embTracer.startSpan("external-span")
                     startTimeMs = clock.now()
                     val parentContext = embOpenTelemetry.context.root().storeSpan(span)
@@ -131,6 +134,13 @@ internal class ExternalTracerTest {
 
                 // the experiments attribute cannot be set via the OTel API
                 assertNull(parent.attributes?.singleOrNull { it.key == EmbCommonAttributes.EMB_EXPERIMENTS })
+
+                // but the SDK-written value on the session span reaches the customer span exporter
+                val exportedSessionSpan = spanExporter.exportedSpans.single { it.name == "emb-session" }
+                assertEquals(
+                    "e:checkout-flow:variant-a:$trackStartMs",
+                    exportedSessionSpan.attributes[EmbCommonAttributes.EMB_EXPERIMENTS],
+                )
                 assertEmbraceSpanData(
                     span = parent,
                     expectedStartTimeMs = checkNotNull(startTimeMs),

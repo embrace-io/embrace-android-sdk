@@ -18,6 +18,8 @@ internal const val SESSION_SPAN_FILE_NAME = "session_span.pb"
 
 internal const val SPAN_SNAPSHOTS_FILE_NAME = "span_snapshots.pb"
 
+internal const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
+
 /**
  * Writes [fileName] into [partDir] by encoding to a temporary file and then renaming it, so a
  * partially written file is never observed. Any file already at that path is replaced.

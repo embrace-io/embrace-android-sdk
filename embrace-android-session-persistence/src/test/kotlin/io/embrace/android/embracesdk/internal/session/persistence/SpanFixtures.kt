@@ -63,7 +63,7 @@ internal val fullyPopulatedSpanProto = SpanProto(
     ),
 )
 
-internal val fullyPopulatedSessionSpanProto = SessionSpan(
+internal val fullyPopulatedSessionSpanProto = SessionPartSpan(
     format_version = FORMAT_VERSION,
     span = fullyPopulatedSpanProto,
 )

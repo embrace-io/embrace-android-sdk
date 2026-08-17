@@ -38,7 +38,7 @@ class SpanSnapshotsWriter(
 
         val partDir = File(sessionsDir.value, directory.dirName)
         if (!partDir.isDirectory) {
-            trackFailure(IOException("Not a session part directory: ${partDir.path}"))
+            trackFailure(IOException("Not a session part directory"))
             return false
         }
         val snapshots = SpanSnapshots(

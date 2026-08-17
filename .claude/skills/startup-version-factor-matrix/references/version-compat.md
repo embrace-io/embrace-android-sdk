@@ -43,6 +43,17 @@ channel. Two consequences specific to this skill:
 
 `compat_patch.py` encodes these as data. Apply before a cell, revert after.
 
+**Apply them in a dedicated worktree, not the user's checkout.** Version campaigns mutate the
+catalog pin, the iteration count, and (for old versions) app source — run the whole campaign from
+`git worktree add --detach`, pass the worktree to the runner (`fleet_campaign.py --repo`), invoke
+`compat_patch.py` from the *worktree's own copy* of this skill so its `git rev-parse` self-location
+targets the worktree, reset between versions with an in-worktree `git checkout`, and delete the
+worktree at the end. Nothing is borrowed, so a killed campaign leaves nothing to restore — the
+failure class that produced four incidents on 2026-08-15/17 (dirty pins after SIGTERM, a restore
+that half-applied, a tree-clean that silently reverted a fix) cannot occur. The one recipe that
+still touches shared state is `local` (publishes the working tree to mavenLocal) — there the
+working tree is the *subject*, and mavenLocal is global by design; verify what resolved, as below.
+
 - **9.x / 8.x (modern)** — no patch. `embrace = "<version>"` in
   `examples/ExampleApp/gradle/libs.versions.toml`; `local` means publish the working tree with
   `./gradlew publishToMavenLocal -q` and pin the `version=` from the repo root `gradle.properties`.

@@ -74,16 +74,36 @@ object TelemetryVerificationTap {
      * before [Embrace.start], since the SDK ignores processors added after it has started.
      */
     fun registerIfEnabled(context: Context) {
-        val mode = when (Settings.Global.getString(context.contentResolver, SETTING_KEY)) {
-            "all" -> Mode.ALL
-            "startup", "1" -> Mode.STARTUP
+        val setting = Settings.Global.getString(context.contentResolver, SETTING_KEY)
+        val mode = when {
+            setting == "all" -> Mode.ALL
+            setting == "startup" || setting == "1" -> Mode.STARTUP
+            setting?.startsWith("startup:") == true -> Mode.STARTUP
             else -> null
         } ?: return
         Embrace.addSpanProcessor(VerificationSpanProcessor(mode))
         if (mode == Mode.ALL) {
             Embrace.addLogRecordProcessor(VerificationLogRecordProcessor())
         } else {
-            scheduleStartupFlush()
+            scheduleStartupFlush(startupFlushDelayMs(setting))
+        }
+    }
+
+    /**
+     * `startup:<seconds>` overrides the flush delay. The default 10 s NEVER survives a
+     * macrobenchmark run: the harness force-stops the process between iterations on a shorter
+     * cadence, so every launch dies holding its queue and 50 tapped launches emit nothing at all
+     * (measured 2026-08-17). A short delay still lands well after the startup window and TTID
+     * (both < ~1 s of launch) — it only needs to beat the force-stop, not stay out of the way of
+     * the measurement. A malformed suffix falls back to the default rather than failing: this is
+     * verification plumbing inside a host app, and a bad setting must never take the app down.
+     */
+    private fun startupFlushDelayMs(setting: String): Long {
+        val seconds = setting.substringAfter("startup:", "").toLongOrNull()
+        return if (seconds != null && seconds in 1..STARTUP_FLUSH_DELAY_MS / 1000) {
+            seconds * 1000
+        } else {
+            STARTUP_FLUSH_DELAY_MS
         }
     }
 
@@ -113,6 +133,23 @@ object TelemetryVerificationTap {
                     }
                 }
             }
+            // The timer alone NEVER fires under macrobenchmark: the harness force-stops the
+            // process 1-3 s after launch, so at any delay that stays clear of the measurement the
+            // queue dies unemitted (measured 2026-08-17: 1 flush in 50 launches at 3 s with a
+            // 16 MB logcat buffer; 1 in 50 at 1 s). The sentinel is the startup trace's ROOT span
+            // ending - startup is over by definition, and every trace event that determines the
+            // window and TTID already exists, so post-hoc metric derivation cannot be perturbed
+            // by the flush's CPU. The child spans are recorded RETROSPECTIVELY after the root
+            // ends (end-call order is not timestamp order), so the flush waits a short grace for
+            // them to reach the queue rather than keying on any child's name - emitter-internal
+            // recording order is not a contract. The timer stays as the fallback for launches
+            // where no startup root ends (crashed launch, no activity); flushStartupSpans() is
+            // idempotent via startupFlushDone, so both firing is benign.
+            if (mode == Mode.STARTUP && span.name in STARTUP_SENTINEL_SPANS &&
+                !startupFlushDone.get()
+            ) {
+                flushHandler?.postDelayed({ flushStartupSpans() }, SENTINEL_FLUSH_GRACE_MS)
+            }
         }
 
         override fun isStartRequired(): Boolean = false
@@ -138,15 +175,14 @@ object TelemetryVerificationTap {
         override suspend fun shutdown(): OperationResultCode = OperationResultCode.Success
     }
 
-    private fun scheduleStartupFlush() {
+    private fun scheduleStartupFlush(delayMs: Long) {
         val thread = HandlerThread("emb-verify-flush", Process.THREAD_PRIORITY_BACKGROUND)
         thread.start()
-        Handler(thread.looper).postDelayed(
-            {
-                flushStartupSpans()
-                thread.quitSafely()
-            },
-            STARTUP_FLUSH_DELAY_MS,
+        val handler = Handler(thread.looper)
+        flushHandler = handler
+        handler.postDelayed(
+            { flushStartupSpans() },
+            delayMs,
         )
     }
 
@@ -315,12 +351,18 @@ object TelemetryVerificationTap {
         "emb-app-ready",
     )
 
+    /** The startup trace's root spans: either one ending means startup is complete. */
+    private val STARTUP_SENTINEL_SPANS = setOf("emb-app-startup-cold", "emb-app-startup-warm")
+
     private const val SETTING_KEY = "embrace_verify_telemetry"
     private const val TAG = "EmbVerify"
     private const val MARKER = "EMBV1"
     private const val MAX_CHUNK_BYTES = 3600
     private const val STARTUP_FLUSH_DELAY_MS = 10_000L
+    private const val SENTINEL_FLUSH_GRACE_MS = 150L
 
+    @Volatile
+    private var flushHandler: Handler? = null
     private val nextSeq = AtomicInteger(0)
     private val resourceEmitted = AtomicBoolean(false)
     private val startupFlushDone = AtomicBoolean(false)

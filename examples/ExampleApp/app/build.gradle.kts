@@ -101,9 +101,13 @@ dependencies {
     implementation(libs.embrace.android.otel.java)
     // opentelemetry-kotlin processor API used by TelemetryVerificationTap; the Embrace SDK already
     // ships these at runtime, this just makes them visible at compile time. Keep the version in
-    // sync with the SDK's otelKotlin version.
-    implementation("io.opentelemetry.kotlin:api:0.6.0")
-    implementation("io.opentelemetry.kotlin:sdk-api:0.6.0")
+    // sync with the SDK's otelKotlin version. compileOnly is load-bearing: as implementation these
+    // override the SDK-under-test's own otel-kotlin on the runtime classpath, which crashes any SDK
+    // built against a different version (8.3.0 died with NoSuchMethodError on Context.storeSpan in
+    // a posted Handler callback - AFTER the activity was up, so macrobenchmark still reported rc=0
+    // and produced 200 traces from a process that crashed on every launch).
+    compileOnly("io.opentelemetry.kotlin:api:0.6.0")
+    compileOnly("io.opentelemetry.kotlin:sdk-api:0.6.0")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 
     // uncomment to enable debugging through source contained in those modules

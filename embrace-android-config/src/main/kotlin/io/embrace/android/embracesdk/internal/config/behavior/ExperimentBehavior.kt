@@ -6,9 +6,9 @@ package io.embrace.android.embracesdk.internal.config.behavior
 interface ExperimentBehavior {
 
     /**
-     * The combined maximum number of tracked active experiments and feature flags.
+     * The combined maximum number of tracked experiments and feature flags, counting both active and ended records.
      */
-    fun getMaxActiveCount(): Int
+    fun getMaxExperimentCount(): Int
 
     /**
      * The maximum length of an ID for the experiments API.

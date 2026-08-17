@@ -3,8 +3,6 @@ package io.embrace.android.embracesdk.testcases.features
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.assertions.findSpanByName
-import io.embrace.android.embracesdk.experiments.TrackedExperiment
-import io.embrace.android.embracesdk.experiments.TrackedFeatureFlag
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
@@ -36,11 +34,11 @@ internal class ExperimentsDataDeliveryTest {
                 recordSession {
                     val trackStartMs = clock.now()
                     embrace.trackExperiment(
-                        TrackedExperiment(id = "checkout-flow", startTimeMs = trackStartMs, variant = "variant-a"),
+                        embrace.createExperiment(id = "checkout-flow", startTimeMs = trackStartMs, variant = "variant-a"),
                     )
 
                     val flagStartMs = clock.tick()
-                    embrace.trackFeatureFlag(TrackedFeatureFlag(id = "dark-mode", startTimeMs = flagStartMs))
+                    embrace.trackFeatureFlag(embrace.createFeatureFlag(id = "dark-mode", startTimeMs = flagStartMs))
 
                     val untrackEndMs = clock.tick()
                     embrace.untrackExperiment("checkout-flow", endTimeMs = untrackEndMs)

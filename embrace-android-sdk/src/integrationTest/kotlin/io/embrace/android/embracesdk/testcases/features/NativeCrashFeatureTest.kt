@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.experiments.TrackedExperiment
 import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
@@ -148,7 +147,7 @@ internal class NativeCrashFeatureTest {
                 setupFakeNativeCrash(serializer, crashData)
             },
             testCaseAction = {
-                embrace.trackExperiment(TrackedExperiment(id = "current-exp", startTimeMs = clock.now()))
+                embrace.trackExperiment(embrace.createExperiment(id = "current-exp", startTimeMs = clock.now()))
                 ioWorker.blockingMode = false
                 ioWorker.runCurrentlyBlocked()
             },

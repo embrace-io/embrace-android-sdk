@@ -4,7 +4,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.assertions.findSpanByName
 import io.embrace.android.embracesdk.assertions.getLogOfType
-import io.embrace.android.embracesdk.experiments.TrackedExperiment
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -71,7 +70,7 @@ internal class ExperimentsDataDeliveryTest {
                 recordSession {
                     trackStartMs = clock.now()
                     embrace.trackExperiment(
-                        TrackedExperiment(id = "checkout-flow", startTimeMs = trackStartMs, variant = "variant-a"),
+                        embrace.createExperiment(id = "checkout-flow", startTimeMs = trackStartMs, variant = "variant-a"),
                     )
                     embrace.logMessage("log with experiments", Severity.INFO)
                     flushLogBatch()

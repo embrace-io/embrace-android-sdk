@@ -1,15 +1,21 @@
 <!--
-  TEMPLATE for the startup-analysis report.            (FYI: template last updated 2026-08-12)
+  TEMPLATE for the startup-analysis report.
 
   Each generated report covers exactly one skill invocation — every pass run during that
   invocation, on the same device/SDK build — not the status of any broader investigation.
 
-  Identity fields are placeholders in ⟨angle brackets⟩: ANY device meeting the skill's
-  prerequisites works — the report must state which device was used and its important
-  attributes (manufacturer, model, device code, Android version/API level), all obtainable
-  via the adb command in the skill. The numeric values below are ILLUSTRATIVE ONLY — they show
-  the expected shape/precision of each cell, not expected magnitudes (real numbers vary by an
-  order of magnitude across device tiers).
+  Identity fields are placeholders in ⟨angle brackets⟩: ANY physical device meeting the skill's
+  prerequisites works (emulators do not). The report MUST state the full device profile —
+  manufacturer/vendor, model + device code, Android release and API level, tier
+  (entry/mid/flagship), SoC family, and RAM class if known — plus the build type. Everything in
+  that list is obtainable via the adb command and device-probe pointer in SKILL.md
+  ("Choosing a device, and recording its profile"). Without the profile the numbers are not
+  comparable to any other run, including your own later ones.
+
+  The numeric values below are ILLUSTRATIVE ONLY — they show the expected shape/precision of
+  each cell, not expected magnitudes. Real numbers vary by an order of magnitude across device
+  tiers and differ by build type, so never leave a template number in place and never treat one
+  as a target.
 
   SDK version: report it because it determines WHICH trace data exists, not as an identity —
   it fixes the window source (emb-sdk-start slice on newer SDKs; composed
@@ -158,7 +164,7 @@
 
 <main>
   <h1>SDK Init Timing — ⟨YYYY-MM-DD⟩ (⟨SDK version under test⟩)</h1>
-  <p class="context">⟨Manufacturer⟩ ⟨Model⟩ (⟨device code⟩) · Android ⟨version⟩ (API ⟨level⟩) · Embrace SDK ⟨version under test⟩ · ExampleApp benchmark variant, R8-minified · compilation: ⟨DEFAULT (verify) | baseline-profile (Partial/Require) — one report section or column per arm run⟩ · ⟨analysis date⟩ · ⟨N⟩ cold-start iterations per arm</p>
+  <p class="context">⟨Manufacturer⟩ ⟨Model⟩ (⟨device code⟩) · ⟨entry | mid | flagship⟩ tier · ⟨SoC family⟩ · ⟨RAM class, if known⟩ · Android ⟨release⟩ (API ⟨level⟩) · Embrace SDK ⟨version under test⟩ · ExampleApp benchmark variant (profileable, non-debuggable), R8-minified · compilation: ⟨DEFAULT (verify) | baseline-profile (Partial/Require) — one report section or column per arm run⟩ · ⟨analysis date⟩ · ⟨N⟩ cold-start iterations per arm</p>
 
   <div class="verdict">✓ All ⟨M⟩ sections expected for this SDK version recorded on ⟨N⟩/⟨N⟩ runs (window source: ⟨emb-sdk-start | composed fallback⟩). SDK-init window median ⟨X⟩ ms; ⟨0⟩/⟨N⟩ iterations flagged CONTENDED. ⟨If any sections expected for this SDK version were absent, or iterations were contended, say so here.⟩</div>
 

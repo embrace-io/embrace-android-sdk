@@ -13,8 +13,10 @@ import json
 import pathlib
 import sys
 
-# per-launch seconds by device class, measured: A14 ~8s incl. pacing, P7P ~7s, A01 ~20s
-LAUNCH_SECONDS = {"a14": 8.0, "p7p": 7.0, "pixel3": 9.0, "a01": 20.0}
+# Rough per-launch seconds by TIER, for budgeting only. Calibrate against your own first cell:
+# the estimate exists to stop you planning 20 h of work into an 8 h window, not to be precise.
+LAUNCH_SECONDS = {"flagship": 7.0, "mid": 9.0, "entry": 20.0}
+DEFAULT_LAUNCH_SECONDS = 10.0
 PASS_OVERHEAD_S = 180.0   # gradle invocation, install, cool gate, trace copy
 COOL_GATE_S = 300.0       # typical wait per pass; longer from a hot start
 
@@ -26,7 +28,7 @@ def cell_id(version, levels, device):
 
 def build_cells(plan):
     ref = plan["reference"]
-    dev = plan["device"]["name"]
+    dev = plan["primary_device"]
     cells = []
 
     # 1. version sweep in the reference cell - the primary deliverable
@@ -48,7 +50,7 @@ def build_cells(plan):
     for combo in plan.get("combos", []):
         merged = dict(ref)
         merged.update(combo["levels"])
-        device = combo.get("device", dev)
+        device = combo.get("device") or dev
         cells.append({"id": cell_id(combo["version"], combo["levels"], device),
                       "version": combo["version"], "levels": merged, "device": device,
                       "group": f"combo:{combo['id']}"})
@@ -80,7 +82,8 @@ def interleave(cells):
 
 
 def estimate_seconds(cell, plan):
-    per_launch = LAUNCH_SECONDS.get(cell["device"], 10.0)
+    tier = (plan.get("devices", {}).get(cell["device"], {}) or {}).get("tier")
+    per_launch = LAUNCH_SECONDS.get(tier, DEFAULT_LAUNCH_SECONDS)
     launches = plan["passes"] * plan["iterations"]
     extra = 0.0
     if cell["levels"].get("install") in ("fresh", "updated"):
@@ -112,23 +115,36 @@ def main():
     args = ap.parse_args()
 
     plan = json.loads(pathlib.Path(args.plan).read_text())
-    for key in ("run_id", "device", "passes", "iterations", "reference", "versions", "anchors"):
+    for key in ("run_id", "primary_device", "devices", "passes", "iterations", "reference",
+                "versions", "anchors"):
         if key not in plan:
-            sys.exit(f"plan is missing required key: {key}")
+            sys.exit(f"plan is missing required key: {key} (see plan-example.json)")
 
     # Any cell may name a device other than the primary (combos deliberately do). Every such
     # device needs a serial, or the runner would silently drive the primary device instead.
-    devices = dict(plan.get("devices", {}))
-    devices.setdefault(plan["device"]["name"], plan["device"])
-    plan["devices"] = devices
-    needed = {c.get("device", plan["device"]["name"]) for c in plan.get("combos", [])}
+    devices = plan["devices"]
+    needed = {plan["primary_device"]} | {c.get("device") or plan["primary_device"]
+                                        for c in plan.get("combos", [])}
     missing = sorted(d for d in needed if d not in devices)
     if missing:
-        sys.exit(f"plan names device(s) {missing} in combos but gives no serial for them - add a "
-                 f'"devices" map: {{"a01": {{"name": "a01", "serial": "...", "cool_gate_c": 30}}}}')
-    if plan["passes"] < 4 or plan["iterations"] < 50:
-        print(f"WARNING: {plan['passes']}x{plan['iterations']} is weaker than the scoped 4x50 "
-              f"shape - outlier tails and pass-state need 4 passes of 50. Say so in the report.")
+        sys.exit(f"plan references device key(s) {missing} with no entry in \"devices\" - add one "
+                 f"per device with its serial and profile (see plan-example.json)")
+    for key, cfg in devices.items():
+        for field in ("serial", "api_level", "tier", "vendor"):
+            if not cfg.get(field):
+                print(f"WARNING: device '{key}' is missing '{field}'. The profile travels with "
+                      f"every result and is what makes runs comparable later - fill it in.")
+    # Pass count is the binding constraint, not iteration count: the permutation floor is
+    # 2/C(2G,G), so below four passes per arm no result can reach alpha = 0.05 whatever the effect
+    # size, and precision at a fixed launch budget scales with passes alone.
+    if plan["passes"] < 4:
+        print(f"WARNING: {plan['passes']} passes per arm cannot reach significance at all - the "
+              f"smallest attainable p-value is above 0.05. Add passes or state plainly that the "
+              f"cell is descriptive only.")
+    elif plan["passes"] < 10:
+        print(f"WARNING: {plan['passes']}x{plan['iterations']} is weaker than the scoped 10x20 "
+              f"shape - precision and the p-value floor both improve with passes, not iterations. "
+              f"Say so in the report.")
 
     cells = interleave(build_cells(plan))
     total = 0.0

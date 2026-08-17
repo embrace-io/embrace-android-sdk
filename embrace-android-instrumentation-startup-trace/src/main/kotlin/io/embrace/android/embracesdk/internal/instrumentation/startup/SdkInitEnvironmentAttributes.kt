@@ -62,7 +62,10 @@ private fun MutableMap<String, String>.putThermalAttributes(
 ) {
     if (versionChecker.isAtLeast(VERSION_CODES.Q)) {
         val powerManager = powerManagerProvider() ?: return
-        put(THERMAL_STATUS, thermalStatusName(powerManager.currentThermalStatus))
+        val thermalStatus = powerManager.currentThermalStatus
+        if (thermalStatus != PowerManager.THERMAL_STATUS_NONE) {
+            put(THERMAL_STATUS, thermalStatusName(thermalStatus))
+        }
         if (versionChecker.isAtLeast(VERSION_CODES.R)) {
             val headroom = runCatching { powerManager.getThermalHeadroom(0) }.getOrNull()
             if (headroom != null && headroom.isFinite()) {

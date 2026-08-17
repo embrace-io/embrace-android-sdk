@@ -21,6 +21,7 @@ internal class ExperimentTrackingFoundationTest {
     fun `experiment and feature flag tracking works through the public api`() {
         var bufferedExperimentStartMs: Long = -1
         var flagStartMs: Long = -1
+        var sharedIdExperimentStartMs: Long = -1
         var variantlessExperimentStartMs: Long = -1
         var untrackEndMs: Long = -1
 
@@ -33,6 +34,10 @@ internal class ExperimentTrackingFoundationTest {
                 recordSession {
                     flagStartMs = clock.tick()
                     embrace.trackFeatureFlag(id = "dark-mode", startedAt = flagStartMs)
+
+                    // an experiment may share an id with a feature flag: they are two independent records
+                    sharedIdExperimentStartMs = clock.tick()
+                    embrace.trackExperiment(id = "dark-mode", startedAt = sharedIdExperimentStartMs)
 
                     // omitted timestamp resolves to the SDK clock's time at the moment of the call
                     variantlessExperimentStartMs = clock.tick()
@@ -51,6 +56,7 @@ internal class ExperimentTrackingFoundationTest {
                 val expectedRecords =
                     "e:checkout-flow:variant-a:$bufferedExperimentStartMs:$untrackEndMs;" +
                         "f:dark-mode::$flagStartMs;" +
+                        "e:dark-mode::$sharedIdExperimentStartMs;" +
                         "e:promo::$variantlessExperimentStartMs"
                 assertEquals(
                     expectedRecords,
@@ -59,7 +65,7 @@ internal class ExperimentTrackingFoundationTest {
 
                 val envelopes = getSessionEnvelopes(2)
                 val attrs = checkNotNull(envelopes.first().findSessionPartSpan().attributes)
-                assertEquals("3", attrs.findAttributeValue("emb.usage.track_experiment"))
+                assertEquals("4", attrs.findAttributeValue("emb.usage.track_experiment"))
                 assertEquals("1", attrs.findAttributeValue("emb.usage.untrack_experiment"))
                 assertEquals("1", attrs.findAttributeValue("emb.usage.track_feature_flag"))
 

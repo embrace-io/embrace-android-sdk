@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.api.delegate
 import io.embrace.android.embracesdk.experiments.TrackedExperiment
 import io.embrace.android.embracesdk.experiments.TrackedFeatureFlag
 import io.embrace.android.embracesdk.internal.api.ExperimentApi
+import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentKind
 import io.embrace.android.embracesdk.internal.capture.experiment.TrackedData
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
@@ -28,7 +29,7 @@ internal class ExperimentApiDelegate(
     }
 
     override fun untrackExperiments(ids: List<String>, endedAt: Long?) {
-        untrack("untrack_experiment", ids, endedAt ?: now())
+        untrack("untrack_experiment", ExperimentKind.EXPERIMENT, ids, endedAt ?: now())
     }
 
     override fun trackFeatureFlags(flags: List<TrackedFeatureFlag>) {
@@ -36,14 +37,14 @@ internal class ExperimentApiDelegate(
     }
 
     override fun untrackFeatureFlags(ids: List<String>, endedAt: Long?) {
-        untrack("untrack_feature_flag", ids, endedAt ?: now())
+        untrack("untrack_feature_flag", ExperimentKind.FEATURE_FLAG, ids, endedAt ?: now())
     }
 
     fun flushPendingCalls() {
         while (true) {
             when (val event = pendingEvents.poll() ?: return) {
                 is PendingEvent.Track -> trackNow(event.action, event.data)
-                is PendingEvent.Untrack -> untrackNow(event.action, event.ids, event.endTimeMs)
+                is PendingEvent.Untrack -> untrackNow(event.action, event.kind, event.ids, event.endTimeMs)
             }
         }
     }
@@ -56,11 +57,11 @@ internal class ExperimentApiDelegate(
         }
     }
 
-    private fun untrack(action: String, ids: List<String>, endTimeMs: Long) {
+    private fun untrack(action: String, kind: ExperimentKind, ids: List<String>, endTimeMs: Long) {
         if (!sdkCallChecker.started.get()) {
-            buffer(PendingEvent.Untrack(action, ids, endTimeMs))
+            buffer(PendingEvent.Untrack(action, kind, ids, endTimeMs))
         } else {
-            untrackNow(action, ids, endTimeMs)
+            untrackNow(action, kind, ids, endTimeMs)
         }
     }
 
@@ -70,9 +71,9 @@ internal class ExperimentApiDelegate(
         }
     }
 
-    private fun untrackNow(action: String, ids: List<String>, endTimeMs: Long) {
+    private fun untrackNow(action: String, kind: ExperimentKind, ids: List<String>, endTimeMs: Long) {
         if (sdkCallChecker.check(action)) {
-            experimentTrackingService?.untrack(ids, endTimeMs)
+            experimentTrackingService?.untrack(kind, ids, endTimeMs)
         }
     }
 
@@ -101,7 +102,12 @@ internal class ExperimentApiDelegate(
 
     private sealed interface PendingEvent {
         class Track(val action: String, val data: List<TrackedData>) : PendingEvent
-        class Untrack(val action: String, val ids: List<String>, val endTimeMs: Long) : PendingEvent
+        class Untrack(
+            val action: String,
+            val kind: ExperimentKind,
+            val ids: List<String>,
+            val endTimeMs: Long,
+        ) : PendingEvent
     }
 
     private companion object {

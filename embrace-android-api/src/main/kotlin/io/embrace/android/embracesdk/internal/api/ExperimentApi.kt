@@ -6,8 +6,9 @@ import io.embrace.android.embracesdk.experiments.TrackedFeatureFlag
 import io.embrace.android.embracesdk.experiments.TrackedFeatureFlagImpl
 
 /**
- * The public API used to track experiment and feature-flag state on a given device for the current app instance. IDs are unique across
- * experiments and feature flags. The SDK does not persist this state, and users need to call this each time the app starts up.
+ * The public API used to track experiment and feature-flag state on a given device for the current app instance. IDs are unique within
+ * each kind, so an experiment and a feature flag may share an ID. The SDK does not persist this state, and users need to call this each
+ * time the app starts up.
  */
 public interface ExperimentApi {
 

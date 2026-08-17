@@ -5,6 +5,10 @@ import android.content.Context
 import android.os.PowerManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Before
@@ -29,6 +33,29 @@ internal class SdkInitEnvironmentAttributesTest {
         val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
         shadowOf(powerManager).setCurrentThermalStatus(PowerManager.THERMAL_STATUS_MODERATE)
         assertEquals("moderate", environmentAttributes()[SdkInitAttributeKeys.THERMAL_STATUS])
+    }
+
+    @Test
+    fun `thermal status none is omitted since it carries no signal`() {
+        val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+        shadowOf(powerManager).setCurrentThermalStatus(PowerManager.THERMAL_STATUS_NONE)
+        assertFalse(environmentAttributes().containsKey(SdkInitAttributeKeys.THERMAL_STATUS))
+    }
+
+    @Test
+    fun `thermal headroom is still reported when thermal status is none`() {
+        // Robolectric's ShadowPowerManager has no shadow for getThermalHeadroom, so the real
+        // method throws under Robolectric and a mock is the only way to drive this branch.
+        val powerManager = mockk<PowerManager> {
+            every { currentThermalStatus } returns PowerManager.THERMAL_STATUS_NONE
+            every { getThermalHeadroom(0) } returns 0.42f
+        }
+        val attributes = environmentAttributes(
+            powerManagerProvider = { powerManager },
+            versionChecker = VersionChecker { true },
+        )
+        assertFalse(attributes.containsKey(SdkInitAttributeKeys.THERMAL_STATUS))
+        assertEquals("42", attributes[SdkInitAttributeKeys.THERMAL_HEADROOM_PCT])
     }
 
     @Test
@@ -109,11 +136,14 @@ internal class SdkInitEnvironmentAttributesTest {
 
     private fun environmentAttributes(
         prefsFileSizeProvider: () -> Long? = { null },
+        powerManagerProvider: () -> PowerManager? = { context.getSystemService(Context.POWER_SERVICE) as? PowerManager },
+        versionChecker: VersionChecker = BuildVersionChecker,
     ): Map<String, String> = sdkInitEnvironmentAttributes(
-        powerManagerProvider = { context.getSystemService(Context.POWER_SERVICE) as? PowerManager },
+        powerManagerProvider = powerManagerProvider,
         activityManagerProvider = { context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager },
         packageInfo = context.packageManager.getPackageInfo(context.packageName, 0),
         nowMs = NOW_MS,
+        versionChecker = versionChecker,
         uptimeMs = { fakeUptimeMs },
         prefsFileSizeProvider = prefsFileSizeProvider,
     )

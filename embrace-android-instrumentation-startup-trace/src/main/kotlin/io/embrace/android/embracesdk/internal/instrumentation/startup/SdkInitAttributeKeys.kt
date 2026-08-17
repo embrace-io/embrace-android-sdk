@@ -67,9 +67,11 @@ object SdkInitAttributeKeys {
 
     /**
      * The device's overall thermal throttling status at record time, as reported by
-     * [android.os.PowerManager.getCurrentThermalStatus] (API 29+): none/light/moderate/severe/
-     * critical/emergency/shutdown. Collected because heat measurably slows init, and this is a
-     * signal for that.
+     * [android.os.PowerManager.getCurrentThermalStatus] (API 29+): light/moderate/severe/
+     * critical/emergency/shutdown. Present only when the status is not none, so presence means
+     * the device was being throttled at the moment, while absence is not a strong signal
+     * because it could be due to a lag in the update or that there is no actual throttling.
+     * This is collected because heat measurably slows init, and this is a signal for that.
      */
     const val THERMAL_STATUS: String = "thermal-status"
 

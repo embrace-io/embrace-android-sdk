@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.experiments.TrackedExperiment
-import io.embrace.android.embracesdk.experiments.TrackedFeatureFlag
 import io.embrace.android.embracesdk.fakes.FakeExperimentTrackingService
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
@@ -49,7 +47,7 @@ internal class ExperimentApiDelegateTest {
 
     @Test
     fun `trackExperiment before start buffers without recording usage or error`() {
-        delegate.trackExperiment(TrackedExperiment("exp1", 1L))
+        delegate.trackExperiment(delegate.createExperiment("exp1", 1L))
 
         assertTrue(fakeExperimentTrackingService.trackedData.isEmpty())
         assertTrue(telemetryService.apiCalls.isEmpty())
@@ -67,7 +65,7 @@ internal class ExperimentApiDelegateTest {
 
     @Test
     fun `trackFeatureFlag before start buffers without recording usage or error`() {
-        delegate.trackFeatureFlag(TrackedFeatureFlag("flag1", 1L))
+        delegate.trackFeatureFlag(delegate.createFeatureFlag("flag1", 1L))
 
         assertTrue(fakeExperimentTrackingService.trackedData.isEmpty())
         assertTrue(telemetryService.apiCalls.isEmpty())
@@ -85,8 +83,8 @@ internal class ExperimentApiDelegateTest {
 
     @Test
     fun `buffered calls flush in FIFO order`() {
-        delegate.trackExperiment(TrackedExperiment("exp1", startTimeMs = 123456789L, variant = "v1"))
-        delegate.trackFeatureFlag(TrackedFeatureFlag("flag1", startTimeMs = 987654321L))
+        delegate.trackExperiment(delegate.createExperiment("exp1", startTimeMs = 123456789L, variant = "v1"))
+        delegate.trackFeatureFlag(delegate.createFeatureFlag("flag1", startTimeMs = 987654321L))
         delegate.untrackExperiment("exp1", endTimeMs = 555555555L)
         delegate.untrackFeatureFlag("flag1", endTimeMs = 666666666L)
 
@@ -116,7 +114,7 @@ internal class ExperimentApiDelegateTest {
     @Test
     fun `oldest buffered call is dropped once the pending event limit is exceeded`() {
         repeat(PENDING_EVENT_LIMIT + 1) { i ->
-            delegate.trackExperiment(TrackedExperiment("exp-$i", i.toLong()))
+            delegate.trackExperiment(delegate.createExperiment("exp-$i", i.toLong()))
         }
 
         sdkCallChecker.started.set(true)
@@ -133,7 +131,7 @@ internal class ExperimentApiDelegateTest {
     fun `trackExperiment after SDK start calls into the internal service immediately`() {
         sdkCallChecker.started.set(true)
 
-        delegate.trackExperiment(TrackedExperiment("exp1", startTimeMs = 111L, variant = "v1"))
+        delegate.trackExperiment(delegate.createExperiment("exp1", startTimeMs = 111L, variant = "v1"))
 
         assertEquals(
             listOf(TrackedData.Experiment(id = "exp1", startTimeMs = 111L, variant = "v1")),
@@ -159,7 +157,7 @@ internal class ExperimentApiDelegateTest {
     fun `trackFeatureFlag after SDK start calls into the internal service immediately`() {
         sdkCallChecker.started.set(true)
 
-        delegate.trackFeatureFlag(TrackedFeatureFlag("flag1", startTimeMs = 333L))
+        delegate.trackFeatureFlag(delegate.createFeatureFlag("flag1", startTimeMs = 333L))
 
         assertEquals(
             listOf(TrackedData.FeatureFlag(id = "flag1", startTimeMs = 333L)),

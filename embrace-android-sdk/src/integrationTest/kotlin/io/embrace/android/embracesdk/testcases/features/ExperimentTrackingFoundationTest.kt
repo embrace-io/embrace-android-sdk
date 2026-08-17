@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
-import io.embrace.android.embracesdk.experiments.TrackedExperiment
-import io.embrace.android.embracesdk.experiments.TrackedFeatureFlag
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
@@ -29,7 +27,7 @@ internal class ExperimentTrackingFoundationTest {
             preSdkStartAction = {
                 bufferedExperimentStartMs = clock.now()
                 embrace.trackExperiment(
-                    TrackedExperiment(
+                    embrace.createExperiment(
                         id = "checkout-flow",
                         startTimeMs = bufferedExperimentStartMs,
                         variant = "variant-a",
@@ -40,19 +38,19 @@ internal class ExperimentTrackingFoundationTest {
                 recordSession {
                     flagStartMs = clock.tick()
                     embrace.trackFeatureFlag(
-                        TrackedFeatureFlag(id = "dark-mode", startTimeMs = flagStartMs)
+                        embrace.createFeatureFlag(id = "dark-mode", startTimeMs = flagStartMs)
                     )
 
                     variantlessExperimentStartMs = clock.tick()
                     embrace.trackExperiment(
-                        TrackedExperiment(id = "promo", startTimeMs = variantlessExperimentStartMs)
+                        embrace.createExperiment(id = "promo", startTimeMs = variantlessExperimentStartMs)
                     )
 
                     untrackEndMs = clock.tick()
                     embrace.untrackExperiment("checkout-flow", endTimeMs = untrackEndMs)
 
                     embrace.trackExperiment(
-                        TrackedExperiment(id = "checkout-flow", startTimeMs = clock.tick(), variant = "variant-b")
+                        embrace.createExperiment(id = "checkout-flow", startTimeMs = clock.tick(), variant = "variant-b")
                     )
                 }
             },

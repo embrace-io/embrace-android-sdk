@@ -3,15 +3,20 @@ package io.embrace.android.embracesdk.experiments
 /**
  * A single feature flag that has been enabled on this app instance.
  */
-public class TrackedFeatureFlag(
+public interface TrackedFeatureFlag {
 
     /**
      * The unique ID of the feature flag.
      */
-    public val id: String,
+    public val id: String
 
     /**
      * The time at which the flag started applying to the device, in milliseconds since the epoch.
      */
-    public val startTimeMs: Long,
-)
+    public val startTimeMs: Long
+}
+
+internal class TrackedFeatureFlagImpl(
+    override val id: String,
+    override val startTimeMs: Long,
+) : TrackedFeatureFlag

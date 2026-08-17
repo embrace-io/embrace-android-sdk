@@ -43,7 +43,7 @@ internal class ExperimentTrackingServiceImpl(
         var updated = false
         synchronized(lock) {
             ids.forEach { id ->
-                if (untrackRecord(RecordKey(kind, id), endTimeMs)) {
+                if (untrackRecord(RecordKey(kind, id.stripWhitespace()), endTimeMs)) {
                     updated = true
                 }
             }
@@ -99,15 +99,15 @@ internal class ExperimentTrackingServiceImpl(
     private fun TrackedData.toRecord(): ExperimentRecord = when (this) {
         is TrackedData.Experiment -> ExperimentRecord(
             kind = ExperimentKind.EXPERIMENT,
-            id = id,
-            variant = variant,
+            id = id.stripWhitespace(),
+            variant = variant?.stripWhitespace()?.ifEmpty { null },
             startTimeMs = startTimeMs,
             endTimeMs = null,
         )
 
         is TrackedData.FeatureFlag -> ExperimentRecord(
             kind = ExperimentKind.FEATURE_FLAG,
-            id = id,
+            id = id.stripWhitespace(),
             variant = null,
             startTimeMs = startTimeMs,
             endTimeMs = null,
@@ -115,13 +115,18 @@ internal class ExperimentTrackingServiceImpl(
     }
 
     private fun isValid(record: ExperimentRecord): Boolean {
-        if (record.id.isBlank() || record.id.length > maxIdLength) {
+        if (record.id.isEmpty() || record.id.length > maxIdLength) {
             return false
         }
 
         val variant = record.variant
         return (variant == null || variant.length <= maxVariantLength)
     }
+
+    // Strips exactly the six ASCII whitespace code points (U+0009-U+000D and U+0020) from both ends. Deliberately
+    // narrower than Char.isWhitespace(), which also matches code points the wire contract requires to be kept
+    // (e.g. U+001C-U+001F, U+0085, U+00A0, U+3000).
+    private fun String.stripWhitespace(): String = trim { it in '\u0009'..'\u000D' || it == ' ' }
 
     private data class RecordKey(
         val kind: ExperimentKind,

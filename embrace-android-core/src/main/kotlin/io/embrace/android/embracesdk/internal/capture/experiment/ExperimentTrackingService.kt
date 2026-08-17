@@ -8,12 +8,14 @@ interface ExperimentTrackingService {
     /**
      * Records the given experiments and feature flags as tracked. Records are identified by kind + ID, so an experiment and a
      * feature flag may share an ID. Repeats of the same kind + ID are dropped, both in the same call and in subsequent calls.
+     * Leading and trailing ASCII whitespace (U+0009-U+000D, U+0020) is stripped from IDs and variants before validation and
+     * storage, and if there are no characters left after storage, it's treated as empty.
      */
     fun track(data: List<TrackedData>)
 
     /**
      * Marks the given experiments or feature flags of the given kind as no longer enabled. IDs given here must match a
-     * previously tracked record of the same kind. Otherwise, they are dropped.
+     * previously tracked record of the same kind after ASCII whitespace stripping. Otherwise, they are dropped.
      */
     fun untrack(kind: ExperimentKind, ids: List<String>, endTimeMs: Long)
 

@@ -56,15 +56,32 @@ class SessionReconstructionService(
             EnvelopeMetadataProto::format_version,
         )?.toPayload() ?: return null
 
-        // spans & span snapshots not persisted/deserialized yet
+        val sessionSpan = readPartFile(
+            partDir,
+            SESSION_SPAN_FILE_NAME,
+            SessionSpan.ADAPTER,
+            SessionSpan::format_version,
+        ) ?: return null
+
+        val span = sessionSpan.span
+        if (span == null) {
+            trackFailure(IOException("Session span file has no span: ${partDir.path}"))
+            return null
+        }
+
+        // A session span with no end time never finished, so it is delivered as a snapshot rather
+        // than as a completed span. Spans other than the session span are not persisted yet.
+        val payload = span.toPayload()
+        val complete = payload.endTimeNanos != null
+
         return Envelope(
             resource = resource.toPayload(),
             metadata = metadata,
             version = manifest.envelope_version,
             type = manifest.envelope_type,
             data = SessionPartPayload(
-                spans = null,
-                spanSnapshots = null,
+                spans = if (complete) listOf(payload) else null,
+                spanSnapshots = if (complete) null else listOf(payload),
                 sharedLibSymbolMapping = manifest.shared_lib_symbol_mapping?.symbols,
             ),
         )

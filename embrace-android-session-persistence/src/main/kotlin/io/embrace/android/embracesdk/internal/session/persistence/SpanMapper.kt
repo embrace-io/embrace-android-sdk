@@ -41,3 +41,40 @@ internal fun Link.toProto(): LinkProto = LinkProto(
     attributes = attributes?.map(Attribute::toProto).orEmpty(),
     is_remote = isRemote ?: false,
 )
+
+internal fun SpanProto.toPayload(): Span = Span(
+    traceId = trace_id.takeIf(String::isNotEmpty),
+    spanId = span_id.takeIf(String::isNotEmpty),
+    parentSpanId = parent_span_id.takeIf(String::isNotEmpty),
+    name = name.takeIf(String::isNotEmpty),
+    startTimeNanos = start_time_unix_nano.takeIf { it != 0L },
+    endTimeNanos = end_time_unix_nano,
+    status = status.toPayload(),
+    events = events.takeIf(List<SpanEventProto>::isNotEmpty)?.map(SpanEventProto::toPayload),
+    attributes = attributes.takeIf(List<AttributeProto>::isNotEmpty)?.map(AttributeProto::toPayload),
+    links = links.takeIf(List<LinkProto>::isNotEmpty)?.map(LinkProto::toPayload),
+)
+
+internal fun SpanProto.Status.toPayload(): Span.Status = when (this) {
+    SpanProto.Status.UNSET -> Span.Status.UNSET
+    SpanProto.Status.ERROR -> Span.Status.ERROR
+    SpanProto.Status.OK -> Span.Status.OK
+}
+
+internal fun SpanEventProto.toPayload(): SpanEvent = SpanEvent(
+    name = name.takeIf(String::isNotEmpty),
+    timestampNanos = time_unix_nano.takeIf { it != 0L },
+    attributes = attributes.takeIf(List<AttributeProto>::isNotEmpty)?.map(AttributeProto::toPayload),
+)
+
+internal fun AttributeProto.toPayload(): Attribute = Attribute(
+    key = key.takeIf(String::isNotEmpty),
+    data = value_.takeIf(String::isNotEmpty),
+)
+
+internal fun LinkProto.toPayload(): Link = Link(
+    spanId = span_id.takeIf(String::isNotEmpty),
+    traceId = trace_id.takeIf(String::isNotEmpty),
+    attributes = attributes.takeIf(List<AttributeProto>::isNotEmpty)?.map(AttributeProto::toPayload),
+    isRemote = is_remote,
+)

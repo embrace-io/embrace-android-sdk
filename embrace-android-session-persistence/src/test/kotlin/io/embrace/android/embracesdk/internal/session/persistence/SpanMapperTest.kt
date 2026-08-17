@@ -93,4 +93,84 @@ internal class SpanMapperTest {
             Link().toProto(),
         )
     }
+
+    @Test
+    fun `every span field is mapped back`() {
+        assertEquals(fullyPopulatedSpan, fullyPopulatedSpanProto.toPayload())
+    }
+
+    @Test
+    fun `a fully populated span round-trips`() {
+        assertEquals(fullyPopulatedSpan, fullyPopulatedSpan.toProto().toPayload())
+    }
+
+    @Test
+    fun `proto string defaults are mapped back to null`() {
+        val span = SpanProto().toPayload()
+        assertNull(span.traceId)
+        assertNull(span.spanId)
+        assertNull(span.parentSpanId)
+        assertNull(span.name)
+    }
+
+    @Test
+    fun `a zero start time is mapped back to null`() {
+        assertNull(SpanProto(start_time_unix_nano = 0).toPayload().startTimeNanos)
+        assertEquals(1L, SpanProto(start_time_unix_nano = 1).toPayload().startTimeNanos)
+    }
+
+    @Test
+    fun `an unended span stays distinct from one that ended at zero when mapped back`() {
+        assertNull(SpanProto(end_time_unix_nano = null).toPayload().endTimeNanos)
+        assertEquals(0L, SpanProto(end_time_unix_nano = 0).toPayload().endTimeNanos)
+    }
+
+    @Test
+    fun `every status is mapped back and unset does not become null`() {
+        assertEquals(Span.Status.UNSET, SpanProto(status = SpanProto.Status.UNSET).toPayload().status)
+        assertEquals(Span.Status.ERROR, SpanProto(status = SpanProto.Status.ERROR).toPayload().status)
+        assertEquals(Span.Status.OK, SpanProto(status = SpanProto.Status.OK).toPayload().status)
+    }
+
+    @Test
+    fun `empty proto collections are mapped back to null`() {
+        val span = SpanProto(events = emptyList(), attributes = emptyList(), links = emptyList()).toPayload()
+        assertNull(span.events)
+        assertNull(span.attributes)
+        assertNull(span.links)
+    }
+
+    @Test
+    fun `attribute order and duplicate keys are preserved when mapped back`() {
+        val attributes = listOf(
+            AttributeProto(key = "b", value_ = "1"),
+            AttributeProto(key = "a", value_ = "2"),
+            AttributeProto(key = "b", value_ = "3"),
+        )
+        val span = SpanProto(attributes = attributes).toPayload()
+        assertEquals(
+            listOf(
+                Attribute(key = "b", data = "1"),
+                Attribute(key = "a", data = "2"),
+                Attribute(key = "b", data = "3"),
+            ),
+            span.attributes,
+        )
+    }
+
+    @Test
+    fun `attribute proto defaults are mapped back to null`() {
+        assertEquals(Attribute(key = null, data = null), AttributeProto().toPayload())
+    }
+
+    @Test
+    fun `span event proto defaults are mapped back to null`() {
+        assertEquals(SpanEvent(name = null, timestampNanos = null, attributes = null), SpanEventProto().toPayload())
+    }
+
+    @Test
+    fun `link proto defaults are mapped back to null, other than is remote`() {
+        assertEquals(Link(spanId = null, traceId = null, attributes = null, isRemote = false), LinkProto().toPayload())
+        assertEquals(true, LinkProto(is_remote = true).toPayload().isRemote)
+    }
 }

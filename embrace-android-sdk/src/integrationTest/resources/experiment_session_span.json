@@ -94,9 +94,11 @@
           { "key": "persisted-config-load-duration-ms", "value": "0" },
           { "key": "post-init-duration-ms", "value": "0" },
           { "key": "post-services-setup-duration-ms", "value": "0" },
+          { "key": "prefs-file-bytes", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "prefs-first-read-duration-ms", "value": "0" },
+          { "key": "seconds-since-boot", "value": "0" },
           { "key": "span-service-init-duration-ms", "value": "0" },
           { "key": "start-first-session-duration-ms", "value": "0" },
-          { "key": "thermal-status", "value": "none" },
           { "key": "user-session-orchestration-init-duration-ms", "value": "0" }
         ],
         "links": "__EMBRACE_TEST_IGNORE__"

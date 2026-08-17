@@ -11,18 +11,19 @@ public interface TrackedExperiment {
     public val id: String
 
     /**
-     * The time at which membership in this experiment began, in milliseconds since the epoch.
-     */
-    public val startTimeMs: Long
-
-    /**
      * Optional name of the variant in which this app instance has been bucketed into this experiment under.
      */
     public val variant: String?
+
+    /**
+     * The time at which membership in this experiment began, in milliseconds since the epoch. If null, the time at which the SDK is
+     * told to track this experiment will be used.
+     */
+    public val startedAt: Long?
 }
 
 internal class TrackedExperimentImpl(
     override val id: String,
-    override val startTimeMs: Long,
     override val variant: String?,
+    override val startedAt: Long?,
 ) : TrackedExperiment

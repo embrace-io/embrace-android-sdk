@@ -197,7 +197,16 @@ def main():
                             f"replaced device must become a NEW device_key")
 
     # ---- recipe -------------------------------------------------------------------------
-    instrument = recipe_frozen.get("instrument", "app-embrace-start")
+    # No default, ever. This line used to fall back to "app-embrace-start", which combined with
+    # the probe writing the same guess meant a wrong instrument could flow through BOTH layers
+    # without either flagging it (2026-08-16: every leg's ingest refused with "no window found"
+    # because neither layer had actually decided what the harness records). The probe now writes
+    # null; the decision is the operator's, made once, here enforced.
+    instrument = recipe_frozen.get("instrument")
+    if not instrument:
+        sys.exit("REFUSED: reference set has no instrument. The probe writes null deliberately - "
+                 "set recipe.instrument to what your traces actually contain (\"emb-sdk-start\" "
+                 "for SDK >= 9.2.0, \"composed\" for the fallback window) before the first ingest.")
     recipe_run = {
         "build_type": (provenance or {}).get("build_type"),
         "compile_state": ((provenance or {}).get("cell", {}).get("levels", {}) or {}).get("compile"),

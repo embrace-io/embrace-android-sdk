@@ -85,6 +85,26 @@ Two records are also refused outright, because storing them is worse than storin
   invented label passed on the command line) creates a phantom series that nothing can ever be
   compared against. Declare the device first; never mint a key at ingest time.
 
+## Archiving a closed series is a ONE-TIME, guarded move
+
+When a recipe change closes a series, the old store gets moved aside exactly once. Any automation
+that performs that move MUST guard it on the archive **not already existing** — never on "a store
+is present at the live path", because after a restart the live path holds the *new* series. On
+2026-08-16 an unguarded `store.replace(archive)` in a campaign driver ran a second time when the
+campaign was restarted mid-run: it moved the new series' six records on top of the archived series'
+eight, destroying the older store. The archive existing is itself the marker that the move already
+happened; nothing else is.
+
+Two corollaries, both paid for that night:
+
+- **Reduction is not a backup.** Pruning raw traces because "they are reduced into the store" makes
+  the store the only copy. That is sometimes a reasonable disk trade — but make it knowingly: once
+  the traces are gone, the store's loss is the data's loss, so a store that is the sole survivor of
+  its traces must be copied before any driver, migration, or cleanup is allowed near it.
+- **Same-named files across series are an overwrite hazard beyond the store itself.** The
+  reference set, notes, and store all live under fixed names; any "move the directory aside"
+  automation inherits the same runs-once requirement.
+
 ## Choosing the control version
 
 The control exists so that when BOTH versions move later you know the *measurement* changed rather

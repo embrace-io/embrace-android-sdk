@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Creates the SDK's [KeyValueStore], backed by the default [SharedPreferences].
@@ -29,6 +30,7 @@ internal class SharedPrefsStore(
 ) : KeyValueStore {
 
     private val openBatch = ThreadLocal<Batch?>()
+    private val firstAccessTraced = AtomicBoolean(false)
 
     override fun getString(key: String): String? {
         return pending(key) { impl.getString(key, null) }
@@ -74,7 +76,7 @@ internal class SharedPrefsStore(
         if (batch != null) {
             batch.action()
         } else {
-            SharedPrefsStoreEditor(impl.edit(), serializer).use {
+            SharedPrefsStoreEditor(measureFirstAccess { impl.edit() }, serializer).use {
                 it.action()
             }
         }
@@ -98,18 +100,32 @@ internal class SharedPrefsStore(
     /**
      * Returns the value buffered by the batch open on this thread, falling back to [read] if there
      * is no open batch or the batch hasn't written [key].
+     *
+     * [read] is `noinline` so it can be handed to [measureFirstAccess]
      */
-    private inline fun <reified T> pending(key: String, read: () -> T?): T? {
-        val batch = openBatch.get() ?: return read()
-        val write = batch.writes[key] ?: return read()
+    private inline fun <reified T> pending(key: String, noinline read: () -> T?): T? {
+        val batch = openBatch.get() ?: return measureFirstAccess(read)
+        val write = batch.writes[key] ?: return measureFirstAccess(read)
         return write.value as? T
     }
+
+    /**
+     * A calling of [read] that measures the first invocation, which is the access of [SharedPreferences]
+     * from this class. That measurement should include the loading of the shared preferences file if
+     * that call was the first to load it.
+     */
+    private fun <T> measureFirstAccess(read: () -> T): T =
+        if (firstAccessTraced.compareAndSet(false, true)) {
+            EmbTrace.trace(sectionName = "prefs-first-read", recordDuration = true) { read() }
+        } else {
+            read()
+        }
 
     private fun Batch.flush() {
         if (writes.isEmpty()) {
             return
         }
-        SharedPrefsStoreEditor(impl.edit(), serializer).use { editor ->
+        SharedPrefsStoreEditor(measureFirstAccess { impl.edit() }, serializer).use { editor ->
             writes.values.forEach { it.write(editor) }
         }
     }

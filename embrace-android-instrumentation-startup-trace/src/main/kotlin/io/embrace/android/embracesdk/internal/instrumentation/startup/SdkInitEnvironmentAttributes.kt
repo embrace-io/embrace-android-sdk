@@ -7,6 +7,7 @@ import android.os.PowerManager
 import android.os.SystemClock
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.LOW_MEMORY
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.MEM_AVAILABLE_PCT
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.PREFS_FILE_BYTES
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.SECONDS_SINCE_BOOT
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.SECONDS_SINCE_INSTALL
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.SECONDS_SINCE_UPDATE
@@ -35,15 +36,24 @@ fun sdkInitEnvironmentAttributes(
     nowMs: Long,
     versionChecker: VersionChecker = BuildVersionChecker,
     uptimeMs: () -> Long = { SystemClock.uptimeMillis() },
+    prefsFileSizeProvider: () -> Long? = { null },
 ): Map<String, String> = try {
     buildMap {
         putThermalAttributes(powerManagerProvider, versionChecker)
         putInstallRecencyAttributes(packageInfo, nowMs)
         putMemoryAttributes(activityManagerProvider)
         put(SECONDS_SINCE_BOOT, (uptimeMs() / 1000L).toString())
+        putPrefsFileSize(prefsFileSizeProvider)
     }
 } catch (_: Throwable) {
     emptyMap()
+}
+
+private fun MutableMap<String, String>.putPrefsFileSize(prefsFileSizeProvider: () -> Long?) {
+    val bytes = runCatching { prefsFileSizeProvider() }.getOrNull()
+    if (bytes != null && bytes > 0) {
+        put(PREFS_FILE_BYTES, bytes.toString())
+    }
 }
 
 private fun MutableMap<String, String>.putThermalAttributes(
@@ -52,7 +62,10 @@ private fun MutableMap<String, String>.putThermalAttributes(
 ) {
     if (versionChecker.isAtLeast(VERSION_CODES.Q)) {
         val powerManager = powerManagerProvider() ?: return
-        put(THERMAL_STATUS, thermalStatusName(powerManager.currentThermalStatus))
+        val thermalStatus = powerManager.currentThermalStatus
+        if (thermalStatus != PowerManager.THERMAL_STATUS_NONE) {
+            put(THERMAL_STATUS, thermalStatusName(thermalStatus))
+        }
         if (versionChecker.isAtLeast(VERSION_CODES.R)) {
             val headroom = runCatching { powerManager.getThermalHeadroom(0) }.getOrNull()
             if (headroom != null && headroom.isFinite()) {

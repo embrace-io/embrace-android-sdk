@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.startup
 
-import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.INIT_MAJ_FAULTS
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.INIT_RUN_DELAY_PCT
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.THERMAL_STATUS
 
@@ -45,17 +44,10 @@ object SdkInitAttributeKeys {
     const val INIT_RUN_DELAY_PCT: String = "init-run-delay-pct"
 
     /**
-     * Major page faults taken by the process during the init window - reads that had to go
-     * to storage (cold code pages, cold files), including flash contention from concurrent
-     * installs.
-     */
-    const val INIT_MAJ_FAULTS: String = "init-maj-faults"
-
-    /**
      * Kilobytes actually read from storage by the process during the init window. Normal
      * inits read little (config file + cold pages); elevated values mark storage-bound
      * runs - cold caches after reboot/update, slow flash, or IO contention from concurrent
-     * installs - and pair with [INIT_MAJ_FAULTS] to confirm an IO-class slow run.
+     * installs.
      */
     const val INIT_DISK_READ_KB: String = "init-disk-read-kb"
 
@@ -75,9 +67,11 @@ object SdkInitAttributeKeys {
 
     /**
      * The device's overall thermal throttling status at record time, as reported by
-     * [android.os.PowerManager.getCurrentThermalStatus] (API 29+): none/light/moderate/severe/
-     * critical/emergency/shutdown. Collected because heat measurably slows init, and this is a
-     * signal for that.
+     * [android.os.PowerManager.getCurrentThermalStatus] (API 29+): light/moderate/severe/
+     * critical/emergency/shutdown. Present only when the status is not none, so presence means
+     * the device was being throttled at the moment, while absence is not a strong signal
+     * because it could be due to a lag in the update or that there is no actual throttling.
+     * This is collected because heat measurably slows init, and this is a signal for that.
      */
     const val THERMAL_STATUS: String = "thermal-status"
 
@@ -119,4 +113,15 @@ object SdkInitAttributeKeys {
      * and the OS is actively reclaiming memory. The presence of this indicates memory pressure.
      */
     const val LOW_MEMORY: String = "low-memory"
+
+    /**
+     * Size in bytes of the HOST APP's default `SharedPreferences` file, which the SDK's key-value
+     * store is backed by, used to explain the `prefs-first-read` duration. The bigger the file,
+     * the longer it takes to load and parse its data, as Android needs to load the whole thing
+     * before reading even one value from it.
+     *
+     * This should be obtained by reading looking at the file without opening it and incurring
+     * the costs that this measurement is trying to quantify.
+     */
+    const val PREFS_FILE_BYTES: String = "prefs-file-bytes"
 }

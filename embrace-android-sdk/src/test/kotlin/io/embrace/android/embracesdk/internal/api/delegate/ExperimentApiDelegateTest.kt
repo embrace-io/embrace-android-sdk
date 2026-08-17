@@ -37,7 +37,7 @@ internal class ExperimentApiDelegateTest {
 
         val moduleInitBootstrapper = ModuleInitBootstrapper(
             FakeInitModule(logger = initLogger),
-            essentialServiceModuleSupplier = { _, _, _, _, _, _, _, _ ->
+            essentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
                 FakeEssentialServiceModule(experimentTrackingService = fakeExperimentTrackingService)
             },
         )

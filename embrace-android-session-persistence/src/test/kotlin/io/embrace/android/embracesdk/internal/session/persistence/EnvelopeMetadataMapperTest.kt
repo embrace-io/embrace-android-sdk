@@ -13,6 +13,11 @@ internal class EnvelopeMetadataMapperTest {
     }
 
     @Test
+    fun `the format version is stamped on the proto`() {
+        assertEquals(FORMAT_VERSION, EnvelopeMetadata().toProto().format_version)
+    }
+
+    @Test
     fun `null user fields map to absent proto fields`() {
         val proto = EnvelopeMetadata(timezoneDescription = "Europe/London", locale = "en_GB").toProto()
         assertNull(proto.user_id)
@@ -55,5 +60,54 @@ internal class EnvelopeMetadataMapperTest {
     fun `fully populated metadata survives a round trip through the wire format`() {
         val proto = fullyPopulatedMetadata.toProto()
         assertEquals(proto, EnvelopeMetadataProto.ADAPTER.decode(EnvelopeMetadataProto.ADAPTER.encode(proto)))
+    }
+
+    @Test
+    fun `every proto field maps to its payload counterpart`() {
+        assertEquals(fullyPopulatedMetadata, fullyPopulatedMetadataProto.toPayload())
+    }
+
+    @Test
+    fun `absent proto user fields map to null`() {
+        val metadata = EnvelopeMetadataProto().toPayload()
+        assertNull(metadata.userId)
+        assertNull(metadata.email)
+        assertNull(metadata.username)
+    }
+
+    @Test
+    fun `empty string proto fields are preserved`() {
+        val metadata = EnvelopeMetadataProto(user_id = "", email = "", username = "").toPayload()
+        assertEquals("", metadata.userId)
+        assertEquals("", metadata.email)
+        assertEquals("", metadata.username)
+    }
+
+    @Test
+    fun `empty timezone and locale map to null`() {
+        val metadata = EnvelopeMetadataProto().toPayload()
+        assertNull(metadata.timezoneDescription)
+        assertNull(metadata.locale)
+    }
+
+    @Test
+    fun `empty proto personas map to null`() {
+        assertNull(EnvelopeMetadataProto(personas = emptyList()).toPayload().personas)
+    }
+
+    @Test
+    fun `duplicate personas are deduped on read`() {
+        val personas = listOf("payer", "first_day", "payer")
+        assertEquals(setOf("payer", "first_day"), EnvelopeMetadataProto(personas = personas).toPayload().personas)
+    }
+
+    @Test
+    fun `fully populated metadata survives a round trip through the mappers`() {
+        assertEquals(fullyPopulatedMetadata, fullyPopulatedMetadata.toProto().toPayload())
+    }
+
+    @Test
+    fun `metadata with no populated fields survives a round trip through the mappers`() {
+        assertEquals(EnvelopeMetadata(), EnvelopeMetadata().toProto().toPayload())
     }
 }

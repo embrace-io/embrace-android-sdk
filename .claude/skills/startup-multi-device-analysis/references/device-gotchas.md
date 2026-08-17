@@ -82,6 +82,34 @@ telemetry verification fails unattended) are in
   of a pass — expected, not a foreign process.
 - Two devices of the SAME model share one `connected/` output directory name — give them
   distinct campaign dirs and never run them concurrently.
+- **A leg is verified against the DEVICE's crash buffer, never the harness exit code.** A
+  macrobenchmark leg can report rc=0 and write a complete, plausible trace set from a process that
+  crashed on every single launch: a crash in a *posted* callback fires after the activity is up, so
+  the harness's activity check passes, the window slices are present (init "completed" before the
+  crash), and nothing anywhere reads failed. Measured instance (2026-08-16): a runtime-classpath
+  conflict killed SDK 8.3.0 on every launch; the two slower devices crashed before the activity
+  check and failed honestly, while the fastest device produced 200 green-looking traces and a crash
+  buffer holding 200 `FATAL EXCEPTION`s — one per launch. Faster devices are MORE exposed, not
+  less. After every leg: `adb logcat -d -b crash` and require zero new `FATAL EXCEPTION`s before
+  the leg's data is used; a smoke pass before an unattended campaign must check the crash buffer
+  too, not just "the app launched".
+- **A hung leg emits nothing, so log monitoring cannot see it.** Watching a campaign log for
+  failure signatures catches failures, not stalls: a leg that hangs produces no lines at all and
+  looks identical to a slow leg until a driver-level timeout fires hours later (2026-08-16: one leg
+  hung for a full 4-hour outer timeout, zero passes collected, zero log lines). Give every leg its
+  own subprocess timeout sized to the LEG (~2–3× its expected duration), and make any watchdog
+  assert on *expected progress within an interval* rather than only matching failure strings.
+- **Killing a campaign does not kill its tree.** SIGTERM to a driver leaves its child benchmark
+  runner and THAT child's gradle client alive (and device-side tracers — see the tracer note in
+  "Driving a device outside macrobenchmark"). After any kill, sweep the host for survivors
+  (`pgrep -fl fleet_campaign`, `pgrep -fl connectedBenchmark`) and the device for tracers before
+  trusting the fleet is idle; a driver that spawns children should run them in a process group and
+  kill the group.
+- **The Go-tier `ddmlib ShellCommandUnresponsiveException` on install is intermittent, not a
+  device state.** Across four attempts on the same device it allowed 6, 0, 10 and 4 passes with no
+  pattern; load average ~20 is that tier's normal idle (it coexists with clean 10-pass legs), so
+  neither reboots nor cooldowns fix it. The mitigation is a bounded retry scoped to exactly that
+  failure signature — anything broader retries genuine failures into false passes.
 
 ## Driving a device outside macrobenchmark
 
@@ -138,12 +166,26 @@ compile`. So "profiled" only ever means "the broadcast was sent"; say so rather 
 verified state. The first launch after ANY recompile pays re-verification and must be held out
 like an install-aftermath iteration.
 
-## Long-running campaigns: borrowing global state
+## Long-running campaigns: DON'T borrow global state — run from a worktree
 
-A campaign that mutates something shared (above all the gradle catalog's SDK version pin) must be
-able to give it back after being killed. `try/finally` is not enough — **SIGTERM skips `finally`
-entirely**, and two killed runs in one session each left the pin at the wrong version. Three
-layers, because each covers what the others cannot:
+**The preferred pattern (2026-08-17, after four borrowed-state incidents in two days): campaigns
+that need repo mutations — the catalog's SDK version pin, benchmark iteration counts, compat
+patches for old versions — run from a dedicated `git worktree add --detach`, never from the user's
+checkout.** The worktree gets edited freely, per-version resets are a plain in-worktree
+`git checkout`, gradle builds into the worktree's own build dirs, and the whole thing is deleted
+afterwards — there is nothing to restore, so the entire class of restore-on-kill hazards below
+does not exist. `fleet_campaign.py --repo <worktree>` targets it; scripts that self-locate via
+`git rev-parse` (e.g. `compat_patch.py`) target the worktree automatically when invoked from the
+worktree's own copy of the skill. Two boundaries: the user's working tree is the *subject* only
+when benchmarking uncommitted changes (then the checkout is the point — copy the diff into the
+worktree or accept borrowing); and the host must still stay quiet-ish during legs — the worktree
+frees the *tree*, not the CPU.
+
+The borrowing discipline below remains for the cases a worktree cannot cover. When you must
+mutate something genuinely global (a device setting, mavenLocal contents, the user's checkout
+itself), a campaign must be able to give it back after being killed. `try/finally` is not enough —
+**SIGTERM skips `finally` entirely**, and two killed runs in one session each left the pin at the
+wrong version. Three layers, because each covers what the others cannot:
 
 1. **A marker file** written when the state is borrowed and deleted when returned. Its presence at
    startup means a previous run died holding it. This is the ONLY layer that survives SIGKILL or a
@@ -156,6 +198,19 @@ layers, because each covers what the others cannot:
 
 Worth testing rather than assuming: drive the real file, send a real SIGTERM, send a real SIGKILL,
 and assert the next startup recovers.
+
+Two defects measured in a real implementation of this pattern (2026-08-16), both of the kind a
+casual read passes over:
+
+- **Nested borrows half-restore on a signal.** With two borrowed states (pin wrapping a source
+  edit), each context's own handler restores *its* state and re-raises with `SIG_DFL` — so the
+  INNER context restores and the re-raised default disposition kills the process before the outer
+  handler ever runs. Normal exit and Python exceptions unwind both correctly, which is exactly why
+  the defect hides: it only manifests on the signal path. The handler must unwind a module-level
+  registry of ALL live borrows in reverse order, then re-raise once.
+- **The marker round-trip must be byte-exact.** A restore that strips a trailing newline returns a
+  source file that is one byte off — a spurious diff on an otherwise clean tree, and a lint finding
+  on Kotlin. No `strip()` anywhere on the stored value; assert `restore(capture(x)) == x` on bytes.
 
 ## Device housekeeping that silently kills campaigns
 

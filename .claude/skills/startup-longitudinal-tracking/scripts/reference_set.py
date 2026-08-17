@@ -31,8 +31,17 @@ RECIPE_DEFAULT = {
     "run_shape": {"passes": 10, "iterations": 20},
     "build_type": "benchmark",
     "compile_state": "profile",
-    "instrument": "app-embrace-start",
-    "_comment": "Changing any of these starts a NEW comparable series; see references/store.md",
+    # Deliberately null: the probe cannot know which window instrument a harness actually records,
+    # and a plausible-looking default here is worse than a missing value. On 2026-08-16 this field
+    # shipped as "app-embrace-start" - a span the harness never emits - and every ingest of a
+    # 200-trace leg was refused with "no window found" until it was corrected by hand. ingest_run
+    # refuses a null instrument with a pointed message, so leaving this unset fails LOUDLY at the
+    # first ingest instead of silently poisoning the series definition. Set it to what your traces
+    # really contain: "emb-sdk-start" (SDK >= 9.2.0) or "composed" (the fallback window).
+    "instrument": None,
+    "_comment": "EVERY value above is provisional output of --probe, not just the device keys: "
+                "review the recipe field by field before the first ingest. Changing any of these "
+                "later starts a NEW comparable series; see references/store.md",
 }
 
 PROFILE_FIELDS = ["api_level", "release", "tier", "vendor", "soc_family", "clusters",

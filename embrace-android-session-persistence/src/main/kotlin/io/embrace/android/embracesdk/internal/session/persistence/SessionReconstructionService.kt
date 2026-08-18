@@ -5,6 +5,9 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
+import io.embrace.android.embracesdk.internal.payload.Span
+import okio.buffer
+import okio.source
 import java.io.File
 import java.io.IOException
 
@@ -69,10 +72,16 @@ class SessionReconstructionService(
             return null
         }
 
+        val completedSpans = readCompletedSpansFile(partDir) ?: return null
+
         // A session span with no end time never finished, so it is delivered as a snapshot rather
-        // than as a completed span. Spans other than the session span are not persisted yet.
-        val payload = span.toPayload()
-        val complete = payload.endTimeNanos != null
+        // than as a completed span. Span snapshots are not read back yet.
+        val sessionSpanPayload = span.toPayload()
+        val complete = sessionSpanPayload.endTimeNanos != null
+        val spans = when {
+            complete -> completedSpans + sessionSpanPayload
+            else -> completedSpans
+        }
 
         return Envelope(
             resource = resource.toPayload(),
@@ -80,11 +89,28 @@ class SessionReconstructionService(
             version = manifest.envelope_version,
             type = manifest.envelope_type,
             data = SessionPartPayload(
-                spans = if (complete) listOf(payload) else null,
-                spanSnapshots = if (complete) null else listOf(payload),
+                spans = spans.takeIf(List<Span>::isNotEmpty),
+                spanSnapshots = if (complete) null else listOf(sessionSpanPayload),
                 sharedLibSymbolMapping = manifest.shared_lib_symbol_mapping?.symbols,
             ),
         )
+    }
+
+    /**
+     * Decodes the completed spans logged in a session part directory, or null if the log is absent
+     * or cannot be read.
+     */
+    private fun readCompletedSpansFile(partDir: File): List<Span>? {
+        val src = File(partDir, COMPLETED_SPANS_FILE_NAME)
+        return try {
+            if (!src.isFile) {
+                throw IOException("Completed spans file not found")
+            }
+            src.source().buffer().use(::readCompletedSpans).map(SpanProto::toPayload)
+        } catch (exc: Throwable) {
+            trackFailure(exc)
+            null
+        }
     }
 
     /**

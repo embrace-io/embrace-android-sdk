@@ -16,6 +16,8 @@ internal const val METADATA_FILE_NAME = "metadata.pb"
 
 internal const val SESSION_SPAN_FILE_NAME = "session_span.pb"
 
+internal const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
+
 internal const val SPAN_SNAPSHOTS_FILE_NAME = "span_snapshots.pb"
 
 /**

@@ -77,10 +77,16 @@ internal class SessionReconstructionServiceManifestTest {
         assertTrue(metadataWriter.write())
         assertTrue(sessionSpanWriter.write(fullyPopulatedSpan))
         writeCompletedSpans(directory)
+        writeSpanSnapshots(directory)
     }
 
     private fun writeCompletedSpans(directory: SessionPartDirectory = partDirectory) {
         File(partDir(directory), "completed_spans.pb").writeBytes(completedSpansLog(emptyList()))
+    }
+
+    private fun writeSpanSnapshots(directory: SessionPartDirectory = partDirectory) {
+        val snapshots = SpanSnapshots(format_version = FORMAT_VERSION, spans = listOf(inFlightSpanProto))
+        File(partDir(directory), "span_snapshots.pb").writeBytes(SpanSnapshots.ADAPTER.encode(snapshots))
     }
 
     private fun writeManifestBytes(manifest: SessionManifest, directory: SessionPartDirectory = partDirectory) {
@@ -108,12 +114,12 @@ internal class SessionReconstructionServiceManifestTest {
     }
 
     @Test
-    fun `span snapshots are the only telemetry not reconstructed yet`() {
+    fun `every persisted file contributes to the reconstructed telemetry`() {
         write()
 
         val envelope = checkNotNull(service.reconstruct(partDirectory))
         assertEquals(listOf(fullyPopulatedSpan), envelope.data.spans)
-        assertNull(envelope.data.spanSnapshots)
+        assertEquals(listOf(inFlightSpan), envelope.data.spanSnapshots)
     }
 
     @Test

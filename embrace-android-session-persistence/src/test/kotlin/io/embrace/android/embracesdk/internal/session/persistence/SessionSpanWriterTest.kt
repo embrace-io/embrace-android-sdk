@@ -216,8 +216,8 @@ internal class SessionSpanWriterTest {
     private fun sessionSpanFile(directory: SessionPartDirectory = partDirectory): File =
         File(partDir(directory), SESSION_SPAN_FILE_NAME)
 
-    private fun readSessionSpan(directory: SessionPartDirectory = partDirectory): SessionSpan =
-        sessionSpanFile(directory).inputStream().use(SessionSpan.ADAPTER::decode)
+    private fun readSessionSpan(directory: SessionPartDirectory = partDirectory): SessionPartSpan =
+        sessionSpanFile(directory).inputStream().use(SessionPartSpan.ADAPTER::decode)
 
     private fun write(
         directory: SessionPartDirectory? = partDirectory,

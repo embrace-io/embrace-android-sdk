@@ -206,7 +206,7 @@ internal class SessionReconstructionServiceSessionSpanTest {
     @Test
     fun `a session span file holding no span is reported`() {
         write()
-        writeSessionSpanBytes(SessionSpan(format_version = FORMAT_VERSION, span = null))
+        writeSessionSpanBytes(SessionPartSpan(format_version = FORMAT_VERSION, span = null))
 
         assertNull(service.reconstruct(partDirectory))
         assertReconstructionFailureTracked()
@@ -241,8 +241,8 @@ internal class SessionReconstructionServiceSessionSpanTest {
         assertTrue(sessionSpanWriter.write(spanProvider()))
     }
 
-    private fun writeSessionSpanBytes(sessionSpan: SessionSpan, directory: SessionPartDirectory = partDirectory) {
-        sessionSpanFile(directory).writeBytes(SessionSpan.ADAPTER.encode(sessionSpan))
+    private fun writeSessionSpanBytes(sessionSpan: SessionPartSpan, directory: SessionPartDirectory = partDirectory) {
+        sessionSpanFile(directory).writeBytes(SessionPartSpan.ADAPTER.encode(sessionSpan))
     }
 
     private fun assertNoInternalErrors() {

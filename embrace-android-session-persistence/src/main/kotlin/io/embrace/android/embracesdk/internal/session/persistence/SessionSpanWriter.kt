@@ -31,15 +31,15 @@ class SessionSpanWriter(
 
         val partDir = File(sessionsDir.value, directory.dirName)
         if (!partDir.isDirectory) {
-            trackFailure(IOException("Not a session part directory: ${partDir.path}"))
+            trackFailure(IOException("Not a session part directory"))
             return false
         }
-        val sessionSpan = SessionSpan(
+        val sessionSpan = SessionPartSpan(
             format_version = FORMAT_VERSION,
             span = span.toProto(),
         )
         writeAtomically(partDir, SESSION_SPAN_FILE_NAME) { stream ->
-            SessionSpan.ADAPTER.encode(stream, sessionSpan)
+            SessionPartSpan.ADAPTER.encode(stream, sessionSpan)
         }
         return true
     }

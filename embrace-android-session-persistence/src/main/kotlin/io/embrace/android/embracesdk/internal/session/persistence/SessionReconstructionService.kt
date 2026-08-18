@@ -32,7 +32,7 @@ class SessionReconstructionService(
     private fun reconstructImpl(directory: SessionPartDirectory): Envelope<SessionPartPayload>? {
         val partDir = File(sessionsDir.value, directory.dirName)
         if (!partDir.isDirectory) {
-            trackFailure(IOException("Not a session part directory: ${partDir.path}"))
+            trackFailure(IOException("Not a session part directory"))
             return null
         }
 
@@ -45,7 +45,7 @@ class SessionReconstructionService(
 
         val resource = manifest.resource
         if (resource == null) {
-            trackFailure(IOException("Manifest has no resource: ${partDir.path}"))
+            trackFailure(IOException("Manifest has no resource"))
             return null
         }
 
@@ -59,13 +59,13 @@ class SessionReconstructionService(
         val sessionSpan = readPartFile(
             partDir,
             SESSION_SPAN_FILE_NAME,
-            SessionSpan.ADAPTER,
-            SessionSpan::format_version,
+            SessionPartSpan.ADAPTER,
+            SessionPartSpan::format_version,
         ) ?: return null
 
         val span = sessionSpan.span
         if (span == null) {
-            trackFailure(IOException("Session span file has no span: ${partDir.path}"))
+            trackFailure(IOException("Session span file has no span"))
             return null
         }
 
@@ -104,13 +104,13 @@ class SessionReconstructionService(
         val src = File(partDir, fileName)
         return try {
             if (!src.isFile) {
-                throw IOException("File not found: ${src.path}")
+                throw IOException("Session part file not found")
             }
             val message = src.inputStream().buffered().use(adapter::decode)
 
             val version = formatVersion(message)
             if (version != FORMAT_VERSION) {
-                throw IOException("Unsupported format version in ${src.path}: $version")
+                throw IOException("Unsupported format version in session part file")
             }
             message
         } catch (exc: Throwable) {

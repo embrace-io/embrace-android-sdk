@@ -1,0 +1,270 @@
+{
+  "resource": {
+    "app_version": "2.5.1",
+    "app_framework": 1,
+    "build_id": "fakeBuildId",
+    "app_ecosystem_id": "com.fake.package",
+    "build_type": "fakeBuildType",
+    "build_flavor": "fakeBuildFlavor",
+    "environment": "dev",
+    "bundle_version": "99",
+    "sdk_version": "__EMBRACE_TEST_IGNORE__",
+    "sdk_simple_version": 53,
+    "device_manufacturer": "__EMBRACE_TEST_IGNORE__",
+    "device_model": "__EMBRACE_TEST_IGNORE__",
+    "device_architecture": "__EMBRACE_TEST_IGNORE__",
+    "jailbroken": "__EMBRACE_TEST_IGNORE__",
+    "disk_total_capacity": "__EMBRACE_TEST_IGNORE__",
+    "os_type": "linux",
+    "os_name": "android",
+    "os_version": "__EMBRACE_TEST_IGNORE__",
+    "os_code": "__EMBRACE_TEST_IGNORE__",
+    "screen_resolution": "__EMBRACE_TEST_IGNORE__",
+    "num_cores": "__EMBRACE_TEST_IGNORE__"
+  },
+  "metadata": {
+    "personas": "__EMBRACE_TEST_IGNORE__",
+    "timezone_description": "__EMBRACE_TEST_IGNORE__",
+    "locale": "__EMBRACE_TEST_IGNORE__"
+  },
+  "version": "0.1.0",
+  "type": "spans",
+  "data": {
+    "spans": [
+      {
+        "trace_id": "__EMBRACE_TEST_IGNORE__",
+        "span_id": "__EMBRACE_TEST_IGNORE__",
+        "parent_span_id": "__EMBRACE_TEST_IGNORE__",
+        "name": "emb-screen-view",
+        "start_time_unix_nano": 169220160010000000,
+        "end_time_unix_nano": 169220200133000000,
+        "status": "Unset",
+        "events": [],
+        "attributes": [
+          { "key": "emb.process_identifier", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.session_part_id", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.type", "value": "ux.view" },
+          { "key": "emb.user_session_id", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "view.name", "value": "android.app.Activity" }
+        ],
+        "links": "__EMBRACE_TEST_IGNORE__"
+      },
+      {
+        "trace_id": "__EMBRACE_TEST_IGNORE__",
+        "span_id": "__EMBRACE_TEST_IGNORE__",
+        "parent_span_id": "__EMBRACE_TEST_IGNORE__",
+        "name": "emb-app-startup-cold",
+        "start_time_unix_nano": 169220159900000000,
+        "end_time_unix_nano": 169220200133000000,
+        "status": "Error",
+        "events": [],
+        "attributes": [
+          { "key": "emb.error_code", "value": "user_abandon" },
+          { "key": "emb.process_identifier", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.session_part_id", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.startup_activity", "value": "android.app.Activity" },
+          { "key": "emb.type", "value": "perf" },
+          { "key": "emb.user_session_id", "value": "__EMBRACE_TEST_IGNORE__" }
+        ],
+        "links": "__EMBRACE_TEST_IGNORE__"
+      },
+      {
+        "trace_id": "__EMBRACE_TEST_IGNORE__",
+        "span_id": "__EMBRACE_TEST_IGNORE__",
+        "parent_span_id": "__EMBRACE_TEST_IGNORE__",
+        "name": "emb-embrace-init",
+        "start_time_unix_nano": 169220160000000000,
+        "end_time_unix_nano": 169220160000000000,
+        "status": "Unset",
+        "events": [],
+        "attributes": [
+          { "key": "delivery-init-duration-ms", "value": "0" },
+          { "key": "emb.app.version_startup_counter", "value": "1" },
+          { "key": "emb.process_identifier", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.session_part_id", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.type", "value": "perf" },
+          { "key": "emb.user_session_id", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "essential-service-init-duration-ms", "value": "0" },
+          { "key": "instrumentation-init-duration-ms", "value": "0" },
+          { "key": "key-value-store-init-duration-ms", "value": "0" },
+          { "key": "load-instrumentation-duration-ms", "value": "0" },
+          { "key": "modules-init-duration-ms", "value": "0" },
+          { "key": "otel-tracer-init-duration-ms", "value": "0" },
+          { "key": "payload-source-init-duration-ms", "value": "0" },
+          { "key": "persisted-config-load-duration-ms", "value": "0" },
+          { "key": "post-init-duration-ms", "value": "0" },
+          { "key": "post-services-setup-duration-ms", "value": "0" },
+          { "key": "span-service-init-duration-ms", "value": "0" },
+          { "key": "start-first-session-duration-ms", "value": "0" },
+          { "key": "thermal-status", "value": "none" },
+          { "key": "user-session-orchestration-init-duration-ms", "value": "0" }
+        ],
+        "links": "__EMBRACE_TEST_IGNORE__"
+      },
+      {
+        "trace_id": "__EMBRACE_TEST_IGNORE__",
+        "span_id": "__EMBRACE_TEST_IGNORE__",
+        "parent_span_id": "__EMBRACE_TEST_IGNORE__",
+        "name": "emb-activity-init-delay",
+        "start_time_unix_nano": 169220160000000000,
+        "end_time_unix_nano": 169220160000000000,
+        "status": "Unset",
+        "events": [],
+        "attributes": [
+          { "key": "emb.process_identifier", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.session_part_id", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.type", "value": "perf" },
+          { "key": "emb.user_session_id", "value": "__EMBRACE_TEST_IGNORE__" }
+        ],
+        "links": "__EMBRACE_TEST_IGNORE__"
+      },
+      {
+        "trace_id": "__EMBRACE_TEST_IGNORE__",
+        "span_id": "__EMBRACE_TEST_IGNORE__",
+        "parent_span_id": "__EMBRACE_TEST_IGNORE__",
+        "name": "emb-activity-init",
+        "start_time_unix_nano": 169220160000000000,
+        "end_time_unix_nano": 169220160010000000,
+        "status": "Unset",
+        "events": [],
+        "attributes": [
+          { "key": "emb.process_identifier", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.session_part_id", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.type", "value": "perf" },
+          { "key": "emb.user_session_id", "value": "__EMBRACE_TEST_IGNORE__" }
+        ],
+        "links": "__EMBRACE_TEST_IGNORE__"
+      },
+      {
+        "trace_id": "__EMBRACE_TEST_IGNORE__",
+        "span_id": "__EMBRACE_TEST_IGNORE__",
+        "parent_span_id": "__EMBRACE_TEST_IGNORE__",
+        "name": "emb-state-test",
+        "start_time_unix_nano": 169220160010000000,
+        "end_time_unix_nano": 169220200133000000,
+        "status": "Unset",
+        "events": [],
+        "attributes": [
+          { "key": "emb.process_identifier", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.session_part_id", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.state.initial_value", "value": "UNKNOWN" },
+          { "key": "emb.type", "value": "state" },
+          { "key": "emb.user_session_id", "value": "__EMBRACE_TEST_IGNORE__" }
+        ],
+        "links": "__EMBRACE_TEST_IGNORE__"
+      },
+      {
+        "trace_id": "__EMBRACE_TEST_IGNORE__",
+        "span_id": "__EMBRACE_TEST_IGNORE__",
+        "parent_span_id": "__EMBRACE_TEST_IGNORE__",
+        "name": "emb-state-screen-automatic",
+        "start_time_unix_nano": 169220160010000000,
+        "end_time_unix_nano": 169220200133000000,
+        "status": "Unset",
+        "events": [
+          {
+            "name": "transition",
+            "time_unix_nano": 169220160010000000,
+            "attributes": [
+              { "key": "emb.state.new_value", "value": "android.app.Activity" }
+            ]
+          },
+          {
+            "name": "transition",
+            "time_unix_nano": 169220200133000000,
+            "attributes": [
+              { "key": "emb.state.new_value", "value": "Backgrounded" }
+            ]
+          }
+        ],
+        "attributes": [
+          { "key": "emb.process_identifier", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.session_part_id", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.state.initial_value", "value": "Initializing" },
+          { "key": "emb.state.transition_count", "value": "2" },
+          { "key": "emb.type", "value": "state" },
+          { "key": "emb.user_session_id", "value": "__EMBRACE_TEST_IGNORE__" }
+        ],
+        "links": "__EMBRACE_TEST_IGNORE__"
+      },
+      {
+        "trace_id": "__EMBRACE_TEST_IGNORE__",
+        "span_id": "__EMBRACE_TEST_IGNORE__",
+        "parent_span_id": "__EMBRACE_TEST_IGNORE__",
+        "name": "emb-state-network",
+        "start_time_unix_nano": 169220160010000000,
+        "end_time_unix_nano": 169220200133000000,
+        "status": "Unset",
+        "events": [],
+        "attributes": [
+          { "key": "emb.process_identifier", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.session_part_id", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.state.initial_value", "value": "unverified" },
+          { "key": "emb.type", "value": "state" },
+          { "key": "emb.user_session_id", "value": "__EMBRACE_TEST_IGNORE__" }
+        ],
+        "links": "__EMBRACE_TEST_IGNORE__"
+      },
+      {
+        "trace_id": "__EMBRACE_TEST_IGNORE__",
+        "span_id": "__EMBRACE_TEST_IGNORE__",
+        "parent_span_id": "__EMBRACE_TEST_IGNORE__",
+        "name": "emb-session",
+        "start_time_unix_nano": 169220160010000000,
+        "end_time_unix_nano": 169220200133000000,
+        "status": "Unset",
+        "events": [],
+        "attributes": [
+          { "key": "emb.app.version_startup_counter", "value": "1" },
+          { "key": "emb.clean_exit", "value": "true" },
+          { "key": "emb.clock_gnss_drift", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.clock_network_drift", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.cold_start", "value": "true" },
+          { "key": "emb.disk_free_bytes", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.error_log_count", "value": "0" },
+          { "key": "emb.experiments", "value": "e:checkout-flow:variant-a:169220160030:169220160032;f:dark-mode::169220160031" },
+          { "key": "emb.heartbeat_time_unix_nano", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.is_emulator", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.kotlin_on_classpath", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.okhttp3", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.okhttp3_on_classpath", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.process_identifier", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.session_end_type", "value": "state" },
+          { "key": "emb.session_part_id", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.session_part_number", "value": "2" },
+          { "key": "emb.session_start_type", "value": "state" },
+          { "key": "emb.startup_duration", "value": "0" },
+          { "key": "emb.state", "value": "foreground" },
+          { "key": "emb.terminated", "value": "false" },
+          { "key": "emb.type", "value": "ux.session" },
+          { "key": "emb.usage.track_experiment", "value": "1" },
+          { "key": "emb.usage.track_feature_flag", "value": "1" },
+          { "key": "emb.usage.untrack_experiment", "value": "1" },
+          { "key": "emb.user_session_id", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.user_session_inactivity_timeout_seconds", "value": "1800" },
+          { "key": "emb.user_session_max_duration_seconds", "value": "43200" },
+          { "key": "emb.user_session_number", "value": "1" },
+          { "key": "emb.user_session_part_index", "value": "2" },
+          { "key": "emb.user_session_start_ts", "value": "169220160000" }
+        ],
+        "links": "__EMBRACE_TEST_IGNORE__"
+      }
+    ],
+    "span_snapshots": [
+      {
+        "trace_id": "__EMBRACE_TEST_IGNORE__",
+        "span_id": "__EMBRACE_TEST_IGNORE__",
+        "parent_span_id": "__EMBRACE_TEST_IGNORE__",
+        "name": "emb-network-status",
+        "start_time_unix_nano": 169220160000000000,
+        "status": "Unset",
+        "events": [],
+        "attributes": [
+          { "key": "emb.type", "value": "sys.network_status" },
+          { "key": "network", "value": "unknown" }
+        ],
+        "links": []
+      }
+    ]
+  }
+}

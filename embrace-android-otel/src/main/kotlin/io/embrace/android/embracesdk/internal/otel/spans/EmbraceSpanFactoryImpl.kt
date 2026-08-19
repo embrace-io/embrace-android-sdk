@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalSemconv::class)
+
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
@@ -17,6 +19,8 @@ import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
+import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
+import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -335,6 +339,12 @@ private class EmbraceSpanImpl(
     override fun getStartTimeMs(): Long? = spanStartTimeMs.takeIf { it > UNSET_TIME }
 
     override fun addAttribute(key: String, value: String): Boolean {
+        // Reserved attribute that can't be set by customers.
+        // In the future, this should be expanded to more reserved attributes.
+        if (key == EmbCommonAttributes.EMB_EXPERIMENTS) {
+            return false
+        }
+
         val maxAttributeCount = deps.dataValidator.otelLimitsConfig.getMaxCustomAttributeCount()
         if (customAttributes.size < maxAttributeCount && key.isNotBlank()) {
             synchronized(customAttributes) {

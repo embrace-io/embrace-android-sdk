@@ -58,11 +58,11 @@ internal class ExperimentRecordTest {
         val record = ExperimentRecord(
             kind = ExperimentKind.EXPERIMENT,
             id = "id%:;&|",
-            variant = "50%",
+            variant = "variant%:;&|",
             startTimeMs = 100L,
             endTimeMs = null,
         )
-        assertEquals("e:id%25%3A%3B&|:50%25:100", record.serialize())
+        assertEquals("e:id%25%3A%3B&|:variant%25%3A%3B&|:100", record.serialize())
     }
 
     @Test

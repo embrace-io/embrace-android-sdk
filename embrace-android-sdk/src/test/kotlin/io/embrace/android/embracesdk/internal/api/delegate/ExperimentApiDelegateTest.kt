@@ -3,13 +3,17 @@ package io.embrace.android.embracesdk.internal.api.delegate
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeExperimentTrackingService
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.fakes.createExperimentBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentKind
 import io.embrace.android.embracesdk.internal.capture.experiment.TrackedData
+import io.embrace.android.embracesdk.internal.config.behavior.ExperimentBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -28,6 +32,7 @@ internal class ExperimentApiDelegateTest {
     private lateinit var checkerLogger: FakeInternalLogger
     private lateinit var sdkCallChecker: SdkCallChecker
     private lateinit var clock: FakeClock
+    private lateinit var initModule: FakeInitModule
 
     @Before
     fun setUp() {
@@ -36,18 +41,10 @@ internal class ExperimentApiDelegateTest {
         initLogger = FakeInternalLogger()
         checkerLogger = FakeInternalLogger(throwOnInternalError = false)
 
-        val initModule = FakeInitModule(logger = initLogger)
+        initModule = FakeInitModule(logger = initLogger)
         clock = checkNotNull(initModule.getFakeClock())
-        val moduleInitBootstrapper = ModuleInitBootstrapper(
-            initModule,
-            essentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
-                FakeEssentialServiceModule(experimentTrackingService = fakeExperimentTrackingService)
-            },
-        )
-        moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
-
         sdkCallChecker = SdkCallChecker(checkerLogger, telemetryService)
-        delegate = ExperimentApiDelegate(moduleInitBootstrapper, sdkCallChecker)
+        delegate = createDelegate(RemoteConfig())
     }
 
     @Test
@@ -137,19 +134,52 @@ internal class ExperimentApiDelegateTest {
     }
 
     @Test
-    fun `oldest buffered call is dropped once the pending event limit is exceeded`() {
-        repeat(PENDING_EVENT_LIMIT + 1) { i ->
+    fun `buffer admits entries up to the absolute record limit, keeping the earliest`() {
+        repeat(PENDING_ENTRY_LIMIT - 1) { i ->
             delegate.trackExperiment("exp-$i", startedAt = i.toLong())
         }
+        // a bulk call straddling the limit keeps its earlier entries and drops the rest
+        delegate.trackExperiments(
+            listOf(
+                delegate.createExperiment("exp-kept", startedAt = 1L),
+                delegate.createExperiment("exp-dropped", startedAt = 2L),
+            ),
+        )
+        delegate.trackExperiment("exp-after-full", startedAt = 3L)
 
         sdkCallChecker.started.set(true)
         delegate.flushPendingCalls()
 
         val flushedIds = fakeExperimentTrackingService.trackedData.map { it.id }
-        assertEquals(PENDING_EVENT_LIMIT, flushedIds.size)
-        assertFalse(flushedIds.contains("exp-0"))
-        assertTrue(flushedIds.contains("exp-1"))
-        assertTrue(flushedIds.contains("exp-$PENDING_EVENT_LIMIT"))
+        assertEquals(PENDING_ENTRY_LIMIT, flushedIds.size)
+        assertTrue(flushedIds.contains("exp-0"))
+        assertTrue(flushedIds.contains("exp-kept"))
+        assertFalse(flushedIds.contains("exp-dropped"))
+        assertFalse(flushedIds.contains("exp-after-full"))
+    }
+
+    @Test
+    fun `replay after SDK start passes every buffered entry to the store, which enforces the configured cap`() {
+        val delegate = createDelegate(RemoteConfig(experimentMaxCount = 2))
+        delegate.trackExperiment("exp-0", startedAt = 1L)
+        delegate.trackExperiments(
+            listOf(
+                delegate.createExperiment("exp-1", startedAt = 2L),
+                delegate.createExperiment("exp-2", startedAt = 3L),
+            ),
+        )
+        delegate.untrackExperiment("exp-0", endedAt = 4L)
+
+        sdkCallChecker.started.set(true)
+        delegate.flushPendingCalls()
+
+        // the delegate does not trim to the configured cap: the store enforces it and counts the overage
+        assertEquals(listOf("exp-0", "exp-1", "exp-2"), fakeExperimentTrackingService.trackedData.map { it.id })
+        assertEquals(
+            listOf(FakeExperimentTrackingService.UntrackCall(ExperimentKind.EXPERIMENT, listOf("exp-0"), 4L)),
+            fakeExperimentTrackingService.untrackCalls,
+        )
+        assertEquals(listOf("track_experiment", "track_experiment", "untrack_experiment"), telemetryService.apiCalls)
     }
 
     @Test
@@ -262,7 +292,21 @@ internal class ExperimentApiDelegateTest {
         assertTrue(fakeExperimentTrackingService.untrackCalls.all { it.ids.isEmpty() })
     }
 
+    private fun createDelegate(remoteConfig: RemoteConfig): ExperimentApiDelegate {
+        val moduleInitBootstrapper = ModuleInitBootstrapper(
+            initModule,
+            configServiceSupplier = { _, _, _, _, _ ->
+                FakeConfigService(experimentBehavior = createExperimentBehavior(remoteConfig))
+            },
+            essentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
+                FakeEssentialServiceModule(experimentTrackingService = fakeExperimentTrackingService)
+            },
+        )
+        moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
+        return ExperimentApiDelegate(moduleInitBootstrapper, sdkCallChecker)
+    }
+
     private companion object {
-        private const val PENDING_EVENT_LIMIT = 5000
+        private const val PENDING_ENTRY_LIMIT = ExperimentBehaviorImpl.MAX_EXPERIMENT_COUNT_LIMIT
     }
 }

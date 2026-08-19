@@ -15,14 +15,13 @@ internal class ExperimentTrackingServiceImpl(
     private val telemetryDestination: TelemetryDestination,
 ) : ExperimentTrackingService {
 
-    private val maxActiveCount = configService.experimentBehavior.getMaxActiveCount()
+    private val maxRecordCount = configService.experimentBehavior.getMaxExperimentCount()
     private val maxIdLength = configService.experimentBehavior.getMaxIdLength()
     private val maxVariantLength = configService.experimentBehavior.getMaxVariantLength()
 
     private val lock = Any()
 
     private val records = LinkedHashMap<RecordKey, ExperimentRecord>()
-    private var activeCount = 0
     private var cacheValid = false
     private var cachedRecords: String? = null
 
@@ -72,12 +71,11 @@ internal class ExperimentTrackingServiceImpl(
             return false
         }
 
-        if (activeCount >= maxActiveCount || records.size >= TOTAL_RECORD_LIMIT) {
+        if (records.size >= maxRecordCount) {
             telemetryService.trackAppliedLimit("experiments", AppliedLimitType.DROP)
             return false
         }
         records[key] = record
-        activeCount++
         cacheValid = false
         return true
     }
@@ -88,7 +86,6 @@ internal class ExperimentTrackingServiceImpl(
             return false
         }
         records[key] = record.copy(endTimeMs = endTimeMs)
-        activeCount--
         cacheValid = false
         return true
     }
@@ -130,8 +127,4 @@ internal class ExperimentTrackingServiceImpl(
         val kind: ExperimentKind,
         val id: String,
     )
-
-    private companion object {
-        private const val TOTAL_RECORD_LIMIT = 5000
-    }
 }

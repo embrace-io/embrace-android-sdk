@@ -157,7 +157,7 @@ internal class ExperimentTrackingServiceImplTest {
 
     @Test
     fun `an id longer than the max length is dropped silently`() {
-        val service = serviceWithRemoteConfig(RemoteConfig(maxExperimentIdLength = 5))
+        val service = serviceWithRemoteConfig(RemoteConfig(experimentIdMaxLength = 5))
         service.track(
             listOf(TrackedData.Experiment(id = "123456", variant = null, startTimeMs = 100L)),
         )
@@ -166,7 +166,7 @@ internal class ExperimentTrackingServiceImplTest {
 
     @Test
     fun `a variant longer than the max length is dropped silently`() {
-        val service = serviceWithRemoteConfig(RemoteConfig(maxExperimentVariantLength = 5))
+        val service = serviceWithRemoteConfig(RemoteConfig(experimentVariantMaxLength = 5))
         service.track(
             listOf(TrackedData.Experiment(id = "id1", variant = "123456", startTimeMs = 100L)),
         )
@@ -174,8 +174,8 @@ internal class ExperimentTrackingServiceImplTest {
     }
 
     @Test
-    fun `tracking a new id is dropped once the active cap is reached`() {
-        val service = serviceWithRemoteConfig(RemoteConfig(maxExperimentCount = 2))
+    fun `tracking a new id is dropped once the record cap is reached`() {
+        val service = serviceWithRemoteConfig(RemoteConfig(experimentMaxCount = 2))
         service.track(
             listOf(
                 TrackedData.Experiment(id = "id1", variant = null, startTimeMs = 100L),
@@ -190,8 +190,8 @@ internal class ExperimentTrackingServiceImplTest {
     }
 
     @Test
-    fun `untracking an active id frees a slot for a new id`() {
-        val service = serviceWithRemoteConfig(RemoteConfig(maxExperimentCount = 2))
+    fun `untracking does not free a slot because ended records count against the cap`() {
+        val service = serviceWithRemoteConfig(RemoteConfig(experimentMaxCount = 2))
         service.track(
             listOf(
                 TrackedData.Experiment(id = "id1", variant = null, startTimeMs = 100L),
@@ -202,12 +202,13 @@ internal class ExperimentTrackingServiceImplTest {
         service.track(
             listOf(TrackedData.Experiment(id = "id3", variant = null, startTimeMs = 300L)),
         )
-        service.assertRecordState("e:id1::100:150;e:id2::200;e:id3::300")
+        service.assertRecordState("e:id1::100:150;e:id2::200")
+        assertEquals(listOf("experiments" to AppliedLimitType.DROP), telemetryService.appliedLimits)
     }
 
     @Test
     fun `re-tracking a known id and untracking are never blocked by being at the cap`() {
-        val service = serviceWithRemoteConfig(RemoteConfig(maxExperimentCount = 2))
+        val service = serviceWithRemoteConfig(RemoteConfig(experimentMaxCount = 2))
         service.track(
             listOf(
                 TrackedData.Experiment(id = "id1", variant = "v1", startTimeMs = 100L),
@@ -227,23 +228,6 @@ internal class ExperimentTrackingServiceImplTest {
     }
 
     @Test
-    fun `ended records beyond the active cap remain in the serialized output`() {
-        val service = serviceWithRemoteConfig(RemoteConfig(maxExperimentCount = 1))
-        service.track(
-            listOf(TrackedData.Experiment(id = "id1", variant = null, startTimeMs = 100L)),
-        )
-        service.untrack(ExperimentKind.EXPERIMENT, listOf("id1"), 150L)
-        service.track(
-            listOf(TrackedData.Experiment(id = "id2", variant = null, startTimeMs = 200L)),
-        )
-        service.untrack(ExperimentKind.EXPERIMENT, listOf("id2"), 250L)
-        service.track(
-            listOf(TrackedData.Experiment(id = "id3", variant = null, startTimeMs = 300L)),
-        )
-        service.assertRecordState("e:id1::100:150;e:id2::200:250;e:id3::300")
-    }
-
-    @Test
     fun `getRecords is null when nothing has ever been tracked`() {
         service.assertRecordState(null)
     }
@@ -260,26 +244,6 @@ internal class ExperimentTrackingServiceImplTest {
             listOf(TrackedData.Experiment(id = "id3", variant = null, startTimeMs = 300L)),
         )
         service.assertRecordState("e:id1::100;f:id2::200;e:id3::300")
-    }
-
-    @Test
-    fun `total records cap will prevent new active experiment from being tracked even if there are less the max number of actives`() {
-        val service = serviceWithRemoteConfig(RemoteConfig(maxExperimentCount = 5000))
-        val bulk = (1..5000).map { index ->
-            TrackedData.Experiment(id = "id$index", variant = null, startTimeMs = index.toLong())
-        }
-        service.track(bulk)
-        assertTrue(telemetryService.appliedLimits.isEmpty())
-
-        service.untrack(ExperimentKind.EXPERIMENT, listOf("id1"), 6000L)
-        assertTrue(service.getRecords()?.contains("e:id1::1:6000") == true)
-
-        service.track(
-            listOf(TrackedData.Experiment(id = "id5001", variant = null, startTimeMs = 7000L)),
-        )
-
-        assertEquals(listOf("experiments" to AppliedLimitType.DROP), telemetryService.appliedLimits)
-        assertFalse(service.getRecords()?.contains("id5001") == true)
     }
 
     private fun serviceWithRemoteConfig(remoteConfig: RemoteConfig): ExperimentTrackingService =

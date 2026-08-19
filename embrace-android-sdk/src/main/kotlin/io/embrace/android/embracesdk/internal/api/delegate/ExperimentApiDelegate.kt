@@ -5,9 +5,11 @@ import io.embrace.android.embracesdk.experiments.TrackedFeatureFlag
 import io.embrace.android.embracesdk.internal.api.ExperimentApi
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentKind
 import io.embrace.android.embracesdk.internal.capture.experiment.TrackedData
+import io.embrace.android.embracesdk.internal.config.behavior.ExperimentBehaviorImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicInteger
 
 internal class ExperimentApiDelegate(
     bootstrapper: ModuleInitBootstrapper,
@@ -23,6 +25,7 @@ internal class ExperimentApiDelegate(
     }
 
     private val pendingEvents = ConcurrentLinkedQueue<PendingEvent>()
+    private val bufferedEntryCount = AtomicInteger(0)
 
     override fun trackExperiments(experiments: List<TrackedExperiment>) {
         track("track_experiment", experiments.map { it.toData() })
@@ -41,8 +44,11 @@ internal class ExperimentApiDelegate(
     }
 
     fun flushPendingCalls() {
+        // The buffer can contain more experiments than the configured cap, but we'll replay all of them and let the limit enforcer
+        // log the overage and drop later calls after the cap has been reached.
         while (true) {
-            when (val event = pendingEvents.poll() ?: return) {
+            val event = pendingEvents.poll() ?: break
+            when (event) {
                 is PendingEvent.Track -> trackNow(event.action, event.data)
                 is PendingEvent.Untrack -> untrackNow(event.action, event.kind, event.ids, event.endTimeMs)
             }
@@ -51,7 +57,8 @@ internal class ExperimentApiDelegate(
 
     private fun track(action: String, data: List<TrackedData>) {
         if (!sdkCallChecker.started.get()) {
-            buffer(PendingEvent.Track(action, data))
+            val admitted = admitEntries(data) ?: return
+            pendingEvents.add(PendingEvent.Track(action, admitted))
         } else {
             trackNow(action, data)
         }
@@ -59,7 +66,8 @@ internal class ExperimentApiDelegate(
 
     private fun untrack(action: String, kind: ExperimentKind, ids: List<String>, endTimeMs: Long) {
         if (!sdkCallChecker.started.get()) {
-            buffer(PendingEvent.Untrack(action, kind, ids, endTimeMs))
+            val admitted = admitEntries(ids) ?: return
+            pendingEvents.add(PendingEvent.Untrack(action, kind, admitted, endTimeMs))
         } else {
             untrackNow(action, kind, ids, endTimeMs)
         }
@@ -80,11 +88,20 @@ internal class ExperimentApiDelegate(
     // Use the system clock if the SDK hasn't been initialized and the SDK clock is unavailable.
     private fun now(): Long = clock?.now() ?: System.currentTimeMillis()
 
-    private fun buffer(event: PendingEvent) {
-        if (pendingEvents.size >= PENDING_EVENT_LIMIT) {
-            pendingEvents.poll()
+    /**
+     * Return the entries to be allowed given the cap. Any entries that will put the total over the cap will be dropped.
+     */
+    private fun <T> admitEntries(entries: List<T>): List<T>? {
+        if (entries.isEmpty()) {
+            return entries
         }
-        pendingEvents.add(event)
+        val remaining = PENDING_ENTRY_LIMIT - bufferedEntryCount.get()
+        if (remaining <= 0) {
+            return null
+        }
+        val admitted = entries.take(remaining)
+        bufferedEntryCount.addAndGet(admitted.size)
+        return admitted
     }
 
     private fun TrackedExperiment.toData(): TrackedData =
@@ -111,6 +128,8 @@ internal class ExperimentApiDelegate(
     }
 
     private companion object {
-        private const val PENDING_EVENT_LIMIT = 5000
+        // The buffer stores entries up to the record cap's maximum settable value because it can't resolve the configured cap
+        // until the SDK starts.
+        private const val PENDING_ENTRY_LIMIT = ExperimentBehaviorImpl.MAX_EXPERIMENT_COUNT_LIMIT
     }
 }

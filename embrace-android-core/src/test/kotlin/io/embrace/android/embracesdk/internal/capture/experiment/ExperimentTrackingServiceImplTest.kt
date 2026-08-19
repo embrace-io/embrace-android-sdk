@@ -148,11 +148,52 @@ internal class ExperimentTrackingServiceImplTest {
     }
 
     @Test
-    fun `a blank id is dropped without creating a record`() {
+    fun `an id that is empty after stripping is dropped without creating a record`() {
         service.track(
-            listOf(TrackedData.Experiment(id = "", variant = null, startTimeMs = 100L)),
+            listOf(
+                TrackedData.Experiment(id = "", variant = null, startTimeMs = 100L),
+                TrackedData.Experiment(id = " \t\r\n ", variant = null, startTimeMs = 200L),
+            ),
         )
         service.assertRecordState(null)
+    }
+
+    @Test
+    fun `ids and variants are stripped of ascii whitespace before validation, identity, and serialization`() {
+        val service = serviceWithRemoteConfig(RemoteConfig(experimentIdMaxLength = 3))
+        service.track(
+            listOf(TrackedData.Experiment(id = " \t\na:b \r", variant = "\u000B v1 \u000C", startTimeMs = 100L)),
+        )
+        // the stripped id "a:b" passes the 3-char limit, is stored unescaped, and is escaped only at serialization
+        service.assertRecordState("e:a%3Ab:v1:100")
+
+        // untrack matches on the stripped id
+        service.untrack(ExperimentKind.EXPERIMENT, listOf("a:b "), 200L)
+        service.assertRecordState("e:a%3Ab:v1:100:200")
+    }
+
+    @Test
+    fun `characters outside the six ascii whitespace code points are not stripped`() {
+        service.track(
+            listOf(
+                TrackedData.Experiment(id = "\u00A0", variant = null, startTimeMs = 100L),
+                TrackedData.Experiment(id = "\u001Fid\u0085", variant = "\u3000", startTimeMs = 200L),
+            ),
+        )
+        service.assertRecordState("e:\u00A0::100;e:\u001Fid\u0085:\u3000:200")
+    }
+
+    @Test
+    fun `null, empty, and whitespace-only variants are identical and absent in the output`() {
+        service.track(
+            listOf(
+                TrackedData.Experiment(id = "id1", variant = null, startTimeMs = 100L),
+                TrackedData.Experiment(id = "id2", variant = "", startTimeMs = 100L),
+                TrackedData.Experiment(id = "id3", variant = " ", startTimeMs = 100L),
+                TrackedData.Experiment(id = "id4", variant = "\t\r\n", startTimeMs = 100L),
+            ),
+        )
+        service.assertRecordState("e:id1::100;e:id2::100;e:id3::100;e:id4::100")
     }
 
     @Test

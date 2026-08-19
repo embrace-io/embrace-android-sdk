@@ -16,8 +16,3 @@ public interface TrackedFeatureFlag {
      */
     public val startedAt: Long?
 }
-
-internal class TrackedFeatureFlagImpl(
-    override val id: String,
-    override val startedAt: Long?,
-) : TrackedFeatureFlag

@@ -14,16 +14,25 @@ interface ExperimentTrackingService {
     fun track(data: List<TrackedData>)
 
     /**
-     * Marks the given experiments or feature flags of the given kind as no longer enabled. IDs given here must match a
-     * previously tracked record of the same kind after ASCII whitespace stripping. Otherwise, they are dropped.
+     * Marks the given experiments or feature flags as no longer enabled. IDs given here must match a previously tracked record of
+     * the same kind after ASCII whitespace stripping. Otherwise, they are dropped.
      */
-    fun untrack(kind: ExperimentKind, ids: List<String>, endTimeMs: Long)
+    fun untrack(data: List<UntrackedData>)
 
     /**
      * Returns the serialized experiment records as a blob, or null if nothing has been tracked.
      */
     fun getRecords(): String?
 }
+
+/**
+ * Internal representation of a request to stop tracking a single experiment or feature flag.
+ */
+data class UntrackedData(
+    val kind: ExperimentKind,
+    val id: String,
+    val endTimeMs: Long,
+)
 
 /**
  * Internal representation of a single tracked experiment or feature flag.

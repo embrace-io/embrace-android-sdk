@@ -58,15 +58,24 @@ public abstract interface annotation class io/embrace/android/embracesdk/annotat
 public abstract interface annotation class io/embrace/android/embracesdk/annotation/NotTracedActivity : java/lang/annotation/Annotation {
 }
 
-public abstract interface class io/embrace/android/embracesdk/experiments/TrackedExperiment {
-	public abstract fun getId ()Ljava/lang/String;
-	public abstract fun getStartedAt ()Ljava/lang/Long;
-	public abstract fun getVariant ()Ljava/lang/String;
+public abstract interface class io/embrace/android/embracesdk/experiments/ExperimentTrackingScope {
+	public abstract fun experiment (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)V
+	public abstract fun featureFlag (Ljava/lang/String;Ljava/lang/Long;)V
 }
 
-public abstract interface class io/embrace/android/embracesdk/experiments/TrackedFeatureFlag {
-	public abstract fun getId ()Ljava/lang/String;
-	public abstract fun getStartedAt ()Ljava/lang/Long;
+public final class io/embrace/android/embracesdk/experiments/ExperimentTrackingScope$DefaultImpls {
+	public static synthetic fun experiment$default (Lio/embrace/android/embracesdk/experiments/ExperimentTrackingScope;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;ILjava/lang/Object;)V
+	public static synthetic fun featureFlag$default (Lio/embrace/android/embracesdk/experiments/ExperimentTrackingScope;Ljava/lang/String;Ljava/lang/Long;ILjava/lang/Object;)V
+}
+
+public abstract interface class io/embrace/android/embracesdk/experiments/ExperimentUntrackingScope {
+	public abstract fun experiment (Ljava/lang/String;Ljava/lang/Long;)V
+	public abstract fun featureFlag (Ljava/lang/String;Ljava/lang/Long;)V
+}
+
+public final class io/embrace/android/embracesdk/experiments/ExperimentUntrackingScope$DefaultImpls {
+	public static synthetic fun experiment$default (Lio/embrace/android/embracesdk/experiments/ExperimentUntrackingScope;Ljava/lang/String;Ljava/lang/Long;ILjava/lang/Object;)V
+	public static synthetic fun featureFlag$default (Lio/embrace/android/embracesdk/experiments/ExperimentUntrackingScope;Ljava/lang/String;Ljava/lang/Long;ILjava/lang/Object;)V
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/BreadcrumbApi {
@@ -83,31 +92,23 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Embra
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/ExperimentApi {
-	public abstract fun createExperiment (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)Lio/embrace/android/embracesdk/experiments/TrackedExperiment;
-	public abstract fun createFeatureFlag (Ljava/lang/String;Ljava/lang/Long;)Lio/embrace/android/embracesdk/experiments/TrackedFeatureFlag;
 	public abstract fun trackExperiment (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)V
-	public abstract fun trackExperiments (Ljava/util/List;)V
+	public abstract fun trackExperiments (Lkotlin/jvm/functions/Function1;)V
 	public abstract fun trackFeatureFlag (Ljava/lang/String;Ljava/lang/Long;)V
-	public abstract fun trackFeatureFlags (Ljava/util/List;)V
 	public abstract fun untrackExperiment (Ljava/lang/String;Ljava/lang/Long;)V
-	public abstract fun untrackExperiments (Ljava/util/List;Ljava/lang/Long;)V
+	public abstract fun untrackExperiments (Lkotlin/jvm/functions/Function1;)V
 	public abstract fun untrackFeatureFlag (Ljava/lang/String;Ljava/lang/Long;)V
-	public abstract fun untrackFeatureFlags (Ljava/util/List;Ljava/lang/Long;)V
 }
 
 public final class io/embrace/android/embracesdk/internal/api/ExperimentApi$DefaultImpls {
-	public static synthetic fun createExperiment$default (Lio/embrace/android/embracesdk/internal/api/ExperimentApi;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;ILjava/lang/Object;)Lio/embrace/android/embracesdk/experiments/TrackedExperiment;
-	public static synthetic fun createFeatureFlag$default (Lio/embrace/android/embracesdk/internal/api/ExperimentApi;Ljava/lang/String;Ljava/lang/Long;ILjava/lang/Object;)Lio/embrace/android/embracesdk/experiments/TrackedFeatureFlag;
 	public static fun trackExperiment (Lio/embrace/android/embracesdk/internal/api/ExperimentApi;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)V
 	public static synthetic fun trackExperiment$default (Lio/embrace/android/embracesdk/internal/api/ExperimentApi;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;ILjava/lang/Object;)V
 	public static fun trackFeatureFlag (Lio/embrace/android/embracesdk/internal/api/ExperimentApi;Ljava/lang/String;Ljava/lang/Long;)V
 	public static synthetic fun trackFeatureFlag$default (Lio/embrace/android/embracesdk/internal/api/ExperimentApi;Ljava/lang/String;Ljava/lang/Long;ILjava/lang/Object;)V
 	public static fun untrackExperiment (Lio/embrace/android/embracesdk/internal/api/ExperimentApi;Ljava/lang/String;Ljava/lang/Long;)V
 	public static synthetic fun untrackExperiment$default (Lio/embrace/android/embracesdk/internal/api/ExperimentApi;Ljava/lang/String;Ljava/lang/Long;ILjava/lang/Object;)V
-	public static synthetic fun untrackExperiments$default (Lio/embrace/android/embracesdk/internal/api/ExperimentApi;Ljava/util/List;Ljava/lang/Long;ILjava/lang/Object;)V
 	public static fun untrackFeatureFlag (Lio/embrace/android/embracesdk/internal/api/ExperimentApi;Ljava/lang/String;Ljava/lang/Long;)V
 	public static synthetic fun untrackFeatureFlag$default (Lio/embrace/android/embracesdk/internal/api/ExperimentApi;Ljava/lang/String;Ljava/lang/Long;ILjava/lang/Object;)V
-	public static synthetic fun untrackFeatureFlags$default (Lio/embrace/android/embracesdk/internal/api/ExperimentApi;Ljava/util/List;Ljava/lang/Long;ILjava/lang/Object;)V
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/InstrumentationApi {

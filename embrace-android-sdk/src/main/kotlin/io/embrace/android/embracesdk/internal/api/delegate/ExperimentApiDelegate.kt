@@ -1,10 +1,11 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
-import io.embrace.android.embracesdk.experiments.TrackedExperiment
-import io.embrace.android.embracesdk.experiments.TrackedFeatureFlag
+import io.embrace.android.embracesdk.experiments.ExperimentTrackingScope
+import io.embrace.android.embracesdk.experiments.ExperimentUntrackingScope
 import io.embrace.android.embracesdk.internal.api.ExperimentApi
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentKind
 import io.embrace.android.embracesdk.internal.capture.experiment.TrackedData
+import io.embrace.android.embracesdk.internal.capture.experiment.UntrackedData
 import io.embrace.android.embracesdk.internal.config.behavior.ExperimentBehaviorImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
@@ -27,26 +28,22 @@ internal class ExperimentApiDelegate(
     private val pendingEvents = ConcurrentLinkedQueue<PendingEvent>()
     private val bufferedEntryCount = AtomicInteger(0)
 
-    override fun createExperiment(id: String, variant: String?, startedAt: Long?): TrackedExperiment =
-        TrackedExperimentImpl(id, variant, startedAt)
-
-    override fun trackExperiments(experiments: List<TrackedExperiment>) {
-        track("track_experiment", experiments.map { it.toData() })
+    override fun trackExperiments(action: ExperimentTrackingScope.() -> Unit) {
+        val scope = ExperimentTrackingScopeImpl(::now)
+        try {
+            scope.action()
+        } finally {
+            track(scope.drain())
+        }
     }
 
-    override fun untrackExperiments(ids: List<String>, endedAt: Long?) {
-        untrack("untrack_experiment", ExperimentKind.EXPERIMENT, ids, endedAt ?: now())
-    }
-
-    override fun createFeatureFlag(id: String, startedAt: Long?): TrackedFeatureFlag =
-        TrackedFeatureFlagImpl(id, startedAt)
-
-    override fun trackFeatureFlags(flags: List<TrackedFeatureFlag>) {
-        track("track_feature_flag", flags.map { it.toData() })
-    }
-
-    override fun untrackFeatureFlags(ids: List<String>, endedAt: Long?) {
-        untrack("untrack_feature_flag", ExperimentKind.FEATURE_FLAG, ids, endedAt ?: now())
+    override fun untrackExperiments(action: ExperimentUntrackingScope.() -> Unit) {
+        val scope = ExperimentUntrackingScopeImpl(::now)
+        try {
+            scope.action()
+        } finally {
+            untrack(scope.drain())
+        }
     }
 
     fun flushPendingCalls() {
@@ -55,39 +52,49 @@ internal class ExperimentApiDelegate(
         while (true) {
             val event = pendingEvents.poll() ?: break
             when (event) {
-                is PendingEvent.Track -> trackNow(event.action, event.data)
-                is PendingEvent.Untrack -> untrackNow(event.action, event.kind, event.ids, event.endTimeMs)
+                is PendingEvent.Track -> trackNow(event.data)
+                is PendingEvent.Untrack -> untrackNow(event.data)
             }
         }
     }
 
-    private fun track(action: String, data: List<TrackedData>) {
+    private fun track(data: List<TrackedData>) {
+        if (data.isEmpty()) {
+            return
+        }
         if (!sdkCallChecker.started.get()) {
             val admitted = admitEntries(data) ?: return
-            pendingEvents.add(PendingEvent.Track(action, admitted))
+            pendingEvents.add(PendingEvent.Track(admitted))
         } else {
-            trackNow(action, data)
+            trackNow(data)
         }
     }
 
-    private fun untrack(action: String, kind: ExperimentKind, ids: List<String>, endTimeMs: Long) {
+    private fun untrack(data: List<UntrackedData>) {
+        if (data.isEmpty()) {
+            return
+        }
         if (!sdkCallChecker.started.get()) {
-            val admitted = admitEntries(ids) ?: return
-            pendingEvents.add(PendingEvent.Untrack(action, kind, admitted, endTimeMs))
+            val admitted = admitEntries(data) ?: return
+            pendingEvents.add(PendingEvent.Untrack(admitted))
         } else {
-            untrackNow(action, kind, ids, endTimeMs)
+            untrackNow(data)
         }
     }
 
-    private fun trackNow(action: String, data: List<TrackedData>) {
-        if (sdkCallChecker.check(action)) {
+    private fun trackNow(data: List<TrackedData>) {
+        val experiments = data.any { it is TrackedData.Experiment } && sdkCallChecker.check(TRACK_EXPERIMENT)
+        val flags = data.any { it is TrackedData.FeatureFlag } && sdkCallChecker.check(TRACK_FEATURE_FLAG)
+        if (experiments || flags) {
             experimentTrackingService?.track(data)
         }
     }
 
-    private fun untrackNow(action: String, kind: ExperimentKind, ids: List<String>, endTimeMs: Long) {
-        if (sdkCallChecker.check(action)) {
-            experimentTrackingService?.untrack(kind, ids, endTimeMs)
+    private fun untrackNow(data: List<UntrackedData>) {
+        val experiments = data.any { it.kind == ExperimentKind.EXPERIMENT } && sdkCallChecker.check(UNTRACK_EXPERIMENT)
+        val flags = data.any { it.kind == ExperimentKind.FEATURE_FLAG } && sdkCallChecker.check(UNTRACK_FEATURE_FLAG)
+        if (experiments || flags) {
+            experimentTrackingService?.untrack(data)
         }
     }
 
@@ -110,30 +117,17 @@ internal class ExperimentApiDelegate(
         return admitted
     }
 
-    private fun TrackedExperiment.toData(): TrackedData =
-        TrackedData.Experiment(
-            id = id,
-            startTimeMs = startedAt ?: now(),
-            variant = variant,
-        )
-
-    private fun TrackedFeatureFlag.toData(): TrackedData =
-        TrackedData.FeatureFlag(
-            id = id,
-            startTimeMs = startedAt ?: now(),
-        )
-
     private sealed interface PendingEvent {
-        class Track(val action: String, val data: List<TrackedData>) : PendingEvent
-        class Untrack(
-            val action: String,
-            val kind: ExperimentKind,
-            val ids: List<String>,
-            val endTimeMs: Long,
-        ) : PendingEvent
+        class Track(val data: List<TrackedData>) : PendingEvent
+        class Untrack(val data: List<UntrackedData>) : PendingEvent
     }
 
     private companion object {
+        private const val TRACK_EXPERIMENT = "track_experiment"
+        private const val TRACK_FEATURE_FLAG = "track_feature_flag"
+        private const val UNTRACK_EXPERIMENT = "untrack_experiment"
+        private const val UNTRACK_FEATURE_FLAG = "untrack_feature_flag"
+
         // The buffer stores entries up to the record cap's maximum settable value because it can't resolve the configured cap
         // until the SDK starts.
         private const val PENDING_ENTRY_LIMIT = ExperimentBehaviorImpl.MAX_EXPERIMENT_COUNT_LIMIT

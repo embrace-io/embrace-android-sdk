@@ -120,6 +120,7 @@ class EssentialServiceModuleImpl(
         ExperimentTrackingServiceImpl(
             configService = configService,
             telemetryService = initModule.telemetryService,
+            telemetryDestination = telemetryDestination,
         )
     }
 }

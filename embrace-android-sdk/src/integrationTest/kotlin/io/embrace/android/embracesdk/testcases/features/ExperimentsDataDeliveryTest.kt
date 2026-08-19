@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Severity
+import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.assertions.findSpanByName
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
@@ -82,6 +83,19 @@ internal class ExperimentsDataDeliveryTest {
                     "e:checkout-flow:variant-a:$trackStartMs",
                     log.attributes?.findAttributeValue(EmbCommonAttributes.EMB_EXPERIMENTS),
                 )
+            },
+        )
+    }
+
+    @Test
+    fun `experiments attribute not on session part span when API not used`() {
+        testRule.runTest(
+            testCaseAction = {
+                recordSession()
+            },
+            assertAction = {
+                val attrs = checkNotNull(getSingleSessionEnvelope().findSessionPartSpan().attributes)
+                assertNull(attrs.findAttributeValue(EmbCommonAttributes.EMB_EXPERIMENTS))
             },
         )
     }

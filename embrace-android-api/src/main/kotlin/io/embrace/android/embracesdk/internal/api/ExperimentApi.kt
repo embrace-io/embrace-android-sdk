@@ -1,9 +1,7 @@
 package io.embrace.android.embracesdk.internal.api
 
 import io.embrace.android.embracesdk.experiments.TrackedExperiment
-import io.embrace.android.embracesdk.experiments.TrackedExperimentImpl
 import io.embrace.android.embracesdk.experiments.TrackedFeatureFlag
-import io.embrace.android.embracesdk.experiments.TrackedFeatureFlagImpl
 
 /**
  * The public API used to track experiment and feature-flag state on a given device for the current app instance. IDs are unique within
@@ -16,8 +14,7 @@ public interface ExperimentApi {
      * Creates a [TrackedExperiment] with an optional [variant] and a timestamp [startedAt] in milliseconds from epoch observed from
      * the client-side that denotes when the experiment variant was first applied.
      */
-    public fun createExperiment(id: String, variant: String? = null, startedAt: Long? = null): TrackedExperiment =
-        TrackedExperimentImpl(id, variant, startedAt)
+    public fun createExperiment(id: String, variant: String? = null, startedAt: Long? = null): TrackedExperiment
 
     /**
      * Tracks a single experiment membership that this app instance has been bucketed into. A null [startedAt] means the time at which
@@ -48,8 +45,7 @@ public interface ExperimentApi {
      * Creates a [TrackedFeatureFlag] with an optional timestamp [startedAt] in milliseconds from epoch observed from the client-side
      * that denotes when the flag was first applied.
      */
-    public fun createFeatureFlag(id: String, startedAt: Long? = null): TrackedFeatureFlag =
-        TrackedFeatureFlagImpl(id, startedAt)
+    public fun createFeatureFlag(id: String, startedAt: Long? = null): TrackedFeatureFlag
 
     /**
      * Tracks a single enabled feature flag that applies to this app instance. A null [startedAt] means the time at which this call

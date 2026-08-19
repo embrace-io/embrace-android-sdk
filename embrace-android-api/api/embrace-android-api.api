@@ -96,9 +96,7 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Exper
 }
 
 public final class io/embrace/android/embracesdk/internal/api/ExperimentApi$DefaultImpls {
-	public static fun createExperiment (Lio/embrace/android/embracesdk/internal/api/ExperimentApi;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)Lio/embrace/android/embracesdk/experiments/TrackedExperiment;
 	public static synthetic fun createExperiment$default (Lio/embrace/android/embracesdk/internal/api/ExperimentApi;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;ILjava/lang/Object;)Lio/embrace/android/embracesdk/experiments/TrackedExperiment;
-	public static fun createFeatureFlag (Lio/embrace/android/embracesdk/internal/api/ExperimentApi;Ljava/lang/String;Ljava/lang/Long;)Lio/embrace/android/embracesdk/experiments/TrackedFeatureFlag;
 	public static synthetic fun createFeatureFlag$default (Lio/embrace/android/embracesdk/internal/api/ExperimentApi;Ljava/lang/String;Ljava/lang/Long;ILjava/lang/Object;)Lio/embrace/android/embracesdk/experiments/TrackedFeatureFlag;
 	public static fun trackExperiment (Lio/embrace/android/embracesdk/internal/api/ExperimentApi;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)V
 	public static synthetic fun trackExperiment$default (Lio/embrace/android/embracesdk/internal/api/ExperimentApi;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;ILjava/lang/Object;)V
@@ -172,8 +170,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/SdkAp
 public final class io/embrace/android/embracesdk/internal/api/SdkApi$DefaultImpls {
 	public static fun addLoadTraceChildSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Landroid/app/Activity;Ljava/lang/String;JJ)V
 	public static fun addStartupTraceChildSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;JJ)V
-	public static fun createExperiment (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)Lio/embrace/android/embracesdk/experiments/TrackedExperiment;
-	public static fun createFeatureFlag (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Ljava/lang/Long;)Lio/embrace/android/embracesdk/experiments/TrackedFeatureFlag;
 	public static fun trackExperiment (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)V
 	public static fun trackFeatureFlag (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Ljava/lang/Long;)V
 	public static fun untrackExperiment (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Ljava/lang/Long;)V

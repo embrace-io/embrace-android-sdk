@@ -56,8 +56,9 @@ internal class ExperimentTrackingServiceImplTest {
         )
         service.assertRecordState("e:id1:v1:100")
 
-        // the dropped call does not invalidate the cached serialization
+        // the dropped call does not invalidate the cached serialization or write the attribute again
         assertSame(records, service.getRecords())
+        assertEquals(1, experimentAttributeWriteCount())
     }
 
     @Test
@@ -85,8 +86,9 @@ internal class ExperimentTrackingServiceImplTest {
         service.untrack(ExperimentKind.FEATURE_FLAG, listOf("id1"), 200L)
         service.assertRecordState("e:id1::100")
 
-        // the dropped calls do not invalidate the cached serialization
+        // the dropped calls do not invalidate the cached serialization or write the attribute again
         assertSame(records, service.getRecords())
+        assertEquals(1, experimentAttributeWriteCount())
     }
 
     @Test
@@ -124,7 +126,7 @@ internal class ExperimentTrackingServiceImplTest {
     }
 
     @Test
-    fun `a bulk call applies all entries in order`() {
+    fun `a bulk call applies all entries in order with a single attribute write`() {
         service.track(
             listOf(
                 TrackedData.Experiment(id = "id1", variant = null, startTimeMs = 100L),
@@ -133,6 +135,7 @@ internal class ExperimentTrackingServiceImplTest {
             ),
         )
         service.assertRecordState("e:id1::100;e:id2::200;e:id3::300")
+        assertEquals(1, experimentAttributeWriteCount())
     }
 
     @Test
@@ -293,6 +296,9 @@ internal class ExperimentTrackingServiceImplTest {
             telemetryService = telemetryService,
             telemetryDestination = destination,
         )
+
+    private fun experimentAttributeWriteCount(): Int =
+        destination.sessionPartAttributeWrites.count { it.first == EmbCommonAttributes.EMB_EXPERIMENTS }
 
     private fun ExperimentTrackingService.assertRecordState(expected: String?) {
         assertEquals(expected, getRecords())

@@ -79,6 +79,7 @@ internal class ExternalLoggerTest {
     fun `record a log with otel logging API during a session`() {
         var logTime: Long = -1L
         var observedTime: Long = -1L
+        var trackStartMs: Long = -1L
         var exportedOTelLog: ReadableLogRecord? = null
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
@@ -92,6 +93,8 @@ internal class ExternalLoggerTest {
                 observedTime = clock.now().millisToNanos()
                 clock.tick()
                 recordSession {
+                    trackStartMs = clock.now()
+                    embrace.trackExperiment(id = "checkout-flow", variant = "variant-a", startedAt = trackStartMs)
                     logTime = clock.now().millisToNanos()
                     embrace.addUserSessionProperty("session-attr", "blah", PropertyScope.PERMANENT)
                     embLogger.emit(
@@ -135,8 +138,12 @@ internal class ExternalLoggerTest {
                         expectedAttributes = mapOf("foo" to "bar"),
                     )
 
-                    // experiments attribute value is reserved and cannot be set via the API
-                    assertEquals("", attributes[EmbCommonAttributes.EMB_EXPERIMENTS])
+                    // the experiments attribute is reserved: the caller-set value is replaced by the real records,
+                    // which reach the customer-registered exporter
+                    assertEquals(
+                        "e:checkout-flow:variant-a:$trackStartMs",
+                        attributes[EmbCommonAttributes.EMB_EXPERIMENTS],
+                    )
                 }
                 assertEquals(exportedOTelLog.toEmbracePayload(), getSingleLogEnvelope().getLastLog())
             },

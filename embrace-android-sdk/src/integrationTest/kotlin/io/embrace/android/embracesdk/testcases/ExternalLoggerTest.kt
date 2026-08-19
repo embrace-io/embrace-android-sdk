@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalSemconv::class)
+
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -16,7 +18,9 @@ import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.toStringMap
+import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceOtelExportAssertionInterface
@@ -100,6 +104,7 @@ internal class ExternalLoggerTest {
                         severityText = "DANG",
                     ) {
                         setStringAttribute("foo", "bar")
+                        setStringAttribute(EmbCommonAttributes.EMB_EXPERIMENTS, "spoof")
                     }
                     clock.tick(2000L)
                 }
@@ -129,6 +134,9 @@ internal class ExternalLoggerTest {
                         expectedSessionProperties = mapOf("session-attr" to "blah"),
                         expectedAttributes = mapOf("foo" to "bar"),
                     )
+
+                    // experiments attribute value is reserved and cannot be set via the API
+                    assertEquals("", attributes[EmbCommonAttributes.EMB_EXPERIMENTS])
                 }
                 assertEquals(exportedOTelLog.toEmbracePayload(), getSingleLogEnvelope().getLastLog())
             },

@@ -27,31 +27,22 @@ internal class ExperimentTrackingFoundationTest {
         testRule.runTest(
             preSdkStartAction = {
                 bufferedExperimentStartMs = clock.now()
-                embrace.trackExperiment(
-                    embrace.createExperiment(
-                        id = "checkout-flow",
-                        startTimeMs = bufferedExperimentStartMs,
-                        variant = "variant-a",
-                    )
-                )
+                embrace.trackExperiment(id = "checkout-flow", variant = "variant-a", startedAt = bufferedExperimentStartMs)
             },
             testCaseAction = {
                 recordSession {
                     flagStartMs = clock.tick()
-                    embrace.trackFeatureFlag(
-                        embrace.createFeatureFlag(id = "dark-mode", startTimeMs = flagStartMs)
-                    )
+                    embrace.trackFeatureFlag(id = "dark-mode", startedAt = flagStartMs)
 
+                    // omitted timestamp resolves to the SDK clock's time at the moment of the call
                     variantlessExperimentStartMs = clock.tick()
-                    embrace.trackExperiment(
-                        embrace.createExperiment(id = "promo", startTimeMs = variantlessExperimentStartMs)
-                    )
+                    embrace.trackExperiment(id = "promo")
 
                     untrackEndMs = clock.tick()
-                    embrace.untrackExperiment("checkout-flow", endTimeMs = untrackEndMs)
+                    embrace.untrackExperiment("checkout-flow", endedAt = untrackEndMs)
 
-                    embrace.trackExperiment(
-                        embrace.createExperiment(id = "checkout-flow", startTimeMs = clock.tick(), variant = "variant-b")
+                    embrace.trackExperiments(
+                        listOf(embrace.createExperiment(id = "checkout-flow", variant = "variant-b", startedAt = clock.tick()))
                     )
                 }
                 recordSession()

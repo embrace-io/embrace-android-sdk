@@ -24,8 +24,8 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun clearUserIdentifier ()V
 	public fun clearUserPersona (Ljava/lang/String;)V
 	public fun clearUsername ()V
-	public fun createExperiment (Ljava/lang/String;JLjava/lang/String;)Lio/embrace/android/embracesdk/experiments/TrackedExperiment;
-	public fun createFeatureFlag (Ljava/lang/String;J)Lio/embrace/android/embracesdk/experiments/TrackedFeatureFlag;
+	public fun createExperiment (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)Lio/embrace/android/embracesdk/experiments/TrackedExperiment;
+	public fun createFeatureFlag (Ljava/lang/String;Ljava/lang/Long;)Lio/embrace/android/embracesdk/experiments/TrackedFeatureFlag;
 	public fun createSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun disable ()V
 	public fun endUserSession ()V
@@ -62,10 +62,14 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun start (Landroid/content/Context;)V
 	public fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/Long;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun startView (Ljava/lang/String;)Z
-	public fun trackExperiment ([Lio/embrace/android/embracesdk/experiments/TrackedExperiment;)V
-	public fun trackFeatureFlag ([Lio/embrace/android/embracesdk/experiments/TrackedFeatureFlag;)V
-	public fun untrackExperiment ([Ljava/lang/String;J)V
-	public fun untrackFeatureFlag ([Ljava/lang/String;J)V
+	public fun trackExperiment (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)V
+	public fun trackExperiments (Ljava/util/List;)V
+	public fun trackFeatureFlag (Ljava/lang/String;Ljava/lang/Long;)V
+	public fun trackFeatureFlags (Ljava/util/List;)V
+	public fun untrackExperiment (Ljava/lang/String;Ljava/lang/Long;)V
+	public fun untrackExperiments (Ljava/util/List;Ljava/lang/Long;)V
+	public fun untrackFeatureFlag (Ljava/lang/String;Ljava/lang/Long;)V
+	public fun untrackFeatureFlags (Ljava/util/List;Ljava/lang/Long;)V
 }
 
 public final class io/embrace/android/embracesdk/internal/instrumentation/bytecode/ApplicationInitTimeBytecodeEntrypoint {

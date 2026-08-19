@@ -11,12 +11,13 @@ public interface TrackedFeatureFlag {
     public val id: String
 
     /**
-     * The time at which the flag started applying to the device, in milliseconds since the epoch.
+     * The time at which the flag started applying to the device, in milliseconds since the epoch. If null, the time at which the SDK is
+     * told to track this feature flag will be used.
      */
-    public val startTimeMs: Long
+    public val startedAt: Long?
 }
 
 internal class TrackedFeatureFlagImpl(
     override val id: String,
-    override val startTimeMs: Long,
+    override val startedAt: Long?,
 ) : TrackedFeatureFlag

@@ -147,7 +147,7 @@ internal class NativeCrashFeatureTest {
                 setupFakeNativeCrash(serializer, crashData)
             },
             testCaseAction = {
-                embrace.trackExperiment(embrace.createExperiment(id = "current-exp", startTimeMs = clock.now()))
+                embrace.trackExperiment(id = "current-exp", startedAt = clock.now())
                 ioWorker.blockingMode = false
                 ioWorker.runCurrentlyBlocked()
             },

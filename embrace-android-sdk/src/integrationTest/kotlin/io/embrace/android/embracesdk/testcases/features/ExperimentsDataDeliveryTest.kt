@@ -46,15 +46,13 @@ internal class ExperimentsDataDeliveryTest {
             testCaseAction = {
                 recordSession {
                     val trackStartMs = clock.now()
-                    embrace.trackExperiment(
-                        embrace.createExperiment(id = "checkout-flow", startTimeMs = trackStartMs, variant = "variant-a"),
-                    )
+                    embrace.trackExperiment(id = "checkout-flow", variant = "variant-a", startedAt = trackStartMs)
 
                     val flagStartMs = clock.tick()
-                    embrace.trackFeatureFlag(embrace.createFeatureFlag(id = "dark-mode", startTimeMs = flagStartMs))
+                    embrace.trackFeatureFlag(id = "dark-mode", startedAt = flagStartMs)
 
                     val untrackEndMs = clock.tick()
-                    embrace.untrackExperiment("checkout-flow", endTimeMs = untrackEndMs)
+                    embrace.untrackExperiment("checkout-flow", endedAt = untrackEndMs)
                 }
             },
             assertAction = {
@@ -70,9 +68,7 @@ internal class ExperimentsDataDeliveryTest {
             testCaseAction = {
                 recordSession {
                     trackStartMs = clock.now()
-                    embrace.trackExperiment(
-                        embrace.createExperiment(id = "checkout-flow", startTimeMs = trackStartMs, variant = "variant-a"),
-                    )
+                    embrace.trackExperiment(id = "checkout-flow", variant = "variant-a", startedAt = trackStartMs)
                     embrace.logMessage("log with experiments", Severity.INFO)
                     flushLogBatch()
                 }

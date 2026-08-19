@@ -46,9 +46,9 @@ internal class ExperimentTrackingFoundationTest {
                     untrackEndMs = clock.tick()
                     embrace.untrackExperiment("checkout-flow", endedAt = untrackEndMs)
 
-                    embrace.trackExperiments(
-                        listOf(embrace.createExperiment(id = "checkout-flow", variant = "variant-b", startedAt = clock.tick()))
-                    )
+                    embrace.trackExperiments {
+                        experiment(id = "checkout-flow", variant = "variant-b", startedAt = clock.tick())
+                    }
                 }
                 recordSession()
             },
@@ -75,6 +75,54 @@ internal class ExperimentTrackingFoundationTest {
                         envelope.findSessionPartSpan().attributes?.findAttributeValue(EmbCommonAttributes.EMB_EXPERIMENTS)
                     )
                 }
+            }
+        )
+    }
+
+    @Test
+    fun `a single block can declare both experiments and feature flags`() {
+        var expOneStartMs: Long = -1
+        var flagOneStartMs: Long = -1
+        var expTwoStartMs: Long = -1
+        var untrackEndMs: Long = -1
+
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    expOneStartMs = clock.tick()
+                    flagOneStartMs = clock.tick()
+                    expTwoStartMs = clock.tick()
+                    embrace.trackExperiments {
+                        experiment(id = "checkout-flow", variant = "variant-a", startedAt = expOneStartMs)
+                        featureFlag(id = "dark-mode", startedAt = flagOneStartMs)
+                        experiment(id = "promo", startedAt = expTwoStartMs)
+                    }
+
+                    untrackEndMs = clock.tick()
+                    embrace.untrackExperiments {
+                        experiment(id = "promo", endedAt = untrackEndMs)
+                        featureFlag(id = "dark-mode", endedAt = untrackEndMs)
+                    }
+                }
+            },
+            assertAction = {
+                val expectedRecords =
+                    "e:checkout-flow:variant-a:$expOneStartMs;" +
+                        "f:dark-mode::$flagOneStartMs:$untrackEndMs;" +
+                        "e:promo::$expTwoStartMs:$untrackEndMs"
+                assertEquals(
+                    expectedRecords,
+                    testRule.bootstrapper.essentialServiceModule.experimentTrackingService.getRecords()
+                )
+
+                val attrs = checkNotNull(getSingleSessionEnvelope().findSessionPartSpan().attributes)
+                assertEquals(expectedRecords, attrs.findAttributeValue(EmbCommonAttributes.EMB_EXPERIMENTS))
+
+                // each kind present in a block records its usage once, however many entries of that kind were declared
+                assertEquals("1", attrs.findAttributeValue("emb.usage.track_experiment"))
+                assertEquals("1", attrs.findAttributeValue("emb.usage.track_feature_flag"))
+                assertEquals("1", attrs.findAttributeValue("emb.usage.untrack_experiment"))
+                assertEquals("1", attrs.findAttributeValue("emb.usage.untrack_feature_flag"))
             }
         )
     }

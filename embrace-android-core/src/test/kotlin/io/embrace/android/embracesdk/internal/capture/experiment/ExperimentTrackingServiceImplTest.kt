@@ -71,7 +71,7 @@ internal class ExperimentTrackingServiceImplTest {
         )
         service.assertRecordState("e:a::100;e:b::200")
 
-        service.untrack(ExperimentKind.EXPERIMENT, listOf("a"), 300L)
+        service.untrack(ExperimentKind.EXPERIMENT, "a", endTimeMs = 300L)
         service.assertRecordState("e:a::100:300;e:b::200")
     }
 
@@ -82,8 +82,8 @@ internal class ExperimentTrackingServiceImplTest {
         )
 
         val records = service.getRecords()
-        service.untrack(ExperimentKind.EXPERIMENT, listOf("unknown"), 200L)
-        service.untrack(ExperimentKind.FEATURE_FLAG, listOf("id1"), 200L)
+        service.untrack(ExperimentKind.EXPERIMENT, "unknown", endTimeMs = 200L)
+        service.untrack(ExperimentKind.FEATURE_FLAG, "id1", endTimeMs = 200L)
         service.assertRecordState("e:id1::100")
 
         // the dropped calls do not invalidate the cached serialization or write the attribute again
@@ -96,8 +96,8 @@ internal class ExperimentTrackingServiceImplTest {
         service.track(
             listOf(TrackedData.Experiment(id = "id1", variant = null, startTimeMs = 100L)),
         )
-        service.untrack(ExperimentKind.EXPERIMENT, listOf("id1"), 200L)
-        service.untrack(ExperimentKind.EXPERIMENT, listOf("id1"), 300L)
+        service.untrack(ExperimentKind.EXPERIMENT, "id1", endTimeMs = 200L)
+        service.untrack(ExperimentKind.EXPERIMENT, "id1", endTimeMs = 300L)
         service.assertRecordState("e:id1::100:200")
     }
 
@@ -106,7 +106,7 @@ internal class ExperimentTrackingServiceImplTest {
         service.track(
             listOf(TrackedData.FeatureFlag(id = "flag1", startTimeMs = 100L)),
         )
-        service.untrack(ExperimentKind.FEATURE_FLAG, listOf("flag1"), 200L)
+        service.untrack(ExperimentKind.FEATURE_FLAG, "flag1", endTimeMs = 200L)
         service.assertRecordState("f:flag1::100:200")
     }
 
@@ -121,7 +121,7 @@ internal class ExperimentTrackingServiceImplTest {
         service.assertRecordState("e:id1::100;f:id1::150")
 
         // untrack matches on kind as well as id, so only the feature flag record is closed
-        service.untrack(ExperimentKind.FEATURE_FLAG, listOf("id1"), 200L)
+        service.untrack(ExperimentKind.FEATURE_FLAG, "id1", endTimeMs = 200L)
         service.assertRecordState("e:id1::100;f:id1::150:200")
     }
 
@@ -171,7 +171,7 @@ internal class ExperimentTrackingServiceImplTest {
         service.assertRecordState("e:a%3Ab:v1:100")
 
         // untrack matches on the stripped id
-        service.untrack(ExperimentKind.EXPERIMENT, listOf("a:b "), 200L)
+        service.untrack(ExperimentKind.EXPERIMENT, "a:b ", endTimeMs = 200L)
         service.assertRecordState("e:a%3Ab:v1:100:200")
     }
 
@@ -242,7 +242,7 @@ internal class ExperimentTrackingServiceImplTest {
                 TrackedData.Experiment(id = "id2", variant = null, startTimeMs = 200L),
             ),
         )
-        service.untrack(ExperimentKind.EXPERIMENT, listOf("id1"), 150L)
+        service.untrack(ExperimentKind.EXPERIMENT, "id1", endTimeMs = 150L)
         service.track(
             listOf(TrackedData.Experiment(id = "id3", variant = null, startTimeMs = 300L)),
         )
@@ -266,7 +266,7 @@ internal class ExperimentTrackingServiceImplTest {
         service.assertRecordState("e:id1:v1:100;e:id2::200")
 
         // untracking while at the cap is never blocked
-        service.untrack(ExperimentKind.EXPERIMENT, listOf("id1"), 300L)
+        service.untrack(ExperimentKind.EXPERIMENT, "id1", endTimeMs = 300L)
         service.assertRecordState("e:id1:v1:100:300;e:id2::200")
         assertTrue(telemetryService.appliedLimits.none { it.first == "experiments" })
     }
@@ -290,6 +290,45 @@ internal class ExperimentTrackingServiceImplTest {
         service.assertRecordState("e:id1::100;f:id2::200;e:id3::300")
     }
 
+    @Test
+    fun `untrack applies a different end time to each entry in one call`() {
+        service.track(
+            listOf(
+                TrackedData.Experiment(id = "id1", variant = null, startTimeMs = 100L),
+                TrackedData.Experiment(id = "id2", variant = null, startTimeMs = 100L),
+                TrackedData.FeatureFlag(id = "id1", startTimeMs = 100L),
+            ),
+        )
+        service.untrack(
+            listOf(
+                UntrackedData(kind = ExperimentKind.EXPERIMENT, id = "id1", endTimeMs = 200L),
+                UntrackedData(kind = ExperimentKind.EXPERIMENT, id = "id2", endTimeMs = 300L),
+                UntrackedData(kind = ExperimentKind.FEATURE_FLAG, id = "id1", endTimeMs = 400L),
+            ),
+        )
+        service.assertRecordState("e:id1::100:200;e:id2::100:300;f:id1::100:400")
+    }
+
+    @Test
+    fun `one untrack call publishes the records once however many entries it holds`() {
+        service.track(
+            listOf(
+                TrackedData.Experiment(id = "id1", variant = null, startTimeMs = 100L),
+                TrackedData.Experiment(id = "id2", variant = null, startTimeMs = 100L),
+            ),
+        )
+        val writesAfterTrack = experimentAttributeWriteCount()
+
+        service.untrack(
+            listOf(
+                UntrackedData(kind = ExperimentKind.EXPERIMENT, id = "id1", endTimeMs = 200L),
+                UntrackedData(kind = ExperimentKind.EXPERIMENT, id = "id2", endTimeMs = 300L),
+            ),
+        )
+
+        assertEquals(writesAfterTrack + 1, experimentAttributeWriteCount())
+    }
+
     private fun serviceWithRemoteConfig(remoteConfig: RemoteConfig): ExperimentTrackingService =
         ExperimentTrackingServiceImpl(
             configService = FakeConfigService(experimentBehavior = createExperimentBehavior(remoteConfig)),
@@ -307,5 +346,12 @@ internal class ExperimentTrackingServiceImplTest {
         } else {
             assertEquals(expected, destination.attributes[EmbCommonAttributes.EMB_EXPERIMENTS])
         }
+    }
+
+    /**
+     * Untracks the given IDs of a single kind at one time, which is all most of these tests need.
+     */
+    private fun ExperimentTrackingService.untrack(kind: ExperimentKind, vararg ids: String, endTimeMs: Long) {
+        untrack(ids.map { UntrackedData(kind = kind, id = it, endTimeMs = endTimeMs) })
     }
 }

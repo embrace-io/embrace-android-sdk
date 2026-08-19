@@ -39,11 +39,11 @@ internal class ExperimentTrackingServiceImpl(
         }
     }
 
-    override fun untrack(kind: ExperimentKind, ids: List<String>, endTimeMs: Long) {
+    override fun untrack(data: List<UntrackedData>) {
         var updated = false
         synchronized(lock) {
-            ids.forEach { id ->
-                if (untrackRecord(RecordKey(kind, id.stripWhitespace()), endTimeMs)) {
+            data.forEach { entry ->
+                if (untrackRecord(RecordKey(entry.kind, entry.id.stripWhitespace()), entry.endTimeMs)) {
                     updated = true
                 }
             }

@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentKind
 import io.embrace.android.embracesdk.internal.capture.experiment.TrackedData
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import org.junit.Assert.assertEquals
@@ -108,8 +109,8 @@ internal class ExperimentApiDelegateTest {
         )
         assertEquals(
             listOf(
-                FakeExperimentTrackingService.UntrackCall(listOf("exp1"), 555555555L),
-                FakeExperimentTrackingService.UntrackCall(listOf("flag1"), 666666666L),
+                FakeExperimentTrackingService.UntrackCall(ExperimentKind.EXPERIMENT, listOf("exp1"), 555555555L),
+                FakeExperimentTrackingService.UntrackCall(ExperimentKind.FEATURE_FLAG, listOf("flag1"), 666666666L),
             ),
             fakeExperimentTrackingService.untrackCalls,
         )
@@ -171,7 +172,7 @@ internal class ExperimentApiDelegateTest {
         delegate.untrackExperiments(listOf("exp1", "exp2"), endedAt = 222L)
 
         assertEquals(
-            listOf(FakeExperimentTrackingService.UntrackCall(listOf("exp1", "exp2"), 222L)),
+            listOf(FakeExperimentTrackingService.UntrackCall(ExperimentKind.EXPERIMENT, listOf("exp1", "exp2"), 222L)),
             fakeExperimentTrackingService.untrackCalls,
         )
         assertEquals(listOf("untrack_experiment"), telemetryService.apiCalls)
@@ -197,7 +198,7 @@ internal class ExperimentApiDelegateTest {
         delegate.untrackFeatureFlag("flag1", endedAt = 444L)
 
         assertEquals(
-            listOf(FakeExperimentTrackingService.UntrackCall(listOf("flag1"), 444L)),
+            listOf(FakeExperimentTrackingService.UntrackCall(ExperimentKind.FEATURE_FLAG, listOf("flag1"), 444L)),
             fakeExperimentTrackingService.untrackCalls,
         )
         assertEquals(listOf("untrack_feature_flag"), telemetryService.apiCalls)
@@ -217,7 +218,7 @@ internal class ExperimentApiDelegateTest {
             fakeExperimentTrackingService.trackedData,
         )
         assertEquals(
-            listOf(FakeExperimentTrackingService.UntrackCall(listOf("exp1"), untrackTimeMs)),
+            listOf(FakeExperimentTrackingService.UntrackCall(ExperimentKind.EXPERIMENT, listOf("exp1"), untrackTimeMs)),
             fakeExperimentTrackingService.untrackCalls,
         )
     }

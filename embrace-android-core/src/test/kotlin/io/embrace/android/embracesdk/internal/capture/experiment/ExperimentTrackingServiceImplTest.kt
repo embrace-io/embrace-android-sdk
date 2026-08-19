@@ -70,21 +70,22 @@ internal class ExperimentTrackingServiceImplTest {
         )
         service.assertRecordState("e:a::100;e:b::200")
 
-        service.untrack(listOf("a"), 300L)
+        service.untrack(ExperimentKind.EXPERIMENT, listOf("a"), 300L)
         service.assertRecordState("e:a::100:300;e:b::200")
     }
 
     @Test
-    fun `calls to untrack an id not previously tracked has no effect`() {
+    fun `calls to untrack an id not previously tracked with that kind has no effect`() {
         service.track(
             listOf(TrackedData.Experiment(id = "id1", variant = null, startTimeMs = 100L)),
         )
 
         val records = service.getRecords()
-        service.untrack(listOf("unknown"), 200L)
+        service.untrack(ExperimentKind.EXPERIMENT, listOf("unknown"), 200L)
+        service.untrack(ExperimentKind.FEATURE_FLAG, listOf("id1"), 200L)
         service.assertRecordState("e:id1::100")
 
-        // the dropped call does not invalidate the cached serialization
+        // the dropped calls do not invalidate the cached serialization
         assertSame(records, service.getRecords())
     }
 
@@ -93,8 +94,8 @@ internal class ExperimentTrackingServiceImplTest {
         service.track(
             listOf(TrackedData.Experiment(id = "id1", variant = null, startTimeMs = 100L)),
         )
-        service.untrack(listOf("id1"), 200L)
-        service.untrack(listOf("id1"), 300L)
+        service.untrack(ExperimentKind.EXPERIMENT, listOf("id1"), 200L)
+        service.untrack(ExperimentKind.EXPERIMENT, listOf("id1"), 300L)
         service.assertRecordState("e:id1::100:200")
     }
 
@@ -103,19 +104,23 @@ internal class ExperimentTrackingServiceImplTest {
         service.track(
             listOf(TrackedData.FeatureFlag(id = "flag1", startTimeMs = 100L)),
         )
-        service.untrack(listOf("flag1"), 200L)
+        service.untrack(ExperimentKind.FEATURE_FLAG, listOf("flag1"), 200L)
         service.assertRecordState("f:flag1::100:200")
     }
 
     @Test
-    fun `an id tracked as an experiment cannot be re-tracked as a feature flag`() {
+    fun `an experiment and a feature flag sharing an id are two independent records`() {
         service.track(
             listOf(TrackedData.Experiment(id = "id1", variant = null, startTimeMs = 100L)),
         )
         service.track(
             listOf(TrackedData.FeatureFlag(id = "id1", startTimeMs = 150L)),
         )
-        service.assertRecordState("e:id1::100")
+        service.assertRecordState("e:id1::100;f:id1::150")
+
+        // untrack matches on kind as well as id, so only the feature flag record is closed
+        service.untrack(ExperimentKind.FEATURE_FLAG, listOf("id1"), 200L)
+        service.assertRecordState("e:id1::100;f:id1::150:200")
     }
 
     @Test
@@ -193,7 +198,7 @@ internal class ExperimentTrackingServiceImplTest {
                 TrackedData.Experiment(id = "id2", variant = null, startTimeMs = 200L),
             ),
         )
-        service.untrack(listOf("id1"), 150L)
+        service.untrack(ExperimentKind.EXPERIMENT, listOf("id1"), 150L)
         service.track(
             listOf(TrackedData.Experiment(id = "id3", variant = null, startTimeMs = 300L)),
         )
@@ -216,7 +221,7 @@ internal class ExperimentTrackingServiceImplTest {
         service.assertRecordState("e:id1:v1:100;e:id2::200")
 
         // untracking while at the cap is never blocked
-        service.untrack(listOf("id1"), 300L)
+        service.untrack(ExperimentKind.EXPERIMENT, listOf("id1"), 300L)
         service.assertRecordState("e:id1:v1:100:300;e:id2::200")
         assertTrue(telemetryService.appliedLimits.none { it.first == "experiments" })
     }
@@ -227,11 +232,11 @@ internal class ExperimentTrackingServiceImplTest {
         service.track(
             listOf(TrackedData.Experiment(id = "id1", variant = null, startTimeMs = 100L)),
         )
-        service.untrack(listOf("id1"), 150L)
+        service.untrack(ExperimentKind.EXPERIMENT, listOf("id1"), 150L)
         service.track(
             listOf(TrackedData.Experiment(id = "id2", variant = null, startTimeMs = 200L)),
         )
-        service.untrack(listOf("id2"), 250L)
+        service.untrack(ExperimentKind.EXPERIMENT, listOf("id2"), 250L)
         service.track(
             listOf(TrackedData.Experiment(id = "id3", variant = null, startTimeMs = 300L)),
         )
@@ -266,7 +271,7 @@ internal class ExperimentTrackingServiceImplTest {
         service.track(bulk)
         assertTrue(telemetryService.appliedLimits.isEmpty())
 
-        service.untrack(listOf("id1"), 6000L)
+        service.untrack(ExperimentKind.EXPERIMENT, listOf("id1"), 6000L)
         assertTrue(service.getRecords()?.contains("e:id1::1:6000") == true)
 
         service.track(

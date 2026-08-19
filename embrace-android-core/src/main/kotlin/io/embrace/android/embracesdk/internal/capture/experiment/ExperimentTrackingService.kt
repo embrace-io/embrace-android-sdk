@@ -6,17 +6,16 @@ package io.embrace.android.embracesdk.internal.capture.experiment
 interface ExperimentTrackingService {
 
     /**
-     * Records the given experiments and feature flags as tracked. IDs share a single namespace across kinds: the first entry
-     * tracked with a given ID persists irrespective of kind. Repeats are dropped, both in the same call and in subsequent
-     * calls, even if the kind is different.
+     * Records the given experiments and feature flags as tracked. Records are identified by kind + ID, so an experiment and a
+     * feature flag may share an ID. Repeats of the same kind + ID are dropped, both in the same call and in subsequent calls.
      */
     fun track(data: List<TrackedData>)
 
     /**
-     * Marks the given experiments or feature flags as no longer enabled. IDs given here must have previously been tracked.
-     * Otherwise, they are dropped.
+     * Marks the given experiments or feature flags of the given kind as no longer enabled. IDs given here must match a
+     * previously tracked record of the same kind. Otherwise, they are dropped.
      */
-    fun untrack(ids: List<String>, endTimeMs: Long)
+    fun untrack(kind: ExperimentKind, ids: List<String>, endTimeMs: Long)
 
     /**
      * Returns the serialized experiment records as a blob, or null if nothing has been tracked.

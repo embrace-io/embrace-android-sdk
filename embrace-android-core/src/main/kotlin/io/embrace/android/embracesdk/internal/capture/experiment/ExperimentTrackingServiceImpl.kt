@@ -21,7 +21,7 @@ internal class ExperimentTrackingServiceImpl(
 
     private val lock = Any()
 
-    private val records = LinkedHashMap<String, ExperimentRecord>()
+    private val records = LinkedHashMap<RecordKey, ExperimentRecord>()
     private var activeCount = 0
     private var cacheValid = false
     private var cachedRecords: String? = null
@@ -40,11 +40,11 @@ internal class ExperimentTrackingServiceImpl(
         }
     }
 
-    override fun untrack(ids: List<String>, endTimeMs: Long) {
+    override fun untrack(kind: ExperimentKind, ids: List<String>, endTimeMs: Long) {
         var updated = false
         synchronized(lock) {
             ids.forEach { id ->
-                if (untrackRecord(id, endTimeMs)) {
+                if (untrackRecord(RecordKey(kind, id), endTimeMs)) {
                     updated = true
                 }
             }
@@ -67,33 +67,30 @@ internal class ExperimentTrackingServiceImpl(
     }
 
     private fun trackRecord(record: ExperimentRecord): Boolean {
-        synchronized(lock) {
-            if (!isValid(record) || records.containsKey(record.id)) {
-                return false
-            }
-
-            if (activeCount >= maxActiveCount || records.size >= TOTAL_RECORD_LIMIT) {
-                telemetryService.trackAppliedLimit("experiments", AppliedLimitType.DROP)
-                return false
-            }
-            records[record.id] = record
-            activeCount++
-            cacheValid = false
-            return true
+        val key = RecordKey(record.kind, record.id)
+        if (!isValid(record) || records.containsKey(key)) {
+            return false
         }
+
+        if (activeCount >= maxActiveCount || records.size >= TOTAL_RECORD_LIMIT) {
+            telemetryService.trackAppliedLimit("experiments", AppliedLimitType.DROP)
+            return false
+        }
+        records[key] = record
+        activeCount++
+        cacheValid = false
+        return true
     }
 
-    private fun untrackRecord(id: String, endTimeMs: Long): Boolean {
-        synchronized(lock) {
-            val record = records[id]
-            if (record == null || record.endTimeMs != null) {
-                return false
-            }
-            records[id] = record.copy(endTimeMs = endTimeMs)
-            activeCount--
-            cacheValid = false
-            return true
+    private fun untrackRecord(key: RecordKey, endTimeMs: Long): Boolean {
+        val record = records[key]
+        if (record == null || record.endTimeMs != null) {
+            return false
         }
+        records[key] = record.copy(endTimeMs = endTimeMs)
+        activeCount--
+        cacheValid = false
+        return true
     }
 
     private fun publishRecords() {
@@ -128,6 +125,11 @@ internal class ExperimentTrackingServiceImpl(
         val variant = record.variant
         return (variant == null || variant.length <= maxVariantLength)
     }
+
+    private data class RecordKey(
+        val kind: ExperimentKind,
+        val id: String,
+    )
 
     private companion object {
         private const val TOTAL_RECORD_LIMIT = 5000

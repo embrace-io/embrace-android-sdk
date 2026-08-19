@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentKind
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentTrackingService
 import io.embrace.android.embracesdk.internal.capture.experiment.TrackedData
 
@@ -10,6 +11,7 @@ class FakeExperimentTrackingService : ExperimentTrackingService {
     var fakeRecords: String? = null
 
     data class UntrackCall(
+        val kind: ExperimentKind,
         val ids: List<String>,
         val endTimeMs: Long,
     )
@@ -18,8 +20,8 @@ class FakeExperimentTrackingService : ExperimentTrackingService {
         trackedData.addAll(data)
     }
 
-    override fun untrack(ids: List<String>, endTimeMs: Long) {
-        untrackCalls.add(UntrackCall(ids, endTimeMs))
+    override fun untrack(kind: ExperimentKind, ids: List<String>, endTimeMs: Long) {
+        untrackCalls.add(UntrackCall(kind, ids, endTimeMs))
     }
 
     override fun getRecords(): String? = fakeRecords

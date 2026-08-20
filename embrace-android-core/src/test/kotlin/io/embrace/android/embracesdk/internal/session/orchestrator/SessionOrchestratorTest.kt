@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.behavior.FakeUserSessionBehavior
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
+import io.embrace.android.embracesdk.fakes.createPersistenceBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
@@ -47,6 +48,8 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
+import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
+import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectoryStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
@@ -61,9 +64,12 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RuntimeEnvironment
+import java.io.File
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
@@ -88,7 +94,12 @@ internal class SessionOrchestratorTest {
     private lateinit var startupClassifier: StartupClassifierImpl
     private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
     private lateinit var destination: FakeTelemetryDestination
+    private lateinit var sessionsDir: File
+    private lateinit var sessionPersistenceExecutor: BlockingScheduledExecutorService
     private var orchestratorStartTimeMs: Long = 0
+
+    @get:Rule
+    val tempFolder: TemporaryFolder = TemporaryFolder()
 
     private val maxDurationMs = TimeUnit.MINUTES.toMillis(10)
     private val inactivityMs = TimeUnit.MINUTES.toMillis(5)
@@ -98,6 +109,7 @@ internal class SessionOrchestratorTest {
         clock = FakeClock()
         logger = FakeInternalLogger(throwOnInternalError = false)
         startupClassifier = StartupClassifierImpl()
+        sessionsDir = tempFolder.newFolder("embrace_sessions_split")
     }
 
     @Test
@@ -994,6 +1006,73 @@ internal class SessionOrchestratorTest {
         assertEquals(clock.now(), attr.toLong().nanosToMillis())
     }
 
+    @Test
+    fun `initial session part creates a session part directory`() {
+        createOrchestrator(ProcessState.FOREGROUND, multiFilePersistenceConfigService())
+
+        val directory = sessionPartDirs().single()
+        assertEquals(sessionTracker.getActiveSessionPartId(), directory.sessionPartId)
+        assertEquals(activeUserSession().userSessionId, directory.userSessionId)
+        assertEquals(orchestratorStartTimeMs, directory.timestamp)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `each new session part creates its own directory`() {
+        createOrchestrator(ProcessState.FOREGROUND, multiFilePersistenceConfigService())
+        val partIds = mutableListOf(checkNotNull(sessionTracker.getActiveSessionPartId()))
+
+        clock.tick(10000)
+        orchestrator.onBackground()
+        partIds.add(checkNotNull(sessionTracker.getActiveSessionPartId()))
+
+        clock.tick(10000)
+        orchestrator.onForeground()
+        partIds.add(checkNotNull(sessionTracker.getActiveSessionPartId()))
+
+        val directories = sessionPartDirs()
+        assertEquals(partIds, directories.map(SessionPartDirectory::sessionPartId))
+        assertEquals(3, directories.map(SessionPartDirectory::dirName).distinct().size)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `no session part directory is created when multi file persistence is disabled`() {
+        createOrchestrator(ProcessState.FOREGROUND)
+        clock.tick(10000)
+        orchestrator.onBackground()
+
+        assertEquals(emptyList<SessionPartDirectory>(), sessionPartDirs())
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `no session part directory is created when a new session part is not started`() {
+        val configService = multiFilePersistenceConfigService().apply {
+            backgroundActivityBehavior = backgroundActivityBehavior(false)
+        }
+        createOrchestrator(ProcessState.FOREGROUND, configService)
+        val initial = sessionPartDirs().single()
+
+        clock.tick(10000)
+        orchestrator.onBackground()
+
+        assertEquals(listOf(initial), sessionPartDirs())
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `crash does not create a session part directory`() {
+        createOrchestrator(ProcessState.FOREGROUND, multiFilePersistenceConfigService())
+        val initial = sessionPartDirs().single()
+
+        clock.tick(10000)
+        orchestrator.handleCrash("crash-id")
+
+        assertEquals(listOf(initial), sessionPartDirs())
+        assertNoInternalErrors()
+    }
+
     private fun createOrchestrator(
         startingProcessState: ProcessState,
         configService: FakeConfigService =
@@ -1022,6 +1101,7 @@ internal class SessionOrchestratorTest {
         )
         sessionCacheExecutor = BlockingScheduledExecutorService(clock, true)
         inactivityWorkerExecutor = BlockingScheduledExecutorService(clock, true)
+        sessionPersistenceExecutor = BlockingScheduledExecutorService(clock, true)
         payloadCachingService = PayloadCachingServiceImpl(
             PeriodicSessionPartCacher(
                 BackgroundWorker(sessionCacheExecutor),
@@ -1075,6 +1155,12 @@ internal class SessionOrchestratorTest {
             BackgroundWorker(inactivityWorkerExecutor),
             TestUuidSource(),
             startupClassifier,
+            SessionPartDirectoryStore(
+                lazy { sessionsDir },
+                BackgroundWorker(sessionPersistenceExecutor),
+                clock,
+                logger,
+            ),
         ).apply {
             start()
         }
@@ -1845,6 +1931,28 @@ internal class SessionOrchestratorTest {
                 isBackgroundOnly = isBackgroundOnly,
             ),
         )
+    }
+
+    private fun multiFilePersistenceConfigService() = FakeConfigService(
+        backgroundActivityBehavior = backgroundActivityBehavior(true),
+        persistenceBehavior = createPersistenceBehavior(
+            remoteCfg = RemoteConfig(pctMultiFilePersistenceEnabled = 100.0f),
+        ),
+    )
+
+    /**
+     * Drains the session persistence worker and returns the session part directories on disk, in
+     * the order they will be delivered.
+     */
+    private fun sessionPartDirs(): List<SessionPartDirectory> {
+        sessionPersistenceExecutor.runCurrentlyBlocked()
+        return (sessionsDir.list() ?: emptyArray())
+            .mapNotNull(SessionPartDirectory::fromDirName)
+            .sortedWith(SessionPartDirectory.comparator)
+    }
+
+    private fun assertNoInternalErrors() {
+        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
     }
 
     private fun activeUserSession(): UserSessionMetadata = checkNotNull(orchestrator.currentUserSession())

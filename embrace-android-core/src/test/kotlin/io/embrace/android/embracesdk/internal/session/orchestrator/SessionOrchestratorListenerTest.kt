@@ -414,6 +414,7 @@ internal class SessionOrchestratorListenerTest {
             fakeBackgroundWorker(),
             TestUuidSource(),
             startupClassifier,
+            null,
         ).apply {
             start()
         }

@@ -28,6 +28,8 @@ import io.embrace.android.embracesdk.internal.session.UserSessionState
 import io.embrace.android.embracesdk.internal.session.UserSessionState.Active
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
+import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
+import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectoryStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
@@ -61,6 +63,7 @@ internal class SessionOrchestratorImpl(
     private val backgroundWorker: BackgroundWorker,
     private val uuidSource: UuidSource,
     private val startupClassifier: StartupClassifier,
+    private val sessionPartDirectoryStore: SessionPartDirectoryStore?,
 ) : SessionOrchestrator {
 
     /**
@@ -414,6 +417,11 @@ internal class SessionOrchestratorImpl(
                         boundaryDelegate.prepareForNewSession()
                         sessionPartSpanAttrPopulator.populateSessionPartSpanStartAttrs(newSessionPart, userSession)
                         if (transitionType != TransitionType.CRASH) {
+                            // create the directory that holds this session part's telemetry
+                            EmbTrace.trace("create-session-part-dir") {
+                                createSessionPartDirectory(newSessionPart, userSession, timestamp)
+                            }
+
                             // initiate periodic caching of the payload if a new session has started
                             EmbTrace.trace("initiate-periodic-caching") {
                                 updatePeriodicCacheAttrs()
@@ -548,6 +556,28 @@ internal class SessionOrchestratorImpl(
         return ordinalStore.incrementAndGet(Ordinal.SESSION_PART) {
             currentUserSession()?.userSessionNumber?.toInt() ?: 1
         }
+    }
+
+    /**
+     * Creates the directory that holds the telemetry for a newly started session part, if the
+     * multi-file persistence layer is enabled.
+     */
+    private fun createSessionPartDirectory(
+        newSessionPart: SessionPartToken,
+        userSession: UserSessionMetadata?,
+        timestamp: Long,
+    ) {
+        if (!configService.persistenceBehavior.isMultiFilePersistenceEnabled()) {
+            return
+        }
+        sessionPartDirectoryStore?.create(
+            SessionPartDirectory(
+                timestamp = timestamp,
+                uuid = uuidSource.createUuid(),
+                userSessionId = userSession?.userSessionId ?: "",
+                sessionPartId = newSessionPart.sessionPartId,
+            ),
+        )
     }
 
     private fun processEndMessage(envelope: Envelope<SessionPartPayload>?, transitionType: TransitionType) {

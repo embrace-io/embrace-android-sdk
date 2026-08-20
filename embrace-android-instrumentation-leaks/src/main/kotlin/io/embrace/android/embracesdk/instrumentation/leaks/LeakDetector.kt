@@ -14,9 +14,12 @@ import kotlin.concurrent.thread
  *
  * Each tracked object is paired with a [Sentinel] allocated when its lifecycle begins and released when that lifecycle ends.
  * The two should be reclaimed by the same collection, so a collection that reclaims the sentinel could have reclaimed the
- * tracked object as well, and anything still reachable at that point is reported to [listener] as a probable leak. Collections
- * may be region-targeted, so the number of collections an object survives does not establish whether it could have been
- * collected.
+ * tracked object as well. Collections may be region-targeted, so the number of collections an object survives does not
+ * establish whether it could have been collected.
+ *
+ * An object still reachable at that point is suspected rather than reported. It is paired with a new [Sentinel] and only
+ * reported to [listener] if it outlives that one too, which discards objects that something else was briefly holding as the
+ * lifecycle ended, such as the framework finishing its own teardown.
  *
  * The caller decides what the start and end of a lifecycle mean. Use [trackOpened] and [trackClosed] to mark them, and [start]
  * and [stop] to control the thread that reports leaks.
@@ -105,24 +108,34 @@ internal class LeakDetector(
     }
 
     /**
-     * Report the object tracked by [ref] as a probable leak if it is still reachable. Invoked on the detector thread as the
-     * queue delivers reclaimed sentinels, and visible so that tests can drive reclamation without relying on a real collection.
+     * Pair the object tracked by [ref] with a new [Sentinel] if it is still reachable, or report it as a probable leak if it
+     * has already outlived one. Invoked on the detector thread as the queue delivers reclaimed sentinels, and visible so that
+     * tests can drive reclamation without relying on a real collection.
      *
      * A collection clears weak references before it enqueues phantom references, so the reachability of the tracked object is
      * already settled by the time this is called.
+     *
+     * Returns the reference now watching the new sentinel. Returns null if the tracked object was reported, was collected, or
+     * if [ref] was no longer being watched.
      */
-    fun onSentinelReclaimed(ref: TrackedReference) {
+    fun onSentinelReclaimed(ref: TrackedReference): TrackedReference? {
         if (!stopWatching(ref)) {
             // already handled, or dropped by stop()
-            return
-        }
-
-        val referent = ref.target.get()
-        if (referent != null) {
-            listener.onLeakDetected(referent, ref.trackedAtMs, ref.token)
+            return null
         }
 
         ref.clear()
+
+        val referent = ref.target.get() ?: return null
+
+        if (ref.suspected) {
+            listener.onLeakDetected(referent, ref.trackedAtMs, ref.token)
+            return null
+        }
+
+        val confirmation = TrackedReference(Sentinel(), queue, ref.target, ref.trackedAtMs, ref.token, suspected = true)
+        watch(confirmation)
+        return confirmation
     }
 
     /*
@@ -175,6 +188,9 @@ internal class LeakDetector(
     /**
      * Watches the [Sentinel] belonging to a tracked object, and carries what [LeakListener] needs to report it. The tracked
      * object is held weakly so that watching it cannot keep it in memory.
+     *
+     * [suspected] marks the second sentinel a tracked object is given, after it has already outlived one. Outliving that one
+     * as well is what makes it a leak, so this reference reports rather than pairing the object up again.
      */
     internal class TrackedReference(
         sentinel: Sentinel,
@@ -182,6 +198,7 @@ internal class LeakDetector(
         val target: WeakReference<Any>,
         val trackedAtMs: Long,
         val token: Any?,
+        val suspected: Boolean = false,
     ) : PhantomReference<Sentinel>(sentinel, queue)
 
     internal companion object {

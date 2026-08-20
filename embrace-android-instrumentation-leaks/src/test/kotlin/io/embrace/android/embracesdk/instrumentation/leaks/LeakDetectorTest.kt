@@ -40,7 +40,7 @@ internal class LeakDetectorTest {
     }
 
     @Test
-    fun `an object still reachable when its sentinel is reclaimed is reported`() {
+    fun `an object that outlives a second sentinel is reported`() {
         // held strongly for the duration of the test so that it cannot be collected
         val leaked = Any()
         val token = "Hello!"
@@ -50,12 +50,44 @@ internal class LeakDetectorTest {
         val ref = checkNotNull(detector.trackClosed(leaked, token))
 
         now = 9000L
-        detector.onSentinelReclaimed(ref)
+        val confirmation = checkNotNull(detector.onSentinelReclaimed(ref))
+        assertTrue("outliving one sentinel only makes it a suspect", reported.isEmpty())
+
+        assertNull("reporting ends the chain", detector.onSentinelReclaimed(confirmation))
 
         val leak = reported.single()
         assertSame(leaked, leak.referent)
         assertEquals(5000L, leak.trackedAtMs)
         assertSame(token, leak.token)
+    }
+
+    @Test
+    fun `an object released before its second sentinel is reclaimed is not reported`() {
+        val brieflyHeld = Any()
+        detector.trackOpened(brieflyHeld)
+        val ref = checkNotNull(detector.trackClosed(brieflyHeld))
+
+        // something was still holding it as the lifecycle ended, so it outlives the first sentinel
+        val confirmation = checkNotNull(detector.onSentinelReclaimed(ref))
+
+        // that hold is released, so the collection reclaiming the second sentinel takes it too
+        confirmation.target.clear()
+
+        assertNull(detector.onSentinelReclaimed(confirmation))
+        assertTrue("a hold that was released is not a leak", reported.isEmpty())
+    }
+
+    @Test
+    fun `the second sentinel tracks the same object as the first`() {
+        val leaked = Any()
+        detector.trackOpened(leaked)
+        val ref = checkNotNull(detector.trackClosed(leaked, "token"))
+
+        val confirmation = checkNotNull(detector.onSentinelReclaimed(ref))
+
+        assertSame("the weak reference is carried over rather than reallocated", ref.target, confirmation.target)
+        assertEquals(ref.trackedAtMs, confirmation.trackedAtMs)
+        assertSame(ref.token, confirmation.token)
     }
 
     @Test
@@ -66,8 +98,8 @@ internal class LeakDetectorTest {
 
         // the collection that reclaimed the sentinel reclaimed the tracked object too
         ref.target.clear()
-        detector.onSentinelReclaimed(ref)
 
+        assertNull("a collected object is never suspected", detector.onSentinelReclaimed(ref))
         assertTrue("an object that was collected is not a leak", reported.isEmpty())
     }
 
@@ -99,10 +131,10 @@ internal class LeakDetectorTest {
         val firstRef = checkNotNull(detector.trackClosed(first))
         val secondRef = checkNotNull(detector.trackClosed(second))
 
-        detector.onSentinelReclaimed(firstRef)
+        reportAfterSecondSentinel(firstRef)
         assertEquals(listOf(first), reported.map { it.referent })
 
-        detector.onSentinelReclaimed(secondRef)
+        reportAfterSecondSentinel(secondRef)
         assertEquals(listOf(first, second), reported.map { it.referent })
     }
 
@@ -112,8 +144,12 @@ internal class LeakDetectorTest {
         detector.trackOpened(leaked)
         val ref = checkNotNull(detector.trackClosed(leaked))
 
+        val confirmation = reportAfterSecondSentinel(ref)
+        assertEquals(1, reported.size)
+
         repeat(5) {
             detector.onSentinelReclaimed(ref)
+            detector.onSentinelReclaimed(confirmation)
         }
 
         assertEquals(1, reported.size)
@@ -130,6 +166,15 @@ internal class LeakDetectorTest {
         detector.onSentinelReclaimed(ref)
 
         assertTrue(reported.isEmpty())
+    }
+
+    /**
+     * Drives both reclamations the detector thread would otherwise drive, returning the confirmation reference.
+     */
+    private fun reportAfterSecondSentinel(ref: LeakDetector.TrackedReference): LeakDetector.TrackedReference {
+        val confirmation = checkNotNull(detector.onSentinelReclaimed(ref))
+        detector.onSentinelReclaimed(confirmation)
+        return confirmation
     }
 
     private fun detectorThread(): Thread? =

@@ -68,7 +68,9 @@ class UserSessionOrchestrationModuleImpl(
             initModule.uuidSource,
             initModule.clock,
             initModule.logger,
+            payloadSourceModule.envelopeMetadataSource,
         )
+        essentialServiceModule.userService.addUserInfoListener(sessionPartWriter::onUserInfoChanged)
 
         SessionOrchestratorImpl(
             essentialServiceModule.processStateTracker,

@@ -7,8 +7,11 @@ import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.createPersistenceBehavior
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
+import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.session.persistence.EnvelopeMetadataProto
+import io.embrace.android.embracesdk.internal.session.persistence.SessionManifest
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
@@ -29,6 +32,7 @@ internal class SessionPartWriterBoundaryTest {
         private const val FIRST_PART_ID = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
         private const val SECOND_PART_ID = "cccccccccccccccccccccccccccccccc"
         private const val METADATA_FILE_NAME = "metadata.pb"
+        private const val MANIFEST_FILE_NAME = "manifest.pb"
     }
 
     @get:Rule
@@ -40,6 +44,13 @@ internal class SessionPartWriterBoundaryTest {
     private lateinit var logger: FakeInternalLogger
     private lateinit var writer: SessionPartWriter
     private var writeCount = 0
+    private var resourceCount = 0
+    private val resourceSource = object : EnvelopeResourceSource {
+        override fun getEnvelopeResource(): EnvelopeResource =
+            EnvelopeResource(appVersion = "resource${resourceCount++}")
+
+        override fun add(key: String, value: String) = Unit
+    }
 
     @Before
     fun setUp() {
@@ -48,6 +59,7 @@ internal class SessionPartWriterBoundaryTest {
         executor = BlockingScheduledExecutorService(clock, true)
         logger = FakeInternalLogger(throwOnInternalError = false)
         writeCount = 0
+        resourceCount = 0
         writer = SessionPartWriterImpl(
             lazy { sessionsDir },
             BackgroundWorker(executor),
@@ -59,6 +71,7 @@ internal class SessionPartWriterBoundaryTest {
             TestUuidSource(),
             clock,
             logger,
+            resourceSource,
         ) { EnvelopeMetadata(userId = "user${writeCount++}") }
     }
 
@@ -126,6 +139,33 @@ internal class SessionPartWriterBoundaryTest {
         assertEquals(2, writeCount)
     }
 
+    @Test
+    fun `a pending manifest write lands in the session part it was queued for`() {
+        startPart(FIRST_PART_ID)
+        startPart(SECOND_PART_ID)
+        drain()
+
+        assertEquals("resource0", manifestIn(FIRST_PART_ID)?.resource?.app_version)
+        assertEquals("resource1", manifestIn(SECOND_PART_ID)?.resource?.app_version)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a user info change after a boundary does not rewrite either manifest`() {
+        startPart(FIRST_PART_ID)
+        drain()
+        startPart(SECOND_PART_ID)
+        drain()
+
+        writer.onUserInfoChanged()
+        drain()
+
+        assertEquals("resource0", manifestIn(FIRST_PART_ID)?.resource?.app_version)
+        assertEquals("resource1", manifestIn(SECOND_PART_ID)?.resource?.app_version)
+        assertEquals(2, resourceCount)
+        assertNoInternalErrors()
+    }
+
     private fun startPart(sessionPartId: String) {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, sessionPartId)
     }
@@ -146,6 +186,11 @@ internal class SessionPartWriterBoundaryTest {
         partFile(sessionPartId, METADATA_FILE_NAME)
             ?.inputStream()
             ?.use(EnvelopeMetadataProto.ADAPTER::decode)
+
+    private fun manifestIn(sessionPartId: String): SessionManifest? =
+        partFile(sessionPartId, MANIFEST_FILE_NAME)
+            ?.inputStream()
+            ?.use(SessionManifest.ADAPTER::decode)
 
     private fun partFile(sessionPartId: String, fileName: String): File? =
         File(File(sessionsDir, dirFor(sessionPartId).dirName), fileName).takeIf(File::isFile)

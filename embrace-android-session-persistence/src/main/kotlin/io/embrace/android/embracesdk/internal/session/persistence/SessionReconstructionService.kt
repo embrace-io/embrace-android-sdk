@@ -74,13 +74,25 @@ class SessionReconstructionService(
 
         val completedSpans = readCompletedSpansFile(partDir) ?: return null
 
+        val snapshots = readPartFile(
+            partDir,
+            SPAN_SNAPSHOTS_FILE_NAME,
+            SpanSnapshots.ADAPTER,
+            SpanSnapshots::format_version,
+        ) ?: return null
+        val persistedSnapshots = snapshots.spans.map(SpanProto::toPayload)
+
         // A session span with no end time never finished, so it is delivered as a snapshot rather
-        // than as a completed span. Span snapshots are not read back yet.
+        // than as a completed span. The snapshots file never holds the session span itself.
         val sessionSpanPayload = span.toPayload()
         val complete = sessionSpanPayload.endTimeNanos != null
         val spans = when {
             complete -> completedSpans + sessionSpanPayload
             else -> completedSpans
+        }
+        val spanSnapshots = when {
+            complete -> persistedSnapshots
+            else -> persistedSnapshots + sessionSpanPayload
         }
 
         return Envelope(
@@ -90,7 +102,7 @@ class SessionReconstructionService(
             type = manifest.envelope_type,
             data = SessionPartPayload(
                 spans = spans.takeIf(List<Span>::isNotEmpty),
-                spanSnapshots = if (complete) null else listOf(sessionSpanPayload),
+                spanSnapshots = spanSnapshots.takeIf(List<Span>::isNotEmpty),
                 sharedLibSymbolMapping = manifest.shared_lib_symbol_mapping?.symbols,
             ),
         )

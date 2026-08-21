@@ -233,6 +233,7 @@ internal class SessionReconstructionServiceCompletedSpansTest {
         writeMetadata(directory)
         writeSessionSpan(directory)
         writeCompletedSpans(directory, spans)
+        writeSpanSnapshots(directory)
     }
 
     private fun writeManifest(directory: SessionPartDirectory = partDirectory) {
@@ -254,6 +255,12 @@ internal class SessionReconstructionServiceCompletedSpansTest {
         spans: List<SpanProto> = emptyList(),
     ) {
         completedSpansFile(directory).writeBytes(completedSpansLog(spans))
+    }
+
+    private fun writeSpanSnapshots(directory: SessionPartDirectory = partDirectory) {
+        File(partDir(directory), "span_snapshots.pb").writeBytes(
+            SpanSnapshots.ADAPTER.encode(SpanSnapshots(format_version = FORMAT_VERSION)),
+        )
     }
 
     private fun assertNoInternalErrors() {

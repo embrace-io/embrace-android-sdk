@@ -4,47 +4,34 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
-import io.embrace.android.embracesdk.internal.utils.threadSafeToList
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
-import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.RejectedExecutionException
 
 class FileStorageServiceImpl(
     outputDir: Lazy<File>,
     private val worker: PriorityWorker<StoredTelemetryMetadata>,
     private val logger: InternalLogger,
-    private val clock: Clock,
-    private val storageLimit: Int = 500,
-    private val maxAgeMs: Long = DEFAULT_MAX_AGE_MS,
+    clock: Clock,
+    storageLimit: Int = 500,
+    maxAgeMs: Long = DEFAULT_MAX_AGE_MS,
 ) : FileStorageService {
 
     private companion object {
         const val DEFAULT_MAX_AGE_MS = 7L * 24L * 60L * 60L * 1_000L
     }
 
-    private val payloadDir by lazy {
-        outputDir.value.apply { mkdirs() }
-    }
-
-    // maintain an in-memory list of payloads to avoid calling listFiles() every time we need
-    // to check the storage limit. This will always remain in sync with the actual files on disk
-    // as the files are only manipulated from within this class.
-    private val storedFiles: CopyOnWriteArraySet<StoredTelemetryMetadata> by lazy {
-        val result = runCatching { payloadDir.listFiles() }.getOrNull()
-        val files = result?.toList() ?: emptyList()
-        val metadata = files.mapNotNull { file ->
-            val parsed = StoredTelemetryMetadata.fromFilename(file.name).getOrNull()
-            if (parsed == null) {
-                // delete files that can't be parsed (e.g. leftover .tmp files from killed processes)
-                runCatching { file.delete() }
-            }
-            parsed
-        }
-        CopyOnWriteArraySet(metadata)
-    }
+    private val index = StoredEntryIndex(
+        outputDir = outputDir,
+        layout = StoredTelemetryMetadataLayout,
+        clock = clock,
+        logger = logger,
+        errorType = InternalErrorType.PayloadStorageFail,
+        storageLimit = storageLimit,
+        maxAgeMs = maxAgeMs,
+    )
 
     override fun store(metadata: StoredTelemetryMetadata, action: SerializationAction) {
         try {
@@ -58,29 +45,25 @@ class FileStorageServiceImpl(
         metadata: StoredTelemetryMetadata,
         action: SerializationAction,
     ) {
-        if (pruneStorage(
-                newPayload = metadata,
-                cutoffMs = clock.now() - maxAgeMs,
-            )
-        ) {
+        if (index.prune(newEntry = metadata)) {
             return
         }
 
         // write to a temporary file then rename it, to avoid sending incomplete files
         // to the backend (i.e. where the process terminates or there isn't any disk space).
-        // create temp file inside payloadDir so any orphans
+        // create temp file inside the payload dir so any orphans
         // are co-located with payloads and swept on next startup
-        val tmpFile = File.createTempFile(metadata.filename, ".tmp", payloadDir)
+        val tmpFile = File.createTempFile(metadata.filename, ".tmp", index.rootDir)
         try {
             tmpFile.outputStream().buffered().use { stream ->
                 action(stream)
             }
 
             // move the complete file to its final location.
-            val dst = metadata.asFile()
+            val dst = index.fileFor(metadata)
             dst.parentFile?.mkdirs()
             if (tmpFile.renameTo(dst)) {
-                storedFiles.add(metadata)
+                index.add(metadata)
             }
         } finally {
             // clean up the temp file on any failure
@@ -90,7 +73,7 @@ class FileStorageServiceImpl(
 
     override fun delete(metadata: StoredTelemetryMetadata, callback: () -> Unit) {
         val action = {
-            processDelete(metadata)
+            index.delete(metadata)
             callback()
         }
         try {
@@ -100,21 +83,9 @@ class FileStorageServiceImpl(
         }
     }
 
-    private fun processDelete(metadata: StoredTelemetryMetadata) {
-        try {
-            metadata.asFile().delete()
-        } catch (exc: Throwable) {
-            if (exc !is FileNotFoundException) {
-                logger.trackInternalError(InternalErrorType.PayloadStorageFail, exc)
-            }
-        } finally {
-            storedFiles.remove(metadata)
-        }
-    }
-
     override fun loadPayloadAsStream(metadata: StoredTelemetryMetadata): InputStream? {
         return try {
-            metadata.asFile().inputStream().buffered()
+            index.fileFor(metadata).inputStream().buffered()
         } catch (_: FileNotFoundException) {
             null
         } catch (exc: Throwable) {
@@ -123,45 +94,28 @@ class FileStorageServiceImpl(
         }
     }
 
-    override fun getStoredPayloads(): List<StoredTelemetryMetadata> {
-        return storedFiles.threadSafeToList()
+    override fun getStoredPayloads(): List<StoredTelemetryMetadata> = index.storedEntries()
+}
+
+/**
+ * Layout for telemetry payloads, which occupy one file per payload with the metadata encoded in the
+ * filename.
+ */
+internal object StoredTelemetryMetadataLayout : StoredEntryLayout<StoredTelemetryMetadata> {
+
+    override fun fromName(name: String): StoredTelemetryMetadata? =
+        StoredTelemetryMetadata.fromFilename(name).getOrNull()
+
+    override fun fileFor(rootDir: File, entry: StoredTelemetryMetadata): File =
+        File(rootDir, entry.filename)
+
+    override fun delete(file: File) {
+        file.delete()
     }
 
-    /**
-     * When [cutoffMs] > 0 all payloads whose timestamp is strictly less than [cutoffMs] are
-     * removed.  When [newPayload] is non-null the count-based limit
-     * is then enforced and the return value indicates whether [newPayload]
-     * itself was not written to disk.
-     */
-    private fun pruneStorage(newPayload: StoredTelemetryMetadata?, cutoffMs: Long = 0L): Boolean {
-        // remove old payloads created before the cutoff
-        if (cutoffMs > 0L) {
-            storedFiles.filter { it.timestamp < cutoffMs }.forEach(::processDelete)
-        }
+    override fun timestampOf(entry: StoredTelemetryMetadata): Long = entry.timestamp
 
-        newPayload ?: return false
-
-        // remove payloads by count
-        val count = storedFiles.size
-        if (count < storageLimit) {
-            return false
-        }
-        val input = storedFiles.plus(newPayload)
-        val removalCount = input.size - storageLimit
-        if (removalCount < 0) {
-            return false
-        }
-        val removals = input.sortedWith(
-            compareByDescending(StoredTelemetryMetadata::envelopeType)
-                .thenBy(StoredTelemetryMetadata::timestamp),
-        )
-            .take(removalCount)
-        removals.forEach(::processDelete)
-
-        // notify the caller whether the new payload should be dropped
-        val shouldNotPersist = removals.contains(newPayload)
-        return shouldNotPersist
-    }
-
-    private fun StoredTelemetryMetadata.asFile(): File = File(payloadDir, filename)
+    override val removalComparator: Comparator<StoredTelemetryMetadata> =
+        compareByDescending(StoredTelemetryMetadata::envelopeType)
+            .thenBy(StoredTelemetryMetadata::timestamp)
 }

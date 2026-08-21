@@ -96,12 +96,18 @@ class StoredEntryIndex<T>(
         if (count < storageLimit) {
             return false
         }
-        val input = entries.plus(newEntry)
+        val input = (entries + newEntry).toMutableList()
         val removalCount = input.size - storageLimit
         if (removalCount < 0) {
             return false
         }
-        val removals = input.sortedWith(layout.removalComparator).take(removalCount)
+        val removals = if (removalCount == 1) {
+            // exceeding the limit by one is the common case, so avoid sorting the whole index
+            listOfNotNull(input.minWithOrNull(layout.removalComparator))
+        } else {
+            input.sortWith(layout.removalComparator)
+            input.take(removalCount)
+        }
         removals.forEach(::delete)
 
         // notify the caller whether the new entry should be dropped

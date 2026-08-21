@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package embrace.session.persistence;
+
+option java_package = "io.embrace.android.embracesdk.internal.session.persistence";
+
+// Data immutable for the lifetime of a session part.
+message SessionManifest {
+  // version of the on-disk layout
+  uint32 format_version = 1;
+
+  string envelope_version = 2;
+  string envelope_type = 3;
+  string user_session_id = 4;
+  string session_part_id = 5;
+
+  // Wrapped because proto3 forbids `optional` on a map and this can be null if no NDK
+  // symbols were injected at build time.
+  SharedLibSymbolMapping shared_lib_symbol_mapping = 6;
+
+  EnvelopeResourceProto resource = 7;
+}
+
+message SharedLibSymbolMapping {
+  map<string, string> symbols = 1;
+}
+
+// Mirrors EnvelopeResource, in declaration order. Every field is optional because
+// EnvelopeResourceSourceImpl can leave many null
+message EnvelopeResourceProto {
+  optional string app_version = 1;
+  optional AppFramework app_framework = 2;
+  optional string build_id = 3;
+  optional string app_ecosystem_id = 4;
+  optional string build_type = 5;
+  optional string build_flavor = 6;
+  optional string environment = 7;
+  optional string bundle_version = 8;
+  optional string sdk_version = 9;
+  optional int32 sdk_simple_version = 10;
+  optional string react_native_bundle_id = 11;
+  optional string react_native_version = 12;
+  optional string javascript_patch_number = 13;
+  optional string hosted_platform_version = 14;
+  optional string hosted_sdk_version = 15;
+  optional string unity_build_id = 16;
+  optional string device_manufacturer = 17;
+  optional string device_model = 18;
+  optional string device_architecture = 19;
+  optional bool jailbroken = 20;
+  optional int64 disk_total_capacity = 21;
+  optional string os_type = 22;
+  optional string os_name = 23;
+  optional string os_version = 24;
+  optional string os_code = 25;
+  optional string screen_resolution = 26;
+  optional int32 num_cores = 27;
+  optional bool uses_emmc_storage = 28;
+  optional string device_soc_model = 29;
+
+  map<string, string> extras = 30;
+
+  enum AppFramework {
+    UNSPECIFIED = 0;
+    NATIVE = 1;
+    REACT_NATIVE = 2;
+    UNITY = 3;
+    FLUTTER = 4;
+  }
+}

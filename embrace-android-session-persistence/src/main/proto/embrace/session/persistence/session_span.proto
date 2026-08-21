@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package embrace.session.persistence;
+
+import "embrace/session/persistence/span.proto";
+
+option java_package = "io.embrace.android.embracesdk.internal.session.persistence";
+
+message SessionPartSpan {
+  uint32 format_version = 1;
+  SpanProto span = 2;
+}

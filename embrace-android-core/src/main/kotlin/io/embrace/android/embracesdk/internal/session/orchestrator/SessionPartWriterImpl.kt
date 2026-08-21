@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDir
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.File
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Writes session part telemetry to disk, if the multi-file persistence layer is enabled.
@@ -30,12 +29,14 @@ class SessionPartWriterImpl(
      * The writers for the session part that telemetry is currently written to. Each targets one
      * fixed directory, so a write that was queued for a session part cannot land in a later one.
      */
-    private val current = AtomicReference<PartWriters?>(null)
+    @Volatile
+    private var current: PartWriters? = null
+
     private val directoryStore = SessionPartDirectoryStore(sessionsDir, worker, clock, logger)
 
     override fun onSessionPartStarted(timestamp: Long, userSessionId: String, sessionPartId: String) {
         if (!enabled()) {
-            current.set(null)
+            current = null
             return
         }
         val writers = PartWriters(
@@ -47,7 +48,7 @@ class SessionPartWriterImpl(
             ),
         )
 
-        current.set(writers)
+        current = writers
         directoryStore.create(writers.directory)
         queueMetadataWrite(writers)
     }
@@ -56,7 +57,7 @@ class SessionPartWriterImpl(
         if (!enabled()) {
             return
         }
-        queueMetadataWrite(current.get() ?: return)
+        queueMetadataWrite(current ?: return)
     }
 
     private fun queueMetadataWrite(writers: PartWriters) {

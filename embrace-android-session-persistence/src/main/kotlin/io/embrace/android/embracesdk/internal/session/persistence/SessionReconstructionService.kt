@@ -141,10 +141,7 @@ class SessionReconstructionService(
     ): T? {
         val src = File(partDir, fileName)
         return try {
-            if (!src.isFile) {
-                throw IOException("Session part file not found")
-            }
-            val message = src.inputStream().buffered().use(adapter::decode)
+            val message = decodePartFile(src, adapter)
 
             val version = formatVersion(message)
             if (version != FORMAT_VERSION) {
@@ -155,6 +152,19 @@ class SessionReconstructionService(
             trackFailure(exc)
             null
         }
+    }
+
+    /**
+     * Decodes the whole of [src] as a single message, or throws if the file is missing or too large.
+     */
+    private fun <T> decodePartFile(src: File, adapter: ProtoAdapter<T>): T {
+        if (!src.isFile) {
+            throw IOException("Session part file not found")
+        }
+        if (src.length() > MAX_PART_FILE_BYTES) {
+            throw IOException("Session part file exceeds the maximum size")
+        }
+        return src.inputStream().buffered().use(adapter::decode)
     }
 
     private fun trackFailure(exc: Throwable) {

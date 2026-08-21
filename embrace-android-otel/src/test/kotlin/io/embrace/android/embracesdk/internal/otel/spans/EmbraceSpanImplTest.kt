@@ -44,6 +44,7 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
+import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.getTracer
@@ -490,6 +491,18 @@ internal class EmbraceSpanImplTest {
             with(combinedAttributes) {
                 assertEquals("long-key-value", combinedAttributes[TRUNCATED_TOO_LONG_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN])
                 assertEquals(TRUNCATED_TOO_LONG_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN, combinedAttributes["long-value-key"])
+            }
+        }
+    }
+
+    @Test
+    fun `reserved experiment key attribute is not settable on internal and public spans via the addAttribute method`() {
+        listOf(embraceSpan, createInternalEmbraceSdkSpan()).forEach { span ->
+            with(span) {
+                assertTrue(start())
+                assertFalse(addAttribute(key = EmbCommonAttributes.EMB_EXPERIMENTS, value = "spoof"))
+                assertNull(attributes()[EmbCommonAttributes.EMB_EXPERIMENTS])
+                assertNull(embraceSpan.snapshot()?.attributes?.findAttributeValue(EmbCommonAttributes.EMB_EXPERIMENTS))
             }
         }
     }

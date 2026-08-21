@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalSemconv::class)
+
 package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
@@ -14,7 +16,9 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.opentelemetry.kotlin.semconv.UserAttributes
 import java.io.File
 import java.util.ServiceLoader
@@ -255,6 +259,9 @@ private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, St
             put(EmbSessionAttributes.EMB_STATE, sessionState.description)
             essentialServiceModule.userService.getUserInfo().userId?.let {
                 put(UserAttributes.USER_ID, it)
+            }
+            essentialServiceModule.experimentTrackingService.getRecords()?.let {
+                put(EmbCommonAttributes.EMB_EXPERIMENTS, it)
             }
             putAll(
                 essentialServiceModule.userSessionPropertiesService

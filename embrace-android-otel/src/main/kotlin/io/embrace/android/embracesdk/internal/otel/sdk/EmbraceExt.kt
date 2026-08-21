@@ -37,6 +37,21 @@ fun List<Attribute>.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boo
 
 fun List<Attribute>.findAttributeValue(key: String): String? = singleOrNull { it.key == key }?.data
 
+/**
+ * Returns the values of the given attribute keys in a single pass over the list. Keys that are absent or have no value are omitted.
+ */
+fun List<Attribute>.findAttributeValues(keys: Set<String>): Map<String, String> {
+    val values = mutableMapOf<String, String>()
+    forEach { attribute ->
+        val key = attribute.key
+        val data = attribute.data
+        if (key != null && data != null && key in keys) {
+            values[key] = data
+        }
+    }
+    return values
+}
+
 fun Map<String, String>.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
     this[embraceAttribute.key] == embraceAttribute.value
 

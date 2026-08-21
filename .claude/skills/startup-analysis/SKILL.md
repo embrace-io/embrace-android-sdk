@@ -36,10 +36,21 @@ References:
   Publishing a new path mints a new artifact URL per analysis — reuse a previous report's
   exact file path only when intentionally updating that report (and its URL) in place.
 
-There is deliberately no logcat/jq/grep/benchmark-JSON path — the traces are the single source
-of truth. The one thing traces cannot verify is the `<section>-duration-ms` attributes on the
-exported span (`recordDuration`); if that mechanism ever needs validating, it is an SDK
-integration-test concern, not this skill's.
+There is deliberately no jq/grep/benchmark-JSON path — the traces are the single source of truth
+for *timing*.
+
+**Verifying what the SDK logged is a different job with a different instrument.** Traces cannot
+show attribute VALUES (`init-cpu-pct`, `<section>-duration-ms`, thermal state). For that, use the
+app-side verification tap: a gated Kotlin `SpanProcessor` in ExampleApp that emits each completed
+span as chunked JSON to logcat (`adb logcat -d -s EmbVerify:I`, then reassemble and wait for the
+flush marker). It works on any build type — including the non-debuggable benchmark build — and on
+locked/unattended devices. Do NOT verify via the cached payload
+(`run-as … files/embrace_cache/*session*`): that needs a debuggable build AND a foreground user
+session, so it returns zero-span background payloads on an idle/locked device. And note the tap
+must be a *processor*, not an exporter — exporters never see `emb.private` spans, and sdk-init is
+private. Full contract + the trace_processor query traps that produce plausible-but-wrong numbers
+are in the multi-device skill's `references/methodology.md` (Telemetry verification channel) and
+`references/device-gotchas.md` (Trace-capture and trace_processor traps).
 
 ## What you get (all from the traces)
 
@@ -70,6 +81,40 @@ integration-test concern, not this skill's.
   perfetto trace. Its metric list is the minimum `measureRepeated` requires
   (`StartupTimingMetric` only) and is NOT the source of any reported number — it never needs to
   track SDK sections.
+
+## Run shape policy
+
+- **Default: 4 passes × 50 iterations** per device. Four passes balances two-state devices
+  (some devices alternate a fast/slow pass state per benchmark cycle — always use an even
+  pass count and judge on fast-state passes) and yields four first-post-install samples;
+  50 iterations gives churn-driven outliers (e.g. system_server GC, which starts firing
+  after ~10–15 iterations of accumulated load) enough runway to appear.
+- **Targeted or time-constrained runs may use 4 × 25 — never go below that.** Fewer
+  iterations under-samples mid-pass outliers; fewer passes breaks state balance and
+  first-launch sampling.
+- Report tails, not just medians: p90/p95/max/top-3 and the slow-iteration rate (threshold
+  = max(4 ms, 10% of the pass median)). With ≤200 samples, do not quote a p99.
+
+## Compilation-mode arms
+
+The compilation state is a measured ~2× lever on SDK-init time and MUST be explicit:
+
+- `StartupBenchmarks` exposes: `coldStartup` (CompilationMode.DEFAULT — fresh-install
+  `verify` state; the historical-continuity arm), `coldStartupBaselineProfile`
+  (Partial/Require — what Play-installed users with profiles experience; **fails if no
+  baseline profile is packaged, which is itself the packaging check**), and
+  `coldStartupNoAot` / `coldStartupFullAot` (canary/diagnostic arms). Select with
+  `#methodName` appended to the instrumentation `class` filter.
+- **A standard analysis runs TWO arms: `coldStartup` and `coldStartupBaselineProfile`**,
+  and reports both (with the delta). Default-mode-only runs never exercise the shipped
+  profile, so profile-coverage regressions are invisible to them. Run `coldStartupNoAot`
+  occasionally as the what-is-the-profile-worth canary.
+- **Arm-ordering bias is real**: back-to-back arms self-heat the device, disadvantaging
+  whichever runs second (measured: a fixed order inflated an apparent +23% effect to
+  +43% on a thermally-sensitive device). Between arms, cool the device back to its
+  pre-arm silicon temperature (`dumpsys thermalservice`, NOT battery temp — silicon runs
+  30 °C+ hotter under load), or counterbalance order across passes; cross-arm claims
+  should survive the boundary comparison (last iterations of arm A vs first of arm B).
 
 ## Choosing the SDK under test
 
@@ -158,6 +203,17 @@ always set it explicitly for the run, note the value you replaced, and restore i
 - Confirm which sections a public version *should* emit with
   `git grep -n "EmbTrace.trace" <version-tag> -- "*.kt"` — and beware pathspec globs: `*` does
   not cross directory separators, so use the bare `"*.kt"` form over module-scoped globs.
+
+## Pre-flight checks (cheap, prevent unsalvageable runs)
+
+- **Verify the SDK pin resolves to what you intend** (`embrace =` in the ExampleApp
+  catalog) — repo syncs/rebases silently revert uncommitted pins, after which the app
+  builds against a released SDK from mavenCentral and the whole run measures the wrong
+  thing. Symptom check: the first pass's traces must contain `emb-sdk-start` (9.2.0+) and
+  familiar section names.
+- **Verify iter000 freshness per pass**: `persisted-config-load` must be fast (~2–5 ms) on
+  a true first launch. A slow iter000 (~cached-mode cost) means app data survived a failed
+  harness uninstall and the pass's first-launch sample is poisoned.
 
 ## Interpretation gotchas
 

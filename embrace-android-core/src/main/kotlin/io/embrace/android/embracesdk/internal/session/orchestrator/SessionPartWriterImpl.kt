@@ -3,7 +3,11 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
+import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
+import io.embrace.android.embracesdk.internal.envelope.session.SESSION_ENVELOPE_TYPE
+import io.embrace.android.embracesdk.internal.envelope.session.SESSION_ENVELOPE_VERSION
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.session.persistence.SessionManifestWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadataWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectoryStore
@@ -22,6 +26,7 @@ class SessionPartWriterImpl(
     private val uuidSource: UuidSource,
     clock: Clock,
     private val logger: InternalLogger,
+    private val resourceSource: EnvelopeResourceSource,
     private val metadataSource: EnvelopeMetadataSource,
 ) : SessionPartWriter {
 
@@ -50,6 +55,7 @@ class SessionPartWriterImpl(
 
         current = writers
         directoryStore.create(writers.directory)
+        queueManifestWrite(writers)
         queueMetadataWrite(writers)
     }
 
@@ -58,6 +64,18 @@ class SessionPartWriterImpl(
             return
         }
         queueMetadataWrite(current ?: return)
+    }
+
+    private fun queueManifestWrite(writers: PartWriters) {
+        worker.submit {
+            writers.manifest.write(
+                directory = writers.directory,
+                resource = resourceSource.getEnvelopeResource(),
+                envelopeVersion = SESSION_ENVELOPE_VERSION,
+                envelopeType = SESSION_ENVELOPE_TYPE,
+                sharedLibSymbolMapping = configService.nativeSymbolMap,
+            )
+        }
     }
 
     private fun queueMetadataWrite(writers: PartWriters) {
@@ -69,6 +87,8 @@ class SessionPartWriterImpl(
     private fun enabled(): Boolean = configService.persistenceBehavior.isMultiFilePersistenceEnabled()
 
     private inner class PartWriters(val directory: SessionPartDirectory) {
+
+        val manifest = SessionManifestWriter(sessionsDir, logger)
 
         val metadata = SessionMetadataWriter(
             sessionsDir = sessionsDir,

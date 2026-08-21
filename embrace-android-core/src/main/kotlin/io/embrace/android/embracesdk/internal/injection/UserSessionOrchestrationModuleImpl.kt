@@ -68,6 +68,7 @@ class UserSessionOrchestrationModuleImpl(
             initModule.uuidSource,
             initModule.clock,
             initModule.logger,
+            payloadSourceModule.resourceSource,
             payloadSourceModule.envelopeMetadataSource,
         )
         essentialServiceModule.userService.addUserInfoListener(sessionPartWriter::onUserInfoChanged)

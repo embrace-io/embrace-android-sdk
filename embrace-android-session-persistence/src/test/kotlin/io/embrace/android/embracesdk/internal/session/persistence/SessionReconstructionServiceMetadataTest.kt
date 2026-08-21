@@ -181,6 +181,11 @@ internal class SessionReconstructionServiceMetadataTest {
         writeManifest(directory)
         writeMetadata(directory)
         writeSessionSpan(directory)
+        writeCompletedSpans(directory)
+    }
+
+    private fun writeCompletedSpans(directory: SessionPartDirectory = partDirectory) {
+        File(partDir(directory), "completed_spans.pb").writeBytes(completedSpansLog(emptyList()))
     }
 
     private fun writeManifest(directory: SessionPartDirectory = partDirectory) {

@@ -76,6 +76,11 @@ internal class SessionReconstructionServiceManifestTest {
         activePart = directory
         assertTrue(metadataWriter.write())
         assertTrue(sessionSpanWriter.write(fullyPopulatedSpan))
+        writeCompletedSpans(directory)
+    }
+
+    private fun writeCompletedSpans(directory: SessionPartDirectory = partDirectory) {
+        File(partDir(directory), "completed_spans.pb").writeBytes(completedSpansLog(emptyList()))
     }
 
     private fun writeManifestBytes(manifest: SessionManifest, directory: SessionPartDirectory = partDirectory) {
@@ -103,7 +108,7 @@ internal class SessionReconstructionServiceManifestTest {
     }
 
     @Test
-    fun `the session span is the only telemetry reconstructed so far`() {
+    fun `span snapshots are the only telemetry not reconstructed yet`() {
         write()
 
         val envelope = checkNotNull(service.reconstruct(partDirectory))

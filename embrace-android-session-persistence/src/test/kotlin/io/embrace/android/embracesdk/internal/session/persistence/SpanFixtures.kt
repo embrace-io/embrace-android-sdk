@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
+import okio.Buffer
 
 internal val fullyPopulatedSpan = Span(
     traceId = "6c9b1f2ec1d34f3c9a7d0b8e5f2a4c11",
@@ -94,3 +95,7 @@ internal val fullyPopulatedSpanSnapshotsProto = SpanSnapshots(
     format_version = FORMAT_VERSION,
     spans = listOf(fullyPopulatedSpanProto, inFlightSpanProto),
 )
+
+internal fun completedSpansLog(spans: List<SpanProto>): ByteArray = Buffer().apply {
+    spans.forEach { write(CompletedSpans.ADAPTER.encode(CompletedSpans(spans = listOf(it)))) }
+}.readByteArray()

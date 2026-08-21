@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
+import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
@@ -9,6 +11,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.OrchestratorB
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestratorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSpanAttrPopulatorImpl
+import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectoryStore
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 class UserSessionOrchestrationModuleImpl(
@@ -54,6 +57,17 @@ class UserSessionOrchestrationModuleImpl(
             payloadSourceModule.metadataService,
         )
 
+        val sessionPartDirectoryStore = SessionPartDirectoryStore(
+            StorageLocation.SESSION_SPLIT.asFile(
+                logger = initModule.logger,
+                rootDirSupplier = { coreModule.context.filesDir },
+                fallbackDirSupplier = { coreModule.context.cacheDir },
+            ),
+            workerThreadModule.backgroundWorker(Worker.Background.SessionPersistenceWorker),
+            initModule.clock,
+            initModule.logger,
+        )
+
         SessionOrchestratorImpl(
             essentialServiceModule.processStateTracker,
             payloadFactory,
@@ -73,6 +87,7 @@ class UserSessionOrchestrationModuleImpl(
             workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
             initModule.uuidSource,
             initModule.startupClassifier,
+            sessionPartDirectoryStore,
         )
     }
 }

@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.OrchestratorB
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestratorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSpanAttrPopulatorImpl
-import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectoryStore
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartWriterImpl
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 class UserSessionOrchestrationModuleImpl(
@@ -57,13 +57,15 @@ class UserSessionOrchestrationModuleImpl(
             payloadSourceModule.metadataService,
         )
 
-        val sessionPartDirectoryStore = SessionPartDirectoryStore(
+        val sessionPartWriter = SessionPartWriterImpl(
             StorageLocation.SESSION_SPLIT.asFile(
                 logger = initModule.logger,
                 rootDirSupplier = { coreModule.context.filesDir },
                 fallbackDirSupplier = { coreModule.context.cacheDir },
             ),
             workerThreadModule.backgroundWorker(Worker.Background.SessionPersistenceWorker),
+            configService,
+            initModule.uuidSource,
             initModule.clock,
             initModule.logger,
         )
@@ -87,7 +89,7 @@ class UserSessionOrchestrationModuleImpl(
             workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
             initModule.uuidSource,
             initModule.startupClassifier,
-            sessionPartDirectoryStore,
+            sessionPartWriter,
         )
     }
 }

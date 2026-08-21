@@ -190,7 +190,11 @@ internal class EmbraceUserService(
         synchronized(userInfoReference) {
             userInfoReference.set(newUserInfo)
         }
-        listeners.forEach { it() }
+        listeners.forEach { listener ->
+            runCatching(listener).onFailure {
+                logger.trackInternalError(InternalErrorType.UserInfoCallbackFail, it)
+            }
+        }
     }
 
     /**

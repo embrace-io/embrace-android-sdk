@@ -29,6 +29,9 @@ internal class LeakDetectorTest {
         detector = LeakDetector(clock = { now }) { referent, trackedAtMs, token ->
             reported.add(ReportedLeak(referent, trackedAtMs, token))
         }
+
+        // nothing is tracked unless the detector is running, so every test needs it started
+        detector.start()
     }
 
     @After
@@ -158,7 +161,6 @@ internal class LeakDetectorTest {
     @Test
     fun `nothing tracked is reported after the detector stops`() {
         val leaked = Any()
-        detector.start()
         detector.trackOpened(leaked)
         val ref = checkNotNull(detector.trackClosed(leaked))
 

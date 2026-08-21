@@ -1,0 +1,46 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: emb.memory_leak
+    visibility: public
+    stability: development
+    brief: "Embrace memory leak attributes (experimental)"
+    attributes:
+      - ref: memory_leak.object_type
+      - ref: memory_leak.class_name
+      - ref: memory_leak.identity_hash_code
+      - ref: memory_leak.user_session_id
+      - ref: memory_leak.session_part_id
+      - ref: memory_leak.detection_delay_ms
+
+attributes:
+  - key: memory_leak.object_type
+    type: string
+    brief: "The kind of object whose lifecycle ended without it being released. Supplied by whichever instrumentation tracked the object rather than fixed here, so that a module adding support for a new kind reports it without a schema change."
+    stability: development
+    examples: ["activity", "fragment"]
+  - key: memory_leak.class_name
+    type: string
+    brief: "The fully qualified class of the object that was not released."
+    stability: development
+    examples: ["com.example.MainActivity"]
+  - key: memory_leak.identity_hash_code
+    type: int
+    brief: "The identity hash code of the object that was not released. With memory_leak.user_session_id and memory_leak.session_part_id it identifies one leaked instance, so that repeated reports of the same leak can be recognised as the same leak. Stable for the lifetime of the object, but a hash rather than a guaranteed-unique identifier, so treat a match as strong evidence rather than proof."
+    stability: development
+    examples: [12345678, 987654321]
+  - key: memory_leak.user_session_id
+    type: string
+    brief: "The user session in which the object's lifecycle ended. Carried explicitly because the leak is detected later than it is reported as having happened, so the session current at detection is not the one the leak belongs to. Always populated, as a leak whose session is unknown is not reported at all."
+    stability: development
+    examples: ["abc123"]
+  - key: memory_leak.session_part_id
+    type: string
+    brief: "The session part in which the object's lifecycle ended. Carried explicitly for the same reason as memory_leak.user_session_id, and likewise always populated."
+    stability: development
+    examples: ["abc123"]
+  - key: memory_leak.detection_delay_ms
+    type: int
+    brief: "Milliseconds between the object's lifecycle ending and the leak being detected. The log is timestamped at the former, so this recovers the latter, and is also how long the object outlived its own lifecycle before anything noticed."
+    stability: development
+    examples: [1200, 45000]

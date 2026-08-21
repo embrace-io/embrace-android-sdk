@@ -98,6 +98,8 @@ sealed class EmbType(type: String, subtype: String?) : EmbraceAttribute {
 
         object LowPower : System("low_power")
 
+        object MemoryLeak : System("memory_leak")
+
         object NetworkCapturedRequest : System("network_capture", SendMode.IMMEDIATE)
 
         object NetworkStatus : System("network_status")

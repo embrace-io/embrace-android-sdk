@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.semconv.EmbAeiAttributes
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbBreadcrumbAttributes
 import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
+import io.embrace.android.embracesdk.semconv.EmbMemoryLeakAttributes
 import io.embrace.android.embracesdk.semconv.EmbNetworkCapturedRequestAttributes
 import io.embrace.android.embracesdk.semconv.EmbNetworkStateAttributes
 import io.embrace.android.embracesdk.semconv.EmbNetworkStatusAttributes
@@ -193,6 +194,36 @@ sealed class SchemaType(
         fixedObjectName = "device-low-power",
     ) {
         override val schemaAttributes: Map<String, String> = emptyMap()
+    }
+
+    /**
+     * An object that was still reachable after a collection that could have reclaimed it, and so probably leaked. Recorded as
+     * a log timestamped at the end of the object's lifecycle rather than at detection, which is why the session it belongs to
+     * is carried in the attributes instead of being taken from whichever session is current when it is reported.
+     */
+    class MemoryLeak(
+        objectType: String,
+        className: String,
+        identityHashCode: Int,
+        userSessionId: String,
+        sessionPartId: String,
+        detectionDelayMs: Long,
+    ) : SchemaType(
+        telemetryType = EmbType.System.MemoryLeak,
+        fixedObjectName = "memory-leak",
+    ) {
+        override val schemaAttributes: Map<String, String> = mapOf(
+            EmbMemoryLeakAttributes.MEMORY_LEAK_OBJECT_TYPE to objectType,
+            EmbMemoryLeakAttributes.MEMORY_LEAK_CLASS_NAME to className,
+            EmbMemoryLeakAttributes.MEMORY_LEAK_IDENTITY_HASH_CODE to identityHashCode.toString(),
+            EmbMemoryLeakAttributes.MEMORY_LEAK_USER_SESSION_ID to userSessionId,
+            EmbMemoryLeakAttributes.MEMORY_LEAK_SESSION_PART_ID to sessionPartId,
+            EmbMemoryLeakAttributes.MEMORY_LEAK_DETECTION_DELAY_MS to detectionDelayMs.toString(),
+            // keep the standard session IDs empty, as this log is back-dated into a session that is not necessarily the one
+            // current when it is recorded. The leak-specific attributes above are the only ones that name it.
+            EmbSessionAttributes.EMB_SESSION_PART_ID to "",
+            EmbSessionAttributes.EMB_USER_SESSION_ID to "",
+        )
     }
 
     class NetworkCapturedRequest(

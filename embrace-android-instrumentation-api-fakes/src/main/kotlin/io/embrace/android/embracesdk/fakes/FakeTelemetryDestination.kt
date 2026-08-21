@@ -29,7 +29,7 @@ class FakeTelemetryDestination(
         isPrivate: Boolean,
         timestampMs: Long?,
     ) {
-        logEvents.add(FakeLogData(schemaType, severity, message))
+        logEvents.add(FakeLogData(schemaType, severity, message, timestampMs))
     }
 
     override fun addSessionPartEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {

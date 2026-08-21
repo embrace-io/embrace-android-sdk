@@ -7,4 +7,5 @@ class FakeLogData(
     val schemaType: SchemaType,
     val severity: LogSeverity,
     val message: String,
+    val timestampMs: Long? = null,
 )

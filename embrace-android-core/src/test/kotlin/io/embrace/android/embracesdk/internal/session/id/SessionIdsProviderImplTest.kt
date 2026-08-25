@@ -5,6 +5,8 @@ import io.embrace.android.embracesdk.fakes.FakeSessionPartTracker
 import io.embrace.android.embracesdk.fakes.fakeSessionPartToken
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotSame
+import org.junit.Assert.assertSame
 import org.junit.Before
 import org.junit.Test
 
@@ -64,6 +66,32 @@ internal class SessionIdsProviderImplTest {
             isBackgroundOnly = false,
         )
         assertEquals(SessionIdsSnapshot(token.userSessionId, token.sessionPartId), provider.getActiveSessionIds())
+    }
+
+    @Test
+    fun `getActiveSessionIds returns the same instance on every call during the same session part`() {
+        sessionPartTracker.currentSession = fakeSessionPartToken()
+
+        val first = provider.getActiveSessionIds()
+        val second = provider.getActiveSessionIds()
+
+        assertSame(
+            "every caller during the same session part should share one instance rather than each allocating its own",
+            first,
+            second,
+        )
+    }
+
+    @Test
+    fun `getActiveSessionIds returns a new instance once the session part changes`() {
+        sessionPartTracker.currentSession = fakeSessionPartToken()
+        val beforeChange = provider.getActiveSessionIds()
+
+        sessionPartTracker.currentSession = fakeSessionPartToken().copy(sessionPartId = "a-different-session-part")
+        val afterChange = provider.getActiveSessionIds()
+
+        assertNotSame(beforeChange, afterChange)
+        assertEquals("a-different-session-part", afterChange.sessionPartId)
     }
 
     @Test

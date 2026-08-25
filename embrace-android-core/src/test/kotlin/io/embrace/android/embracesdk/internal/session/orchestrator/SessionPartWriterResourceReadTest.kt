@@ -74,6 +74,7 @@ internal class SessionPartWriterResourceReadTest {
     private lateinit var logger: FakeInternalLogger
     private lateinit var writer: SessionPartWriter
     private lateinit var sessionSpan: FakeEmbraceSdkSpan
+    private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
     private lateinit var service: SessionReconstructionService
 
     @Before
@@ -82,10 +83,8 @@ internal class SessionPartWriterResourceReadTest {
         clock = FakeClock()
         executor = BlockingScheduledExecutorService(clock, true)
         logger = FakeInternalLogger(throwOnInternalError = false)
-        sessionSpan = FakeEmbraceSdkSpan(name = "emb-session").apply {
-            start(clock.now())
-            stop(endTimeMs = clock.now() + 1000)
-        }
+        sessionSpan = FakeEmbraceSdkSpan(name = "emb-session").apply { start(clock.now()) }
+        currentSessionPartSpan = FakeCurrentSessionPartSpan(clock).apply { sessionPartSpan = sessionSpan }
         writer = SessionPartWriterImpl(
             lazy { sessionsDir },
             BackgroundWorker(executor),
@@ -100,7 +99,7 @@ internal class SessionPartWriterResourceReadTest {
             logger,
             FakeEnvelopeResourceSource().apply { resource = RESOURCE },
             EnvelopeMetadataSource { EnvelopeMetadata(userId = "my-user-id") },
-            FakeCurrentSessionPartSpan(clock).apply { sessionPartSpan = sessionSpan },
+            currentSessionPartSpan,
         )
         service = SessionReconstructionService(lazy { sessionsDir }, logger)
     }
@@ -117,10 +116,24 @@ internal class SessionPartWriterResourceReadTest {
     }
 
     @Test
-    fun `the session span written at the start of the part is reconstructed`() {
+    fun `the session span written at the start of the part is reconstructed as a snapshot`() {
         val envelope = checkNotNull(writeSessionPart())
         val expected = checkNotNull(sessionSpan.snapshot()).copy(events = null, links = null)
+        assertEquals(expected, envelope.data.spanSnapshots?.last())
+        assertNull(envelope.data.spans?.find { it.spanId == sessionSpan.spanId })
+        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+    }
+
+    @Test
+    fun `the session span written when the part ends is reconstructed as a completed span`() {
+        writeSessionPart()
+        clock.tick(1000)
+        endSessionPart()
+
+        val envelope = checkNotNull(service.reconstruct(directory()))
+        val expected = checkNotNull(sessionSpan.snapshot()).copy(events = null, links = null)
         assertEquals(expected, envelope.data.spans?.last())
+        assertNull(envelope.data.spanSnapshots?.find { it.spanId == sessionSpan.spanId })
         assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
     }
 
@@ -153,6 +166,12 @@ internal class SessionPartWriterResourceReadTest {
             ),
         )
         service.reconstruct(directory())
+    }
+
+    private fun endSessionPart() {
+        currentSessionPartSpan.endSession(startNewSession = true)
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        executor.runCurrentlyBlocked()
     }
 
     private fun writePartFile(fileName: String, bytes: ByteArray) {

@@ -378,6 +378,11 @@ internal class SessionOrchestratorImpl(
                             EmbTrace.trace("end-current-session") {
                                 processEndMessage(oldSessionAction?.invoke(this), transitionType)
                             }
+
+                            // persist the stopped session part span
+                            EmbTrace.trace("write-session-part-span") {
+                                sessionPartWriter?.onSessionPartEnded(sessionPartId)
+                            }
                         },
                         startSessionPartCallback = {
                             // the previous session has fully ended at this point

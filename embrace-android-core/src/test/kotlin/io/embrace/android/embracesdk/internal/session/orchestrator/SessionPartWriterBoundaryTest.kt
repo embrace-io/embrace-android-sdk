@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.createPersistenceBehavior
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
@@ -19,6 +20,7 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDir
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartSpan
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -180,6 +182,40 @@ internal class SessionPartWriterBoundaryTest {
     }
 
     @Test
+    fun `a session span write queued at a part end lands in the session part it was queued for`() {
+        startPart(FIRST_PART_ID)
+        clock.tick(10000)
+        endPart(FIRST_PART_ID)
+        startPart(SECOND_PART_ID)
+        drain()
+
+        with(checkNotNull(sessionSpanIn(FIRST_PART_ID)?.span)) {
+            assertEquals("span0", name)
+            assertEquals(clock.now().millisToNanos(), end_time_unix_nano)
+        }
+        with(checkNotNull(sessionSpanIn(SECOND_PART_ID)?.span)) {
+            assertEquals("span1", name)
+            assertNull(end_time_unix_nano)
+        }
+        assertEquals(2, spanCount)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a pending session span write for a deleted session part is reported and does not stop the new part`() {
+        startPart(FIRST_PART_ID)
+        drain()
+        clock.tick(10000)
+        endPart(FIRST_PART_ID)
+        File(sessionsDir, dirFor(FIRST_PART_ID).dirName).deleteRecursively()
+        startPart(SECOND_PART_ID)
+        drain()
+
+        assertEquals(listOf("SessionSpanWriteFail"), logger.internalErrorMessages.map { it.msg })
+        assertEquals("span1", sessionSpanIn(SECOND_PART_ID)?.span?.name)
+    }
+
+    @Test
     fun `a pending manifest write lands in the session part it was queued for`() {
         startPart(FIRST_PART_ID)
         startPart(SECOND_PART_ID)
@@ -209,6 +245,12 @@ internal class SessionPartWriterBoundaryTest {
     private fun startPart(sessionPartId: String) {
         sessionSpan.name = "span${spanCount++}"
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, sessionPartId)
+    }
+
+    private fun endPart(sessionPartId: String) {
+        currentSessionPartSpan.endSession(startNewSession = true)
+        writer.onSessionPartEnded(sessionPartId)
+        sessionSpan = checkNotNull(currentSessionPartSpan.sessionPartSpan)
     }
 
     private fun drain() {

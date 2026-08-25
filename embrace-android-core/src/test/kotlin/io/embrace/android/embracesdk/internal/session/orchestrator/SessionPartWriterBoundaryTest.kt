@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.createPersistenceBehavior
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
@@ -85,7 +84,7 @@ internal class SessionPartWriterBoundaryTest {
             clock,
             logger,
             resourceSource,
-            EnvelopeMetadataSource { EnvelopeMetadata(userId = "user${writeCount++}") },
+            { EnvelopeMetadata(userId = "user${writeCount++}") },
             currentSessionPartSpan,
         )
     }
@@ -110,17 +109,17 @@ internal class SessionPartWriterBoundaryTest {
     }
 
     @Test
-    fun `several queued writes spanning a boundary all land in the session part they were queued for`() {
+    fun `only the last metadata write queued before a boundary lands in the older part`() {
         startPart(FIRST_PART_ID)
         drain()
         repeat(2) { writer.onUserInfoChanged() }
         startPart(SECOND_PART_ID)
         drain()
 
-        // both queued writes went to the first part
-        assertEquals("user2", metadataIn(FIRST_PART_ID)?.user_id)
-        assertEquals("user3", metadataIn(SECOND_PART_ID)?.user_id)
-        assertEquals(4, writeCount)
+        // the first of the queued writes was superseded, and the one that ran went to the first part
+        assertEquals("user1", metadataIn(FIRST_PART_ID)?.user_id)
+        assertEquals("user2", metadataIn(SECOND_PART_ID)?.user_id)
+        assertEquals(3, writeCount)
         assertNoInternalErrors()
     }
 

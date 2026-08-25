@@ -50,7 +50,11 @@ internal class SessionPartWriterImplTest {
     private lateinit var logger: FakeInternalLogger
 
     private var writeCount = 0
-    private val metadataSource = EnvelopeMetadataSource { EnvelopeMetadata(userId = "user${writeCount++}") }
+    private var onMetadataRead: () -> Unit = {}
+    private val metadataSource = EnvelopeMetadataSource {
+        onMetadataRead()
+        EnvelopeMetadata(userId = "user${writeCount++}")
+    }
 
     private lateinit var sessionSpan: FakeEmbraceSdkSpan
     private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
@@ -71,6 +75,7 @@ internal class SessionPartWriterImplTest {
         logger = FakeInternalLogger(throwOnInternalError = false)
         writeCount = 0
         resourceCount = 0
+        onMetadataRead = {}
         sessionSpan = FakeEmbraceSdkSpan(name = "span0").apply { start(clock.now()) }
         currentSessionPartSpan = FakeCurrentSessionPartSpan(clock).apply { sessionPartSpan = sessionSpan }
     }
@@ -151,7 +156,7 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
-    fun `every user info change rewrites the metadata`() {
+    fun `queued metadata writes for a session part are coalesced into one write`() {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
@@ -159,8 +164,9 @@ internal class SessionPartWriterImplTest {
         repeat(4) { writer.onUserInfoChanged() }
         drain()
 
-        assertEquals("user4", metadataIn(SESSION_PART_ID)?.user_id)
-        assertEquals(5, writeCount)
+        // the queued writes were superseded before they ran, so only the last one wrote
+        assertEquals("user1", metadataIn(SESSION_PART_ID)?.user_id)
+        assertEquals(2, writeCount)
         assertNoInternalErrors()
     }
 
@@ -527,6 +533,75 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertEquals(submitCount, executor.submitCount)
+        assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.span?.name)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `queued session span writes are coalesced into one write`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        File(sessionsDir, partDirs().single().dirName).deleteRecursively()
+        repeat(4) {
+            clock.tick(2000)
+            writer.onPeriodicWrite()
+        }
+        drain()
+
+        assertEquals(listOf("SessionSpanWriteFail"), logger.internalErrorMessages.map { it.msg })
+    }
+
+    @Test
+    fun `a coalesced session span write persists the latest snapshot`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        repeat(4) { index ->
+            clock.tick(2000)
+            sessionSpan.name = "span${index + 1}"
+            writer.onPeriodicWrite()
+        }
+        drain()
+
+        assertEquals("span4", sessionSpanIn(SESSION_PART_ID)?.span?.name)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a write that has already started is not cancelled`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+
+        // supersede the metadata write from inside the metadata write itself
+        onMetadataRead = {
+            onMetadataRead = {}
+            writer.onUserInfoChanged()
+        }
+        drain()
+
+        assertEquals("user0", metadataOnDisk(SESSION_PART_ID)?.user_id)
+        assertEquals(1, writeCount)
+
+        // the write queued while the other one ran is still pending, and runs next
+        drain()
+        assertEquals("user1", metadataOnDisk(SESSION_PART_ID)?.user_id)
+        assertEquals(2, writeCount)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `queued writes for different files do not cancel each other`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        writer.onUserInfoChanged()
+        drain()
+
+        assertEquals("resource0", manifestIn(SESSION_PART_ID)?.resource?.app_version)
+        assertEquals("user0", metadataIn(SESSION_PART_ID)?.user_id)
+        assertEquals(1, writeCount)
         assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.span?.name)
         assertNoInternalErrors()
     }

@@ -161,7 +161,7 @@ internal class SessionManifestWriterTest {
     }
 
     @Test
-    fun `manifest is not rewritten on a second call`() {
+    fun `manifest is rewritten on a second call`() {
         assertTrue(write(sharedLibSymbolMapping = mapOf("armeabi-v7a" to "my-symbols")))
         assertTrue(
             write(
@@ -173,13 +173,13 @@ internal class SessionManifestWriterTest {
         )
 
         with(readManifest()) {
-            assertEquals(fullyPopulatedResourceProto, resource)
-            assertEquals(ENVELOPE_VERSION, envelope_version)
-            assertEquals(ENVELOPE_TYPE, envelope_type)
-            assertEquals(
-                SharedLibSymbolMapping(symbols = mapOf("armeabi-v7a" to "my-symbols")),
-                shared_lib_symbol_mapping,
-            )
+            assertEquals("9.9.9", resource?.app_version)
+            assertEquals(EnvelopeResourceProto.AppFramework.FLUTTER, resource?.app_framework)
+            assertEquals("9.9.9", envelope_version)
+            assertEquals("logs", envelope_type)
+            assertNull(shared_lib_symbol_mapping)
+            assertEquals(USER_SESSION_ID, user_session_id)
+            assertEquals(SESSION_PART_ID, session_part_id)
         }
         assertEquals(listOf(MANIFEST_FILE_NAME), partDir().list()?.toList())
         assertNoInternalErrors()

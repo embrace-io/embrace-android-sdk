@@ -7,7 +7,11 @@ import java.io.File
 import java.io.IOException
 
 /**
- * Writes the data that is immutable for the lifetime of a session part to its directory.
+ * Writes the envelope resource and the identity of a session part to its directory.
+ *
+ * This file is overwritten in place. [write] is called when a session part starts and again
+ * whenever the [EnvelopeResource] changes, as some of the values it is built from are retrieved
+ * asynchronously or supplied by a hosted SDK after the session part began.
  */
 class SessionManifestWriter(
     private val sessionsDir: Lazy<File>,
@@ -15,7 +19,7 @@ class SessionManifestWriter(
 ) {
 
     /**
-     * Writes the manifest for the given session part, unless one already exists.
+     * Writes the manifest for the given session part, replacing any manifest already on disk.
      *
      * Returns true if a manifest is on disk for this session part
      */
@@ -45,10 +49,6 @@ class SessionManifestWriter(
         if (!partDir.isDirectory) {
             trackFailure(IOException("Not a session part directory"))
             return false
-        }
-
-        if (File(partDir, MANIFEST_FILE_NAME).exists()) {
-            return true
         }
 
         // build the message before touching the filesystem

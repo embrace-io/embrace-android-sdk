@@ -3,16 +3,18 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
+import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.createPersistenceBehavior
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpans
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
-import io.embrace.android.embracesdk.internal.session.persistence.SessionPartSpan
 import io.embrace.android.embracesdk.internal.session.persistence.SessionReconstructionService
 import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
 import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshots
@@ -33,7 +35,6 @@ internal class SessionPartWriterResourceReadTest {
         private const val SESSION_PART_ID = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
         private const val FORMAT_VERSION = 1
         private const val MANIFEST_FILE_NAME = "manifest.pb"
-        private const val SESSION_SPAN_FILE_NAME = "session_span.pb"
         private const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
         private const val SPAN_SNAPSHOTS_FILE_NAME = "span_snapshots.pb"
         private val SYMBOLS = mapOf("armeabi-v7a" to "my-symbols")
@@ -44,7 +45,7 @@ internal class SessionPartWriterResourceReadTest {
             sdkVersion = "7.0.0",
         )
 
-        private val sessionSpan = SpanProto(
+        private val spanTemplate = SpanProto(
             trace_id = "6c9b1f2ec1d34f3c9a7d0b8e5f2a4c11",
             span_id = "aaaaaaaaaaaaaaa1",
             name = "emb-session",
@@ -52,12 +53,12 @@ internal class SessionPartWriterResourceReadTest {
             end_time_unix_nano = 1726739284136000000L,
         )
 
-        private val completedSpan = sessionSpan.copy(
+        private val completedSpan = spanTemplate.copy(
             span_id = "aaaaaaaaaaaaaaa2",
             name = "emb-startup-moment",
         )
 
-        private val snapshotSpan = sessionSpan.copy(
+        private val snapshotSpan = spanTemplate.copy(
             span_id = "aaaaaaaaaaaaaaa3",
             name = "emb-network-request",
             end_time_unix_nano = null,
@@ -72,6 +73,7 @@ internal class SessionPartWriterResourceReadTest {
     private lateinit var executor: BlockingScheduledExecutorService
     private lateinit var logger: FakeInternalLogger
     private lateinit var writer: SessionPartWriter
+    private lateinit var sessionSpan: FakeEmbraceSdkSpan
     private lateinit var service: SessionReconstructionService
 
     @Before
@@ -80,6 +82,10 @@ internal class SessionPartWriterResourceReadTest {
         clock = FakeClock()
         executor = BlockingScheduledExecutorService(clock, true)
         logger = FakeInternalLogger(throwOnInternalError = false)
+        sessionSpan = FakeEmbraceSdkSpan(name = "emb-session").apply {
+            start(clock.now())
+            stop(endTimeMs = clock.now() + 1000)
+        }
         writer = SessionPartWriterImpl(
             lazy { sessionsDir },
             BackgroundWorker(executor),
@@ -93,7 +99,9 @@ internal class SessionPartWriterResourceReadTest {
             clock,
             logger,
             FakeEnvelopeResourceSource().apply { resource = RESOURCE },
-        ) { EnvelopeMetadata(userId = "my-user-id") }
+            EnvelopeMetadataSource { EnvelopeMetadata(userId = "my-user-id") },
+            FakeCurrentSessionPartSpan(clock).apply { sessionPartSpan = sessionSpan },
+        )
         service = SessionReconstructionService(lazy { sessionsDir }, logger)
     }
 
@@ -105,6 +113,14 @@ internal class SessionPartWriterResourceReadTest {
         assertEquals(RESOURCE, envelope.resource)
         assertEquals("my-user-id", envelope.metadata?.userId)
         assertEquals(SYMBOLS, envelope.data.sharedLibSymbolMapping)
+        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+    }
+
+    @Test
+    fun `the session span written at the start of the part is reconstructed`() {
+        val envelope = checkNotNull(writeSessionPart())
+        val expected = checkNotNull(sessionSpan.snapshot()).copy(events = null, links = null)
+        assertEquals(expected, envelope.data.spans?.last())
         assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
     }
 
@@ -124,12 +140,6 @@ internal class SessionPartWriterResourceReadTest {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         executor.runCurrentlyBlocked()
 
-        writePartFile(
-            SESSION_SPAN_FILE_NAME,
-            SessionPartSpan.ADAPTER.encode(
-                SessionPartSpan(format_version = FORMAT_VERSION, span = sessionSpan),
-            ),
-        )
         writePartFile(
             COMPLETED_SPANS_FILE_NAME,
             Buffer().apply {

@@ -3,16 +3,20 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
+import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.createPersistenceBehavior
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.session.persistence.EnvelopeMetadataProto
 import io.embrace.android.embracesdk.internal.session.persistence.SessionManifest
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
+import io.embrace.android.embracesdk.internal.session.persistence.SessionPartSpan
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -33,6 +37,7 @@ internal class SessionPartWriterBoundaryTest {
         private const val SECOND_PART_ID = "cccccccccccccccccccccccccccccccc"
         private const val METADATA_FILE_NAME = "metadata.pb"
         private const val MANIFEST_FILE_NAME = "manifest.pb"
+        private const val SESSION_SPAN_FILE_NAME = "session_span.pb"
     }
 
     @get:Rule
@@ -45,6 +50,9 @@ internal class SessionPartWriterBoundaryTest {
     private lateinit var writer: SessionPartWriter
     private var writeCount = 0
     private var resourceCount = 0
+    private var spanCount = 0
+    private lateinit var sessionSpan: FakeEmbraceSdkSpan
+    private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
     private val resourceSource = object : EnvelopeResourceSource {
         override fun getEnvelopeResource(): EnvelopeResource =
             EnvelopeResource(appVersion = "resource${resourceCount++}")
@@ -60,6 +68,9 @@ internal class SessionPartWriterBoundaryTest {
         logger = FakeInternalLogger(throwOnInternalError = false)
         writeCount = 0
         resourceCount = 0
+        spanCount = 0
+        sessionSpan = FakeEmbraceSdkSpan().apply { start(clock.now()) }
+        currentSessionPartSpan = FakeCurrentSessionPartSpan(clock).apply { sessionPartSpan = sessionSpan }
         writer = SessionPartWriterImpl(
             lazy { sessionsDir },
             BackgroundWorker(executor),
@@ -72,7 +83,9 @@ internal class SessionPartWriterBoundaryTest {
             clock,
             logger,
             resourceSource,
-        ) { EnvelopeMetadata(userId = "user${writeCount++}") }
+            EnvelopeMetadataSource { EnvelopeMetadata(userId = "user${writeCount++}") },
+            currentSessionPartSpan,
+        )
     }
 
     @Test
@@ -140,6 +153,33 @@ internal class SessionPartWriterBoundaryTest {
     }
 
     @Test
+    fun `a pending session span write lands in the session part it was queued for`() {
+        startPart(FIRST_PART_ID)
+        startPart(SECOND_PART_ID)
+        drain()
+
+        assertEquals("span0", sessionSpanIn(FIRST_PART_ID)?.span?.name)
+        assertEquals("span1", sessionSpanIn(SECOND_PART_ID)?.span?.name)
+        assertEquals(2, spanCount)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a user info change after a boundary does not rewrite either session span`() {
+        startPart(FIRST_PART_ID)
+        drain()
+        startPart(SECOND_PART_ID)
+        drain()
+        writer.onUserInfoChanged()
+        drain()
+
+        assertEquals("span0", sessionSpanIn(FIRST_PART_ID)?.span?.name)
+        assertEquals("span1", sessionSpanIn(SECOND_PART_ID)?.span?.name)
+        assertEquals(2, spanCount)
+        assertNoInternalErrors()
+    }
+
+    @Test
     fun `a pending manifest write lands in the session part it was queued for`() {
         startPart(FIRST_PART_ID)
         startPart(SECOND_PART_ID)
@@ -167,6 +207,7 @@ internal class SessionPartWriterBoundaryTest {
     }
 
     private fun startPart(sessionPartId: String) {
+        sessionSpan.name = "span${spanCount++}"
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, sessionPartId)
     }
 
@@ -186,6 +227,11 @@ internal class SessionPartWriterBoundaryTest {
         partFile(sessionPartId, METADATA_FILE_NAME)
             ?.inputStream()
             ?.use(EnvelopeMetadataProto.ADAPTER::decode)
+
+    private fun sessionSpanIn(sessionPartId: String): SessionPartSpan? =
+        partFile(sessionPartId, SESSION_SPAN_FILE_NAME)
+            ?.inputStream()
+            ?.use(SessionPartSpan.ADAPTER::decode)
 
     private fun manifestIn(sessionPartId: String): SessionManifest? =
         partFile(sessionPartId, MANIFEST_FILE_NAME)

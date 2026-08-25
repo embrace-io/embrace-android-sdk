@@ -1165,6 +1165,7 @@ internal class SessionOrchestratorTest {
                 logger,
                 FakeEnvelopeResourceSource(),
                 FakeEnvelopeMetadataSource(),
+                currentSessionPartSpan,
             ),
         ).apply {
             start()

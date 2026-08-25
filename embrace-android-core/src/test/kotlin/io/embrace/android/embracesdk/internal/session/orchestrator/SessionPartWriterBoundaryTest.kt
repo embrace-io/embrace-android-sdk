@@ -59,6 +59,8 @@ internal class SessionPartWriterBoundaryTest {
             EnvelopeResource(appVersion = "resource${resourceCount++}")
 
         override fun add(key: String, value: String) = Unit
+
+        override fun addChangeListener(listener: (EnvelopeResource) -> Unit) = Unit
     }
 
     @Before

@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.envelope.metadata.FlutterSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.NativeSdkVersionInfo
+import io.embrace.android.embracesdk.internal.envelope.metadata.ObservableHostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.ReactNativeSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.UnitySdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.resource.DeviceImpl
@@ -66,12 +67,16 @@ class PayloadSourceModuleImpl(
 
     private val logPayloadSource = LogPayloadSourceImpl(otelModule.logSink)
 
-    override val hostedSdkVersionInfo: HostedSdkVersionInfo = when (configService.appFramework) {
-        AppFramework.REACT_NATIVE -> ReactNativeSdkVersionInfo(coreModule.store)
-        AppFramework.UNITY -> UnitySdkVersionInfo(coreModule.store)
-        AppFramework.FLUTTER -> FlutterSdkVersionInfo(coreModule.store)
-        else -> NativeSdkVersionInfo()
-    }
+    private val observableHostedSdkVersionInfo = ObservableHostedSdkVersionInfo(
+        when (configService.appFramework) {
+            AppFramework.REACT_NATIVE -> ReactNativeSdkVersionInfo(coreModule.store)
+            AppFramework.UNITY -> UnitySdkVersionInfo(coreModule.store)
+            AppFramework.FLUTTER -> FlutterSdkVersionInfo(coreModule.store)
+            else -> NativeSdkVersionInfo()
+        },
+    )
+
+    override val hostedSdkVersionInfo: HostedSdkVersionInfo = observableHostedSdkVersionInfo
 
     private val appEnvironment: AppEnvironment = AppEnvironment(
         isDebug = with(coreModule.context.applicationInfo) {
@@ -79,24 +84,35 @@ class PayloadSourceModuleImpl(
         },
     )
 
-    override val resourceSource: EnvelopeResourceSource = EmbTrace.trace("resource-source") {
+    private val device = EmbTrace.trace("deviceImpl") {
+        DeviceImpl(
+            windowManagerProvider = { coreModule.context.getSystemServiceSafe(Context.WINDOW_SERVICE) },
+            backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
+            systemInfo = initModule.systemInfo,
+            logger = initModule.logger,
+        )
+    }
+
+    private val resourceSourceImpl = EmbTrace.trace("resource-source") {
         EnvelopeResourceSourceImpl(
             hosted = hostedSdkVersionInfo,
             environment = appEnvironment.environment,
             configService = configService,
-            device = EmbTrace.trace("deviceImpl") {
-                DeviceImpl(
-                    windowManagerProvider = { coreModule.context.getSystemServiceSafe(Context.WINDOW_SERVICE) },
-                    backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
-                    systemInfo = initModule.systemInfo,
-                    logger = initModule.logger,
-                )
-            },
+            device = device,
             rnBundleIdProvider = { rnBundleIdTracker.getReactNativeBundleId() },
             versionName = BuildConfig.VERSION_NAME,
             versionCode = BuildConfig.VERSION_CODE.toIntOrNull(),
-        )
+        ).apply {
+            device.addChangeListener(::notifyIfChanged)
+            observableHostedSdkVersionInfo.addChangeListener(::notifyIfChanged)
+
+            if (configService.appFramework == AppFramework.REACT_NATIVE) {
+                rnBundleIdTracker.addChangeListener(::notifyIfChanged)
+            }
+        }
     }
+
+    override val resourceSource: EnvelopeResourceSource = resourceSourceImpl
 
     override val envelopeMetadataSource: EnvelopeMetadataSource = EmbTrace.trace("metadata-source") {
         EnvelopeMetadataSourceImpl { essentialServiceModule.userService.getUserInfo() }

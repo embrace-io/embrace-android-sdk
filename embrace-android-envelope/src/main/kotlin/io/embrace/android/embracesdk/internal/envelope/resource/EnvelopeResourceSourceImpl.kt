@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 
 class EnvelopeResourceSourceImpl(
     private val configService: ConfigService,
@@ -17,6 +18,9 @@ class EnvelopeResourceSourceImpl(
 ) : EnvelopeResourceSource {
 
     private val extras = ConcurrentHashMap<String, String>()
+    private val listeners = CopyOnWriteArrayList<(EnvelopeResource) -> Unit>()
+    private var lastEmitted: EnvelopeResource? = null
+    private val lock = Any()
 
     override fun getEnvelopeResource(): EnvelopeResource {
         val buildInfo = configService.buildInfo
@@ -56,5 +60,42 @@ class EnvelopeResourceSourceImpl(
 
     override fun add(key: String, value: String) {
         extras[key] = value
+        notifyIfChanged()
+    }
+
+    override fun addChangeListener(listener: (EnvelopeResource) -> Unit) {
+        listeners.add(listener)
+        val current = synchronized(lock) {
+            getEnvelopeResource().also { lastEmitted = it }
+        }
+        notifyListener(listener, current)
+    }
+
+    /**
+     * Rebuilds the resource and hands it to the listeners if it differs from the one they last saw.
+     * Called by whatever owns a value the resource is built from, once that value has changed.
+     */
+    fun notifyIfChanged() {
+        if (listeners.isEmpty()) {
+            return
+        }
+        val changed = synchronized(lock) {
+            val current = getEnvelopeResource()
+            when (current) {
+                lastEmitted -> null
+                else -> current.also { lastEmitted = it }
+            }
+        } ?: return
+
+        listeners.forEach { listener ->
+            notifyListener(listener, changed)
+        }
+    }
+
+    private fun notifyListener(listener: (EnvelopeResource) -> Unit, resource: EnvelopeResource) {
+        try {
+            listener(resource)
+        } catch (ignored: Throwable) {
+        }
     }
 }

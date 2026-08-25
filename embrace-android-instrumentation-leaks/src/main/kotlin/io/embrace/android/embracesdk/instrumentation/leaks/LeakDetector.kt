@@ -206,15 +206,17 @@ internal class LeakDetector(
     /**
      * A snapshot of every confirmed suspect still reachable, safe to hand outside the detector: it never carries the tracked
      * object itself, only what [trackClosed] was given, its class name read fresh from the still-live object, and how many
-     * GC cycles it has survived since being confirmed. A suspect actually collected between being read here and
-     * [onSuspectCollected] catching up to it is simply omitted, the same as if it had already been dropped.
+     * GC cycles it has survived since being confirmed.
      */
     fun suspects(): List<LeakSnapshot> {
         val cycleCount = currentGcCycleCount()
         return synchronized(trackedSuspects) {
             trackedSuspects.mapNotNull { suspect ->
                 val referent = suspect.get() ?: return@mapNotNull null
-                LeakSnapshot(suspect.trackedAtMs, suspect.token, cycleCount - suspect.suspectedAtCycle, referent.javaClass.name)
+                // The suspectedAtCycle is captured after the first GC cycle (when a TrackedReference becomes a ConfirmedSuspect).
+                // So we +1 here so that cycle is represented in the reporting (instead of reporting a confusing 0 value).
+                val cyclesSurvived = cycleCount - suspect.suspectedAtCycle + 1
+                LeakSnapshot(suspect.trackedAtMs, suspect.token, cyclesSurvived, referent.javaClass.name)
             }
         }
     }

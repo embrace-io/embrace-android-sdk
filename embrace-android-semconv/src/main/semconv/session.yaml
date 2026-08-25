@@ -34,6 +34,7 @@ attribute_groups:
       - ref: emb.user_session_inactivity_timeout_seconds
       - ref: emb.clock_network_drift
       - ref: emb.clock_gnss_drift
+      - ref: emb.memory_leak_suspects
 
 attributes:
   - key: emb.state
@@ -188,3 +189,8 @@ attributes:
     brief: "Drift in milliseconds. Positive = GNSS clock behind wall clock. (Wall Time - GNSS Time)"
     stability: development
     examples: ["987", "-789"]
+  - key: emb.memory_leak_suspects
+    type: string
+    brief: "Confirmed leak suspects still reachable at the end of this session part, and how many GC cycles each has survived since being confirmed. Encoded as ';'-separated groups of '<sessionPartId>_<userSessionId>:<entries>', each naming the session part the suspects were originally tracked closed in, followed by a ','-separated list of '<objectType>|<className>|<cyclesSurvived>' entries. A suspect still alive across multiple session parts is reported again in each one, with an updated cyclesSurvived."
+    stability: development
+    examples: ["part123_sess456:activity|com.example.MainActivity|4"]

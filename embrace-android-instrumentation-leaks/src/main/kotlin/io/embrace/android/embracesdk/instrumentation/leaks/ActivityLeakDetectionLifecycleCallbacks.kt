@@ -22,7 +22,7 @@ internal class ActivityLeakDetectionLifecycleCallbacks(
     }
 
     override fun onActivityDestroyed(activity: Activity) {
-        leakDetector.trackClosed(activity, activeSessionIdsProvider())
+        leakDetector.trackClosed(activity, LeakContext(OBJECT_TYPE, activeSessionIdsProvider()))
     }
 
     override fun onActivityPaused(activity: Activity) = Unit
@@ -30,4 +30,12 @@ internal class ActivityLeakDetectionLifecycleCallbacks(
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
     override fun onActivityStarted(activity: Activity) = Unit
     override fun onActivityStopped(activity: Activity) = Unit
+
+    private companion object {
+
+        /**
+         * Reported as [LeakContext.objectType], naming what this instrumentation tracks.
+         */
+        const val OBJECT_TYPE = "activity"
+    }
 }

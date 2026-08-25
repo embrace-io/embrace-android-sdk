@@ -51,7 +51,7 @@ internal class LeakDetectorTest {
         val suspect = detector.suspects().single()
         assertEquals(5000L, suspect.trackedAtMs)
         assertSame(token, suspect.token)
-        assertEquals("no cycles have passed yet at the moment of confirmation", 0L, suspect.cyclesSurvived)
+        assertEquals("surviving the sentinel that confirmed it already counts as one cycle survived", 1L, suspect.cyclesSurvived)
         assertEquals(
             "read fresh from the still-live object rather than captured at confirmation",
             leaked.javaClass.name,
@@ -59,7 +59,11 @@ internal class LeakDetectorTest {
         )
 
         gcCycleCount = 7L
-        assertEquals("4 cycles have passed since confirmation", 4L, detector.suspects().single().cyclesSurvived)
+        assertEquals(
+            "4 more cycles have passed since confirmation, on top of the 1 already counted",
+            5L,
+            detector.suspects().single().cyclesSurvived,
+        )
     }
 
     @Test

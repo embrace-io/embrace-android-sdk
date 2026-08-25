@@ -71,6 +71,12 @@ object EmbSessionAttributes {
     const val EMB_IS_FINAL_SESSION_PART: String = "emb.is_final_session_part"
 
     /**
+     * Confirmed leak suspects still reachable at the end of this session part, and how many GC cycles each has survived since being confirmed. Encoded as ';'-separated groups of '<sessionPartId>_<userSessionId>:<entries>', each naming the session part the suspects were originally tracked closed in, followed by a ','-separated list of '<objectType>|<className>|<cyclesSurvived>' entries. A suspect still alive across multiple session parts is reported again in each one, with an updated cyclesSurvived.
+     */
+    @ExperimentalSemconv
+    const val EMB_MEMORY_LEAK_SUSPECTS: String = "emb.memory_leak_suspects"
+
+    /**
      * How a signal should be delivered to the Embrace backend.
      */
     @ExperimentalSemconv

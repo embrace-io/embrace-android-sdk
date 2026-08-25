@@ -280,6 +280,10 @@ internal class SessionOrchestratorImpl(
             },
             crashId = crashId,
         )
+
+        EmbTrace.trace("flush-session-part-writes") {
+            sessionPartWriter?.onCrash()
+        }
     }
 
     override fun onSessionDataUpdate() {

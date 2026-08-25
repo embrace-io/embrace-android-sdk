@@ -63,6 +63,7 @@ dependencies {
     testImplementation(libs.opentelemetry.java.aliases)
     testImplementation(project(":embrace-android-otel-java"))
     testImplementation(project(":embrace-test-fakes"))
+    testImplementation(project(":embrace-android-session-persistence"))
     testImplementation(project(":embrace-android-config-fakes"))
     testImplementation(project(":embrace-android-delivery-fakes"))
     testImplementation(project(":embrace-android-instrumentation-api-fakes"))

@@ -20,7 +20,9 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDir
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartSpan
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -571,6 +573,20 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
+    fun `a crash persists the queued session span without the worker being drained`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        clock.tick(10000)
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        writer.onCrash()
+
+        assertEquals(clock.now().millisToNanos(), sessionSpanOnDisk(SESSION_PART_ID)?.span?.end_time_unix_nano)
+        assertTrue(executor.isShutdown)
+        assertNoInternalErrors()
+    }
+
+    @Test
     fun `a write that has already started is not cancelled`() {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
@@ -593,6 +609,19 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
+    fun `a crash persists the telemetry queued when the session part started`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        writer.onCrash()
+
+        assertEquals(listOf(SESSION_PART_ID), partDirs().map(SessionPartDirectory::sessionPartId))
+        assertEquals("resource0", manifestOnDisk(SESSION_PART_ID)?.resource?.app_version)
+        assertEquals("user0", metadataOnDisk(SESSION_PART_ID)?.user_id)
+        assertEquals("span0", sessionSpanOnDisk(SESSION_PART_ID)?.span?.name)
+        assertNoInternalErrors()
+    }
+
+    @Test
     fun `queued writes for different files do not cancel each other`() {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
@@ -603,6 +632,53 @@ internal class SessionPartWriterImplTest {
         assertEquals("user0", metadataIn(SESSION_PART_ID)?.user_id)
         assertEquals(1, writeCount)
         assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.span?.name)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `no further writes are made once a crash has been handled`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        writer.onCrash()
+        val submitCount = executor.submitCount
+
+        clock.tick(2000)
+        sessionSpan.name = "span1"
+        writer.onPeriodicWrite()
+        writer.onUserInfoChanged()
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+
+        // the worker is sealed by the drain, so queueing anything onto it would be silently
+        // discarded - the writer has to stop instead, leaving the crash-time state on disk
+        assertEquals(submitCount, executor.submitCount)
+        assertEquals("span0", sessionSpanOnDisk(SESSION_PART_ID)?.span?.name)
+        assertNull(sessionSpanOnDisk(SESSION_PART_ID)?.span?.end_time_unix_nano)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a session part started after a crash is not written`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        writer.onCrash()
+        val submitCount = executor.submitCount
+        clock.tick(2000)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
+
+        assertEquals(listOf(SESSION_PART_ID), partDirs().map(SessionPartDirectory::sessionPartId))
+        assertEquals(submitCount, executor.submitCount)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a crash does not drain the worker when multi file persistence is disabled`() {
+        val writer = createWriter(enabled = false)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        writer.onCrash()
+
+        assertEquals(emptyList<SessionPartDirectory>(), partDirs())
+        assertFalse(executor.isShutdown)
         assertNoInternalErrors()
     }
 
@@ -665,13 +741,19 @@ internal class SessionPartWriterImplTest {
 
     private fun manifestIn(sessionPartId: String): SessionManifest? {
         drain()
-        return partFile(sessionPartId, MANIFEST_FILE_NAME)?.inputStream()?.use(SessionManifest.ADAPTER::decode)
+        return manifestOnDisk(sessionPartId)
     }
+
+    private fun manifestOnDisk(sessionPartId: String): SessionManifest? =
+        partFile(sessionPartId, MANIFEST_FILE_NAME)?.inputStream()?.use(SessionManifest.ADAPTER::decode)
 
     private fun sessionSpanIn(sessionPartId: String): SessionPartSpan? {
         drain()
-        return partFile(sessionPartId, SESSION_SPAN_FILE_NAME)?.inputStream()?.use(SessionPartSpan.ADAPTER::decode)
+        return sessionSpanOnDisk(sessionPartId)
     }
+
+    private fun sessionSpanOnDisk(sessionPartId: String): SessionPartSpan? =
+        partFile(sessionPartId, SESSION_SPAN_FILE_NAME)?.inputStream()?.use(SessionPartSpan.ADAPTER::decode)
 
     private fun partFile(sessionPartId: String, fileName: String): File? {
         val directory = partDirs().single { it.sessionPartId == sessionPartId }

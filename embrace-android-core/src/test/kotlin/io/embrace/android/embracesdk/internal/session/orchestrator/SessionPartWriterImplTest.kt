@@ -395,6 +395,22 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
+    fun `a periodic write refreshes the session span for the current part`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+        assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.span?.name)
+
+        clock.tick(2000)
+        sessionSpan.name = "span1"
+        writer.onPeriodicWrite()
+        drain()
+
+        assertEquals("span1", sessionSpanIn(SESSION_PART_ID)?.span?.name)
+        assertNoInternalErrors()
+    }
+
+    @Test
     fun `the ended session span is snapshotted before the write is queued`() {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
@@ -453,6 +469,65 @@ internal class SessionPartWriterImplTest {
 
         assertEquals(submitCount, executor.submitCount)
         assertNull(sessionSpanIn(SESSION_PART_ID)?.span?.end_time_unix_nano)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `repeated periodic writes keep the latest session span`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+        repeat(4) { index ->
+            clock.tick(2000)
+            sessionSpan.name = "span${index + 1}"
+            writer.onPeriodicWrite()
+            drain()
+        }
+
+        assertEquals("span4", sessionSpanIn(SESSION_PART_ID)?.span?.name)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a periodic write before any session part starts is a no-op`() {
+        val writer = createWriter()
+        writer.onPeriodicWrite()
+        drain()
+
+        assertEquals(emptyList<SessionPartDirectory>(), sessionPartDirs())
+        assertEquals(0, executor.submitCount)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a periodic write writes nothing when the part started without a session span`() {
+        currentSessionPartSpan.sessionPartSpan = null
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+        writer.onPeriodicWrite()
+        drain()
+
+        assertNull(sessionSpanIn(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a periodic write is not made once multi file persistence is disabled`() {
+        val configService = configService(enabled = true)
+        val writer = createWriter(configService = configService)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+        val submitCount = executor.submitCount
+
+        configService.persistenceBehavior = createPersistenceBehavior()
+        clock.tick(2000)
+        sessionSpan.name = "span1"
+        writer.onPeriodicWrite()
+        drain()
+
+        assertEquals(submitCount, executor.submitCount)
+        assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.span?.name)
         assertNoInternalErrors()
     }
 

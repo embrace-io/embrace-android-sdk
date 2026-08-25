@@ -1065,6 +1065,37 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
+    fun `the periodic cache tick rewrites the session span on disk`() {
+        createOrchestrator(ProcessState.FOREGROUND, multiFilePersistenceConfigService())
+        val partId = checkNotNull(sessionTracker.getActiveSessionPartId())
+        assertEquals("emb-session", sessionSpanIn(partId)?.span?.name)
+        clock.tick(2000)
+        checkNotNull(currentSessionPartSpan.sessionPartSpan).name = "refreshed-span"
+        sessionCacheExecutor.runCurrentlyBlocked()
+
+        assertEquals("refreshed-span", sessionSpanIn(partId)?.span?.name)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `the periodic cache tick only rewrites the session span in the background when session data changed`() {
+        createOrchestrator(ProcessState.BACKGROUND, multiFilePersistenceConfigService())
+        val partId = checkNotNull(sessionTracker.getActiveSessionPartId())
+        sessionCacheExecutor.runCurrentlyBlocked()
+
+        clock.tick(2000)
+        checkNotNull(currentSessionPartSpan.sessionPartSpan).name = "refreshed-span"
+        sessionCacheExecutor.runCurrentlyBlocked()
+        assertEquals("emb-session", sessionSpanIn(partId)?.span?.name)
+
+        clock.tick(2000)
+        orchestrator.onSessionDataUpdate()
+        sessionCacheExecutor.runCurrentlyBlocked()
+        assertEquals("refreshed-span", sessionSpanIn(partId)?.span?.name)
+        assertNoInternalErrors()
+    }
+
+    @Test
     fun `crash does not create a session part directory`() {
         createOrchestrator(ProcessState.FOREGROUND, multiFilePersistenceConfigService())
         val initial = sessionPartDirs().single()

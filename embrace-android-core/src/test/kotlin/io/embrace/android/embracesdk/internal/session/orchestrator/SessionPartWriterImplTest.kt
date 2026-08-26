@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpans
 import io.embrace.android.embracesdk.internal.session.persistence.EnvelopeMetadataProto
 import io.embrace.android.embracesdk.internal.session.persistence.SessionManifest
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
@@ -41,6 +42,7 @@ internal class SessionPartWriterImplTest {
         private const val MANIFEST_FILE_NAME = "manifest.pb"
         private const val SESSION_SPAN_FILE_NAME = "session_span.pb"
         private const val SPAN_SNAPSHOTS_FILE_NAME = "span_snapshots.pb"
+        private const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
         private val IN_FLIGHT_SPAN = Span(spanId = "aaaaaaaaaaaaaaa1", name = "network-request")
         private const val ENVELOPE_VERSION = "0.1.0"
         private const val ENVELOPE_TYPE = "spans"
@@ -231,6 +233,7 @@ internal class SessionPartWriterImplTest {
                 "SessionMetadataWriteFail",
                 "SessionSpanWriteFail",
                 "SpanSnapshotsWriteFail",
+                "CompletedSpansWriteFail",
             ),
             logger.internalErrorMessages.map { it.msg },
         )
@@ -245,6 +248,7 @@ internal class SessionPartWriterImplTest {
                 "SessionMetadataWriteFail",
                 "SessionSpanWriteFail",
                 "SpanSnapshotsWriteFail",
+                "CompletedSpansWriteFail",
                 "SessionMetadataWriteFail",
             ),
             logger.internalErrorMessages.map { it.msg },
@@ -261,6 +265,7 @@ internal class SessionPartWriterImplTest {
                 "SessionMetadataWriteFail",
                 "SessionSpanWriteFail",
                 "SpanSnapshotsWriteFail",
+                "CompletedSpansWriteFail",
                 "SessionMetadataWriteFail",
                 "SessionSpanWriteFail",
                 "SpanSnapshotsWriteFail",
@@ -741,6 +746,128 @@ internal class SessionPartWriterImplTest {
         assertNoInternalErrors()
     }
 
+    @Test
+    fun `a completed span is appended to the log`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        writer.onSpanCompleted(listOf(completedSpan("network-request")))
+
+        assertEquals(listOf("network-request"), completedSpanNamesIn(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `completed spans are appended in the order they are reported`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        writer.onSpanCompleted(listOf(completedSpan("first"), completedSpan("second")))
+        writer.onSpanCompleted(listOf(completedSpan("third")))
+
+        assertEquals(listOf("first", "second", "third"), completedSpanNamesIn(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a span completing does not supersede the spans already appended`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        // both appends are queued before either runs. assert a coalescing queue is not used
+        writer.onSpanCompleted(listOf(completedSpan("first")))
+        writer.onSpanCompleted(listOf(completedSpan("second")))
+        drain()
+
+        assertEquals(listOf("first", "second"), completedSpanNamesIn(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a session part in which nothing completes still has an empty log`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+
+        assertEquals(emptyList<String>(), completedSpanNamesIn(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `an empty batch of completed spans queues no write`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+        val submitCount = executor.submitCount
+
+        writer.onSpanCompleted(emptyList())
+
+        assertEquals(submitCount, executor.submitCount)
+        assertEquals(emptyList<String>(), completedSpanNamesIn(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `each session part logs the spans that completed while it was active`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        writer.onSpanCompleted(listOf(completedSpan("first")))
+
+        clock.tick(10000)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
+        writer.onSpanCompleted(listOf(completedSpan("second")))
+
+        assertEquals(listOf("first"), completedSpanNamesIn(SESSION_PART_ID))
+        assertEquals(listOf("second"), completedSpanNamesIn(OTHER_SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `completed spans before any session part starts write nothing`() {
+        val writer = createWriter()
+        writer.onSpanCompleted(listOf(completedSpan("network-request")))
+
+        assertEquals(emptyList<SessionPartDirectory>(), sessionPartDirs())
+        assertEquals(0, executor.submitCount)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `completed spans are ignored when multi file persistence is disabled`() {
+        val writer = createWriter(enabled = false)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        writer.onSpanCompleted(listOf(completedSpan("network-request")))
+
+        assertEquals(emptyList<SessionPartDirectory>(), sessionPartDirs())
+        assertEquals(0, executor.submitCount)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `no completed spans are appended once a crash has been handled`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        writer.onSpanCompleted(listOf(completedSpan("first")))
+        writer.onCrash()
+        val submitCount = executor.submitCount
+
+        writer.onSpanCompleted(listOf(completedSpan("second")))
+
+        assertEquals(submitCount, executor.submitCount)
+        assertEquals(listOf("first"), completedSpanNamesOnDisk(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    private fun completedSpan(name: String) = Span(
+        traceId = "6c9b1f2ec1d34f3c9a7d0b8e5f2a4c11",
+        spanId = "aaaaaaaaaaaaaaa2",
+        name = name,
+        startTimeNanos = clock.now().millisToNanos(),
+        endTimeNanos = (clock.now() + 1000).millisToNanos(),
+    )
+
     private fun endPart() {
         currentSessionPartSpan.endSession(startNewSession = true)
     }
@@ -822,6 +949,16 @@ internal class SessionPartWriterImplTest {
             ?.use(SpanSnapshots.ADAPTER::decode)
             ?.spans
             ?.map { it.name }
+    }
+
+    private fun completedSpanNamesIn(sessionPartId: String): List<String?> {
+        drain()
+        return completedSpanNamesOnDisk(sessionPartId)
+    }
+
+    private fun completedSpanNamesOnDisk(sessionPartId: String): List<String?> {
+        val bytes = partFile(sessionPartId, COMPLETED_SPANS_FILE_NAME)?.readBytes() ?: return emptyList()
+        return CompletedSpans.ADAPTER.decode(bytes).spans.map { it.name }
     }
 
     private fun partFile(sessionPartId: String, fileName: String): File? {

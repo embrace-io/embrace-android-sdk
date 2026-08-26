@@ -23,7 +23,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  */
 class SpanRepository {
     private val spans: ConcurrentMap<String, EmbraceSdkSpan> = ConcurrentHashMap()
-    private var spanUpdateNotifier: (() -> Unit)? = null
+    private val spanChangeListeners = CopyOnWriteArrayList<(EmbraceSdkSpan) -> Unit>()
 
     private val completedSpanData: Queue<Span> = ConcurrentLinkedQueue()
     private val flushLock = Any()
@@ -97,17 +97,22 @@ class SpanRepository {
     }
 
     /**
-     * Set a function to be invoked when a span has been updated
+     * Registers a [listener] invoked with a span immediately after any of its state has changed,
+     * including its start and stop. The caller is responsible for deriving initial state.
+     *
+     * The listener is invoked on the thread that mutated the span and must not block or perform I/O.
      */
-    fun setSpanUpdateNotifier(notifier: () -> Unit) {
-        spanUpdateNotifier = notifier
+    fun addSpanChangeListener(listener: (EmbraceSdkSpan) -> Unit) {
+        spanChangeListeners.add(listener)
     }
 
     /**
-     * Call to notify the repository that a span has been updated
+     * Call to notify the repository that the state of [span] has changed.
      */
-    fun notifySpanUpdate() {
-        spanUpdateNotifier?.invoke()
+    fun notifySpanChanged(span: EmbraceSdkSpan) {
+        spanChangeListeners.forEach { listener ->
+            notifyListener(listener, span)
+        }
     }
 
     /**
@@ -154,9 +159,9 @@ class SpanRepository {
         }
     }
 
-    private fun notifyListener(listener: (List<Span>) -> Unit, spans: List<Span>) {
+    private fun <T> notifyListener(listener: (T) -> Unit, value: T) {
         try {
-            listener(spans)
+            listener(value)
         } catch (ignored: Throwable) {
         }
     }

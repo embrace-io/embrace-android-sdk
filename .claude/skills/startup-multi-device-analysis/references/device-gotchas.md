@@ -181,6 +181,14 @@ when benchmarking uncommitted changes (then the checkout is the point — copy t
 worktree or accept borrowing); and the host must still stay quiet-ish during legs — the worktree
 frees the *tree*, not the CPU.
 
+**A worktree directory that still exists is not a worktree that still works.** Scratchpad worktrees
+live under `/private/tmp`, which macOS purges by *file* age, and the purge leaves the module
+directory tree standing while deleting `gradlew`, the top-level build files and `.git`. The result
+looks intact to `ls`, is invisible to `git worktree list`, and fails only once a campaign tries to
+build. Probe for a **file** the build needs — `examples/ExampleApp/gradlew` — not for the directory,
+and recreate rather than repair: a gutted worktree cannot be restored in place. (Observed
+2026-08-26: two engine-A/B worktrees reduced to 404K and 16K of empty directories.)
+
 The borrowing discipline below remains for the cases a worktree cannot cover. When you must
 mutate something genuinely global (a device setting, mavenLocal contents, the user's checkout
 itself), a campaign must be able to give it back after being killed. `try/finally` is not enough —
@@ -211,6 +219,83 @@ casual read passes over:
 - **The marker round-trip must be byte-exact.** A restore that strips a trailing newline returns a
   source file that is one byte off — a spurious diff on an otherwise clean tree, and a lint finding
   on Kotlin. No `strip()` anywhere on the stored value; assert `restore(capture(x)) == x` on bytes.
+
+## Config-flag A/B: prove the arms differ BEFORE spending device time
+
+A flag A/B is two builds of one commit differing in an `embrace-config.json` key. If the flag does
+not take effect — wrong key, config not picked up, a stale APK reused — **both arms are the same
+program**, and the campaign then reports "no significant difference" with clean statistics and no
+symptom anywhere distinguishing that from a real null.
+
+**Before anything else, verify WHICH SDK the app will build against.** A config-flag A/B changes a
+key in `embrace-config.json`; it does not change which SDK artifact the app resolves. The ExampleApp
+pins `embrace = "<version>"` in `examples/ExampleApp/gradle/libs.versions.toml` and resolves from
+mavenCentral, so **a worktree checked out at the commit under test still builds against a published
+release** unless that pin is repointed. That one line also drives the *plugin* version, since the
+plugin entry resolves through the same ref. Flipping a flag then changes a setting inside an SDK that
+is not the one being tested.
+
+This voided X37 on 2026-08-26 at a cost of 2.5 hours of device time. The engine A/B ran 20 clean legs
+on the A14 and returned **+0.1% at the median (p=0.97)** where X33 had measured −20.4% eight days
+earlier. The config file was right, the plugin has read that key since 2025-10, and the dex payloads
+differed — every check that was run passed, because none asked which SDK was in the APK. X32/X33 had
+listed the prerequisite plainly (*"HEAD published to mavenLocal as 9.3.0-SNAPSHOT"*) and it was not
+carried forward.
+
+Three checks, cheapest first: **read the pin** and confirm it names the build under test; **run the
+propagation gate on leg 1** (below) and abort the device if it does not fire; and afterwards,
+**compare the level against the longitudinal store** — X37's pooled A14 median of 61.21 ms sat on the
+store's 9.1.0 record (63.02), not 9.2.0 (45.05), which is how the wrong SDK was identified. The store
+doubles as a provenance check: it can tell you which version you actually measured.
+
+**The primary arm check is the PROPAGATION GATE, not an artefact comparison.** Verify the arms from the
+SDK's own instrumented sections: the effect must concentrate in the sections the flag targets while
+unrelated sections stay flat. For the otel-kotlin flag that signature is unmistakable — the OTel
+construction sections move −42% to −90% while `otel-module` holds within ±7% as an internal control.
+Noise cannot concentrate a reduction of that size in exactly the right sections and leave everything
+else alone. This is the method P17 arrived at in 2026-08-14 after three artefact-based attempts
+failed, and it is what X32/X33 gated on per device. **Prefer it whenever the flag has a predicted
+locus**; fall back to artefact comparison only when it does not.
+
+*Corrected 2026-08-26: an earlier version of this section led with the dex comparison and did not
+mention the propagation gate at all, which understated a method the project had already established
+and reduced a decisive check to a smoke test.*
+
+The artefact-level check is still worth running as a cheap pre-flight —
+`scripts/verify_ab_arms.py <a> <b>` — because it catches the total-failure case before any device
+time is spent. What it can and cannot establish:
+
+- **Identical APK size is what SUCCESS looks like**, not failure. The plugin injects local config by
+  rewriting SDK *bytecode*, so a boolean flip is a one-opcode change. Two correctly-differing arms
+  both came out at exactly 7,112,294 bytes.
+- **Do not look for generated source.** There is no KSP-generated config class under
+  `app/build/generated` — the plugin rewrites bytecode instead of emitting source. A check that
+  looks there reports a false failure on good arms, which is exactly what happened first.
+- **The APK digest proves nothing on its own**; zip metadata and timestamps move it.
+- **Android builds are not byte-reproducible, so "the dex differs" is a smoke test, not proof.** The
+  same two trees differed by **275** dex byte positions when built as a pair, and by **11,790** after
+  the harness independently rebuilt both — a 43× swing, all noise. Any byte-count threshold is
+  meaningless without a control build of one arm against itself.
+- **Byte-identical dex is the one conclusive verdict**: the flag did nothing, do not run.
+- **The engine-agnostic verification tap cannot discriminate engines** — same span names, same
+  resource attributes, same attribute keys in both arms. Checked; it is not a route.
+- **The strongest cheap control is a metric already measured independently.** For the otel-kotlin
+  flip, prior campaigns had established the median effect per device, so reproducing that median
+  inside the new run confirms the flag works and licenses reading the new statistic (the tail). Plan
+  an A/B so that it re-measures something known, rather than only the novel quantity.
+- **Do not delete the traces until the propagation gate has run.** A campaign that reduces to window
+  values only — to save disk, say — throws away the section data the gate needs, and the gate is the
+  one check that can confirm the arms differ. Extract per-section medians in the same pass that
+  extracts the windows, then delete.
+
+## Structure and level need different sample sizes
+
+Containment — which sections nest inside which — is a property of the code path and is stable in a
+handful of traces. A duration median is not. Taking both from the same small sample produced a span
+longer than the window that encloses it (`emb-modules-init` 100.77 ms against a 94.46 ms window),
+because the four traces came from `pass1`, the pass most distorted by install aftermath. Read
+structure from a few traces if that is all you have, but take every *level* from the full-shape
+medians, and sample across passes rather than from the head of one.
 
 ## Device housekeeping that silently kills campaigns
 

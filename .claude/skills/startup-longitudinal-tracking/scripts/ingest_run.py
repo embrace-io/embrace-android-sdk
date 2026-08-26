@@ -299,6 +299,20 @@ def main():
                         f"{shape.get('passes')}x{shape.get('iterations')}={expected} - the missing "
                         f"passes are the later, warmer ones, so this is not comparable to a full "
                         f"run; re-run it or store it with --force and a reason")
+    elif expected and len(windows) > 1.1 * expected:
+        # The MIRROR of the truncation guard, and the more dangerous direction. A truncated run
+        # looks obviously wrong; an over-long one looks like unusually good data and sails through.
+        # Real instance, 2026-08-25: a leg ran 10x50 because a `git checkout` had reverted the
+        # benchmark's iteration count, and ingest accepted 500 windows into a 10x20 series with
+        # rc=0. Run shape is series-DEFINING - a 10x50 record is not "more data", it is a different
+        # experiment whose passes each carry a longer within-pass warm-up/thermal ramp, so its
+        # median is not comparable with the series it would join. The only symptom was n=500 in a
+        # log line.
+        problems.append(f"over-long run: {len(windows)} windows against a declared shape of "
+                        f"{shape.get('passes')}x{shape.get('iterations')}={expected} - the run did "
+                        f"NOT use the declared shape, and shape is part of the series key, so this "
+                        f"is a different experiment rather than extra data; fix the harness's "
+                        f"iteration count and re-run, or declare the shape this run actually used")
 
     record = {
         "run_id": (provenance or {}).get("plan_run_id") or run_dir.name,

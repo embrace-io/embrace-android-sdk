@@ -150,7 +150,7 @@ internal class SessionPartWriterImplTest {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
-        writer.onUserInfoChanged()
+        writer.onMetadataChanged()
         assertEquals("user0", metadataOnDisk(SESSION_PART_ID)?.user_id)
 
         drain()
@@ -165,7 +165,7 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
 
-        repeat(4) { writer.onUserInfoChanged() }
+        repeat(4) { writer.onMetadataChanged() }
         drain()
 
         // the queued writes were superseded before they ran, so only the last one wrote
@@ -178,7 +178,7 @@ internal class SessionPartWriterImplTest {
     fun `a user info change is not queued when multi file persistence is disabled`() {
         val writer = createWriter(enabled = false)
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
-        writer.onUserInfoChanged()
+        writer.onMetadataChanged()
         assertEquals(0, executor.submitCount)
         assertEquals(0, writeCount)
     }
@@ -186,7 +186,7 @@ internal class SessionPartWriterImplTest {
     @Test
     fun `a user info change before any session part starts writes nothing`() {
         val writer = createWriter()
-        writer.onUserInfoChanged()
+        writer.onMetadataChanged()
         assertEquals(emptyList<SessionPartDirectory>(), sessionPartDirs())
         assertEquals(0, writeCount)
         assertNoInternalErrors()
@@ -203,7 +203,7 @@ internal class SessionPartWriterImplTest {
         clock.tick(10000)
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
         drain()
-        writer.onUserInfoChanged()
+        writer.onMetadataChanged()
         drain()
 
         assertEquals(listOf(SESSION_PART_ID), sessionPartDirs().map { it.sessionPartId })
@@ -228,7 +228,7 @@ internal class SessionPartWriterImplTest {
             logger.internalErrorMessages.map { it.msg },
         )
 
-        writer.onUserInfoChanged()
+        writer.onMetadataChanged()
         drain()
 
         assertEquals(
@@ -311,7 +311,7 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
 
-        repeat(4) { writer.onUserInfoChanged() }
+        repeat(4) { writer.onMetadataChanged() }
         drain()
 
         assertEquals("resource0", manifestIn(SESSION_PART_ID)?.resource?.app_version)
@@ -379,7 +379,7 @@ internal class SessionPartWriterImplTest {
         drain()
 
         sessionSpan.name = "span1"
-        repeat(4) { writer.onUserInfoChanged() }
+        repeat(4) { writer.onMetadataChanged() }
         drain()
 
         assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.span?.name)
@@ -596,7 +596,7 @@ internal class SessionPartWriterImplTest {
         // supersede the metadata write from inside the metadata write itself
         onMetadataRead = {
             onMetadataRead = {}
-            writer.onUserInfoChanged()
+            writer.onMetadataChanged()
         }
         drain()
 
@@ -627,7 +627,7 @@ internal class SessionPartWriterImplTest {
     fun `queued writes for different files do not cancel each other`() {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
-        writer.onUserInfoChanged()
+        writer.onMetadataChanged()
         drain()
 
         assertEquals("resource0", manifestIn(SESSION_PART_ID)?.resource?.app_version)
@@ -647,7 +647,7 @@ internal class SessionPartWriterImplTest {
         clock.tick(2000)
         sessionSpan.name = "span1"
         writer.onPeriodicWrite()
-        writer.onUserInfoChanged()
+        writer.onMetadataChanged()
         endPart()
         writer.onSessionPartEnded(SESSION_PART_ID)
 

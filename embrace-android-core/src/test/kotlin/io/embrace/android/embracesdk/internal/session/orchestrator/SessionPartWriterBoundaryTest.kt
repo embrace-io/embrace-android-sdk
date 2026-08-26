@@ -96,7 +96,7 @@ internal class SessionPartWriterBoundaryTest {
         startPart(FIRST_PART_ID)
         drain()
         assertEquals("user0", metadataIn(FIRST_PART_ID)?.user_id)
-        writer.onUserInfoChanged()
+        writer.onMetadataChanged()
         assertEquals("user0", metadataIn(FIRST_PART_ID)?.user_id)
 
         // next part begins before write completed
@@ -114,7 +114,7 @@ internal class SessionPartWriterBoundaryTest {
     fun `only the last metadata write queued before a boundary lands in the older part`() {
         startPart(FIRST_PART_ID)
         drain()
-        repeat(2) { writer.onUserInfoChanged() }
+        repeat(2) { writer.onMetadataChanged() }
         startPart(SECOND_PART_ID)
         drain()
 
@@ -132,7 +132,7 @@ internal class SessionPartWriterBoundaryTest {
         startPart(SECOND_PART_ID)
         drain()
 
-        writer.onUserInfoChanged()
+        writer.onMetadataChanged()
         drain()
 
         assertEquals("user0", metadataIn(FIRST_PART_ID)?.user_id)
@@ -145,7 +145,7 @@ internal class SessionPartWriterBoundaryTest {
     fun `a pending metadata write for a deleted session part is reported and does not stop the new part`() {
         startPart(FIRST_PART_ID)
         drain()
-        writer.onUserInfoChanged()
+        writer.onMetadataChanged()
         File(sessionsDir, dirFor(FIRST_PART_ID).dirName).deleteRecursively()
 
         startPart(SECOND_PART_ID)
@@ -173,7 +173,7 @@ internal class SessionPartWriterBoundaryTest {
         drain()
         startPart(SECOND_PART_ID)
         drain()
-        writer.onUserInfoChanged()
+        writer.onMetadataChanged()
         drain()
 
         assertEquals("span0", sessionSpanIn(FIRST_PART_ID)?.span?.name)
@@ -251,7 +251,7 @@ internal class SessionPartWriterBoundaryTest {
         startPart(SECOND_PART_ID)
         drain()
 
-        writer.onUserInfoChanged()
+        writer.onMetadataChanged()
         drain()
 
         assertEquals("resource0", manifestIn(FIRST_PART_ID)?.resource?.app_version)

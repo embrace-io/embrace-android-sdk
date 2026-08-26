@@ -27,6 +27,9 @@ internal class ExperimentApiDelegate(
     private val pendingEvents = ConcurrentLinkedQueue<PendingEvent>()
     private val bufferedEntryCount = AtomicInteger(0)
 
+    override fun createExperiment(id: String, variant: String?, startedAt: Long?): TrackedExperiment =
+        TrackedExperimentImpl(id, variant, startedAt)
+
     override fun trackExperiments(experiments: List<TrackedExperiment>) {
         track("track_experiment", experiments.map { it.toData() })
     }
@@ -34,6 +37,9 @@ internal class ExperimentApiDelegate(
     override fun untrackExperiments(ids: List<String>, endedAt: Long?) {
         untrack("untrack_experiment", ExperimentKind.EXPERIMENT, ids, endedAt ?: now())
     }
+
+    override fun createFeatureFlag(id: String, startedAt: Long?): TrackedFeatureFlag =
+        TrackedFeatureFlagImpl(id, startedAt)
 
     override fun trackFeatureFlags(flags: List<TrackedFeatureFlag>) {
         track("track_feature_flag", flags.map { it.toData() })

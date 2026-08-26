@@ -21,9 +21,3 @@ public interface TrackedExperiment {
      */
     public val startedAt: Long?
 }
-
-internal class TrackedExperimentImpl(
-    override val id: String,
-    override val variant: String?,
-    override val startedAt: Long?,
-) : TrackedExperiment

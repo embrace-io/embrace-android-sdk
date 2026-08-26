@@ -14,10 +14,12 @@ import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.persistence.EnvelopeMetadataProto
 import io.embrace.android.embracesdk.internal.session.persistence.SessionManifest
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartSpan
+import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshots
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -38,6 +40,8 @@ internal class SessionPartWriterImplTest {
         private const val METADATA_FILE_NAME = "metadata.pb"
         private const val MANIFEST_FILE_NAME = "manifest.pb"
         private const val SESSION_SPAN_FILE_NAME = "session_span.pb"
+        private const val SPAN_SNAPSHOTS_FILE_NAME = "span_snapshots.pb"
+        private val IN_FLIGHT_SPAN = Span(spanId = "aaaaaaaaaaaaaaa1", name = "network-request")
         private const val ENVELOPE_VERSION = "0.1.0"
         private const val ENVELOPE_TYPE = "spans"
         private val SYMBOLS = mapOf("armeabi-v7a" to "my-symbols")
@@ -60,6 +64,7 @@ internal class SessionPartWriterImplTest {
 
     private lateinit var sessionSpan: FakeEmbraceSdkSpan
     private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
+    private var inFlightSpans: List<Span> = emptyList()
 
     private var resourceCount = 0
     private val resourceSource = object : EnvelopeResourceSource {
@@ -80,6 +85,7 @@ internal class SessionPartWriterImplTest {
         writeCount = 0
         resourceCount = 0
         onMetadataRead = {}
+        inFlightSpans = emptyList()
         sessionSpan = FakeEmbraceSdkSpan(name = "span0").apply { start(clock.now()) }
         currentSessionPartSpan = FakeCurrentSessionPartSpan(clock).apply { sessionPartSpan = sessionSpan }
     }
@@ -224,6 +230,7 @@ internal class SessionPartWriterImplTest {
                 "SessionManifestWriteFail",
                 "SessionMetadataWriteFail",
                 "SessionSpanWriteFail",
+                "SpanSnapshotsWriteFail",
             ),
             logger.internalErrorMessages.map { it.msg },
         )
@@ -237,6 +244,7 @@ internal class SessionPartWriterImplTest {
                 "SessionManifestWriteFail",
                 "SessionMetadataWriteFail",
                 "SessionSpanWriteFail",
+                "SpanSnapshotsWriteFail",
                 "SessionMetadataWriteFail",
             ),
             logger.internalErrorMessages.map { it.msg },
@@ -252,8 +260,10 @@ internal class SessionPartWriterImplTest {
                 "SessionManifestWriteFail",
                 "SessionMetadataWriteFail",
                 "SessionSpanWriteFail",
+                "SpanSnapshotsWriteFail",
                 "SessionMetadataWriteFail",
                 "SessionSpanWriteFail",
+                "SpanSnapshotsWriteFail",
             ),
             logger.internalErrorMessages.map { it.msg },
         )
@@ -638,6 +648,53 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
+    fun `the in-flight spans are written as soon as a session part starts`() {
+        val writer = createWriter()
+        inFlightSpans = listOf(IN_FLIGHT_SPAN)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        assertEquals(listOf("network-request"), spanSnapshotNamesIn(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `the in-flight spans are rewritten when the session part ends`() {
+        val writer = createWriter()
+        inFlightSpans = listOf(IN_FLIGHT_SPAN)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        clock.tick(1000)
+        inFlightSpans = listOf(IN_FLIGHT_SPAN.copy(name = "view-load"))
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+
+        assertEquals(listOf("view-load"), spanSnapshotNamesIn(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `an empty span snapshots file is written when nothing is in flight`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        assertEquals(emptyList<String>(), spanSnapshotNamesIn(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a periodic write leaves the span snapshots untouched`() {
+        val writer = createWriter()
+        inFlightSpans = listOf(IN_FLIGHT_SPAN)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        inFlightSpans = listOf(IN_FLIGHT_SPAN.copy(name = "view-load"))
+        writer.onPeriodicWrite()
+
+        assertEquals(listOf("network-request"), spanSnapshotNamesIn(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
     fun `no further writes are made once a crash has been handled`() {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
@@ -702,6 +759,7 @@ internal class SessionPartWriterImplTest {
         resourceSource,
         metadataSource,
         currentSessionPartSpan,
+        { inFlightSpans },
     )
 
     private fun configService(
@@ -756,6 +814,15 @@ internal class SessionPartWriterImplTest {
 
     private fun sessionSpanOnDisk(sessionPartId: String): SessionPartSpan? =
         partFile(sessionPartId, SESSION_SPAN_FILE_NAME)?.inputStream()?.use(SessionPartSpan.ADAPTER::decode)
+
+    private fun spanSnapshotNamesIn(sessionPartId: String): List<String?>? {
+        drain()
+        return partFile(sessionPartId, SPAN_SNAPSHOTS_FILE_NAME)
+            ?.inputStream()
+            ?.use(SpanSnapshots.ADAPTER::decode)
+            ?.spans
+            ?.map { it.name }
+    }
 
     private fun partFile(sessionPartId: String, fileName: String): File? {
         val directory = partDirs().single { it.sessionPartId == sessionPartId }

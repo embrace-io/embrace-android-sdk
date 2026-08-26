@@ -88,6 +88,7 @@ internal class SessionPartWriterBoundaryTest {
             resourceSource,
             { EnvelopeMetadata(userId = "user${writeCount++}") },
             currentSessionPartSpan,
+            { emptyList() },
         )
     }
 
@@ -229,7 +230,10 @@ internal class SessionPartWriterBoundaryTest {
         startPart(SECOND_PART_ID)
         drain()
 
-        assertEquals(listOf("SessionSpanWriteFail"), logger.internalErrorMessages.map { it.msg })
+        assertEquals(
+            listOf("SessionSpanWriteFail", "SpanSnapshotsWriteFail"),
+            logger.internalErrorMessages.map { it.msg },
+        )
         assertEquals("span1", sessionSpanIn(SECOND_PART_ID)?.span?.name)
     }
 

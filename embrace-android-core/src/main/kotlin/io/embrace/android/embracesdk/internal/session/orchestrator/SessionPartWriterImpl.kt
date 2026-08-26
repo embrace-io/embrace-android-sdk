@@ -9,11 +9,13 @@ import io.embrace.android.embracesdk.internal.envelope.session.SESSION_ENVELOPE_
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.persistence.SessionManifestWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadataWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectoryStore
 import io.embrace.android.embracesdk.internal.session.persistence.SessionSpanWriter
+import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshotsWriter
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -36,6 +38,7 @@ class SessionPartWriterImpl(
     private val resourceSource: EnvelopeResourceSource,
     private val metadataSource: EnvelopeMetadataSource,
     private val currentSessionPartSpan: CurrentSessionPartSpan,
+    private val spanSnapshotSource: () -> List<Span>,
 ) : SessionPartWriter {
 
     private companion object {
@@ -75,6 +78,7 @@ class SessionPartWriterImpl(
         queueManifestWrite(writers)
         queueMetadataWrite(writers)
         queueSessionSpanWrite(writers)
+        queueSpanSnapshotsWrite(writers)
         registerResourceChangeListener()
     }
 
@@ -87,6 +91,7 @@ class SessionPartWriterImpl(
             return
         }
         queueSessionSpanWrite(writers)
+        queueSpanSnapshotsWrite(writers)
     }
 
     override fun onMetadataChanged() {
@@ -165,6 +170,24 @@ class SessionPartWriterImpl(
     }
 
     /**
+     * Writes in-flight spans to a snapshot file.
+     */
+    private fun queueSpanSnapshotsWrite(writers: PartWriters) {
+        // TODO: future: don't call this every time the listener is invoked as it's expensive to
+        // obtain _all_ the spans for every change. Currently this write only happens at session
+        // start/end
+        val spans = try {
+            spanSnapshotSource()
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.SpanSnapshotsWriteFail, exc)
+            return
+        }
+        execute(InternalErrorType.SpanSnapshotsWriteFail, writers.spanSnapshotWrites::submit) {
+            writers.spanSnapshots.write(spans)
+        }
+    }
+
+    /**
      * Queues [action] with [submit], or runs it on the calling thread if the process is crashing
      * and the [worker] has already been sealed by [onCrash]. Telemetry gathered inside [action] can
      * throw, so a failure is tracked here rather than escaping onto a crashing thread.
@@ -207,9 +230,16 @@ class SessionPartWriterImpl(
             logger = logger,
         )
 
+        val spanSnapshots = SpanSnapshotsWriter(
+            sessionsDir = sessionsDir,
+            sessionPartDirectorySource = { directory },
+            logger = logger,
+        )
+
         val manifestWrites = CoalescingWriteQueue(worker)
         val metadataWrites = CoalescingWriteQueue(worker)
         val sessionSpanWrites = CoalescingWriteQueue(worker)
+        val spanSnapshotWrites = CoalescingWriteQueue(worker)
     }
 
     /**

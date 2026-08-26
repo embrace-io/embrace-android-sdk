@@ -13,11 +13,11 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpans
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SessionReconstructionService
 import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
-import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshots
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import okio.Buffer
 import org.junit.Assert.assertEquals
@@ -33,10 +33,8 @@ internal class SessionPartWriterResourceReadTest {
     private companion object {
         private const val USER_SESSION_ID = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         private const val SESSION_PART_ID = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-        private const val FORMAT_VERSION = 1
         private const val MANIFEST_FILE_NAME = "manifest.pb"
         private const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
-        private const val SPAN_SNAPSHOTS_FILE_NAME = "span_snapshots.pb"
         private val SYMBOLS = mapOf("armeabi-v7a" to "my-symbols")
 
         private val RESOURCE = EnvelopeResource(
@@ -58,10 +56,12 @@ internal class SessionPartWriterResourceReadTest {
             name = "emb-startup-moment",
         )
 
-        private val snapshotSpan = spanTemplate.copy(
-            span_id = "aaaaaaaaaaaaaaa3",
+        private val inFlightSpan = Span(
+            traceId = spanTemplate.trace_id,
+            spanId = "aaaaaaaaaaaaaaa3",
             name = "emb-network-request",
-            end_time_unix_nano = null,
+            startTimeNanos = spanTemplate.start_time_unix_nano,
+            status = Span.Status.UNSET,
         )
     }
 
@@ -76,6 +76,7 @@ internal class SessionPartWriterResourceReadTest {
     private lateinit var sessionSpan: FakeEmbraceSdkSpan
     private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
     private lateinit var service: SessionReconstructionService
+    private var inFlightSpans: List<Span> = emptyList()
 
     @Before
     fun setUp() {
@@ -83,6 +84,7 @@ internal class SessionPartWriterResourceReadTest {
         clock = FakeClock()
         executor = BlockingScheduledExecutorService(clock, true)
         logger = FakeInternalLogger(throwOnInternalError = false)
+        inFlightSpans = listOf(inFlightSpan)
         sessionSpan = FakeEmbraceSdkSpan(name = "emb-session").apply { start(clock.now()) }
         currentSessionPartSpan = FakeCurrentSessionPartSpan(clock).apply { sessionPartSpan = sessionSpan }
         writer = SessionPartWriterImpl(
@@ -100,6 +102,7 @@ internal class SessionPartWriterResourceReadTest {
             FakeEnvelopeResourceSource().apply { resource = RESOURCE },
             EnvelopeMetadataSource { EnvelopeMetadata(userId = "my-user-id") },
             currentSessionPartSpan,
+            { inFlightSpans },
         )
         service = SessionReconstructionService(lazy { sessionsDir }, logger)
     }
@@ -138,6 +141,13 @@ internal class SessionPartWriterResourceReadTest {
     }
 
     @Test
+    fun `the in-flight spans are reconstructed as snapshots`() {
+        val envelope = checkNotNull(writeSessionPart())
+        assertEquals(inFlightSpan, envelope.data.spanSnapshots?.first())
+        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+    }
+
+    @Test
     fun `a session part cannot be reconstructed without the manifest`() {
         writeSessionPart()
         File(partDir(), MANIFEST_FILE_NAME).delete()
@@ -146,8 +156,8 @@ internal class SessionPartWriterResourceReadTest {
     }
 
     /**
-     * Starts a session part, then hand-writes the files that no production writer produces yet, so
-     * the directory holds everything reconstruction requires.
+     * Starts a session part, then hand-writes the completed spans, which no production writer
+     * produces yet, so the directory holds everything reconstruction requires.
      */
     private fun writeSessionPart() = run {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
@@ -158,12 +168,6 @@ internal class SessionPartWriterResourceReadTest {
             Buffer().apply {
                 write(CompletedSpans.ADAPTER.encode(CompletedSpans(spans = listOf(completedSpan))))
             }.readByteArray(),
-        )
-        writePartFile(
-            SPAN_SNAPSHOTS_FILE_NAME,
-            SpanSnapshots.ADAPTER.encode(
-                SpanSnapshots(format_version = FORMAT_VERSION, spans = listOf(snapshotSpan)),
-            ),
         )
         service.reconstruct(directory())
     }

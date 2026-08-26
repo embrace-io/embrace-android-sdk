@@ -1,8 +1,10 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
@@ -71,6 +73,12 @@ class UserSessionOrchestrationModuleImpl(
             payloadSourceModule.resourceSource,
             payloadSourceModule.envelopeMetadataSource,
             openTelemetryModule.currentSessionPartSpan,
+            {
+                // don't include the session part span
+                openTelemetryModule.spanRepository.getActiveEmbraceSpans()
+                    .filterNot { it.hasEmbraceAttribute(EmbType.Ux.Session) }
+                    .mapNotNull(EmbraceSdkSpan::snapshot)
+            },
         )
         essentialServiceModule.userService.addUserInfoListener(sessionPartWriter::onMetadataChanged)
 

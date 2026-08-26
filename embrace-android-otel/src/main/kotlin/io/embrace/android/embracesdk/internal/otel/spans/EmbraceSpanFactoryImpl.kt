@@ -121,14 +121,19 @@ private class EmbraceSpanImpl(
     override var status: StatusData
         get() = currentStatus
         set(value) {
-            startedSpan.get()?.let { sdkSpan ->
-                synchronized(startedSpan) {
-                    sdkSpan.setStatus(value)
-                    currentStatus = value
-                    deps.spanRepository.notifySpanChanged(this)
-                }
+            if (setSpanStatus(value)) {
+                notifyChanged()
             }
         }
+
+    private fun setSpanStatus(value: StatusData): Boolean {
+        val sdkSpan = startedSpan.get() ?: return false
+        synchronized(startedSpan) {
+            sdkSpan.setStatus(value)
+            currentStatus = value
+        }
+        return true
+    }
 
     /**
      * Guards mutation and snapshotting of the lazily created event/link collections and their counters.
@@ -218,9 +223,9 @@ private class EmbraceSpanImpl(
             newSpan.setName(spanName)
 
             spanStartTimeMs = attemptedStartTimeMs
-            deps.spanRepository.notifySpanChanged(this)
         }
 
+        notifyChanged()
         return true
     }
 
@@ -242,7 +247,7 @@ private class EmbraceSpanImpl(
             startedSpan.get()?.let { spanToStop ->
                 spanId?.let { deps.stopCallback?.invoke(it) }
                 if (errorCode != null) {
-                    status = ERROR_STATUS
+                    setSpanStatus(ERROR_STATUS)
                     spanToStop.setEmbraceAttribute(errorCode)
                 } else if (status is StatusData.Error) {
                     spanToStop.setEmbraceAttribute(ErrorCodeAttribute.Failure)
@@ -257,12 +262,14 @@ private class EmbraceSpanImpl(
                 successful = !isRecording
                 if (successful) {
                     spanEndTimeMs = attemptedEndTimeMs
-                    deps.spanRepository.notifySpanChanged(this)
                     releaseRetainedData()
                 }
             }
         }
 
+        if (successful) {
+            notifyChanged()
+        }
         return successful
     }
 
@@ -337,6 +344,7 @@ private class EmbraceSpanImpl(
     override fun addAttribute(key: String, value: String): Boolean {
         val maxAttributeCount = deps.dataValidator.otelLimitsConfig.getMaxCustomAttributeCount()
         if (customAttributes.size < maxAttributeCount && key.isNotBlank()) {
+            var added = false
             synchronized(customAttributes) {
                 if (customAttributes.size < maxAttributeCount && isRecording) {
                     val attribute = deps.dataValidator.truncateAttribute(
@@ -345,9 +353,12 @@ private class EmbraceSpanImpl(
                         internal = internal,
                     )
                     customAttributes[attribute.first] = attribute.second
-                    deps.spanRepository.notifySpanChanged(this)
-                    return true
+                    added = true
                 }
+            }
+            if (added) {
+                notifyChanged()
+                return true
             }
         }
 
@@ -357,13 +368,17 @@ private class EmbraceSpanImpl(
 
     override fun updateName(newName: String): Boolean {
         if (newName.isNotBlank()) {
+            var updated = false
             synchronized(startedSpan) {
                 if (!spanStarted() || isRecording) {
                     spanName = newName
                     startedSpan.get()?.setName(spanName)
-                    deps.spanRepository.notifySpanChanged(this)
-                    return true
+                    updated = true
                 }
+            }
+            if (updated) {
+                notifyChanged()
+                return true
             }
         }
 
@@ -422,12 +437,16 @@ private class EmbraceSpanImpl(
     override fun addSystemAttribute(key: String, value: String) {
         val max = deps.dataValidator.otelLimitsConfig.getMaxSystemAttributeCount()
         if (systemAttributes.containsKey(key) || systemAttributes.size < max) {
+            var added = false
             synchronized(systemAttributes) {
                 if (systemAttributes.containsKey(key) || systemAttributes.size < max) {
                     systemAttributes[key] = value
-                    deps.spanRepository.notifySpanChanged(this)
-                    return
+                    added = true
                 }
+            }
+            if (added) {
+                notifyChanged()
+                return
             }
         }
         deps.telemetryService.trackAppliedLimit("span_attribute", AppliedLimitType.DROP)
@@ -435,7 +454,7 @@ private class EmbraceSpanImpl(
 
     override fun removeSystemAttribute(key: String) {
         systemAttributes.remove(key)
-        deps.spanRepository.notifySpanChanged(this)
+        notifyChanged()
     }
 
     override fun attributes(): Map<String, Any> {
@@ -512,6 +531,7 @@ private class EmbraceSpanImpl(
      * recording or that collection has reached [max]. Inlined so no closure is allocated on this hot path.
      */
     private inline fun recordEvent(system: Boolean, max: Int, eventSupplier: () -> EmbraceSpanEvent?): Boolean {
+        var added = false
         if (isRecording && eventCount(system) < max) {
             synchronized(collectionLock) {
                 if (eventCount(system) < max && isRecording) {
@@ -523,11 +543,15 @@ private class EmbraceSpanImpl(
                             customEvents().add(event)
                             customEventCount++
                         }
-                        deps.spanRepository.notifySpanChanged(this)
-                        return true
+                        added = true
                     }
                 }
             }
+        }
+
+        if (added) {
+            notifyChanged()
+            return true
         }
 
         deps.telemetryService.trackAppliedLimit(SPAN_EVENT_TELEMETRY_TYPE, AppliedLimitType.DROP)
@@ -538,6 +562,7 @@ private class EmbraceSpanImpl(
      * Link equivalent of [recordEvent].
      */
     private inline fun recordLink(system: Boolean, max: Int, linkSupplier: () -> EmbraceLinkData): Boolean {
+        var added = false
         if (isRecording && linkCount(system) < max) {
             synchronized(collectionLock) {
                 if (linkCount(system) < max && isRecording) {
@@ -549,10 +574,14 @@ private class EmbraceSpanImpl(
                         customLinks().add(link)
                         customLinkCount++
                     }
-                    deps.spanRepository.notifySpanChanged(this)
-                    return true
+                    added = true
                 }
             }
+        }
+
+        if (added) {
+            notifyChanged()
+            return true
         }
 
         deps.telemetryService.trackAppliedLimit(SPAN_LINK_TELEMETRY_TYPE, AppliedLimitType.DROP)
@@ -577,6 +606,13 @@ private class EmbraceSpanImpl(
         customLinks ?: ArrayList<EmbraceLinkData>(INITIAL_COLLECTION_CAPACITY).also { customLinks = it }
 
     private fun spanStarted() = startedSpan.get() != null
+
+    /**
+     * Tells the repository this span's data changed. Must be called after the monitor is released.
+     */
+    private fun notifyChanged() {
+        deps.spanRepository.notifySpanChanged(this)
+    }
 
     private fun Map<String, String>.redactIfSensitive(): Map<String, String> {
         return mapValues {

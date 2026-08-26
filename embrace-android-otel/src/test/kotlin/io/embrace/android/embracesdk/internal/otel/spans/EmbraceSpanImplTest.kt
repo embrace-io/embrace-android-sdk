@@ -60,6 +60,7 @@ import org.junit.Test
 import java.util.Queue
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 internal class EmbraceSpanImplTest {
@@ -721,6 +722,33 @@ internal class EmbraceSpanImplTest {
         val expectedDrops = THREAD_COUNT * attemptsPerThread - max
         assertEquals(expectedDrops, telemetryService.appliedLimits.size)
         assertTrue(telemetryService.appliedLimits.all { it == "span_event" to AppliedLimitType.DROP })
+    }
+
+    @Test
+    fun `span change listener does not run while the span holds its locks`() {
+        assertTrue(embraceSpan.start())
+        val notifications = AtomicInteger(0)
+        val mutatedFromListener = CountDownLatch(1)
+        val notifiedSpans = ConcurrentLinkedQueue<EmbraceSdkSpan>()
+
+        spanRepository.addSpanChangeListener { span ->
+            notifiedSpans.add(span)
+            if (notifications.getAndIncrement() == 0) {
+                val mutator = Thread {
+                    if (embraceSpan.addEvent("event-from-listener")) {
+                        mutatedFromListener.countDown()
+                    }
+                }
+                mutator.start()
+                mutator.join(THREAD_JOIN_TIMEOUT_MS)
+            }
+        }
+
+        assertTrue(embraceSpan.addEvent(EXPECTED_EVENT_NAME))
+        assertTrue(mutatedFromListener.await(0, TimeUnit.MILLISECONDS))
+        assertEquals(2, notifications.get())
+        assertEquals(2, embraceSpan.events().size)
+        assertTrue(notifiedSpans.all { it === embraceSpan })
     }
 
     /**

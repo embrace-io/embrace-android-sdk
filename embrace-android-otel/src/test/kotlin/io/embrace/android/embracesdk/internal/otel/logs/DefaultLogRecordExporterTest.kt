@@ -8,8 +8,8 @@ import io.embrace.android.embracesdk.internal.otel.export.ExternalExportDispatch
 import io.embrace.android.embracesdk.internal.otel.export.immediateExportDispatcher
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.opentelemetry.kotlin.export.OperationResultCode
+import io.opentelemetry.kotlin.logging.data.LogRecordData
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
-import io.opentelemetry.kotlin.logging.model.ReadableLogRecord
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -77,7 +77,7 @@ internal class DefaultLogRecordExporterTest {
     fun `external export runs off the calling thread and is awaited by forceFlush()`() {
         val exportThreads = mutableListOf<String>()
         val threadRecordingExporter = object : LogRecordExporter {
-            override suspend fun export(telemetry: List<ReadableLogRecord>): OperationResultCode {
+            override suspend fun export(telemetry: List<LogRecordData>): OperationResultCode {
                 exportThreads += Thread.currentThread().name
                 return OperationResultCode.Success
             }
@@ -97,7 +97,7 @@ internal class DefaultLogRecordExporterTest {
     fun `a throwing external exporter neither stops the others nor fails the internal store`() {
         val logSink: LogSink = LogSinkImpl()
         val throwingExporter = object : LogRecordExporter {
-            override suspend fun export(telemetry: List<ReadableLogRecord>): OperationResultCode =
+            override suspend fun export(telemetry: List<LogRecordData>): OperationResultCode =
                 throw RuntimeException("boom")
 
             override suspend fun forceFlush(): OperationResultCode = OperationResultCode.Success

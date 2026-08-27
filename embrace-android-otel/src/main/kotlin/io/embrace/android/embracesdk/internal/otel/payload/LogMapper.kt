@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.internal.otel.payload
 
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Log
-import io.opentelemetry.kotlin.logging.model.ReadableLogRecord
+import io.opentelemetry.kotlin.logging.data.LogRecordData
 
-fun ReadableLogRecord.toEmbracePayload(): Log {
+fun LogRecordData.toEmbracePayload(): Log {
     val isSpanContextValid = spanContext.isValid
     return Log(
         traceId = if (isSpanContextValid) spanContext.traceId else null,

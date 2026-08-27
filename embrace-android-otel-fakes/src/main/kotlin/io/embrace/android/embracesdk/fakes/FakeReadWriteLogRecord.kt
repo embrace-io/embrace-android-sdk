@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.opentelemetry.kotlin.InstrumentationScopeInfo
 import io.opentelemetry.kotlin.attributes.AttributesMutator
+import io.opentelemetry.kotlin.logging.data.LogRecordData
 import io.opentelemetry.kotlin.logging.model.ReadWriteLogRecord
 import io.opentelemetry.kotlin.logging.SeverityNumber
 import io.opentelemetry.kotlin.resource.Resource
@@ -20,4 +21,7 @@ class FakeReadWriteLogRecord(
     override var spanContext: SpanContext = FakeSpanContext(),
     override val attributes: Map<String, Any> = attributeContainer.attributes,
     override val droppedAttributesCount: Int = 0,
-) : ReadWriteLogRecord, AttributesMutator by attributeContainer
+) : ReadWriteLogRecord, AttributesMutator by attributeContainer {
+
+    override fun toLogRecordData(): LogRecordData = this
+}

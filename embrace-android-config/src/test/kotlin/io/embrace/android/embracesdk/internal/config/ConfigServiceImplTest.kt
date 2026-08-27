@@ -76,6 +76,22 @@ internal class ConfigServiceImplTest {
     }
 
     @Test
+    fun `test normalized DeviceId is only calculated once`() {
+        var resolutions = 0
+        thresholdCheck = BehaviorThresholdCheck {
+            resolutions++
+            "07D85B44E4E245F4A30E559BFC0D0739"
+        }
+        val expected = thresholdCheck.getNormalizedDeviceId()
+
+        repeat(5) {
+            assertEquals(expected, thresholdCheck.getNormalizedDeviceId())
+            assertTrue(thresholdCheck.isBehaviorEnabled(50f))
+        }
+        assertEquals(1, resolutions)
+    }
+
+    @Test
     fun `test isBehaviourEnabled with bad input`() {
         thresholdCheck = BehaviorThresholdCheck { "07D85B44E4E245F4A30E559BFCFFFFFF" }
         assertFalse(thresholdCheck.isBehaviorEnabled(1000f))

@@ -192,12 +192,31 @@ internal class SessionReconstructionServiceCompletedSpansTest {
     }
 
     @Test
-    fun `a missing completed spans log is reported`() {
+    fun `a missing completed spans log reconstructs the session span alone`() {
         writeManifest()
         writeMetadata()
         writeSessionSpan()
-        assertNull(service.reconstruct(partDirectory))
-        assertReconstructionFailureTracked()
+        writeSpanSnapshots()
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(listOf(fullyPopulatedSpan), payload.spans)
+        assertNull(payload.spanSnapshots)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a missing completed spans log does not stop the unfinished session span being delivered`() {
+        val incomplete = fullyPopulatedSpan.copy(endTimeNanos = null)
+        sessionSpan = incomplete
+        writeManifest()
+        writeMetadata()
+        writeSessionSpan()
+        writeSpanSnapshots()
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertNull(payload.spans)
+        assertEquals(listOf(incomplete), payload.spanSnapshots)
+        assertNoInternalErrors()
     }
 
     @Test

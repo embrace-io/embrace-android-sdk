@@ -26,8 +26,8 @@ class CompletedSpansWriter(
 
     /**
      * Appends [spans] to the log for the active session part, leaving the spans already logged in
-     * place. Writing no spans creates an empty log, so a session part in which nothing completed
-     * can still be read back.
+     * place. A session part in which nothing completed has no log at all, which reconstruction
+     * reads back as no completed spans.
      */
     fun write(spans: List<Span>): Boolean = synchronized(lock) {
         try {

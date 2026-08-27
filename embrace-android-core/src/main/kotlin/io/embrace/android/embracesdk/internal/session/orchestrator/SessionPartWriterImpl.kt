@@ -80,7 +80,6 @@ class SessionPartWriterImpl(
         queueMetadataWrite(writers)
         queueSessionSpanWrite(writers)
         queueSpanSnapshotsWrite(writers)
-        queueCompletedSpansWrite(writers, emptyList())
         registerResourceChangeListener()
     }
 

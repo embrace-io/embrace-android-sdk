@@ -73,14 +73,7 @@ class SessionReconstructionService(
         }
 
         val completedSpans = readCompletedSpansFile(partDir) ?: return null
-
-        val snapshots = readPartFile(
-            partDir,
-            SPAN_SNAPSHOTS_FILE_NAME,
-            SpanSnapshots.ADAPTER,
-            SpanSnapshots::format_version,
-        ) ?: return null
-        val persistedSnapshots = snapshots.spans.map(SpanProto::toPayload)
+        val persistedSnapshots = readSpanSnapshotsFile(partDir) ?: return null
 
         // A session span with no end time never finished, so it is delivered as a snapshot rather
         // than as a completed span. The snapshots file never holds the session span itself.
@@ -109,20 +102,37 @@ class SessionReconstructionService(
     }
 
     /**
-     * Decodes the completed spans logged in a session part directory, or null if the log is absent
-     * or cannot be read.
+     * Decodes the completed spans logged in a session part directory, or null if the log cannot be
+     * read.
      */
     private fun readCompletedSpansFile(partDir: File): List<Span>? {
         val src = File(partDir, COMPLETED_SPANS_FILE_NAME)
+        if (!src.exists()) {
+            return emptyList()
+        }
         return try {
-            if (!src.isFile) {
-                throw IOException("Completed spans file not found")
-            }
             src.source().buffer().use(::readCompletedSpans).map(SpanProto::toPayload)
         } catch (exc: Throwable) {
             trackFailure(exc)
             null
         }
+    }
+
+    /**
+     * Decodes the span snapshots persisted in a session part directory, or null if the file cannot
+     * be read.
+     */
+    private fun readSpanSnapshotsFile(partDir: File): List<Span>? {
+        if (!File(partDir, SPAN_SNAPSHOTS_FILE_NAME).exists()) {
+            return emptyList()
+        }
+        val snapshots = readPartFile(
+            partDir,
+            SPAN_SNAPSHOTS_FILE_NAME,
+            SpanSnapshots.ADAPTER,
+            SpanSnapshots::format_version,
+        ) ?: return null
+        return snapshots.spans.map(SpanProto::toPayload)
     }
 
     /**

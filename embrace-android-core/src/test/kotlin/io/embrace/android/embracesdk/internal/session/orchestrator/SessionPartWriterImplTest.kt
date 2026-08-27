@@ -233,7 +233,6 @@ internal class SessionPartWriterImplTest {
                 "SessionMetadataWriteFail",
                 "SessionSpanWriteFail",
                 "SpanSnapshotsWriteFail",
-                "CompletedSpansWriteFail",
             ),
             logger.internalErrorMessages.map { it.msg },
         )
@@ -248,7 +247,6 @@ internal class SessionPartWriterImplTest {
                 "SessionMetadataWriteFail",
                 "SessionSpanWriteFail",
                 "SpanSnapshotsWriteFail",
-                "CompletedSpansWriteFail",
                 "SessionMetadataWriteFail",
             ),
             logger.internalErrorMessages.map { it.msg },
@@ -265,7 +263,6 @@ internal class SessionPartWriterImplTest {
                 "SessionMetadataWriteFail",
                 "SessionSpanWriteFail",
                 "SpanSnapshotsWriteFail",
-                "CompletedSpansWriteFail",
                 "SessionMetadataWriteFail",
                 "SessionSpanWriteFail",
                 "SpanSnapshotsWriteFail",
@@ -787,11 +784,12 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
-    fun `a session part in which nothing completes still has an empty log`() {
+    fun `a session part in which nothing completes writes no log`() {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
 
-        assertEquals(emptyList<String>(), completedSpanNamesIn(SESSION_PART_ID))
+        assertNull(partFile(SESSION_PART_ID, COMPLETED_SPANS_FILE_NAME))
         assertNoInternalErrors()
     }
 
@@ -805,7 +803,7 @@ internal class SessionPartWriterImplTest {
         writer.onSpanCompleted(emptyList())
 
         assertEquals(submitCount, executor.submitCount)
-        assertEquals(emptyList<String>(), completedSpanNamesIn(SESSION_PART_ID))
+        assertNull(partFile(SESSION_PART_ID, COMPLETED_SPANS_FILE_NAME))
         assertNoInternalErrors()
     }
 

@@ -216,7 +216,13 @@ internal class LeakDetector(
                 // The suspectedAtCycle is captured after the first GC cycle (when a TrackedReference becomes a ConfirmedSuspect).
                 // So we +1 here so that cycle is represented in the reporting (instead of reporting a confusing 0 value).
                 val cyclesSurvived = cycleCount - suspect.suspectedAtCycle + 1
-                LeakSnapshot(suspect.trackedAtMs, suspect.token, cyclesSurvived, referent.javaClass.name)
+                LeakSnapshot(
+                    suspect.trackedAtMs,
+                    suspect.token,
+                    cyclesSurvived,
+                    referent.javaClass.name,
+                    System.identityHashCode(referent),
+                )
             }
         }
     }
@@ -332,12 +338,18 @@ internal class LeakDetector(
     /**
      * One entry of [suspects]: everything needed to report a confirmed suspect, read fresh at snapshot time rather than
      * retained by the [ConfirmedSuspect] itself, and nothing that could retain the object it describes.
+     *
+     * [id] is the referent's identity hashcode - stable for its lifetime regardless of when it's first read, so a
+     * suspect reported again in a later session part can be told apart from a different instance of the same class
+     * confirmed in the same one. Not guaranteed unique (identity hashcodes can collide, or be reused once an object is
+     * actually collected), but at the scale of suspects any one class accumulates here the odds are negligible.
      */
     internal data class LeakSnapshot(
         val trackedAtMs: Long,
         val token: Any?,
         val cyclesSurvived: Long,
         val className: String,
+        val id: Int,
     )
 
     internal companion object {

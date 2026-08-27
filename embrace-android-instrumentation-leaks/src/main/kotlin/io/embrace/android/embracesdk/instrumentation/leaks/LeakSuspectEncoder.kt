@@ -14,9 +14,10 @@ package io.embrace.android.embracesdk.instrumentation.leaks
  * A suspect whose [LeakDetector.LeakSnapshot.token] is not a [LeakContext], or whose session IDs are empty, is dropped: a
  * leak whose session is unknown is not reportable.
  *
- * The format is `<sessionPartId>_<userSessionId>:<objectType>|<className>|<cyclesSurvived>,...;...` - groups separated by
- * `;`, entries within a group by `,`, fields within an entry by `|`. None of these, nor `:`, can appear in a JVM class
- * name, so no escaping is needed.
+ * The format is `<sessionPartId>_<userSessionId>:<objectType>|<className>|<cyclesSurvived>|<id>,...;...` - groups
+ * separated by `;`, entries within a group by `,`, fields within an entry by `|`. None of these, nor `:`, can appear in a
+ * JVM class name, so no escaping is needed. `<id>` is [LeakDetector.LeakSnapshot.id] rendered as hex, matching the
+ * unsigned convention `Object.toString()` already uses for identity hashcodes.
  *
  * Session-part attributes are not length-truncated by the platform the way custom attributes are, so [maxLength] is
  * enforced here - defaulting to 2000, matching `OtelLimitsConfig.getMaxInternalAttributeValueLength()`. Suspects are kept
@@ -55,7 +56,7 @@ private fun toCandidate(snapshot: LeakDetector.LeakSnapshot): Candidate? {
 
     return Candidate(
         groupKey = "${sessionIds.sessionPartId}_${sessionIds.userSessionId}",
-        entry = "${context.objectType}|${snapshot.className}|${snapshot.cyclesSurvived}",
+        entry = "${context.objectType}|${snapshot.className}|${snapshot.cyclesSurvived}|${Integer.toHexString(snapshot.id)}",
         cyclesSurvived = snapshot.cyclesSurvived,
     )
 }

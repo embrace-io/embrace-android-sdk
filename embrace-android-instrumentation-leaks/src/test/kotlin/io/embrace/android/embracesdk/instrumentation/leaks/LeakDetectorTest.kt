@@ -57,6 +57,7 @@ internal class LeakDetectorTest {
             leaked.javaClass.name,
             suspect.className,
         )
+        assertEquals(System.identityHashCode(leaked), suspect.id)
 
         gcCycleCount = 7L
         assertEquals(
@@ -64,6 +65,26 @@ internal class LeakDetectorTest {
             5L,
             detector.suspects().single().cyclesSurvived,
         )
+    }
+
+    @Test
+    fun `id identifies the referent and stays stable across repeated snapshots`() {
+        val first = Any()
+        val second = Any()
+
+        detector.trackOpened(first)
+        detector.trackOpened(second)
+        val firstRef = checkNotNull(detector.trackClosed(first, "first"))
+        val secondRef = checkNotNull(detector.trackClosed(second, "second"))
+        confirmAfterSecondSentinel(firstRef)
+        confirmAfterSecondSentinel(secondRef)
+
+        val snapshots = detector.suspects().associateBy { it.token }
+        assertEquals(System.identityHashCode(first), snapshots.getValue("first").id)
+        assertEquals(System.identityHashCode(second), snapshots.getValue("second").id)
+
+        // stable across repeated snapshots, not re-randomized per call
+        assertEquals(snapshots.getValue("first").id, detector.suspects().single { it.token == "first" }.id)
     }
 
     @Test

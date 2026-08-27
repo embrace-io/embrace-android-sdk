@@ -43,6 +43,7 @@ internal class AutoDataCaptureBehaviorImplTest {
             assertTrue(isNavigationStateCaptureEnabled())
             assertFalse(isSmoothnessCaptureEnabled())
             assertFalse(isActivityProcessLifecycleTrackerEnabled())
+            assertFalse(isActivityLeakDetectionEnabled())
         }
     }
 
@@ -239,6 +240,27 @@ internal class AutoDataCaptureBehaviorImplTest {
                 localActivityProcessLifecycleTrackerEnabled = true,
                 remote = RemoteConfig(pctActivityProcessLifecycleTrackerEnabled = 0.0f),
             ).isActivityProcessLifecycleTrackerEnabled(),
+        )
+    }
+
+    @Test
+    fun `activity leak detection disabled when remote field null`() {
+        assertFalse(createAutoDataCaptureBehavior(remoteCfg = null).isActivityLeakDetectionEnabled())
+    }
+
+    @Test
+    fun `activity leak detection enabled when pct is 100`() {
+        assertTrue(
+            createBehavior(remote = RemoteConfig(pctActivityLeakDetectionEnabled = 100.0f))
+                .isActivityLeakDetectionEnabled(),
+        )
+    }
+
+    @Test
+    fun `activity leak detection disabled when pct is 0`() {
+        assertFalse(
+            createBehavior(remote = RemoteConfig(pctActivityLeakDetectionEnabled = 0.0f))
+                .isActivityLeakDetectionEnabled(),
         )
     }
 

@@ -95,4 +95,9 @@ interface AutoDataCaptureBehavior {
      * androidx ProcessLifecycleOwner implementation.
      */
     fun isActivityProcessLifecycleTrackerEnabled(): Boolean
+
+    /**
+     * Whether Activity leak detection is enabled.
+     */
+    fun isActivityLeakDetectionEnabled(): Boolean
 }

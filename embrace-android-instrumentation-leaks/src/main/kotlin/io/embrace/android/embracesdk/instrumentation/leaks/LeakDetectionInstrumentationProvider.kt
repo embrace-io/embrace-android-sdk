@@ -16,7 +16,7 @@ class LeakDetectionInstrumentationProvider : InstrumentationProvider {
         }
         return DataSourceState(
             factory = { LeakDetectionDataSource(args) },
-            configGate = { true },
+            configGate = { args.configService.autoDataCaptureBehavior.isActivityLeakDetectionEnabled() },
         )
     }
 }

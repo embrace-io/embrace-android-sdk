@@ -148,4 +148,10 @@ data class RemoteConfig(
      */
     @SerialName("vitals")
     val vitalsRemoteConfig: VitalsRemoteConfig? = null,
+
+    /**
+     * Percentage of devices for which activity leak detection is captured.
+     */
+    @SerialName("pct_activity_leak_detection_enabled")
+    val pctActivityLeakDetectionEnabled: Float? = null,
 )

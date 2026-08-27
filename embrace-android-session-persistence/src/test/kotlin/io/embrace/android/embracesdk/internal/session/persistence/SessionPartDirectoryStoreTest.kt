@@ -163,6 +163,52 @@ internal class SessionPartDirectoryStoreTest {
     }
 
     @Test
+    fun `stored directories are the ones created by the store`() {
+        assertEquals(emptyList<SessionPartDirectory>(), store.storedDirectories())
+
+        val other = partDirectory.copy(timestamp = NOW + 1)
+        create(partDirectory)
+        create(other)
+
+        assertEquals(setOf(partDirectory, other), store.storedDirectories().toSet())
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `stored directories include those left behind by a previous process`() {
+        val previous = partDirectory.copy(timestamp = NOW - 1, uuid = "d3721de2-490a-533b-cacd-36423d8b6aab")
+        createOnDisk(previous)
+        create(partDirectory)
+
+        assertEquals(setOf(previous, partDirectory), store.storedDirectories().toSet())
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `deleting a directory removes its contents and its index entry`() {
+        val survivor = partDirectory.copy(timestamp = NOW + 1)
+        create(partDirectory)
+        create(survivor)
+
+        store.delete(partDirectory)
+
+        assertFalse(partDir(partDirectory).exists())
+        assertEquals(listOf(survivor), store.storedDirectories())
+        assertEquals(listOf(survivor.dirName), dirNames())
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `deleting a directory that is not on disk is tolerated`() {
+        create(partDirectory)
+        store.delete(partDirectory)
+        store.delete(partDirectory)
+
+        assertEquals(emptyList<SessionPartDirectory>(), store.storedDirectories())
+        assertNoInternalErrors()
+    }
+
+    @Test
     fun `failure is tracked when the sessions root is a regular file`() {
         val occupiedRoot = File(sessionsDir, "occupied").apply { writeText("not a directory") }
         store = createStore(root = occupiedRoot)

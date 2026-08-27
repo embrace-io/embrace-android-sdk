@@ -88,18 +88,61 @@ class SessionReconstructionService(
             else -> persistedSnapshots + sessionSpanPayload
         }
 
+        val deduped = dedupeSpanIds(spans, spanSnapshots)
+
         return Envelope(
             resource = resource.toPayload(),
             metadata = metadata,
             version = manifest.envelope_version,
             type = manifest.envelope_type,
             data = SessionPartPayload(
-                spans = spans.takeIf(List<Span>::isNotEmpty),
-                spanSnapshots = spanSnapshots.takeIf(List<Span>::isNotEmpty),
+                spans = deduped.spans.takeIf(List<Span>::isNotEmpty),
+                spanSnapshots = deduped.spanSnapshots.takeIf(List<Span>::isNotEmpty),
                 sharedLibSymbolMapping = manifest.shared_lib_symbol_mapping?.symbols,
             ),
         )
     }
+
+    /**
+     * Removes spans that share a span ID with another span in the payload.
+     *
+     * The same span can reach the payload twice if a snapshot and completed span file get out of sync.
+     * The completed span always supersedes snapshots, and otherwise the span with the latest end time
+     * is chosen.
+     */
+    private fun dedupeSpanIds(spans: List<Span>, spanSnapshots: List<Span>): DedupedSpans {
+        val completedIds = spans.mapNotNull(Span::spanId).toSet()
+        val remainingSnapshots = spanSnapshots.filter { snapshot ->
+            val id = snapshot.spanId
+            id == null || id !in completedIds
+        }
+        val dedupedSpans = keepLatestPerSpanId(spans)
+        val dedupedSnapshots = keepLatestPerSpanId(remainingSnapshots)
+
+        val duplicates = (spans.size - dedupedSpans.size) + (spanSnapshots.size - dedupedSnapshots.size)
+        if (duplicates > 0) {
+            logger.trackInternalError(
+                InternalErrorType.DuplicateSpanIds,
+                IllegalStateException("Removed duplicate spans from session part payload"),
+            )
+        }
+        return DedupedSpans(dedupedSpans, dedupedSnapshots)
+    }
+
+    private fun keepLatestPerSpanId(spans: List<Span>): List<Span> {
+        val winners = mutableMapOf<String, Int>()
+        spans.forEachIndexed { index, span ->
+            val id = span.spanId ?: return@forEachIndexed
+            val incumbent = winners[id]
+            if (incumbent == null || span.endTime() > spans[incumbent].endTime()) {
+                winners[id] = index
+            }
+        }
+        val kept = winners.values.toSet()
+        return spans.filterIndexed { index, span -> span.spanId == null || index in kept }
+    }
+
+    private fun Span.endTime(): Long = endTimeNanos ?: Long.MIN_VALUE
 
     /**
      * Decodes the completed spans logged in a session part directory, or null if the log cannot be
@@ -180,4 +223,6 @@ class SessionReconstructionService(
     private fun trackFailure(exc: Throwable) {
         logger.trackInternalError(InternalErrorType.SessionReconstructionFail, exc)
     }
+
+    private class DedupedSpans(val spans: List<Span>, val spanSnapshots: List<Span>)
 }

@@ -360,7 +360,7 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
-    fun `the session span is snapshotted before the write is queued`() {
+    fun `the span bound to the part is written even if the current session span is cleared`() {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
 
@@ -369,6 +369,17 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.span?.name)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a queued session span write persists the state at the time it runs`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        sessionSpan.name = "span1"
+        drain()
+
+        assertEquals("span1", sessionSpanIn(SESSION_PART_ID)?.span?.name)
         assertNoInternalErrors()
     }
 
@@ -432,7 +443,7 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
-    fun `the ended session span is snapshotted before the write is queued`() {
+    fun `the ended session span is written even if the current session span is cleared`() {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()

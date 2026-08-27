@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.session.persistence
 
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
+import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -44,6 +45,9 @@ internal class SessionReconstructionServiceMetadataTest {
     private var metadataProvider: () -> EnvelopeMetadata = { fullyPopulatedMetadata }
 
     @Volatile
+    private var resourceProvider: () -> EnvelopeResource = { fullyPopulatedResource }
+
+    @Volatile
     private var activePart: SessionPartDirectory? = partDirectory
 
     @Before
@@ -51,9 +55,16 @@ internal class SessionReconstructionServiceMetadataTest {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
         logger = FakeInternalLogger(throwOnInternalError = false)
         metadataProvider = { fullyPopulatedMetadata }
+        resourceProvider = { fullyPopulatedResource }
         activePart = partDirectory
         manifestWriter = SessionManifestWriter(lazy { sessionsDir }, logger)
-        metadataWriter = SessionMetadataWriter(lazy { sessionsDir }, { activePart }, { metadataProvider() }, logger)
+        metadataWriter = SessionMetadataWriter(
+            lazy { sessionsDir },
+            { activePart },
+            { metadataProvider() },
+            { resourceProvider() },
+            logger,
+        )
         sessionSpanWriter = SessionSpanWriter(lazy { sessionsDir }, { activePart }, logger)
         service = SessionReconstructionService(lazy { sessionsDir }, logger)
         createPartDir(partDirectory)
@@ -103,6 +114,27 @@ internal class SessionReconstructionServiceMetadataTest {
         assertEquals("userId", service.reconstruct(partDirectory)?.metadata?.userId)
         assertEquals("otherUserId", service.reconstruct(other)?.metadata?.userId)
         assertNoInternalErrors()
+    }
+
+    @Test
+    fun `both halves of the resource are merged into the reconstructed envelope`() {
+        write()
+        assertEquals(fullyPopulatedResource, service.reconstruct(partDirectory)?.resource)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `metadata with no resource is reported`() {
+        write()
+        writeMetadataBytes(
+            EnvelopeMetadataProto(
+                format_version = FORMAT_VERSION,
+                user_id = "userId",
+                resource = null,
+            ),
+        )
+        assertNull(service.reconstruct(partDirectory))
+        assertReconstructionFailureTracked()
     }
 
     @Test

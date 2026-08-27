@@ -9,17 +9,17 @@ internal class EnvelopeMetadataMapperTest {
 
     @Test
     fun `every field maps to its proto counterpart`() {
-        assertEquals(fullyPopulatedMetadataProto, fullyPopulatedMetadata.toProto())
+        assertEquals(fullyPopulatedMetadataProto, fullyPopulatedMetadata.toProto(fullyPopulatedMutableResourceProto))
     }
 
     @Test
     fun `the format version is stamped on the proto`() {
-        assertEquals(FORMAT_VERSION, EnvelopeMetadata().toProto().format_version)
+        assertEquals(FORMAT_VERSION, EnvelopeMetadata().toProto(MutableResourceProto()).format_version)
     }
 
     @Test
     fun `null user fields map to absent proto fields`() {
-        val proto = EnvelopeMetadata(timezoneDescription = "Europe/London", locale = "en_GB").toProto()
+        val proto = EnvelopeMetadata(timezoneDescription = "Europe/London", locale = "en_GB").toProto(MutableResourceProto())
         assertNull(proto.user_id)
         assertNull(proto.email)
         assertNull(proto.username)
@@ -27,7 +27,7 @@ internal class EnvelopeMetadataMapperTest {
 
     @Test
     fun `empty string fields are preserved`() {
-        val proto = EnvelopeMetadata(userId = "", email = "", username = "").toProto()
+        val proto = EnvelopeMetadata(userId = "", email = "", username = "").toProto(MutableResourceProto())
         assertEquals("", proto.user_id)
         assertEquals("", proto.email)
         assertEquals("", proto.username)
@@ -35,30 +35,30 @@ internal class EnvelopeMetadataMapperTest {
 
     @Test
     fun `null timezone and locale map to empty strings`() {
-        val proto = EnvelopeMetadata().toProto()
+        val proto = EnvelopeMetadata().toProto(MutableResourceProto())
         assertEquals("", proto.timezone_description)
         assertEquals("", proto.locale)
     }
 
     @Test
     fun `null personas map to an empty list`() {
-        assertEquals(emptyList<String>(), EnvelopeMetadata(personas = null).toProto().personas)
+        assertEquals(emptyList<String>(), EnvelopeMetadata(personas = null).toProto(MutableResourceProto()).personas)
     }
 
     @Test
     fun `empty personas map to an empty list`() {
-        assertEquals(emptyList<String>(), EnvelopeMetadata(personas = emptySet()).toProto().personas)
+        assertEquals(emptyList<String>(), EnvelopeMetadata(personas = emptySet()).toProto(MutableResourceProto()).personas)
     }
 
     @Test
     fun `personas are preserved`() {
         val personas = linkedSetOf("payer", "first_day", "persona1")
-        assertEquals(personas.toList(), EnvelopeMetadata(personas = personas).toProto().personas)
+        assertEquals(personas.toList(), EnvelopeMetadata(personas = personas).toProto(MutableResourceProto()).personas)
     }
 
     @Test
     fun `fully populated metadata survives a round trip through the wire format`() {
-        val proto = fullyPopulatedMetadata.toProto()
+        val proto = fullyPopulatedMetadata.toProto(fullyPopulatedMutableResourceProto)
         assertEquals(proto, EnvelopeMetadataProto.ADAPTER.decode(EnvelopeMetadataProto.ADAPTER.encode(proto)))
     }
 
@@ -103,11 +103,19 @@ internal class EnvelopeMetadataMapperTest {
 
     @Test
     fun `fully populated metadata survives a round trip through the mappers`() {
-        assertEquals(fullyPopulatedMetadata, fullyPopulatedMetadata.toProto().toPayload())
+        assertEquals(fullyPopulatedMetadata, fullyPopulatedMetadata.toProto(fullyPopulatedMutableResourceProto).toPayload())
     }
 
     @Test
     fun `metadata with no populated fields survives a round trip through the mappers`() {
-        assertEquals(EnvelopeMetadata(), EnvelopeMetadata().toProto().toPayload())
+        assertEquals(EnvelopeMetadata(), EnvelopeMetadata().toProto(MutableResourceProto()).toPayload())
+    }
+
+    @Test
+    fun `the mutable resource half is carried on the proto`() {
+        assertEquals(
+            fullyPopulatedMutableResourceProto,
+            EnvelopeMetadata().toProto(fullyPopulatedMutableResourceProto).resource,
+        )
     }
 }

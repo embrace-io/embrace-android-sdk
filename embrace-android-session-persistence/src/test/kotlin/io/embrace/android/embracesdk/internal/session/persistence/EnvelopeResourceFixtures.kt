@@ -39,9 +39,9 @@ internal val fullyPopulatedResource = EnvelopeResource(
     extras = mapOf("custom.key" to "custom.value", "other.key" to "other.value"),
 )
 
-internal val fullyPopulatedResourceProto = EnvelopeResourceProto(
+internal val fullyPopulatedImmutableResourceProto = ImmutableResourceProto(
     app_version = "appVersion",
-    app_framework = EnvelopeResourceProto.AppFramework.UNITY,
+    app_framework = ImmutableResourceProto.AppFramework.UNITY,
     build_id = "buildId",
     app_ecosystem_id = "appEcosystemId",
     build_type = "buildType",
@@ -50,24 +50,27 @@ internal val fullyPopulatedResourceProto = EnvelopeResourceProto(
     bundle_version = "bundleVersion",
     sdk_version = "sdkVersion",
     sdk_simple_version = 53,
-    react_native_bundle_id = "reactNativeBundleId",
-    react_native_version = "reactNativeVersion",
-    javascript_patch_number = "javascriptPatchNumber",
-    hosted_platform_version = "hostedPlatformVersion",
-    hosted_sdk_version = "hostedSdkVersion",
-    unity_build_id = "unityBuildId",
     device_manufacturer = "deviceManufacturer",
     device_model = "deviceModel",
     device_architecture = "deviceArchitecture",
-    jailbroken = true,
     disk_total_capacity = 123456789L,
     os_type = "osType",
     os_name = "osName",
     os_version = "osVersion",
     os_code = "osCode",
-    screen_resolution = "screenResolution",
     num_cores = 8,
-    uses_emmc_storage = true,
     device_soc_model = "deviceSocModel",
+)
+
+internal val fullyPopulatedMutableResourceProto = MutableResourceProto(
+    jailbroken = true,
+    screen_resolution = "screenResolution",
+    uses_emmc_storage = true,
+    hosted_platform_version = "hostedPlatformVersion",
+    hosted_sdk_version = "hostedSdkVersion",
+    javascript_patch_number = "javascriptPatchNumber",
+    unity_build_id = "unityBuildId",
+    react_native_bundle_id = "reactNativeBundleId",
+    react_native_version = "reactNativeVersion",
     extras = mapOf("custom.key" to "custom.value", "other.key" to "other.value"),
 )

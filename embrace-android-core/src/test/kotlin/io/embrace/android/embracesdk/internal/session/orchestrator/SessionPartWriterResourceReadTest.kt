@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionReconst
 import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import okio.Buffer
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -37,10 +38,13 @@ internal class SessionPartWriterResourceReadTest {
         private const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
         private val SYMBOLS = mapOf("armeabi-v7a" to "my-symbols")
 
+        // spans both halves of the split: the last two properties live in the metadata
         private val RESOURCE = EnvelopeResource(
             appVersion = "1.2.3",
             appEcosystemId = "com.example.app",
             sdkVersion = "7.0.0",
+            screenResolution = "1080x2400",
+            reactNativeBundleId = "bundle-1",
         )
 
         private val spanTemplate = SpanProto(
@@ -76,6 +80,7 @@ internal class SessionPartWriterResourceReadTest {
     private lateinit var sessionSpan: FakeEmbraceSdkSpan
     private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
     private lateinit var service: SessionReconstructionService
+    private lateinit var resourceSource: FakeEnvelopeResourceSource
     private var inFlightSpans: List<Span> = emptyList()
 
     @Before
@@ -87,6 +92,7 @@ internal class SessionPartWriterResourceReadTest {
         inFlightSpans = listOf(inFlightSpan)
         sessionSpan = FakeEmbraceSdkSpan(name = "emb-session").apply { start(clock.now()) }
         currentSessionPartSpan = FakeCurrentSessionPartSpan(clock).apply { sessionPartSpan = sessionSpan }
+        resourceSource = FakeEnvelopeResourceSource().apply { resource = RESOURCE }
         writer = SessionPartWriterImpl(
             lazy { sessionsDir },
             BackgroundWorker(executor),
@@ -99,7 +105,7 @@ internal class SessionPartWriterResourceReadTest {
             TestUuidSource(),
             clock,
             logger,
-            FakeEnvelopeResourceSource().apply { resource = RESOURCE },
+            resourceSource,
             EnvelopeMetadataSource { EnvelopeMetadata(userId = "my-user-id") },
             currentSessionPartSpan,
             { inFlightSpans },
@@ -144,6 +150,25 @@ internal class SessionPartWriterResourceReadTest {
     fun `the in-flight spans are reconstructed as snapshots`() {
         val envelope = checkNotNull(writeSessionPart())
         assertEquals(inFlightSpan, envelope.data.spanSnapshots?.first())
+        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+    }
+
+    @Test
+    fun `a change to the mutable half of the resource is reconstructed`() {
+        writeSessionPart()
+        val manifest = File(partDir(), MANIFEST_FILE_NAME).readBytes()
+
+        resourceSource.changeResource(
+            RESOURCE.copy(screenResolution = "1440x3120", reactNativeBundleId = "bundle-2"),
+        )
+        executor.runCurrentlyBlocked()
+
+        val envelope = checkNotNull(service.reconstruct(directory()))
+        assertEquals(
+            RESOURCE.copy(screenResolution = "1440x3120", reactNativeBundleId = "bundle-2"),
+            envelope.resource,
+        )
+        assertArrayEquals(manifest, File(partDir(), MANIFEST_FILE_NAME).readBytes())
         assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
     }
 

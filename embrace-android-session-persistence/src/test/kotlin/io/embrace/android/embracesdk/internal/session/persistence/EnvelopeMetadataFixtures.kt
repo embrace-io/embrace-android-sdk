@@ -19,4 +19,5 @@ internal val fullyPopulatedMetadataProto = EnvelopeMetadataProto(
     personas = listOf("persona1", "persona2"),
     timezone_description = "Europe/London",
     locale = "en_GB",
+    resource = fullyPopulatedMutableResourceProto,
 )

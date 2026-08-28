@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResource
 import io.embrace.android.embracesdk.internal.envelope.session.SESSION_ENVELOPE_TYPE
 import io.embrace.android.embracesdk.internal.envelope.session.SESSION_ENVELOPE_VERSION
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.session.persistence.SessionManifestWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadataWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
@@ -63,6 +64,17 @@ class SessionPartWriterImpl(
         queueSessionSpanWrite(writers)
     }
 
+    override fun onSessionPartEnded(sessionPartId: String) {
+        if (!enabled()) {
+            return
+        }
+        val writers = current ?: return
+        if (writers.directory.sessionPartId != sessionPartId) {
+            return
+        }
+        queueSessionSpanWrite(writers)
+    }
+
     override fun onUserInfoChanged() {
         if (!enabled()) {
             return
@@ -94,7 +106,7 @@ class SessionPartWriterImpl(
      * Writes the session span as it stands right now.
      */
     private fun queueSessionSpanWrite(writers: PartWriters) {
-        val span = currentSessionPartSpan.current()?.snapshot() ?: return
+        val span = writers.span?.snapshot() ?: return
         worker.submit {
             writers.sessionSpan.write(span)
         }
@@ -103,6 +115,8 @@ class SessionPartWriterImpl(
     private fun enabled(): Boolean = configService.persistenceBehavior.isMultiFilePersistenceEnabled()
 
     private inner class PartWriters(val directory: SessionPartDirectory) {
+
+        val span: EmbraceSdkSpan? = currentSessionPartSpan.current()
 
         val manifest = SessionManifestWriter(sessionsDir, logger)
 

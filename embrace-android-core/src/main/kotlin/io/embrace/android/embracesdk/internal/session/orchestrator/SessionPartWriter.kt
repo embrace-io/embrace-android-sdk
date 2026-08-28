@@ -11,6 +11,11 @@ interface SessionPartWriter {
     fun onSessionPartStarted(timestamp: Long, userSessionId: String, sessionPartId: String)
 
     /**
+     * A session part has ended. Persists any necessary information.
+     */
+    fun onSessionPartEnded(sessionPartId: String)
+
+    /**
      * User information has changed and should be persisted.
      */
     fun onUserInfoChanged()

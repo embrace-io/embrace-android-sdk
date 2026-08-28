@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.createPersistenceBehavior
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
@@ -230,6 +231,22 @@ internal class SessionPartWriterImplTest {
             ),
             logger.internalErrorMessages.map { it.msg },
         )
+
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        drain()
+
+        assertEquals(
+            listOf(
+                "SessionPartDirectoryStoreFail",
+                "SessionManifestWriteFail",
+                "SessionMetadataWriteFail",
+                "SessionSpanWriteFail",
+                "SessionMetadataWriteFail",
+                "SessionSpanWriteFail",
+            ),
+            logger.internalErrorMessages.map { it.msg },
+        )
         assertEquals(0, writeCount)
     }
 
@@ -357,6 +374,90 @@ internal class SessionPartWriterImplTest {
 
         assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.span?.name)
         assertNoInternalErrors()
+    }
+
+    @Test
+    fun `the session span is rewritten with an end time when the session part ends`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+        assertNull(sessionSpanIn(SESSION_PART_ID)?.span?.end_time_unix_nano)
+        clock.tick(10000)
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        drain()
+
+        val span = checkNotNull(sessionSpanIn(SESSION_PART_ID)?.span)
+        assertEquals("span0", span.name)
+        assertEquals(sessionSpan.spanId, span.span_id)
+        assertEquals(clock.now().millisToNanos(), span.end_time_unix_nano)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `the ended session span is snapshotted before the write is queued`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+        clock.tick(10000)
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        currentSessionPartSpan.sessionPartSpan = null
+        drain()
+
+        assertEquals(clock.now().millisToNanos(), sessionSpanIn(SESSION_PART_ID)?.span?.end_time_unix_nano)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a session part that ends before any session part starts writes nothing`() {
+        val writer = createWriter()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        drain()
+
+        assertEquals(emptyList<SessionPartDirectory>(), sessionPartDirs())
+        assertEquals(0, executor.submitCount)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `an end for a session part other than the current one is ignored`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+        val submitCount = executor.submitCount
+
+        clock.tick(10000)
+        endPart()
+        writer.onSessionPartEnded(OTHER_SESSION_PART_ID)
+        drain()
+
+        assertEquals(submitCount, executor.submitCount)
+        assertNull(sessionSpanIn(SESSION_PART_ID)?.span?.end_time_unix_nano)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a session part end is not written once multi file persistence is disabled`() {
+        val configService = configService(enabled = true)
+        val writer = createWriter(configService = configService)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+        val submitCount = executor.submitCount
+
+        configService.persistenceBehavior = createPersistenceBehavior()
+        clock.tick(10000)
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        drain()
+
+        assertEquals(submitCount, executor.submitCount)
+        assertNull(sessionSpanIn(SESSION_PART_ID)?.span?.end_time_unix_nano)
+        assertNoInternalErrors()
+    }
+
+    private fun endPart() {
+        currentSessionPartSpan.endSession(startNewSession = true)
     }
 
     private fun createWriter(

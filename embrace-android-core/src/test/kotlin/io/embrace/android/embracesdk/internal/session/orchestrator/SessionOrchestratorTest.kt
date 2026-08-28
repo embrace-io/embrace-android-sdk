@@ -33,6 +33,7 @@ import io.embrace.android.embracesdk.internal.arch.startup.StartupType
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.capture.session.PropertyScope
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -51,6 +52,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
+import io.embrace.android.embracesdk.internal.session.persistence.SessionPartSpan
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
@@ -1074,6 +1076,45 @@ internal class SessionOrchestratorTest {
         assertNoInternalErrors()
     }
 
+    @Test
+    fun `the session part span is rewritten with its end time when the part ends`() {
+        createOrchestrator(ProcessState.FOREGROUND, multiFilePersistenceConfigService())
+        val first = checkNotNull(sessionTracker.getActiveSessionPartId())
+        clock.tick(10000)
+        orchestrator.onBackground()
+        val second = checkNotNull(sessionTracker.getActiveSessionPartId())
+
+        assertEquals(clock.now().millisToNanos(), sessionSpanIn(first)?.span?.end_time_unix_nano)
+        assertNull(sessionSpanIn(second)?.span?.end_time_unix_nano)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a crash rewrites the session part span with its end time`() {
+        createOrchestrator(ProcessState.FOREGROUND, multiFilePersistenceConfigService())
+        val sessionPartId = checkNotNull(sessionTracker.getActiveSessionPartId())
+        clock.tick(10000)
+        orchestrator.handleCrash("crash-id")
+
+        assertEquals(clock.now().millisToNanos(), sessionSpanIn(sessionPartId)?.span?.end_time_unix_nano)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a session part that ends without a new part starting still records its end time`() {
+        val configService = multiFilePersistenceConfigService().apply {
+            backgroundActivityBehavior = backgroundActivityBehavior(false)
+        }
+        createOrchestrator(ProcessState.FOREGROUND, configService)
+        val sessionPartId = checkNotNull(sessionTracker.getActiveSessionPartId())
+        clock.tick(10000)
+        orchestrator.onBackground()
+
+        assertNull(sessionTracker.getActiveSessionPartId())
+        assertEquals(clock.now().millisToNanos(), sessionSpanIn(sessionPartId)?.span?.end_time_unix_nano)
+        assertNoInternalErrors()
+    }
+
     private fun createOrchestrator(
         startingProcessState: ProcessState,
         configService: FakeConfigService =
@@ -1955,6 +1996,18 @@ internal class SessionOrchestratorTest {
         return (sessionsDir.list() ?: emptyArray())
             .mapNotNull(SessionPartDirectory::fromDirName)
             .sortedWith(SessionPartDirectory.comparator)
+    }
+
+    /**
+     * Drains the session persistence worker and returns the session span persisted for the given
+     * session part, if any.
+     */
+    private fun sessionSpanIn(sessionPartId: String): SessionPartSpan? {
+        val directory = sessionPartDirs().single { it.sessionPartId == sessionPartId }
+        return File(File(sessionsDir, directory.dirName), "session_span.pb")
+            .takeIf(File::isFile)
+            ?.inputStream()
+            ?.use(SessionPartSpan.ADAPTER::decode)
     }
 
     private fun assertNoInternalErrors() {

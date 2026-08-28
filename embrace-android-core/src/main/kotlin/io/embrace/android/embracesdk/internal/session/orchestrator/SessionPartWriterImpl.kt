@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionManifes
 import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadataWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectoryStore
+import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTracker
 import io.embrace.android.embracesdk.internal.session.persistence.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshotsWriter
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
@@ -42,6 +43,7 @@ class SessionPartWriterImpl(
     private val spanSnapshotSource: () -> List<Span>,
     private val directoryStore: SessionPartDirectoryStore =
         SessionPartDirectoryStore(sessionsDir, worker, clock, logger),
+    private val writeTracker: SessionPartWriteTracker = SessionPartWriteTracker(),
 ) : SessionPartWriter {
 
     private companion object {
@@ -75,6 +77,7 @@ class SessionPartWriterImpl(
         )
 
         current = writers
+        writeTracker.markWriting(sessionPartId)
         directoryStore.create(writers.directory)
         queueManifestWrite(writers)
         queueMetadataWrite(writers)
@@ -93,6 +96,7 @@ class SessionPartWriterImpl(
         }
         queueSessionSpanWrite(writers)
         queueSpanSnapshotsWrite(writers)
+        worker.submit { writeTracker.markComplete(sessionPartId) }
     }
 
     override fun onMetadataChanged() {

@@ -40,6 +40,7 @@ sealed class InternalErrorType(private val severity: Severity) {
     object SessionPartDirectoryStoreFail : InternalErrorType(ERROR)
     object SessionReconstructionFail : InternalErrorType(ERROR)
     object SessionPartReadFail : InternalErrorType(ERROR)
+    object SessionPartWritesCompleteFail : InternalErrorType(ERROR)
     object DuplicateSpanIds : InternalErrorType(ERROR)
     object SessionSpanWriteFail : InternalErrorType(ERROR)
     object CompletedSpansWriteFail : InternalErrorType(ERROR)

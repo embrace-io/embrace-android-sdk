@@ -44,6 +44,7 @@ class SessionPartWriterImpl(
     private val directoryStore: SessionPartDirectoryStore =
         SessionPartDirectoryStore(sessionsDir, worker, clock, logger),
     private val writeTracker: SessionPartWriteTracker = SessionPartWriteTracker(),
+    private val onWritesComplete: () -> Unit = {},
 ) : SessionPartWriter {
 
     private companion object {
@@ -96,7 +97,13 @@ class SessionPartWriterImpl(
         }
         queueSessionSpanWrite(writers)
         queueSpanSnapshotsWrite(writers)
-        worker.submit { writeTracker.markComplete(sessionPartId) }
+        worker.submit {
+            writeTracker.markComplete(sessionPartId)
+
+            if (!writesSealed) {
+                notifyWritesComplete()
+            }
+        }
     }
 
     override fun onMetadataChanged() {
@@ -228,6 +235,17 @@ class SessionPartWriterImpl(
             task.run()
         } else {
             submit(task)
+        }
+    }
+
+    /**
+     * Signals that a session part is fully written.
+     */
+    private fun notifyWritesComplete() {
+        try {
+            onWritesComplete()
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.SessionPartWritesCompleteFail, exc)
         }
     }
 

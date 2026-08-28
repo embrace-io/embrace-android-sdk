@@ -112,6 +112,7 @@ class UserSessionOrchestrationModuleImpl(
             },
             sessionPartDirectoryStore,
             sessionPartWriteTracker,
+            onWritesComplete = { sessionPartReader?.readPersistedSessionParts() },
         )
         essentialServiceModule.userService.addUserInfoListener(sessionPartWriter::onMetadataChanged)
         openTelemetryModule.spanRepository.addCompletedOtelSpansListener { spans ->

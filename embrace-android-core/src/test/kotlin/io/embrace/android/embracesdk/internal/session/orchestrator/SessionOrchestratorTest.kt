@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
 import io.embrace.android.embracesdk.fakes.FakeDataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
+import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
@@ -1162,6 +1163,7 @@ internal class SessionOrchestratorTest {
                 TestUuidSource(),
                 clock,
                 logger,
+                FakeEnvelopeResourceSource(),
                 FakeEnvelopeMetadataSource(),
             ),
         ).apply {

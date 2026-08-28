@@ -6,6 +6,16 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSnapshotType
 
+/**
+ * Version of the envelope schema used for session part payloads.
+ */
+internal const val SESSION_ENVELOPE_VERSION: String = "0.1.0"
+
+/**
+ * Type of the envelope used for session part payloads.
+ */
+internal const val SESSION_ENVELOPE_TYPE: String = "spans"
+
 internal class SessionPartEnvelopeSourceImpl(
     private val metadataSource: EnvelopeMetadataSource,
     private val resourceSource: EnvelopeResourceSource,
@@ -20,8 +30,8 @@ internal class SessionPartEnvelopeSourceImpl(
         return Envelope(
             resourceSource.getEnvelopeResource(),
             metadataSource.getEnvelopeMetadata(),
-            "0.1.0",
-            "spans",
+            SESSION_ENVELOPE_VERSION,
+            SESSION_ENVELOPE_TYPE,
             payloadSource.getSessionPartPayload(endType, startNewSession, crashId),
         )
     }

@@ -49,7 +49,6 @@ import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
-import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectoryStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
@@ -1155,9 +1154,11 @@ internal class SessionOrchestratorTest {
             BackgroundWorker(inactivityWorkerExecutor),
             TestUuidSource(),
             startupClassifier,
-            SessionPartDirectoryStore(
+            SessionPartWriterImpl(
                 lazy { sessionsDir },
                 BackgroundWorker(sessionPersistenceExecutor),
+                configService,
+                TestUuidSource(),
                 clock,
                 logger,
             ),

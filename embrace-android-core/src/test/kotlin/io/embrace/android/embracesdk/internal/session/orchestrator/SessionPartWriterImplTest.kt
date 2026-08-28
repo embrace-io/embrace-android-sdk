@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
+import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.createPersistenceBehavior
@@ -14,6 +16,7 @@ import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.session.persistence.EnvelopeMetadataProto
 import io.embrace.android.embracesdk.internal.session.persistence.SessionManifest
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
+import io.embrace.android.embracesdk.internal.session.persistence.SessionPartSpan
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -31,6 +34,7 @@ internal class SessionPartWriterImplTest {
         private const val OTHER_SESSION_PART_ID = "cccccccccccccccccccccccccccccccc"
         private const val METADATA_FILE_NAME = "metadata.pb"
         private const val MANIFEST_FILE_NAME = "manifest.pb"
+        private const val SESSION_SPAN_FILE_NAME = "session_span.pb"
         private const val ENVELOPE_VERSION = "0.1.0"
         private const val ENVELOPE_TYPE = "spans"
         private val SYMBOLS = mapOf("armeabi-v7a" to "my-symbols")
@@ -46,6 +50,9 @@ internal class SessionPartWriterImplTest {
 
     private var writeCount = 0
     private val metadataSource = EnvelopeMetadataSource { EnvelopeMetadata(userId = "user${writeCount++}") }
+
+    private lateinit var sessionSpan: FakeEmbraceSdkSpan
+    private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
 
     private var resourceCount = 0
     private val resourceSource = object : EnvelopeResourceSource {
@@ -63,6 +70,8 @@ internal class SessionPartWriterImplTest {
         logger = FakeInternalLogger(throwOnInternalError = false)
         writeCount = 0
         resourceCount = 0
+        sessionSpan = FakeEmbraceSdkSpan(name = "span0").apply { start(clock.now()) }
+        currentSessionPartSpan = FakeCurrentSessionPartSpan(clock).apply { sessionPartSpan = sessionSpan }
     }
 
     @Test
@@ -199,7 +208,12 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertEquals(
-            listOf("SessionPartDirectoryStoreFail", "SessionManifestWriteFail", "SessionMetadataWriteFail"),
+            listOf(
+                "SessionPartDirectoryStoreFail",
+                "SessionManifestWriteFail",
+                "SessionMetadataWriteFail",
+                "SessionSpanWriteFail",
+            ),
             logger.internalErrorMessages.map { it.msg },
         )
 
@@ -211,6 +225,7 @@ internal class SessionPartWriterImplTest {
                 "SessionPartDirectoryStoreFail",
                 "SessionManifestWriteFail",
                 "SessionMetadataWriteFail",
+                "SessionSpanWriteFail",
                 "SessionMetadataWriteFail",
             ),
             logger.internalErrorMessages.map { it.msg },
@@ -277,6 +292,73 @@ internal class SessionPartWriterImplTest {
         assertNoInternalErrors()
     }
 
+    @Test
+    fun `the session span is written as soon as a session part starts`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        val span = checkNotNull(sessionSpanIn(SESSION_PART_ID)?.span)
+        assertEquals("span0", span.name)
+        assertEquals(sessionSpan.traceId, span.trace_id)
+        assertEquals(sessionSpan.spanId, span.span_id)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `each session part gets its own session span`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        clock.tick(10000)
+        sessionSpan.name = "span1"
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
+        drain()
+
+        assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.span?.name)
+        assertEquals("span1", sessionSpanIn(OTHER_SESSION_PART_ID)?.span?.name)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `the session span is snapshotted before the write is queued`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+
+        // the part ends before the worker drains, so the span captured at the start is the one written
+        currentSessionPartSpan.sessionPartSpan = null
+        drain()
+
+        assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.span?.name)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `no session span is written when there is no active session span`() {
+        currentSessionPartSpan.sessionPartSpan = null
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        assertNull(sessionSpanIn(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a user info change leaves the session span untouched`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        sessionSpan.name = "span1"
+        repeat(4) { writer.onUserInfoChanged() }
+        drain()
+
+        assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.span?.name)
+        assertNoInternalErrors()
+    }
+
     private fun createWriter(
         enabled: Boolean = true,
         configService: FakeConfigService = configService(enabled),
@@ -290,6 +372,7 @@ internal class SessionPartWriterImplTest {
         logger,
         resourceSource,
         metadataSource,
+        currentSessionPartSpan,
     )
 
     private fun configService(
@@ -332,6 +415,11 @@ internal class SessionPartWriterImplTest {
     private fun manifestIn(sessionPartId: String): SessionManifest? {
         drain()
         return partFile(sessionPartId, MANIFEST_FILE_NAME)?.inputStream()?.use(SessionManifest.ADAPTER::decode)
+    }
+
+    private fun sessionSpanIn(sessionPartId: String): SessionPartSpan? {
+        drain()
+        return partFile(sessionPartId, SESSION_SPAN_FILE_NAME)?.inputStream()?.use(SessionPartSpan.ADAPTER::decode)
     }
 
     private fun partFile(sessionPartId: String, fileName: String): File? {

@@ -11,6 +11,8 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionManifes
 import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadataWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectoryStore
+import io.embrace.android.embracesdk.internal.session.persistence.SessionSpanWriter
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.File
@@ -28,6 +30,7 @@ class SessionPartWriterImpl(
     private val logger: InternalLogger,
     private val resourceSource: EnvelopeResourceSource,
     private val metadataSource: EnvelopeMetadataSource,
+    private val currentSessionPartSpan: CurrentSessionPartSpan,
 ) : SessionPartWriter {
 
     /**
@@ -57,6 +60,7 @@ class SessionPartWriterImpl(
         directoryStore.create(writers.directory)
         queueManifestWrite(writers)
         queueMetadataWrite(writers)
+        queueSessionSpanWrite(writers)
     }
 
     override fun onUserInfoChanged() {
@@ -84,6 +88,18 @@ class SessionPartWriterImpl(
         }
     }
 
+    // TODO: the session span is not yet written on a regular interval while the part is active.
+
+    /**
+     * Writes the session span as it stands right now.
+     */
+    private fun queueSessionSpanWrite(writers: PartWriters) {
+        val span = currentSessionPartSpan.current()?.snapshot() ?: return
+        worker.submit {
+            writers.sessionSpan.write(span)
+        }
+    }
+
     private fun enabled(): Boolean = configService.persistenceBehavior.isMultiFilePersistenceEnabled()
 
     private inner class PartWriters(val directory: SessionPartDirectory) {
@@ -94,6 +110,12 @@ class SessionPartWriterImpl(
             sessionsDir = sessionsDir,
             sessionPartDirectorySource = { directory },
             metadataSource = metadataSource::getEnvelopeMetadata,
+            logger = logger,
+        )
+
+        val sessionSpan = SessionSpanWriter(
+            sessionsDir = sessionsDir,
+            sessionPartDirectorySource = { directory },
             logger = logger,
         )
     }

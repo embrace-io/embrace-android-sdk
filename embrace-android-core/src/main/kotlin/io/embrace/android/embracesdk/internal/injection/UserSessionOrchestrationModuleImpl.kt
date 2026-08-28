@@ -70,6 +70,7 @@ class UserSessionOrchestrationModuleImpl(
             initModule.logger,
             payloadSourceModule.resourceSource,
             payloadSourceModule.envelopeMetadataSource,
+            openTelemetryModule.currentSessionPartSpan,
         )
         essentialServiceModule.userService.addUserInfoListener(sessionPartWriter::onUserInfoChanged)
 

@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 internal class ActivityLeakDetectionLifecycleCallbacks(
     private val leakDetector: LeakDetector,
     private val activeSessionIdsProvider: () -> SessionIdsSnapshot,
+    private val fragmentSupport: FragmentSupport,
 ) : Application.ActivityLifecycleCallbacks {
 
     override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
@@ -19,6 +20,7 @@ internal class ActivityLeakDetectionLifecycleCallbacks(
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             leakDetector.trackOpened(activity)
         }
+        fragmentSupport.onActivityCreated(activity)
     }
 
     override fun onActivityDestroyed(activity: Activity) {

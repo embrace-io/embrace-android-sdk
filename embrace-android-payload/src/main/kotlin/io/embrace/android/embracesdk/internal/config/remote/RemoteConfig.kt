@@ -154,4 +154,10 @@ data class RemoteConfig(
      */
     @SerialName("pct_activity_leak_detection_enabled")
     val pctActivityLeakDetectionEnabled: Float? = null,
+
+    /**
+     * Percentage of devices for which fragment and fragment view leak detection is captured.
+     */
+    @SerialName("pct_fragment_leak_detection_enabled")
+    val pctFragmentLeakDetectionEnabled: Float? = null,
 )

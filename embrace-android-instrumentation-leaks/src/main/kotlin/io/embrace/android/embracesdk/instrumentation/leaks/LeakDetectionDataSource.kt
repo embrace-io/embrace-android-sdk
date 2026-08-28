@@ -23,7 +23,15 @@ class LeakDetectionDataSource(args: InstrumentationArgs) :
      */
     internal val leakDetector = LeakDetector(args.clock)
 
-    private val callbacks = ActivityLeakDetectionLifecycleCallbacks(leakDetector, args::activeSessionIds)
+    private val fragmentSupport: FragmentSupport =
+        if (args.configService.autoDataCaptureBehavior.isFragmentLeakDetectionEnabled()) {
+            createFragmentSupport(leakDetector, args::activeSessionIds)
+        } else {
+            NoOpFragmentSupport
+        }
+
+    private val callbacks =
+        ActivityLeakDetectionLifecycleCallbacks(leakDetector, args::activeSessionIds, fragmentSupport)
 
     override fun onDataCaptureEnabled() {
         application.registerActivityLifecycleCallbacks(callbacks)

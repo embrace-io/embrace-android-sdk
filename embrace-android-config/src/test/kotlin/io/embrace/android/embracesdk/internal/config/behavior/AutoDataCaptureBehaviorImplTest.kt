@@ -44,6 +44,7 @@ internal class AutoDataCaptureBehaviorImplTest {
             assertFalse(isSmoothnessCaptureEnabled())
             assertFalse(isActivityProcessLifecycleTrackerEnabled())
             assertFalse(isActivityLeakDetectionEnabled())
+            assertFalse(isFragmentLeakDetectionEnabled())
         }
     }
 
@@ -261,6 +262,27 @@ internal class AutoDataCaptureBehaviorImplTest {
         assertFalse(
             createBehavior(remote = RemoteConfig(pctActivityLeakDetectionEnabled = 0.0f))
                 .isActivityLeakDetectionEnabled(),
+        )
+    }
+
+    @Test
+    fun `fragment leak detection disabled when remote field null`() {
+        assertFalse(createAutoDataCaptureBehavior(remoteCfg = null).isFragmentLeakDetectionEnabled())
+    }
+
+    @Test
+    fun `fragment leak detection enabled when pct is 100`() {
+        assertTrue(
+            createBehavior(remote = RemoteConfig(pctFragmentLeakDetectionEnabled = 100.0f))
+                .isFragmentLeakDetectionEnabled(),
+        )
+    }
+
+    @Test
+    fun `fragment leak detection disabled when pct is 0`() {
+        assertFalse(
+            createBehavior(remote = RemoteConfig(pctFragmentLeakDetectionEnabled = 0.0f))
+                .isFragmentLeakDetectionEnabled(),
         )
     }
 

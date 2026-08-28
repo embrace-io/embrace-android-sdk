@@ -100,4 +100,9 @@ interface AutoDataCaptureBehavior {
      * Whether Activity leak detection is enabled.
      */
     fun isActivityLeakDetectionEnabled(): Boolean
+
+    /**
+     * Whether Fragment and Fragment View leak detection is enabled.
+     */
+    fun isFragmentLeakDetectionEnabled(): Boolean
 }

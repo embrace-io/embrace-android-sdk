@@ -19,4 +19,9 @@ interface SessionPartWriter {
      * User information has changed and should be persisted.
      */
     fun onUserInfoChanged()
+
+    /**
+     * The periodic cache interval has elapsed. Rewrites the session span so disk reflects reality.
+     */
+    fun onPeriodicWrite()
 }

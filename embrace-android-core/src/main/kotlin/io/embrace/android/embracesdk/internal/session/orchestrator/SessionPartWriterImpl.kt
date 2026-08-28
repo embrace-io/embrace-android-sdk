@@ -82,6 +82,13 @@ class SessionPartWriterImpl(
         queueMetadataWrite(current ?: return)
     }
 
+    override fun onPeriodicWrite() {
+        if (!enabled()) {
+            return
+        }
+        queueSessionSpanWrite(current ?: return)
+    }
+
     private fun queueManifestWrite(writers: PartWriters) {
         worker.submit {
             writers.manifest.write(
@@ -99,8 +106,6 @@ class SessionPartWriterImpl(
             writers.metadata.write()
         }
     }
-
-    // TODO: the session span is not yet written on a regular interval while the part is active.
 
     /**
      * Writes the session span as it stands right now.

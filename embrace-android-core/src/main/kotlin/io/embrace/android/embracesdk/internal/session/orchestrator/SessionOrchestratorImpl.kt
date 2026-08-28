@@ -442,6 +442,7 @@ internal class SessionOrchestratorImpl(
                                             )
                                         }
                                         updatePeriodicCacheAttrs()
+                                        sessionPartWriter?.onPeriodicWrite()
                                         payloadFactory.snapshotPayload(state, timestamp, zygote)
                                     }
                                 }

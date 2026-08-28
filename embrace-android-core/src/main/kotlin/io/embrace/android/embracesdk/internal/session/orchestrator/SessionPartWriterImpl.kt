@@ -56,13 +56,13 @@ class SessionPartWriterImpl(
     private var current: PartWriters? = null
 
     @Volatile
-    private var crashing = false
+    private var writesSealed = false
 
     @Volatile
     private var resourceListenerRegistered = false
 
     override fun onSessionPartStarted(timestamp: Long, userSessionId: String, sessionPartId: String) {
-        if (!enabled()) {
+        if (!acceptingWrites()) {
             return
         }
         val writers = PartWriters(
@@ -84,7 +84,7 @@ class SessionPartWriterImpl(
     }
 
     override fun onSessionPartEnded(sessionPartId: String) {
-        if (!enabled()) {
+        if (!acceptingWrites()) {
             return
         }
         val writers = current ?: return
@@ -96,38 +96,38 @@ class SessionPartWriterImpl(
     }
 
     override fun onMetadataChanged() {
-        if (!enabled()) {
+        if (!acceptingWrites()) {
             return
         }
         queueMetadataWrite(current ?: return)
     }
 
     override fun onSpanCompleted(spans: List<Span>) {
-        if (!enabled() || spans.isEmpty()) {
+        if (!acceptingWrites() || spans.isEmpty()) {
             return
         }
         queueCompletedSpansWrite(current ?: return, spans)
     }
 
     private fun onResourceChanged() {
-        if (!enabled()) {
+        if (!acceptingWrites()) {
             return
         }
         queueMetadataWrite(current ?: return)
     }
 
     override fun onPeriodicWrite() {
-        if (!enabled()) {
+        if (!acceptingWrites()) {
             return
         }
         queueSessionSpanWrite(current ?: return)
     }
 
     override fun onCrash() {
-        if (!enabled()) {
+        if (!persistenceEnabled() || writesSealed) {
             return
         }
-        crashing = true
+        writesSealed = true
         worker.shutdownAndWait(CRASH_DRAIN_TIMEOUT_MS)
     }
 
@@ -205,9 +205,8 @@ class SessionPartWriterImpl(
     }
 
     /**
-     * Queues [action] with [submit], or runs it on the calling thread if the process is crashing
-     * and the [worker] has already been sealed by [onCrash]. Telemetry gathered inside [action] can
-     * throw, so a failure is tracked here rather than escaping onto a crashing thread.
+     * Runs [action] on the [worker] via [submit], tracking any failure as an internal error rather
+     * than letting it escape - the telemetry gathered inside [action] can throw.
      */
     private fun execute(
         errorType: InternalErrorType,
@@ -221,16 +220,22 @@ class SessionPartWriterImpl(
                 logger.trackInternalError(errorType, exc)
             }
         }
-        if (crashing) {
+        if (writesSealed) {
             task.run()
         } else {
             submit(task)
         }
     }
 
-    private fun enabled(): Boolean {
-        return configService.persistenceBehavior.isMultiFilePersistenceEnabled() && !crashing
-    }
+    private fun persistenceEnabled(): Boolean =
+        configService.persistenceBehavior.isMultiFilePersistenceEnabled()
+
+    /**
+     * Whether new telemetry should still be recorded. [onCrash] flushes what already exists and
+     * then seals the writer: the [worker] is shut down at that point and the process is about to
+     * die, so anything that happens afterwards is dropped rather than queued onto a dead worker.
+     */
+    private fun acceptingWrites(): Boolean = persistenceEnabled() && !writesSealed
 
     private inner class PartWriters(val directory: SessionPartDirectory) {
 

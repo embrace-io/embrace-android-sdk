@@ -7,6 +7,9 @@ import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.createPersistenceBehavior
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
+import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
+import io.embrace.android.embracesdk.internal.session.persistence.EnvelopeMetadataProto
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
@@ -22,6 +25,7 @@ internal class SessionPartWriterImplTest {
         private const val USER_SESSION_ID = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         private const val SESSION_PART_ID = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
         private const val OTHER_SESSION_PART_ID = "cccccccccccccccccccccccccccccccc"
+        private const val METADATA_FILE_NAME = "metadata.pb"
     }
 
     @get:Rule
@@ -32,12 +36,16 @@ internal class SessionPartWriterImplTest {
     private lateinit var executor: BlockingScheduledExecutorService
     private lateinit var logger: FakeInternalLogger
 
+    private var writeCount = 0
+    private val metadataSource = EnvelopeMetadataSource { EnvelopeMetadata(userId = "user${writeCount++}") }
+
     @Before
     fun setUp() {
         sessionsDir = tempFolder.newFolder("embrace_sessions_split")
         clock = FakeClock()
         executor = BlockingScheduledExecutorService(clock, true)
         logger = FakeInternalLogger(throwOnInternalError = false)
+        writeCount = 0
     }
 
     @Test
@@ -89,13 +97,116 @@ internal class SessionPartWriterImplTest {
         assertNoInternalErrors()
     }
 
-    private fun createWriter(enabled: Boolean = true) = SessionPartWriterImpl(
+    @Test
+    fun `metadata is written as soon as a session part starts`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        assertEquals("user0", metadataIn(SESSION_PART_ID)?.user_id)
+        assertEquals(1, writeCount)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a user info change rewrites the metadata on the worker`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+        writer.onUserInfoChanged()
+        assertEquals("user0", metadataOnDisk(SESSION_PART_ID)?.user_id)
+
+        drain()
+        assertEquals("user1", metadataIn(SESSION_PART_ID)?.user_id)
+        assertEquals(2, writeCount)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `every user info change rewrites the metadata`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        repeat(4) { writer.onUserInfoChanged() }
+        drain()
+
+        assertEquals("user4", metadataIn(SESSION_PART_ID)?.user_id)
+        assertEquals(5, writeCount)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a user info change is not queued when multi file persistence is disabled`() {
+        val writer = createWriter(enabled = false)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        writer.onUserInfoChanged()
+        assertEquals(0, executor.submitCount)
+        assertEquals(0, writeCount)
+    }
+
+    @Test
+    fun `a user info change before any session part starts writes nothing`() {
+        val writer = createWriter()
+        writer.onUserInfoChanged()
+        assertEquals(emptyList<SessionPartDirectory>(), sessionPartDirs())
+        assertEquals(0, writeCount)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `nothing more is written to a session part once multi file persistence is disabled`() {
+        val configService = configService(enabled = true)
+        val writer = createWriter(configService = configService)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        configService.persistenceBehavior = createPersistenceBehavior()
+        clock.tick(10000)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
+        drain()
+        writer.onUserInfoChanged()
+        drain()
+
+        assertEquals(listOf(SESSION_PART_ID), sessionPartDirs().map { it.sessionPartId })
+        assertEquals("user0", metadataIn(SESSION_PART_ID)?.user_id)
+        assertEquals(1, writeCount)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a session part directory that cannot be created is reported and nothing is written`() {
+        val writer = createWriter(sessionsDir = tempFolder.newFile("not_a_dir"))
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        assertEquals(
+            listOf("SessionPartDirectoryStoreFail", "SessionMetadataWriteFail"),
+            logger.internalErrorMessages.map { it.msg },
+        )
+
+        writer.onUserInfoChanged()
+        drain()
+
+        assertEquals(
+            listOf("SessionPartDirectoryStoreFail", "SessionMetadataWriteFail", "SessionMetadataWriteFail"),
+            logger.internalErrorMessages.map { it.msg },
+        )
+        assertEquals(0, writeCount)
+    }
+
+    private fun createWriter(
+        enabled: Boolean = true,
+        configService: FakeConfigService = configService(enabled),
+        sessionsDir: File = this.sessionsDir,
+    ) = SessionPartWriterImpl(
         lazy { sessionsDir },
         BackgroundWorker(executor),
-        configService(enabled),
+        configService,
         TestUuidSource(),
         clock,
         logger,
+        metadataSource,
     )
 
     private fun configService(enabled: Boolean) = FakeConfigService(
@@ -115,9 +226,26 @@ internal class SessionPartWriterImplTest {
      */
     private fun sessionPartDirs(): List<SessionPartDirectory> {
         drain()
-        return (sessionsDir.list() ?: emptyArray())
+        return partDirs()
+    }
+
+    private fun partDirs(): List<SessionPartDirectory> =
+        (sessionsDir.list() ?: emptyArray())
             .mapNotNull(SessionPartDirectory::fromDirName)
             .sortedWith(SessionPartDirectory.comparator)
+
+    private fun metadataIn(sessionPartId: String): EnvelopeMetadataProto? {
+        drain()
+        return metadataOnDisk(sessionPartId)
+    }
+
+    private fun metadataOnDisk(sessionPartId: String): EnvelopeMetadataProto? {
+        val directory = partDirs().single { it.sessionPartId == sessionPartId }
+        val file = File(File(sessionsDir, directory.dirName), METADATA_FILE_NAME)
+        return when {
+            file.isFile -> file.inputStream().use(EnvelopeMetadataProto.ADAPTER::decode)
+            else -> null
+        }
     }
 
     private fun assertNoInternalErrors() {

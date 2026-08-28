@@ -9,4 +9,9 @@ interface SessionPartWriter {
      * A new session part has started. Creates the directory that holds its telemetry.
      */
     fun onSessionPartStarted(timestamp: Long, userSessionId: String, sessionPartId: String)
+
+    /**
+     * User information has changed and should be persisted.
+     */
+    fun onUserInfoChanged()
 }

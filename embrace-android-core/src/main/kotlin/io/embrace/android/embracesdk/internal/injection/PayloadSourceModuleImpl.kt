@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSourceImpl
+import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.metadata.FlutterSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
@@ -97,15 +98,15 @@ class PayloadSourceModuleImpl(
         )
     }
 
-    private val metadataSource = EmbTrace.trace("metadata-source") {
+    override val envelopeMetadataSource: EnvelopeMetadataSource = EmbTrace.trace("metadata-source") {
         EnvelopeMetadataSourceImpl { essentialServiceModule.userService.getUserInfo() }
     }
 
     override val sessionPartEnvelopeSource: SessionPartEnvelopeSource =
-        SessionPartEnvelopeSourceImpl(metadataSource, resourceSource, partPayloadSource)
+        SessionPartEnvelopeSourceImpl(envelopeMetadataSource, resourceSource, partPayloadSource)
 
     override val logEnvelopeSource: LogEnvelopeSource =
-        LogEnvelopeSourceImpl(metadataSource, resourceSource, logPayloadSource, deliveryModule?.cachedLogEnvelopeStore)
+        LogEnvelopeSourceImpl(envelopeMetadataSource, resourceSource, logPayloadSource, deliveryModule?.cachedLogEnvelopeStore)
 
     override val metadataService: MetadataService = EmbTrace.trace("metadata-service-init") {
         EmbraceMetadataService(

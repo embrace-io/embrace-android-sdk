@@ -11,6 +11,7 @@ import java.util.Queue
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Stores the spans of the current session. Two distinct representations are held:
@@ -26,6 +27,7 @@ class SpanRepository {
 
     private val completedSpanData: Queue<Span> = ConcurrentLinkedQueue()
     private val flushLock = Any()
+    private val completedSpansListeners = CopyOnWriteArrayList<(List<Span>) -> Unit>()
 
     /**
      * Track the [EmbraceSpan] if it has been started and it's not already tracked.
@@ -125,7 +127,38 @@ class SpanRepository {
         } catch (t: Throwable) {
             return StoreDataResult.FAILURE
         }
+        notifyCompletedOtelSpans(spans)
         return StoreDataResult.SUCCESS
+    }
+
+    /**
+     * Registers a [listener] invoked with each batch of completed [Span] immediately after it has
+     * been stored, so that spans can be persisted.
+     *
+     * Spans already stored when the listener registers are handed to it as one batch upon registration.
+     */
+    fun addCompletedOtelSpansListener(listener: (List<Span>) -> Unit) {
+        completedSpansListeners.add(listener)
+        val alreadyStored = completedOtelSpans()
+        if (alreadyStored.isNotEmpty()) {
+            notifyListener(listener, alreadyStored)
+        }
+    }
+
+    private fun notifyCompletedOtelSpans(spans: List<Span>) {
+        if (spans.isEmpty() || completedSpansListeners.isEmpty()) {
+            return
+        }
+        completedSpansListeners.forEach { listener ->
+            notifyListener(listener, spans)
+        }
+    }
+
+    private fun notifyListener(listener: (List<Span>) -> Unit, spans: List<Span>) {
+        try {
+            listener(spans)
+        } catch (ignored: Throwable) {
+        }
     }
 
     /**

@@ -17,10 +17,13 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.File
+import java.util.concurrent.Future
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Writes session part telemetry to disk, if the multi-file persistence layer is enabled.
- * All filesystem work is queued on a single-threaded [worker].
+ * All filesystem work is queued on a single-threaded [worker]. A queued write that is superseded
+ * before it runs is cancelled to avoid duplicate work.
  */
 class SessionPartWriterImpl(
     private val sessionsDir: Lazy<File>,
@@ -102,7 +105,7 @@ class SessionPartWriterImpl(
     }
 
     private fun queueMetadataWrite(writers: PartWriters) {
-        worker.submit {
+        writers.metadataWrites.submit {
             writers.metadata.write()
         }
     }
@@ -112,7 +115,7 @@ class SessionPartWriterImpl(
      */
     private fun queueSessionSpanWrite(writers: PartWriters) {
         val span = writers.span?.snapshot() ?: return
-        worker.submit {
+        writers.sessionSpanWrites.submit {
             writers.sessionSpan.write(span)
         }
     }
@@ -122,7 +125,6 @@ class SessionPartWriterImpl(
     private inner class PartWriters(val directory: SessionPartDirectory) {
 
         val span: EmbraceSdkSpan? = currentSessionPartSpan.current()
-
         val manifest = SessionManifestWriter(sessionsDir, logger)
 
         val metadata = SessionMetadataWriter(
@@ -137,5 +139,21 @@ class SessionPartWriterImpl(
             sessionPartDirectorySource = { directory },
             logger = logger,
         )
+
+        val metadataWrites = CoalescingWriteQueue(worker)
+        val sessionSpanWrites = CoalescingWriteQueue(worker)
+    }
+
+    /**
+     * Queues the writes for one file in a session part. Each write persists the whole file so
+     * we should cancel and remove any enqueued writes as they will be superseded by later ones.
+     * A write that has already started is left to finish.
+     */
+    private class CoalescingWriteQueue(private val worker: BackgroundWorker) {
+        private val pending = AtomicReference<Future<*>?>(null)
+
+        fun submit(runnable: Runnable) {
+            pending.getAndSet(worker.submit(runnable))?.cancel(false)
+        }
     }
 }

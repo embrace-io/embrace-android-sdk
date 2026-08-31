@@ -99,7 +99,7 @@ internal class ExperimentApiDelegate(
      */
     private fun <T> admitEntries(entries: List<T>): List<T>? {
         if (entries.isEmpty()) {
-            return entries
+            return null
         }
         val remaining = PENDING_ENTRY_LIMIT - bufferedEntryCount.get()
         if (remaining <= 0) {

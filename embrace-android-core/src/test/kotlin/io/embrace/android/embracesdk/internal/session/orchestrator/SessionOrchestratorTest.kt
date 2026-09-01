@@ -1238,6 +1238,7 @@ internal class SessionOrchestratorTest {
                 FakeEnvelopeResourceSource(),
                 FakeEnvelopeMetadataSource(),
                 currentSessionPartSpan,
+                { emptyList() },
             ),
         ).apply {
             start()

@@ -214,6 +214,7 @@ internal class SessionPartWriterResourceChangeTest {
         resourceSource,
         { EnvelopeMetadata(userId = "my-user-id") },
         currentSessionPartSpan,
+        { emptyList() },
     )
 
     private fun startPart(writer: SessionPartWriter, sessionPartId: String) {

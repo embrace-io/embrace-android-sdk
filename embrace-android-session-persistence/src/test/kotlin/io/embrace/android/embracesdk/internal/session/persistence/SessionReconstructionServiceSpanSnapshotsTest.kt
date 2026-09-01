@@ -157,14 +157,31 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
     }
 
     @Test
-    fun `a missing snapshots file is reported`() {
+    fun `a missing snapshots file reconstructs no snapshots`() {
         writeManifest()
         writeMetadata()
         writeSessionSpan()
         writeCompletedSpans()
 
-        assertNull(service.reconstruct(partDirectory))
-        assertReconstructionFailureTracked()
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertNull(payload.spanSnapshots)
+        assertEquals(listOf(fullyPopulatedSpan), payload.spans)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a missing snapshots file still reconstructs the unfinished session span`() {
+        val incomplete = fullyPopulatedSpan.copy(endTimeNanos = null)
+        sessionSpan = incomplete
+        writeManifest()
+        writeMetadata()
+        writeSessionSpan()
+        writeCompletedSpans()
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(listOf(incomplete), payload.spanSnapshots)
+        assertNull(payload.spans)
+        assertNoInternalErrors()
     }
 
     @Test

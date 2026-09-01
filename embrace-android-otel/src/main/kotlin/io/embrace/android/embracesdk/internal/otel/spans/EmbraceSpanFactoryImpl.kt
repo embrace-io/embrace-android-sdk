@@ -125,7 +125,7 @@ private class EmbraceSpanImpl(
                 synchronized(startedSpan) {
                     sdkSpan.setStatus(value)
                     currentStatus = value
-                    deps.spanRepository.notifySpanUpdate()
+                    deps.spanRepository.notifySpanChanged(this)
                 }
             }
         }
@@ -218,7 +218,7 @@ private class EmbraceSpanImpl(
             newSpan.setName(spanName)
 
             spanStartTimeMs = attemptedStartTimeMs
-            deps.spanRepository.notifySpanUpdate()
+            deps.spanRepository.notifySpanChanged(this)
         }
 
         return true
@@ -257,7 +257,7 @@ private class EmbraceSpanImpl(
                 successful = !isRecording
                 if (successful) {
                     spanEndTimeMs = attemptedEndTimeMs
-                    deps.spanRepository.notifySpanUpdate()
+                    deps.spanRepository.notifySpanChanged(this)
                     releaseRetainedData()
                 }
             }
@@ -345,7 +345,7 @@ private class EmbraceSpanImpl(
                         internal = internal,
                     )
                     customAttributes[attribute.first] = attribute.second
-                    deps.spanRepository.notifySpanUpdate()
+                    deps.spanRepository.notifySpanChanged(this)
                     return true
                 }
             }
@@ -361,7 +361,7 @@ private class EmbraceSpanImpl(
                 if (!spanStarted() || isRecording) {
                     spanName = newName
                     startedSpan.get()?.setName(spanName)
-                    deps.spanRepository.notifySpanUpdate()
+                    deps.spanRepository.notifySpanChanged(this)
                     return true
                 }
             }
@@ -425,7 +425,7 @@ private class EmbraceSpanImpl(
             synchronized(systemAttributes) {
                 if (systemAttributes.containsKey(key) || systemAttributes.size < max) {
                     systemAttributes[key] = value
-                    deps.spanRepository.notifySpanUpdate()
+                    deps.spanRepository.notifySpanChanged(this)
                     return
                 }
             }
@@ -435,7 +435,7 @@ private class EmbraceSpanImpl(
 
     override fun removeSystemAttribute(key: String) {
         systemAttributes.remove(key)
-        deps.spanRepository.notifySpanUpdate()
+        deps.spanRepository.notifySpanChanged(this)
     }
 
     override fun attributes(): Map<String, Any> {
@@ -523,7 +523,7 @@ private class EmbraceSpanImpl(
                             customEvents().add(event)
                             customEventCount++
                         }
-                        deps.spanRepository.notifySpanUpdate()
+                        deps.spanRepository.notifySpanChanged(this)
                         return true
                     }
                 }
@@ -549,7 +549,7 @@ private class EmbraceSpanImpl(
                         customLinks().add(link)
                         customLinkCount++
                     }
-                    deps.spanRepository.notifySpanUpdate()
+                    deps.spanRepository.notifySpanChanged(this)
                     return true
                 }
             }

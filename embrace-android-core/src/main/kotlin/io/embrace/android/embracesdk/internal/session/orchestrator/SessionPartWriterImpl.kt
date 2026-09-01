@@ -52,6 +52,9 @@ class SessionPartWriterImpl(
     @Volatile
     private var crashing = false
 
+    @Volatile
+    private var resourceListenerRegistered = false
+
     private val directoryStore = SessionPartDirectoryStore(sessionsDir, worker, clock, logger)
 
     override fun onSessionPartStarted(timestamp: Long, userSessionId: String, sessionPartId: String) {
@@ -72,6 +75,7 @@ class SessionPartWriterImpl(
         queueManifestWrite(writers)
         queueMetadataWrite(writers)
         queueSessionSpanWrite(writers)
+        registerResourceChangeListener()
     }
 
     override fun onSessionPartEnded(sessionPartId: String) {
@@ -92,6 +96,13 @@ class SessionPartWriterImpl(
         queueMetadataWrite(current ?: return)
     }
 
+    private fun onResourceChanged() {
+        if (!enabled()) {
+            return
+        }
+        queueManifestWrite(current ?: return)
+    }
+
     override fun onPeriodicWrite() {
         if (!enabled()) {
             return
@@ -107,8 +118,26 @@ class SessionPartWriterImpl(
         worker.shutdownAndWait(CRASH_DRAIN_TIMEOUT_MS)
     }
 
-    private fun queueManifestWrite(writers: PartWriters) {
+    /**
+     * Subscribes to resource changes so the manifest on disk keeps up with them. Registration
+     * happens at most once as the listener outlives any one session part, and is deferred to the
+     * [worker] because building a resource can touch the filesystem.
+     *
+     * The resource handed to the listener is discarded: each write rebuilds it, so the newest
+     * resource wins even if two changes are delivered out of order.
+     */
+    private fun registerResourceChangeListener() {
+        if (resourceListenerRegistered) {
+            return
+        }
+        resourceListenerRegistered = true
         execute(InternalErrorType.SessionManifestWriteFail, { worker.submit(it) }) {
+            resourceSource.addChangeListener { _ -> onResourceChanged() }
+        }
+    }
+
+    private fun queueManifestWrite(writers: PartWriters) {
+        execute(InternalErrorType.SessionManifestWriteFail, writers.manifestWrites::submit) {
             writers.manifest.write(
                 directory = writers.directory,
                 resource = resourceSource.getEnvelopeResource(),
@@ -178,6 +207,7 @@ class SessionPartWriterImpl(
             logger = logger,
         )
 
+        val manifestWrites = CoalescingWriteQueue(worker)
         val metadataWrites = CoalescingWriteQueue(worker)
         val sessionSpanWrites = CoalescingWriteQueue(worker)
     }

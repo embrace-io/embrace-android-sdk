@@ -28,12 +28,30 @@ internal class ExperimentTrackingFoundationTest {
         testRule.runTest(
             preSdkStartAction = {
                 bufferedExperimentStartMs = clock.now()
-                embrace.trackExperiment(id = "checkout-flow", variant = "variant-a", startedAt = bufferedExperimentStartMs)
+
+                embrace.trackExperiments(
+                    listOf(
+                        embrace.createExperiment("checkout-flow", "variant-a", bufferedExperimentStartMs),
+                        embrace.createExperiment("color-palette", "yellow", bufferedExperimentStartMs),
+                    ),
+                )
+                embrace.trackFeatureFlags(
+                    listOf(
+                        embrace.createFeatureFlag("dark-mode", bufferedExperimentStartMs),
+                        embrace.createFeatureFlag("new-ui", bufferedExperimentStartMs),
+                    ),
+                )
+                embrace.trackExperiment("color-palette", "blue")
             },
             testCaseAction = {
                 recordSession {
                     flagStartMs = clock.tick()
-                    embrace.trackFeatureFlag(id = "dark-mode", startedAt = flagStartMs)
+                    embrace.trackFeatureFlags(
+                        listOf(
+                            embrace.createFeatureFlag("dark-mode"),
+                            embrace.createFeatureFlag("http3"),
+                        ),
+                    )
 
                     // an experiment may share an id with a feature flag: they are two independent records
                     sharedIdExperimentStartMs = clock.tick()
@@ -44,10 +62,10 @@ internal class ExperimentTrackingFoundationTest {
                     embrace.trackExperiment(id = "promo")
 
                     untrackEndMs = clock.tick()
-                    embrace.untrackExperiment("checkout-flow", endedAt = untrackEndMs)
+                    embrace.untrackExperiment(id = "checkout-flow", endedAt = untrackEndMs)
 
                     embrace.trackExperiments(
-                        listOf(embrace.createExperiment(id = "checkout-flow", variant = "variant-b", startedAt = clock.tick()))
+                        listOf(embrace.createExperiment(id = "checkout-flow", variant = "variant-b", startedAt = clock.tick())),
                     )
                 }
                 recordSession()
@@ -55,27 +73,30 @@ internal class ExperimentTrackingFoundationTest {
             assertAction = {
                 val expectedRecords =
                     "e:checkout-flow:variant-a:$bufferedExperimentStartMs:$untrackEndMs;" +
-                        "f:dark-mode::$flagStartMs;" +
+                        "e:color-palette:yellow:$bufferedExperimentStartMs;" +
+                        "f:dark-mode::$bufferedExperimentStartMs;" +
+                        "f:new-ui::$bufferedExperimentStartMs;" +
+                        "f:http3::$flagStartMs;" +
                         "e:dark-mode::$sharedIdExperimentStartMs;" +
                         "e:promo::$variantlessExperimentStartMs"
                 assertEquals(
                     expectedRecords,
-                    testRule.bootstrapper.essentialServiceModule.experimentTrackingService.getRecords()
+                    testRule.bootstrapper.essentialServiceModule.experimentTrackingService.getRecords(),
                 )
 
                 val envelopes = getSessionEnvelopes(2)
                 val attrs = checkNotNull(envelopes.first().findSessionPartSpan().attributes)
-                assertEquals("4", attrs.findAttributeValue("emb.usage.track_experiment"))
+                assertEquals("5", attrs.findAttributeValue("emb.usage.track_experiment"))
                 assertEquals("1", attrs.findAttributeValue("emb.usage.untrack_experiment"))
-                assertEquals("1", attrs.findAttributeValue("emb.usage.track_feature_flag"))
+                assertEquals("2", attrs.findAttributeValue("emb.usage.track_feature_flag"))
 
                 envelopes.forEach { envelope ->
                     assertEquals(
                         expectedRecords,
-                        envelope.findSessionPartSpan().attributes?.findAttributeValue(EmbCommonAttributes.EMB_EXPERIMENTS)
+                        envelope.findSessionPartSpan().attributes?.findAttributeValue(EmbCommonAttributes.EMB_EXPERIMENTS),
                     )
                 }
-            }
+            },
         )
     }
 }

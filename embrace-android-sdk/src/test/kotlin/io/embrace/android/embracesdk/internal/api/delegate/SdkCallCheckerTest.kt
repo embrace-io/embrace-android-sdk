@@ -47,4 +47,12 @@ internal class SdkCallCheckerTest {
         assertTrue(logger.sdkNotInitializedMessages.isEmpty())
         assertEquals(action, telemetryService.apiCalls.single())
     }
+
+    @Test
+    fun `api call recorded regardless if SDK has started`() {
+        assertFalse(checker.started.get())
+        checker.recordApiCall(action)
+        assertTrue(logger.sdkNotInitializedMessages.isEmpty())
+        assertEquals(action, telemetryService.apiCalls.single())
+    }
 }

@@ -84,33 +84,54 @@ internal class ExperimentApiDelegateTest {
     }
 
     @Test
-    fun `buffered calls flush in FIFO order`() {
-        delegate.trackExperiment("exp1", variant = "v1", startedAt = 123456789L)
-        delegate.trackFeatureFlag("flag1", startedAt = 987654321L)
-        delegate.untrackExperiment("exp1", endedAt = 555555555L)
+    fun `buffered calls are coalesced with api usage record preserved when flushed`() {
+        delegate.trackExperiments(
+            listOf(
+                TrackedExperimentImpl("exp1", "v1", 123456789L),
+                TrackedExperimentImpl("exp2", "v1", 123456789L),
+            ),
+        )
+        delegate.trackExperiments(
+            listOf(
+                TrackedExperimentImpl("exp2", "v2", 123456789L),
+                TrackedExperimentImpl("exp3", "v1", 123456789L),
+            ),
+        )
+        delegate.trackExperiment("exp4", "v2", 123456789L)
+        delegate.trackFeatureFlags(
+            listOf(
+                TrackedFeatureFlagImpl("flag1", 987654321L),
+                TrackedFeatureFlagImpl("flag2", 987654321L),
+            ),
+        )
+        delegate.trackFeatureFlag("flag3", startedAt = 987654321L)
+        delegate.untrackExperiments(listOf("exp1", "exp2"), 555555555L)
+        delegate.untrackExperiment("exp3", 555555555L)
+        delegate.untrackExperiment("exp4", 555555566L)
+        delegate.untrackFeatureFlags(listOf("flag1", "flag3"), 555555555L)
         delegate.untrackFeatureFlag("flag1", endedAt = 666666666L)
+        delegate.untrackFeatureFlag("flag2", endedAt = 666666666L)
 
         sdkCallChecker.started.set(true)
         delegate.flushPendingCalls()
 
         assertEquals(
-            listOf("track_experiment", "track_feature_flag", "untrack_experiment", "untrack_feature_flag"),
+            listOf(
+                "track_experiment",
+                "track_experiment",
+                "track_experiment",
+                "track_feature_flag",
+                "track_feature_flag",
+                "untrack_experiment",
+                "untrack_experiment",
+                "untrack_experiment",
+                "untrack_feature_flag",
+                "untrack_feature_flag",
+                "untrack_feature_flag",
+            ),
             telemetryService.apiCalls,
         )
-        assertEquals(
-            listOf(
-                TrackedData.Experiment(id = "exp1", startTimeMs = 123456789L, variant = "v1"),
-                TrackedData.FeatureFlag(id = "flag1", startTimeMs = 987654321L),
-            ),
-            fakeExperimentTrackingService.trackedData,
-        )
-        assertEquals(
-            listOf(
-                FakeExperimentTrackingService.UntrackCall(ExperimentKind.EXPERIMENT, listOf("exp1"), 555555555L),
-                FakeExperimentTrackingService.UntrackCall(ExperimentKind.FEATURE_FLAG, listOf("flag1"), 666666666L),
-            ),
-            fakeExperimentTrackingService.untrackCalls,
-        )
+        assertEquals(5, fakeExperimentTrackingService.serviceInvocations.get())
     }
 
     @Test

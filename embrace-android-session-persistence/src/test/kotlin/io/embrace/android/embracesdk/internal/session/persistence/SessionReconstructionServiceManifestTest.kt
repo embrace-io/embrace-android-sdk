@@ -44,13 +44,23 @@ internal class SessionReconstructionServiceManifestTest {
     @Volatile
     private var activePart: SessionPartDirectory? = partDirectory
 
+    @Volatile
+    private var writtenResource: EnvelopeResource = fullyPopulatedResource
+
     @Before
     fun setUp() {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
         logger = FakeInternalLogger(throwOnInternalError = false)
         activePart = partDirectory
+        writtenResource = fullyPopulatedResource
         writer = SessionManifestWriter(lazy { sessionsDir }, logger)
-        metadataWriter = SessionMetadataWriter(lazy { sessionsDir }, { activePart }, { fullyPopulatedMetadata }, logger)
+        metadataWriter = SessionMetadataWriter(
+            lazy { sessionsDir },
+            { activePart },
+            { fullyPopulatedMetadata },
+            { writtenResource },
+            logger,
+        )
         sessionSpanWriter = SessionSpanWriter(lazy { sessionsDir }, { activePart }, logger)
         service = SessionReconstructionService(lazy { sessionsDir }, logger)
         createPartDir(partDirectory)
@@ -74,6 +84,7 @@ internal class SessionReconstructionServiceManifestTest {
     ) {
         assertTrue(writer.write(directory, resource, envelopeVersion, envelopeType, sharedLibSymbolMapping))
         activePart = directory
+        writtenResource = resource
         assertTrue(metadataWriter.write())
         assertTrue(sessionSpanWriter.write(fullyPopulatedSpan))
         writeCompletedSpans(directory)
@@ -242,7 +253,7 @@ internal class SessionReconstructionServiceManifestTest {
                 format_version = FORMAT_VERSION + 1,
                 envelope_version = ENVELOPE_VERSION,
                 envelope_type = ENVELOPE_TYPE,
-                resource = fullyPopulatedResourceProto,
+                resource = fullyPopulatedImmutableResourceProto,
             ),
         )
 

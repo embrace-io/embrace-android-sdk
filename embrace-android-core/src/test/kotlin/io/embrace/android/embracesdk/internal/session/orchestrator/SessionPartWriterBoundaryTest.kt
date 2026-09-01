@@ -244,7 +244,7 @@ internal class SessionPartWriterBoundaryTest {
         drain()
 
         assertEquals("resource0", manifestIn(FIRST_PART_ID)?.resource?.app_version)
-        assertEquals("resource1", manifestIn(SECOND_PART_ID)?.resource?.app_version)
+        assertEquals("resource2", manifestIn(SECOND_PART_ID)?.resource?.app_version)
         assertNoInternalErrors()
     }
 
@@ -259,8 +259,7 @@ internal class SessionPartWriterBoundaryTest {
         drain()
 
         assertEquals("resource0", manifestIn(FIRST_PART_ID)?.resource?.app_version)
-        assertEquals("resource1", manifestIn(SECOND_PART_ID)?.resource?.app_version)
-        assertEquals(2, resourceCount)
+        assertEquals("resource2", manifestIn(SECOND_PART_ID)?.resource?.app_version)
         assertNoInternalErrors()
     }
 

@@ -60,7 +60,13 @@ internal class SessionReconstructionServiceFileSizeTest {
         logger = FakeInternalLogger(throwOnInternalError = false)
         activePart = partDirectory
         manifestWriter = SessionManifestWriter(lazy { sessionsDir }, logger)
-        metadataWriter = SessionMetadataWriter(lazy { sessionsDir }, { activePart }, { fullyPopulatedMetadata }, logger)
+        metadataWriter = SessionMetadataWriter(
+            lazy { sessionsDir },
+            { activePart },
+            { fullyPopulatedMetadata },
+            { fullyPopulatedResource },
+            logger,
+        )
         sessionSpanWriter = SessionSpanWriter(lazy { sessionsDir }, { activePart }, logger)
         snapshotsWriter = SpanSnapshotsWriter(lazy { sessionsDir }, { activePart }, logger)
         service = SessionReconstructionService(lazy { sessionsDir }, logger)

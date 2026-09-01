@@ -17,10 +17,10 @@ internal class SessionManifestTest {
             shared_lib_symbol_mapping = SharedLibSymbolMapping(
                 symbols = mapOf("abc-123-uuid" to "libembrace.so"),
             ),
-            resource = EnvelopeResourceProto(
+            resource = ImmutableResourceProto(
                 app_version = "1.2.3",
-                app_framework = EnvelopeResourceProto.AppFramework.NATIVE,
-                extras = mapOf("custom.key" to "custom.value"),
+                app_framework = ImmutableResourceProto.AppFramework.NATIVE,
+                device_soc_model = "Tensor G3",
             ),
         )
 
@@ -42,11 +42,11 @@ internal class SessionManifestTest {
     @Test
     fun `absent resource stays distinct from an empty resource`() {
         val absent = SessionManifest(resource = null)
-        val empty = SessionManifest(resource = EnvelopeResourceProto())
+        val empty = SessionManifest(resource = ImmutableResourceProto())
 
         assertNull(SessionManifest.ADAPTER.decode(SessionManifest.ADAPTER.encode(absent)).resource)
         assertEquals(
-            EnvelopeResourceProto(),
+            ImmutableResourceProto(),
             SessionManifest.ADAPTER.decode(SessionManifest.ADAPTER.encode(empty)).resource,
         )
     }

@@ -113,7 +113,7 @@ class SessionPartWriterImpl(
         if (!enabled()) {
             return
         }
-        queueManifestWrite(current ?: return)
+        queueMetadataWrite(current ?: return)
     }
 
     override fun onPeriodicWrite() {
@@ -132,7 +132,7 @@ class SessionPartWriterImpl(
     }
 
     /**
-     * Subscribes to resource changes so the manifest on disk keeps up with them. Registration
+     * Subscribes to resource changes so the metadata on disk keeps up with them. Registration
      * happens at most once as the listener outlives any one session part, and is deferred to the
      * [worker] because building a resource can touch the filesystem.
      *
@@ -144,13 +144,13 @@ class SessionPartWriterImpl(
             return
         }
         resourceListenerRegistered = true
-        execute(InternalErrorType.SessionManifestWriteFail, { worker.submit(it) }) {
+        execute(InternalErrorType.SessionMetadataWriteFail, { worker.submit(it) }) {
             resourceSource.addChangeListener { _ -> onResourceChanged() }
         }
     }
 
     private fun queueManifestWrite(writers: PartWriters) {
-        execute(InternalErrorType.SessionManifestWriteFail, writers.manifestWrites::submit) {
+        execute(InternalErrorType.SessionManifestWriteFail, { worker.submit(it) }) {
             writers.manifest.write(
                 directory = writers.directory,
                 resource = resourceSource.getEnvelopeResource(),
@@ -235,6 +235,7 @@ class SessionPartWriterImpl(
             sessionsDir = sessionsDir,
             sessionPartDirectorySource = { directory },
             metadataSource = metadataSource::getEnvelopeMetadata,
+            resourceSource = resourceSource::getEnvelopeResource,
             logger = logger,
         )
 
@@ -256,7 +257,6 @@ class SessionPartWriterImpl(
             logger = logger,
         )
 
-        val manifestWrites = CoalescingWriteQueue(worker)
         val metadataWrites = CoalescingWriteQueue(worker)
         val sessionSpanWrites = CoalescingWriteQueue(worker)
         val spanSnapshotWrites = CoalescingWriteQueue(worker)

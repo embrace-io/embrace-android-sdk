@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 /**
  * Maps an [EnvelopeMetadata] to its protobuf equivalent.
  */
-internal fun EnvelopeMetadata.toProto(): EnvelopeMetadataProto = EnvelopeMetadataProto(
+internal fun EnvelopeMetadata.toProto(resource: MutableResourceProto): EnvelopeMetadataProto = EnvelopeMetadataProto(
     format_version = FORMAT_VERSION,
     user_id = userId,
     email = email,
@@ -13,6 +13,7 @@ internal fun EnvelopeMetadata.toProto(): EnvelopeMetadataProto = EnvelopeMetadat
     personas = personas?.toList().orEmpty(),
     timezone_description = timezoneDescription.orEmpty(),
     locale = locale.orEmpty(),
+    resource = resource,
 )
 
 internal fun EnvelopeMetadataProto.toPayload(): EnvelopeMetadata = EnvelopeMetadata(

@@ -46,18 +46,25 @@ class SessionReconstructionService(
             SessionManifest::format_version,
         ) ?: return null
 
-        val resource = manifest.resource
-        if (resource == null) {
+        val immutableResource = manifest.resource
+        if (immutableResource == null) {
             trackFailure(IOException("Manifest has no resource"))
             return null
         }
 
-        val metadata = readPartFile(
+        val metadataProto = readPartFile(
             partDir,
             METADATA_FILE_NAME,
             EnvelopeMetadataProto.ADAPTER,
             EnvelopeMetadataProto::format_version,
-        )?.toPayload() ?: return null
+        ) ?: return null
+
+        val mutableResource = metadataProto.resource
+        if (mutableResource == null) {
+            trackFailure(IOException("Metadata has no resource"))
+            return null
+        }
+        val metadata = metadataProto.toPayload()
 
         val sessionSpan = readPartFile(
             partDir,
@@ -91,7 +98,7 @@ class SessionReconstructionService(
         val deduped = dedupeSpanIds(spans, spanSnapshots)
 
         return Envelope(
-            resource = resource.toPayload(),
+            resource = immutableResource.toPayload(mutableResource),
             metadata = metadata,
             version = manifest.envelope_version,
             type = manifest.envelope_type,

@@ -7,11 +7,11 @@ import java.io.File
 import java.io.IOException
 
 /**
- * Writes the envelope resource and the identity of a session part to its directory.
+ * Writes the immutable parts of the envelope resource and the identity of a session part to its
+ * directory.
  *
- * This file is overwritten in place. [write] is called when a session part starts and again
- * whenever the [EnvelopeResource] changes, as some of the values it is built from are retrieved
- * asynchronously or supplied by a hosted SDK after the session part began.
+ * [write] is called once, when a session part starts. Everything it holds is fixed for the
+ * lifetime of the process, so the file is never revisited.
  */
 class SessionManifestWriter(
     private val sessionsDir: Lazy<File>,
@@ -19,7 +19,7 @@ class SessionManifestWriter(
 ) {
 
     /**
-     * Writes the manifest for the given session part, replacing any manifest already on disk.
+     * Writes the manifest for the given session part.
      *
      * Returns true if a manifest is on disk for this session part
      */
@@ -61,7 +61,7 @@ class SessionManifestWriter(
             shared_lib_symbol_mapping = sharedLibSymbolMapping?.let { symbols ->
                 SharedLibSymbolMapping(symbols = symbols)
             },
-            resource = resource.toProto(),
+            resource = resource.toImmutableProto(),
         )
 
         writeAtomically(partDir, MANIFEST_FILE_NAME) { stream ->

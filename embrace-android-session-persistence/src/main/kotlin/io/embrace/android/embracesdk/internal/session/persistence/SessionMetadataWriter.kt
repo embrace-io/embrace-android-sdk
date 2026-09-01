@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.session.persistence
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
+import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import java.io.File
 import java.io.IOException
 
@@ -10,12 +11,13 @@ import java.io.IOException
  * Writes the data that can change over the lifetime of a session part to its directory.
  *
  * Unlike the manifest, this file is overwritten in place. [write] is called when a session part
- * starts and again whenever the user's id, email, username or personas change.
+ * starts, whenever the user info or envelope resource changes.
  */
 class SessionMetadataWriter(
     private val sessionsDir: Lazy<File>,
     private val sessionPartDirectorySource: () -> SessionPartDirectory?,
     private val metadataSource: () -> EnvelopeMetadata,
+    private val resourceSource: () -> EnvelopeResource,
     private val logger: InternalLogger,
 ) {
 
@@ -42,7 +44,7 @@ class SessionMetadataWriter(
             return false
         }
 
-        val metadata = metadataSource().toProto()
+        val metadata = metadataSource().toProto(resourceSource().toMutableProto())
         writeAtomically(partDir, METADATA_FILE_NAME) { stream ->
             EnvelopeMetadataProto.ADAPTER.encode(stream, metadata)
         }

@@ -12,9 +12,11 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
+import io.embrace.android.embracesdk.internal.session.persistence.EnvelopeMetadataProto
 import io.embrace.android.embracesdk.internal.session.persistence.SessionManifest
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -24,8 +26,9 @@ import org.junit.rules.TemporaryFolder
 import java.io.File
 
 /**
- * Covers rewriting the manifest when the envelope resource changes. Most of the resource is fixed
- * for the lifetime of the process, but values such as the React Native bundle id can mutate.
+ * Covers rewriting the metadata when the envelope resource changes. Most of the resource is fixed
+ * for the lifetime of the process and lives in the write-once manifest, but values such as the
+ * React Native bundle id can mutate and are persisted in the metadata instead.
  */
 internal class SessionPartWriterResourceChangeTest {
 
@@ -34,8 +37,10 @@ internal class SessionPartWriterResourceChangeTest {
         private const val FIRST_PART_ID = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
         private const val SECOND_PART_ID = "cccccccccccccccccccccccccccccccc"
         private const val MANIFEST_FILE_NAME = "manifest.pb"
-        private const val INITIAL_VERSION = "1.0.0"
-        private const val CHANGED_VERSION = "2.0.0"
+        private const val METADATA_FILE_NAME = "metadata.pb"
+        private const val APP_VERSION = "1.0.0"
+        private const val INITIAL_BUNDLE_ID = "bundle-1"
+        private const val CHANGED_BUNDLE_ID = "bundle-2"
     }
 
     @get:Rule
@@ -47,14 +52,14 @@ internal class SessionPartWriterResourceChangeTest {
     private lateinit var logger: FakeInternalLogger
     private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
 
-    private var appVersion = INITIAL_VERSION
+    private var bundleId = INITIAL_BUNDLE_ID
     private var resourceReads = 0
     private val resourceListeners = mutableListOf<(EnvelopeResource) -> Unit>()
 
     private val resourceSource = object : EnvelopeResourceSource {
         override fun getEnvelopeResource(): EnvelopeResource {
             resourceReads++
-            return EnvelopeResource(appVersion = appVersion)
+            return EnvelopeResource(appVersion = APP_VERSION, reactNativeBundleId = bundleId)
         }
 
         override fun add(key: String, value: String) = Unit
@@ -71,7 +76,7 @@ internal class SessionPartWriterResourceChangeTest {
         clock = FakeClock()
         executor = BlockingScheduledExecutorService(clock, true)
         logger = FakeInternalLogger(throwOnInternalError = false)
-        appVersion = INITIAL_VERSION
+        bundleId = INITIAL_BUNDLE_ID
         resourceReads = 0
         resourceListeners.clear()
         currentSessionPartSpan = FakeCurrentSessionPartSpan(clock).apply {
@@ -80,17 +85,17 @@ internal class SessionPartWriterResourceChangeTest {
     }
 
     @Test
-    fun `a resource change rewrites the manifest for the active session part`() {
+    fun `a resource change rewrites the metadata for the active session part`() {
         val writer = createWriter()
         startPart(writer, FIRST_PART_ID)
         drain()
-        assertEquals(INITIAL_VERSION, manifestOnDisk(FIRST_PART_ID)?.resource?.app_version)
+        assertEquals(INITIAL_BUNDLE_ID, bundleIdOnDisk(FIRST_PART_ID))
 
-        changeResource(CHANGED_VERSION)
+        changeResource(CHANGED_BUNDLE_ID)
         drain()
 
+        assertEquals(CHANGED_BUNDLE_ID, bundleIdOnDisk(FIRST_PART_ID))
         with(checkNotNull(manifestOnDisk(FIRST_PART_ID))) {
-            assertEquals(CHANGED_VERSION, resource?.app_version)
             assertEquals(USER_SESSION_ID, user_session_id)
             assertEquals(FIRST_PART_ID, session_part_id)
         }
@@ -98,9 +103,24 @@ internal class SessionPartWriterResourceChangeTest {
     }
 
     @Test
+    fun `a resource change leaves the manifest untouched`() {
+        val writer = createWriter()
+        startPart(writer, FIRST_PART_ID)
+        drain()
+        val written = checkNotNull(manifestFile(FIRST_PART_ID)).readBytes()
+
+        repeat(3) { changeResource("bundle-change-$it") }
+        drain()
+
+        assertArrayEquals(written, manifestFile(FIRST_PART_ID)?.readBytes())
+        assertEquals(APP_VERSION, manifestOnDisk(FIRST_PART_ID)?.resource?.app_version)
+        assertNoInternalErrors()
+    }
+
+    @Test
     fun `a resource change before any session part starts writes nothing`() {
         createWriter()
-        changeResource(CHANGED_VERSION)
+        changeResource(CHANGED_BUNDLE_ID)
         drain()
 
         assertTrue(resourceListeners.isEmpty())
@@ -114,7 +134,7 @@ internal class SessionPartWriterResourceChangeTest {
         val writer = createWriter(enabled = false)
         startPart(writer, FIRST_PART_ID)
         drain()
-        changeResource(CHANGED_VERSION)
+        changeResource(CHANGED_BUNDLE_ID)
         drain()
 
         assertTrue(resourceListeners.isEmpty())
@@ -124,7 +144,7 @@ internal class SessionPartWriterResourceChangeTest {
     }
 
     @Test
-    fun `a resource change after a boundary rewrites only the newer manifest`() {
+    fun `a resource change after a boundary rewrites only the newer metadata`() {
         val writer = createWriter()
         startPart(writer, FIRST_PART_ID)
         drain()
@@ -132,26 +152,26 @@ internal class SessionPartWriterResourceChangeTest {
         startPart(writer, SECOND_PART_ID)
         drain()
 
-        changeResource(CHANGED_VERSION)
+        changeResource(CHANGED_BUNDLE_ID)
         drain()
 
-        assertEquals(INITIAL_VERSION, manifestOnDisk(FIRST_PART_ID)?.resource?.app_version)
-        assertEquals(CHANGED_VERSION, manifestOnDisk(SECOND_PART_ID)?.resource?.app_version)
+        assertEquals(INITIAL_BUNDLE_ID, bundleIdOnDisk(FIRST_PART_ID))
+        assertEquals(CHANGED_BUNDLE_ID, bundleIdOnDisk(SECOND_PART_ID))
         assertNoInternalErrors()
     }
 
     @Test
-    fun `a burst of resource changes is coalesced into one manifest write`() {
+    fun `a burst of resource changes is coalesced into one metadata write`() {
         val writer = createWriter()
         startPart(writer, FIRST_PART_ID)
         drain()
-        assertEquals(2, resourceReads)
+        assertEquals(3, resourceReads)
 
-        repeat(3) { changeResource("2.0.$it") }
+        repeat(3) { changeResource("bundle-2.$it") }
         drain()
 
-        assertEquals(3, resourceReads)
-        assertEquals("2.0.2", manifestOnDisk(FIRST_PART_ID)?.resource?.app_version)
+        assertEquals(4, resourceReads)
+        assertEquals("bundle-2.2", bundleIdOnDisk(FIRST_PART_ID))
         assertNoInternalErrors()
     }
 
@@ -176,10 +196,10 @@ internal class SessionPartWriterResourceChangeTest {
         writer.onCrash()
 
         val readsBeforeChange = resourceReads
-        changeResource(CHANGED_VERSION)
+        changeResource(CHANGED_BUNDLE_ID)
 
         assertEquals(readsBeforeChange, resourceReads)
-        assertEquals(INITIAL_VERSION, manifestOnDisk(FIRST_PART_ID)?.resource?.app_version)
+        assertEquals(INITIAL_BUNDLE_ID, bundleIdOnDisk(FIRST_PART_ID))
         assertNoInternalErrors()
     }
 
@@ -190,11 +210,11 @@ internal class SessionPartWriterResourceChangeTest {
         drain()
         assertTrue(File(sessionsDir, dirFor(FIRST_PART_ID).dirName).deleteRecursively())
 
-        changeResource(CHANGED_VERSION)
+        changeResource(CHANGED_BUNDLE_ID)
         drain()
 
         assertEquals(1, logger.internalErrorMessages.size)
-        assertEquals("SessionManifestWriteFail", logger.internalErrorMessages.single().msg)
+        assertEquals("SessionMetadataWriteFail", logger.internalErrorMessages.single().msg)
     }
 
     private fun createWriter(enabled: Boolean = true) = SessionPartWriterImpl(
@@ -226,9 +246,9 @@ internal class SessionPartWriterResourceChangeTest {
         writer.onSessionPartEnded(sessionPartId)
     }
 
-    private fun changeResource(version: String) {
-        appVersion = version
-        val resource = EnvelopeResource(appVersion = version)
+    private fun changeResource(newBundleId: String) {
+        bundleId = newBundleId
+        val resource = EnvelopeResource(appVersion = APP_VERSION, reactNativeBundleId = newBundleId)
         resourceListeners.forEach { listener -> listener(resource) }
     }
 
@@ -244,11 +264,20 @@ internal class SessionPartWriterResourceChangeTest {
     private fun dirFor(sessionPartId: String): SessionPartDirectory =
         partDirs().single { it.sessionPartId == sessionPartId }
 
+    private fun manifestFile(sessionPartId: String): File? =
+        File(File(sessionsDir, dirFor(sessionPartId).dirName), MANIFEST_FILE_NAME).takeIf(File::isFile)
+
     private fun manifestOnDisk(sessionPartId: String): SessionManifest? =
-        File(File(sessionsDir, dirFor(sessionPartId).dirName), MANIFEST_FILE_NAME)
+        manifestFile(sessionPartId)?.inputStream()?.use(SessionManifest.ADAPTER::decode)
+
+    private fun metadataOnDisk(sessionPartId: String): EnvelopeMetadataProto? =
+        File(File(sessionsDir, dirFor(sessionPartId).dirName), METADATA_FILE_NAME)
             .takeIf(File::isFile)
             ?.inputStream()
-            ?.use(SessionManifest.ADAPTER::decode)
+            ?.use(EnvelopeMetadataProto.ADAPTER::decode)
+
+    private fun bundleIdOnDisk(sessionPartId: String): String? =
+        metadataOnDisk(sessionPartId)?.resource?.react_native_bundle_id
 
     private fun assertNoInternalErrors() {
         assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)

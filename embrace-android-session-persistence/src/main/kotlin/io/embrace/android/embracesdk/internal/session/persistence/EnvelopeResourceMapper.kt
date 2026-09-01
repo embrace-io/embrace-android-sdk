@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 /**
  * Maps an [EnvelopeResource] to its protobuf equivalent.
  */
-internal fun EnvelopeResource.toProto(): EnvelopeResourceProto = EnvelopeResourceProto(
+internal fun EnvelopeResource.toImmutableProto(): ImmutableResourceProto = ImmutableResourceProto(
     app_version = appVersion,
     app_framework = appFramework?.toProto(),
     build_id = buildId,
@@ -17,36 +17,32 @@ internal fun EnvelopeResource.toProto(): EnvelopeResourceProto = EnvelopeResourc
     bundle_version = bundleVersion,
     sdk_version = sdkVersion,
     sdk_simple_version = sdkSimpleVersion,
-    react_native_bundle_id = reactNativeBundleId,
-    react_native_version = reactNativeVersion,
-    javascript_patch_number = javascriptPatchNumber,
-    hosted_platform_version = hostedPlatformVersion,
-    hosted_sdk_version = hostedSdkVersion,
-    unity_build_id = unityBuildId,
     device_manufacturer = deviceManufacturer,
     device_model = deviceModel,
     device_architecture = deviceArchitecture,
-    jailbroken = jailbroken,
     disk_total_capacity = diskTotalCapacity,
     os_type = osType,
     os_name = osName,
     os_version = osVersion,
     os_code = osCode,
-    screen_resolution = screenResolution,
     num_cores = numCores,
-    uses_emmc_storage = usesEmmcStorage,
     device_soc_model = deviceSocModel,
+)
+
+internal fun EnvelopeResource.toMutableProto(): MutableResourceProto = MutableResourceProto(
+    jailbroken = jailbroken,
+    screen_resolution = screenResolution,
+    uses_emmc_storage = usesEmmcStorage,
+    hosted_platform_version = hostedPlatformVersion,
+    hosted_sdk_version = hostedSdkVersion,
+    javascript_patch_number = javascriptPatchNumber,
+    unity_build_id = unityBuildId,
+    react_native_bundle_id = reactNativeBundleId,
+    react_native_version = reactNativeVersion,
     extras = extras,
 )
 
-internal fun AppFramework.toProto(): EnvelopeResourceProto.AppFramework = when (this) {
-    AppFramework.NATIVE -> EnvelopeResourceProto.AppFramework.NATIVE
-    AppFramework.REACT_NATIVE -> EnvelopeResourceProto.AppFramework.REACT_NATIVE
-    AppFramework.UNITY -> EnvelopeResourceProto.AppFramework.UNITY
-    AppFramework.FLUTTER -> EnvelopeResourceProto.AppFramework.FLUTTER
-}
-
-internal fun EnvelopeResourceProto.toPayload(): EnvelopeResource = EnvelopeResource(
+internal fun ImmutableResourceProto.toPayload(mutable: MutableResourceProto): EnvelopeResource = EnvelopeResource(
     appVersion = app_version,
     appFramework = app_framework?.toPayload(),
     buildId = build_id,
@@ -57,32 +53,39 @@ internal fun EnvelopeResourceProto.toPayload(): EnvelopeResource = EnvelopeResou
     bundleVersion = bundle_version,
     sdkVersion = sdk_version,
     sdkSimpleVersion = sdk_simple_version,
-    reactNativeBundleId = react_native_bundle_id,
-    reactNativeVersion = react_native_version,
-    javascriptPatchNumber = javascript_patch_number,
-    hostedPlatformVersion = hosted_platform_version,
-    hostedSdkVersion = hosted_sdk_version,
-    unityBuildId = unity_build_id,
+    reactNativeBundleId = mutable.react_native_bundle_id,
+    reactNativeVersion = mutable.react_native_version,
+    javascriptPatchNumber = mutable.javascript_patch_number,
+    hostedPlatformVersion = mutable.hosted_platform_version,
+    hostedSdkVersion = mutable.hosted_sdk_version,
+    unityBuildId = mutable.unity_build_id,
     deviceManufacturer = device_manufacturer,
     deviceModel = device_model,
     deviceArchitecture = device_architecture,
-    jailbroken = jailbroken,
+    jailbroken = mutable.jailbroken,
     diskTotalCapacity = disk_total_capacity,
     osType = os_type,
     osName = os_name,
     osVersion = os_version,
     osCode = os_code,
-    screenResolution = screen_resolution,
+    screenResolution = mutable.screen_resolution,
     numCores = num_cores,
-    usesEmmcStorage = uses_emmc_storage,
+    usesEmmcStorage = mutable.uses_emmc_storage,
     deviceSocModel = device_soc_model,
-    extras = extras,
+    extras = mutable.extras,
 )
 
-internal fun EnvelopeResourceProto.AppFramework.toPayload(): AppFramework? = when (this) {
-    EnvelopeResourceProto.AppFramework.UNSPECIFIED -> null
-    EnvelopeResourceProto.AppFramework.NATIVE -> AppFramework.NATIVE
-    EnvelopeResourceProto.AppFramework.REACT_NATIVE -> AppFramework.REACT_NATIVE
-    EnvelopeResourceProto.AppFramework.UNITY -> AppFramework.UNITY
-    EnvelopeResourceProto.AppFramework.FLUTTER -> AppFramework.FLUTTER
+internal fun AppFramework.toProto(): ImmutableResourceProto.AppFramework = when (this) {
+    AppFramework.NATIVE -> ImmutableResourceProto.AppFramework.NATIVE
+    AppFramework.REACT_NATIVE -> ImmutableResourceProto.AppFramework.REACT_NATIVE
+    AppFramework.UNITY -> ImmutableResourceProto.AppFramework.UNITY
+    AppFramework.FLUTTER -> ImmutableResourceProto.AppFramework.FLUTTER
+}
+
+internal fun ImmutableResourceProto.AppFramework.toPayload(): AppFramework? = when (this) {
+    ImmutableResourceProto.AppFramework.UNSPECIFIED -> null
+    ImmutableResourceProto.AppFramework.NATIVE -> AppFramework.NATIVE
+    ImmutableResourceProto.AppFramework.REACT_NATIVE -> AppFramework.REACT_NATIVE
+    ImmutableResourceProto.AppFramework.UNITY -> AppFramework.UNITY
+    ImmutableResourceProto.AppFramework.FLUTTER -> AppFramework.FLUTTER
 }

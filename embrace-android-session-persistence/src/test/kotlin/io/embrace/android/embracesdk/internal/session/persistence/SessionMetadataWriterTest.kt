@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.session.persistence
 
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
+import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -41,6 +42,9 @@ internal class SessionMetadataWriterTest {
     private var metadataProvider: () -> EnvelopeMetadata = { fullyPopulatedMetadata }
 
     @Volatile
+    private var resourceProvider: () -> EnvelopeResource = { fullyPopulatedResource }
+
+    @Volatile
     private var activePart: SessionPartDirectory? = partDirectory
 
     @Before
@@ -48,8 +52,15 @@ internal class SessionMetadataWriterTest {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
         logger = FakeInternalLogger(throwOnInternalError = false)
         metadataProvider = { fullyPopulatedMetadata }
+        resourceProvider = { fullyPopulatedResource }
         activePart = partDirectory
-        writer = SessionMetadataWriter(lazy { sessionsDir }, { activePart }, { metadataProvider() }, logger)
+        writer = SessionMetadataWriter(
+            lazy { sessionsDir },
+            { activePart },
+            { metadataProvider() },
+            { resourceProvider() },
+            logger,
+        )
         createPartDir(partDirectory)
     }
 
@@ -121,6 +132,39 @@ internal class SessionMetadataWriterTest {
 
         assertEquals(listOf("userId0", "userId1", "userId2"), observed)
         assertEquals("userId2", readMetadata().user_id)
+    }
+
+    @Test
+    fun `every mutable resource field is persisted`() {
+        write()
+
+        val resource = checkNotNull(readMetadata().resource)
+        assertEquals(fullyPopulatedMutableResourceProto, resource)
+        assertEquals(true, resource.jailbroken)
+        assertEquals(true, resource.uses_emmc_storage)
+        assertEquals("screenResolution", resource.screen_resolution)
+        assertEquals("hostedSdkVersion", resource.hosted_sdk_version)
+        assertEquals(
+            mapOf("custom.key" to "custom.value", "other.key" to "other.value"),
+            resource.extras,
+        )
+    }
+
+    @Test
+    fun `metadata is overwritten when the resource changes`() {
+        write()
+        resourceProvider = {
+            fullyPopulatedResource.copy(screenResolution = "1440x3120", jailbroken = false)
+        }
+        assertTrue(writer.write())
+
+        with(checkNotNull(readMetadata().resource)) {
+            assertEquals("1440x3120", screen_resolution)
+            assertEquals(false, jailbroken)
+        }
+        assertEquals("userId", readMetadata().user_id)
+        assertEquals(listOf(METADATA_FILE_NAME), partDir().list()?.toList())
+        assertNoInternalErrors()
     }
 
     @Test
@@ -213,7 +257,13 @@ internal class SessionMetadataWriterTest {
 
     @Test
     fun `a failing session part source is reported and does not throw`() {
-        writer = SessionMetadataWriter(lazy { sessionsDir }, { error("boom") }, { metadataProvider() }, logger)
+        writer = SessionMetadataWriter(
+            lazy { sessionsDir },
+            { error("boom") },
+            { metadataProvider() },
+            { resourceProvider() },
+            logger,
+        )
 
         assertFalse(writer.write())
         assertEquals(emptyList<String>(), partDir().list()?.toList())

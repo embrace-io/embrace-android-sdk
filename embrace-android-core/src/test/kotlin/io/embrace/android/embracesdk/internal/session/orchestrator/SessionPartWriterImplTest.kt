@@ -283,7 +283,7 @@ internal class SessionPartWriterImplTest {
         assertEquals(USER_SESSION_ID, manifest.user_session_id)
         assertEquals(SESSION_PART_ID, manifest.session_part_id)
         assertEquals("resource0", manifest.resource?.app_version)
-        assertEquals(1, resourceCount)
+        assertEquals(2, resourceCount)
         assertNoInternalErrors()
     }
 
@@ -327,7 +327,6 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertEquals("resource0", manifestIn(SESSION_PART_ID)?.resource?.app_version)
-        assertEquals(1, resourceCount)
         assertNoInternalErrors()
     }
 

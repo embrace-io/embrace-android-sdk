@@ -84,21 +84,16 @@ internal class SessionManifestWriterTest {
     }
 
     @Test
-    fun `every envelope resource field is persisted`() {
+    fun `every immutable resource field is persisted`() {
         write()
 
         val resource = checkNotNull(readManifest().resource)
-        assertEquals(fullyPopulatedResourceProto, resource)
-        assertEquals(EnvelopeResourceProto.AppFramework.UNITY, resource.app_framework)
+        assertEquals(fullyPopulatedImmutableResourceProto, resource)
+        assertEquals(ImmutableResourceProto.AppFramework.UNITY, resource.app_framework)
         assertEquals(53, resource.sdk_simple_version)
         assertEquals(8, resource.num_cores)
-        assertEquals(true, resource.jailbroken)
-        assertEquals(true, resource.uses_emmc_storage)
         assertEquals(123456789L, resource.disk_total_capacity)
-        assertEquals(
-            mapOf("custom.key" to "custom.value", "other.key" to "other.value"),
-            resource.extras,
-        )
+        assertEquals("deviceSocModel", resource.device_soc_model)
     }
 
     @Test
@@ -106,13 +101,12 @@ internal class SessionManifestWriterTest {
         write(resource = EnvelopeResource())
 
         val resource = checkNotNull(readManifest().resource)
-        assertEquals(EnvelopeResourceProto(), resource)
+        assertEquals(ImmutableResourceProto(), resource)
         assertNull(resource.app_version)
         assertNull(resource.app_framework)
-        assertNull(resource.jailbroken)
         assertNull(resource.disk_total_capacity)
         assertNull(resource.num_cores)
-        assertEquals(emptyMap<String, String>(), resource.extras)
+        assertNull(resource.device_soc_model)
     }
 
     @Test
@@ -120,7 +114,7 @@ internal class SessionManifestWriterTest {
         write()
 
         with(readManifest()) {
-            assertEquals(1, format_version)
+            assertEquals(FORMAT_VERSION, format_version)
             assertEquals(ENVELOPE_VERSION, envelope_version)
             assertEquals(ENVELOPE_TYPE, envelope_type)
             assertEquals(USER_SESSION_ID, user_session_id)
@@ -174,7 +168,7 @@ internal class SessionManifestWriterTest {
 
         with(readManifest()) {
             assertEquals("9.9.9", resource?.app_version)
-            assertEquals(EnvelopeResourceProto.AppFramework.FLUTTER, resource?.app_framework)
+            assertEquals(ImmutableResourceProto.AppFramework.FLUTTER, resource?.app_framework)
             assertEquals("9.9.9", envelope_version)
             assertEquals("logs", envelope_type)
             assertNull(shared_lib_symbol_mapping)

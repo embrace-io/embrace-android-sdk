@@ -40,6 +40,8 @@ class SessionPartWriterImpl(
     private val metadataSource: EnvelopeMetadataSource,
     private val currentSessionPartSpan: CurrentSessionPartSpan,
     private val spanSnapshotSource: () -> List<Span>,
+    private val directoryStore: SessionPartDirectoryStore =
+        SessionPartDirectoryStore(sessionsDir, worker, clock, logger),
 ) : SessionPartWriter {
 
     private companion object {
@@ -58,8 +60,6 @@ class SessionPartWriterImpl(
 
     @Volatile
     private var resourceListenerRegistered = false
-
-    private val directoryStore = SessionPartDirectoryStore(sessionsDir, worker, clock, logger)
 
     override fun onSessionPartStarted(timestamp: Long, userSessionId: String, sessionPartId: String) {
         if (!enabled()) {

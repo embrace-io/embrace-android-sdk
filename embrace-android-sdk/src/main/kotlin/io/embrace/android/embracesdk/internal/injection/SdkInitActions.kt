@@ -190,6 +190,9 @@ internal fun ModuleGraph.triggerPayloadSend() {
             deliveryModule?.schedulingService?.onResurrectionComplete()
         }
     }
+    worker.submit { // deliver any session parts persisted by the multi-file persistence layer
+        userSessionOrchestrationModule.sessionPartReader?.readPersistedSessionParts()
+    }
     worker.submit { // potentially trigger first delivery attempt by firing network status callback
         deliveryModule?.schedulingService?.let(
             essentialServiceModule.networkConnectivityService::addNetworkConnectivityListener,

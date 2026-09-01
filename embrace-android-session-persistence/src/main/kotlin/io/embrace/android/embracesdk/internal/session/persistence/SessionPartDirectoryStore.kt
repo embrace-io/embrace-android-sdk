@@ -60,6 +60,18 @@ class SessionPartDirectoryStore(
         }
     }
 
+    /**
+     * The session parts currently on disk.
+     */
+    fun storedDirectories(): List<SessionPartDirectory> = index.storedEntries()
+
+    /**
+     * Removes a session part's telemetry from disk, and its entry from the index.
+     */
+    fun delete(directory: SessionPartDirectory) {
+        index.delete(directory)
+    }
+
     private fun createImpl(directory: SessionPartDirectory) {
         if (index.prune(newEntry = directory)) {
             return

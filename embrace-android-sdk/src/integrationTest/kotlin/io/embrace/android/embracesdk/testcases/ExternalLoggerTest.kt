@@ -25,7 +25,7 @@ import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.getTracer
 import io.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.kotlin.logging.SeverityNumber
-import io.opentelemetry.kotlin.logging.model.ReadableLogRecord
+import io.opentelemetry.kotlin.logging.data.LogRecordData
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.LogAttributes
 import io.opentelemetry.kotlin.semconv.ServiceAttributes
@@ -75,7 +75,7 @@ internal class ExternalLoggerTest {
     fun `record a log with otel logging API during a session`() {
         var logTime: Long = -1L
         var observedTime: Long = -1L
-        var exportedOTelLog: ReadableLogRecord? = null
+        var exportedOTelLog: LogRecordData? = null
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             persistedRemoteConfig = remoteConfig,
@@ -145,7 +145,7 @@ internal class ExternalLoggerTest {
         var userSessionId = ""
         var sessionPartId = ""
         var parentContext: SpanContext? = null
-        var exportedOTelLog: ReadableLogRecord? = null
+        var exportedOTelLog: LogRecordData? = null
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             persistedRemoteConfig = remoteConfig,
@@ -272,7 +272,7 @@ internal class ExternalLoggerTest {
         embLogger = embOpenTelemetry.loggerProvider.getLogger(name = "external-logger", version = "1.1.0")
     }
 
-    private fun ReadableLogRecord.assertOTelLogRecord(
+    private fun LogRecordData.assertOTelLogRecord(
         expectedInstrumentationName: String,
         expectedInstrumentationVersion: String,
         expectedResourceAttributes: Map<String, String>,
@@ -329,7 +329,7 @@ internal class ExternalLoggerTest {
         }
     }
 
-    private fun EmbraceOtelExportAssertionInterface.assertJavaOTelLogRecord(expectedOTelLog: ReadableLogRecord) {
+    private fun EmbraceOtelExportAssertionInterface.assertJavaOTelLogRecord(expectedOTelLog: LogRecordData) {
         val logId = expectedOTelLog.attributes[LogAttributes.LOG_RECORD_UID].toString()
         val logRecord = awaitLogs(1) { it.attributes.toStringMap()[LogAttributes.LOG_RECORD_UID] == logId }.single()
         with(logRecord) {

@@ -8,6 +8,7 @@ include(
     ":embrace-android-config-fakes",
     ":embrace-android-envelope",
     ":embrace-android-infra",
+    ":embrace-android-limits",
     ":embrace-android-utils",
     ":embrace-android-instrumentation-vitals",
     ":embrace-android-instrumentation-api",

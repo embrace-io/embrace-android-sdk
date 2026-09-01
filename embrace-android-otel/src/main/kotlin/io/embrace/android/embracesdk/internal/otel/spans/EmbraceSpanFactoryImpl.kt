@@ -121,15 +121,17 @@ private class EmbraceSpanImpl(
     override var status: StatusData
         get() = currentStatus
         set(value) {
-            if (setSpanStatus(value)) {
+            if (setSpanStatus(value) && spanStarted()) {
                 notifyChanged()
             }
         }
 
     private fun setSpanStatus(value: StatusData): Boolean {
-        val sdkSpan = startedSpan.get() ?: return false
         synchronized(startedSpan) {
-            sdkSpan.setStatus(value)
+            if (spanStarted() && !isRecording) {
+                return false
+            }
+            startedSpan.get()?.setStatus(value)
             currentStatus = value
         }
         return true
@@ -221,6 +223,9 @@ private class EmbraceSpanImpl(
 
             deps.spanRepository.trackStartedEmbraceSpan(this)
             newSpan.setName(spanName)
+            if (currentStatus != StatusData.Unset) {
+                newSpan.setStatus(currentStatus)
+            }
 
             spanStartTimeMs = attemptedStartTimeMs
         }
@@ -345,6 +350,7 @@ private class EmbraceSpanImpl(
         val maxAttributeCount = deps.dataValidator.otelLimitsConfig.getMaxCustomAttributeCount()
         if (customAttributes.size < maxAttributeCount && key.isNotBlank()) {
             var added = false
+            var changed = false
             synchronized(customAttributes) {
                 if (customAttributes.size < maxAttributeCount && isRecording) {
                     val attribute = deps.dataValidator.truncateAttribute(
@@ -352,12 +358,14 @@ private class EmbraceSpanImpl(
                         value = value,
                         internal = internal,
                     )
-                    customAttributes[attribute.first] = attribute.second
+                    changed = customAttributes.put(attribute.first, attribute.second) != attribute.second
                     added = true
                 }
             }
             if (added) {
-                notifyChanged()
+                if (changed) {
+                    notifyChanged()
+                }
                 return true
             }
         }
@@ -377,7 +385,9 @@ private class EmbraceSpanImpl(
                 }
             }
             if (updated) {
-                notifyChanged()
+                if (spanStarted()) {
+                    notifyChanged()
+                }
                 return true
             }
         }
@@ -437,15 +447,18 @@ private class EmbraceSpanImpl(
     override fun addSystemAttribute(key: String, value: String) {
         val max = deps.dataValidator.otelLimitsConfig.getMaxSystemAttributeCount()
         if (systemAttributes.containsKey(key) || systemAttributes.size < max) {
-            var added = false
+            var written = false
+            var changed = false
             synchronized(systemAttributes) {
-                if (systemAttributes.containsKey(key) || systemAttributes.size < max) {
-                    systemAttributes[key] = value
-                    added = true
+                if ((systemAttributes.containsKey(key) || systemAttributes.size < max) && mutable()) {
+                    changed = systemAttributes.put(key, value) != value
+                    written = true
                 }
             }
-            if (added) {
-                notifyChanged()
+            if (written) {
+                if (changed && spanStarted()) {
+                    notifyChanged()
+                }
                 return
             }
         }
@@ -453,8 +466,15 @@ private class EmbraceSpanImpl(
     }
 
     override fun removeSystemAttribute(key: String) {
-        systemAttributes.remove(key)
-        notifyChanged()
+        var removed = false
+        synchronized(systemAttributes) {
+            if (mutable()) {
+                removed = systemAttributes.remove(key) != null
+            }
+        }
+        if (removed && spanStarted()) {
+            notifyChanged()
+        }
     }
 
     override fun attributes(): Map<String, Any> {
@@ -606,6 +626,13 @@ private class EmbraceSpanImpl(
         customLinks ?: ArrayList<EmbraceLinkData>(INITIAL_COLLECTION_CAPACITY).also { customLinks = it }
 
     private fun spanStarted() = startedSpan.get() != null
+
+    /**
+     * Whether this span's own data can still be changed: freely before it starts, and while it is
+     * recording. A stopped span is immutable. Mirrors the condition [updateName] applies, and is
+     * deliberately a lock-free read so callers holding another monitor never acquire [startedSpan].
+     */
+    private fun mutable() = !spanStarted() || isRecording
 
     /**
      * Tells the repository this span's data changed. Must be called after the monitor is released.

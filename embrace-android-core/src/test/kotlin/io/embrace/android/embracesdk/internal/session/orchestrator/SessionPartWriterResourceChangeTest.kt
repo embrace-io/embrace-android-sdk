@@ -253,7 +253,9 @@ internal class SessionPartWriterResourceChangeTest {
     }
 
     private fun drain() {
-        executor.runCurrentlyBlocked()
+        do {
+            executor.moveForwardAndRunBlocked(CoalescingWriteQueue.DEFAULT_DELAY_MS)
+        } while (executor.scheduledTasksCount() > 0)
     }
 
     private fun partDirs(): List<SessionPartDirectory> =

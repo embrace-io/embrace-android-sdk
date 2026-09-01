@@ -2025,7 +2025,7 @@ internal class SessionOrchestratorTest {
      * the order they will be delivered.
      */
     private fun sessionPartDirs(): List<SessionPartDirectory> {
-        sessionPersistenceExecutor.runCurrentlyBlocked()
+        drainPersistence()
         return partDirs()
     }
 
@@ -2039,8 +2039,14 @@ internal class SessionOrchestratorTest {
      * session part, if any.
      */
     private fun sessionSpanIn(sessionPartId: String): SessionPartSpan? {
-        sessionPersistenceExecutor.runCurrentlyBlocked()
+        drainPersistence()
         return sessionSpanOnDisk(sessionPartId)
+    }
+
+    private fun drainPersistence() {
+        do {
+            sessionPersistenceExecutor.moveForwardAndRunBlocked(CoalescingWriteQueue.DEFAULT_DELAY_MS)
+        } while (sessionPersistenceExecutor.scheduledTasksCount() > 0)
     }
 
     private fun sessionSpanOnDisk(sessionPartId: String): SessionPartSpan? {

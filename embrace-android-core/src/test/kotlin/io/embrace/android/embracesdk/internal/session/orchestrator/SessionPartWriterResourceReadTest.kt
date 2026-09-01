@@ -161,7 +161,7 @@ internal class SessionPartWriterResourceReadTest {
         resourceSource.changeResource(
             RESOURCE.copy(screenResolution = "1440x3120", reactNativeBundleId = "bundle-2"),
         )
-        executor.runCurrentlyBlocked()
+        drain()
 
         val envelope = checkNotNull(service.reconstruct(directory()))
         assertEquals(
@@ -186,7 +186,7 @@ internal class SessionPartWriterResourceReadTest {
      */
     private fun writeSessionPart() = run {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
-        executor.runCurrentlyBlocked()
+        drain()
 
         writePartFile(
             COMPLETED_SPANS_FILE_NAME,
@@ -200,7 +200,7 @@ internal class SessionPartWriterResourceReadTest {
     private fun endSessionPart() {
         currentSessionPartSpan.endSession(startNewSession = true)
         writer.onSessionPartEnded(SESSION_PART_ID)
-        executor.runCurrentlyBlocked()
+        drain()
     }
 
     private fun writePartFile(fileName: String, bytes: ByteArray) {
@@ -211,4 +211,10 @@ internal class SessionPartWriterResourceReadTest {
 
     private fun directory(): SessionPartDirectory =
         (sessionsDir.list() ?: emptyArray()).mapNotNull(SessionPartDirectory::fromDirName).single()
+
+    private fun drain() {
+        do {
+            executor.moveForwardAndRunBlocked(CoalescingWriteQueue.DEFAULT_DELAY_MS)
+        } while (executor.scheduledTasksCount() > 0)
+    }
 }

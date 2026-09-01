@@ -1082,6 +1082,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(ProcessState.BACKGROUND, multiFilePersistenceConfigService())
         val partId = checkNotNull(sessionTracker.getActiveSessionPartId())
         sessionCacheExecutor.runCurrentlyBlocked()
+        assertEquals("emb-session", sessionSpanIn(partId)?.span?.name)
 
         clock.tick(2000)
         checkNotNull(currentSessionPartSpan.sessionPartSpan).name = "refreshed-span"

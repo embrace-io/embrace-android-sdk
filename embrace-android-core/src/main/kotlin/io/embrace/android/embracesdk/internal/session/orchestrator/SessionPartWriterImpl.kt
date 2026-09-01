@@ -171,9 +171,12 @@ class SessionPartWriterImpl(
      * Writes the session span as it stands right now.
      */
     private fun queueSessionSpanWrite(writers: PartWriters) {
-        val span = writers.span?.snapshot() ?: return
+        val span = writers.span ?: return
         execute(InternalErrorType.SessionSpanWriteFail, writers.sessionSpanWrites::submit) {
-            writers.sessionSpan.write(span)
+            val snapshot = span.snapshot()
+            if (snapshot != null) {
+                writers.sessionSpan.write(snapshot)
+            }
         }
     }
 
@@ -211,14 +214,17 @@ class SessionPartWriterImpl(
         submit: (Runnable) -> Unit,
         action: () -> Unit,
     ) {
-        if (crashing) {
+        val task = Runnable {
             try {
                 action()
             } catch (exc: Throwable) {
                 logger.trackInternalError(errorType, exc)
             }
+        }
+        if (crashing) {
+            task.run()
         } else {
-            submit(Runnable(action))
+            submit(task)
         }
     }
 

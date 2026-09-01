@@ -264,7 +264,8 @@ internal class SessionPartWriterBoundaryTest {
     }
 
     private fun startPart(sessionPartId: String) {
-        sessionSpan.name = "span${spanCount++}"
+        sessionSpan = FakeEmbraceSdkSpan(name = "span${spanCount++}").apply { start(clock.now()) }
+        currentSessionPartSpan.sessionPartSpan = sessionSpan
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, sessionPartId)
     }
 

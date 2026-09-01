@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpansWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionManifestWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadataWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
@@ -79,6 +80,7 @@ class SessionPartWriterImpl(
         queueMetadataWrite(writers)
         queueSessionSpanWrite(writers)
         queueSpanSnapshotsWrite(writers)
+        queueCompletedSpansWrite(writers, emptyList())
         registerResourceChangeListener()
     }
 
@@ -99,6 +101,13 @@ class SessionPartWriterImpl(
             return
         }
         queueMetadataWrite(current ?: return)
+    }
+
+    override fun onSpanCompleted(spans: List<Span>) {
+        if (!enabled() || spans.isEmpty()) {
+            return
+        }
+        queueCompletedSpansWrite(current ?: return, spans)
     }
 
     private fun onResourceChanged() {
@@ -187,6 +196,12 @@ class SessionPartWriterImpl(
         }
     }
 
+    private fun queueCompletedSpansWrite(writers: PartWriters, spans: List<Span>) {
+        execute(InternalErrorType.CompletedSpansWriteFail, { worker.submit(it) }) {
+            writers.completedSpans.write(spans)
+        }
+    }
+
     /**
      * Queues [action] with [submit], or runs it on the calling thread if the process is crashing
      * and the [worker] has already been sealed by [onCrash]. Telemetry gathered inside [action] can
@@ -225,6 +240,12 @@ class SessionPartWriterImpl(
         )
 
         val sessionSpan = SessionSpanWriter(
+            sessionsDir = sessionsDir,
+            sessionPartDirectorySource = { directory },
+            logger = logger,
+        )
+
+        val completedSpans = CompletedSpansWriter(
             sessionsDir = sessionsDir,
             sessionPartDirectorySource = { directory },
             logger = logger,

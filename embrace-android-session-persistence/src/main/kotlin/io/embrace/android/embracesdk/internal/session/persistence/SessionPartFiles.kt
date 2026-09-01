@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
 import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 import java.io.OutputStream
 
@@ -37,5 +38,14 @@ internal fun writeAtomically(partDir: File, fileName: String, encode: (OutputStr
         }
     } finally {
         tmpFile.delete()
+    }
+}
+
+/**
+ * Appends [bytes] to [fileName] in [partDir], creating the file if it is not there yet.
+ */
+internal fun appendTo(partDir: File, fileName: String, bytes: ByteArray) {
+    FileOutputStream(File(partDir, fileName), true).use { stream ->
+        stream.write(bytes)
     }
 }

@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
+import io.embrace.android.embracesdk.internal.payload.Span
+
 /**
  * Writes the telemetry for the active session part to its own directory on disk.
  */
@@ -19,6 +21,12 @@ interface SessionPartWriter {
      * User information has changed and should be persisted.
      */
     fun onMetadataChanged()
+
+    /**
+     * Called when a batch of spans have completed. The session span is persisted separately and
+     * reattached when the session part is read back, so callers must filter it out.
+     */
+    fun onSpanCompleted(spans: List<Span>)
 
     /**
      * The periodic cache interval has elapsed. Rewrites the session span so disk reflects reality.

@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
+import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
@@ -81,6 +82,10 @@ class UserSessionOrchestrationModuleImpl(
             },
         )
         essentialServiceModule.userService.addUserInfoListener(sessionPartWriter::onMetadataChanged)
+        openTelemetryModule.spanRepository.addCompletedOtelSpansListener { spans ->
+            // don't include the session part span
+            sessionPartWriter.onSpanCompleted(spans.filterNot { it.hasEmbraceAttribute(EmbType.Ux.Session) })
+        }
 
         SessionOrchestratorImpl(
             essentialServiceModule.processStateTracker,

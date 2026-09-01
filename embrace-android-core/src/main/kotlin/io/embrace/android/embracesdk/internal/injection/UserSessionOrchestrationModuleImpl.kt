@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrches
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSpanAttrPopulatorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartWriterImpl
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectoryStore
+import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTracker
 import io.embrace.android.embracesdk.internal.session.persistence.SessionReconstructionService
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.io.File
@@ -53,11 +54,14 @@ class UserSessionOrchestrationModuleImpl(
         initModule.logger,
     )
 
+    private val sessionPartWriteTracker = SessionPartWriteTracker()
+
     override val sessionPartReader: SessionPartReader? = deliveryModule?.let { delivery ->
         SessionPartReader(
             directoryStore = sessionPartDirectoryStore,
             reconstructionService = SessionReconstructionService(sessionsDir, initModule.logger),
             intakeService = delivery.intakeService,
+            writeTracker = sessionPartWriteTracker,
             processIdProvider = { openTelemetryModule.otelSdkConfig.processIdentifier },
             configService = configService,
             logger = initModule.logger,
@@ -107,6 +111,7 @@ class UserSessionOrchestrationModuleImpl(
                     .mapNotNull(EmbraceSdkSpan::snapshot)
             },
             sessionPartDirectoryStore,
+            sessionPartWriteTracker,
         )
         essentialServiceModule.userService.addUserInfoListener(sessionPartWriter::onMetadataChanged)
         openTelemetryModule.spanRepository.addCompletedOtelSpansListener { spans ->

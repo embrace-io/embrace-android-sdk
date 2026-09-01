@@ -1103,7 +1103,7 @@ internal class SessionOrchestratorTest {
         clock.tick(10000)
         orchestrator.handleCrash("crash-id")
 
-        assertEquals(listOf(initial), sessionPartDirs())
+        assertEquals(listOf(initial), partDirs())
         assertNoInternalErrors()
     }
 
@@ -1121,13 +1121,13 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
-    fun `a crash rewrites the session part span with its end time`() {
+    fun `a crash rewrites the session part span with its end time before the process dies`() {
         createOrchestrator(ProcessState.FOREGROUND, multiFilePersistenceConfigService())
         val sessionPartId = checkNotNull(sessionTracker.getActiveSessionPartId())
         clock.tick(10000)
         orchestrator.handleCrash("crash-id")
 
-        assertEquals(clock.now().millisToNanos(), sessionSpanIn(sessionPartId)?.span?.end_time_unix_nano)
+        assertEquals(clock.now().millisToNanos(), sessionSpanOnDisk(sessionPartId)?.span?.end_time_unix_nano)
         assertNoInternalErrors()
     }
 
@@ -2024,17 +2024,25 @@ internal class SessionOrchestratorTest {
      */
     private fun sessionPartDirs(): List<SessionPartDirectory> {
         sessionPersistenceExecutor.runCurrentlyBlocked()
-        return (sessionsDir.list() ?: emptyArray())
+        return partDirs()
+    }
+
+    private fun partDirs(): List<SessionPartDirectory> =
+        (sessionsDir.list() ?: emptyArray())
             .mapNotNull(SessionPartDirectory::fromDirName)
             .sortedWith(SessionPartDirectory.comparator)
-    }
 
     /**
      * Drains the session persistence worker and returns the session span persisted for the given
      * session part, if any.
      */
     private fun sessionSpanIn(sessionPartId: String): SessionPartSpan? {
-        val directory = sessionPartDirs().single { it.sessionPartId == sessionPartId }
+        sessionPersistenceExecutor.runCurrentlyBlocked()
+        return sessionSpanOnDisk(sessionPartId)
+    }
+
+    private fun sessionSpanOnDisk(sessionPartId: String): SessionPartSpan? {
+        val directory = partDirs().single { it.sessionPartId == sessionPartId }
         return File(File(sessionsDir, directory.dirName), "session_span.pb")
             .takeIf(File::isFile)
             ?.inputStream()

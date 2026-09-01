@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.envelope.session.SESSION_ENVELOPE_TYPE
 import io.embrace.android.embracesdk.internal.envelope.session.SESSION_ENVELOPE_VERSION
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.session.persistence.SessionManifestWriter
@@ -37,6 +38,10 @@ class SessionPartWriterImpl(
     private val currentSessionPartSpan: CurrentSessionPartSpan,
 ) : SessionPartWriter {
 
+    private companion object {
+        const val CRASH_DRAIN_TIMEOUT_MS: Long = 3000
+    }
+
     /**
      * The writers for the session part that telemetry is currently written to. Each targets one
      * fixed directory, so a write that was queued for a session part cannot land in a later one.
@@ -44,11 +49,13 @@ class SessionPartWriterImpl(
     @Volatile
     private var current: PartWriters? = null
 
+    @Volatile
+    private var crashing = false
+
     private val directoryStore = SessionPartDirectoryStore(sessionsDir, worker, clock, logger)
 
     override fun onSessionPartStarted(timestamp: Long, userSessionId: String, sessionPartId: String) {
         if (!enabled()) {
-            current = null
             return
         }
         val writers = PartWriters(
@@ -92,8 +99,16 @@ class SessionPartWriterImpl(
         queueSessionSpanWrite(current ?: return)
     }
 
+    override fun onCrash() {
+        if (!enabled()) {
+            return
+        }
+        crashing = true
+        worker.shutdownAndWait(CRASH_DRAIN_TIMEOUT_MS)
+    }
+
     private fun queueManifestWrite(writers: PartWriters) {
-        worker.submit {
+        execute(InternalErrorType.SessionManifestWriteFail, { worker.submit(it) }) {
             writers.manifest.write(
                 directory = writers.directory,
                 resource = resourceSource.getEnvelopeResource(),
@@ -105,7 +120,7 @@ class SessionPartWriterImpl(
     }
 
     private fun queueMetadataWrite(writers: PartWriters) {
-        writers.metadataWrites.submit {
+        execute(InternalErrorType.SessionMetadataWriteFail, writers.metadataWrites::submit) {
             writers.metadata.write()
         }
     }
@@ -115,12 +130,35 @@ class SessionPartWriterImpl(
      */
     private fun queueSessionSpanWrite(writers: PartWriters) {
         val span = writers.span?.snapshot() ?: return
-        writers.sessionSpanWrites.submit {
+        execute(InternalErrorType.SessionSpanWriteFail, writers.sessionSpanWrites::submit) {
             writers.sessionSpan.write(span)
         }
     }
 
-    private fun enabled(): Boolean = configService.persistenceBehavior.isMultiFilePersistenceEnabled()
+    /**
+     * Queues [action] with [submit], or runs it on the calling thread if the process is crashing
+     * and the [worker] has already been sealed by [onCrash]. Telemetry gathered inside [action] can
+     * throw, so a failure is tracked here rather than escaping onto a crashing thread.
+     */
+    private fun execute(
+        errorType: InternalErrorType,
+        submit: (Runnable) -> Unit,
+        action: () -> Unit,
+    ) {
+        if (crashing) {
+            try {
+                action()
+            } catch (exc: Throwable) {
+                logger.trackInternalError(errorType, exc)
+            }
+        } else {
+            submit(Runnable(action))
+        }
+    }
+
+    private fun enabled(): Boolean {
+        return configService.persistenceBehavior.isMultiFilePersistenceEnabled() && !crashing
+    }
 
     private inner class PartWriters(val directory: SessionPartDirectory) {
 

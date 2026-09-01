@@ -24,4 +24,10 @@ interface SessionPartWriter {
      * The periodic cache interval has elapsed. Rewrites the session span so disk reflects reality.
      */
     fun onPeriodicWrite()
+
+    /**
+     * The process is terminating due to a JVM crash. Blocks until the necessary session part info
+     * has been flushed to disk
+     */
+    fun onCrash()
 }

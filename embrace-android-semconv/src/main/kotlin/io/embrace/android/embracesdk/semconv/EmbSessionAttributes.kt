@@ -71,6 +71,12 @@ object EmbSessionAttributes {
     const val EMB_IS_FINAL_SESSION_PART: String = "emb.is_final_session_part"
 
     /**
+     * Confirmed leak suspects still reachable at the end of this session part, as delimited entries of object type, class name, GC cycles survived, and identity hash.
+     */
+    @ExperimentalSemconv
+    const val EMB_MEMORY_LEAK_SUSPECTS: String = "emb.memory_leak_suspects"
+
+    /**
      * How a signal should be delivered to the Embrace backend.
      */
     @ExperimentalSemconv

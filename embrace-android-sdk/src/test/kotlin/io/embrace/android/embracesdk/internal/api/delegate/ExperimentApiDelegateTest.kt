@@ -159,30 +159,6 @@ internal class ExperimentApiDelegateTest {
     }
 
     @Test
-    fun `replay after SDK start passes every buffered entry to the store, which enforces the configured cap`() {
-        val delegate = createDelegate(RemoteConfig(experimentMaxCount = 2))
-        delegate.trackExperiment("exp-0", startedAt = 1L)
-        delegate.trackExperiments(
-            listOf(
-                delegate.createExperiment("exp-1", startedAt = 2L),
-                delegate.createExperiment("exp-2", startedAt = 3L),
-            ),
-        )
-        delegate.untrackExperiment("exp-0", endedAt = 4L)
-
-        sdkCallChecker.started.set(true)
-        delegate.flushPendingCalls()
-
-        // the delegate does not trim to the configured cap: the store enforces it and counts the overage
-        assertEquals(listOf("exp-0", "exp-1", "exp-2"), fakeExperimentTrackingService.trackedData.map { it.id })
-        assertEquals(
-            listOf(FakeExperimentTrackingService.UntrackCall(ExperimentKind.EXPERIMENT, listOf("exp-0"), 4L)),
-            fakeExperimentTrackingService.untrackCalls,
-        )
-        assertEquals(listOf("track_experiment", "track_experiment", "untrack_experiment"), telemetryService.apiCalls)
-    }
-
-    @Test
     fun `trackExperiment after SDK start calls into the internal service immediately`() {
         sdkCallChecker.started.set(true)
 

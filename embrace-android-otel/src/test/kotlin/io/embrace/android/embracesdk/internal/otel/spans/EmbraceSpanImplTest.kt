@@ -502,7 +502,7 @@ internal class EmbraceSpanImplTest {
                 assertTrue(start())
                 assertFalse(addAttribute(key = EmbCommonAttributes.EMB_EXPERIMENTS, value = "spoof"))
                 assertNull(attributes()[EmbCommonAttributes.EMB_EXPERIMENTS])
-                assertNull(embraceSpan.snapshot()?.attributes?.findAttributeValue(EmbCommonAttributes.EMB_EXPERIMENTS))
+                assertNull(snapshot()?.attributes?.findAttributeValue(EmbCommonAttributes.EMB_EXPERIMENTS))
             }
         }
     }

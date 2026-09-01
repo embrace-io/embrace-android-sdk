@@ -89,7 +89,7 @@ class SessionPartWriterImpl(
         queueSessionSpanWrite(writers)
     }
 
-    override fun onUserInfoChanged() {
+    override fun onMetadataChanged() {
         if (!enabled()) {
             return
         }

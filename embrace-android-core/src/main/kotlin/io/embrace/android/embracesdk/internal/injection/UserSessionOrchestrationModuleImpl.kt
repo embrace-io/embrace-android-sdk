@@ -72,7 +72,7 @@ class UserSessionOrchestrationModuleImpl(
             payloadSourceModule.envelopeMetadataSource,
             openTelemetryModule.currentSessionPartSpan,
         )
-        essentialServiceModule.userService.addUserInfoListener(sessionPartWriter::onUserInfoChanged)
+        essentialServiceModule.userService.addUserInfoListener(sessionPartWriter::onMetadataChanged)
 
         SessionOrchestratorImpl(
             essentialServiceModule.processStateTracker,

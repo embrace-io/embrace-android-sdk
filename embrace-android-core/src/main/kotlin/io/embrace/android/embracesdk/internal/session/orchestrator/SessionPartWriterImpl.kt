@@ -22,8 +22,6 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.File
-import java.util.concurrent.Future
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Writes session part telemetry to disk, if the multi-file persistence layer is enabled.
@@ -293,18 +291,5 @@ class SessionPartWriterImpl(
         val metadataWrites = CoalescingWriteQueue(worker)
         val sessionSpanWrites = CoalescingWriteQueue(worker)
         val spanSnapshotWrites = CoalescingWriteQueue(worker)
-    }
-
-    /**
-     * Queues the writes for one file in a session part. Each write persists the whole file so
-     * we should cancel and remove any enqueued writes as they will be superseded by later ones.
-     * A write that has already started is left to finish.
-     */
-    private class CoalescingWriteQueue(private val worker: BackgroundWorker) {
-        private val pending = AtomicReference<Future<*>?>(null)
-
-        fun submit(runnable: Runnable) {
-            pending.getAndSet(worker.submit(runnable))?.cancel(false)
-        }
     }
 }

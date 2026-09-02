@@ -187,13 +187,14 @@ internal class SessionPartWriterBoundaryTest {
     fun `a session span write queued at a part end lands in the session part it was queued for`() {
         startPart(FIRST_PART_ID)
         clock.tick(10000)
+        val endedAt = clock.now()
         endPart(FIRST_PART_ID)
         startPart(SECOND_PART_ID)
         drain()
 
         with(checkNotNull(sessionSpanIn(FIRST_PART_ID)?.span)) {
             assertEquals("span0", name)
-            assertEquals(clock.now().millisToNanos(), end_time_unix_nano)
+            assertEquals(endedAt.millisToNanos(), end_time_unix_nano)
         }
         with(checkNotNull(sessionSpanIn(SECOND_PART_ID)?.span)) {
             assertEquals("span1", name)
@@ -276,7 +277,9 @@ internal class SessionPartWriterBoundaryTest {
     }
 
     private fun drain() {
-        executor.runCurrentlyBlocked()
+        do {
+            executor.moveForwardAndRunBlocked(CoalescingWriteQueue.DEFAULT_DELAY_MS)
+        } while (executor.scheduledTasksCount() > 0)
     }
 
     private fun sessionPartDirs(): List<SessionPartDirectory> =

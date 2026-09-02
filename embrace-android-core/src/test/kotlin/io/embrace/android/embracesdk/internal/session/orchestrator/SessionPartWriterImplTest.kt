@@ -95,10 +95,11 @@ internal class SessionPartWriterImplTest {
     @Test
     fun `a session part start creates a directory holding the metadata`() {
         val writer = createWriter()
-        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        val startedAt = clock.now()
+        writer.onSessionPartStarted(startedAt, USER_SESSION_ID, SESSION_PART_ID)
 
         val directory = sessionPartDirs().single()
-        assertEquals(clock.now(), directory.timestamp)
+        assertEquals(startedAt, directory.timestamp)
         assertEquals(USER_SESSION_ID, directory.userSessionId)
         assertEquals(SESSION_PART_ID, directory.sessionPartId)
         assertNoInternalErrors()
@@ -226,48 +227,39 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
 
-        assertEquals(
-            listOf(
-                "SessionPartDirectoryStoreFail",
-                "SessionManifestWriteFail",
-                "SessionMetadataWriteFail",
-                "SessionSpanWriteFail",
-                "SpanSnapshotsWriteFail",
-            ),
-            logger.internalErrorMessages.map { it.msg },
+        assertInternalErrors(
+            "SessionPartDirectoryStoreFail",
+            "SessionManifestWriteFail",
+            "SessionMetadataWriteFail",
+            "SessionSpanWriteFail",
+            "SpanSnapshotsWriteFail",
         )
 
         writer.onMetadataChanged()
         drain()
 
-        assertEquals(
-            listOf(
-                "SessionPartDirectoryStoreFail",
-                "SessionManifestWriteFail",
-                "SessionMetadataWriteFail",
-                "SessionSpanWriteFail",
-                "SpanSnapshotsWriteFail",
-                "SessionMetadataWriteFail",
-            ),
-            logger.internalErrorMessages.map { it.msg },
+        assertInternalErrors(
+            "SessionPartDirectoryStoreFail",
+            "SessionManifestWriteFail",
+            "SessionMetadataWriteFail",
+            "SessionSpanWriteFail",
+            "SpanSnapshotsWriteFail",
+            "SessionMetadataWriteFail",
         )
 
         endPart()
         writer.onSessionPartEnded(SESSION_PART_ID)
         drain()
 
-        assertEquals(
-            listOf(
-                "SessionPartDirectoryStoreFail",
-                "SessionManifestWriteFail",
-                "SessionMetadataWriteFail",
-                "SessionSpanWriteFail",
-                "SpanSnapshotsWriteFail",
-                "SessionMetadataWriteFail",
-                "SessionSpanWriteFail",
-                "SpanSnapshotsWriteFail",
-            ),
-            logger.internalErrorMessages.map { it.msg },
+        assertInternalErrors(
+            "SessionPartDirectoryStoreFail",
+            "SessionManifestWriteFail",
+            "SessionMetadataWriteFail",
+            "SessionSpanWriteFail",
+            "SpanSnapshotsWriteFail",
+            "SessionMetadataWriteFail",
+            "SessionSpanWriteFail",
+            "SpanSnapshotsWriteFail",
         )
         assertEquals(0, writeCount)
     }
@@ -415,6 +407,7 @@ internal class SessionPartWriterImplTest {
         drain()
         assertNull(sessionSpanIn(SESSION_PART_ID)?.span?.end_time_unix_nano)
         clock.tick(10000)
+        val endedAt = clock.now()
         endPart()
         writer.onSessionPartEnded(SESSION_PART_ID)
         drain()
@@ -422,7 +415,7 @@ internal class SessionPartWriterImplTest {
         val span = checkNotNull(sessionSpanIn(SESSION_PART_ID)?.span)
         assertEquals("span0", span.name)
         assertEquals(sessionSpan.spanId, span.span_id)
-        assertEquals(clock.now().millisToNanos(), span.end_time_unix_nano)
+        assertEquals(endedAt.millisToNanos(), span.end_time_unix_nano)
         assertNoInternalErrors()
     }
 
@@ -448,12 +441,13 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
         clock.tick(10000)
+        val endedAt = clock.now()
         endPart()
         writer.onSessionPartEnded(SESSION_PART_ID)
         currentSessionPartSpan.sessionPartSpan = null
         drain()
 
-        assertEquals(clock.now().millisToNanos(), sessionSpanIn(SESSION_PART_ID)?.span?.end_time_unix_nano)
+        assertEquals(endedAt.millisToNanos(), sessionSpanIn(SESSION_PART_ID)?.span?.end_time_unix_nano)
         assertNoInternalErrors()
     }
 
@@ -620,13 +614,13 @@ internal class SessionPartWriterImplTest {
             onMetadataRead = {}
             writer.onMetadataChanged()
         }
-        drain()
+        drainOnce()
 
         assertEquals("user0", metadataOnDisk(SESSION_PART_ID)?.user_id)
         assertEquals(1, writeCount)
 
         // the write queued while the other one ran is still pending, and runs next
-        drain()
+        drainOnce()
         assertEquals("user1", metadataOnDisk(SESSION_PART_ID)?.user_id)
         assertEquals(2, writeCount)
         assertNoInternalErrors()
@@ -909,7 +903,13 @@ internal class SessionPartWriterImplTest {
     )
 
     private fun drain() {
-        executor.runCurrentlyBlocked()
+        do {
+            executor.moveForwardAndRunBlocked(CoalescingWriteQueue.DEFAULT_DELAY_MS)
+        } while (executor.scheduledTasksCount() > 0)
+    }
+
+    private fun drainOnce() {
+        executor.moveForwardAndRunBlocked(CoalescingWriteQueue.DEFAULT_DELAY_MS)
     }
 
     /**
@@ -972,6 +972,10 @@ internal class SessionPartWriterImplTest {
     private fun partFile(sessionPartId: String, fileName: String): File? {
         val directory = partDirs().single { it.sessionPartId == sessionPartId }
         return File(File(sessionsDir, directory.dirName), fileName).takeIf(File::isFile)
+    }
+
+    private fun assertInternalErrors(vararg expected: String) {
+        assertEquals(expected.sorted(), logger.internalErrorMessages.map { it.msg }.sorted())
     }
 
     private fun assertNoInternalErrors() {

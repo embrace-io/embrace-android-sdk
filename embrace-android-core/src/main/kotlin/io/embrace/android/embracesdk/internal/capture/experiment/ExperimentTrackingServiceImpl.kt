@@ -25,33 +25,27 @@ internal class ExperimentTrackingServiceImpl(
     private var cacheValid = false
     private var cachedRecords: String? = null
 
-    override fun track(data: List<TrackedData>) {
-        var updated = false
-        synchronized(lock) {
-            data.forEach { entry ->
-                if (trackRecord(entry.toRecord())) {
-                    updated = true
-                }
-            }
-        }
-        if (updated) {
-            publishRecords()
-        }
-    }
+    override fun track(data: List<TrackedData>) = modifyAndPublish { trackRecords(data) }
 
-    override fun untrack(kind: ExperimentKind, ids: List<String>, endTimeMs: Long) {
-        var updated = false
-        synchronized(lock) {
-            ids.forEach { id ->
-                if (untrackRecord(RecordKey(kind, id.stripWhitespace()), endTimeMs)) {
-                    updated = true
+    override fun untrack(kind: ExperimentKind, ids: List<String>, endTimeMs: Long) =
+        modifyAndPublish {
+            untrackRecords(kind, ids, endTimeMs)
+        }
+
+    override fun bulkModify(events: List<ExperimentApiCall>) =
+        modifyAndPublish {
+            var changed = false
+            events.forEach { event ->
+                val applied = when (event) {
+                    is ExperimentApiCall.Track -> trackRecords(event.data)
+                    is ExperimentApiCall.Untrack -> untrackRecords(event.kind, event.ids, event.endTimeMs)
+                }
+                if (applied) {
+                    changed = true
                 }
             }
+            changed
         }
-        if (updated) {
-            publishRecords()
-        }
-    }
 
     override fun getRecords(): String? = synchronized(lock) {
         if (!cacheValid) {
@@ -65,6 +59,22 @@ internal class ExperimentTrackingServiceImpl(
         cachedRecords
     }
 
+    /**
+     * Must be called while holding [lock]. Returns true if any record was added.
+     */
+    private fun trackRecords(data: List<TrackedData>): Boolean {
+        var updated = false
+        data.forEach { entry ->
+            if (trackRecord(entry.toRecord())) {
+                updated = true
+            }
+        }
+        return updated
+    }
+
+    /**
+     * Must be called while holding [lock]. Returns true if the record was added.
+     */
     private fun trackRecord(record: ExperimentRecord): Boolean {
         val key = RecordKey(record.kind, record.id)
         if (!isValid(record) || records.containsKey(key)) {
@@ -80,6 +90,22 @@ internal class ExperimentTrackingServiceImpl(
         return true
     }
 
+    /**
+     * Must be called while holding [lock]. Returns true if any record was modified.
+     */
+    private fun untrackRecords(kind: ExperimentKind, ids: List<String>, endTimeMs: Long): Boolean {
+        var updated = false
+        ids.forEach { id ->
+            if (untrackRecord(RecordKey(kind, id.stripWhitespace()), endTimeMs)) {
+                updated = true
+            }
+        }
+        return updated
+    }
+
+    /**
+     * Must be called while holding [lock]. Returns true if the given record was modified.
+     */
     private fun untrackRecord(key: RecordKey, endTimeMs: Long): Boolean {
         val record = records[key]
         if (record == null || record.endTimeMs != null) {
@@ -88,6 +114,18 @@ internal class ExperimentTrackingServiceImpl(
         records[key] = record.copy(endTimeMs = endTimeMs)
         cacheValid = false
         return true
+    }
+
+    /**
+     * Runs [modify] while holding [lock], then publishes the records outside the lock if it reports that any changed.
+     */
+    private inline fun modifyAndPublish(modify: () -> Boolean) {
+        val updated = synchronized(lock) {
+            modify()
+        }
+        if (updated) {
+            publishRecords()
+        }
     }
 
     private fun publishRecords() {

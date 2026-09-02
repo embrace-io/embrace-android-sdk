@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.createExperimentBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentApiCall
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentKind
 import io.embrace.android.embracesdk.internal.capture.experiment.TrackedData
 import io.embrace.android.embracesdk.internal.config.behavior.ExperimentBehaviorImpl
@@ -84,7 +85,7 @@ internal class ExperimentApiDelegateTest {
     }
 
     @Test
-    fun `buffered calls are coalesced with api usage record preserved when flushed`() {
+    fun `buffered calls are replayed in one service call with api usage recorded when flushed`() {
         delegate.trackExperiments(
             listOf(
                 TrackedExperimentImpl("exp1", "v1", 123456789L),
@@ -131,7 +132,38 @@ internal class ExperimentApiDelegateTest {
             ),
             telemetryService.apiCalls,
         )
-        assertEquals(5, fakeExperimentTrackingService.serviceInvocations)
+        assertEquals(1, fakeExperimentTrackingService.serviceInvocations)
+        assertEquals(
+            listOf(
+                ExperimentApiCall.Track(
+                    listOf(
+                        TrackedData.Experiment("exp1", 123456789L, "v1"),
+                        TrackedData.Experiment("exp2", 123456789L, "v1"),
+                    ),
+                ),
+                ExperimentApiCall.Track(
+                    listOf(
+                        TrackedData.Experiment("exp2", 123456789L, "v2"),
+                        TrackedData.Experiment("exp3", 123456789L, "v1"),
+                    ),
+                ),
+                ExperimentApiCall.Track(listOf(TrackedData.Experiment("exp4", 123456789L, "v2"))),
+                ExperimentApiCall.Track(
+                    listOf(
+                        TrackedData.FeatureFlag("flag1", 987654321L),
+                        TrackedData.FeatureFlag("flag2", 987654321L),
+                    ),
+                ),
+                ExperimentApiCall.Track(listOf(TrackedData.FeatureFlag("flag3", 987654321L))),
+                ExperimentApiCall.Untrack(ExperimentKind.EXPERIMENT, listOf("exp1", "exp2"), 555555555L),
+                ExperimentApiCall.Untrack(ExperimentKind.EXPERIMENT, listOf("exp3"), 555555555L),
+                ExperimentApiCall.Untrack(ExperimentKind.EXPERIMENT, listOf("exp4"), 555555566L),
+                ExperimentApiCall.Untrack(ExperimentKind.FEATURE_FLAG, listOf("flag1", "flag3"), 555555555L),
+                ExperimentApiCall.Untrack(ExperimentKind.FEATURE_FLAG, listOf("flag1"), 666666666L),
+                ExperimentApiCall.Untrack(ExperimentKind.FEATURE_FLAG, listOf("flag2"), 666666666L),
+            ),
+            fakeExperimentTrackingService.bulkApiCalls,
+        )
     }
 
     @Test
@@ -279,6 +311,7 @@ internal class ExperimentApiDelegateTest {
 
         sdkCallChecker.started.set(true)
         delegate.flushPendingCalls()
+        assertEquals(0, fakeExperimentTrackingService.serviceInvocations)
 
         delegate.trackExperiments(emptyList())
         delegate.untrackExperiments(emptyList(), endedAt = 0L)

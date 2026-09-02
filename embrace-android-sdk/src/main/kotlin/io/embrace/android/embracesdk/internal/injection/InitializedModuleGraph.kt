@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import android.app.ActivityManager
 import android.content.Context
 import android.os.Build
 import io.embrace.android.embracesdk.core.BuildConfig
@@ -183,7 +184,10 @@ internal class InitializedModuleGraph(
     }
 
     override val dataCaptureServiceModule: DataCaptureServiceModule = init("data-capture-service") {
-        val destination = instrumentationModule.instrumentationArgs.destination
+        val instrumentationArgs = instrumentationModule.instrumentationArgs
+        val destination = instrumentationArgs.destination
+        val activityManager = instrumentationArgs.systemService<ActivityManager>(Context.ACTIVITY_SERVICE)
+        val backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker)
         dataCaptureServiceModuleSupplier?.invoke(
             initModule.clock,
             initModule.logger,
@@ -192,6 +196,8 @@ internal class InitializedModuleGraph(
             { coreModule.appVersionStartupCounter },
             initModule.startupClassifier,
             versionChecker,
+            activityManager,
+            backgroundWorker,
         ) ?: DataCaptureServiceModuleImpl(
             initModule.clock,
             initModule.logger,
@@ -200,6 +206,8 @@ internal class InitializedModuleGraph(
             { coreModule.appVersionStartupCounter },
             initModule.startupClassifier,
             versionChecker,
+            activityManager,
+            backgroundWorker,
         )
     }
 

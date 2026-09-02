@@ -49,15 +49,65 @@ internal class ExperimentApiDelegate(
         untrack("untrack_feature_flag", ExperimentKind.FEATURE_FLAG, ids, endedAt ?: now())
     }
 
+    /**
+     * Flush buffered experiment API calls by combining tracking and untracking into as few
+     * calls down to the service as possible. The ordering of tracking calls will be preserved,
+     * first writer still wins, but all untracking calls will be replayed after the tracking
+     * calls in the order they were called. Later untracking calls using the same end
+     * timestamp as a previous one will be hoisted to when that first untracking call with
+     * the same timestamp was invoked.
+     */
     fun flushPendingCalls() {
-        // The buffer can contain more experiments than the configured cap, but we'll replay all of them and let the limit enforcer
-        // log the overage and drop later calls after the cap has been reached.
+        val toTrack = mutableListOf<TrackedData>()
+        val expToUntrack = linkedMapOf<Long, List<String>>()
+        val flagsToUntrack = linkedMapOf<Long, List<String>>()
+        val apiCalls = mutableListOf<String>()
         while (true) {
             val event = pendingEvents.poll() ?: break
+            apiCalls.add(event.action)
+
             when (event) {
-                is PendingEvent.Track -> trackNow(event.action, event.data)
-                is PendingEvent.Untrack -> untrackNow(event.action, event.kind, event.ids, event.endTimeMs)
+                is PendingEvent.Track -> {
+                    toTrack += event.data
+                }
+
+                is PendingEvent.Untrack -> {
+                    when (event.kind) {
+                        ExperimentKind.EXPERIMENT -> {
+                            val existing = expToUntrack[event.endTimeMs]
+                            if (existing == null) {
+                                expToUntrack[event.endTimeMs] = event.ids
+                            } else {
+                                expToUntrack[event.endTimeMs] = existing + event.ids
+                            }
+                        }
+
+                        ExperimentKind.FEATURE_FLAG -> {
+                            val existing = flagsToUntrack[event.endTimeMs]
+                            if (existing == null) {
+                                flagsToUntrack[event.endTimeMs] = event.ids
+                            } else {
+                                flagsToUntrack[event.endTimeMs] = existing + event.ids
+                            }
+                        }
+                    }
+                }
             }
+        }
+
+        // Reducing the update of the session part span to one, instead of once per service call, requires a lot more complexity
+        // to be introduced to the service. But given the expected use cases, and the unlikely usage of untracking APIs pre-SDK init,
+        // the net result will likely be one session part span update anyway. As such, this implementation is acceptable for now.
+
+        experimentTrackingService?.track(toTrack)
+        expToUntrack.entries.forEach {
+            experimentTrackingService?.untrack(ExperimentKind.EXPERIMENT, it.value, it.key)
+        }
+        flagsToUntrack.entries.forEach {
+            experimentTrackingService?.untrack(ExperimentKind.FEATURE_FLAG, it.value, it.key)
+        }
+        apiCalls.forEach {
+            sdkCallChecker.recordApiCall(it)
         }
     }
 
@@ -124,9 +174,11 @@ internal class ExperimentApiDelegate(
         )
 
     private sealed interface PendingEvent {
-        class Track(val action: String, val data: List<TrackedData>) : PendingEvent
+        val action: String
+
+        class Track(override val action: String, val data: List<TrackedData>) : PendingEvent
         class Untrack(
-            val action: String,
+            override val action: String,
             val kind: ExperimentKind,
             val ids: List<String>,
             val endTimeMs: Long,

@@ -25,7 +25,14 @@ internal class SdkCallChecker(
         if (!isStarted && outputErrorMessage) {
             logger.logSdkNotInitialized(action)
         }
-        telemetryService?.onPublicApiCalled(action)
+        recordApiCall(action)
         return isStarted
+    }
+
+    /**
+     * Record a public API call
+     */
+    fun recordApiCall(action: String) {
+        telemetryService?.onPublicApiCalled(action)
     }
 }

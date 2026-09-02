@@ -50,7 +50,7 @@ internal class ExperimentApiDelegate(
     }
 
     /**
-     * Flush buffered experiment API calls by combine tracking and untracking into as few
+     * Flush buffered experiment API calls by combining tracking and untracking into as few
      * calls down to the service as possible. The ordering of tracking calls will be preserved,
      * first writer still wins, but all untracking calls will be replayed after the tracking
      * calls in the order they were called. Later untracking calls using the same end
@@ -94,6 +94,11 @@ internal class ExperimentApiDelegate(
                 }
             }
         }
+
+        // Reducing the update of the session part span to one, instead of once per service call, requires a lot more complexity
+        // to be introduced to the service. But given the expected use cases, and the unlikely usage of untracking APIs pre-SDK init,
+        // the net result will likely be one session part span update anyway. As such, this implementation is acceptable for now.
+
         experimentTrackingService?.track(toTrack)
         expToUntrack.entries.forEach {
             experimentTrackingService?.untrack(ExperimentKind.EXPERIMENT, it.value, it.key)

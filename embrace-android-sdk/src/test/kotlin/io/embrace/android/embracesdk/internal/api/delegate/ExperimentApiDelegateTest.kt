@@ -131,7 +131,7 @@ internal class ExperimentApiDelegateTest {
             ),
             telemetryService.apiCalls,
         )
-        assertEquals(5, fakeExperimentTrackingService.serviceInvocations.get())
+        assertEquals(5, fakeExperimentTrackingService.serviceInvocations)
     }
 
     @Test

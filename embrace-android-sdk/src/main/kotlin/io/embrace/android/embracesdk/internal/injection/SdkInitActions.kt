@@ -4,10 +4,14 @@ package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
 import io.embrace.android.embracesdk.core.BuildConfig
+import io.embrace.android.embracesdk.internal.api.delegate.ExperimentApiDelegate
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStateDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.startup.sdkInitEnvironmentAttributes
@@ -64,6 +68,13 @@ internal fun ModuleGraph.postInit() = EmbTrace.trace(sectionName = "post-init", 
 
     // Start the orchestrator and create the first session part once all the module dependencies have been created and wired up
     userSessionOrchestrationModule.sessionOrchestrator.start()
+}
+
+/**
+ * Replays experiment API calls that were buffered before the SDK started.
+ */
+internal fun ModuleGraph.flushPendingExperimentCalls(experimentApiDelegate: ExperimentApiDelegate) {
+    experimentApiDelegate.flushPendingCalls()
 }
 
 /**
@@ -140,6 +151,39 @@ private fun loadInstrumentationProviders(): List<InstrumentationProvider> {
         providers.add(provider)
     }
     return providers
+}
+
+/**
+ * Initializes HttpUrlConnection instrumentation via reflection, if the module is present and capture is enabled.
+ */
+internal fun ModuleGraph.initializeHucInstrumentation() {
+    val networkBehavior = configService.networkBehavior
+    try {
+        if (networkBehavior.isHttpUrlConnectionCaptureEnabled()) {
+            EmbTrace.trace(sectionName = "huc-init", recordDuration = true) {
+                val trackerClass = Class.forName("io.embrace.android.embracesdk.instrumentation.huc.HttpUrlConnectionTracker")
+                val objectField = trackerClass.getDeclaredField("INSTANCE")
+                val trackerObject = objectField.get(null)
+                val initMethod = trackerClass.getDeclaredMethod(
+                    "registerUrlStreamHandlerFactory",
+                    Boolean::class.java,
+                    InstrumentationArgs::class.java,
+                    NetworkRequestDataSource::class.java,
+                    NetworkCaptureDataSource::class.java,
+                )
+                val module = instrumentationModule
+                initMethod.invoke(
+                    trackerObject,
+                    networkBehavior.isRequestContentLengthCaptureEnabled(),
+                    module.instrumentationArgs,
+                    module.instrumentationRegistry.findByType(NetworkRequestDataSource::class),
+                    module.instrumentationRegistry.findByType(NetworkCaptureDataSource::class),
+                )
+            }
+        }
+    } catch (t: Throwable) {
+        initModule.logger.trackInternalError(InternalErrorType.InstrumentationRegFail, t)
+    }
 }
 
 /**

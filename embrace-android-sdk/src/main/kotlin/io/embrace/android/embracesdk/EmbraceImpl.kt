@@ -31,22 +31,19 @@ import io.embrace.android.embracesdk.internal.api.delegate.SdkStateApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserSessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
-import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
-import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModule
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.flushPendingExperimentCalls
+import io.embrace.android.embracesdk.internal.injection.initializeHucInstrumentation
 import io.embrace.android.embracesdk.internal.injection.loadInstrumentation
 import io.embrace.android.embracesdk.internal.injection.markSdkInitComplete
 import io.embrace.android.embracesdk.internal.injection.postInit
 import io.embrace.android.embracesdk.internal.injection.postLoadInstrumentation
 import io.embrace.android.embracesdk.internal.injection.registerListeners
 import io.embrace.android.embracesdk.internal.injection.triggerPayloadSend
-import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
-import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.spans.TracingApi
 import java.util.concurrent.Executors
@@ -99,7 +96,6 @@ internal class EmbraceImpl(
         EmbraceInternalApi.isStarted = sdkCallChecker.started::get
     }
 
-    private val logger get() = bootstrapper.initModule.logger
     private val clock get() = bootstrapper.initModule.clock
     private val startStopLock = Any()
 
@@ -129,10 +125,10 @@ internal class EmbraceImpl(
                         // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
                         // so we allow external calls.
                         sdkCallChecker.started.set(true)
-                        experimentApiDelegate.flushPendingCalls()
+                        bootstrapper.flushPendingExperimentCalls(experimentApiDelegate)
                         bootstrapper.registerListeners()
                         bootstrapper.loadInstrumentation()
-                        initializeHucInstrumentation(bootstrapper.configService.networkBehavior)
+                        bootstrapper.initializeHucInstrumentation()
                         bootstrapper.postLoadInstrumentation()
                         bootstrapper.triggerPayloadSend()
                     }
@@ -141,35 +137,6 @@ internal class EmbraceImpl(
                     Log.w("Embrace", "Failed to initialize Embrace SDK", ignored)
                 }
             }
-        }
-    }
-
-    private fun initializeHucInstrumentation(networkBehavior: NetworkBehavior) {
-        try {
-            if (networkBehavior.isHttpUrlConnectionCaptureEnabled()) {
-                EmbTrace.trace(sectionName = "huc-init", recordDuration = true) {
-                    val trackerClass = Class.forName("io.embrace.android.embracesdk.instrumentation.huc.HttpUrlConnectionTracker")
-                    val objectField = trackerClass.getDeclaredField("INSTANCE")
-                    val trackerObject = objectField.get(null)
-                    val initMethod = trackerClass.getDeclaredMethod(
-                        "registerUrlStreamHandlerFactory",
-                        Boolean::class.java,
-                        InstrumentationArgs::class.java,
-                        NetworkRequestDataSource::class.java,
-                        NetworkCaptureDataSource::class.java,
-                    )
-                    val module = bootstrapper.instrumentationModule
-                    initMethod.invoke(
-                        trackerObject,
-                        networkBehavior.isRequestContentLengthCaptureEnabled(),
-                        module.instrumentationArgs,
-                        module.instrumentationRegistry.findByType(NetworkRequestDataSource::class),
-                        module.instrumentationRegistry.findByType(NetworkCaptureDataSource::class),
-                    )
-                }
-            }
-        } catch (t: Throwable) {
-            logger.trackInternalError(InternalErrorType.InstrumentationRegFail, t)
         }
     }
 

@@ -36,8 +36,7 @@ import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModule
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.internal.injection.flushPendingExperimentCalls
-import io.embrace.android.embracesdk.internal.injection.initializeHucInstrumentation
+import io.embrace.android.embracesdk.internal.injection.applyCustomMetadata
 import io.embrace.android.embracesdk.internal.injection.loadInstrumentation
 import io.embrace.android.embracesdk.internal.injection.markSdkInitComplete
 import io.embrace.android.embracesdk.internal.injection.postInit
@@ -125,14 +124,13 @@ internal class EmbraceImpl(
                         // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
                         // so we allow external calls.
                         sdkCallChecker.started.set(true)
-                        bootstrapper.flushPendingExperimentCalls(experimentApiDelegate)
+                        bootstrapper.applyCustomMetadata(experimentApiDelegate::flushPendingCalls)
                         bootstrapper.registerListeners()
                         bootstrapper.loadInstrumentation()
-                        bootstrapper.initializeHucInstrumentation()
                         bootstrapper.postLoadInstrumentation()
                         bootstrapper.triggerPayloadSend()
                     }
-                    bootstrapper.markSdkInitComplete(EmbTrace.durationTracker.flush())
+                    bootstrapper.markSdkInitComplete(EmbTrace.durationTracker::flush)
                 } catch (ignored: Throwable) {
                     Log.w("Embrace", "Failed to initialize Embrace SDK", ignored)
                 }

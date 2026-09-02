@@ -4,7 +4,6 @@ package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
 import io.embrace.android.embracesdk.core.BuildConfig
-import io.embrace.android.embracesdk.internal.api.delegate.ExperimentApiDelegate
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
@@ -71,16 +70,18 @@ internal fun ModuleGraph.postInit() = EmbTrace.trace(sectionName = "post-init", 
 }
 
 /**
- * Replays experiment API calls that were buffered before the SDK started.
+ * Apply custom metadata by the SDK user through Embrace APIs.
+ * Should only be done after the SDK has been started successfully.
  */
-internal fun ModuleGraph.flushPendingExperimentCalls(experimentApiDelegate: ExperimentApiDelegate) {
-    experimentApiDelegate.flushPendingCalls()
-}
+internal fun ModuleGraph.applyCustomMetadata(applyMetadata: () -> Unit) =
+    safeInit {
+        applyMetadata()
+    }
 
 /**
  * Registers listeners for various lifecycle/system callbacks.
  */
-internal fun ModuleGraph.registerListeners() {
+internal fun ModuleGraph.registerListeners() = safeInit {
     EmbTrace.trace("service-registration") {
         val ctx = coreModule.application
         ctx.registerActivityLifecycleCallbacks(dataCaptureServiceModule.startupTracker)
@@ -125,17 +126,19 @@ internal fun ModuleGraph.registerListeners() {
 /**
  * Loads instrumentation via SPI and legacy methods.
  */
-internal fun ModuleGraph.loadInstrumentation() =
+internal fun ModuleGraph.loadInstrumentation() = safeInit {
     EmbTrace.trace(sectionName = "load-instrumentation", recordDuration = true) {
         val registry = instrumentationModule.instrumentationRegistry
         registry.loadInstrumentations(loadInstrumentationProviders(), instrumentationModule.instrumentationArgs)
 
         threadBlockageService?.startCapture()
-
         featureModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
             workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
         )
     }
+
+    initializeHucInstrumentation()
+}
 
 /**
  * Loads the [InstrumentationProvider] implementations declared via SPI. Before making changes
@@ -156,7 +159,7 @@ private fun loadInstrumentationProviders(): List<InstrumentationProvider> {
 /**
  * Initializes HttpUrlConnection instrumentation via reflection, if the module is present and capture is enabled.
  */
-internal fun ModuleGraph.initializeHucInstrumentation() {
+private fun ModuleGraph.initializeHucInstrumentation() {
     val networkBehavior = configService.networkBehavior
     try {
         if (networkBehavior.isHttpUrlConnectionCaptureEnabled()) {
@@ -189,7 +192,7 @@ internal fun ModuleGraph.initializeHucInstrumentation() {
 /**
  * Performs post-load instrumentation tasks such as setting listeners.
  */
-internal fun ModuleGraph.postLoadInstrumentation() {
+internal fun ModuleGraph.postLoadInstrumentation() = safeInit {
     // setup crash teardown handlers
     val registry = instrumentationModule.instrumentationRegistry
     registry.findByType(JvmCrashDataSource::class)?.apply {
@@ -211,7 +214,7 @@ internal fun ModuleGraph.postLoadInstrumentation() {
 /**
  * Trigger sending cached data on disk.
  */
-internal fun ModuleGraph.triggerPayloadSend() {
+internal fun ModuleGraph.triggerPayloadSend() = safeInit {
     val worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
     worker.submit {
         val resurrectionService = payloadSourceModule.payloadResurrectionService
@@ -255,9 +258,10 @@ internal fun ModuleGraph.triggerPayloadSend() {
 /**
  * Mark SDK initialization as complete.
  */
-internal fun ModuleGraph.markSdkInitComplete(sdkInitDurations: Map<String, Long>) {
+internal fun ModuleGraph.markSdkInitComplete(sdkInitDurationsProvider: () -> Map<String, Long>) = safeInit {
     val startupService = dataCaptureServiceModule.startupService
     EmbTrace.trace("startup-tracking") {
+        val sdkInitDurations = sdkInitDurationsProvider()
         val resourceUsageTracker = sdkInitResourceUsageTracker
         resourceUsageTracker.captureEnd()
         startupService.setSdkStartupInfo(
@@ -318,6 +322,19 @@ private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, St
                 put(it.key, it.value.toString())
             }
         }
+    }
+}
+
+/**
+ * Run the given initialization phase and record any failures, but allow execution to continue even if it does.
+ */
+private inline fun ModuleGraph.safeInit(
+    init: () -> Unit,
+) {
+    try {
+        init()
+    } catch (t: Throwable) {
+        initModule.logger.trackInternalError(InternalErrorType.SdkInitPhaseFail, t)
     }
 }
 

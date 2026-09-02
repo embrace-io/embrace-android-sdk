@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import kotlin.math.pow
-
 /**
  * Checks whether a percent-based config value is over a threshold where it should be enabled.
  */
@@ -11,6 +9,26 @@ class BehaviorThresholdCheck(
 
     private companion object {
         private const val DIGITS = 6
+        private const val RADIX = 16
+
+        /**
+         * The number of distinct values the normalized device ID can take, i.e. 16^6 - 1. That's
+         * roughly 1.6m possibilities, which is sufficient granularity for our needs.
+         */
+        private const val SPACE = 0xFFFFFF
+    }
+
+    /**
+     * The device ID is fixed for the lifetime of the process, so its normalized value is too.
+     * Resolving it can hit the [io.embrace.android.embracesdk.internal.store.KeyValueStore], so this
+     * is deliberately lazy - a threshold that short-circuits in [isBehaviorEnabled] never pays that
+     * cost, and everything else pays it at most once.
+     */
+    private val normalizedId: Float by lazy {
+        val deviceId = deviceIdProvider()
+        val finalChars = deviceId.substring(deviceId.length - DIGITS)
+        // Normalize the device ID to a value between 0.0 - 100.0
+        finalChars.toInt(RADIX).toFloat() / SPACE * 100
     }
 
     /**
@@ -31,10 +49,6 @@ class BehaviorThresholdCheck(
      * it against the enabled percentage. This ensures that devices are consistently in a given
      * group for beta functionality.
      *
-     *
-     * The normalized device ID has 16^6 possibilities (roughly 1.6m) which should be sufficient
-     * granularity for our needs.
-     *
      * @param pctEnabled the % enabled for a given config value. This should be a float rather than
      * an integer for maximum granularity.
      * @return whether the behaviour is enabled or not.
@@ -50,13 +64,5 @@ class BehaviorThresholdCheck(
         return pctEnabled >= deviceId
     }
 
-    fun getNormalizedDeviceId(): Float {
-        val deviceId = deviceIdProvider()
-        val finalChars = deviceId.substring(deviceId.length - DIGITS)
-        // Normalize the device ID to a value between 0.0 - 100.0
-        val radix = 16
-        val space = (radix.toDouble().pow(DIGITS.toDouble()) - 1).toInt()
-        val value = Integer.valueOf(finalChars, radix)
-        return value.toFloat() / space * 100
-    }
+    fun getNormalizedDeviceId(): Float = normalizedId
 }

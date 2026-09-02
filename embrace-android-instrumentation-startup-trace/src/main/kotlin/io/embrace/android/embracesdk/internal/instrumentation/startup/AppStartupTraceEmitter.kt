@@ -50,7 +50,7 @@ internal class AppStartupTraceEmitter(
     private val logger: InternalLogger,
     private val startupClassifier: StartupClassifier,
     manualEnd: Boolean,
-    processInfo: ProcessInfo,
+    private val processInfo: ProcessInfo,
 ) : AppStartupDataCollector {
     private val additionalTrackedIntervals = ConcurrentLinkedQueue<TrackedInterval>()
     private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
@@ -280,7 +280,7 @@ internal class AppStartupTraceEmitter(
                     applicationInitEndMs = if (recordColdStart) applicationInitEndMs else null,
                     sdkInitStartMs = if (recordColdStart) startupService.getSdkInitStartMs() else null,
                     sdkInitEndMs = if (recordColdStart) sdkInitEndMs else null,
-                    sdkInitDurations = if (recordColdStart) startupService.getSdkInitDurations() else emptyMap(),
+                    sdkInitAttributes = if (recordColdStart) startupService.getSdkInitAttributes() else emptyMap(),
                     firstActivityInitMs = firstActivityInitStartMs,
                     activityInitStartMs = activityInitStartMs,
                     activityInitEndMs = activityInitEndMs,
@@ -326,7 +326,7 @@ internal class AppStartupTraceEmitter(
         applicationInitEndMs: Long?,
         sdkInitStartMs: Long?,
         sdkInitEndMs: Long?,
-        sdkInitDurations: Map<String, Long>,
+        sdkInitAttributes: Map<String, String>,
         firstActivityInitMs: Long?,
         activityInitStartMs: Long?,
         activityInitEndMs: Long?,
@@ -355,11 +355,11 @@ internal class AppStartupTraceEmitter(
 
             if (sdkInitStartMs != null && sdkInitEndMs != null) {
                 val counter = startupServiceProvider()?.getAppVersionStartupCounter()
-                val attributes = buildMap(sdkInitDurations.size + 1) {
+                val attributes = buildMap(sdkInitAttributes.size + 1) {
                     if (counter != null) {
                         put(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER, counter.toString())
                     }
-                    putSdkInitDurations(sdkInitDurations)
+                    putAll(sdkInitAttributes)
                 }
 
                 destination.recordCompletedSpan(
@@ -426,6 +426,11 @@ internal class AppStartupTraceEmitter(
 
         startupActivityName?.let { name ->
             setSystemAttribute(EmbSessionAttributes.EMB_STARTUP_ACTIVITY, name)
+        }
+
+        // already resolved when the SDK started, so this does not go near the platform on the thread the app is starting up on
+        processInfo.launchReason()?.let { reason ->
+            setSystemAttribute(EmbSessionAttributes.EMB_STARTUP_LAUNCH_REASON, reason)
         }
     }
 

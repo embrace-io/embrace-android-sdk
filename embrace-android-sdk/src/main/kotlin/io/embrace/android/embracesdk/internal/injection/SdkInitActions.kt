@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import android.content.Context
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
@@ -7,12 +8,15 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrash
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStateDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStatusDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.startup.sdkInitEnvironmentAttributes
+import io.embrace.android.embracesdk.internal.instrumentation.startup.toSdkInitDurationAttributes
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.UserAttributes
+import java.io.File
 import java.util.ServiceLoader
 import java.util.concurrent.TimeUnit
 
@@ -207,12 +211,28 @@ internal fun ModuleGraph.triggerPayloadSend() {
 internal fun ModuleGraph.markSdkInitComplete(sdkInitDurations: Map<String, Long>) {
     val startupService = dataCaptureServiceModule.startupService
     EmbTrace.trace("startup-tracking") {
+        val resourceUsageTracker = sdkInitResourceUsageTracker
+        resourceUsageTracker.captureEnd()
         startupService.setSdkStartupInfo(
             startTimeMs = sdkStartTimeMs,
             endTimeMs = initModule.clock.now(),
             endState = essentialServiceModule.processStateTracker.getAppState(),
             threadName = Thread.currentThread().name,
-            sdkInitDurations = sdkInitDurations,
+            attributesProvider = {
+                sdkInitDurations.toSdkInitDurationAttributes() +
+                    resourceUsageTracker.buildAttributes() +
+                    sdkInitEnvironmentAttributes(
+                        activityManagerProvider = {
+                            instrumentationModule.instrumentationArgs.systemService(Context.ACTIVITY_SERVICE)
+                        },
+                        powerManagerProvider = {
+                            instrumentationModule.instrumentationArgs.systemService(Context.POWER_SERVICE)
+                        },
+                        packageInfo = instrumentationModule.instrumentationArgs.packageInfo,
+                        nowMs = initModule.clock.now(),
+                        prefsFileSizeProvider = { defaultPrefsFile(coreModule.context)?.length() },
+                    )
+            },
         )
     }
     workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
@@ -252,3 +272,14 @@ private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, St
 }
 
 private const val SPAN_TIMEOUT_SWEEP_INTERVAL_MS = 30_000L
+
+/**
+ * Attempt to identify the size of the host app's default `SharedPreferences` file without actually opening it.
+ * This file currently hosts the SDK's key-value store, and the bigger it is, the more impact it will have on
+ * SDK init time if the SDK is the thing that opens it first.
+ *
+ * Returns null if the file is absent, so a missing file is not reported.
+ */
+private fun defaultPrefsFile(context: Context): File? =
+    File(File(context.applicationInfo.dataDir, "shared_prefs"), "${context.packageName}_preferences.xml")
+        .takeIf(File::exists)

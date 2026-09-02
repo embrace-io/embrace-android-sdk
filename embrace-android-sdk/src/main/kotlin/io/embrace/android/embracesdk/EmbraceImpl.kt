@@ -142,24 +142,26 @@ internal class EmbraceImpl(
     private fun initializeHucInstrumentation(networkBehavior: NetworkBehavior) {
         try {
             if (networkBehavior.isHttpUrlConnectionCaptureEnabled()) {
-                val trackerClass = Class.forName("io.embrace.android.embracesdk.instrumentation.huc.HttpUrlConnectionTracker")
-                val objectField = trackerClass.getDeclaredField("INSTANCE")
-                val trackerObject = objectField.get(null)
-                val initMethod = trackerClass.getDeclaredMethod(
-                    "registerUrlStreamHandlerFactory",
-                    Boolean::class.java,
-                    InstrumentationArgs::class.java,
-                    NetworkRequestDataSource::class.java,
-                    NetworkCaptureDataSource::class.java,
-                )
-                val module = bootstrapper.instrumentationModule
-                initMethod.invoke(
-                    trackerObject,
-                    networkBehavior.isRequestContentLengthCaptureEnabled(),
-                    module.instrumentationArgs,
-                    module.instrumentationRegistry.findByType(NetworkRequestDataSource::class),
-                    module.instrumentationRegistry.findByType(NetworkCaptureDataSource::class),
-                )
+                EmbTrace.trace(sectionName = "huc-init", recordDuration = true) {
+                    val trackerClass = Class.forName("io.embrace.android.embracesdk.instrumentation.huc.HttpUrlConnectionTracker")
+                    val objectField = trackerClass.getDeclaredField("INSTANCE")
+                    val trackerObject = objectField.get(null)
+                    val initMethod = trackerClass.getDeclaredMethod(
+                        "registerUrlStreamHandlerFactory",
+                        Boolean::class.java,
+                        InstrumentationArgs::class.java,
+                        NetworkRequestDataSource::class.java,
+                        NetworkCaptureDataSource::class.java,
+                    )
+                    val module = bootstrapper.instrumentationModule
+                    initMethod.invoke(
+                        trackerObject,
+                        networkBehavior.isRequestContentLengthCaptureEnabled(),
+                        module.instrumentationArgs,
+                        module.instrumentationRegistry.findByType(NetworkRequestDataSource::class),
+                        module.instrumentationRegistry.findByType(NetworkCaptureDataSource::class),
+                    )
+                }
             }
         } catch (t: Throwable) {
             logger.trackInternalError(InternalErrorType.InstrumentationRegFail, t)

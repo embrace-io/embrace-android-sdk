@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleSupplier
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageServiceSupplier
 import io.embrace.android.embracesdk.internal.prefs.createKeyValueStore
@@ -48,6 +49,7 @@ internal class ModuleInitBootstrapper(
     @Volatile
     private var delegate: ModuleGraph = UninitializedModuleGraph
     override val sdkStartTimeMs: Long get() = delegate.sdkStartTimeMs
+    override val sdkInitResourceUsageTracker: SdkInitResourceUsageTracker get() = delegate.sdkInitResourceUsageTracker
     override val coreModule: CoreModule get() = delegate.coreModule
     override val configService: ConfigService get() = delegate.configService
     override val workerThreadModule: WorkerThreadModule get() = delegate.workerThreadModule
@@ -73,8 +75,10 @@ internal class ModuleInitBootstrapper(
             if (isInitialized()) {
                 return@trace false
             }
-            // stamped before anything else so that the SDK init span covers all the work below
+            // stamped before anything else so that the SDK init span covers all the work below,
+            // and the perf samples cover the same interval as the span
             val startTimeMs = initModule.clock.now()
+            val resourceUsageTracker = SdkInitResourceUsageTracker().apply { captureStart() }
             val keyValueStore = lazy { createKeyValueStore(context, initModule.jsonSerializer) }
             val persistedConfig = EmbTrace.trace(
                 sectionName = "persisted-config-load",
@@ -98,6 +102,7 @@ internal class ModuleInitBootstrapper(
                 context,
                 versionChecker,
                 startTimeMs,
+                resourceUsageTracker,
                 initModule,
                 openTelemetryModule,
                 workerThreadModule,

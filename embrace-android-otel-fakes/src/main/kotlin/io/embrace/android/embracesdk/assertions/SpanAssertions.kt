@@ -112,6 +112,7 @@ fun List<Attribute>?.assertSdkInitSectionDurationsRecorded() {
 private val expectedSdkInitSections = listOf(
     "modules-init",
     "persisted-config-load",
+    "prefs-first-read",
     "span-service-init",
     "essential-service-init",
     "delivery-init",

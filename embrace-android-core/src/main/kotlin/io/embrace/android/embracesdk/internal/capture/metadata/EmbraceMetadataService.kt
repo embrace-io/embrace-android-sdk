@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.capture.metadata
 
 import android.app.usage.StorageStatsManager
 import android.content.Context
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Environment
 import android.os.Process
@@ -61,8 +60,6 @@ internal class EmbraceMetadataService(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && configService.autoDataCaptureBehavior.isDiskUsageCaptureEnabled()) {
                 val deviceDiskAppUsage = getDeviceDiskAppUsage(
                     context.getSystemServiceSafe(Context.STORAGE_STATS_SERVICE),
-                    context.packageManager,
-                    context.packageName,
                 )
                 if (deviceDiskAppUsage != null) {
                     diskUsage = DiskUsage(deviceDiskAppUsage, free)
@@ -78,15 +75,12 @@ internal class EmbraceMetadataService(
     @RequiresApi(Build.VERSION_CODES.O)
     private fun getDeviceDiskAppUsage(
         storageStatsManager: StorageStatsManager?,
-        packageManager: PackageManager,
-        contextPackageName: String?,
     ): Long? {
         runCatching {
-            val packageInfo = packageManager.getPackageInfo(contextPackageName!!, 0)
-            if (packageInfo?.packageName != null && storageStatsManager != null) {
+            if (storageStatsManager != null) {
                 val stats = storageStatsManager.queryStatsForPackage(
                     StorageManager.UUID_DEFAULT,
-                    packageInfo.packageName,
+                    context.packageName,
                     Process.myUserHandle(),
                 )
                 return stats.appBytes + stats.dataBytes + stats.cacheBytes

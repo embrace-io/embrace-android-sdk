@@ -29,11 +29,13 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartup
 import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupService
 import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupServiceImpl
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.hasPrePostEvents
+import io.embrace.android.embracesdk.internal.instrumentation.startup.toSdkInitDurationAttributes
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.hasRenderEvent
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.supportFrameCommitCallback
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbStartupLaunchReasonValues
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -62,6 +64,7 @@ internal class AppStartupTraceEmitterTest {
     private var trackProcessStart: Boolean = true
     private var hasRenderEvent = true
     private var hasFrameCommitEvent = true
+    private var launchReason: String? = EmbStartupLaunchReasonValues.LAUNCHER
 
     private lateinit var clock: FakeClock
     private lateinit var destination: FakeTelemetryDestination
@@ -90,6 +93,20 @@ internal class AppStartupTraceEmitterTest {
     @Config(sdk = [VERSION_CODES.TIRAMISU])
     @Test
     fun `verify cold start trace with every event triggered in T`() {
+        createTraceEmitter().simulateAppStartup()
+    }
+
+    @Config(sdk = [VERSION_CODES.TIRAMISU])
+    @Test
+    fun `verify launch reason reported by the platform is recorded on the trace`() {
+        launchReason = EmbStartupLaunchReasonValues.PUSH
+        createTraceEmitter().simulateAppStartup()
+    }
+
+    @Config(sdk = [VERSION_CODES.TIRAMISU])
+    @Test
+    fun `verify launch reason omitted from the trace when the platform does not report one`() {
+        launchReason = null
         createTraceEmitter().simulateAppStartup()
     }
 
@@ -632,6 +649,7 @@ internal class AppStartupTraceEmitterTest {
                 } else {
                     null
                 },
+                fakeLaunchReason = launchReason,
             ),
         )
 
@@ -776,7 +794,7 @@ internal class AppStartupTraceEmitterTest {
             endTimeMs = end,
             endState = ProcessState.BACKGROUND,
             threadName = "main",
-            sdkInitDurations = mapOf("modules-init" to 30L),
+            attributesProvider = { mapOf("modules-init" to 30L).toSdkInitDurationAttributes() },
         )
 
         val applicationInitEnd = if (hasAppInitEvents) {
@@ -913,6 +931,7 @@ internal class AppStartupTraceEmitterTest {
 
         val attrs = checkNotNull(trace.attributes)
         assertEquals(STARTUP_ACTIVITY_NAME, attrs[EmbSessionAttributes.EMB_STARTUP_ACTIVITY])
+        assertEquals(launchReason, attrs[EmbSessionAttributes.EMB_STARTUP_LAUNCH_REASON])
         assertEquals(1, dataCollectionCompletedCallbackInvokedCount)
 
         expectedCustomAttributes.forEach { entry ->

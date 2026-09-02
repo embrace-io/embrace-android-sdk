@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestinati
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 internal class StartupServiceImpl(
     private val destination: TelemetryDestination,
@@ -28,10 +29,16 @@ internal class StartupServiceImpl(
     private var sdkStartupDurationMs: Long? = null
 
     @Volatile
-    private var sdkInitDurations: Map<String, Long> = emptyMap()
+    private var endedInForeground: Boolean = false
 
     @Volatile
-    private var endedInForeground: Boolean = false
+    private var attributesProvider: (() -> Map<String, String>)? = null
+
+    /**
+     * The built attributes, memoized on first use so the provider is only ever invoked once
+     * and every consumer attaches an identical set.
+     */
+    private val sdkInitAttributes = AtomicReference<Map<String, String>?>(null)
 
     private val sdkInitSpanRecorded = AtomicBoolean(false)
 
@@ -40,28 +47,28 @@ internal class StartupServiceImpl(
         endTimeMs: Long,
         endState: ProcessState,
         threadName: String,
-        sdkInitDurations: Map<String, Long>,
+        attributesProvider: (() -> Map<String, String>)?,
     ) {
         sdkInitStartMs = startTimeMs
         sdkInitEndMs = endTimeMs
         this.threadName = threadName
         endedInForeground = endState == ProcessState.FOREGROUND
         sdkStartupDurationMs = endTimeMs - startTimeMs
-        this.sdkInitDurations = sdkInitDurations
+        this.attributesProvider = attributesProvider
+        sdkInitAttributes.set(null)
     }
 
     override fun recordSdkInitSpan() {
         val startTimeMs = sdkInitStartMs ?: return
         val endTimeMs = sdkInitEndMs ?: return
         if (sdkInitSpanRecorded.compareAndSet(false, true)) {
-            val initDurations = sdkInitDurations
-            val attributes = buildMap(initDurations.size + 3) {
+            val attributes = buildMap {
                 put("ended-in-foreground", endedInForeground.toString())
                 put("thread-name", threadName)
                 startupCounter?.let { counter ->
                     put(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER, counter.toString())
                 }
-                putSdkInitDurations(initDurations)
+                putAll(getSdkInitAttributes())
             }
             destination.recordCompletedSpan(
                 name = "sdk-init",
@@ -78,5 +85,10 @@ internal class StartupServiceImpl(
     override fun getSdkInitEndMs(): Long? = sdkInitEndMs
     override fun getInitThreadName(): String = threadName
     override fun getAppVersionStartupCounter(): Int? = startupCounter
-    override fun getSdkInitDurations(): Map<String, Long> = sdkInitDurations
+    override fun getSdkInitAttributes(): Map<String, String> {
+        sdkInitAttributes.get()?.let { return it }
+        val computed = attributesProvider?.invoke() ?: emptyMap()
+        sdkInitAttributes.compareAndSet(null, computed)
+        return sdkInitAttributes.get() ?: computed
+    }
 }

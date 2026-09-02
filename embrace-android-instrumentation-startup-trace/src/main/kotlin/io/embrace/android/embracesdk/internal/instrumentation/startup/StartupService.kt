@@ -9,13 +9,18 @@ interface StartupService {
 
     /**
      * Sets the SDK startup info. This is called when the SDK is initialized.
+     *
+     * [attributesProvider] is a deferred supplier of the SDK init attributes (section durations,
+     * perf counters) attached to the spans that describe the init. It is invoked when a span is
+     * recorded - i.e. off the startup hot path - so suppliers may do work (parsing, binder
+     * calls) that must not happen during init itself.
      */
     fun setSdkStartupInfo(
         startTimeMs: Long,
         endTimeMs: Long,
         endState: ProcessState,
         threadName: String,
-        sdkInitDurations: Map<String, Long> = emptyMap(),
+        attributesProvider: (() -> Map<String, String>)? = null,
     )
 
     /**
@@ -52,18 +57,19 @@ interface StartupService {
     fun getAppVersionStartupCounter(): Int?
 
     /**
-     * Durations in milliseconds of the instrumented SDK init sections, keyed by section name.
-     * Empty until startup info is recorded.
+     * Extra attributes to be attached to telemetry tracking SDK startup. Empty until startup info is
+     * recorded. Invokes the provider given to [setSdkStartupInfo], which could require computation or
+     * code execution that could be slow. Do not call this in perf-sensitive places. The result is
+     * memoized on first use, so the provider runs at most once and every caller sees the same
+     * attributes.
      */
-    fun getSdkInitDurations(): Map<String, Long>
+    fun getSdkInitAttributes(): Map<String, String>
 }
 
 /**
- * Add an entry to the map given a map of sdk init durations where the key name comprises the
- * section name with an additional suffix.
+ * Converts SDK init section durations to span attributes, keyed by section name with the `-duration-ms` suffix.
  */
-internal fun MutableMap<String, String>.putSdkInitDurations(durations: Map<String, Long>) {
-    durations.forEach { (sectionName, durationMs) ->
-        put("$sectionName-duration-ms", durationMs.toString())
+fun Map<String, Long>.toSdkInitDurationAttributes(): Map<String, String> =
+    entries.associate { (sectionName, durationMs) ->
+        "$sectionName-duration-ms" to durationMs.toString()
     }
-}

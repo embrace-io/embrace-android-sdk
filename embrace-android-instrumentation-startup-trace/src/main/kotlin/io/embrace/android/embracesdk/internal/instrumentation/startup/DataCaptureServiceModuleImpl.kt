@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.startup
 
+import android.app.ActivityManager
 import android.app.Application
 import android.os.SystemClock
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
@@ -13,6 +14,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.createD
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
 class DataCaptureServiceModuleImpl(
     clock: Clock,
@@ -22,12 +24,27 @@ class DataCaptureServiceModuleImpl(
     appVersionStartupCounterProvider: () -> Int?,
     private val startupClassifier: StartupClassifier,
     versionChecker: VersionChecker = BuildVersionChecker,
+    activityManager: ActivityManager? = null,
+    backgroundWorker: BackgroundWorker? = null,
 ) : DataCaptureServiceModule {
 
     override val startupService: StartupService = StartupServiceImpl(
         destination = destination,
         appVersionStartupCounterProvider = appVersionStartupCounterProvider,
     )
+
+    private val processInfo: ProcessInfo = ProcessInfoImpl(
+        deviceStartTimeMs = clock.now() - SystemClock.elapsedRealtime(),
+        versionChecker = versionChecker,
+        activityManager = activityManager,
+    ).apply {
+        // resolve the launch reason as close to the process starting as we can, but off the thread the app is starting up on
+        if (backgroundWorker != null) {
+            backgroundWorker.submit { prefetchLaunchReason() }
+        } else {
+            prefetchLaunchReason()
+        }
+    }
 
     override val appStartupDataCollector: AppStartupDataCollector = AppStartupTraceEmitter(
         clock = clock,
@@ -37,10 +54,7 @@ class DataCaptureServiceModuleImpl(
         logger = logger,
         startupClassifier = startupClassifier,
         manualEnd = configService.autoDataCaptureBehavior.isEndStartupWithAppReadyEnabled(),
-        processInfo = ProcessInfoImpl(
-            deviceStartTimeMs = clock.now() - SystemClock.elapsedRealtime(),
-            versionChecker = versionChecker,
-        ),
+        processInfo = processInfo,
     )
 
     override val uiLoadDataListener: UiLoadDataListener? =

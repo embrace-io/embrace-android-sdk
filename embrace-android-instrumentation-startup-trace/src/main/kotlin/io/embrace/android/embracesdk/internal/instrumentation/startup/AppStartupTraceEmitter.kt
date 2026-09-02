@@ -50,7 +50,7 @@ internal class AppStartupTraceEmitter(
     private val logger: InternalLogger,
     private val startupClassifier: StartupClassifier,
     manualEnd: Boolean,
-    processInfo: ProcessInfo,
+    private val processInfo: ProcessInfo,
 ) : AppStartupDataCollector {
     private val additionalTrackedIntervals = ConcurrentLinkedQueue<TrackedInterval>()
     private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
@@ -426,6 +426,11 @@ internal class AppStartupTraceEmitter(
 
         startupActivityName?.let { name ->
             setSystemAttribute(EmbSessionAttributes.EMB_STARTUP_ACTIVITY, name)
+        }
+
+        // already resolved when the SDK started, so this does not go near the platform on the thread the app is starting up on
+        processInfo.launchReason()?.let { reason ->
+            setSystemAttribute(EmbSessionAttributes.EMB_STARTUP_LAUNCH_REASON, reason)
         }
     }
 

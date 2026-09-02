@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.serialization.BinaryVersion
 import kotlinx.serialization.Serializable
 
 @Serializable
-@BinaryVersion(-7750445934992932748)
+@BinaryVersion(5150249617565183063)
 data class CachedConfiguration(
     val deviceId: String,
     val etag: String?,

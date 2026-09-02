@@ -71,6 +71,12 @@ object EmbSessionAttributes {
     const val EMB_IS_FINAL_SESSION_PART: String = "emb.is_final_session_part"
 
     /**
+     * Confirmed leak suspects still reachable at the end of this session part, as delimited entries of object type, class name, GC cycles survived, and identity hash.
+     */
+    @ExperimentalSemconv
+    const val EMB_MEMORY_LEAK_SUSPECTS: String = "emb.memory_leak_suspects"
+
+    /**
      * How a signal should be delivered to the Embrace backend.
      */
     @ExperimentalSemconv
@@ -124,6 +130,87 @@ object EmbSessionAttributes {
      */
     @ExperimentalSemconv
     const val EMB_STARTUP_DURATION: String = "emb.startup_duration"
+
+    /**
+     * Why the OS started the app process that the startup trace was recorded in. Reported by the platform from Android 15 onwards, and omitted where it is unavailable. This describes the creation of the process, which is not necessarily what the user did to launch the app: a process forked to handle a push message and subsequently used for a user launch is reported as `push`.
+     */
+    @ExperimentalSemconv
+    const val EMB_STARTUP_LAUNCH_REASON: String = "emb.startup_launch_reason"
+
+    object EmbStartupLaunchReasonValues {
+
+        /**
+         * The process was started to deliver an alarm.
+         */
+        @ExperimentalSemconv
+        const val ALARM: String = "alarm"
+
+        /**
+         * The process was started to run a backup or restore operation.
+         */
+        @ExperimentalSemconv
+        const val BACKUP: String = "backup"
+
+        /**
+         * The process was started in response to the device finishing booting.
+         */
+        @ExperimentalSemconv
+        const val BOOT_COMPLETE: String = "boot_complete"
+
+        /**
+         * The process was started to receive a broadcast.
+         */
+        @ExperimentalSemconv
+        const val BROADCAST: String = "broadcast"
+
+        /**
+         * The process was started because one of its content providers was accessed.
+         */
+        @ExperimentalSemconv
+        const val CONTENT_PROVIDER: String = "content_provider"
+
+        /**
+         * The process was started to run a scheduled job.
+         */
+        @ExperimentalSemconv
+        const val JOB: String = "job"
+
+        /**
+         * The process was started because the app was launched from the launcher.
+         */
+        @ExperimentalSemconv
+        const val LAUNCHER: String = "launcher"
+
+        /**
+         * The process was started because the app was launched from the recents screen.
+         */
+        @ExperimentalSemconv
+        const val LAUNCHER_RECENTS: String = "launcher_recents"
+
+        /**
+         * The process was started for a reason the platform does not categorise further.
+         */
+        @ExperimentalSemconv
+        const val OTHER: String = "other"
+
+        /**
+         * The process was started to handle a push message.
+         */
+        @ExperimentalSemconv
+        const val PUSH: String = "push"
+
+        /**
+         * The process was started because one of its services was bound or started.
+         */
+        @ExperimentalSemconv
+        const val SERVICE: String = "service"
+
+        /**
+         * The process was started because another component started one of its activities.
+         */
+        @ExperimentalSemconv
+        const val START_ACTIVITY: String = "start_activity"
+    }
 
     /**
      * The application state (foreground/background) at the time the log was recorded.

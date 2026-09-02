@@ -11,9 +11,9 @@ import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.export.OperationResultCode
+import io.opentelemetry.kotlin.logging.data.LogRecordData
 import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
 import io.opentelemetry.kotlin.logging.model.ReadWriteLogRecord
-import io.opentelemetry.kotlin.logging.model.ReadableLogRecord
 import io.opentelemetry.kotlin.semconv.LogAttributes
 
 /**
@@ -22,7 +22,7 @@ import io.opentelemetry.kotlin.semconv.LogAttributes
 internal class EmbraceLogRecordProcessor(
     private val uuidSource: UuidSource,
     private val metadataProvider: Provider<Map<String, String>>,
-    private val logRecordExporter: InlineExporter<ReadableLogRecord>,
+    private val logRecordExporter: InlineExporter<LogRecordData>,
 ) : LogRecordProcessor {
 
     override suspend fun forceFlush(): OperationResultCode = logRecordExporter.forceFlush()

@@ -76,7 +76,7 @@ internal class SessionReconstructionServiceSessionSpanTest {
     @Test
     fun `a complete session span is not reconstructed as a span snapshot`() {
         write()
-        assertNull(service.reconstruct(partDirectory)?.data?.spanSnapshots)
+        assertEquals(emptyList<Span>(), service.reconstruct(partDirectory)?.data?.spanSnapshots)
         assertNoInternalErrors()
     }
 
@@ -88,7 +88,7 @@ internal class SessionReconstructionServiceSessionSpanTest {
 
         val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
         assertEquals(listOf(incomplete), payload.spanSnapshots)
-        assertNull(payload.spans)
+        assertEquals(emptyList<Span>(), payload.spans)
         assertNoInternalErrors()
     }
 
@@ -100,7 +100,7 @@ internal class SessionReconstructionServiceSessionSpanTest {
 
         val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
         assertEquals(listOf(ended), payload.spans)
-        assertNull(payload.spanSnapshots)
+        assertEquals(emptyList<Span>(), payload.spanSnapshots)
         assertNoInternalErrors()
     }
 
@@ -110,8 +110,11 @@ internal class SessionReconstructionServiceSessionSpanTest {
         write()
 
         val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
-        assertEquals(listOf(Span(status = Span.Status.UNSET)), payload.spanSnapshots)
-        assertNull(payload.spans)
+        assertEquals(
+            listOf(Span(status = Span.Status.UNSET, events = emptyList(), attributes = emptyList(), links = emptyList())),
+            payload.spanSnapshots,
+        )
+        assertEquals(emptyList<Span>(), payload.spans)
         assertNoInternalErrors()
     }
 

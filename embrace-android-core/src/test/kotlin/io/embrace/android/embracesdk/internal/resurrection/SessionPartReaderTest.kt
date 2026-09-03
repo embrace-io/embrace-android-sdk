@@ -62,10 +62,12 @@ internal class SessionPartReaderTest {
             startTimeNanos = 1726739283136000000L,
             endTimeNanos = 1726739284136000000L,
             status = Span.Status.UNSET,
+            events = emptyList(),
             attributes = listOfNotNull(
                 Attribute(key = "emb.type", data = "ux.session"),
                 processIdentifier?.let { Attribute(key = EmbSessionAttributes.EMB_PROCESS_IDENTIFIER, data = it) },
             ),
+            links = emptyList(),
         )
     }
 

@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.session.persistence
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.payload.Span
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -93,7 +92,7 @@ internal class SessionReconstructionServiceDedupeTest {
 
         val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
         assertEquals(listOf(earlySpan, fullyPopulatedSpan), payload.spans)
-        assertNull(payload.spanSnapshots)
+        assertEquals(emptyList<Span>(), payload.spanSnapshots)
         assertDuplicatesTracked()
     }
 
@@ -103,7 +102,7 @@ internal class SessionReconstructionServiceDedupeTest {
 
         val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
         assertEquals(listOf(earlySpan, fullyPopulatedSpan), payload.spans)
-        assertNull(payload.spanSnapshots)
+        assertEquals(emptyList<Span>(), payload.spanSnapshots)
         assertDuplicatesTracked()
     }
 

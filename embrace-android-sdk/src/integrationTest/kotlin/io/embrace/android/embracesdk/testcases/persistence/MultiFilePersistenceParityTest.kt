@@ -366,7 +366,6 @@ internal class MultiFilePersistenceParityTest {
         )
     }
 
-    @Ignore("Empty span collections read back as absent ones")
     @Test
     fun `empty span collections are persisted identically`() {
         testRule.runTest(
@@ -400,7 +399,6 @@ internal class MultiFilePersistenceParityTest {
         )
     }
 
-    @Ignore("The session span's emb.process_identifier is not persisted")
     @Test
     fun `the session span process identifier is persisted identically`() {
         testRule.runTest(
@@ -562,28 +560,18 @@ internal class MultiFilePersistenceParityTest {
 
     private fun Span.normalised(): Span {
         val span = copy(
-            events = events?.map { it.normalised() }?.nullIfEmpty(),
-            attributes = attributes?.sorted()?.nullIfEmpty(),
-            links = links?.map { it.normalised() }?.nullIfEmpty(),
+            events = events?.map { it.normalised() },
+            attributes = attributes?.sorted(),
+            links = links?.map { it.normalised() },
         )
-        if (span.name != SESSION_SPAN_NAME) {
-            return span
-        }
-        return span.copy(
-            links = null,
-            attributes = span.attributes
-                ?.filterNot { it.key == EmbSessionAttributes.EMB_PROCESS_IDENTIFIER }
-                ?.nullIfEmpty(),
-        )
+        return if (span.name == SESSION_SPAN_NAME) span.copy(links = null) else span
     }
 
-    private fun SpanEvent.normalised(): SpanEvent = copy(attributes = attributes?.sorted()?.nullIfEmpty())
+    private fun SpanEvent.normalised(): SpanEvent = copy(attributes = attributes?.sorted())
 
-    private fun Link.normalised(): Link = copy(attributes = attributes?.sorted()?.nullIfEmpty())
+    private fun Link.normalised(): Link = copy(attributes = attributes?.sorted())
 
     private fun List<Attribute>.sorted(): List<Attribute> = sortedWith(compareBy({ it.key }, { it.data }))
-
-    private fun <T> List<T>.nullIfEmpty(): List<T>? = takeIf(List<T>::isNotEmpty)
 
     private companion object {
         const val SESSION_SPAN_NAME = "emb-session"

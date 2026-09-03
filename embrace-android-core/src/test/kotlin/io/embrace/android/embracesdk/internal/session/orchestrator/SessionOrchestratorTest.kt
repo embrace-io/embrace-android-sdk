@@ -1221,6 +1221,7 @@ internal class SessionOrchestratorTest {
                 { null },
                 FakeLogLimitingService(),
                 FakeMetadataService(),
+                "process-id",
             ),
             ordinalStoreOverride ?: FakeOrdinalStore(),
             keyValueStoreOverride ?: FakeKeyValueStore(),

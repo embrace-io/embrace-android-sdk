@@ -102,7 +102,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
 
         val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
         assertEquals(listOf(inFlightSpan, incomplete), payload.spanSnapshots)
-        assertNull(payload.spans)
+        assertEquals(emptyList<Span>(), payload.spans)
         assertNoInternalErrors()
     }
 
@@ -111,7 +111,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         write()
 
         val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
-        assertNull(payload.spanSnapshots)
+        assertEquals(emptyList<Span>(), payload.spanSnapshots)
         assertEquals(listOf(fullyPopulatedSpan), payload.spans)
         assertNoInternalErrors()
     }
@@ -170,7 +170,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         writeCompletedSpans()
 
         val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
-        assertNull(payload.spanSnapshots)
+        assertEquals(emptyList<Span>(), payload.spanSnapshots)
         assertEquals(listOf(fullyPopulatedSpan), payload.spans)
         assertNoInternalErrors()
     }
@@ -186,7 +186,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
 
         val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
         assertEquals(listOf(incomplete), payload.spanSnapshots)
-        assertNull(payload.spans)
+        assertEquals(emptyList<Span>(), payload.spans)
         assertNoInternalErrors()
     }
 

@@ -66,6 +66,9 @@ internal class SessionPartWriterResourceReadTest {
             name = "emb-network-request",
             startTimeNanos = spanTemplate.start_time_unix_nano,
             status = Span.Status.UNSET,
+            events = emptyList(),
+            attributes = emptyList(),
+            links = emptyList(),
         )
     }
 
@@ -127,7 +130,7 @@ internal class SessionPartWriterResourceReadTest {
     @Test
     fun `the session span written at the start of the part is reconstructed as a snapshot`() {
         val envelope = checkNotNull(writeSessionPart())
-        val expected = checkNotNull(sessionSpan.snapshot()).copy(events = null, links = null)
+        val expected = checkNotNull(sessionSpan.snapshot())
         assertEquals(expected, envelope.data.spanSnapshots?.last())
         assertNull(envelope.data.spans?.find { it.spanId == sessionSpan.spanId })
         assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
@@ -140,7 +143,7 @@ internal class SessionPartWriterResourceReadTest {
         endSessionPart()
 
         val envelope = checkNotNull(service.reconstruct(directory()))
-        val expected = checkNotNull(sessionSpan.snapshot()).copy(events = null, links = null)
+        val expected = checkNotNull(sessionSpan.snapshot())
         assertEquals(expected, envelope.data.spans?.last())
         assertNull(envelope.data.spanSnapshots?.find { it.spanId == sessionSpan.spanId })
         assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)

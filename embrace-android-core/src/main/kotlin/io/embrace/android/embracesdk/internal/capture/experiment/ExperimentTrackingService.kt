@@ -20,32 +20,13 @@ interface ExperimentTrackingService {
     fun untrack(kind: ExperimentKind, ids: List<String>, endTimeMs: Long)
 
     /**
+     * Applies experiment API calls that were buffered before the SDK started, in the order given, exactly as if each had
+     * been made via [track] or [untrack] after startup. The only difference is that they are applied as a single update.
+     */
+    fun bulkModify(events: List<ExperimentApiCall>)
+
+    /**
      * Returns the serialized experiment records as a blob, or null if nothing has been tracked.
      */
     fun getRecords(): String?
-}
-
-/**
- * Internal representation of a single tracked experiment or feature flag.
- */
-sealed class TrackedData {
-    abstract val id: String
-    abstract val startTimeMs: Long
-
-    /**
-     * An association with an experiment, optionally including the variant in which this app instance is bucketed into.
-     */
-    data class Experiment(
-        override val id: String,
-        override val startTimeMs: Long,
-        val variant: String?,
-    ) : TrackedData()
-
-    /**
-     * An association with an enabled feature flag.
-     */
-    data class FeatureFlag(
-        override val id: String,
-        override val startTimeMs: Long,
-    ) : TrackedData()
 }

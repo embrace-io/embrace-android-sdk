@@ -277,6 +277,89 @@ internal class ExperimentTrackingServiceImplTest {
     }
 
     @Test
+    fun `making multiple calls in bulk results in one attribute write`() {
+        service.bulkModify(
+            listOf(
+                ExperimentApiCall.Track(
+                    listOf(
+                        TrackedData.Experiment(id = "a", variant = null, startTimeMs = 100L),
+                        TrackedData.Experiment(id = "b", variant = null, startTimeMs = 200L),
+                    ),
+                ),
+                ExperimentApiCall.Untrack(ExperimentKind.EXPERIMENT, listOf("a"), 300L),
+                ExperimentApiCall.Track(
+                    listOf(TrackedData.FeatureFlag(id = "f", startTimeMs = 150L)),
+                ),
+                ExperimentApiCall.Untrack(ExperimentKind.FEATURE_FLAG, listOf("f"), 400L),
+            ),
+        )
+        service.assertRecordState("e:a::100:300;e:b::200;f:f::150:400")
+        assertEquals(1, experimentAttributeWriteCount())
+    }
+
+    @Test
+    fun `bulk calls dedupes and invokes methods in the expected order`() {
+        val replayed = serviceWithRemoteConfig(RemoteConfig())
+        val events = listOf(
+            // untracking before tracking is dropped, as it would be live
+            ExperimentApiCall.Untrack(ExperimentKind.EXPERIMENT, listOf("id1"), 50L),
+            ExperimentApiCall.Track(
+                listOf(TrackedData.Experiment(id = "id1", variant = "v1", startTimeMs = 100L)),
+            ),
+            ExperimentApiCall.Track(
+                listOf(TrackedData.Experiment(id = "id1", variant = "v2", startTimeMs = 200L)),
+            ),
+            ExperimentApiCall.Untrack(ExperimentKind.EXPERIMENT, listOf("id1"), 300L),
+            ExperimentApiCall.Untrack(ExperimentKind.EXPERIMENT, listOf("id1"), 250L),
+        )
+        replayed.bulkModify(events)
+
+        events.forEach { event ->
+            when (event) {
+                is ExperimentApiCall.Track -> service.track(event.data)
+                is ExperimentApiCall.Untrack -> service.untrack(event.kind, event.ids, event.endTimeMs)
+            }
+        }
+
+        assertEquals("e:id1:v1:100:300", replayed.getRecords())
+        assertEquals(service.getRecords(), replayed.getRecords())
+    }
+
+    @Test
+    fun `bulk calls validates and enforces limits`() {
+        val service = serviceWithRemoteConfig(RemoteConfig(experimentMaxCount = 2))
+        service.bulkModify(
+            listOf(
+                ExperimentApiCall.Track(
+                    listOf(
+                        TrackedData.Experiment(id = "id1", variant = null, startTimeMs = 100L),
+                        TrackedData.Experiment(id = "", variant = null, startTimeMs = 150L),
+                        TrackedData.Experiment(id = "id2", variant = null, startTimeMs = 200L),
+                        TrackedData.Experiment(id = "id3", variant = null, startTimeMs = 300L),
+                    ),
+                ),
+            ),
+        )
+        service.assertRecordState("e:id1::100;e:id2::200")
+        assertEquals(listOf("experiments" to AppliedLimitType.DROP), telemetryService.appliedLimits)
+    }
+
+    @Test
+    fun `bulk calls only updates experiments attributes if one of the calls actually changed something`() {
+        service.bulkModify(emptyList())
+        service.bulkModify(
+            listOf(
+                ExperimentApiCall.Track(
+                    listOf(TrackedData.Experiment(id = " ", variant = null, startTimeMs = 100L)),
+                ),
+                ExperimentApiCall.Untrack(ExperimentKind.EXPERIMENT, listOf("unknown"), 200L),
+            ),
+        )
+        service.assertRecordState(null)
+        assertEquals(0, experimentAttributeWriteCount())
+    }
+
+    @Test
     fun `serialization order follows tracking order irrespective of kind`() {
         service.track(
             listOf(TrackedData.Experiment(id = "id1", variant = null, startTimeMs = 100L)),

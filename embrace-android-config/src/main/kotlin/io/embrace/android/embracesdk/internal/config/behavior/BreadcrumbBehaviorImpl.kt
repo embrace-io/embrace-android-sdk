@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.config.behavior
 import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior.Companion.DEFAULT_BREADCRUMB_LIMIT
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.EnabledFeatureConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.WebViewFragmentCapture
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 
 /**
@@ -37,6 +38,9 @@ class BreadcrumbBehaviorImpl(
 
     override fun isWebViewBreadcrumbQueryParamCaptureEnabled(): Boolean =
         local.isWebViewBreadcrumbQueryParamCaptureEnabled()
+
+    override fun getWebViewBreadcrumbFragmentCapture(): WebViewFragmentCapture =
+        local.getWebViewBreadcrumbFragmentCapture()
 
     override fun isFcmPiiDataCaptureEnabled(): Boolean = local.isFcmPiiDataCaptureEnabled()
 }

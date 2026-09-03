@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.fakes.config
 
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.EnabledFeatureConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.WebViewFragmentCapture
 
 class FakeEnabledFeatureConfig(
     base: EnabledFeatureConfig = InstrumentedConfigImpl.enabledFeatures,
@@ -19,6 +20,7 @@ class FakeEnabledFeatureConfig(
     private val bgActivityCapture: Boolean = base.isBackgroundActivityCaptureEnabled(),
     private val webviewBreadcrumbCapture: Boolean = base.isWebViewBreadcrumbCaptureEnabled(),
     private val webviewQueryCapture: Boolean = base.isWebViewBreadcrumbQueryParamCaptureEnabled(),
+    private val webviewFragmentCapture: WebViewFragmentCapture = base.getWebViewBreadcrumbFragmentCapture(),
     private val fcmPiiCapture: Boolean = base.isFcmPiiDataCaptureEnabled(),
     private val requestContentLengthCapture: Boolean = base.isRequestContentLengthCaptureEnabled(),
     private val okHttpResponseBodySizeCapture: Boolean = base.isOkHttpResponseBodySizeCaptureEnabled(),
@@ -51,6 +53,7 @@ class FakeEnabledFeatureConfig(
     override fun isBackgroundActivityCaptureEnabled(): Boolean = bgActivityCapture
     override fun isWebViewBreadcrumbCaptureEnabled(): Boolean = webviewBreadcrumbCapture
     override fun isWebViewBreadcrumbQueryParamCaptureEnabled(): Boolean = webviewQueryCapture
+    override fun getWebViewBreadcrumbFragmentCapture(): WebViewFragmentCapture = webviewFragmentCapture
     override fun isFcmPiiDataCaptureEnabled(): Boolean = fcmPiiCapture
     override fun isRequestContentLengthCaptureEnabled(): Boolean = requestContentLengthCapture
     override fun isOkHttpResponseBodySizeCaptureEnabled(): Boolean = okHttpResponseBodySizeCapture

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.fakes.behavior
 
 import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.WebViewFragmentCapture
 
 class FakeBreadcrumbBehavior(
     var customBreadcrumbLimitImpl: Int = 100,
@@ -11,6 +12,7 @@ class FakeBreadcrumbBehavior(
     var automaticActivityCaptureEnabled: Boolean = true,
     var webViewBreadcrumbCaptureEnabled: Boolean = true,
     var queryParamCaptureEnabled: Boolean = true,
+    var fragmentCapture: WebViewFragmentCapture = WebViewFragmentCapture.KEEP,
     var captureFcmPiiDataEnabled: Boolean = false,
 ) : BreadcrumbBehavior {
 
@@ -22,5 +24,6 @@ class FakeBreadcrumbBehavior(
     override fun isActivityBreadcrumbCaptureEnabled(): Boolean = automaticActivityCaptureEnabled
     override fun isWebViewBreadcrumbCaptureEnabled(): Boolean = webViewBreadcrumbCaptureEnabled
     override fun isWebViewBreadcrumbQueryParamCaptureEnabled(): Boolean = queryParamCaptureEnabled
+    override fun getWebViewBreadcrumbFragmentCapture(): WebViewFragmentCapture = fragmentCapture
     override fun isFcmPiiDataCaptureEnabled(): Boolean = captureFcmPiiDataEnabled
 }

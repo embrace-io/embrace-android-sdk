@@ -104,7 +104,6 @@ internal class MultiFilePersistenceParityTest {
         )
     }
 
-    @Ignore("The session span's attributes are persisted in an arbitrary order")
     @Test
     fun `multi-file session part span matches the golden file`() {
         testRule.runTest(
@@ -471,8 +470,9 @@ internal class MultiFilePersistenceParityTest {
     private fun EmbracePayloadAssertionInterface.assertMatchesGoldenFile(
         envelope: Envelope<SessionPartPayload>,
     ) {
+        val sessionSpan = envelope.findSessionPartSpan()
         validatePayloadAgainstGoldenFile(
-            payload = envelope.findSessionPartSpan(),
+            payload = sessionSpan.copy(attributes = sessionSpan.attributes?.sorted()),
             goldenFileName = GOLDEN_FILE,
             placeholders = mapOf(
                 Placeholder.USER_SESSION_ID to envelope.getUserSessionId(),

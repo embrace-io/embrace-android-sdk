@@ -76,6 +76,8 @@ internal class SpanChangeNotificationTest {
         "name",
         "events",
         "links",
+        "retainDataAfterStop",
+        "releaseRetainedData",
     )
 
     @Before

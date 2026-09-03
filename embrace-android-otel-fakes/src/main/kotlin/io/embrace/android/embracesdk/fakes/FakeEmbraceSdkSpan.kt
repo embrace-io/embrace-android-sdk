@@ -59,6 +59,12 @@ class FakeEmbraceSdkSpan(
     val events: ConcurrentLinkedQueue<EmbraceSpanEvent> = ConcurrentLinkedQueue()
     val links: ConcurrentLinkedQueue<EmbraceLinkData> = ConcurrentLinkedQueue()
 
+    var dataRetainedAfterStop: Boolean = false
+        private set
+
+    var retainedDataReleased: Boolean = false
+        private set
+
     override val parent: EmbraceSpan?
         get() = parentContext.getEmbraceSpan(openTelemetry)
 
@@ -186,6 +192,16 @@ class FakeEmbraceSdkSpan(
                 links = links.toList().map { it.toEmbracePayload() }
             )
         }
+    }
+
+    override fun retainDataAfterStop() {
+        dataRetainedAfterStop = true
+    }
+
+    override fun releaseRetainedData() {
+        retainedDataReleased = true
+        events.clear()
+        links.clear()
     }
 
     override fun hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =

@@ -104,7 +104,7 @@ internal class MultiFilePersistenceParityTest {
         )
     }
 
-    @Ignore("Fails on the session span's events, links, emb.process_identifier and attribute order")
+    @Ignore("The session span's attributes are persisted in an arbitrary order")
     @Test
     fun `multi-file session part span matches the golden file`() {
         testRule.runTest(
@@ -171,7 +171,6 @@ internal class MultiFilePersistenceParityTest {
         )
     }
 
-    @Ignore("The session span's events are not persisted")
     @Test
     fun `breadcrumbs recorded during the session are persisted identically`() {
         testRule.runTest(
@@ -384,7 +383,6 @@ internal class MultiFilePersistenceParityTest {
         )
     }
 
-    @Ignore("The session span's links are not persisted")
     @Test
     fun `the session span links are persisted identically`() {
         testRule.runTest(
@@ -558,14 +556,16 @@ internal class MultiFilePersistenceParityTest {
         return (sessionsDir.list() ?: emptyArray()).mapNotNull(SessionPartDirectory::fromDirName)
     }
 
-    private fun Span.normalised(): Span {
-        val span = copy(
-            events = events?.map { it.normalised() },
-            attributes = attributes?.sorted(),
-            links = links?.map { it.normalised() },
-        )
-        return if (span.name == SESSION_SPAN_NAME) span.copy(links = null) else span
-    }
+    /**
+     * Sorts the attributes of a span, its events and its links: the two payloads are built from
+     * separate reads of the same telemetry, so an attribute map that is unordered by nature can be
+     * iterated in a different order for each of them.
+     */
+    private fun Span.normalised(): Span = copy(
+        events = events?.map { it.normalised() },
+        attributes = attributes?.sorted(),
+        links = links?.map { it.normalised() },
+    )
 
     private fun SpanEvent.normalised(): SpanEvent = copy(attributes = attributes?.sorted())
 

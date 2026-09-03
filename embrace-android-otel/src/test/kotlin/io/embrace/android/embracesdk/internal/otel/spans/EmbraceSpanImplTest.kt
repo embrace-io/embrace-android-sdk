@@ -382,6 +382,25 @@ internal class EmbraceSpanImplTest {
     }
 
     @Test
+    fun `retained event and link data survives a stop once retention is requested`() {
+        with(embraceSpan) {
+            assertTrue(start())
+            retainDataAfterStop()
+            assertTrue(addEvent("an-event"))
+            assertTrue(addLink(FakeEmbraceSdkSpan.stopped()))
+        }
+        assertTrue(embraceSpan.stop())
+
+        val snapshot = checkNotNull(embraceSpan.snapshot())
+        assertEquals(1, snapshot.events?.size)
+        assertEquals(1, snapshot.links?.size)
+
+        embraceSpan.releaseRetainedData()
+        assertEquals(0, embraceSpan.events().size)
+        assertEquals(0, embraceSpan.links().size)
+    }
+
+    @Test
     fun `cannot stop twice irrespective of error code`() {
         with(embraceSpan) {
             assertTrue(start())

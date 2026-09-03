@@ -862,6 +862,33 @@ internal class SessionPartWriterImplTest {
         assertNoInternalErrors()
     }
 
+    @Test
+    fun `the session span retains its data until the part's writes have completed`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+        assertTrue(sessionSpan.dataRetainedAfterStop)
+        assertFalse(sessionSpan.retainedDataReleased)
+
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        assertFalse(sessionSpan.retainedDataReleased)
+
+        drain()
+        assertTrue(sessionSpan.retainedDataReleased)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `the session span is not asked to retain its data when multi file persistence is disabled`() {
+        val writer = createWriter(enabled = false)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        assertFalse(sessionSpan.dataRetainedAfterStop)
+        assertNoInternalErrors()
+    }
+
     private fun completedSpan(name: String) = Span(
         traceId = "6c9b1f2ec1d34f3c9a7d0b8e5f2a4c11",
         spanId = "aaaaaaaaaaaaaaa2",

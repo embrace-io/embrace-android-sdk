@@ -161,6 +161,9 @@ private class EmbraceSpanImpl(
 
     private var customLinks: MutableList<EmbraceLinkData>? = null
 
+    @Volatile
+    private var retainDataAfterStop = false
+
     private val systemAttributes = ConcurrentHashMap<String, String>(otelSpanStartArgs.embraceAttributes.size).apply {
         otelSpanStartArgs.embraceAttributes.forEach { put(it.key, it.value) }
     }
@@ -267,7 +270,9 @@ private class EmbraceSpanImpl(
                 successful = !isRecording
                 if (successful) {
                     spanEndTimeMs = attemptedEndTimeMs
-                    releaseRetainedData()
+                    if (!retainDataAfterStop) {
+                        releaseRetainedData()
+                    }
                 }
             }
         }
@@ -278,12 +283,16 @@ private class EmbraceSpanImpl(
         return successful
     }
 
+    override fun retainDataAfterStop() {
+        retainDataAfterStop = true
+    }
+
     /**
      * Once a span has stopped it has been exported to an independent [Span] payload, so its own
      * event/link collections are redundant. Drop the references to allow GC on the collections during
      * the remainder of the session part.
      */
-    private fun releaseRetainedData() {
+    override fun releaseRetainedData() {
         synchronized(collectionLock) {
             systemEvents = null
             customEvents = null

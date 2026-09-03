@@ -6,6 +6,7 @@ description = "Embrace Android SDK: Startup Trace Instrumentation"
 
 android {
     namespace = "io.embrace.android.embracesdk.instrumentation.startup"
+    defaultConfig.consumerProguardFiles("embrace-proguard.cfg")
 }
 
 dependencies {

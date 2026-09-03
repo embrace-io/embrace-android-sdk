@@ -77,6 +77,11 @@ class SessionPartWriterImpl(
 
         current = writers
         writeTracker.markWriting(sessionPartId)
+
+        // the session span is snapshotted after it has stopped, so it must hold on to its events and
+        // links until this part's writes have completed
+        writers.span?.retainDataAfterStop()
+
         directoryStore.create(writers.directory)
         queueManifestWrite(writers)
         queueMetadataWrite(writers)
@@ -101,6 +106,7 @@ class SessionPartWriterImpl(
             if (!writesSealed) {
                 notifyWritesComplete()
             }
+            writers.span?.releaseRetainedData()
         }
     }
 

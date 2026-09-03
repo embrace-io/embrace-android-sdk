@@ -50,6 +50,18 @@ interface EmbraceSdkSpan : EmbraceSpan {
     fun snapshot(): Span?
 
     /**
+     * Keeps the events and links this span records once it stops, rather than releasing them after
+     * export. [releaseRetainedData] must be called when owners are finished with the collections.
+     */
+    fun retainDataAfterStop()
+
+    /**
+     * Drops references to internal data this span recorded that are already copied onto the
+     * underlying opentelemetry span.
+     */
+    fun releaseRetainedData()
+
+    /**
      * Checks to see if the given span has a particular [EmbraceAttribute]
      */
     fun hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean

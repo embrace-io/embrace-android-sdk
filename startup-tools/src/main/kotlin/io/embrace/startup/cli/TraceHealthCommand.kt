@@ -39,7 +39,7 @@ class TraceHealthCommand : CliktCommand(name = "trace-health") {
         val tp = TraceProcessor(Prebuilt.resolve(explicit = traceProcessor))
         val reports = traces.map { trace ->
             val report = TraceHealth.check(tp, trace, canary)
-            if (report.verdict != TraceHealth.Verdict.OK) {
+            if (report.verdict != TraceHealth.Verdict.OK || report.classLoadBurst) {
                 echo(perTraceLine(report, trace, showMeta))
             }
             report
@@ -63,7 +63,12 @@ class TraceHealthCommand : CliktCommand(name = "trace-health") {
             shown.putAll(report.buckets.getValue(TraceHealth.Bucket.PARSE))
             if (showMeta) shown.putAll(report.buckets.getValue(TraceHealth.Bucket.META))
             val detail = shown.entries.sortedBy { it.key }.joinToString(", ") { "${it.key}=${it.value}" }.ifEmpty { "none" }
-            return "  [${report.verdict.key.padEnd(VERDICT_W)}] ${trace.fileName}  canary=${report.canarySlices} $detail"
+            val burst = if (report.classLoadBurst) {
+                "  first-session-classloads=${report.classLoadsInFirstSession}"
+            } else {
+                ""
+            }
+            return "  [${report.verdict.key.padEnd(VERDICT_W)}] ${trace.fileName}  canary=${report.canarySlices} $detail$burst"
         }
 
         private const val VERDICT_W = 17

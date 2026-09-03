@@ -49,6 +49,9 @@ class MainApplication : Application(), ImageLoaderFactory {
         // mirror telemetry to logcat for host-side verification when enabled for this run
         TelemetryVerificationTap.registerIfEnabled(this)
 
+        // benchmark-only: when armed from the shell, force the SDK onto the new-user-session path
+        BenchmarkStateHooks.expireUserSessionIfRequested(this)
+
         // add OTel exporters to send data to 3rd party destinations
         Embrace.addJavaSpanExporter(LogcatSpanExporter())
         Embrace.addJavaLogRecordExporter(LogcatLogRecordExporter())

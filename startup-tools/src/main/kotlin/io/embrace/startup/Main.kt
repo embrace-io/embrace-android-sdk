@@ -5,6 +5,7 @@ import com.github.ajalt.clikt.core.subcommands
 import io.embrace.startup.cli.AnalyzeCommand
 import io.embrace.startup.cli.ArtifactSyncCommand
 import io.embrace.startup.cli.CellRunnerCommand
+import io.embrace.startup.cli.CohortsCommand
 import io.embrace.startup.cli.CompatPatchCommand
 import io.embrace.startup.cli.CrossDeviceSectionsCommand
 import io.embrace.startup.cli.FactorsReportCommand
@@ -47,6 +48,7 @@ fun main(args: Array<String>) = StartupTools()
         ProbeCommand(),
         VerifyArmsCommand(),
         FleetCampaignCommand(),
+        CohortsCommand(),
         CompatPatchCommand(),
         CellRunnerCommand(),
         MatrixReportCommand(),

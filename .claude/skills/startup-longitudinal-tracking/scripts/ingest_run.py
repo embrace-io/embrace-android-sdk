@@ -237,7 +237,7 @@ def main():
             # partially-evicted traces is exactly the kind of slow corruption this skill exists
             # to prevent. Buffer-level loss and event-parse errors are counted separately because
             # they invalidate different things - see _shared/trace_health.py.
-            health = check_trace(tp, trace, instrument) if check_trace is not None else None
+            health = check_trace(tp, trace, instrument, with_class_loads=False) if check_trace is not None else None
             if health is not None:
                 if health["verdict"] in ("lossy", "unusable"):
                     lossy += 1

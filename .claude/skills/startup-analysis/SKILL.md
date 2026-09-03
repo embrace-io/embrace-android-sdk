@@ -158,6 +158,49 @@ though the ratio is device-specific, so establish it on yours — and MUST be ex
   and reports both (with the delta). Default-mode-only runs never exercise the shipped
   profile, so profile-coverage regressions are invisible to them. Run `coldStartupNoAot`
   occasionally as the what-is-the-profile-worth canary.
+
+## User-session state arms (the production cold start)
+
+The compile state is not the only device state the harness controls by accident. The SDK
+restores the previous user session on launch when it is within its inactivity timeout
+(30 minutes by default) and only CREATES and PERSISTS a new one otherwise. Every benchmark
+method above relaunches within seconds, so every iteration after the first restores, and
+`start-first-session` (inside `post-init`) is close to free. A production cold start is
+usually hours after the previous one: it takes the create-and-persist path, which does real
+work on the main thread (serialization, a preferences write, thread starts) and on an
+uncompiled install costs several times the restore path - enough to be a large share of
+`post-init` in production while the lab reported it as negligible. **The benchmark modelled a
+user who relaunches every few seconds; production is the other user.** Evidence:
+`claude-output/2026-09-03-first-session-fix/RESULTS.md` and
+`references/interpreting-results.md` "User-session state decides post-init".
+
+- `coldStartupBaselineProfileNewUserSession` runs `pm clear` in `setupBlock`, so every
+  iteration starts with no stored user session AND no persisted config (the first-launch
+  config path). It is the "fresh install" cohort made repeatable. Its `start-first-session`
+  is the number production sees; its `persisted-config-load` is NOT (compare that section
+  against the plain arm).
+- `coldStartupBaselineProfileExpiredUserSession` isolates the user-session write from the
+  config path: `setupBlock` arms `settings put global embrace_bench_expire_user_session 1`,
+  and the ExampleApp's `BenchmarkStateHooks` deletes only the `embrace.user_session` key from
+  the default SharedPreferences before `Embrace.start` (a release build cannot be reached with
+  `run-as`, so the app does it to itself). Persisted config and all other state stay as a
+  returning user's would. This is the "returning user, hours later" cohort - the production
+  median. Side effect: the prefs file is loaded on the main thread before the SDK's prewarm, so
+  `key-value-store-init`/`prefs-first-read` read slightly low in this arm. The setting persists
+  on the device; disarm with `settings delete global embrace_bench_expire_user_session`
+  before any arm that should restore.
+- **The campaign runner verifies the cohort of every launch** (`fleet_campaign.py` and
+  `startup-tools fleet-campaign` alike): it arms the ExampleApp's `EmbVerify` logcat tap for the
+  campaign, streams the pass's lines to `passN-embverify.log`, and classifies each launch's
+  `sdk-init` span as created (new `emb.user_session_id`, or counter reset to 1), restored (same
+  id) or unknown, writing `passN-cohorts.json` and a `cohorts:` line to the campaign log. A
+  launch on the wrong path for the arm is a WARN with its iteration index - drop or split it
+  in analysis, never average it in. `_shared/cohorts.py` / `startup-tools cohorts` re-run the
+  classification on a saved capture. The tap adds a span processor to the app under test, so
+  every arm of a comparison must run with it in the same state (it is on by default; the
+  runner restores the setting afterwards).
+- Report `start-first-session` and `post-init` from this arm separately; never average them
+  with the restoring arms, they are different code paths.
 - **Arm-ordering bias is real**: back-to-back arms self-heat the device, disadvantaging
   whichever runs second. On a thermally-sensitive device a fixed arm order can inflate the
   apparent effect size by roughly half again — enough to change a conclusion — so never

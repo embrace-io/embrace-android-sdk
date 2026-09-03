@@ -123,9 +123,17 @@ class FleetCampaignTest {
                 io.embrace.startup.core.proc.Processes.Output(1, "some real failure", ""),
             ),
         )
+        val settings = ArrayList<String>()
         val adb = object : Adb() {
-            override fun run(serial: String?, vararg args: String): Output = Output(0, dumpsys, "")
+            override fun run(serial: String?, vararg args: String): Output {
+                if (args.getOrNull(1) == "settings") {
+                    settings.add(args.drop(2).joinToString(" "))
+                    return Output(0, if (args[2] == "get") "null" else "", "")
+                }
+                return Output(0, dumpsys, "")
+            }
         }
+        val taps = ArrayList<Path>()
         val campaign = FleetCampaign(
             serial = "S1",
             dirMatch = "pixel",
@@ -142,6 +150,18 @@ class FleetCampaignTest {
                 out
             },
             sleep = {},
+            logcat = { cmd, file ->
+                assertEquals(listOf("adb", "-s", "S1") + Cohorts.LOGCAT_ARGS, cmd)
+                taps.add(file)
+                // what the tap would have streamed: one launch that created its user session
+                Files.writeString(
+                    file,
+                    "09-03 14:37:56.782 15291 15314 I EmbVerify: EMBV1 2 1/1 {\"kind\":\"span\",\"name\":\"emb-sdk-init\"," +
+                        "\"startNanos\":1,\"endNanos\":2000001,\"attrs\":{\"emb.user_session_id\":\"AAAA\"," +
+                        "\"emb.app.version_startup_counter\":\"1\",\"start-first-session-duration-ms\":\"3\"}}\n",
+                )
+                AutoCloseable {}
+            },
         )
         assertEquals(1, campaign.run())
         assertTrue(Files.exists(camp.resolve("pass1-gradle.log")))
@@ -153,5 +173,22 @@ class FleetCampaignTest {
         assertTrue(log.contains("pass 2 FAILED (exit 1); aborting"))
         assertTrue(outcomes.isEmpty())
         assertTrue(Files.isDirectory(Path.of(camp.toString(), "pass1")))
+
+        // cohort verification: the tap was armed once for the campaign and restored after, one capture per
+        // pass attempted, the fresh-install launch of a restoring arm is not a violation
+        assertEquals(
+            listOf(
+                "get global embrace_verify_telemetry",
+                "put global embrace_verify_telemetry startup:1",
+                "delete global embrace_verify_telemetry",
+            ),
+            settings,
+        )
+        assertEquals(listOf(camp.resolve("pass1-embverify.log"), camp.resolve("pass2-embverify.log")), taps)
+        assertTrue(log.contains("cohort verification: logcat tap armed (embrace_verify_telemetry=startup:1; was 'null')"))
+        assertTrue(log.contains("pass 1 cohorts: 1 launches, 1 created, 0 restored, 0 unknown; expected restored; violations: 0"))
+        val cohorts = Files.readString(camp.resolve("pass1-cohorts.json"))
+        assertTrue(cohorts.contains("\"cohort\":\"created\""))
+        assertTrue(cohorts.contains("\"expected\":\"restored\""))
     }
 }

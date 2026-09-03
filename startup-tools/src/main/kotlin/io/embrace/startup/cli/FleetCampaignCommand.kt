@@ -39,6 +39,11 @@ class FleetCampaignCommand : CliktCommand(name = "fleet-campaign") {
         "--dry-run",
         help = "resolve paths, read thermal state and print the gradle command without running",
     ).flag()
+    private val noVerifyCohort by option(
+        "--no-verify-cohort",
+        help = "do not arm the ExampleApp's logcat tap and classify each launch's user-session cohort (default: verify; " +
+            "turn off only when comparing against runs made before the tap existed)",
+    ).flag()
 
     override fun help(context: Context): String =
         "Run N back-to-back benchmark passes on one device: silicon cool gate between passes, traces copied aside per " +
@@ -55,6 +60,7 @@ class FleetCampaignCommand : CliktCommand(name = "fleet-campaign") {
             gapAfterPass = gapAfterPass,
             repo = repo ?: RepoRoot.locate(),
             dryRun = dryRun,
+            verifyCohort = !noVerifyCohort,
         ).run()
         if (rc != 0) throw ProgramResult(rc)
     }

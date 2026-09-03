@@ -76,6 +76,27 @@ UNION ALL
 SELECT 'sched_rows', (SELECT COUNT(*) FROM sched);
 """
 
+# The section that carries the new-user-session write on a production cold start, and the class-load
+# count inside it at or above which a serializer is being resolved at runtime on the init thread. A
+# healthy launch that creates a user session loads up to about fifty classes there (SDK lambdas, schema
+# types, the JSON encoder, app classes the launch happens to touch); the kotlinx builtin serializer
+# table adds roughly seventy more, so the two populations sit well either side of this line. A
+# restoring launch loads one or two.
+FIRST_SESSION_SLICE = "emb-start-first-session"
+CLASS_LOAD_BURST_THRESHOLD = 80
+
+# A second, separate query (so the health query's frozen goldens stay byte-identical): ART class-load
+# slices (`Lpkg/Cls;`) on the same thread inside the first occurrence of the section.
+CLASS_LOAD_SQL = """
+SELECT 'classloads' AS k, COUNT(*) AS v
+  FROM slice s
+  JOIN thread_track tt ON s.track_id = tt.id
+  JOIN (SELECT s2.ts AS ts, s2.ts + s2.dur AS end_ts, tt2.utid AS utid
+          FROM slice s2 JOIN thread_track tt2 ON s2.track_id = tt2.id
+         WHERE s2.name = '{section}' ORDER BY s2.ts LIMIT 1) w
+ WHERE tt.utid = w.utid AND s.ts >= w.ts AND s.ts < w.end_ts AND s.name GLOB 'L*;';
+"""
+
 # Written data was lost. Only these can remove a window or part of sched.
 BUFFER_MARKERS = ("chunks_overwritten", "packet_loss", "abi_violations", "ftrace_cpu_overrun",
                   "trace_writer_packet_loss", "chunks_discarded", "packets_lost")
@@ -103,12 +124,12 @@ def classify(counter_name):
     return "parse"  # unrecognised: surface it rather than assume it is harmless
 
 
-def _rows(tp, trace, canary):
+def _query_rows(tp, trace, sql):
     handle, name = tempfile.mkstemp(suffix=".sql", prefix="trace_health_")
     query = pathlib.Path(name)
     os.close(handle)
     try:
-        query.write_text(HEALTH_SQL.format(canary=canary))
+        query.write_text(sql)
         cp = subprocess.run([str(tp), "-q", str(query), str(trace)],
                             capture_output=True, text=True, timeout=900)
     finally:
@@ -124,11 +145,25 @@ def _rows(tp, trace, canary):
     return out
 
 
-def check_trace(tp, trace, canary="emb-sdk-start"):
+def _rows(tp, trace, canary):
+    return _query_rows(tp, trace, HEALTH_SQL.format(canary=canary))
+
+
+def _class_loads(tp, trace, section=FIRST_SESSION_SLICE):
+    """ART class-load slices on the init thread inside the first `section` slice, or None if unreadable."""
+    return _query_rows(tp, trace, CLASS_LOAD_SQL.format(section=section)).get("classloads")
+
+
+def check_trace(tp, trace, canary="emb-sdk-start", with_class_loads=True):
     """Verdict dict: ok / lossy / unusable / slices-incomplete / missing-canary, plus the
     bucketed counters that decided it. `windows_ok` says whether durations read from the window
-    are trustworthy; `counts_ok` says whether count- or presence-shaped metrics are."""
+    are trustworthy; `counts_ok` says whether count- or presence-shaped metrics are.
+
+    `class_loads_in_first_session` / `class_load_burst` carry the runtime-serializer regression
+    signature (see CLASS_LOAD_BURST_THRESHOLD); pass with_class_loads=False to skip that second query
+    where only the verdict matters (ingest), which is also what the Kotlin port's ingest does."""
     rows = _rows(tp, trace, canary)
+    class_loads = _class_loads(tp, trace) if with_class_loads else None
     losses = {k[len("loss."):]: v for k, v in rows.items() if k.startswith("loss.") and v}
     buckets = {"buffer": {}, "parse": {}, "meta": {}}
     for name, value in losses.items():
@@ -159,7 +194,9 @@ def check_trace(tp, trace, canary="emb-sdk-start"):
             "canary_slices": canary_count, "losses": losses, "buckets": buckets,
             "windows_ok": verdict in ("ok", "slices-incomplete", "lossy"),
             "counts_ok": verdict in ("ok",),
-            "slices": rows.get("slices", 0), "sched_rows": rows.get("sched_rows", 0)}
+            "slices": rows.get("slices", 0), "sched_rows": rows.get("sched_rows", 0),
+            "class_loads_in_first_session": class_loads,
+            "class_load_burst": (class_loads or 0) >= CLASS_LOAD_BURST_THRESHOLD}
 
 
 def summarize(verdicts):
@@ -188,6 +225,14 @@ def summarize(verdicts):
             f"INVESTIGATE ({counts['missing-canary']}/{total} missing the canary with CLEAN loss "
             "counters): this is a query, build, or instrument problem, not saturation. Do not "
             "'fix' it by enlarging buffers.")
+    bursts = sum(1 for v in verdicts if v.get("class_load_burst"))
+    if bursts:
+        lines.append(
+            f"REGRESSION ({bursts}/{total} loaded >= {CLASS_LOAD_BURST_THRESHOLD} classes inside "
+            f"{FIRST_SESSION_SLICE} on the init thread): a serializer is being resolved at runtime "
+            "on the new-user-session write (the kotlinx builtin serializer table, several times "
+            "more expensive on an uncompiled install). Every SDK call must pass a static "
+            "SerializationStrategy; look for a reified serializer<T>() that crept back in.")
     return "\n".join(lines)
 
 
@@ -213,14 +258,16 @@ def main():
     for trace in traces:
         verdict = check_trace(tp, trace, args.canary)
         verdicts.append(verdict)
-        if verdict["verdict"] != "ok":
+        if verdict["verdict"] != "ok" or verdict["class_load_burst"]:
             shown = dict(verdict["buckets"]["buffer"])
             shown.update(verdict["buckets"]["parse"])
             if args.show_meta:
                 shown.update(verdict["buckets"]["meta"])
             detail = ", ".join(f"{k}={v}" for k, v in sorted(shown.items())) or "none"
+            burst = (f"  first-session-classloads={verdict['class_loads_in_first_session']}"
+                     if verdict["class_load_burst"] else "")
             print(f"  [{verdict['verdict']:<17}] {trace.name}  canary={verdict['canary_slices']} "
-                  f"{detail}")
+                  f"{detail}{burst}")
     print(summarize(verdicts))
 
 

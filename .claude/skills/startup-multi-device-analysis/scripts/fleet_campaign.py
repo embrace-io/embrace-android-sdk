@@ -18,15 +18,25 @@ Usage:
   gap-after-pass optional: sleep 300 s after this pass number
   --repo PATH    repo root. Defaults to `git rev-parse --show-toplevel` from the cwd, so
                  running this from anywhere inside the checkout needs no argument.
+  --no-verify-cohort
+                 do not arm the ExampleApp's logcat tap and classify each launch's
+                 user-session cohort (default: verify). Turn off only when comparing
+                 against runs made before the tap existed.
 
 Copies each pass's traces aside before the next pass wipes them; logs battery level/temp
 AND silicon (thermalservice) temps around every pass — battery temp understates silicon by
 30 C+ under load, and some devices report a constant battery temperature regardless of load,
 so judge thermal state from the silicon reading, not battery.
+
+Verifies the cohort of every launch: the `EmbVerify` logcat lines of each pass are captured to
+`passN-embverify.log` and each launch's sdk-init span is classified created / restored /
+unknown into `passN-cohorts.json` (see _shared/cohorts.py); a launch on the wrong path for
+the method is a WARN in campaign.log with its iteration index.
 Requires StartupBenchmarks.kt at iterations = 50.
 """
 
 import datetime
+import json
 import os
 import re
 import shutil
@@ -62,6 +72,11 @@ def main() -> int:
             return 1
         repo = os.path.abspath(argv[i + 1])
         del argv[i:i + 2]
+    # Verify each launch's user-session cohort from the ExampleApp's logcat tap (see _shared/cohorts.py).
+    # Off only when comparing against runs made before the tap existed: it adds a span processor to the
+    # app under test, so every arm of a comparison must run with it in the same state.
+    verify_cohort = "--no-verify-cohort" not in argv
+    argv = [a for a in argv if a != "--no-verify-cohort"]
     if len(argv) < 4:
         print(__doc__, file=sys.stderr)
         return 1
@@ -187,19 +202,44 @@ def main() -> int:
             prev = now
         return prev
 
-    log(f"repo {repo}")
-    env = dict(os.environ, ANDROID_SERIAL=serial)
-    baseline_silicon = settle_baseline()
-    log(f"silicon baseline for the cool gate (settled): {baseline_silicon}")
-    for p in range(1, passes + 1):
-        dest = os.path.join(camp, f"pass{p}")
-        if os.path.isdir(dest):
-            log(f"pass {p} already collected, skipping")
-            continue
-        if p > 1:
-            cool_down(baseline_silicon)
-        log(f"pass {p}/{passes} starting, battery {battery()}, {silicon()}")
-        t0 = datetime.datetime.now()
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "_shared"))
+    import cohorts  # noqa: E402
+
+    def adb_shell(*args):
+        return subprocess.run(["adb", "-s", serial, "shell", *args], capture_output=True, text=True,
+                              timeout=15).stdout.strip()
+
+    def arm_cohort_tap():
+        """Turn on the ExampleApp's logcat telemetry tap for the campaign; returns the previous value so
+        the device is left as found."""
+        previous = adb_shell("settings", "get", "global", cohorts.SETTING_KEY)
+        adb_shell("settings", "put", "global", cohorts.SETTING_KEY, cohorts.SETTING_VALUE)
+        log(f"cohort verification: logcat tap armed ({cohorts.SETTING_KEY}={cohorts.SETTING_VALUE}; was '{previous}')")
+        return previous
+
+    def disarm_cohort_tap(previous):
+        if previous in (None, "", "null"):
+            adb_shell("settings", "delete", "global", cohorts.SETTING_KEY)
+        else:
+            adb_shell("settings", "put", "global", cohorts.SETTING_KEY, previous)
+
+    def check_cohorts(p, capture):
+        """Classify the pass's launches from the captured tap output; a violation is logged loudly, never fatal."""
+        text = ""
+        if os.path.exists(capture):
+            with open(capture, encoding="utf-8", errors="replace") as f:
+                text = f.read()
+        launches, expected, bad, summary = cohorts.report(text, method)
+        with open(os.path.join(camp, f"pass{p}-cohorts.json"), "w") as f:
+            json.dump(cohorts.to_json(launches, expected, bad, method), f, indent=1, sort_keys=True)
+        log(f"pass {p} {summary}")
+        if bad:
+            log(f"pass {p} WARN: {len(bad)} launch(es) took the wrong user-session path for {method} - drop or split them")
+        if not launches:
+            log(f"pass {p} WARN: no sdk-init spans in the tap capture - is the app under test the ExampleApp "
+                "with TelemetryVerificationTap?")
+
+    def run_benchmark(log_name):
         proc = subprocess.run(
             [os.path.join(app, "gradlew"), "-p", app,
              ":app:benchmark:connectedBenchmarkAndroidTest",
@@ -211,8 +251,52 @@ def main() -> int:
              "androidx.benchmark.suppressErrors=LOW-BATTERY"],
             capture_output=True, text=True, cwd=repo, env=env,
         )
-        with open(os.path.join(camp, f"pass{p}-gradle.log"), "w") as f:
+        with open(os.path.join(camp, log_name), "w") as f:
             f.write(proc.stdout + "\n--- stderr ---\n" + proc.stderr)
+        return proc
+
+    log(f"repo {repo}")
+    env = dict(os.environ, ANDROID_SERIAL=serial)
+    baseline_silicon = settle_baseline()
+    log(f"silicon baseline for the cool gate (settled): {baseline_silicon}")
+    previous_tap = arm_cohort_tap() if verify_cohort else None
+    try:
+        return run_passes(passes, camp, connected, match, method, gap_after, verify_cohort, serial,
+                          baseline_silicon, log, cool_down, battery, silicon, run_benchmark, check_cohorts)
+    finally:
+        if verify_cohort:
+            disarm_cohort_tap(previous_tap)
+
+
+def run_passes(passes, camp, connected, match, method, gap_after, verify_cohort, serial, baseline_silicon,
+               log, cool_down, battery, silicon, run_benchmark, check_cohorts):
+    for p in range(1, passes + 1):
+        dest = os.path.join(camp, f"pass{p}")
+        if os.path.isdir(dest):
+            log(f"pass {p} already collected, skipping")
+            continue
+        if p > 1:
+            cool_down(baseline_silicon)
+        log(f"pass {p}/{passes} starting, battery {battery()}, {silicon()}")
+        t0 = datetime.datetime.now()
+        capture = os.path.join(camp, f"pass{p}-embverify.log")
+        tap = None
+        if verify_cohort:
+            sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "_shared"))
+            import cohorts  # noqa: E402
+            tap_file = open(capture, "a")
+            tap = (subprocess.Popen(["adb", "-s", serial, *cohorts.LOGCAT_ARGS], stdout=tap_file,
+                                    stderr=subprocess.STDOUT), tap_file)
+        try:
+            proc = run_benchmark(f"pass{p}-gradle.log")
+        finally:
+            if tap is not None:
+                tap[0].terminate()
+                try:
+                    tap[0].wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    tap[0].kill()
+                tap[1].close()
         if proc.returncode != 0 and INSTALL_TIMEOUT_MARKER in (proc.stdout or ""):
             # Entry-tier devices intermittently blow ddmlib's install-commit timeout: the APK
             # install hangs and surfaces as ShellCommandUnresponsiveException. Measured on the Go
@@ -223,19 +307,7 @@ def main() -> int:
             # still abort rather than be papered over by repetition.
             log(f"pass {p} hit the install-timeout signature; retrying once")
             cool_down(baseline_silicon)
-            proc = subprocess.run(
-                [os.path.join(app, "gradlew"), "-p", app,
-                 ":app:benchmark:connectedBenchmarkAndroidTest",
-                 "-Pandroid.testInstrumentationRunnerArguments.class="
-                 f"io.embrace.android.benchmark.StartupBenchmarks#{method}",
-                 "-Pandroid.testInstrumentationRunnerArguments."
-                 "androidx.benchmark.dryRunMode.enable=false",
-                 "-Pandroid.testInstrumentationRunnerArguments."
-                 "androidx.benchmark.suppressErrors=LOW-BATTERY"],
-                capture_output=True, text=True, cwd=repo, env=env,
-            )
-            with open(os.path.join(camp, f"pass{p}-gradle-retry.log"), "w") as f:
-                f.write(proc.stdout + "\n--- stderr ---\n" + proc.stderr)
+            proc = run_benchmark(f"pass{p}-gradle-retry.log")
         if proc.returncode != 0:
             log(f"pass {p} FAILED (exit {proc.returncode}); aborting")
             return 1
@@ -246,6 +318,8 @@ def main() -> int:
         n = len([f for f in os.listdir(dest) if f.endswith(".perfetto-trace")])
         mins = (datetime.datetime.now() - t0).total_seconds() / 60
         log(f"pass {p} done in {mins:.1f} min, {n} traces, battery {battery()}, {silicon()}")
+        if verify_cohort:
+            check_cohorts(p, capture)
         if gap_after == p:
             log("idle gap: 300 s")
             time.sleep(300)

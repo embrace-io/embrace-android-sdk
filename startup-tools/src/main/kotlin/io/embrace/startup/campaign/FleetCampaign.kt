@@ -47,6 +47,10 @@ class FleetCampaign(
     },
     private val sleep: (Long) -> Unit = { Thread.sleep(it) },
     private val dryRun: Boolean = false,
+    /** Verify each launch's user-session cohort from the app's logcat tap (see [Cohorts]); off only for A/B against old runs. */
+    private val verifyCohort: Boolean = true,
+    /** Starts a background `adb ... logcat` writing to the file; the returned handle stops it. Injected so tests never spawn adb. */
+    private val logcat: (List<String>, Path) -> AutoCloseable = { cmd, file -> Processes.background(cmd, file) },
 ) {
 
     private val app: Path = repo.resolve("examples/ExampleApp")
@@ -68,33 +72,77 @@ class FleetCampaign(
         }
         val baseline = settleBaseline()
         log("silicon baseline for the cool gate (settled): ${baseline?.let { PyFormat.fixed(it, 1) } ?: "None"}")
-        for (p in 1..passes) {
-            if (Files.isDirectory(campDir.resolve("pass$p"))) {
-                log("pass $p already collected, skipping")
-                continue
+        val previousTap = if (verifyCohort) armCohortTap() else null
+        try {
+            for (p in 1..passes) {
+                if (Files.isDirectory(campDir.resolve("pass$p"))) {
+                    log("pass $p already collected, skipping")
+                    continue
+                }
+                if (!runPass(p, baseline)) {
+                    return 1
+                }
             }
-            if (!runPass(p, baseline)) {
-                return 1
+        } finally {
+            if (verifyCohort) {
+                disarmCohortTap(previousTap)
             }
         }
         log("$campDir complete")
         return 0
     }
 
-    /** One pass: cool gate, benchmark (with the single install-timeout retry), copy traces aside. */
+    /**
+     * Turn on the ExampleApp's logcat telemetry tap for the campaign and remember what it was, so the
+     * device is left as found. The tap mirrors the startup spans (with every sdk-init attribute) to
+     * logcat one second after init; it adds a span processor to the app under test, so every arm of a
+     * comparison must run with it in the same state.
+     */
+    private fun armCohortTap(): String {
+        val previous = adb.shell(serial, "settings", "get", "global", Cohorts.SETTING_KEY)
+        adb.shell(serial, "settings", "put", "global", Cohorts.SETTING_KEY, Cohorts.SETTING_VALUE)
+        log("cohort verification: logcat tap armed (${Cohorts.SETTING_KEY}=${Cohorts.SETTING_VALUE}; was '$previous')")
+        return previous
+    }
+
+    private fun disarmCohortTap(previous: String?) {
+        if (previous == null || previous == "null" || previous.isEmpty()) {
+            adb.shell(serial, "settings", "delete", "global", Cohorts.SETTING_KEY)
+        } else {
+            adb.shell(serial, "settings", "put", "global", Cohorts.SETTING_KEY, previous)
+        }
+    }
+
+    /** Classify the pass's launches from the captured tap output; a violation is logged loudly, never fatal. */
+    private fun checkCohorts(p: Int, capture: Path) {
+        val text = if (Files.exists(capture)) Files.readString(capture) else ""
+        val report = Cohorts.report(text, method)
+        Files.writeString(
+            campDir.resolve("pass$p-cohorts.json"),
+            StartupJson.encodeToString(JsonObject.serializer(), Cohorts.toJson(report, method)),
+        )
+        log("pass $p ${report.summary}")
+        if (report.violations.isNotEmpty()) {
+            log("pass $p WARN: ${report.violations.size} launch(es) took the wrong user-session path for $method - drop or split them")
+        }
+        if (report.launches.isEmpty()) {
+            log("pass $p WARN: no sdk-init spans in the tap capture - is the app under test the ExampleApp with TelemetryVerificationTap?")
+        }
+    }
+
+    /** One pass: cool gate, benchmark (with the single install-timeout retry), copy traces aside, verify cohorts. */
     private fun runPass(p: Int, baseline: Double?): Boolean {
         if (p > 1) {
             coolDown(baseline)
         }
         log("pass $p/$passes starting, battery ${Thermal.battery(adb, serial)}, ${Thermal.silicon(adb, serial)}")
         val t0 = System.nanoTime()
-        var out = runBenchmark(campDir.resolve("pass$p-gradle.log"))
-        if (out.exitCode != 0 && INSTALL_TIMEOUT_MARKER in out.stdout) {
-            // Entry-tier devices intermittently blow ddmlib's install-commit timeout - neither thermal
-            // nor space, a slow-eMMC timeout. Retried ONCE, and only for this specific signature.
-            log("pass $p hit the install-timeout signature; retrying once")
-            coolDown(baseline)
-            out = runBenchmark(campDir.resolve("pass$p-gradle-retry.log"))
+        val capture = campDir.resolve("pass$p-embverify.log")
+        val tap = if (verifyCohort) logcat(listOf("adb", "-s", serial) + Cohorts.LOGCAT_ARGS, capture) else null
+        val out = try {
+            runBenchmarkWithRetry(p, baseline)
+        } finally {
+            tap?.close()
         }
         if (out.exitCode != 0) {
             log("pass $p FAILED (exit ${out.exitCode}); aborting")
@@ -106,11 +154,26 @@ class FleetCampaign(
         val n = Files.list(dest).use { s -> s.filter { it.fileName.toString().endsWith(".perfetto-trace") }.count() }
         val mins = PyFormat.fixed((System.nanoTime() - t0) / NANOS_PER_MINUTE, 1)
         log("pass $p done in $mins min, $n traces, battery ${Thermal.battery(adb, serial)}, ${Thermal.silicon(adb, serial)}")
+        if (verifyCohort) {
+            checkCohorts(p, capture)
+        }
         if (gapAfterPass == p) {
             log("idle gap: 300 s")
             sleep(IDLE_GAP_MS)
         }
         return true
+    }
+
+    private fun runBenchmarkWithRetry(p: Int, baseline: Double?): Processes.Output {
+        var out = runBenchmark(campDir.resolve("pass$p-gradle.log"))
+        if (out.exitCode != 0 && INSTALL_TIMEOUT_MARKER in out.stdout) {
+            // Entry-tier devices intermittently blow ddmlib's install-commit timeout - neither thermal
+            // nor space, a slow-eMMC timeout. Retried ONCE, and only for this specific signature.
+            log("pass $p hit the install-timeout signature; retrying once")
+            coolDown(baseline)
+            out = runBenchmark(campDir.resolve("pass$p-gradle-retry.log"))
+        }
+        return out
     }
 
     fun benchmarkCommand(): List<String> = listOf(

@@ -63,6 +63,28 @@ class TraceHealthTest {
         assertTrue(summary.contains("PREVENTION (2/5"))
         assertTrue(summary.contains("CAVEAT (1/5"))
         assertTrue(summary.contains("INVESTIGATE (1/5"))
+        assertFalse(summary.contains("REGRESSION"))
+
+        // the runtime-serializer signature: a class-load burst inside start-first-session, verdict untouched
+        val burst = TraceHealth.evaluate("t", mapOf("canary" to 1L), classLoadsInFirstSession = 119L)
+        assertEquals(TraceHealth.Verdict.OK, burst.verdict)
+        assertTrue(burst.classLoadBurst)
+        val restored = TraceHealth.evaluate("t", mapOf("canary" to 1L), classLoadsInFirstSession = 1L)
+        assertFalse(restored.classLoadBurst)
+        // a healthy create-path launch loads up to about fifty classes there and must NOT be flagged
+        val created = TraceHealth.evaluate("t", mapOf("canary" to 1L), classLoadsInFirstSession = 50L)
+        assertFalse(created.classLoadBurst)
+        assertFalse(clean.classLoadBurst) // not measured => not flagged
+        val burstSummary = TraceHealth.summarize(listOf(burst, restored, created, clean))
+        assertEquals("trace health: 4/4 clean", burstSummary.lines().first())
+        assertTrue(burstSummary.contains("REGRESSION (1/4 loaded >= 80 classes inside emb-start-first-session"))
+    }
+
+    @Test
+    fun `class-load query parses through the same row reader`() {
+        assertEquals(mapOf("classloads" to 55L), TraceHealth.parseRows("\"k\",\"v\"\n\"classloads\",55\n"))
+        assertTrue(TraceHealth.classLoadSql().contains("s2.name = 'emb-start-first-session'"))
+        assertTrue(TraceHealth.classLoadSql("emb-post-init").contains("s2.name = 'emb-post-init'"))
     }
 
     @Test

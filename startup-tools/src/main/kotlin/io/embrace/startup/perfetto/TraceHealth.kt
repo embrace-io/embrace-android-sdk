@@ -31,6 +31,19 @@ object TraceHealth {
 
     const val DEFAULT_CANARY: String = "emb-sdk-start"
 
+    /** The section that carries the new-user-session write on a production cold start. */
+    const val FIRST_SESSION_SLICE: String = "emb-start-first-session"
+
+    /**
+     * Class-load slices inside [FIRST_SESSION_SLICE] at or above this count mean a serializer is being
+     * resolved at runtime on the init thread. A healthy launch that creates a user session loads up to
+     * about fifty classes there (SDK lambdas, schema types, the JSON encoder, app classes the launch
+     * happens to touch); the kotlinx builtin serializer table adds roughly seventy more, so the two
+     * populations sit well either side of this line. A launch that restores its user session loads one
+     * or two.
+     */
+    const val CLASS_LOAD_BURST_THRESHOLD: Long = 80L
+
     enum class Bucket(val key: String) { BUFFER("buffer"), PARSE("parse"), META("meta") }
 
     enum class Verdict(val key: String) {
@@ -51,12 +64,17 @@ object TraceHealth {
         val buckets: Map<Bucket, Map<String, Long>>,
         val slices: Long,
         val schedRows: Long,
+        /** ART class-load slices on the init thread inside [FIRST_SESSION_SLICE]; null when not measured. */
+        val classLoadsInFirstSession: Long? = null,
     ) {
         /** Durations read from the window are trustworthy. */
         val windowsOk: Boolean get() = verdict == Verdict.OK || verdict == Verdict.SLICES_INCOMPLETE || verdict == Verdict.LOSSY
 
         /** Count- or presence-shaped metrics over the whole trace are trustworthy. */
         val countsOk: Boolean get() = verdict == Verdict.OK
+
+        /** The runtime-serializer regression signature: see [CLASS_LOAD_BURST_THRESHOLD]. */
+        val classLoadBurst: Boolean get() = (classLoadsInFirstSession ?: 0L) >= CLASS_LOAD_BURST_THRESHOLD
     }
 
     /** One query, because each `trace_processor` invocation re-parses the whole trace. */
@@ -71,6 +89,20 @@ UNION ALL
 SELECT 'slices', (SELECT COUNT(*) FROM slice)
 UNION ALL
 SELECT 'sched_rows', (SELECT COUNT(*) FROM sched);
+"""
+
+    /**
+     * A second, separate query (so the frozen health goldens stay byte-identical): ART class-load slices
+     * (`Lpkg/Cls;`) on the same thread inside the first occurrence of [section].
+     */
+    fun classLoadSql(section: String = FIRST_SESSION_SLICE): String = """
+SELECT 'classloads' AS k, COUNT(*) AS v
+  FROM slice s
+  JOIN thread_track tt ON s.track_id = tt.id
+  JOIN (SELECT s2.ts AS ts, s2.ts + s2.dur AS end_ts, tt2.utid AS utid
+          FROM slice s2 JOIN thread_track tt2 ON s2.track_id = tt2.id
+         WHERE s2.name = '$section' ORDER BY s2.ts LIMIT 1) w
+ WHERE tt.utid = w.utid AND s.ts >= w.ts AND s.ts < w.end_ts AND s.name GLOB 'L*;';
 """
 
     /** Bucket a Perfetto stats counter by what a non-zero value can invalidate. */
@@ -95,11 +127,14 @@ SELECT 'sched_rows', (SELECT COUNT(*) FROM sched);
         return out
     }
 
-    fun check(tp: TraceProcessor, trace: Path, canary: String = DEFAULT_CANARY): Report =
-        evaluate(trace.toString(), parseRows(tp.queryRaw(sql(canary), trace).stdout))
+    fun check(tp: TraceProcessor, trace: Path, canary: String = DEFAULT_CANARY): Report {
+        val rows = parseRows(tp.queryRaw(sql(canary), trace).stdout)
+        val classLoads = parseRows(tp.queryRaw(classLoadSql(), trace).stdout)[CLASS_LOADS_KEY]
+        return evaluate(trace.toString(), rows, classLoads)
+    }
 
     /** Verdict from already-parsed rows; split out so goldens can drive it without a binary. */
-    fun evaluate(trace: String, rows: Map<String, Long>): Report {
+    fun evaluate(trace: String, rows: Map<String, Long>, classLoadsInFirstSession: Long? = null): Report {
         val losses = rows.filterKeys { it.startsWith(LOSS_PREFIX) }
             .filterValues { it != 0L }
             .mapKeys { it.key.removePrefix(LOSS_PREFIX) }
@@ -140,6 +175,7 @@ SELECT 'sched_rows', (SELECT COUNT(*) FROM sched);
             buckets = buckets,
             slices = rows["slices"] ?: 0L,
             schedRows = rows["sched_rows"] ?: 0L,
+            classLoadsInFirstSession = classLoadsInFirstSession,
         )
     }
 
@@ -178,11 +214,22 @@ SELECT 'sched_rows', (SELECT COUNT(*) FROM sched);
                     "'fix' it by enlarging buffers.",
             )
         }
+        val bursts = reports.count { it.classLoadBurst }
+        if (bursts > 0) {
+            lines.add(
+                "REGRESSION ($bursts/$total loaded >= $CLASS_LOAD_BURST_THRESHOLD classes inside " +
+                    "$FIRST_SESSION_SLICE on the init thread): a serializer is being resolved at runtime " +
+                    "on the new-user-session write (the kotlinx builtin serializer table, several times " +
+                    "more expensive on an uncompiled install). Every SDK call must pass a static " +
+                    "SerializationStrategy; look for a reified serializer<T>() that crept back in.",
+            )
+        }
         return lines.joinToString("\n")
     }
 
     private const val LOSS_PREFIX = "loss."
     private const val CANARY_KEY = "canary"
+    private const val CLASS_LOADS_KEY = "classloads"
 
     private val BUFFER_MARKERS = listOf(
         "chunks_overwritten",

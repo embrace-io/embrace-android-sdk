@@ -364,6 +364,33 @@ Practical consequences:
   poisoned. Establish both bands on this device's first campaign (the fresh-install fast path is
   single-digit ms on every tier measured; the cached-config mode is several times that and
   scales with tier) and then reuse **your own** bands, never another device's.
+- **User-session state decides post-init.** `start-first-session` (almost all of `post-init`)
+  runs one of two paths: RESTORE the persisted user session (within its 30-minute inactivity
+  timeout; near-zero cost) or CREATE and PERSIST a new one (no stored session, or inactive, or
+  over its max duration). The create path serializes the session metadata to JSON and writes
+  prefs on the main thread, and in 9.2.0 it also resolved its serializer at runtime, which on
+  the first such call in a process loads kotlinx-serialization's whole builtin serializer table
+  and runs reflection. The cost scales with the device's compile state: small on a
+  `speed-profile` install, several times larger in `verify` state, and largest on mid-tier
+  hardware - large enough to dominate `post-init` at the production median. The bench relaunches
+  every few seconds, so it restores; production launches hours apart, so it creates. Every
+  campaign before this was understood therefore measured the restore path and attributed the
+  rare create-path iteration (a fresh install, or a first launch with no restorable session) to
+  install aftermath. Rules: (1) report `start-first-session` per arm and never pool restoring and
+  creating launches; (2) a launch that creates a session is identified from the `sdk-init` span
+  (`emb.user_session_id` changes; `emb.app.version_startup_counter` resets after `pm clear`),
+  not guessed from timing; (3) the `trace-health` class-load check (a burst of ART class loads
+  inside `emb-start-first-session` on the init thread) is the regression signature for a
+  serializer being resolved at runtime again - see `startup-tools trace-health`. Evidence:
+  `claude-output/2026-09-03-first-session-fix/RESULTS.md`.
+- **A rare lab iteration is a hypothesis about production, not noise.** Setting slow
+  iterations aside is right for measuring the fast state and wrong for finding code paths the
+  harness under-samples. Before an iteration is filed as contention or thermal, list the
+  sections that carried its excess and the classes the init thread loaded inside them
+  (deobfuscate with the build's `mapping.txt`; R8 names are stable across builds of the same
+  source). The user-session write was found this way: a single iteration whose whole excess sat
+  in `post-init` had been reported in the variance analysis's section-excess table across
+  several campaigns and filed as environmental each time.
 
 ## Outlier classes and their single-trace signatures
 

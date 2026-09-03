@@ -33,5 +33,23 @@ object Processes {
         return Output(process.exitValue(), stdout, stderr.toString())
     }
 
+    /**
+     * Start a child in the background with both streams appended to [output]; closing the handle stops
+     * it (SIGTERM, then a forcible kill if it lingers). For long-lived readers such as `adb logcat`.
+     */
+    fun background(command: List<String>, output: Path): AutoCloseable {
+        val process = ProcessBuilder(command)
+            .redirectErrorStream(true)
+            .redirectOutput(ProcessBuilder.Redirect.appendTo(output.toFile()))
+            .start()
+        return AutoCloseable {
+            process.destroy()
+            if (!process.waitFor(BACKGROUND_STOP_SECONDS, TimeUnit.SECONDS)) {
+                process.destroyForcibly()
+            }
+        }
+    }
+
     private const val DEFAULT_TIMEOUT_HOURS = 6L
+    private const val BACKGROUND_STOP_SECONDS = 5L
 }

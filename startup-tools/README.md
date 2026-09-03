@@ -43,7 +43,8 @@ daemon around the tool's own `gradlew` children for the length of a campaign).
 | `cell-runner` | `cell_runner.py` | one matrix cell with invariants, provenance, passes |
 | `compat-patch` | `compat_patch.py` | per-version app patches + pin, journaled |
 | `probe` | `startup-multi-device-analysis/scripts/device_probe.py` | a device's topology profile |
-| `fleet-campaign` | `fleet_campaign.py` | N passes on one device with the silicon cool gate |
+| `fleet-campaign` | `fleet_campaign.py` | N passes on one device with the silicon cool gate; verifies each launch's user-session cohort from the logcat tap (`passN-cohorts.json`) |
+| `cohorts` | `_shared/cohorts.py` | classify a pass's launches as created / restored from an `EmbVerify` logcat capture |
 | `verify-arms` | `verify_ab_arms.py` | dex-level A/B arm pre-flight |
 | `serve-trace` | `serve_trace.py` | serve traces to ui.perfetto.dev |
 | `artifact-sync` | `_shared/artifact_sync.py` | living-doc drift guard (check / record / list) |

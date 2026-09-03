@@ -92,6 +92,7 @@ class UserSessionOrchestrationModuleImpl(
             appVersionStartupCounterProvider,
             logModule.logLimitingService,
             payloadSourceModule.metadataService,
+            openTelemetryModule.otelSdkConfig.processIdentifier,
         )
 
         val sessionPartWriter = SessionPartWriterImpl(

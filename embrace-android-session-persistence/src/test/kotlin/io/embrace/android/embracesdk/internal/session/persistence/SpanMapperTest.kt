@@ -133,11 +133,11 @@ internal class SpanMapperTest {
     }
 
     @Test
-    fun `empty proto collections are mapped back to null`() {
+    fun `empty proto collections are mapped back to empty collections`() {
         val span = SpanProto(events = emptyList(), attributes = emptyList(), links = emptyList()).toPayload()
-        assertNull(span.events)
-        assertNull(span.attributes)
-        assertNull(span.links)
+        assertEquals(emptyList<SpanEvent>(), span.events)
+        assertEquals(emptyList<Attribute>(), span.attributes)
+        assertEquals(emptyList<Link>(), span.links)
     }
 
     @Test
@@ -159,18 +159,18 @@ internal class SpanMapperTest {
     }
 
     @Test
-    fun `attribute proto defaults are mapped back to null`() {
-        assertEquals(Attribute(key = null, data = null), AttributeProto().toPayload())
+    fun `an empty attribute key and value survive the round trip`() {
+        assertEquals(Attribute(key = "", data = ""), AttributeProto().toPayload())
     }
 
     @Test
-    fun `span event proto defaults are mapped back to null`() {
-        assertEquals(SpanEvent(name = null, timestampNanos = null, attributes = null), SpanEventProto().toPayload())
+    fun `span event proto defaults are mapped back to null, other than its attributes`() {
+        assertEquals(SpanEvent(name = null, timestampNanos = null, attributes = emptyList()), SpanEventProto().toPayload())
     }
 
     @Test
-    fun `link proto defaults are mapped back to null, other than is remote`() {
-        assertEquals(Link(spanId = null, traceId = null, attributes = null, isRemote = false), LinkProto().toPayload())
+    fun `link proto defaults are mapped back to null, other than is remote and its attributes`() {
+        assertEquals(Link(spanId = null, traceId = null, attributes = emptyList(), isRemote = false), LinkProto().toPayload())
         assertEquals(true, LinkProto(is_remote = true).toPayload().isRemote)
     }
 }

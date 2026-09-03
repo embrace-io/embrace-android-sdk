@@ -406,6 +406,7 @@ internal class SessionOrchestratorListenerTest {
                 { null },
                 FakeLogLimitingService(),
                 FakeMetadataService(),
+                "process-id",
             ),
             ordinalStoreOverride ?: FakeOrdinalStore(),
             FakeKeyValueStore(),

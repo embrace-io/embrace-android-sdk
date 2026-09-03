@@ -103,8 +103,8 @@ class SessionReconstructionService(
             version = manifest.envelope_version,
             type = manifest.envelope_type,
             data = SessionPartPayload(
-                spans = deduped.spans.takeIf(List<Span>::isNotEmpty),
-                spanSnapshots = deduped.spanSnapshots.takeIf(List<Span>::isNotEmpty),
+                spans = deduped.spans,
+                spanSnapshots = deduped.spanSnapshots,
                 sharedLibSymbolMapping = manifest.shared_lib_symbol_mapping?.symbols,
             ),
         )

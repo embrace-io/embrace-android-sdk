@@ -77,7 +77,9 @@ internal val inFlightSpan = Span(
     startTimeNanos = 1726739283200000000L,
     endTimeNanos = null,
     status = Span.Status.UNSET,
+    events = emptyList(),
     attributes = listOf(Attribute(key = "url.full", data = "https://example.com")),
+    links = emptyList(),
 )
 
 internal val inFlightSpanProto = SpanProto(

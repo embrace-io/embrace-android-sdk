@@ -2,6 +2,7 @@ package io.embrace.android.gradle.plugin.instrumentation.config.arch.sdk
 
 import io.embrace.android.gradle.plugin.instrumentation.ASM_API_VERSION
 import io.embrace.android.gradle.plugin.instrumentation.config.BooleanReturnValueMethodVisitor
+import io.embrace.android.gradle.plugin.instrumentation.config.EnumReturnValueMethodVisitor
 import io.embrace.android.gradle.plugin.instrumentation.config.IntReturnValueMethodVisitor
 import io.embrace.android.gradle.plugin.instrumentation.config.LongReturnValueMethodVisitor
 import io.embrace.android.gradle.plugin.instrumentation.config.MapReturnValueMethodVisitor
@@ -34,6 +35,7 @@ fun verifyConfigMethodVisitor(
             is StringReturnValueMethodVisitor -> visitor.replacedValue
             is StringListReturnValueMethodVisitor -> visitor.replacedValue
             is MapReturnValueMethodVisitor -> visitor.replacedValue
+            is EnumReturnValueMethodVisitor -> visitor.replacedValue
             else -> null
         },
     )

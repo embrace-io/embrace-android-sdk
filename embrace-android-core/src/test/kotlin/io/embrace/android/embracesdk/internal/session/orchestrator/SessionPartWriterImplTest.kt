@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.createPersistenceBehavior
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -21,6 +22,7 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionManifes
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartSpan
 import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshots
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -56,6 +58,7 @@ internal class SessionPartWriterImplTest {
     private lateinit var clock: FakeClock
     private lateinit var executor: BlockingScheduledExecutorService
     private lateinit var logger: FakeInternalLogger
+    private lateinit var telemetryService: FakeTelemetryService
 
     private var writeCount = 0
     private var onMetadataRead: () -> Unit = {}
@@ -84,6 +87,7 @@ internal class SessionPartWriterImplTest {
         clock = FakeClock()
         executor = BlockingScheduledExecutorService(clock, true)
         logger = FakeInternalLogger(throwOnInternalError = false)
+        telemetryService = FakeTelemetryService()
         writeCount = 0
         resourceCount = 0
         onMetadataRead = {}
@@ -827,12 +831,66 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
-    fun `completed spans before any session part starts write nothing`() {
+    fun `completed spans before any session part starts are held and logged against the first part`() {
         val writer = createWriter()
         writer.onSpanCompleted(listOf(completedSpan("network-request")))
-
         assertEquals(emptyList<SessionPartDirectory>(), sessionPartDirs())
         assertEquals(0, executor.submitCount)
+
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        assertEquals(listOf("network-request"), completedSpanNamesIn(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `completed spans after a session part ended are logged against the next part`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        drain()
+
+        writer.onSpanCompleted(listOf(completedSpan("carried-over")))
+        drain()
+        assertEquals(emptyList<String?>(), completedSpanNamesOnDisk(SESSION_PART_ID))
+
+        clock.tick(10000)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
+
+        assertEquals(listOf("carried-over"), completedSpanNamesIn(OTHER_SESSION_PART_ID))
+        assertEquals(emptyList<String?>(), completedSpanNamesOnDisk(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `completed spans while a session part is open are logged against it rather than held`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        writer.onSpanCompleted(listOf(completedSpan("network-request")))
+        drain()
+        assertEquals(listOf("network-request"), completedSpanNamesOnDisk(SESSION_PART_ID))
+
+        clock.tick(10000)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
+
+        assertEquals(emptyList<String?>(), completedSpanNamesIn(OTHER_SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `spans held past the limit are dropped and counted as an applied limit`() {
+        val writer = createWriter()
+        writer.onSpanCompleted(List(1002) { completedSpan("held-$it") })
+
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+
+        assertEquals(1000, completedSpanNamesIn(SESSION_PART_ID).size)
+        assertEquals(
+            List(2) { "carried_over_span" to AppliedLimitType.DROP },
+            telemetryService.appliedLimits,
+        )
         assertNoInternalErrors()
     }
 
@@ -916,6 +974,7 @@ internal class SessionPartWriterImplTest {
         metadataSource,
         currentSessionPartSpan,
         { inFlightSpans },
+        telemetryService,
     )
 
     private fun configService(

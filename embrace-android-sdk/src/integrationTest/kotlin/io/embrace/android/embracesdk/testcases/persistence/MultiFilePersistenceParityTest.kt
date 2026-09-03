@@ -31,15 +31,17 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.testcases.features.createNativeSymbolsForCurrentArch
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.Placeholder
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -338,9 +340,8 @@ internal class MultiFilePersistenceParityTest {
         )
     }
 
-    @Ignore("Spans completed with no active session part are not persisted")
     @Test
-    fun `spans completed while no session part is active are persisted identically`() {
+    fun `spans completed before the first session part directory exists are persisted identically`() {
         testRule.runTest(
             persistedRemoteConfig = RemoteConfig(
                 pctMultiFilePersistenceEnabled = 100.0f,
@@ -348,18 +349,70 @@ internal class MultiFilePersistenceParityTest {
             ),
             testCaseAction = {
                 recordSession()
-                embrace.recordSpan("orphaned-span") {
-                    clock.tick(100)
+            },
+            assertAction = {
+                val names = assertParity().single().allSpanNames()
+                assertTrue("emb-sdk-init missing from: $names", "emb-sdk-init" in names)
+            },
+        )
+    }
+
+    @Test
+    fun `a span that stops after its session part ended is persisted identically`() {
+        lateinit var span: EmbraceSpan
+        testRule.runTest(
+            persistedRemoteConfig = RemoteConfig(
+                pctMultiFilePersistenceEnabled = 100.0f,
+                backgroundActivityConfig = BackgroundActivityRemoteConfig(0f),
+            ),
+            testCaseAction = {
+                recordSession {
+                    span = checkNotNull(embrace.startSpan("late-span"))
                 }
+                clock.tick(100)
+                span.stop()
                 clock.tick(20000)
                 recordSession()
             },
             assertAction = {
                 val parts = assertParity(expectedParts = 2)
                 assertTrue(
-                    "orphaned-span missing from every payload",
-                    parts.any { "orphaned-span" in it.allSpanNames() },
+                    "late-span missing from every payload",
+                    parts.any { "late-span" in it.allSpanNames() },
                 )
+            },
+        )
+    }
+
+    @Test
+    fun `no span is created while no session part is active`() {
+        var blockRan = false
+        lateinit var orphaned: EmbraceSpan
+        testRule.runTest(
+            persistedRemoteConfig = RemoteConfig(
+                pctMultiFilePersistenceEnabled = 100.0f,
+                backgroundActivityConfig = BackgroundActivityRemoteConfig(0f),
+            ),
+            testCaseAction = {
+                recordSession()
+                orphaned = embrace.startSpan("started-span")
+                embrace.recordSpan("recorded-span") {
+                    blockRan = true
+                    clock.tick(100)
+                }
+                clock.tick(20000)
+                recordSession()
+            },
+            assertAction = {
+                assertFalse("a span was started with no active session part", orphaned.isRecording)
+                assertNull("a span was started with no active session part", orphaned.spanId)
+                assertTrue("recordSpan did not run the block it was given", blockRan)
+
+                assertParity(expectedParts = 2).forEach { part ->
+                    val names = part.allSpanNames()
+                    assertFalse("started-span was persisted: $names", "started-span" in names)
+                    assertFalse("recorded-span was persisted: $names", "recorded-span" in names)
+                }
             },
         )
     }

@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.createPersistenceBehavior
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -112,6 +113,7 @@ internal class SessionPartWriterResourceReadTest {
             EnvelopeMetadataSource { EnvelopeMetadata(userId = "my-user-id") },
             currentSessionPartSpan,
             { inFlightSpans },
+            FakeTelemetryService(),
         )
         service = SessionReconstructionService(lazy { sessionsDir }, logger)
     }

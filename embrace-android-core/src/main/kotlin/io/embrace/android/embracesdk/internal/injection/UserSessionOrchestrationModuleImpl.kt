@@ -111,6 +111,7 @@ class UserSessionOrchestrationModuleImpl(
                     .filterNot { it.hasEmbraceAttribute(EmbType.Ux.Session) }
                     .mapNotNull(EmbraceSdkSpan::snapshot)
             },
+            initModule.telemetryService,
             sessionPartDirectoryStore,
             sessionPartWriteTracker,
             onWritesComplete = { sessionPartReader?.readPersistedSessionParts() },

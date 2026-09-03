@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.PersistenceBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehavior
@@ -47,6 +48,7 @@ class FakeConfigService(
         createNetworkSpanForwardingBehavior(traceparentInjectionBehavior),
     override var sensitiveKeysBehavior: SensitiveKeysBehavior = createSensitiveKeysBehavior(),
     override val otelBehavior: OtelBehavior = createOtelBehavior(),
+    override var persistenceBehavior: PersistenceBehavior = createPersistenceBehavior(),
     override var buildInfo: BuildInfo = BuildInfo(
         "fakeBuildId",
         "fakeBuildType",

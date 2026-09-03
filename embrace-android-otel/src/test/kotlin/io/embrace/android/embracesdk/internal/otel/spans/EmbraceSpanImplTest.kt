@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.assertions.validateSystemLink
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
+import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.TestConstants.TESTS_DEFAULT_USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
@@ -49,6 +50,7 @@ import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.getTracer
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.tracing.SpanKind
+import io.opentelemetry.kotlin.tracing.StatusData
 import io.opentelemetry.kotlin.tracing.Tracer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -60,6 +62,7 @@ import org.junit.Test
 import java.util.Queue
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 internal class EmbraceSpanImplTest {
@@ -70,16 +73,31 @@ internal class EmbraceSpanImplTest {
     private lateinit var dataValidator: DataValidator
     private lateinit var tracer: Tracer
     private lateinit var telemetryService: FakeTelemetryService
+    private lateinit var spanExporter: FakeSpanExporter
     private lateinit var embraceSpanFactory: EmbraceSpanFactory
-    private var updateNotified: Boolean = false
+    private val notifications = AtomicInteger(0)
+    private val updateNotified: Boolean get() = notifications.get() > 0
     private var stoppedSpanId: String? = null
 
     @Before
     fun setup() {
         fakeClock = FakeClock()
         val otelClock = FakeOtelKotlinClock(fakeClock)
-        tracer = createSdkOtelInstance(clock = otelClock, useKotlinSdk = TESTS_DEFAULT_USE_KOTLIN_SDK).getTracer("test-tracer")
-        spanRepository = SpanRepository().apply { setSpanUpdateNotifier { updateNotified = true } }
+        spanExporter = FakeSpanExporter()
+        tracer = createSdkOtelInstance(
+            clock = otelClock,
+            useKotlinSdk = TESTS_DEFAULT_USE_KOTLIN_SDK,
+            tracerProvider = {
+                export {
+                    EmbraceSpanProcessor(
+                        sessionIdsProvider = { null },
+                        processIdentifier = "test-process",
+                        spanExporter = spanExporter,
+                    )
+                }
+            },
+        ).getTracer("test-tracer")
+        spanRepository = SpanRepository().apply { addSpanChangeListener { notifications.incrementAndGet() } }
         serializer = TestPlatformSerializer()
         telemetryService = FakeTelemetryService()
         dataValidator = DataValidator(telemetryService = telemetryService)
@@ -361,6 +379,25 @@ internal class EmbraceSpanImplTest {
         // but its heavier event and link data has been released
         assertEquals(0, tracked.events().size)
         assertEquals(0, tracked.links().size)
+    }
+
+    @Test
+    fun `retained event and link data survives a stop once retention is requested`() {
+        with(embraceSpan) {
+            assertTrue(start())
+            retainDataAfterStop()
+            assertTrue(addEvent("an-event"))
+            assertTrue(addLink(FakeEmbraceSdkSpan.stopped()))
+        }
+        assertTrue(embraceSpan.stop())
+
+        val snapshot = checkNotNull(embraceSpan.snapshot())
+        assertEquals(1, snapshot.events?.size)
+        assertEquals(1, snapshot.links?.size)
+
+        embraceSpan.releaseRetainedData()
+        assertEquals(0, embraceSpan.events().size)
+        assertEquals(0, embraceSpan.links().size)
     }
 
     @Test
@@ -721,6 +758,154 @@ internal class EmbraceSpanImplTest {
         val expectedDrops = THREAD_COUNT * attemptsPerThread - max
         assertEquals(expectedDrops, telemetryService.appliedLimits.size)
         assertTrue(telemetryService.appliedLimits.all { it == "span_event" to AppliedLimitType.DROP })
+    }
+
+    @Test
+    fun `span change listener does not run while the span holds its locks`() {
+        assertTrue(embraceSpan.start())
+        val listenerCalls = AtomicInteger(0)
+        val mutatedFromListener = CountDownLatch(1)
+        val notifiedSpans = ConcurrentLinkedQueue<EmbraceSdkSpan>()
+
+        spanRepository.addSpanChangeListener { span ->
+            notifiedSpans.add(span)
+            if (listenerCalls.getAndIncrement() == 0) {
+                val mutator = Thread {
+                    if (embraceSpan.addEvent("event-from-listener")) {
+                        mutatedFromListener.countDown()
+                    }
+                }
+                mutator.start()
+                mutator.join(THREAD_JOIN_TIMEOUT_MS)
+            }
+        }
+
+        assertTrue(embraceSpan.addEvent(EXPECTED_EVENT_NAME))
+        assertTrue(mutatedFromListener.await(0, TimeUnit.MILLISECONDS))
+        assertEquals(2, listenerCalls.get())
+        assertEquals(2, embraceSpan.events().size)
+        assertTrue(notifiedSpans.all { it === embraceSpan })
+    }
+
+    @Test
+    fun `rewriting an attribute with the value it already holds does not notify`() {
+        assertTrue(embraceSpan.start())
+        val afterStart = notifications.get()
+
+        embraceSpan.addSystemAttribute("system-key", "value")
+        assertEquals(afterStart + 1, notifications.get())
+
+        embraceSpan.addSystemAttribute("system-key", "value")
+        assertEquals(afterStart + 1, notifications.get())
+        assertEquals("value", embraceSpan.getSystemAttribute("system-key"))
+        assertTrue(telemetryService.appliedLimits.isEmpty())
+
+        embraceSpan.addSystemAttribute("system-key", "different")
+        assertEquals(afterStart + 2, notifications.get())
+
+        // custom attributes behave the same way, but an unchanged write still reports success
+        assertTrue(embraceSpan.addAttribute("custom-key", "value"))
+        assertEquals(afterStart + 3, notifications.get())
+        assertTrue(embraceSpan.addAttribute("custom-key", "value"))
+        assertEquals(afterStart + 3, notifications.get())
+        assertEquals("value", embraceSpan.attributes()["custom-key"])
+    }
+
+    @Test
+    fun `removing an absent system attribute does not notify`() {
+        assertTrue(embraceSpan.start())
+        val afterStart = notifications.get()
+
+        embraceSpan.removeSystemAttribute("never-set")
+        assertEquals(afterStart, notifications.get())
+
+        embraceSpan.addSystemAttribute("system-key", "value")
+        embraceSpan.removeSystemAttribute("system-key")
+        assertNull(embraceSpan.getSystemAttribute("system-key"))
+        assertEquals(afterStart + 2, notifications.get())
+
+        embraceSpan.removeSystemAttribute("system-key")
+        assertEquals(afterStart + 2, notifications.get())
+    }
+
+    @Test
+    fun `system attributes cannot be changed once the span has stopped`() {
+        with(embraceSpan) {
+            assertTrue(start())
+            addSystemAttribute("system-key", "value")
+            assertTrue(stop())
+            val afterStop = notifications.get()
+            val dropsAfterStop = telemetryService.appliedLimits.size
+
+            addSystemAttribute("system-key", "updated")
+            addSystemAttribute("new-key", "value")
+            removeSystemAttribute("system-key")
+
+            assertEquals("value", getSystemAttribute("system-key"))
+            assertNull(getSystemAttribute("new-key"))
+            assertEquals(afterStop, notifications.get())
+
+            // the two rejected adds are tracked as drops; a rejected removal has nothing to drop
+            assertEquals(dropsAfterStop + 2, telemetryService.appliedLimits.size)
+            assertTrue(telemetryService.appliedLimits.all { it == "span_attribute" to AppliedLimitType.DROP })
+        }
+    }
+
+    @Test
+    fun `status set before the span starts is applied when it starts`() {
+        with(embraceSpan) {
+            status = StatusData.Ok
+            assertEquals(StatusData.Ok, status)
+            assertEquals(0, notifications.get())
+
+            assertTrue(start())
+            assertEquals(1, notifications.get())
+            assertEquals(Span.Status.OK, checkNotNull(snapshot()).status)
+
+            assertTrue(stop())
+            assertEquals(StatusData.Ok, spanExporter.exportedSpans.single { it.name == EXPECTED_SPAN_NAME }.status)
+        }
+    }
+
+    @Test
+    fun `status cannot be changed once the span has stopped`() {
+        with(embraceSpan) {
+            assertTrue(start())
+            status = StatusData.Ok
+            assertTrue(stop())
+            val afterStop = notifications.get()
+            status = StatusData.Error("too late")
+
+            assertEquals(StatusData.Ok, status)
+            assertEquals(Span.Status.OK, checkNotNull(snapshot()).status)
+            assertEquals(afterStop, notifications.get())
+        }
+    }
+
+    @Test
+    fun `mutating a span before it starts does not notify`() {
+        with(embraceSpan) {
+            assertTrue(updateName("new-name"))
+            status = StatusData.Ok
+            setSystemAttribute("system-key", "value")
+            assertEquals("new-name", name())
+            assertEquals("value", getSystemAttribute("system-key"))
+            assertEquals(0, notifications.get())
+
+            // a pre-start write is deferred, not rejected, so nothing is dropped
+            assertTrue(telemetryService.appliedLimits.isEmpty())
+
+            assertTrue(start())
+            assertEquals(1, notifications.get())
+
+            assertTrue(updateName("newer-name"))
+            assertEquals("newer-name", name())
+            assertEquals(2, notifications.get())
+
+            removeSystemAttribute("system-key")
+            assertNull(getSystemAttribute("system-key"))
+            assertEquals(3, notifications.get())
+        }
     }
 
     /**

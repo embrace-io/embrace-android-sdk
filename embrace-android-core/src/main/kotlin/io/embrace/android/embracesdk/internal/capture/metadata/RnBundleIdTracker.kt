@@ -9,4 +9,9 @@ interface RnBundleIdTracker {
     fun setReactNativeBundleId(jsBundleUrl: String?, forceUpdate: Boolean? = null)
 
     fun getReactNativeBundleId(): String?
+
+    /**
+     * Registers a [listener] invoked whenever the React Native bundle ID changes.
+     */
+    fun addChangeListener(listener: () -> Unit)
 }

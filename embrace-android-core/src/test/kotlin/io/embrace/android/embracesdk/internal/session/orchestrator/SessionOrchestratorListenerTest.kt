@@ -406,6 +406,7 @@ internal class SessionOrchestratorListenerTest {
                 { null },
                 FakeLogLimitingService(),
                 FakeMetadataService(),
+                "process-id",
             ),
             ordinalStoreOverride ?: FakeOrdinalStore(),
             FakeKeyValueStore(),
@@ -414,6 +415,7 @@ internal class SessionOrchestratorListenerTest {
             fakeBackgroundWorker(),
             TestUuidSource(),
             startupClassifier,
+            null,
         ).apply {
             start()
         }

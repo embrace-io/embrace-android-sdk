@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.PersistenceBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehavior
@@ -98,6 +99,11 @@ interface ConfigService {
      * Provides behavior for OpenTelemetry configuration
      */
     val otelBehavior: OtelBehavior
+
+    /**
+     * How the persistence layer should behave when writing telemetry to disk.
+     */
+    val persistenceBehavior: PersistenceBehavior
 
     /**
      * The app framework that is currently in use.

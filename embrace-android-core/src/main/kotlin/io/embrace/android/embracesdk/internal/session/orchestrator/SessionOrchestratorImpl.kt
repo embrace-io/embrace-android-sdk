@@ -61,6 +61,7 @@ internal class SessionOrchestratorImpl(
     private val backgroundWorker: BackgroundWorker,
     private val uuidSource: UuidSource,
     private val startupClassifier: StartupClassifier,
+    private val sessionPartWriter: SessionPartWriter?,
 ) : SessionOrchestrator {
 
     /**
@@ -279,6 +280,10 @@ internal class SessionOrchestratorImpl(
             },
             crashId = crashId,
         )
+
+        EmbTrace.trace("flush-session-part-writes") {
+            sessionPartWriter?.onCrash()
+        }
     }
 
     override fun onSessionDataUpdate() {
@@ -377,6 +382,11 @@ internal class SessionOrchestratorImpl(
                             EmbTrace.trace("end-current-session") {
                                 processEndMessage(oldSessionAction?.invoke(this), transitionType)
                             }
+
+                            // persist the stopped session part span
+                            EmbTrace.trace("write-session-part-span") {
+                                sessionPartWriter?.onSessionPartEnded(sessionPartId)
+                            }
                         },
                         startSessionPartCallback = {
                             // the previous session has fully ended at this point
@@ -414,6 +424,15 @@ internal class SessionOrchestratorImpl(
                         boundaryDelegate.prepareForNewSession()
                         sessionPartSpanAttrPopulator.populateSessionPartSpanStartAttrs(newSessionPart, userSession)
                         if (transitionType != TransitionType.CRASH) {
+                            // create the directory that holds this session part's telemetry
+                            EmbTrace.trace("create-session-part-dir") {
+                                sessionPartWriter?.onSessionPartStarted(
+                                    timestamp = timestamp,
+                                    userSessionId = userSession?.userSessionId ?: "",
+                                    sessionPartId = newSessionPart.sessionPartId,
+                                )
+                            }
+
                             // initiate periodic caching of the payload if a new session has started
                             EmbTrace.trace("initiate-periodic-caching") {
                                 updatePeriodicCacheAttrs()
@@ -427,6 +446,7 @@ internal class SessionOrchestratorImpl(
                                             )
                                         }
                                         updatePeriodicCacheAttrs()
+                                        sessionPartWriter?.onPeriodicWrite()
                                         payloadFactory.snapshotPayload(state, timestamp, zygote)
                                     }
                                 }

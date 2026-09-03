@@ -38,9 +38,7 @@ internal fun ModuleGraph.postInit() = EmbTrace.trace(sectionName = "post-init", 
 
     initModule.logger.errorHandlerProvider = { featureModule.internalErrorDataSource.dataSource }
     deliveryModule?.payloadCachingService?.run {
-        openTelemetryModule.spanRepository.setSpanUpdateNotifier {
-            reportBackgroundActivityStateChange()
-        }
+        openTelemetryModule.spanRepository.addSpanChangeListener { reportBackgroundActivityStateChange() }
     }
 
     payloadSourceModule.metadataService.precomputeValues()
@@ -195,6 +193,9 @@ internal fun ModuleGraph.triggerPayloadSend() {
         if (!resurrectionAttempted) {
             deliveryModule?.schedulingService?.onResurrectionComplete()
         }
+    }
+    worker.submit { // deliver any session parts persisted by the multi-file persistence layer
+        userSessionOrchestrationModule.sessionPartReader?.readPersistedSessionParts()
     }
     worker.submit { // potentially trigger first delivery attempt by firing network status callback
         deliveryModule?.schedulingService?.let(

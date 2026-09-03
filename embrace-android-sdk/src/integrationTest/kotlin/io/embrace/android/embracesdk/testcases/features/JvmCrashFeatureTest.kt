@@ -7,7 +7,10 @@ import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.assertions.getStartTime
 import io.embrace.android.embracesdk.assertions.getUserSessionId
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -19,7 +22,10 @@ import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.UserSessionRemoteConfig
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
+import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
+import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
@@ -28,6 +34,8 @@ import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
+import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
+import io.embrace.android.embracesdk.internal.session.persistence.SessionPartSpan
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
@@ -46,6 +54,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.File
 import java.util.zip.GZIPInputStream
 
 @RunWith(AndroidJUnit4::class)
@@ -58,7 +67,11 @@ internal class JvmCrashFeatureTest {
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
         EmbraceSetupInterface(
             fakeStorageLayer = true,
-            workersToFake = listOf(Worker.Background.NonIoRegWorker, Worker.Background.IoRegWorker),
+            workersToFake = listOf(
+                Worker.Background.NonIoRegWorker,
+                Worker.Background.IoRegWorker,
+                Worker.Background.SessionPersistenceWorker,
+            ),
         ).apply {
             getEmbLogger().throwOnInternalError = false
             getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).blockingMode = false
@@ -99,6 +112,31 @@ internal class JvmCrashFeatureTest {
                 }
 
                 assertEquals("bar", crash.attributes?.single { it.key == "foo".toEmbraceAttributeName() }?.data)
+            }
+        )
+    }
+
+    @Test
+    fun `app crash persists the session part span even though its write was still enqueued`() {
+        testRule.runTest(
+            persistedRemoteConfig = RemoteConfig(pctMultiFilePersistenceEnabled = 100.0f),
+            testCaseAction = {
+                recordSession {
+                    crashTimeMs = clock.now()
+                    simulateJvmUncaughtException(testException)
+                }
+            },
+            assertAction = {
+                val crashLog = payloadStorageService.getPersistedCrashLog().getLastLog()
+                val sessionPartId = checkNotNull(
+                    crashLog.attributes?.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID)
+                )
+
+                // assert disk was written synchronously by the crash teardown
+                val sessionSpan = checkNotNull(readSessionSpanOnDisk(sessionPartId)) {
+                    "no session span was persisted for part $sessionPartId"
+                }
+                assertEquals(crashTimeMs.millisToNanos(), sessionSpan.span?.end_time_unix_nano)
             }
         )
     }
@@ -372,5 +410,22 @@ internal class JvmCrashFeatureTest {
             assertNotNull(foundCrashId)
         }
         assertNotNull(attributes?.findAttributeValue(EmbAndroidAttributes.EMB_ANDROID_THREADS))
+    }
+
+    private fun readSessionSpanOnDisk(sessionPartId: String): SessionPartSpan? {
+        val ctx = ApplicationProvider.getApplicationContext<Context>()
+        val sessionsDir = StorageLocation.SESSION_SPLIT.asFile(
+            logger = FakeInternalLogger(),
+            rootDirSupplier = { ctx.filesDir },
+            fallbackDirSupplier = { ctx.cacheDir },
+        ).value
+        val partDir = (sessionsDir.list() ?: emptyArray())
+            .mapNotNull(SessionPartDirectory::fromDirName)
+            .singleOrNull { it.sessionPartId == sessionPartId }
+            ?: return null
+        return File(File(sessionsDir, partDir.dirName), "session_span.pb")
+            .takeIf(File::isFile)
+            ?.inputStream()
+            ?.use(SessionPartSpan.ADAPTER::decode)
     }
 }

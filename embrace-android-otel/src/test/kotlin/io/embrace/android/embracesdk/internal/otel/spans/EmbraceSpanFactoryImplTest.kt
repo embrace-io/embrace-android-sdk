@@ -30,9 +30,7 @@ internal class EmbraceSpanFactoryImplTest {
     fun setup() {
         val openTelemetryClock = FakeOtelKotlinClock(clock)
         spanRepository = SpanRepository().apply {
-            setSpanUpdateNotifier {
-                updateNotified = true
-            }
+            addSpanChangeListener { updateNotified = true }
         }
         tracer = createSdkOtelInstance(clock = openTelemetryClock, useKotlinSdk = TESTS_DEFAULT_USE_KOTLIN_SDK).getTracer("my_tracer")
         embraceSpanFactory = EmbraceSpanFactoryImpl(

@@ -150,6 +150,13 @@ data class RemoteConfig(
     val vitalsRemoteConfig: VitalsRemoteConfig? = null,
 
     /**
+     * Percentage of devices for which the multi-file session persistence layer writes in parallel
+     * with the existing single-file payload writer.
+     */
+    @SerialName("pct_multi_file_persistence_enabled")
+    val pctMultiFilePersistenceEnabled: Float? = null,
+
+    /**
      * Percentage of devices for which activity leak detection is captured.
      */
     @SerialName("pct_activity_leak_detection_enabled")

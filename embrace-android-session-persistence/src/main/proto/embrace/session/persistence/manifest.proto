@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package embrace.session.persistence;
+
+option java_package = "io.embrace.android.embracesdk.internal.session.persistence";
+
+// Data immutable for the lifetime of a session part.
+message SessionManifest {
+  // version of the on-disk layout
+  uint32 format_version = 1;
+
+  string envelope_version = 2;
+  string envelope_type = 3;
+  string user_session_id = 4;
+  string session_part_id = 5;
+
+  // Wrapped because proto3 forbids `optional` on a map and this can be null if no NDK
+  // symbols were injected at build time.
+  SharedLibSymbolMapping shared_lib_symbol_mapping = 6;
+
+  ImmutableResourceProto resource = 7;
+}
+
+message SharedLibSymbolMapping {
+  map<string, string> symbols = 1;
+}
+
+// The half of EnvelopeResource that is fixed once the process is running.
+//
+// Every field is optional because EnvelopeResourceSourceImpl can leave many null.
+message ImmutableResourceProto {
+  optional string app_version = 1;
+  optional AppFramework app_framework = 2;
+  optional string build_id = 3;
+  optional string app_ecosystem_id = 4;
+  optional string build_type = 5;
+  optional string build_flavor = 6;
+  optional string environment = 7;
+  optional string bundle_version = 8;
+  optional string sdk_version = 9;
+  optional int32 sdk_simple_version = 10;
+  optional string device_manufacturer = 11;
+  optional string device_model = 12;
+  optional string device_architecture = 13;
+  optional int64 disk_total_capacity = 14;
+  optional string os_type = 15;
+  optional string os_name = 16;
+  optional string os_version = 17;
+  optional string os_code = 18;
+  optional int32 num_cores = 19;
+  optional string device_soc_model = 20;
+
+  enum AppFramework {
+    UNSPECIFIED = 0;
+    NATIVE = 1;
+    REACT_NATIVE = 2;
+    UNITY = 3;
+    FLUTTER = 4;
+  }
+}

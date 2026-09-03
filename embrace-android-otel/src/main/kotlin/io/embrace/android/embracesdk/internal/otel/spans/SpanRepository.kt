@@ -11,6 +11,7 @@ import java.util.Queue
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Stores the spans of the current session. Two distinct representations are held:
@@ -22,10 +23,11 @@ import java.util.concurrent.ConcurrentMap
  */
 class SpanRepository {
     private val spans: ConcurrentMap<String, EmbraceSdkSpan> = ConcurrentHashMap()
-    private var spanUpdateNotifier: (() -> Unit)? = null
+    private val spanChangeListeners = CopyOnWriteArrayList<(EmbraceSdkSpan) -> Unit>()
 
     private val completedSpanData: Queue<Span> = ConcurrentLinkedQueue()
     private val flushLock = Any()
+    private val completedSpansListeners = CopyOnWriteArrayList<(List<Span>) -> Unit>()
 
     /**
      * Track the [EmbraceSpan] if it has been started and it's not already tracked.
@@ -95,17 +97,22 @@ class SpanRepository {
     }
 
     /**
-     * Set a function to be invoked when a span has been updated
+     * Registers a [listener] invoked with a span immediately after any of its state has changed,
+     * including its start and stop. The caller is responsible for deriving initial state.
+     *
+     * The listener is invoked on the thread that mutated the span and must not block or perform I/O.
      */
-    fun setSpanUpdateNotifier(notifier: () -> Unit) {
-        spanUpdateNotifier = notifier
+    fun addSpanChangeListener(listener: (EmbraceSdkSpan) -> Unit) {
+        spanChangeListeners.add(listener)
     }
 
     /**
-     * Call to notify the repository that a span has been updated
+     * Call to notify the repository that the state of [span] has changed.
      */
-    fun notifySpanUpdate() {
-        spanUpdateNotifier?.invoke()
+    fun notifySpanChanged(span: EmbraceSdkSpan) {
+        spanChangeListeners.forEach { listener ->
+            notifyListener(listener, span)
+        }
     }
 
     /**
@@ -125,7 +132,38 @@ class SpanRepository {
         } catch (t: Throwable) {
             return StoreDataResult.FAILURE
         }
+        notifyCompletedOtelSpans(spans)
         return StoreDataResult.SUCCESS
+    }
+
+    /**
+     * Registers a [listener] invoked with each batch of completed [Span] immediately after it has
+     * been stored, so that spans can be persisted.
+     *
+     * Spans already stored when the listener registers are handed to it as one batch upon registration.
+     */
+    fun addCompletedOtelSpansListener(listener: (List<Span>) -> Unit) {
+        completedSpansListeners.add(listener)
+        val alreadyStored = completedOtelSpans()
+        if (alreadyStored.isNotEmpty()) {
+            notifyListener(listener, alreadyStored)
+        }
+    }
+
+    private fun notifyCompletedOtelSpans(spans: List<Span>) {
+        if (spans.isEmpty() || completedSpansListeners.isEmpty()) {
+            return
+        }
+        completedSpansListeners.forEach { listener ->
+            notifyListener(listener, spans)
+        }
+    }
+
+    private fun <T> notifyListener(listener: (T) -> Unit, value: T) {
+        try {
+            listener(value)
+        } catch (ignored: Throwable) {
+        }
     }
 
     /**

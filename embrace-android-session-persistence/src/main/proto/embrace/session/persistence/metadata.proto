@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package embrace.session.persistence;
+
+option java_package = "io.embrace.android.embracesdk.internal.session.persistence";
+
+// Mirrors EnvelopeMetadata and mutable values on EnvelopeResource.
+message EnvelopeMetadataProto {
+  uint32 format_version = 1;
+
+  optional string user_id = 2;
+  optional string email = 3;
+  optional string username = 4;
+
+  // a Set in the payload, so the mapper dedupes on read.
+  repeated string personas = 5;
+
+  string timezone_description = 6;
+  string locale = 7;
+
+  MutableResourceProto resource = 8;
+}
+
+// The half of EnvelopeResource that can change after a session part starts
+message MutableResourceProto {
+  optional bool jailbroken = 1;
+  optional string screen_resolution = 2;
+  optional bool uses_emmc_storage = 3;
+  optional string hosted_platform_version = 4;
+  optional string hosted_sdk_version = 5;
+  optional string javascript_patch_number = 6;
+  optional string unity_build_id = 7;
+  optional string react_native_bundle_id = 8;
+  optional string react_native_version = 9;
+
+  map<string, string> extras = 10;
+}

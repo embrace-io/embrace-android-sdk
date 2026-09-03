@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.fakes.FakePayloadMessageCollator
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.behavior.FakeUserSessionBehavior
@@ -1241,6 +1242,7 @@ internal class SessionOrchestratorTest {
                 FakeEnvelopeMetadataSource(),
                 currentSessionPartSpan,
                 { emptyList() },
+                FakeTelemetryService(),
             ),
         ).apply {
             start()

@@ -19,6 +19,8 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWri
 import io.embrace.android.embracesdk.internal.session.persistence.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshotsWriter
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
+import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.File
@@ -39,6 +41,7 @@ class SessionPartWriterImpl(
     private val metadataSource: EnvelopeMetadataSource,
     private val currentSessionPartSpan: CurrentSessionPartSpan,
     private val spanSnapshotSource: () -> List<Span>,
+    private val telemetryService: TelemetryService,
     private val directoryStore: SessionPartDirectoryStore =
         SessionPartDirectoryStore(sessionsDir, worker, clock, logger),
     private val writeTracker: SessionPartWriteTracker = SessionPartWriteTracker(),
@@ -47,6 +50,8 @@ class SessionPartWriterImpl(
 
     private companion object {
         const val CRASH_DRAIN_TIMEOUT_MS: Long = 3000
+        const val MAX_CARRIED_OVER_SPANS: Int = 1000
+        const val CARRIED_OVER_SPAN_LIMIT_TYPE: String = "carried_over_span"
     }
 
     /**
@@ -62,6 +67,9 @@ class SessionPartWriterImpl(
     @Volatile
     private var resourceListenerRegistered = false
 
+    private val bufferLock = Any()
+    private val carriedOverSpans = ArrayDeque<Span>()
+
     override fun onSessionPartStarted(timestamp: Long, userSessionId: String, sessionPartId: String) {
         if (!acceptingWrites()) {
             return
@@ -75,14 +83,21 @@ class SessionPartWriterImpl(
             ),
         )
 
-        current = writers
         writeTracker.markWriting(sessionPartId)
 
         // the session span is snapshotted after it has stopped, so it must hold on to its events and
         // links until this part's writes have completed
         writers.span?.retainDataAfterStop()
-
         directoryStore.create(writers.directory)
+
+        synchronized(bufferLock) {
+            if (carriedOverSpans.isNotEmpty()) {
+                queueCompletedSpansWrite(writers, carriedOverSpans.toList())
+                carriedOverSpans.clear()
+            }
+            current = writers
+        }
+
         queueManifestWrite(writers)
         queueMetadataWrite(writers)
         queueSessionSpanWrite(writers)
@@ -108,6 +123,10 @@ class SessionPartWriterImpl(
             }
             writers.span?.releaseRetainedData()
         }
+
+        synchronized(bufferLock) {
+            current = null
+        }
     }
 
     override fun onMetadataChanged() {
@@ -121,7 +140,10 @@ class SessionPartWriterImpl(
         if (!acceptingWrites() || spans.isEmpty()) {
             return
         }
-        queueCompletedSpansWrite(current ?: return, spans)
+        val writers = current ?: synchronized(bufferLock) {
+            current ?: return carryOver(spans)
+        }
+        queueCompletedSpansWrite(writers, spans)
     }
 
     private fun onResourceChanged() {
@@ -216,6 +238,20 @@ class SessionPartWriterImpl(
     private fun queueCompletedSpansWrite(writers: PartWriters, spans: List<Span>) {
         execute(InternalErrorType.CompletedSpansWriteFail, { worker.submit(it) }) {
             writers.completedSpans.write(spans)
+        }
+    }
+
+    /**
+     * Holds [spans] until the next session part starts. Spans beyond [MAX_CARRIED_OVER_SPANS] are
+     * dropped.
+     */
+    private fun carryOver(spans: List<Span>) {
+        spans.forEach { span ->
+            if (carriedOverSpans.size >= MAX_CARRIED_OVER_SPANS) {
+                telemetryService.trackAppliedLimit(CARRIED_OVER_SPAN_LIMIT_TYPE, AppliedLimitType.DROP)
+            } else {
+                carriedOverSpans.add(span)
+            }
         }
     }
 

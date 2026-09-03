@@ -88,6 +88,11 @@
               "description": "Set to false to disable capturing of web views.",
               "default": true,
               "type": "boolean"
+            },
+            "fragment_capture": {
+              "description": "Controls how the URL fragment - the part after the '#' - is captured for web views. One of keep, redact or remove. 'keep' captures it unaltered. 'redact' removes the values from any key=value pairs and drops long unstructured segments, while preserving hash routes and short anchors; pick this to avoid capturing tokens without losing the route the user was on. 'remove' discards the fragment entirely. Independent of capture_query_params. If webview:enable is set to false, this setting has no effect since all capture of web view information is disabled.",
+              "default": "keep",
+              "type": "string"
             }
           },
           "minProperties": 1

@@ -63,7 +63,8 @@
     },
     "webview": {
       "enable": false,
-      "capture_query_params": false
+      "capture_query_params": false,
+      "fragment_capture": "redact"
     },
     "capture_fcm_pii_data": true
   }

@@ -5,9 +5,7 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
 import io.embrace.android.embracesdk.internal.serialization.EmbraceBinary
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.serialization.decodeFromStream
-import io.embrace.android.embracesdk.internal.serialization.encodeToStream
-import io.embrace.android.embracesdk.internal.serialization.toJson
+import kotlinx.serialization.builtins.nullable
 import java.io.File
 
 internal class RemoteConfigStoreImpl(
@@ -28,7 +26,7 @@ internal class RemoteConfigStoreImpl(
     private fun loadFromCache(): StoredConfigResponse? {
         return try {
             val cached = cachedConfigFile.inputStream().buffered().use {
-                EmbraceBinary.decodeFromStream<CachedConfiguration>(it)
+                EmbraceBinary.decodeFromStream(CachedConfiguration.serializer(), it)
             }
             StoredConfigResponse(
                 cfg = cached.remoteConfig,
@@ -71,7 +69,7 @@ internal class RemoteConfigStoreImpl(
         try {
             storageDir.mkdirs()
             configFile.outputStream().buffered().use { stream ->
-                serializer.toJson<RemoteConfig?>(response.cfg, stream)
+                serializer.toJson(response.cfg, RemoteConfig.serializer().nullable, stream)
             }
             response.etag?.let(etagFile::writeText)
         } catch (exc: Exception) {
@@ -101,7 +99,7 @@ internal class RemoteConfigStoreImpl(
                 remoteConfig = cfg,
             )
             cachedConfigFile.outputStream().buffered().use { stream ->
-                EmbraceBinary.encodeToStream(cached, stream)
+                EmbraceBinary.encodeToStream(CachedConfiguration.serializer(), cached, stream)
             }
         } catch (exc: Exception) {
             // a partially-written or failed blob must not be read back: delete it and rely on the

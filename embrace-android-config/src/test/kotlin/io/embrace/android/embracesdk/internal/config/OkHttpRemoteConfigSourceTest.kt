@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRe
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.source.ConfigEndpoint
 import io.embrace.android.embracesdk.internal.config.source.OkHttpRemoteConfigSource
-import io.embrace.android.embracesdk.internal.serialization.toJson
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.mockwebserver.MockResponse
@@ -45,7 +44,7 @@ class OkHttpRemoteConfigSourceTest {
         // serialize the config response
         configResponseBuffer = Buffer()
         val gzipSink = GzipSink(configResponseBuffer).buffer()
-        TestPlatformSerializer().toJson(remoteConfig, gzipSink.outputStream())
+        TestPlatformSerializer().toJson(remoteConfig, RemoteConfig.serializer(), gzipSink.outputStream())
         source = OkHttpRemoteConfigSource(
             lazyOf(client),
             TestPlatformSerializer(),

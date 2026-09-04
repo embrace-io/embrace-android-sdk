@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.JsException
-import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.utils.encodeToUTF8String
 
 internal class ReactNativeInternalInterfaceImpl(
@@ -39,7 +38,7 @@ internal class ReactNativeInternalInterfaceImpl(
                 attributes.setAttribute(
                     embAndroidReactNativeCrashJsException,
                     encodeToUTF8String(
-                        serializer.toJson(exception),
+                        serializer.toJson(exception, JsException.serializer()),
                     ),
                 )
                 SchemaType.ReactNativeCrash(attributes)

@@ -9,10 +9,12 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashException
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashSymbols
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
-import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.nullable
+import kotlinx.serialization.builtins.serializer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -68,7 +70,10 @@ internal class NativeCrashDataSourceImplTest {
             )
             assertEquals("1", attributes[EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER])
             assertEquals(testNativeCrashData.crash, attributes[embNativeCrashException])
-            val json = args.serializer.toJson(testNativeCrashData.symbols)
+            val json = args.serializer.toJson(
+                testNativeCrashData.symbols,
+                MapSerializer(String.serializer(), String.serializer()).nullable,
+            )
             assertEquals(
                 json.toByteArray().toUTF8String(),
                 attributes[embNativeCrashSymbols],

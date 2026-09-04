@@ -10,13 +10,15 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.arch.stacktrace.truncateStacktrace
 import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
+import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.serialization.toJson
+import io.embrace.android.embracesdk.internal.serialization.stringListSerializer
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.utils.encodeToUTF8String
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.LogAttributes
+import kotlinx.serialization.builtins.ListSerializer
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -69,7 +71,7 @@ class JvmCrashDataSourceImpl(
                     setAttribute(
                         ExceptionAttributes.EXCEPTION_STACKTRACE,
                         encodeToUTF8String(
-                            serializer.toJson(crashException.lines),
+                            serializer.toJson(crashException.lines, stringListSerializer),
                         ),
                     )
                     setAttribute(LogAttributes.LOG_RECORD_UID, crashId)
@@ -115,7 +117,7 @@ class JvmCrashDataSourceImpl(
             result.add(0, exceptionInfo)
             throwable = throwable.cause
         }
-        return serializer.toJson<List<LegacyExceptionInfo>>(result)
+        return serializer.toJson(result, ListSerializer(LegacyExceptionInfo.serializer()))
     }
 
     /**
@@ -123,7 +125,7 @@ class JvmCrashDataSourceImpl(
      */
     private fun getThreadsInfo(): String {
         val threadsList = Thread.getAllStackTraces().map { truncateStacktrace(it.key, it.value) }
-        return serializer.toJson(threadsList)
+        return serializer.toJson(threadsList, ListSerializer(ThreadInfo.serializer()))
     }
 
     /**

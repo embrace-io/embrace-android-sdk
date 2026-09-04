@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import java.io.File
 
@@ -38,6 +37,7 @@ class CachedLogEnvelopeStoreImpl(
         fileStorageService.store(storedTelemetryMetadata) { stream ->
             serializer.toJson(
                 LogPayload().createLogEnvelope(resource, metadata),
+                Envelope.serializer(LogPayload.serializer()),
                 stream,
             )
         }

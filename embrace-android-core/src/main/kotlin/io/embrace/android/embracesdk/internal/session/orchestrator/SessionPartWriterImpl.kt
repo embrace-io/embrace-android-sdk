@@ -46,6 +46,7 @@ class SessionPartWriterImpl(
         SessionPartDirectoryStore(sessionsDir, worker, clock, logger),
     private val writeTracker: SessionPartWriteTracker = SessionPartWriteTracker(),
     private val onWritesComplete: () -> Unit = {},
+    private val writeDelayMs: Long = CoalescingWriteQueue.DEFAULT_DELAY_MS,
 ) : SessionPartWriter {
 
     private companion object {
@@ -109,12 +110,19 @@ class SessionPartWriterImpl(
         if (!acceptingWrites()) {
             return
         }
-        val writers = current ?: return
-        if (writers.directory.sessionPartId != sessionPartId) {
-            return
+
+        val writers = synchronized(bufferLock) {
+            val ref = current ?: return
+            if (ref.directory.sessionPartId != sessionPartId) {
+                return
+            }
+            current = null
+            ref
         }
         queueSessionSpanWrite(writers)
         queueSpanSnapshotsWrite(writers)
+        writers.flushPendingWrites()
+
         worker.submit {
             writeTracker.markComplete(sessionPartId)
 
@@ -122,10 +130,6 @@ class SessionPartWriterImpl(
                 notifyWritesComplete()
             }
             writers.span?.releaseRetainedData()
-        }
-
-        synchronized(bufferLock) {
-            current = null
         }
     }
 
@@ -165,6 +169,9 @@ class SessionPartWriterImpl(
             return
         }
         writesSealed = true
+
+        // flush then wait for pending writes
+        current?.flushPendingWrites()
         worker.shutdownAndWait(CRASH_DRAIN_TIMEOUT_MS)
     }
 
@@ -330,8 +337,12 @@ class SessionPartWriterImpl(
             logger = logger,
         )
 
-        val metadataWrites = CoalescingWriteQueue(worker)
-        val sessionSpanWrites = CoalescingWriteQueue(worker)
-        val spanSnapshotWrites = CoalescingWriteQueue(worker)
+        val metadataWrites = CoalescingWriteQueue(worker, writeDelayMs)
+        val sessionSpanWrites = CoalescingWriteQueue(worker, writeDelayMs)
+        val spanSnapshotWrites = CoalescingWriteQueue(worker, writeDelayMs)
+
+        private val writeQueues = listOf(metadataWrites, sessionSpanWrites, spanSnapshotWrites)
+
+        fun flushPendingWrites() = writeQueues.forEach(CoalescingWriteQueue::flush)
     }
 }

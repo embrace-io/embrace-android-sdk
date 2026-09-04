@@ -242,7 +242,11 @@ internal class InitializedModuleGraph(
 
     override val threadBlockageService: ThreadBlockageService? = init("thread-blockage") {
         val args = instrumentationModule.instrumentationArgs
-        threadBlockageServiceSupplier?.invoke(args) ?: createThreadBlockageService(args)
+        // Only create the thread blockage service if the provider is null, not when the provider returns null
+        when (threadBlockageServiceSupplier) {
+            null -> createThreadBlockageService(args)
+            else -> threadBlockageServiceSupplier.invoke(args)
+        }
     }
 
     override val payloadSourceModule: PayloadSourceModule = init(name = "payload-source", recordDuration = true) {

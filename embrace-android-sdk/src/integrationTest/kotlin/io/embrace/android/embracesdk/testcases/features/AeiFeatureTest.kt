@@ -93,7 +93,10 @@ internal class AeiFeatureTest {
                 recordSession()
             },
             assertAction = {
-                val logs = getLogEnvelopes(2).flatMap { it.getLogsOfType(EmbType.System.Exit) }
+                val logs = getLogEnvelopes(2)
+                    .flatMap { it.getLogsOfType(EmbType.System.Exit) }
+                    .sortedBy { it.attributes?.findAttributeValue(EmbAndroidAttributes.EMB_ANDROID_AEI_CRASH_NUMBER)?.toInt() }
+                assertEquals(2, logs.size)
                 logs[0].assertContainsAeiData(nativeCrash, "1", "1")
                 logs[1].assertContainsAeiData(nativeCrash, "2", "2")
             }

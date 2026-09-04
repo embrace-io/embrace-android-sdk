@@ -48,3 +48,24 @@ fun InstrumentedConfigClass.stringListMethod(name: String, valueProvider: () -> 
 fun InstrumentedConfigClass.mapMethod(name: String, valueProvider: () -> Map<String, String>?) {
     addMethod(InstrumentedConfigMethod(name, ReturnType.MAP, valueProvider))
 }
+
+/**
+ * DSL to declare how an SDK config method that returns an enum should be instrumented.
+ *
+ * [enumClassName] is the fully qualified name of the SDK enum that the method returns, and the
+ * value provider supplies the name of the constant to return.
+ */
+fun InstrumentedConfigClass.enumMethod(
+    name: String,
+    enumClassName: String,
+    valueProvider: () -> String?,
+) {
+    addMethod(
+        InstrumentedConfigMethod(
+            functionName = name,
+            returnType = ReturnType.ENUM,
+            valueProvider = valueProvider,
+            enumInternalName = enumClassName.replace('.', '/'),
+        ),
+    )
+}

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.WebViewFragmentCapture
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.UiRemoteConfig
 import org.junit.Assert.assertEquals
@@ -35,6 +36,7 @@ internal class BreadcrumbBehaviorImplTest {
             assertTrue(isActivityBreadcrumbCaptureEnabled())
             assertTrue(isWebViewBreadcrumbCaptureEnabled())
             assertTrue(isWebViewBreadcrumbQueryParamCaptureEnabled())
+            assertEquals(WebViewFragmentCapture.KEEP, getWebViewBreadcrumbFragmentCapture())
             assertFalse(isFcmPiiDataCaptureEnabled())
         }
     }

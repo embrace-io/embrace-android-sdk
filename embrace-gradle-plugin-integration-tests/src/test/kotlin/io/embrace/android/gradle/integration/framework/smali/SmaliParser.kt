@@ -11,6 +11,7 @@ class SmaliParser {
         private const val STRING_CONSTANT = "const-string"
         private const val LOW_INT_CONSTANT = "const/16"
         private const val BOOL_CONSTANT = "const/4"
+        private const val STATIC_FIELD_READ = "sget-object"
         private const val CONSTRUCTOR = "<init>()V"
         private const val CLASS_CONSTRUCTOR = "<clinit>()V"
         private const val RETURN_TYPE_STRING = "Ljava/lang/String;"
@@ -81,13 +82,12 @@ class SmaliParser {
         } else if (input.startsWith(LOW_INT_CONSTANT) && returnType == RETURN_TYPE_INT) {
             readHexValue(input)
         } else if (input.startsWith(BOOL_CONSTANT) && returnType == RETURN_TYPE_BOOL) {
-            when (readHexValue(input)) {
-                "1" -> "true"
-                "0" -> "false"
-                else -> error("Unexpected boolean value")
-            }
+            readBooleanValue(input)
         } else if (input.startsWith(STRING_CONSTANT) && (returnType == RETURN_TYPE_LIST || returnType == RETURN_TYPE_MAP)) {
             input.split(" ").last().replace("\"", "")
+        } else if (input.startsWith(STATIC_FIELD_READ) && isEnumReturnType(returnType)) {
+            // an enum constant is read from a static field, e.g. `sget-object v0, LFoo;->BAR:LFoo;`
+            input.substringAfterLast("->").substringBefore(":")
         } else {
             null
         }
@@ -109,9 +109,28 @@ class SmaliParser {
         }
     }
 
+    /**
+     * Any object return type other than the ones handled above is assumed to be an enum, as those
+     * are the only object-returning config methods.
+     */
+    private fun isEnumReturnType(returnType: String): Boolean {
+        return returnType.startsWith("L") &&
+            returnType != RETURN_TYPE_STRING &&
+            returnType != RETURN_TYPE_LIST &&
+            returnType != RETURN_TYPE_MAP
+    }
+
     private fun readHexValue(input: String): String {
         val token = input.split(" ").last()
         val value = token.replace("\"", "").replace("0x", "")
         return value.toInt(16).toString()
+    }
+
+    fun readBooleanValue(input: String): String {
+        return when (readHexValue(input)) {
+            "1" -> "true"
+            "0" -> "false"
+            else -> error("Unexpected boolean value")
+        }
     }
 }

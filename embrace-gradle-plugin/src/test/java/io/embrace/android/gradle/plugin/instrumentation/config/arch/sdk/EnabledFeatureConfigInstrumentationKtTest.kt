@@ -42,6 +42,11 @@ class EnabledFeatureConfigInstrumentationKtTest {
         ConfigMethod("isBackgroundActivityCaptureEnabled", "()Z", true),
         ConfigMethod("isWebViewBreadcrumbCaptureEnabled", "()Z", true),
         ConfigMethod("isWebViewBreadcrumbQueryParamCaptureEnabled", "()Z", true),
+        ConfigMethod(
+            "getWebViewBreadcrumbFragmentCapture",
+            "()Lio/embrace/android/embracesdk/internal/config/instrumented/schema/WebViewFragmentCapture;",
+            "REDACT",
+        ),
         ConfigMethod("isFcmPiiDataCaptureEnabled", "()Z", true),
         ConfigMethod("isRequestContentLengthCaptureEnabled", "()Z", true),
         ConfigMethod("isOkHttpResponseBodySizeCaptureEnabled", "()Z", true),
@@ -119,6 +124,7 @@ class EnabledFeatureConfigInstrumentationKtTest {
                         webViewConfig = WebViewLocalConfig(
                             captureWebViews = true,
                             captureQueryParams = true,
+                            fragmentCapture = WebViewLocalConfig.FragmentCapture.REDACT,
                         ),
                         viewConfig = ViewLocalConfig(
                             enableAutomaticActivityCapture = true,

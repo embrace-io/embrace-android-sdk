@@ -33,6 +33,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.util.concurrent.ScheduledExecutorService
 
 internal class SessionPartWriterImplTest {
 
@@ -40,6 +41,7 @@ internal class SessionPartWriterImplTest {
         private const val USER_SESSION_ID = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         private const val SESSION_PART_ID = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
         private const val OTHER_SESSION_PART_ID = "cccccccccccccccccccccccccccccccc"
+        private const val WRITE_DELAY_MS = 5000L
         private const val METADATA_FILE_NAME = "metadata.pb"
         private const val MANIFEST_FILE_NAME = "manifest.pb"
         private const val SESSION_SPAN_FILE_NAME = "session_span.pb"
@@ -70,6 +72,7 @@ internal class SessionPartWriterImplTest {
     private lateinit var sessionSpan: FakeEmbraceSdkSpan
     private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
     private var inFlightSpans: List<Span> = emptyList()
+    private var onSpanSnapshotsRead: () -> Unit = {}
 
     private var resourceCount = 0
     private val resourceSource = object : EnvelopeResourceSource {
@@ -92,6 +95,7 @@ internal class SessionPartWriterImplTest {
         resourceCount = 0
         onMetadataRead = {}
         inFlightSpans = emptyList()
+        onSpanSnapshotsRead = {}
         sessionSpan = FakeEmbraceSdkSpan(name = "span0").apply { start(clock.now()) }
         currentSessionPartSpan = FakeCurrentSessionPartSpan(clock).apply { sessionPartSpan = sessionSpan }
     }
@@ -609,6 +613,92 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
+    fun `a crash flushes the debounced writes before the worker is shut down`() {
+        val events = mutableListOf<String>()
+        val recordingExecutor = ShutdownRecordingExecutor(executor) { events.add("shutdown") }
+        executor.blockingMode = false
+        onMetadataRead = { events.add("metadata-write") }
+
+        val writer = createWriter(
+            worker = BackgroundWorker(recordingExecutor),
+            writeDelayMs = WRITE_DELAY_MS,
+        )
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        assertEquals(emptyList<String>(), events)
+
+        writer.onCrash()
+        assertEquals(listOf("metadata-write", "shutdown"), events)
+        assertEquals("user0", metadataOnDisk(SESSION_PART_ID)?.user_id)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a debounced write runs before the part's writes are announced as complete`() {
+        var endTimeAtCompletion: Long? = null
+        val writer = createWriter(
+            writeDelayMs = WRITE_DELAY_MS,
+            onWritesComplete = {
+                endTimeAtCompletion = sessionSpanOnDisk(SESSION_PART_ID)?.span?.end_time_unix_nano
+            },
+        )
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain(WRITE_DELAY_MS)
+
+        clock.tick(10000)
+        endPart()
+        val expectedEndTimeNanos = clock.now().millisToNanos()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        drain(WRITE_DELAY_MS)
+
+        assertEquals(expectedEndTimeNanos, endTimeAtCompletion)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a write racing with the end of a session part is not queued for it`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+        assertEquals(1, writeCount)
+
+        // simulate another thread reporting a change while the session part is finalised
+        onSpanSnapshotsRead = {
+            onSpanSnapshotsRead = {}
+            writer.onMetadataChanged()
+        }
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        drain()
+
+        // the part is no longer current, so the write does not land
+        assertEquals(1, writeCount)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a completed span racing with the end of a session part is carried over`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        onSpanSnapshotsRead = {
+            onSpanSnapshotsRead = {}
+            writer.onSpanCompleted(listOf(completedSpan("network-request")))
+        }
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        drain()
+
+        assertEquals(emptyList<String>(), completedSpanNamesIn(SESSION_PART_ID))
+
+        clock.tick(1000)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
+
+        assertEquals(listOf("network-request"), completedSpanNamesIn(OTHER_SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
     fun `a write that has already started is not cancelled`() {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
@@ -947,6 +1037,17 @@ internal class SessionPartWriterImplTest {
         assertNoInternalErrors()
     }
 
+    private class ShutdownRecordingExecutor(
+        private val delegate: ScheduledExecutorService,
+        private val onShutdown: () -> Unit,
+    ) : ScheduledExecutorService by delegate {
+
+        override fun shutdown() {
+            onShutdown()
+            delegate.shutdown()
+        }
+    }
+
     private fun completedSpan(name: String) = Span(
         traceId = "6c9b1f2ec1d34f3c9a7d0b8e5f2a4c11",
         spanId = "aaaaaaaaaaaaaaa2",
@@ -963,9 +1064,12 @@ internal class SessionPartWriterImplTest {
         enabled: Boolean = true,
         configService: FakeConfigService = configService(enabled),
         sessionsDir: File = this.sessionsDir,
+        worker: BackgroundWorker = BackgroundWorker(executor),
+        writeDelayMs: Long = CoalescingWriteQueue.DEFAULT_DELAY_MS,
+        onWritesComplete: () -> Unit = {},
     ) = SessionPartWriterImpl(
         lazy { sessionsDir },
-        BackgroundWorker(executor),
+        worker,
         configService,
         TestUuidSource(),
         clock,
@@ -973,8 +1077,13 @@ internal class SessionPartWriterImplTest {
         resourceSource,
         metadataSource,
         currentSessionPartSpan,
-        { inFlightSpans },
+        {
+            onSpanSnapshotsRead()
+            inFlightSpans
+        },
         telemetryService,
+        onWritesComplete = onWritesComplete,
+        writeDelayMs = writeDelayMs,
     )
 
     private fun configService(
@@ -988,9 +1097,9 @@ internal class SessionPartWriterImplTest {
         },
     )
 
-    private fun drain() {
+    private fun drain(delayMs: Long = CoalescingWriteQueue.DEFAULT_DELAY_MS) {
         do {
-            executor.moveForwardAndRunBlocked(CoalescingWriteQueue.DEFAULT_DELAY_MS)
+            executor.moveForwardAndRunBlocked(delayMs)
         } while (executor.scheduledTasksCount() > 0)
     }
 

@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import java.util.concurrent.atomic.AtomicBoolean
@@ -67,7 +68,7 @@ internal class SharedPrefsStore(
     override fun getStringMap(key: String): Map<String, String>? {
         return pending(key) {
             val mapString = impl.getString(key, null) ?: return@pending null
-            serializer.fromJson(mapString, mapSerializer)
+            serializer.fromJson(mapString, stringMapSerializer)
         }
     }
 
@@ -170,8 +171,7 @@ internal class SharedPrefsStore(
         val value: Any?,
         val write: (KeyValueStoreEditor) -> Unit,
     )
-
-    private companion object {
-        val mapSerializer = MapSerializer(String.serializer(), String.serializer())
-    }
 }
+
+internal val stringMapSerializer: KSerializer<Map<String, String>> =
+    MapSerializer(String.serializer(), String.serializer())

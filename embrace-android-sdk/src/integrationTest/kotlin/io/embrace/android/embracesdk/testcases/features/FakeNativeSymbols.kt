@@ -5,14 +5,13 @@ import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeBase64SharedObjectFilesMap
 import io.embrace.android.embracesdk.internal.config.CpuAbi
 import io.embrace.android.embracesdk.internal.payload.NativeSymbols
-import io.embrace.android.embracesdk.internal.serialization.toJson
 
 fun createNativeSymbolsForCurrentArch(
     symbols: Map<String, String>,
     abi: CpuAbi = CpuAbi.ARMEABI_V7A,
 ): FakeBase64SharedObjectFilesMap {
     val symbols = NativeSymbols(mapOf(abi.archName to symbols))
-    val json = TestPlatformSerializer().toJson(symbols)
+    val json = TestPlatformSerializer().toJson(symbols, NativeSymbols.serializer())
 
     val encoded = Base64.encodeToString(
         json.toByteArray(),

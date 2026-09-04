@@ -19,7 +19,6 @@ import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -27,6 +26,8 @@ import io.embrace.android.embracesdk.testframework.assertions.JsonComparator.com
 import io.embrace.android.embracesdk.testframework.assertions.Placeholder
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import io.embrace.android.embracesdk.testframework.server.FormPart
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -254,7 +255,7 @@ internal class EmbracePayloadAssertionInterface(
         assertEquals("ERROR", log.severityText)
         assertEquals("", log.body)
 
-        val symbols = serializer.toJson(symbolMap)
+        val symbols = serializer.toJson(symbolMap, MapSerializer(String.serializer(), String.serializer()))
         assertEquals(crashData.nativeCrash.timestamp, log.timeUnixNano?.nanosToMillis())
 
         val attrs = checkNotNull(log.attributes)
@@ -322,7 +323,7 @@ internal class EmbracePayloadAssertionInterface(
         placeholders: Map<Placeholder, String> = emptyMap(),
     ) {
         try {
-            val observedJson = serializer.toJson(payload)
+            val observedJson = serializer.toJson(payload, kotlinx.serialization.serializer<T>())
             val expectedJson = placeholders.entries.fold(
                 ResourceReader.readResourceAsText(goldenFileName)
             ) { json, (placeholder, value) ->

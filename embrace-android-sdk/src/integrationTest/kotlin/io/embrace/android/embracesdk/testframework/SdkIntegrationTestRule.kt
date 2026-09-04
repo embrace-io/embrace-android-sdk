@@ -23,7 +23,6 @@ import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
@@ -208,7 +207,7 @@ internal class SdkIntegrationTestRule(
         val responseFile = File(storageDir, "most_recent_response")
 
         responseFile.outputStream().buffered().use { stream ->
-            TestPlatformSerializer().toJson(persistedRemoteConfig, stream)
+            TestPlatformSerializer().toJson(persistedRemoteConfig, RemoteConfig.serializer(), stream)
         }
     }
 

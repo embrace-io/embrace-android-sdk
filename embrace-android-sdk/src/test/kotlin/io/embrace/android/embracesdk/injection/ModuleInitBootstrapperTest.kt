@@ -22,7 +22,6 @@ import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.postInit
 import io.embrace.android.embracesdk.internal.injection.postLoadInstrumentation
-import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import org.junit.Assert.assertEquals
@@ -184,7 +183,7 @@ internal class ModuleInitBootstrapperTest {
     private fun createBootstrapperWithPersistedConfig(cfg: RemoteConfig): ModuleInitBootstrapper {
         val storageDir = File(context.filesDir, PersistedConfig.STORAGE_DIR_NAME).apply { mkdirs() }
         File(storageDir, "most_recent_response").outputStream().buffered().use { stream ->
-            TestPlatformSerializer().toJson(cfg, stream)
+            TestPlatformSerializer().toJson(cfg, RemoteConfig.serializer(), stream)
         }
         return ModuleInitBootstrapper(
             initModule = FakeInitModule(clock = clock, logger = logger),

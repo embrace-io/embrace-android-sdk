@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
-import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.threadLocal
 import io.embrace.android.embracesdk.assertions.getLastLog
@@ -135,7 +134,7 @@ internal class FakeApiServer(
         if (configResponseJson != null) {
             gzipSink.use { it.writeUtf8(configResponseJson) }
         } else {
-            serializer.toJson(remoteConfig, gzipSink.outputStream())
+            serializer.toJson(remoteConfig, RemoteConfig.serializer(), gzipSink.outputStream())
         }
         val response = MockResponse()
             .setBody(configResponseBuffer)

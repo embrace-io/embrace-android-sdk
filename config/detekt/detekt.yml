@@ -50,7 +50,10 @@ potential-bugs:
 style:
   ForbiddenImport:
     active: true
-    imports: [ 'android.util.Pair' ]
+    # kotlinx.serialization.serializer / serializerOrNull resolve a serializer at runtime. Forbid their use in production,
+    # but allow usage in tests. Instead, prod code should use the generated serializers (e.g. ListSerializer).
+    imports: [ 'android.util.Pair', 'kotlinx.serialization.serializer', 'kotlinx.serialization.serializerOrNull' ]
+    excludes: [ '**/test/**', '**/integrationTest/**', '**/androidTest/**', '**/testFixtures/**' ]
   ForbiddenComment:
     active: false
   MagicNumber:

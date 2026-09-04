@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.fakes.config.FakeBase64SharedObjectFilesMap
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.payload.NativeSymbols
-import io.embrace.android.embracesdk.internal.serialization.toJson
 import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -67,7 +66,7 @@ class NativeSymbolTest {
         arch: String = "arm64-v8a",
     ): ConfigService {
         val cfg = if (symbolMap != null) {
-            val json = serializer.toJson(NativeSymbols(symbols = symbolMap))
+            val json = serializer.toJson(NativeSymbols(symbols = symbolMap), NativeSymbols.serializer())
             val encodedSymbols = Base64.encode(json.toByteArray())
             FakeInstrumentedConfig(symbols = FakeBase64SharedObjectFilesMap(encodedSymbols))
         } else {

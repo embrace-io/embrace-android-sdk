@@ -5,3 +5,5 @@ package io.embrace.android.embracesdk.internal.session.persistence
  * exhaustion and is considered unlikely for the vast majority of runs.
  */
 internal const val MAX_PART_FILE_BYTES: Long = 3L * 1024 * 1024
+
+internal const val OVERSIZED_PART_FILE_MSG = "Session part file exceeds the maximum size"

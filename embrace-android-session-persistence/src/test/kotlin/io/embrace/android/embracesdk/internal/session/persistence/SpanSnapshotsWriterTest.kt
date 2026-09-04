@@ -221,6 +221,22 @@ internal class SpanSnapshotsWriterTest {
     }
 
     @Test
+    fun `oversized span snapshots are not written`() {
+        assertFalse(write(span = listOf(paddedSpan(paddedSpanId(0), MAX_PART_FILE_BYTES.toInt() + 1))))
+        assertEquals(emptyList<String>(), partDir().list()?.toList())
+        assertWriteFailureTracked()
+    }
+
+    @Test
+    fun `oversized span snapshots leave the previous ones intact`() {
+        assertTrue(write())
+        assertFalse(write(span = listOf(paddedSpan(paddedSpanId(0), MAX_PART_FILE_BYTES.toInt() + 1))))
+        assertEquals(fullyPopulatedSpanSnapshotsProto, readSnapshots())
+        assertEquals(listOf(SPAN_SNAPSHOTS_FILE_NAME), partDir().list()?.toList())
+        assertWriteFailureTracked()
+    }
+
+    @Test
     fun `concurrent span snapshot writes leave one valid file`() {
         val threadCount = 8
         val writesPerThread = 25

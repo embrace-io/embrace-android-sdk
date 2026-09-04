@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.session.persistence
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoWriter
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.internal.payload.Span
 import okio.Buffer
 import okio.ByteString.Companion.toByteString
 import org.junit.Assert.assertEquals
@@ -31,6 +32,7 @@ internal class SessionReconstructionServiceFileSizeTest {
         private const val SESSION_PART_ID = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
         private const val PADDING_FIELD_NUMBER = 1000
         private const val PADDING_FIELD_OVERHEAD = 6
+        private const val PADDED_SPAN_BYTES = 64 * 1024
 
         private val partDirectory = SessionPartDirectory(
             timestamp = TIMESTAMP,
@@ -109,13 +111,38 @@ internal class SessionReconstructionServiceFileSizeTest {
     }
 
     /**
-     * The log is decoded a record at a time rather than as one message, so overall limits don't apply (yet).
+     * The log is decoded a record at a time, so it is truncated to the records that fit.
      */
     @Test
-    fun `an oversized completed spans log is not rejected`() {
+    fun `an oversized completed spans log is reported but still reconstructed`() {
         padToSize(COMPLETED_SPANS_FILE_NAME, MAX_PART_FILE_BYTES + 1)
         assertNotNull(service.reconstruct(partDirectory))
-        assertNoInternalErrors()
+        assertEquals(1, logger.internalErrorMessages.size)
+        assertEquals("SessionReconstructionFail", logger.internalErrorMessages.single().msg)
+    }
+
+    @Test
+    fun `an oversized completed spans log keeps the records it holds`() {
+        val logged = paddedSpanProto(paddedSpanId(0), padding = 1)
+        partFile(COMPLETED_SPANS_FILE_NAME).writeBytes(completedSpansLog(listOf(logged)))
+        padToSize(COMPLETED_SPANS_FILE_NAME, MAX_PART_FILE_BYTES + 1)
+
+        val envelope = checkNotNull(service.reconstruct(partDirectory))
+        assertEquals(listOf(paddedSpan(paddedSpanId(0), padding = 1), fullyPopulatedSpan), envelope.data.spans)
+    }
+
+    @Test
+    fun `completed span records past the budget are dropped`() {
+        val padded = paddedSpanProto(paddedSpanId(0), PADDED_SPAN_BYTES)
+        val recordBytes = SpanProto.ADAPTER.encode(padded).size
+        val fitting = (MAX_PART_FILE_BYTES / recordBytes).toInt()
+        val logged = List(fitting + 5) { paddedSpanProto(paddedSpanId(it), PADDED_SPAN_BYTES) }
+        partFile(COMPLETED_SPANS_FILE_NAME).writeBytes(completedSpansLog(logged))
+
+        val envelope = checkNotNull(service.reconstruct(partDirectory))
+        assertEquals(fitting + 1, envelope.data.spans?.size)
+        val ids = envelope.data.spans?.mapNotNull(Span::spanId)
+        assertEquals(logged.take(fitting).map(SpanProto::span_id), ids?.dropLast(1))
     }
 
     private fun assertOversizedFileRejected(fileName: String) {

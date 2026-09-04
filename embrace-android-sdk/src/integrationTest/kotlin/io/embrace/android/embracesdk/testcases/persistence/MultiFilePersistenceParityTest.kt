@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.testcases.persistence
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.findEventsOfType
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
@@ -21,7 +20,6 @@ import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
@@ -45,22 +43,36 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 import java.io.File
 
 /**
- * Verifies that a minimal session payload reaches the server whether it was persisted by the legacy
- * single-file layer or by the multi-file layer.
+ * Verifies that a session payload reaches the server, and looks the same, whether it was persisted
+ * by the legacy single-file layer or by the multi-file layer.
+ *
+ * Every case runs under both layers. Only one of them may deliver a given session part - see
+ * [deliveredParts].
  */
-@RunWith(AndroidJUnit4::class)
-internal class MultiFilePersistenceParityTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class MultiFilePersistenceParityTest(
+    private val persistenceMode: PersistenceMode,
+) {
 
-    // TODO: future address test case failures
+    internal enum class PersistenceMode { LEGACY, MULTI_FILE }
 
     private val backgroundActivityEnabled = BackgroundActivityRemoteConfig(100f)
 
-    private val multiFileEnabled = RemoteConfig(
-        pctMultiFilePersistenceEnabled = 100.0f,
-        backgroundActivityConfig = backgroundActivityEnabled,
+    /**
+     * The remote config for the layer under test.
+     */
+    private fun remoteConfig(
+        backgroundActivity: BackgroundActivityRemoteConfig = backgroundActivityEnabled,
+    ) = RemoteConfig(
+        pctMultiFilePersistenceEnabled = when (persistenceMode) {
+            PersistenceMode.MULTI_FILE -> 100.0f
+            PersistenceMode.LEGACY -> null
+        },
+        backgroundActivityConfig = backgroundActivity,
     )
 
     @Rule
@@ -81,55 +93,27 @@ internal class MultiFilePersistenceParityTest {
     }
 
     @Test
-    fun `legacy single-file persistence delivers one session payload`() {
+    fun `one session payload is delivered`() {
         testRule.runTest(
-            persistedRemoteConfig = RemoteConfig(backgroundActivityConfig = backgroundActivityEnabled),
+            persistedRemoteConfig = remoteConfig(),
             testCaseAction = {
                 recordSession()
             },
             assertAction = {
-                assertMinimalSessionPayload(getSingleSessionEnvelope())
+                assertMinimalSessionPayload(deliveredParts().single())
             },
         )
     }
 
     @Test
-    fun `legacy session part span matches the golden file`() {
+    fun `the session part span matches the golden file`() {
         testRule.runTest(
-            persistedRemoteConfig = RemoteConfig(backgroundActivityConfig = backgroundActivityEnabled),
+            persistedRemoteConfig = remoteConfig(),
             testCaseAction = {
                 recordSession()
             },
             assertAction = {
-                assertMatchesGoldenFile(getSingleSessionEnvelope())
-            },
-        )
-    }
-
-    @Test
-    fun `multi-file session part span matches the golden file`() {
-        testRule.runTest(
-            persistedRemoteConfig = multiFileEnabled,
-            testCaseAction = {
-                recordSession()
-            },
-            assertAction = {
-                val (first, second) = deliveredPair()
-                assertMatchesGoldenFile(first)
-                assertMatchesGoldenFile(second)
-            },
-        )
-    }
-
-    @Test
-    fun `multi-file persistence delivers the session payload once its writes complete`() {
-        testRule.runTest(
-            persistedRemoteConfig = multiFileEnabled,
-            testCaseAction = {
-                recordSession()
-            },
-            assertAction = {
-                assertMinimalSessionPayload(assertParity().single())
+                assertMatchesGoldenFile(deliveredParts().single())
             },
         )
     }
@@ -137,7 +121,7 @@ internal class MultiFilePersistenceParityTest {
     @Test
     fun `spans completed during the session are persisted identically`() {
         testRule.runTest(
-            persistedRemoteConfig = multiFileEnabled,
+            persistedRemoteConfig = remoteConfig(),
             testCaseAction = {
                 recordSession {
                     embrace.recordSpan("completed-span") {
@@ -149,7 +133,7 @@ internal class MultiFilePersistenceParityTest {
                 }
             },
             assertAction = {
-                val names = assertParity().single().allSpanNames()
+                val names = deliveredParts().single().allSpanNames()
                 assertTrue("completed-span missing: $names", "completed-span" in names)
                 assertTrue("stopped-span missing: $names", "stopped-span" in names)
             },
@@ -159,14 +143,14 @@ internal class MultiFilePersistenceParityTest {
     @Test
     fun `a span still in flight at session end is persisted identically`() {
         testRule.runTest(
-            persistedRemoteConfig = multiFileEnabled,
+            persistedRemoteConfig = remoteConfig(),
             testCaseAction = {
                 recordSession {
                     checkNotNull(embrace.startSpan("in-flight-span"))
                 }
             },
             assertAction = {
-                val names = assertParity().single().allSpanNames()
+                val names = deliveredParts().single().allSpanNames()
                 assertTrue("in-flight-span missing: $names", "in-flight-span" in names)
             },
         )
@@ -175,7 +159,7 @@ internal class MultiFilePersistenceParityTest {
     @Test
     fun `breadcrumbs recorded during the session are persisted identically`() {
         testRule.runTest(
-            persistedRemoteConfig = multiFileEnabled,
+            persistedRemoteConfig = remoteConfig(),
             testCaseAction = {
                 recordSession {
                     embrace.addBreadcrumb("Hello, world!")
@@ -184,7 +168,7 @@ internal class MultiFilePersistenceParityTest {
                 }
             },
             assertAction = {
-                val sessionSpan = assertParity().single().findSessionPartSpan()
+                val sessionSpan = deliveredParts().single().findSessionPartSpan()
                 assertEquals(2, sessionSpan.findEventsOfType(EmbType.System.Breadcrumb).size)
             },
         )
@@ -193,7 +177,7 @@ internal class MultiFilePersistenceParityTest {
     @Test
     fun `session properties are persisted identically`() {
         testRule.runTest(
-            persistedRemoteConfig = multiFileEnabled,
+            persistedRemoteConfig = remoteConfig(),
             setupAction = {
                 setupPermanentUserSessionProperties(mapOf("seeded" to "value"))
             },
@@ -204,7 +188,7 @@ internal class MultiFilePersistenceParityTest {
                 }
             },
             assertAction = {
-                val sessionSpan = assertParity().single().findSessionPartSpan()
+                val sessionSpan = deliveredParts().single().findSessionPartSpan()
                 listOf("seeded", "permanent", "temporary").forEach {
                     assertNotNull("missing session property '$it'", sessionSpan.getSessionProperty(it))
                 }
@@ -216,7 +200,7 @@ internal class MultiFilePersistenceParityTest {
     @Test
     fun `user info changed mid-session is persisted identically`() {
         testRule.runTest(
-            persistedRemoteConfig = multiFileEnabled,
+            persistedRemoteConfig = remoteConfig(),
             testCaseAction = {
                 recordSession {
                     embrace.setUserIdentifier("newId")
@@ -225,7 +209,7 @@ internal class MultiFilePersistenceParityTest {
                 }
             },
             assertAction = {
-                val metadata = checkNotNull(assertParity().single().metadata)
+                val metadata = checkNotNull(deliveredParts().single().metadata)
                 assertEquals("newId", metadata.userId)
                 assertEquals("newUserName", metadata.username)
                 assertEquals("new@domain.com", metadata.email)
@@ -236,7 +220,7 @@ internal class MultiFilePersistenceParityTest {
     @Test
     fun `a recorded network request is persisted identically`() {
         testRule.runTest(
-            persistedRemoteConfig = multiFileEnabled,
+            persistedRemoteConfig = remoteConfig(),
             testCaseAction = {
                 recordSession {
                     embrace.recordNetworkRequest(
@@ -253,7 +237,7 @@ internal class MultiFilePersistenceParityTest {
                 }
             },
             assertAction = {
-                val envelope = assertParity().single()
+                val envelope = deliveredParts().single()
                 assertEquals(1, envelope.findSpansOfType(EmbType.Performance.Network).size)
             },
         )
@@ -265,14 +249,14 @@ internal class MultiFilePersistenceParityTest {
             instrumentedConfig = FakeInstrumentedConfig(
                 symbols = createNativeSymbolsForCurrentArch(mapOf("libfoo.so" to "symbol_content")),
             ),
-            persistedRemoteConfig = multiFileEnabled,
+            persistedRemoteConfig = remoteConfig(),
             testCaseAction = {
                 recordSession()
             },
             assertAction = {
                 assertEquals(
                     mapOf("libfoo.so" to "symbol_content"),
-                    assertParity().single().data.sharedLibSymbolMapping,
+                    deliveredParts().single().data.sharedLibSymbolMapping,
                 )
             },
         )
@@ -281,7 +265,7 @@ internal class MultiFilePersistenceParityTest {
     @Test
     fun `each session part in a process is persisted identically`() {
         testRule.runTest(
-            persistedRemoteConfig = multiFileEnabled,
+            persistedRemoteConfig = remoteConfig(),
             testCaseAction = {
                 recordSession {
                     embrace.recordSpan("first-part-span") { clock.tick(100) }
@@ -292,7 +276,7 @@ internal class MultiFilePersistenceParityTest {
                 }
             },
             assertAction = {
-                val parts = assertParity(expectedParts = 2)
+                val parts = deliveredParts(expectedParts = 2)
                 parts.forEach(::assertMinimalSessionPayload)
                 assertEquals(
                     setOf("first-part-span", "second-part-span"),
@@ -305,12 +289,12 @@ internal class MultiFilePersistenceParityTest {
     @Test
     fun `background activity parts are persisted identically`() {
         testRule.runTest(
-            persistedRemoteConfig = multiFileEnabled,
+            persistedRemoteConfig = remoteConfig(),
             testCaseAction = {
                 recordSession()
             },
             assertAction = {
-                val envelope = assertParity(state = ProcessState.BACKGROUND).single()
+                val envelope = deliveredParts(state = ProcessState.BACKGROUND).single()
                 assertEquals(
                     "background",
                     envelope.findSessionPartSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE),
@@ -322,7 +306,7 @@ internal class MultiFilePersistenceParityTest {
     @Test
     fun `a periodic write before the session ends does not change what is persisted`() {
         testRule.runTest(
-            persistedRemoteConfig = multiFileEnabled,
+            persistedRemoteConfig = remoteConfig(),
             testCaseAction = {
                 recordSession {
                     embrace.recordSpan("before-the-periodic-write") { clock.tick(100) }
@@ -333,7 +317,7 @@ internal class MultiFilePersistenceParityTest {
                 }
             },
             assertAction = {
-                val names = assertParity().single().allSpanNames()
+                val names = deliveredParts().single().allSpanNames()
                 assertTrue("before-the-periodic-write missing: $names", "before-the-periodic-write" in names)
                 assertTrue("after-the-periodic-write missing: $names", "after-the-periodic-write" in names)
             },
@@ -343,15 +327,12 @@ internal class MultiFilePersistenceParityTest {
     @Test
     fun `spans completed before the first session part directory exists are persisted identically`() {
         testRule.runTest(
-            persistedRemoteConfig = RemoteConfig(
-                pctMultiFilePersistenceEnabled = 100.0f,
-                backgroundActivityConfig = BackgroundActivityRemoteConfig(0f),
-            ),
+            persistedRemoteConfig = remoteConfig(backgroundActivity = BackgroundActivityRemoteConfig(0f)),
             testCaseAction = {
                 recordSession()
             },
             assertAction = {
-                val names = assertParity().single().allSpanNames()
+                val names = deliveredParts().single().allSpanNames()
                 assertTrue("emb-sdk-init missing from: $names", "emb-sdk-init" in names)
             },
         )
@@ -361,10 +342,7 @@ internal class MultiFilePersistenceParityTest {
     fun `a span that stops after its session part ended is persisted identically`() {
         lateinit var span: EmbraceSpan
         testRule.runTest(
-            persistedRemoteConfig = RemoteConfig(
-                pctMultiFilePersistenceEnabled = 100.0f,
-                backgroundActivityConfig = BackgroundActivityRemoteConfig(0f),
-            ),
+            persistedRemoteConfig = remoteConfig(backgroundActivity = BackgroundActivityRemoteConfig(0f)),
             testCaseAction = {
                 recordSession {
                     span = checkNotNull(embrace.startSpan("late-span"))
@@ -375,7 +353,7 @@ internal class MultiFilePersistenceParityTest {
                 recordSession()
             },
             assertAction = {
-                val parts = assertParity(expectedParts = 2)
+                val parts = deliveredParts(expectedParts = 2)
                 assertTrue(
                     "late-span missing from every payload",
                     parts.any { "late-span" in it.allSpanNames() },
@@ -389,10 +367,7 @@ internal class MultiFilePersistenceParityTest {
         var blockRan = false
         lateinit var orphaned: EmbraceSpan
         testRule.runTest(
-            persistedRemoteConfig = RemoteConfig(
-                pctMultiFilePersistenceEnabled = 100.0f,
-                backgroundActivityConfig = BackgroundActivityRemoteConfig(0f),
-            ),
+            persistedRemoteConfig = remoteConfig(backgroundActivity = BackgroundActivityRemoteConfig(0f)),
             testCaseAction = {
                 recordSession()
                 orphaned = embrace.startSpan("started-span")
@@ -408,7 +383,7 @@ internal class MultiFilePersistenceParityTest {
                 assertNull("a span was started with no active session part", orphaned.spanId)
                 assertTrue("recordSpan did not run the block it was given", blockRan)
 
-                assertParity(expectedParts = 2).forEach { part ->
+                deliveredParts(expectedParts = 2).forEach { part ->
                     val names = part.allSpanNames()
                     assertFalse("started-span was persisted: $names", "started-span" in names)
                     assertFalse("recorded-span was persisted: $names", "recorded-span" in names)
@@ -418,9 +393,9 @@ internal class MultiFilePersistenceParityTest {
     }
 
     @Test
-    fun `empty span collections are persisted identically`() {
+    fun `an empty span event collection survives being persisted`() {
         testRule.runTest(
-            persistedRemoteConfig = multiFileEnabled,
+            persistedRemoteConfig = remoteConfig(),
             testCaseAction = {
                 recordSession {
                     embrace.recordSpan("plain-span") {
@@ -429,39 +404,27 @@ internal class MultiFilePersistenceParityTest {
                 }
             },
             assertAction = {
-                val (first, second) = deliveredPair()
-                assertEquals(first.findSpanByName("plain-span"), second.findSpanByName("plain-span"))
-            },
-        )
-    }
-
-    @Test
-    fun `the session span links are persisted identically`() {
-        testRule.runTest(
-            persistedRemoteConfig = multiFileEnabled,
-            testCaseAction = {
-                recordSession()
-            },
-            assertAction = {
-                val (first, second) = deliveredPair()
-                assertEquals(first.findSessionPartSpan().links, second.findSessionPartSpan().links)
-            },
-        )
-    }
-
-    @Test
-    fun `the session span process identifier is persisted identically`() {
-        testRule.runTest(
-            persistedRemoteConfig = multiFileEnabled,
-            testCaseAction = {
-                recordSession()
-            },
-            assertAction = {
-                val (first, second) = deliveredPair()
+                val span = checkNotNull(deliveredParts().single().findSpanByName("plain-span"))
+                assertEquals(emptyList<SpanEvent>(), span.events)
                 assertEquals(
-                    first.findSessionPartSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER),
-                    second.findSessionPartSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER),
+                    listOf("END_SESSION_PART"),
+                    span.links.orEmpty().map { it.attributes?.findAttributeValue("emb.link_type") },
                 )
+            },
+        )
+    }
+
+    @Test
+    fun `the session span records the process that created it`() {
+        testRule.runTest(
+            persistedRemoteConfig = remoteConfig(),
+            testCaseAction = {
+                recordSession()
+            },
+            assertAction = {
+                val processId = deliveredParts().single()
+                    .findSessionPartSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER)
+                assertNotNull("the session span has no process identifier", processId)
             },
         )
     }
@@ -469,7 +432,7 @@ internal class MultiFilePersistenceParityTest {
     @Test
     fun `a crashed session part is handed to the intake service rather than delivered`() {
         testRule.runTest(
-            persistedRemoteConfig = multiFileEnabled,
+            persistedRemoteConfig = remoteConfig(),
             testCaseAction = {
                 recordSession {
                     simulateJvmUncaughtException(RuntimeException("Boom!"))
@@ -486,38 +449,23 @@ internal class MultiFilePersistenceParityTest {
     }
 
     /**
-     * Returns one envelope per session part, having first asserted that the two envelopes delivered
-     * for each part are identical.
+     * Returns the envelope delivered for each session part.
+     *
+     * Exactly one envelope is expected per part: only one persistence layer may own a part, so a
+     * second envelope for the same part means both layers delivered it. `getSessionEnvelopes`
+     * waits for an exact count, so a duplicate delivery fails here rather than passing silently.
      */
-    private fun EmbracePayloadAssertionInterface.assertParity(
+    private fun EmbracePayloadAssertionInterface.deliveredParts(
         expectedParts: Int = 1,
         state: ProcessState = ProcessState.FOREGROUND,
     ): List<Envelope<SessionPartPayload>> {
-        val envelopes = getSessionEnvelopes(expectedParts * 2, state, assertOrdering = false)
-        val byPart = envelopes.groupBy(Envelope<SessionPartPayload>::getSessionPartId)
-        assertEquals("wrong number of distinct session parts delivered", expectedParts, byPart.size)
-
-        return byPart.map { (sessionPartId, pair) ->
-            assertEquals("session part $sessionPartId was not delivered twice", 2, pair.size)
-            assertEnvelopesMatch(sessionPartId, pair.first(), pair.last())
-            pair.first()
-        }
-    }
-
-    /**
-     * Returns the two envelopes delivered for a single session part without asserting anything
-     * about them. Used by the tests that pin down one known divergence.
-     */
-    private fun EmbracePayloadAssertionInterface.deliveredPair(
-        state: ProcessState = ProcessState.FOREGROUND,
-    ): Pair<Envelope<SessionPartPayload>, Envelope<SessionPartPayload>> {
-        val envelopes = getSessionEnvelopes(2, state, assertOrdering = false)
+        val envelopes = getSessionEnvelopes(expectedParts, state, assertOrdering = false)
         assertEquals(
-            "more than one session part was delivered",
-            1,
+            "wrong number of distinct session parts delivered",
+            expectedParts,
             envelopes.map(Envelope<SessionPartPayload>::getSessionPartId).distinct().size,
         )
-        return envelopes.first() to envelopes.last()
+        return envelopes
     }
 
     private fun EmbracePayloadAssertionInterface.assertMatchesGoldenFile(
@@ -548,54 +496,6 @@ internal class MultiFilePersistenceParityTest {
         assertEquals("foreground", sessionSpan.attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE))
     }
 
-    private fun assertEnvelopesMatch(
-        sessionPartId: String,
-        first: Envelope<SessionPartPayload>,
-        second: Envelope<SessionPartPayload>,
-    ) {
-        assertEquals("envelope version differs for part $sessionPartId", first.version, second.version)
-        assertEquals("envelope type differs for part $sessionPartId", first.type, second.type)
-        assertEquals("resource differs for part $sessionPartId", first.resource, second.resource)
-        assertEquals("metadata differs for part $sessionPartId", first.metadata, second.metadata)
-        assertEquals(
-            "shared lib symbol mapping differs for part $sessionPartId",
-            first.data.sharedLibSymbolMapping,
-            second.data.sharedLibSymbolMapping,
-        )
-        assertSpansMatch("spans", sessionPartId, first.data.spans, second.data.spans)
-        assertSpansMatch("span snapshots", sessionPartId, first.data.spanSnapshots, second.data.spanSnapshots)
-    }
-
-    /**
-     * Compares two span lists ignoring their order: the legacy path emits spans in `SpanRepository`
-     * flush order whereas the multi-file path replays the append order of `completed_spans.pb` with
-     * the session span last. Each span is then compared by [normalised].
-     */
-    private fun assertSpansMatch(
-        label: String,
-        sessionPartId: String,
-        first: List<Span>?,
-        second: List<Span>?,
-    ) {
-        assertEquals(
-            "one payload for part $sessionPartId has no $label and the other does",
-            first == null,
-            second == null,
-        )
-        val firstByKey = first.orEmpty().map { it.normalised() }.groupBy(::spanKey)
-        val secondByKey = second.orEmpty().map { it.normalised() }.groupBy(::spanKey)
-        assertEquals(
-            "different $label in each payload for part $sessionPartId",
-            firstByKey.keys.sorted(),
-            secondByKey.keys.sorted(),
-        )
-        firstByKey.forEach { (key, spans) ->
-            assertEquals("$label differ for '$key' in part $sessionPartId", spans, secondByKey.getValue(key))
-        }
-    }
-
-    private fun spanKey(span: Span): String = "${span.name}[${span.spanId}]"
-
     private fun Envelope<SessionPartPayload>.allSpanNames(): List<String> =
         (data.spans.orEmpty() + data.spanSnapshots.orEmpty()).mapNotNull(Span::name)
 
@@ -610,24 +510,17 @@ internal class MultiFilePersistenceParityTest {
     }
 
     /**
-     * Sorts the attributes of a span, its events and its links: the two payloads are built from
-     * separate reads of the same telemetry, so an attribute map that is unordered by nature can be
-     * iterated in a different order for each of them.
+     * Sorts a span's attributes: an attribute map is unordered by nature, so the golden file can
+     * only be compared against a stable ordering.
      */
-    private fun Span.normalised(): Span = copy(
-        events = events?.map { it.normalised() },
-        attributes = attributes?.sorted(),
-        links = links?.map { it.normalised() },
-    )
-
-    private fun SpanEvent.normalised(): SpanEvent = copy(attributes = attributes?.sorted())
-
-    private fun Link.normalised(): Link = copy(attributes = attributes?.sorted())
-
     private fun List<Attribute>.sorted(): List<Attribute> = sortedWith(compareBy({ it.key }, { it.data }))
 
-    private companion object {
-        const val SESSION_SPAN_NAME = "emb-session"
-        const val GOLDEN_FILE = "multi_file_parity_session_part_span.json"
+    internal companion object {
+        private const val SESSION_SPAN_NAME = "emb-session"
+        private const val GOLDEN_FILE = "multi_file_parity_session_part_span.json"
+
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = PersistenceMode.entries.map { arrayOf<Any>(it) }
     }
 }

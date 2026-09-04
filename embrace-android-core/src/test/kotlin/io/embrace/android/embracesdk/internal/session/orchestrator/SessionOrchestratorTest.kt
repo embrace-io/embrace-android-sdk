@@ -1148,6 +1148,32 @@ internal class SessionOrchestratorTest {
         assertNoInternalErrors()
     }
 
+    @Test
+    fun `the legacy store does not receive a session part when multi file persistence is enabled`() {
+        createOrchestrator(ProcessState.FOREGROUND, multiFilePersistenceConfigService())
+        val sessionPartId = checkNotNull(sessionTracker.getActiveSessionPartId())
+        clock.tick(10000)
+        orchestrator.onBackground()
+
+        assertEquals(emptyList<Any>(), store.storedSessionPartPayloads)
+        assertTrue(sessionPartDirs().any { it.sessionPartId == sessionPartId })
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `the periodic cache builds no payload when multi file persistence is enabled`() {
+        createOrchestrator(ProcessState.FOREGROUND, multiFilePersistenceConfigService())
+        val partId = checkNotNull(sessionTracker.getActiveSessionPartId())
+        clock.tick(2000)
+        checkNotNull(currentSessionPartSpan.sessionPartSpan).name = "refreshed-span"
+        sessionCacheExecutor.runCurrentlyBlocked()
+
+        // nothing was cached by the legacy layer
+        assertEquals(emptyList<Any>(), store.cachedSessionPartPayloads)
+        assertEquals("refreshed-span", sessionSpanIn(partId)?.span?.name)
+        assertNoInternalErrors()
+    }
+
     private fun createOrchestrator(
         startingProcessState: ProcessState,
         configService: FakeConfigService =

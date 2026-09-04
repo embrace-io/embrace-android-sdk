@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.BackgroundActivity
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
 import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.behavior.ExperimentBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl
@@ -107,6 +108,7 @@ class ConfigServiceImpl(
     override val threadBlockageBehavior = ThreadBlockageBehaviorImpl(thresholdCheck, remoteConfig)
     override val vitalsBehavior = VitalsBehaviorImpl(thresholdCheck, remoteConfig)
     override val sessionBehavior = UserSessionBehaviorImpl(remoteConfig)
+    override val experimentBehavior = ExperimentBehaviorImpl(remoteConfig)
     override val networkBehavior = NetworkBehaviorImpl(instrumentedConfig, remoteConfig)
     override val dataCaptureEventBehavior = DataCaptureEventBehaviorImpl(remoteConfig)
     override val sdkModeBehavior = SdkModeBehaviorImpl(thresholdCheck, remoteConfig)

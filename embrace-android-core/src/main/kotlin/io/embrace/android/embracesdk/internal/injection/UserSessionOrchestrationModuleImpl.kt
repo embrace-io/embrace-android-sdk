@@ -52,7 +52,9 @@ class UserSessionOrchestrationModuleImpl(
             appVersionStartupCounterProvider,
             logModule.logLimitingService,
             payloadSourceModule.metadataService,
-        )
+        ) {
+            essentialServiceModule.experimentTrackingService.getRecords()
+        }
 
         SessionOrchestratorImpl(
             essentialServiceModule.processStateTracker,

@@ -64,7 +64,7 @@ class SessionManifestWriter(
             resource = resource.toImmutableProto(),
         )
 
-        writeAtomically(partDir, MANIFEST_FILE_NAME) { stream ->
+        writeAtomically(partDir, MANIFEST_FILE_NAME, Long.MAX_VALUE) { stream ->
             SessionManifest.ADAPTER.encode(stream, manifest)
         }
         return true

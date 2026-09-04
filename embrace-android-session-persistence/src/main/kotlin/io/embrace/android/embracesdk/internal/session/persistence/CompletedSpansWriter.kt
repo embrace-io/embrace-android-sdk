@@ -20,9 +20,13 @@ class CompletedSpansWriter(
     private val sessionsDir: Lazy<File>,
     private val sessionPartDirectorySource: () -> SessionPartDirectory?,
     private val logger: InternalLogger,
+    private val maxBytes: Long = MAX_PART_FILE_BYTES,
 ) {
 
     private val lock = Any()
+
+    @Volatile
+    private var reportedOverflow = false
 
     /**
      * Appends [spans] to the log for the active session part, leaving the spans already logged in
@@ -47,9 +51,21 @@ class CompletedSpansWriter(
             return false
         }
         val records = CompletedSpans(spans = spans.map(Span::toProto))
-        appendTo(partDir, COMPLETED_SPANS_FILE_NAME, CompletedSpans.ADAPTER.encode(records))
+        val bytes = CompletedSpans.ADAPTER.encode(records)
+
+        if (bytes.isNotEmpty() && !fits(partDir, bytes.size)) {
+            if (!reportedOverflow) {
+                reportedOverflow = true
+                trackFailure(IOException(OVERSIZED_PART_FILE_MSG))
+            }
+            return false
+        }
+        appendTo(partDir, COMPLETED_SPANS_FILE_NAME, bytes)
         return true
     }
+
+    private fun fits(partDir: File, byteCount: Int): Boolean =
+        File(partDir, COMPLETED_SPANS_FILE_NAME).length() + byteCount <= maxBytes
 
     private fun trackFailure(exc: Throwable) {
         logger.trackInternalError(InternalErrorType.CompletedSpansWriteFail, exc)

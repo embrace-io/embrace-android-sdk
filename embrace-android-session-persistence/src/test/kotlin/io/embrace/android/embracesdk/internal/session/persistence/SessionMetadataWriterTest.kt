@@ -247,6 +247,17 @@ internal class SessionMetadataWriterTest {
     }
 
     @Test
+    fun `oversized metadata is written`() {
+        val extras = mapOf("custom.key" to "x".repeat(MAX_PART_FILE_BYTES.toInt() + 1))
+        resourceProvider = { fullyPopulatedResource.copy(extras = extras) }
+
+        assertTrue(writer.write())
+        assertTrue(metadataFile().length() > MAX_PART_FILE_BYTES)
+        assertEquals(extras, readMetadata().resource?.extras)
+        assertNoInternalErrors()
+    }
+
+    @Test
     fun `failure building the metadata leaves no files on disk`() {
         metadataProvider = { error("boom") }
 

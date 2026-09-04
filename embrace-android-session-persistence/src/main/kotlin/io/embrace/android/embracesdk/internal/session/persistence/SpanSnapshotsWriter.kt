@@ -45,7 +45,7 @@ class SpanSnapshotsWriter(
             format_version = FORMAT_VERSION,
             spans = spans.map(Span::toProto),
         )
-        writeAtomically(partDir, SPAN_SNAPSHOTS_FILE_NAME) { stream ->
+        writeAtomically(partDir, SPAN_SNAPSHOTS_FILE_NAME, MAX_PART_FILE_BYTES) { stream ->
             SpanSnapshots.ADAPTER.encode(stream, snapshots)
         }
         return true

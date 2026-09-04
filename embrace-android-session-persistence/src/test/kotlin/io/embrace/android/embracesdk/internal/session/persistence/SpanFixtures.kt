@@ -101,3 +101,27 @@ internal val fullyPopulatedSpanSnapshotsProto = SpanSnapshots(
 internal fun completedSpansLog(spans: List<SpanProto>): ByteArray = Buffer().apply {
     spans.forEach { write(CompletedSpans.ADAPTER.encode(CompletedSpans(spans = listOf(it)))) }
 }.readByteArray()
+
+internal fun paddedSpan(spanId: String, padding: Int): Span = Span(
+    traceId = "6c9b1f2ec1d34f3c9a7d0b8e5f2a4c11",
+    spanId = spanId,
+    name = "emb-padded",
+    startTimeNanos = 1726739283200000000L,
+    endTimeNanos = 1726739284136000000L,
+    status = Span.Status.OK,
+    events = emptyList(),
+    attributes = listOf(Attribute(key = "pad", data = "x".repeat(padding))),
+    links = emptyList(),
+)
+
+internal fun paddedSpanProto(spanId: String, padding: Int): SpanProto = SpanProto(
+    trace_id = "6c9b1f2ec1d34f3c9a7d0b8e5f2a4c11",
+    span_id = spanId,
+    name = "emb-padded",
+    start_time_unix_nano = 1726739283200000000L,
+    end_time_unix_nano = 1726739284136000000L,
+    status = SpanProto.Status.OK,
+    attributes = listOf(AttributeProto(key = "pad", value_ = "x".repeat(padding))),
+)
+
+internal fun paddedSpanId(index: Int): String = "aaaaaaaa" + "%08d".format(index)

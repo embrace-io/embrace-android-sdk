@@ -134,10 +134,37 @@ internal class SdkInitEnvironmentAttributesTest {
         assertEquals("45", attributes[SdkInitAttributeKeys.SECONDS_SINCE_BOOT])
     }
 
+    @Test
+    fun `record compile filter and ART optimization state if available`() {
+        val compiled = environmentAttributes(
+            compileStateProvider = {
+                ArtOptimizationState(artCompilerFilter = "speed-profile", hasAppImage = true)
+            },
+        )
+        assertEquals("speed-profile", compiled[SdkInitAttributeKeys.ART_COMPILE_FILTER])
+        assertEquals("true", compiled[SdkInitAttributeKeys.APP_IMAGE_AT_INIT])
+
+        val verifyOnly = environmentAttributes(
+            compileStateProvider = {
+                ArtOptimizationState(artCompilerFilter = "verify", hasAppImage = false)
+            },
+        )
+        assertEquals("verify", verifyOnly[SdkInitAttributeKeys.ART_COMPILE_FILTER])
+        assertFalse(verifyOnly.containsKey(SdkInitAttributeKeys.APP_IMAGE_AT_INIT))
+
+        val unknown = environmentAttributes(compileStateProvider = { null })
+        assertFalse(unknown.containsKey(SdkInitAttributeKeys.ART_COMPILE_FILTER))
+        assertFalse(unknown.containsKey(SdkInitAttributeKeys.APP_IMAGE_AT_INIT))
+
+        // Check to see it doesn't throw
+        environmentAttributes(compileStateProvider = { error("bleep bloop oh noes") })
+    }
+
     private fun environmentAttributes(
         prefsFileSizeProvider: () -> Long? = { null },
         powerManagerProvider: () -> PowerManager? = { context.getSystemService(Context.POWER_SERVICE) as? PowerManager },
         versionChecker: VersionChecker = BuildVersionChecker,
+        compileStateProvider: () -> ArtOptimizationState? = { null },
     ): Map<String, String> = sdkInitEnvironmentAttributes(
         powerManagerProvider = powerManagerProvider,
         activityManagerProvider = { context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager },
@@ -146,6 +173,7 @@ internal class SdkInitEnvironmentAttributesTest {
         versionChecker = versionChecker,
         uptimeMs = { fakeUptimeMs },
         prefsFileSizeProvider = prefsFileSizeProvider,
+        artOptimizationProvider = compileStateProvider,
     )
 
     private companion object {

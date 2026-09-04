@@ -16,5 +16,6 @@ class FakeDevice(
         osName = "android",
         osVersion = "8.0.0",
         androidOsApiLevel = "26",
+        primaryAbi = "arm64-v8a",
     ),
 ) : Device

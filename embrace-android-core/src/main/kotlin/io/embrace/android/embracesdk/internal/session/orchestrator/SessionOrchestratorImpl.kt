@@ -447,7 +447,11 @@ internal class SessionOrchestratorImpl(
                                         }
                                         updatePeriodicCacheAttrs()
                                         sessionPartWriter?.onPeriodicWrite()
-                                        payloadFactory.snapshotPayload(state, timestamp, zygote)
+
+                                        when {
+                                            multiFilePersistenceEnabled() -> null
+                                            else -> payloadFactory.snapshotPayload(state, timestamp, zygote)
+                                        }
                                     }
                                 }
                             }
@@ -571,10 +575,16 @@ internal class SessionOrchestratorImpl(
     }
 
     private fun processEndMessage(envelope: Envelope<SessionPartPayload>?, transitionType: TransitionType) {
+        if (multiFilePersistenceEnabled()) {
+            return
+        }
         envelope?.let {
             payloadStore?.storeSessionPartPayload(envelope, transitionType)
         }
     }
+
+    private fun multiFilePersistenceEnabled(): Boolean =
+        configService.persistenceBehavior.isMultiFilePersistenceEnabled()
 
     private fun updatePeriodicCacheAttrs() {
         val now = clock.now().millisToNanos()

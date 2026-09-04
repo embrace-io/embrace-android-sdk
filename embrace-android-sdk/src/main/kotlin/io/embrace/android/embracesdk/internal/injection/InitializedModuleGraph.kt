@@ -80,7 +80,7 @@ internal class InitializedModuleGraph(
                 hasConfiguredOtlpExport = openTelemetryModule.otelSdkConfig::hasConfiguredOtlpExport,
                 sdkVersion = BuildConfig.VERSION_NAME,
                 apiLevel = Build.VERSION.SDK_INT,
-                abis = Build.SUPPORTED_ABIS,
+                primaryAbi = initModule.systemInfo.primaryAbi,
                 logger = initModule.logger,
             )
         }

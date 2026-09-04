@@ -25,7 +25,6 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.config.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.ConfigServiceImpl
-import io.embrace.android.embracesdk.internal.config.CpuAbi
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.CoreModuleImpl
@@ -143,7 +142,7 @@ internal class EmbraceSetupInterface(
                 hasConfiguredOtlpExport = openTelemetryModule.otelSdkConfig::hasConfiguredOtlpExport,
                 sdkVersion = BuildConfig.VERSION_NAME,
                 apiLevel = Build.VERSION.SDK_INT,
-                abis = Build.SUPPORTED_ABIS,
+                primaryAbi = initModule.systemInfo.primaryAbi,
                 logger = initModule.logger,
             )
             DecoratedConfigService(impl)
@@ -400,6 +399,5 @@ internal class EmbraceSetupInterface(
             "99",
             "com.fake.package",
         )
-        override val cpuAbi: CpuAbi = CpuAbi.ARM64_V8A
     }
 }

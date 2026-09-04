@@ -5,6 +5,8 @@ import android.content.pm.PackageInfo
 import android.os.Build.VERSION_CODES
 import android.os.PowerManager
 import android.os.SystemClock
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.APP_IMAGE_AT_INIT
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.ART_COMPILE_FILTER
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.LOW_MEMORY
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.MEM_AVAILABLE_PCT
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.PREFS_FILE_BYTES
@@ -37,6 +39,7 @@ fun sdkInitEnvironmentAttributes(
     versionChecker: VersionChecker = BuildVersionChecker,
     uptimeMs: () -> Long = { SystemClock.uptimeMillis() },
     prefsFileSizeProvider: () -> Long? = { null },
+    artOptimizationProvider: () -> ArtOptimizationState? = { null },
 ): Map<String, String> = try {
     buildMap {
         putThermalAttributes(powerManagerProvider, versionChecker)
@@ -44,6 +47,7 @@ fun sdkInitEnvironmentAttributes(
         putMemoryAttributes(activityManagerProvider)
         put(SECONDS_SINCE_BOOT, (uptimeMs() / 1000L).toString())
         putPrefsFileSize(prefsFileSizeProvider)
+        putArtOptimizationAttributes(artOptimizationProvider)
     }
 } catch (_: Throwable) {
     emptyMap()
@@ -97,6 +101,20 @@ private fun MutableMap<String, String>.putMemoryAttributes(activityManagerProvid
         put(MEM_AVAILABLE_PCT, (100.0 * memoryInfo.availMem / memoryInfo.totalMem).roundToLong().toString())
         if (memoryInfo.lowMemory) {
             put(LOW_MEMORY, "true")
+        }
+    }
+}
+
+private fun MutableMap<String, String>.putArtOptimizationAttributes(
+    artOptimizationStateProvider: () -> ArtOptimizationState?,
+) {
+    val state = runCatching { artOptimizationStateProvider() }.getOrNull()
+    if (state != null) {
+        state.artCompilerFilter?.let {
+            put(ART_COMPILE_FILTER, it)
+        }
+        if (state.hasAppImage) {
+            put(APP_IMAGE_AT_INIT, "true")
         }
     }
 }

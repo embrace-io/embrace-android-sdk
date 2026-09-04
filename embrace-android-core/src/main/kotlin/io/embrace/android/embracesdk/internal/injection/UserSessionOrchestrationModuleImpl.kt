@@ -65,6 +65,7 @@ class UserSessionOrchestrationModuleImpl(
             processIdProvider = { openTelemetryModule.otelSdkConfig.processIdentifier },
             configService = configService,
             logger = initModule.logger,
+            worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
         )
     }
 

@@ -22,8 +22,22 @@ object RepoRoot {
         return Path.of("").toAbsolutePath()
     }
 
-    /** The default analysis output directory: `<repo>/claude-output` (project-local, gitignored). */
+    /**
+     * The scratch directory for raw outputs: `<repo>/claude-output` (project-local, gitignored). Traces and
+     * whole campaign directories land here; nothing that must outlive the machine belongs here.
+     */
     fun claudeOutput(repo: Path = locate()): Path = repo.resolve("claude-output")
+
+    /**
+     * The committed records root, [RECORDS_REL] under the repo: everything the startup tooling learns
+     * and must keep - the longitudinal store and reference set, the maxims ledger and its pages, the
+     * living-document sources with their publish manifest, each campaign's per-pass datasets, and the
+     * per-run analysis summaries. Raw traces are the one thing that stays out (hundreds of megabytes per
+     * pass); the datasets and summaries derived from them are the durable record.
+     */
+    fun records(repo: Path = locate()): Path = repo.resolve(RECORDS_REL)
+
+    const val RECORDS_REL: String = ".claude/skills/_shared/records"
 
     private fun gitTopLevel(from: Path): Path? = runCatching {
         val process = ProcessBuilder("git", "-C", from.toString(), "rev-parse", "--show-toplevel")

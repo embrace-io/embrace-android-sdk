@@ -32,7 +32,7 @@ class AnalyzeCommand : CliktCommand(name = "analyze") {
         .flag()
     private val outputDir by option(
         "--output-dir",
-        help = "directory for the timestamped summary file (default: <repo root>/claude-output)",
+        help = "directory for the timestamped summary file (default: <repo root>/${RepoRoot.RECORDS_REL}/analyses)",
     )
         .path()
     private val repo by option(
@@ -47,7 +47,7 @@ class AnalyzeCommand : CliktCommand(name = "analyze") {
 
     override fun run() {
         val start = LocalDateTime.now()
-        val outDir = outputDir ?: RepoRoot.claudeOutput(repo ?: RepoRoot.locate())
+        val outDir = outputDir ?: RepoRoot.records(repo ?: RepoRoot.locate()).resolve("analyses")
         val traces = StartupAnalysis.listTraces(tracesDir)
         if (traces.isEmpty()) {
             echo("no .perfetto-trace files in $tracesDir", err = true)

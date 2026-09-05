@@ -47,13 +47,16 @@ Two hard ideas make it work:
 - `references/analysis.md` — how to read the trend output: baselines, drift vs regression,
   pooled tail statistics, and the traps (population drift, survivorship, seasonality of device
   state, and why a moving baseline hides slow regressions).
-- `scripts/ingest_run.py` — take a completed run directory from any of the other three skills,
-  extract per-iteration windows plus provenance, validate it against the reference set, and
-  append it to the store. Refuses non-comparable records loudly.
-- `scripts/trend_report.py` — per-device-profile baselines, run-over-run deltas with a
-  significance rule that respects the tail-heavy distribution, and a regression verdict.
-- `scripts/reference_set.py` — declare/inspect the reference set: probe attached devices, write
-  or update `reference-set.json`, and flag drift in a device's own profile.
+- The commands, from the Kotlin `startup-tools` module (run as `tools/startup <command>` from the
+  repo root; `startup-tools/README.md` has the table, `tools/startup <command> --help` the flags;
+  needs a JDK 17+ and `adb`):
+  - `tools/startup ingest <run-dir>` — take a completed run directory from any of the other
+    three skills, extract per-iteration windows plus provenance, validate it against the
+    reference set, and append it to the store. Refuses non-comparable records loudly.
+  - `tools/startup trend` — per-device-profile baselines, run-over-run deltas with a
+    significance rule that respects the tail-heavy distribution, and a regression verdict.
+  - `tools/startup reference-set` — declare/inspect the reference set: probe attached devices,
+    write or update `reference-set.json`, and flag drift in a device's own profile.
 
 ## Setting up the reference set (do this once, revisit rarely)
 
@@ -63,7 +66,7 @@ Two hard ideas make it work:
    entry/low-RAM device, where regressions bite hardest), two vendors (install-time compile
    policy and thermal governors are OEM decisions), and two ART generations (AOT behaviour and
    class-load accounting differ). Physical devices only. Practical floor: API 29.
-3. `python3 scripts/reference_set.py --probe --out reference-set.json` records each device's
+3. `tools/startup reference-set --probe --out reference-set.json` records each device's
    profile: `api_level`, `tier`, `vendor`, `soc_family`, cluster topology, `ram_class`, plus a
    stable `device_key` you choose (e.g. `entry-a`, `mid-b`) that is used in every later report.
 4. Freeze the measurement recipe in the same file: run shape (default 10x20 — ten passes of twenty
@@ -79,11 +82,23 @@ than a smaller set you maintain, because gaps are where regressions hide.
 1. **Produce a run** with whichever skill fits (single-device check, multi-device campaign, or a
    matrix cell). Nothing special is required beyond the profile-carrying provenance those skills
    already write.
-2. **Ingest it**: `python3 scripts/ingest_run.py <run-dir> --store <store.jsonl>`. The script
-   pulls per-iteration windows, the device profile, SDK version, build type, compile state, run
-   shape, and instrument; it then checks the record against the reference set and the frozen
-   recipe. Mismatches are reported, not silently accepted.
-3. **Report**: `python3 scripts/trend_report.py --store <store.jsonl>` prints, per device key: the
+2. **Ingest it**: `tools/startup ingest <run-dir> --store <store.jsonl> --reference-set
+   reference-set.json`. The store and the reference set are the committed ones under
+   `_shared/records/longitudinal/` (`store.jsonl`, `sweep-store.jsonl` for the version sweeps,
+   `reference-set.json`); commit the appended record with the run. The command pulls per-iteration
+   windows, the device profile, SDK version, build type, compile state, run shape, and instrument; it
+   then checks the record against the reference set and the frozen recipe. Mismatches are reported,
+   not silently accepted.
+2b. **Score the maxims** for the same run (`tools/startup maxims score <run-dir>
+   --reference-set reference-set.json`, then `tools/startup maxims render`), when the run carries the per-pass
+   datasets. The store records what was measured; the ledger records what the measurement said
+   about what we believe. They are deliberately separate files under the same committed root
+   (`_shared/records/`): the store keeps every iteration, the ledger names only device keys and
+   tallies, so each page's git history is the record of when a measurement or a belief changed.
+   Scoring also packs the run's per-pass datasets and log into `_shared/records/campaigns/<run-id>.zip`,
+   so the evidence behind the ledger outlives the traces. Both key cells the same way (device key,
+   recipe, arm).
+3. **Report**: `tools/startup trend --store <store.jsonl>` prints, per device key: the
    baseline, the most recent runs, deltas with their significance verdict, and pooled tail
    statistics across all comparable runs.
 4. **Act on the verdict, not the delta.** A single run that moved is a candidate; a move that

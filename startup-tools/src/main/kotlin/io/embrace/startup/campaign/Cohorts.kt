@@ -31,6 +31,9 @@ object Cohorts {
         "emb.app.version_startup_counter",
         "start-first-session-duration-ms",
         "post-init-duration-ms",
+        // 9.3.0 names; the older name is kept so pre-rename captures still classify and print.
+        "art-compile-filter",
+        "app-image-at-init",
         "init-compile-filter",
         "thread-name",
         "ended-in-foreground",
@@ -139,7 +142,7 @@ object Cohorts {
             "session $session  counter ${launch.counter ?: "?"}  " +
             "start-first-session ${launch.attrs["start-first-session-duration-ms"] ?: "?"} ms  " +
             "post-init ${launch.attrs["post-init-duration-ms"] ?: "?"} ms  " +
-            "compile ${launch.attrs["init-compile-filter"] ?: "?"}"
+            "compile ${launch.attrs["art-compile-filter"] ?: launch.attrs["init-compile-filter"] ?: "?"}"
     }
 
     data class Report(val launches: List<Launch>, val expected: String?, val violations: List<Int>, val summary: String)

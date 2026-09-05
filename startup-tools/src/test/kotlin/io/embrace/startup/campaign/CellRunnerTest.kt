@@ -43,7 +43,7 @@ class CellRunnerTest {
         Files.writeString(
             cells,
             """{"plan": {"run_id": "t1", "passes": 1, "iterations": 20, "build_type": "benchmark", "instrument": "emb-sdk-start",
-                 "devices": {"mid-b": {"serial": "8ANX0W1SN", "tier": "entry-mid", "cool_gate_c": 32.0, "profile": {"api_level": 31}}}},
+                 "devices": {"mid-b": {"serial": "SERIAL0001", "tier": "entry-mid", "cool_gate_c": 32.0, "profile": {"api_level": 31}}}},
                 "cells": [{"id": "mid-b|9.2.0|reference", "version": "9.2.0", "levels": {"compile": "profile"}, "device": "mid-b",
                            "group": "version-sweep"}]}""",
         )
@@ -51,7 +51,7 @@ class CellRunnerTest {
             override fun run(serial: String?, vararg args: String): Output {
                 val key = args.joinToString(" ")
                 val out = when {
-                    key == "devices" -> "List of devices attached\n8ANX0W1SN\tdevice\n"
+                    key == "devices" -> "List of devices attached\nSERIAL0001\tdevice\n"
                     key == "shell dumpsys thermalservice" ->
                         "Current temperatures from HAL:\n\tTemperature{mValue=30.5, mType=0, mName=cpu0, mStatus=0}\n"
                     key == "shell pm list packages io.embrace.android.exampleapp" -> "package:io.embrace.android.exampleapp\n"
@@ -95,7 +95,7 @@ class CellRunnerTest {
         assertEquals(repo.resolve("out/mid-b__9.2.0__reference"), cellDir)
         val state = StartupJson.parseToJsonElement(Files.readString(cellDir.resolve("cell-state.json"))).jsonObject
         assertEquals("t1", state.getValue("plan_run_id").jsonPrimitive.content)
-        assertEquals("8ANX0W1SN", state.getValue("serial").jsonPrimitive.content)
+        assertEquals("SERIAL0001", state.getValue("serial").jsonPrimitive.content)
         assertEquals("entry-mid", state.getValue("device_profile").jsonObject.getValue("tier").jsonPrimitive.content)
         assertTrue("serial" !in state.getValue("device_profile").jsonObject)
         assertEquals("embrace = \"9.2.0\"", state.getValue("catalog_pin").jsonPrimitive.content)

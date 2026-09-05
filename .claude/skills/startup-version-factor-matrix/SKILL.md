@@ -55,18 +55,22 @@ instead of `V*F`. Full rationale, cell budgets, and the priority ladder are in
 - `references/version-compat.md` — per-version build recipes (which plugin, which deps, what
   breaks), which measurement instruments exist in which versions, and the bridge-calibration
   procedure that makes old and new windows comparable.
-- `scripts/matrix_plan.py` — expands a plan file into an ordered, interleaved cell list with a
-  wall-clock estimate and the controls checklist. **Dry-run by default; run this first.**
-- `scripts/cell_runner.py` — executes ONE cell: applies the factor state, machine-checks every
-  invariant (resolved SDK version, compile state, temperature, quiet host, single driver),
-  delegates the passes to `fleet_campaign.py`, and writes a `cell-state.json` provenance record
-  next to the traces.
-- `scripts/compat_patch.py` — applies/reverts the per-version app-side compatibility patches
-  (plugin id, extra deps, API breaks) encoded as data from prior sweeps; `--verify` re-checks a
-  patched tree builds before a cell is allowed to run.
-- `scripts/matrix_report.py` — cross-cell comparison: per-cell median/p90/max, per-pass medians
-  (drift and pass-state detection), version deltas inside the reference cell, and factor effect
-  sizes per anchor version.
+- The commands, from the Kotlin `startup-tools` module (run as `tools/startup <command>` from the
+  repo root; `startup-tools/README.md` has the table, `tools/startup <command> --help` the flags;
+  needs a JDK 17+ and `adb`):
+  - `tools/startup matrix-plan <plan.json>` — expands a plan file into an ordered, interleaved
+    cell list with a wall-clock estimate and the controls checklist. **Dry-run by default; run
+    this first.** `--emit <cells.json>` writes the cell list the runner consumes.
+  - `tools/startup cell-runner --cells <cells.json> --cell <id>` — executes ONE cell: applies the
+    factor state, machine-checks every invariant (resolved SDK version, compile state,
+    temperature, quiet host, single driver), delegates the passes to `fleet-campaign`, and writes
+    a `cell-state.json` provenance record next to the traces.
+  - `tools/startup compat-patch` — applies/reverts the per-version app-side compatibility patches
+    (plugin id, extra deps, API breaks) encoded as data from prior sweeps; `--verify` re-checks a
+    patched tree builds before a cell is allowed to run.
+  - `tools/startup matrix-report <run-dir>` — cross-cell comparison: per-cell median/p90/max,
+    per-pass medians (drift and pass-state detection), version deltas inside the reference cell,
+    and factor effect sizes per anchor version.
 
 ## Run shape (non-negotiable parts)
 
@@ -83,25 +87,25 @@ instead of `V*F`. Full rationale, cell budgets, and the priority ladder are in
   whichever arm runs later.
 - **Cool gate before every pass**, per-device threshold, driven by thermalservice sensors — not
   `dumpsys battery` (two fleet devices report unusable battery temperatures).
-- **One cell at a time, one driver at a time.** `cell_runner.py` takes a pidfile lock; a second
+- **One cell at a time, one driver at a time.** `tools/startup cell-runner` takes a pidfile lock; a second
   driver silently destroys a run by force-stopping the app mid-init and competing for trace
   buffers.
 
 ## Procedure
 
 1. **Plan.** Copy `plan-example.json`, fill in your own devices with their profiles (schema in
-   `references/design.md`), then `python3 scripts/matrix_plan.py plan.json` — it prints the ordered cell list,
-   the wall-clock estimate, and what it will change on the device/repo. Confirm the estimate
-   fits the window you actually have; trim cells, never trim iterations.
-2. **Probe devices once** with `startup-multi-device-analysis/scripts/device_probe.py` (cluster
-   map, thermal sensors, OS version). The matrix needs the cluster map for analysis and the
-   sensor list for the cool gate.
-3. **Per cell**: `python3 scripts/cell_runner.py --cell <id> --plan plan.json`. It refuses to
+   `references/design.md`), then `tools/startup matrix-plan plan.json --emit cells.json` — it
+   prints the ordered cell list, the wall-clock estimate, and what it will change on the
+   device/repo, and writes the cell list the runner reads. Confirm the estimate fits the window
+   you actually have; trim cells, never trim iterations.
+2. **Probe devices once** with `tools/startup probe` (cluster map, thermal sensors, OS version).
+   The matrix needs the cluster map for analysis and the sensor list for the cool gate.
+3. **Per cell**: `tools/startup cell-runner --cells cells.json --cell <id>`. It refuses to
    start unless every invariant passes, so a red cell is a stop-and-fix, not a warning.
-4. **Report** with `scripts/matrix_report.py <run-dir>`. Read `references/design.md` §Reading
+4. **Report** with `tools/startup matrix-report <run-dir>`. Read `references/design.md` §Reading
    the output before interpreting: which numbers are comparable across versions and which are
    not is a property of the *instrument*, not of the data.
-5. **Restore.** `compat_patch.py --revert-all` and confirm `git status` is clean apart from
+5. **Restore.** `tools/startup compat-patch --revert-all` and confirm `git status` is clean apart from
    intended changes; the app tree must return to its pre-run state or the next campaign is
    measuring a different app.
 

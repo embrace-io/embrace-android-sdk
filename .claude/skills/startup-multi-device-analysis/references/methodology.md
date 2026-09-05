@@ -41,7 +41,7 @@ device needs. Spend hardware budget on axes.
   systematically optimistic; an oldest-only set over-weights classes that are disappearing
   from the installed base.
 
-**Record the profile, always.** Run `device_probe.py` per device before the first campaign and
+**Record the profile, always.** Run `tools/startup probe` per device before the first campaign and
 keep `<name>-topology.json` next to the campaign output. Every later comparison (across
 sessions, across SDK versions, across engineers) depends on knowing exactly which device state
 produced the numbers; a marketing name is not a profile. Re-probe after an OS update — an

@@ -5,7 +5,7 @@
     python3 artifact_sync.py record <local.html> <artifact-url>
     python3 artifact_sync.py list                     # every tracked doc and its state
 
-WHY THIS EXISTS. The project's living docs exist twice: a local file in `claude-output/` and a
+WHY THIS EXISTS. The project's living docs exist twice: a source file in `_shared/records/documents/` and a
 published artifact that people actually read. Nothing keeps them in step, and on 2026-08-26 a single
 audit found drift in BOTH directions:
 
@@ -34,16 +34,15 @@ depend on memory:
     DIRTY    - changed locally since the last publish. Do NOT overwrite from published; merge, and
                expect the publish tool to demand a read first if another session also moved.
 
-The manifest lives beside the docs in claude-output/ (gitignored, like them) rather than in the
-skill, because it describes those files' state, not the tooling's.
+The manifest lives in the committed records root (_shared/records/) beside the document sources it
+describes, so a fresh checkout knows which local file and published page were last the same.
 """
 import hashlib
 import json
 import pathlib
 import sys
 
-MANIFEST = pathlib.Path("/Users/hansonho/work/embrace-android-sdk/claude-output/"
-                        "artifact-manifest.json")
+MANIFEST = pathlib.Path(__file__).resolve().parent / "records" / "artifact-manifest.json"
 
 
 def digest(path):

@@ -1,0 +1,74 @@
+{
+    "benchmark-statistics-methods.html": {
+        "path": "/Users/hansonho/work/embrace-android-sdk/.claude/skills/_shared/records/documents/benchmark-statistics-methods.html",
+        "published_at": "2026-08-26",
+        "sha": "4590cc2e8a300272",
+        "url": "https://claude.ai/code/artifact/7666429a-99cc-4f11-ae9d-64ffa0cb8db8"
+    },
+    "otel-engine-comparison.html": {
+        "path": "/Users/hansonho/work/embrace-android-sdk/.claude/skills/_shared/records/documents/otel-engine-comparison.html",
+        "published_at": "2026-08-26",
+        "sha": "3de9bcb017cdd98f",
+        "url": "https://claude.ai/code/artifact/da788ded-e298-42c9-ba18-ff16102e1b7d"
+    },
+    "p17-otel-kotlin-engine.html": {
+        "path": "/Users/hansonho/work/embrace-android-sdk/.claude/skills/_shared/records/documents/p17-otel-kotlin-engine.html",
+        "published_at": "2026-08-26",
+        "sha": "39989c533030c0b9",
+        "url": "https://claude.ai/code/artifact/088f251b-3abb-481d-87ca-3dd087c566e9"
+    },
+    "sdk-init-metadata-fleet-validation.html": {
+        "path": "/Users/hansonho/work/embrace-android-sdk/.claude/skills/_shared/records/documents/sdk-init-metadata-fleet-validation.html",
+        "published_at": "2026-08-26-recovered",
+        "sha": "a72ba5f99b421955",
+        "url": "https://claude.ai/code/artifact/9f3bafbe-5cab-4d56-b0d0-dd09e0140883"
+    },
+    "startup-external-factors-summary.html": {
+        "path": "/Users/hansonho/work/embrace-android-sdk/.claude/skills/_shared/records/documents/startup-external-factors-summary.html",
+        "published_at": "2026-08-26",
+        "sha": "38074d8eaedf3b1c",
+        "url": "https://claude.ai/code/artifact/9eda58ea-2446-4bd9-b1ea-228ea7ad7a33"
+    },
+    "startup-improvements-tracker.html": {
+        "path": "/Users/hansonho/work/embrace-android-sdk/.claude/skills/_shared/records/documents/startup-improvements-tracker.html",
+        "published_at": "2026-08-26",
+        "sha": "1dbf22901f65ba99",
+        "url": "https://claude.ai/code/artifact/0e08adcf-5b33-43f5-8a7f-abc7679d68b3"
+    },
+    "startup-outlier-mitigation-telemetry.html": {
+        "path": "/Users/hansonho/work/embrace-android-sdk/.claude/skills/_shared/records/documents/startup-outlier-mitigation-telemetry.html",
+        "published_at": "2026-08-26",
+        "sha": "a71246a9bf45d809",
+        "url": "https://claude.ai/code/artifact/8818cdf3-30c0-43d4-9bc4-a71fe0525435"
+    },
+    "startup-primer.html": {
+        "path": "/Users/hansonho/work/embrace-android-sdk/.claude/skills/_shared/records/documents/startup-primer.html",
+        "published_at": "unrecorded",
+        "sha": "895d6db88056d048",
+        "url": "https://claude.ai/code/artifact/a67bcf10-2835-49e8-95ee-7d10a551fdf9"
+    },
+    "startup-testing-log.html": {
+        "path": "/Users/hansonho/work/embrace-android-sdk/.claude/skills/_shared/records/documents/startup-testing-log.html",
+        "published_at": "2026-08-26",
+        "sha": "a2bfa7200fded418",
+        "url": "https://claude.ai/code/artifact/c8ef75b3-4c83-4335-8b9a-3776699266a0"
+    },
+    "startup-tools-in-kotlin.html": {
+        "path": "/Users/hansonho/work/embrace-android-sdk/.claude/skills/_shared/records/documents/startup-tools-in-kotlin.html",
+        "published_at": "unrecorded",
+        "sha": "52e5dc94733eff24",
+        "url": "https://claude.ai/code/artifact/930f1140-2999-4d45-8a73-e57f5b0495fc"
+    },
+    "startup-variance-analysis-2026-08-11.html": {
+        "path": "/Users/hansonho/work/embrace-android-sdk/.claude/skills/_shared/records/documents/startup-variance-analysis-2026-08-11.html",
+        "published_at": "2026-08-26",
+        "sha": "c719d940c920a36d",
+        "url": "https://claude.ai/code/artifact/f5761a2e-9a72-4709-937c-52c0146112b4"
+    },
+    "startup-version-evolution.html": {
+        "path": "/Users/hansonho/work/embrace-android-sdk/.claude/skills/_shared/records/documents/startup-version-evolution.html",
+        "published_at": "2026-08-26",
+        "sha": "cb38196f11a37411",
+        "url": "https://claude.ai/code/artifact/40218422-0143-4fd8-82ee-6fcb1bce67cb"
+    }
+}

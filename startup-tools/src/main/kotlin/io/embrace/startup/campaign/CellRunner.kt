@@ -415,7 +415,7 @@ class CellRunner(
 
         /**
          * Every `mValue=` on a `Temperature{...}` line of the "Current temperatures from HAL" block. The
-         * Python scanned the whole dump, which on a Pixel 3 also contains a "Cached temperatures" block
+         * Python scanned the whole dump, which on some devices also contains a "Cached temperatures" block
          * holding peak values (72 °C at idle) - a gate reading those would never open after a hot pass.
          */
         fun parseTemperatures(dumpsys: String): List<Double> =

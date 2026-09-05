@@ -13,7 +13,7 @@
       "api_level": 34,
       "tier": "mid",
       "vendor": "<oem>",
-      "soc_family": "<from device_probe.py>",
+      "soc_family": "<from tools/startup probe>",
       "ram_class": "4-6GB",
       "cool_gate_c": 32.0
     },
@@ -22,7 +22,7 @@
       "api_level": 29,
       "tier": "entry",
       "vendor": "<oem>",
-      "soc_family": "<from device_probe.py>",
+      "soc_family": "<from tools/startup probe>",
       "ram_class": "<=2GB",
       "cool_gate_c": 30.0
     },
@@ -31,7 +31,7 @@
       "api_level": 35,
       "tier": "flagship",
       "vendor": "<oem, ideally different from the mid device>",
-      "soc_family": "<from device_probe.py>",
+      "soc_family": "<from tools/startup probe>",
       "ram_class": ">=8GB",
       "cool_gate_c": 32.0
     }

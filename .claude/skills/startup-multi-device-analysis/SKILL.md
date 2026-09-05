@@ -45,6 +45,13 @@ with missing values, cross-device comparison rules), `references/outlier-taxonom
 gating, per-device casts, extending telemetry validation across the set),
 `references/device-gotchas.md` (vendor-class tooling capability limits).
 
+**What we already believe** is in `_shared/records/maxims/MAXIMS.md` (generated: each maxim's statement,
+scope, status and how many devices hold it) and `_shared/records/maxims/FINDINGS.md` (curated: the
+conclusions that are not per-campaign checks, and the maxim history). Read them first, as priors.
+Every device's campaign is scored against the maxims with `tools/startup maxims score` (step 4b below)
+so that a belief failing on one tier is recorded as exactly that; the mechanism and the process are
+described in `startup-analysis/SKILL.md` "Maxims".
+
 **What this layer may conclude.** It compares result sets and **flags differences** — "these two
 differ by this much on this metric", "this signal exists on one and not the other", "this delta is
 confounded by X". It does not explain *why* a difference exists: attribution needs one factor
@@ -106,48 +113,52 @@ fields across all the startup skills so results stay comparable:
 - **vendor / OEM** — governs install-time compile policy, thermal governors, SELinux
   readability of sysfs/procfs nodes.
 - **soc_family + cluster topology** — cluster map, per-cluster max frequencies, homogeneous
-  vs big.LITTLE (from `device_probe.py`).
+  vs big.LITTLE (from `tools/startup probe`).
 - **ram_class**, and **storage_class** where detectable (eMMC vs UFS-class changes IO-stall
   severity by an order of magnitude).
 
-`device_probe.py` emits all of these. **Run it on every device before the first campaign and
+`tools/startup probe` emits all of these. **Run it on every device before the first campaign and
 store its topology JSON alongside the results.** Comparability later depends on it: without
 the recorded profile, a subsequent run cannot tell whether a difference is the SDK, a
 different device, or the same device in a different state.
 
-## Bundled files (relative to this skill's base directory)
+## Commands this skill uses
 
-Scripts (python3 stdlib only; trace_processor launcher fetched as in `startup-analysis`):
+All from the Kotlin `startup-tools` module, run from the repo root as `tools/startup <command>`
+(`startup-tools/README.md` has the full command table; `tools/startup <command> --help` gives the
+exact flags; the perfetto engine is fetched once per machine as described in `startup-analysis`):
 
-- `scripts/device_probe.py` — per-device profile probe: vendor/model, API level, SoC family,
-  CPU part ids, cpufreq policies (cluster map + max freqs), RAM and storage class, a
-  heuristic tier, thermalservice availability. Writes `<name>-topology.json`; its cluster map
-  feeds `--little-cpus` below. **Run FIRST per device and keep the JSON.**
-- `scripts/fleet_campaign.py` — one device's campaign: N back-to-back passes of the chosen
+- `tools/startup probe <serial> <name> <output-dir>` — per-device profile probe: vendor/model,
+  API level, SoC family, CPU part ids, cpufreq policies (cluster map + max freqs), RAM and
+  storage class, a heuristic tier, thermalservice availability. Writes `<name>-topology.json`;
+  its cluster map feeds `--little-cpus` below. **Run FIRST per device and keep the JSON.**
+- `tools/startup fleet-campaign` — one device's campaign: N back-to-back passes of the chosen
   benchmark method, traces copied aside per pass before the next wipes them, battery AND
-  silicon (thermalservice) temps logged per pass. Args: serial, connected-dir match,
-  output dir, passes, method; `--repo` if not run from inside the repo. Run per device,
-  sequentially (single gradle project).
-- `scripts/variance_analysis.py` — per-iteration extraction for one pass dir: window +
+  silicon (thermalservice) temps logged per pass. Flags: `--serial`, `--dir-match`
+  (connected-dir match), `--out`, `--passes`, `--method`, `--iterations`; `--repo` if not run
+  from inside the repo. Run per device, sequentially (single gradle project).
+- `tools/startup variance <pass-dir>` — per-iteration extraction for one pass dir: window +
   every section duration, per-section thread-state, per-CPU window residency; `--json` for
   downstream tools; `--little-cpus` sets the cluster split from the probe.
-- `scripts/hypothesis_tests.py` — cross-pass tests for one device: pass-state detection
-  (fast/slow alternation + section-ratio fingerprint), config-load bimodality (iter000 vs
-  rest), placement correlation, off-window fluctuators.
-- `scripts/outlier_metrics.sql` + `scripts/outlier_factors.py` — the external-factor
+- `tools/startup hypothesis-tests <campaign-dir>` — cross-pass tests for one device: pass-state
+  detection (fast/slow alternation + section-ratio fingerprint), config-load bimodality
+  (iter000 vs rest), placement correlation, off-window fluctuators.
+- `tools/startup outlier-factors <pass-dir> <passN-factors.json>` — the external-factor
   catalogue per iteration: delivered CPU clocks, thread-state with D/IO split, ART
   verify/class-load, lock contention, binder counts, own-process GC, in-process and
-  other-process CPU competitors, swap/memory.
-- `scripts/factors_report.py` — factor correlations vs window delta, pass-level factor
-  means, the ranked outlier catalogue, extreme-outlier competitor drill-down.
-- `scripts/cross_device_sections.py` — the side-by-side: per-section median/max/%-of-window
-  per device (pooled across passes), top-3 shares — the workload-identity check.
+  other-process CPU competitors, swap/memory. Its query is `outlier_metrics.sql` under
+  `startup-tools/src/main/resources/io/embrace/startup/perfetto/sql/`.
+- `tools/startup factors-report <campaign-dir>` — factor correlations vs window delta,
+  pass-level factor means, the ranked outlier catalogue, extreme-outlier competitor drill-down.
+- `tools/startup cross-device-sections <label>=<campaign-dir>...` — the side-by-side:
+  per-section median/max/%-of-window per device (pooled across passes), top-3 shares — the
+  workload-identity check.
 
 ## Prerequisites
 
 - Everything from `startup-analysis` (built SDK in mavenLocal or a released version pinned,
-  device prerequisites), times N devices. Multiple devices may be connected simultaneously;
-  target each with `ANDROID_SERIAL` (fleet_campaign does this). Gradle runs are sequential
+  device prerequisites, JDK 17+ and `adb`), times N devices. Multiple devices may be connected
+  simultaneously; target each with `ANDROID_SERIAL` (`fleet-campaign` does this). Gradle runs are sequential
   across devices — one campaign at a time; analysis parallelizes freely.
 - A device set assembled per **Choosing your device set** above, each device probed and its
   profile recorded.
@@ -158,7 +169,7 @@ Scripts (python3 stdlib only; trace_processor launcher fetched as in `startup-an
 
 ## Procedure
 
-1. **Probe every device**: `device_probe.py` per device. Record the full device profile
+1. **Probe every device**: `tools/startup probe` per device. Record the full device profile
    (cluster map / little-CPU list, max freqs, API level, vendor, SoC family, RAM and storage
    class, thermal sensors). The probe output IS the device context for every later report;
    store it with the results.
@@ -166,15 +177,22 @@ Scripts (python3 stdlib only; trace_processor launcher fetched as in `startup-an
    interpreting-results.md; 4×25 floor for targeted/fast runs — never fewer), and the SAME
    shape on every device in the set. Keep passes back-to-back; the campaign log carries temps.
    Set the iteration count in `StartupBenchmarks.kt` if it differs, and restore it afterwards.
-3. **Per-device analysis**: `variance_analysis.py --json` per pass (use the probe's
-   `--little-cpus`), then `hypothesis_tests.py` per device. Check FIRST for pass-state
+3. **Per-device analysis**: `tools/startup variance --json` per pass (use the probe's
+   `--little-cpus`), then `tools/startup hypothesis-tests` per device. Check FIRST for pass-state
    alternation — if present, all cross-pass comparisons use matching-state passes only.
-4. **Factor forensics**: `outlier_factors.py` per pass, `factors_report.py` per device.
+4. **Factor forensics**: `tools/startup outlier-factors` per pass, `tools/startup factors-report`
+   per device.
    Read the outlier catalogue tail-first (p90/p95/max/top-3, slow-rate) — never medians
    alone. Classify each outlier by its single-trace signature (interpreting-results.md), then
    use `references/outlier-taxonomy.md` to check the class against that device's tier gating
    and to name its cast.
-5. **Cross-device synthesis**: `cross_device_sections.py` over all devices. Run the
+4b. **Score the maxims per device**: `tools/startup maxims score <campaign-dir>
+   --reference-set <reference-set.json>` reads the `passN.json`, `passN-factors.json` and
+   `passN-cohorts.json` just produced, prints one verdict per maxim and records them in the
+   ledger; then `tools/startup maxims render` regenerates `MAXIMS.md`. A rerun of an already-scored campaign
+   takes `--ledger none`. Report contradictions by cell and say whether they repeat; report
+   candidates (factors at 1.5x or more that no maxim covers) as leads for the synthesis.
+5. **Cross-device synthesis**: `tools/startup cross-device-sections` over all devices. Run the
    workload-identity check; grade each per-device finding by tier scaling; triangulate any
    anomaly across vendor/SoC/OS arms before theorizing mechanisms. Where an axis is missing
    from your set, say what that leaves confounded.

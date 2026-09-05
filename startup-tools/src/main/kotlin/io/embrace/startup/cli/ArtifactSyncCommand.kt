@@ -14,8 +14,8 @@ import io.embrace.startup.store.ArtifactManifest
 /**
  * `artifact-sync` - the former `_shared/artifact_sync.py`: guard against local/published drift in the
  * living docs. Run `check` BEFORE editing, `record` AFTER publishing. The manifest is
- * `<repo>/claude-output/artifact-manifest.json` (repo-relative now; the Python hard-coded one home
- * directory).
+ * `artifact-manifest.json` in the committed records root (`RepoRoot.records()`), beside the document
+ * sources it describes.
  */
 class ArtifactSyncCommand : CliktCommand(name = "artifact-sync") {
     init {

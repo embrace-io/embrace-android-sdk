@@ -30,7 +30,7 @@ class SubmitTest {
     fun `real store records are found by run id and refused for their unclean signal inventory`() {
         val local = assertNotNull(Submit.findLocal(store, "9.2.0__mid-b")).let { Submit.findLocal(store, "9.2.0__mid-b")!! }
         assertNull(Submit.findLocal(store, "nope"))
-        val out = Submit.build(local, "hanson", "9.2.0__mid-b", "2026-09-02T08:00:00", device = null, lossyTolerancePct = 0.0)
+        val out = Submit.build(local, "contributor", "9.2.0__mid-b", "2026-09-02T08:00:00", device = null, lossyTolerancePct = 0.0)
         assertNull(out.record)
         assertEquals(
             listOf(

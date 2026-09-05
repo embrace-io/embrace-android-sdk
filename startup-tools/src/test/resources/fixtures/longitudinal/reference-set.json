@@ -12,7 +12,7 @@
  },
  "devices": {
   "flagship-a": {
-   "serial": "29131FDH300KXR",
+   "serial": "SERIAL0001",
    "tier": "flagship",
    "profile": {
     "api_level": 35,
@@ -31,7 +31,7 @@
    "retired": false
   },
   "mid-b": {
-   "serial": "8ANX0W1SN",
+   "serial": "SERIAL0002",
    "tier": "entry-mid",
    "profile": {
     "api_level": 31,
@@ -49,7 +49,7 @@
    "retired": false
   },
   "mid-a": {
-   "serial": "R58W211D4ZD",
+   "serial": "SERIAL0003",
    "tier": "entry-mid",
    "profile": {
     "api_level": 35,
@@ -66,7 +66,7 @@
    "retired": false
   },
   "entry-a": {
-   "serial": "RZ8RA1SQVAN",
+   "serial": "SERIAL0004",
    "tier": "entry",
    "profile": {
     "api_level": 29,

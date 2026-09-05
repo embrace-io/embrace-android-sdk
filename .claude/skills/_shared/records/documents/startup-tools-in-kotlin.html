@@ -1,0 +1,366 @@
+
+<title>Startup Tools in Kotlin</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #F3F5F7;
+    --surface: #FFFFFF;
+    --surface-2: #E8ECF0;
+    --ink: #16202A;
+    --ink-2: #55636F;
+    --ink-3: #8593A0;
+    --rule: #D6DDE3;
+    --accent: #1E6F7A;
+    --accent-soft: #DDEDEF;
+    --decide: #9A6700;
+    --decide-soft: #FBF1D9;
+    --gate: #2E7D4F;
+    --gate-soft: #E1F0E7;
+    --serif: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    --sans: "IBM Plex Sans", -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0F151B; --surface: #161E26; --surface-2: #1E2830;
+      --ink: #E6ECF1; --ink-2: #A3B0BC; --ink-3: #72808C; --rule: #2B3743;
+      --accent: #6FB9C4; --accent-soft: #14303A;
+      --decide: #E0B24A; --decide-soft: #2E2612;
+      --gate: #6CC392; --gate-soft: #14301F;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0F151B; --surface: #161E26; --surface-2: #1E2830;
+    --ink: #E6ECF1; --ink-2: #A3B0BC; --ink-3: #72808C; --rule: #2B3743;
+    --accent: #6FB9C4; --accent-soft: #14303A;
+    --decide: #E0B24A; --decide-soft: #2E2612;
+    --gate: #6CC392; --gate-soft: #14301F;
+  }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: var(--sans); font-size: 16px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page { max-width: 1040px; margin: 0 auto; padding: 48px 28px 96px; }
+  .col { max-width: 72ch; }
+  header { border-bottom: 2px solid var(--ink); padding-bottom: 20px; margin-bottom: 36px; }
+  .eyebrow { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin: 0 0 12px; }
+  h1 { font-family: var(--serif); font-weight: 600; font-size: clamp(1.9rem, 4vw, 2.6rem); line-height: 1.12; margin: 0 0 14px; text-wrap: balance; letter-spacing: -0.01em; }
+  .standfirst { font-size: 1.08rem; color: var(--ink-2); margin: 0; max-width: 64ch; }
+  h2 { font-family: var(--serif); font-weight: 600; font-size: 1.45rem; margin: 48px 0 12px; text-wrap: balance; }
+  h3 { font-family: var(--sans); font-weight: 600; font-size: 1.02rem; margin: 26px 0 8px; }
+  p { margin: 0 0 14px; }
+  p, li { max-width: 72ch; }
+  ul, ol { margin: 0 0 14px; padding-left: 1.3rem; }
+  li { margin-bottom: 6px; }
+  code { font-family: var(--mono); font-size: 0.86em; background: var(--surface-2); border-radius: 3px; padding: 1px 5px; }
+  pre { font-family: var(--mono); font-size: 0.82rem; line-height: 1.5; background: var(--surface); border: 1px solid var(--rule); border-radius: 4px; padding: 14px 16px; overflow-x: auto; margin: 14px 0; }
+  pre code { background: none; padding: 0; font-size: inherit; }
+  a { color: var(--accent); }
+  .lead { background: var(--surface); border: 1px solid var(--rule); border-left: 4px solid var(--accent); border-radius: 4px; padding: 16px 20px; margin: 18px 0 26px; max-width: none; }
+  .lead p { max-width: none; }
+  .lead p:last-child { margin-bottom: 0; }
+  .sources { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 18px 0 8px; }
+  .src { background: var(--surface); border: 1px solid var(--rule); border-radius: 4px; padding: 10px 14px; font-size: 0.86rem; }
+  .src b { display: block; font-family: var(--mono); font-size: 0.74rem; color: var(--accent); margin-bottom: 3px; font-weight: 500; }
+  .src span { color: var(--ink-2); }
+  .tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--rule); border-radius: 4px; margin: 16px 0 22px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+  th { text-align: left; font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; padding: 10px 12px 8px; border-bottom: 1px solid var(--rule); background: var(--surface-2); white-space: nowrap; }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td.num, th.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.k { font-weight: 600; white-space: nowrap; }
+  .phase-n { font-family: var(--mono); font-weight: 500; color: var(--accent); white-space: nowrap; }
+  .gate { color: var(--gate); font-weight: 500; }
+  .pill { display: inline-block; font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; border-radius: 3px; padding: 1px 7px; vertical-align: 1px; font-weight: 500; }
+  .pill.keep { background: var(--gate-soft); color: var(--gate); }
+  .pill.merge { background: var(--accent-soft); color: var(--accent); }
+  .pill.fix { background: var(--decide-soft); color: var(--decide); }
+  .decide { background: var(--decide-soft); border: 1px solid transparent; border-left: 4px solid var(--decide); border-radius: 4px; padding: 14px 18px; margin: 14px 0; }
+  .decide ol { margin-bottom: 0; }
+  .decide li { max-width: none; }
+  .decide .rec { color: var(--ink-2); }
+  .note { color: var(--ink-2); font-size: 0.9rem; }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 18px 0 6px; }
+  .fact { background: var(--surface); border: 1px solid var(--rule); border-radius: 4px; padding: 12px 14px; }
+  .fact .v { font-family: var(--mono); font-size: 1.35rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .fact .l { font-size: 0.78rem; color: var(--ink-2); margin-top: 2px; }
+  footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--rule); font-size: 0.84rem; color: var(--ink-3); }
+  footer p { max-width: none; margin-bottom: 6px; }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+
+<div class="page">
+<header>
+  <p class="eyebrow">Plan · startup-analysis skills · 2026-09-01</p>
+  <h1>Porting the startup-analysis toolchain from Python to Kotlin</h1>
+  <p class="standfirst">Five skills, nineteen Python files, one method of record — rebuilt as one Kotlin module that anyone with the repo can run on a Mac with a single command, and proven against the Python before the Python is deleted.</p>
+</header>
+
+<div class="col">
+<div class="lead">
+  <p><strong>The decision.</strong> One Gradle JVM module in this repo, <code>:startup-tools</code>, with a Clikt dispatcher and one Kotlin file per former Python script, sharing a single core library. Shipped through <code>installDist</code> behind a checked-in <code>tools/startup</code> wrapper that rebuilds incrementally and then runs the tool directly, so the loop is <em>edit file → <code>tools/startup &lt;command&gt;</code></em>, with a few seconds of compile in between. Nothing to install beyond what building the SDK already requires. Parity is proven by golden fixtures generated from the real stores, a CPython-compatible random number generator so bootstrap and permutation results match bit for bit, and a captured trace set for the Perfetto layer. Along the way the port fixes the defects the inventory found instead of reproducing them, and records every deliberate departure.</p>
+</div>
+</div>
+
+<h2>What this plan rests on</h2>
+<p class="note">Four supporting documents, all in <code>claude-output/2026-08-26-kotlin-port/</code>. This page is their synthesis; the detail lives there.</p>
+<div class="sources">
+  <div class="src"><b>01 · python-inventory</b><span>Every script, CLI, input, output, subprocess and shared import; the duplication and defect audit.</span></div>
+  <div class="src"><b>02 · methodology-to-replicate</b><span>The behaviour the port must preserve, each rule tied to the incident that earned it.</span></div>
+  <div class="src"><b>03 · toolchain-facts</b><span>Repo build stack, and what the pinned <code>trace_processor</code> actually is.</span></div>
+  <div class="src"><b>04 · kotlin-research</b><span>Eight approaches compared with dated sources; recommendation and runner-up.</span></div>
+</div>
+
+<div class="facts">
+  <div class="fact"><div class="v">5,002</div><div class="l">Python lines across 19 files</div></div>
+  <div class="fact"><div class="v">392</div><div class="l">SQL lines across 5 files, ported verbatim</div></div>
+  <div class="fact"><div class="v">0</div><div class="l">third-party Python dependencies</div></div>
+  <div class="fact"><div class="v">3</div><div class="l">incompatible quantile definitions today</div></div>
+  <div class="fact"><div class="v">428</div><div class="l">lines of <code>stats.py</code> imported by nothing</div></div>
+</div>
+
+<div class="col">
+<h2>Why this shape and not another</h2>
+<p>The research compared eight approaches — <code>.main.kts</code>, kscript, JBang, Kotlin Notebook, Amper, a compiled Gradle module, Kotlin/Native and GraalVM. Three facts about <em>this</em> codebase decide it.</p>
+<p><strong>The Python is stdlib-only and the Gradle build already contains everything the Kotlin needs.</strong> Gradle 9.7.1, Kotlin 2.4.10, kotlinx-serialization, the daemon, the build and configuration caches — all present and warmed by normal development. Every scripting option adds a Homebrew install and a second compiler outside Gradle. The compiled module adds nothing.</p>
+<p><strong>The tools spend their time in child processes.</strong> <code>adb</code>, <code>gradlew -p examples/ExampleApp</code> and <code>trace_processor</code> run for seconds to hours. JVM cold start, around 0.2–0.4 s, is noise against that — which removes the only argument for Kotlin/Native or GraalVM, both of which cost real time in subprocess ergonomics, build minutes and, for GraalVM, arm64-only macOS support. It also means the tool must be launched <em>outside</em> Gradle: <code>./gradlew run</code> swallows stdin, converts exit codes into exceptions, breaks terminal detection, and would wrap a Gradle daemon around the campaign's own <code>gradlew</code> children.</p>
+<p><strong>The statistics need a reproducibility a script cannot test.</strong> The method of record is a seeded two-stage cluster bootstrap and a cluster permutation test. Bit-exact parity with the Python is achievable on the JVM — Commons Math 3's <code>MersenneTwister</code> is a verified <code>init_by_array</code>, and CPython's <code>random</code> layer is about eighty lines on top — and it is <em>provable</em> only with a test suite that runs in CI, which a module has and a script does not.</p>
+<h3>Runner-up, and when to prefer it</h3>
+<p><code>.main.kts</code> scripts with shared code via <code>@file:Import</code>, kept beside the SKILL.md files. JetBrains is committed to the format and AndroidX uses it for exactly this kind of utility. Choose it only if the team wants <em>no</em> Gradle wiring, rarely edits the scripts (each edit costs a 3–5 s recompile, and imported files have a stale-cache bug), and accepts having no unit tests. That is not the stated goal, so it is the fallback rather than the plan.</p>
+</div>
+
+<h2>Target architecture</h2>
+<div class="col"><p>One module. The <code>cli/</code> directory is the script-sized edit surface — one file per former Python script — and everything those files share lives once in <code>core/</code>, <code>perfetto/</code>, <code>device/</code> and <code>campaign/</code>.</p></div>
+<pre><code>startup-tools/                          new Gradle subproject, JVM only
+  build.gradle.kts                      kotlin("jvm") · application · kotlin-serialization · detekt
+  src/main/kotlin/io/embrace/startup/
+    Main.kt                             Clikt dispatcher: one subcommands(...) list
+    cli/                                ONE FILE PER FORMER SCRIPT
+      Analyze.kt  Variance.kt  HypothesisTests.kt  OutlierFactors.kt  FactorsReport.kt
+      CrossDeviceSections.kt  Probe.kt  FleetCampaign.kt  VerifyArms.kt
+      ReferenceSet.kt  Ingest.kt  Trend.kt  Submit.kt  Reproducibility.kt
+      MatrixPlan.kt  CellRunner.kt  CompatPatch.kt  MatrixReport.kt  TraceHealth.kt  ServeTrace.kt
+    core/                               the consolidated library
+      stats/   Quantile.kt  Cluster.kt (bootstrap · permutation · ICC/DEFF)  EffectSize.kt  Power.kt  Compare.kt
+      rng/     CPythonRandom.kt         MT19937 + CPython's random() · getrandbits · _randbelow · shuffle · choice
+      json/    StoreRecord.kt  ReferenceSet.kt  CorpusRecord.kt  SectionMedians.kt  LegRecord.kt   (@Serializable)
+      text/    Table.kt  Csv.kt
+      repo/    RepoRoot.kt (one implementation)  Worktree.kt  BorrowedState.kt
+    perfetto/
+      Prebuilt.kt                       native trace_processor_shell by URL + sha256, pinned v57.2
+      TraceProcessor.kt                 query(trace, sql) via -q · WarmSession via `server unix` + `query --remote`
+      TraceHealth.kt                    loss counters × canary → five verdicts
+      sql/                              the five .sql files, unchanged, as resources
+    device/
+      Adb.kt (ONE wrapper)  Probe.kt  Thermal.kt (ONE parser)  CoolGate.kt  CrashBuffer.kt
+    campaign/
+      LegRunner.kt  Resume.kt  InstallRetry.kt  PropagationGate.kt  Sweep.kt
+  src/test/kotlin/                      golden + parity tests
+  src/test/resources/fixtures/          stores · section JSONs · leg arrays · a small gzipped trace set
+tools/startup                           bash wrapper: build if needed, exec the launcher with "$@"</code></pre>
+
+<div class="col">
+<h3>The wrapper</h3>
+<pre><code>#!/usr/bin/env bash
+# tools/startup — rebuild incrementally (warm daemon: seconds), then run the tool directly.
+set -euo pipefail
+REPO="$(cd "$(dirname "$0")/.." &amp;&amp; pwd)"
+if [[ -z "${STARTUP_TOOLS_NO_BUILD:-}" ]]; then
+  "$REPO/gradlew" -q --console=plain :startup-tools:installDist
+fi
+exec "$REPO/startup-tools/build/install/startup-tools/bin/startup-tools" "$@"</code></pre>
+<p><code>STARTUP_TOOLS_NO_BUILD=1</code> skips Gradle when iterating on data only. The tool runs as a plain JVM process with real stdin, real exit codes, and no Gradle daemon wrapped around the campaign.</p>
+<p class="note">Build constraints from the repo: do <em>not</em> apply <code>embrace-jvm-conventions</code> (its JVM 11 target, <code>languageVersion 2.0</code> and warnings-as-errors are for shipped SDK code); apply detekt directly with the repo config and a module baseline; target JVM 17; stay configuration-cache clean, because <code>problems=fail</code> is set repo-wide.</p>
+</div>
+
+<h2>Fidelity policy — port, consolidate, fix, or decide</h2>
+<div class="col"><p>The inventory shows the Python is not one program but several, written over two weeks. A literal port would reproduce three quantile definitions, five <code>repo_root</code> implementations, five adb wrappers, three thermal parsers, four canonical-section lists and two broken CLI contracts. Every departure is decided up front and recorded in a port log.</p></div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>class</th><th>rule</th><th>what falls in it</th></tr></thead>
+  <tbody>
+    <tr><td class="k"><span class="pill keep">preserve</span></td><td>Byte-for-byte behaviour, tested by golden fixture — a published number or stored record depends on it</td><td>Store record schema; <code>derive()</code> fields; ingest guards (truncated &lt; 0.9×, over-long &gt; 1.1×, lossy &gt; 2%, empty); trend <code>verdict()</code> and the fixed baseline; <code>group_key</code> including <code>sdk_version</code>; corpus redaction allowlist and <code>unit_token</code>; the SQL files verbatim</td></tr>
+    <tr><td class="k"><span class="pill merge">consolidate</span></td><td>One implementation in <code>core/</code>, tested once — pure duplication with one intended meaning</td><td><code>pearson</code>; the adb wrapper (one, explicit timeout per call); <code>repo_root</code>; thermal parsing; trace_processor CSV extraction; the published-version test; the section list (one source of truth, per-view subsets)</td></tr>
+    <tr><td class="k"><span class="pill fix">fix</span></td><td>Fix, and note it — the Python is wrong and nothing depends on the wrongness</td><td><code>cell_runner</code> invoking <code>fleet_campaign</code> with flags it does not accept (cells will call the shared <code>LegRunner</code>); the two SKILL.md files with wrong invocations; <code>HUNT_FIELDS</code> naming fields never written; fixed-name temp SQL files; <code>artifact_sync</code>'s absolute manifest path; the split <code>ram_class</code> vocabulary</td></tr>
+    <tr><td class="k"><span class="pill fix">decide</span></td><td>One canonical choice; a legacy path only where a stored number needs it; both labelled</td><td><strong>Quantile</strong>: canonical is Type-7 interpolation as in <code>stats.py</code>; the store's <code>derived.p90/p95</code> keep the index-based definition under a <code>legacy_index</code> label; the version tables are re-derived once under both and the deltas recorded. <strong>Run shape</strong>: 10×20 everywhere; the two SKILL.md files saying 4×50 are corrected. <strong>Instrument</strong>: the composed window is the metric of record; <code>app-embrace-start</code> is dropped as a default</td></tr>
+    <tr><td class="k"><span class="pill keep">wire in</span></td><td>Correct code nobody calls becomes the only implementation</td><td><code>stats.compare()</code> is what every report uses; <code>BorrowedState</code> wraps the version pin in <code>CompatPatch</code> and <code>CellRunner</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="col">
+<h3>Two improvements the port enables</h3>
+<p><strong>Pin the Perfetto engine, not the launcher.</strong> The current "v46.0" is a Python launcher script that fetches <strong>Perfetto v57.2</strong> native prebuilts — so the recorded version does not identify the engine that produced the stored numbers, and the toolchain secretly requires python3. <code>Prebuilt.kt</code> fetches the native binary by URL and sha256 (mac-arm64 <code>98a41b80…</code>, mac-amd64 <code>c0f61397…</code>) and records v57.2. This is a recipe change and is recorded as one; parity on fixtures should be exact, because the launcher was already running v57.2.</p>
+<p><strong>Parse each trace once.</strong> Ingest runs three separate <code>trace_processor</code> processes per trace — window, signals, health — three full parses. The native binary offers <code>server unix</code> warm sessions with <code>query --remote</code>; <code>WarmSession</code> loads a trace once and runs every query against it. On a 200-trace leg that is about 200 parses instead of 600. The <code>-q</code> path stays as the always-works fallback and the parity oracle.</p>
+</div>
+
+<h2>How the port is validated</h2>
+<div class="col"><p>Parity is proven in layers, each with its own oracle, so a failure localises to one layer.</p></div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>layer</th><th>what it proves</th><th>oracle</th><th>needs hardware</th></tr></thead>
+  <tbody>
+    <tr><td class="k">A · pure functions</td><td>Every <code>stats.py</code> function, <code>derive()</code>, trend verdicts, reproducibility cells, matrix planning. Bootstrap CI bounds and permutation p-values <strong>bit-exact</strong> once <code>CPythonRandom</code> reproduces <code>Random(12345).choice/.shuffle</code>; means and variances tolerance-based (Python's <code>statistics.mean</code> is exactly rounded, Kotlin's <code>average()</code> is not)</td><td><code>dump_golden.py</code>, run once against the existing Python with <code>seed=12345</code>, writing key-sorted JSON fixtures; compared as JSON trees, doubles at 1e-9, never as strings</td><td>no</td></tr>
+    <tr><td class="k">B · Perfetto layer</td><td>SQL execution, CSV parsing, <code>[NULL]</code> handling, five trace-health verdicts</td><td>Python outputs on a <strong>captured trace set</strong> — none survives today, so phase 0 captures one; 3–5 gzipped traces committed, the rest local with skip-if-absent</td><td>once, phase 0</td></tr>
+    <tr><td class="k">C · end-to-end differential</td><td>Every command's <code>--json</code> output on the real stores, section JSONs, leg arrays and trace fixtures</td><td>Old and new CLIs run side by side until every diff is clean; the Python is deleted in one commit</td><td>no</td></tr>
+    <tr><td class="k">D · device &amp; campaign</td><td>Probe parity; cool gate; crash buffer; install retry; resume; kill → process-group death → device sweep → borrowed-state restore; propagation-gate thresholds against X33's recorded deltas</td><td>Same device, old vs new; a dry-run mode; one real pass; one deliberate SIGTERM</td><td>yes, phase 5</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>Incremental steps</h2>
+<div class="col"><p>Each phase ends in a working, reviewable state with its own gate. Phases 3–4 (file-only) and phase 5 (device layer) are independent and can run in parallel. Effort figures are rough working estimates for one engineer, there to size phases against each other.</p></div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>#</th><th>phase</th><th>delivers</th><th>gate</th><th class="num">effort</th></tr></thead>
+  <tbody>
+    <tr><td class="phase-n">0</td><td class="k">Foundations</td><td>Module in <code>settings.gradle.kts</code>; <code>tools/startup</code>; Clikt dispatcher with <code>--help</code>/<code>--version</code>; detekt passing; CI job; fixtures copied from <code>claude-output/</code>; <strong>trace fixture capture</strong> (one short device run — the only hardware dependency before phase 5); <code>dump_golden.py</code> written and its outputs frozen</td><td class="gate"><code>tools/startup --help</code> runs from a clean clone in one command; CI green; goldens committed</td><td class="num">2–3 d</td></tr>
+    <tr><td class="phase-n">1</td><td class="k">Core library</td><td><code>Quantile</code> (HF7 + <code>legacy_index</code>), <code>Cluster</code>, <code>EffectSize</code>, <code>Power</code>, <code>Compare</code>; <code>CPythonRandom</code>; serializable schemas; <code>Table</code>, <code>Csv</code>, <code>RepoRoot</code></td><td class="gate">Layer A green; bootstrap and permutation bit-exact against the seed-12345 goldens</td><td class="num">3–4 d</td></tr>
+    <tr><td class="phase-n">2</td><td class="k">Perfetto layer</td><td><code>Prebuilt</code> (native v57.2 by URL + sha256, cache dirs as in <code>tooling.py</code>); <code>TraceProcessor.query</code> via <code>-q</code>; CSV parse; <code>TraceHealth</code>; SQL as resources</td><td class="gate">Layer B green: identical <code>(what, k, val)</code> rows and identical health verdicts on the trace fixtures</td><td class="num">2 d</td></tr>
+    <tr><td class="phase-n">3</td><td class="k">File-only analyses</td><td><code>analyze</code>, <code>variance</code>, <code>hypothesis-tests</code>, <code>outlier-factors</code>, <code>factors-report</code>, <code>cross-device-sections</code>, <code>trend</code>, <code>reproducibility</code>, <code>matrix-plan</code>, <code>matrix-report</code>, <code>trace-health</code>, <code>serve-trace</code></td><td class="gate">Layer C differential clean for every command; each report also read side by side with the Python's text</td><td class="num">4–5 d</td></tr>
+    <tr><td class="phase-n">4</td><td class="k">Store writers</td><td><code>reference-set</code>, <code>ingest</code>, <code>submit</code> — all guards, drift check, provenance, redaction, <code>--dry-run</code>/<code>--force</code>; <code>artifact_sync</code> with a repo-relative manifest</td><td class="gate">Ingest of a trace fixture equals the Python's record modulo timestamps; guards identical on synthetic truncated / over-long / lossy inputs</td><td class="num">2–3 d</td></tr>
+    <tr><td class="phase-n">5</td><td class="k">Device &amp; campaign</td><td><code>Adb</code>, <code>Thermal</code>, <code>CoolGate</code>, <code>CrashBuffer</code>, <code>probe</code>; <code>LegRunner</code> + <code>Resume</code> + <code>InstallRetry</code> + <code>Sweep</code>; <code>fleet-campaign</code>; <code>verify-arms</code>; <code>cell-runner</code> calling <code>LegRunner</code> directly; <code>compat-patch</code> in <code>BorrowedState</code>; <code>PropagationGate</code></td><td class="gate">Layer D: probe parity on real devices; one real pass; kill / restore / resume test passes; gate validated against X33's deltas</td><td class="num">5–6 d</td></tr>
+    <tr><td class="phase-n">6</td><td class="k">Warm sessions</td><td><code>WarmSession</code> behind the same interface; ingest and analyze use it when available, fall back to <code>-q</code></td><td class="gate">Results identical to the <code>-q</code> path on fixtures; wall time per 200-trace leg measured and recorded</td><td class="num">1–2 d</td></tr>
+    <tr><td class="phase-n">7</td><td class="k">Cutover</td><td>SKILL.md files rewritten to <code>tools/startup …</code>; references corrected (10×20 everywhere, instrument names, invocations); Python deleted in one commit; port log written; recipe change recorded in <code>store.md</code></td><td class="gate">A clean clone runs every documented workflow with the Kotlin tool only; <code>python3</code> invoked nowhere</td><td class="num">1–2 d</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="col"><p><strong>Total, rough:</strong> 20–27 working days <strong>for a human engineer writing the code</strong>; running phases 3–4 alongside phase 5 brings the calendar to about three weeks. The one hard external dependency is <strong>device time</strong> — in phase 0 for the trace fixtures, and in phase 5 for campaign validation.</p>
+<p><strong>If Claude writes the code and Hanson reviews</strong>, authoring compresses roughly four- to fivefold and the total is <strong>about 5–8 days of session time</strong>, with the calendar set by review turnaround and device access rather than by typing.</p></div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th class="num">#</th><th class="num">human</th><th class="num">Claude writes, human reviews</th><th>what bounds it</th></tr></thead>
+  <tbody>
+    <tr><td class="num">0</td><td class="num">2–3 d</td><td class="num">~1 d</td><td>one device run; the five decisions</td></tr>
+    <tr><td class="num">1</td><td class="num">3–4 d</td><td class="num">~1 d</td><td>RNG bit-exactness is a test-fix loop of a few hours</td></tr>
+    <tr><td class="num">2</td><td class="num">2 d</td><td class="num">hours</td><td>needs phase 0's traces</td></tr>
+    <tr><td class="num">3</td><td class="num">4–5 d</td><td class="num">~1 d</td><td>differential fixing across 12 commands</td></tr>
+    <tr><td class="num">4</td><td class="num">2–3 d</td><td class="num">½–1 d</td><td>—</td></tr>
+    <tr><td class="num">5</td><td class="num">5–6 d</td><td class="num">1–1½ d</td><td>device passes and the kill/restore test run at device speed</td></tr>
+    <tr><td class="num">6</td><td class="num">1–2 d</td><td class="num">hours</td><td>—</td></tr>
+    <tr><td class="num">7</td><td class="num">1–2 d</td><td class="num">hours + review</td><td>—</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="col">
+<h3>Delivery mode — how review is scheduled sets the calendar</h3>
+<p>Session time is about 5–8 days in every Claude-writes mode; what moves is the waiting between phases and where the irreversible risk lands.</p>
+</div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>mode</th><th class="num">session time</th><th>calendar</th><th>where the risk sits</th></tr></thead>
+  <tbody>
+    <tr><td class="k">Human writes</td><td class="num">20–27 d</td><td>~3 weeks parallelised</td><td>spread through the writing</td></tr>
+    <tr><td class="k">Claude writes, synchronous review at every gate</td><td class="num">5–8 d</td><td>~8–12 d with same-day reviews; <strong>~3 weeks if each review takes a day</strong> — latency dominates and it converges on the human number</td><td>low: nothing compounds past a gate</td></tr>
+    <tr><td class="k">Claude writes, self-validates and moves on; review async and at the end</td><td class="num">5–7 d</td><td><strong>~1–1.5 weeks</strong> continuous, plus a final review pass and one fix-up round</td><td>an undetected error compounds across phases until review</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="col">
+<p><strong>Why async is viable here:</strong> the gates are mechanical, not judgment calls — bit-identical bootstrap CIs, an empty differential, matching trace rows. They do not need a human to pass. <strong>Where it is not</strong>, this session's void campaign is the case study: a check on the wrong thing, then a judgment call past an inconclusive result. Three rules follow:</p>
+<ol>
+  <li><strong>A gate passes on zero diff or a pre-declared tolerance, never on "close enough."</strong> Any unexplained difference blocks the phase and is listed for the reviewer, not resolved unilaterally.</li>
+  <li><strong>Two synchronous checkpoints remain:</strong> the five decisions before phase 0, and <strong>a review before phase 7</strong>, because deleting the Python is the one step that is expensive to walk back. Everything before it is additive and mechanically gated.</li>
+  <li><strong>A phase log is written as work proceeds</strong>, so the async review reads what was decided and why, not just a diff.</li>
+</ol>
+<p><strong>Recommended: the hybrid</strong> — async through phases 0–6 under those rules, synchronous only at the decisions and before cutover. Roughly a week and a half of calendar, with review time spent where it has the most leverage. Sync-at-every-gate buys little safety the mechanical gates do not already provide, and costs most of the speed.</p>
+<h3>Parallelism with subagents — a further 30–40%, not a multiple</h3>
+<p><strong>What parallelises well:</strong> phase 3's twelve file-only commands — one file each, own golden, own differential, so the layout is the partition (3–4 agents × 3–4 commands); phase 2 alongside phase 1's statistics, since it depends only on the CSV helper and repo utilities; phase 4 alongside 3; phase 5's <em>code</em> alongside 3 and 4; and in phase 0 the goldens script, the module skeleton and the fixture copy.</p>
+<p><strong>What does not:</strong> the core contract (schemas and the <code>core/</code> API surface) must exist before fan-out and should be written serially by one author so twelve files share one convention; the CPython RNG parity is a single test-fix loop; <strong>integration and every gate judgment stay with one reviewer</strong> — agents may run the parity suites, no agent decides a diff is acceptable; and device time is serial on hardware regardless of who wrote the code.</p>
+</div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>step</th><th>who</th><th class="num">session time</th></tr></thead>
+  <tbody>
+    <tr><td class="k">0 skeleton ∥ goldens ∥ fixture capture</td><td>3 agents; the device run bounds it</td><td class="num">½–1 d</td></tr>
+    <tr><td class="k">1a core contract</td><td><strong>serial, one author</strong></td><td class="num">¼ d</td></tr>
+    <tr><td class="k">1b stats + RNG ∥ 2 Perfetto ∥ 3 fan-out ∥ 4 writers ∥ 5 code</td><td>agents; the RNG loop is the long pole</td><td class="num">½–1 d</td></tr>
+    <tr><td class="k">integrate, run every parity suite, triage diffs</td><td>one reviewer</td><td class="num">½–1 d</td></tr>
+    <tr><td class="k">5 validation on devices; 6 warm sessions</td><td>device speed</td><td class="num">½–1 d</td></tr>
+    <tr><td class="k">7 cutover after the sync review</td><td>—</td><td class="num">¼ d + review</td></tr>
+    <tr><td class="k"><strong>total</strong></td><td></td><td class="num"><strong>~3½–5 d</strong> (from 5–7); calendar ~4–6 working days</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="col">
+<p>Conditions: <strong>strict file ownership</strong> — no two agents touch one file — and a <strong>conventions note</strong> written with the core contract (error handling, exit codes, how a command reports a parity failure), with detekt enforcing the mechanical half. Part of the saving is spent on coordination: precise per-agent specs and curating their output. <strong>Net:</strong> async review is the larger lever (three weeks to a week and a half); subagents take a further day or two off, chiefly in phase 3.</p>
+<p>What does not compress in any mode: device time, Gradle build-test cycles, and <strong>review</strong> — both the critical path and the quality gate. Fast generation does not produce correctness; review does.</p>
+</div>
+
+<h2>Risks, and what is done about each</h2>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>risk</th><th>mitigation</th></tr></thead>
+  <tbody>
+    <tr><td class="k">CPython RNG parity is fiddly</td><td>Seed expansion, <code>_randbelow</code> rejection sampling and <code>shuffle</code> direction all have to match. It is about eighty lines over a verified engine, and it is checkable: the first golden compares the raw <code>random()</code> sequence. If parity proves impossible, fall back to tolerance-based CI comparison (10,000 resamples make bounds stable to ~1%) and record that the method, not the digits, was preserved</td></tr>
+    <tr><td class="k">No trace fixtures exist</td><td>Phase 0 captures them deliberately into a durable location and commits a minimal gzipped set; tests skip cleanly when the larger local set is absent</td></tr>
+    <tr><td class="k">Pinning v57.2 changes the recipe</td><td>Parity on fixtures proves the numbers do not move; the change is recorded in <code>store.md</code> and the recipe field rather than slipped in</td></tr>
+    <tr><td class="k">Quantile canonicalisation moves published numbers</td><td><code>legacy_index</code> preserved for stored fields; tables re-derived once under both definitions with deltas published before anything is relabelled</td></tr>
+    <tr><td class="k">Configuration cache <code>problems=fail</code></td><td>No <code>Project.exec</code> at configuration time; standard tasks only; verified in phase 0</td></tr>
+    <tr><td class="k">Scope creep into redesign</td><td>The fidelity policy is the boundary: consolidate and fix are allowed; new behaviour waits for phase 6 and is listed</td></tr>
+    <tr><td class="k">The Python keeps changing during the port</td><td>Freeze it: goldens are generated once from a tagged commit; any later Python change is mirrored or the port is re-baselined explicitly</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="col">
+<h2>Decisions needed before phase 0</h2>
+<div class="decide">
+<ol>
+  <li><strong>Module name and location</strong> — <code>startup-tools/</code> at the repo root beside the <code>embrace-*</code> siblings, or under a <code>tools/</code> directory. <span class="rec">Recommendation: root-level module, wrapper at <code>tools/startup</code>.</span></li>
+  <li><strong>Trace fixtures in the repo</strong> — commit 3–5 gzipped traces (a few MB) so CI covers the Perfetto layer, or keep all traces out and accept that layer is local-only. <span class="rec">Recommendation: commit the minimal set.</span></li>
+  <li><strong>Quantile canonicalisation</strong> — adopt Type-7 as canonical with <code>legacy_index</code> retained for stored fields, or keep index-based everywhere and document it. <span class="rec">Recommendation: the former.</span></li>
+  <li><strong>JVM target</strong> — 17, matching what developers run, or the conventions' 11. <span class="rec">Recommendation: 17.</span></li>
+  <li><strong>Where the port log lives</strong> — <code>references/port-log.md</code> in the multi-device skill, or a section in each SKILL.md. <span class="rec">Recommendation: one file.</span></li>
+</ol>
+</div>
+
+<h2>What done looks like</h2>
+<p>A developer clones the repo on a Mac with a JDK, plugs in a device, and runs <code>tools/startup probe</code>, then <code>fleet-campaign</code>, then <code>ingest</code>, then <code>trend</code> — and every number matches what the Python produced on the same inputs, proven by a CI suite rather than by inspection. There is no <code>python3</code> anywhere in the workflow. The Perfetto engine version in every record is the one that actually ran. Each trace is parsed once. The cluster statistics have one implementation that every report uses. And the two CLI contracts and four documentation errors the inventory found no longer exist.</p>
+</div>
+
+<h2 id="progress">Progress — first overnight session, 2026-09-02</h2>
+<div class="col"><p>Branch <code>hho/startup-tools-kotlin</code> off <code>7b3c3cd8f</code>, one append-only commit per gate (twenty-four so far). Every former script is now a subcommand of <code>tools/startup</code>; 100+ parity tests and detekt are green, and the opt-in live gate re-ran the native engine on all 60 fixture traces with every row matching. The table gives the plan's Claude-writes estimate against what the session actually took.</p></div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>#</th><th>phase</th><th class="num">estimate</th><th class="num">actual</th><th>state</th></tr></thead>
+  <tbody>
+    <tr><td class="phase-n">0</td><td class="k">Foundations</td><td class="num">~1 d</td><td class="num">~1 h</td><td class="gate">DONE — module, wrapper, 31 goldens, 60 fixture traces on three devices (not committed, by decision)</td></tr>
+    <tr><td class="phase-n">1</td><td class="k">Core library</td><td class="num">~1 d</td><td class="num">~1 h</td><td class="gate">DONE — CPython MT19937 bit-exact; cluster bootstrap and permutation bit-exact on the four real store pairs; <code>compare()</code> field for field on synthetic, store and X37 legs</td></tr>
+    <tr><td class="phase-n">2</td><td class="k">Perfetto layer</td><td class="num">hours</td><td class="num">~1 h</td><td class="gate">DONE — native v57.2 prebuilt, <code>-q</code> client, SQL as resources, health verdicts; 630 frozen trace goldens; the live re-run of the native engine on all 60 traces is opt-in (<code>-PtraceParity=1</code>)</td></tr>
+    <tr><td class="phase-n">3</td><td class="k">File-only analyses</td><td class="num">~1 d</td><td class="num">~1.5 h</td><td class="gate">DONE, 12 of 12 — line for line against Python stdout on synthetic and real inputs; <code>matrix-report</code> has no Python golden (none could be produced) and is checked against hand-derived expectations</td></tr>
+    <tr><td class="phase-n">4</td><td class="k">Store writers</td><td class="num">½–1 d</td><td class="num">~30 min</td><td class="gate">DONE — <code>ingest</code>, <code>reference-set</code>, <code>submit</code>; <code>reference-set --check</code> reports all four real devices unchanged</td></tr>
+    <tr><td class="phase-n">5</td><td class="k">Device &amp; campaign</td><td class="num">1–1½ d</td><td class="num">~1.5 h</td><td class="gate">DONE and exercised on hardware: <code>probe</code>, then one real <code>fleet-campaign</code> pass on the Pixel 3 (4.2 min, 50 traces, silicon 30.8 → 49.9 °C), then <code>ingest</code> — which refused the pass against the declared 1×20 shape (the harness ran 50) and recorded it against the true 1×50 shape — then <code>analyze</code> and <code>trend</code>. Then one real <code>cell-runner</code> cell from a <code>matrix-plan --emit</code> file: the first <code>--check-only</code> failed on two invariants and exposed departures #24 and #25; after the fixes, the full 1×50 cell ran end to end (invariants, delegated pass, state restored, post-run instrument check 10/10 clean) and <code>matrix-report</code> rendered its row. Finally a side-by-side on fresh data: a 3-pass Kotlin campaign (150 traces, cool gate between passes exercised), then the Python and the Kotlin <code>ingest</code> over the same run directory — identical in every window, derived value, health count and signal; the one key-presence difference became departure #26 and was fixed the same night — and both <code>analyze</code>s over the same pass, identical apart from timestamp and output path. The kill/restore test is the one Layer-D item not run</td></tr>
+    <tr><td class="phase-n">6</td><td class="k">Warm sessions</td><td class="num">hours</td><td class="num">~20 min</td><td class="gate">DONE — each trace loaded once into a <code>server unix</code> session; ingest's three queries share one parse; warm rows verified equal to the frozen cold rows</td></tr>
+    <tr><td class="phase-n">7</td><td class="k">Cutover</td><td class="num">hours + review</td><td class="num">—</td><td>deliberately not started: the synchronous review before deleting the Python</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="col">
+<h3>What the goldens found in the Python</h3>
+<p>Twenty-six deliberate departures are listed in <code>startup-tools/PORT-LOG.md</code>; five of them are defects that change what stored data means or whether a workflow could ever have run:</p>
+<ol>
+  <li><strong><code>signals_present</code> is empty in every real store record.</strong> Ingest used the instrument name as the trace-health canary, and no slice is named <code>composed</code>, so no trace was ever judged clean enough to inventory. The port uses <code>emb-modules-init</code> for the composed window. A consequence: all twelve real records are inadmissible to the corpus under the Python's own clean-signals rule.</li>
+  <li><strong><code>cell_runner.py</code> could never have completed a cell.</strong> Its temperature parser required a comma-split part to start with <code>mValue=</code>, but the first part starts with <code>Temperature{</code>, so it never read a sensor; and its post-run instrument check looked for <code>app-embrace-start</code>, which the harness never emits. Both are fixed and pinned by tests. Running a cell for real found two more: <code>dumpsys thermalservice</code> prints a "Cached temperatures" block of peak values (72.6 °C on an idle Pixel 3) ahead of the HAL's current readings, so a whole-dump scan gates on history rather than the present; and the shell that launches the runner names it on its own command line, so excluding only the runner's pid trips the host-quiet check. The port reads only the HAL block and excludes the runner's ancestors.</li>
+  <li><strong><code>variance_analysis.py</code> crashes on the Pixel 7 Pro at 9.2.0</strong> (<code>emb-record-startup</code> is emitted by no trace there; <code>statistics.median([])</code>). The crash is frozen as a golden; the port renders the section as absent.</li>
+  <li><strong>The recorded <code>trace_processor_version: v46.0</code> never named the engine</strong> — it was the Python launcher, which fetched Perfetto v57.2. The port pins v57.2 directly and records it; a label change for the store.</li>
+  <li><strong>Nothing wrote the <code>run-metadata.json</code> that ingest required.</strong> <code>fleet-campaign</code> now writes it.</li>
+</ol>
+<h3>What needs Hanson</h3>
+<div class="decide">
+<ol>
+  <li>The five decisions above were taken by default: root-level module, Type-7 canonical with <code>legacyIndex</code> for stored fields, JVM 11 via the convention plugin, one port log at <code>startup-tools/PORT-LOG.md</code>, no trace binaries committed (60 traces is 345 MB; even a gzipped handful is tens of MB).</li>
+  <li>Review of the twenty-six departures before any cutover; the two that change what the store means (#5 canary, #8 engine label) most of all.</li>
+  <li>Device time for the rest of Layer D: only the kill/restore test remains (not meaningful with the reference cell on this device, where the app is absent between runs; it needs a non-reference <code>compile</code> level on a device that keeps the app installed).</li>
+  <li>Whether the next real campaign runs the Python and the Kotlin side by side (Layer C) before the Python is deleted.</li>
+</ol>
+</div>
+<p>Resume from <code>startup-tools/README.md</code>, <code>startup-tools/PORT-LOG.md</code> and <code>claude-output/2026-08-26-kotlin-port/06-progress-2026-09-02.md</code>.</p>
+</div>
+
+<footer>
+  <p><strong>Provenance.</strong> Inventory from a full read of <code>.claude/skills/startup-*</code> and <code>_shared</code> on 2026-08-26; Kotlin research conducted 2026-09-01 with dated sources (see <code>04-kotlin-research.md</code> §9 for what could not be verified); toolchain facts read from the checkout at <code>7b3c3cd8f</code> and from the installed <code>trace_processor</code> prebuilt. Effort figures are working estimates, not commitments. Progress section added 2026-09-02 from the branch's commit log and test results; last updated 2026-09-02 03:12 after the side-by-side ingest.</p>
+</footer>
+</div>

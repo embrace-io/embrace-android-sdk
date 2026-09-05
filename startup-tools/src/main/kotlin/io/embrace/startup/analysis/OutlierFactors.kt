@@ -2,6 +2,8 @@ package io.embrace.startup.analysis
 
 import io.embrace.startup.perfetto.Queries
 import io.embrace.startup.perfetto.TraceProcessor
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.nio.file.Path
@@ -17,6 +19,14 @@ import java.nio.file.Path
  */
 object OutlierFactors {
 
+    /**
+     * Every scalar is `@EncodeDefault(NEVER)`: a scalar the query returned no row for is ABSENT from the
+     * dataset, as the Python wrote it, never `null`. Downstream readers treat the two alike, but a
+     * `"freq_cl0_mhz": null` on disk would read as "the kernel exported nothing" where the truth is
+     * "no counter covered the window", and the pre-cutover shadow run found such nulls on most iterations
+     * of one device (port log #28).
+     */
+    @OptIn(ExperimentalSerializationApi::class)
     @Serializable
     data class Record(
         val trace: String,
@@ -26,21 +36,21 @@ object OutlierFactors {
         val inproc: Map<String, Double>,
         /** Other processes: ms on-CPU inside the window, by process (or thread) name. */
         val othercpu: Map<String, Double>,
-        @SerialName("window_ms") val windowMs: Double? = null,
-        @SerialName("eff_mhz") val effMhz: Double? = null,
-        @SerialName("run_cl0_ms") val runCl0Ms: Double? = null,
-        @SerialName("run_cl1_ms") val runCl1Ms: Double? = null,
-        @SerialName("freq_cl0_mhz") val freqCl0Mhz: Double? = null,
-        @SerialName("freq_cl1_mhz") val freqCl1Mhz: Double? = null,
-        @SerialName("art_verify_ms") val artVerifyMs: Double? = null,
-        @SerialName("art_classload_ms") val artClassloadMs: Double? = null,
-        @SerialName("lock_contention_ms") val lockContentionMs: Double? = null,
-        @SerialName("binder_txn_cnt") val binderTxnCnt: Double? = null,
-        @SerialName("gc_slice_ms") val gcSliceMs: Double? = null,
-        @SerialName("freq_limit_cl0") val freqLimitCl0: Double? = null,
-        @SerialName("freq_limit_cl1") val freqLimitCl1: Double? = null,
-        @SerialName("mem_swap") val memSwap: Double? = null,
-        @SerialName("mem_available") val memAvailable: Double? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("window_ms") val windowMs: Double? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("eff_mhz") val effMhz: Double? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("run_cl0_ms") val runCl0Ms: Double? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("run_cl1_ms") val runCl1Ms: Double? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("freq_cl0_mhz") val freqCl0Mhz: Double? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("freq_cl1_mhz") val freqCl1Mhz: Double? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("art_verify_ms") val artVerifyMs: Double? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("art_classload_ms") val artClassloadMs: Double? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("lock_contention_ms") val lockContentionMs: Double? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("binder_txn_cnt") val binderTxnCnt: Double? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("gc_slice_ms") val gcSliceMs: Double? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("freq_limit_cl0") val freqLimitCl0: Double? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("freq_limit_cl1") val freqLimitCl1: Double? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("mem_swap") val memSwap: Double? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("mem_available") val memAvailable: Double? = null,
     )
 
     /** Every scalar `what` the query can emit, in the order the SQL declares them. */

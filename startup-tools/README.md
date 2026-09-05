@@ -1,23 +1,27 @@
 # startup-tools
 
 The SDK startup-analysis toolchain, in Kotlin: run benchmark campaigns, analyse Perfetto traces,
-maintain the longitudinal store, compare versions and devices. It replaces the Python scripts under
-`.claude/skills/*/scripts/` one for one; every former script is a subcommand.
+maintain the longitudinal store, compare versions and devices. It is the toolchain the startup
+skills under `.claude/skills/startup-*/` drive; every step there is a subcommand here. The
+"former script" column below is history: the Python scripts that once lived under
+`.claude/skills/*/scripts/` and `.claude/skills/_shared/` were replaced one for one and no longer
+exist.
 
 ## Running it
 
 ```
 tools/startup --help
 tools/startup analyze <traces-dir>
-tools/startup trend --store claude-output/longitudinal/store.jsonl
+tools/startup trend --store .claude/skills/_shared/records/longitudinal/store.jsonl
 ```
 
 `tools/startup` builds the module incrementally (`:startup-tools:installDist`, a few seconds when
 nothing changed) and execs the launcher. Set `STARTUP_TOOLS_NO_BUILD=1` to skip the build when you know
 it is current. Requirements on macOS: a JDK 17+ (the repo's Gradle needs one anyway) and `adb` for the
 device commands. **No Python.** The Perfetto engine (`trace_processor_shell` v57.2) is fetched once per
-machine into `~/.cache/embrace-startup-tools/` and verified by sha256; if the old Python launcher ever
-ran on the machine, its cached prebuilt is reused instead of downloading.
+machine into `~/.cache/embrace-startup-tools/` and verified by sha256; if perfetto's own
+`trace_processor` Python launcher ever ran on the machine, its cached prebuilt is reused instead of
+downloading.
 
 Never run the tool through `./gradlew run` (it swallows stdin, wraps exit codes, and would hold a Gradle
 daemon around the tool's own `gradlew` children for the length of a campaign).
@@ -48,8 +52,11 @@ daemon around the tool's own `gradlew` children for the length of a campaign).
 | `verify-arms` | `verify_ab_arms.py` | dex-level A/B arm pre-flight |
 | `serve-trace` | `serve_trace.py` | serve traces to ui.perfetto.dev |
 | `artifact-sync` | `_shared/artifact_sync.py` | living-doc drift guard (check / record / list) |
+| `maxims` | `_shared/maxims.py` | `score` a campaign against every maxim into the shared ledger (`_shared/records/maxims/ledger.json`) and pack its datasets into `_shared/records/campaigns/<run-id>.zip` (which `score` also accepts as input); `render` MAXIMS.md from it |
 
-`--little-cpus` replaces the Python's `LITTLE_CPUS` environment variable wherever it was used.
+`--little-cpus` replaces the former scripts' `LITTLE_CPUS` environment variable wherever it was used;
+`fleet-campaign` takes flags (`--serial --dir-match --out --passes --method`) where the former
+script took positionals.
 
 ## Layout
 

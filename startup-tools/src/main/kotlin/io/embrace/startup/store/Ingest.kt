@@ -155,7 +155,7 @@ object Ingest {
         val notes = ArrayList<String>()
 
         val deviceKey = resolveDeviceKey(ref, prov, options, problems)
-        val profileRun = PyJson.obj(prov, "device_profile") ?: JsonObject(emptyMap())
+        val profileRun = profileOf(prov)
         checkProfileDrift(ref, deviceKey, profileRun, problems)
         val (buildType, compileState) = recipeOfRun(ref, prov, problems)
 
@@ -220,6 +220,18 @@ object Ingest {
             java.nio.file.StandardOpenOption.CREATE,
             java.nio.file.StandardOpenOption.APPEND,
         )
+    }
+
+    /**
+     * The run's device profile from provenance. `run-metadata.json` (fleet-campaign) carries the flat
+     * profile; a `cell-state.json` written by the Python cell runner carried the reference set's whole
+     * device entry (`tier`, `cool_gate_c` and the profile nested under `profile`). The profile is what
+     * drift is checked against and what the record stores, so the nested form is unwrapped rather than
+     * stored verbatim with its non-profile fields (port log #29).
+     */
+    fun profileOf(prov: JsonObject?): JsonObject {
+        val raw = PyJson.obj(prov, "device_profile") ?: return JsonObject(emptyMap())
+        return PyJson.obj(raw, "profile") ?: raw
     }
 
     private fun resolveDeviceKey(ref: ReferenceSet, prov: JsonObject?, options: Options, problems: MutableList<String>): String? {

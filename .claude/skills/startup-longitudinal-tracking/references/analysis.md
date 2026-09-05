@@ -54,7 +54,7 @@ a **change worth investigating**, and it is usually one of:
   that failed to parse is an absent slice, indistinguishable from a signal the SDK never emitted.
   These cluster by device (one device family in this repo's corpus produced them in 27–55% of
   traces while another produced none), so a "disappearance" that shows up on exactly one device
-  after an OS update is more likely a parse-error cluster than a code change. `ingest_run.py`
+  after an OS update is more likely a parse-error cluster than a code change. `tools/startup ingest`
   therefore takes the signal inventory only from a trace with a fully clean verdict, and records
   `signals_from_clean_trace` so an empty inventory can be told apart from a genuine absence
 - a code path that stopped running — the interesting case, and the reason this check is worth having

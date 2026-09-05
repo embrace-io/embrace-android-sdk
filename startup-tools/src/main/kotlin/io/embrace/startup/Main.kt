@@ -14,6 +14,7 @@ import io.embrace.startup.cli.HypothesisTestsCommand
 import io.embrace.startup.cli.IngestCommand
 import io.embrace.startup.cli.MatrixPlanCommand
 import io.embrace.startup.cli.MatrixReportCommand
+import io.embrace.startup.cli.MaximsCommand
 import io.embrace.startup.cli.OutlierFactorsCommand
 import io.embrace.startup.cli.ProbeCommand
 import io.embrace.startup.cli.ReferenceSetCommand
@@ -53,6 +54,7 @@ fun main(args: Array<String>) = StartupTools()
         CellRunnerCommand(),
         MatrixReportCommand(),
         ArtifactSyncCommand(),
+        MaximsCommand(),
         // Every former script is now a subcommand.
     )
     .main(args)

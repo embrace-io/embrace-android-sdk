@@ -9,9 +9,10 @@ benchmark-JSON involvement. The window is the emb-sdk-start slice when the SDK e
 
 The summary is also written to a uniquely named file,
 <output-dir>/startup-analysis-<YYYY-MM-DD-HHMMSS>.txt (analysis start time), so successive
-runs never clobber each other. The default output dir is claude-output/ under the SDK repo root,
-discovered at runtime (git rev-parse, else the nearest ancestor with .git); --repo and
---output-dir override. No path is hardcoded — the skill works from any checkout location.
+runs never clobber each other. The default output dir is the committed records root's analyses/
+(.claude/skills/_shared/records/analyses) under the SDK repo root, discovered at runtime (git
+rev-parse, else the nearest ancestor with .git); --repo and --output-dir override. No path is
+hardcoded — the skill works from any checkout location.
 
 Usage:
   python3 analyze_startup.py --trace-processor <path-to-launcher-or-binary> <traces-dir>
@@ -71,7 +72,7 @@ def main() -> int:
                         help="list every emb-* section (default: canonical + top 15 others)")
     parser.add_argument("--output-dir", default=None,
                         help="directory for the timestamped summary file "
-                             "(default: <repo root>/claude-output)")
+                             "(default: <repo root>/.claude/skills/_shared/records/analyses)")
     parser.add_argument("--repo", default=None,
                         help="SDK repo root; defaults to git rev-parse --show-toplevel, else the "
                              "nearest ancestor of this script containing .git")
@@ -80,7 +81,8 @@ def main() -> int:
     start = datetime.datetime.now()
     script_dir = os.path.dirname(os.path.abspath(__file__))
     sql = os.path.join(script_dir, "startup_metrics.sql")
-    out_dir = args.output_dir or os.path.join(args.repo or repo_root(script_dir), "claude-output")
+    out_dir = args.output_dir or os.path.join(
+        args.repo or repo_root(script_dir), ".claude", "skills", "_shared", "records", "analyses")
     traces = sorted(
         (f for f in os.listdir(args.traces_dir) if f.endswith(".perfetto-trace")),
         key=iter_index,

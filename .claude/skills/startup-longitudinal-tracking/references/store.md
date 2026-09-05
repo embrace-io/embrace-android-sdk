@@ -67,7 +67,7 @@ Two records may be compared only when **all** of these match:
 - `conditions` (a quiet-cool-settled record is not comparable to a contention record)
 - host app identity (`app_build_id`), unless the question *is* about the app
 
-`ingest_run.py` enforces this; `trend_report.py` groups by the tuple and never averages across
+`tools/startup ingest` enforces this; `tools/startup trend` groups by the tuple and never averages across
 groups. When you deliberately change the recipe, you are starting a new series: keep the old
 records, mark the change in `notes`, and expect the baseline to reset. A silent recipe change is
 the single easiest way to manufacture a fake regression or hide a real one.
@@ -89,8 +89,8 @@ Two records are also refused outright, because storing them is worse than storin
 
 When a recipe change closes a series, the old store gets moved aside exactly once. Any automation
 that performs that move MUST guard it on the archive **not already existing** — never on "a store
-is present at the live path", because after a restart the live path holds the *new* series. On
-2026-08-16 an unguarded `store.replace(archive)` in a campaign driver ran a second time when the
+is present at the live path", because after a restart the live path holds the *new* series. In one
+campaign an unguarded `store.replace(archive)` in the driver ran a second time when the
 campaign was restarted mid-run: it moved the new series' six records on top of the archived series'
 eight, destroying the older store. The archive existing is itself the marker that the move already
 happened; nothing else is.
@@ -124,7 +124,7 @@ Devices are not stable just because they are the same physical object.
 
 - **OS upgrade**: ART generation, compile policy, and scheduler behaviour can all shift. Treat the
   upgraded device as a NEW `device_key` (e.g. `mid-b` becomes `mid-b-api35`). Do not carry the old
-  baseline forward; re-establish it. `reference_set.py` flags a profile drift at probe time
+  baseline forward; re-establish it. `tools/startup reference-set --probe --check` flags a profile drift at probe time
   precisely so this is a decision rather than an accident.
 - **Replacement with the same model**: still a new key. Battery health, thermal paste, storage
   wear, and accumulated system state all move numbers.

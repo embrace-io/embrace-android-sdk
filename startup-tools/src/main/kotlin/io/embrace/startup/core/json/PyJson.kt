@@ -77,6 +77,34 @@ object PyJson {
         }
     }
 
+    /**
+     * `json.dumps(el, indent=indent, sort_keys=sortKeys)`: Python's pretty layout - one entry per line,
+     * `", "` collapsed to a bare comma at line end, `": "` between key and value, empty containers as
+     * `[]` / `{}` - with `ensure_ascii=True`. Number literals are emitted verbatim, so a file the Python
+     * wrote round-trips byte for byte.
+     */
+    fun dumpsPretty(el: JsonElement, indent: Int = 2, sortKeys: Boolean = true, level: Int = 0): String = when (el) {
+        is JsonNull -> "null"
+        is JsonPrimitive -> if (el.isString) quote(el.content) else el.content
+        is JsonArray -> if (el.isEmpty()) {
+            "[]"
+        } else {
+            val pad = " ".repeat(indent * (level + 1))
+            el.joinToString(",\n", "[\n", "\n" + " ".repeat(indent * level) + "]") {
+                pad + dumpsPretty(it, indent, sortKeys, level + 1)
+            }
+        }
+        is JsonObject -> if (el.isEmpty()) {
+            "{}"
+        } else {
+            val pad = " ".repeat(indent * (level + 1))
+            val entries = if (sortKeys) el.entries.sortedBy { it.key } else el.entries.toList()
+            entries.joinToString(",\n", "{\n", "\n" + " ".repeat(indent * level) + "}") {
+                "$pad${quote(it.key)}: ${dumpsPretty(it.value, indent, sortKeys, level + 1)}"
+            }
+        }
+    }
+
     /** Python's `str(list_of_str)` / `repr` of a string list: `['a', 'b']`. */
     fun reprList(items: List<String>): String = items.joinToString(", ", "[", "]") { repr(it) }
 

@@ -1,6 +1,7 @@
 package io.embrace.startup.store
 
 import io.embrace.startup.core.json.StartupJson
+import io.embrace.startup.core.repo.RepoRoot
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -13,15 +14,16 @@ import java.security.MessageDigest
 /**
  * The living-docs drift manifest from `_shared/artifact_sync.py`: the digest of every doc at the
  * moment it was published FROM HERE, so "have I changed this since?" has an answer that does not
- * depend on memory. States: UNKNOWN (never recorded - fetch the published page and reconcile before
+ * depend on memory. It lives in the committed records root beside the document sources it
+ * describes. States: UNKNOWN (never recorded - fetch the published page and reconcile before
  * touching it), CLEAN (identical to the last publish from here - the published copy is the truth,
  * another session may still have moved it), DIRTY (changed locally - merge, never overwrite from
- * published). On 2026-08-26 one audit found drift in both directions; the dangerous case is the edit
+ * published). One audit found drift in both directions; the dangerous case is the edit
  * that looks successful.
  */
 class ArtifactManifest(repo: Path) {
 
-    val file: Path = repo.resolve("claude-output").resolve("artifact-manifest.json")
+    val file: Path = RepoRoot.records(repo).resolve("artifact-manifest.json")
 
     fun load(): Map<String, JsonObject> {
         if (!Files.exists(file)) return emptyMap()

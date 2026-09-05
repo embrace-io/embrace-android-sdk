@@ -86,10 +86,10 @@ Every benchmark method that relaunches within seconds takes the restore path. Pr
 starts are hours apart and take the create path. Use `coldStartupBaselineProfileNewUserSession`
 (`pm clear` per iteration) or `coldStartupBaselineProfileExpiredUserSession` (session key
 deleted, config kept) to measure the create path; see SKILL.md "User-session state arms".
-Evidence for all of the above: `claude-output/2026-09-03-first-session-fix/RESULTS.md`.
+Evidence for all of the above: the first-session A/B campaign (September 2026, in the analysis records).
 
 Fixed after 9.2.0 by passing a static `MapSerializer` on the write path and deleting the reified
-helpers; `startup-tools trace-health` flags a recurrence (a burst of ART class loads inside
+helpers; `tools/startup trace-health` flags a recurrence (a burst of ART class loads inside
 `emb-start-first-session` on the init thread). The `init-compile-filter` attribute added at the
 same time tells you which compile-state population a production span came from.
 
@@ -135,7 +135,7 @@ install-time compile state, and it is real rather than an instrumentation artifa
 the one-command detection, and how to handle it are in
 `interpreting-results.md` → Install-time compile state.
 
-Slow iterations/passes come in TWO trace signatures (analyze_startup.py's scheduling table
+Slow iterations/passes come in TWO trace signatures (the scheduling table of `tools/startup analyze`
 separates them; judge regressions only on iterations showing neither):
 1. **Contention** — high main-thread wait (R/R+) inside the window, together with migration
    across many CPUs, versus low wait and few CPUs on a clean iteration. The usual competitors are

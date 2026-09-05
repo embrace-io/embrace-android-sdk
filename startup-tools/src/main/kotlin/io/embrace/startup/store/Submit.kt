@@ -139,6 +139,11 @@ object Submit {
         )
     }
 
-    private val PRETTY = kotlinx.serialization.json.Json(StartupJson) { prettyPrint = true }
+    /** One-space indent, as the Python's `json.dumps(indent=1)` preview. */
+    @OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
+    private val PRETTY = kotlinx.serialization.json.Json(StartupJson) {
+        prettyPrint = true
+        prettyPrintIndent = " "
+    }
     private const val PERCENT = 100.0
 }

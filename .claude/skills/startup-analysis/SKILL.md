@@ -13,17 +13,20 @@ parsing. All paths below are relative to the SDK repo root.
 
 ## Bundled files (relative to this skill's base directory)
 
-Primary analysis:
-- `scripts/analyze_startup.py` — THE analysis entry point (python3 stdlib only): runs
-  trace_processor over every iteration trace in a directory and prints section stats,
-  window stats, TTID stats, and the per-iteration contention/slow-execution table.
-- `scripts/startup_metrics.sql` — the per-trace query analyze_startup.py executes (sections,
-  window, TTID, main-thread thread-state; commented).
-- `scripts/init_window_sched.sql` — standalone deep-dive on ONE trace: thread-state + per-CPU
-  residency over the modules-init window. To find who stole the CPUs, query `sched` joined to
-  `thread`/`process` excluding the window's utid.
-- `scripts/serve_trace.py` — CORS-enabled static server for opening traces in ui.perfetto.dev
-  (`python3 serve_trace.py <dir> [port]`).
+Primary analysis — the Kotlin `startup-tools` module, run from the repo root as
+`tools/startup <command>` (`startup-tools/README.md` has the full command table;
+`tools/startup <command> --help` gives the exact flags):
+- `tools/startup analyze <traces-dir>` — THE analysis entry point: runs the perfetto engine over
+  every iteration trace in a directory and prints section stats, window stats, TTID stats, and
+  the per-iteration contention/slow-execution table.
+- `tools/startup serve-trace <dir> [port]` — CORS-enabled static server for opening traces in
+  ui.perfetto.dev.
+- The SQL the commands execute lives in
+  `startup-tools/src/main/resources/io/embrace/startup/perfetto/sql/`: `startup_metrics.sql` is
+  the per-trace query `analyze` runs (sections, window, TTID, main-thread thread-state;
+  commented); `init_window_sched.sql` is a standalone deep-dive on ONE trace: thread-state +
+  per-CPU residency over the modules-init window. To find who stole the CPUs, query `sched`
+  joined to `thread`/`process` excluding the window's utid.
 
 References:
 - `references/interpreting-results.md` — **the foundation for interpreting any run, and the
@@ -38,10 +41,20 @@ References:
   the two slow-pass signatures (contention vs slow execution) for judging noisy passes.
 - `references/report-template.html` — the report page to adapt (a filled example; see the
   comment at the top for what to replace vs keep). Write each analysis's report to
-  `claude-output/startup-analysis-<YYYY-MM-DD-HHMMSS>.html` using the SAME timestamp as that
+  `_shared/records/analyses/startup-analysis-<YYYY-MM-DD-HHMMSS>.html` using the SAME timestamp as that
   analysis's summary .txt, so the pair is uniquely referencable and never clobbered.
   Publishing a new path mints a new artifact URL per analysis — reuse a previous report's
   exact file path only when intentionally updating that report (and its URL) in place.
+
+Shared across the startup skills (`.claude/skills/_shared/`):
+- `maxims/MAXIMS.md` — **what we currently believe about SDK init on the bench, and the evidence
+  for it**: each maxim's statement, scope, status (accepted / under review / refuted / untested),
+  how many reference devices hold it, and the latest contradictions. Generated from the maxim
+  definitions and the ledger; never edit it by hand. `maxims/FINDINGS.md` is the hand-curated
+  companion: conclusions that are not per-campaign checks, and the dated history of every maxim.
+  Read both before an analysis, as priors to confirm or contradict, not as conclusions to repeat.
+- `tools/startup maxims` — scores a campaign directory against every maxim and records the
+  verdicts in `maxims/ledger.json`. See "Maxims" below.
 
 There is deliberately no jq/grep/benchmark-JSON path — the traces are the single source of truth
 for *timing*.
@@ -86,6 +99,9 @@ are in `references/interpreting-results.md`.
 - **API 29 or newer** — the practical floor, because perfetto tracing of a *profileable,
   non-debuggable* app (which is what the benchmark variant is) requires it. Below that the
   harness cannot produce the traces this skill analyzes.
+- **JDK 17+** (the repo's Gradle needs one anyway) and `adb`. `tools/startup` builds the Kotlin
+  module incrementally and fetches its own perfetto engine (see "Analyze" below); nothing else
+  to install.
 - `examples/ExampleApp/app/benchmark/src/main/java/io/embrace/android/benchmark/StartupBenchmarks.kt`
   is purely the harness: it drives N instrumented cold starts so each iteration records a
   perfetto trace. Its metric list is the minimum `measureRepeated` requires
@@ -121,7 +137,7 @@ it is exactly what the longitudinal skill consumes:
 | `api_level` + Android release | `getprop ro.build.version.sdk`, `getprop ro.build.version.release` (drives ART generation and tracing capability) |
 | `tier` — entry / mid / flagship | your judgement, proxied by RAM class and SoC class |
 | `vendor` / OEM | `getprop ro.product.manufacturer` (drives install-time compile policy, thermal governor, SELinux readability of sysfs) |
-| `soc_family` + cluster topology | CPU part ids from `/proc/cpuinfo` and the `cpufreq` policies — the multi-device skill's `scripts/device_probe.py` collects and summarises these |
+| `soc_family` + cluster topology | CPU part ids from `/proc/cpuinfo` and the `cpufreq` policies — `tools/startup probe` collects and summarises these |
 | `ram_class`, `storage_class` | where detectable |
 
 A number without its profile is not reusable by anyone, including you next month.
@@ -171,7 +187,7 @@ work on the main thread (serialization, a preferences write, thread starts) and 
 uncompiled install costs several times the restore path - enough to be a large share of
 `post-init` in production while the lab reported it as negligible. **The benchmark modelled a
 user who relaunches every few seconds; production is the other user.** Evidence:
-`claude-output/2026-09-03-first-session-fix/RESULTS.md` and
+the first-session A/B campaign (September 2026, in the analysis records) and
 `references/interpreting-results.md` "User-session state decides post-init".
 
 - `coldStartupBaselineProfileNewUserSession` runs `pm clear` in `setupBlock`, so every
@@ -189,14 +205,14 @@ user who relaunches every few seconds; production is the other user.** Evidence:
   `key-value-store-init`/`prefs-first-read` read slightly low in this arm. The setting persists
   on the device; disarm with `settings delete global embrace_bench_expire_user_session`
   before any arm that should restore.
-- **The campaign runner verifies the cohort of every launch** (`fleet_campaign.py` and
-  `startup-tools fleet-campaign` alike): it arms the ExampleApp's `EmbVerify` logcat tap for the
-  campaign, streams the pass's lines to `passN-embverify.log`, and classifies each launch's
-  `sdk-init` span as created (new `emb.user_session_id`, or counter reset to 1), restored (same
-  id) or unknown, writing `passN-cohorts.json` and a `cohorts:` line to the campaign log. A
-  launch on the wrong path for the arm is a WARN with its iteration index - drop or split it
-  in analysis, never average it in. `_shared/cohorts.py` / `startup-tools cohorts` re-run the
-  classification on a saved capture. The tap adds a span processor to the app under test, so
+- **The campaign runner verifies the cohort of every launch** (`tools/startup fleet-campaign`):
+  it arms the ExampleApp's `EmbVerify` logcat tap for the campaign, streams the pass's lines to
+  `passN-embverify.log`, and classifies each launch's `sdk-init` span as created (new
+  `emb.user_session_id`, or counter reset to 1), restored (same id) or unknown, writing
+  `passN-cohorts.json` and a `cohorts:` line to the campaign log. A launch on the wrong path for
+  the arm is a WARN with its iteration index - drop or split it in analysis, never average it
+  in. `tools/startup cohorts` re-runs the classification on a saved capture. The tap adds a span
+  processor to the app under test, so
   every arm of a comparison must run with it in the same state (it is on by default; the
   runner restores the setting afterwards).
 - Report `start-first-session` and `post-init` from this arm separately; never average them
@@ -244,22 +260,21 @@ always set it explicitly for the run, note the value you replaced, and restore i
    `examples/ExampleApp/app/benchmark/build/outputs/connected_android_test_additional_output/benchmark/connected/<device>/`
    as `StartupBenchmarks_coldStartup_iterNNN_<timestamp>.perfetto-trace`. Each rerun WIPES this
    directory — copy any traces you need to keep (e.g. per-pass comparisons) before rerunning.
-3. **Analyze**: fetch the trace_processor launcher once per machine (it is a python3 script that
-   self-downloads the native binary on first use):
+3. **Analyze**: run
    ```
-   curl -sL -o <scratchpad>/trace_processor https://get.perfetto.dev/trace_processor
+   tools/startup analyze "<traces dir>"
    ```
-   then run
-   ```
-   python3 .claude/skills/startup-analysis/scripts/analyze_startup.py \
-     --trace-processor <scratchpad>/trace_processor "<traces dir>"
-   ```
+   The first run on a machine fetches the pinned perfetto engine (`trace_processor_shell`) into
+   `~/.cache/embrace-startup-tools/` and verifies its sha256; nothing to install by hand
+   (`--trace-processor <path>` points at a different native binary if you must).
    (`--all-sections` to list every emb-* section instead of the top 15 extras.) Besides
    printing, the summary is written to a uniquely named file —
-   `claude-output/startup-analysis-<YYYY-MM-DD-HHMMSS>.txt` (analysis start time;
+   `_shared/records/analyses/startup-analysis-<YYYY-MM-DD-HHMMSS>.txt` (analysis start time;
    `--output-dir` overrides) — so successive runs never clobber each other; cite that file
-   in reports and keep it as the per-pass record (the traces themselves get wiped by the
-   next benchmark run).
+   in reports and commit it as the per-pass record (the traces themselves get wiped by the
+   next benchmark run; the records root is what survives, see `_shared/records/README.md`).
+   Summaries land as loose files there and are folded into `analyses/<YYYY-MM>.zip` by that
+   directory's `pack.py` once they pile up.
    Every analysis/report must state the test context up front: the full device profile
    (see "Choosing a device" — manufacturer, model, api level + Android release, tier, SoC
    family) via
@@ -274,17 +289,66 @@ always set it explicitly for the run, note the value you replaced, and restore i
    passes — iterations flagged CONTENDED, or whole passes with elevated Running time, are
    environment noise, not regressions (signatures in references/sections.md).
 5. **Inspect a trace visually (optional)**: serve the traces dir on `127.0.0.1:9001` with
-   `serve_trace.py` (plain `python3 -m http.server` lacks the CORS header) and open
+   `tools/startup serve-trace "<traces dir>"` (a plain static file server lacks the CORS header
+   ui.perfetto.dev needs) and open
    `https://ui.perfetto.dev/#!/?url=http://127.0.0.1:9001/<file>` — the first fetch can take
    ~30 s (private-network preflight). Once loaded, the address bar rewrites to a durable
    `local_cache_key` URL that resolves from that machine's Chrome afterwards; use that form in
    reports. Pick the iteration whose window is the median (or a flagged-vs-clean pair when
    illustrating variance).
 6. **Restore** the catalog's `embrace` version to the value you replaced.
+7. **Score the maxims** when the run is a campaign with per-pass datasets (see below). A single
+   pass analysed with `tools/startup analyze` alone has nothing to score yet; produce the datasets
+   first if the run is worth adding to the ledger.
+
+## Maxims: every campaign confirms a belief or teaches us something
+
+The bench toolchain keeps its beliefs about SDK init as **maxims**: statements with a mechanical
+check, a scope, and a one-line mechanism, defined in `startup-tools` and run as
+`tools/startup maxims`. Every campaign is scored against every maxim and the verdicts accumulate in a
+ledger, so a belief that fails on one device or tier is visible as exactly that rather than as a
+lower percentage. This is the same structure and process as the production analysis tool
+(`tool/sdk-startup` in the go repository, which scores per-app × per-device cells from ClickHouse):
+the same scopes, the same verdict vocabulary, the same ledger shape, the same split between a
+generated `MAXIMS.md` and a curated `FINDINGS.md`, and the same maxim id wherever the claim is the
+same. The two tools measure the same thing by different means, so how their conclusions are shared,
+updated and validated follows one shape.
+
+- **Scopes.** *Universal*: must hold at the stated size on every device. *Directional*: the sign
+  holds everywhere but the size is the device's, so a right-way lift under the floor is
+  *undetected*, not a contradiction. *Device-specific*: the sign belongs to the device, and the
+  per-device split is the finding (the install-compile toggle is one).
+- **Cell** = one campaign: one device under one recipe and arm. Verdicts per cell are confirmed /
+  contradicted / thin (under the power floor) / undetected / n-a (input absent). Status derives
+  from how many *devices* hold a maxim, not how many cells: nine cells from three devices are
+  three votes.
+- **Inputs** are the per-pass datasets a campaign already writes: `passN.json` (from
+  `tools/startup variance --json`), `passN-factors.json` (`tools/startup outlier-factors`),
+  `passN-cohorts.json` (the fleet campaign's EmbVerify tap) and `run-metadata.json`. No trace is
+  opened.
+- **Run it after every campaign**, then regenerate the page:
+  ```
+  tools/startup maxims score <campaign-dir> --reference-set <reference-set.json>
+  tools/startup maxims render
+  ```
+  Use `--ledger none` for a rerun of a campaign already scored, so the same data is not counted
+  twice.
+- **A contradiction is the most valuable line on the page.** Name it, with the cell and the
+  observed value, and say whether it repeats an earlier one (the page lists the latest). Thin
+  cells are named, never read. A **candidate** is a factor with a lift of 1.5x or more that no
+  maxim covers; one that keeps appearing is a maxim waiting to be written, and some are small bands
+  the next campaign refutes.
+- **Changing a belief.** A new maxim, a demotion or a refutation is a code change in
+  `startup-tools`, a dated entry in `maxims/FINDINGS.md` naming the campaign that did it, and a
+  regenerated `MAXIMS.md`. Retired
+  maxims stay visible in the page with their record: a belief tried and removed is a finding.
+- The ledger, `MAXIMS.md` and `FINDINGS.md` live in git beside the skills (device keys are not
+  sensitive, unlike the production ledger's app IDs), so the page's history is the record of when
+  a belief changed.
 
 ## Handling missing data (older SDK versions)
 
-- **Missing sections**: analyze_startup.py prints "not instrumented in this SDK version" for
+- **Missing sections**: `tools/startup analyze` prints "not instrumented in this SDK version" for
   canonical sections with no slice — report those explicitly; never present the found set as
   complete. (At public 9.0.0, present: `embrace-impl-init`, `bootstrapper-init`, `modules-init`,
   `config-service-init`, `span-service-init`, `otel-tracer-init`, `post-services-setup`.)

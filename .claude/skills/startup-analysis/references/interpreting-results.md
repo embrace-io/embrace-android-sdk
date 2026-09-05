@@ -19,6 +19,11 @@ assume it and none of them repeat it — they add only what *more than one devic
 > growing**: when a campaign confirms a rule, add the replication; when one contradicts it, revise
 > the directive and record the conditions, since a rule that holds on one tier and not another
 > becomes a scoped rule rather than a deleted one.
+>
+> The rules here that can be checked mechanically are also **maxims** (`tools/startup maxims`), scored
+> against every campaign and tallied in `_shared/records/maxims/MAXIMS.md`; that page is the current
+> standing of each belief, and `_shared/records/maxims/FINDINGS.md` is its history. This file explains the
+> mechanisms and the traps; the page says whether the fleet still agrees.
 
 ## Trace-capture and trace_processor traps
 
@@ -84,8 +89,8 @@ standing requirements on any query you write.
   count credits *other* processes' work (a foreign GC) to your app.
 - **A missing window is more often a query bug than lost data — check both, in that order.**
   Before blaming the capture, confirm against perfetto's own loss counters (the `stats` table's
-  `data_loss`/`error` severities; `_shared/trace_health.py` runs exactly this check plus a canary
-  slice). A name-predicate that failed to resolve is the far more common cause and looks
+  `data_loss`/`error` severities; `tools/startup trace-health` runs exactly this check plus a
+  canary slice). A name-predicate that failed to resolve is the far more common cause and looks
   identical from the outside: clean loss counters plus a missing window means your query, the
   wrong build, or a broken instrument — not eviction.
 - **Not every non-zero loss counter means your number is wrong**, and treating them alike makes the
@@ -153,9 +158,9 @@ standing requirements on any query you write.
   Android/ART generation without that check.
 - **Cluster-indexed queries hardcode a topology.** Anything keyed on `cpu < 4`, `t.cpu = 4`, or
   a `Cpu 4 Max Freq Limit` counter name assumes a 4+4 split with the little cluster first.
-  Remap such splits against this device's real cluster map before interpreting them (the
-  multi-device skill's `device_probe.py` emits `little_cpus` and its `factors_report.py` does
-  the remap), and check that the counter names exist at all on the device.
+  Remap such splits against this device's real cluster map before interpreting them
+  (`tools/startup probe` emits `little_cpus` and `tools/startup factors-report --little-cpus`
+  does the remap), and check that the counter names exist at all on the device.
 
 ## Where a section is placed decides whether it can see the cost
 
@@ -381,8 +386,8 @@ Practical consequences:
   (`emb.user_session_id` changes; `emb.app.version_startup_counter` resets after `pm clear`),
   not guessed from timing; (3) the `trace-health` class-load check (a burst of ART class loads
   inside `emb-start-first-session` on the init thread) is the regression signature for a
-  serializer being resolved at runtime again - see `startup-tools trace-health`. Evidence:
-  `claude-output/2026-09-03-first-session-fix/RESULTS.md`.
+  serializer being resolved at runtime again - see `tools/startup trace-health`. Evidence:
+  the first-session A/B campaign (September 2026, in the analysis records).
 - **A rare lab iteration is a hypothesis about production, not noise.** Setting slow
   iterations aside is right for measuring the fast state and wrong for finding code paths the
   harness under-samples. Before an iteration is filed as contention or thermal, list the

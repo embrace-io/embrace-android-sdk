@@ -37,12 +37,15 @@ incomparable records produces confident fleet numbers that are wrong in a way no
 - `references/reproducibility.md` — how to test agreement between contributors, what tolerance
   means for a right-skewed distribution, the dimension hunt when they disagree, and the pooling
   rules (including which pooling is invalid).
-- `scripts/submit_run.py` — turn a locally ingested record into a corpus submission: collect the
-  extra provenance, redact what must not leave the machine, validate against the schema, and append
-  to the corpus (or emit a file to send).
-- `scripts/reproducibility_report.py` — per (model, os_build, recipe) cell: how many contributors
-  and units, whether their distributions agree, and a ranked list of candidate explanations when
-  they do not.
+- The commands, from the Kotlin `startup-tools` module (run as `tools/startup <command>` from the
+  repo root; `startup-tools/README.md` has the table, `tools/startup <command> --help` the flags;
+  needs a JDK 17+ and `adb`):
+  - `tools/startup submit` — turn a locally ingested record into a corpus submission: collect the
+    extra provenance, redact what must not leave the machine, validate against the schema, and
+    append to the corpus (or emit a file to send).
+  - `tools/startup reproducibility` — per (model, os_build, recipe) cell: how many contributors
+    and units, whether their distributions agree, and a ranked list of candidate explanations
+    when they do not.
 
 ## Why "same model" is not the same as "same device"
 
@@ -95,9 +98,9 @@ you which of them to chase.
 
 1. Produce and ingest a run locally (`startup-longitudinal-tracking`), so it is already
    recipe-validated and health-checked.
-2. `python3 scripts/submit_run.py --store <local store.jsonl> --run-id <id> --corpus <corpus.jsonl>`
+2. `tools/startup submit --store <local store.jsonl> --run-id <id> --corpus <corpus.jsonl>`
    — collects the extra device/OS/environment provenance, redacts, validates, appends.
-3. `python3 scripts/reproducibility_report.py --corpus <corpus.jsonl>` — per cell: contributor and
+3. `tools/startup reproducibility --corpus <corpus.jsonl>` — per cell: contributor and
    unit counts, agreement verdict, pooled tail where agreement holds, and candidate dimensions
    where it does not.
 4. When a cell fails to reproduce, run the dimension hunt in `references/reproducibility.md`. The

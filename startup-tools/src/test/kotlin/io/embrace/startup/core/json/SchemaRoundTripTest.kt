@@ -90,7 +90,8 @@ class SchemaRoundTripTest {
 
     @Test
     fun `every preserved leg decodes at its declared shape`() {
-        val files = fixtures.resolve("legs/x37").listFiles { f -> f.name.endsWith(".json") }.orEmpty()
+        val legs = Zips.unpackToTemp(fixtures.toPath().resolve("legs").resolve("x37.zip")).toFile()
+        val files = legs.listFiles { f -> f.name.endsWith(".json") }.orEmpty()
         assertTrue(files.size >= 22)
         files.forEach { f ->
             val leg = StartupJson.decodeFromString(LegRecord.serializer(), f.readText())

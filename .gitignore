@@ -64,5 +64,8 @@ docs/
 .DS_Store
 .kotlin
 
-# Claude output
+# Claude output (scratch: raw traces, whole campaign directories)
 claude-output/
+
+# The startup tooling's committed records keep each campaign's log despite the *.log rule above
+!.claude/skills/_shared/records/**/*.log

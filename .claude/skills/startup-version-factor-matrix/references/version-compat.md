@@ -41,15 +41,16 @@ channel. Two consequences specific to this skill:
 
 ## Per-version build recipes
 
-`compat_patch.py` encodes these as data. Apply before a cell, revert after.
+`tools/startup compat-patch` encodes these as data. Apply before a cell, revert after.
 
 **Apply them in a dedicated worktree, not the user's checkout.** Version campaigns mutate the
 catalog pin, the iteration count, and (for old versions) app source — run the whole campaign from
-`git worktree add --detach`, pass the worktree to the runner (`fleet_campaign.py --repo`), invoke
-`compat_patch.py` from the *worktree's own copy* of this skill so its `git rev-parse` self-location
-targets the worktree, reset between versions with an in-worktree `git checkout`, and delete the
+`git worktree add --detach`, pass the worktree to the runner (`tools/startup fleet-campaign --repo
+<worktree>`) and to the patcher (`tools/startup compat-patch --repo <worktree>`; without the flag
+it self-locates via `git rev-parse` from the cwd), reset between versions with an in-worktree
+`git checkout`, and delete the
 worktree at the end. Nothing is borrowed, so a killed campaign leaves nothing to restore — the
-failure class that produced four incidents on 2026-08-15/17 (dirty pins after SIGTERM, a restore
+failure class that produced four incidents in one week (dirty pins after SIGTERM, a restore
 that half-applied, a tree-clean that silently reverted a fix) cannot occur. The one recipe that
 still touches shared state is `local` (publishes the working tree to mavenLocal) — there the
 working tree is the *subject*, and mavenLocal is global by design; verify what resolved, as below.
@@ -113,7 +114,7 @@ what the longitudinal layer keeps.
 
 ## Restoring the tree
 
-The app tree must return to its pre-run state: `compat_patch.py --revert-all`, restore the
+The app tree must return to its pre-run state: `tools/startup compat-patch --revert-all`, restore the
 `embrace =` pin to its original value, and confirm with `git status --short`. Leftover patches or a
 stale pin make the *next* campaign measure something you did not intend — and it will not be
 obvious.

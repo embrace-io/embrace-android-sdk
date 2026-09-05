@@ -17,3 +17,8 @@ store.jsonl
 plan.json
 *.pftrace
 *.perfetto-trace
+
+# The one place the reference set and stores ARE committed: the shared records root
+# (see _shared/records/README.md). Traces still never are.
+!_shared/records/longitudinal/reference-set.json
+!_shared/records/longitudinal/store.jsonl

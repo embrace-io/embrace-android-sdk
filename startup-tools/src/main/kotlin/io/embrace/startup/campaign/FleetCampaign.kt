@@ -274,14 +274,6 @@ class FleetCampaign(
         Files.writeString(campDir.resolve("run-metadata.json"), StartupJson.encodeToString(JsonObject.serializer(), meta))
     }
 
-    /** The compile state a StartupBenchmarks method establishes, as the reference recipe names it. */
-    private fun compileStateOf(method: String): String? = when (method) {
-        "coldStartupBaselineProfile" -> "profile"
-        "coldStartupNoAot" -> "none"
-        "coldStartup" -> "full"
-        else -> null
-    }
-
     private fun jsonOrNull(value: Any?): JsonElement = when (value) {
         null -> JsonNull
         is Int -> JsonPrimitive(value)
@@ -305,6 +297,24 @@ class FleetCampaign(
         private const val IDLE_GAP_MS = 300_000L
         private const val MILLIS = 1000L
         private const val NANOS_PER_MINUTE = 60e9
+
+        /**
+         * The compile state a StartupBenchmarks method establishes, in the reference recipe's vocabulary.
+         * `coldStartup` runs CompilationMode.DEFAULT - the fresh-install state, which is `verify` on most
+         * builds and never full AOT - so it is `default`, not `full`; `full` is `coldStartupFullAot`. The
+         * two user-session arms compile with the baseline profile like the arm they derive from.
+         */
+        internal fun compileStateOf(method: String): String? = when (method) {
+            "coldStartupBaselineProfile",
+            "coldStartupBaselineProfileNewUserSession",
+            "coldStartupBaselineProfileExpiredUserSession",
+            -> "profile"
+            "coldStartupNoAot" -> "none"
+            "coldStartupFullAot" -> "full"
+            "coldStartup" -> "default"
+            else -> null
+        }
+
         private val CLOCK: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
         private val ISO: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
 
@@ -312,7 +322,7 @@ class FleetCampaign(
          * Find the run's output directory under `connected/`, tolerantly. Macrobenchmark names it from
          * the device's model string plus API level ('SM-A145M - 15'); hints are written the other way
          * ('SM_A145'). A plain substring test failed AFTER a pass was measured and wiped a four-device
-         * campaign on 2026-08-14. So: compare with separators and case normalised away, fall back to the
+         * campaign. So: compare with separators and case normalised away, fall back to the
          * sole directory present (gradle wipes it per run), and log both non-exact outcomes loudly.
          */
         fun resolveTraceDir(connected: Path, match: String, log: (String) -> Unit): Path? {

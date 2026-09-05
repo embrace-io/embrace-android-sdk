@@ -76,7 +76,7 @@ telemetry verification fails unattended) are in
   `am force-stop`/install cycles kill the app mid-init and its perfetto session competes for
   buffer space; symptoms are missing `emb-sdk-start` slices and arms that silently switch build
   type mid-pass. Before launching anything unattended, verify no other driver process is alive
-  (`pgrep -fl python3`) — a harness task list is NOT proof — and give long-running masters a
+  (`pgrep -fl startup-tools`, `pgrep -fl connectedBenchmark`) — a harness task list is NOT proof — and give long-running masters a
   pidfile singleton lock that refuses to start when a live PID holds it.
 - Harness `cat`/device-state reads appear as small competitor processes in early iterations
   of a pass — expected, not a foreign process.
@@ -86,7 +86,7 @@ telemetry verification fails unattended) are in
   macrobenchmark leg can report rc=0 and write a complete, plausible trace set from a process that
   crashed on every single launch: a crash in a *posted* callback fires after the activity is up, so
   the harness's activity check passes, the window slices are present (init "completed" before the
-  crash), and nothing anywhere reads failed. Measured instance (2026-08-16): a runtime-classpath
+  crash), and nothing anywhere reads failed. Measured instance ([evidence: E1](#e1)): a runtime-classpath
   conflict killed SDK 8.3.0 on every launch; the two slower devices crashed before the activity
   check and failed honestly, while the fastest device produced 200 green-looking traces and a crash
   buffer holding 200 `FATAL EXCEPTION`s — one per launch. Faster devices are MORE exposed, not
@@ -95,14 +95,14 @@ telemetry verification fails unattended) are in
   too, not just "the app launched".
 - **A hung leg emits nothing, so log monitoring cannot see it.** Watching a campaign log for
   failure signatures catches failures, not stalls: a leg that hangs produces no lines at all and
-  looks identical to a slow leg until a driver-level timeout fires hours later (2026-08-16: one leg
+  looks identical to a slow leg until a driver-level timeout fires hours later (measured: one leg
   hung for a full 4-hour outer timeout, zero passes collected, zero log lines). Give every leg its
   own subprocess timeout sized to the LEG (~2–3× its expected duration), and make any watchdog
   assert on *expected progress within an interval* rather than only matching failure strings.
 - **Killing a campaign does not kill its tree.** SIGTERM to a driver leaves its child benchmark
   runner and THAT child's gradle client alive (and device-side tracers — see the tracer note in
   "Driving a device outside macrobenchmark"). After any kill, sweep the host for survivors
-  (`pgrep -fl fleet_campaign`, `pgrep -fl connectedBenchmark`) and the device for tracers before
+  (`pgrep -fl fleet-campaign`, `pgrep -fl connectedBenchmark`) and the device for tracers before
   trusting the fleet is idle; a driver that spawns children should run them in a process group and
   kill the group.
 - **The Go-tier `ddmlib ShellCommandUnresponsiveException` on install is intermittent, not a
@@ -168,15 +168,16 @@ like an install-aftermath iteration.
 
 ## Long-running campaigns: DON'T borrow global state — run from a worktree
 
-**The preferred pattern (2026-08-17, after four borrowed-state incidents in two days): campaigns
+**The preferred pattern (adopted after four borrowed-state incidents in two days): campaigns
 that need repo mutations — the catalog's SDK version pin, benchmark iteration counts, compat
 patches for old versions — run from a dedicated `git worktree add --detach`, never from the user's
 checkout.** The worktree gets edited freely, per-version resets are a plain in-worktree
 `git checkout`, gradle builds into the worktree's own build dirs, and the whole thing is deleted
 afterwards — there is nothing to restore, so the entire class of restore-on-kill hazards below
-does not exist. `fleet_campaign.py --repo <worktree>` targets it; scripts that self-locate via
-`git rev-parse` (e.g. `compat_patch.py`) target the worktree automatically when invoked from the
-worktree's own copy of the skill. Two boundaries: the user's working tree is the *subject* only
+does not exist. `tools/startup fleet-campaign --repo <worktree>` targets it, and `compat-patch`
+and `cell-runner` take the same `--repo` flag (without it a command self-locates via
+`git rev-parse`, so one run from inside the worktree targets it automatically). Two boundaries:
+the user's working tree is the *subject* only
 when benchmarking uncommitted changes (then the checkout is the point — copy the diff into the
 worktree or accept borrowing); and the host must still stay quiet-ish during legs — the worktree
 frees the *tree*, not the CPU.
@@ -186,8 +187,8 @@ live under `/private/tmp`, which macOS purges by *file* age, and the purge leave
 directory tree standing while deleting `gradlew`, the top-level build files and `.git`. The result
 looks intact to `ls`, is invisible to `git worktree list`, and fails only once a campaign tries to
 build. Probe for a **file** the build needs — `examples/ExampleApp/gradlew` — not for the directory,
-and recreate rather than repair: a gutted worktree cannot be restored in place. (Observed
-2026-08-26: two engine-A/B worktrees reduced to 404K and 16K of empty directories.)
+and recreate rather than repair: a gutted worktree cannot be restored in place. (Observed on two
+A/B worktrees, each reduced to a few hundred KB of empty directories.)
 
 The borrowing discipline below remains for the cases a worktree cannot cover. When you must
 mutate something genuinely global (a device setting, mavenLocal contents, the user's checkout
@@ -207,8 +208,8 @@ wrong version. Three layers, because each covers what the others cannot:
 Worth testing rather than assuming: drive the real file, send a real SIGTERM, send a real SIGKILL,
 and assert the next startup recovers.
 
-Two defects measured in a real implementation of this pattern (2026-08-16), both of the kind a
-casual read passes over:
+Two defects measured in a real implementation of this pattern, both of the kind a casual read passes
+over:
 
 - **Nested borrows half-restore on a signal.** With two borrowed states (pin wrapping a source
   edit), each context's own handler restores *its* state and re-raises with `SIG_DFL` — so the
@@ -235,34 +236,35 @@ release** unless that pin is repointed. That one line also drives the *plugin* v
 plugin entry resolves through the same ref. Flipping a flag then changes a setting inside an SDK that
 is not the one being tested.
 
-This voided X37 on 2026-08-26 at a cost of 2.5 hours of device time. The engine A/B ran 20 clean legs
-on the A14 and returned **+0.1% at the median (p=0.97)** where X33 had measured −20.4% eight days
-earlier. The config file was right, the plugin has read that key since 2025-10, and the dex payloads
-differed — every check that was run passed, because none asked which SDK was in the APK. X32/X33 had
-listed the prerequisite plainly (*"HEAD published to mavenLocal as 9.3.0-SNAPSHOT"*) and it was not
+This voided a whole engine A/B campaign at a cost of hours of device time ([evidence: E2](#e2)): twenty
+clean legs returned a null where a campaign eight days earlier had measured a large effect. The config
+file was right, the plugin had read that key for months, and the dex payloads differed — every check
+that was run passed, because none asked which SDK was in the APK. The earlier campaigns had listed the
+prerequisite plainly (publish the build under test to mavenLocal and repoint the pin) and it was not
 carried forward.
 
 Three checks, cheapest first: **read the pin** and confirm it names the build under test; **run the
 propagation gate on leg 1** (below) and abort the device if it does not fire; and afterwards,
-**compare the level against the longitudinal store** — X37's pooled A14 median of 61.21 ms sat on the
-store's 9.1.0 record (63.02), not 9.2.0 (45.05), which is how the wrong SDK was identified. The store
-doubles as a provenance check: it can tell you which version you actually measured.
+**compare the level against the longitudinal store** — the voided campaign's pooled median sat on the
+store's record for the *previous* released version, not the one under test, which is how the wrong SDK
+was identified. The store doubles as a provenance check: it can tell you which version you actually
+measured.
 
 **The primary arm check is the PROPAGATION GATE, not an artefact comparison.** Verify the arms from the
 SDK's own instrumented sections: the effect must concentrate in the sections the flag targets while
 unrelated sections stay flat. For the otel-kotlin flag that signature is unmistakable — the OTel
 construction sections move −42% to −90% while `otel-module` holds within ±7% as an internal control.
 Noise cannot concentrate a reduction of that size in exactly the right sections and leave everything
-else alone. This is the method P17 arrived at in 2026-08-14 after three artefact-based attempts
-failed, and it is what X32/X33 gated on per device. **Prefer it whenever the flag has a predicted
-locus**; fall back to artefact comparison only when it does not.
+else alone. This is the method the project arrived at after three artefact-based attempts failed, and
+it is what the earlier engine A/B campaigns gated on per device. **Prefer it whenever the flag has a
+predicted locus**; fall back to artefact comparison only when it does not.
 
-*Corrected 2026-08-26: an earlier version of this section led with the dex comparison and did not
-mention the propagation gate at all, which understated a method the project had already established
-and reduced a decisive check to a smoke test.*
+*Correction: an earlier version of this section led with the dex comparison and did not mention the
+propagation gate at all, which understated a method the project had already established and reduced
+a decisive check to a smoke test.*
 
 The artefact-level check is still worth running as a cheap pre-flight —
-`scripts/verify_ab_arms.py <a> <b>` — because it catches the total-failure case before any device
+`tools/startup verify-arms <a> <b> [<a-rebuilt>]` — because it catches the total-failure case before any device
 time is spent. What it can and cannot establish:
 
 - **Identical APK size is what SUCCESS looks like**, not failure. The plugin injects local config by
@@ -311,3 +313,28 @@ medians, and sample across passes rather than from the head of one.
   55 °C, so a battery-gated wait releases immediately. Gate relative to the device's own settled
   idle temperature, since idle baselines differ by tier, and note that "settled" needs a strict
   threshold: a 1 °C-per-30 s test declares 42 °C settled on a device that idles at 34 °C.
+
+---
+
+# Appendix — evidence behind the rules
+
+Point-in-time incidents from one four-device fleet (a Tensor flagship, a 2018 flagship, a mid-tier
+Exynos, a 1 GB Go device) during the August 2026 campaigns. Kept so the reasoning above can be checked;
+the rules stand on their own and none of these figures is a threshold to import.
+
+<a id="e1"></a>
+### E1 — A crash on every launch with a green harness
+
+A runtime-classpath conflict killed SDK 8.3.0 on every launch of a version-sweep leg. The two slower
+devices crashed before the activity check and failed honestly; the fastest device produced 200
+green-looking traces and a crash buffer holding 200 `FATAL EXCEPTION`s, one per launch.
+
+<a id="e2"></a>
+### E2 — An engine A/B that measured the wrong SDK
+
+The ExampleApp catalog pin still named the released 9.2.0 while the worktree was checked out at the
+commit under test, so both arms built against the release. Twenty clean legs on the mid-tier device
+returned +0.1% at the median (p = 0.97) where a campaign eight days earlier had measured −20.4% on the
+same flag; 2.5 hours of device time were voided. The pooled median (61.2 ms) sat on the longitudinal
+store's record for the previous release (63.0 ms), not the one under test (45.1 ms), which is how the
+wrong SDK was identified.

@@ -1,0 +1,245 @@
+<title>External Factors in SDK Startup — Findings Summary</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #FFFFFF;
+    --ink: #1C1E21;
+    --ink-secondary: #55524B;
+    --muted: #8A8577;
+    --line: #E5E2D9;
+    --accent: #D9930D;
+    --accent-soft: #F5E3BC;
+    --good: #3E7C4F;
+    --good-soft: #E4EFE6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #16181C;
+      --surface: #1E2126;
+      --ink: #ECEAE4;
+      --ink-secondary: #B5B1A6;
+      --muted: #7D796E;
+      --line: #33363C;
+      --accent: #E8B04B;
+      --accent-soft: #3A3123;
+      --good: #7FBB8E;
+      --good-soft: #24352A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #16181C;
+    --surface: #1E2126;
+    --ink: #ECEAE4;
+    --ink-secondary: #B5B1A6;
+    --muted: #7D796E;
+    --line: #33363C;
+    --accent: #E8B04B;
+    --accent-soft: #3A3123;
+    --good: #7FBB8E;
+    --good-soft: #24352A;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.55;
+    margin: 0;
+    padding: 40px 24px 72px;
+  }
+  main { max-width: 920px; margin: 0 auto; }
+  h1 { font-size: 1.7rem; letter-spacing: -0.01em; margin: 0 0 4px; text-wrap: balance; }
+  h2 { font-size: 1.15rem; margin: 44px 0 6px; letter-spacing: -0.005em; }
+  h2 .sub { display: block; font-size: 0.85rem; font-weight: 400; color: var(--ink-secondary); margin-top: 2px; }
+  .context { color: var(--ink-secondary); font-size: 0.9rem; margin: 0 0 20px; }
+  .factor {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 16px 18px;
+    margin: 14px 0;
+  }
+  .factor h3 { margin: 0 0 6px; font-size: 1.0rem; }
+  .rank {
+    display: inline-block;
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-weight: 700;
+    border-radius: 4px;
+    padding: 1px 7px;
+    margin-right: 8px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    vertical-align: 2px;
+  }
+  .factor p { font-size: 0.87rem; margin: 6px 0; color: var(--ink-secondary); }
+  .factor p strong { color: var(--ink); }
+  .factor ul { font-size: 0.87rem; color: var(--ink-secondary); margin: 6px 0; padding-left: 22px; }
+  .factor li { margin: 3px 0; }
+  .factor li strong { color: var(--ink); }
+  code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.85em;
+    background: var(--accent-soft);
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+  a { color: var(--accent); font-weight: 600; }
+  .note { color: var(--ink-secondary); font-size: 0.84rem; margin-top: 10px; }
+  .excluded {
+    background: var(--good-soft);
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 0.87rem;
+    color: var(--ink-secondary);
+    margin: 14px 0;
+  }
+  .excluded strong { color: var(--good); }
+  .tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; margin: 14px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.86rem; }
+  th {
+    text-align: left; font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--muted); font-weight: 600; padding: 10px 12px 6px; border-bottom: 1px solid var(--line);
+  }
+  th.num, td.num { text-align: right; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-variant-numeric: tabular-nums; }
+  td { padding: 7px 12px; border-bottom: 1px solid var(--line); }
+  tr:last-child td { border-bottom: none; }
+  footer { margin-top: 48px; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--line); padding-top: 16px; }
+  footer p { margin: 4px 0; }
+</style>
+
+<main>
+  <h1>External Factors in SDK Startup — Findings Summary</h1>
+  <p class="context">What we are now confident affects SDK-init performance <em>from outside our code</em>, based on several thousand instrumented cold starts across four devices (Pixel 7 Pro / Tensor G2 / Android 15 · Galaxy A14 / Exynos 850 / Android 15 · Pixel 3 / SD845 / Android 12 · Galaxy A01 Core / MT6739 32-bit / Android 10 Go), hot and cool condition arms, per-iteration perfetto trace analysis, and causal manipulation experiments. High-confidence findings only. New to this investigation? Start with the <a href="https://claude.ai/code/artifact/a67bcf10-2835-49e8-95ee-7d10a551fdf9">primer: how the SDK starts</a>. Full detail: <a href="https://claude.ai/code/artifact/c8ef75b3-4c83-4335-8b9a-3776699266a0">testing log</a> (scoreboard + every experiment).</p>
+
+  <p class="note"><strong>How to read the numbers here.</strong> This document is about <em>mechanisms</em>, which outlive any release; the figures are illustrations of magnitude, not the claims themselves. So the durable form of every finding is a <strong>ratio or a percentage measured within one SDK version across device classes</strong> — that comparison holds even as the SDK gets faster underneath it. Absolute millisecond values are given only to convey scale, and each is labelled with the version it was measured on. The strongest evidence of this durability is the tier span itself: the fastest and slowest devices in the fleet sit <strong>≈8× apart at 8.3.0 (20.9 → 177.1 ms) and still ≈8× apart at 9.2.0 (11.5 → 92.6 ms)</strong>, even though both ends roughly halved. The hardware ordering is a property of the hardware; the absolute numbers are a property of the release.</p>
+
+  <p class="note"><strong>The unifying model behind everything below:</strong> window duration = fixed work ÷ (CPU clock × IPC). Across every device and condition we measured, the term that actually moves is <strong>IPC — the effective speed of the memory subsystem</strong>. The SDK's init work (class loading, config decode, OTel assembly) is pointer-chasing and memory-bound, so anything that degrades memory-system throughput degrades our startup, even when CPU clocks are provably pinned at maximum.</p>
+
+  <h2>A. Factors that set baseline startup speed<span class="sub">outside our control · ranked by impact</span></h2>
+
+  <div class="factor">
+    <h3><span class="rank">A1 · ≈8×</span>Device tier: CPU microarchitecture + memory subsystem</h3>
+    <p><strong>Empirical:</strong> identical SDK work spans nearly an order of magnitude across the fleet. At 9.2.0 the window medians are 11.5 ms (Pixel 7 Pro) · 32.0 (Pixel 3) · 45.1 (A14) · 92.6 (A01 Core) — a span of <strong>8.0×</strong>. The same measurement at 8.3.0 spans <strong>8.5×</strong> (20.9 · 43.5 · 75.6 · 177.1). <strong>That stability across two releases is the point:</strong> the SDK halved its own cost in between, and the tier ratio barely moved, because tier is a property of the silicon rather than of our code.</p>
+    <p>That it is the <em>same work</em> on every device is verified by the section-share fingerprint. At 9.2.0 the OTel assembly phase takes <strong>33%, 34% and 33%</strong> of the window on the Pixel 3, A14 and A01 Core respectively, and the config decode 17–28% — near-identical proportions across a threefold span in absolute window size. Only the hardware changes.</p>
+    <p><strong>Theoretical:</strong> in-order cores (A53/A55) stall on every cache miss; out-of-order wide cores (X1) hide memory latency. Cache sizes and DRAM width scale with tier, and our workload is dominated by exactly the operations these differences hit hardest.</p>
+  </div>
+
+  <div class="factor">
+    <h3><span class="rank">A2 · up to ~1.9×</span>Device temperature — via memory-subsystem throttling, not CPU clocks</h3>
+    <p><strong>Empirical</strong> <em>(measured 2026-08-12 on the then-current build; read the ratios, not the absolute values)</em><strong>:</strong> Pixel 3 dose-response: cool passes ran 31.9 → 42.2 ms — <strong>+32%</strong> — as the device self-heated 30→39 °C <strong>at exactly 2803 MHz delivered CPU clock in every window</strong>; the hot arm (41 °C battery ≈ 70 °C silicon, read via <code>dumpsys thermalservice</code>) ran 50–61 ms at the same clocks. Cool also collapsed the outlier rate (5/250 vs 54/250 slow iterations). The Pixel 7 Pro was indifferent across 28–34 °C — modern headroom absorbs it. Records: <code>cooldown-2026-08-12/pixel/</code>, clock tables in <code>probes-2026-08-12/</code>.</p>
+    <p><strong>Theoretical + architectural:</strong> thermal governors throttle DDR/bus/cache clocks before (and invisibly to) cpufreq — the Pixel 3's HAL literally registers <code>thermal-devfreq-0</code> as a cooling device. Same clock + hotter silicon = fewer instructions per cycle for memory-bound work.</p>
+  </div>
+
+  <div class="factor">
+    <h3><span class="rank">A3 · +24–40%</span>Ambient device load (how busy the phone already is)</h3>
+    <p><strong>Empirical — causal:</strong> inducing system_server churn while launching inflated cold starts <strong>+40% on the A14 (758→1058 ms) and +24% on the Pixel 7 Pro (208→258 ms)</strong> under identical load, with instant recovery when the load stopped (<code>probes-2026-08-12/</code>). Observationally, the Pixel 3's pass medians tracked its rising background activity (Photos/GMS/Play churn) at flat clocks.</p>
+    <p><strong>Theoretical:</strong> concurrent processes don't need to steal our CPU (main-thread scheduler wait stayed &lt;3 ms throughout) — they steal memory bandwidth from the shared bus, and lower-tier devices have the least bandwidth to share.</p>
+  </div>
+
+  <div class="factor">
+    <h3><span class="rank">A4 · shifts shares</span>OS / ART runtime version</h3>
+    <p><strong>Empirical:</strong> class-loading cost varies by runtime generation — pre-window class-load (<code>embrace-impl-init</code>) is 17.5% of window on Android 12 vs 8% on Android 15 (same silicon tier); ART 10 doesn't even emit per-class instrumentation. Profile-guided AOT never helps within a day: steady state arrives by iteration ~2 (page cache), and the real profile payoff waits for background dexopt (idle + charging), which our data shows cannot fire mid-session.</p>
+    <p><strong>Theoretical:</strong> verification, JIT policy, and AOT state are runtime-owned; the same APK executes meaningfully different runtime work per OS version — and the first day after install runs mostly un-AOT'd.</p>
+    <p><strong>Refinement — measured (2026-08-12):</strong> the SDK ships a baseline profile, but every measurement above ran in the benchmark's fresh-install (<code>verify</code>) state, which never exercised it. The with/without A/B (all four devices) found the profile <strong>halves the AOT-less cost where it hurts most</strong>: window p50 −42–47% and worst-case −47–52% on A14/A01/P7P, first-launch included. <strong>Pixel 3/Android 12 correction (2026-08-13):</strong> the earlier "reproducible inversion" did NOT survive a properly counterbalanced re-test — ABBA arms put the boundary deltas at +5.0% and −6.8% (opposite directions, within run-to-run noise), so on ART 12 the profile is <em>neutral</em>: no benefit, no reliable penalty. The original +23% estimate is attributed to residual ordering/thermal bias in the fixed-order design; the prod caveat downgrades from "profile hurts on Android 12" to "profile doesn't help there." Practical upshot: the runtime-version factor is substantially a <em>profile-delivery</em> factor — devices/installs that get profile-compiled code sit near the tier's best case; those that don't pay up to 2×.</p>
+  </div>
+
+  <div class="factor">
+    <h3><span class="rank">A5 · up to 2× window · ±45% TTID</span>Install-time compile state — how the app arrived on the device</h3>
+    <p><strong>This was previously filed under "excluded" as a suspected measurement artifact. It is neither excluded nor an artifact — it is the strongest software factor we have measured</strong>, and it is promoted here because three separate tests closed it out.</p>
+    <p><strong>Empirical:</strong> the same APK executes as interpreted/JIT code or as AOT-compiled code depending on how it was installed, and the difference roughly <strong>halves the window</strong> (baseline-profile A/B across all four devices: window p50 −42–47%, worst case −47–52% on A14/A01/P7P). On Samsung the install state <em>alternates between consecutive installs</em>: fast installs show <code>base.apk [status=speed-profile] [reason=install-speg]</code>, slow ones <code>[status=verify]</code>, producing a <strong>+45% swing at TTID scale</strong> (cycle medians 597 / 866 / 598 / 863 ms across four fresh-install cycles of 50 plain <code>am start -W</code> launches, no tracing anywhere).</p>
+    <p><strong>Two theories about it were refuted, which is why the conclusion is now firm.</strong> The <em>tracing-overhead</em> explanation died with the untraced E15 test above. The <em>self-oscillator</em> explanation (verify install → JIT writes a profile → next install compiles → verify again) died with a no-launch discriminator: parity alternates perfectly across 8 same-APK reinstalls with <strong>zero launches in between</strong>, so the state machine is installer-side, not usage-driven. It alternates identically under every SDK version back to 8.3.0 — device behaviour, not ours.</p>
+    <p><strong>Prod mapping:</strong> Play installs carry cloud profiles (<code>install-dm</code>), so production devices land compiled deterministically — meaning the <em>baseline-profile arm is the prod-representative benchmark arm</em> on Play-delivered Samsungs. <strong>Benchmarking rule:</strong> on Samsung, DEFAULT mode is not a stable verify state; always pair it with the profile arm. There is no public API exposing compile state, which remains the known gap in the shipped device attributes.</p>
+  </div>
+
+  <h2>B. Factors that cause outlier startups<span class="sub">outside our control · ranked by observed damage</span></h2>
+
+  <div class="factor">
+    <h3><span class="rank">B1 · +25–60% windows</span>Concurrent system-process CPU bursts (GC compactions, dexopt, GMS/Play)</h3>
+    <p><strong>Empirical:</strong> the strongest outlier correlate on every device. A14: system_server CPU r = 0.73 (n = 250); every iteration with &gt;5 ms of system_server <em>heap-compaction GC</em> overlap was slow (13/13, mean +10.9 ms) — the two worst windows sat under 46–52 ms of active compaction; partial correlation shows GC hurts exactly via the CPU it burns (equal non-GC binder-storm bursts hurt equally). Pixel 3 extremes: <code>dex2oat</code> burning 149–413 ms of CPU inside 100 ms windows. A01 extremes: GMS/sync adapters at 127–245 ms. Made <strong>causal</strong> by the induced-load experiment (A3). Drill-downs: <a href="https://claude.ai/code/artifact/f5761a2e-9a72-4709-937c-52c0146112b4">variance doc</a> §external-factor catalogue; <code>campaign-2026-08-11/factors-report.txt</code>.</p>
+    <p><strong>Theoretical:</strong> heap compaction and dex compilation are memory-copy workloads — the highest bandwidth-per-CPU-second work a phone does. They saturate the DRAM interface precisely while our in-order main thread pointer-chases through class loads and config decode.</p>
+  </div>
+
+  <div class="factor">
+    <h3><span class="rank">B2 · first-launch cohort</span>Install aftermath — a deterministic trigger for B1</h3>
+    <p><strong>Empirical:</strong> the first cold start after an install runs with 2–3× baseline concurrent CPU in every measured pass — and the processes are the install pipeline itself: Play Store 55–80 ms, <code>installd</code> 17–43 ms, <code>artd</code> 48 ms, system_server to 75 ms, plus every app with a <code>PACKAGE_ADDED</code> receiver waking up. Visible three independent ways (factor catalogue, windows net of config, raw P7P launches decaying 468→331 ms over the first minute). Settles by launch ~3. <strong>Verification refinement (2026-08-12, 16 passes):</strong> the raw iter000 <em>window</em> is not uniformly slow — first launch also skips the persisted-config decode (~2 ms fast path vs 11–26 ms steady-state), and on fast tiers that saved work outweighs the aftermath pressure (iter000/median 0.63–1.18 on P7P/A14/Pixel 3) while the weakest tier still nets slower (A01 +17–39%). Two opposing forces, so in prod judge the <code>counter == 1</code> cohort by its <em>composition</em> (run-delay + time-since-install attrs separate pressure from work), not by assuming it is slow.</p>
+    <p><strong>Theoretical:</strong> real Play installs are heavier than our adb installs (verification, cloud-profile dexopt), users tap "Open" within the burst, and real apps add their own first-run work (onboarding, migrations, other SDKs) — so prod's first-launch outlier enrichment should exceed the bench's. <strong>Prod action: segment <code>version_startup_counter == 1</code> as its own cohort before any outlier analysis.</strong></p>
+  </div>
+
+  <div class="factor">
+    <h3><span class="rank">B3 · up to 2×</span>Scheduler core placement on heterogeneous silicon</h3>
+    <p><strong>Empirical:</strong> rare but catastrophic on big.LITTLE — the two Pixel 3 windows that landed majority-on-little ran 104.3 and 103.1 ms (~2× its median, the two worst non-storm outliers observed). Mild-but-common on the A14's two-domain layout (+2–4 ms, r ≈ 0.3–0.5 in every campaign); benign on the Pixel 7 Pro (mid-core placement costs ~2–3 ms of an 11 ms window).</p>
+    <p><strong>Theoretical:</strong> startup begins before the scheduler has load history for the new process; on asymmetric silicon a wrong initial placement runs the whole window on cores with half the clock and a fraction of the IPC.</p>
+  </div>
+
+  <div class="factor">
+    <h3><span class="rank">B4 · +5–60 ms</span>Flash/IO stalls</h3>
+    <p><strong>Empirical:</strong> a distinct outlier class with main-thread D-state/IO far above the ~2 ms baseline — up to 61 ms on the A01 (its top outlier correlate, r = 0.73), 50.7 ms in the Pixel 3's worst window (flash contention while dex2oat wrote), 4–11 ms in the A14's Type-B outliers, some with dex re-verification (13 ms of <code>VerifyClass</code>).</p>
+    <p><strong>Theoretical:</strong> cold starts fault code and data in from flash; entry-tier eMMC is slow and its controller is shared, so concurrent writers (installs, sync, logging) turn page faults into multi-ms stalls.</p>
+  </div>
+
+  <div class="factor">
+    <h3><span class="rank">B5 · low-RAM tier</span>Memory pressure: swap, kswapd, and the app's own GC</h3>
+    <p><strong>Empirical:</strong> on the 1 GB Go device only: <code>kswapd0</code> active inside windows (47 ms in the worst), <code>MemAvailable</code> correlates with slowness (r = −0.53), and — a class no other device showed — the app's <em>own</em> ART GC runs 64–99 ms inside half the outlier windows. A third of all A01 iterations qualify as outliers. Records: <code>a01-campaign-2026-08-11/</code>.</p>
+    <p><strong>Theoretical:</strong> at 1 GB with zram, startup allocation itself triggers reclaim and GC; the heap is small enough that init-time allocations cross GC thresholds that bigger devices never notice.</p>
+  </div>
+
+  <h2>Refuted, retired, and excluded<span class="sub">claims we tested and dropped — kept visible so they are not re-proposed</span></h2>
+  <div class="excluded">
+    <strong>CPU clock speed per se</strong> — exonerated as a primary factor: delivered clocks were pinned at maximum across all 450 A14 and 250 A01 iterations regardless of speed, and near-max on the hot Pixel 3 while it ran 2× slower. (Transient clock dips do contribute mid-tier outliers on SD845, and post-idle ramping costs the P7P ~2 ms — real but minor.)<br><br>
+    <strong>Charging state</strong> — tested directly (A14 full-battery-not-charging arm vs charging arms): no measurable effect at matched temperature.<br><br>
+    <strong>Core count</strong> — rejected as a device-model dimension: every modern tier ships 8, so it has no discriminating power left, and its apparent historical signal was microarchitecture riding along.<br><br>
+    <strong>The baseline profile "hurts" on Android 12</strong> — <em>refuted 2026-08-13.</em> The earlier reproducible-looking inversion did not survive a counterbalanced re-test: ABBA arms put the boundary deltas at +5.0% and −6.8%, opposite directions and within run-to-run noise. On ART 12 the profile is <strong>neutral</strong> — no benefit, no reliable penalty — and the original +23% estimate is attributed to ordering/thermal bias in the fixed-order design. The prod caveat downgrades from "profile hurts there" to "profile doesn't help there".<br><br>
+    <strong>ART generation as the explanation for uneven version gains</strong> — <em>argued against 2026-08-25.</em> When one device gained noticeably less than its peers from an SDK release, the oldest-OS-device hypothesis was the natural suspect. Section-level attribution rejects it in that global form: uniformly weaker codegen would depress every phase, yet <em>half</em> the phases improved <strong>more</strong> on that device, and the shortfall concentrates in a single phase (~79% of it). The effect is phase-specific, not runtime-wide. ART generation remains a real cofactor for compile state (above); it is not a general explanation for cross-device differences.<br><br>
+    <strong><code>init-maj-faults</code> as an IO signal</strong> — <em>retired as a proxy 2026-08-14.</em> It saturates at <em>both</em> ends of the tier range: pinned at 0 on the Go device even on a cold launch that read 1136 KB and ran ~25% slow (readahead makes the faults minor), and pinned high-and-flat on the flagship, where the cold value sits inside the warm range. It discriminates only on the two middle devices. Use <code>init-disk-read-kb</code>, which separates cold from warm on all four. <strong>The general lesson: a proxy can fail by saturating at either end, so check discrimination across the whole tier range rather than correctness on one device.</strong><br><br>
+    <strong>Section-share drift as a mechanism discriminator</strong> — <em>retired 2026-08-16.</em> It survived multiple-comparison correction mechanically and then failed its own premise in both directions. A corrected test can still be the wrong test.<br><br>
+    <strong>Device load saturation as the cause of entry-tier campaign failures</strong> — <em>retracted 2026-08-16.</em> A load average near 20 looked like saturation and prompted a reboot; the same load returned within the hour with six passes running cleanly under it. The real cause is an intermittent ddmlib install-commit timeout on slow eMMC — not thermal either, since it reproduces identically at 44 °C and 55 °C with 8.7 GB free.
+  </div>
+
+  <h2>A caveat about measuring any of this<span class="sub">why a careful benchmark is the wrong instrument for several of these factors</span></h2>
+  <p class="note"><strong>A quiet, well-controlled campaign cannot explain variance — and that is a fact about the design, not about the factors.</strong> Joining 28 production attributes to 200 launches found nothing significant at either level, because a cool-gated, settled, single-device run held thermal headroom to a 2.8-point range, available memory to 0.9, and never fired <code>low-memory</code> once. The same attributes correlate strongly when state is deliberately ramped (thermal headroom ρ = +0.55 partialled, p &lt; 0.001). <strong>Explanatory power requires the explanatory variable to move</strong>, so every factor above was established by <em>inducing</em> the condition — heat, load, install state — rather than by waiting for it to appear in a clean run. The practical consequence is that these factors are best hunted in production data, where the conditions vary on their own, and confirmed in the bench by deliberate manipulation.</p>
+  <p class="note">One related trap worth naming: "between-pass variance is 93–99% of the total" is a statement about a specific <em>estimator</em> on a specific device and version, not a fleet constant, and it is easily confused with the raw intraclass correlation, which answers a different question and can read 0.027 on the same 200 launches. Both are correct for their own cell. Always say which decomposition a number is, and compute it per arm rather than inheriting it.</p>
+
+  <h2>The device performance model<span class="sub">living section — which attributes predict startup performance, and why · revisited at every theory audit</span></h2>
+  <p>We are deliberately building a <strong>causal</strong> model, not a correlational one. An attribute earns a place only if it has (1) a mechanistic seat in the unified model (window = work ÷ (clock × IPC), plus wait classes) explaining <em>why</em> it moves performance, (2) demonstrated empirical separation in bench or prod data, and (3) cheap, unrooted collectability. Correlation alone is not admission — core count is the canonical rejection: 2-vs-8 correlates across a decade of devices, but every modern tier ships 8 cores, so it has no remaining discriminating power and its apparent historical signal was really microarchitecture riding along.</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>dimension</th><th>causal mechanism</th><th>empirical status</th><th>verdict</th></tr></thead>
+      <tbody>
+        <tr><td><strong>SoC model</strong></td><td>fixes microarchitecture, cache hierarchy, memory controller — the clock × IPC product for memory-bound init work</td><td>the four SoCs span <strong>8.0× at 9.2.0 and 8.5× at 8.3.0</strong> — stable while the SDK itself halved; restricted to the three 8-core devices the spread is still 3.9×</td><td><strong>primary key</strong></td></tr>
+        <tr><td><strong>Compile state</strong> (verify vs speed-profile)</td><td>interpreted/JIT vs AOT execution of the same work</td><td>halves the window (P2 A/B); ±45% TTID via SPEG alternation (E15/X2)</td><td><strong>strongest software dimension</strong></td></tr>
+        <tr><td><strong>OEM / vendor software</strong></td><td>install-time dexopt policy, thermal governors, scheduler tuning — same silicon, different policies</td><td>SPEG proven in-house; the reason the cohort key is SoC × Android × OEM</td><td><strong>required cofactor</strong></td></tr>
+        <tr><td><strong>Android / ART major</strong></td><td>ART generation changes JIT/AOT trade-offs</td><td>profile neutral on ART 12 vs −45% on ART 14/15</td><td><strong>required cofactor</strong></td></tr>
+        <tr><td><strong>Temperature</strong></td><td>memory-bus/clock throttling degrades effective memory speed</td><td>dose–response proven (Pixel 3); <strong>P7P quantified 2026-08-14 (X5 batch 1): +10% median from ≤33 °C to ≥38 °C, ascending and descending arms agreeing within 1–4 ms per band — so "P7P immunity" is now "immune through ~35 °C, ~+6–10% by 38 °C"</strong>. Pixel 3 and A01 staircases failed to produce a range (constant-37.7 °C battery sensor; never heated) — batch 2 must drive bands from thermalservice sensors</td><td><strong>state dimension</strong> (not identity)</td></tr>
+        <tr><td>RAM amount</td><td>memory-pressure/GC class on constrained devices</td><td>causal at the 1 GB extreme (own-GC in half of Go-tier outlier windows); weak within 4–12 GB</td><td>threshold dimension only</td></tr>
+        <tr><td>Storage type (eMMC/UFS)</td><td>IO-wait class, install aftermath, TTID — not the memory-bound window median</td><td>untested (no variance in our fleet)</td><td><em>candidate — test on suspicion</em></td></tr>
+        <tr><td>Max CPU clock</td><td>real term in the unified model but IPC-confounded and degenerate across modern tiers (entry = mid at 2.4 GHz)</td><td>1.4× clock gap coexists with 3.7× perf gap</td><td>subsumed by SoC model</td></tr>
+        <tr><td>Core count</td><td>saturated: all modern tiers ship 8</td><td>zero discriminating power in 2025–26 lineups and in our own fleet</td><td><strong>rejected</strong> (kept as the cautionary example)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><strong>How this section evolves:</strong> every new data batch's theory audit revisits the table; prod variance decomposition (within-SoC-across-model vs between-SoC spread — the P3/P5 attrs are committed &amp; in review as of 2026-08-13, and the SoC key already ships fleet-wide as <code>device_soc_model</code> on the envelope resource) is the standing acceptance test for the key; new candidate dimensions get added when suspicion arises (e.g. same-SoC devices diverging in prod → test storage type, RAM grade, or big-core count from <code>/proc/cpuinfo</code>) and are admitted only with mechanism + measured separation.</p>
+
+  <h2>Damage scale by tier</h2>
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Device</th><th class="num">p50 @ 9.2.0</th><th class="num">p95 @ 9.2.0</th><th class="num">worst under stress</th><th>dominant outlier causes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Pixel 7 Pro (2022 flagship, Android 15)</td><td class="num">11.5 ms</td><td class="num">17.3 ms</td><td class="num">29 ms</td><td>placement + post-idle ramp — negligible absolute damage</td></tr>
+        <tr><td>Pixel 3 (2018 flagship, Android 12)</td><td class="num">32.0 ms</td><td class="num">35.4 ms</td><td class="num">120 ms</td><td>heat (A2), dexopt storms (B1), little-core placement (B3)</td></tr>
+        <tr><td>Galaxy A14 (2023 entry, Android 15)</td><td class="num">45.1 ms</td><td class="num">59.1 ms</td><td class="num">92 ms</td><td>system_server GC bursts (B1), placement (B3)</td></tr>
+        <tr><td>A01 Core (2020 Go, Android 10)</td><td class="num">92.6 ms</td><td class="num">142.0 ms</td><td class="num">203 ms</td><td>everything at once: IO (B4), memory pressure (B5), GMS bursts (B1)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note"><strong>p50 and p95 are SDK 9.2.0</strong> on quiet, cool-gated campaigns (200 launches per device, baseline profile applied). <strong>"Worst under stress" is deliberately a different kind of number</strong> — the worst window seen across all campaigns including heat and induced-load arms, on earlier builds — because that is what the outlier factors on this page actually cost. Do not read the two columns as one distribution: the gap between a device's quiet p95 and its stressed worst <em>is</em> the damage this document catalogues. On the Pixel 3 that gap is the largest in the fleet (35 ms against 120), which is consistent with heat being its dominant factor.</p>
+  <p class="note">The mechanisms are universal; the damage is tier-dependent. The flagship's worst window still beats the entry device's fastest median — so outlier mitigation matters most exactly where most Android users are.</p>
+
+  <footer>
+    <p><strong>Currency.</strong> Reviewed and re-anchored <strong>2026-08-26</strong>. Window figures are SDK <strong>9.2.0</strong> from the longitudinal store (10 passes × 20 launches per device, benchmark build, baseline profile applied), with 8.3.0 from the matching sweep; factor magnitudes measured on the build current at each experiment and labelled where it matters. Changes in this revision: the install-time compile-state toggle was <em>promoted</em> from "excluded" to factor A5 after three tests confirmed it real; the refuted list gained the ART-12 profile inversion, ART generation as a general cross-device explanation, <code>init-maj-faults</code> as an IO proxy, section-share drift as a discriminator, and load saturation as a campaign-failure cause; and a caveat was added about what a quiet campaign structurally cannot measure.</p>
+    <p><strong>Method.</strong> androidx.macrobenchmark cold starts, all numbers from per-iteration perfetto traces via trace_processor; factor catalogues per window (delivered clocks, thread-state, per-CPU residency, competitor processes, ART work, IO, GC); causal experiments via induced load and synthetic simpleperf workloads. Tooling in <code>claude-output/</code> (<code>variance_analysis.py</code>, <code>outlier_factors.py</code>, <code>factors_report.py</code>, <code>hypothesis_tests.py</code>, <code>cross_device_sections.py</code>).</p>
+    <p><strong>Detailed docs:</strong> <a href="https://claude.ai/code/artifact/a67bcf10-2835-49e8-95ee-7d10a551fdf9">primer (how the SDK starts)</a> · <a href="https://claude.ai/code/artifact/c8ef75b3-4c83-4335-8b9a-3776699266a0">testing log (scoreboard, every experiment, open items)</a> · archived history: <a href="https://claude.ai/code/artifact/f5761a2e-9a72-4709-937c-52c0146112b4">variance deep-dive</a>, <a href="https://claude.ai/code/artifact/6fce4278-d750-431b-b95b-da1a2a3b6080">baseline timing report</a>. Records: <code>claude-output/*-2026-08-1[12]/</code>, plan doc <code>2026-08-11-startup-outlier-investigation-plan.md</code>.</p>
+  </footer>
+</main>

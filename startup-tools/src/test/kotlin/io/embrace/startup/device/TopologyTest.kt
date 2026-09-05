@@ -84,7 +84,7 @@ class TopologyTest {
                 return Output(0, out, "")
             }
         }
-        val t = TopologyProbe(adb).probe("8ANX0W1SN", "mid-b")
+        val t = TopologyProbe(adb).probe("SERIAL0001", "mid-b")
         assertEquals(31, t.apiLevel)
         assertEquals("Qualcomm", t.socFamily)
         assertEquals("SDM845", t.socModel)

@@ -1,6 +1,7 @@
 # Deciding whether a difference is real
 
-Companion to `stats.py`.
+Companion to the statistics core of `startup-tools` (`core/stats`, the method of record behind
+every `tools/startup` report).
 
 > **How this document is organized.** The body states transferable rules — the directive, the
 > mechanism, and the diagnostic signature — without fleet-specific numbers, so it stays valid as
@@ -122,7 +123,7 @@ pairs give identical absolute differences, so the smallest attainable p is `2/C(
 ### How many passes a comparison needs
 
 Size the design from the BETWEEN-PASS coefficient of variation of whatever statistic you are
-comparing, using `required_n(cv_pct, effect_pct, deff=1.0)` - deff = 1 because the pass is already
+comparing, using `requiredN(cvPct, effectPct, deff = 1.0)` (`core/stats/Power.kt`) - deff = 1 because the pass is already
 the unit. Measure that CV from pilot passes rather than assuming it; it varies by an order of
 magnitude across devices and is the single input that decides cost.
 

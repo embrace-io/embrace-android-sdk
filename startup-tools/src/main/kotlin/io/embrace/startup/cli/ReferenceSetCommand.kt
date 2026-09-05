@@ -68,6 +68,12 @@ class ReferenceSetCommand : CliktCommand(name = "reference-set") {
 
     private companion object {
         val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
-        val PRETTY = Json(StartupJson) { prettyPrint = true }
+
+        /** One-space indent, as the Python's `json.dumps(indent=1)` printed and wrote the reference set. */
+        @OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
+        val PRETTY = Json(StartupJson) {
+            prettyPrint = true
+            prettyPrintIndent = " "
+        }
     }
 }

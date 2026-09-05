@@ -191,4 +191,16 @@ class FleetCampaignTest {
         assertTrue(cohorts.contains("\"cohort\":\"created\""))
         assertTrue(cohorts.contains("\"expected\":\"restored\""))
     }
+
+    @Test
+    fun `benchmark methods map to the reference recipe's compile-state vocabulary`() {
+        assertEquals("profile", FleetCampaign.compileStateOf("coldStartupBaselineProfile"))
+        assertEquals("profile", FleetCampaign.compileStateOf("coldStartupBaselineProfileNewUserSession"))
+        assertEquals("profile", FleetCampaign.compileStateOf("coldStartupBaselineProfileExpiredUserSession"))
+        assertEquals("none", FleetCampaign.compileStateOf("coldStartupNoAot"))
+        assertEquals("full", FleetCampaign.compileStateOf("coldStartupFullAot"))
+        // CompilationMode.DEFAULT is the fresh-install state, not full AOT (port log #27).
+        assertEquals("default", FleetCampaign.compileStateOf("coldStartup"))
+        assertNull(FleetCampaign.compileStateOf("somethingElse"))
+    }
 }

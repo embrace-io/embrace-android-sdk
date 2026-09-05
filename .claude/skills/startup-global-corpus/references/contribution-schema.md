@@ -80,7 +80,7 @@ notes              free text, including any known peculiarity of this unit
 - Coarse buckets rather than exact values wherever a bucket answers the question — exact free bytes
   or exact app counts are more identifying and no more useful.
 
-`submit_run.py` enforces this: it constructs the record from an allowlist of fields, so a field
+`tools/startup submit` enforces this: it constructs the record from an allowlist of fields, so a field
 nobody thought about cannot leak by default.
 
 ## Versioning

@@ -74,7 +74,7 @@ delta is interpretable even though several dimensions moved.
 
 Per-cell wall clock on a mid-tier device, benchmark build: 200 launches plus pass overhead and
 cool gates lands around **35-45 min**. Entry-tier devices run several times slower per launch —
-budget roughly double to triple. Calibrate from your own first cell; `matrix_plan.py` prints an
+budget roughly double to triple. Calibrate from your own first cell; `tools/startup matrix-plan` prints an
 estimate from the tier you declare, purely so you do not plan 20 h of cells into an 8 h window.
 
 Plan in nights, and never shrink the run shape to fit — shrink the cell count. Cutting passes is
@@ -97,7 +97,7 @@ Ladder (each rung is a night, each depends on the previous):
 
 ## Plan file schema
 
-`matrix_plan.py` reads a JSON plan — copy `plan-example.json` and fill in your own devices.
+`tools/startup matrix-plan` reads a JSON plan — copy `plan-example.json` and fill in your own devices.
 Required keys: `run_id`, `primary_device` (a key into `devices`), `devices` (each with a serial
 plus its profile), `passes`, `iterations`, `reference`, `versions`, `anchors`. Optional:
 `factor_levels`, `combos` (each may name a different `device`), `build_type`,
@@ -107,7 +107,7 @@ Each `devices` entry carries the profile, not just a serial:
 
 ```json
 "mid": {"serial": "<from adb devices -l>", "api_level": 34, "tier": "mid",
-        "vendor": "<oem>", "soc_family": "<from device_probe.py>",
+        "vendor": "<oem>", "soc_family": "<from tools/startup probe>",
         "ram_class": "4-6GB", "cool_gate_c": 32.0}
 ```
 
@@ -118,7 +118,7 @@ and the repo HEAD sha for provenance.
 
 ## Reading the output
 
-`matrix_report.py` prints, per cell: n, window median / p90 / max, per-pass medians, TTID
+`tools/startup matrix-report` prints, per cell: n, window median / p90 / max, per-pass medians, TTID
 median, and pre-TTID main-thread CPU median. Then two derived tables:
 
 - **Version table** (reference cell only): each version's window median with the delta vs the

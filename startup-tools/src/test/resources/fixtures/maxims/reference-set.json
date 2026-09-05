@@ -1,0 +1,45 @@
+{
+ "recipe": {
+  "run_shape": {
+   "passes": 4,
+   "iterations": 20
+  },
+  "build_type": "benchmark",
+  "compile_state": "profile",
+  "instrument": "emb-sdk-start"
+ },
+ "devices": {
+  "flagship-a": {
+   "serial": "FIXTURE-SERIAL-B",
+   "tier": "flagship",
+   "profile": {
+    "api_level": 35,
+    "release": "15",
+    "vendor": "Google",
+    "soc_family": "GS201",
+    "clusters": [
+     1803000,
+     2348000,
+     2850000
+    ],
+    "ram_class": ">=8GB",
+    "storage_class": "unknown"
+   }
+  },
+  "mid-a": {
+   "serial": "FIXTURE-SERIAL-A",
+   "tier": "entry-mid",
+   "profile": {
+    "api_level": 35,
+    "release": "15",
+    "vendor": "samsung",
+    "soc_family": "Exynos 850",
+    "clusters": [
+     2002000
+    ],
+    "ram_class": "3-4GB",
+    "storage_class": "unknown"
+   }
+  }
+ }
+}

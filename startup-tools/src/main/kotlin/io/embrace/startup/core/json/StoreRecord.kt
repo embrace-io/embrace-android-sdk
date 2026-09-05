@@ -54,18 +54,21 @@ data class StoreRecord(
  *
  * Every field is nullable with a null default for one reason: the three salvaged 8.3.0 sweep records
  * carry an EMPTY profile (`{}`), and a reader that cannot decode them cannot read the store. A
- * complete profile is required at ingest time; [isComplete] is the check.
+ * complete profile is required at ingest time; [isComplete] is the check. Fields are
+ * `@EncodeDefault(NEVER)` so a run with no provenance stores `{}` as the Python did, not seven nulls
+ * (port log #29).
  */
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class DeviceProfile(
-    @SerialName("api_level") val apiLevel: Int? = null,
-    val release: String? = null,
-    val vendor: String? = null,
-    @SerialName("soc_family") val socFamily: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("api_level") val apiLevel: Int? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER) val release: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER) val vendor: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("soc_family") val socFamily: String? = null,
     /** Per-cluster maximum CPU frequency in kHz, ascending. */
-    val clusters: List<Long>? = null,
-    @SerialName("ram_class") val ramClass: String? = null,
-    @SerialName("storage_class") val storageClass: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER) val clusters: List<Long>? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("ram_class") val ramClass: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("storage_class") val storageClass: String? = null,
 ) {
     val isComplete: Boolean
         get() = apiLevel != null && release != null && vendor != null && socFamily != null &&
@@ -110,7 +113,7 @@ data class TraceHealth(
  * `values[min(n-1, floor(p*n))]`, not the Type-7 interpolation the statistics library uses - the port
  * keeps this definition for stored fields under the name "legacy index" so existing records remain
  * reproducible, and labels it wherever shown. Each producer writes only its own keys, so the two
- * producer-specific fields are never written as `null` (the side-by-side ingest of 2026-09-02 caught
+ * producer-specific fields are never written as `null` (the side-by-side ingest caught
  * a spurious `"pass_medians": null` in the Kotlin record).
  */
 @OptIn(ExperimentalSerializationApi::class)

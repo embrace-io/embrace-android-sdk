@@ -60,7 +60,7 @@ class IngestTest {
     private fun provenance(profile: DeviceProfile = realRef.devices.getValue("mid-b").profile): Pair<JsonObject, String> {
         val prov = JsonObject(
             mapOf(
-                "serial" to JsonPrimitive("8ANX0W1SN"),
+                "serial" to JsonPrimitive(realRef.devices.getValue("mid-b").serial),
                 "device_profile" to StartupJson.encodeToJsonElement(DeviceProfile.serializer(), profile).jsonObject,
                 "build_type" to JsonPrimitive("benchmark"),
                 "sdk_version" to JsonPrimitive("9.2.0"),

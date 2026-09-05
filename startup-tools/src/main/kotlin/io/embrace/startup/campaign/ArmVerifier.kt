@@ -12,7 +12,7 @@ import java.util.zip.ZipFile
  * both arms are the SAME program, the campaign runs perfectly, and "no significant difference" is
  * indistinguishable from a real null. The dex payload is the best available static check, with one
  * hard limit: Android builds are not byte-reproducible (275 vs 11,790 differing bytes between two
- * rebuilds of one tree, measured 2026-08-26), so "the dex differs" is necessary, not sufficient. Only
+ * rebuilds of one tree), so "the dex differs" is necessary, not sufficient. Only
  * a CONTROL - a rebuild of arm A's own tree - gives a noise floor to compare against, and the
  * propagation gate (section deltas on device) remains the primary arm check.
  */

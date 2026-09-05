@@ -11,7 +11,7 @@ import kotlinx.serialization.json.Json
  * - `explicitNulls = true`: the Python built each record as a complete dict and `json.dumps` wrote
  *   every key, `null` included (`"app_build_id": null` on a run with no APK digest). Readers treat
  *   absent and null alike, but the records on disk should look like the ones the Python wrote; the
- *   side-by-side ingest of 2026-09-02 was the only difference between the two toolchains' records
+ *   side-by-side ingest of a fresh campaign was the only difference between the two toolchains' records
  *   once the engine label was excluded. Fields a given producer never writes are marked
  *   `@EncodeDefault(NEVER)` on the type instead (see `Derived`).
  * - `allowSpecialFloatingPointValues`: Python's `json` module emits bare `NaN`/`Infinity`, which

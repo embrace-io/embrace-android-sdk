@@ -38,7 +38,10 @@ LOGCAT_ARGS = ("logcat", "-v", "threadtime", "-T", "1", "-s", "EmbVerify:I")
 _LINE = re.compile(r"^\S+ \S+\s+(\d+)\s+(\d+)\s+I EmbVerify: EMBV1 (\d+) (\d+)/(\d+) (.*)$")
 
 ATTRS = ("emb.user_session_id", "emb.app.version_startup_counter", "start-first-session-duration-ms",
-         "post-init-duration-ms", "init-compile-filter", "thread-name", "ended-in-foreground")
+         "post-init-duration-ms",
+         # 9.3.0 names; the older name is kept so pre-rename captures still classify and print.
+         "art-compile-filter", "app-image-at-init", "init-compile-filter",
+         "thread-name", "ended-in-foreground")
 
 
 def parse_embverify(text):
@@ -139,7 +142,7 @@ def launch_line(launch):
             f"counter {launch.get('emb.app.version_startup_counter') or '?'}  "
             f"start-first-session {launch.get('start-first-session-duration-ms') or '?'} ms  "
             f"post-init {launch.get('post-init-duration-ms') or '?'} ms  "
-            f"compile {launch.get('init-compile-filter') or '?'}")
+            f"compile {launch.get('art-compile-filter') or launch.get('init-compile-filter') or '?'}")
 
 
 def report(text, method):

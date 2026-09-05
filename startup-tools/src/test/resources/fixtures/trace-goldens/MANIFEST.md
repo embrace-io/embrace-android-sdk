@@ -8,11 +8,11 @@ verdicts and every trace-driven report can be tested for parity in CI without a 
 
 ## Devices
 
-| key | device | serial | traces |
-|---|---|---|---|
-| `flagship-a` | Pixel 7 Pro | 29131FDH300KXR | 20 |
-| `mid-a` | Galaxy A14 | R58W211D4ZD | 20 |
-| `mid-b` | Pixel 3 | 8ANX0W1SN | 20 |
+| key | device | traces |
+|---|---|---|
+| `flagship-a` | Pixel 7 Pro (Tensor G2, API 35) | 20 |
+| `mid-a` | Galaxy A14 (Exynos 850, API 35) | 20 |
+| `mid-b` | Pixel 3 (Snapdragon 845, API 31) | 20 |
 
 ## Producer
 
@@ -25,7 +25,17 @@ the **Perfetto v57.2** native engine - the same prebuilt the Kotlin `Prebuilt` p
 `hypothesis_tests.py` and `cross_device_sections.py` on the result. `_producers/copy_trace_goldens_into_module.py`
 copied it all here.
 
+## Storage
+
+The goldens are generated once and never edited, and there are ~630 of them, so they are kept as a
+single deflated archive, `data.zip`, beside this manifest. `TraceGoldens` unpacks it to a temporary
+directory once per test JVM; a producer script that writes the directory tree in place is used as it
+stands, so re-freezing is unchanged (write the tree, then re-pack it). Only this manifest stays a plain
+file, because it is the part a person reads.
+
 ## Layout
+
+Inside `data.zip`:
 
 ```
 <device>/<trace-stem>/
@@ -65,6 +75,15 @@ _campaign/<device>/pass1.json, pass1-factors.json   the variance / outlier-facto
 `./gradlew -PtraceParity=1 :startup-tools:test` was run on 2026-09-02 (09:03Z, mac-arm64): the native
 v57.2 `trace_processor_shell` re-ran all nine queries on all 60 fixture traces and every parsed row
 matched the frozen launcher output. 942 s wall, 540 trace parses. Layer B is green end to end.
+
+Re-run attempted on 2026-09-05 (mac-arm64, branch `hho/startup-tools-kotlin`, after the cohorts,
+trace-health class-load, maxims and ingest changes): the first attempt was voided by a concurrent
+`:startup-tools:test` invocation sharing the module's test-results directory (Gradle failed with
+`NoSuchFileException ... in-progress-results-generic.bin` after 17m53s; not a parity result). Do not run
+any other `:startup-tools:test` while the gate runs. The clean re-run, alone: **PASS** — exit 0,
+`TraceProcessorTest` 5 tests / 0 failures / 0 errors, the live parity case 1045 s, same 60 traces
+(JUnit report `startup-tools/build/test-results/test/TEST-io.embrace.startup.perfetto.TraceProcessorTest.xml`).
+Part of the pre-cutover evidence in `claude-output/2026-09-05-shadow-run/REPORT.md`.
 
 ## Findings recorded while freezing (Python behaviour on real data)
 

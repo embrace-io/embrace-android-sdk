@@ -1,5 +1,6 @@
 package io.embrace.startup.perfetto
 
+import io.embrace.startup.core.io.Zips
 import io.embrace.startup.core.json.SchemaRoundTripTest
 import io.embrace.startup.core.json.StartupJson
 import kotlinx.serialization.json.JsonObject
@@ -11,9 +12,10 @@ import kotlin.streams.toList
 /**
  * The frozen Python trace-layer outputs: for each fixture trace, the raw `trace_processor -q` stdout
  * of every query (`<query>.csv`) and the Python's own parse of it (`python_parsed.json`). Produced by
- * `claude-output/2026-08-26-kotlin-port/goldens/dump_trace_goldens.py`; the trace binaries themselves
- * are NOT in the repo, so tests that need them look under the repo's `claude-output/` and skip when
- * absent.
+ * the `_producers/` scripts inside the set; see the trace-goldens MANIFEST for provenance. They are
+ * generated once and never edited, so they are stored as a single archive and unpacked on demand. The
+ * trace binaries themselves are NOT in the repo, so tests that need them look under the repo's scratch
+ * output directory and skip when absent.
  */
 object TraceGoldens {
 
@@ -28,7 +30,11 @@ object TraceGoldens {
         val traceFileName: String get() = "$stem.perfetto-trace"
     }
 
-    fun root(): Path = SchemaRoundTripTest.fixturesRoot().toPath().resolve("trace-goldens")
+    /**
+     * The goldens, unpacked. `trace-goldens/data.zip` is unpacked once per test JVM into a temporary
+     * directory; a `trace-goldens/` left unpacked by a producer script is used as it stands.
+     */
+    fun root(): Path = unpacked
 
     fun all(): List<TraceGolden> {
         val root = root()
@@ -49,11 +55,22 @@ object TraceGoldens {
     fun cliStdout(name: String): String? =
         root().resolve("_cli").resolve(name).takeIf { Files.isRegularFile(it) }?.let { Files.readString(it) }
 
-    /** The captured trace for a golden, if this machine has the durable fixture set. */
+    /**
+     * The captured trace for a golden, if this machine has the durable fixture set: `<root>/<device>/pass1/<trace>`
+     * where the root is `STARTUP_TOOLS_TRACE_FIXTURES` when set, else the default location under `claude-output`
+     * named in the trace-goldens manifest.
+     */
     fun traceFile(golden: TraceGolden, repoRoot: Path): Path? {
-        val candidate = repoRoot.resolve("claude-output/2026-08-26-kotlin-port/fixtures/traces")
-            .resolve(golden.device).resolve("pass1").resolve(golden.traceFileName)
+        val root = System.getenv("STARTUP_TOOLS_TRACE_FIXTURES")?.let { Path.of(it) }
+            ?: repoRoot.resolve("claude-output/2026-08-26-kotlin-port/fixtures/traces")
+        val candidate = root.resolve(golden.device).resolve("pass1").resolve(golden.traceFileName)
         return candidate.takeIf { Files.isRegularFile(it) }
+    }
+
+    private val unpacked: Path by lazy {
+        val dir = SchemaRoundTripTest.fixturesRoot().toPath().resolve("trace-goldens")
+        val archive = dir.resolve("data.zip")
+        if (Files.isRegularFile(archive)) Zips.unpackToTemp(archive) else dir
     }
 
     /** The repo root, from the module's working directory (Gradle runs tests in the module dir). */

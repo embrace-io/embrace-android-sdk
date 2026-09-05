@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Per-section medians for one device × version arm, as the attribution campaigns (X34, X35) reduced
+ * Per-section medians for one device × version arm, as the attribution campaigns reduced
  * them from traces before the traces were deleted. The window itself is stored under the reserved key
  * [WINDOW_KEY] so a section's share of the window can be computed without a second file.
  *

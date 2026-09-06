@@ -59,4 +59,4 @@ synth-a  [build=benchmark compile=profile instrument=emb-sdk-start]
   9.2.0        median    41.4 ms   n=1200  runs=6
 
 Reminders: baselines are fixed, not rolling (a rolling baseline hides slow drift); one run is a candidate, two make a regression; never compare across device keys or recipes.
-wrote /Users/hansonho/work/embrace-android-sdk/claude-output/2026-08-26-kotlin-port/goldens/trend_synthetic.json
+wrote <repo>/claude-output/2026-08-26-kotlin-port/goldens/trend_synthetic.json

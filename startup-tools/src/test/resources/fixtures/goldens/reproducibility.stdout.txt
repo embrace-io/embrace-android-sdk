@@ -32,4 +32,4 @@ Pixel 7 Pro  sdk=9.2.0
   REPRODUCED - pooled n=80 across 2 contributors/2 units: median 12.8 p90 13.2 p95 13.3 (n<500: no p99)
 
 Reminders: pool only inside a reproduced cell; never pool across models to make a fleet number (composition artefact); never widen tolerance to force agreement - that disables the only mechanism that finds unaccounted dimensions.
-wrote /Users/hansonho/work/embrace-android-sdk/claude-output/2026-08-26-kotlin-port/goldens/reproducibility.json
+wrote <repo>/claude-output/2026-08-26-kotlin-port/goldens/reproducibility.json

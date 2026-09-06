@@ -17,6 +17,7 @@ import io.embrace.startup.cli.MatrixReportCommand
 import io.embrace.startup.cli.MaximsCommand
 import io.embrace.startup.cli.OutlierFactorsCommand
 import io.embrace.startup.cli.ProbeCommand
+import io.embrace.startup.cli.RecordsCommand
 import io.embrace.startup.cli.ReferenceSetCommand
 import io.embrace.startup.cli.ReproducibilityCommand
 import io.embrace.startup.cli.ServeTraceCommand
@@ -55,6 +56,7 @@ fun main(args: Array<String>) = StartupTools()
         MatrixReportCommand(),
         ArtifactSyncCommand(),
         MaximsCommand(),
+        RecordsCommand(),
         // Every former script is now a subcommand.
     )
     .main(args)

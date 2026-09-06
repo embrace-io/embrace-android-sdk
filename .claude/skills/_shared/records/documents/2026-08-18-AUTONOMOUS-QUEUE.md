@@ -65,7 +65,7 @@ campaign processes, and this file is a plan for later, not a queue that fires on
 | X37 (engine tail) | **VOID** — benchmarked released 9.1.0 in both arms. Data marked `VOID-DO-NOT-ANALYSE.md`. Stopped at entry-a leg 5. |
 | X40 (the redo) | **PREPARED, NOT RUN.** Both worktrees repointed to `9.3.0-SNAPSHOT` (already in mavenLocal from 08-17) and preflight passes. It started one leg by accident and was killed; **no X40 data exists** and none reached `claude-output/`. |
 | watchdog | **stopped** (was nagging hourly into an idle fleet) |
-| devices | all idle and swept. **The A14 (`<mid-a>`) is `unauthorized`** — it locked; reauthorise from the device before using it. |
+| devices | all idle and swept. **The A14 (`mid-a`) is `unauthorized`** — it locked; reauthorise from the device before using it. |
 | docs | all current and republished; manifest recorded |
 | skills | back in the tree; today's lesson applied to `device-gotchas.md` (uncommitted) |
 

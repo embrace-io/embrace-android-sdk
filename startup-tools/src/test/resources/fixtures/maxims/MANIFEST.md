@@ -1,13 +1,20 @@
 # Maxims fixture
 
-Parity fixture for the maxims ledger (`_shared/maxims.py` in Python, `startup-tools maxims` in Kotlin).
-Everything here is produced by one script, `make_fixture.py`, from closed-form data; there is no RNG.
+The closed-form fixture for the maxims ledger (`tools/startup maxims`). The inputs are synthetic and
+contain no RNG, so every number below is reproducible by construction.
+
+It began as a parity fixture against the Python reference implementation and became the **frozen spec**
+at the cutover (2026-09-05), when that implementation was deleted. The goldens are now regression
+goldens: they no longer prove agreement with a second implementation, they prove the Kotlin has not
+changed by accident. A deliberate rule change is expected to move them, and the diff is the review
+surface — regenerate with `tools/startup maxims score` / `render` against these inputs, using the
+timestamps below, and read the diff before accepting it.
 
 | item | value |
 |---|---|
-| Produced | 2026-09-04 |
-| Regenerate | `python3 startup-tools/src/test/resources/fixtures/maxims/make_fixture.py` (rewrites every file beside it) |
-| Reference | `.claude/skills/_shands/maxims.py` is the reference implementation; the Kotlin must match its output |
+| Produced | 2026-09-04, from the Python reference implementation |
+| Frozen | 2026-09-05, at the cutover |
+| Regenerate | run `tools/startup maxims` against the inputs here with the pinned `--now` values (below); the generator script was deleted with the Python |
 
 ## Inputs
 
@@ -21,6 +28,10 @@ Everything here is produced by one script, `make_fixture.py`, from closed-form d
   a poisoned fast path (iter000 config load 6 ms), no cohorts, no starvation. Exercises contradicted, thin
   and n/a.
 - `reference-set.json`: maps both serials to their device keys.
+
+The scoping rules that make a maxim `n/a` for a whole arm (a per-iteration data reset, a single-cohort
+arm, a tap that carries no CPU attributes) are exercised in `MaximsTest` against campaigns built in
+Kotlin rather than as files here, so a new rule needs no new fixture directory.
 
 ## Outputs (the goldens)
 

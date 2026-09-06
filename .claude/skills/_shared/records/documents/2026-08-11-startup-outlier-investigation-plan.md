@@ -18,9 +18,9 @@ campaign finishes).
 
 | device | serial | SoC / cores | OS | role |
 |---|---|---|---|---|
-| Samsung A14 (SM-A145M) | <mid-a> | Exynos 850, 8×A55 @2.0 (2 clock domains: cpu0-3, cpu4-7) | 15 | primary; all original findings |
-| Pixel 3 (blueline) | <mid-b> | SD845, 4×Silver@1.77 (cpu0-3) + 4×Gold@2.80 (cpu4-7) | 12 | generality: big.LITTLE, varying clocks, HOT tonight (41 °C) |
-| Samsung A01 Core (SM-A013G) | <entry-a> | MT6739, 4×A53 32-bit @1.5, single cluster | 10 (Go) | extreme low end; API-29 floor check |
+| Samsung A14 (SM-A145M) | mid-a | Exynos 850, 8×A55 @2.0 (2 clock domains: cpu0-3, cpu4-7) | 15 | primary; all original findings |
+| Pixel 3 (blueline) | mid-b | SD845, 4×Silver@1.77 (cpu0-3) + 4×Gold@2.80 (cpu4-7) | 12 | generality: big.LITTLE, varying clocks, HOT tonight (41 °C) |
+| Samsung A01 Core (SM-A013G) | entry-a | MT6739, 4×A53 32-bit @1.5, single cluster | 10 (Go) | extreme low end; API-29 floor check |
 | Pixel 7 Pro (incoming) | TBD | Tensor G2, 2×X1 + 2×A78 + 4×A55, 3 clock domains | 13+ | modern flagship: does any of this matter on current hardware; capacity-annotated traces |
 
 ## Theories under test (HISTORICAL — state before this round; final verdicts live in the

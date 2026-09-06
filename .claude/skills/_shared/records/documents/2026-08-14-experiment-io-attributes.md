@@ -2,8 +2,8 @@
 
 Status: RUN 2026-08-14 — verdicts reached, see the **Results (2026-08-14)** section at the end of
 this document. The design and feasibility probes below are the pre-campaign record; all probe
-results in this section were captured read-only on the four attached devices (`<flagship-a>`
-Pixel 7 Pro API35, `<mid-a>` Galaxy A14 API35, `<mid-b>` Pixel 3 API31, `<entry-a>` Galaxy
+results in this section were captured read-only on the four attached devices (`flagship-a`
+Pixel 7 Pro API35, `mid-a` Galaxy A14 API35, `mid-b` Pixel 3 API31, `entry-a` Galaxy
 A01 Core API29),
 with `atrace --async_stop` and a clean `pgrep tracebox`/`perfetto`/`atrace` check run first on every
 device, per the tracer-holdout precondition in `interpreting-results.md`.

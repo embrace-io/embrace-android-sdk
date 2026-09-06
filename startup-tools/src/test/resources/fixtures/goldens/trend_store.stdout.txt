@@ -96,4 +96,4 @@ mid-b  [build=benchmark compile=profile instrument=composed]
   9.2.0        median    31.9 ms   n=200   runs=1
 
 Reminders: baselines are fixed, not rolling (a rolling baseline hides slow drift); one run is a candidate, two make a regression; never compare across device keys or recipes.
-wrote /Users/hansonho/work/embrace-android-sdk/claude-output/2026-08-26-kotlin-port/goldens/trend_store.json
+wrote <repo>/claude-output/2026-08-26-kotlin-port/goldens/trend_store.json

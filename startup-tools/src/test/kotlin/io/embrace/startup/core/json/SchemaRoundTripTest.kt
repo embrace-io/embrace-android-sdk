@@ -1,5 +1,6 @@
 package io.embrace.startup.core.json
 
+import io.embrace.startup.core.io.Zips
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -139,7 +140,7 @@ class SchemaRoundTripTest {
         /** Resources are on disk under build/resources/test in a Gradle test run; resolve the root once. */
         fun fixturesRoot(): File {
             val url = checkNotNull(SchemaRoundTripTest::class.java.classLoader.getResource("fixtures/SOURCES.md")) {
-                "fixtures are not on the test classpath - run copy_fixtures_into_module.py"
+                "fixtures are not on the test classpath - check src/test/resources/fixtures/ is intact"
             }
             return File(url.toURI()).parentFile
         }

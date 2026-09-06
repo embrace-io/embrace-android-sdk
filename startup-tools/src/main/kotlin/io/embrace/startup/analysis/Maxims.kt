@@ -206,7 +206,8 @@ object Maxims {
                 "below the median of the rest of the pass.",
             why = "iter000 has no cached config to decode. A violation means app data survived a failed uninstall and the " +
                 "pass's first-launch sample is poisoned (hypothesis H3); the check is tier-relative because the two bands " +
-                "scale with the device.",
+                "scale with the device. An arm that clears app data before every launch is n/a: every launch takes the " +
+                "fast path there, so the comparison has no second population.",
             check = ::checkConfigFastPath,
         ),
         Maxim(
@@ -224,7 +225,9 @@ object Maxims {
             statement = "A launch that creates a user session spends at least 2x as long in start-first-session as one " +
                 "that restores the persisted session.",
             why = "The create path serializes and persists session metadata on the main thread; the restore path is a " +
-                "read. The bench measured only the restore path until the cohort tap existed.",
+                "read. The bench measured only the restore path until the cohort tap existed. An arm that pins the " +
+                "cohort cannot test it - the comparison is then across the matching cells of the two arms, not inside " +
+                "one campaign, and the check reports n/a rather than pretending the sample is merely thin.",
             check = ::checkRestoreVsCreate,
         ),
         Maxim(
@@ -439,6 +442,12 @@ object Maxims {
      * absolute numbers span an order of magnitude between flagship and entry.
      */
     private fun checkConfigFastPath(c: Campaign): Verdict {
+        // The check reads iter000 against the rest because only iter000 starts without a cached config.
+        // An arm that wipes app data before every launch gives every launch the fast path, so the two
+        // sides are the same population and the comparison is noise either way.
+        dataResetMethod(c)?.let {
+            return Verdict(NA, "$it clears app data before every launch: all take the fast path")
+        }
         val bad = ArrayList<String>()
         var seen = 0
         c.passes.forEach { p ->
@@ -505,6 +514,17 @@ object Maxims {
         return if (rs.isEmpty()) null else Quantile.median(rs.sorted())
     }
 
+    /**
+     * The provenance's benchmark method when it is one that clears the app's data before every launch
+     * (rather than once per pass), else null. Named rather than inferred: the harness owns these method
+     * names, and the alternative - guessing from the data - cannot tell "every launch took the fast path"
+     * from "the decode is simply cheap on this device".
+     */
+    private fun dataResetMethod(c: Campaign): String? {
+        val method = PyJson.strOrNull(c.meta, "method") ?: return null
+        return method.takeIf { m -> DATA_RESET_METHODS.any { m.contains(it) } }
+    }
+
     /** Python `float(launch.get(key))`, or null when absent, null, or not a number. */
     private fun attrFloat(launch: JsonObject, key: String): Double? {
         val raw = launch[key] as? JsonPrimitive ?: return null
@@ -530,6 +550,15 @@ object Maxims {
             .mapNotNull { attrFloat(it, FIRST_SESSION_ATTR) }
         if (created.isEmpty() && restored.isEmpty()) {
             return Verdict(NA, "$FIRST_SESSION_ATTR absent from the tap")
+        }
+        // An arm that pins the cohort holds one side of the comparison at zero by construction, so no
+        // number of extra launches would make it testable: it needs the matching cell of the other arm.
+        if (created.isEmpty() || restored.isEmpty()) {
+            return Verdict(
+                NA,
+                "single-cohort arm (${created.size} created, ${restored.size} restored); " +
+                    "compare against the matching cell of the other arm",
+            )
         }
         if (created.size < MIN_COHORT || restored.size < MIN_COHORT) {
             return Verdict(THIN, "${created.size} created and ${restored.size} restored launches with the attribute")
@@ -637,6 +666,13 @@ object Maxims {
         if (PyJson.truthy(obj, key)) PyJson.strOrNull(obj, key) else null
 
     private val RUNNABLE_STATES = setOf("R", "R+")
+
+    /**
+     * Fragments of the harness method names that clear the app's data before EVERY launch, not once per
+     * pass. Add one here when a new arm does the same, or `config-fast-path` will contradict on it for a
+     * reason that is the arm's design rather than a finding.
+     */
+    private val DATA_RESET_METHODS = listOf("NewUserSession")
     private const val MAX_PASS_NUMBER = 100
     private const val PERCENT = 100.0
     private const val ENRICHMENT_FLOOR = 3.0

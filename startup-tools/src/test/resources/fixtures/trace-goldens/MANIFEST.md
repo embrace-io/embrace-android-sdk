@@ -29,9 +29,12 @@ copied it all here.
 
 The goldens are generated once and never edited, and there are ~630 of them, so they are kept as a
 single deflated archive, `data.zip`, beside this manifest. `TraceGoldens` unpacks it to a temporary
-directory once per test JVM; a producer script that writes the directory tree in place is used as it
-stands, so re-freezing is unchanged (write the tree, then re-pack it). Only this manifest stays a plain
-file, because it is the part a person reads.
+directory once per test JVM, and falls back to an unpacked `trace-goldens/` directory if one is present.
+Only this manifest stays a plain file, because it is the part a person reads.
+
+**Frozen at the cutover (2026-09-05).** The `_producers/` scripts described above were deleted with the
+Python they drove, and the captured traces were never in the repo, so these goldens cannot be
+regenerated. They are the spec the trace layer is held to: a golden that moves means the Kotlin changed.
 
 ## Layout
 

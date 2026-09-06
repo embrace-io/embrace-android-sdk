@@ -2,7 +2,7 @@
 
 Status: RUN 2026-08-14 — verdicts reached, see the **Results (2026-08-14)** section at the end of
 this document. The design and feasibility probes below are the pre-campaign record; the campaign
-ran on the Galaxy A01 Core (`<entry-a>`, API 29) only — the sole device in the fleet where the
+ran on the Galaxy A01 Core (`entry-a`, API 29) only — the sole device in the fleet where the
 `low-memory` threshold is reachable without extreme allocations, exactly as §6 anticipated.
 
 ## Summary table
@@ -16,10 +16,10 @@ ran on the Galaxy A01 Core (`<entry-a>`, API 29) only — the sole device in the
 
 | device | total RAM | threshold (`homeAppMem` + half-gap to `cachedAppMin`) | threshold as % of total | idle availMem-proxy now | idle % now | gap to threshold |
 |---|---|---|---|---|---|---|
-| Galaxy A01 Core (<entry-a>, API 29) | 911,420 KB | 147,456 KB | 16% | 401,336 KB | 44% | **~254 MB (28 pts) — smallest absolute gap, primary target** |
-| Pixel 3 (<mid-b>, API 31) | 3,665,328 KB | 221,184 KB | 6% | 1,738,540 KB | 47% | ~1.52 GB (41 pts) |
-| Galaxy A14 (<mid-a>, API 35) | 3,771,792 KB | 140,113 KB | 4% | 1,341,480 KB | 36% | ~1.20 GB (32 pts) |
-| Pixel 7 Pro (<flagship-a>, API 35) | 11,746,524 KB | 221,184 KB | 2% | 7,198,096 KB | 61% | ~6.98 GB (59 pts) — not a realistic target |
+| Galaxy A01 Core (entry-a, API 29) | 911,420 KB | 147,456 KB | 16% | 401,336 KB | 44% | **~254 MB (28 pts) — smallest absolute gap, primary target** |
+| Pixel 3 (mid-b, API 31) | 3,665,328 KB | 221,184 KB | 6% | 1,738,540 KB | 47% | ~1.52 GB (41 pts) |
+| Galaxy A14 (mid-a, API 35) | 3,771,792 KB | 140,113 KB | 4% | 1,341,480 KB | 36% | ~1.20 GB (32 pts) |
+| Pixel 7 Pro (flagship-a, API 35) | 11,746,524 KB | 221,184 KB | 2% | 7,198,096 KB | 61% | ~6.98 GB (59 pts) — not a realistic target |
 
 On all 4 devices, `HOME_APP_ADJ`'s memory level equals `CACHED_APP_MIN_ADJ`'s memory level exactly, so the
 "half the gap between them" term in the `lowMemory` formula collapses to zero — the threshold is simply
@@ -291,7 +291,7 @@ guaranteed on an unfamiliar vendor's LMK tuning).
 - **New code required**: one debug-only allocator component in `ExampleApp` (§2) — this is a real
   build-touching change (unlike today's read-only probes), should live behind a variant/flag that never
   ships, and must be developed on its own branch.
-- **Device requirement**: single device, the Galaxy A01 Core (`<entry-a>`) — the only device in the
+- **Device requirement**: single device, the Galaxy A01 Core (`entry-a`) — the only device in the
   4-device fleet where the threshold gap (~254 MB) is reachable without extreme or unsafe measures. The
   other three devices need 1.2–7 GB of held allocation to reach their thresholds and are not realistic
   targets for this design; they remain useful only as a "never fires under normal load" corroboration
@@ -339,7 +339,7 @@ hatch should not be needed, but it is stated for completeness.
 
 ## Results (2026-08-14)
 
-The campaign ran on the **Galaxy A01 Core** only (`<entry-a>`, entry/Go tier, API 29, 911 MB RAM),
+The campaign ran on the **Galaxy A01 Core** only (`entry-a`, entry/Go tier, API 29, 911 MB RAM),
 exactly the device §6 identified as the only realistic target. The other three devices were not
 re-tested here; they remain no-false-positive corroboration from idle-state checks only, per the
 original scope.

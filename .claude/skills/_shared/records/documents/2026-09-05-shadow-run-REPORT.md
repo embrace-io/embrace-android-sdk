@@ -23,8 +23,8 @@ assembled this file from `compare/summary.json` plus the hand-written `tooling/v
   `~/.local/share/perfetto/prebuilts/trace_processor_shell-98a41b80e9f60da0`, Perfetto v57.2) was passed
   explicitly as `--trace-processor` / positional `tp` wherever a script takes one. The Kotlin used its own pinned
   `~/.cache/embrace-startup-tools/trace_processor_shell/v57.2/trace_processor_shell` (also v57.2).
-* Devices attached during the run (read-only adb only): Pixel 7 Pro `<flagship-a>` (flagship-a), Pixel 3 `<mid-b>`
-  (mid-b), SM-A145M `<mid-a>` (mid-a), SM-A013G `<entry-a>` (entry-a).
+* Devices attached during the run (read-only adb only): Pixel 7 Pro `flagship-a` (flagship-a), Pixel 3 `mid-b`
+  (mid-b), SM-A145M `mid-a` (mid-a), SM-A013G `entry-a` (entry-a).
 * `--little-cpus` / `LITTLE_CPUS`: taken from the Kotlin `probe` topology JSON written at the start of the run
   (`little_cpus` = `0,1,2,3` on all four devices; the Python probe wrote the identical JSON). Both sides got the
   same value for every input.
@@ -254,7 +254,7 @@ Verdicts: **a** identical (after the masking below); **b** a departure already l
 | submit-dry-run | validation-store__mid-b | py=1 kt=1 | stdout identical | a |  |
 | submit-dry-run | sbs-store-kotlin-final__mid-b | py=0 kt=0 | stdout 196 diff lines | c | C3: the redacted submission is printed with indent 1 (Python) vs 4 (Kotlin); identical after stripping leading whitespace (same fields, same 61 signals, same derived values). Both sides ADMIT this record (rc 0) - it is the Kotlin-ingested record, whose signals came from a clean trace. |
 | submit-dry-run | sbs-store-python__mid-b | py=0 kt=0 | stdout 196 diff lines | c | C3 (indent only). NOTE: this is the store the PYTHON ingest wrote on 2026-09-02 and both sides admit it, so its signals_present is populated - see the side-by-side notes in PORT-LOG; the twelve records in longitudinal/store.jsonl and the four in sweep-store.jsonl are refused identically by both sides (PORT-LOG #5: `the signal inventory did not come from a clean trace`). |
-| submit-dry-run-serial | sbs-store-kotlin-final__mid-b | py=0 kt=0 | stdout 228 diff lines | c | C3 (indent only). With --serial <mid-b> both sides collected the same device provenance from the Pixel 3 (model, os_build, security_patch, kernel, soc, storage 20-40%, battery_health 3, app count 50-150, settings) and derived the same unit_id 23ed8346bca11944 from the shared .unit-salt the Python wrote first. |
+| submit-dry-run-serial | sbs-store-kotlin-final__mid-b | py=0 kt=0 | stdout 228 diff lines | c | C3 (indent only). With --serial mid-b both sides collected the same device provenance from the Pixel 3 (model, os_build, security_patch, kernel, soc, storage 20-40%, battery_health 3, app count 50-150, settings) and derived the same unit_id 23ed8346bca11944 from the shared .unit-salt the Python wrote first. |
 | matrix-plan | skill-plan-example | py=0 kt=0 | stdout 2 diff lines; cells.json=identical | b (#9) | --emit hint names `startup-tools cell-runner --cells` instead of `cell_runner.py --cells`; emitted cells.json tree-identical. |
 | matrix-plan | fixture-plan-example | py=0 kt=0 | stdout 2 diff lines; cells.json=identical | b (#9) | same as above; cells.json tree-identical. |
 | matrix-report | vfm-emb-sdk-start | py=0 kt=0 | stdout identical; cells.json=identical | a | Sequential re-run: identical (n=50, med 26.4, p90 27.5, max 28.6) and cells.json tree-identical. The concurrent first pass showed the Python at n=3 - finding C5: matrix_report.py writes its SQL to the fixed path `$TMPDIR/vfm_q.sql`, and the three concurrent Python matrix-report processes overwrote each other's query. |
@@ -273,8 +273,8 @@ Verdicts: **a** identical (after the masking below); **b** a departure already l
 C1: stdout hint sentence reworded (`pass --little-cpus 0,1,2,3 to variance_analysis.py, or set LITTLE_CPUS=0,1,2,3 for hypothesis_tests.py / factors_report.py` -> `pass --little-cpus 0,1,2,3 to variance, hypothesis-tests and factors-report`). Follows from PORT-LOG #7 but the probe's advice line is not listed there. The topology JSON is tree-identical.
 
 ```
-py: python3 .claude/skills/startup-multi-device-analysis/scripts/device_probe.py <flagship-a> flagship-a <scratch>/probe/py
-kt: tools/startup probe <flagship-a> flagship-a <scratch>/probe/kt
+py: python3 .claude/skills/startup-multi-device-analysis/scripts/device_probe.py flagship-a flagship-a <scratch>/probe/py
+kt: tools/startup probe flagship-a flagship-a <scratch>/probe/kt
 ```
 
 rc: py=0 kt=0; wall: py 0.6 s, kt 1.1 s
@@ -295,8 +295,8 @@ stdout diff (after masking):
 C1 (same rewording as flagship-a); topology JSON tree-identical.
 
 ```
-py: python3 .claude/skills/startup-multi-device-analysis/scripts/device_probe.py <mid-b> mid-b <scratch>/probe/py
-kt: tools/startup probe <mid-b> mid-b <scratch>/probe/kt
+py: python3 .claude/skills/startup-multi-device-analysis/scripts/device_probe.py mid-b mid-b <scratch>/probe/py
+kt: tools/startup probe mid-b mid-b <scratch>/probe/kt
 ```
 
 rc: py=0 kt=0; wall: py 0.5 s, kt 0.8 s
@@ -317,8 +317,8 @@ stdout diff (after masking):
 C1 (same rewording); topology JSON tree-identical.
 
 ```
-py: python3 .claude/skills/startup-multi-device-analysis/scripts/device_probe.py <mid-a> mid-a <scratch>/probe/py
-kt: tools/startup probe <mid-a> mid-a <scratch>/probe/kt
+py: python3 .claude/skills/startup-multi-device-analysis/scripts/device_probe.py mid-a mid-a <scratch>/probe/py
+kt: tools/startup probe mid-a mid-a <scratch>/probe/kt
 ```
 
 rc: py=0 kt=0; wall: py 1.0 s, kt 1.3 s
@@ -339,8 +339,8 @@ stdout diff (after masking):
 C1 (same rewording); topology JSON tree-identical.
 
 ```
-py: python3 .claude/skills/startup-multi-device-analysis/scripts/device_probe.py <entry-a> entry-a <scratch>/probe/py
-kt: tools/startup probe <entry-a> entry-a <scratch>/probe/kt
+py: python3 .claude/skills/startup-multi-device-analysis/scripts/device_probe.py entry-a entry-a <scratch>/probe/py
+kt: tools/startup probe entry-a entry-a <scratch>/probe/kt
 ```
 
 rc: py=0 kt=0; wall: py 0.5 s, kt 0.8 s
@@ -459,13 +459,13 @@ py stderr (rc=1):
 
 ```
 Traceback (most recent call last):
-  File "/Users/hansonho/work/embrace-android-sdk/.claude/skills/startup-multi-device-analysis/scripts/variance_analysis.py", line 243, in <module>
+  File "<repo>/.claude/skills/startup-multi-device-analysis/scripts/variance_analysis.py", line 243, in <module>
     sys.exit(main())
              ~~~~^^
-  File "/Users/hansonho/work/embrace-android-sdk/.claude/skills/startup-multi-device-analysis/scripts/variance_analysis.py", line 106, in main
+  File "<repo>/.claude/skills/startup-multi-device-analysis/scripts/variance_analysis.py", line 106, in main
     report(data, little_cpus)
     ~~~~~~^^^^^^^^^^^^^^^^^^^
-  File "/Users/hansonho/work/embrace-android-sdk/.claude/skills/startup-multi-device-analysis/scripts/variance_analysis.py", line 142, in report
+  File "<repo>/.claude/skills/startup-multi-device-analysis/scripts/variance_analysis.py", line 142, in report
     med = {c: statistics.median([m["dur"][c] for _, m in data if c in m["dur"]]) for c in cols}
               ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "/opt/homebrew/Cellar/python@3.14/3.14.2_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/statistics.py", line 343, in median
@@ -1067,7 +1067,7 @@ artifact `store.jsonl`: DIFF
 [0]/device_profile/vendor: only in kt
 
 == value differences ==
-[0]/recipe/trace_processor_path: py='/Users/hansonho/.cache/embrace-startup-tools/trace_processor/v46.0/trace_processor' kt='/Users/hansonho/.cache/embrace-startup-tools/trace_processor_shell/v57.2/trace_processor_shell'
+[0]/recipe/trace_processor_path: py='<home>/.cache/embrace-startup-tools/trace_processor/v46.0/trace_processor' kt='<home>/.cache/embrace-startup-tools/trace_processor_shell/v57.2/trace_processor_shell'
 [0]/recipe/trace_processor_version: py='v46.0' kt='v57.2'
 [0]/signals_present: list length py=0 kt=60
 [0]/trace_health/parse_errors: py=0 kt=5
@@ -1098,7 +1098,7 @@ artifact `store.jsonl`: DIFF
 [0]/device_profile/vendor: only in kt
 
 == value differences ==
-[0]/recipe/trace_processor_path: py='/Users/hansonho/.cache/embrace-startup-tools/trace_processor/v46.0/trace_processor' kt='/Users/hansonho/.cache/embrace-startup-tools/trace_processor_shell/v57.2/trace_processor_shell'
+[0]/recipe/trace_processor_path: py='<home>/.cache/embrace-startup-tools/trace_processor/v46.0/trace_processor' kt='<home>/.cache/embrace-startup-tools/trace_processor_shell/v57.2/trace_processor_shell'
 [0]/recipe/trace_processor_version: py='v46.0' kt='v57.2'
 [0]/signals_present: list length py=0 kt=61
 [0]/trace_health/signals_from_clean_trace: py=False (bool) kt=True (bool)
@@ -1128,7 +1128,7 @@ artifact `store.jsonl`: DIFF
 [0]/device_profile/vendor: only in kt
 
 == value differences ==
-[0]/recipe/trace_processor_path: py='/Users/hansonho/.cache/embrace-startup-tools/trace_processor/v46.0/trace_processor' kt='/Users/hansonho/.cache/embrace-startup-tools/trace_processor_shell/v57.2/trace_processor_shell'
+[0]/recipe/trace_processor_path: py='<home>/.cache/embrace-startup-tools/trace_processor/v46.0/trace_processor' kt='<home>/.cache/embrace-startup-tools/trace_processor_shell/v57.2/trace_processor_shell'
 [0]/recipe/trace_processor_version: py='v46.0' kt='v57.2'
 [0]/signals_present: list length py=0 kt=61
 [0]/trace_health/signals_from_clean_trace: py=False (bool) kt=True (bool)
@@ -1159,7 +1159,7 @@ artifact `store.jsonl`: DIFF
 [0]/device_profile/storage_class: only in kt
 
 == value differences ==
-[0]/recipe/trace_processor_path: py='/Users/hansonho/.cache/embrace-startup-tools/trace_processor/v46.0/trace_processor' kt='/Users/hansonho/.cache/embrace-startup-tools/trace_processor_shell/v57.2/trace_processor_shell'
+[0]/recipe/trace_processor_path: py='<home>/.cache/embrace-startup-tools/trace_processor/v46.0/trace_processor' kt='<home>/.cache/embrace-startup-tools/trace_processor_shell/v57.2/trace_processor_shell'
 [0]/recipe/trace_processor_version: py='v46.0' kt='v57.2'
 [0]/signals_present: list length py=0 kt=61
 [0]/trace_health/signals_from_clean_trace: py=False (bool) kt=True (bool)
@@ -1196,7 +1196,7 @@ stdout diff (after masking):
 - },
 - "devices": {
 -  "flagship-a": {
--   "serial": "<flagship-a>",
+-   "serial": "flagship-a",
 -   "tier": "flagship",
 -   "profile": {
 -    "api_level": 35,
@@ -1215,7 +1215,7 @@ stdout diff (after masking):
 -   "retired": false
 -  },
 -  "mid-b": {
--   "serial": "<mid-b>",
+-   "serial": "mid-b",
 -   "tier": "entry-mid",
 -   "profile": {
 -    "api_level": 31,
@@ -1233,7 +1233,7 @@ stdout diff (after masking):
 -   "retired": false
 -  },
 -  "mid-a": {
--   "serial": "<mid-a>",
+-   "serial": "mid-a",
 -   "tier": "entry-mid",
 -   "profile": {
 -    "api_level": 35,
@@ -1250,7 +1250,7 @@ stdout diff (after masking):
 -   "retired": false
 -  },
 -  "entry-a": {
--   "serial": "<entry-a>",
+-   "serial": "entry-a",
 -   "tier": "entry",
 -   "profile": {
 -    "api_level": 29,
@@ -1293,7 +1293,7 @@ stdout diff (after masking):
 - },
 - "devices": {
 -  "flagship-a": {
--   "serial": "<flagship-a>",
+-   "serial": "flagship-a",
 -   "tier": "flagship",
 -   "profile": {
 -    "api_level": 35,
@@ -1312,7 +1312,7 @@ stdout diff (after masking):
 -   "retired": false
 -  },
 -  "mid-b": {
--   "serial": "<mid-b>",
+-   "serial": "mid-b",
 -   "tier": "entry-mid",
 -   "profile": {
 -    "api_level": 31,
@@ -1330,7 +1330,7 @@ stdout diff (after masking):
 -   "retired": false
 -  },
 -  "mid-a": {
--   "serial": "<mid-a>",
+-   "serial": "mid-a",
 -   "tier": "entry-mid",
 -   "profile": {
 -    "api_level": 35,
@@ -1347,7 +1347,7 @@ stdout diff (after masking):
 -   "retired": false
 -  },
 -  "entry-a": {
--   "serial": "<entry-a>",
+-   "serial": "entry-a",
 -   "tier": "entry",
 -   "profile": {
 -    "api_level": 29,
@@ -1390,7 +1390,7 @@ stdout diff (after masking):
 - },
 - "devices": {
 -  "flagship-a": {
--   "serial": "<flagship-a>",
+-   "serial": "flagship-a",
 -   "tier": "flagship",
 -   "profile": {
 -    "api_level": 35,
@@ -1409,7 +1409,7 @@ stdout diff (after masking):
 -   "retired": false
 -  },
 -  "mid-b": {
--   "serial": "<mid-b>",
+-   "serial": "mid-b",
 -   "tier": "entry-mid",
 -   "profile": {
 -    "api_level": 31,
@@ -1427,7 +1427,7 @@ stdout diff (after masking):
 -   "retired": false
 -  },
 -  "mid-a": {
--   "serial": "<mid-a>",
+-   "serial": "mid-a",
 -   "tier": "entry-mid",
 -   "profile": {
 -    "api_level": 35,
@@ -1444,7 +1444,7 @@ stdout diff (after masking):
 -   "retired": false
 -  },
 -  "entry-a": {
--   "serial": "<entry-a>",
+-   "serial": "entry-a",
 -   "tier": "entry",
 -   "profile": {
 -    "api_level": 29,
@@ -1493,7 +1493,7 @@ stdout diff (after masking):
 - },
 - "devices": {
 -  "flagship-a": {
--   "serial": "<flagship-a>",
+-   "serial": "flagship-a",
 -   "tier": "flagship",
 -   "profile": {
 -    "api_level": 35,
@@ -1512,7 +1512,7 @@ stdout diff (after masking):
 -   "retired": false
 -  },
 -  "mid-b": {
--   "serial": "<mid-b>",
+-   "serial": "mid-b",
 -   "tier": "entry-mid",
 -   "profile": {
 -    "api_level": 31,
@@ -1530,7 +1530,7 @@ stdout diff (after masking):
 -   "retired": false
 -  },
 -  "entry-a": {
--   "serial": "<entry-a>",
+-   "serial": "entry-a",
 -   "tier": "entry",
 -   "profile": {
 -    "api_level": 29,
@@ -1547,7 +1547,7 @@ stdout diff (after masking):
 -   "retired": false
 -  },
 -  "mid-a": {
--   "serial": "<mid-a>",
+-   "serial": "mid-a",
 -   "tier": "entry-mid",
 -   "profile": {
 ... (105 more lines; full diff in compare/reference-set-show/x25-archive.stdout.diff)
@@ -1582,7 +1582,7 @@ stdout diff (after masking):
 - },
 - "devices": {
 -  "flagship-a": {
--   "serial": "<flagship-a>",
+-   "serial": "flagship-a",
 -   "tier": "flagship",
 -   "profile": {
 -    "api_level": 35,
@@ -1599,7 +1599,7 @@ stdout diff (after masking):
 -   }
 -  },
 -  "mid-a": {
--   "serial": "<mid-a>",
+-   "serial": "mid-a",
 -   "tier": "entry-mid",
 -   "profile": {
 -    "api_level": 35,
@@ -1625,7 +1625,7 @@ stdout diff (after masking):
 +    },
 +    "devices": {
 +        "flagship-a": {
-+            "serial": "<flagship-a>",
++            "serial": "flagship-a",
 +            "tier": "flagship",
 +            "profile": {
 +                "api_level": 35,
@@ -1642,7 +1642,7 @@ stdout diff (after masking):
 +            }
 +        },
 +        "mid-a": {
-+            "serial": "<mid-a>",
++            "serial": "mid-a",
 +            "tier": "entry-mid",
 +            "profile": {
 +                "api_level": 35,
@@ -1846,11 +1846,11 @@ stdout diff (after masking):
 
 ### `submit-dry-run-serial` / `sbs-store-kotlin-final__mid-b` - verdict c
 
-C3 (indent only). With --serial <mid-b> both sides collected the same device provenance from the Pixel 3 (model, os_build, security_patch, kernel, soc, storage 20-40%, battery_health 3, app count 50-150, settings) and derived the same unit_id 23ed8346bca11944 from the shared .unit-salt the Python wrote first.
+C3 (indent only). With --serial mid-b both sides collected the same device provenance from the Pixel 3 (model, os_build, security_patch, kernel, soc, storage 20-40%, battery_health 3, app count 50-150, settings) and derived the same unit_id 23ed8346bca11944 from the shared .unit-salt the Python wrote first.
 
 ```
-py: python3 .claude/skills/startup-global-corpus/scripts/submit_run.py --store claude-output/2026-08-26-kotlin-port/validation/side-by-side/store-kotlin-final.jsonl --run-id mid-b --corpus <scratch>/submit/with-serial/corpus.jsonl --contributor shadow --serial <mid-b> --dry-run
-kt: tools/startup submit --store claude-output/2026-08-26-kotlin-port/validation/side-by-side/store-kotlin-final.jsonl --run-id mid-b --corpus <scratch>/submit/with-serial/corpus.jsonl --contributor shadow --serial <mid-b> --dry-run
+py: python3 .claude/skills/startup-global-corpus/scripts/submit_run.py --store claude-output/2026-08-26-kotlin-port/validation/side-by-side/store-kotlin-final.jsonl --run-id mid-b --corpus <scratch>/submit/with-serial/corpus.jsonl --contributor shadow --serial mid-b --dry-run
+kt: tools/startup submit --store claude-output/2026-08-26-kotlin-port/validation/side-by-side/store-kotlin-final.jsonl --run-id mid-b --corpus <scratch>/submit/with-serial/corpus.jsonl --contributor shadow --serial mid-b --dry-run
 ```
 
 rc: py=0 kt=0; wall: py 1.0 s, kt 1.3 s
@@ -2112,7 +2112,7 @@ ingest (dry-run)      python3 .../ingest_run.py <run-dir> --reference-set claude
 ingest (--force)      same with --force instead of --dry-run, into <A>.store.jsonl (scratch stores; EXTRA, so the records themselves could be tree-compared)
 reference-set         python3 .../reference_set.py --show <ref> | --probe --check <ref> | --probe --out <A>.ref.json      KT reference-set (same flags)
 reproducibility       python3 <SK>/startup-global-corpus/scripts/reproducibility_report.py --corpus <corpus> --json <A>.cells.json      KT reproducibility --corpus ... --json ...
-submit (dry-run)      python3 .../submit_run.py --store <store> --run-id <id> --corpus <scratch>/submit/<label>/corpus.jsonl --contributor shadow --dry-run [--serial <mid-b>]
+submit (dry-run)      python3 .../submit_run.py --store <store> --run-id <id> --corpus <scratch>/submit/<label>/corpus.jsonl --contributor shadow --dry-run [--serial mid-b]
                       KT submit (same flags)
 matrix-plan           python3 <SK>/startup-version-factor-matrix/scripts/matrix_plan.py <plan> --emit <A>.cells.json      KT matrix-plan <plan> --emit <A>.cells.json
 matrix-report         python3 .../matrix_report.py claude-output/2026-08-26-kotlin-port/validation/vfm [--slice emb-sdk-start|composed] --trace-processor <TP> [--json <A>.cells.json]

@@ -4,6 +4,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
@@ -25,6 +26,51 @@ object Zips {
                 zip.closeEntry()
             }
         }
+    }
+
+    /** Pack every file under [root] into [dest], keeping the tree's own relative paths as entry names. */
+    fun packTree(root: Path, dest: Path) {
+        val files = Files.walk(root).use { walk -> walk.filter { Files.isRegularFile(it) }.sorted().toList() }
+        dest.toAbsolutePath().parent?.let { Files.createDirectories(it) }
+        ZipOutputStream(Files.newOutputStream(dest)).use { zip ->
+            files.forEach { file ->
+                zip.putNextEntry(ZipEntry(root.relativize(file).toString()))
+                Files.copy(file, zip)
+                zip.closeEntry()
+            }
+        }
+    }
+
+    /**
+     * Add [files] to [dest] by file name, keeping every entry it already holds and never replacing one.
+     * Returns the entry count afterwards. Used to fold a run's loose output into the archive for its month.
+     */
+    fun merge(dest: Path, files: List<Path>): Int {
+        val existing = LinkedHashMap<String, ByteArray>()
+        if (Files.exists(dest)) {
+            ZipFile(dest.toFile()).use { zip ->
+                zip.entries().asSequence().filterNot { it.isDirectory }.forEach { entry ->
+                    existing[entry.name] = zip.getInputStream(entry).use { it.readBytes() }
+                }
+            }
+        }
+        val added = files.filterNot { existing.containsKey(it.fileName.toString()) }
+        dest.toAbsolutePath().parent?.let { Files.createDirectories(it) }
+        val temp = dest.resolveSibling("${dest.fileName}.tmp")
+        ZipOutputStream(Files.newOutputStream(temp)).use { zip ->
+            existing.toSortedMap().forEach { (name, blob) ->
+                zip.putNextEntry(ZipEntry(name))
+                zip.write(blob)
+                zip.closeEntry()
+            }
+            added.forEach { file ->
+                zip.putNextEntry(ZipEntry(file.fileName.toString()))
+                Files.copy(file, zip)
+                zip.closeEntry()
+            }
+        }
+        Files.move(temp, dest, StandardCopyOption.REPLACE_EXISTING)
+        return existing.size + added.size
     }
 
     /**

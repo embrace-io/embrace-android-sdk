@@ -201,8 +201,8 @@
       "undetected": 1
     },
     "config-fast-path": {
-      "confirmed": 14,
-      "contradicted": 5,
+      "confirmed": 13,
+      "contradicted": 4,
       "contradictions": [
         {
           "cell": "entry-a / 9.2.0-SNAPSHOT-0811 / default",
@@ -227,12 +227,6 @@
           "device": "entry-a",
           "observed": "1 of 4 passes; pass 4: iter000 35.8 ms vs rest p50 23.7 ms",
           "run": "a01-mini-2026-08-12"
-        },
-        {
-          "cell": "mid-b / 9.2.0 / new-user-session",
-          "device": "mid-b",
-          "observed": "1 of 1 passes; pass 1: iter000 2.1 ms vs rest p50 1.8 ms",
-          "run": "2026-09-03-first-session-fix-arm-a-9.2.0"
         }
       ],
       "devices": {
@@ -255,8 +249,8 @@
           "undetected": 0
         },
         "mid-b": {
-          "confirmed": 10,
-          "contradicted": 1,
+          "confirmed": 9,
+          "contradicted": 0,
           "thin": 0,
           "undetected": 0
         }
@@ -414,13 +408,13 @@
         "mid-b": {
           "confirmed": 0,
           "contradicted": 0,
-          "thin": 4,
+          "thin": 2,
           "undetected": 0
         }
       },
       "scope": "universal",
       "statement": "A launch that creates a user session spends at least 2x as long in start-first-session as one that restores the persisted session.",
-      "thin": 4,
+      "thin": 2,
       "undetected": 0
     },
     "scheduler-wait": {
@@ -503,5 +497,5 @@
   },
   "runs": 19,
   "source": "bench",
-  "updated_at": "2026-09-05T18:28:50Z"
+  "updated_at": "2026-09-06T01:15:18Z"
 }

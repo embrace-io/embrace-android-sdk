@@ -1,4 +1,4 @@
-# start-first-session fix — verification (2026-09-03, Pixel 3 `<mid-b>`, Android 12)
+# start-first-session fix — verification (2026-09-03, Pixel 3 `mid-b`, Android 12)
 
 ## What was fixed (uncommitted on `hho/startup-tools-kotlin`)
 

@@ -1,13 +1,6 @@
-# Runtime artifacts produced by running or syntax-checking the skill scripts. None of these are
-# skill content: a skill is its SKILL.md, references/, and the scripts themselves.
-__pycache__/
-*.pyc
-
-# Shared, gitignored tool cache (see _shared/tooling.py). Binaries are fetched once per machine
-# into a version-pinned subdir; the preferred location is outside the repo entirely
-# (~/.cache/embrace-startup-tools), and this is the in-repo fallback.
-.tools/
-trace_processor
+# A skill here is its SKILL.md and references/ - there is no code under `.claude/skills` any more. The
+# tooling is the `startup-tools` module, invoked as `tools/startup <command>`; the Python it replaced
+# was deleted at the cutover (2026-09-05), records housekeeping included.
 
 # Local run output: stores, plans with real device serials, probe results, and captured traces.
 # Keep these next to your run artifacts, not in the skill definition.

@@ -37,6 +37,10 @@ object Cohorts {
         "init-compile-filter",
         "thread-name",
         "ended-in-foreground",
+        // The span's own CPU accounting, so a capture can be graded against itself: the `cpu-closure`
+        // maxim needs both on the same launch, and no earlier capture carried either.
+        "init-cpu-pct",
+        "init-run-delay-pct",
     )
 
     // threadtime: "09-03 14:37:56.782 15291 15314 I EmbVerify: EMBV1 2 1/1 {json chunk}"

@@ -41,10 +41,10 @@ as such throughout.
 
 | Device | Serial | API | Thermal HAL | `Thermal Status` (idle) | Status-driving sensor (type=SKIN) | Idle SKIN reading | Idle battery temp | Hot-throttling thresholds on that sensor (light/moderate/severe/critical/emergency/shutdown, °C) | "Temperature headroom thresholds" ratio array exposed? | `scaling_max_freq` readable? | `scaling_cur_freq` (idle) |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| Pixel 7 Pro | <flagship-a> | 35 | AIDL 2 | 0 (none) | `VIRTUAL-SKIN` | 31.46 °C | 30.7 °C | 39 / 43 / 45 / 46.5 / 52 / 55 | Yes: `[NaN, 0.8, 0.933, NaN, 1.05, 1.233, 1.333]` | Yes | little 1803 MHz (pinned at max, idle-adb artifact), mid 400 MHz, big 500 MHz — none throttled |
-| Galaxy A14 | <mid-a> | 35 | AIDL 2 | 0 (none) | `SKIN` | 31.3 °C | 29.2 °C | 36 / 38 / 40 / 42 / 45 / 60 | Yes: `[NaN, 0.867, 0.933, NaN, 1.1, 1.6, 2.6]` | Yes (2002 MHz uniform cap, all 8 cores) | 949 MHz (cores 0–3), 546 MHz (cores 4–7) — DVFS idle scaling, not throttling |
-| Pixel 3 | <mid-b> | 31 | HAL 2.0 | 0 (none) | `fps-therm-monitor` | 31.76 °C | 29.8 °C ("maxfg") | 39 / 43 / 45 / 47 / 51 / 55 | **No** — line absent from this device's dump despite headroom being API-supported | **No** — `Permission denied` on all 4 entries read this session | 2803.2 MHz on the 4 entries that WERE readable — matches the prior-established constant hot-clock value exactly, at idle |
-| Galaxy A01 Core | <entry-a> | 29 | HAL 1.0 | 0 (none) | `SKIN_T` | 34.0 °C | 32.1 °C | *(HAL 1.0 dump has no threshold struct at all)* | No (and `getThermalHeadroom` is unavailable here regardless — API <30) | Yes (1495 MHz, all 4 cores) | 962 MHz |
+| Pixel 7 Pro | flagship-a | 35 | AIDL 2 | 0 (none) | `VIRTUAL-SKIN` | 31.46 °C | 30.7 °C | 39 / 43 / 45 / 46.5 / 52 / 55 | Yes: `[NaN, 0.8, 0.933, NaN, 1.05, 1.233, 1.333]` | Yes | little 1803 MHz (pinned at max, idle-adb artifact), mid 400 MHz, big 500 MHz — none throttled |
+| Galaxy A14 | mid-a | 35 | AIDL 2 | 0 (none) | `SKIN` | 31.3 °C | 29.2 °C | 36 / 38 / 40 / 42 / 45 / 60 | Yes: `[NaN, 0.867, 0.933, NaN, 1.1, 1.6, 2.6]` | Yes (2002 MHz uniform cap, all 8 cores) | 949 MHz (cores 0–3), 546 MHz (cores 4–7) — DVFS idle scaling, not throttling |
+| Pixel 3 | mid-b | 31 | HAL 2.0 | 0 (none) | `fps-therm-monitor` | 31.76 °C | 29.8 °C ("maxfg") | 39 / 43 / 45 / 47 / 51 / 55 | **No** — line absent from this device's dump despite headroom being API-supported | **No** — `Permission denied` on all 4 entries read this session | 2803.2 MHz on the 4 entries that WERE readable — matches the prior-established constant hot-clock value exactly, at idle |
+| Galaxy A01 Core | entry-a | 29 | HAL 1.0 | 0 (none) | `SKIN_T` | 34.0 °C | 32.1 °C | *(HAL 1.0 dump has no threshold struct at all)* | No (and `getThermalHeadroom` is unavailable here regardless — API <30) | Yes (1495 MHz, all 4 cores) | 962 MHz |
 
 Findings worth flagging as **new since the last synthesis**, purely from this read-only pass:
 

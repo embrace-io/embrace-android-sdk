@@ -273,8 +273,8 @@ always set it explicitly for the run, note the value you replaced, and restore i
    `--output-dir` overrides) — so successive runs never clobber each other; cite that file
    in reports and commit it as the per-pass record (the traces themselves get wiped by the
    next benchmark run; the records root is what survives, see `_shared/records/README.md`).
-   Summaries land as loose files there and are folded into `analyses/<YYYY-MM>.zip` by that
-   directory's `pack.py` once they pile up.
+   Summaries land as loose files there and are folded into `analyses/<YYYY-MM>.zip` by
+   `tools/startup records pack` once they pile up.
    Every analysis/report must state the test context up front: the full device profile
    (see "Choosing a device" — manufacturer, model, api level + Android release, tier, SoC
    family) via

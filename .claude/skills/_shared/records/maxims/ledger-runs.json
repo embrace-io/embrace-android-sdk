@@ -1,0 +1,31 @@
+{
+    "_comment": [
+        "The ledger's definition: every campaign archive under ../campaigns/ that counts, in scoring order.",
+        "`tools/startup records rebuild-ledger` deletes ledger.json, scores each of these and re-renders MAXIMS.md,",
+        "so the ledger is reproducible rather than accumulated. Append an entry when a campaign is scored for the",
+        "first time, and the rebuild stays complete.",
+        "device/sdk/arm override the cell; omit them when the run's own provenance names it (the August 2026",
+        "campaigns predate run-metadata.json, and the user-session arms carry their cohort as the arm label)."
+    ],
+    "runs": [
+        {"run": "campaign-2026-08-11", "device": "mid-a", "sdk": "9.2.0-SNAPSHOT-0811", "arm": "default"},
+        {"run": "a14-campaign2-2026-08-11", "device": "mid-a", "sdk": "9.2.0-SNAPSHOT-0811", "arm": "default"},
+        {"run": "pixel-campaign-2026-08-11", "device": "mid-b", "sdk": "9.2.0-SNAPSHOT-0811", "arm": "default"},
+        {"run": "a01-campaign-2026-08-11", "device": "entry-a", "sdk": "9.2.0-SNAPSHOT-0811", "arm": "default"},
+        {"run": "p7p-campaign-2026-08-12", "device": "flagship-a", "sdk": "9.2.0-SNAPSHOT-0811", "arm": "default"},
+        {"run": "p7p-cooldown-2026-08-12", "device": "flagship-a", "sdk": "9.2.0-SNAPSHOT-0811", "arm": "default-cool"},
+        {"run": "cooldown-2026-08-12-pixel", "device": "mid-b", "sdk": "9.2.0-SNAPSHOT-0811", "arm": "default-cool"},
+        {"run": "cooldown-2026-08-12-a14", "device": "mid-a", "sdk": "9.2.0-SNAPSHOT-0811", "arm": "default-cool"},
+        {"run": "cooldown-2026-08-12-a01", "device": "entry-a", "sdk": "9.2.0-SNAPSHOT-0811", "arm": "default-cool"},
+        {"run": "a01-mini-2026-08-12", "device": "entry-a", "sdk": "9.2.0-SNAPSHOT-0811", "arm": "default"},
+        {"run": "2026-08-26-port-validation-mid-b"},
+        {"run": "2026-08-26-port-side-by-side-mid-b"},
+        {"run": "2026-08-26-port-vfm-mid-b-9.2.0-reference", "sdk": "9.2.0"},
+        {"run": "2026-09-03-first-session-fix-arm-a-9.2.0", "arm": "new-user-session"},
+        {"run": "2026-09-03-first-session-fix-arm-b-fix", "arm": "new-user-session"},
+        {"run": "2026-09-03-first-session-fix-arm-c-expired-hook", "arm": "expired-user-session"},
+        {"run": "2026-09-03-first-session-fix-arm-d-expired-hook-fix", "arm": "expired-user-session"},
+        {"run": "2026-09-05-paired-pixel3-kotlin"},
+        {"run": "2026-09-05-paired-pixel3-python", "device": "mid-b", "sdk": "9.2.0", "arm": "full"}
+    ]
+}

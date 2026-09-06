@@ -1,8 +1,16 @@
 # Golden fixtures for the Kotlin port of the startup-analysis skills
 
-Frozen outputs of the existing Python (`.claude/skills/`) on fixed inputs, so Kotlin unit tests can
-prove parity before any Kotlin exists. Everything in this directory was produced by ONE script,
-`dump_golden.py`, and checked by `verify_goldens.py`. Nothing outside `goldens/` was modified.
+Frozen outputs of the Python implementation (formerly `.claude/skills/`) on fixed inputs, produced so
+Kotlin unit tests could prove parity before any Kotlin existed. Everything here came from ONE script,
+`dump_golden.py`, checked by `verify_goldens.py`; nothing outside `goldens/` was modified.
+
+**These became the frozen spec at the cutover (2026-09-05)**, when the Python and both of those scripts
+were deleted. They are no longer regenerable and no longer prove agreement with a second implementation:
+they now pin the behaviour the port was accepted against, so a golden that moves means the Kotlin
+changed. Everything below — the serialization conventions, the RNG contract, the per-file tolerances,
+the recorded inconsistencies — is therefore a specification of required behaviour, not a description of
+someone else's code. Keep it that way: if a behaviour here is ever changed deliberately, change this
+document in the same commit.
 
 ## Provenance
 
@@ -11,8 +19,8 @@ prove parity before any Kotlin exists. Everything in this directory was produced
 | Produced | 2026-09-02 |
 | `python3 --version` | `Python 3.14.2` |
 | `sys.version` | `3.14.2 (main, Dec  5 2025, 16:49:16) [Clang 17.0.0 (clang-1700.6.3.2)]` (also recorded inside `rng.json`) |
-| `git -C /Users/hansonho/work/embrace-android-sdk rev-parse HEAD` | `7b3c3cd8fe55c1f329aeba27e8721c3024e4f2fc` (branch `EMBR-13565/hho/multi-device-analysis`, tree clean) |
-| Regenerate | `python3 /Users/hansonho/work/embrace-android-sdk/claude-output/2026-08-26-kotlin-port/goldens/dump_golden.py` then `python3 .../goldens/verify_goldens.py` |
+| `git -C <repo> rev-parse HEAD` | `7b3c3cd8fe55c1f329aeba27e8721c3024e4f2fc` (branch `EMBR-13565/hho/multi-device-analysis`, tree clean) |
+| Regenerate | not possible — the producer and the implementation it drove were deleted at the cutover; these files are the spec |
 | Determinism | Two consecutive runs produced byte-identical files (sizes matched exactly); every random input is seeded, every synthetic input is a closed-form formula |
 
 Real inputs read (never written): `claude-output/longitudinal/store.jsonl` (12 records),
@@ -250,11 +258,14 @@ them.
   `available: false` bootstrap/permutation paths and `quantile_ci_trustworthy = false` on real
   data.
 
-### Helper scripts
-* `dump_golden.py` - the producer. Sections 1-9 map to the files above; `main()` runs each step
-  under try/except and writes any traceback to `errors/<step>.txt` (none were produced).
-* `verify_goldens.py` - loads every JSON/JSONL, prints size and top-level shape, checks the expected
-  text artefacts exist. Exit 0 = PASS.
+### Helper scripts (deleted at the cutover)
+* `dump_golden.py` - the producer. Sections 1-9 mapped to the files above; `main()` ran each step
+  under try/except and wrote any traceback to `errors/<step>.txt` (none were produced).
+* `verify_goldens.py` - loaded every JSON/JSONL, printed size and top-level shape, checked the expected
+  text artefacts existed. Exit 0 = PASS.
+
+Both imported the Python modules that no longer exist, so they were removed with them. Their output is
+what survives, and this document is the record of how it was made.
 
 ## Functions / scripts NOT exercised, and why
 

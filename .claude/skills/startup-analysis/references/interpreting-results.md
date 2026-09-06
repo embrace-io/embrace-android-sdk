@@ -435,7 +435,8 @@ device in front of you:
   storage-class property (eMMC-class vs UFS-class), not a CPU one — record `storage_class` with
   the device profile.
 - **Class C — scheduler core placement** (heterogeneous silicon). *Signature*: the whole window
-  resident on lower-class cores; the per-CPU residency table (`scripts/init_window_sched.sql`)
+  resident on lower-class cores; the per-CPU residency table (`init_window_sched.sql`, shipped as a
+  resource of the `startup-tools` module and run by `tools/startup variance`)
   shows it directly. Requires this device's real cluster map — a fixed `cpu<4` partition is
   wrong on many devices. On homogeneous-core devices a residual placement correlation can
   persist at provably equal delivered clocks — mechanism unresolved (IRQ locality suspected);

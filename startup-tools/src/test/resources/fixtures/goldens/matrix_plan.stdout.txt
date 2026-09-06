@@ -35,4 +35,4 @@ Controls this run depends on (cell_runner enforces the machine-checkable ones):
   [human ] device screen/charging/airplane state left to the runner to save and restore
   [human ] compat patches reverted and the version pin restored when the run ends
 
-wrote /Users/hansonho/work/embrace-android-sdk/claude-output/2026-08-26-kotlin-port/goldens/matrix_plan.json - run cells with: cell_runner.py --cells /Users/hansonho/work/embrace-android-sdk/claude-output/2026-08-26-kotlin-port/goldens/matrix_plan.json --cell <id>
+wrote <repo>/claude-output/2026-08-26-kotlin-port/goldens/matrix_plan.json - run cells with: cell_runner.py --cells <repo>/claude-output/2026-08-26-kotlin-port/goldens/matrix_plan.json --cell <id>

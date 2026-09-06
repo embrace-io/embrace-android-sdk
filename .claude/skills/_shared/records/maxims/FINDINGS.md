@@ -357,7 +357,7 @@ in MAXIMS.md.
   dataset), `thermal-pressure` (needs per-pass silicon temperatures), the class-load burst check (needs
   trace-health with class loads in the campaign output).
 - **2026-09-04** — Ledger seeded with the nine August 2026 campaigns from the analysis records (four
-  devices, a 9.2.0 snapshot build, default and cool arms; `rebuild-ledger.py` beside the ledger
+  devices, a 9.2.0 snapshot build, default and cool arms; `tools/startup records rebuild-ledger`
   reproduces it). Two rules were
   corrected on that data before seeding: own GC counts only from 1 ms, because datasets produced before
   `outlier_metrics.sql` gained its GLOB guard carry sub-millisecond `Lgc;` false matches on every
@@ -389,12 +389,14 @@ in MAXIMS.md.
   campaign, bringing the ledger to 19 runs; nine of them had only traces, so their `passN.json` and
   `passN-factors.json` were produced from the traces before those are lost (the port validation runs,
   the four user-session arms of the first-session fix, the paired Python/Kotlin runs). The ledger is now
-  rebuilt end to end by `rebuild-ledger.py` beside it, which lists every run with its cell overrides.
+  rebuilt end to end by `tools/startup records rebuild-ledger`, which scores every run named in
+  `maxims/ledger-runs.json` with that entry's cell overrides.
   Standing unchanged in status, sharper in evidence: `off-cpu` 5 confirmed / 0 contradicted, `gc-rare`
   13 / 0 on three devices, `concurrent-cpu` and `config-fast-path` under review, `first-launch` and
   `starved-enriched` refuted, `compile-state-toggle` device-specific (the three 9.2.0 `mid-b` passes
   ran 30.5 → 30.5 → 30.8 ms, a clean non-toggle). Three scoping limits surfaced and are left as
-  rules to encode rather than ledger noise: (1) `config-fast-path` presumes a settled pass, so a
+  rules to encode rather than ledger noise, all three of which were encoded the same day (see the next
+  entry): (1) `config-fast-path` presumes a settled pass, so a
   `new-user-session` arm that runs `pm clear` before every launch contradicts it trivially (iter000
   2.1 ms against 1.8 ms) and should be n/a there; (2) `restore-vs-create` compares cohorts within a
   run, but the cohort arms are single-cohort by design (49 created / 0 restored, or 1 / 48), so it
@@ -403,3 +405,25 @@ in MAXIMS.md.
   `init-cpu-pct` and `init-run-delay-pct` in the tap capture, which the `startup` tap mode did not
   carry in these runs. Fifty-iteration single-pass runs score `thin` on every slow-iteration maxim
   (0-3 slow iterations); the maxims need the multi-pass campaign shape to speak.
+- **2026-09-05** — **The three scoping gaps are closed, and the Python implementation is deleted.** A
+  maxim now reports `n/a` where the arm's own design removes the comparison, instead of blaming the SDK
+  for the harness: `config-fast-path` is n/a on any arm whose benchmark method clears app data before
+  every launch (the method is named in a list in the code, because guessing from the data cannot
+  separate "every launch took the fast path" from "the decode is cheap here"), and `restore-vs-create`
+  is n/a on a single-cohort arm, which no number of extra launches can fix - that comparison lives
+  across the matching cells of two arms. `cpu-closure` was blocked on its inputs rather than its rule,
+  so the cohort tap now captures `init-cpu-pct` and `init-run-delay-pct` alongside the session
+  attributes; runs recorded before that stay n/a and the next campaign grades it. Rebuilding the ledger
+  over all 19 campaigns moved two spurious verdicts off the books: the first-session `pm clear` arms no
+  longer contradict `config-fast-path` (its remaining contradictions are the genuine poisoned-uninstall
+  passes, so it stays under review), and the two cohort-pinned arms no longer read `thin` on
+  `restore-vs-create`, which is now honestly `untested`. A run with a thin-but-real second cohort still
+  reads `thin` - the paired Pixel 3 runs, at 1 created against 48 restored, are not the same thing as an
+  arm with none. Deleted with the Python: 26 scripts, 5 SQL files (the Kotlin ships its own as JVM
+  resources) and the three golden producers, which imported the modules that went. Every golden stays
+  and changes meaning: it no longer proves agreement with a second implementation, it pins the
+  behaviour the port was accepted against, so a golden that moves now means the Kotlin changed. The two
+  records-maintenance scripts followed the same day, as `tools/startup records pack` and
+  `records rebuild-ledger`, so no Python remains; the Kotlin rebuild was checked by diffing its ledger
+  against the Python's, which matched apart from the timestamps. The rebuild's run list now lives in
+  `ledger-runs.json` beside the ledger, so adding a campaign is a data edit rather than a code one.

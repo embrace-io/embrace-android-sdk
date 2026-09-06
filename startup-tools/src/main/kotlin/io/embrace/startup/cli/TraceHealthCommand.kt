@@ -8,6 +8,7 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.path
+import io.embrace.startup.core.proc.Parallel
 import io.embrace.startup.perfetto.Prebuilt
 import io.embrace.startup.perfetto.TraceHealth
 import io.embrace.startup.perfetto.TraceProcessor
@@ -16,8 +17,8 @@ import java.nio.file.Path
 import kotlin.streams.toList
 
 /**
- * `trace-health` - the former `trace_health.py` CLI: per-trace loss/canary verdicts over a directory
- * (recursively, `*.perfetto-trace` then `*.pftrace`) and the run-level summary with prevention advice.
+ * `trace-health`: per-trace loss/canary verdicts over a directory (recursively, `*.perfetto-trace`
+ * then `*.pftrace`) and the run-level summary with prevention advice.
  */
 class TraceHealthCommand : CliktCommand(name = "trace-health") {
 
@@ -37,18 +38,19 @@ class TraceHealthCommand : CliktCommand(name = "trace-health") {
             throw ProgramResult(1)
         }
         val tp = TraceProcessor(Prebuilt.resolve(explicit = traceProcessor))
-        val reports = traces.map { trace ->
-            val report = TraceHealth.check(tp, trace, canary)
+        // Checked in parallel, reported in input order: interleaved lines from several workers would be
+        // unreadable, and the per-trace order is what a reader matches against the run directory.
+        val reports = Parallel.map(traces) { TraceHealth.check(tp, it, canary) }
+        reports.forEachIndexed { index, report ->
             if (report.verdict != TraceHealth.Verdict.OK || report.classLoadBurst) {
-                echo(perTraceLine(report, trace, showMeta))
+                echo(perTraceLine(report, traces[index], showMeta))
             }
-            report
         }
         echo(TraceHealth.summarize(reports))
     }
 
     companion object {
-        /** The Python's ordering: all `*.perfetto-trace` sorted, then all `*.pftrace` sorted. */
+        /** Trace ordering, pinned by the goldens: all `*.perfetto-trace` sorted, then all `*.pftrace` sorted. */
         fun listTraces(dir: Path): List<Path> {
             fun withSuffix(suffix: String) = Files.walk(dir).use { s ->
                 s.filter { Files.isRegularFile(it) && it.fileName.toString().endsWith(suffix) }.toList()

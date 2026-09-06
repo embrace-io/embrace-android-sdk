@@ -8,6 +8,7 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.path
 import io.embrace.startup.analysis.StartupAnalysis
+import io.embrace.startup.core.proc.Parallel
 import io.embrace.startup.core.repo.RepoRoot
 import io.embrace.startup.perfetto.Prebuilt
 import io.embrace.startup.perfetto.TraceProcessor
@@ -16,9 +17,9 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 /**
- * `analyze` - the former `analyze_startup.py`. Runs `startup_metrics.sql` against every iteration
- * trace in a directory and prints the standard startup report; the same text is also written to a
- * uniquely named `startup-analysis-<timestamp>.txt` so successive runs never clobber each other.
+ * `analyze`: runs `startup_metrics.sql` against every iteration trace in a directory and prints the
+ * standard startup report; the same text is also written to a uniquely named
+ * `startup-analysis-<timestamp>.txt` so successive runs never clobber each other.
  */
 class AnalyzeCommand : CliktCommand(name = "analyze") {
 
@@ -54,7 +55,7 @@ class AnalyzeCommand : CliktCommand(name = "analyze") {
             throw ProgramResult(1)
         }
         val tp = TraceProcessor(Prebuilt.resolve(explicit = traceProcessor, repoRoot = repo))
-        val perTrace = traces.map { it.fileName.toString() to StartupAnalysis.extract(tp, it) }
+        val perTrace = Parallel.map(traces) { it.fileName.toString() to StartupAnalysis.extract(tp, it) }
 
         val text = buildString {
             append("startup analysis started ${start.format(HEADER_TIME)}\n")

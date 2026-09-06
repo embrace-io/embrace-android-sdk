@@ -11,7 +11,7 @@ object MultipleComparisons {
 
     /**
      * One verdict per input, in input order: true = rejected at FDR `alpha`, false = not, null where
-     * the input p-value was null (that entry is excluded from the family, exactly as the Python did).
+     * the input p-value was null (that entry is excluded from the family).
      */
     fun benjaminiHochberg(pValues: List<Double?>, alpha: Double = DEFAULT_ALPHA): List<Boolean?> {
         val indexed = pValues.withIndex()

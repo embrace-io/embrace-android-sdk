@@ -11,7 +11,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 /**
- * `matrix_plan.py`: expand a version × factor plan into an ordered, interleaved cell list with a
+ * Expands a version × factor plan into an ordered, interleaved cell list with a
  * wall-clock estimate. Dry-run by nature - it prints what WOULD run so a plan that does not fit the
  * window is trimmed before any device time is spent. Trim cells, never iterations.
  *
@@ -65,7 +65,7 @@ Controls this run depends on (cell_runner enforces the machine-checkable ones):
 
     class PlanError(message: String) : IllegalArgumentException(message)
 
-    /** The Python's `sys.exit` validations: missing keys and unregistered devices. */
+    /** The validations that must stop the plan before it runs: missing keys and unregistered devices. */
     fun validate(plan: JsonObject) {
         REQUIRED_KEYS.forEach { key ->
             if (key !in plan) throw PlanError("plan is missing required key: $key (see plan-example.json)")
@@ -82,7 +82,7 @@ Controls this run depends on (cell_runner enforces the machine-checkable ones):
         }
     }
 
-    /** Non-fatal warnings the Python printed before the table. */
+    /** Non-fatal warnings printed before the table. */
     fun warnings(plan: JsonObject): List<String> {
         val out = ArrayList<String>()
         plan.getValue("devices").jsonObject.forEach { (key, cfg) ->

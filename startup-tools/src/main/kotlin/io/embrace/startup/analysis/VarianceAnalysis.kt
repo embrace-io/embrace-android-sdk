@@ -10,7 +10,7 @@ import kotlinx.serialization.Serializable
 import java.nio.file.Path
 
 /**
- * `variance_analysis.py`: per-iteration variance over a directory of traces - the iteration matrix
+ * `variance`: per-iteration variance over a directory of traces - the iteration matrix
  * (A), per-section fluctuation and correlation with the window (B), outlier decomposition of the
  * four slowest iterations (C), the thread-state split inside each section (D) and the main thread's
  * per-CPU residency with the little-cluster share (E).
@@ -55,11 +55,11 @@ object VarianceAnalysis {
     )
     val DEFAULT_LITTLE_CPUS: Set<Int> = setOf(0, 1, 2, 3)
 
-    /** One trace's dataset - the `--json` element schema, key names as the Python wrote them. */
+    /** One trace's dataset - the `--json` element schema, key names as the frozen goldens have them. */
     @Serializable
     data class Record(
         val trace: String,
-        /** Absent when the trace has no `emb-sdk-start` slice; the Python then failed at report time. */
+        /** Absent when the trace has no `emb-sdk-start` slice; report time then fails, matching the goldens. */
         @SerialName("window_ms") val windowMs: Double? = null,
         /** First-occurrence duration of every `emb-*` section. */
         val dur: Map<String, Double>,
@@ -135,8 +135,8 @@ object VarianceAnalysis {
 
     private fun StringBuilder.decomposition(data: List<Record>, windows: List<Double>, cols: List<String>, slow: List<Int>) {
         val wmed = Quantile.median(windows.sorted())
-        // The Python's statistics.median raised on a section present in NO trace; NaN here keeps the
-        // report renderable and the "> 0.3" filter drops it, which is the only sane reading.
+        // A section absent from every trace would otherwise raise (as statistics.median does on an empty
+        // list); NaN here keeps the report renderable and the "> 0.3" filter drops it, which is the only sane reading.
         val med = cols.associateWith { c ->
             val vals = data.mapNotNull { it.dur[c] }
             if (vals.isEmpty()) Double.NaN else Quantile.median(vals.sorted())

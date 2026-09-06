@@ -5,13 +5,12 @@ import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.parameters.options.versionOption
 
 /**
- * The dispatcher. Every former Python script becomes one subcommand, each in its own file under
- * `cli/`, so the "script-sized" edit surface of the Python is preserved: to change what an analysis
- * does, edit one file. Everything the subcommands share lives once under `core/`, `perfetto/`,
- * `device/` and `campaign/`.
+ * The dispatcher. Each analysis is one subcommand in its own file under `cli/`, deliberately kept
+ * "script-sized": to change what an analysis does, edit one file. Everything the subcommands share
+ * lives once under `core/`, `perfetto/`, `device/` and `campaign/`.
  *
- * Subcommands are registered in [main]. A command absent from that list has not been ported yet; the
- * Python remains the tool of record for it until it appears there.
+ * Subcommands are registered in [main]; that list is the complete set of tools. `README.md` maps each
+ * one to the script it replaced, for reading analysis documents written before the port.
  */
 class StartupTools : CliktCommand(name = "startup-tools") {
     init {

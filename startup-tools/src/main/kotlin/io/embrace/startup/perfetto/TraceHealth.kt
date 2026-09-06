@@ -3,8 +3,8 @@ package io.embrace.startup.perfetto
 import java.nio.file.Path
 
 /**
- * Detect trace data loss BEFORE trusting any number derived from a trace. Ported from
- * `_shared/trace_health.py`, verdict logic and wording intact.
+ * Detect trace data loss BEFORE trusting any number derived from a trace, with verdict logic and
+ * wording kept intact from the previous toolchain.
  *
  * Perfetto does not fail loudly when it drops data: a saturated ring buffer silently evicts the
  * oldest packets - exactly the app slices at the start of a launch - and the trace still parses and
@@ -113,7 +113,7 @@ SELECT 'classloads' AS k, COUNT(*) AS v
     }
 
     /**
-     * The Python's `_rows` parse of the health query's stdout: naive comma split, quotes stripped,
+     * The health query's stdout parse: naive comma split, quotes stripped,
      * two-field lines only, header (`k`) skipped, values truncated through `int(float(v))`.
      */
     fun parseRows(stdout: String): Map<String, Long> {
@@ -127,11 +127,16 @@ SELECT 'classloads' AS k, COUNT(*) AS v
         return out
     }
 
-    fun check(tp: TraceProcessor, trace: Path, canary: String = DEFAULT_CANARY): Report {
-        val rows = parseRows(tp.queryRaw(sql(canary), trace).stdout)
-        val classLoads = parseRows(tp.queryRaw(classLoadSql(), trace).stdout)[CLASS_LOADS_KEY]
-        return evaluate(trace.toString(), rows, classLoads)
-    }
+    /**
+     * Both queries run against ONE load of the trace. Asking [TraceProcessor] twice re-parses it twice,
+     * and a full parse is the dominant cost per trace; `Ingest` already shares a load the same way.
+     */
+    fun check(tp: TraceProcessor, trace: Path, canary: String = DEFAULT_CANARY): Report =
+        tp.withWarmTrace(trace) { target ->
+            val rows = parseRows(target.queryRaw(sql(canary)).stdout)
+            val classLoads = parseRows(target.queryRaw(classLoadSql()).stdout)[CLASS_LOADS_KEY]
+            evaluate(trace.toString(), rows, classLoads)
+        }
 
     /** Verdict from already-parsed rows; split out so goldens can drive it without a binary. */
     fun evaluate(trace: String, rows: Map<String, Long>, classLoadsInFirstSession: Long? = null): Report {
@@ -179,7 +184,7 @@ SELECT 'classloads' AS k, COUNT(*) AS v
         )
     }
 
-    /** The run-level summary lines the Python printed, including its prevention/caveat guidance. */
+    /** The run-level summary lines, including prevention/caveat guidance. */
     fun summarize(reports: List<Report>): String {
         val counts = reports.groupingBy { it.verdict }.eachCount()
         val total = reports.size.coerceAtLeast(1)

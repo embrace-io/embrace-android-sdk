@@ -6,8 +6,8 @@ package io.embrace.startup.core.rng
  *
  * Why this exists rather than `kotlin.random.Random`: the method of record is a seeded two-stage
  * cluster bootstrap and a cluster permutation test, and the strongest available proof that the port
- * carried that method over intact is reproducing the Python's confidence bounds and p-values to the
- * last digit. That is only possible if every resampling draw is identical, which means the generator
+ * carried that method over intact is reproducing the frozen goldens' confidence bounds and p-values
+ * to the last digit. That is only possible if every resampling draw is identical, which means the generator
  * must be identical - CPython's Mersenne Twister with its own seeding, its own 53-bit double
  * construction and its own rejection sampling. `kotlin.random.Random` is a different generator
  * (XorWow) with no stability guarantee across stdlib versions.
@@ -21,7 +21,7 @@ package io.embrace.startup.core.rng
  * - `shuffle(x)`: Fisher–Yates from the end, `j = _randbelow(i + 1)`;
  * - `choice(seq)`: `seq[_randbelow(len(seq))]`.
  *
- * Only the subset the Python statistics code touches is implemented. Adding `randint`, `gauss`
+ * Only the subset the statistics code touches is implemented. Adding `randint`, `gauss`
  * or `sample` would need their exact CPython algorithms too - do not approximate them.
  */
 class CPythonRandom(seed: Long) {

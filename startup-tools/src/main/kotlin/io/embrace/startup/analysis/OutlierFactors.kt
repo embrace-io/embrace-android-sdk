@@ -9,10 +9,10 @@ import kotlinx.serialization.Serializable
 import java.nio.file.Path
 
 /**
- * `outlier_factors.py`: the external-factor catalogue (`outlier_metrics.sql`) per trace - the
+ * `outlier-factors`: the external-factor catalogue (`outlier_metrics.sql`) per trace - the
  * `passN-factors.json` that `factors-report` and `hypothesis-tests` consume.
  *
- * Every scalar is optional because the Python only emitted the rows the query returned non-NULL:
+ * Every scalar is optional because the query only returns rows for the fields it found non-NULL:
  * `eff_mhz` is absent when no cpufreq counter covered the window, `mem_swap` when the process had
  * no swap counter, the `freq_limit_*` pair on kernels that do not export the limit tracks. Downstream
  * code must keep treating absence as "not exported", never as zero.
@@ -21,7 +21,7 @@ object OutlierFactors {
 
     /**
      * Every scalar is `@EncodeDefault(NEVER)`: a scalar the query returned no row for is ABSENT from the
-     * dataset, as the Python wrote it, never `null`. Downstream readers treat the two alike, but a
+     * dataset, exactly as the goldens have it, never `null`. Downstream readers treat the two alike, but a
      * `"freq_cl0_mhz": null` on disk would read as "the kernel exported nothing" where the truth is
      * "no counter covered the window", and the pre-cutover shadow run found such nulls on most iterations
      * of one device (port log #28).

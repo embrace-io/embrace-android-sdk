@@ -19,7 +19,7 @@ import java.time.format.DateTimeFormatter
 import kotlin.streams.toList
 
 /**
- * `fleet_campaign.py`: N back-to-back benchmark passes on one device, each pass's traces copied
+ * Runs N back-to-back benchmark passes on one device, each pass's traces copied
  * aside before the next pass wipes them, with battery AND silicon temperatures logged around every
  * pass and a silicon cool gate between passes.
  *
@@ -28,9 +28,9 @@ import kotlin.streams.toList
  * battery: the entry-tier device failed its 9.0.0 leg twice with a battery-based gate reading "cool"
  * at 31 °C while the CPU sat at 55 °C. Best-effort - unreadable sensors proceed, loudly.
  *
- * Departure from the Python (recorded in the port log): a `run-metadata.json` is written into the
- * campaign directory (serial, method, declared shape, catalog pin, repo head) so `ingest` has
- * provenance; the Python left that file to the operator, and nothing in the toolchain wrote it.
+ * A gap in the old tool's history, recorded in the port log: nothing in that toolchain wrote
+ * provenance into the campaign directory, leaving it to the operator. A `run-metadata.json` is
+ * now written there (serial, method, declared shape, catalog pin, repo head) so `ingest` has it.
  */
 class FleetCampaign(
     private val serial: String,
@@ -247,7 +247,8 @@ class FleetCampaign(
             Processes.run(listOf("git", "-C", repo.toString(), "rev-parse", "HEAD")).stdout.trim()
         }.getOrNull()
         // The device PROFILE and the compile state travel with the run so `ingest` can check drift and
-        // fill the recipe without a cell-state.json; the Python left both to the operator.
+        // fill the recipe without a cell-state.json; leaving both to the operator was a gap in the old
+        // tool's history, recorded in the port log.
         val profile = runCatching { DeviceProbe(adb).profile(serial) }.getOrNull()
         val profileJson: JsonElement = if (profile == null) {
             JsonObject(emptyMap())

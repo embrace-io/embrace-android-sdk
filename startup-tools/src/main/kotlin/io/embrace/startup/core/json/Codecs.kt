@@ -6,11 +6,11 @@ import kotlinx.serialization.json.Json
  * The one JSON configuration every reader and writer in the toolchain uses.
  *
  * Why each setting is what it is:
- * - `ignoreUnknownKeys`: the stores were written by Python over several weeks and carry fields such
+ * - `ignoreUnknownKeys`: the stores accumulated over several weeks and carry fields such
  *   as `_comment` that are documentation, not data. A reader that rejects them cannot read history.
- * - `explicitNulls = true`: the Python built each record as a complete dict and `json.dumps` wrote
- *   every key, `null` included (`"app_build_id": null` on a run with no APK digest). Readers treat
- *   absent and null alike, but the records on disk should look like the ones the Python wrote; the
+ * - `explicitNulls = true`: each record on disk is built as a complete dict, with `json.dumps`
+ *   writing every key, `null` included (`"app_build_id": null` on a run with no APK digest). Readers
+ *   treat absent and null alike, but the records on disk should look like the ones already there; the
  *   side-by-side ingest of a fresh campaign was the only difference between the two toolchains' records
  *   once the engine label was excluded. Fields a given producer never writes are marked
  *   `@EncodeDefault(NEVER)` on the type instead (see `Derived`).

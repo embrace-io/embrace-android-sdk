@@ -17,12 +17,12 @@ import java.nio.file.Files
  * The query client, in two layers.
  *
  * Offline (always runs when the goldens are present): the saved stdout of every query parses into
- * the rows the Python read - `(what, k, val)` triples after the header sentinel, the window value
- * and the signal inventory exactly as `ingest_run.py` extracted them.
+ * the rows the golden recorded - `(what, k, val)` triples after the header sentinel, the window value
+ * and the signal inventory exactly as the golden extracted them.
  *
  * Live (only with `STARTUP_TOOLS_TRACE_PARITY=1`, the captured traces on disk and a resolvable
  * native `trace_processor_shell`): every query is re-run through this client on every fixture trace
- * and its parsed rows compared with the Python launcher's. This is the Layer-B gate proper; it
+ * and its parsed rows compared with the frozen golden's. This is the Layer-B gate proper; it
  * re-parses each trace nine times, so it is opt-in.
  */
 class TraceProcessorTest {
@@ -43,7 +43,7 @@ class TraceProcessorTest {
     }
 
     @Test
-    fun `saved query output parses into what the Python read, on every frozen trace`() {
+    fun `saved query output parses into what the golden recorded, on every frozen trace`() {
         val goldens = TraceGoldens.all()
         assumeTrue("trace goldens not present", goldens.isNotEmpty())
         goldens.forEach { golden ->

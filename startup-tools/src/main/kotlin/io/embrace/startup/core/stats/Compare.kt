@@ -5,9 +5,9 @@ package io.embrace.startup.core.stats
  * explicit statement of what the design can and cannot support. Every version table and A/B verdict
  * in the published analyses came out of this bundle.
  *
- * Structure differs from the Python only in shape: where it keyed dictionaries by arm label, this
- * returns typed [Sides] with the labels carried alongside. Every number is computed by the same call
- * in the same order, so the goldens compare field for field.
+ * Rather than keying dictionaries by arm label, this returns typed [Sides] with the labels carried
+ * alongside. Every number is computed by the same call in the same order, so the goldens compare
+ * field for field.
  */
 object Compare {
 
@@ -54,6 +54,15 @@ object Compare {
         val medianA = Quantile.type7(aFlat, MEDIAN)
         val medianB = Quantile.type7(bFlat, MEDIAN)
         val diffPct = if (medianA != 0.0) PERCENT * (medianB - medianA) / medianA else Double.NaN
+        // One set of draws serves the median and every quantile whose n supports an interval: the draws
+        // do not depend on the statistic, so asking separately would redraw the same sequence each time.
+        val withCi = quantiles.filter { Quantile.ciTrustworthy(aFlat.size, it) && Quantile.ciTrustworthy(bFlat.size, it) }
+        val bootstraps = Cluster.bootstrapDiffs(
+            a,
+            b,
+            listOf(Cluster.Statistic.Median) + withCi.map { Cluster.Statistic.Quantile(it) },
+        )
+        val quantileCis = withCi.zip(bootstraps.drop(1)).toMap()
         return Report(
             labels = Sides(labelA, labelB),
             n = Sides(aFlat.size, bFlat.size),
@@ -61,24 +70,23 @@ object Compare {
             median = Sides(medianA, medianB),
             designEffect = Sides(Cluster.designEffect(a), Cluster.designEffect(b)),
             effectSize = EffectSize.cliffsDelta(aFlat, bFlat),
-            medianCi = Cluster.bootstrapDiff(a, b),
+            medianCi = bootstraps.first(),
             permutation = Cluster.permutationTest(a, b),
             medianDiffPct = diffPct,
             clearsNoiseBand = Power.practical(diffPct, noiseBandPct),
-            quantiles = quantiles.map { p -> quantileRow(a, b, aFlat, bFlat, p) },
+            quantiles = quantiles.map { p -> quantileRow(aFlat, bFlat, p, quantileCis[p]) },
         )
     }
 
+    /** [bootstrapped] is the shared-draw interval for this quantile, or null when n is too small for one. */
     private fun quantileRow(
-        a: List<List<Double>>,
-        b: List<List<Double>>,
         aFlat: List<Double>,
         bFlat: List<Double>,
         p: Double,
+        bootstrapped: Cluster.BootstrapResult?,
     ): QuantileRow {
-        val trustworthy = Quantile.ciTrustworthy(aFlat.size, p) && Quantile.ciTrustworthy(bFlat.size, p)
-        val ci = if (trustworthy) {
-            Cluster.bootstrapDiff(a, b, Cluster.Statistic.Quantile(p))
+        val ci = if (bootstrapped != null) {
+            bootstrapped
         } else {
             val floor = Quantile.minNForCi[Math.rint(p * PERCENT) / PERCENT]?.toString() ?: "?"
             Cluster.BootstrapResult(

@@ -10,8 +10,8 @@ import java.nio.file.Path
 import kotlin.streams.toList
 
 /**
- * The frozen Python trace-layer outputs: for each fixture trace, the raw `trace_processor -q` stdout
- * of every query (`<query>.csv`) and the Python's own parse of it (`python_parsed.json`). Produced by
+ * The frozen trace-layer goldens: for each fixture trace, the raw `trace_processor -q` stdout
+ * of every query (`<query>.csv`) and the frozen parse of it (`python_parsed.json`). Produced by
  * the `_producers/` scripts inside the set; see the trace-goldens MANIFEST for provenance. They are
  * generated once and never edited, so they are stored as a single archive and unpacked on demand. The
  * trace binaries themselves are NOT in the repo, so tests that need them look under the repo's scratch
@@ -51,7 +51,7 @@ object TraceGoldens {
         }
     }
 
-    /** Frozen stdout of a Python CLI run over one device's traces, or null when not captured. */
+    /** Frozen stdout of the golden CLI run over one device's traces, or null when not captured. */
     fun cliStdout(name: String): String? =
         root().resolve("_cli").resolve(name).takeIf { Files.isRegularFile(it) }?.let { Files.readString(it) }
 

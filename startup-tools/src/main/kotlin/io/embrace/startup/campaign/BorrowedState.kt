@@ -4,8 +4,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 /**
- * Borrow a piece of shared mutable state and give it back even if the process is killed. Ported from
- * `_shared/borrowed_state.py`.
+ * Borrow a piece of shared mutable state and give it back even if the process is killed.
  *
  * Campaigns mutate things that outlive them - above all the ExampleApp gradle catalog's SDK version
  * pin, which a campaign flips per version leg. If the process dies holding it, the next unrelated
@@ -13,7 +12,7 @@ import java.nio.file.Path
  *
  * Three layers, because each covers what the others cannot:
  * 1. a MARKER FILE - survives SIGKILL, power loss, the machine going down; the only durable layer;
- * 2. a JVM shutdown hook - runs on SIGTERM/SIGINT/normal exit (not SIGKILL), the Python's signal handlers;
+ * 2. a JVM shutdown hook - runs on SIGTERM/SIGINT/normal exit (not SIGKILL), matching what a signal handler would catch;
  * 3. the `finally` of [use] - normal completion and exceptions.
  *
  * Ordering rule that matters more than it looks: [recover] runs BEFORE the current value is read.

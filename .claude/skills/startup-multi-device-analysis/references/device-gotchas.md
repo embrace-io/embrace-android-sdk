@@ -314,6 +314,42 @@ medians, and sample across passes rather than from the head of one.
   idle temperature, since idle baselines differ by tier, and note that "settled" needs a strict
   threshold: a 1 °C-per-30 s test declares 42 °C settled on a device that idles at 34 °C.
 
+## Running unattended: the mechanisms turn on each other
+
+Everything above assumes someone is watching. When nothing is, the failure mode is rarely a single
+bug — it is two safeguards interacting, and the run that looks finished is the one to distrust.
+
+- **One host, one campaign — chain, never parallelise.** The per-device rule above is not enough:
+  two gradle campaigns on the same host contend even when they drive different phones, and heavy
+  `trace_processor` analysis counts as contention too. Run analysis only while the fleet is idle.
+- **A timeout kill can manufacture the crash its own guard then trips on.** Observed cascade: an
+  attempt timeout set too short for the device's real pass rate fired → process-group kill →
+  instrumentation died → the harness wrote a `FATAL EXCEPTION` to the crash buffer → the crash-buffer
+  guard poisoned a leg that had in fact just completed. Size timeouts from *measured* pass rates, not
+  hope, and read the crash buffer BEFORE the kill so you have a baseline to diff against.
+- **Scope the crash-buffer guard to the APP's process.** Counting every `FATAL EXCEPTION` fails a
+  valid leg when the *harness* is what died. An app crash invalidates measurements; a harness crash
+  aborts the leg and leaves what it already collected good. Match on the app process specifically.
+- **Daemonize anything long** (`start_new_session=True`). Background tasks belonging to the agent
+  harness get reaped when it moves on, killing a campaign hours in with no error anyone will see.
+- **Capture failure evidence BEFORE the cleanup that erases it.** The `git checkout -- .` that makes
+  a leg safe to retry also destroys the patched tree that failed to compile, so the build error
+  cannot be re-read afterwards. Copy the diff and the FULL build log into the campaign directory on
+  failure, then revert.
+- **Don't summarise build errors — capture a window.** Logging only the lines matching a marker such
+  as `What went wrong` records the header and none of the message. Keep several lines after each
+  marker; a truncated error is indistinguishable from an unexplained one when you read it days later.
+- **Refuse pass-level statistics when `n != passes × iterations`.** Positional pass recovery
+  misaligns when any leg is short, quietly attributing one pass's launches to another.
+- **A kill does not propagate — verify teardown on BOTH sides.** Killing a driver left its child
+  campaign still driving a device, and killing *that* left the `gradlew` client running the connected
+  test; each had to be hunted by hand. The device side is worse, because a host-side `pgrep` cannot
+  see it: stranded `tracebox`/`perfetto`/`atrace` processes hold the kernel ftrace buffer, so every
+  later trace is silently empty while the tooling still reports success, and their scratch files fill
+  `/data` until installs start failing. Run children in a process group and kill the group, then
+  VERIFY rather than assume: host-side for the driver and its gradle client, device-side for the
+  tracers, plus `df /data`. Clear stuck tracing with `atrace --async_stop`.
+
 ---
 
 # Appendix — evidence behind the rules

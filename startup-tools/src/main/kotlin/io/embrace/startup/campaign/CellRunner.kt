@@ -24,7 +24,7 @@ import java.time.format.DateTimeFormatter
 import kotlin.streams.toList
 
 /**
- * `cell_runner.py`: run ONE matrix cell - set the factor state, machine-check every invariant, run
+ * Runs ONE matrix cell - set the factor state, machine-check every invariant, run
  * the passes through [FleetCampaign] (in-process, no CLI seam to drift), and record provenance in
  * `cell-state.json` - the file `ingest` reads first.
  *
@@ -33,12 +33,12 @@ import kotlin.streams.toList
  * `dumpsys package dexopt`; temperature from thermalservice only (battery is not a control input);
  * host quiet (no second driver alive).
  *
- * Two departures from the Python, both in the port log: the instrument canary for the post-run check
- * comes from the plan's `instrument` (default `emb-sdk-start`) where the Python hard-coded
- * `app-embrace-start`, a slice the harness never emitted; and the temperature parser matches
- * `mValue=` anywhere in a `Temperature{...}` line, where the Python required a comma-split part to
- * START with it - the first part starts with `Temperature{`, so the Python never read a sensor and the
- * temperature invariant could never pass.
+ * Two defects in the tool's history, both in the port log: hard-coding the instrument canary for the
+ * post-run check as `app-embrace-start` was wrong - the harness never emitted that slice - so the
+ * canary now comes from the plan's `instrument` (default `emb-sdk-start`); and requiring the
+ * temperature parser's `mValue=` match to START a comma-split part was wrong too - the first part
+ * starts with `Temperature{`, so no sensor was ever read and the temperature invariant could never
+ * pass. It now matches `mValue=` anywhere in a `Temperature{...}` line.
  */
 class CellRunner(
     private val repo: Path,
@@ -80,7 +80,7 @@ class CellRunner(
     private val example: Path = repo.resolve("examples/ExampleApp")
     private val catalog: Path = example.resolve("gradle/libs.versions.toml")
 
-    /** Runs the cell; throws [Abort] with the Python's message on any refused invariant. Returns the cell directory. */
+    /** Runs the cell; throws [Abort] with the refused invariant's message. Returns the cell directory. */
     fun run(cellsFile: Path, cellId: String, outDir: Path?, checkOnly: Boolean): Path {
         val target = resolve(cellsFile, cellId, outDir)
         acquireLock()
@@ -146,6 +146,7 @@ class CellRunner(
     private fun runChecks(t: Target): List<Check> {
         val checks = ArrayList<Check>()
         checks.add(checkHostQuiet())
+        checks.add(checkDeviceQuiet(t.serial, t.logFile))
         checks.add(checkSdkMatches(PyJson.str(t.cell, "version", "None"), t.logFile))
         checks.add(checkTemperature(t.serial, t.coolGateC, PyJson.strOrNull(t.levels, "thermal")))
         if (adb.shell(t.serial, "pm", "list", "packages", PKG).isNotEmpty()) {
@@ -221,6 +222,42 @@ class CellRunner(
     }
 
     /** thermalservice only; `dumpsys battery` is not a control input (some devices freeze it). */
+    /**
+     * Nothing of ours still running ON THE DEVICE. Killing the host leaves the device untouched: a
+     * SIGKILL skips [restoreState], so its load generators keep the phone pegged, and a stuck tracer
+     * holds the kernel ftrace buffer so every later capture is silently empty while the tool still
+     * reports success. A host-side process list cannot see any of it.
+     *
+     * These processes are ours, so this sweeps rather than merely refusing, then verifies the sweep
+     * worked. It fails only if something survives, because measuring a contaminated device produces
+     * numbers that look entirely plausible.
+     */
+    fun checkDeviceQuiet(serial: String, logFile: Path): Check {
+        val before = deviceLeftovers(serial)
+        if (before.isEmpty()) {
+            return Check("device quiet", true, "device quiet")
+        }
+        log("device quiet: sweeping leftovers from a previous run: ${PyJson.reprList(before)}", logFile)
+        adb.shell(serial, "pkill", "-9", "-f", "dd if=/dev/zero")
+        TRACERS.forEach { adb.shell(serial, "pkill", "-9", it) }
+        adb.shell(serial, "atrace", "--async_stop")
+        val after = deviceLeftovers(serial)
+        return if (after.isEmpty()) {
+            Check("device quiet", true, "swept ${before.size} leftover process(es) from a previous run")
+        } else {
+            Check("device quiet", false, "device still busy after a sweep: ${PyJson.reprList(after)}")
+        }
+    }
+
+    /** Names of our own processes seen on the device: load generators and trace collectors. */
+    private fun deviceLeftovers(serial: String): List<String> {
+        val listing = runCatching { adb.shell(serial, "ps", "-A", "-o", "NAME,ARGS") }.getOrElse { return emptyList() }
+        return listing.lines()
+            .map { it.trim() }
+            .filter { line -> LEFTOVER_MARKERS.any { it in line } }
+            .take(MAX_LEFTOVERS_SHOWN)
+    }
+
     fun checkTemperature(serial: String, gateC: Double, band: String?): Check {
         val temps = parseTemperatures(adb.shell(serial, "dumpsys", "thermalservice"))
         val plausible = temps.filter { it > PLAUSIBLE_MIN_C && it < PLAUSIBLE_MAX_C }
@@ -403,6 +440,13 @@ class CellRunner(
         private const val PLAUSIBLE_MAX_C = 100.0
         private const val SAMPLE_EDGE = 5
         private const val SHA_BUFFER_SHIFT = 20
+        private const val MAX_LEFTOVERS_SHOWN = 6
+
+        /** Trace collectors that hold the kernel ftrace buffer if they outlive the run that started them. */
+        private val TRACERS = listOf("tracebox", "perfetto", "atrace")
+
+        /** What one of our own killed runs leaves behind on the device: load generators and tracers. */
+        private val LEFTOVER_MARKERS = listOf("dd if=/dev/zero") + TRACERS
         private val DRIVER_MARKERS =
             listOf("fleet_campaign", "fleet-campaign", "device_driver", "p6b", "cell_runner", "cell-runner")
         private val M_VALUE = Regex("mValue=([\\-\\d.]+)")
@@ -414,9 +458,9 @@ class CellRunner(
         fun cellDirName(cellId: String): String = cellId.replace("|", "__").replace(",", "_").replace("=", "-")
 
         /**
-         * Every `mValue=` on a `Temperature{...}` line of the "Current temperatures from HAL" block. The
-         * Python scanned the whole dump, which on some devices also contains a "Cached temperatures" block
-         * holding peak values (72 °C at idle) - a gate reading those would never open after a hot pass.
+         * Every `mValue=` on a `Temperature{...}` line of the "Current temperatures from HAL" block.
+         * Scanning the whole dump is wrong - on some devices it also contains a "Cached temperatures"
+         * block holding peak values (72 °C at idle), and a gate reading those would never open after a hot pass.
          */
         fun parseTemperatures(dumpsys: String): List<Double> =
             io.embrace.startup.device.Topology.halTemperatureLines(dumpsys).map { it.trim() }

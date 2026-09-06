@@ -19,7 +19,7 @@ import java.nio.file.Files
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-/** `ingest` - the former `ingest_run.py`: one run directory into the longitudinal store, with validation. */
+/** `ingest`: one run directory into the longitudinal store, with validation. */
 class IngestCommand : CliktCommand(name = "ingest") {
 
     private val runDir by argument("run-dir").path(mustExist = true, canBeFile = false)

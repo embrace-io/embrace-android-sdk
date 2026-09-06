@@ -6,7 +6,7 @@ import java.security.MessageDigest
 import java.util.zip.ZipFile
 
 /**
- * `verify_ab_arms.py`: prove that two A/B arms actually differ BEFORE spending hours of device time.
+ * Proves that two A/B arms actually differ BEFORE spending hours of device time.
  *
  * A config-flag A/B builds one commit twice with a flag flipped. If the flag does not take effect,
  * both arms are the SAME program, the campaign runs perfectly, and "no significant difference" is

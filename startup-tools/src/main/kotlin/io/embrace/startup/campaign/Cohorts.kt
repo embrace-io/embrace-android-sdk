@@ -11,14 +11,14 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
 
 /**
- * `_shared/cohorts.py`: per-iteration user-session cohort verification for a benchmark pass.
+ * Per-iteration user-session cohort verification for a benchmark pass.
  *
  * `start-first-session` runs one of two paths on every cold start: RESTORE the persisted user session
  * (within its inactivity timeout; near-zero cost) or CREATE and PERSIST a new one (no stored session,
  * inactive, or expired; the production cold-start path). An arm that intends one path can silently take
  * the other and the numbers still look valid, so the campaign runner does not trust its setup: it
  * enables the ExampleApp's logcat telemetry tap, streams the `EmbVerify` lines for the pass, and this
- * classifies every launch from its exported `sdk-init` span. Output text is identical to the Python's.
+ * classifies every launch from its exported `sdk-init` span. Output text is pinned to the format the goldens expect.
  */
 object Cohorts {
 
@@ -151,7 +151,7 @@ object Cohorts {
 
     data class Report(val launches: List<Launch>, val expected: String?, val violations: List<Int>, val summary: String)
 
-    /** Parse + classify + check, exactly as the Python's `report()`. */
+    /** Parse + classify + check, in the sequence the goldens pin. */
     fun report(text: String, method: String?): Report {
         val launches = classify(parseEmbVerify(text))
         val expected = expectedCohort(method)
@@ -159,7 +159,7 @@ object Cohorts {
         return Report(launches, expected, bad, summarize(launches, expected, bad))
     }
 
-    /** The `passN-cohorts.json` tree; same keys as the Python's (its `sort_keys` ordering is not reproduced). */
+    /** The `passN-cohorts.json` tree; same keys the goldens pin (their `sort_keys` ordering is not reproduced). */
     fun toJson(report: Report, method: String?): JsonObject = JsonObject(
         mapOf(
             "method" to prim(method),

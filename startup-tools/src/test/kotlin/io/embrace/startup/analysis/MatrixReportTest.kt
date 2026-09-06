@@ -7,7 +7,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 /**
- * No Python golden exists for `matrix_report.py` (it needs cell-state run directories and none
+ * No frozen golden exists for the matrix report (it needs cell-state run directories and none
  * survived), so this checks the port against hand-derived expectations: the summary definitions
  * (median, index p90, index IQR, pass medians in string-sorted key order), the pass-state flag, the
  * version table's "newest" rule, and the factor table's reference lookup.

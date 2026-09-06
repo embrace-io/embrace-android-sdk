@@ -4,13 +4,13 @@ import io.embrace.startup.core.text.PyFormat
 import kotlin.math.sqrt
 
 /**
- * The descriptive helpers the report scripts duplicated verbatim: Pearson's r and the sample
+ * Descriptive helpers shared across every report: Pearson's r and the sample
  * standard deviation, with Python's `statistics.mean` (exact) for the centring so a printed `r`
  * agrees at every precision a report shows.
  */
 object Descriptive {
 
-    /** `pearson(xs, ys)`: NaN when either series has zero variance, as the Python returned. */
+    /** `pearson(xs, ys)`: NaN when either series has zero variance. */
     fun pearson(xs: List<Double>, ys: List<Double>): Double {
         require(xs.size == ys.size) { "series differ in length: ${xs.size} vs ${ys.size}" }
         if (xs.isEmpty()) return Double.NaN

@@ -13,7 +13,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 /**
- * `submit_run.py`: turn a locally ingested run into a corpus submission - collect provenance, REDACT,
+ * Turns a locally ingested run into a corpus submission - collect provenance, REDACT,
  * validate, append.
  *
  * Two design choices matter more than the code: the record is built field by field from an explicit
@@ -27,7 +27,7 @@ object Submit {
 
     data class Outcome(val record: JsonObject?, val problems: List<String>)
 
-    /** The LAST store line whose run_id matches, as the Python's loop left it. */
+    /** The LAST store line whose run_id matches - later entries win, the resolution the goldens now pin. */
     fun findLocal(store: Path, runId: String): JsonObject? {
         var found: JsonObject? = null
         Files.readAllLines(store).forEach { line ->
@@ -139,7 +139,7 @@ object Submit {
         )
     }
 
-    /** One-space indent, as the Python's `json.dumps(indent=1)` preview. */
+    /** One-space indent, as `json.dumps(indent=1)` would preview it. */
     @OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
     private val PRETTY = kotlinx.serialization.json.Json(StartupJson) {
         prettyPrint = true

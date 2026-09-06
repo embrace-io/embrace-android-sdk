@@ -25,7 +25,7 @@ import java.nio.file.Path
 
 /**
  * Ingest's record construction and every guard, driven by the frozen per-trace measurements of the
- * Pixel 3 fixture run (health verdicts, windows and signals exactly as the Python read them) so no
+ * Pixel 3 fixture run (health verdicts, windows and signals exactly as the golden read them) so no
  * Perfetto binary is needed. The guards are exercised by varying the reference set's declared shape,
  * device and profile around that fixed run.
  */
@@ -171,7 +171,7 @@ class IngestTest {
     }
 
     @Test
-    fun `published-version rule and window rounding follow the Python`() {
+    fun `published-version rule and window rounding follow the golden`() {
         assertTrue(Ingest.isPublished("9.2.0"))
         listOf("9.3.0-SNAPSHOT", "local", "9.2.0+dirty", "9.2.0+3", "", null).forEach {
             assertTrue("$it", !Ingest.isPublished(it))

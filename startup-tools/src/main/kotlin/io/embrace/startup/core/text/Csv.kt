@@ -3,8 +3,8 @@ package io.embrace.startup.core.text
 /**
  * A small RFC-4180 reader, sufficient for `trace_processor -q` output: comma-separated fields,
  * double-quoted fields with `""` escapes, no embedded newlines inside quoted fields (Perfetto never
- * emits them). Behaves like Python's `csv.reader` on that input - which is what `analyze_startup.py`
- * parsed with, so a row compares equal to what the Python saw.
+ * emits them). Behaves like Python's `csv.reader` on that input, so a parsed row matches the frozen
+ * goldens.
  */
 object Csv {
 

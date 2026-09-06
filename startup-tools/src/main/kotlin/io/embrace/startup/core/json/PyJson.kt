@@ -10,10 +10,10 @@ import kotlinx.serialization.json.jsonPrimitive
 /**
  * Loose, Python-`dict.get`-flavoured access to JSON records plus `json.dumps` rendering.
  *
- * The store, corpus and plan files were read by the Python as plain dicts with `.get(...) or
+ * The store, corpus and plan files are read as plain dicts with `.get(...) or
  * default` everywhere, so malformed records (the salvaged 8.3.0 sweep rows with null versions,
  * empty profiles) flow through and print `?`. Typed schemas exist for writing; reading for a
- * REPORT keeps the Python's tolerance, and these helpers make that explicit rather than sprinkling
+ * REPORT keeps that tolerance, and these helpers make that explicit rather than sprinkling
  * casts through every report.
  */
 object PyJson {
@@ -80,8 +80,8 @@ object PyJson {
     /**
      * `json.dumps(el, indent=indent, sort_keys=sortKeys)`: Python's pretty layout - one entry per line,
      * `", "` collapsed to a bare comma at line end, `": "` between key and value, empty containers as
-     * `[]` / `{}` - with `ensure_ascii=True`. Number literals are emitted verbatim, so a file the Python
-     * wrote round-trips byte for byte.
+     * `[]` / `{}` - with `ensure_ascii=True`. Number literals are emitted verbatim, so a file written
+     * this way round-trips byte for byte.
      */
     fun dumpsPretty(el: JsonElement, indent: Int = 2, sortKeys: Boolean = true, level: Int = 0): String = when (el) {
         is JsonNull -> "null"

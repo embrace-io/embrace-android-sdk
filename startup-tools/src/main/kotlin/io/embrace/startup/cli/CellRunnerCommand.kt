@@ -10,7 +10,7 @@ import com.github.ajalt.clikt.parameters.types.path
 import io.embrace.startup.campaign.CellRunner
 import io.embrace.startup.core.repo.RepoRoot
 
-/** `cell-runner` - the former `cell_runner.py`: run ONE matrix cell with every invariant machine-checked first. */
+/** `cell-runner`: run ONE matrix cell with every invariant machine-checked first. */
 class CellRunnerCommand : CliktCommand(name = "cell-runner") {
 
     private val cells by option("--cells", help = "the cell list written by `matrix-plan --emit`").path(mustExist = true).required()

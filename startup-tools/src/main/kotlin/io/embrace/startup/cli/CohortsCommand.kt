@@ -12,8 +12,8 @@ import kotlinx.serialization.json.JsonObject
 import java.nio.file.Files
 
 /**
- * `cohorts` - the former `_shared/cohorts.py` CLI: classify every launch in a pass's `EmbVerify` logcat
- * capture as created / restored / unknown and report violations of the arm's expected cohort.
+ * `cohorts`: classify every launch in a pass's `EmbVerify` logcat capture as created / restored /
+ * unknown and report violations of the arm's expected cohort.
  */
 class CohortsCommand : CliktCommand(name = "cohorts") {
 

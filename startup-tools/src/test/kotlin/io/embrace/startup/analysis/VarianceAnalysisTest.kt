@@ -16,14 +16,14 @@ import org.junit.Test
 import java.nio.file.Files
 
 /**
- * `variance` and `outlier-factors` against the Python's frozen output per device. The Python's
+ * `variance` and `outlier-factors` against the frozen golden output per device. The golden's
  * `extract` was driven with the same saved `trace_processor` stdout the Kotlin parses here, so the
  * JSON datasets must be equal as trees and the variance report equal line for line.
  */
 class VarianceAnalysisTest {
 
     @Test
-    fun `variance report and JSON dataset reproduce variance_analysis py per device`() {
+    fun `variance report and JSON dataset reproduce the golden per device`() {
         val goldens = TraceGoldens.all()
         assumeTrue("trace goldens not present", goldens.isNotEmpty())
         var compared = 0
@@ -48,7 +48,7 @@ class VarianceAnalysisTest {
     }
 
     @Test
-    fun `outlier factors dataset reproduces outlier_factors py per device`() {
+    fun `outlier factors dataset reproduces the golden per device`() {
         val goldens = TraceGoldens.all()
         assumeTrue("trace goldens not present", goldens.isNotEmpty())
         var compared = 0

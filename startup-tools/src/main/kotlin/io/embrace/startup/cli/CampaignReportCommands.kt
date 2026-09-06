@@ -18,9 +18,8 @@ import java.nio.file.Path
  * The three file-only campaign reports. They read what `variance --json` and `outlier-factors`
  * wrote, so they need no trace processor - only the campaign directory.
  *
- * `--little-cpus` replaces the Python's `LITTLE_CPUS` environment variable: take the value from
- * `probe`; the default (cpu0-3) is wrong on any device whose little cluster sits elsewhere and it
- * fails silently by reporting a meaningless share.
+ * `--little-cpus` takes the value from `probe`; the default (cpu0-3) is wrong on any device whose
+ * little cluster sits elsewhere and it fails silently by reporting a meaningless share.
  */
 private fun CliktCommand.littleCpusOption() = option(
     "--little-cpus",
@@ -29,7 +28,7 @@ private fun CliktCommand.littleCpusOption() = option(
 
 private fun parseCpus(text: String): Set<Int> = text.split(",").map { it.trim().toInt() }.toSet()
 
-/** `hypothesis-tests` - the former `hypothesis_tests.py`. */
+/** `hypothesis-tests`: H1-H4 across a campaign's passes. */
 class HypothesisTestsCommand : CliktCommand(name = "hypothesis-tests") {
 
     private val campaignDir by argument("campaign-dir", help = "directory with pass1.json..passN.json and campaign.log")
@@ -51,7 +50,7 @@ class HypothesisTestsCommand : CliktCommand(name = "hypothesis-tests") {
     }
 }
 
-/** `factors-report` - the former `factors_report.py`. */
+/** `factors-report`: factor correlations, outlier catalogue. */
 class FactorsReportCommand : CliktCommand(name = "factors-report") {
 
     private val campaignDir by argument("campaign-dir", help = "directory with pass1-factors.json..passN-factors.json")
@@ -72,7 +71,7 @@ class FactorsReportCommand : CliktCommand(name = "factors-report") {
     }
 }
 
-/** `cross-device-sections` - the former `cross_device_sections.py`. */
+/** `cross-device-sections`: section shares across devices. */
 class CrossDeviceSectionsCommand : CliktCommand(name = "cross-device-sections") {
 
     private val devices by argument(

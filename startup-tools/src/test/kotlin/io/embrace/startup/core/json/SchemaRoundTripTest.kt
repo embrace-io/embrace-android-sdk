@@ -15,7 +15,7 @@ import java.io.File
 import kotlin.math.abs
 
 /**
- * Phase-1a gate for the core contract: every real fixture the Python produced decodes into the
+ * Phase-1a gate for the core contract: every real fixture the golden produced decodes into the
  * Kotlin schemas, and a decoded store record re-encodes to a tree equivalent to the original.
  *
  * "Equivalent" is deliberate. kotlinx-serialization cannot reproduce Python's `sort_keys=True`
@@ -107,7 +107,7 @@ class SchemaRoundTripTest {
 
     /**
      * Absent and null are the same thing in this contract (`StartupJson` sets `explicitNulls = false`),
-     * because Python wrote `"app_build_id": null` where Kotlin omits the key; both mean "no value".
+     * because the golden has `"app_build_id": null` where Kotlin omits the key; both mean "no value".
      * So null-valued keys are dropped from both sides before key sets are compared.
      */
     private fun assertTreesEquivalent(expected: JsonElement, actual: JsonElement, path: String) {

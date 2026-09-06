@@ -14,9 +14,9 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 /**
- * `serve-trace` - the former `serve_trace.py`: serve a directory over HTTP on 127.0.0.1 with the
- * CORS header ui.perfetto.dev needs to fetch a local trace via its `?url=` deep link (a plain static
- * server lacks it and the fetch hangs in a private-network preflight).
+ * `serve-trace`: serve a directory over HTTP on 127.0.0.1 with the CORS header ui.perfetto.dev
+ * needs to fetch a local trace via its `?url=` deep link (a plain static server lacks it and the
+ * fetch hangs in a private-network preflight).
  *
  * Then open `https://ui.perfetto.dev/#!/?url=http://127.0.0.1:<port>/<trace-filename>`. The first
  * fetch can take ~30 s; stop the server once the UI shows a `local_cache_key` URL.

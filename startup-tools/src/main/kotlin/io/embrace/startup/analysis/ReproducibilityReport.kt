@@ -16,7 +16,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 /**
- * `reproducibility_report.py`: do independent contributors on the same model agree?
+ * `reproducibility`: do independent contributors on the same model agree?
  *
  * Verdicts are per statistic (median / tail / shape) because they fail for different reasons and a
  * single "agrees" hides the informative case. Tolerance is derived from the submissions' OWN

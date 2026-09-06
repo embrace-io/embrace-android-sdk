@@ -5,10 +5,12 @@ import io.embrace.startup.core.proc.Processes
 import kotlinx.serialization.Serializable
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 /**
- * `compat_patch.py`: apply / revert the per-version app-side compatibility patches needed to build
- * ExampleApp against old Embrace SDKs, and set the version pin.
+ * Applies / reverts the per-version app-side compatibility patches needed to build
+ * ExampleApp against old Embrace SDKs, and sets the version pin.
  *
  * Recipes are DATA and came from an actual sweep back to 6.14.0 on a modern AGP toolchain - re-verify
  * them when the app's AGP/Gradle/Kotlin move. Every patched file is snapshotted to a journal so
@@ -22,8 +24,19 @@ class CompatPatch(
 
     data class Recipe(val name: String, val appliesTo: String, val pluginId: String?, val extraDeps: List<String>, val notes: String)
 
+    /**
+     * [ownerPid] and [appliedAt] exist so a patched tree can say who left it that way. The patch outlives
+     * the process that applied it by design (apply, build, revert are separate commands), so a run that
+     * dies in the middle leaves every later build silently resolving the wrong SDK. Recording the owner
+     * lets [status] and [apply] say that out loud instead.
+     */
     @Serializable
-    data class Journal(val files: MutableMap<String, String> = LinkedHashMap(), var version: String? = null)
+    data class Journal(
+        val files: MutableMap<String, String> = LinkedHashMap(),
+        var version: String? = null,
+        var ownerPid: Long? = null,
+        var appliedAt: String? = null,
+    )
 
     class PatchError(message: String) : IllegalStateException(message)
 
@@ -61,10 +74,13 @@ class CompatPatch(
         return resolved
     }
 
-    /** Apply the recipe for [version]; returns the console lines the Python printed. */
+    /** Apply the recipe for [version]; returns the console lines to print. */
     fun apply(version: String): List<String> {
         val journal = readJournal()
         val lines = ArrayList<String>()
+        lines.addAll(staleWarning(journal))
+        journal.ownerPid = ProcessHandle.current().pid()
+        journal.appliedAt = LocalDateTime.now().format(STAMP)
         val recipe = RECIPES.getValue(recipeFor(version))
         lines.add("recipe ${recipe.name} for $version: ${recipe.notes}")
         val resolved = setPin(version, journal)
@@ -97,6 +113,40 @@ class CompatPatch(
         return lines
     }
 
+    /**
+     * Whether this checkout is currently patched, and by whom. Cheap to call and safe to run any time:
+     * the question "why is my build resolving an old SDK" has no other answer short of reading a diff.
+     */
+    fun status(): List<String> {
+        val journal = readJournal()
+        if (journal.files.isEmpty()) {
+            return listOf("clean: no compat patch applied")
+        }
+        val owner = journal.ownerPid
+        val alive = owner != null && ProcessHandle.of(owner).map { it.isAlive }.orElse(false)
+        return listOf(
+            "PATCHED for ${journal.version ?: "an unrecorded version"}: " +
+                "${journal.files.size} file(s) rewritten, applied ${journal.appliedAt ?: "at an unrecorded time"}" +
+                (owner?.let { " by pid $it${if (alive) " (still running)" else " (no longer running)"}" } ?: ""),
+            "every build in this checkout resolves the patched version until `compat-patch --revert-all`",
+        ) + journal.files.keys.map { "  patched: $it" }
+    }
+
+    /** Said at the top of [apply] when the tree was already patched, most likely by a run that died. */
+    private fun staleWarning(journal: Journal): List<String> {
+        if (journal.files.isEmpty()) return emptyList()
+        val owner = journal.ownerPid
+        val alive = owner != null && ProcessHandle.of(owner).map { it.isAlive }.orElse(false)
+        if (alive) {
+            return listOf("NOTE: pid $owner is patching this checkout right now; two patchers will fight over the same files")
+        }
+        return listOf(
+            "WARNING: this checkout was already patched for ${journal.version ?: "an unrecorded version"} " +
+                "(applied ${journal.appliedAt ?: "at an unrecorded time"}) and never reverted - a previous run died.",
+            "  The ORIGINAL files are still in the journal, so `compat-patch --revert-all` restores them.",
+        )
+    }
+
     fun revertAll(): List<String> {
         val journal = readJournal()
         if (journal.files.isEmpty()) return listOf("nothing to revert")
@@ -127,6 +177,8 @@ class CompatPatch(
 
     companion object {
         const val MODERN_PLUGIN: String = "io.embrace.gradle"
+
+        private val STAMP: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
 
         val RECIPES: Map<String, Recipe> = listOf(
             Recipe("modern", ">=8.0", MODERN_PLUGIN, emptyList(), "no patch needed"),

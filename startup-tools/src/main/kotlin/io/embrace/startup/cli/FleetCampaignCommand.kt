@@ -13,9 +13,8 @@ import io.embrace.startup.campaign.FleetCampaign
 import io.embrace.startup.core.repo.RepoRoot
 
 /**
- * `fleet-campaign` - the former `fleet_campaign.py`: N back-to-back passes on one device with the
- * silicon cool gate. Flag-based (the form `cell_runner.py` already tried to call; the Python script
- * itself only took positionals - the mismatch the plan noted).
+ * `fleet-campaign`: N back-to-back passes on one device with the silicon cool gate. Flag-based,
+ * matching the form `cell-runner` already calls it with.
  */
 class FleetCampaignCommand : CliktCommand(name = "fleet-campaign") {
 

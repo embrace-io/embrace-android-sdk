@@ -20,7 +20,7 @@ import org.junit.Test
  * the four real longitudinal version pairs (`stats_store.json`, labels are run ids) and the X37
  * engine A/B legs (`x37_legs.json`, legs as clusters, labels `compat`/`kotlin`).
  *
- * Every field the Python emitted is checked: n, cluster counts, medians, design effects, Cliff's
+ * Every field the golden emitted is checked: n, cluster counts, medians, design effects, Cliff's
  * delta, the median CI, the permutation test, the relative median difference, the noise-band verdict,
  * and each quantile row (values, support, CI or the "point estimate only" refusal). Bootstrap and
  * permutation numbers are exact; ICC/DEFF and the percentage difference at the summation tolerance.

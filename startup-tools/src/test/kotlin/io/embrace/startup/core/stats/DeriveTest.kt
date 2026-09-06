@@ -14,7 +14,7 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 /**
- * `Derive.of` against `derive_store.json`: the Python `ingest_run.derive()` applied to every store
+ * `Derive.of` against `derive_store.json`: the golden output of `derive()` applied to every store
  * record's stored (rounded) windows, plus edge cases. Compared exactly - `derive` is index-picking
  * and a two-value mean, with no accumulation to drift.
  */
@@ -26,7 +26,7 @@ class DeriveTest {
     ).jsonObject
 
     @Test
-    fun `every store and sweep record derives exactly as the Python did`() {
+    fun `every store and sweep record derives exactly as the golden did`() {
         val records = listOf("longitudinal/store.jsonl", "longitudinal/sweep-store.jsonl")
             .flatMap { fixtures.resolve(it).readLines() }
             .filter { it.isNotBlank() }

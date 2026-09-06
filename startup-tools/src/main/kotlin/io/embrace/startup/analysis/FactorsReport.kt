@@ -6,18 +6,18 @@ import io.embrace.startup.core.stats.Quantile
 import io.embrace.startup.core.text.PyFormat
 
 /**
- * `factors_report.py`: correlate external/on-device factors with SDK-init window slowness,
+ * `factors-report`: correlate external/on-device factors with SDK-init window slowness,
  * outlier-first - pass-level factor means, pooled per-iteration correlations against the window
  * delta, the outlier catalogue, extreme-outlier detail and D-state blocked-function totals.
  *
  * `outlier_metrics.sql` partitions run time at a fixed cpu<4 boundary; [cl0Share] remaps that
- * partition against the device's real little cluster, exactly as the Python did.
+ * partition against the device's real little cluster.
  */
 object FactorsReport {
 
     const val SLOW_DELTA_MS: Double = 4.0
 
-    /** The Python's per-iteration `derive()` row. */
+    /** One per-iteration `derive()` row. */
     data class Row(
         val pass: Int,
         val iter: Int,
@@ -225,7 +225,7 @@ object FactorsReport {
         }
     }
 
-    /** `statistics.median`, or NaN on an empty list where the Python would have raised. */
+    /** Models `statistics.median`, returning NaN on an empty list instead of raising. */
     private fun median(values: List<Double>): Double =
         if (values.isEmpty()) Double.NaN else Quantile.median(values.sorted())
 

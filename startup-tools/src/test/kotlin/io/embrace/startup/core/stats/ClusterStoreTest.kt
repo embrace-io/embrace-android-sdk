@@ -14,8 +14,8 @@ import org.junit.Test
 
 /**
  * The method of record on the REAL data: four version pairs from the longitudinal store, each arm
- * chunked into 10 passes of 20 exactly as the Python did, then bootstrap CIs (median, p90, p95),
- * permutation p-values (median, p90), ICC and DEFF - compared to what the Python produced.
+ * chunked into 10 passes of 20 exactly as the golden did, then bootstrap CIs (median, p90, p95),
+ * permutation p-values (median, p90), ICC and DEFF - compared to what the golden produced.
  *
  * These are the comparisons behind the published version tables. Reproducing them to the last digit
  * is the single strongest statement the port can make about having carried the method over intact.

@@ -14,9 +14,8 @@ import kotlinx.serialization.builtins.ListSerializer
 import java.nio.file.Files
 
 /**
- * `outlier-factors` - the former `outlier_factors.py`. Extracts the external-factor catalogue for
- * every trace in a directory into the `passN-factors.json` that `factors-report` and
- * `hypothesis-tests` consume.
+ * `outlier-factors`: extracts the external-factor catalogue for every trace in a directory into
+ * the `passN-factors.json` that `factors-report` and `hypothesis-tests` consume.
  */
 class OutlierFactorsCommand : CliktCommand(name = "outlier-factors") {
 

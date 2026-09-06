@@ -9,8 +9,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 /**
- * The three campaign reports against the Python's frozen stdout - first on the synthetic
- * campaigns produced by `dump_golden.py` (three passes, injected outliers, a missing pass, a
+ * The three campaign reports against the frozen golden stdout - first on the synthetic
+ * campaigns captured for the fixtures (three passes, injected outliers, a missing pass, a
  * dropped section, a truncated campaign log), then on the real one-pass fixture campaigns when the
  * trace goldens are present. Text is compared line for line after trimming trailing whitespace.
  */

@@ -15,8 +15,8 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 
 /**
- * Access to the frozen Python outputs under `fixtures/goldens/` and the comparison idioms the
- * goldens' manifest prescribes: exact where the Python did no accumulation, relative 1e-9 where it
+ * Access to the frozen goldens under `fixtures/goldens/` and the comparison idioms the
+ * goldens' manifest prescribes: exact where the golden did no accumulation, relative 1e-9 where it
  * summed with `statistics.mean`, relative 1e-12 for a single `sqrt`/`log`.
  */
 object Goldens {

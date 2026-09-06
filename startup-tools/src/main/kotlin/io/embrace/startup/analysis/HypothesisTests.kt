@@ -8,7 +8,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 /**
- * `hypothesis_tests.py`: cross-pass evidence for one device's campaign.
+ * `hypothesis-tests`: cross-pass evidence for one device's campaign.
  *
  * - H2 pass-level fast/slow alternation, uniform CPU inflation, block-resume sections ~2×
  * - H1 within-pass outliers = little-core placement (needs the device's real cluster map)
@@ -16,9 +16,9 @@ import java.nio.file.Path
  * - H4 off-window fluctuators: power-service-registration binder stalls; native-lib IO
  *
  * Run per device BEFORE any cross-device or cross-arm comparison: if H2 fires, only matching-state
- * passes may be compared. Note the label/threshold mismatch carried over from the Python: the
- * "slow iterations (delta > +4 ms)" line uses an effective threshold of max(4 ms, 10% of the pass
- * median), so "slow" scales across device tiers.
+ * passes may be compared. Note the label/threshold mismatch: the "slow iterations (delta > +4 ms)"
+ * line's label is fixed, but the effective threshold is max(4 ms, 10% of the pass median), so "slow"
+ * scales across device tiers even though the label does not say so.
  */
 object HypothesisTests {
 

@@ -5,7 +5,7 @@ package io.embrace.startup.core.stats
  * evidence of sameness; this is the test that actually asks the question, and it is what a
  * control-version check ("these numbers did not move") rests on.
  *
- * Implemented, as in the Python, by interval inclusion: equivalence is declared when the whole
+ * Implemented by interval inclusion: equivalence is declared when the whole
  * cluster-bootstrap CI for the RELATIVE median difference lies inside the margin.
  */
 object Equivalence {

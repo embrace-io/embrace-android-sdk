@@ -8,19 +8,19 @@ import kotlin.math.ln
 import kotlin.math.sqrt
 
 /**
- * Sizing and sanity arithmetic ported from `stats.py`: how many launches a question needs, how small
+ * Sizing and sanity arithmetic: how many launches a question needs, how small
  * an effect a design can see, and the two guards against over-reading a number (`dilution`,
  * `practical`).
  *
- * Operation order follows the Python line for line so `ceil` lands on the same integer. Where the
- * Python wrote `x ** 2` this port writes `x * x`; CPython's float power for an exponent of 2 is the
- * same correctly rounded product.
+ * Operation order is fixed so `ceil` lands on the same integer as the goldens. This writes `x * x`
+ * rather than `x ** 2`; CPython's float power for an exponent of 2 is the same correctly rounded
+ * product.
  */
 object Power {
 
     /**
      * `required_n`: iterations per arm to detect `effectPct` given variability `cvPct`, at 80% power
-     * (or 70% for any `power` below 0.8 - the Python had exactly these two z values) and two-sided
+     * (or 70% for any `power` below 0.8 - exactly these two z values are supported) and two-sided
      * α = 0.05, inflated by the design effect. Halving the effect QUADRUPLES the sample.
      */
     fun requiredN(cvPct: Double, effectPct: Double, power: Double = DEFAULT_POWER, deff: Double = 1.0): Int? {

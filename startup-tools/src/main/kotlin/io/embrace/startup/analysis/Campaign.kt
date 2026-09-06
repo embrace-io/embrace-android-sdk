@@ -9,9 +9,9 @@ import java.nio.file.Path
  * A campaign directory: `pass1.json .. passN.json` (the `variance --json` datasets) and
  * `pass1-factors.json .. ` (the `outlier-factors` datasets), plus an optional `campaign.log`.
  *
- * Two loading conventions coexisted in the Python and both are kept: `hypothesis-tests` and
- * `factors-report` stop at the first missing pass number ([consecutive]); `cross-device-sections`
- * skips gaps and pools whatever exists ([present]).
+ * Two loading conventions are used, both intentional: `hypothesis-tests` and `factors-report` stop
+ * at the first missing pass number ([consecutive]); `cross-device-sections` skips gaps and pools
+ * whatever exists ([present]).
  */
 object Campaign {
 

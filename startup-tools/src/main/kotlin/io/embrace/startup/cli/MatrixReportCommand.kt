@@ -13,7 +13,7 @@ import io.embrace.startup.perfetto.TraceProcessor
 import kotlinx.serialization.json.JsonObject
 import java.nio.file.Files
 
-/** `matrix-report` - the former `matrix_report.py`: cross-cell comparison for a version x factor run. */
+/** `matrix-report`: cross-cell comparison for a version x factor run. */
 class MatrixReportCommand : CliktCommand(name = "matrix-report") {
 
     private val runDir by argument("run-dir", help = "directory holding the cells' cell-state.json subdirectories")

@@ -7,6 +7,7 @@ import io.embrace.startup.core.json.Recipe
 import io.embrace.startup.core.json.ReferenceSet
 import io.embrace.startup.core.json.StartupJson
 import io.embrace.startup.core.json.StoreRecord
+import io.embrace.startup.core.proc.Parallel
 import io.embrace.startup.core.stats.Derive
 import io.embrace.startup.core.text.PyFormat
 import io.embrace.startup.perfetto.Prebuilt
@@ -24,7 +25,7 @@ import kotlin.streams.toList
 import io.embrace.startup.core.json.TraceHealth as StoredHealth
 
 /**
- * `ingest_run.py`: turn one completed run directory into a longitudinal-store record, WITH validation.
+ * Turns one completed run directory into a longitudinal-store record, WITH validation.
  *
  * Validation is the point. A record that cannot be compared later is worse than no record, so this
  * refuses (rather than quietly stores) runs whose device is not in the reference set, whose profile
@@ -32,12 +33,12 @@ import io.embrace.startup.core.json.TraceHealth as StoredHealth
  * unless `--force`, which stamps the reasons into the record. Every guard here was added after a
  * real incident; the messages carry the incident so the next reader knows why.
  *
- * Two deliberate departures from the Python, both recorded in the port log:
+ * Two defects in the tool's history, both recorded in the port log:
  * 1. The health canary for the composed window is `emb-modules-init`, not the literal instrument
- *    name. The Python passed `"composed"` as the canary, no such slice exists, so no trace was ever
+ *    name. Passing `"composed"` as the canary is wrong - no such slice exists, so no trace is ever
  *    judged clean and `signals_present` is `[]` in EVERY record of the real store.
- * 2. A run with no usable windows is refused even with `--force`. The Python's own message says "do
- *    not store a placeholder", but its code stored `derived: {}` when forced.
+ * 2. A run with no usable windows is refused even with `--force`. The rule has always been: do
+ *    not store a placeholder - the old behaviour violated it and stored `derived: {}` when forced.
  */
 object Ingest {
 
@@ -67,7 +68,7 @@ object Ingest {
         /** The record to append, or null when refused. */
         val record: StoreRecord?,
         val problems: List<String>,
-        /** Informational lines the Python printed before the verdict (the lossy NOTE). */
+        /** Informational lines printed before the verdict (the lossy NOTE). */
         val notes: List<String>,
         val refusedOutright: String? = null,
     )
@@ -75,7 +76,7 @@ object Ingest {
     fun canaryFor(instrument: String): String =
         if (instrument == Queries.COMPOSED_INSTRUMENT) COMPOSED_CANARY else instrument
 
-    /** `*.perfetto-trace` recursively (sorted) then `*.pftrace` (sorted), as the Python listed them. */
+    /** `*.perfetto-trace` recursively (sorted) then `*.pftrace` (sorted); this ordering is pinned by the goldens. */
     fun listTraces(runDir: Path): List<Path> {
         fun find(suffix: String) = Files.walk(runDir).use { s ->
             s.filter { Files.isRegularFile(it) && it.fileName.toString().endsWith(suffix) }.toList()
@@ -96,28 +97,31 @@ object Ingest {
 
     /**
      * Health, window and (from the first clean trace) signals, per trace - the only step that touches
-     * Perfetto. Each trace is loaded ONCE into a warm session for its three queries (the Python parsed
-     * it three times); the `-q` fallback is automatic if a session cannot start.
+     * Perfetto. Each trace is loaded ONCE into a warm session for its three queries, rather than parsed
+     * three separate times; the `-q` fallback is automatic if a session cannot start.
      */
     fun measure(tp: TraceProcessor, traces: List<Path>, instrument: String): List<Measurement> {
         val canary = canaryFor(instrument)
-        var signalsTaken = false
-        return traces.map { trace ->
+        val measured = Parallel.map(traces) { trace ->
             tp.withWarmTrace(trace) { target ->
                 val health = TraceHealth.evaluate(trace.toString(), TraceHealth.parseRows(target.queryRaw(TraceHealth.sql(canary)).stdout))
                 if (health.verdict == TraceHealth.Verdict.UNUSABLE) {
                     return@withWarmTrace Measurement(trace, health, null, null)
                 }
                 val window = TraceReads.parseWindow(target.queryRaw(Queries.windowFor(instrument)).stdout)?.takeIf { it != 0.0 }
-                val signals = if (window != null && !signalsTaken && health.verdict == TraceHealth.Verdict.OK) {
-                    signalsTaken = true
-                    TraceReads.parseSignals(target.queryRaw(Queries.SIGNALS).stdout)
-                } else {
-                    null
-                }
-                Measurement(trace, health, window, signals)
+                Measurement(trace, health, window, null)
             }
         }
+        // The signal inventory is a property of the RUN, taken from its first clean trace, so it is
+        // decided here in input order rather than inside the loop. A flag set while measuring would make
+        // the answer depend on which worker finished first, which is the kind of order dependence that
+        // silently changes a stored record.
+        val first = measured.indexOfFirst { it.windowMs != null && it.health.verdict == TraceHealth.Verdict.OK }
+        if (first < 0) return measured
+        val signals = tp.withWarmTrace(measured[first].trace) { target ->
+            TraceReads.parseSignals(target.queryRaw(Queries.SIGNALS).stdout)
+        }
+        return measured.mapIndexed { i, m -> if (i == first) m.copy(signals = signals) else m }
     }
 
     /** A published, immutable version may seed a baseline; anything snapshot/local/dirty is comparison-only. */
@@ -194,7 +198,7 @@ object Ingest {
         return Outcome(record, problems, notes)
     }
 
-    /** The run-level counts the Python accumulated in its trace loop. */
+    /** The run-level counts accumulated across the run's traces. */
     private class Tally(measurements: List<Measurement>) {
         val traces: Int = measurements.size
         val windows: List<Double> = measurements.mapNotNull { it.windowMs }
@@ -224,8 +228,8 @@ object Ingest {
 
     /**
      * The run's device profile from provenance. `run-metadata.json` (fleet-campaign) carries the flat
-     * profile; a `cell-state.json` written by the Python cell runner carried the reference set's whole
-     * device entry (`tier`, `cool_gate_c` and the profile nested under `profile`). The profile is what
+     * profile; a `cell-state.json` (from the cell runner) carries the reference set's whole device
+     * entry (`tier`, `cool_gate_c` and the profile nested under `profile`). The profile is what
      * drift is checked against and what the record stores, so the nested form is unwrapped rather than
      * stored verbatim with its non-profile fields (port log #29).
      */

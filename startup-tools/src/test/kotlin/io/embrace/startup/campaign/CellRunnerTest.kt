@@ -33,6 +33,69 @@ class CellRunnerTest {
         assertEquals("mid__9.2.0__compile-none_install-fresh", CellRunner.cellDirName("mid|9.2.0|compile=none,install=fresh"))
     }
 
+    /**
+     * A killed run leaves its load generators and tracers running ON THE DEVICE, where no host-side
+     * process list can see them. The next cell would then measure a pegged phone, or capture traces a
+     * stuck tracer has emptied, and report success either way.
+     */
+    @Test
+    fun `device-quiet invariant sweeps a killed run's leftovers and passes once they are gone`() {
+        val issued = ArrayList<String>()
+        var listing = "root 1 dd if=/dev/zero of=/dev/null\nshell 2 tracebox traced_probes\nroot 3 zygote64\n"
+        val adb = object : Adb() {
+            override fun run(serial: String?, vararg args: String): Output {
+                val key = args.joinToString(" ")
+                issued.add(key)
+                if (key.startsWith("shell pkill") || key.startsWith("shell atrace")) listing = "root 3 zygote64\n"
+                return Output(0, if (key.startsWith("shell ps")) listing else "", "")
+            }
+        }
+
+        val check = CellRunner(Files.createTempDirectory("repo"), adb = adb)
+            .checkDeviceQuiet("SERIAL0001", Files.createTempFile("cell", ".log"))
+
+        assertTrue(check.detail, check.ok)
+        assertTrue(check.detail, check.detail.contains("swept 2 leftover"))
+        assertTrue("sweeps the load generators", issued.any { it.contains("pkill") && it.contains("dd if=/dev/zero") })
+        assertTrue("stops a stuck tracer", issued.any { it.contains("tracebox") })
+        assertTrue("releases the ftrace buffer", issued.any { it.contains("atrace --async_stop") })
+    }
+
+    @Test
+    fun `device-quiet invariant fails when a leftover survives the sweep`() {
+        val adb = object : Adb() {
+            override fun run(serial: String?, vararg args: String): Output {
+                val key = args.joinToString(" ")
+                val listing = "root 1 dd if=/dev/zero of=/dev/null\n"
+                return Output(0, if (key.startsWith("shell ps")) listing else "", "")
+            }
+        }
+
+        val check = CellRunner(Files.createTempDirectory("repo"), adb = adb)
+            .checkDeviceQuiet("SERIAL0001", Files.createTempFile("cell", ".log"))
+
+        assertTrue(check.detail, !check.ok)
+        assertTrue(check.detail, check.detail.contains("still busy after a sweep"))
+    }
+
+    @Test
+    fun `a device running nothing of ours is quiet without a sweep`() {
+        val issued = ArrayList<String>()
+        val adb = object : Adb() {
+            override fun run(serial: String?, vararg args: String): Output {
+                issued.add(args.joinToString(" "))
+                return Output(0, "root 3 zygote64\nsystem 4 system_server\n", "")
+            }
+        }
+
+        val check = CellRunner(Files.createTempDirectory("repo"), adb = adb)
+            .checkDeviceQuiet("SERIAL0001", Files.createTempFile("cell", ".log"))
+
+        assertTrue(check.detail, check.ok)
+        assertEquals("device quiet", check.detail)
+        assertTrue("nothing is killed on a clean device", issued.none { it.contains("pkill") })
+    }
+
     @Test
     fun `check-only run passes every invariant against scripted adb and gradle and writes cell-state json`() {
         val repo = Files.createTempDirectory("repo")
@@ -113,7 +176,7 @@ class CellRunnerTest {
     }
 
     @Test
-    fun `temperature and compile checks word their verdicts like the Python`() {
+    fun `temperature and compile checks word their verdicts like the golden`() {
         val adb = object : Adb() {
             var thermal = ""
             override fun run(serial: String?, vararg args: String): Output = Output(0, thermal, "")

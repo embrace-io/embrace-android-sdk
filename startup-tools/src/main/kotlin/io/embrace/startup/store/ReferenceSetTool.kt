@@ -12,7 +12,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 
 /**
- * `reference_set.py`: declare and inspect the stable reference device set.
+ * Declares and inspects the stable reference device set.
  *
  * Probes every attached device for its PROFILE (not its identity), assigns each a provisional key
  * (`<tier>-<letter>`) the operator renames and keeps forever, and freezes the measurement recipe with
@@ -26,10 +26,14 @@ import kotlinx.serialization.json.jsonObject
  */
 object ReferenceSetTool {
 
+    /**
+     * The fields [check] compares, which are exactly the fields of a stored `profile`. `tier` is NOT one
+     * of them: it is a hand-confirmed label stored beside the profile rather than inside it, and the probe
+     * does not report one, so listing it here only made the check look wider than it was.
+     */
     val PROFILE_FIELDS: List<String> = listOf(
         "api_level",
         "release",
-        "tier",
         "vendor",
         "soc_family",
         "clusters",

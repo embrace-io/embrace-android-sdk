@@ -22,7 +22,7 @@ internal class OutlierFactorsEncodingTest {
         val tree = StartupJson.encodeToJsonElement(OutlierFactors.Record.serializer(), record).jsonObject
         assertEquals(30.0, tree.getValue("window_ms").toString().toDouble(), 0.0)
         assertTrue("a present zero stays present", tree.containsKey("gc_slice_ms"))
-        // port log #28: the Python omitted the key, so the Kotlin must too.
+        // port log #28: the golden omits the key, so the Kotlin must too.
         assertFalse(tree.containsKey("freq_cl0_mhz"))
         assertFalse(tree.containsKey("freq_limit_cl0"))
         assertFalse(tree.containsKey("eff_mhz"))

@@ -1,18 +1,18 @@
 package io.embrace.startup.perfetto
 
+import io.embrace.startup.core.proc.Processes
 import java.io.Closeable
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Duration
 import java.util.UUID
-import java.util.concurrent.TimeUnit
 
 /**
  * One trace loaded ONCE into a background `trace_processor_shell server unix` session, answering
  * any number of `query --remote` calls without re-parsing.
  *
- * The Python parsed every trace once per query: ingest ran health, window and signals as three
+ * The naive model parses every trace once per query: ingest ran health, window and signals as three
  * processes per trace - three full parses. On a 200-trace leg that is 600 parses instead of 200. The
  * output format of `query --remote` is the same CSV `-q` prints, so rows are interchangeable; a
  * parity test asserts it. Always [close] (or use [TraceProcessor.withWarmTrace]) - a leaked session
@@ -44,8 +44,18 @@ class WarmTrace private constructor(
 
     fun triples(sql: String): List<TraceProcessor.Triple> = TraceProcessor.triplesOf(rows(sql), trace)
 
+    /**
+     * A session that will not die holds this trace's whole parse in memory until its idle timeout, and on
+     * a 200-trace ingest that compounds, so a failure here is reported rather than swallowed. It is still
+     * not thrown: this runs from `use`, where throwing would replace the caller's own exception.
+     */
     override fun close() {
-        runCatching { run(listOf(binary.toString(), "server", "kill", name), Duration.ofSeconds(KILL_TIMEOUT_S)) }
+        val kill = listOf(binary.toString(), "server", "kill", name)
+        val result = runCatching { run(kill, Duration.ofSeconds(KILL_TIMEOUT_S)) }
+        val failure = result.exceptionOrNull()?.message ?: result.getOrNull()?.takeIf { it.exitCode != 0 }?.stderr
+        if (failure != null) {
+            System.err.println("warning: warm session $name for $trace did not stop; it holds memory until idle: $failure")
+        }
     }
 
     companion object {
@@ -67,18 +77,14 @@ class WarmTrace private constructor(
 
         private const val NAME_CHARS = 8
 
+        /** Through the shared helper, so this path gets the same deadlock and timeout guarantees. */
         private fun run(command: List<String>, timeout: Duration): TraceProcessor.Output {
-            val process = ProcessBuilder(command).redirectErrorStream(false).start()
-            val stderr = StringBuilder()
-            val drain = Thread { process.errorStream.bufferedReader().use { stderr.append(it.readText()) } }
-            drain.start()
-            val stdout = process.inputStream.bufferedReader().use { it.readText() }
-            if (!process.waitFor(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
-                process.destroyForcibly()
-                throw TraceProcessor.QueryFailed("${command.getOrNull(1)} timed out after $timeout")
+            val out = try {
+                Processes.run(command, timeout = timeout)
+            } catch (e: Processes.TimedOut) {
+                throw TraceProcessor.QueryFailed("${command.getOrNull(1)} timed out after $timeout", e)
             }
-            drain.join()
-            return TraceProcessor.Output(process.exitValue(), stdout, stderr.toString())
+            return TraceProcessor.Output(out.exitCode, out.stdout, out.stderr)
         }
     }
 }

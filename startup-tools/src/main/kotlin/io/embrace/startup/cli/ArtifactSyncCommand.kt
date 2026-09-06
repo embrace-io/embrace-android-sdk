@@ -12,8 +12,8 @@ import io.embrace.startup.core.repo.RepoRoot
 import io.embrace.startup.store.ArtifactManifest
 
 /**
- * `artifact-sync` - the former `_shared/artifact_sync.py`: guard against local/published drift in the
- * living docs. Run `check` BEFORE editing, `record` AFTER publishing. The manifest is
+ * `artifact-sync`: guard against local/published drift in the living docs. Run `check` BEFORE
+ * editing, `record` AFTER publishing. The manifest is
  * `artifact-manifest.json` in the committed records root (`RepoRoot.records()`), beside the document
  * sources it describes.
  */

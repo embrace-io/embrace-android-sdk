@@ -1,28 +1,28 @@
 package io.embrace.startup.perfetto
 
+import io.embrace.startup.core.proc.Processes
 import io.embrace.startup.core.text.Csv
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Duration
-import java.util.concurrent.TimeUnit
 
 /**
  * Runs SQL against one trace with the native `trace_processor_shell`, through the legacy flat
- * interface (`-q <file.sql> <trace>`) that every Python script used and that upstream documents as
+ * interface (`-q <file.sql> <trace>`) that upstream documents as
  * "fully supported and will remain so". Output is CSV: a header row, then one row per result row,
  * with `[NULL]` for SQL NULL.
  *
- * Every call re-parses the trace. That is the Python's cost model too, and it is what the parity
- * goldens were produced with; the warm-session client (`server unix` + `query --remote`) is a
+ * Every call re-parses the trace - the naive, one-parse-per-query model that produced the parity
+ * goldens; the warm-session client (`server unix` + `query --remote`) is a
  * later phase behind this same interface.
  */
-class TraceProcessor(
+open class TraceProcessor(
     val binary: Path,
     private val timeout: Duration = Duration.ofMinutes(DEFAULT_TIMEOUT_MINUTES),
 ) {
 
-    class QueryFailed(message: String) : IOException(message)
+    class QueryFailed(message: String, cause: Throwable? = null) : IOException(message, cause)
 
     data class Output(val exitCode: Int, val stdout: String, val stderr: String)
 
@@ -34,16 +34,12 @@ class TraceProcessor(
         val sqlFile = Files.createTempFile("startup-tools-", ".sql")
         try {
             Files.writeString(sqlFile, sql)
-            val process = ProcessBuilder(binary.toString(), "-q", sqlFile.toString(), trace.toString())
-                .redirectErrorStream(false)
-                .start()
-            val stdout = process.inputStream.bufferedReader().use { it.readText() }
-            val stderr = process.errorStream.bufferedReader().use { it.readText() }
-            if (!process.waitFor(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
-                process.destroyForcibly()
-                throw QueryFailed("trace_processor timed out after $timeout on $trace")
+            val result = try {
+                Processes.run(listOf(binary.toString(), "-q", sqlFile.toString(), trace.toString()), timeout = timeout)
+            } catch (e: Processes.TimedOut) {
+                throw QueryFailed("trace_processor timed out after $timeout on $trace", e)
             }
-            val output = Output(process.exitValue(), stdout, stderr)
+            val output = Output(result.exitCode, result.stdout, result.stderr)
             if (output.exitCode != 0) {
                 throw QueryFailed("trace_processor failed (exit ${output.exitCode}) on $trace:\n${output.stderr}")
             }
@@ -60,7 +56,7 @@ class TraceProcessor(
      * Load [trace] once and run [block] against it (phase 6, warm sessions). Falls back to per-query
      * `-q` parses if the server cannot start, so callers never need a second code path.
      */
-    fun <T> withWarmTrace(trace: Path, block: (QueryTarget) -> T): T {
+    open fun <T> withWarmTrace(trace: Path, block: (QueryTarget) -> T): T {
         val warm = runCatching { WarmTrace.open(binary, trace, timeout) }.getOrNull()
         if (warm == null) return block(ColdTarget(this, trace))
         return warm.use { block(WarmTarget(it)) }
@@ -83,9 +79,9 @@ class TraceProcessor(
     }
 
     /**
-     * `(what, k, val)` rows after the standard header, exactly as `analyze_startup.extract_metrics`
-     * read them: rows before the header sentinel and rows without three fields are ignored; a
-     * missing header is an error because it means the query returned nothing recognisable.
+     * `(what, k, val)` rows after the standard header: rows before the header sentinel and rows
+     * without three fields are ignored; a missing header is an error because it means the query
+     * returned nothing recognisable.
      */
     fun triples(sql: String, trace: Path): List<Triple> = triplesOf(rows(sql, trace), trace)
 

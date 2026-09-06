@@ -13,7 +13,7 @@ import java.nio.file.Path
 import kotlin.math.abs
 
 /**
- * `trend_report.py`: baselines, drift and regressions per series from the longitudinal store.
+ * `trend`: baselines, drift and regressions per series from the longitudinal store.
  *
  * Design choices carried over intact:
  * - a series is one SDK VERSION on one device under one recipe and one set of conditions; nothing is
@@ -62,7 +62,7 @@ object TrendReport {
 
     data class Result(val text: String, val json: Map<String, SeriesOut>)
 
-    /** Store lines as loose records; a malformed line is skipped with the Python's message in the text. */
+    /** Store lines as loose records; a malformed line is skipped, with the message the frozen goldens expect. */
     fun readStore(path: Path): Pair<List<JsonObject>, List<String>> {
         val records = ArrayList<JsonObject>()
         val notes = ArrayList<String>()

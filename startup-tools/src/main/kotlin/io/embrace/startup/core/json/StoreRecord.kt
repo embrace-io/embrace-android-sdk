@@ -7,8 +7,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
 /**
- * One line of the longitudinal store (`store.jsonl` / `sweep-store.jsonl`), exactly as the Python
- * `ingest_run.py` wrote it. This schema is in the PRESERVE class of the fidelity policy: existing
+ * One line of the longitudinal store (`store.jsonl` / `sweep-store.jsonl`), matching the existing
+ * records exactly. This schema is in the PRESERVE class of the fidelity policy: existing
  * records must decode without loss and re-encode to an equivalent tree, because every published
  * version table was derived from them.
  *
@@ -19,7 +19,7 @@ import kotlinx.serialization.json.JsonObject
  * - [recipe] is the comparability key. Run shape is part of it because pass count changes WHAT is
  *   measured, not just how precisely; records with different recipes are never compared.
  * - [baselineEligible] is false for snapshot/local/dirty builds, which are excluded from baselines.
- * - [derived] duplicates what [windowsMs] implies, using the index-based quantile the Python used;
+ * - [derived] duplicates what [windowsMs] implies, using the index-based quantile stored records use;
  *   see [Derived] for why that definition is kept alongside the canonical one.
  */
 @Serializable
@@ -32,7 +32,8 @@ data class StoreRecord(
     /**
      * Nullable only to read history: three of the four 8.3.0 sweep records were written with
      * `sdk_version: null` (and null `build_type`/`compile_state`), salvaged from an earlier store.
-     * The analysis scripts fell back to the version in [runId], so published tables were unaffected.
+     * Downstream consumers fell back to the version in [runId] for these rows, so published tables
+     * were unaffected.
      * The port's ingest refuses to WRITE a null version; this field is nullable so it can still READ one.
      */
     @SerialName("sdk_version") val sdkVersion: String? = null,
@@ -55,7 +56,7 @@ data class StoreRecord(
  * Every field is nullable with a null default for one reason: the three salvaged 8.3.0 sweep records
  * carry an EMPTY profile (`{}`), and a reader that cannot decode them cannot read the store. A
  * complete profile is required at ingest time; [isComplete] is the check. Fields are
- * `@EncodeDefault(NEVER)` so a run with no provenance stores `{}` as the Python did, not seven nulls
+ * `@EncodeDefault(NEVER)` so a run with no provenance stores `{}`, not seven nulls
  * (port log #29).
  */
 @OptIn(ExperimentalSerializationApi::class)
@@ -107,8 +108,8 @@ data class TraceHealth(
 )
 
 /**
- * Aggregates as the Python stored them. Two producers exist: `ingest_run.derive()` writes
- * `n, median, p90, p95, max, iqr`; `matrix_report.summarize()` writes `n, median, p90, max, iqr,
+ * Aggregates as recorded on disk. Two producers exist: the per-run ingest writes
+ * `n, median, p90, p95, max, iqr`; the matrix report summary writes `n, median, p90, max, iqr,
  * pass_medians` (a `pass1 → median` object). Both use the INDEX-BASED quantile
  * `values[min(n-1, floor(p*n))]`, not the Type-7 interpolation the statistics library uses - the port
  * keeps this definition for stored fields under the name "legacy index" so existing records remain

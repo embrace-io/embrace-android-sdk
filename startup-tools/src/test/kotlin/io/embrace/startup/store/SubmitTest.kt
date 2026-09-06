@@ -19,7 +19,7 @@ import java.nio.file.Path
 /**
  * Corpus submission: the allowlist, the admissibility rules on real store records, and device
  * provenance collected through a scripted `adb`. A finding this test pins down: every record in the
- * real longitudinal store is INADMISSIBLE under the Python's own rule, because their signal
+ * real longitudinal store is INADMISSIBLE under the golden's own rule, because their signal
  * inventories were never taken from a clean trace (the composed-window canary defect).
  */
 class SubmitTest {
@@ -110,7 +110,7 @@ class SubmitTest {
     }
 
     @Test
-    fun `the other admissibility rules fire with the Python wording`() {
+    fun `the other admissibility rules fire with the golden wording`() {
         val local = JsonObject(
             mapOf(
                 "sdk_version" to JsonPrimitive("9.3.0-SNAPSHOT"),

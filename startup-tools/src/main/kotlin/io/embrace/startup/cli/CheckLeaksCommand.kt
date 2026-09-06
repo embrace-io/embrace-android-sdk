@@ -14,9 +14,13 @@ import io.embrace.startup.core.repo.RepoRoot
 import java.nio.file.Path
 
 /**
- * `check-leaks` - the former `check_leaks.py` in the production repo: sweep the skills and the tooling
- * for one author's personal setup, so what ships describes the work rather than the machine it ran on.
- * Exits 1 when anything is found, so it can gate a commit.
+ * `check-leaks`: sweep the skills and the tooling for one author's personal setup, so what ships
+ * describes the work rather than the machine it ran on. Exits 1 when anything is found, so it can
+ * gate a commit.
+ *
+ * Ported from `_shared/check_leaks.py` in the production `sdk-startup` repo, which is a live tool
+ * there, not one of the scripts this module replaced - see [io.embrace.startup.check.LeakCheck] for
+ * what this port kept and where it deliberately differs.
  */
 class CheckLeaksCommand : CliktCommand(name = "check-leaks") {
 

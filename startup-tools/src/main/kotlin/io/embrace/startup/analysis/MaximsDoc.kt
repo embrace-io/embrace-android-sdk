@@ -8,8 +8,8 @@ import kotlinx.serialization.json.jsonObject
 
 /**
  * MAXIMS.md: the generated half of the maxims documentation, rendered from the maxim definitions in
- * [Maxims] and the ledger. The curated half (FINDINGS.md) is written by hand. Text is the Python
- * `render()`'s line for line.
+ * [Maxims] and the ledger. The curated half (FINDINGS.md) is written by hand. Text matches the frozen
+ * goldens line for line.
  */
 object MaximsDoc {
 

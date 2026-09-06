@@ -16,7 +16,7 @@ import java.nio.file.Files
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-/** `submit` - the former `submit_run.py`: a locally ingested run into the shared corpus, redacted and validated. */
+/** `submit`: a locally ingested run into the shared corpus, redacted and validated. */
 class SubmitCommand : CliktCommand(name = "submit") {
 
     private val store by option("--store", help = "local store.jsonl").path(mustExist = true).required()

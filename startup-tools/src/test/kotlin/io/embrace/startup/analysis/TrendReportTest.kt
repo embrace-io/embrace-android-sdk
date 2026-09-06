@@ -18,7 +18,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 /**
- * `trend` against the three frozen runs of `trend_report.py` - the real store (every series has one
+ * `trend` against the three frozen golden runs - the real store (every series has one
  * run, so the value is in the version-comparison block), the sweep store (three malformed records
  * grouped under `?`), and the synthetic store that exercises baseline, candidate, REGRESSION, the
  * TAIL-ONLY tag, ad-hoc runs, signal changes, pooled p99 and every next-action branch. Stdout is
@@ -46,7 +46,7 @@ class TrendReportTest {
     }
 
     @Test
-    fun `trace-health CLI summary and per-trace lines match the Python on the fixture traces`() {
+    fun `trace-health CLI summary and per-trace lines match the golden on the fixture traces`() {
         val traces = TraceGoldens.all()
         assumeTrue(traces.isNotEmpty())
         traces.groupBy { it.device }.forEach { (device, goldensForDevice) ->

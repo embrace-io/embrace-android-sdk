@@ -4,9 +4,9 @@ import kotlin.math.ln
 import kotlin.math.sqrt
 
 /**
- * Standard-normal helpers. `ndtri` is the Acklam rational approximation the Python `_ndtri` used -
- * relative error ~1e-9, adequate for sizing work and reproduced here in the same evaluation order
- * so the two agree to the last digit (bar a libm ulp in `ln`/`sqrt`).
+ * Standard-normal helpers. `ndtri` is the Acklam rational approximation - relative error ~1e-9,
+ * adequate for sizing work and reproduced here in the same evaluation order as the goldens, so
+ * they agree to the last digit (bar a libm ulp in `ln`/`sqrt`).
  */
 object Normal {
 

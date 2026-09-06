@@ -18,7 +18,7 @@ import org.junit.Test
 
 /**
  * Cluster inference against `stats_synthetic.json`: two recorded arms of 5 clusters × 8 values,
- * bootstrap and permutation at the Python defaults (seed 12345, 10 000 resamples).
+ * bootstrap and permutation at the golden's defaults (seed 12345, 10 000 resamples).
  *
  * Bootstrap bounds and permutation p-values are asserted EXACTLY. They are quantiles over sorted
  * resamples of medians, so with an identical RNG there is nothing to drift; a one-ulp difference

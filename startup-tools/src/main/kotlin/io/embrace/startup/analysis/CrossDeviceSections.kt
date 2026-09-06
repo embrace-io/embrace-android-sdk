@@ -5,7 +5,7 @@ import io.embrace.startup.core.stats.Quantile
 import io.embrace.startup.core.text.PyFormat
 
 /**
- * `cross_device_sections.py`: side-by-side per-section median / max / % of window across devices,
+ * `cross-device-sections`: side-by-side per-section median / max / % of window across devices,
  * pooled over every available pass. The workload-identity check: compare section SHARES, not
  * absolute ms - matching shares mean the SDK does identical work everywhere and the differences are
  * device effects; diverging shares mean the code path itself differs.

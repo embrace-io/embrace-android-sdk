@@ -15,7 +15,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import java.nio.file.Files
 
-/** `trend` - the former `trend_report.py`: baselines, drift and regressions per series from the store. */
+/** `trend`: baselines, drift and regressions per series from the store. */
 class TrendCommand : CliktCommand(name = "trend") {
 
     private val store by option("--store", help = "the longitudinal store (JSONL)").path().required()

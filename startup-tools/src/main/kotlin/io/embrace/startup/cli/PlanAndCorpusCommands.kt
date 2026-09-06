@@ -16,7 +16,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import java.nio.file.Files
 
-/** `reproducibility` - the former `reproducibility_report.py`: per-cell contributor agreement in the corpus. */
+/** `reproducibility`: per-cell contributor agreement in the corpus. */
 class ReproducibilityCommand : CliktCommand(name = "reproducibility") {
 
     private val corpus by option("--corpus", help = "the shared corpus (JSONL of contributions)").path().required()
@@ -61,7 +61,7 @@ class ReproducibilityCommand : CliktCommand(name = "reproducibility") {
     }
 }
 
-/** `matrix-plan` - the former `matrix_plan.py`: expand a plan into ordered cells with a wall-clock estimate. */
+/** `matrix-plan`: expand a plan into ordered cells with a wall-clock estimate. */
 class MatrixPlanCommand : CliktCommand(name = "matrix-plan") {
 
     private val plan by argument("plan", help = "the plan JSON (see the skill's plan-example.json)").path(mustExist = true)

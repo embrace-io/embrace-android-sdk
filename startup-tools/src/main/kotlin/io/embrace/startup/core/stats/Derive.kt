@@ -3,7 +3,7 @@ package io.embrace.startup.core.stats
 import io.embrace.startup.core.json.Derived
 
 /**
- * The store's `derived` aggregates, as `ingest_run.derive()` computed them - a PRESERVE-class port.
+ * The store's `derived` aggregates, computed the same way the existing records were - a PRESERVE-class port.
  *
  * Uses [Quantile.legacyIndex] deliberately: every `derived.p90/p95` on disk and every published
  * version table used this definition, so it must stay reproducible. New analyses use
@@ -12,11 +12,11 @@ import io.embrace.startup.core.json.Derived
  * One subtlety the goldens exposed: ingest computed `derived` on the UNROUNDED windows and then
  * rounded the windows to 3 dp before writing them, so `derive(record.windowsMs)` can differ from
  * `record.derived` in the fourth decimal. Parity is therefore asserted against the golden - the
- * Python's output on the SAME (rounded) input - not against the stored field.
+ * recomputed output on the SAME (rounded) input - not against the stored field.
  */
 object Derive {
 
-    /** Python `derive(windows)`; returns null for an empty input where the Python returns `{}`. */
+    /** `derive(windows)`; returns null for an empty input where the golden record has `{}`. */
     fun of(windows: List<Double>): Derived? {
         if (windows.isEmpty()) return null
         val values = windows.sorted()

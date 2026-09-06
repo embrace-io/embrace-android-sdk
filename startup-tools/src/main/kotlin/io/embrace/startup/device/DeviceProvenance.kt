@@ -9,7 +9,7 @@ import java.security.MessageDigest
 import java.security.SecureRandom
 
 /**
- * The corpus submission's device provenance from `submit_run.py`: ONLY the dimensions that explain
+ * The corpus submission's device provenance: ONLY the dimensions that explain
  * reproducibility failures, coarsely bucketed, and a salted non-reversible unit token in place of the
  * serial. The salt lives beside the corpus on this machine and never leaves it.
  */

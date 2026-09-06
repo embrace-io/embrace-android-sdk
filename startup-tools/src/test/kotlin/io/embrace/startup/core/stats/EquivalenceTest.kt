@@ -39,7 +39,7 @@ class EquivalenceTest {
     }
 
     @Test
-    fun `too few clusters and a zero baseline are reported unavailable with the Python reasons`() {
+    fun `too few clusters and a zero baseline are reported unavailable with the golden reasons`() {
         val few = Equivalence.tost(a.take(2), b.take(2), 5.0)
         assertFalse(few.available)
         assertNull(few.equivalent)

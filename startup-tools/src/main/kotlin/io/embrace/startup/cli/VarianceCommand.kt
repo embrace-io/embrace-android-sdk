@@ -9,15 +9,16 @@ import com.github.ajalt.clikt.parameters.types.path
 import io.embrace.startup.analysis.StartupAnalysis
 import io.embrace.startup.analysis.VarianceAnalysis
 import io.embrace.startup.core.json.StartupJson
+import io.embrace.startup.core.proc.Parallel
 import io.embrace.startup.perfetto.Prebuilt
 import io.embrace.startup.perfetto.TraceProcessor
 import kotlinx.serialization.builtins.ListSerializer
 import java.nio.file.Files
 
 /**
- * `variance` - the former `variance_analysis.py`. Per-iteration variance over a directory of
- * traces; `--json` writes the dataset that `hypothesis-tests`, `factors-report` and
- * `cross-device-sections` consume, `--out` tees the report to a file.
+ * `variance`: per-iteration variance over a directory of traces; `--json` writes the dataset that
+ * `hypothesis-tests`, `factors-report` and `cross-device-sections` consume, `--out` tees the
+ * report to a file.
  */
 class VarianceCommand : CliktCommand(name = "variance") {
 
@@ -41,7 +42,7 @@ class VarianceCommand : CliktCommand(name = "variance") {
     override fun run() {
         val little = littleCpus.split(",").map { it.trim().toInt() }.toSet()
         val tp = TraceProcessor(Prebuilt.resolve(explicit = traceProcessor))
-        val data = StartupAnalysis.listTraces(tracesDir).map { VarianceAnalysis.extract(tp, it) }
+        val data = Parallel.map(StartupAnalysis.listTraces(tracesDir)) { VarianceAnalysis.extract(tp, it) }
         jsonPath?.let {
             Files.writeString(it, StartupJson.encodeToString(ListSerializer(VarianceAnalysis.Record.serializer()), data))
         }

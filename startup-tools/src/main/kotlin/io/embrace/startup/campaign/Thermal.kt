@@ -6,7 +6,7 @@ import io.embrace.startup.device.Topology
 import java.io.IOException
 
 /**
- * Device temperature readings for campaigns, from `fleet_campaign.py`.
+ * Device temperature readings for campaigns.
  *
  * Judge thermal state from SILICON (`dumpsys thermalservice`), never from battery: battery
  * temperature understates silicon by 30 °C or more under load, and some devices report a constant

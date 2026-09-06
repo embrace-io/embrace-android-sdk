@@ -27,7 +27,7 @@ internal class IngestProfileTest {
         ).jsonObject
         assertEquals("31", Ingest.profileOf(flat).getValue("api_level").jsonPrimitive.content)
 
-        // What the Python cell runner wrote: the reference set's whole device entry, profile nested.
+        // What the cell runner wrote: the reference set's whole device entry, profile nested.
         val nested = StartupJson.parseToJsonElement(
             """{"device_profile":{"api_level":31,"tier":"entry-mid","vendor":"Google","cool_gate_c":32.0,
                "profile":{"api_level":31,"release":"12","vendor":"Google","soc_family":"SDM845",

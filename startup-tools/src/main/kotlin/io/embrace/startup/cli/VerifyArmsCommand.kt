@@ -9,7 +9,7 @@ import com.github.ajalt.clikt.parameters.types.path
 import io.embrace.startup.campaign.ArmVerifier
 import java.io.IOException
 
-/** `verify-arms` - the former `verify_ab_arms.py`: dex-level pre-flight that two A/B APKs differ at all. */
+/** `verify-arms`: dex-level pre-flight that two A/B APKs differ at all. */
 class VerifyArmsCommand : CliktCommand(name = "verify-arms") {
 
     private val armA by argument("arm-a.apk").path(mustExist = true)

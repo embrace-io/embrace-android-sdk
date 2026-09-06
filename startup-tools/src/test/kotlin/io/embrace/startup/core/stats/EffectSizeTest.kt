@@ -30,7 +30,7 @@ class EffectSizeTest {
     }
 
     @Test
-    fun `caveat text reproduces the Python wording at every ICC band`() {
+    fun `caveat text reproduces the golden wording at every ICC band`() {
         val g = golden.getValue("cliffs_delta_caveat").jsonObject
         assertEquals(g.getValue("None").jsonPrimitive.content, EffectSize.cliffsDeltaCaveat(null))
         listOf(0.05, 0.1, 0.2, 0.3, 0.65).forEach { icc ->

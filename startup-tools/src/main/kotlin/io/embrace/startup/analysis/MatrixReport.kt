@@ -17,15 +17,15 @@ import java.nio.file.Path
 import kotlin.streams.toList
 
 /**
- * `matrix_report.py`: cross-cell comparison for a version × factor run. Per cell: n, window
+ * `matrix-report`: cross-cell comparison for a version × factor run. Per cell: n, window
  * median/p90/max, per-pass medians (so pass-state stays visible instead of pooled away); then the
  * version table (reference cells only) and the factor table (effect per anchor version, against the
  * same version's reference cell).
  *
- * No Python golden exists for this report (it needs cell-state run directories, none survived), so
+ * No frozen golden exists for this report (it needs cell-state run directories, none survived), so
  * the port is checked against hand-derived expectations on a synthetic run directory. Departure
- * (port log): the default window slice is `emb-sdk-start`, with `composed` for pre-9.2.0 cells; the
- * Python defaulted to `app-embrace-start`, a slice the harness never emitted.
+ * (port log): the default window slice is `emb-sdk-start`, with `composed` for pre-9.2.0 cells - never
+ * `app-embrace-start`, a slice the harness never emits.
  */
 object MatrixReport {
 
@@ -37,7 +37,7 @@ object MatrixReport {
         val p90: Double,
         val max: Double,
         val iqr: Double,
-        /** Pass key → median, keys sorted as strings (`pass1`, `pass10`, `pass2`, …) as the Python did. */
+        /** Pass key → median, keys sorted as strings (`pass1`, `pass10`, `pass2`, …). */
         val passMedians: Map<String, Double>,
     )
 
@@ -128,7 +128,7 @@ object MatrixReport {
         return out.toString()
     }
 
-    /** `--json`: the cells dict as the Python dumped it (summary, build type, short sha). */
+    /** `--json`: the cells dict, matching the goldens' shape (summary, build type, short sha). */
     fun toJson(cells: Map<String, CellResult>): JsonObject = JsonObject(
         cells.mapValues { (_, c) ->
             val s = c.summary
@@ -158,7 +158,7 @@ object MatrixReport {
         val ref = cells.filterKeys { it.endsWith("|reference") }
         if (ref.size <= 1) return
         line("\n=== VERSION TABLE (reference cell) ===")
-        // The Python's `max(ref, key=version == "local")`: a local cell if any, else the first key.
+        // Reference cell selection: a local cell if any, else the first key (`max(ref, key=version == "local")`).
         val newest = ref.keys.firstOrNull { PyJson.strOrNull(ref.getValue(it).cell, "version") == "local" } ?: ref.keys.first()
         val base = ref.getValue(newest).summary.median
         line("${"version".padEnd(W14)}${"med".padStart(W9)}${"p90".padStart(W9)}${"max".padStart(W9)}${"delta vs newest".padStart(W18)}")

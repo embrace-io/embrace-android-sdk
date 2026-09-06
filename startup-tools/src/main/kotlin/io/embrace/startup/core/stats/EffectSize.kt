@@ -5,9 +5,8 @@ import java.util.Locale
 /**
  * Effect sizes - how big a difference is, independent of how sure we are about it.
  *
- * Ported from `stats.py` (`cliffs_delta`, `cliffs_delta_caveat`). The magnitude thresholds are the
- * Romano et al. conventions the Python used; the caveat text is reproduced verbatim because the
- * published analyses quote it.
+ * Cliff's delta and its caveat. The magnitude thresholds are the Romano et al. conventions; the
+ * caveat text is fixed verbatim because the published analyses quote it.
  */
 object EffectSize {
 

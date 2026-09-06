@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * `device_probe.py`: one connected device's DEVICE PROFILE for a multi-device campaign - what the
+ * One connected device's DEVICE PROFILE for a multi-device campaign - what the
  * device is, so numbers stay comparable across sessions, SDK versions and engineers. A marketing
  * name is not a profile.
  *
@@ -15,7 +15,7 @@ import kotlinx.serialization.Serializable
  *
  * Note the two RAM vocabularies that coexist in the toolchain, both preserved: this profile's
  * `ram_class` (go/low/mid/high, gating outlier classes) and the reference set's (`<=2GB`, `3-4GB`,
- * `6GB`, `>=8GB`, from `reference_set.py`).
+ * `6GB`, `>=8GB`).
  */
 @Serializable
 data class Topology(
@@ -43,7 +43,7 @@ data class Topology(
         @SerialName("cpu_part") val cpuPart: String?,
     )
 
-    /** The `--little-cpus` value to pass downstream: the little cluster, or the Python's `0,1,2,3` fallback. */
+    /** The `--little-cpus` value to pass downstream: the little cluster, or the `0,1,2,3` fallback. */
     val littleCpusArg: String get() = if (littleCpus.isEmpty()) "0,1,2,3" else littleCpus.sorted().joinToString(",")
 
     companion object {
@@ -161,7 +161,7 @@ data class Topology(
 /** Runs the probe's independent shell reads and assembles a [Topology]. */
 class TopologyProbe(private val adb: Adb) {
 
-    /** One `adb shell <command>`; null on any failure, as the Python's `run_shell`. */
+    /** One `adb shell <command>`; null on any failure. */
     private fun shell(serial: String, command: String): String? = runCatching {
         adb.run(serial, "shell", command).takeIf { it.exitCode == 0 }?.stdout
     }.getOrNull()

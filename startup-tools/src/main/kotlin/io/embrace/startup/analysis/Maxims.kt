@@ -15,14 +15,14 @@ import kotlin.math.abs
 import io.embrace.startup.analysis.Campaign as CampaignFiles
 
 /**
- * `_shared/maxims.py`: the bench toolchain's beliefs about SDK init, checked on every campaign.
+ * `maxims`: the bench toolchain's beliefs about SDK init, checked on every campaign.
  *
  * Each maxim is a statement with a mechanical check that a campaign's data confirms, contradicts, or is
  * too thin to judge; the verdicts accumulate in the ledger ([io.embrace.startup.store.MaximsLedger]) per
  * cell - one device under one recipe and arm. Strong associations no maxim covers come out as
  * candidates. Inputs are the per-pass datasets a campaign already produces (`passN.json`,
  * `passN-factors.json`, `passN-cohorts.json`) plus `run-metadata.json` / `cell-state.json` for
- * provenance; no trace is opened here. Every threshold, string and ordering is the Python's.
+ * provenance; no trace is opened here. Every threshold, string and ordering is pinned by the goldens.
  */
 object Maxims {
 
@@ -71,7 +71,7 @@ object Maxims {
     const val CPU_ATTR: String = "init-cpu-pct"
     const val DELAY_ATTR: String = "init-run-delay-pct"
 
-    /** One launch of the campaign with everything the checks read, in run order. Identity-compared, as the Python's. */
+    /** One launch of the campaign with everything the checks read, in run order. Compared by identity, as the goldens require. */
     class Iteration(
         val passNo: Int,
         val index: Int,
@@ -281,7 +281,7 @@ object Maxims {
         arm: String? = null,
     ): Cell {
         val meta = campaign.meta
-        // An empty reference set is falsy in the Python: no serial lookup, no RAM-class fallback.
+        // An empty reference set is treated as absent: no serial lookup, no RAM-class fallback.
         val devices = if (ref.isNullOrEmpty()) null else PyJson.obj(ref, "devices")
         val key = deviceKey.takeUnless { it.isNullOrEmpty() } ?: keyForSerial(devices, PyJson.strOrNull(meta, "serial"))
         val sdk = sdkVersion.takeUnless { it.isNullOrEmpty() }
@@ -325,7 +325,7 @@ object Maxims {
         if (k < MIN_GROUP) {
             return null
         }
-        // Python's tuple sort: floats compared with `<`/`==` (so -0.0 ties 0.0), then pass_no, then index.
+        // Sort order: by value first (floats compared with `<`/`==`, so -0.0 ties 0.0), then pass_no, then index.
         val ordered = valued.sortedWith { a, b ->
             val ka = requireNotNull(key(a))
             val kb = requireNotNull(key(b))
@@ -525,7 +525,7 @@ object Maxims {
         return method.takeIf { m -> DATA_RESET_METHODS.any { m.contains(it) } }
     }
 
-    /** Python `float(launch.get(key))`, or null when absent, null, or not a number. */
+    /** Parses a launch attribute as a float, tolerantly: null when absent, `null`, or not a number. */
     private fun attrFloat(launch: JsonObject, key: String): Double? {
         val raw = launch[key] as? JsonPrimitive ?: return null
         if (raw is JsonNull) {
@@ -653,7 +653,7 @@ object Maxims {
     private fun competitorShare(name: String): (Iteration) -> Double? =
         { iter -> (requireNotNull(iter.factors).othercpu[name] ?: 0.0) / iter.window }
 
-    /** `ref.get("devices")` entry whose serial matches, as the Python's `next(...)`. */
+    /** `ref.get("devices")` entry whose serial matches; the first match wins. */
     private fun keyForSerial(devices: JsonObject?, serial: String?): String? {
         if (devices == null || serial.isNullOrEmpty()) {
             return null

@@ -3,8 +3,8 @@ package io.embrace.startup.perfetto
 import java.nio.file.Path
 
 /**
- * The two single-column reads `ingest_run.py` made per trace, with their exact (deliberately naive)
- * parses: the window value is the LAST line of stdout that parses as a number, and the signal
+ * The two single-column reads the `ingest` command makes per trace, with their exact (deliberately
+ * naive) parses: the window value is the LAST line of stdout that parses as a number, and the signal
  * inventory is every line that, once stripped of quotes, starts with `emb-`.
  */
 object TraceReads {

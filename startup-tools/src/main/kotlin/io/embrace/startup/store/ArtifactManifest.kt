@@ -12,7 +12,7 @@ import java.nio.file.Path
 import java.security.MessageDigest
 
 /**
- * The living-docs drift manifest from `_shared/artifact_sync.py`: the digest of every doc at the
+ * The living-docs drift manifest: the digest of every doc at the
  * moment it was published FROM HERE, so "have I changed this since?" has an answer that does not
  * depend on memory. It lives in the committed records root beside the document sources it
  * describes. States: UNKNOWN (never recorded - fetch the published page and reconcile before
@@ -33,7 +33,7 @@ class ArtifactManifest(private val repo: Path) {
             .getOrDefault(emptyMap())
     }
 
-    /** Exit code and the Python's wording: 2 missing, 1 unknown, 0 clean or dirty. */
+    /** Exit code and wording pinned by the goldens: 2 missing, 1 unknown, 0 clean or dirty. */
     fun check(path: Path): Pair<Int, String> {
         val entry = load()[path.fileName.toString()]
         if (!Files.exists(path)) return 2 to "MISSING: $path does not exist"
@@ -106,7 +106,7 @@ class ArtifactManifest(private val repo: Path) {
     }
 
     companion object {
-        /** sha256 of the file's bytes, first 16 hex chars - the Python's digest. */
+        /** sha256 of the file's bytes, first 16 hex chars - the digest format the manifest has always used. */
         fun digest(path: Path): String =
             MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(path)).joinToString("") {
                 "%02x".format(it)

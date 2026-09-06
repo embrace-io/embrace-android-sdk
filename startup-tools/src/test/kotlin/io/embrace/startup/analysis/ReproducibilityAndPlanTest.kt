@@ -59,7 +59,7 @@ class ReproducibilityAndPlanTest {
     }
 
     @Test
-    fun `matrix plan expands, orders and estimates the example plan exactly as the Python did`() {
+    fun `matrix plan expands, orders and estimates the example plan exactly as the golden did`() {
         val plan = StartupJson.parseToJsonElement(Files.readString(goldens.resolve("inputs/plan-example.json"))).jsonObject
         val result = MatrixPlan.report(plan)
         // The golden ends "<checklist>\n\nwrote <path>": drop the wrote line, then the blank the checklist leaves.
@@ -82,7 +82,7 @@ class ReproducibilityAndPlanTest {
     }
 
     @Test
-    fun `a plan missing a required key or a device entry is refused with the Python message`() {
+    fun `a plan missing a required key or a device entry is refused with the golden message`() {
         val plan = StartupJson.parseToJsonElement(Files.readString(goldens.resolve("inputs/plan-example.json"))).jsonObject
         val missingKey = kotlinx.serialization.json.JsonObject(plan.filterKeys { it != "anchors" })
         val e1 = runCatching { MatrixPlan.report(missingKey) }.exceptionOrNull()

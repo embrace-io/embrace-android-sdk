@@ -8,7 +8,7 @@ import java.nio.file.Files
 class ArtifactManifestTest {
 
     @Test
-    fun `unknown, clean and dirty states with the Python's digest and wording`() {
+    fun `unknown, clean and dirty states with the golden's digest and wording`() {
         val repo = Files.createTempDirectory("repo")
         val doc = Files.createDirectories(repo.resolve("claude-output")).resolve("brief.html")
         Files.writeString(doc, "<title>Brief</title>")

@@ -18,10 +18,10 @@ import java.nio.file.Path
  * The maxims ledger (`_shared/records/maxims/ledger.json`): every campaign's verdict against every maxim, tallied
  * per device, with the contradictions kept beside the cell that produced them, plus the candidates.
  *
- * The ledger is kept as the JSON tree the Python writes rather than a typed schema, so a file written by
- * either toolchain loads in the other unchanged: keys the Python added later survive a round trip, number
- * literals are re-emitted verbatim, and [save] writes sorted keys at a two-space indent exactly as
- * `json.dumps(led, indent=2, sort_keys=True)` does. Shape:
+ * The ledger is kept as an untyped JSON tree rather than a typed schema, so an existing ledger file
+ * loads unchanged regardless of which version wrote it: keys this schema doesn't recognize survive a
+ * round trip, number literals are re-emitted verbatim, and [save] writes sorted keys at a two-space
+ * indent exactly as `json.dumps(led, indent=2, sort_keys=True)` does. Shape:
  *
  * ```
  * {source, runs, updated_at,
@@ -168,7 +168,7 @@ object MaximsLedger {
         return out
     }
 
-    /** An integer field read as Python would (`d[key]`), a missing or non-numeric one as 0. */
+    /** An integer field read directly (`d[key]`), the way records have always been read: a missing or non-numeric one as 0. */
     fun int(obj: JsonObject?, key: String): Int {
         val content = (obj?.get(key) as? JsonPrimitive)?.takeUnless { it is JsonNull }?.content
         return content?.toIntOrNull() ?: content?.toDoubleOrNull()?.toInt() ?: 0

@@ -3,7 +3,7 @@ package io.embrace.startup.device
 import io.embrace.startup.core.json.DeviceProfile
 
 /**
- * The reference-set PROFILE probe from `reference_set.py`: what a device IS (API level, release,
+ * The reference-set PROFILE probe: what a device IS (API level, release,
  * vendor, SoC, cluster topology, RAM class), not which unit it is. Profiles are compared field by
  * field at ingest; an OS upgrade or a replaced handset changes the profile and must become a new
  * device key, because silently comparing across it is the classic way to invent or hide a regression.
@@ -30,7 +30,13 @@ class DeviceProbe(private val adb: Adb) {
             serial,
             "for p in /sys/devices/system/cpu/cpufreq/policy*; do cat \$p/cpuinfo_max_freq; done",
         )
-        return FREQ.findAll(out).map { it.value.toLong() }.toSortedSet().toList()
+        // A whole line, not a number found anywhere: `cat cpuinfo_max_freq` prints the frequency alone,
+        // while a failed glob or a busybox complaint lands in the same stream, and any five-digit number
+        // inside it (an errno, a pid) would otherwise be read as a CPU cluster.
+        return out.lines()
+            .mapNotNull { line -> line.trim().takeIf { FREQ.matches(it) }?.toLongOrNull() }
+            .toSortedSet()
+            .toList()
     }
 
     fun ramClass(serial: String): String {

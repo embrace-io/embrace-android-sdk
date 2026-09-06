@@ -9,14 +9,14 @@ import java.nio.file.Path
 import kotlin.streams.toList
 
 /**
- * `analyze_startup.py`: aggregate SDK startup metrics purely from macrobenchmark traces - the window
+ * `analyze`: aggregate SDK startup metrics purely from macrobenchmark traces - the window
  * (native `emb-sdk-start` when the SDK emits it, 9.2.0+, else composed from modules-init start to
  * post-services-setup end), TTID, every canonical section's first-occurrence duration and share of
  * the window, and a per-iteration scheduler-contention readout.
  *
- * The report text is reproduced line for line so it can be diffed against the Python's frozen
- * output; the only lines that legitimately differ are the two header lines carrying the start time
- * and the absolute traces directory.
+ * The report text is reproduced line for line so it can be diffed against the frozen goldens; the
+ * only lines that legitimately differ are the two header lines carrying the start time and the
+ * absolute traces directory.
  */
 object StartupAnalysis {
 
@@ -78,7 +78,7 @@ object StartupAnalysis {
     fun extract(tp: TraceProcessor, trace: Path): TraceMetrics =
         metricsOf(tp.triples(Queries.STARTUP_METRICS, trace))
 
-    /** `*.perfetto-trace` files directly under `dir`, ordered by their `iterNNN` index as the Python did. */
+    /** `*.perfetto-trace` files directly under `dir`, ordered by their `iterNNN` index. */
     fun listTraces(dir: Path): List<Path> = Files.list(dir).use { stream ->
         stream.filter { it.fileName.toString().endsWith(".perfetto-trace") }.toList()
     }.sortedBy { iterIndex(it.fileName.toString()) }

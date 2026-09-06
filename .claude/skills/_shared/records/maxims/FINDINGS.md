@@ -15,10 +15,10 @@ Devices are referred to by their reference-set keys. The fleet as of September 2
 (`flagship-a`, API 35), a 2018 Snapdragon flagship (`mid-b`, API 31), a Samsung mid-tier Exynos (`mid-a`,
 API 35) and a 1 GB Go device (`entry-a`, API 29), two vendors. Every number below is from the benchmark
 build of the example app with the baseline profile applied unless it says otherwise; the run that produced
-it is under `../campaigns/`, `../experiments/` or `../analyses/`, and the dated write-ups are under
-`../documents/`. The living pages (`startup-testing-log.html`, `startup-external-factors-summary.html`,
-`startup-version-evolution.html`, `startup-improvements-tracker.html`) are the session-by-session record
-this page condenses.
+it is under `../campaigns/`, `../experiments/` or `../analyses/`, and each run's dated write-up is inside
+that same archive rather than loose - this page is the curated form, the archive holds the working. The
+living pages (`startup-testing-log.html`, `startup-external-factors-summary.html`,
+`startup-version-evolution.html`) are the session-by-session record this page condenses.
 
 ## What init costs and where it goes
 

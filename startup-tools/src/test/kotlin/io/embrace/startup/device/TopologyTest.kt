@@ -11,7 +11,7 @@ import org.junit.Test
 class TopologyTest {
 
     @Test
-    fun `cpuinfo, cpufreq halves, clusters and little cpus derive as the Python did`() {
+    fun `cpuinfo, cpufreq halves, clusters and little cpus derive as the golden did`() {
         val cpuinfo = "processor\t: 0\nCPU part\t: 0xd05\nprocessor\t: 1\nCPU part\t: 0xd05\n" +
             "processor\t: 4\nCPU part\t: 0xd0a\nBogus line\nprocessor\t: x\nCPU part\t: ignored\n"
         assertEquals(mapOf(0 to "0xd05", 1 to "0xd05", 4 to "0xd0a"), Topology.parseCpuinfo(cpuinfo))
@@ -36,7 +36,7 @@ class TopologyTest {
     }
 
     @Test
-    fun `memory, storage, tier and thermal sensors classify as the Python did`() {
+    fun `memory, storage, tier and thermal sensors classify as the golden did`() {
         assertEquals(3785, Topology.parseMemTotalMb("MemTotal:        3876352 kB\nMemFree: 1 kB\n"))
         assertNull(Topology.parseMemTotalMb("garbage"))
         assertEquals("go", Topology.classifyRam(1400))
@@ -68,7 +68,7 @@ class TopologyTest {
     }
 
     @Test
-    fun `the assembled profile serialises with the Python's keys and the summary names the little cpus`() {
+    fun `the assembled profile serialises with the golden's keys and the summary names the little cpus`() {
         val adb = object : Adb() {
             override fun run(serial: String?, vararg args: String): Output {
                 val cmd = args.last()

@@ -17,7 +17,7 @@ import java.nio.file.Files
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-/** `reference-set` - the former `reference_set.py`: probe, check for drift, or show the reference device set. */
+/** `reference-set`: probe, check for drift, or show the reference device set. */
 class ReferenceSetCommand : CliktCommand(name = "reference-set") {
 
     private val probe by option("--probe", help = "probe every attached device's profile").flag()
@@ -69,7 +69,7 @@ class ReferenceSetCommand : CliktCommand(name = "reference-set") {
     private companion object {
         val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
 
-        /** One-space indent, as the Python's `json.dumps(indent=1)` printed and wrote the reference set. */
+        /** One-space indent (`json.dumps(indent=1)` style), which the goldens pin for the reference set. */
         @OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
         val PRETTY = Json(StartupJson) {
             prettyPrint = true

@@ -279,15 +279,10 @@ object LeakCheck {
         "tools",
     )
 
-    /**
-     * The committed evidence: citing a real run is its job, so only the personal patterns apply. The port
-     * log belongs here rather than with the source - it is a record of what was decided and when, and its
-     * entries cite the runs that decided them.
-     */
+    /** The committed evidence: citing a real run is its job, so only the personal patterns apply. */
     private val DATA_ROOTS = listOf(
         ".claude/skills/_shared/records",
         "startup-tools/src/test/resources/fixtures",
-        "startup-tools/PORT-LOG.md",
     )
 
     private val SOURCE_EXTENSIONS = setOf(".md", ".kt", ".kts", ".sh", ".json", ".yaml", ".yml")

@@ -28,6 +28,12 @@ daemon around the tool's own `gradlew` children for the length of a campaign).
 
 ## Commands
 
+The Python scripts named below were deleted at the cutover; this table is the only place their names
+are still recorded, so that analysis documents written before the port stay navigable. Nothing in the
+tool depends on them — if you are reading a document that says `variance_analysis.py`, look it up here.
+(`check_leaks.py` is the exception: it is a live tool in the production `sdk-startup` repo, not one of
+the scripts this module replaced.)
+
 | command | former script | what it does |
 |---|---|---|
 | `analyze` | `startup-analysis/scripts/analyze_startup.py` | window, TTID, canonical sections, scheduler contention per trace dir |
@@ -85,10 +91,12 @@ file under `cli/` and register it in `Main.kt`.
 ./gradlew -PtraceParity=1 :startup-tools:test               # + re-run the native engine on all 60 fixture traces
 ```
 
-The tests are parity gates against frozen Python output (`fixtures/goldens/MANIFEST.md`,
-`fixtures/trace-goldens/MANIFEST.md`): bootstrap bounds and permutation p-values bit-exact (the
-CPython Mersenne Twister is ported), report text line for line, JSON datasets as trees. Every
-deliberate departure from the Python is listed in `PORT-LOG.md`.
+The tests are gates against the frozen goldens (`fixtures/goldens/MANIFEST.md`,
+`fixtures/trace-goldens/MANIFEST.md`), which are the specification since the Python they were
+captured from was deleted: bootstrap bounds and permutation p-values bit-exact (the CPython
+Mersenne Twister is ported), report text line for line, JSON datasets as trees. Where the code
+deliberately keeps a behaviour that looks wrong - a stale threshold label, a superseded quantile
+definition, half-to-even rounding - the reason is in that declaration's own KDoc.
 
 The fixture traces (60 × 9.2.0 cold launches on three devices, 345 MB) are not in the repo; the live
 gate skips without them. Regenerating goldens: see the two manifests.

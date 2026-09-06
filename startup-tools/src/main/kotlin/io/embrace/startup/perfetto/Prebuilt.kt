@@ -15,14 +15,14 @@ import java.time.Duration
 /**
  * Resolve, fetch and PIN the native Perfetto `trace_processor_shell`.
  *
- * Why a native prebuilt and not the upstream launcher: the launcher the Python suite pinned as
+ * Why a native prebuilt and not the upstream launcher: the launcher previously pinned as
  * "v46.0" is a Python script that itself downloads whichever engine its manifest names - v57.2 at
  * the time of the port. Two consequences the port fixes in one move: the toolchain no longer needs
  * `python3` to run its "binary", and the version recorded in every recipe (`trace_processor_version`)
  * now names the engine that actually produced the numbers. Bumping [VERSION] is a recipe change:
  * re-baseline longitudinal series and say so in the report.
  *
- * Resolution order (first hit wins), unchanged from `tooling.py`:
+ * Resolution order (first hit wins), unchanged since the previous toolchain:
  * 1. an explicit path passed by the caller;
  * 2. `$STARTUP_TOOLS_DIR` (a pre-seeded or offline cache);
  * 3. `$XDG_CACHE_HOME/embrace-startup-tools`, else `~/.cache/embrace-startup-tools`;
@@ -31,7 +31,7 @@ import java.time.Duration
  * Layout: `<cache>/trace_processor_shell/<version>/trace_processor_shell`, so pinned versions coexist
  * and a report can name exactly which one produced it. Before downloading, the launcher's own cache
  * (`~/.local/share/perfetto/prebuilts`) is checked for a file with the pinned digest - on a machine
- * that ran the Python suite the binary is already there.
+ * that ran the previous toolchain the binary is already there.
  */
 object Prebuilt {
 

@@ -1,12 +1,13 @@
 package io.embrace.startup.core.repo
 
+import io.embrace.startup.core.proc.Processes
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.TimeUnit
+import java.time.Duration
 
 /**
- * Locate the SDK repo root without any hardcoded path - the same three-step fallback every Python
- * script carried: `git rev-parse --show-toplevel` (correct inside worktrees and submodules), else the
+ * Locate the SDK repo root without any hardcoded path, via the standard three-step fallback:
+ * `git rev-parse --show-toplevel` (correct inside worktrees and submodules), else the
  * nearest ancestor containing `.git`, else the working directory, so a tool still runs outside a
  * checkout.
  */
@@ -40,16 +41,12 @@ object RepoRoot {
     const val RECORDS_REL: String = ".claude/skills/_shared/records"
 
     private fun gitTopLevel(from: Path): Path? = runCatching {
-        val process = ProcessBuilder("git", "-C", from.toString(), "rev-parse", "--show-toplevel")
-            .redirectErrorStream(false)
-            .start()
-        val out = process.inputStream.bufferedReader().use { it.readText() }.trim()
-        process.errorStream.bufferedReader().use { it.readText() }
-        if (process.waitFor(GIT_TIMEOUT_S, TimeUnit.SECONDS) && process.exitValue() == 0 && out.isNotEmpty()) {
-            Path.of(out)
-        } else {
-            null
-        }
+        val result = Processes.run(
+            listOf("git", "-C", from.toString(), "rev-parse", "--show-toplevel"),
+            timeout = Duration.ofSeconds(GIT_TIMEOUT_S),
+        )
+        val out = result.stdout.trim()
+        if (result.exitCode == 0 && out.isNotEmpty()) Path.of(out) else null
     }.getOrNull()
 
     private const val GIT_TIMEOUT_S = 60L

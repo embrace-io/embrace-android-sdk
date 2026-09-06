@@ -10,8 +10,8 @@ import org.junit.Assume.assumeTrue
 import org.junit.Test
 
 /**
- * The `analyze` report against the Python's frozen stdout per device: metrics are rebuilt from the
- * saved `startup_metrics.sql` output of every trace (in `iterNNN` order, as the Python listed them),
+ * The `analyze` report against the frozen golden stdout per device: metrics are rebuilt from the
+ * saved `startup_metrics.sql` output of every trace (in `iterNNN` order, as the golden listed them),
  * rendered, and compared line for line - excluding only the two header lines that carry the start
  * time and the absolute traces directory, and the trailing "summary written to" line.
  */
@@ -28,7 +28,7 @@ class StartupAnalysisTest {
     }
 
     @Test
-    fun `iteration ordering and short names follow the Python regexes`() {
+    fun `iteration ordering and short names follow the golden regexes`() {
         assertEquals(7, StartupAnalysis.iterIndex("StartupBenchmarks_cold_iter007_2026.perfetto-trace"))
         assertEquals(1 shl 30, StartupAnalysis.iterIndex("no-index.perfetto-trace"))
         assertEquals("iter007_2026-09-02", StartupAnalysis.short("StartupBenchmarks_cold_iter007_2026-09-02.perfetto-trace"))
@@ -36,7 +36,7 @@ class StartupAnalysisTest {
     }
 
     @Test
-    fun `the report reproduces analyze_startup py stdout for every fixture device`() {
+    fun `the report reproduces the golden stdout for every fixture device`() {
         val goldens = TraceGoldens.all()
         assumeTrue("trace goldens not present", goldens.isNotEmpty())
         val byDevice = goldens.groupBy { it.device }

@@ -21,7 +21,7 @@ The sweep holds prose and evidence to different bars, because they do different 
 | scope | what it covers | which patterns |
 |---|---|---|
 | source | every `SKILL.md` and `references/`, `startup-tools/src/main`, `tools/` | all of them |
-| evidence | `_shared/records/`, the test fixtures, `PORT-LOG.md` | only the personal ones |
+| evidence | `_shared/records/`, the test fixtures | only the personal ones |
 
 A campaign record citing the run it came from is the point of a campaign record. A skill citing that
 same run is a defect, because the reader has no copy of it. So the records keep their artifact links,

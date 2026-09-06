@@ -27,6 +27,54 @@ class CompatPatchTest {
         return repo
     }
 
+    /**
+     * Apply, build and revert are three separate commands, so a run that dies between them leaves the
+     * checkout pinned to the wrong SDK and every later build resolves it. Nothing used to say so.
+     */
+    @Test
+    fun `a checkout left patched by a dead run says so, and still holds the original files`() {
+        val repo = repo()
+        val patch = CompatPatch(repo)
+        patch.apply("7.5.0")
+        orphanJournal(patch)
+
+        val status = patch.status()
+        assertTrue(status[0], status[0].startsWith("PATCHED for 7.5.0: 2 file(s) rewritten"))
+        assertTrue(status[0], status[0].contains("no longer running"))
+        assertTrue(status[1], status[1].contains("--revert-all"))
+        assertTrue(status.any { it.contains("patched: examples/ExampleApp/gradle/libs.versions.toml") })
+
+        val lines = patch.apply("7.4.0")
+        assertTrue(lines[0], lines[0].startsWith("WARNING: this checkout was already patched for 7.5.0"))
+        assertTrue(lines[0], lines[0].contains("a previous run died"))
+        assertTrue(lines[1], lines[1].contains("restores them"))
+
+        patch.revertAll()
+        assertEquals(listOf("clean: no compat patch applied"), patch.status())
+        assertTrue(Files.readString(patch.catalog).contains("embrace = \"9.2.0\""))
+    }
+
+    @Test
+    fun `a second patcher that is still alive is reported as a conflict, not a dead run`() {
+        val repo = repo()
+        val patch = CompatPatch(repo)
+        patch.apply("7.5.0")
+
+        val lines = patch.apply("7.4.0")
+
+        assertTrue(lines[0], lines[0].contains("is patching this checkout right now"))
+    }
+
+    /** Rewrites the journal's owner to a pid that cannot be alive, standing in for a run that was killed. */
+    private fun orphanJournal(patch: CompatPatch) {
+        val journal = patch.readJournal()
+        journal.ownerPid = DEAD_PID
+        Files.writeString(
+            patch.journalFile,
+            io.embrace.startup.core.json.StartupJson.encodeToString(CompatPatch.Journal.serializer(), journal),
+        )
+    }
+
     @Test
     fun `recipe selection follows the major version`() {
         assertEquals("modern", CompatPatch.recipeFor("local"))
@@ -100,5 +148,10 @@ class CompatPatchTest {
         assertFalse(ok)
         assertEquals("VERIFY FAILED: patched tree does not build - fix the recipe before running cells", lines.last())
         assertTrue(called!!.contains(":app:assembleBenchmark"))
+    }
+
+    private companion object {
+        /** Above the pid ceiling of every platform this runs on, so `ProcessHandle.of` finds nothing. */
+        const val DEAD_PID = 999_999_999L
     }
 }

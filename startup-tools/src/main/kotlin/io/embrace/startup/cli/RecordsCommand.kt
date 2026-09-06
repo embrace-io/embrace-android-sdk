@@ -10,6 +10,7 @@ import io.embrace.startup.core.io.Zips
 import io.embrace.startup.core.json.PyJson
 import io.embrace.startup.core.json.StartupJson
 import io.embrace.startup.core.repo.RepoRoot
+import io.embrace.startup.store.MaximsRunner
 import kotlinx.serialization.json.jsonObject
 import java.nio.file.Files
 import java.nio.file.Path
@@ -117,7 +118,7 @@ class RecordsCommand : CliktCommand(name = "records") {
                 val archive = records.resolve(CAMPAIGNS).resolve("$id.zip")
                 require(Files.exists(archive)) { "no campaign archive $archive for run $id" }
                 out.append(
-                    MaximsCommand.score(
+                    MaximsRunner.score(
                         campaign = archive,
                         referenceSet = reference,
                         deviceKey = PyJson.strOrNull(run, "device"),
@@ -130,7 +131,7 @@ class RecordsCommand : CliktCommand(name = "records") {
                     ),
                 )
             }
-            out.append(MaximsCommand.render(ledger.toString(), records.resolve(MAXIMS).resolve("MAXIMS.md").toString(), null))
+            out.append(MaximsRunner.render(ledger.toString(), records.resolve(MAXIMS).resolve("MAXIMS.md").toString(), null))
             return out.toString()
         }
 

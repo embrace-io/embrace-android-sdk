@@ -11,7 +11,7 @@ import io.embrace.startup.device.TopologyProbe
 import kotlinx.serialization.json.Json
 import java.nio.file.Files
 
-/** `probe` - the former `device_probe.py`: one device's topology profile, written as `<name>-topology.json`. */
+/** `probe`: one device's topology profile, written as `<name>-topology.json`. */
 class ProbeCommand : CliktCommand(name = "probe") {
 
     private val serial by argument("serial")

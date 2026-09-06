@@ -29,8 +29,8 @@ import io.embrace.startup.cli.VarianceCommand
 import io.embrace.startup.cli.VerifyArmsCommand
 
 /**
- * Entry point. The subcommand list is the complete port surface, extended phase by phase as each
- * former Python script passes its parity gate against the goldens.
+ * Entry point. The subcommand list below is the toolchain's complete surface; each command's
+ * behaviour is held to the frozen goldens by its own parity gate.
  */
 fun main(args: Array<String>) = StartupTools()
     .subcommands(

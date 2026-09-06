@@ -12,7 +12,7 @@ import org.junit.Test
 
 /**
  * Trace-health verdicts: the bucket table and every verdict branch on synthetic counters, then the
- * Python's own verdict on every frozen fixture trace (`python_parsed.json > health_check_trace`)
+ * golden's own verdict on every frozen fixture trace (`python_parsed.json > health_check_trace`)
  * reproduced from the saved health-query stdout.
  */
 class TraceHealthTest {
@@ -88,7 +88,7 @@ class TraceHealthTest {
     }
 
     @Test
-    fun `every frozen fixture trace reproduces the Python parse and verdict from the saved stdout`() {
+    fun `every frozen fixture trace reproduces the golden parse and verdict from the saved stdout`() {
         val goldens = TraceGoldens.all()
         assumeTrue("trace goldens not present", goldens.isNotEmpty())
         goldens.forEach { golden ->

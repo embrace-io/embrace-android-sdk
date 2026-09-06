@@ -50,7 +50,7 @@ The second case is the dangerous one: a lost banner leaves a superseded document
 - **The publish tool demands a read when this session has not seen the artifact.** That guard is about
   *session provenance*, not content — hitting it does not mean someone else edited the page, only that
   you cannot yet prove they did not. Fetch, compare, then publish.
-- **`WebFetch` on a `claude.ai/code/artifact/<uuid>` URL returns the full served HTML**, wrapped in the
+- **`WebFetch` on a `claude.ai/code/artifact/<uuid>` URL returns the full served HTML**<!-- leakcheck:allow: the URL form, not a link to one -->, wrapped in the
   publishing shell. To recover a lost source, strip everything before the document's own `<title>` and
   the trailing `</body></html>`; refuse the result if `__FRAME_PREAMBLE` survives the strip.
 - **A doc shared with the organisation updates for viewers immediately.** Check the fetch header — it

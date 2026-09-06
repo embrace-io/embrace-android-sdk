@@ -141,7 +141,7 @@ small irreplaceable artifact has been copied into `claude-output/2026-08-16-x25-
 - The campaign driver, its daemonizer, all analysis scripts, both stores and both reference sets
   are preserved in `claude-output/2026-08-16-x25-artifacts/`.
 - Raw traces (~2 GB) remain ONLY in the scratchpad at
-  `/private/tmp/claude-501/-Users-hansonho-work-embrace-android-sdk/52623843-9021-472d-bd91-e2c4c33adc76/scratchpad/combined-10x20/`.
+  `<scratch>`.
   They are too large to copy into the repo. **If the scratchpad is wiped they are gone** — but the
   stores hold every per-launch window value derived from them, which is what all the analyses use.
 

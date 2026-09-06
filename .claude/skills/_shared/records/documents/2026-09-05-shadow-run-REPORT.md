@@ -1477,8 +1477,8 @@ stdout diff (after masking):
 - "declared_at": null,
 - "_reconstructed": {
 -  "why": "the original was overwritten when the campaign restarted and re-archived the live reference set on top of it",
--  "recipe_and_profiles_from": "/private/tmp/claude-501/-Users-hansonho-work-embrace-android-sdk/52623843-9021-472d-bd91-e2c4c33adc76/scratchpad/baseline-4x50-archive/store.jsonl",
--  "serial_tier_coolgate_from": "/private/tmp/claude-501/-Users-hansonho-work-embrace-android-sdk/52623843-9021-472d-bd91-e2c4c33adc76/scratchpad/baseline/reference-set.json",
+-  "recipe_and_profiles_from": "<scratch>",
+-  "serial_tier_coolgate_from": "<scratch>",
 -  "declared_at": "NOT RECOVERABLE - the original timestamp was lost with the file"
 - },
 - "recipe": {

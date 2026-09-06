@@ -11,6 +11,12 @@ description: >-
   startup-version-factor-matrix.
 ---
 
+> **Editing this skill?** Run `tools/startup check-leaks` before you call it done. Nothing here may
+> describe one machine: no device serials, home paths, private artifact links or dated run
+> directories, because the next reader has none of them. The rule, the two standards it holds prose
+> and evidence to, and how to suppress a legitimate look-alike:
+> [`_shared/no-local-references.md`](../_shared/no-local-references.md).
+
 # Longitudinal startup tracking
 
 The other three skills each answer a question *inside one sitting*: how fast is it here

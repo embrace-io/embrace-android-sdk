@@ -10,6 +10,12 @@ description: >-
   startup-version-factor-matrix.
 ---
 
+> **Editing this skill?** Run `tools/startup check-leaks` before you call it done. Nothing here may
+> describe one machine: no device serials, home paths, private artifact links or dated run
+> directories, because the next reader has none of them. The rule, the two standards it holds prose
+> and evidence to, and how to suppress a legitimate look-alike:
+> [`_shared/no-local-references.md`](../_shared/no-local-references.md).
+
 # Multi-device startup forensics
 
 Single-device runs (the `startup-analysis` skill) answer *how fast is SDK init here*. This

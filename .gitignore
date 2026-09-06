@@ -69,3 +69,7 @@ claude-output/
 
 # The startup tooling's committed records keep each campaign's log despite the *.log rule above
 !.claude/skills/_shared/records/**/*.log
+
+# One engineer's own device serials, hosts and app ids, for `tools/startup check-leaks` to match by
+# name. Never committed: the checked-in half of that tool describes the SHAPE of a leak, this names it.
+.leakcheck-local

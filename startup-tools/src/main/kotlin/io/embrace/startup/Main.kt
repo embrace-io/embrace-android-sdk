@@ -5,6 +5,7 @@ import com.github.ajalt.clikt.core.subcommands
 import io.embrace.startup.cli.AnalyzeCommand
 import io.embrace.startup.cli.ArtifactSyncCommand
 import io.embrace.startup.cli.CellRunnerCommand
+import io.embrace.startup.cli.CheckLeaksCommand
 import io.embrace.startup.cli.CohortsCommand
 import io.embrace.startup.cli.CompatPatchCommand
 import io.embrace.startup.cli.CrossDeviceSectionsCommand
@@ -57,6 +58,7 @@ fun main(args: Array<String>) = StartupTools()
         ArtifactSyncCommand(),
         MaximsCommand(),
         RecordsCommand(),
+        CheckLeaksCommand(),
         // Every former script is now a subcommand.
     )
     .main(args)

@@ -52,6 +52,7 @@ daemon around the tool's own `gradlew` children for the length of a campaign).
 | `verify-arms` | `verify_ab_arms.py` | dex-level A/B arm pre-flight |
 | `serve-trace` | `serve_trace.py` | serve traces to ui.perfetto.dev |
 | `artifact-sync` | `_shared/artifact_sync.py` | living-doc drift guard (check / record / list) |
+| `check-leaks` | the production repo's `_shared/check_leaks.py` | scan the skills and this module for one author's personal setup: home paths, addresses, device serials, private artifact links, run-specific citations. Exits 1 on a hit, so it can gate a commit |
 | `records` | `_shared/records/{pack,maxims/rebuild-ledger}.py` | maintain the committed records root: `pack` loose output into its archives, `rebuild-ledger` re-score every campaign in `maxims/ledger-runs.json` into a fresh ledger |
 | `maxims` | `_shared/maxims.py` | `score` a campaign against every maxim into the shared ledger (`_shared/records/maxims/ledger.json`) and pack its datasets into `_shared/records/campaigns/<run-id>.zip` (which `score` also accepts as input); `render` MAXIMS.md from it |
 

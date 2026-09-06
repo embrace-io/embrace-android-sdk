@@ -3,6 +3,12 @@ name: startup-analysis
 description: Run the SDK startup macrobenchmark on a connected Android device and analyze the EmbTrace section durations and SDK-init span timing, including each section's share of the SDK-init span. Defaults to benchmarking a locally built SDK; can also target a publicly released SDK version. Use when asked to measure, verify, or compare SDK startup/init performance on-device.
 ---
 
+> **Editing this skill?** Run `tools/startup check-leaks` before you call it done. Nothing here may
+> describe one machine: no device serials, home paths, private artifact links or dated run
+> directories, because the next reader has none of them. The rule, the two standards it holds prose
+> and evidence to, and how to suppress a legitimate look-alike:
+> [`_shared/no-local-references.md`](../_shared/no-local-references.md).
+
 # SDK startup analysis (macrobenchmark)
 
 Measures Embrace SDK init on a real device via `examples/ExampleApp` and reports per-section
@@ -47,6 +53,9 @@ References:
   exact file path only when intentionally updating that report (and its URL) in place.
 
 Shared across the startup skills (`.claude/skills/_shared/`):
+- `no-local-references.md` — **the sweep every edit to these skills ends with**: what may not describe
+  one machine, the different standards prose and evidence are held to, and how to suppress a
+  legitimate look-alike. Enforced by `tools/startup check-leaks` and by the tool's own test suite.
 - `maxims/MAXIMS.md` — **what we currently believe about SDK init on the bench, and the evidence
   for it**: each maxim's statement, scope, status (accepted / under review / refuted / untested),
   how many reference devices hold it, and the latest contradictions. Generated from the maxim

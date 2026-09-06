@@ -1,0 +1,7 @@
+  [slices-incomplete] StartupBenchmarks_coldStartupBaselineProfile_iter001_2026-09-02-07-23-59.perfetto-trace  canary=1 sorter_push_event_out_of_order=16
+  [slices-incomplete] StartupBenchmarks_coldStartupBaselineProfile_iter004_2026-09-02-07-24-40.perfetto-trace  canary=1 sorter_push_event_out_of_order=20
+  [slices-incomplete] StartupBenchmarks_coldStartupBaselineProfile_iter008_2026-09-02-07-25-23.perfetto-trace  canary=1 sorter_push_event_out_of_order=25
+  [slices-incomplete] StartupBenchmarks_coldStartupBaselineProfile_iter012_2026-09-02-07-26-05.perfetto-trace  canary=1 trace_sorter_negative_timestamp_dropped=1
+  [slices-incomplete] StartupBenchmarks_coldStartupBaselineProfile_iter016_2026-09-02-07-26-46.perfetto-trace  canary=1 sorter_push_event_out_of_order=20
+trace health: 15/20 clean, 5 slices-incomplete
+CAVEAT (5/20 had event-parse errors): duration and window figures stand; do not make count-based or 'signal absent' claims from these traces without checking whether the affected traces cluster on one device. Narrowing atrace categories reduces userspace-side parse failures.

@@ -1,0 +1,28 @@
+{
+ "Galaxy A14|samsung/a14xxx/a14:15/UP1A.231005.007/A145FXXU5CXK1:user/release-keys|9.2.0|benchmark/profile/emb-sdk-start|{\"compile\": \"profile\"}": {
+  "candidates": [
+   "installed_app_count",
+   "device_settings",
+   "security_patch"
+  ],
+  "contributors": 2,
+  "median_spread_pct": 22.22222222222222,
+  "p90_spread_pct": 30.76923076923077,
+  "status": "unresolved (candidates found)",
+  "tolerance_pct": 26.0,
+  "units": 2
+ },
+ "Pixel 3|google/blueline/blueline:12/SP1A.210812.016.C1/8618562:user/release-keys|9.2.0|benchmark/profile/emb-sdk-start|{\"compile\": \"profile\"}": {
+  "status": "insufficient data",
+  "submissions": 1
+ },
+ "Pixel 7 Pro|google/cheetah/cheetah:15/AP4A.250905.001/13579:user/release-keys|9.2.0|benchmark/profile/emb-sdk-start|{\"compile\": \"profile\"}": {
+  "candidates": [],
+  "contributors": 2,
+  "median_spread_pct": 2.4691358024691414,
+  "p90_spread_pct": 2.6315789473684235,
+  "status": "reproduced",
+  "tolerance_pct": 5.0,
+  "units": 2
+ }
+}

@@ -1,0 +1,38 @@
+WARNING: 4x50 is weaker than the scoped 10x20 shape - precision and the p-value floor both improve with passes, not iterations. Say so in the report.
+
+run vfm-<yyyy-mm-dd>: 15 cells, 4x50 each, build=benchmark, night budget 8 h
+
+  #  cell                                                      device  group                         est
+  1  mid|<oldest supported release>|reference                  mid     version-sweep                 62m
+  2  mid|<mid release>|reference                               mid     version-sweep                 62m
+  3  mid|<previous release>|reference                          mid     version-sweep                 62m
+  4  mid|local|reference                                       mid     version-sweep                 62m
+  5  mid|<oldest supported release>|compile=none               mid     factor:compile=none           62m
+  6  mid|<oldest supported release>|install=fresh              mid     factor:install=fresh         102m
+  7  mid|<oldest supported release>|contention=queueing        mid     factor:contention=queueing    62m
+     ---------------------------------------- night 1 full (7.9 h) ------------
+  8  entry|local|compile=none,install=fresh                    entry   combo:worst-realistic        139m
+  9  flagship|local|contention=queueing,thermal=hot            flagshipcombo:bad-day                 95m
+ 10  mid|<previous release>|compile=none                       mid     factor:compile=none           62m
+ 11  mid|<previous release>|install=fresh                      mid     factor:install=fresh         102m
+ 12  mid|<previous release>|contention=queueing                mid     factor:contention=queueing    62m
+     ---------------------------------------- night 2 full (7.7 h) ------------
+ 13  mid|local|compile=none                                    mid     factor:compile=none           62m
+ 14  mid|local|install=fresh                                   mid     factor:install=fresh         102m
+ 15  mid|local|contention=queueing                             mid     factor:contention=queueing    62m
+
+total estimate: 19.3 h across 3 night(s); 4 version-sweep (reference) cells run FIRST so factor deltas always have a baseline
+
+Controls this run depends on (cell_runner enforces the machine-checkable ones):
+  [runner] resolved SDK coordinate matches the cell (read back, not from the catalog file)
+  [runner] compile state matches the cell (dumpsys package dexopt, recorded per cell)
+  [runner] APK sha256 recorded; unexpected changes flagged (git state alters the build id)
+  [runner] temperature within band before each pass, from thermalservice - NOT dumpsys battery
+  [runner] no second driver alive, no gradle build running, host load under threshold
+  [runner] expected window instrument present in pass 1 traces (app-embrace-start wrapper)
+  [human ] app source untouched between cells; no commit/sync mid-campaign
+  [human ] launch-index policy declared (settled discards launches 0-2)
+  [human ] device screen/charging/airplane state left to the runner to save and restore
+  [human ] compat patches reverted and the version pin restored when the run ends
+
+wrote /Users/hansonho/work/embrace-android-sdk/claude-output/2026-08-26-kotlin-port/goldens/matrix_plan.json - run cells with: cell_runner.py --cells /Users/hansonho/work/embrace-android-sdk/claude-output/2026-08-26-kotlin-port/goldens/matrix_plan.json --cell <id>

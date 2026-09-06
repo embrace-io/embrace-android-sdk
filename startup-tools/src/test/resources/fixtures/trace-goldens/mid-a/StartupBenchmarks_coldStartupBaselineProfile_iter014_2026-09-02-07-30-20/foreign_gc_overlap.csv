@@ -1,0 +1,9 @@
+"what","k","val"
+"foreign_gc_like_raw_ms","io.embrace.android.benchmark",0.507115
+"foreign_gc_like_raw_ms","system_server",54.396115
+"foreign_gc_like_raw_n","io.embrace.android.benchmark",2.000000
+"foreign_gc_like_raw_n","system_server",1.000000
+"foreign_gc_glob_raw_ms","system_server",54.396115
+"foreign_gc_glob_raw_n","system_server",1.000000
+"foreign_gc_collection_ms","system_server",54.396115
+"foreign_gc_collection_n","system_server",1.000000

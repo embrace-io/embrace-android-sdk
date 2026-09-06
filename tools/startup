@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# tools/startup - run the SDK startup-analysis toolchain.
+#
+# Builds the :startup-tools module incrementally (a warm Gradle daemon makes a no-op build take a
+# second or two) and then execs the generated launcher directly, so the tool runs as a plain JVM
+# process with real stdin, real exit codes and working terminal detection - none of which survive
+# `./gradlew run`. Set STARTUP_TOOLS_NO_BUILD=1 to skip the build when iterating on data only.
+#
+# Usage:  tools/startup <command> [args...]      e.g.  tools/startup --help
+set -euo pipefail
+
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+LAUNCHER="$REPO/startup-tools/build/install/startup-tools/bin/startup-tools"
+
+if [[ -z "${STARTUP_TOOLS_NO_BUILD:-}" ]]; then
+  "$REPO/gradlew" -q --console=plain -p "$REPO" :startup-tools:installDist
+elif [[ ! -x "$LAUNCHER" ]]; then
+  echo "startup-tools: no built launcher at $LAUNCHER and STARTUP_TOOLS_NO_BUILD is set" >&2
+  exit 2
+fi
+
+exec "$LAUNCHER" "$@"

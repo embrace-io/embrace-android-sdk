@@ -1,0 +1,13 @@
+"what","k","val"
+"foreign_gc_like_raw_ms","com.google.android.googlequicksearchbox:googleapp",1.554896
+"foreign_gc_like_raw_ms","com.google.android.googlequicksearchbox:search",29.952503
+"foreign_gc_like_raw_n","com.google.android.googlequicksearchbox:googleapp",1.000000
+"foreign_gc_like_raw_n","com.google.android.googlequicksearchbox:search",1.000000
+"foreign_gc_glob_raw_ms","com.google.android.googlequicksearchbox:googleapp",1.554896
+"foreign_gc_glob_raw_ms","com.google.android.googlequicksearchbox:search",29.952503
+"foreign_gc_glob_raw_n","com.google.android.googlequicksearchbox:googleapp",1.000000
+"foreign_gc_glob_raw_n","com.google.android.googlequicksearchbox:search",1.000000
+"foreign_gc_collection_ms","com.google.android.googlequicksearchbox:googleapp",1.554896
+"foreign_gc_collection_ms","com.google.android.googlequicksearchbox:search",29.952503
+"foreign_gc_collection_n","com.google.android.googlequicksearchbox:googleapp",1.000000
+"foreign_gc_collection_n","com.google.android.googlequicksearchbox:search",1.000000

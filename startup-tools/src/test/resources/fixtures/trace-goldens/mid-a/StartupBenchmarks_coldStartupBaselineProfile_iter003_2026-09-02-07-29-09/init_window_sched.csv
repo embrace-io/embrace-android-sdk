@@ -1,0 +1,8 @@
+"what","k","val"
+"window_ms","",34.295346
+"thread_state_ms","D",4.346577
+"thread_state_ms","R",0.258924
+"thread_state_ms","R+",0.163462
+"thread_state_ms","Running",29.525767
+"thread_state_ms","S",0.000616
+"cpu_residency_ms","6",29.525767

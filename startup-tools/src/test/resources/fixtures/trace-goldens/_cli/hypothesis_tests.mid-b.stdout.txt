@@ -1,0 +1,28 @@
+hypothesis tests over 1 passes, 20 iterations total
+
+H2. pass-level windows (ms) and battery temps
+  pass    n     p50     p90     max  run p50  temp start  temp end
+     1   20    31.7    33.4    34.1     30.2          --        --
+  pass medians sequence: 31.7
+  fastest pass 1 (31.7), slowest pass 1 (31.7), swing 0.0 ms
+  slow/fast section-median ratios (H2 predicts pure-CPU ~1x, block-resume ~2x):
+    emb-span-service-init                 pure-CPU         9.98   9.98  ratio  1.00x
+    emb-otel-tracer-init                  pure-CPU         7.00   7.00  ratio  1.00x
+    emb-config-service-init               block-resume     1.32   1.32  ratio  1.00x
+    emb-payload-source-init               block-resume     2.18   2.18  ratio  1.00x
+    emb-essential-service-init            block-resume     0.72   0.72  ratio  1.00x
+    emb-post-init                         block-resume     1.10   1.10  ratio  1.00x
+    emb-delivery-init                     block-resume     1.79   1.79  ratio  1.00x
+
+H1. little-core placement vs window
+  pass 1: r=  nan  little-majority n=  0 mean=    --  cluster1-majority n= 20 mean=  31.1
+  pooled r(window-delta-vs-pass-median, little-share) = nan   n=20
+  slow iterations (delta > +4 ms): 0 total, 0 little-majority, 0 FALSIFIERS (<10% little-core)
+
+H3. persisted-config-load: iter000 (fresh install) vs the rest, ms
+  pass  iter000  rest min  rest p50  rest max  rest <5ms
+     1     1.80      1.16      5.99      6.85          3
+
+H4. off-window fluctuators
+  pass power p50 power max stalls>10  natlib io p50 sighand io p50  snap max
+     1      1.31      2.26         0           1.42           1.75      6.45

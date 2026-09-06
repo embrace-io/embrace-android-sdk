@@ -1,0 +1,1 @@
+StatisticsError: no median for empty data

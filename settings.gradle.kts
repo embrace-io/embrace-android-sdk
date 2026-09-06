@@ -49,6 +49,7 @@ include(
     ":embrace-bytecode-instrumentation-tests",
     ":embrace-gradle-plugin-integration-tests",
     ":embrace-microbenchmark",
+    ":startup-tools",
 )
 
 pluginManagement {

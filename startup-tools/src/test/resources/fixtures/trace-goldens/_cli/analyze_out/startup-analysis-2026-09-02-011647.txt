@@ -1,0 +1,70 @@
+startup analysis started 2026-09-02 01:16:47
+traces dir: /Users/hansonho/work/embrace-android-sdk/claude-output/2026-08-26-kotlin-port/fixtures/traces/mid-a/pass1
+traces analyzed: 20
+
+SDK-init window, ms — source: emb-sdk-start slice (wraps Embrace.start(); ~<1 ms wider than the exported emb-embrace-init span)
+  n=20  min=37.4  median=43.3  mean=43.4  max=54.4
+  per-iteration: 44.7, 40.8, 39.2, 39.6, 43.7, 50.5, 41.3, 40.3, 40.1, 43.5, 37.4, 43.6, 44.8, 37.9, 54.4, 44.4, 43.0, 42.2, 50.1, 46.4
+
+TTID (android.startup module; anchor differs a few ms from macrobenchmark JSON), ms:
+  n=20  min=959.2  median=989.9  mean=1033.4  max=1284.1
+
+canonical sections, execution order (first-occurrence slice durations, ms):
+  section                                        n      min   median      max  % of win
+  emb-embrace-impl-init                         20     1.67     2.63     5.36       6.1
+    ↳ emb-bootstrapper-init                     20     1.05     1.74     4.09       4.0
+  emb-modules-init                              20    33.48    38.38    48.12      88.7
+    ↳ emb-persisted-config-load                 20     2.75    11.71    16.12      27.1
+    ↳ emb-config-service-init                   20     0.61     0.84     1.97       2.0
+    ↳ emb-span-service-init                     20    14.07    17.43    24.98      40.3
+      ↳ emb-otel-tracer-init                    20    11.48    14.77    20.12      34.1
+    ↳ emb-essential-service-init                20     0.46     0.68     1.22       1.6
+    ↳ emb-delivery-init                         20     1.15     1.72     2.63       4.0
+    ↳ emb-payload-source-init                   20     1.62     2.01     3.65       4.7
+  emb-post-init                                 20     0.31     0.42     1.19       1.0
+  emb-post-services-setup                       20     1.85     2.31     3.87       5.3
+    ↳ emb-load-instrumentation                  20     1.75     2.16     3.76       5.0
+
+other emb-* sections (top 15 by median; not part of the canonical breakdown):
+  emb-install-native-crash-signal-handlers      20     9.84    12.29    16.37
+  emb-load-embrace-native-lib                   20     7.01     9.31    13.16
+  emb-record-startup                            20     5.09     7.01     9.75
+  emb-power-service-registration                20     1.78     3.00    27.41
+  emb-snapshot-session                          20     1.49     2.26     5.56
+  emb-on-session-cache                          20     1.45     2.22     5.52
+  emb-otel-logger-init                          20     1.85     2.15     4.12
+  emb-thermal-service-registration              20     1.06     1.43     2.80
+  emb-init-module                               20     0.63     1.25     3.24
+  emb-session-payload-source                    20     0.70     0.90     1.48
+  emb-config-init                               20     0.64     0.88     2.02
+  emb-otel-external-export                      20     0.63     0.85     2.18
+  emb-native-install-handlers                   20     0.39     0.81     1.24
+  emb-okhttp-client-init                        20     0.53     0.74     1.64
+  emb-resource-source                           20     0.54     0.66     1.75
+
+main-thread scheduling inside the window (contention / slow-execution check):
+  iteration                                             window     run    wait  wait%  cpus
+  iter000_2026-09-02-07-28-48                             44.7    38.0     0.6   1.4%     3
+  iter001_2026-09-02-07-28-55                             40.8    37.7     0.4   0.9%     3
+  iter002_2026-09-02-07-29-02                             39.2    34.9     0.8   1.9%     3
+  iter003_2026-09-02-07-29-09                             39.6    34.6     0.6   1.4%     1
+  iter004_2026-09-02-07-29-15                             43.7    38.6     0.5   1.1%     4
+  iter005_2026-09-02-07-29-22                             50.5    42.9     1.3   2.6%     4
+  iter006_2026-09-02-07-29-28                             41.3    36.9     0.4   1.1%     1
+  iter007_2026-09-02-07-29-35                             40.3    34.7     0.6   1.6%     2
+  iter008_2026-09-02-07-29-41                             40.1    36.8     0.7   1.7%     4
+  iter009_2026-09-02-07-29-47                             43.5    39.7     0.8   1.7%     6
+  iter010_2026-09-02-07-29-54                             37.4    34.7     0.3   0.8%     1
+  iter011_2026-09-02-07-30-00                             43.6    39.8     1.8   4.0%     5
+  iter012_2026-09-02-07-30-07                             44.8    36.9     0.8   1.7%     6
+  iter013_2026-09-02-07-30-14                             37.9    34.9     0.4   1.1%     2
+  iter014_2026-09-02-07-30-20                             54.4    48.8     1.3   2.5%     3
+  iter015_2026-09-02-07-30-27                             44.4    40.2     1.0   2.2%     6
+  iter016_2026-09-02-07-30-33                             43.0    39.8     0.7   1.6%     4
+  iter017_2026-09-02-07-30-40                             42.2    38.0     1.3   3.0%     7
+  iter018_2026-09-02-07-30-47                             50.1    45.4     1.3   2.6%     4
+  iter019_2026-09-02-07-30-54                             46.4    37.7     1.0   2.3%     4
+  0/20 iterations contended (wait > 15% of window).
+  Two slow signatures (see references/sections.md): high wait% = scheduler contention;
+  low wait% but elevated run time vs a fast pass = slower execution (core placement /
+  clocks). Judge regressions on iterations that show neither.

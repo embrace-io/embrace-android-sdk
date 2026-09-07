@@ -183,6 +183,22 @@ internal class SessionSpanWriterTest {
     }
 
     @Test
+    fun `an oversized session span is not written`() {
+        assertFalse(writer.write(paddedSpan(paddedSpanId(0), MAX_PART_FILE_BYTES.toInt() + 1)))
+        assertEquals(emptyList<String>(), partDir().list()?.toList())
+        assertWriteFailureTracked()
+    }
+
+    @Test
+    fun `an oversized session span leaves the previous one intact`() {
+        assertTrue(write())
+        assertFalse(writer.write(paddedSpan(paddedSpanId(0), MAX_PART_FILE_BYTES.toInt() + 1)))
+        assertEquals(fullyPopulatedSessionSpanProto, readSessionSpan())
+        assertEquals(listOf(SESSION_SPAN_FILE_NAME), partDir().list()?.toList())
+        assertWriteFailureTracked()
+    }
+
+    @Test
     fun `concurrent session span writes leave one valid file`() {
         val threadCount = 8
         val writesPerThread = 25

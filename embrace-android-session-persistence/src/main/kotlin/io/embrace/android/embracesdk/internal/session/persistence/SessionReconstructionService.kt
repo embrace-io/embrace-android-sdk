@@ -154,11 +154,16 @@ class SessionReconstructionService(
     /**
      * Decodes the completed spans logged in a session part directory, or null if the log cannot be
      * read.
+     *
+     * An oversized log is truncated rather than rejected.
      */
     private fun readCompletedSpansFile(partDir: File): List<Span>? {
         val src = File(partDir, COMPLETED_SPANS_FILE_NAME)
         if (!src.exists()) {
             return emptyList()
+        }
+        if (src.length() > MAX_PART_FILE_BYTES) {
+            trackFailure(IOException(OVERSIZED_PART_FILE_MSG))
         }
         return try {
             src.source().buffer().use(::readCompletedSpans).map(SpanProto::toPayload)
@@ -222,7 +227,7 @@ class SessionReconstructionService(
             throw IOException("Session part file not found")
         }
         if (src.length() > MAX_PART_FILE_BYTES) {
-            throw IOException("Session part file exceeds the maximum size")
+            throw IOException(OVERSIZED_PART_FILE_MSG)
         }
         return src.inputStream().buffered().use(adapter::decode)
     }

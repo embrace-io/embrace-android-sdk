@@ -45,7 +45,7 @@ class SessionMetadataWriter(
         }
 
         val metadata = metadataSource().toProto(resourceSource().toMutableProto())
-        writeAtomically(partDir, METADATA_FILE_NAME) { stream ->
+        writeAtomically(partDir, METADATA_FILE_NAME, Long.MAX_VALUE) { stream ->
             EnvelopeMetadataProto.ADAPTER.encode(stream, metadata)
         }
         return true

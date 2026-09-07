@@ -38,7 +38,7 @@ class SessionSpanWriter(
             format_version = FORMAT_VERSION,
             span = span.toProto(),
         )
-        writeAtomically(partDir, SESSION_SPAN_FILE_NAME) { stream ->
+        writeAtomically(partDir, SESSION_SPAN_FILE_NAME, MAX_PART_FILE_BYTES) { stream ->
             SessionPartSpan.ADAPTER.encode(stream, sessionSpan)
         }
         return true

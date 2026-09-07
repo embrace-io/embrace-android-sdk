@@ -33,6 +33,10 @@ internal class CompletedSpansWriterTest {
 
         private val completed = listOf(fullyPopulatedSpan)
 
+        private val twoSpanBudget = 2L * CompletedSpans.ADAPTER.encode(
+            CompletedSpans(spans = listOf(span("aaaaaaaaaaaaaaa1").toProto())),
+        ).size
+
         private fun span(id: String, name: String = "emb-network-request") =
             fullyPopulatedSpan.copy(spanId = id, name = name)
     }
@@ -223,6 +227,60 @@ internal class CompletedSpansWriterTest {
         assertEquals(listOf(COMPLETED_SPANS_FILE_NAME), partDir().list()?.toList())
         assertNoInternalErrors()
     }
+
+    @Test
+    fun `an append that would exceed the maximum log size is dropped`() {
+        writer = boundedWriter()
+        assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa1"))))
+        assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa2"))))
+        assertFalse(write(spans = listOf(span("aaaaaaaaaaaaaaa3"))))
+        assertWriteFailureTracked()
+    }
+
+    @Test
+    fun `the spans already logged survive a dropped append`() {
+        writer = boundedWriter()
+        write(spans = listOf(span("aaaaaaaaaaaaaaa1")))
+        write(spans = listOf(span("aaaaaaaaaaaaaaa2")))
+        write(spans = listOf(span("aaaaaaaaaaaaaaa3")))
+        assertEquals(
+            listOf("aaaaaaaaaaaaaaa1", "aaaaaaaaaaaaaaa2"),
+            readLog().map(SpanProto::span_id),
+        )
+    }
+
+    @Test
+    fun `an append landing exactly on the maximum log size is written`() {
+        writer = boundedWriter()
+        assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa1"))))
+        assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa2"))))
+        assertEquals(twoSpanBudget, logFile().length())
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a full log is reported once however many appends are dropped`() {
+        writer = boundedWriter()
+        write(spans = listOf(span("aaaaaaaaaaaaaaa1")))
+        write(spans = listOf(span("aaaaaaaaaaaaaaa2")))
+
+        repeat(5) { assertFalse(write(spans = listOf(span("aaaaaaaaaaaaaaa3")))) }
+        assertWriteFailureTracked()
+    }
+
+    @Test
+    fun `an empty append is a no-op once the log is full`() {
+        writer = boundedWriter()
+        write(spans = listOf(span("aaaaaaaaaaaaaaa1")))
+        write(spans = listOf(span("aaaaaaaaaaaaaaa2")))
+
+        assertTrue(write(spans = emptyList()))
+        assertEquals(twoSpanBudget, logFile().length())
+        assertNoInternalErrors()
+    }
+
+    private fun boundedWriter(): CompletedSpansWriter =
+        CompletedSpansWriter(lazy { sessionsDir }, { activePart }, logger, twoSpanBudget)
 
     private fun createPartDir(directory: SessionPartDirectory): File =
         File(sessionsDir, directory.dirName).apply { mkdirs() }

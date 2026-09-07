@@ -221,6 +221,15 @@ internal class SessionManifestWriterTest {
     }
 
     @Test
+    fun `an oversized manifest is written`() {
+        val symbols = mapOf("libembrace.so" to "x".repeat(MAX_PART_FILE_BYTES.toInt() + 1))
+        assertTrue(write(sharedLibSymbolMapping = symbols))
+        assertTrue(manifestFile().length() > MAX_PART_FILE_BYTES)
+        assertEquals(symbols, readManifest().shared_lib_symbol_mapping?.symbols)
+        assertNoInternalErrors()
+    }
+
+    @Test
     fun `failure building the manifest leaves no files on disk`() {
         assertFalse(write(sharedLibSymbolMapping = ExplodingMap()))
         assertEquals(emptyList<String>(), partDir().list()?.toList())

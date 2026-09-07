@@ -21,6 +21,13 @@ internal class CompletedSpansReaderTest {
         private fun span(id: String) = fullyPopulatedSpanProto.copy(span_id = id)
 
         private fun read(bytes: ByteArray): List<SpanProto> = Buffer().write(bytes).use(::readCompletedSpans)
+
+        private fun read(bytes: ByteArray, maxBytes: Long): List<SpanProto> =
+            Buffer().write(bytes).use { readCompletedSpans(it, maxBytes) }
+
+        /** The budget a record consumes, which is the record itself and not the framing round it. */
+        private fun budgetOf(vararg spans: SpanProto): Long =
+            spans.sumOf { SpanProto.ADAPTER.encode(it).size }.toLong()
     }
 
     private val first = span("aaaaaaaaaaaaaaa1")
@@ -102,5 +109,35 @@ internal class CompletedSpansReaderTest {
         } catch (expected: IOException) {
             // the records before it are still lost, but reporting beats delivering a partial log
         }
+    }
+
+    @Test
+    fun `records past the budget are dropped`() {
+        val log = completedSpansLog(listOf(first, second, third))
+        assertEquals(listOf(first, second), read(log, budgetOf(first, second)))
+    }
+
+    @Test
+    fun `a budget landing inside a record drops that record whole`() {
+        val log = completedSpansLog(listOf(first, second))
+        assertEquals(listOf(first), read(log, budgetOf(first, second) - 1))
+    }
+
+    @Test
+    fun `a first record larger than the budget reads back no spans`() {
+        val log = completedSpansLog(listOf(first, second))
+        assertEquals(emptyList<SpanProto>(), read(log, budgetOf(first) - 1))
+    }
+
+    @Test
+    fun `a log exactly filling the budget reads back in full`() {
+        val log = completedSpansLog(listOf(first, second))
+        assertEquals(listOf(first, second), read(log, budgetOf(first, second)))
+    }
+
+    @Test
+    fun `a field a later SDK added does not count against the budget`() {
+        val log = completedSpansLog(listOf(first)) + UNKNOWN_FIELD + completedSpansLog(listOf(second))
+        assertEquals(listOf(first, second), read(log, budgetOf(first, second)))
     }
 }

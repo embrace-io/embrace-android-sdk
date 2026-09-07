@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.session.persistence
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
+import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import java.io.File
 import java.io.IOException
 
@@ -29,8 +30,8 @@ class SessionManifestWriter(
         envelopeVersion: String,
         envelopeType: String,
         sharedLibSymbolMapping: Map<String, String>? = null,
-    ): Boolean {
-        return try {
+    ): Boolean = SystemTrace.trace("mf-write-manifest") {
+        try {
             writeImpl(directory, resource, envelopeVersion, envelopeType, sharedLibSymbolMapping)
         } catch (exc: Throwable) {
             trackFailure(exc)

@@ -13,8 +13,10 @@ import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.Th
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageServiceSupplier
 import io.embrace.android.embracesdk.internal.prefs.createKeyValueStore
 import io.embrace.android.embracesdk.internal.storage.StorageService
+import io.embrace.android.embracesdk.internal.utils.AndroidSectionRecorder
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.Worker
 
@@ -75,6 +77,7 @@ internal class ModuleInitBootstrapper(
             if (isInitialized()) {
                 return@trace false
             }
+            SystemTrace.recorder = AndroidSectionRecorder
             // stamped before anything else so that the SDK init span covers all the work below,
             // and the perf samples cover the same interval as the span
             val startTimeMs = initModule.clock.now()

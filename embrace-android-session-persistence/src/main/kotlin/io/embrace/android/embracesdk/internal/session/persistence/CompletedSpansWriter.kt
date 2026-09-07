@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.session.persistence
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import java.io.File
 import java.io.IOException
 
@@ -33,12 +34,14 @@ class CompletedSpansWriter(
      * place. A session part in which nothing completed has no log at all, which reconstruction
      * reads back as no completed spans.
      */
-    fun write(spans: List<Span>): Boolean = synchronized(lock) {
-        try {
-            writeImpl(spans)
-        } catch (exc: Throwable) {
-            trackFailure(exc)
-            false
+    fun write(spans: List<Span>): Boolean = SystemTrace.trace("mf-write-completed-spans") {
+        synchronized(lock) {
+            try {
+                writeImpl(spans)
+            } catch (exc: Throwable) {
+                trackFailure(exc)
+                false
+            }
         }
     }
 

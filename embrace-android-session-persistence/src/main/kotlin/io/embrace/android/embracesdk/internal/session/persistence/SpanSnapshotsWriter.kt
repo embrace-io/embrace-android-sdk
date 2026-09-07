@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.session.persistence
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import java.io.File
 import java.io.IOException
 
@@ -24,12 +25,14 @@ class SpanSnapshotsWriter(
     /**
      * Writes the in-flight spans for the active session part, replacing any already on disk.
      */
-    fun write(spans: List<Span>): Boolean = synchronized(lock) {
-        try {
-            writeImpl(spans)
-        } catch (exc: Throwable) {
-            trackFailure(exc)
-            false
+    fun write(spans: List<Span>): Boolean = SystemTrace.trace("mf-write-span-snapshots") {
+        synchronized(lock) {
+            try {
+                writeImpl(spans)
+            } catch (exc: Throwable) {
+                trackFailure(exc)
+                false
+            }
         }
     }
 

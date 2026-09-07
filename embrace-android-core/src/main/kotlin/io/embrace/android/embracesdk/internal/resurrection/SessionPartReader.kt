@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDir
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectoryStore
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTracker
 import io.embrace.android.embracesdk.internal.session.persistence.SessionReconstructionService
+import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 
@@ -43,16 +44,18 @@ class SessionPartReader(
             return
         }
         worker.submit {
-            directoryStore.storedDirectories()
-                .filterNot { writeTracker.isWriting(it.sessionPartId) }
-                .sortedWith(SessionPartDirectory.comparator)
-                .forEach { directory ->
-                    runCatching {
-                        deliver(directory)
-                    }.onFailure {
-                        logger.trackInternalError(InternalErrorType.SessionPartReadFail, it)
+            EmbTrace.trace("mf-read-session-parts") {
+                directoryStore.storedDirectories()
+                    .filterNot { writeTracker.isWriting(it.sessionPartId) }
+                    .sortedWith(SessionPartDirectory.comparator)
+                    .forEach { directory ->
+                        runCatching {
+                            deliver(directory)
+                        }.onFailure {
+                            logger.trackInternalError(InternalErrorType.SessionPartReadFail, it)
+                        }
                     }
-                }
+            }
         }
     }
 

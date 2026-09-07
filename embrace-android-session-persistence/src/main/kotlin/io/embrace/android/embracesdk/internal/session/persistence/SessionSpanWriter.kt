@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.session.persistence
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import java.io.File
 import java.io.IOException
 
@@ -17,12 +18,14 @@ class SessionSpanWriter(
 
     private val lock = Any()
 
-    fun write(span: Span): Boolean = synchronized(lock) {
-        try {
-            writeImpl(span)
-        } catch (exc: Throwable) {
-            trackFailure(exc)
-            false
+    fun write(span: Span): Boolean = SystemTrace.trace("mf-write-session-span") {
+        synchronized(lock) {
+            try {
+                writeImpl(span)
+            } catch (exc: Throwable) {
+                trackFailure(exc)
+                false
+            }
         }
     }
 

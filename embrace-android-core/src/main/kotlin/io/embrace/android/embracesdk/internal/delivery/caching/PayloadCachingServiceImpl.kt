@@ -57,7 +57,7 @@ internal class PayloadCachingServiceImpl(
     ): Envelope<SessionPartPayload>? {
         deliveryTracer?.onSessionCache()
 
-        EmbTrace.trace("on-session-cache") {
+        EmbTrace.trace("periodic-cache-supply") {
             if (initial.sessionPartId != sessionIdsProvider.getCurrentSessionPartId()) {
                 return null
             }

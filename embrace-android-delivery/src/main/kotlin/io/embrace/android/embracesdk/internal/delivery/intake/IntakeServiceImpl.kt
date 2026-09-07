@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
@@ -117,13 +118,17 @@ class IntakeServiceImpl(
                 metadata.complete -> payloadStorageService
                 else -> cacheStorageService
             }
-            service.store(metadata) { stream ->
-                val envelopeSerializer = metadata.envelopeType.envelopeSerializer
-                if (envelopeSerializer != null) {
-                    serializer.toJson(intake, envelopeSerializer, stream)
-                } else { // payload doesn't require serialization
-                    val pair = intake.data as Pair<String, ByteArray>
-                    storeAttachment(stream, pair.second, pair.first)
+            SystemTrace.trace("intake-process") {
+                service.store(metadata) { stream ->
+                    val envelopeSerializer = metadata.envelopeType.envelopeSerializer
+                    if (envelopeSerializer != null) {
+                        SystemTrace.trace("payload-json-serialize") {
+                            serializer.toJson(intake, envelopeSerializer, stream)
+                        }
+                    } else { // payload doesn't require serialization
+                        val pair = intake.data as Pair<String, ByteArray>
+                        storeAttachment(stream, pair.second, pair.first)
+                    }
                 }
             }
 

@@ -38,7 +38,7 @@ class PeriodicSessionPartCacher(
         if (stopped) {
             return@Runnable
         }
-        EmbTrace.trace("snapshot-session") {
+        EmbTrace.trace("periodic-cache-tick") {
             try {
                 provider()
             } catch (ex: Exception) {

@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.delivery.storage
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import io.embrace.android.embracesdk.internal.utils.threadSafeToList
 import java.io.File
 import java.io.FileNotFoundException
@@ -82,24 +83,24 @@ class StoredEntryIndex<T>(
      * count-based limit is then enforced, and the return value indicates whether [newEntry] itself
      * was pruned and so should not be written to disk.
      */
-    fun prune(newEntry: T? = null): Boolean {
+    fun prune(newEntry: T? = null): Boolean = SystemTrace.trace("storage-index-prune") {
         // remove entries created before the cutoff
         val cutoffMs = clock.now() - maxAgeMs
         if (cutoffMs > 0L) {
             entries.filter { layout.timestampOf(it) < cutoffMs }.forEach(::delete)
         }
 
-        newEntry ?: return false
+        newEntry ?: return@trace false
 
         // remove entries by count
         val count = entries.size
         if (count < storageLimit) {
-            return false
+            return@trace false
         }
         val input = (entries + newEntry).toMutableList()
         val removalCount = input.size - storageLimit
         if (removalCount < 0) {
-            return false
+            return@trace false
         }
         val removals = if (removalCount == 1) {
             // exceeding the limit by one is the common case, so avoid sorting the whole index
@@ -111,6 +112,6 @@ class StoredEntryIndex<T>(
         removals.forEach(::delete)
 
         // notify the caller whether the new entry should be dropped
-        return removals.contains(newEntry)
+        removals.contains(newEntry)
     }
 }

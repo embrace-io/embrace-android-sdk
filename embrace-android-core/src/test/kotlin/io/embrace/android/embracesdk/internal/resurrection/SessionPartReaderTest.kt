@@ -81,6 +81,7 @@ internal class SessionPartReaderTest {
     private lateinit var directoryStore: SessionPartDirectoryStore
     private lateinit var intakeService: FakeIntakeService
     private lateinit var writeTracker: SessionPartWriteTracker
+    private lateinit var readExecutor: BlockingScheduledExecutorService
 
     @Before
     fun setUp() {
@@ -91,6 +92,7 @@ internal class SessionPartReaderTest {
         directoryStore = SessionPartDirectoryStore(lazy { sessionsDir }, BackgroundWorker(executor), clock, logger)
         intakeService = FakeIntakeService()
         writeTracker = SessionPartWriteTracker()
+        readExecutor = BlockingScheduledExecutorService(clock, false)
     }
 
     @Test
@@ -180,6 +182,18 @@ internal class SessionPartReaderTest {
         assertNothingDelivered(retained = listOf(partDirectory))
     }
 
+    @Test
+    fun `reading is queued on the worker rather than run on the calling thread`() {
+        persist(partDirectory)
+        readExecutor.blockingMode = true
+        createReader().readPersistedSessionParts()
+        assertNothingDelivered(retained = listOf(partDirectory))
+
+        readExecutor.runCurrentlyBlocked()
+        assertEquals(partDirectory.sessionPartId, intakeService.intakeList.single().metadata.sessionPartId)
+        assertDeleted(partDirectory)
+    }
+
     private fun createReader(enabled: Boolean = true) = SessionPartReader(
         directoryStore = directoryStore,
         reconstructionService = SessionReconstructionService(lazy { sessionsDir }, logger),
@@ -192,6 +206,7 @@ internal class SessionPartReaderTest {
             ),
         ),
         logger = logger,
+        worker = BackgroundWorker(readExecutor),
     )
 
     private fun persist(directory: SessionPartDirectory, span: Span = sessionSpan()) {

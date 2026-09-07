@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDir
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectoryStore
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTracker
 import io.embrace.android.embracesdk.internal.session.persistence.SessionReconstructionService
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 
 /**
@@ -30,26 +31,29 @@ class SessionPartReader(
     private val processIdProvider: () -> String,
     private val configService: ConfigService,
     private val logger: InternalLogger,
+    private val worker: BackgroundWorker,
 ) {
 
     /**
-     * Reads every completed session part on disk and hands it to the intake service.
+     * Queues a read of every completed session part on disk. The work runs on [worker] so that it
+     * does not hold up telemetry queued on the session persistence worker.
      */
     fun readPersistedSessionParts() {
         if (!configService.persistenceBehavior.isMultiFilePersistenceEnabled()) {
             return
         }
-
-        directoryStore.storedDirectories()
-            .filterNot { writeTracker.isWriting(it.sessionPartId) }
-            .sortedWith(SessionPartDirectory.comparator)
-            .forEach { directory ->
-                runCatching {
-                    deliver(directory)
-                }.onFailure {
-                    logger.trackInternalError(InternalErrorType.SessionPartReadFail, it)
+        worker.submit {
+            directoryStore.storedDirectories()
+                .filterNot { writeTracker.isWriting(it.sessionPartId) }
+                .sortedWith(SessionPartDirectory.comparator)
+                .forEach { directory ->
+                    runCatching {
+                        deliver(directory)
+                    }.onFailure {
+                        logger.trackInternalError(InternalErrorType.SessionPartReadFail, it)
+                    }
                 }
-            }
+        }
     }
 
     /**

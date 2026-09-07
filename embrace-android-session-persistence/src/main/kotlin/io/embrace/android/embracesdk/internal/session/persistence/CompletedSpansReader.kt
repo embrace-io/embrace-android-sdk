@@ -16,8 +16,9 @@ private const val SPANS_TAG = 1
  * not reported: every record written in full before it is returned. A record that is all
  * present but does not decode is corruption and throws.
  */
-internal fun readCompletedSpans(source: BufferedSource, maxBytes: Long = MAX_PART_FILE_BYTES): List<SpanProto> {
+internal fun readCompletedSpans(source: BufferedSource, maxBytes: Long = MAX_PART_FILE_BYTES): DecodedSpans {
     val spans = mutableListOf<SpanProto>()
+    var corruption: Throwable? = null
     val reader = ProtoReader(source)
     reader.beginMessage()
     var remaining = maxBytes
@@ -25,7 +26,7 @@ internal fun readCompletedSpans(source: BufferedSource, maxBytes: Long = MAX_PAR
     while (true) {
         val record = try {
             when (reader.nextTag()) {
-                -1 -> return spans
+                -1 -> return DecodedSpans(spans, corruption)
                 SPANS_TAG -> reader.readBytes()
                 else -> {
                     reader.skip()
@@ -33,12 +34,17 @@ internal fun readCompletedSpans(source: BufferedSource, maxBytes: Long = MAX_PAR
                 }
             }
         } catch (exc: EOFException) {
-            return spans
+            return DecodedSpans(spans, corruption)
         }
         remaining -= record.size
         if (remaining < 0) {
-            return spans
+            return DecodedSpans(spans, corruption)
         }
-        spans.add(SpanProto.ADAPTER.decode(record))
+        try {
+            spans.add(SpanProto.ADAPTER.decode(record))
+        } catch (exc: Exception) {
+            // keep exc associated with first bad record, then continue
+            corruption = corruption ?: exc
+        }
     }
 }

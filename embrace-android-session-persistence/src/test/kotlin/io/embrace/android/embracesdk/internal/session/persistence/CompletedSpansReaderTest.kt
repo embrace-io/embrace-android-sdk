@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.internal.session.persistence
 
 import okio.Buffer
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.fail
 import org.junit.Test
 import java.io.IOException
@@ -18,12 +20,17 @@ internal class CompletedSpansReaderTest {
         /** Field 1, length delimited, claiming more bytes than any log could hold. */
         private val OVERSIZED_LENGTH_PREFIX = byteArrayOf(0x0A, -1, -1, -1, -1, 0x07)
 
+        /** An intact frame round a record body holding an invalid field encoding. */
+        private val UNDECODABLE_RECORD = byteArrayOf(0x0A, 0x01, 0x0E)
+
         private fun span(id: String) = fullyPopulatedSpanProto.copy(span_id = id)
 
-        private fun read(bytes: ByteArray): List<SpanProto> = Buffer().write(bytes).use(::readCompletedSpans)
+        private fun decode(bytes: ByteArray): DecodedSpans = Buffer().write(bytes).use(::readCompletedSpans)
+
+        private fun read(bytes: ByteArray): List<SpanProto> = decode(bytes).spans
 
         private fun read(bytes: ByteArray, maxBytes: Long): List<SpanProto> =
-            Buffer().write(bytes).use { readCompletedSpans(it, maxBytes) }
+            Buffer().write(bytes).use { readCompletedSpans(it, maxBytes) }.spans
 
         /** The budget a record consumes, which is the record itself and not the framing round it. */
         private fun budgetOf(vararg spans: SpanProto): Long =
@@ -109,6 +116,36 @@ internal class CompletedSpansReaderTest {
         } catch (expected: IOException) {
             // the records before it are still lost, but reporting beats delivering a partial log
         }
+    }
+
+    @Test
+    fun `an undecodable record is dropped and the records either side of it are kept`() {
+        val log = completedSpansLog(listOf(first)) + UNDECODABLE_RECORD + completedSpansLog(listOf(second))
+        assertEquals(listOf(first, second), read(log))
+    }
+
+    @Test
+    fun `an undecodable record is reported so the caller can track it`() {
+        val log = completedSpansLog(listOf(first)) + UNDECODABLE_RECORD
+        assertNotNull(decode(log).corruption)
+    }
+
+    @Test
+    fun `a log every record of which is undecodable reads back no spans`() {
+        val decoded = decode(UNDECODABLE_RECORD + UNDECODABLE_RECORD)
+        assertEquals(emptyList<SpanProto>(), decoded.spans)
+        assertNotNull(decoded.corruption)
+    }
+
+    @Test
+    fun `a log with no undecodable records reports no corruption`() {
+        assertNull(decode(completedSpansLog(listOf(first, second))).corruption)
+    }
+
+    @Test
+    fun `an undecodable record counts against the budget`() {
+        val log = completedSpansLog(listOf(first)) + UNDECODABLE_RECORD + completedSpansLog(listOf(second))
+        assertEquals(listOf(first), read(log, budgetOf(first, second)))
     }
 
     @Test

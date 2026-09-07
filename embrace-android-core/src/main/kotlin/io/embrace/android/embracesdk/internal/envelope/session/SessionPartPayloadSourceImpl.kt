@@ -27,6 +27,24 @@ internal class SessionPartPayloadSourceImpl(
         endType: SessionPartSnapshotType,
         startNewSession: Boolean,
         crashId: String?,
+    ): SessionPartPayload = collectSessionPart(endType, startNewSession, crashId, buildSnapshots = true)
+
+    override fun endSessionPart(
+        endType: SessionPartSnapshotType,
+        startNewSession: Boolean,
+        crashId: String?,
+    ) {
+        collectSessionPart(endType, startNewSession, crashId, buildSnapshots = false)
+    }
+
+    /**
+     * Ends the session part, collecting its telemetry into a [SessionPartPayload].
+     */
+    private fun collectSessionPart(
+        endType: SessionPartSnapshotType,
+        startNewSession: Boolean,
+        crashId: String?,
+        buildSnapshots: Boolean,
     ): SessionPartPayload {
         val isCacheAttempt = endType == SessionPartSnapshotType.PERIODIC_CACHE
         val includeSnapshots = endType != SessionPartSnapshotType.JVM_CRASH
@@ -43,13 +61,15 @@ internal class SessionPartPayloadSourceImpl(
         }
 
         // Snapshots should only be included if the process is expected to last beyond the current user session
-        val snapshots: List<Span>? = if (includeSnapshots) {
-            retrieveSpanSnapshots(isCacheAttempt)
-        } else {
-            emptyList()
+        val snapshots: List<Span>? = when {
+            !buildSnapshots -> null
+            includeSnapshots -> retrieveSpanSnapshots(isCacheAttempt)
+            else -> emptyList()
         }
 
-        // Ensure the span retrieving is last as that potentially ends the session part span, which effectively ends the user session
+        // Ensure the span retrieving is last as that potentially ends the session part span, which effectively ends the user session.
+        // Its result goes unused when no payload is wanted, but its side effects - recording pending telemetry, stopping the session
+        // part span and draining the completed spans - are required either way.
         val spans: List<Span>? = retrieveSpanData(isCacheAttempt, startNewSession, crashId)
 
         return SessionPartPayload(

@@ -12,4 +12,14 @@ interface SessionPartPayloadSource {
         startNewSession: Boolean,
         crashId: String? = null,
     ): SessionPartPayload
+
+    /**
+     * Applies the same side effects as [getSessionPartPayload] without mapping in-flight spans
+     * into snapshots.
+     */
+    fun endSessionPart(
+        endType: SessionPartSnapshotType,
+        startNewSession: Boolean,
+        crashId: String? = null,
+    )
 }

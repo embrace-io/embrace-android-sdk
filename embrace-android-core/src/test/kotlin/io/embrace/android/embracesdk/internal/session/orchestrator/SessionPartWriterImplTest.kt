@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -48,7 +49,6 @@ internal class SessionPartWriterImplTest {
         private const val SESSION_SPAN_FILE_NAME = "session_span.pb"
         private const val SPAN_SNAPSHOTS_FILE_NAME = "span_snapshots.pb"
         private const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
-        private val IN_FLIGHT_SPAN = Span(spanId = "aaaaaaaaaaaaaaa1", name = "network-request")
         private const val ENVELOPE_VERSION = "0.1.0"
         private const val ENVELOPE_TYPE = "spans"
         private val SYMBOLS = mapOf("armeabi-v7a" to "my-symbols")
@@ -72,7 +72,7 @@ internal class SessionPartWriterImplTest {
 
     private lateinit var sessionSpan: FakeEmbraceSdkSpan
     private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
-    private var inFlightSpans: List<Span> = emptyList()
+    private var inFlightSpans: List<EmbraceSdkSpan> = emptyList()
     private var onSpanSnapshotsRead: () -> Unit = {}
 
     private var resourceCount = 0
@@ -804,7 +804,7 @@ internal class SessionPartWriterImplTest {
     @Test
     fun `the in-flight spans are written as soon as a session part starts`() {
         val writer = createWriter()
-        inFlightSpans = listOf(IN_FLIGHT_SPAN)
+        inFlightSpans = listOf(inFlightSpan("network-request"))
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         assertEquals(listOf("network-request"), spanSnapshotNamesIn(SESSION_PART_ID))
         assertNoInternalErrors()
@@ -813,12 +813,12 @@ internal class SessionPartWriterImplTest {
     @Test
     fun `the in-flight spans are rewritten when the session part ends`() {
         val writer = createWriter()
-        inFlightSpans = listOf(IN_FLIGHT_SPAN)
+        inFlightSpans = listOf(inFlightSpan("network-request"))
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
 
         clock.tick(1000)
-        inFlightSpans = listOf(IN_FLIGHT_SPAN.copy(name = "view-load"))
+        inFlightSpans = listOf(inFlightSpan("view-load"))
         endPart()
         writer.onSessionPartEnded(SESSION_PART_ID)
 
@@ -837,14 +837,186 @@ internal class SessionPartWriterImplTest {
     @Test
     fun `a periodic write leaves the span snapshots untouched`() {
         val writer = createWriter()
-        inFlightSpans = listOf(IN_FLIGHT_SPAN)
+        inFlightSpans = listOf(inFlightSpan("network-request"))
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
 
-        inFlightSpans = listOf(IN_FLIGHT_SPAN.copy(name = "view-load"))
+        inFlightSpans = listOf(inFlightSpan("view-load"))
         writer.onPeriodicWrite()
 
         assertEquals(listOf("network-request"), spanSnapshotNamesIn(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a span snapshot change rewrites the in-flight spans`() {
+        val writer = createWriter()
+        inFlightSpans = listOf(inFlightSpan("network-request"))
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        inFlightSpans = listOf(inFlightSpan("view-load"))
+        writer.onSpanSnapshotChanged()
+
+        assertEquals(listOf("view-load"), spanSnapshotNamesIn(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `the in-flight spans are gathered when the write runs rather than when it is queued`() {
+        var reads = 0
+        onSpanSnapshotsRead = { reads++ }
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+        assertEquals(1, reads)
+
+        inFlightSpans = listOf(inFlightSpan("network-request"))
+        writer.onSpanSnapshotChanged()
+        assertEquals(1, reads)
+        assertEquals(emptyList<String>(), spanSnapshotNamesOnDisk(SESSION_PART_ID))
+
+        drain()
+        assertEquals(2, reads)
+        assertEquals(listOf("network-request"), spanSnapshotNamesOnDisk(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a burst of span snapshot changes is coalesced into one write of the latest spans`() {
+        var reads = 0
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        onSpanSnapshotsRead = { reads++ }
+        repeat(4) { index ->
+            clock.tick(1000)
+            inFlightSpans = listOf(inFlightSpan("view-load-$index"))
+            writer.onSpanSnapshotChanged()
+        }
+        drain()
+
+        assertEquals(1, reads)
+        assertEquals(listOf("view-load-3"), spanSnapshotNamesIn(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `the in-flight spans persisted for a session part are the ones it ended with`() {
+        val writer = createWriter()
+        inFlightSpans = listOf(inFlightSpan("network-request"))
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        clock.tick(1000)
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        inFlightSpans = listOf(inFlightSpan("next-part-span"))
+        drain()
+
+        assertEquals(listOf("network-request"), spanSnapshotNamesOnDisk(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `the in-flight spans persisted for a session part are the ones it started with`() {
+        val writer = createWriter()
+        inFlightSpans = listOf(inFlightSpan("network-request"))
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+
+        clock.tick(1000)
+        inFlightSpans = listOf(inFlightSpan("later-span"))
+        drain()
+
+        assertEquals(listOf("network-request"), spanSnapshotNamesOnDisk(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a span snapshot change is dropped once another session part has started`() {
+        val writer = createWriter()
+        inFlightSpans = listOf(inFlightSpan("network-request"))
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+        writer.onSpanSnapshotChanged()
+
+        clock.tick(10000)
+        inFlightSpans = listOf(inFlightSpan("next-part-span"))
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
+        drain()
+
+        assertEquals(listOf("network-request"), spanSnapshotNamesOnDisk(SESSION_PART_ID))
+        assertEquals(listOf("next-part-span"), spanSnapshotNamesOnDisk(OTHER_SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `an in-flight span is snapshotted when its write runs rather than when it is queued`() {
+        val writer = createWriter()
+        val span = inFlightSpan("network-request")
+        inFlightSpans = listOf(span)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        span.name = "view-load"
+        drain()
+
+        assertEquals(listOf("view-load"), spanSnapshotNamesOnDisk(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a span snapshot change before any session part starts writes nothing`() {
+        val writer = createWriter()
+        writer.onSpanSnapshotChanged()
+
+        assertEquals(emptyList<SessionPartDirectory>(), sessionPartDirs())
+        assertEquals(0, executor.submitCount)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a span snapshot change after a session part ended is not written to it`() {
+        val writer = createWriter()
+        inFlightSpans = listOf(inFlightSpan("network-request"))
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        clock.tick(1000)
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        drain()
+
+        inFlightSpans = listOf(inFlightSpan("view-load"))
+        writer.onSpanSnapshotChanged()
+
+        assertEquals(listOf("network-request"), spanSnapshotNamesIn(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a span snapshot change is ignored when multi file persistence is disabled`() {
+        val writer = createWriter(enabled = false)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        writer.onSpanSnapshotChanged()
+
+        assertEquals(emptyList<SessionPartDirectory>(), sessionPartDirs())
+        assertEquals(0, executor.submitCount)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `no span snapshots are written once a crash has been handled`() {
+        val writer = createWriter()
+        inFlightSpans = listOf(inFlightSpan("network-request"))
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        writer.onCrash()
+        val submitCount = executor.submitCount
+
+        inFlightSpans = listOf(inFlightSpan("view-load"))
+        writer.onSpanSnapshotChanged()
+
+        assertEquals(submitCount, executor.submitCount)
+        assertEquals(listOf("network-request"), spanSnapshotNamesOnDisk(SESSION_PART_ID))
         assertNoInternalErrors()
     }
 
@@ -1116,6 +1288,9 @@ internal class SessionPartWriterImplTest {
         }
     }
 
+    private fun inFlightSpan(name: String) =
+        FakeEmbraceSdkSpan(name = name).apply { start(clock.now()) }
+
     private fun completedSpan(name: String) = Span(
         traceId = "6c9b1f2ec1d34f3c9a7d0b8e5f2a4c11",
         spanId = "aaaaaaaaaaaaaaa2",
@@ -1209,12 +1384,15 @@ internal class SessionPartWriterImplTest {
 
     private fun spanSnapshotNamesIn(sessionPartId: String): List<String?>? {
         drain()
-        return partFile(sessionPartId, SPAN_SNAPSHOTS_FILE_NAME)
+        return spanSnapshotNamesOnDisk(sessionPartId)
+    }
+
+    private fun spanSnapshotNamesOnDisk(sessionPartId: String): List<String?>? =
+        partFile(sessionPartId, SPAN_SNAPSHOTS_FILE_NAME)
             ?.inputStream()
             ?.use(SpanSnapshots.ADAPTER::decode)
             ?.spans
             ?.map { it.name }
-    }
 
     private fun completedSpanNamesIn(sessionPartId: String): List<String?> {
         drain()

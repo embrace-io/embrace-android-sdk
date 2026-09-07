@@ -12,9 +12,9 @@ import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.createPersistenceBehavior
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
-import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpans
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SessionReconstructionService
@@ -60,17 +60,6 @@ internal class SessionPartWriterResourceReadTest {
             span_id = "aaaaaaaaaaaaaaa2",
             name = "emb-startup-moment",
         )
-
-        private val inFlightSpan = Span(
-            traceId = spanTemplate.trace_id,
-            spanId = "aaaaaaaaaaaaaaa3",
-            name = "emb-network-request",
-            startTimeNanos = spanTemplate.start_time_unix_nano,
-            status = Span.Status.UNSET,
-            events = emptyList(),
-            attributes = emptyList(),
-            links = emptyList(),
-        )
     }
 
     @get:Rule
@@ -85,7 +74,8 @@ internal class SessionPartWriterResourceReadTest {
     private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
     private lateinit var service: SessionReconstructionService
     private lateinit var resourceSource: FakeEnvelopeResourceSource
-    private var inFlightSpans: List<Span> = emptyList()
+    private lateinit var inFlightSpan: FakeEmbraceSdkSpan
+    private var inFlightSpans: List<EmbraceSdkSpan> = emptyList()
 
     @Before
     fun setUp() {
@@ -93,6 +83,7 @@ internal class SessionPartWriterResourceReadTest {
         clock = FakeClock()
         executor = BlockingScheduledExecutorService(clock, true)
         logger = FakeInternalLogger(throwOnInternalError = false)
+        inFlightSpan = FakeEmbraceSdkSpan(name = "emb-network-request").apply { start(clock.now()) }
         inFlightSpans = listOf(inFlightSpan)
         sessionSpan = FakeEmbraceSdkSpan(name = "emb-session").apply { start(clock.now()) }
         currentSessionPartSpan = FakeCurrentSessionPartSpan(clock).apply { sessionPartSpan = sessionSpan }
@@ -154,7 +145,7 @@ internal class SessionPartWriterResourceReadTest {
     @Test
     fun `the in-flight spans are reconstructed as snapshots`() {
         val envelope = checkNotNull(writeSessionPart())
-        assertEquals(inFlightSpan, envelope.data.spanSnapshots?.first())
+        assertEquals(checkNotNull(inFlightSpan.snapshot()), envelope.data.spanSnapshots?.first())
         assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
     }
 

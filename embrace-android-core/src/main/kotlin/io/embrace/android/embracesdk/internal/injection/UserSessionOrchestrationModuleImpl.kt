@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.resurrection.SessionPartReader
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
@@ -110,7 +109,6 @@ class UserSessionOrchestrationModuleImpl(
                 // don't include the session part span
                 openTelemetryModule.spanRepository.getActiveEmbraceSpans()
                     .filterNot { it.hasEmbraceAttribute(EmbType.Ux.Session) }
-                    .mapNotNull(EmbraceSdkSpan::snapshot)
             },
             initModule.telemetryService,
             sessionPartDirectoryStore,
@@ -121,6 +119,11 @@ class UserSessionOrchestrationModuleImpl(
         openTelemetryModule.spanRepository.addCompletedOtelSpansListener { spans ->
             // don't include the session part span
             sessionPartWriter.onSpanCompleted(spans.filterNot { it.hasEmbraceAttribute(EmbType.Ux.Session) })
+        }
+        openTelemetryModule.spanRepository.addSpanChangeListener { span ->
+            if (!span.hasEmbraceAttribute(EmbType.Ux.Session)) {
+                sessionPartWriter.onSpanSnapshotChanged()
+            }
         }
 
         SessionOrchestratorImpl(

@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.Future
 import java.util.concurrent.FutureTask
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 
@@ -15,7 +14,7 @@ import java.util.concurrent.atomic.AtomicReference
  *
  * A write is held as a [FutureTask] armed with a scheduled trigger that runs it
  * [delayMs] later. Cancelling that trigger does not cancel the [FutureTask] it wraps. This
- * lets [shutdown] force the task to run early rather than queueing the work twice.
+ * lets [flush] force the task to run early rather than queueing the work twice.
  */
 internal class CoalescingWriteQueue(
     private val worker: BackgroundWorker,
@@ -56,20 +55,13 @@ internal class CoalescingWriteQueue(
     }
 
     /**
-     * Runs the pending write and blocks for up to [timeoutMs] so the newest data is on disk
-     * before the caller moves on. This is typically because the process is about to die.
+     * Forces the pending write onto the worker now, disarming its scheduled trigger so that the
+     * write does not run twice. This call does not block.
      */
-    fun shutdown(timeoutMs: Long) {
+    fun flush() {
         val write = pending.getAndSet(null) ?: return
         write.trigger?.cancel(false)
-
-        if (runCatching { worker.submit(write.task) }.isFailure) {
-            write.task.run()
-        }
-        when (runCatching { write.task.get(timeoutMs, TimeUnit.MILLISECONDS) }.exceptionOrNull()) {
-            is TimeoutException -> write.task.run()
-            is InterruptedException -> Thread.currentThread().interrupt()
-        }
+        runCatching { worker.submit(write.task) }
     }
 
     private class PendingWrite(

@@ -14,7 +14,6 @@ internal class CoalescingWriteQueueTest {
 
     private companion object {
         private const val DELAY_MS = 5000L
-        private const val TIMEOUT_MS = 1000L
     }
 
     private lateinit var executor: BlockingScheduledExecutorService
@@ -64,16 +63,16 @@ internal class CoalescingWriteQueueTest {
     }
 
     @Test
-    fun `shutdown runs the pending write immediately`() {
+    fun `flush runs the pending write immediately`() {
         queue.submit(write("first"))
-        queue.shutdown(TIMEOUT_MS)
+        queue.flush()
         assertEquals(listOf("first"), writes)
     }
 
     @Test
-    fun `a write forced by shutdown does not run again when its delay elapses`() {
+    fun `a write forced by flush does not run again when its delay elapses`() {
         queue.submit(write("first"))
-        queue.shutdown(TIMEOUT_MS)
+        queue.flush()
 
         executor.moveForwardAndRunBlocked(DELAY_MS)
         assertEquals(listOf("first"), writes)
@@ -81,23 +80,23 @@ internal class CoalescingWriteQueueTest {
     }
 
     @Test
-    fun `shutdown with nothing pending does nothing`() {
-        queue.shutdown(TIMEOUT_MS)
+    fun `flush with nothing pending does nothing`() {
+        queue.flush()
         assertEquals(emptyList<String>(), writes)
     }
 
     @Test
-    fun `shutdown twice runs the pending write once`() {
+    fun `flush twice runs the pending write once`() {
         queue.submit(write("first"))
-        queue.shutdown(TIMEOUT_MS)
-        queue.shutdown(TIMEOUT_MS)
+        queue.flush()
+        queue.flush()
         assertEquals(listOf("first"), writes)
     }
 
     @Test
-    fun `a write submitted after shutdown is armed as normal`() {
+    fun `a write submitted after flush is armed as normal`() {
         queue.submit(write("first"))
-        queue.shutdown(TIMEOUT_MS)
+        queue.flush()
 
         queue.submit(write("second"))
         executor.moveForwardAndRunBlocked(DELAY_MS)
@@ -106,20 +105,30 @@ internal class CoalescingWriteQueueTest {
     }
 
     @Test
-    fun `a write that throws does not fail shutdown`() {
+    fun `a write that throws does not fail flush`() {
         queue.submit { error("write failed") }
-        queue.shutdown(TIMEOUT_MS)
+        queue.flush()
         assertEquals(emptyList<String>(), writes)
     }
 
     @Test
-    fun `a write submitted to a shut down worker is flushed by shutdown`() {
+    fun `flush drops a write that the worker will not take`() {
         executor.shutdown()
         queue.submit(write("first"))
+        queue.flush()
+        assertEquals(emptyList<String>(), writes)
+    }
 
+    @Test
+    fun `flush does not wait for the write to run`() {
+        val blockedExecutor = BlockingScheduledExecutorService(FakeClock(), blockingMode = true)
+        val blockedQueue = CoalescingWriteQueue(BackgroundWorker(blockedExecutor), DELAY_MS)
+
+        blockedQueue.submit(write("first"))
+        blockedQueue.flush()
         assertEquals(emptyList<String>(), writes)
 
-        queue.shutdown(TIMEOUT_MS)
+        blockedExecutor.runCurrentlyBlocked()
         assertEquals(listOf("first"), writes)
     }
 

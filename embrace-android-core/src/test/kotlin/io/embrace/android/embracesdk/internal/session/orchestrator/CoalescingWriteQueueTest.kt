@@ -23,6 +23,15 @@ internal class CoalescingWriteQueueTest {
 
     private fun write(name: String) = Runnable { writes.add(name) }
 
+    /**
+     * Burns the queue's first write, which is never debounced, so that a test can exercise the
+     * delayed path.
+     */
+    private fun primeQueue(target: CoalescingWriteQueue = queue) {
+        target.submit(write("prime"))
+        writes.clear()
+    }
+
     @Before
     fun setUp() {
         executor = BlockingScheduledExecutorService(FakeClock(), blockingMode = false)
@@ -31,7 +40,53 @@ internal class CoalescingWriteQueueTest {
     }
 
     @Test
+    fun `the first write runs without waiting for the delay`() {
+        queue.submit(write("first"))
+        assertEquals(listOf("first"), writes)
+        assertEquals(0, executor.scheduledTasksCount())
+    }
+
+    @Test
+    fun `only the first write skips the delay`() {
+        queue.submit(write("first"))
+        queue.submit(write("second"))
+        assertEquals(listOf("first"), writes)
+        assertEquals(1, executor.scheduledTasksCount())
+
+        executor.moveForwardAndRunBlocked(DELAY_MS)
+        assertEquals(listOf("first", "second"), writes)
+    }
+
+    @Test
+    fun `the first write is queued on the worker rather than run inline`() {
+        val blockedExecutor = BlockingScheduledExecutorService(FakeClock(), blockingMode = true)
+        val blockedQueue = CoalescingWriteQueue(BackgroundWorker(blockedExecutor), DELAY_MS)
+
+        blockedQueue.submit(write("first"))
+        assertEquals(emptyList<String>(), writes)
+        assertEquals(0, blockedExecutor.scheduledTasksCount())
+
+        blockedExecutor.runCurrentlyBlocked()
+        assertEquals(listOf("first"), writes)
+    }
+
+    @Test
+    fun `a flushed write does not re-enable the immediate path`() {
+        primeQueue()
+        queue.submit(write("first"))
+        queue.flush()
+        assertEquals(listOf("first"), writes)
+
+        queue.submit(write("second"))
+        assertEquals(listOf("first"), writes)
+
+        executor.moveForwardAndRunBlocked(DELAY_MS)
+        assertEquals(listOf("first", "second"), writes)
+    }
+
+    @Test
     fun `a write waits out its delay`() {
+        primeQueue()
         queue.submit(write("first"))
 
         assertEquals(1, executor.scheduledTasksCount())
@@ -43,6 +98,7 @@ internal class CoalescingWriteQueueTest {
 
     @Test
     fun `writes submitted within the delay collapse to the last one`() {
+        primeQueue()
         queue.submit(write("first"))
         executor.moveForwardAndRunBlocked(DELAY_MS - 1)
         queue.submit(write("second"))
@@ -54,6 +110,7 @@ internal class CoalescingWriteQueueTest {
 
     @Test
     fun `writes submitted after the delay all run`() {
+        primeQueue()
         queue.submit(write("first"))
         executor.moveForwardAndRunBlocked(DELAY_MS)
         queue.submit(write("second"))
@@ -64,6 +121,7 @@ internal class CoalescingWriteQueueTest {
 
     @Test
     fun `flush runs the pending write immediately`() {
+        primeQueue()
         queue.submit(write("first"))
         queue.flush()
         assertEquals(listOf("first"), writes)
@@ -71,6 +129,7 @@ internal class CoalescingWriteQueueTest {
 
     @Test
     fun `a write forced by flush does not run again when its delay elapses`() {
+        primeQueue()
         queue.submit(write("first"))
         queue.flush()
 
@@ -87,6 +146,7 @@ internal class CoalescingWriteQueueTest {
 
     @Test
     fun `flush twice runs the pending write once`() {
+        primeQueue()
         queue.submit(write("first"))
         queue.flush()
         queue.flush()
@@ -95,6 +155,7 @@ internal class CoalescingWriteQueueTest {
 
     @Test
     fun `a write submitted after flush is armed as normal`() {
+        primeQueue()
         queue.submit(write("first"))
         queue.flush()
 
@@ -106,6 +167,7 @@ internal class CoalescingWriteQueueTest {
 
     @Test
     fun `a write that throws does not fail flush`() {
+        primeQueue()
         queue.submit { error("write failed") }
         queue.flush()
         assertEquals(emptyList<String>(), writes)
@@ -124,6 +186,10 @@ internal class CoalescingWriteQueueTest {
         val blockedExecutor = BlockingScheduledExecutorService(FakeClock(), blockingMode = true)
         val blockedQueue = CoalescingWriteQueue(BackgroundWorker(blockedExecutor), DELAY_MS)
 
+        primeQueue(blockedQueue)
+        blockedExecutor.runCurrentlyBlocked()
+        writes.clear()
+
         blockedQueue.submit(write("first"))
         blockedQueue.flush()
         assertEquals(emptyList<String>(), writes)
@@ -140,6 +206,8 @@ internal class CoalescingWriteQueueTest {
         }
         val reentrantQueue = CoalescingWriteQueue(BackgroundWorker(hookedExecutor), DELAY_MS)
         queueRef = reentrantQueue
+
+        primeQueue(reentrantQueue)
 
         reentrantQueue.submit(write("first"))
         executor.moveForwardAndRunBlocked(DELAY_MS)
@@ -160,7 +228,7 @@ internal class CoalescingWriteQueueTest {
 
         override fun schedule(command: Runnable?, delay: Long, unit: TimeUnit?): ScheduledFuture<*> {
             val future = delegate.schedule(command, delay, unit)
-            if (!hooked) {
+            if (!hooked && delay > 0) {
                 hooked = true
                 onFirstSchedule()
             }

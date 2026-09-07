@@ -217,9 +217,5 @@ internal class SessionPartWriterResourceReadTest {
     private fun directory(): SessionPartDirectory =
         (sessionsDir.list() ?: emptyArray()).mapNotNull(SessionPartDirectory::fromDirName).single()
 
-    private fun drain() {
-        do {
-            executor.moveForwardAndRunBlocked(CoalescingWriteQueue.DEFAULT_DELAY_MS)
-        } while (executor.scheduledTasksCount() > 0)
-    }
+    private fun drain() = executor.drainWrites()
 }

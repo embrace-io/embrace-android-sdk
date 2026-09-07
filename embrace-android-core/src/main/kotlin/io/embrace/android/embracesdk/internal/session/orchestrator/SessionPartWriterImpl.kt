@@ -46,13 +46,16 @@ class SessionPartWriterImpl(
         SessionPartDirectoryStore(sessionsDir, worker, clock, logger),
     private val writeTracker: SessionPartWriteTracker = SessionPartWriteTracker(),
     private val onWritesComplete: () -> Unit = {},
-    private val writeDelayMs: Long = CoalescingWriteQueue.DEFAULT_DELAY_MS,
 ) : SessionPartWriter {
 
-    private companion object {
-        const val CRASH_DRAIN_TIMEOUT_MS: Long = 3000
-        const val MAX_CARRIED_OVER_SPANS: Int = 1000
-        const val CARRIED_OVER_SPAN_LIMIT_TYPE: String = "carried_over_span"
+    internal companion object {
+        private const val CRASH_DRAIN_TIMEOUT_MS: Long = 3000
+        private const val MAX_CARRIED_OVER_SPANS: Int = 1000
+        private const val CARRIED_OVER_SPAN_LIMIT_TYPE: String = "carried_over_span"
+
+        const val METADATA_WRITE_DELAY_MS: Long = 10
+        const val SESSION_SPAN_WRITE_DELAY_MS: Long = 10
+        const val SPAN_SNAPSHOT_WRITE_DELAY_MS: Long = 100
     }
 
     /**
@@ -337,9 +340,9 @@ class SessionPartWriterImpl(
             logger = logger,
         )
 
-        val metadataWrites = CoalescingWriteQueue(worker, writeDelayMs)
-        val sessionSpanWrites = CoalescingWriteQueue(worker, writeDelayMs)
-        val spanSnapshotWrites = CoalescingWriteQueue(worker, writeDelayMs)
+        val metadataWrites = CoalescingWriteQueue(worker, METADATA_WRITE_DELAY_MS)
+        val sessionSpanWrites = CoalescingWriteQueue(worker, SESSION_SPAN_WRITE_DELAY_MS)
+        val spanSnapshotWrites = CoalescingWriteQueue(worker, SPAN_SNAPSHOT_WRITE_DELAY_MS)
 
         private val writeQueues = listOf(metadataWrites, sessionSpanWrites, spanSnapshotWrites)
 

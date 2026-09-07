@@ -166,12 +166,12 @@ internal class SessionPartWriterResourceChangeTest {
         val writer = createWriter()
         startPart(writer, FIRST_PART_ID)
         drain()
-        assertEquals(3, resourceReads)
+        assertEquals(4, resourceReads)
 
         repeat(3) { changeResource("bundle-2.$it") }
         drain()
 
-        assertEquals(4, resourceReads)
+        assertEquals(5, resourceReads)
         assertEquals("bundle-2.2", bundleIdOnDisk(FIRST_PART_ID))
         assertNoInternalErrors()
     }
@@ -254,11 +254,7 @@ internal class SessionPartWriterResourceChangeTest {
         resourceListeners.forEach { listener -> listener(resource) }
     }
 
-    private fun drain() {
-        do {
-            executor.moveForwardAndRunBlocked(CoalescingWriteQueue.DEFAULT_DELAY_MS)
-        } while (executor.scheduledTasksCount() > 0)
-    }
+    private fun drain() = executor.drainWrites()
 
     private fun partDirs(): List<SessionPartDirectory> =
         (sessionsDir.list() ?: emptyArray())

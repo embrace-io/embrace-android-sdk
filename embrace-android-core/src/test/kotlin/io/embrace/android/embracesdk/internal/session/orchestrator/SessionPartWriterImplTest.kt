@@ -25,6 +25,7 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartSpa
 import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshots
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -429,7 +430,7 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
-    fun `a periodic write refreshes the session span for the current part`() {
+    fun `a session span change refreshes the session span for the current part`() {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
@@ -437,10 +438,71 @@ internal class SessionPartWriterImplTest {
 
         clock.tick(2000)
         sessionSpan.name = "span1"
-        writer.onPeriodicWrite()
+        writer.onSessionSpanChanged()
         drain()
 
         assertEquals("span1", sessionSpanIn(SESSION_PART_ID)?.span?.name)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a session span write stamps the time of the write as the heartbeat`() {
+        executor.blockingMode = false
+        val writer = createWriter()
+        val startedAt = clock.now()
+        writer.onSessionPartStarted(startedAt, USER_SESSION_ID, SESSION_PART_ID)
+        assertEquals(listOf(startedAt.millisToNanos().toString()), heartbeatsOnDisk(SESSION_PART_ID))
+
+        clock.tick(2000)
+        writer.onSessionSpanChanged()
+        executor.moveForwardAndRunBlocked(SessionPartWriterImpl.SESSION_SPAN_WRITE_DELAY_MS)
+        assertEquals(listOf(clock.now().millisToNanos().toString()), heartbeatsOnDisk(SESSION_PART_ID))
+        assertNull(sessionSpan.attributes[EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO])
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a heartbeat already on the session span is replaced rather than duplicated`() {
+        sessionSpan.addSystemAttribute(EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO, "1")
+        executor.blockingMode = false
+        val writer = createWriter()
+        val startedAt = clock.now()
+        writer.onSessionPartStarted(startedAt, USER_SESSION_ID, SESSION_PART_ID)
+
+        assertEquals(listOf(startedAt.millisToNanos().toString()), heartbeatsOnDisk(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `an ended session span is written with its end time as the heartbeat`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        clock.tick(10000)
+        val endedAt = clock.now()
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        drain()
+
+        assertEquals(endedAt.millisToNanos(), sessionSpanIn(SESSION_PART_ID)?.span?.end_time_unix_nano)
+        assertEquals(listOf(endedAt.millisToNanos().toString()), heartbeatsOnDisk(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a session span change that arrives after its session part ended is dropped`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+        clock.tick(10000)
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        drain()
+
+        File(sessionsDir, partDirs().single().dirName).deleteRecursively()
+        writer.onSessionSpanChanged()
+        drain()
         assertNoInternalErrors()
     }
 
@@ -508,14 +570,14 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
-    fun `repeated periodic writes keep the latest session span`() {
+    fun `repeated session span changes keep the latest session span`() {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
         repeat(4) { index ->
             clock.tick(2000)
             sessionSpan.name = "span${index + 1}"
-            writer.onPeriodicWrite()
+            writer.onSessionSpanChanged()
             drain()
         }
 
@@ -524,9 +586,9 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
-    fun `a periodic write before any session part starts is a no-op`() {
+    fun `a session span change before any session part starts is a no-op`() {
         val writer = createWriter()
-        writer.onPeriodicWrite()
+        writer.onSessionSpanChanged()
         drain()
 
         assertEquals(emptyList<SessionPartDirectory>(), sessionPartDirs())
@@ -535,12 +597,12 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
-    fun `a periodic write writes nothing when the part started without a session span`() {
+    fun `a session span change writes nothing when the part started without a session span`() {
         currentSessionPartSpan.sessionPartSpan = null
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
-        writer.onPeriodicWrite()
+        writer.onSessionSpanChanged()
         drain()
 
         assertNull(sessionSpanIn(SESSION_PART_ID))
@@ -548,7 +610,7 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
-    fun `a periodic write is not made once multi file persistence is disabled`() {
+    fun `a session span change is not written once multi file persistence is disabled`() {
         val configService = configService(enabled = true)
         val writer = createWriter(configService = configService)
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
@@ -558,7 +620,7 @@ internal class SessionPartWriterImplTest {
         configService.persistenceBehavior = createPersistenceBehavior()
         clock.tick(2000)
         sessionSpan.name = "span1"
-        writer.onPeriodicWrite()
+        writer.onSessionSpanChanged()
         drain()
 
         assertEquals(submitCount, executor.submitCount)
@@ -575,7 +637,7 @@ internal class SessionPartWriterImplTest {
         File(sessionsDir, partDirs().single().dirName).deleteRecursively()
         repeat(4) {
             clock.tick(2000)
-            writer.onPeriodicWrite()
+            writer.onSessionSpanChanged()
         }
         drain()
 
@@ -591,7 +653,7 @@ internal class SessionPartWriterImplTest {
         repeat(4) { index ->
             clock.tick(2000)
             sessionSpan.name = "span${index + 1}"
-            writer.onPeriodicWrite()
+            writer.onSessionSpanChanged()
         }
         drain()
 
@@ -835,14 +897,14 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
-    fun `a periodic write leaves the span snapshots untouched`() {
+    fun `a session span change leaves the span snapshots untouched`() {
         val writer = createWriter()
         inFlightSpans = listOf(inFlightSpan("network-request"))
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
 
         inFlightSpans = listOf(inFlightSpan("view-load"))
-        writer.onPeriodicWrite()
+        writer.onSessionSpanChanged()
 
         assertEquals(listOf("network-request"), spanSnapshotNamesIn(SESSION_PART_ID))
         assertNoInternalErrors()
@@ -1029,7 +1091,7 @@ internal class SessionPartWriterImplTest {
 
         clock.tick(2000)
         sessionSpan.name = "span1"
-        writer.onPeriodicWrite()
+        writer.onSessionSpanChanged()
         writer.onMetadataChanged()
         endPart()
         writer.onSessionPartEnded(SESSION_PART_ID)
@@ -1381,6 +1443,11 @@ internal class SessionPartWriterImplTest {
 
     private fun sessionSpanOnDisk(sessionPartId: String): SessionPartSpan? =
         partFile(sessionPartId, SESSION_SPAN_FILE_NAME)?.inputStream()?.use(SessionPartSpan.ADAPTER::decode)
+
+    private fun heartbeatsOnDisk(sessionPartId: String): List<String>? =
+        sessionSpanOnDisk(sessionPartId)?.span?.attributes
+            ?.filter { it.key == EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO }
+            ?.map { it.value_ }
 
     private fun spanSnapshotNamesIn(sessionPartId: String): List<String?>? {
         drain()

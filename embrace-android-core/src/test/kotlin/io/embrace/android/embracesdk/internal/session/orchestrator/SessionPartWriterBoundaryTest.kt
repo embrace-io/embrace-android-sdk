@@ -226,7 +226,7 @@ internal class SessionPartWriterBoundaryTest {
     }
 
     @Test
-    fun `a periodic write after a boundary only updates the newer session part`() {
+    fun `a session span change after a boundary only updates the newer session part`() {
         startPart(FIRST_PART_ID)
         drain()
         startPart(SECOND_PART_ID)
@@ -234,7 +234,7 @@ internal class SessionPartWriterBoundaryTest {
 
         clock.tick(2000)
         sessionSpan.name = "span-refreshed"
-        writer.onPeriodicWrite()
+        writer.onSessionSpanChanged()
         drain()
 
         assertEquals("span0", sessionSpanIn(FIRST_PART_ID)?.span?.name)

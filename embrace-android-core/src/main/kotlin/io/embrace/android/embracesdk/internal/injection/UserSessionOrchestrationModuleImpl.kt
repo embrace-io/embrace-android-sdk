@@ -121,7 +121,9 @@ class UserSessionOrchestrationModuleImpl(
             sessionPartWriter.onSpanCompleted(spans.filterNot { it.hasEmbraceAttribute(EmbType.Ux.Session) })
         }
         openTelemetryModule.spanRepository.addSpanChangeListener { span ->
-            if (!span.hasEmbraceAttribute(EmbType.Ux.Session)) {
+            if (span.hasEmbraceAttribute(EmbType.Ux.Session)) {
+                sessionPartWriter.onSessionSpanChanged()
+            } else {
                 sessionPartWriter.onSpanSnapshotChanged()
             }
         }

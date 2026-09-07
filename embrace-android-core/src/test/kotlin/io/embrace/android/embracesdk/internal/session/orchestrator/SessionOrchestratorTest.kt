@@ -504,11 +504,11 @@ internal class SessionOrchestratorTest {
         val initial = activeUserSession().lastActivityMs
 
         clock.tick(59_000)
-        sessionCacheExecutor.runCurrentlyBlocked()
+        inactivityWorkerExecutor.runCurrentlyBlocked()
         assertEquals(initial, activeUserSession().lastActivityMs)
 
         clock.tick(2_000)
-        sessionCacheExecutor.runCurrentlyBlocked()
+        inactivityWorkerExecutor.runCurrentlyBlocked()
         assertEquals(clock.now(), activeUserSession().lastActivityMs)
     }
 
@@ -521,11 +521,11 @@ internal class SessionOrchestratorTest {
         val initial = activeUserSession().lastActivityMs
 
         clock.tick(19_000L)
-        sessionCacheExecutor.runCurrentlyBlocked()
+        inactivityWorkerExecutor.runCurrentlyBlocked()
         assertEquals(initial, activeUserSession().lastActivityMs)
 
         clock.tick(2_000L)
-        sessionCacheExecutor.runCurrentlyBlocked()
+        inactivityWorkerExecutor.runCurrentlyBlocked()
         assertEquals(clock.now(), activeUserSession().lastActivityMs)
     }
 
@@ -541,7 +541,7 @@ internal class SessionOrchestratorTest {
         val backgroundedAt = activeUserSession().lastActivityMs
         clock.tick(2 * 60_000L)
         orchestrator.onSessionDataUpdate()
-        sessionCacheExecutor.runCurrentlyBlocked()
+        inactivityWorkerExecutor.runCurrentlyBlocked()
         assertEquals(backgroundedAt, activeUserSession().lastActivityMs)
     }
 
@@ -1066,38 +1066,6 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
-    fun `the periodic cache tick rewrites the session span on disk`() {
-        createOrchestrator(ProcessState.FOREGROUND, multiFilePersistenceConfigService())
-        val partId = checkNotNull(sessionTracker.getActiveSessionPartId())
-        assertEquals("emb-session", sessionSpanIn(partId)?.span?.name)
-        clock.tick(2000)
-        checkNotNull(currentSessionPartSpan.sessionPartSpan).name = "refreshed-span"
-        sessionCacheExecutor.runCurrentlyBlocked()
-
-        assertEquals("refreshed-span", sessionSpanIn(partId)?.span?.name)
-        assertNoInternalErrors()
-    }
-
-    @Test
-    fun `the periodic cache tick only rewrites the session span in the background when session data changed`() {
-        createOrchestrator(ProcessState.BACKGROUND, multiFilePersistenceConfigService())
-        val partId = checkNotNull(sessionTracker.getActiveSessionPartId())
-        sessionCacheExecutor.runCurrentlyBlocked()
-        assertEquals("emb-session", sessionSpanIn(partId)?.span?.name)
-
-        clock.tick(2000)
-        checkNotNull(currentSessionPartSpan.sessionPartSpan).name = "refreshed-span"
-        sessionCacheExecutor.runCurrentlyBlocked()
-        assertEquals("emb-session", sessionSpanIn(partId)?.span?.name)
-
-        clock.tick(2000)
-        orchestrator.onSessionDataUpdate()
-        sessionCacheExecutor.runCurrentlyBlocked()
-        assertEquals("refreshed-span", sessionSpanIn(partId)?.span?.name)
-        assertNoInternalErrors()
-    }
-
-    @Test
     fun `crash does not create a session part directory`() {
         createOrchestrator(ProcessState.FOREGROUND, multiFilePersistenceConfigService())
         val initial = sessionPartDirs().single()
@@ -1161,16 +1129,17 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
-    fun `the periodic cache builds no payload when multi file persistence is enabled`() {
+    fun `no periodic caching is started when multi file persistence is enabled`() {
         createOrchestrator(ProcessState.FOREGROUND, multiFilePersistenceConfigService())
-        val partId = checkNotNull(sessionTracker.getActiveSessionPartId())
+        assertEquals(0, sessionCacheExecutor.scheduledTasksCount())
+
         clock.tick(2000)
-        checkNotNull(currentSessionPartSpan.sessionPartSpan).name = "refreshed-span"
         sessionCacheExecutor.runCurrentlyBlocked()
 
-        // nothing was cached by the legacy layer
         assertEquals(emptyList<Any>(), store.cachedSessionPartPayloads)
-        assertEquals("refreshed-span", sessionSpanIn(partId)?.span?.name)
+
+        // the writer stamps its own heartbeat as it writes, so the legacy attrs are not needed
+        assertNull(destination.attributes[EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO])
         assertNoInternalErrors()
     }
 

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
@@ -9,6 +10,7 @@ import io.embrace.android.embracesdk.internal.envelope.session.SESSION_ENVELOPE_
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
+import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpansWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionManifestWriter
@@ -23,6 +25,7 @@ import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import java.io.File
 
 /**
@@ -35,7 +38,7 @@ class SessionPartWriterImpl(
     private val worker: BackgroundWorker,
     private val configService: ConfigService,
     private val uuidSource: UuidSource,
-    clock: Clock,
+    private val clock: Clock,
     private val logger: InternalLogger,
     private val resourceSource: EnvelopeResourceSource,
     private val metadataSource: EnvelopeMetadataSource,
@@ -54,7 +57,7 @@ class SessionPartWriterImpl(
         private const val CARRIED_OVER_SPAN_LIMIT_TYPE: String = "carried_over_span"
 
         const val METADATA_WRITE_DELAY_MS: Long = 10
-        const val SESSION_SPAN_WRITE_DELAY_MS: Long = 10
+        const val SESSION_SPAN_WRITE_DELAY_MS: Long = 100
         const val SPAN_SNAPSHOT_WRITE_DELAY_MS: Long = 100
     }
 
@@ -167,11 +170,11 @@ class SessionPartWriterImpl(
         queueMetadataWrite(current ?: return)
     }
 
-    override fun onPeriodicWrite() {
+    override fun onSessionSpanChanged() {
         if (!acceptingWrites()) {
             return
         }
-        queueSessionSpanWrite(current ?: return)
+        queueSessionSpanWrite(current ?: return, onlyIfCurrent = true)
     }
 
     override fun onCrash() {
@@ -224,14 +227,29 @@ class SessionPartWriterImpl(
     /**
      * Writes the session span as it stands right now.
      */
-    private fun queueSessionSpanWrite(writers: PartWriters) {
+    private fun queueSessionSpanWrite(writers: PartWriters, onlyIfCurrent: Boolean = false) {
         val span = writers.span ?: return
         execute(InternalErrorType.SessionSpanWriteFail, writers.sessionSpanWrites::submit) {
+            if (onlyIfCurrent && current !== writers) {
+                return@execute
+            }
             val snapshot = span.snapshot()
             if (snapshot != null) {
-                writers.sessionSpan.write(snapshot)
+                writers.sessionSpan.write(snapshot.withHeartbeat())
             }
         }
+    }
+
+    /**
+     * Stamps emb.heartbeat_unix_time_nanos on the span.
+     */
+    private fun Span.withHeartbeat(): Span {
+        val heartbeat = Attribute(
+            EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO,
+            (endTimeNanos ?: clock.now().millisToNanos()).toString(),
+        )
+        val existing = attributes.orEmpty().filterNot { it.key == heartbeat.key }
+        return copy(attributes = existing + heartbeat)
     }
 
     /**

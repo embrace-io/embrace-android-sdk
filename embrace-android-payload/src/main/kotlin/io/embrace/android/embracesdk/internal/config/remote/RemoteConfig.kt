@@ -178,4 +178,10 @@ data class RemoteConfig(
      */
     @SerialName("pct_fragment_leak_detection_enabled")
     val pctFragmentLeakDetectionEnabled: Float? = null,
+
+    /**
+     * Percentage of devices for which WebView leak detection is captured.
+     */
+    @SerialName("pct_web_view_leak_detection_enabled")
+    val pctWebViewLeakDetectionEnabled: Float? = null,
 )

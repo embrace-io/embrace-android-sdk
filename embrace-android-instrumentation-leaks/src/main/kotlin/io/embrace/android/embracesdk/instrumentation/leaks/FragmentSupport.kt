@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.instrumentation.leaks
 
 import android.app.Activity
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 
 /**
@@ -35,7 +36,10 @@ internal object NoOpFragmentSupport : FragmentSupport {
 internal fun createFragmentSupport(
     leakDetector: LeakDetector,
     activeSessionIdsProvider: () -> SessionIdsSnapshot,
+    logger: InternalLogger,
+    webViewLeakDetectionEnabled: Boolean = false,
 ): FragmentSupport {
-    return runCatching { FragmentLeakDetectionLifecycleCallbacks(leakDetector, activeSessionIdsProvider) }
-        .getOrDefault(NoOpFragmentSupport)
+    return runCatching {
+        FragmentLeakDetectionLifecycleCallbacks(leakDetector, activeSessionIdsProvider, logger, webViewLeakDetectionEnabled)
+    }.getOrDefault(NoOpFragmentSupport)
 }

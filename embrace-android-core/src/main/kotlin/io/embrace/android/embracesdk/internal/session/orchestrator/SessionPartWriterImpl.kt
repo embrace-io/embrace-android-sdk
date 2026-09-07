@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionManifes
 import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadataWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectoryStore
+import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTarget
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTracker
 import io.embrace.android.embracesdk.internal.session.persistence.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshotsWriter
@@ -211,7 +212,6 @@ class SessionPartWriterImpl(
     private fun queueManifestWrite(writers: PartWriters) = EmbTrace.trace("mf-queue-manifest") {
         execute(writers, InternalErrorType.SessionManifestWriteFail, { worker.submit(it) }) {
             writers.manifest.write(
-                directory = writers.directory,
                 resource = resourceSource.getEnvelopeResource(),
                 envelopeVersion = SESSION_ENVELOPE_VERSION,
                 envelopeType = SESSION_ENVELOPE_TYPE,
@@ -315,7 +315,7 @@ class SessionPartWriterImpl(
         action: () -> Unit,
     ) {
         val task = Runnable {
-            if (writers?.sealed == true) {
+            if (writers?.abandoned == true) {
                 return@Runnable
             }
             try {
@@ -355,34 +355,28 @@ class SessionPartWriterImpl(
         @Volatile
         var sealed: Boolean = false
 
+        private val target = SessionPartWriteTarget(sessionsDir) { directory }
+
+        /**
+         * Whether nothing more should be written for this part: it has either been fully written,
+         * or the directory is not on disk.
+         */
+        val abandoned: Boolean
+            get() = sealed || target.failed
+
         val span: EmbraceSdkSpan? = currentSessionPartSpan.current()
-        val manifest = SessionManifestWriter(sessionsDir, logger)
+        val manifest = SessionManifestWriter(target, logger)
 
         val metadata = SessionMetadataWriter(
-            sessionsDir = sessionsDir,
-            sessionPartDirectorySource = { directory },
+            target = target,
             metadataSource = metadataSource::getEnvelopeMetadata,
             resourceSource = resourceSource::getEnvelopeResource,
             logger = logger,
         )
 
-        val sessionSpan = SessionSpanWriter(
-            sessionsDir = sessionsDir,
-            sessionPartDirectorySource = { directory },
-            logger = logger,
-        )
-
-        val completedSpans = CompletedSpansWriter(
-            sessionsDir = sessionsDir,
-            sessionPartDirectorySource = { directory },
-            logger = logger,
-        )
-
-        val spanSnapshots = SpanSnapshotsWriter(
-            sessionsDir = sessionsDir,
-            sessionPartDirectorySource = { directory },
-            logger = logger,
-        )
+        val sessionSpan = SessionSpanWriter(target, logger)
+        val completedSpans = CompletedSpansWriter(target, logger)
+        val spanSnapshots = SpanSnapshotsWriter(target, logger)
 
         val metadataWrites = CoalescingWriteQueue(worker, METADATA_WRITE_DELAY_MS)
         val sessionSpanWrites = CoalescingWriteQueue(worker, SESSION_SPAN_WRITE_DELAY_MS)

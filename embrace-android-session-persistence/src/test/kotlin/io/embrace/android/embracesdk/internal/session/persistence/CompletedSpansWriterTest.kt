@@ -56,7 +56,7 @@ internal class CompletedSpansWriterTest {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
         logger = FakeInternalLogger(throwOnInternalError = false)
         activePart = partDirectory
-        writer = CompletedSpansWriter(lazy { sessionsDir }, { activePart }, logger)
+        writer = CompletedSpansWriter(target { activePart }, logger)
         createPartDir(partDirectory)
     }
 
@@ -171,6 +171,15 @@ internal class CompletedSpansWriterTest {
     }
 
     @Test
+    fun `a session part with no directory is given up on and reported once`() {
+        val absent = SessionPartDirectory(timestamp = TIMESTAMP + 2, uuid = UUID)
+        repeat(20) {
+            assertFalse(write(absent))
+        }
+        assertWriteFailureTracked()
+    }
+
+    @Test
     fun `a file occupying the session part path is reported and left untouched`() {
         val occupied = SessionPartDirectory(timestamp = TIMESTAMP + 3, uuid = UUID)
         val occupyingFile = partDir(occupied).apply { writeText("not a directory") }
@@ -181,7 +190,7 @@ internal class CompletedSpansWriterTest {
 
     @Test
     fun `a failing session part source is reported and does not throw`() {
-        writer = CompletedSpansWriter(lazy { sessionsDir }, { error("boom") }, logger)
+        writer = CompletedSpansWriter(target { error("boom") }, logger)
         assertFalse(writer.write(completed))
         assertEquals(emptyList<String>(), partDir().list()?.toList())
         assertWriteFailureTracked()
@@ -280,7 +289,10 @@ internal class CompletedSpansWriterTest {
     }
 
     private fun boundedWriter(): CompletedSpansWriter =
-        CompletedSpansWriter(lazy { sessionsDir }, { activePart }, logger, twoSpanBudget)
+        CompletedSpansWriter(target { activePart }, logger, twoSpanBudget)
+
+    private fun target(source: () -> SessionPartDirectory?): SessionPartWriteTarget =
+        SessionPartWriteTarget(lazy { sessionsDir }, source)
 
     private fun createPartDir(directory: SessionPartDirectory): File =
         File(sessionsDir, directory.dirName).apply { mkdirs() }

@@ -53,18 +53,20 @@ internal class SessionReconstructionServiceManifestTest {
         logger = FakeInternalLogger(throwOnInternalError = false)
         activePart = partDirectory
         writtenResource = fullyPopulatedResource
-        writer = SessionManifestWriter(lazy { sessionsDir }, logger)
+        writer = SessionManifestWriter(target(), logger)
         metadataWriter = SessionMetadataWriter(
-            lazy { sessionsDir },
-            { activePart },
+            target(),
             { fullyPopulatedMetadata },
             { writtenResource },
             logger,
         )
-        sessionSpanWriter = SessionSpanWriter(lazy { sessionsDir }, { activePart }, logger)
+        sessionSpanWriter = SessionSpanWriter(target(), logger)
         service = SessionReconstructionService(lazy { sessionsDir }, logger)
         createPartDir(partDirectory)
     }
+
+    private fun target(): SessionPartWriteTarget =
+        SessionPartWriteTarget(lazy { sessionsDir }) { activePart }
 
     private fun createPartDir(directory: SessionPartDirectory): File =
         File(sessionsDir, directory.dirName).apply { mkdirs() }
@@ -82,8 +84,8 @@ internal class SessionReconstructionServiceManifestTest {
         envelopeType: String = ENVELOPE_TYPE,
         sharedLibSymbolMapping: Map<String, String>? = null,
     ) {
-        assertTrue(writer.write(directory, resource, envelopeVersion, envelopeType, sharedLibSymbolMapping))
         activePart = directory
+        assertTrue(writer.write(resource, envelopeVersion, envelopeType, sharedLibSymbolMapping))
         writtenResource = resource
         assertTrue(metadataWriter.write())
         assertTrue(sessionSpanWriter.write(fullyPopulatedSpan))

@@ -37,7 +37,7 @@ class SessionReconstructionService(
     private fun reconstructImpl(directory: SessionPartDirectory): Envelope<SessionPartPayload>? {
         val partDir = File(sessionsDir.value, directory.dirName)
         if (!partDir.isDirectory) {
-            trackFailure(IOException("Not a session part directory"))
+            trackFailure(IOException(MISSING_PART_DIR_MSG))
             return null
         }
 

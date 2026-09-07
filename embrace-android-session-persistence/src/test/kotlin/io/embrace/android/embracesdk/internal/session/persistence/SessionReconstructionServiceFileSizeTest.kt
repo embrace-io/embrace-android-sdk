@@ -61,16 +61,15 @@ internal class SessionReconstructionServiceFileSizeTest {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
         logger = FakeInternalLogger(throwOnInternalError = false)
         activePart = partDirectory
-        manifestWriter = SessionManifestWriter(lazy { sessionsDir }, logger)
+        manifestWriter = SessionManifestWriter(target(), logger)
         metadataWriter = SessionMetadataWriter(
-            lazy { sessionsDir },
-            { activePart },
+            target(),
             { fullyPopulatedMetadata },
             { fullyPopulatedResource },
             logger,
         )
-        sessionSpanWriter = SessionSpanWriter(lazy { sessionsDir }, { activePart }, logger)
-        snapshotsWriter = SpanSnapshotsWriter(lazy { sessionsDir }, { activePart }, logger)
+        sessionSpanWriter = SessionSpanWriter(target(), logger)
+        snapshotsWriter = SpanSnapshotsWriter(target(), logger)
         service = SessionReconstructionService(lazy { sessionsDir }, logger)
         File(sessionsDir, partDirectory.dirName).mkdirs()
         write()
@@ -169,10 +168,13 @@ internal class SessionReconstructionServiceFileSizeTest {
         assertEquals(size, file.length())
     }
 
+    private fun target(): SessionPartWriteTarget =
+        SessionPartWriteTarget(lazy { sessionsDir }) { activePart }
+
     private fun partFile(fileName: String): File = File(File(sessionsDir, partDirectory.dirName), fileName)
 
     private fun write() {
-        assertTrue(manifestWriter.write(partDirectory, fullyPopulatedResource, ENVELOPE_VERSION, ENVELOPE_TYPE))
+        assertTrue(manifestWriter.write(fullyPopulatedResource, ENVELOPE_VERSION, ENVELOPE_TYPE))
         assertTrue(metadataWriter.write())
         assertTrue(sessionSpanWriter.write(fullyPopulatedSpan))
         assertTrue(snapshotsWriter.write(listOf(inFlightSpan)))

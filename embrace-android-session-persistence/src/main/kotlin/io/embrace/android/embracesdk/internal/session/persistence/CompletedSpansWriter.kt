@@ -18,8 +18,7 @@ import java.io.IOException
  * for filtering it out.
  */
 class CompletedSpansWriter(
-    private val sessionsDir: Lazy<File>,
-    private val sessionPartDirectorySource: () -> SessionPartDirectory?,
+    private val target: SessionPartWriteTarget,
     private val logger: InternalLogger,
     private val maxBytes: Long = MAX_PART_FILE_BYTES,
 ) {
@@ -46,13 +45,9 @@ class CompletedSpansWriter(
     }
 
     private fun writeImpl(spans: List<Span>): Boolean {
-        val directory = sessionPartDirectorySource() ?: return false
+        val directory = target.directory ?: return false
+        val partDir = target.partDir(directory, ::trackFailure) ?: return false
 
-        val partDir = File(sessionsDir.value, directory.dirName)
-        if (!partDir.isDirectory) {
-            trackFailure(IOException("Not a session part directory"))
-            return false
-        }
         val records = CompletedSpans(spans = spans.map(Span::toProto))
         val bytes = CompletedSpans.ADAPTER.encode(records)
 

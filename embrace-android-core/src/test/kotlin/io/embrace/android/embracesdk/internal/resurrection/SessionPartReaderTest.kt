@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionManifes
 import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadataWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectoryStore
+import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTarget
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTracker
 import io.embrace.android.embracesdk.internal.session.persistence.SessionReconstructionService
 import io.embrace.android.embracesdk.internal.session.persistence.SessionSpanWriter
@@ -212,20 +213,19 @@ internal class SessionPartReaderTest {
     private fun persist(directory: SessionPartDirectory, span: Span = sessionSpan()) {
         create(directory)
 
-        SessionManifestWriter(lazy { sessionsDir }, logger).write(
-            directory = directory,
+        val target = SessionPartWriteTarget(lazy { sessionsDir }) { directory }
+        SessionManifestWriter(target, logger).write(
             resource = EnvelopeResource(appVersion = "1.0.0"),
             envelopeVersion = SESSION_ENVELOPE_VERSION,
             envelopeType = SESSION_ENVELOPE_TYPE,
         )
         SessionMetadataWriter(
-            sessionsDir = lazy { sessionsDir },
-            sessionPartDirectorySource = { directory },
+            target = target,
             metadataSource = { EnvelopeMetadata(username = "fake-user") },
             resourceSource = { EnvelopeResource(appVersion = "1.0.0") },
             logger = logger,
         ).write()
-        SessionSpanWriter(lazy { sessionsDir }, { directory }, logger).write(span)
+        SessionSpanWriter(target, logger).write(span)
     }
 
     /**

@@ -48,7 +48,7 @@ internal class SpanSnapshotsWriterTest {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
         logger = FakeInternalLogger(throwOnInternalError = false)
         activePart = partDirectory
-        writer = SpanSnapshotsWriter(lazy { sessionsDir }, { activePart }, logger)
+        writer = SpanSnapshotsWriter(target { activePart }, logger)
         createPartDir(partDirectory)
     }
 
@@ -188,6 +188,15 @@ internal class SpanSnapshotsWriterTest {
     }
 
     @Test
+    fun `a session part with no directory is given up on and reported once`() {
+        val absent = SessionPartDirectory(timestamp = TIMESTAMP + 2, uuid = UUID)
+        repeat(20) {
+            assertFalse(write(absent))
+        }
+        assertWriteFailureTracked()
+    }
+
+    @Test
     fun `a file occupying the session part path is reported and left untouched`() {
         val occupied = SessionPartDirectory(timestamp = TIMESTAMP + 3, uuid = UUID)
         val occupyingFile = partDir(occupied).apply { writeText("not a directory") }
@@ -198,7 +207,7 @@ internal class SpanSnapshotsWriterTest {
 
     @Test
     fun `a failing session part source is reported and does not throw`() {
-        writer = SpanSnapshotsWriter(lazy { sessionsDir }, { error("boom") }, logger)
+        writer = SpanSnapshotsWriter(target { error("boom") }, logger)
         assertFalse(writer.write(snapshots))
         assertEquals(emptyList<String>(), partDir().list()?.toList())
         assertWriteFailureTracked()
@@ -260,6 +269,9 @@ internal class SpanSnapshotsWriterTest {
         assertEquals(listOf(SPAN_SNAPSHOTS_FILE_NAME), partDir().list()?.toList())
         assertNoInternalErrors()
     }
+
+    private fun target(source: () -> SessionPartDirectory?): SessionPartWriteTarget =
+        SessionPartWriteTarget(lazy { sessionsDir }, source)
 
     private fun createPartDir(directory: SessionPartDirectory): File =
         File(sessionsDir, directory.dirName).apply { mkdirs() }

@@ -15,7 +15,7 @@ interface SessionPartWriter {
     /**
      * A session part has ended. Persists any necessary information.
      */
-    fun onSessionPartEnded(sessionPartId: String)
+    fun onSessionPartEnded(sessionPartId: String, crashing: Boolean = false)
 
     /**
      * User information has changed and should be persisted.

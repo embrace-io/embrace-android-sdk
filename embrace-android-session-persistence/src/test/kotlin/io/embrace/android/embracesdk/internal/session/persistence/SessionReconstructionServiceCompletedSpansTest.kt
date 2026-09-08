@@ -48,6 +48,9 @@ internal class SessionReconstructionServiceCompletedSpansTest {
 
         /** Field 1 tagged with wire type 6, which is not a field encoding protobuf defines. */
         private val INVALID_FIELD_ENCODING = byteArrayOf(0x0E)
+
+        /** An intact frame round a record body holding an invalid field encoding. */
+        private val UNDECODABLE_RECORD = byteArrayOf(0x0A, 0x01, 0x0E)
     }
 
     @get:Rule
@@ -189,7 +192,28 @@ internal class SessionReconstructionServiceCompletedSpansTest {
     }
 
     @Test
-    fun `a completed spans log holding undecodable bytes is reported and does not throw`() {
+    fun `an undecodable record is reported but does not lose the rest of the log`() {
+        write(spans = listOf(endedSpanProto))
+        completedSpansFile().appendBytes(UNDECODABLE_RECORD)
+        completedSpansFile().appendBytes(completedSpansLog(listOf(secondEndedSpanProto)))
+
+        val spans = checkNotNull(service.reconstruct(partDirectory)?.data?.spans)
+        assertEquals(listOf(endedSpan, secondEndedSpan, fullyPopulatedSpan), spans)
+        assertReconstructionFailureTracked()
+    }
+
+    @Test
+    fun `several undecodable records are reported once`() {
+        write(spans = listOf(endedSpanProto))
+        completedSpansFile().appendBytes(UNDECODABLE_RECORD + UNDECODABLE_RECORD)
+
+        val spans = checkNotNull(service.reconstruct(partDirectory)?.data?.spans)
+        assertEquals(listOf(endedSpan, fullyPopulatedSpan), spans)
+        assertReconstructionFailureTracked()
+    }
+
+    @Test
+    fun `a completed spans log holding nothing but a malformed frame is reported and does not throw`() {
         write()
         completedSpansFile().writeBytes(INVALID_FIELD_ENCODING)
         assertNull(service.reconstruct(partDirectory))

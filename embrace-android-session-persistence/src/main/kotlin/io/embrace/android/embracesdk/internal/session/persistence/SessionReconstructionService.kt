@@ -170,7 +170,8 @@ class SessionReconstructionService(
         }
         try {
             val decoded = src.source().buffer().use(::readCompletedSpans)
-            SystemTrace.trace("mf-spans-proto-to-payload") { decoded.map(SpanProto::toPayload) }
+            decoded.corruption?.let(::trackFailure)
+            SystemTrace.trace("mf-spans-proto-to-payload") { decoded.spans.map(SpanProto::toPayload) }
         } catch (exc: Throwable) {
             trackFailure(exc)
             null

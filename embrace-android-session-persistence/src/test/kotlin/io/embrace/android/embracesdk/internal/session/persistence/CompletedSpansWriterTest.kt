@@ -304,7 +304,7 @@ internal class CompletedSpansWriterTest {
         File(partDir(directory), COMPLETED_SPANS_FILE_NAME)
 
     private fun readLog(directory: SessionPartDirectory = partDirectory): List<SpanProto> =
-        logFile(directory).source().buffer().use(::readCompletedSpans)
+        logFile(directory).source().buffer().use(::readCompletedSpans).spans
 
     private fun write(
         directory: SessionPartDirectory? = partDirectory,

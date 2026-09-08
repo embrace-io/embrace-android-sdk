@@ -38,7 +38,6 @@ internal class SessionReconstructionServiceMetadataTest {
     private lateinit var logger: FakeInternalLogger
     private lateinit var manifestWriter: SessionManifestWriter
     private lateinit var metadataWriter: SessionMetadataWriter
-    private lateinit var sessionSpanWriter: SessionSpanWriter
     private lateinit var service: SessionReconstructionService
 
     @Volatile
@@ -64,7 +63,6 @@ internal class SessionReconstructionServiceMetadataTest {
             { resourceProvider() },
             logger,
         )
-        sessionSpanWriter = SessionSpanWriter(target(), logger)
         service = SessionReconstructionService(lazy { sessionsDir }, logger)
         createPartDir(partDirectory)
     }
@@ -214,7 +212,6 @@ internal class SessionReconstructionServiceMetadataTest {
     private fun write(directory: SessionPartDirectory = partDirectory) {
         writeManifest(directory)
         writeMetadata(directory)
-        writeSessionSpan(directory)
         writeCompletedSpans(directory)
         writeSpanSnapshots(directory)
     }
@@ -237,11 +234,6 @@ internal class SessionReconstructionServiceMetadataTest {
     private fun writeMetadata(directory: SessionPartDirectory = partDirectory) {
         activePart = directory
         assertTrue(metadataWriter.write())
-    }
-
-    private fun writeSessionSpan(directory: SessionPartDirectory = partDirectory) {
-        activePart = directory
-        assertTrue(sessionSpanWriter.write(fullyPopulatedSpan))
     }
 
     private fun writeMetadataBytes(metadata: EnvelopeMetadataProto, directory: SessionPartDirectory = partDirectory) {

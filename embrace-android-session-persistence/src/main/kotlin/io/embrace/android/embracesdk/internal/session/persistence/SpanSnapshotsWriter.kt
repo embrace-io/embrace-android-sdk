@@ -9,8 +9,7 @@ import io.embrace.android.embracesdk.internal.utils.SystemTrace
  * Writes the in-flight spans for a session part to its directory.
  *
  * The file is overwritten in place with the full set of spans supplied, so it always reflects the
- * spans that are recording right now. The session span should not be written here. Callers are
- * responsible for filtering it out.
+ * spans that are recording right now, including the session span until the session part ends.
  */
 class SpanSnapshotsWriter(
     private val target: SessionPartWriteTarget,

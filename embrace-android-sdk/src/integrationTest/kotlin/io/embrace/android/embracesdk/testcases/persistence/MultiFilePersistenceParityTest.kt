@@ -25,8 +25,9 @@ import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.session.getSessionProperty
+import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpans
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
-import io.embrace.android.embracesdk.internal.session.persistence.SessionPartSpan
+import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -461,7 +462,7 @@ internal class MultiFilePersistenceParityTest(
                         )
                         assertNotNull(
                             "the crashed session part was left unsealed on disk",
-                            sessionSpanOnDisk()?.span?.end_time_unix_nano,
+                            sessionSpanOnDisk()?.end_time_unix_nano,
                         )
                     }
                 }
@@ -494,7 +495,7 @@ internal class MultiFilePersistenceParityTest(
     ) {
         val sessionSpan = envelope.findSessionPartSpan()
         validatePayloadAgainstGoldenFile(
-            payload = sessionSpan.copy(attributes = sessionSpan.attributes?.sorted()),
+            payload = sessionSpan.copy(attributes = sessionSpan.attributes?.withoutHeartbeat()?.sorted()),
             goldenFileName = GOLDEN_FILE,
             placeholders = mapOf(
                 Placeholder.USER_SESSION_ID to envelope.getUserSessionId(),
@@ -504,16 +505,24 @@ internal class MultiFilePersistenceParityTest(
         assertHeartbeat(sessionSpan)
     }
 
+    /**
+     * The one attribute the two layers deliberately differ on: the legacy layer stamps a heartbeat
+     * on the session span as it caches, and the multi file layer writes none at all - a session part
+     * that ended carries its end time, and one that did not is delivered as a snapshot.
+     */
     private fun assertHeartbeat(sessionSpan: Span) {
         val expected = when (persistenceMode) {
-            PersistenceMode.LEGACY -> sessionSpan.startTimeNanos
-            PersistenceMode.MULTI_FILE -> sessionSpan.endTimeNanos
+            PersistenceMode.LEGACY -> sessionSpan.startTimeNanos?.toString()
+            PersistenceMode.MULTI_FILE -> null
         }
         assertEquals(
-            expected?.toString(),
+            expected,
             sessionSpan.attributes?.findAttributeValue(EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO),
         )
     }
+
+    private fun List<Attribute>.withoutHeartbeat(): List<Attribute> =
+        filterNot { it.key == EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO }
 
     /**
      * Asserts the basic shape of a delivered session payload. Both persistence paths must satisfy
@@ -532,12 +541,19 @@ internal class MultiFilePersistenceParityTest(
     private fun Envelope<SessionPartPayload>.allSpanNames(): List<String> =
         (data.spans.orEmpty() + data.spanSnapshots.orEmpty()).mapNotNull(Span::name)
 
-    private fun sessionSpanOnDisk(): SessionPartSpan? {
+    /**
+     * The session span persisted for the newest session part, which is logged as a completed span
+     * once that part has ended.
+     */
+    private fun sessionSpanOnDisk(): SpanProto? {
         val directory = storedSessionPartDirectories().maxWithOrNull(SessionPartDirectory.comparator) ?: return null
-        return File(File(sessionsDir(), directory.dirName), SESSION_SPAN_FILE_NAME)
+        val bytes = File(File(sessionsDir(), directory.dirName), COMPLETED_SPANS_FILE_NAME)
             .takeIf(File::isFile)
-            ?.inputStream()
-            ?.use(SessionPartSpan.ADAPTER::decode)
+            ?.readBytes()
+            ?: return null
+        return CompletedSpans.ADAPTER.decode(bytes).spans.lastOrNull { span ->
+            span.attributes.any { it.key == "emb.type" && it.value_ == "ux.session" }
+        }
     }
 
     private fun storedSessionPartDirectories(): List<SessionPartDirectory> =
@@ -560,7 +576,7 @@ internal class MultiFilePersistenceParityTest(
 
     internal companion object {
         private const val SESSION_SPAN_NAME = "emb-session"
-        private const val SESSION_SPAN_FILE_NAME = "session_span.pb"
+        private const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
         private const val EVENT_DRIVEN_PROPERTY = "event-driven"
         private const val WRITE_DEBOUNCE_WAIT_MS = 1000L
         private const val GOLDEN_FILE = "multi_file_parity_session_part_span.json"

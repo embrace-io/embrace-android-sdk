@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
  */
 internal val WRITE_DRAIN_TICK_MS: Long = maxOf(
     SessionPartWriterImpl.METADATA_WRITE_DELAY_MS,
-    SessionPartWriterImpl.SESSION_SPAN_WRITE_DELAY_MS,
     SessionPartWriterImpl.SPAN_SNAPSHOT_WRITE_DELAY_MS,
 )
 

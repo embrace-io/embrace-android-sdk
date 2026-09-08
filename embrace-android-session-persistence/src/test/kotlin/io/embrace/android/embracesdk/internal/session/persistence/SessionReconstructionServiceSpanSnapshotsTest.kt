@@ -45,12 +45,8 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
     private lateinit var logger: FakeInternalLogger
     private lateinit var manifestWriter: SessionManifestWriter
     private lateinit var metadataWriter: SessionMetadataWriter
-    private lateinit var sessionSpanWriter: SessionSpanWriter
     private lateinit var snapshotsWriter: SpanSnapshotsWriter
     private lateinit var service: SessionReconstructionService
-
-    @Volatile
-    private var sessionSpan: Span = fullyPopulatedSpan
 
     @Volatile
     private var activePart: SessionPartDirectory? = partDirectory
@@ -59,7 +55,6 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
     fun setUp() {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
         logger = FakeInternalLogger(throwOnInternalError = false)
-        sessionSpan = fullyPopulatedSpan
         activePart = partDirectory
         manifestWriter = SessionManifestWriter(target(), logger)
         metadataWriter = SessionMetadataWriter(
@@ -68,7 +63,6 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
             { fullyPopulatedResource },
             logger,
         )
-        sessionSpanWriter = SessionSpanWriter(target(), logger)
         snapshotsWriter = SpanSnapshotsWriter(target(), logger)
         service = SessionReconstructionService(lazy { sessionsDir }, logger)
         createPartDir(partDirectory)
@@ -94,34 +88,12 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
     }
 
     @Test
-    fun `an unfinished session span is reconstructed after the persisted snapshots`() {
-        val incomplete = fullyPopulatedSpan.copy(endTimeNanos = null)
-        sessionSpan = incomplete
-        write(snapshots = listOf(inFlightSpan))
-
-        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
-        assertEquals(listOf(inFlightSpan, incomplete), payload.spanSnapshots)
-        assertEquals(emptyList<Span>(), payload.spans)
-        assertNoInternalErrors()
-    }
-
-    @Test
-    fun `an empty snapshots file reconstructs no snapshots when the session span finished`() {
+    fun `an empty snapshots file reconstructs no snapshots`() {
         write()
 
         val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
         assertEquals(emptyList<Span>(), payload.spanSnapshots)
         assertEquals(listOf(fullyPopulatedSpan), payload.spans)
-        assertNoInternalErrors()
-    }
-
-    @Test
-    fun `an empty snapshots file reconstructs the unfinished session span alone`() {
-        val incomplete = fullyPopulatedSpan.copy(endTimeNanos = null)
-        sessionSpan = incomplete
-        write()
-
-        assertEquals(listOf(incomplete), service.reconstruct(partDirectory)?.data?.spanSnapshots)
         assertNoInternalErrors()
     }
 
@@ -165,7 +137,6 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
     fun `a missing snapshots file reconstructs no snapshots`() {
         writeManifest()
         writeMetadata()
-        writeSessionSpan()
         writeCompletedSpans()
 
         val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
@@ -175,13 +146,12 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
     }
 
     @Test
-    fun `a missing snapshots file still reconstructs the unfinished session span`() {
+    fun `a session span that never ended is reconstructed as a span snapshot`() {
         val incomplete = fullyPopulatedSpan.copy(endTimeNanos = null)
-        sessionSpan = incomplete
         writeManifest()
         writeMetadata()
-        writeSessionSpan()
-        writeCompletedSpans()
+        File(partDir(), "completed_spans.pb").writeBytes(completedSpansLog(emptyList()))
+        writeSpanSnapshots(snapshots = listOf(incomplete))
 
         val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
         assertEquals(listOf(incomplete), payload.spanSnapshots)
@@ -193,7 +163,6 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
     fun `a directory occupying the snapshots path is reported`() {
         writeManifest()
         writeMetadata()
-        writeSessionSpan()
         writeCompletedSpans()
         snapshotsFile().mkdirs()
 
@@ -265,7 +234,6 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
     ) {
         writeManifest(directory)
         writeMetadata(directory)
-        writeSessionSpan(directory)
         writeCompletedSpans(directory)
         writeSpanSnapshots(directory, snapshots)
     }
@@ -280,13 +248,9 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         assertTrue(metadataWriter.write())
     }
 
-    private fun writeSessionSpan(directory: SessionPartDirectory = partDirectory) {
-        activePart = directory
-        assertTrue(sessionSpanWriter.write(sessionSpan))
-    }
-
     private fun writeCompletedSpans(directory: SessionPartDirectory = partDirectory) {
-        File(partDir(directory), "completed_spans.pb").writeBytes(completedSpansLog(emptyList()))
+        File(partDir(directory), "completed_spans.pb")
+            .writeBytes(completedSpansLog(listOf(fullyPopulatedSpanProto)))
     }
 
     private fun writeSpanSnapshots(

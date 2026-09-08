@@ -21,7 +21,6 @@ internal class SessionReconstructionServiceFileSizeTest {
     private companion object {
         private const val MANIFEST_FILE_NAME = "manifest.pb"
         private const val METADATA_FILE_NAME = "metadata.pb"
-        private const val SESSION_SPAN_FILE_NAME = "session_span.pb"
         private const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
         private const val SPAN_SNAPSHOTS_FILE_NAME = "span_snapshots.pb"
         private const val ENVELOPE_VERSION = "0.1.0"
@@ -50,7 +49,6 @@ internal class SessionReconstructionServiceFileSizeTest {
     private lateinit var logger: FakeInternalLogger
     private lateinit var manifestWriter: SessionManifestWriter
     private lateinit var metadataWriter: SessionMetadataWriter
-    private lateinit var sessionSpanWriter: SessionSpanWriter
     private lateinit var snapshotsWriter: SpanSnapshotsWriter
     private lateinit var service: SessionReconstructionService
 
@@ -69,7 +67,6 @@ internal class SessionReconstructionServiceFileSizeTest {
             { fullyPopulatedResource },
             logger,
         )
-        sessionSpanWriter = SessionSpanWriter(target(), logger)
         snapshotsWriter = SpanSnapshotsWriter(target(), logger)
         service = SessionReconstructionService(lazy { sessionsDir }, logger)
         File(sessionsDir, partDirectory.dirName).mkdirs()
@@ -90,11 +87,6 @@ internal class SessionReconstructionServiceFileSizeTest {
     @Test
     fun `oversized metadata is rejected`() {
         assertOversizedFileRejected(METADATA_FILE_NAME)
-    }
-
-    @Test
-    fun `an oversized session span is rejected`() {
-        assertOversizedFileRejected(SESSION_SPAN_FILE_NAME)
     }
 
     @Test
@@ -128,7 +120,7 @@ internal class SessionReconstructionServiceFileSizeTest {
         padToSize(COMPLETED_SPANS_FILE_NAME, MAX_PART_FILE_BYTES + 1)
 
         val envelope = checkNotNull(service.reconstruct(partDirectory))
-        assertEquals(listOf(paddedSpan(paddedSpanId(0), padding = 1), fullyPopulatedSpan), envelope.data.spans)
+        assertEquals(listOf(paddedSpan(paddedSpanId(0), padding = 1)), envelope.data.spans)
     }
 
     @Test
@@ -140,9 +132,9 @@ internal class SessionReconstructionServiceFileSizeTest {
         partFile(COMPLETED_SPANS_FILE_NAME).writeBytes(completedSpansLog(logged))
 
         val envelope = checkNotNull(service.reconstruct(partDirectory))
-        assertEquals(fitting + 1, envelope.data.spans?.size)
+        assertEquals(fitting, envelope.data.spans?.size)
         val ids = envelope.data.spans?.mapNotNull(Span::spanId)
-        assertEquals(logged.take(fitting).map(SpanProto::span_id), ids?.dropLast(1))
+        assertEquals(logged.take(fitting).map(SpanProto::span_id), ids)
     }
 
     @Test
@@ -152,9 +144,8 @@ internal class SessionReconstructionServiceFileSizeTest {
         val envelope = checkNotNull(service.reconstruct(partDirectory))
         val spans = checkNotNull(envelope.data.spans)
 
-        assertEquals(MAX_PERSISTED_SPANS + 1, spans.size)
-        assertEquals(fullyPopulatedSpan, spans.last())
-        assertEquals(logged.take(MAX_PERSISTED_SPANS).map(SpanProto::span_id), spans.dropLast(1).map(Span::spanId))
+        assertEquals(MAX_PERSISTED_SPANS, spans.size)
+        assertEquals(logged.take(MAX_PERSISTED_SPANS).map(SpanProto::span_id), spans.map(Span::spanId))
 
         assertEquals(emptyList<Span>(), envelope.data.spanSnapshots)
         assertEquals(1, logger.internalErrorMessages.size)
@@ -167,7 +158,7 @@ internal class SessionReconstructionServiceFileSizeTest {
         partFile(COMPLETED_SPANS_FILE_NAME).writeBytes(completedSpansLog(logged))
 
         val envelope = checkNotNull(service.reconstruct(partDirectory))
-        assertEquals(MAX_PERSISTED_SPANS, envelope.data.spans?.size)
+        assertEquals(MAX_PERSISTED_SPANS - 1, envelope.data.spans?.size)
         assertEquals(listOf(inFlightSpan), envelope.data.spanSnapshots)
         assertNoInternalErrors()
     }
@@ -235,7 +226,6 @@ internal class SessionReconstructionServiceFileSizeTest {
     private fun write() {
         assertTrue(manifestWriter.write(fullyPopulatedResource, ENVELOPE_VERSION, ENVELOPE_TYPE))
         assertTrue(metadataWriter.write())
-        assertTrue(sessionSpanWriter.write(fullyPopulatedSpan))
         assertTrue(snapshotsWriter.write(listOf(inFlightSpan)))
         partFile(COMPLETED_SPANS_FILE_NAME).writeBytes(completedSpansLog(emptyList()))
     }

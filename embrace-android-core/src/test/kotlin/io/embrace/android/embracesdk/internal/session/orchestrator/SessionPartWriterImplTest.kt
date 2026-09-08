@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.createPersistenceBehavior
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
@@ -21,11 +22,10 @@ import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpans
 import io.embrace.android.embracesdk.internal.session.persistence.EnvelopeMetadataProto
 import io.embrace.android.embracesdk.internal.session.persistence.SessionManifest
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
-import io.embrace.android.embracesdk.internal.session.persistence.SessionPartSpan
+import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
 import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshots
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -49,7 +49,6 @@ internal class SessionPartWriterImplTest {
         private const val OTHER_SESSION_PART_ID = "cccccccccccccccccccccccccccccccc"
         private const val METADATA_FILE_NAME = "metadata.pb"
         private const val MANIFEST_FILE_NAME = "manifest.pb"
-        private const val SESSION_SPAN_FILE_NAME = "session_span.pb"
         private const val SPAN_SNAPSHOTS_FILE_NAME = "span_snapshots.pb"
         private const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
         private const val ENVELOPE_VERSION = "0.1.0"
@@ -100,7 +99,7 @@ internal class SessionPartWriterImplTest {
         onMetadataRead = {}
         inFlightSpans = emptyList()
         onSpanSnapshotsRead = {}
-        sessionSpan = FakeEmbraceSdkSpan(name = "span0").apply { start(clock.now()) }
+        sessionSpan = FakeEmbraceSdkSpan(name = "span0", type = EmbType.Ux.Session).apply { start(clock.now()) }
         currentSessionPartSpan = FakeCurrentSessionPartSpan(clock).apply { sessionPartSpan = sessionSpan }
     }
 
@@ -315,7 +314,7 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
 
-        val span = checkNotNull(sessionSpanIn(SESSION_PART_ID)?.span)
+        val span = checkNotNull(sessionSpanIn(SESSION_PART_ID))
         assertEquals("span0", span.name)
         assertEquals(sessionSpan.traceId, span.trace_id)
         assertEquals(sessionSpan.spanId, span.span_id)
@@ -333,8 +332,8 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
         drain()
 
-        assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.span?.name)
-        assertEquals("span1", sessionSpanIn(OTHER_SESSION_PART_ID)?.span?.name)
+        assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.name)
+        assertEquals("span1", sessionSpanIn(OTHER_SESSION_PART_ID)?.name)
         assertNoInternalErrors()
     }
 
@@ -347,7 +346,7 @@ internal class SessionPartWriterImplTest {
         currentSessionPartSpan.sessionPartSpan = null
         drain()
 
-        assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.span?.name)
+        assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.name)
         assertNoInternalErrors()
     }
 
@@ -358,7 +357,7 @@ internal class SessionPartWriterImplTest {
         sessionSpan.name = "span1"
         drain()
 
-        assertEquals("span1", sessionSpanIn(SESSION_PART_ID)?.span?.name)
+        assertEquals("span1", sessionSpanIn(SESSION_PART_ID)?.name)
         assertNoInternalErrors()
     }
 
@@ -383,7 +382,7 @@ internal class SessionPartWriterImplTest {
         repeat(4) { writer.onMetadataChanged() }
         drain()
 
-        assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.span?.name)
+        assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.name)
         assertNoInternalErrors()
     }
 
@@ -392,14 +391,14 @@ internal class SessionPartWriterImplTest {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
-        assertNull(sessionSpanIn(SESSION_PART_ID)?.span?.end_time_unix_nano)
+        assertNull(sessionSpanIn(SESSION_PART_ID)?.end_time_unix_nano)
         clock.tick(10000)
         val endedAt = clock.now()
         endPart()
         writer.onSessionPartEnded(SESSION_PART_ID)
         drain()
 
-        val span = checkNotNull(sessionSpanIn(SESSION_PART_ID)?.span)
+        val span = checkNotNull(sessionSpanIn(SESSION_PART_ID))
         assertEquals("span0", span.name)
         assertEquals(sessionSpan.spanId, span.span_id)
         assertEquals(endedAt.millisToNanos(), span.end_time_unix_nano)
@@ -411,67 +410,23 @@ internal class SessionPartWriterImplTest {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
-        assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.span?.name)
+        assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.name)
 
         clock.tick(2000)
         sessionSpan.name = "span1"
-        writer.onSessionSpanChanged()
+        writer.onSpanSnapshotChanged()
         drain()
 
-        assertEquals("span1", sessionSpanIn(SESSION_PART_ID)?.span?.name)
+        assertEquals("span1", sessionSpanIn(SESSION_PART_ID)?.name)
         assertNoInternalErrors()
     }
 
     @Test
-    fun `a session span write stamps the time of the write as the heartbeat`() {
-        executor.blockingMode = false
-        val writer = createWriter()
-        val startedAt = clock.now()
-        writer.onSessionPartStarted(startedAt, USER_SESSION_ID, SESSION_PART_ID)
-        assertEquals(listOf(startedAt.millisToNanos().toString()), heartbeatsOnDisk(SESSION_PART_ID))
-
-        clock.tick(2000)
-        writer.onSessionSpanChanged()
-        executor.moveForwardAndRunBlocked(SessionPartWriterImpl.SESSION_SPAN_WRITE_DELAY_MS)
-        assertEquals(listOf(clock.now().millisToNanos().toString()), heartbeatsOnDisk(SESSION_PART_ID))
-        assertNull(sessionSpan.attributes[EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO])
-        assertNoInternalErrors()
-    }
-
-    @Test
-    fun `an unbroken stream of session span changes still advances the heartbeat`() {
-        executor.blockingMode = false
-        val writer = createWriter()
-        val startedAt = clock.now()
-        writer.onSessionPartStarted(startedAt, USER_SESSION_ID, SESSION_PART_ID)
-        assertEquals(listOf(startedAt.millisToNanos().toString()), heartbeatsOnDisk(SESSION_PART_ID))
-
-        val step = SessionPartWriterImpl.SESSION_SPAN_WRITE_DELAY_MS / 2
-        repeat(4) {
-            writer.onSessionSpanChanged()
-            executor.moveForwardAndRunBlocked(step)
-        }
-        assertEquals(listOf(clock.now().millisToNanos().toString()), heartbeatsOnDisk(SESSION_PART_ID))
-        assertNoInternalErrors()
-    }
-
-    @Test
-    fun `a heartbeat already on the session span is replaced rather than duplicated`() {
-        sessionSpan.addSystemAttribute(EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO, "1")
-        executor.blockingMode = false
-        val writer = createWriter()
-        val startedAt = clock.now()
-        writer.onSessionPartStarted(startedAt, USER_SESSION_ID, SESSION_PART_ID)
-
-        assertEquals(listOf(startedAt.millisToNanos().toString()), heartbeatsOnDisk(SESSION_PART_ID))
-        assertNoInternalErrors()
-    }
-
-    @Test
-    fun `an ended session span is written with its end time as the heartbeat`() {
+    fun `an ended session span is logged as a completed span rather than a snapshot`() {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
+        assertEquals(listOf("span0"), spanSnapshotNamesOnDisk(SESSION_PART_ID))
 
         clock.tick(10000)
         val endedAt = clock.now()
@@ -479,8 +434,40 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartEnded(SESSION_PART_ID)
         drain()
 
-        assertEquals(endedAt.millisToNanos(), sessionSpanIn(SESSION_PART_ID)?.span?.end_time_unix_nano)
-        assertEquals(listOf(endedAt.millisToNanos().toString()), heartbeatsOnDisk(SESSION_PART_ID))
+        assertEquals(listOf("span0"), completedSpanNamesOnDisk(SESSION_PART_ID))
+        assertEquals(emptyList<String>(), spanSnapshotNamesOnDisk(SESSION_PART_ID))
+        assertEquals(endedAt.millisToNanos(), sessionSpanOnDisk(SESSION_PART_ID)?.end_time_unix_nano)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `an in-flight session span is not logged as a completed span`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        assertEquals(emptyList<String>(), completedSpanNamesOnDisk(SESSION_PART_ID))
+        assertNull(sessionSpanOnDisk(SESSION_PART_ID)?.end_time_unix_nano)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `the session span of an ended part is not carried over to the next one`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+        val endedSpanId = sessionSpan.spanId
+
+        clock.tick(10000)
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
+        drain()
+
+        assertEquals(
+            emptyList<String?>(),
+            completedSpansOnDisk(OTHER_SESSION_PART_ID).map(SpanProto::span_id).filter { it == endedSpanId },
+        )
         assertNoInternalErrors()
     }
 
@@ -495,7 +482,7 @@ internal class SessionPartWriterImplTest {
         drain()
 
         File(sessionsDir, partDirs().single().dirName).deleteRecursively()
-        writer.onSessionSpanChanged()
+        writer.onSpanSnapshotChanged()
         drain()
         assertNoInternalErrors()
     }
@@ -512,7 +499,7 @@ internal class SessionPartWriterImplTest {
         currentSessionPartSpan.sessionPartSpan = null
         drain()
 
-        assertEquals(endedAt.millisToNanos(), sessionSpanIn(SESSION_PART_ID)?.span?.end_time_unix_nano)
+        assertEquals(endedAt.millisToNanos(), sessionSpanIn(SESSION_PART_ID)?.end_time_unix_nano)
         assertNoInternalErrors()
     }
 
@@ -540,7 +527,7 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertEquals(submitCount, executor.submitCount)
-        assertNull(sessionSpanIn(SESSION_PART_ID)?.span?.end_time_unix_nano)
+        assertNull(sessionSpanIn(SESSION_PART_ID)?.end_time_unix_nano)
         assertNoInternalErrors()
     }
 
@@ -559,7 +546,7 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertEquals(submitCount, executor.submitCount)
-        assertNull(sessionSpanIn(SESSION_PART_ID)?.span?.end_time_unix_nano)
+        assertNull(sessionSpanIn(SESSION_PART_ID)?.end_time_unix_nano)
         assertNoInternalErrors()
     }
 
@@ -571,18 +558,18 @@ internal class SessionPartWriterImplTest {
         repeat(4) { index ->
             clock.tick(2000)
             sessionSpan.name = "span${index + 1}"
-            writer.onSessionSpanChanged()
+            writer.onSpanSnapshotChanged()
             drain()
         }
 
-        assertEquals("span4", sessionSpanIn(SESSION_PART_ID)?.span?.name)
+        assertEquals("span4", sessionSpanIn(SESSION_PART_ID)?.name)
         assertNoInternalErrors()
     }
 
     @Test
     fun `a session span change before any session part starts is a no-op`() {
         val writer = createWriter()
-        writer.onSessionSpanChanged()
+        writer.onSpanSnapshotChanged()
         drain()
 
         assertEquals(emptyList<SessionPartDirectory>(), sessionPartDirs())
@@ -596,7 +583,7 @@ internal class SessionPartWriterImplTest {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
-        writer.onSessionSpanChanged()
+        writer.onSpanSnapshotChanged()
         drain()
 
         assertNull(sessionSpanIn(SESSION_PART_ID))
@@ -614,11 +601,11 @@ internal class SessionPartWriterImplTest {
         configService.persistenceBehavior = createPersistenceBehavior()
         clock.tick(2000)
         sessionSpan.name = "span1"
-        writer.onSessionSpanChanged()
+        writer.onSpanSnapshotChanged()
         drain()
 
         assertEquals(submitCount, executor.submitCount)
-        assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.span?.name)
+        assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.name)
         assertNoInternalErrors()
     }
 
@@ -631,11 +618,11 @@ internal class SessionPartWriterImplTest {
         File(sessionsDir, partDirs().single().dirName).deleteRecursively()
         repeat(4) {
             clock.tick(2000)
-            writer.onSessionSpanChanged()
+            writer.onSpanSnapshotChanged()
         }
         drain()
 
-        assertEquals(listOf("SessionSpanWriteFail"), logger.internalErrorMessages.map { it.msg })
+        assertEquals(listOf("SpanSnapshotsWriteFail"), logger.internalErrorMessages.map { it.msg })
     }
 
     @Test
@@ -649,7 +636,7 @@ internal class SessionPartWriterImplTest {
         repeat(10) { index ->
             clock.tick(2000)
             sessionSpan.name = "span${index + 1}"
-            writer.onSessionSpanChanged()
+            writer.onSpanSnapshotChanged()
             writer.onMetadataChanged()
             writer.onSpanSnapshotChanged()
             writer.onSpanCompleted(listOf(completedSpan("completed$index")))
@@ -666,7 +653,7 @@ internal class SessionPartWriterImplTest {
         File(sessionsDir, partDirs().single().dirName).deleteRecursively()
 
         clock.tick(2000)
-        writer.onSessionSpanChanged()
+        writer.onSpanSnapshotChanged()
         drain()
         assertEquals(1, logger.internalErrorMessages.size)
 
@@ -690,11 +677,11 @@ internal class SessionPartWriterImplTest {
         repeat(4) { index ->
             clock.tick(2000)
             sessionSpan.name = "span${index + 1}"
-            writer.onSessionSpanChanged()
+            writer.onSpanSnapshotChanged()
         }
         drain()
 
-        assertEquals("span4", sessionSpanIn(SESSION_PART_ID)?.span?.name)
+        assertEquals("span4", sessionSpanIn(SESSION_PART_ID)?.name)
         assertNoInternalErrors()
     }
 
@@ -707,7 +694,7 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartEnded(SESSION_PART_ID, crashing = true)
         writer.onCrash()
 
-        assertEquals(clock.now().millisToNanos(), sessionSpanOnDisk(SESSION_PART_ID)?.span?.end_time_unix_nano)
+        assertEquals(clock.now().millisToNanos(), sessionSpanOnDisk(SESSION_PART_ID)?.end_time_unix_nano)
         assertTrue(executor.isShutdown)
         assertNoInternalErrors()
     }
@@ -727,7 +714,7 @@ internal class SessionPartWriterImplTest {
         writer.onCrash()
 
         assertEquals(emptyList<String>(), events)
-        assertEquals(expectedEndTimeNanos, sessionSpanOnDisk(SESSION_PART_ID)?.span?.end_time_unix_nano)
+        assertEquals(expectedEndTimeNanos, sessionSpanOnDisk(SESSION_PART_ID)?.end_time_unix_nano)
         assertNoInternalErrors()
     }
 
@@ -757,7 +744,7 @@ internal class SessionPartWriterImplTest {
         var endTimeAtCompletion: Long? = null
         val writer = createWriter(
             onWritesComplete = {
-                endTimeAtCompletion = sessionSpanOnDisk(SESSION_PART_ID)?.span?.end_time_unix_nano
+                endTimeAtCompletion = sessionSpanOnDisk(SESSION_PART_ID)?.end_time_unix_nano
             },
         )
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
@@ -780,7 +767,7 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
 
         assertEquals("user0", metadataOnDisk(SESSION_PART_ID)?.user_id)
-        assertEquals("span0", sessionSpanOnDisk(SESSION_PART_ID)?.span?.name)
+        assertEquals("span0", sessionSpanOnDisk(SESSION_PART_ID)?.name)
         assertEquals(0, executor.scheduledTasksCount())
         assertNoInternalErrors()
     }
@@ -806,7 +793,7 @@ internal class SessionPartWriterImplTest {
         drain()
 
         // every write queued when the part starts is the first one for its file
-        assertEquals(listOf(0L, 0L, 0L), delays)
+        assertEquals(listOf(0L, 0L), delays)
         delays.clear()
 
         writer.onMetadataChanged()
@@ -815,13 +802,7 @@ internal class SessionPartWriterImplTest {
 
         endPart()
         writer.onSessionPartEnded(SESSION_PART_ID)
-        assertEquals(
-            listOf(
-                SessionPartWriterImpl.SESSION_SPAN_WRITE_DELAY_MS,
-                SessionPartWriterImpl.SPAN_SNAPSHOT_WRITE_DELAY_MS,
-            ),
-            delays,
-        )
+        assertEquals(listOf(SessionPartWriterImpl.SPAN_SNAPSHOT_WRITE_DELAY_MS), delays)
         drain()
         assertNoInternalErrors()
     }
@@ -861,7 +842,7 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartEnded(SESSION_PART_ID)
         drain()
 
-        assertEquals(emptyList<String>(), completedSpanNamesIn(SESSION_PART_ID))
+        assertEquals(listOf("span0"), completedSpanNamesIn(SESSION_PART_ID))
 
         clock.tick(1000)
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
@@ -909,7 +890,7 @@ internal class SessionPartWriterImplTest {
         }
         writer.onSpanCompleted(listOf(completedSpan("network-request")))
         drain()
-        assertEquals(emptyList<String>(), completedSpanNamesOnDisk(SESSION_PART_ID))
+        assertEquals(listOf("span0"), completedSpanNamesOnDisk(SESSION_PART_ID))
 
         clock.tick(1000)
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
@@ -933,7 +914,7 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
 
         assertTrue(executor.isShutdown)
-        assertNull(spanSnapshotNamesOnDisk(OTHER_SESSION_PART_ID))
+        assertNull(inFlightSpanNamesOnDisk(OTHER_SESSION_PART_ID))
         assertNoInternalErrors()
     }
 
@@ -968,7 +949,7 @@ internal class SessionPartWriterImplTest {
         assertEquals(listOf(SESSION_PART_ID), partDirs().map(SessionPartDirectory::sessionPartId))
         assertEquals("resource0", manifestOnDisk(SESSION_PART_ID)?.resource?.app_version)
         assertEquals("user0", metadataOnDisk(SESSION_PART_ID)?.user_id)
-        assertEquals("span0", sessionSpanOnDisk(SESSION_PART_ID)?.span?.name)
+        assertEquals("span0", sessionSpanOnDisk(SESSION_PART_ID)?.name)
         assertNoInternalErrors()
     }
 
@@ -982,7 +963,7 @@ internal class SessionPartWriterImplTest {
         assertEquals("resource0", manifestIn(SESSION_PART_ID)?.resource?.app_version)
         assertEquals("user0", metadataIn(SESSION_PART_ID)?.user_id)
         assertEquals(1, writeCount)
-        assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.span?.name)
+        assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.name)
         assertNoInternalErrors()
     }
 
@@ -991,7 +972,7 @@ internal class SessionPartWriterImplTest {
         val writer = createWriter()
         inFlightSpans = listOf(inFlightSpan("network-request"))
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
-        assertEquals(listOf("network-request"), spanSnapshotNamesIn(SESSION_PART_ID))
+        assertEquals(listOf("network-request"), inFlightSpanNamesIn(SESSION_PART_ID))
         assertNoInternalErrors()
     }
 
@@ -1007,7 +988,7 @@ internal class SessionPartWriterImplTest {
         endPart()
         writer.onSessionPartEnded(SESSION_PART_ID)
 
-        assertEquals(listOf("view-load"), spanSnapshotNamesIn(SESSION_PART_ID))
+        assertEquals(listOf("view-load"), inFlightSpanNamesIn(SESSION_PART_ID))
         assertNoInternalErrors()
     }
 
@@ -1015,21 +996,7 @@ internal class SessionPartWriterImplTest {
     fun `an empty span snapshots file is written when nothing is in flight`() {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
-        assertEquals(emptyList<String>(), spanSnapshotNamesIn(SESSION_PART_ID))
-        assertNoInternalErrors()
-    }
-
-    @Test
-    fun `a session span change leaves the span snapshots untouched`() {
-        val writer = createWriter()
-        inFlightSpans = listOf(inFlightSpan("network-request"))
-        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
-        drain()
-
-        inFlightSpans = listOf(inFlightSpan("view-load"))
-        writer.onSessionSpanChanged()
-
-        assertEquals(listOf("network-request"), spanSnapshotNamesIn(SESSION_PART_ID))
+        assertEquals(emptyList<String>(), inFlightSpanNamesIn(SESSION_PART_ID))
         assertNoInternalErrors()
     }
 
@@ -1043,7 +1010,7 @@ internal class SessionPartWriterImplTest {
         inFlightSpans = listOf(inFlightSpan("view-load"))
         writer.onSpanSnapshotChanged()
 
-        assertEquals(listOf("view-load"), spanSnapshotNamesIn(SESSION_PART_ID))
+        assertEquals(listOf("view-load"), inFlightSpanNamesIn(SESSION_PART_ID))
         assertNoInternalErrors()
     }
 
@@ -1059,11 +1026,11 @@ internal class SessionPartWriterImplTest {
         inFlightSpans = listOf(inFlightSpan("network-request"))
         writer.onSpanSnapshotChanged()
         assertEquals(1, reads)
-        assertEquals(emptyList<String>(), spanSnapshotNamesOnDisk(SESSION_PART_ID))
+        assertEquals(emptyList<String>(), inFlightSpanNamesOnDisk(SESSION_PART_ID))
 
         drain()
         assertEquals(2, reads)
-        assertEquals(listOf("network-request"), spanSnapshotNamesOnDisk(SESSION_PART_ID))
+        assertEquals(listOf("network-request"), inFlightSpanNamesOnDisk(SESSION_PART_ID))
         assertNoInternalErrors()
     }
 
@@ -1083,7 +1050,7 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertEquals(1, reads)
-        assertEquals(listOf("view-load-3"), spanSnapshotNamesIn(SESSION_PART_ID))
+        assertEquals(listOf("view-load-3"), inFlightSpanNamesIn(SESSION_PART_ID))
         assertNoInternalErrors()
     }
 
@@ -1100,7 +1067,7 @@ internal class SessionPartWriterImplTest {
         inFlightSpans = listOf(inFlightSpan("next-part-span"))
         drain()
 
-        assertEquals(listOf("network-request"), spanSnapshotNamesOnDisk(SESSION_PART_ID))
+        assertEquals(listOf("network-request"), inFlightSpanNamesOnDisk(SESSION_PART_ID))
         assertNoInternalErrors()
     }
 
@@ -1114,7 +1081,7 @@ internal class SessionPartWriterImplTest {
         inFlightSpans = listOf(inFlightSpan("later-span"))
         drain()
 
-        assertEquals(listOf("network-request"), spanSnapshotNamesOnDisk(SESSION_PART_ID))
+        assertEquals(listOf("network-request"), inFlightSpanNamesOnDisk(SESSION_PART_ID))
         assertNoInternalErrors()
     }
 
@@ -1131,8 +1098,8 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
         drain()
 
-        assertEquals(listOf("network-request"), spanSnapshotNamesOnDisk(SESSION_PART_ID))
-        assertEquals(listOf("next-part-span"), spanSnapshotNamesOnDisk(OTHER_SESSION_PART_ID))
+        assertEquals(listOf("network-request"), inFlightSpanNamesOnDisk(SESSION_PART_ID))
+        assertEquals(listOf("next-part-span"), inFlightSpanNamesOnDisk(OTHER_SESSION_PART_ID))
         assertNoInternalErrors()
     }
 
@@ -1145,7 +1112,7 @@ internal class SessionPartWriterImplTest {
         span.name = "view-load"
         drain()
 
-        assertEquals(listOf("view-load"), spanSnapshotNamesOnDisk(SESSION_PART_ID))
+        assertEquals(listOf("view-load"), inFlightSpanNamesOnDisk(SESSION_PART_ID))
         assertNoInternalErrors()
     }
 
@@ -1174,7 +1141,7 @@ internal class SessionPartWriterImplTest {
         inFlightSpans = listOf(inFlightSpan("view-load"))
         writer.onSpanSnapshotChanged()
 
-        assertEquals(listOf("network-request"), spanSnapshotNamesIn(SESSION_PART_ID))
+        assertEquals(listOf("network-request"), inFlightSpanNamesIn(SESSION_PART_ID))
         assertNoInternalErrors()
     }
 
@@ -1201,7 +1168,7 @@ internal class SessionPartWriterImplTest {
         writer.onSpanSnapshotChanged()
 
         assertEquals(submitCount, executor.submitCount)
-        assertEquals(listOf("network-request"), spanSnapshotNamesOnDisk(SESSION_PART_ID))
+        assertEquals(listOf("network-request"), inFlightSpanNamesOnDisk(SESSION_PART_ID))
         assertNoInternalErrors()
     }
 
@@ -1214,7 +1181,7 @@ internal class SessionPartWriterImplTest {
 
         clock.tick(2000)
         sessionSpan.name = "span1"
-        writer.onSessionSpanChanged()
+        writer.onSpanSnapshotChanged()
         writer.onMetadataChanged()
         endPart()
         writer.onSessionPartEnded(SESSION_PART_ID)
@@ -1222,8 +1189,8 @@ internal class SessionPartWriterImplTest {
         // the worker is sealed by the drain, so queueing anything onto it would be silently
         // discarded - the writer has to stop instead, leaving the crash-time state on disk
         assertEquals(submitCount, executor.submitCount)
-        assertEquals("span0", sessionSpanOnDisk(SESSION_PART_ID)?.span?.name)
-        assertNull(sessionSpanOnDisk(SESSION_PART_ID)?.span?.end_time_unix_nano)
+        assertEquals("span0", sessionSpanOnDisk(SESSION_PART_ID)?.name)
+        assertNull(sessionSpanOnDisk(SESSION_PART_ID)?.end_time_unix_nano)
         assertNoInternalErrors()
     }
 
@@ -1353,13 +1320,13 @@ internal class SessionPartWriterImplTest {
 
         writer.onSpanCompleted(listOf(completedSpan("carried-over")))
         drain()
-        assertEquals(emptyList<String?>(), completedSpanNamesOnDisk(SESSION_PART_ID))
+        assertEquals(listOf("span0"), completedSpanNamesOnDisk(SESSION_PART_ID))
 
         clock.tick(10000)
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
 
         assertEquals(listOf("carried-over"), completedSpanNamesIn(OTHER_SESSION_PART_ID))
-        assertEquals(emptyList<String?>(), completedSpanNamesOnDisk(SESSION_PART_ID))
+        assertEquals(listOf("span0"), completedSpanNamesOnDisk(SESSION_PART_ID))
         assertNoInternalErrors()
     }
 
@@ -1589,39 +1556,60 @@ internal class SessionPartWriterImplTest {
     private fun manifestOnDisk(sessionPartId: String): SessionManifest? =
         partFile(sessionPartId, MANIFEST_FILE_NAME)?.inputStream()?.use(SessionManifest.ADAPTER::decode)
 
-    private fun sessionSpanIn(sessionPartId: String): SessionPartSpan? {
+    private fun sessionSpanIn(sessionPartId: String): SpanProto? {
         drain()
         return sessionSpanOnDisk(sessionPartId)
     }
 
-    private fun sessionSpanOnDisk(sessionPartId: String): SessionPartSpan? =
-        partFile(sessionPartId, SESSION_SPAN_FILE_NAME)?.inputStream()?.use(SessionPartSpan.ADAPTER::decode)
+    /**
+     * The session span persisted for [sessionPartId]: logged as a completed span once its part has
+     * ended, and held in the span snapshots until then.
+     */
+    private fun sessionSpanOnDisk(sessionPartId: String): SpanProto? =
+        completedSpansOnDisk(sessionPartId).lastOrNull(::isSessionSpan)
+            ?: spanSnapshotsOnDisk(sessionPartId).lastOrNull(::isSessionSpan)
 
-    private fun heartbeatsOnDisk(sessionPartId: String): List<String>? =
-        sessionSpanOnDisk(sessionPartId)?.span?.attributes
-            ?.filter { it.key == EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO }
-            ?.map { it.value_ }
+    private fun isSessionSpan(span: SpanProto): Boolean =
+        span.attributes.any { it.key == "emb.type" && it.value_ == "ux.session" }
 
-    private fun spanSnapshotNamesIn(sessionPartId: String): List<String?>? {
+    private fun inFlightSpanNamesIn(sessionPartId: String): List<String?>? {
         drain()
-        return spanSnapshotNamesOnDisk(sessionPartId)
+        return inFlightSpanNamesOnDisk(sessionPartId)
     }
 
-    private fun spanSnapshotNamesOnDisk(sessionPartId: String): List<String?>? =
+    /**
+     * The names of the spans snapshotted for a session part, other than its session span.
+     */
+    private fun inFlightSpanNamesOnDisk(sessionPartId: String): List<String?>? =
+        spanSnapshotNamesOnDisk(sessionPartId, includeSessionSpan = false)
+
+    private fun spanSnapshotNamesOnDisk(
+        sessionPartId: String,
+        includeSessionSpan: Boolean = true,
+    ): List<String?>? =
+        spanSnapshotsOnDisk(sessionPartId)
+            .takeIf { partFile(sessionPartId, SPAN_SNAPSHOTS_FILE_NAME) != null }
+            ?.filter { includeSessionSpan || !isSessionSpan(it) }
+            ?.map { it.name }
+
+    private fun spanSnapshotsOnDisk(sessionPartId: String): List<SpanProto> =
         partFile(sessionPartId, SPAN_SNAPSHOTS_FILE_NAME)
             ?.inputStream()
             ?.use(SpanSnapshots.ADAPTER::decode)
             ?.spans
-            ?.map { it.name }
+            .orEmpty()
 
     private fun completedSpanNamesIn(sessionPartId: String): List<String?> {
         drain()
         return completedSpanNamesOnDisk(sessionPartId)
     }
 
-    private fun completedSpanNamesOnDisk(sessionPartId: String): List<String?> {
+    private fun completedSpanNamesOnDisk(sessionPartId: String): List<String?> =
+        completedSpansOnDisk(sessionPartId).map { it.name }
+
+    private fun completedSpansOnDisk(sessionPartId: String): List<SpanProto> {
         val bytes = partFile(sessionPartId, COMPLETED_SPANS_FILE_NAME)?.readBytes() ?: return emptyList()
-        return CompletedSpans.ADAPTER.decode(bytes).spans.map { it.name }
+        return CompletedSpans.ADAPTER.decode(bytes).spans
     }
 
     private fun partFile(sessionPartId: String, fileName: String): File? {

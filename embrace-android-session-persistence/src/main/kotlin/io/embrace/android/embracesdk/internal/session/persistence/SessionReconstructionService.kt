@@ -68,29 +68,16 @@ class SessionReconstructionService(
         }
         val metadata = metadataProto.toPayload()
 
-        val span = readSessionSpan(partDir) ?: return null
-
         val budget = SpanBudget()
         val completedSpans = readCompletedSpansFile(partDir, budget) ?: return null
-        val persistedSnapshots = readSpanSnapshotsFile(partDir, budget) ?: return null
+        val spanSnapshots = readSpanSnapshotsFile(partDir, budget) ?: return null
         if (budget.exceeded) {
             trackFailure(IllegalStateException(TOO_MANY_PERSISTED_SPANS_MSG))
         }
 
-        // A session span with no end time never finished, so it is delivered as a snapshot rather
-        // than as a completed span. The snapshots file never holds the session span itself.
-        val sessionSpanPayload = span.toPayload()
-        val complete = sessionSpanPayload.endTimeNanos != null
-        val spans = when {
-            complete -> completedSpans + sessionSpanPayload
-            else -> completedSpans
-        }
-        val spanSnapshots = when {
-            complete -> persistedSnapshots
-            else -> persistedSnapshots + sessionSpanPayload
-        }
-
-        val deduped = dedupeSpanIds(spans, spanSnapshots)
+        // the session span is logged as a completed span once it ends, and is held in the snapshots
+        // file until then, so it needs no handling of its own here
+        val deduped = dedupeSpanIds(completedSpans, spanSnapshots)
 
         return Envelope(
             resource = immutableResource.toPayload(mutableResource),
@@ -103,21 +90,6 @@ class SessionReconstructionService(
                 sharedLibSymbolMapping = manifest.shared_lib_symbol_mapping?.symbols,
             ),
         )
-    }
-
-    private fun readSessionSpan(partDir: File): SpanProto? {
-        val sessionSpan = readPartFile(
-            partDir,
-            SESSION_SPAN_FILE_NAME,
-            SessionPartSpan.ADAPTER,
-            SessionPartSpan::format_version,
-        ) ?: return null
-
-        val span = sessionSpan.span
-        if (span == null) {
-            trackFailure(IOException("Session part span file has no span"))
-        }
-        return span
     }
 
     /**
@@ -275,7 +247,6 @@ class SessionReconstructionService(
 private fun partFileReadSectionName(fileName: String): String = when (fileName) {
     MANIFEST_FILE_NAME -> "mf-read-manifest"
     METADATA_FILE_NAME -> "mf-read-metadata"
-    SESSION_SPAN_FILE_NAME -> "mf-read-session-span"
     SPAN_SNAPSHOTS_FILE_NAME -> "mf-read-span-snapshots"
     else -> "mf-read-file-other"
 }

@@ -56,7 +56,6 @@ internal class SessionReconstructionServiceDedupeTest {
     private lateinit var logger: FakeInternalLogger
     private lateinit var manifestWriter: SessionManifestWriter
     private lateinit var metadataWriter: SessionMetadataWriter
-    private lateinit var sessionSpanWriter: SessionSpanWriter
     private lateinit var snapshotsWriter: SpanSnapshotsWriter
     private lateinit var service: SessionReconstructionService
 
@@ -79,7 +78,6 @@ internal class SessionReconstructionServiceDedupeTest {
             { fullyPopulatedResource },
             logger,
         )
-        sessionSpanWriter = SessionSpanWriter(target(), logger)
         snapshotsWriter = SpanSnapshotsWriter(target(), logger)
         service = SessionReconstructionService(lazy { sessionsDir }, logger)
         createPartDir(partDirectory)
@@ -187,9 +185,8 @@ internal class SessionReconstructionServiceDedupeTest {
     private fun write(spans: List<SpanProto> = emptyList(), snapshots: List<Span> = emptyList()) {
         assertTrue(manifestWriter.write(fullyPopulatedResource, ENVELOPE_VERSION, ENVELOPE_TYPE))
         assertTrue(metadataWriter.write())
-        assertTrue(sessionSpanWriter.write(sessionSpan))
         File(File(sessionsDir, partDirectory.dirName), COMPLETED_SPANS_FILE_NAME)
-            .writeBytes(completedSpansLog(spans))
+            .writeBytes(completedSpansLog(spans + sessionSpan.toProto()))
         assertTrue(snapshotsWriter.write(snapshots))
     }
 

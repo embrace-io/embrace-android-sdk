@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
@@ -10,7 +9,6 @@ import io.embrace.android.embracesdk.internal.envelope.session.SESSION_ENVELOPE_
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
-import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpansWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionManifestWriter
@@ -19,7 +17,6 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDir
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectoryStore
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTarget
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTracker
-import io.embrace.android.embracesdk.internal.session.persistence.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshotsWriter
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
@@ -27,7 +24,6 @@ import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import java.io.File
 
 /**
@@ -59,7 +55,6 @@ class SessionPartWriterImpl(
         private const val CARRIED_OVER_SPAN_LIMIT_TYPE: String = "carried_over_span"
 
         const val METADATA_WRITE_DELAY_MS: Long = 500
-        const val SESSION_SPAN_WRITE_DELAY_MS: Long = 1000
         const val SPAN_SNAPSHOT_WRITE_DELAY_MS: Long = 1000
     }
 
@@ -109,7 +104,6 @@ class SessionPartWriterImpl(
 
         queueManifestWrite(writers)
         queueMetadataWrite(writers)
-        queueSessionSpanWrite(writers)
         queueSpanSnapshotsWrite(writers)
         registerResourceChangeListener()
     }
@@ -127,7 +121,7 @@ class SessionPartWriterImpl(
             current = null
             ref
         }
-        queueSessionSpanWrite(writers)
+        queueEndedSessionSpanWrite(writers)
         queueSpanSnapshotsWrite(writers)
         writers.flushPendingWrites()
 
@@ -171,13 +165,6 @@ class SessionPartWriterImpl(
             return
         }
         queueMetadataWrite(current ?: return)
-    }
-
-    override fun onSessionSpanChanged() {
-        if (!acceptingWrites()) {
-            return
-        }
-        queueSessionSpanWrite(current ?: return, onlyIfCurrent = true)
     }
 
     override fun onCrash() {
@@ -227,33 +214,21 @@ class SessionPartWriterImpl(
     }
 
     /**
-     * Writes the session span as it stands right now.
+     * Logs the session span of a part that has ended as one of its completed spans.
+     *
+     * The span is deliberately not carried over to the next session part if this write is late: it
+     * belongs to this part alone, and a part holding two session spans cannot be read back. It
+     * cannot be late in practice, as the write that seals the part is queued after this one onto
+     * the same single threaded worker.
      */
-    private fun queueSessionSpanWrite(writers: PartWriters, onlyIfCurrent: Boolean = false) =
-        EmbTrace.trace("mf-queue-session-span") {
+    private fun queueEndedSessionSpanWrite(writers: PartWriters) =
+        EmbTrace.trace("mf-queue-ended-session-span") {
             val span = writers.span ?: return@trace
-            execute(writers, InternalErrorType.SessionSpanWriteFail, writers.sessionSpanWrites::submit) {
-                if (onlyIfCurrent && current !== writers) {
-                    return@execute
-                }
-                val snapshot = span.snapshot()
-                if (snapshot != null) {
-                    writers.sessionSpan.write(snapshot.withHeartbeat())
-                }
+            execute(null, InternalErrorType.CompletedSpansWriteFail, { worker.submit(it) }) {
+                val snapshot = span.snapshot()?.takeIf { it.endTimeNanos != null } ?: return@execute
+                writers.completedSpans.write(listOf(snapshot))
             }
         }
-
-    /**
-     * Stamps emb.heartbeat_unix_time_nanos on the span.
-     */
-    private fun Span.withHeartbeat(): Span {
-        val heartbeat = Attribute(
-            EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO,
-            (endTimeNanos ?: clock.now().millisToNanos()).toString(),
-        )
-        val existing = attributes.orEmpty().filterNot { it.key == heartbeat.key }
-        return copy(attributes = existing + heartbeat)
-    }
 
     /**
      * Writes in-flight spans to a snapshot file.
@@ -266,17 +241,29 @@ class SessionPartWriterImpl(
             return@trace
         }
         execute(writers, InternalErrorType.SpanSnapshotsWriteFail, writers.spanSnapshotWrites::submit) {
-            writers.spanSnapshots.write(spans.mapNotNull(EmbraceSdkSpan::snapshot))
+            writers.spanSnapshots.write(spans.mapNotNull(EmbraceSdkSpan::snapshot) + writers.sessionSpanSnapshot())
         }
     }
 
     private fun queueSpanSnapshotsRefresh(writers: PartWriters) = EmbTrace.trace("mf-queue-span-snapshots-refresh") {
         execute(writers, InternalErrorType.SpanSnapshotsWriteFail, writers.spanSnapshotWrites::submit) {
             if (current === writers) {
-                writers.spanSnapshots.write(inFlightSpanSource().mapNotNull(EmbraceSdkSpan::snapshot))
+                writers.spanSnapshots.write(
+                    inFlightSpanSource().mapNotNull(EmbraceSdkSpan::snapshot) + writers.sessionSpanSnapshot(),
+                )
             }
         }
     }
+
+    /**
+     * This part's own session span, for as long as it is still recording. Once it ends it is logged
+     * as a completed span instead, so it is left out of the snapshots from then on.
+     *
+     * [inFlightSpanSource] never supplies it: the span is bound to the session part here so that a
+     * write can never pick up the span of a later part.
+     */
+    private fun PartWriters.sessionSpanSnapshot(): List<Span> =
+        listOfNotNull(span?.snapshot()?.takeIf { it.endTimeNanos == null })
 
     private fun queueCompletedSpansWrite(writers: PartWriters, spans: List<Span>) =
         EmbTrace.trace("mf-queue-completed-spans") {
@@ -374,15 +361,13 @@ class SessionPartWriterImpl(
             logger = logger,
         )
 
-        val sessionSpan = SessionSpanWriter(target, logger)
         val completedSpans = CompletedSpansWriter(target, logger)
         val spanSnapshots = SpanSnapshotsWriter(target, logger)
 
         val metadataWrites = CoalescingWriteQueue(worker, clock, METADATA_WRITE_DELAY_MS)
-        val sessionSpanWrites = CoalescingWriteQueue(worker, clock, SESSION_SPAN_WRITE_DELAY_MS)
         val spanSnapshotWrites = CoalescingWriteQueue(worker, clock, SPAN_SNAPSHOT_WRITE_DELAY_MS)
 
-        private val writeQueues = listOf(metadataWrites, sessionSpanWrites, spanSnapshotWrites)
+        private val writeQueues = listOf(metadataWrites, spanSnapshotWrites)
 
         fun flushPendingWrites() = writeQueues.forEach(CoalescingWriteQueue::flush)
 

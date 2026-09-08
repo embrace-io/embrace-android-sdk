@@ -64,11 +64,6 @@ internal val fullyPopulatedSpanProto = SpanProto(
     ),
 )
 
-internal val fullyPopulatedSessionSpanProto = SessionPartSpan(
-    format_version = FORMAT_VERSION,
-    span = fullyPopulatedSpanProto,
-)
-
 internal val inFlightSpan = Span(
     traceId = "6c9b1f2ec1d34f3c9a7d0b8e5f2a4c13",
     spanId = "aaaaaaaaaaaaaaa4",

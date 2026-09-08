@@ -20,16 +20,16 @@ internal class UserSessionLastActivityUpdateTest {
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
         EmbraceSetupInterface(
-            workersToFake = listOf(Worker.Background.PeriodicCacheWorker),
+            workersToFake = listOf(Worker.Background.NonIoRegWorker),
         ).apply {
-            getFakedWorkerExecutor(Worker.Background.PeriodicCacheWorker).blockingMode = false
+            getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).blockingMode = false
         }
     }
 
     @Test
-    fun `foreground periodic cache task updates user session last activity time`() {
+    fun `foreground task updates user session last activity time`() {
         lateinit var store: KeyValueStore
-        lateinit var cacheWorker: BlockingScheduledExecutorService
+        lateinit var worker: BlockingScheduledExecutorService
         val inactivityTimeoutSeconds = 60
         testRule.runTest(
             persistedRemoteConfig = RemoteConfig(
@@ -37,13 +37,13 @@ internal class UserSessionLastActivityUpdateTest {
             ),
             setupAction = {
                 store = getStore()
-                cacheWorker = getFakedWorkerExecutor(Worker.Background.PeriodicCacheWorker)
+                worker = getFakedWorkerExecutor(Worker.Background.NonIoRegWorker)
             },
             testCaseAction = {
                 recordSession {
                     val initialLastActivityMs = store.currentUserSessionLastActivityTimestamp()
-                    clock.tick(90_000)
-                    cacheWorker.runCurrentlyBlocked()
+                    clock.tick(30_000)
+                    worker.runCurrentlyBlocked()
                     assertTrue(store.currentUserSessionLastActivityTimestamp() > initialLastActivityMs)
                 }
             },

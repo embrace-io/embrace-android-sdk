@@ -83,6 +83,7 @@ internal class SessionOrchestratorImpl(
     private var inactivityTimerState: SessionTimerState? = null
     private var maxDurationTimerState: SessionTimerState? = null
     private var backgroundStartupWindowTimerState: SessionTimerState? = null
+    private var lastActivityTimerState: SessionTimerState? = null
 
     @Volatile
     override var userSessionRestoreDecision: UserSessionRestoreDecision? = null
@@ -363,6 +364,7 @@ internal class SessionOrchestratorImpl(
                 EmbTrace.trace("transition-state-start") {
                     // first, disable any previous periodic caching so the job doesn't overwrite the to-be saved session
                     payloadCachingService?.stopCaching()
+                    lastActivityTimerState?.cancel()
 
                     val endingSession = sessionTracker.getActiveSessionPart()
                     if (endingSession != null) {
@@ -433,24 +435,17 @@ internal class SessionOrchestratorImpl(
                                 )
                             }
 
-                            // initiate periodic caching of the payload if a new session has started
-                            EmbTrace.trace("initiate-periodic-caching") {
-                                updatePeriodicCacheAttrs()
-                                val updateIntervalMs = lastActivityUpdateIntervalMs(userSession)
-                                payloadCachingService?.startCaching(newSessionPart, endAppState) { state, timestamp, zygote ->
-                                    synchronized(lock) {
-                                        if (state == ProcessState.FOREGROUND) {
-                                            updateUserSessionActivityIfStale(
-                                                timestamp = timestamp,
-                                                updateIntervalMs = updateIntervalMs,
-                                            )
-                                        }
-                                        updatePeriodicCacheAttrs()
-                                        sessionPartWriter?.onPeriodicWrite()
+                            scheduleLastActivityUpdate(userSession, endAppState)
 
-                                        when {
-                                            multiFilePersistenceEnabled() -> null
-                                            else -> payloadFactory.snapshotPayload(state, timestamp, zygote)
+                            // initiate periodic caching of the payload if a new session has started.
+                            // the multi file layer writes as telemetry changes, so it needs no tick.
+                            if (!multiFilePersistenceEnabled()) {
+                                EmbTrace.trace("initiate-periodic-caching") {
+                                    updatePeriodicCacheAttrs()
+                                    payloadCachingService?.startCaching(newSessionPart, endAppState) { state, timestamp, zygote ->
+                                        synchronized(lock) {
+                                            updatePeriodicCacheAttrs()
+                                            payloadFactory.snapshotPayload(state, timestamp, zygote)
                                         }
                                     }
                                 }
@@ -477,6 +472,26 @@ internal class SessionOrchestratorImpl(
                 ),
             )
         }
+    }
+
+    /**
+     * Keeps the persisted last activity time of the user session fresh while the app is in the
+     * foreground, so a process that dies mid-session can tell on relaunch whether the user session
+     * was still active. Nothing else updates it between session part transitions, which can be
+     * hours apart.
+     */
+    private fun scheduleLastActivityUpdate(metadata: UserSessionMetadata?, endProcessState: ProcessState) {
+        if (endProcessState != ProcessState.FOREGROUND) {
+            return
+        }
+        val intervalMs = lastActivityUpdateIntervalMs(metadata)
+        val future = backgroundWorker.scheduleWithFixedDelay(
+            { synchronized(lock) { updateUserSessionActivityIfStale(clock.now(), intervalMs) } },
+            intervalMs,
+            intervalMs,
+            TimeUnit.MILLISECONDS,
+        ) ?: return
+        lastActivityTimerState = SessionTimerState(future)
     }
 
     private fun scheduleMaxDurationTimeout(metadata: UserSessionMetadata?) {

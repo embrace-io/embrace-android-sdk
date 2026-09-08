@@ -34,9 +34,9 @@ interface SessionPartWriter {
     fun onSpanSnapshotChanged()
 
     /**
-     * The periodic cache interval has elapsed. Rewrites the session span so disk reflects reality.
+     * The session part span has changed.
      */
-    fun onPeriodicWrite()
+    fun onSessionSpanChanged()
 
     /**
      * The process is terminating due to a JVM crash. Blocks until the necessary session part info

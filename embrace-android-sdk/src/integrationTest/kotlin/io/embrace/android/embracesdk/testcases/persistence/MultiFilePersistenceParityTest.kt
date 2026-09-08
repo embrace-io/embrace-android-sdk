@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
@@ -25,6 +26,7 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.session.getSessionProperty
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
+import io.embrace.android.embracesdk.internal.session.persistence.SessionPartSpan
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -304,7 +306,7 @@ internal class MultiFilePersistenceParityTest(
     }
 
     @Test
-    fun `a periodic write before the session ends does not change what is persisted`() {
+    fun `a periodic cache tick before the session ends does not change what is persisted`() {
         testRule.runTest(
             persistedRemoteConfig = remoteConfig(),
             testCaseAction = {
@@ -480,6 +482,18 @@ internal class MultiFilePersistenceParityTest(
                 Placeholder.SESSION_PART_ID to envelope.getSessionPartId(),
             ),
         )
+        assertHeartbeat(sessionSpan)
+    }
+
+    private fun assertHeartbeat(sessionSpan: Span) {
+        val expected = when (persistenceMode) {
+            PersistenceMode.LEGACY -> sessionSpan.startTimeNanos
+            PersistenceMode.MULTI_FILE -> sessionSpan.endTimeNanos
+        }
+        assertEquals(
+            expected?.toString(),
+            sessionSpan.attributes?.findAttributeValue(EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO),
+        )
     }
 
     /**
@@ -499,14 +513,24 @@ internal class MultiFilePersistenceParityTest(
     private fun Envelope<SessionPartPayload>.allSpanNames(): List<String> =
         (data.spans.orEmpty() + data.spanSnapshots.orEmpty()).mapNotNull(Span::name)
 
-    private fun storedSessionPartDirectories(): List<SessionPartDirectory> {
+    private fun sessionSpanOnDisk(): SessionPartSpan? {
+        val directory = storedSessionPartDirectories().maxWithOrNull(SessionPartDirectory.comparator) ?: return null
+        return File(File(sessionsDir(), directory.dirName), SESSION_SPAN_FILE_NAME)
+            .takeIf(File::isFile)
+            ?.inputStream()
+            ?.use(SessionPartSpan.ADAPTER::decode)
+    }
+
+    private fun storedSessionPartDirectories(): List<SessionPartDirectory> =
+        (sessionsDir().list() ?: emptyArray()).mapNotNull(SessionPartDirectory::fromDirName)
+
+    private fun sessionsDir(): File {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
-        val sessionsDir: File = StorageLocation.SESSION_SPLIT.asFile(
+        return StorageLocation.SESSION_SPLIT.asFile(
             logger = FakeInternalLogger(),
             rootDirSupplier = { ctx.filesDir },
             fallbackDirSupplier = { ctx.cacheDir },
         ).value
-        return (sessionsDir.list() ?: emptyArray()).mapNotNull(SessionPartDirectory::fromDirName)
     }
 
     /**
@@ -517,6 +541,9 @@ internal class MultiFilePersistenceParityTest(
 
     internal companion object {
         private const val SESSION_SPAN_NAME = "emb-session"
+        private const val SESSION_SPAN_FILE_NAME = "session_span.pb"
+        private const val EVENT_DRIVEN_PROPERTY = "event-driven"
+        private const val WRITE_DEBOUNCE_WAIT_MS = 1000L
         private const val GOLDEN_FILE = "multi_file_parity_session_part_span.json"
 
         @JvmStatic

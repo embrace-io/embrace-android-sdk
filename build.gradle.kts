@@ -14,7 +14,7 @@ version = project.version
 kover {
     merge {
         subprojects { project ->
-            val ignoreList = listOf("embrace-lint", "embrace-microbenchmark")
+            val ignoreList = listOf("embrace-lint", "embrace-microbenchmark", "embrace-benchmark-common")
             !project.name.contains("-test") &&
                 !project.name.contains("-fakes") &&
                 !ignoreList.contains(project.name)

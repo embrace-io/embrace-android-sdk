@@ -47,6 +47,7 @@ include(
     ":embrace-lint",
     ":embrace-test-common",
     ":embrace-test-fakes",
+    ":embrace-benchmark-common",
     ":embrace-gradle-plugin",
     ":embrace-bytecode-instrumentation-tests",
     ":embrace-gradle-plugin-integration-tests",

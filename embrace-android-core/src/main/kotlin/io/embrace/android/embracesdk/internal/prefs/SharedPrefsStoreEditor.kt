@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.prefs
 
 import android.content.SharedPreferences
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
 
 internal class SharedPrefsStoreEditor(
@@ -35,7 +34,7 @@ internal class SharedPrefsStoreEditor(
         value: Map<String, String>?,
     ) {
         val mapString = when {
-            value != null -> serializer.toJson(value)
+            value != null -> serializer.toJson(value, stringMapSerializer)
             else -> null
         }
         editor.putString(key, mapString)

@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
 import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStoreImpl
-import io.embrace.android.embracesdk.internal.serialization.toJson
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -170,7 +169,7 @@ internal class PersistedConfigTest {
         } else if (persisted != null) {
             val storageDir = File(filesDir, PersistedConfig.STORAGE_DIR_NAME).apply { mkdirs() }
             File(storageDir, "most_recent_response").outputStream().buffered().use {
-                serializer.toJson(persisted, it)
+                serializer.toJson(persisted, RemoteConfig.serializer(), it)
             }
         }
         return PersistedConfig(

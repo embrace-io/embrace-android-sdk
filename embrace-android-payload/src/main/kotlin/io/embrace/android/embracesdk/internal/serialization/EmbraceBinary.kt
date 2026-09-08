@@ -14,7 +14,6 @@ import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.serializer
 import java.io.ByteArrayOutputStream
 import java.io.DataInput
 import java.io.DataInputStream
@@ -85,12 +84,6 @@ sealed class EmbraceBinary(
 
 /** Shared instance, mirroring [embraceJson]. */
 internal val embraceBinary: EmbraceBinary = EmbraceBinary
-
-inline fun <reified T> EmbraceBinary.encodeToStream(value: T, outputStream: OutputStream): Unit =
-    encodeToStream(serializer<T>(), value, outputStream)
-
-inline fun <reified T> EmbraceBinary.decodeFromStream(inputStream: InputStream): T =
-    decodeFromStream(serializer<T>(), inputStream)
 
 private class DataOutputEncoder(
     private val output: DataOutput,

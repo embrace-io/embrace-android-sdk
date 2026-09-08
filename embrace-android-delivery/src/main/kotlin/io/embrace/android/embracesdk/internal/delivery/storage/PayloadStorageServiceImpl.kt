@@ -59,6 +59,9 @@ class PayloadStorageServiceImpl(
         }
     }
 
+    override fun payloadSizeBytes(metadata: StoredTelemetryMetadata): Long =
+        fileStorageService.payloadSizeBytes(metadata)
+
     override fun getPayloadsByPriority(): List<StoredTelemetryMetadata> {
         return fileStorageService.getStoredPayloads().sortedWith(storedTelemetryComparator).apply {
             deliveryTracer?.onGetPayloadsByPriority(this)

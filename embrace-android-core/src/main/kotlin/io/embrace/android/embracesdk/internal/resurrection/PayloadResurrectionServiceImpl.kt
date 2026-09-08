@@ -31,6 +31,7 @@ import io.embrace.android.embracesdk.internal.session.getUserSessionProperties
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import java.io.IOException
 import java.io.InputStream
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
@@ -46,6 +47,7 @@ internal class PayloadResurrectionServiceImpl(
     private val cachedLogEnvelopeStore: CachedLogEnvelopeStore,
     private val logger: InternalLogger,
     private val serializer: PlatformSerializer,
+    private val maxPayloadBytes: Long = MAX_CACHED_PAYLOAD_BYTES,
 ) : PayloadResurrectionService {
 
     private val completionListeners = CopyOnWriteArrayList<() -> Unit>()
@@ -152,10 +154,11 @@ internal class PayloadResurrectionServiceImpl(
         if (sessionlessNativeCrashes.isNotEmpty()) {
             val cachedCrashEnvelopeMetadata = undeliveredPayloads.firstOrNull { it.isCrashEnvelope() }
             val cachedCrashEnvelope = cachedCrashEnvelopeMetadata
-                ?.loadDecompressedPayload()
-                ?.let { payloadStream ->
+                ?.let { metadata ->
                     runCatching {
-                        serializer.fromJson(payloadStream, Envelope.serializer(LogPayload.serializer()))
+                        metadata.loadDecompressedPayload()?.let { payloadStream ->
+                            serializer.fromJson(payloadStream, Envelope.serializer(LogPayload.serializer()))
+                        }
                     }.getOrNull()
                 }
                 ?.also { runCatching { cacheStorageService.delete(cachedCrashEnvelopeMetadata) } }
@@ -451,14 +454,22 @@ internal class PayloadResurrectionServiceImpl(
     private fun Span.resolveSessionPartIdForCrashMatch(): String? =
         attributes?.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID)
 
-    private fun StoredTelemetryMetadata.loadDecompressedPayload(): InputStream? =
-        cacheStorageService.loadPayloadAsStream(this)?.let {
+    /**
+     * Opens the cached payload for reading, or returns null if it is not on disk or does not hold
+     * gzipped data. Throws [IOException] if the file is larger than [maxPayloadBytes].
+     */
+    private fun StoredTelemetryMetadata.loadDecompressedPayload(): InputStream? {
+        if (cacheStorageService.payloadSizeBytes(this) > maxPayloadBytes) {
+            throw IOException(OVERSIZED_PAYLOAD_MSG)
+        }
+        return cacheStorageService.loadPayloadAsStream(this)?.let {
             try {
                 GZIPInputStream(it)
             } catch (_: ZipException) {
                 null
             }
         }
+    }
 
     /**
      * To approximate the time of any snapshot to be converted into a failed span, we look to the session part span of the payload and take

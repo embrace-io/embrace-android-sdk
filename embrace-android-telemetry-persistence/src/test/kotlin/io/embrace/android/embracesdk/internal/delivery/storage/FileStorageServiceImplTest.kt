@@ -65,6 +65,21 @@ class FileStorageServiceImplTest {
     }
 
     @Test
+    fun `payload size reports the bytes on disk`() {
+        storeDummyFile(fakeSessionStoredTelemetryMetadata)
+        assertEquals(
+            DUMMY_CONTENT.toByteArray().size.toLong(),
+            service.payloadSizeBytes(fakeSessionStoredTelemetryMetadata),
+        )
+    }
+
+    @Test
+    fun `payload size is zero for a payload that was never stored`() {
+        assertEquals(0L, service.payloadSizeBytes(fakeSessionStoredTelemetryMetadata))
+        assertTrue(logger.internalErrorMessages.isEmpty())
+    }
+
+    @Test
     fun `load payload stream no file`() {
         assertNull(service.loadPayloadAsStream(fakeSessionStoredTelemetryMetadata))
         assertTrue(logger.internalErrorMessages.isEmpty())

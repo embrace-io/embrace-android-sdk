@@ -439,6 +439,23 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
+    fun `an unbroken stream of session span changes still advances the heartbeat`() {
+        executor.blockingMode = false
+        val writer = createWriter()
+        val startedAt = clock.now()
+        writer.onSessionPartStarted(startedAt, USER_SESSION_ID, SESSION_PART_ID)
+        assertEquals(listOf(startedAt.millisToNanos().toString()), heartbeatsOnDisk(SESSION_PART_ID))
+
+        val step = SessionPartWriterImpl.SESSION_SPAN_WRITE_DELAY_MS / 2
+        repeat(4) {
+            writer.onSessionSpanChanged()
+            executor.moveForwardAndRunBlocked(step)
+        }
+        assertEquals(listOf(clock.now().millisToNanos().toString()), heartbeatsOnDisk(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
     fun `a heartbeat already on the session span is replaced rather than duplicated`() {
         sessionSpan.addSystemAttribute(EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO, "1")
         executor.blockingMode = false

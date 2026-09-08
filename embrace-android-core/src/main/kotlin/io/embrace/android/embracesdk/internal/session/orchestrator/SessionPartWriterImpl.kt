@@ -378,9 +378,9 @@ class SessionPartWriterImpl(
         val completedSpans = CompletedSpansWriter(target, logger)
         val spanSnapshots = SpanSnapshotsWriter(target, logger)
 
-        val metadataWrites = CoalescingWriteQueue(worker, METADATA_WRITE_DELAY_MS)
-        val sessionSpanWrites = CoalescingWriteQueue(worker, SESSION_SPAN_WRITE_DELAY_MS)
-        val spanSnapshotWrites = CoalescingWriteQueue(worker, SPAN_SNAPSHOT_WRITE_DELAY_MS)
+        val metadataWrites = CoalescingWriteQueue(worker, clock, METADATA_WRITE_DELAY_MS)
+        val sessionSpanWrites = CoalescingWriteQueue(worker, clock, SESSION_SPAN_WRITE_DELAY_MS)
+        val spanSnapshotWrites = CoalescingWriteQueue(worker, clock, SPAN_SNAPSHOT_WRITE_DELAY_MS)
 
         private val writeQueues = listOf(metadataWrites, sessionSpanWrites, spanSnapshotWrites)
 

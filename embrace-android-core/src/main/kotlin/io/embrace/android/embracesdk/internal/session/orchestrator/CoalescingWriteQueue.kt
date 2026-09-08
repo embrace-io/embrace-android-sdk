@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.Future
 import java.util.concurrent.FutureTask
@@ -12,14 +13,19 @@ import java.util.concurrent.atomic.AtomicReference
  * write that is superseded before it runs can be dropped. The intent behind this class
  * is that a burst of changes typically only cost one write, rather than one per change.
  *
- * A write is held as a [FutureTask] armed with a scheduled trigger that runs it
- * [delayMs] later. Cancelling that trigger does not cancel the [FutureTask] it wraps. This
- * lets [flush] force the task to run early rather than queueing the work twice.
+ * A write is held as a [FutureTask] armed with a scheduled trigger. Cancelling that trigger does
+ * not cancel the [FutureTask] it wraps. This lets [flush] force the task to run early rather than
+ * queueing the work twice.
+ *
+ * The wait is bounded: a write inherits the deadline of the armed write it supersedes, so a run of
+ * changes that never pauses for [delayMs] still reaches disk [delayMs] after the run started. The
+ * newest write always wins, it just cannot postpone the deadline set by the one before it.
  *
  * The first write submitted to a queue is not debounced.
  */
 internal class CoalescingWriteQueue(
     private val worker: BackgroundWorker,
+    private val clock: Clock,
     private val delayMs: Long,
 ) {
     private val pending = AtomicReference<PendingWrite?>(null)
@@ -31,16 +37,17 @@ internal class CoalescingWriteQueue(
     private val sequence = AtomicLong()
 
     /**
-     * Arms [runnable] to run once the delay from [delayFor] has elapsed, disarming whatever was
+     * Arms [runnable] to run once the delay from [deadlineFor] has elapsed, disarming whatever was
      * armed before it. In-progress writes are left to finish.
      */
     fun submit(runnable: Runnable) {
         val seq = sequence.incrementAndGet()
         val task = FutureTask(runnable, Unit)
+        val deadline = deadlineFor(seq)
         val trigger = runCatching {
-            worker.schedule<Unit>(task, delayFor(seq), TimeUnit.MILLISECONDS)
+            worker.schedule<Unit>(task, delayUntil(deadline), TimeUnit.MILLISECONDS)
         }.getOrNull()
-        val write = PendingWrite(seq, task, trigger)
+        val write = PendingWrite(seq, deadline, task, trigger)
 
         while (true) {
             val previous = pending.get()
@@ -67,13 +74,25 @@ internal class CoalescingWriteQueue(
     }
 
     /**
-     * How long the write numbered [seq] waits before it runs. The very first write for a session
-     * part is not debounced. All other writes wait for [delayMs].
+     * When the write numbered [seq] should run. The very first write for a session part is not
+     * debounced. A write that supersedes one which is still armed takes over its deadline, so that
+     * an unbroken run of changes cannot hold the file back indefinitely. Any other write waits for
+     * [delayMs].
      */
-    private fun delayFor(seq: Long): Long = if (seq == FIRST_WRITE_SEQ) NO_DELAY_MS else delayMs
+    private fun deadlineFor(seq: Long): Long {
+        val now = clock.now()
+        if (seq == FIRST_WRITE_SEQ) {
+            return now
+        }
+        val armed = pending.get()?.takeUnless { it.task.isDone }
+        return armed?.deadline ?: (now + delayMs)
+    }
+
+    private fun delayUntil(deadline: Long): Long = (deadline - clock.now()).coerceAtLeast(NO_DELAY_MS)
 
     private class PendingWrite(
         val seq: Long,
+        val deadline: Long,
         val task: FutureTask<Unit>,
         val trigger: Future<*>?,
     )

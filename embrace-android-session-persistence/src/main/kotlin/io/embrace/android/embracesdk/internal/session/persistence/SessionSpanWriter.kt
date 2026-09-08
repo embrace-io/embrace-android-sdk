@@ -13,16 +13,12 @@ class SessionSpanWriter(
     private val logger: InternalLogger,
 ) {
 
-    private val lock = Any()
-
     fun write(span: Span): Boolean = SystemTrace.trace("mf-write-session-span") {
-        synchronized(lock) {
-            try {
-                writeImpl(span)
-            } catch (exc: Throwable) {
-                trackFailure(exc)
-                false
-            }
+        try {
+            writeImpl(span)
+        } catch (exc: Throwable) {
+            trackFailure(exc)
+            false
         }
     }
 

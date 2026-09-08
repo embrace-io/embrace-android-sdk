@@ -11,7 +11,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
-import java.util.concurrent.CountDownLatch
 
 internal class SessionSpanWriterTest {
 
@@ -205,31 +204,6 @@ internal class SessionSpanWriterTest {
         assertEquals(fullyPopulatedSessionSpanProto, readSessionSpan())
         assertEquals(listOf(SESSION_SPAN_FILE_NAME), partDir().list()?.toList())
         assertWriteFailureTracked()
-    }
-
-    @Test
-    fun `concurrent session span writes leave one valid file`() {
-        val threadCount = 8
-        val writesPerThread = 25
-        write()
-
-        val spanIds = (0 until threadCount).map { "aaaaaaaaaaaaaaa$it" }
-        val latch = CountDownLatch(1)
-        val threads = spanIds.map { spanId ->
-            Thread {
-                latch.await()
-                repeat(writesPerThread) {
-                    writer.write(fullyPopulatedSpan.copy(spanId = spanId))
-                }
-            }
-        }
-        threads.forEach(Thread::start)
-        latch.countDown()
-        threads.forEach(Thread::join)
-
-        assertTrue(checkNotNull(readSessionSpan().span).span_id in spanIds)
-        assertEquals(listOf(SESSION_SPAN_FILE_NAME), partDir().list()?.toList())
-        assertNoInternalErrors()
     }
 
     private fun target(source: () -> SessionPartDirectory?): SessionPartWriteTarget =

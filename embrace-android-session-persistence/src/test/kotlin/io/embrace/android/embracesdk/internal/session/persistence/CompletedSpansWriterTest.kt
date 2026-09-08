@@ -13,7 +13,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
-import java.util.concurrent.CountDownLatch
 
 internal class CompletedSpansWriterTest {
 
@@ -209,32 +208,6 @@ internal class CompletedSpansWriterTest {
         assertFalse(writer.write(listOf(Span(attributes = ExplodingList()))))
         assertEquals(listOf(fullyPopulatedSpanProto), readLog())
         assertWriteFailureTracked()
-    }
-
-    @Test
-    fun `concurrent appends log every span exactly once`() {
-        val threadCount = 8
-        val writesPerThread = 25
-
-        val latch = CountDownLatch(1)
-        val threads = (0 until threadCount).map { thread ->
-            Thread {
-                latch.await()
-                repeat(writesPerThread) { attempt ->
-                    writer.write(listOf(span("aaaaaaaaaaaa$thread$attempt", name = "span-$thread-$attempt")))
-                }
-            }
-        }
-        threads.forEach(Thread::start)
-        latch.countDown()
-        threads.forEach(Thread::join)
-
-        val expected = (0 until threadCount).flatMap { thread ->
-            (0 until writesPerThread).map { attempt -> "span-$thread-$attempt" }
-        }
-        assertEquals(expected.sorted(), readLog().map { it.name }.sorted())
-        assertEquals(listOf(COMPLETED_SPANS_FILE_NAME), partDir().list()?.toList())
-        assertNoInternalErrors()
     }
 
     @Test

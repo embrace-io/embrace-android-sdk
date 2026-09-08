@@ -17,19 +17,15 @@ class SpanSnapshotsWriter(
     private val logger: InternalLogger,
 ) {
 
-    private val lock = Any()
-
     /**
      * Writes the in-flight spans for the active session part, replacing any already on disk.
      */
     fun write(spans: List<Span>): Boolean = SystemTrace.trace("mf-write-span-snapshots") {
-        synchronized(lock) {
-            try {
-                writeImpl(spans)
-            } catch (exc: Throwable) {
-                trackFailure(exc)
-                false
-            }
+        try {
+            writeImpl(spans)
+        } catch (exc: Throwable) {
+            trackFailure(exc)
+            false
         }
     }
 

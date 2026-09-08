@@ -23,8 +23,6 @@ class CompletedSpansWriter(
     private val maxBytes: Long = MAX_PART_FILE_BYTES,
 ) {
 
-    private val lock = Any()
-
     @Volatile
     private var reportedOverflow = false
 
@@ -34,13 +32,11 @@ class CompletedSpansWriter(
      * reads back as no completed spans.
      */
     fun write(spans: List<Span>): Boolean = SystemTrace.trace("mf-write-completed-spans") {
-        synchronized(lock) {
-            try {
-                writeImpl(spans)
-            } catch (exc: Throwable) {
-                trackFailure(exc)
-                false
-            }
+        try {
+            writeImpl(spans)
+        } catch (exc: Throwable) {
+            trackFailure(exc)
+            false
         }
     }
 

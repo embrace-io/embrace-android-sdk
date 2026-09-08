@@ -29,6 +29,11 @@ interface SessionPartWriter {
     fun onSpanCompleted(spans: List<Span>)
 
     /**
+     * An in-flight span has changed, so the span snapshots on disk are stale.
+     */
+    fun onSpanSnapshotChanged()
+
+    /**
      * The periodic cache interval has elapsed. Rewrites the session span so disk reflects reality.
      */
     fun onPeriodicWrite()

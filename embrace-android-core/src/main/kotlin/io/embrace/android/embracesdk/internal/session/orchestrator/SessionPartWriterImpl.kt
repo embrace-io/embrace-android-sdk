@@ -40,7 +40,7 @@ class SessionPartWriterImpl(
     private val resourceSource: EnvelopeResourceSource,
     private val metadataSource: EnvelopeMetadataSource,
     private val currentSessionPartSpan: CurrentSessionPartSpan,
-    private val spanSnapshotSource: () -> List<Span>,
+    private val inFlightSpanSource: () -> List<EmbraceSdkSpan>,
     private val telemetryService: TelemetryService,
     private val directoryStore: SessionPartDirectoryStore =
         SessionPartDirectoryStore(sessionsDir, worker, clock, logger),
@@ -153,6 +153,13 @@ class SessionPartWriterImpl(
         queueCompletedSpansWrite(writers, spans)
     }
 
+    override fun onSpanSnapshotChanged() {
+        if (!acceptingWrites()) {
+            return
+        }
+        queueSpanSnapshotsRefresh(current ?: return)
+    }
+
     private fun onResourceChanged() {
         if (!acceptingWrites()) {
             return
@@ -231,17 +238,22 @@ class SessionPartWriterImpl(
      * Writes in-flight spans to a snapshot file.
      */
     private fun queueSpanSnapshotsWrite(writers: PartWriters) {
-        // TODO: future: don't call this every time the listener is invoked as it's expensive to
-        // obtain _all_ the spans for every change. Currently this write only happens at session
-        // start/end
         val spans = try {
-            spanSnapshotSource()
+            inFlightSpanSource()
         } catch (exc: Throwable) {
             logger.trackInternalError(InternalErrorType.SpanSnapshotsWriteFail, exc)
             return
         }
         execute(InternalErrorType.SpanSnapshotsWriteFail, writers.spanSnapshotWrites::submit) {
-            writers.spanSnapshots.write(spans)
+            writers.spanSnapshots.write(spans.mapNotNull(EmbraceSdkSpan::snapshot))
+        }
+    }
+
+    private fun queueSpanSnapshotsRefresh(writers: PartWriters) {
+        execute(InternalErrorType.SpanSnapshotsWriteFail, writers.spanSnapshotWrites::submit) {
+            if (current === writers) {
+                writers.spanSnapshots.write(inFlightSpanSource().mapNotNull(EmbraceSdkSpan::snapshot))
+            }
         }
     }
 

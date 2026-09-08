@@ -69,7 +69,7 @@ class SessionPartWriterImpl(
     private var current: PartWriters? = null
 
     @Volatile
-    private var writesSealed = false
+    private var processTerminating = false
 
     @Volatile
     private var resourceListenerRegistered = false
@@ -130,9 +130,10 @@ class SessionPartWriterImpl(
         writers.flushPendingWrites()
 
         worker.submit {
+            writers.sealed = true
             writeTracker.markComplete(sessionPartId)
 
-            if (!writesSealed) {
+            if (!processTerminating) {
                 notifyWritesComplete()
             }
             writers.span?.releaseRetainedData()
@@ -178,10 +179,10 @@ class SessionPartWriterImpl(
     }
 
     override fun onCrash() {
-        if (!persistenceEnabled() || writesSealed) {
+        if (!persistenceEnabled() || processTerminating) {
             return
         }
-        writesSealed = true
+        processTerminating = true
 
         // flush then wait for pending writes
         current?.flushPendingWrites()
@@ -201,13 +202,13 @@ class SessionPartWriterImpl(
             return
         }
         resourceListenerRegistered = true
-        execute(InternalErrorType.SessionMetadataWriteFail, { worker.submit(it) }) {
+        execute(null, InternalErrorType.SessionMetadataWriteFail, { worker.submit(it) }) {
             resourceSource.addChangeListener { _ -> onResourceChanged() }
         }
     }
 
     private fun queueManifestWrite(writers: PartWriters) {
-        execute(InternalErrorType.SessionManifestWriteFail, { worker.submit(it) }) {
+        execute(writers, InternalErrorType.SessionManifestWriteFail, { worker.submit(it) }) {
             writers.manifest.write(
                 directory = writers.directory,
                 resource = resourceSource.getEnvelopeResource(),
@@ -219,7 +220,7 @@ class SessionPartWriterImpl(
     }
 
     private fun queueMetadataWrite(writers: PartWriters) {
-        execute(InternalErrorType.SessionMetadataWriteFail, writers.metadataWrites::submit) {
+        execute(writers, InternalErrorType.SessionMetadataWriteFail, writers.metadataWrites::submit) {
             writers.metadata.write()
         }
     }
@@ -229,7 +230,7 @@ class SessionPartWriterImpl(
      */
     private fun queueSessionSpanWrite(writers: PartWriters, onlyIfCurrent: Boolean = false) {
         val span = writers.span ?: return
-        execute(InternalErrorType.SessionSpanWriteFail, writers.sessionSpanWrites::submit) {
+        execute(writers, InternalErrorType.SessionSpanWriteFail, writers.sessionSpanWrites::submit) {
             if (onlyIfCurrent && current !== writers) {
                 return@execute
             }
@@ -262,13 +263,13 @@ class SessionPartWriterImpl(
             logger.trackInternalError(InternalErrorType.SpanSnapshotsWriteFail, exc)
             return
         }
-        execute(InternalErrorType.SpanSnapshotsWriteFail, writers.spanSnapshotWrites::submit) {
+        execute(writers, InternalErrorType.SpanSnapshotsWriteFail, writers.spanSnapshotWrites::submit) {
             writers.spanSnapshots.write(spans.mapNotNull(EmbraceSdkSpan::snapshot))
         }
     }
 
     private fun queueSpanSnapshotsRefresh(writers: PartWriters) {
-        execute(InternalErrorType.SpanSnapshotsWriteFail, writers.spanSnapshotWrites::submit) {
+        execute(writers, InternalErrorType.SpanSnapshotsWriteFail, writers.spanSnapshotWrites::submit) {
             if (current === writers) {
                 writers.spanSnapshots.write(inFlightSpanSource().mapNotNull(EmbraceSdkSpan::snapshot))
             }
@@ -276,8 +277,13 @@ class SessionPartWriterImpl(
     }
 
     private fun queueCompletedSpansWrite(writers: PartWriters, spans: List<Span>) {
-        execute(InternalErrorType.CompletedSpansWriteFail, { worker.submit(it) }) {
-            writers.completedSpans.write(spans)
+        execute(null, InternalErrorType.CompletedSpansWriteFail, { worker.submit(it) }) {
+            if (writers.sealed) {
+                // the part sealed while this write was queued. Hold the spans for the next one
+                synchronized(bufferLock) { carryOver(spans) }
+            } else {
+                writers.completedSpans.write(spans)
+            }
         }
     }
 
@@ -300,20 +306,22 @@ class SessionPartWriterImpl(
      * than letting it escape - the telemetry gathered inside [action] can throw.
      */
     private fun execute(
+        writers: PartWriters?,
         errorType: InternalErrorType,
         submit: (Runnable) -> Unit,
         action: () -> Unit,
     ) {
         val task = Runnable {
+            if (writers?.sealed == true) {
+                return@Runnable
+            }
             try {
                 action()
             } catch (exc: Throwable) {
                 logger.trackInternalError(errorType, exc)
             }
         }
-        if (writesSealed) {
-            task.run()
-        } else {
+        if (!processTerminating) {
             submit(task)
         }
     }
@@ -337,9 +345,12 @@ class SessionPartWriterImpl(
      * then seals the writer: the [worker] is shut down at that point and the process is about to
      * die, so anything that happens afterwards is dropped rather than queued onto a dead worker.
      */
-    private fun acceptingWrites(): Boolean = persistenceEnabled() && !writesSealed
+    private fun acceptingWrites(): Boolean = persistenceEnabled() && !processTerminating
 
     private inner class PartWriters(val directory: SessionPartDirectory) {
+
+        @Volatile
+        var sealed: Boolean = false
 
         val span: EmbraceSdkSpan? = currentSessionPartSpan.current()
         val manifest = SessionManifestWriter(sessionsDir, logger)

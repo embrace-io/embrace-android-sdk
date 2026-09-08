@@ -35,6 +35,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.util.concurrent.Future
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -815,6 +816,73 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
+    fun `a write armed as a session part ends does not run after the part is sealed`() {
+        val events = mutableListOf<String>()
+        onMetadataRead = { events.add("metadata-write") }
+        lateinit var writer: SessionPartWriterImpl
+
+        val hooked = ScheduleHookExecutor(executor) {
+            endPart()
+            writer.onSessionPartEnded(SESSION_PART_ID)
+        }
+        writer = createWriter(
+            worker = BackgroundWorker(hooked),
+            onWritesComplete = { events.add("writes-complete") },
+        )
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+        events.clear()
+
+        writer.onMetadataChanged()
+        drain()
+
+        assertEquals(listOf("writes-complete"), events)
+        assertEquals("user0", metadataOnDisk(SESSION_PART_ID)?.user_id)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `completed spans queued behind the seal of their part are held for the next one`() {
+        val hooked = SubmitHookExecutor(executor)
+        val writer = createWriter(worker = BackgroundWorker(hooked))
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        hooked.onSubmit = {
+            endPart()
+            writer.onSessionPartEnded(SESSION_PART_ID)
+        }
+        writer.onSpanCompleted(listOf(completedSpan("network-request")))
+        drain()
+        assertEquals(emptyList<String>(), completedSpanNamesOnDisk(SESSION_PART_ID))
+
+        clock.tick(1000)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
+
+        assertEquals(listOf("network-request"), completedSpanNamesIn(OTHER_SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a write racing with a crash is dropped rather than run on the crashing thread`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        inFlightSpans = listOf(inFlightSpan("network-request"))
+        onSpanSnapshotsRead = {
+            onSpanSnapshotsRead = {}
+            writer.onCrash()
+        }
+        clock.tick(1000)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
+
+        assertTrue(executor.isShutdown)
+        assertNull(spanSnapshotNamesOnDisk(OTHER_SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
     fun `a write that has already started is not cancelled`() {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
@@ -1336,6 +1404,36 @@ internal class SessionPartWriterImplTest {
         override fun schedule(command: Runnable?, delay: Long, unit: TimeUnit?): ScheduledFuture<*> {
             delays.add(delay)
             return delegate.schedule(command, delay, unit)
+        }
+    }
+
+    private class ScheduleHookExecutor(
+        private val delegate: ScheduledExecutorService,
+        private val onFirstSchedule: () -> Unit,
+    ) : ScheduledExecutorService by delegate {
+
+        private var hooked = false
+
+        override fun schedule(command: Runnable?, delay: Long, unit: TimeUnit?): ScheduledFuture<*> {
+            if (!hooked && delay > 0) {
+                hooked = true
+                onFirstSchedule()
+            }
+            return delegate.schedule(command, delay, unit)
+        }
+    }
+
+    private class SubmitHookExecutor(
+        private val delegate: ScheduledExecutorService,
+    ) : ScheduledExecutorService by delegate {
+
+        var onSubmit: () -> Unit = {}
+
+        override fun submit(task: Runnable?): Future<*> {
+            val hook = onSubmit
+            onSubmit = {}
+            hook()
+            return delegate.submit(task)
         }
     }
 

@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
+import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import java.io.File
 import java.io.IOException
 
@@ -26,12 +27,14 @@ class SessionMetadataWriter(
     /**
      * Writes the metadata for the active session part, replacing any metadata already on disk.
      */
-    fun write(): Boolean = synchronized(lock) {
-        try {
-            writeImpl()
-        } catch (exc: Throwable) {
-            trackFailure(exc)
-            false
+    fun write(): Boolean = SystemTrace.trace("mf-write-metadata") {
+        synchronized(lock) {
+            try {
+                writeImpl()
+            } catch (exc: Throwable) {
+                trackFailure(exc)
+                false
+            }
         }
     }
 

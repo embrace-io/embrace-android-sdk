@@ -282,7 +282,7 @@ internal class SessionOrchestratorImpl(
             crashId = crashId,
         )
 
-        EmbTrace.trace("flush-session-part-writes") {
+        EmbTrace.trace("mf-flush-writes") {
             sessionPartWriter?.onCrash()
         }
     }
@@ -386,7 +386,7 @@ internal class SessionOrchestratorImpl(
                             }
 
                             // persist the stopped session part span
-                            EmbTrace.trace("write-session-part-span") {
+                            EmbTrace.trace("mf-part-ended") {
                                 sessionPartWriter?.onSessionPartEnded(sessionPartId)
                             }
                         },
@@ -427,7 +427,7 @@ internal class SessionOrchestratorImpl(
                         sessionPartSpanAttrPopulator.populateSessionPartSpanStartAttrs(newSessionPart, userSession)
                         if (transitionType != TransitionType.CRASH) {
                             // create the directory that holds this session part's telemetry
-                            EmbTrace.trace("create-session-part-dir") {
+                            EmbTrace.trace("mf-part-started") {
                                 sessionPartWriter?.onSessionPartStarted(
                                     timestamp = timestamp,
                                     userSessionId = userSession?.userSessionId ?: "",

@@ -28,6 +28,7 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.UserSessionRestoreDecision
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.internal.session.getUserSessionProperties
+import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import java.io.InputStream
@@ -57,10 +58,12 @@ internal class PayloadResurrectionServiceImpl(
         nativeCrashServiceProvider: Provider<NativeCrashService?>,
         userSessionRestoreDecisionProvider: Provider<UserSessionRestoreDecision?>,
     ) {
-        runCatching {
-            processTombstones(nativeCrashServiceProvider, userSessionRestoreDecisionProvider())
-        }.onFailure {
-            logger.trackInternalError(InternalErrorType.PayloadResurrectionFail, it)
+        EmbTrace.trace("resurrect-payloads") {
+            runCatching {
+                processTombstones(nativeCrashServiceProvider, userSessionRestoreDecisionProvider())
+            }.onFailure {
+                logger.trackInternalError(InternalErrorType.PayloadResurrectionFail, it)
+            }
         }
         completionListeners.forEach { listener ->
             runCatching {
@@ -312,7 +315,9 @@ internal class PayloadResurrectionServiceImpl(
         userSessionTerminationReason: String?,
         isBackgroundOnly: Boolean,
     ): Envelope<SessionPartPayload> {
-        val deadPart = serializer.fromJson(payloadStream, Envelope.serializer(SessionPartPayload.serializer()))
+        val deadPart = EmbTrace.trace("payload-json-deserialize") {
+            serializer.fromJson(payloadStream, Envelope.serializer(SessionPartPayload.serializer()))
+        }
         val deadSessionPartSpan = deadPart.getSessionPartSpan()
         val sessionPartId = deadSessionPartSpan?.resolveSessionPartIdForCrashMatch()
         val appState = deadSessionPartSpan?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE)

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
+import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -33,14 +34,16 @@ internal const val SPAN_SNAPSHOTS_FILE_NAME = "span_snapshots.pb"
  * as an internal error of the appropriate type.
  */
 internal fun writeAtomically(partDir: File, fileName: String, maxBytes: Long, encode: (OutputStream) -> Unit) {
-    val tmpFile = File.createTempFile(fileName, ".tmp", partDir)
-    try {
-        LimitedOutputStream(tmpFile.outputStream().buffered(), maxBytes).use(encode)
-        if (!tmpFile.renameTo(File(partDir, fileName))) {
-            throw IOException("Failed to rename $fileName")
+    SystemTrace.trace("mf-file-write-atomic") {
+        val tmpFile = File.createTempFile(fileName, ".tmp", partDir)
+        try {
+            LimitedOutputStream(tmpFile.outputStream().buffered(), maxBytes).use(encode)
+            if (!tmpFile.renameTo(File(partDir, fileName))) {
+                throw IOException("Failed to rename $fileName")
+            }
+        } finally {
+            tmpFile.delete()
         }
-    } finally {
-        tmpFile.delete()
     }
 }
 
@@ -48,8 +51,10 @@ internal fun writeAtomically(partDir: File, fileName: String, maxBytes: Long, en
  * Appends [bytes] to [fileName] in [partDir], creating the file if it is not there yet.
  */
 internal fun appendTo(partDir: File, fileName: String, bytes: ByteArray) {
-    FileOutputStream(File(partDir, fileName), true).use { stream ->
-        stream.write(bytes)
+    SystemTrace.trace("mf-file-append") {
+        FileOutputStream(File(partDir, fileName), true).use { stream ->
+            stream.write(bytes)
+        }
     }
 }
 

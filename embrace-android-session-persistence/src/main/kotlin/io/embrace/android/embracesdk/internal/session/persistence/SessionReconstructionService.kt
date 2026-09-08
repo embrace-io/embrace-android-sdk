@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import okio.buffer
 import okio.source
 import java.io.File
@@ -23,14 +24,15 @@ class SessionReconstructionService(
     /**
      * Reconstructs the envelope for the given session part, or null if it cannot be read.
      */
-    fun reconstruct(directory: SessionPartDirectory): Envelope<SessionPartPayload>? {
-        return try {
-            reconstructImpl(directory)
-        } catch (exc: Throwable) {
-            trackFailure(exc)
-            null
+    fun reconstruct(directory: SessionPartDirectory): Envelope<SessionPartPayload>? =
+        SystemTrace.trace("mf-session-reconstruct") {
+            try {
+                reconstructImpl(directory)
+            } catch (exc: Throwable) {
+                trackFailure(exc)
+                null
+            }
         }
-    }
 
     private fun reconstructImpl(directory: SessionPartDirectory): Envelope<SessionPartPayload>? {
         val partDir = File(sessionsDir.value, directory.dirName)
@@ -117,24 +119,25 @@ class SessionReconstructionService(
      * The completed span always supersedes snapshots, and otherwise the span with the latest end time
      * is chosen.
      */
-    private fun dedupeSpanIds(spans: List<Span>, spanSnapshots: List<Span>): DedupedSpans {
-        val completedIds = spans.mapNotNull(Span::spanId).toSet()
-        val remainingSnapshots = spanSnapshots.filter { snapshot ->
-            val id = snapshot.spanId
-            id == null || id !in completedIds
-        }
-        val dedupedSpans = keepLatestPerSpanId(spans)
-        val dedupedSnapshots = keepLatestPerSpanId(remainingSnapshots)
+    private fun dedupeSpanIds(spans: List<Span>, spanSnapshots: List<Span>): DedupedSpans =
+        SystemTrace.trace("mf-dedupe-span-ids") {
+            val completedIds = spans.mapNotNullTo(HashSet(), Span::spanId)
+            val remainingSnapshots = spanSnapshots.filter { snapshot ->
+                val id = snapshot.spanId
+                id == null || id !in completedIds
+            }
+            val dedupedSpans = keepLatestPerSpanId(spans)
+            val dedupedSnapshots = keepLatestPerSpanId(remainingSnapshots)
 
-        val duplicates = (spans.size - dedupedSpans.size) + (spanSnapshots.size - dedupedSnapshots.size)
-        if (duplicates > 0) {
-            logger.trackInternalError(
-                InternalErrorType.DuplicateSpanIds,
-                IllegalStateException("Removed duplicate spans from session part payload"),
-            )
+            val duplicates = (spans.size - dedupedSpans.size) + (spanSnapshots.size - dedupedSnapshots.size)
+            if (duplicates > 0) {
+                logger.trackInternalError(
+                    InternalErrorType.DuplicateSpanIds,
+                    IllegalStateException("Removed duplicate spans from session part payload"),
+                )
+            }
+            DedupedSpans(dedupedSpans, dedupedSnapshots)
         }
-        return DedupedSpans(dedupedSpans, dedupedSnapshots)
-    }
 
     private fun keepLatestPerSpanId(spans: List<Span>): List<Span> {
         val winners = mutableMapOf<String, Int>()
@@ -157,16 +160,17 @@ class SessionReconstructionService(
      *
      * An oversized log is truncated rather than rejected.
      */
-    private fun readCompletedSpansFile(partDir: File): List<Span>? {
+    private fun readCompletedSpansFile(partDir: File): List<Span>? = SystemTrace.trace("mf-read-completed-spans") {
         val src = File(partDir, COMPLETED_SPANS_FILE_NAME)
         if (!src.exists()) {
-            return emptyList()
+            return@trace emptyList()
         }
         if (src.length() > MAX_PART_FILE_BYTES) {
             trackFailure(IOException(OVERSIZED_PART_FILE_MSG))
         }
-        return try {
-            src.source().buffer().use(::readCompletedSpans).map(SpanProto::toPayload)
+        try {
+            val decoded = src.source().buffer().use(::readCompletedSpans)
+            SystemTrace.trace("mf-spans-proto-to-payload") { decoded.map(SpanProto::toPayload) }
         } catch (exc: Throwable) {
             trackFailure(exc)
             null
@@ -187,7 +191,7 @@ class SessionReconstructionService(
             SpanSnapshots.ADAPTER,
             SpanSnapshots::format_version,
         ) ?: return null
-        return snapshots.spans.map(SpanProto::toPayload)
+        return SystemTrace.trace("mf-spans-proto-to-payload") { snapshots.spans.map(SpanProto::toPayload) }
     }
 
     /**
@@ -203,9 +207,9 @@ class SessionReconstructionService(
         fileName: String,
         adapter: ProtoAdapter<T>,
         formatVersion: (T) -> Int,
-    ): T? {
+    ): T? = SystemTrace.trace(partFileReadSectionName(fileName)) {
         val src = File(partDir, fileName)
-        return try {
+        try {
             val message = decodePartFile(src, adapter)
 
             val version = formatVersion(message)
@@ -237,4 +241,12 @@ class SessionReconstructionService(
     }
 
     private class DedupedSpans(val spans: List<Span>, val spanSnapshots: List<Span>)
+}
+
+private fun partFileReadSectionName(fileName: String): String = when (fileName) {
+    MANIFEST_FILE_NAME -> "mf-read-manifest"
+    METADATA_FILE_NAME -> "mf-read-metadata"
+    SESSION_SPAN_FILE_NAME -> "mf-read-session-span"
+    SPAN_SNAPSHOTS_FILE_NAME -> "mf-read-span-snapshots"
+    else -> "mf-read-file-other"
 }

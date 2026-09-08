@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import java.io.File
 import java.io.FileNotFoundException
@@ -44,9 +45,9 @@ class FileStorageServiceImpl(
     private fun storeImpl(
         metadata: StoredTelemetryMetadata,
         action: SerializationAction,
-    ) {
+    ) = SystemTrace.trace("payload-file-write") {
         if (index.prune(newEntry = metadata)) {
-            return
+            return@trace
         }
 
         // write to a temporary file then rename it, to avoid sending incomplete files

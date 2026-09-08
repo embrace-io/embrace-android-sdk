@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSnapshotType
+import io.embrace.android.embracesdk.internal.utils.EmbTrace
 
 internal class PayloadFactoryImpl(
     private val payloadMessageCollator: PayloadMessageCollator,
@@ -55,9 +56,11 @@ internal class PayloadFactoryImpl(
         timestamp: Long,
         initial: SessionPartToken,
     ): Envelope<SessionPartPayload>? =
-        when (state) {
-            ProcessState.FOREGROUND -> snapshotSession(initial)
-            ProcessState.BACKGROUND -> snapshotBackgroundActivity(initial)
+        EmbTrace.trace("sf-payload-snapshot-build") {
+            when (state) {
+                ProcessState.FOREGROUND -> snapshotSession(initial)
+                ProcessState.BACKGROUND -> snapshotBackgroundActivity(initial)
+            }
         }
 
     override fun startSessionWithManual(

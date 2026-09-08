@@ -23,6 +23,7 @@ import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshotsW
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -157,11 +158,11 @@ class SessionPartWriterImpl(
         queueCompletedSpansWrite(writers, spans)
     }
 
-    override fun onSpanSnapshotChanged() {
+    override fun onSpanSnapshotChanged() = EmbTrace.trace("mf-span-snapshot-changed") {
         if (!acceptingWrites()) {
-            return
+            return@trace
         }
-        queueSpanSnapshotsRefresh(current ?: return)
+        queueSpanSnapshotsRefresh(current ?: return@trace)
     }
 
     private fun onResourceChanged() {
@@ -207,7 +208,7 @@ class SessionPartWriterImpl(
         }
     }
 
-    private fun queueManifestWrite(writers: PartWriters) {
+    private fun queueManifestWrite(writers: PartWriters) = EmbTrace.trace("mf-queue-manifest") {
         execute(writers, InternalErrorType.SessionManifestWriteFail, { worker.submit(it) }) {
             writers.manifest.write(
                 directory = writers.directory,
@@ -219,7 +220,7 @@ class SessionPartWriterImpl(
         }
     }
 
-    private fun queueMetadataWrite(writers: PartWriters) {
+    private fun queueMetadataWrite(writers: PartWriters) = EmbTrace.trace("mf-queue-metadata") {
         execute(writers, InternalErrorType.SessionMetadataWriteFail, writers.metadataWrites::submit) {
             writers.metadata.write()
         }
@@ -228,18 +229,19 @@ class SessionPartWriterImpl(
     /**
      * Writes the session span as it stands right now.
      */
-    private fun queueSessionSpanWrite(writers: PartWriters, onlyIfCurrent: Boolean = false) {
-        val span = writers.span ?: return
-        execute(writers, InternalErrorType.SessionSpanWriteFail, writers.sessionSpanWrites::submit) {
-            if (onlyIfCurrent && current !== writers) {
-                return@execute
-            }
-            val snapshot = span.snapshot()
-            if (snapshot != null) {
-                writers.sessionSpan.write(snapshot.withHeartbeat())
+    private fun queueSessionSpanWrite(writers: PartWriters, onlyIfCurrent: Boolean = false) =
+        EmbTrace.trace("mf-queue-session-span") {
+            val span = writers.span ?: return@trace
+            execute(writers, InternalErrorType.SessionSpanWriteFail, writers.sessionSpanWrites::submit) {
+                if (onlyIfCurrent && current !== writers) {
+                    return@execute
+                }
+                val snapshot = span.snapshot()
+                if (snapshot != null) {
+                    writers.sessionSpan.write(snapshot.withHeartbeat())
+                }
             }
         }
-    }
 
     /**
      * Stamps emb.heartbeat_unix_time_nanos on the span.
@@ -256,19 +258,19 @@ class SessionPartWriterImpl(
     /**
      * Writes in-flight spans to a snapshot file.
      */
-    private fun queueSpanSnapshotsWrite(writers: PartWriters) {
+    private fun queueSpanSnapshotsWrite(writers: PartWriters) = EmbTrace.trace("mf-queue-span-snapshots") {
         val spans = try {
             inFlightSpanSource()
         } catch (exc: Throwable) {
             logger.trackInternalError(InternalErrorType.SpanSnapshotsWriteFail, exc)
-            return
+            return@trace
         }
         execute(writers, InternalErrorType.SpanSnapshotsWriteFail, writers.spanSnapshotWrites::submit) {
             writers.spanSnapshots.write(spans.mapNotNull(EmbraceSdkSpan::snapshot))
         }
     }
 
-    private fun queueSpanSnapshotsRefresh(writers: PartWriters) {
+    private fun queueSpanSnapshotsRefresh(writers: PartWriters) = EmbTrace.trace("mf-queue-span-snapshots-refresh") {
         execute(writers, InternalErrorType.SpanSnapshotsWriteFail, writers.spanSnapshotWrites::submit) {
             if (current === writers) {
                 writers.spanSnapshots.write(inFlightSpanSource().mapNotNull(EmbraceSdkSpan::snapshot))
@@ -276,16 +278,17 @@ class SessionPartWriterImpl(
         }
     }
 
-    private fun queueCompletedSpansWrite(writers: PartWriters, spans: List<Span>) {
-        execute(null, InternalErrorType.CompletedSpansWriteFail, { worker.submit(it) }) {
-            if (writers.sealed) {
-                // the part sealed while this write was queued. Hold the spans for the next one
-                synchronized(bufferLock) { carryOver(spans) }
-            } else {
-                writers.completedSpans.write(spans)
+    private fun queueCompletedSpansWrite(writers: PartWriters, spans: List<Span>) =
+        EmbTrace.trace("mf-queue-completed-spans") {
+            execute(null, InternalErrorType.CompletedSpansWriteFail, { worker.submit(it) }) {
+                if (writers.sealed) {
+                    // the part sealed while this write was queued. Hold the spans for the next one
+                    synchronized(bufferLock) { carryOver(spans) }
+                } else {
+                    writers.completedSpans.write(spans)
+                }
             }
         }
-    }
 
     /**
      * Holds [spans] until the next session part starts. Spans beyond [MAX_CARRIED_OVER_SPANS] are

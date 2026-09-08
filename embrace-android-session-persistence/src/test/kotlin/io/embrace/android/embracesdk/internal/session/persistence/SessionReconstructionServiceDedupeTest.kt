@@ -92,7 +92,7 @@ internal class SessionReconstructionServiceDedupeTest {
         val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
         assertEquals(listOf(earlySpan, fullyPopulatedSpan), payload.spans)
         assertEquals(emptyList<Span>(), payload.spanSnapshots)
-        assertDuplicatesTracked()
+        assertNoInternalErrors()
     }
 
     @Test
@@ -102,7 +102,7 @@ internal class SessionReconstructionServiceDedupeTest {
         val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
         assertEquals(listOf(earlySpan, fullyPopulatedSpan), payload.spans)
         assertEquals(emptyList<Span>(), payload.spanSnapshots)
-        assertDuplicatesTracked()
+        assertNoInternalErrors()
     }
 
     @Test
@@ -119,6 +119,18 @@ internal class SessionReconstructionServiceDedupeTest {
 
         assertEquals(listOf(lateSpan), service.reconstruct(partDirectory)?.data?.spanSnapshots)
         assertDuplicatesTracked()
+    }
+
+    @Test
+    fun `a snapshot superseded by a completed span is not reported as a duplicate`() {
+        write(
+            spans = listOf(earlySpanProto, otherSpanProto),
+            snapshots = listOf(inFlightSpan, otherSnapshot),
+        )
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(listOf(earlySpan, otherSpan, fullyPopulatedSpan), payload.spans)
+        assertEquals(listOf(otherSnapshot), payload.spanSnapshots)
+        assertNoInternalErrors()
     }
 
     @Test

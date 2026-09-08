@@ -2072,11 +2072,7 @@ internal class SessionOrchestratorTest {
         return sessionSpanOnDisk(sessionPartId)
     }
 
-    private fun drainPersistence() {
-        do {
-            sessionPersistenceExecutor.moveForwardAndRunBlocked(CoalescingWriteQueue.DEFAULT_DELAY_MS)
-        } while (sessionPersistenceExecutor.scheduledTasksCount() > 0)
-    }
+    private fun drainPersistence() = sessionPersistenceExecutor.drainWrites()
 
     private fun sessionSpanOnDisk(sessionPartId: String): SessionPartSpan? {
         val directory = partDirs().single { it.sessionPartId == sessionPartId }

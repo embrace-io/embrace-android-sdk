@@ -106,9 +106,10 @@ internal class SessionPartWriterBoundaryTest {
         startPart(SECOND_PART_ID)
         drain()
 
-        // the queued write went to the first part
-        assertEquals("user1", metadataIn(FIRST_PART_ID)?.user_id)
-        assertEquals("user2", metadataIn(SECOND_PART_ID)?.user_id)
+        // the queued write went to the first part. it ran after the second part's own writes, as
+        // those are not debounced, hence the higher user id
+        assertEquals("user2", metadataIn(FIRST_PART_ID)?.user_id)
+        assertEquals("user1", metadataIn(SECOND_PART_ID)?.user_id)
         assertEquals(3, writeCount)
         assertNoInternalErrors()
     }
@@ -122,6 +123,24 @@ internal class SessionPartWriterBoundaryTest {
         drain()
 
         // the first of the queued writes was superseded, and the one that ran went to the first part
+        assertEquals("user2", metadataIn(FIRST_PART_ID)?.user_id)
+        assertEquals("user1", metadataIn(SECOND_PART_ID)?.user_id)
+        assertEquals(3, writeCount)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a metadata write queued before a part ends is flushed ahead of the newer part`() {
+        startPart(FIRST_PART_ID)
+        drain()
+        writer.onMetadataChanged()
+
+        // the orchestrator always ends a part before the next one starts, and ending it flushes
+        // the debounced write rather than leaving it armed
+        endPart(FIRST_PART_ID)
+        startPart(SECOND_PART_ID)
+        drain()
+
         assertEquals("user1", metadataIn(FIRST_PART_ID)?.user_id)
         assertEquals("user2", metadataIn(SECOND_PART_ID)?.user_id)
         assertEquals(3, writeCount)
@@ -278,11 +297,7 @@ internal class SessionPartWriterBoundaryTest {
         sessionSpan = checkNotNull(currentSessionPartSpan.sessionPartSpan)
     }
 
-    private fun drain() {
-        do {
-            executor.moveForwardAndRunBlocked(CoalescingWriteQueue.DEFAULT_DELAY_MS)
-        } while (executor.scheduledTasksCount() > 0)
-    }
+    private fun drain() = executor.drainWrites()
 
     private fun sessionPartDirs(): List<SessionPartDirectory> =
         (sessionsDir.list() ?: emptyArray())

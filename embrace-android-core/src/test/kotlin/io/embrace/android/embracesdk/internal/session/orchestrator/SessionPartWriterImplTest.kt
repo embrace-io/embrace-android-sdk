@@ -34,6 +34,8 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
 import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 
 internal class SessionPartWriterImplTest {
 
@@ -41,7 +43,6 @@ internal class SessionPartWriterImplTest {
         private const val USER_SESSION_ID = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         private const val SESSION_PART_ID = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
         private const val OTHER_SESSION_PART_ID = "cccccccccccccccccccccccccccccccc"
-        private const val WRITE_DELAY_MS = 5000L
         private const val METADATA_FILE_NAME = "metadata.pb"
         private const val MANIFEST_FILE_NAME = "manifest.pb"
         private const val SESSION_SPAN_FILE_NAME = "session_span.pb"
@@ -619,16 +620,17 @@ internal class SessionPartWriterImplTest {
         executor.blockingMode = false
         onMetadataRead = { events.add("metadata-write") }
 
-        val writer = createWriter(
-            worker = BackgroundWorker(recordingExecutor),
-            writeDelayMs = WRITE_DELAY_MS,
-        )
+        val writer = createWriter(worker = BackgroundWorker(recordingExecutor))
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        assertEquals(listOf("metadata-write"), events)
+        events.clear()
+
+        writer.onMetadataChanged()
         assertEquals(emptyList<String>(), events)
 
         writer.onCrash()
         assertEquals(listOf("metadata-write", "shutdown"), events)
-        assertEquals("user0", metadataOnDisk(SESSION_PART_ID)?.user_id)
+        assertEquals("user1", metadataOnDisk(SESSION_PART_ID)?.user_id)
         assertNoInternalErrors()
     }
 
@@ -636,21 +638,73 @@ internal class SessionPartWriterImplTest {
     fun `a debounced write runs before the part's writes are announced as complete`() {
         var endTimeAtCompletion: Long? = null
         val writer = createWriter(
-            writeDelayMs = WRITE_DELAY_MS,
             onWritesComplete = {
                 endTimeAtCompletion = sessionSpanOnDisk(SESSION_PART_ID)?.span?.end_time_unix_nano
             },
         )
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
-        drain(WRITE_DELAY_MS)
+        drain()
 
         clock.tick(10000)
         endPart()
         val expectedEndTimeNanos = clock.now().millisToNanos()
         writer.onSessionPartEnded(SESSION_PART_ID)
-        drain(WRITE_DELAY_MS)
+        drain()
 
         assertEquals(expectedEndTimeNanos, endTimeAtCompletion)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `the first write of a session part is not debounced`() {
+        executor.blockingMode = false
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+
+        assertEquals("user0", metadataOnDisk(SESSION_PART_ID)?.user_id)
+        assertEquals("span0", sessionSpanOnDisk(SESSION_PART_ID)?.span?.name)
+        assertEquals(0, executor.scheduledTasksCount())
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a write after the first one waits out its delay`() {
+        executor.blockingMode = false
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        writer.onMetadataChanged()
+        assertEquals("user0", metadataOnDisk(SESSION_PART_ID)?.user_id)
+
+        executor.moveForwardAndRunBlocked(SessionPartWriterImpl.METADATA_WRITE_DELAY_MS)
+        assertEquals("user1", metadataOnDisk(SESSION_PART_ID)?.user_id)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `each write queue is armed with its own delay`() {
+        val delays = mutableListOf<Long>()
+        val writer = createWriter(worker = BackgroundWorker(DelayRecordingExecutor(executor, delays)))
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        // every write queued when the part starts is the first one for its file
+        assertEquals(listOf(0L, 0L, 0L), delays)
+        delays.clear()
+
+        writer.onMetadataChanged()
+        assertEquals(listOf(SessionPartWriterImpl.METADATA_WRITE_DELAY_MS), delays)
+        delays.clear()
+
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        assertEquals(
+            listOf(
+                SessionPartWriterImpl.SESSION_SPAN_WRITE_DELAY_MS,
+                SessionPartWriterImpl.SPAN_SNAPSHOT_WRITE_DELAY_MS,
+            ),
+            delays,
+        )
+        drain()
         assertNoInternalErrors()
     }
 
@@ -1037,6 +1091,20 @@ internal class SessionPartWriterImplTest {
         assertNoInternalErrors()
     }
 
+    /**
+     * Records the delay that each write is armed with.
+     */
+    private class DelayRecordingExecutor(
+        private val delegate: ScheduledExecutorService,
+        private val delays: MutableList<Long>,
+    ) : ScheduledExecutorService by delegate {
+
+        override fun schedule(command: Runnable?, delay: Long, unit: TimeUnit?): ScheduledFuture<*> {
+            delays.add(delay)
+            return delegate.schedule(command, delay, unit)
+        }
+    }
+
     private class ShutdownRecordingExecutor(
         private val delegate: ScheduledExecutorService,
         private val onShutdown: () -> Unit,
@@ -1065,7 +1133,6 @@ internal class SessionPartWriterImplTest {
         configService: FakeConfigService = configService(enabled),
         sessionsDir: File = this.sessionsDir,
         worker: BackgroundWorker = BackgroundWorker(executor),
-        writeDelayMs: Long = CoalescingWriteQueue.DEFAULT_DELAY_MS,
         onWritesComplete: () -> Unit = {},
     ) = SessionPartWriterImpl(
         lazy { sessionsDir },
@@ -1083,7 +1150,6 @@ internal class SessionPartWriterImplTest {
         },
         telemetryService,
         onWritesComplete = onWritesComplete,
-        writeDelayMs = writeDelayMs,
     )
 
     private fun configService(
@@ -1097,14 +1163,10 @@ internal class SessionPartWriterImplTest {
         },
     )
 
-    private fun drain(delayMs: Long = CoalescingWriteQueue.DEFAULT_DELAY_MS) {
-        do {
-            executor.moveForwardAndRunBlocked(delayMs)
-        } while (executor.scheduledTasksCount() > 0)
-    }
+    private fun drain() = executor.drainWrites()
 
     private fun drainOnce() {
-        executor.moveForwardAndRunBlocked(CoalescingWriteQueue.DEFAULT_DELAY_MS)
+        executor.moveForwardAndRunBlocked(WRITE_DRAIN_TICK_MS)
     }
 
     /**

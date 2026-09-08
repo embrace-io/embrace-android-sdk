@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.BLO
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRASH
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.LOG
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.SESSION
+import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.storedTelemetryRunnableComparator
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -32,10 +33,12 @@ import org.junit.Before
 import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.nio.file.Files
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
+import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 
 class IntakeServiceImplTest {
@@ -55,6 +58,9 @@ class IntakeServiceImplTest {
     private val serializer = TestPlatformSerializer()
     private val sessionEnvelope = Envelope(
         data = SessionPartPayload(spans = listOf(Span(name = "session-span"))),
+    )
+    private val replacementSessionEnvelope = Envelope(
+        data = SessionPartPayload(spans = listOf(Span(name = "replacement-session-span"))),
     )
     private val logEnvelope = Envelope(
         data = LogPayload(logs = listOf(Log(body = "Log data"))),
@@ -787,6 +793,93 @@ class IntakeServiceImplTest {
         assertEquals(1, cacheStorageService.storedPayloadCount())
         assertFalse(f2.isCancelled)
         assertTrue(f2.isDone)
+    }
+
+    @Test
+    fun `onStored is invoked once the payload has been written to disk`() {
+        var storedCount = 0
+        intakeService.take(sessionEnvelope, sessionMetadata, onStored = { storedCount++ })
+
+        // the store is queued on the worker, so nothing is on disk yet
+        assertEquals(0, storedCount)
+
+        executorService.runCurrentlyBlocked()
+        assertEquals(1, payloadStorageService.storedPayloadCount())
+        assertEquals(1, storedCount)
+    }
+
+    @Test
+    fun `onStored is not invoked when the payload fails to store`() {
+        payloadStorageService.failStorage = true
+        var storedCount = 0
+        intakeService.take(sessionEnvelope, sessionMetadata, onStored = { storedCount++ })
+        executorService.runCurrentlyBlocked()
+
+        assertEquals(0, payloadStorageService.storedPayloadCount())
+        assertEquals(0, storedCount)
+        assertTrue(logger.internalErrorMessages.single().throwable is IOException)
+    }
+
+    @Test
+    fun `onStored is not invoked when the payload is dropped after sealing`() {
+        // a crash in the current process seals the intake service once its session part arrives
+        val jvmCrashMetadata = StoredTelemetryMetadata(
+            timestamp = clock.tick(),
+            uuid = "crash-uuid",
+            processIdentifier = PROCESS_ID,
+            envelopeType = CRASH,
+            complete = true,
+            payloadType = PayloadType.JVM_CRASH,
+        )
+        intakeService.take(logEnvelope, jvmCrashMetadata)
+        intakeService.take(sessionEnvelope, sessionMetadata)
+        assertEquals(2, payloadStorageService.storedPayloadCount())
+
+        var storedCount = 0
+        intakeService.take(
+            intake = sessionEnvelope,
+            metadata = sessionMetadata2,
+            onStored = { storedCount++ },
+        )
+
+        // the payload was dropped, so the caller is not told to discard its own copy
+        assertEquals(2, payloadStorageService.storedPayloadCount())
+        assertEquals(0, storedCount)
+    }
+
+    @Test
+    fun `taking a payload whose filename already exists overwrites the stored file`() {
+        val outputDir = Files.createTempDirectory("intake").toFile().apply { deleteRecursively() }
+        val fileStorageService = PayloadStorageServiceImpl(
+            outputDir = lazy { outputDir },
+            worker = PriorityWorker(BlockableExecutorService(blockingMode = false)),
+            processIdProvider = { PROCESS_ID },
+            logger = logger,
+            clock = clock,
+        )
+        intakeService = IntakeServiceImpl(
+            schedulingService,
+            fileStorageService,
+            cacheStorageService,
+            logger,
+            serializer,
+            PriorityWorker(executorService),
+        )
+
+        var storedCount = 0
+        intakeService.take(sessionEnvelope, sessionMetadata, onStored = { storedCount++ })
+        intakeService.take(replacementSessionEnvelope, sessionMetadata, onStored = { storedCount++ })
+        executorService.runCurrentlyBlocked()
+
+        val file = outputDir.listFiles()?.single() ?: error("File not found")
+        assertEquals(sessionMetadata.filename, file.name)
+        val observed = serializer.fromJson(GZIPInputStream(file.inputStream()), Envelope.sessionEnvelopeSerializer)
+        assertEquals("replacement-session-span", observed.data?.spans?.single()?.name)
+
+        assertEquals(2, storedCount)
+        assertEquals(listOf(sessionMetadata), fileStorageService.getPayloadsByPriority())
+        assertEquals(2, schedulingService.payloadIntakeCount)
+        assertTrue(logger.internalErrorMessages.isEmpty())
     }
 
     private fun assertIntakeRejected(envelope: Envelope<*>, metadata: StoredTelemetryMetadata) {

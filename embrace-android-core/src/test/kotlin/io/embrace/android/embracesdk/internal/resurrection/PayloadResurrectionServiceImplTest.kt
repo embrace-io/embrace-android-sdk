@@ -799,6 +799,7 @@ class PayloadResurrectionServiceImplTest {
                 intake: Envelope<*>,
                 metadata: StoredTelemetryMetadata,
                 staleEntry: StoredTelemetryMetadata?,
+                onStored: (() -> Unit)?,
             ): Future<*> {
                 return object : Future<Unit> {
                     override fun cancel(mayInterruptIfRunning: Boolean) = false

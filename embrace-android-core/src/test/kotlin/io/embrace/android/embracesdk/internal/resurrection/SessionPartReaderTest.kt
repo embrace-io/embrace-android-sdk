@@ -168,6 +168,19 @@ internal class SessionPartReaderTest {
     }
 
     @Test
+    fun `a session part that intake does not store is left on disk`() {
+        persist(partDirectory)
+        intakeService.storeSucceeds = false
+
+        createReader().readPersistedSessionParts()
+
+        // the part reached intake but wasn't stored, so the only copy of the telemetry is retained
+        assertEquals(partDirectory.sessionPartId, intakeService.intakeList.single().metadata.sessionPartId)
+        assertEquals(setOf(partDirectory), directoryStore.storedDirectories().toSet())
+        assertEquals(setOf(partDirectory.dirName), sessionsDir.list()?.toSet() ?: emptySet<String>())
+    }
+
+    @Test
     fun `reading persisted session parts is a no-op when there is nothing on disk`() {
         createReader().readPersistedSessionParts()
 

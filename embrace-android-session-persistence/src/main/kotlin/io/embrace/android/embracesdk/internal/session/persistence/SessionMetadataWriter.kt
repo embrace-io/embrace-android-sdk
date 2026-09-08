@@ -5,8 +5,6 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
-import java.io.File
-import java.io.IOException
 
 /**
  * Writes the data that can change over the lifetime of a session part to its directory.
@@ -15,8 +13,7 @@ import java.io.IOException
  * starts, whenever the user info or envelope resource changes.
  */
 class SessionMetadataWriter(
-    private val sessionsDir: Lazy<File>,
-    private val sessionPartDirectorySource: () -> SessionPartDirectory?,
+    private val target: SessionPartWriteTarget,
     private val metadataSource: () -> EnvelopeMetadata,
     private val resourceSource: () -> EnvelopeResource,
     private val logger: InternalLogger,
@@ -39,13 +36,8 @@ class SessionMetadataWriter(
     }
 
     private fun writeImpl(): Boolean {
-        val directory = sessionPartDirectorySource() ?: return false
-
-        val partDir = File(sessionsDir.value, directory.dirName)
-        if (!partDir.isDirectory) {
-            trackFailure(IOException("Not a session part directory"))
-            return false
-        }
+        val directory = target.directory ?: return false
+        val partDir = target.partDir(directory, ::trackFailure) ?: return false
 
         val metadata = metadataSource().toProto(resourceSource().toMutableProto())
         writeAtomically(partDir, METADATA_FILE_NAME, Long.MAX_VALUE) { stream ->

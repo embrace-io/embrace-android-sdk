@@ -4,8 +4,6 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
-import java.io.File
-import java.io.IOException
 
 /**
  * Writes the immutable parts of the envelope resource and the identity of a session part to its
@@ -15,24 +13,23 @@ import java.io.IOException
  * lifetime of the process, so the file is never revisited.
  */
 class SessionManifestWriter(
-    private val sessionsDir: Lazy<File>,
+    private val target: SessionPartWriteTarget,
     private val logger: InternalLogger,
 ) {
 
     /**
-     * Writes the manifest for the given session part.
+     * Writes the manifest for the active session part.
      *
      * Returns true if a manifest is on disk for this session part
      */
     fun write(
-        directory: SessionPartDirectory,
         resource: EnvelopeResource,
         envelopeVersion: String,
         envelopeType: String,
         sharedLibSymbolMapping: Map<String, String>? = null,
     ): Boolean = SystemTrace.trace("mf-write-manifest") {
         try {
-            writeImpl(directory, resource, envelopeVersion, envelopeType, sharedLibSymbolMapping)
+            writeImpl(resource, envelopeVersion, envelopeType, sharedLibSymbolMapping)
         } catch (exc: Throwable) {
             trackFailure(exc)
             false
@@ -40,17 +37,13 @@ class SessionManifestWriter(
     }
 
     private fun writeImpl(
-        directory: SessionPartDirectory,
         resource: EnvelopeResource,
         envelopeVersion: String,
         envelopeType: String,
         sharedLibSymbolMapping: Map<String, String>?,
     ): Boolean {
-        val partDir = File(sessionsDir.value, directory.dirName)
-        if (!partDir.isDirectory) {
-            trackFailure(IOException("Not a session part directory"))
-            return false
-        }
+        val directory = target.directory ?: return false
+        val partDir = target.partDir(directory, ::trackFailure) ?: return false
 
         // build the message before touching the filesystem
         val manifest = SessionManifest(

@@ -39,11 +39,15 @@ internal class SessionManifestWriterTest {
     private lateinit var logger: FakeInternalLogger
     private lateinit var writer: SessionManifestWriter
 
+    @Volatile
+    private var activePart: SessionPartDirectory? = partDirectory
+
     @Before
     fun setUp() {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
         logger = FakeInternalLogger(throwOnInternalError = false)
-        writer = SessionManifestWriter(lazy { sessionsDir }, logger)
+        activePart = partDirectory
+        writer = SessionManifestWriter(SessionPartWriteTarget(lazy { sessionsDir }) { activePart }, logger)
         createPartDir(partDirectory)
     }
 
@@ -60,12 +64,15 @@ internal class SessionManifestWriterTest {
         manifestFile(directory).inputStream().use(SessionManifest.ADAPTER::decode)
 
     private fun write(
-        directory: SessionPartDirectory = partDirectory,
+        directory: SessionPartDirectory? = partDirectory,
         resource: EnvelopeResource = fullyPopulatedResource,
         envelopeVersion: String = ENVELOPE_VERSION,
         envelopeType: String = ENVELOPE_TYPE,
         sharedLibSymbolMapping: Map<String, String>? = null,
-    ): Boolean = writer.write(directory, resource, envelopeVersion, envelopeType, sharedLibSymbolMapping)
+    ): Boolean {
+        activePart = directory
+        return writer.write(resource, envelopeVersion, envelopeType, sharedLibSymbolMapping)
+    }
 
     private fun assertNoInternalErrors() {
         assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)

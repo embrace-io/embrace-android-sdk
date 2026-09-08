@@ -4,15 +4,12 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
-import java.io.File
-import java.io.IOException
 
 /**
  * Writes the session span for a session part to its directory.
  */
 class SessionSpanWriter(
-    private val sessionsDir: Lazy<File>,
-    private val sessionPartDirectorySource: () -> SessionPartDirectory?,
+    private val target: SessionPartWriteTarget,
     private val logger: InternalLogger,
 ) {
 
@@ -30,13 +27,9 @@ class SessionSpanWriter(
     }
 
     private fun writeImpl(span: Span): Boolean {
-        val directory = sessionPartDirectorySource() ?: return false
+        val directory = target.directory ?: return false
+        val partDir = target.partDir(directory, ::trackFailure) ?: return false
 
-        val partDir = File(sessionsDir.value, directory.dirName)
-        if (!partDir.isDirectory) {
-            trackFailure(IOException("Not a session part directory"))
-            return false
-        }
         val sessionSpan = SessionPartSpan(
             format_version = FORMAT_VERSION,
             span = span.toProto(),

@@ -55,8 +55,7 @@ internal class SessionMetadataWriterTest {
         resourceProvider = { fullyPopulatedResource }
         activePart = partDirectory
         writer = SessionMetadataWriter(
-            lazy { sessionsDir },
-            { activePart },
+            target { activePart },
             { metadataProvider() },
             { resourceProvider() },
             logger,
@@ -237,6 +236,15 @@ internal class SessionMetadataWriterTest {
     }
 
     @Test
+    fun `a session part with no directory is given up on and reported once`() {
+        val absent = SessionPartDirectory(timestamp = TIMESTAMP + 2, uuid = UUID)
+        repeat(20) {
+            assertFalse(write(absent))
+        }
+        assertWriteFailureTracked()
+    }
+
+    @Test
     fun `a file occupying the session part path is reported and left untouched`() {
         val occupied = SessionPartDirectory(timestamp = TIMESTAMP + 3, uuid = UUID)
         val occupyingFile = partDir(occupied).apply { writeText("not a directory") }
@@ -269,8 +277,7 @@ internal class SessionMetadataWriterTest {
     @Test
     fun `a failing session part source is reported and does not throw`() {
         writer = SessionMetadataWriter(
-            lazy { sessionsDir },
-            { error("boom") },
+            target { error("boom") },
             { metadataProvider() },
             { resourceProvider() },
             logger,
@@ -317,6 +324,9 @@ internal class SessionMetadataWriterTest {
         assertEquals(listOf(METADATA_FILE_NAME), partDir().list()?.toList())
         assertNoInternalErrors()
     }
+
+    private fun target(source: () -> SessionPartDirectory?): SessionPartWriteTarget =
+        SessionPartWriteTarget(lazy { sessionsDir }, source)
 
     private fun createPartDir(directory: SessionPartDirectory): File =
         File(sessionsDir, directory.dirName).apply { mkdirs() }

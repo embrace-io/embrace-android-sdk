@@ -72,16 +72,15 @@ internal class SessionReconstructionServiceDedupeTest {
         logger = FakeInternalLogger(throwOnInternalError = false)
         sessionSpan = fullyPopulatedSpan
         activePart = partDirectory
-        manifestWriter = SessionManifestWriter(lazy { sessionsDir }, logger)
+        manifestWriter = SessionManifestWriter(target(), logger)
         metadataWriter = SessionMetadataWriter(
-            lazy { sessionsDir },
-            { activePart },
+            target(),
             { fullyPopulatedMetadata },
             { fullyPopulatedResource },
             logger,
         )
-        sessionSpanWriter = SessionSpanWriter(lazy { sessionsDir }, { activePart }, logger)
-        snapshotsWriter = SpanSnapshotsWriter(lazy { sessionsDir }, { activePart }, logger)
+        sessionSpanWriter = SessionSpanWriter(target(), logger)
+        snapshotsWriter = SpanSnapshotsWriter(target(), logger)
         service = SessionReconstructionService(lazy { sessionsDir }, logger)
         createPartDir(partDirectory)
     }
@@ -167,11 +166,14 @@ internal class SessionReconstructionServiceDedupeTest {
         assertNoInternalErrors()
     }
 
+    private fun target(): SessionPartWriteTarget =
+        SessionPartWriteTarget(lazy { sessionsDir }) { activePart }
+
     private fun createPartDir(directory: SessionPartDirectory): File =
         File(sessionsDir, directory.dirName).apply { mkdirs() }
 
     private fun write(spans: List<SpanProto> = emptyList(), snapshots: List<Span> = emptyList()) {
-        assertTrue(manifestWriter.write(partDirectory, fullyPopulatedResource, ENVELOPE_VERSION, ENVELOPE_TYPE))
+        assertTrue(manifestWriter.write(fullyPopulatedResource, ENVELOPE_VERSION, ENVELOPE_TYPE))
         assertTrue(metadataWriter.write())
         assertTrue(sessionSpanWriter.write(sessionSpan))
         File(File(sessionsDir, partDirectory.dirName), COMPLETED_SPANS_FILE_NAME)

@@ -28,6 +28,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -233,45 +234,20 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
-    fun `a session part directory that cannot be created is reported and nothing is written`() {
+    fun `a session part directory that cannot be created is reported once and nothing is written`() {
         val writer = createWriter(sessionsDir = tempFolder.newFile("not_a_dir"))
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
 
-        assertInternalErrors(
-            "SessionPartDirectoryStoreFail",
-            "SessionManifestWriteFail",
-            "SessionMetadataWriteFail",
-            "SessionSpanWriteFail",
-            "SpanSnapshotsWriteFail",
-        )
+        assertInternalErrors("SessionPartDirectoryStoreFail", "SessionManifestWriteFail")
 
         writer.onMetadataChanged()
         drain()
-
-        assertInternalErrors(
-            "SessionPartDirectoryStoreFail",
-            "SessionManifestWriteFail",
-            "SessionMetadataWriteFail",
-            "SessionSpanWriteFail",
-            "SpanSnapshotsWriteFail",
-            "SessionMetadataWriteFail",
-        )
-
         endPart()
         writer.onSessionPartEnded(SESSION_PART_ID)
         drain()
 
-        assertInternalErrors(
-            "SessionPartDirectoryStoreFail",
-            "SessionManifestWriteFail",
-            "SessionMetadataWriteFail",
-            "SessionSpanWriteFail",
-            "SpanSnapshotsWriteFail",
-            "SessionMetadataWriteFail",
-            "SessionSpanWriteFail",
-            "SpanSnapshotsWriteFail",
-        )
+        assertInternalErrors("SessionPartDirectoryStoreFail", "SessionManifestWriteFail")
         assertEquals(0, writeCount)
     }
 
@@ -643,6 +619,49 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertEquals(listOf("SessionSpanWriteFail"), logger.internalErrorMessages.map { it.msg })
+    }
+
+    @Test
+    fun `a session part whose directory is gone is given up on after the first failed write`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+        assertNoInternalErrors()
+        File(sessionsDir, partDirs().single().dirName).deleteRecursively()
+
+        repeat(10) { index ->
+            clock.tick(2000)
+            sessionSpan.name = "span${index + 1}"
+            writer.onSessionSpanChanged()
+            writer.onMetadataChanged()
+            writer.onSpanSnapshotChanged()
+            writer.onSpanCompleted(listOf(completedSpan("completed$index")))
+            drain()
+        }
+        assertEquals(1, logger.internalErrorMessages.size)
+    }
+
+    @Test
+    fun `the next session part is written after the previous one was given up on`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+        File(sessionsDir, partDirs().single().dirName).deleteRecursively()
+
+        clock.tick(2000)
+        writer.onSessionSpanChanged()
+        drain()
+        assertEquals(1, logger.internalErrorMessages.size)
+
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        clock.tick(2000)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
+        drain()
+
+        assertNotNull(sessionSpanIn(OTHER_SESSION_PART_ID))
+        assertNotNull(manifestIn(OTHER_SESSION_PART_ID))
+        assertEquals(1, logger.internalErrorMessages.size)
     }
 
     @Test

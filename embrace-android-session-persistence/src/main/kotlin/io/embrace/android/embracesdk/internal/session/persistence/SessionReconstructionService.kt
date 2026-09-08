@@ -121,7 +121,7 @@ class SessionReconstructionService(
      */
     private fun dedupeSpanIds(spans: List<Span>, spanSnapshots: List<Span>): DedupedSpans =
         SystemTrace.trace("mf-dedupe-span-ids") {
-            val completedIds = spans.mapNotNull(Span::spanId).toSet()
+            val completedIds = spans.mapNotNullTo(HashSet(), Span::spanId)
             val remainingSnapshots = spanSnapshots.filter { snapshot ->
                 val id = snapshot.spanId
                 id == null || id !in completedIds

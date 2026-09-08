@@ -183,7 +183,7 @@ class SessionReconstructionService(
                 }
                 decoded.corruption?.let(::trackFailure)
                 budget.spend(decoded.spans.size, truncated = decoded.spanLimitReached)
-                SystemTrace.trace("mf-spans-proto-to-payload") { decoded.spans.map(SpanProto::toPayload) }
+                SystemTrace.trace("mf-spans-proto-to-payload") { decoded.drainToPayload() }
             } catch (exc: Throwable) {
                 trackFailure(exc)
                 null

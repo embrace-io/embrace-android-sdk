@@ -32,6 +32,7 @@ internal class SessionReconstructionServiceFileSizeTest {
         private const val SESSION_PART_ID = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
         private const val PADDING_FIELD_NUMBER = 1000
         private const val PADDING_FIELD_OVERHEAD = 6
+        private const val EMPTY_PADDING_FIELD_BYTES = 3
         private const val PADDED_SPAN_BYTES = 64 * 1024
 
         private val partDirectory = SessionPartDirectory(
@@ -144,6 +145,33 @@ internal class SessionReconstructionServiceFileSizeTest {
         assertEquals(logged.take(fitting).map(SpanProto::span_id), ids?.dropLast(1))
     }
 
+    @Test
+    fun `spans past the persisted span limit are dropped`() {
+        val logged = List(MAX_PERSISTED_SPANS + 5) { paddedSpanProto(paddedSpanId(it), padding = 1) }
+        partFile(COMPLETED_SPANS_FILE_NAME).writeBytes(completedSpansLog(logged))
+        val envelope = checkNotNull(service.reconstruct(partDirectory))
+        val spans = checkNotNull(envelope.data.spans)
+
+        assertEquals(MAX_PERSISTED_SPANS + 1, spans.size)
+        assertEquals(fullyPopulatedSpan, spans.last())
+        assertEquals(logged.take(MAX_PERSISTED_SPANS).map(SpanProto::span_id), spans.dropLast(1).map(Span::spanId))
+
+        assertEquals(emptyList<Span>(), envelope.data.spanSnapshots)
+        assertEquals(1, logger.internalErrorMessages.size)
+        assertEquals("SessionReconstructionFail", logger.internalErrorMessages.single().msg)
+    }
+
+    @Test
+    fun `a part at exactly the persisted span limit keeps every span`() {
+        val logged = List(MAX_PERSISTED_SPANS - 1) { paddedSpanProto(paddedSpanId(it), padding = 1) }
+        partFile(COMPLETED_SPANS_FILE_NAME).writeBytes(completedSpansLog(logged))
+
+        val envelope = checkNotNull(service.reconstruct(partDirectory))
+        assertEquals(MAX_PERSISTED_SPANS, envelope.data.spans?.size)
+        assertEquals(listOf(inFlightSpan), envelope.data.spanSnapshots)
+        assertNoInternalErrors()
+    }
+
     private fun assertOversizedFileRejected(fileName: String) {
         padToSize(fileName, MAX_PART_FILE_BYTES + 1)
         assertNull(service.reconstruct(partDirectory))
@@ -157,15 +185,46 @@ internal class SessionReconstructionServiceFileSizeTest {
      */
     private fun padToSize(fileName: String, size: Long) {
         val file = partFile(fileName)
-        val payloadSize = size - file.length() - PADDING_FIELD_OVERHEAD
+        file.appendBytes(paddingBytes(size - file.length()))
+        assertEquals(size, file.length())
+    }
+
+    /**
+     * Encodes padding fields occupying exactly [delta] bytes in total.
+     */
+    private fun paddingBytes(delta: Long): ByteArray {
+        val out = Buffer()
+        var remaining = delta
+        while (true) {
+            val field = paddingField(remaining)
+            if (field != null) {
+                out.write(field)
+                break
+            }
+            out.write(encodePadding(0))
+            remaining -= EMPTY_PADDING_FIELD_BYTES
+        }
+        assertEquals(delta, out.size)
+        return out.readByteArray()
+    }
+
+    /**
+     * A single padding field occupying exactly [delta] bytes, or null if no payload size reaches it.
+     */
+    private fun paddingField(delta: Long): ByteArray? =
+        (EMPTY_PADDING_FIELD_BYTES..PADDING_FIELD_OVERHEAD)
+            .asSequence()
+            .map { overhead -> encodePadding((delta - overhead).toInt()) }
+            .firstOrNull { it.size.toLong() == delta }
+
+    private fun encodePadding(payloadSize: Int): ByteArray {
         val padding = Buffer()
         ProtoAdapter.BYTES.encodeWithTag(
             ProtoWriter(padding),
             PADDING_FIELD_NUMBER,
-            ByteArray(payloadSize.toInt()).toByteString(),
+            ByteArray(payloadSize).toByteString(),
         )
-        file.appendBytes(padding.readByteArray())
-        assertEquals(size, file.length())
+        return padding.readByteArray()
     }
 
     private fun target(): SessionPartWriteTarget =

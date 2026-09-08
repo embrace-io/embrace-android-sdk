@@ -20,6 +20,7 @@ internal fun readCompletedSpans(
     source: BufferedSource,
     maxBytes: Long = MAX_PART_FILE_BYTES,
     maxRecordBytes: Long = MAX_RECORD_BYTES,
+    maxSpans: Int = MAX_PERSISTED_SPANS,
 ): DecodedSpans {
     val spans = mutableListOf<SpanProto>()
     var corruption: Throwable? = null
@@ -32,6 +33,9 @@ internal fun readCompletedSpans(
             when (reader.nextTag()) {
                 -1 -> return DecodedSpans(spans, corruption)
                 SPANS_TAG -> {
+                    if (spans.size >= maxSpans) {
+                        return DecodedSpans(spans, corruption, spanLimitReached = true)
+                    }
                     if (reader.nextFieldMinLengthInBytes() > maxRecordBytes) {
                         return DecodedSpans(spans, corruption)
                     }

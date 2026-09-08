@@ -4,34 +4,81 @@ package embrace.session.persistence;
 
 option java_package = "io.embrace.android.embracesdk.internal.session.persistence";
 
-// Mirrors EnvelopeMetadata and mutable values on EnvelopeResource.
-message EnvelopeMetadataProto {
+// Everything needed to rebuild the envelope a session part is delivered in, apart from its spans.
+//
+// Rewritten in place whenever the user info or the envelope resource changes, so it always holds
+// the latest values observed for the session part.
+message SessionMetadata {
+  // version of the on-disk layout
   uint32 format_version = 1;
 
-  optional string user_id = 2;
-  optional string email = 3;
-  optional string username = 4;
+  string envelope_version = 2;
+  string envelope_type = 3;
+  string user_session_id = 4;
+  string session_part_id = 5;
+
+  // Wrapped because proto3 forbids `optional` on a map and this can be null if no NDK
+  // symbols were injected at build time.
+  SharedLibSymbolMapping shared_lib_symbol_mapping = 6;
+
+  ResourceProto resource = 7;
+
+  optional string user_id = 8;
+  optional string email = 9;
+  optional string username = 10;
 
   // a Set in the payload, so the mapper dedupes on read.
-  repeated string personas = 5;
+  repeated string personas = 11;
 
-  string timezone_description = 6;
-  string locale = 7;
-
-  MutableResourceProto resource = 8;
+  string timezone_description = 12;
+  string locale = 13;
 }
 
-// The half of EnvelopeResource that can change after a session part starts
-message MutableResourceProto {
-  optional bool jailbroken = 1;
-  optional string screen_resolution = 2;
-  optional bool uses_emmc_storage = 3;
-  optional string hosted_platform_version = 4;
-  optional string hosted_sdk_version = 5;
-  optional string javascript_patch_number = 6;
-  optional string unity_build_id = 7;
-  optional string react_native_bundle_id = 8;
-  optional string react_native_version = 9;
+message SharedLibSymbolMapping {
+  map<string, string> symbols = 1;
+}
 
-  map<string, string> extras = 10;
+// Mirrors EnvelopeResource.
+//
+// Every field is optional because EnvelopeResourceSourceImpl can leave many null.
+message ResourceProto {
+  optional string app_version = 1;
+  optional AppFramework app_framework = 2;
+  optional string build_id = 3;
+  optional string app_ecosystem_id = 4;
+  optional string build_type = 5;
+  optional string build_flavor = 6;
+  optional string environment = 7;
+  optional string bundle_version = 8;
+  optional string sdk_version = 9;
+  optional int32 sdk_simple_version = 10;
+  optional string device_manufacturer = 11;
+  optional string device_model = 12;
+  optional string device_architecture = 13;
+  optional int64 disk_total_capacity = 14;
+  optional string os_type = 15;
+  optional string os_name = 16;
+  optional string os_version = 17;
+  optional string os_code = 18;
+  optional int32 num_cores = 19;
+  optional string device_soc_model = 20;
+  optional bool jailbroken = 21;
+  optional string screen_resolution = 22;
+  optional bool uses_emmc_storage = 23;
+  optional string hosted_platform_version = 24;
+  optional string hosted_sdk_version = 25;
+  optional string javascript_patch_number = 26;
+  optional string unity_build_id = 27;
+  optional string react_native_bundle_id = 28;
+  optional string react_native_version = 29;
+
+  map<string, string> extras = 30;
+
+  enum AppFramework {
+    UNSPECIFIED = 0;
+    NATIVE = 1;
+    REACT_NATIVE = 2;
+    UNITY = 3;
+    FLUTTER = 4;
+  }
 }

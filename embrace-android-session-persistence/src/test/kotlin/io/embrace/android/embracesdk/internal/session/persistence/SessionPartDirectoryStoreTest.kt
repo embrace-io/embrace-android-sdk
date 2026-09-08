@@ -104,10 +104,10 @@ internal class SessionPartDirectoryStoreTest {
     @Test
     fun `unparseable entries are deleted when the store is first used`() {
         File(sessionsDir, "junk.txt").writeText("not a session part")
-        File(sessionsDir, "manifest.pb.tmp").writeText("orphaned temp file")
+        File(sessionsDir, "metadata.pb.tmp").writeText("orphaned temp file")
         File(sessionsDir, "not-a-session-part").apply {
             mkdirs()
-            File(this, MANIFEST_FILE_NAME).writeText("stale")
+            File(this, METADATA_FILE_NAME).writeText("stale")
         }
         create(partDirectory)
 
@@ -245,7 +245,7 @@ internal class SessionPartDirectoryStoreTest {
     private fun createOnDisk(directory: SessionPartDirectory): File =
         partDir(directory).apply {
             mkdirs()
-            File(this, MANIFEST_FILE_NAME).writeText("previous process")
+            File(this, METADATA_FILE_NAME).writeText("previous process")
         }
 
     private fun partDir(directory: SessionPartDirectory): File = File(sessionsDir, directory.dirName)

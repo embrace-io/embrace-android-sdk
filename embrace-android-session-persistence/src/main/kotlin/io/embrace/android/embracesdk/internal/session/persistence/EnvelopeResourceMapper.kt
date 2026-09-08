@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 /**
  * Maps an [EnvelopeResource] to its protobuf equivalent.
  */
-internal fun EnvelopeResource.toImmutableProto(): ImmutableResourceProto = ImmutableResourceProto(
+internal fun EnvelopeResource.toProto(): ResourceProto = ResourceProto(
     app_version = appVersion,
     app_framework = appFramework?.toProto(),
     build_id = buildId,
@@ -27,9 +27,6 @@ internal fun EnvelopeResource.toImmutableProto(): ImmutableResourceProto = Immut
     os_code = osCode,
     num_cores = numCores,
     device_soc_model = deviceSocModel,
-)
-
-internal fun EnvelopeResource.toMutableProto(): MutableResourceProto = MutableResourceProto(
     jailbroken = jailbroken,
     screen_resolution = screenResolution,
     uses_emmc_storage = usesEmmcStorage,
@@ -42,7 +39,7 @@ internal fun EnvelopeResource.toMutableProto(): MutableResourceProto = MutableRe
     extras = extras,
 )
 
-internal fun ImmutableResourceProto.toPayload(mutable: MutableResourceProto): EnvelopeResource = EnvelopeResource(
+internal fun ResourceProto.toPayload(): EnvelopeResource = EnvelopeResource(
     appVersion = app_version,
     appFramework = app_framework?.toPayload(),
     buildId = build_id,
@@ -53,39 +50,39 @@ internal fun ImmutableResourceProto.toPayload(mutable: MutableResourceProto): En
     bundleVersion = bundle_version,
     sdkVersion = sdk_version,
     sdkSimpleVersion = sdk_simple_version,
-    reactNativeBundleId = mutable.react_native_bundle_id,
-    reactNativeVersion = mutable.react_native_version,
-    javascriptPatchNumber = mutable.javascript_patch_number,
-    hostedPlatformVersion = mutable.hosted_platform_version,
-    hostedSdkVersion = mutable.hosted_sdk_version,
-    unityBuildId = mutable.unity_build_id,
+    reactNativeBundleId = react_native_bundle_id,
+    reactNativeVersion = react_native_version,
+    javascriptPatchNumber = javascript_patch_number,
+    hostedPlatformVersion = hosted_platform_version,
+    hostedSdkVersion = hosted_sdk_version,
+    unityBuildId = unity_build_id,
     deviceManufacturer = device_manufacturer,
     deviceModel = device_model,
     deviceArchitecture = device_architecture,
-    jailbroken = mutable.jailbroken,
+    jailbroken = jailbroken,
     diskTotalCapacity = disk_total_capacity,
     osType = os_type,
     osName = os_name,
     osVersion = os_version,
     osCode = os_code,
-    screenResolution = mutable.screen_resolution,
+    screenResolution = screen_resolution,
     numCores = num_cores,
-    usesEmmcStorage = mutable.uses_emmc_storage,
+    usesEmmcStorage = uses_emmc_storage,
     deviceSocModel = device_soc_model,
-    extras = mutable.extras,
+    extras = extras,
 )
 
-internal fun AppFramework.toProto(): ImmutableResourceProto.AppFramework = when (this) {
-    AppFramework.NATIVE -> ImmutableResourceProto.AppFramework.NATIVE
-    AppFramework.REACT_NATIVE -> ImmutableResourceProto.AppFramework.REACT_NATIVE
-    AppFramework.UNITY -> ImmutableResourceProto.AppFramework.UNITY
-    AppFramework.FLUTTER -> ImmutableResourceProto.AppFramework.FLUTTER
+internal fun AppFramework.toProto(): ResourceProto.AppFramework = when (this) {
+    AppFramework.NATIVE -> ResourceProto.AppFramework.NATIVE
+    AppFramework.REACT_NATIVE -> ResourceProto.AppFramework.REACT_NATIVE
+    AppFramework.UNITY -> ResourceProto.AppFramework.UNITY
+    AppFramework.FLUTTER -> ResourceProto.AppFramework.FLUTTER
 }
 
-internal fun ImmutableResourceProto.AppFramework.toPayload(): AppFramework? = when (this) {
-    ImmutableResourceProto.AppFramework.UNSPECIFIED -> null
-    ImmutableResourceProto.AppFramework.NATIVE -> AppFramework.NATIVE
-    ImmutableResourceProto.AppFramework.REACT_NATIVE -> AppFramework.REACT_NATIVE
-    ImmutableResourceProto.AppFramework.UNITY -> AppFramework.UNITY
-    ImmutableResourceProto.AppFramework.FLUTTER -> AppFramework.FLUTTER
+internal fun ResourceProto.AppFramework.toPayload(): AppFramework? = when (this) {
+    ResourceProto.AppFramework.UNSPECIFIED -> null
+    ResourceProto.AppFramework.NATIVE -> AppFramework.NATIVE
+    ResourceProto.AppFramework.REACT_NATIVE -> AppFramework.REACT_NATIVE
+    ResourceProto.AppFramework.UNITY -> AppFramework.UNITY
+    ResourceProto.AppFramework.FLUTTER -> AppFramework.FLUTTER
 }

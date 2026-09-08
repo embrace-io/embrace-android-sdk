@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpansWriter
-import io.embrace.android.embracesdk.internal.session.persistence.SessionManifestWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadataWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectoryStore
@@ -102,7 +101,6 @@ class SessionPartWriterImpl(
             current = writers
         }
 
-        queueManifestWrite(writers)
         queueMetadataWrite(writers)
         queueSpanSnapshotsWrite(writers)
         registerResourceChangeListener()
@@ -193,17 +191,6 @@ class SessionPartWriterImpl(
         resourceListenerRegistered = true
         execute(null, InternalErrorType.SessionMetadataWriteFail, { worker.submit(it) }) {
             resourceSource.addChangeListener { _ -> onResourceChanged() }
-        }
-    }
-
-    private fun queueManifestWrite(writers: PartWriters) = EmbTrace.trace("mf-queue-manifest") {
-        execute(writers, InternalErrorType.SessionManifestWriteFail, { worker.submit(it) }) {
-            writers.manifest.write(
-                resource = resourceSource.getEnvelopeResource(),
-                envelopeVersion = SESSION_ENVELOPE_VERSION,
-                envelopeType = SESSION_ENVELOPE_TYPE,
-                sharedLibSymbolMapping = configService.nativeSymbolMap,
-            )
         }
     }
 
@@ -352,12 +339,14 @@ class SessionPartWriterImpl(
             get() = sealed || target.failed
 
         val span: EmbraceSdkSpan? = currentSessionPartSpan.current()
-        val manifest = SessionManifestWriter(target, logger)
 
         val metadata = SessionMetadataWriter(
             target = target,
             metadataSource = metadataSource::getEnvelopeMetadata,
             resourceSource = resourceSource::getEnvelopeResource,
+            envelopeVersion = SESSION_ENVELOPE_VERSION,
+            envelopeType = SESSION_ENVELOPE_TYPE,
+            sharedLibSymbolMappingSource = { configService.nativeSymbolMap },
             logger = logger,
         )
 

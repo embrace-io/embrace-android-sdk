@@ -18,7 +18,6 @@ import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpansWriter
-import io.embrace.android.embracesdk.internal.session.persistence.SessionManifestWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadataWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectoryStore
@@ -40,7 +39,7 @@ internal class SessionPartReaderTest {
     private companion object {
         private const val PROCESS_ID = "cccccccccccccccccccccccccccccccc"
         private const val PERSISTED_PROCESS_ID = "dddddddddddddddddddddddddddddddd"
-        private const val MANIFEST_FILE_NAME = "manifest.pb"
+        private const val METADATA_FILE_NAME = "metadata.pb"
 
         private val partDirectory = SessionPartDirectory(
             timestamp = FakeClock.DEFAULT_FAKE_CURRENT_TIME,
@@ -159,7 +158,7 @@ internal class SessionPartReaderTest {
     @Test
     fun `a session part that cannot be reconstructed is deleted without being delivered`() {
         persist(partDirectory)
-        assertTrue(File(File(sessionsDir, partDirectory.dirName), MANIFEST_FILE_NAME).delete())
+        assertTrue(File(File(sessionsDir, partDirectory.dirName), METADATA_FILE_NAME).delete())
 
         createReader().readPersistedSessionParts()
 
@@ -227,15 +226,13 @@ internal class SessionPartReaderTest {
         create(directory)
 
         val target = SessionPartWriteTarget(lazy { sessionsDir }) { directory }
-        SessionManifestWriter(target, logger).write(
-            resource = EnvelopeResource(appVersion = "1.0.0"),
-            envelopeVersion = SESSION_ENVELOPE_VERSION,
-            envelopeType = SESSION_ENVELOPE_TYPE,
-        )
         SessionMetadataWriter(
             target = target,
             metadataSource = { EnvelopeMetadata(username = "fake-user") },
             resourceSource = { EnvelopeResource(appVersion = "1.0.0") },
+            envelopeVersion = SESSION_ENVELOPE_VERSION,
+            envelopeType = SESSION_ENVELOPE_TYPE,
+            sharedLibSymbolMappingSource = { null },
             logger = logger,
         ).write()
         CompletedSpansWriter(target, logger).write(listOf(span))

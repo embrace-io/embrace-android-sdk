@@ -11,40 +11,28 @@ import java.lang.reflect.Modifier
 internal class EnvelopeResourceMapperTest {
 
     @Test
-    fun `every immutable field maps to its proto counterpart`() {
-        assertEquals(fullyPopulatedImmutableResourceProto, fullyPopulatedResource.toImmutableProto())
+    fun `every field maps to its proto counterpart`() {
+        assertEquals(fullyPopulatedResourceProto, fullyPopulatedResource.toProto())
     }
 
     @Test
-    fun `every mutable field maps to its proto counterpart`() {
-        assertEquals(fullyPopulatedMutableResourceProto, fullyPopulatedResource.toMutableProto())
-    }
-
-    @Test
-    fun `the two halves partition every resource field`() {
-        val immutable = protoFieldNames(ImmutableResourceProto::class.java)
-        val mutable = protoFieldNames(MutableResourceProto::class.java)
-
-        assertEquals(emptySet<String>(), immutable intersect mutable)
-        assertEquals(payloadFieldNames(), immutable + mutable)
+    fun `the proto holds every resource field`() {
+        assertEquals(payloadFieldNames(), protoFieldNames())
     }
 
     @Test
     fun `null fields map to absent proto fields`() {
-        val immutable = EnvelopeResource().toImmutableProto()
-        assertEquals(ImmutableResourceProto(), immutable)
-        assertNull(immutable.app_version)
-        assertNull(immutable.app_framework)
-        assertNull(immutable.sdk_simple_version)
-        assertNull(immutable.disk_total_capacity)
-        assertNull(immutable.num_cores)
-
-        val mutable = EnvelopeResource().toMutableProto()
-        assertEquals(MutableResourceProto(), mutable)
-        assertNull(mutable.jailbroken)
-        assertNull(mutable.uses_emmc_storage)
-        assertNull(mutable.screen_resolution)
-        assertEquals(emptyMap<String, String>(), mutable.extras)
+        val proto = EnvelopeResource().toProto()
+        assertEquals(ResourceProto(), proto)
+        assertNull(proto.app_version)
+        assertNull(proto.app_framework)
+        assertNull(proto.sdk_simple_version)
+        assertNull(proto.disk_total_capacity)
+        assertNull(proto.num_cores)
+        assertNull(proto.jailbroken)
+        assertNull(proto.uses_emmc_storage)
+        assertNull(proto.screen_resolution)
+        assertEquals(emptyMap<String, String>(), proto.extras)
     }
 
     @Test
@@ -59,13 +47,11 @@ internal class EnvelopeResourceMapperTest {
             diskTotalCapacity = 0L,
         )
 
-        with(resource.toImmutableProto()) {
+        with(resource.toProto()) {
             assertEquals("", app_version)
             assertEquals(0, num_cores)
             assertEquals(0, sdk_simple_version)
             assertEquals(0L, disk_total_capacity)
-        }
-        with(resource.toMutableProto()) {
             assertEquals(false, jailbroken)
             assertEquals(false, uses_emmc_storage)
             assertEquals("", screen_resolution)
@@ -75,7 +61,7 @@ internal class EnvelopeResourceMapperTest {
     @Test
     fun `extras are preserved`() {
         val extras = mapOf("a" to "1", "b" to "2")
-        assertEquals(extras, EnvelopeResource(extras = extras).toMutableProto().extras)
+        assertEquals(extras, EnvelopeResource(extras = extras).toProto().extras)
     }
 
     @Test
@@ -84,15 +70,15 @@ internal class EnvelopeResourceMapperTest {
 
         assertEquals(
             mapOf(
-                AppFramework.NATIVE to ImmutableResourceProto.AppFramework.NATIVE,
-                AppFramework.REACT_NATIVE to ImmutableResourceProto.AppFramework.REACT_NATIVE,
-                AppFramework.UNITY to ImmutableResourceProto.AppFramework.UNITY,
-                AppFramework.FLUTTER to ImmutableResourceProto.AppFramework.FLUTTER,
+                AppFramework.NATIVE to ResourceProto.AppFramework.NATIVE,
+                AppFramework.REACT_NATIVE to ResourceProto.AppFramework.REACT_NATIVE,
+                AppFramework.UNITY to ResourceProto.AppFramework.UNITY,
+                AppFramework.FLUTTER to ResourceProto.AppFramework.FLUTTER,
             ),
             mapped,
         )
         assertEquals(AppFramework.entries.size, mapped.values.toSet().size)
-        assertFalse(mapped.containsValue(ImmutableResourceProto.AppFramework.UNSPECIFIED))
+        assertFalse(mapped.containsValue(ResourceProto.AppFramework.UNSPECIFIED))
 
         // proto enum must match numeric values in the payload
         mapped.forEach { (framework, proto) ->
@@ -102,15 +88,12 @@ internal class EnvelopeResourceMapperTest {
 
     @Test
     fun `every proto field maps back to its payload counterpart`() {
-        assertEquals(
-            fullyPopulatedResource,
-            fullyPopulatedImmutableResourceProto.toPayload(fullyPopulatedMutableResourceProto),
-        )
+        assertEquals(fullyPopulatedResource, fullyPopulatedResourceProto.toPayload())
     }
 
     @Test
     fun `absent proto fields map to null payload fields`() {
-        val resource = ImmutableResourceProto().toPayload(MutableResourceProto())
+        val resource = ResourceProto().toPayload()
         assertEquals(EnvelopeResource(), resource)
         assertNull(resource.appVersion)
         assertNull(resource.appFramework)
@@ -124,18 +107,15 @@ internal class EnvelopeResourceMapperTest {
 
     @Test
     fun `false and zero valued proto fields are preserved`() {
-        val resource = ImmutableResourceProto(
+        val resource = ResourceProto(
             app_version = "",
             num_cores = 0,
             sdk_simple_version = 0,
             disk_total_capacity = 0L,
-        ).toPayload(
-            MutableResourceProto(
-                jailbroken = false,
-                uses_emmc_storage = false,
-                screen_resolution = "",
-            ),
-        )
+            jailbroken = false,
+            uses_emmc_storage = false,
+            screen_resolution = "",
+        ).toPayload()
 
         assertEquals("", resource.appVersion)
         assertEquals(false, resource.jailbroken)
@@ -149,22 +129,20 @@ internal class EnvelopeResourceMapperTest {
     @Test
     fun `extras are preserved when mapping back`() {
         val extras = mapOf("a" to "1", "b" to "2")
-        val resource = ImmutableResourceProto()
-            .toPayload(MutableResourceProto(extras = extras))
-        assertEquals(extras, resource.extras)
+        assertEquals(extras, ResourceProto(extras = extras).toPayload().extras)
     }
 
     @Test
     fun `every proto app framework maps back and unspecified maps to null`() {
-        val mapped = ImmutableResourceProto.AppFramework.entries.associateWith { it.toPayload() }
+        val mapped = ResourceProto.AppFramework.entries.associateWith { it.toPayload() }
 
         assertEquals(
             mapOf(
-                ImmutableResourceProto.AppFramework.UNSPECIFIED to null,
-                ImmutableResourceProto.AppFramework.NATIVE to AppFramework.NATIVE,
-                ImmutableResourceProto.AppFramework.REACT_NATIVE to AppFramework.REACT_NATIVE,
-                ImmutableResourceProto.AppFramework.UNITY to AppFramework.UNITY,
-                ImmutableResourceProto.AppFramework.FLUTTER to AppFramework.FLUTTER,
+                ResourceProto.AppFramework.UNSPECIFIED to null,
+                ResourceProto.AppFramework.NATIVE to AppFramework.NATIVE,
+                ResourceProto.AppFramework.REACT_NATIVE to AppFramework.REACT_NATIVE,
+                ResourceProto.AppFramework.UNITY to AppFramework.UNITY,
+                ResourceProto.AppFramework.FLUTTER to AppFramework.FLUTTER,
             ),
             mapped,
         )
@@ -177,8 +155,8 @@ internal class EnvelopeResourceMapperTest {
         }
     }
 
-    private fun protoFieldNames(type: Class<*>): Set<String> =
-        instanceFieldNames(type).mapTo(mutableSetOf()) { name ->
+    private fun protoFieldNames(): Set<String> =
+        instanceFieldNames(ResourceProto::class.java).mapTo(mutableSetOf()) { name ->
             name.split("_").reduce { acc, part -> acc + part.replaceFirstChar(Char::uppercase) }
         }
 

@@ -9,9 +9,7 @@ import java.io.OutputStream
  * Version of the on-disk layout written by this SDK. Data persisted with any other version
  * cannot be read back.
  */
-internal const val FORMAT_VERSION = 1
-
-internal const val MANIFEST_FILE_NAME = "manifest.pb"
+internal const val FORMAT_VERSION = 2
 
 internal const val METADATA_FILE_NAME = "metadata.pb"
 

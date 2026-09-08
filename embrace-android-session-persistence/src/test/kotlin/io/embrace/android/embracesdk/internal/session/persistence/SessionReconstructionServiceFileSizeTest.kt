@@ -19,7 +19,6 @@ import java.io.File
 internal class SessionReconstructionServiceFileSizeTest {
 
     private companion object {
-        private const val MANIFEST_FILE_NAME = "manifest.pb"
         private const val METADATA_FILE_NAME = "metadata.pb"
         private const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
         private const val SPAN_SNAPSHOTS_FILE_NAME = "span_snapshots.pb"
@@ -47,7 +46,6 @@ internal class SessionReconstructionServiceFileSizeTest {
 
     private lateinit var sessionsDir: File
     private lateinit var logger: FakeInternalLogger
-    private lateinit var manifestWriter: SessionManifestWriter
     private lateinit var metadataWriter: SessionMetadataWriter
     private lateinit var snapshotsWriter: SpanSnapshotsWriter
     private lateinit var service: SessionReconstructionService
@@ -60,12 +58,14 @@ internal class SessionReconstructionServiceFileSizeTest {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
         logger = FakeInternalLogger(throwOnInternalError = false)
         activePart = partDirectory
-        manifestWriter = SessionManifestWriter(target(), logger)
         metadataWriter = SessionMetadataWriter(
-            target(),
-            { fullyPopulatedMetadata },
-            { fullyPopulatedResource },
-            logger,
+            target = target(),
+            metadataSource = { fullyPopulatedMetadata },
+            resourceSource = { fullyPopulatedResource },
+            envelopeVersion = ENVELOPE_VERSION,
+            envelopeType = ENVELOPE_TYPE,
+            sharedLibSymbolMappingSource = { null },
+            logger = logger,
         )
         snapshotsWriter = SpanSnapshotsWriter(target(), logger)
         service = SessionReconstructionService(lazy { sessionsDir }, logger)
@@ -80,11 +80,6 @@ internal class SessionReconstructionServiceFileSizeTest {
     }
 
     @Test
-    fun `an oversized manifest is rejected`() {
-        assertOversizedFileRejected(MANIFEST_FILE_NAME)
-    }
-
-    @Test
     fun `oversized metadata is rejected`() {
         assertOversizedFileRejected(METADATA_FILE_NAME)
     }
@@ -96,8 +91,8 @@ internal class SessionReconstructionServiceFileSizeTest {
 
     @Test
     fun `a file at exactly the maximum size is reconstructed`() {
-        padToSize(MANIFEST_FILE_NAME, MAX_PART_FILE_BYTES)
-        assertEquals(MAX_PART_FILE_BYTES, partFile(MANIFEST_FILE_NAME).length())
+        padToSize(METADATA_FILE_NAME, MAX_PART_FILE_BYTES)
+        assertEquals(MAX_PART_FILE_BYTES, partFile(METADATA_FILE_NAME).length())
         assertNotNull(service.reconstruct(partDirectory))
         assertNoInternalErrors()
     }
@@ -224,7 +219,6 @@ internal class SessionReconstructionServiceFileSizeTest {
     private fun partFile(fileName: String): File = File(File(sessionsDir, partDirectory.dirName), fileName)
 
     private fun write() {
-        assertTrue(manifestWriter.write(fullyPopulatedResource, ENVELOPE_VERSION, ENVELOPE_TYPE))
         assertTrue(metadataWriter.write())
         assertTrue(snapshotsWriter.write(listOf(inFlightSpan)))
         partFile(COMPLETED_SPANS_FILE_NAME).writeBytes(completedSpansLog(emptyList()))

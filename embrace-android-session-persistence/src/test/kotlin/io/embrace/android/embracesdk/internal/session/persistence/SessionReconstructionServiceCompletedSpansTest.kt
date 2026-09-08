@@ -58,7 +58,6 @@ internal class SessionReconstructionServiceCompletedSpansTest {
 
     private lateinit var sessionsDir: File
     private lateinit var logger: FakeInternalLogger
-    private lateinit var manifestWriter: SessionManifestWriter
     private lateinit var metadataWriter: SessionMetadataWriter
     private lateinit var service: SessionReconstructionService
 
@@ -70,12 +69,14 @@ internal class SessionReconstructionServiceCompletedSpansTest {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
         logger = FakeInternalLogger(throwOnInternalError = false)
         activePart = partDirectory
-        manifestWriter = SessionManifestWriter(target(), logger)
         metadataWriter = SessionMetadataWriter(
-            target(),
-            { fullyPopulatedMetadata },
-            { fullyPopulatedResource },
-            logger,
+            target = target(),
+            metadataSource = { fullyPopulatedMetadata },
+            resourceSource = { fullyPopulatedResource },
+            envelopeVersion = ENVELOPE_VERSION,
+            envelopeType = ENVELOPE_TYPE,
+            sharedLibSymbolMappingSource = { null },
+            logger = logger,
         )
         service = SessionReconstructionService(lazy { sessionsDir }, logger)
         createPartDir(partDirectory)
@@ -213,7 +214,6 @@ internal class SessionReconstructionServiceCompletedSpansTest {
 
     @Test
     fun `a missing completed spans log reconstructs no spans`() {
-        writeManifest()
         writeMetadata()
         writeSpanSnapshots()
 
@@ -225,7 +225,6 @@ internal class SessionReconstructionServiceCompletedSpansTest {
 
     @Test
     fun `a directory occupying the completed spans path is reported`() {
-        writeManifest()
         writeMetadata()
         completedSpansFile().mkdirs()
 
@@ -254,15 +253,9 @@ internal class SessionReconstructionServiceCompletedSpansTest {
         directory: SessionPartDirectory = partDirectory,
         spans: List<SpanProto> = emptyList(),
     ) {
-        writeManifest(directory)
         writeMetadata(directory)
         writeCompletedSpans(directory, spans)
         writeSpanSnapshots(directory)
-    }
-
-    private fun writeManifest(directory: SessionPartDirectory = partDirectory) {
-        activePart = directory
-        assertTrue(manifestWriter.write(fullyPopulatedResource, ENVELOPE_VERSION, ENVELOPE_TYPE))
     }
 
     private fun writeMetadata(directory: SessionPartDirectory = partDirectory) {

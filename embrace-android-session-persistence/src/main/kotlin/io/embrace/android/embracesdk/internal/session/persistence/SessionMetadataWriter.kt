@@ -7,17 +7,29 @@ import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
 
 /**
- * Writes the data that can change over the lifetime of a session part to its directory.
+ * Writes everything a session part is reconstructed from other than its spans: the identity of the
+ * part, the envelope resource, and the user info.
  *
- * Unlike the manifest, this file is overwritten in place. [write] is called when a session part
- * starts, whenever the user info or envelope resource changes.
+ * The file is overwritten in place. [write] is called when a session part starts, and whenever the
+ * user info or envelope resource changes.
  */
 class SessionMetadataWriter(
     private val target: SessionPartWriteTarget,
     private val metadataSource: () -> EnvelopeMetadata,
     private val resourceSource: () -> EnvelopeResource,
+    private val envelopeVersion: String,
+    private val envelopeType: String,
+    private val sharedLibSymbolMappingSource: () -> Map<String, String>?,
     private val logger: InternalLogger,
 ) {
+
+    /**
+     * The NDK symbols injected at build time. They never change, so the message is built on the
+     * first write rather than on every one. Null if no symbols were injected.
+     */
+    private val sharedLibSymbolMapping: SharedLibSymbolMapping? by lazy {
+        sharedLibSymbolMappingSource()?.let { symbols -> SharedLibSymbolMapping(symbols = symbols) }
+    }
 
     /**
      * Writes the metadata for the active session part, replacing any metadata already on disk.
@@ -35,9 +47,16 @@ class SessionMetadataWriter(
         val directory = target.directory ?: return false
         val partDir = target.partDir(directory, ::trackFailure) ?: return false
 
-        val metadata = metadataSource().toProto(resourceSource().toMutableProto())
+        val metadata = metadataSource().toProto(
+            directory = directory,
+            envelopeVersion = envelopeVersion,
+            envelopeType = envelopeType,
+            sharedLibSymbolMapping = sharedLibSymbolMapping,
+            resource = resourceSource().toProto(),
+        )
+
         writeAtomically(partDir, METADATA_FILE_NAME, Long.MAX_VALUE) { stream ->
-            EnvelopeMetadataProto.ADAPTER.encode(stream, metadata)
+            SessionMetadata.ADAPTER.encode(stream, metadata)
         }
         return true
     }

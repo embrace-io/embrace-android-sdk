@@ -13,11 +13,9 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
-import io.embrace.android.embracesdk.internal.session.persistence.EnvelopeMetadataProto
-import io.embrace.android.embracesdk.internal.session.persistence.SessionManifest
+import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadata
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -28,8 +26,8 @@ import java.io.File
 
 /**
  * Covers rewriting the metadata when the envelope resource changes. Most of the resource is fixed
- * for the lifetime of the process and lives in the write-once manifest, but values such as the
- * React Native bundle id can mutate and are persisted in the metadata instead.
+ * for the lifetime of the process, but values such as the React Native bundle id can mutate, and
+ * each rewrite persists the whole resource again.
  */
 internal class SessionPartWriterResourceChangeTest {
 
@@ -37,7 +35,6 @@ internal class SessionPartWriterResourceChangeTest {
         private const val USER_SESSION_ID = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         private const val FIRST_PART_ID = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
         private const val SECOND_PART_ID = "cccccccccccccccccccccccccccccccc"
-        private const val MANIFEST_FILE_NAME = "manifest.pb"
         private const val METADATA_FILE_NAME = "metadata.pb"
         private const val APP_VERSION = "1.0.0"
         private const val INITIAL_BUNDLE_ID = "bundle-1"
@@ -96,7 +93,7 @@ internal class SessionPartWriterResourceChangeTest {
         drain()
 
         assertEquals(CHANGED_BUNDLE_ID, bundleIdOnDisk(FIRST_PART_ID))
-        with(checkNotNull(manifestOnDisk(FIRST_PART_ID))) {
+        with(checkNotNull(metadataOnDisk(FIRST_PART_ID))) {
             assertEquals(USER_SESSION_ID, user_session_id)
             assertEquals(FIRST_PART_ID, session_part_id)
         }
@@ -104,17 +101,20 @@ internal class SessionPartWriterResourceChangeTest {
     }
 
     @Test
-    fun `a resource change leaves the manifest untouched`() {
+    fun `a resource change carries the unchanged fields forward`() {
         val writer = createWriter()
         startPart(writer, FIRST_PART_ID)
         drain()
-        val written = checkNotNull(manifestFile(FIRST_PART_ID)).readBytes()
 
         repeat(3) { changeResource("bundle-change-$it") }
         drain()
 
-        assertArrayEquals(written, manifestFile(FIRST_PART_ID)?.readBytes())
-        assertEquals(APP_VERSION, manifestOnDisk(FIRST_PART_ID)?.resource?.app_version)
+        with(checkNotNull(metadataOnDisk(FIRST_PART_ID))) {
+            assertEquals(APP_VERSION, resource?.app_version)
+            assertEquals("bundle-change-2", resource?.react_native_bundle_id)
+            assertEquals(USER_SESSION_ID, user_session_id)
+            assertEquals(FIRST_PART_ID, session_part_id)
+        }
         assertNoInternalErrors()
     }
 
@@ -166,12 +166,12 @@ internal class SessionPartWriterResourceChangeTest {
         val writer = createWriter()
         startPart(writer, FIRST_PART_ID)
         drain()
-        assertEquals(4, resourceReads)
+        assertEquals(3, resourceReads)
 
         repeat(3) { changeResource("bundle-2.$it") }
         drain()
 
-        assertEquals(5, resourceReads)
+        assertEquals(4, resourceReads)
         assertEquals("bundle-2.2", bundleIdOnDisk(FIRST_PART_ID))
         assertNoInternalErrors()
     }
@@ -264,17 +264,11 @@ internal class SessionPartWriterResourceChangeTest {
     private fun dirFor(sessionPartId: String): SessionPartDirectory =
         partDirs().single { it.sessionPartId == sessionPartId }
 
-    private fun manifestFile(sessionPartId: String): File? =
-        File(File(sessionsDir, dirFor(sessionPartId).dirName), MANIFEST_FILE_NAME).takeIf(File::isFile)
-
-    private fun manifestOnDisk(sessionPartId: String): SessionManifest? =
-        manifestFile(sessionPartId)?.inputStream()?.use(SessionManifest.ADAPTER::decode)
-
-    private fun metadataOnDisk(sessionPartId: String): EnvelopeMetadataProto? =
+    private fun metadataOnDisk(sessionPartId: String): SessionMetadata? =
         File(File(sessionsDir, dirFor(sessionPartId).dirName), METADATA_FILE_NAME)
             .takeIf(File::isFile)
             ?.inputStream()
-            ?.use(EnvelopeMetadataProto.ADAPTER::decode)
+            ?.use(SessionMetadata.ADAPTER::decode)
 
     private fun bundleIdOnDisk(sessionPartId: String): String? =
         metadataOnDisk(sessionPartId)?.resource?.react_native_bundle_id

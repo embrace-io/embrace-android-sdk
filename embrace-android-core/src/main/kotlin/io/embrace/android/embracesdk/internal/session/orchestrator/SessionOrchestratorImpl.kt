@@ -387,7 +387,10 @@ internal class SessionOrchestratorImpl(
 
                             // persist the stopped session part span
                             EmbTrace.trace("mf-part-ended") {
-                                sessionPartWriter?.onSessionPartEnded(sessionPartId)
+                                sessionPartWriter?.onSessionPartEnded(
+                                    sessionPartId = sessionPartId,
+                                    crashing = transitionType == TransitionType.CRASH,
+                                )
                             }
                         },
                         startSessionPartCallback = {

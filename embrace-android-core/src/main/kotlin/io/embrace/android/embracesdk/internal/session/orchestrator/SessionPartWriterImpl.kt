@@ -114,7 +114,7 @@ class SessionPartWriterImpl(
         registerResourceChangeListener()
     }
 
-    override fun onSessionPartEnded(sessionPartId: String) {
+    override fun onSessionPartEnded(sessionPartId: String, crashing: Boolean) {
         if (!acceptingWrites()) {
             return
         }
@@ -135,7 +135,7 @@ class SessionPartWriterImpl(
             writers.sealed = true
             writeTracker.markComplete(sessionPartId)
 
-            if (!processTerminating) {
+            if (!crashing && !processTerminating) {
                 notifyWritesComplete()
             }
             writers.span?.releaseRetainedData()

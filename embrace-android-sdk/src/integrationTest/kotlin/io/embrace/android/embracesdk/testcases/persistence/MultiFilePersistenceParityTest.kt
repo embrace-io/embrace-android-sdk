@@ -432,7 +432,7 @@ internal class MultiFilePersistenceParityTest(
     }
 
     @Test
-    fun `a crashed session part is handed to the intake service rather than delivered`() {
+    fun `a crashed session part is left on disk for the next process launch`() {
         testRule.runTest(
             persistedRemoteConfig = remoteConfig(),
             testCaseAction = {
@@ -442,10 +442,29 @@ internal class MultiFilePersistenceParityTest(
             },
             assertAction = {
                 assertEquals(0, getSessionEnvelopes(0).size)
-                assertTrue(
-                    "the crashed session part was left behind on disk",
-                    storedSessionPartDirectories().isEmpty(),
-                )
+
+                when (persistenceMode) {
+                    // the legacy layer keeps no session part directories
+                    PersistenceMode.LEGACY -> assertEquals(
+                        emptyList<SessionPartDirectory>(),
+                        storedSessionPartDirectories(),
+                    )
+
+                    // reading a part back is very unlikely to complete while the process is
+                    // crashing, so the part is sealed and left for the next launch to deliver
+                    // rather than being handed to the intake service here
+                    PersistenceMode.MULTI_FILE -> {
+                        assertEquals(
+                            "the crashed session part was not left on disk",
+                            1,
+                            storedSessionPartDirectories().size,
+                        )
+                        assertNotNull(
+                            "the crashed session part was left unsealed on disk",
+                            sessionSpanOnDisk()?.span?.end_time_unix_nano,
+                        )
+                    }
+                }
             },
         )
     }

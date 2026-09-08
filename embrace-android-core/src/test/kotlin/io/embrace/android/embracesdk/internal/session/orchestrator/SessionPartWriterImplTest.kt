@@ -687,11 +687,30 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         clock.tick(10000)
         endPart()
-        writer.onSessionPartEnded(SESSION_PART_ID)
+        writer.onSessionPartEnded(SESSION_PART_ID, crashing = true)
         writer.onCrash()
 
         assertEquals(clock.now().millisToNanos(), sessionSpanOnDisk(SESSION_PART_ID)?.span?.end_time_unix_nano)
         assertTrue(executor.isShutdown)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a crash never announces its writes as complete even if the seal runs before the crash flush`() {
+        val events = mutableListOf<String>()
+        val writer = createWriter(onWritesComplete = { events.add("writes-complete") })
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        clock.tick(10000)
+        endPart()
+        val expectedEndTimeNanos = clock.now().millisToNanos()
+        writer.onSessionPartEnded(SESSION_PART_ID, crashing = true)
+        drain()
+        writer.onCrash()
+
+        assertEquals(emptyList<String>(), events)
+        assertEquals(expectedEndTimeNanos, sessionSpanOnDisk(SESSION_PART_ID)?.span?.end_time_unix_nano)
         assertNoInternalErrors()
     }
 

@@ -35,4 +35,12 @@ internal class SessionPartEnvelopeSourceImpl(
             payloadSource.getSessionPartPayload(endType, startNewSession, crashId),
         )
     }
+
+    override fun endSessionPart(
+        endType: SessionPartSnapshotType,
+        startNewSession: Boolean,
+        crashId: String?,
+    ) {
+        payloadSource.endSessionPart(endType, startNewSession, crashId)
+    }
 }

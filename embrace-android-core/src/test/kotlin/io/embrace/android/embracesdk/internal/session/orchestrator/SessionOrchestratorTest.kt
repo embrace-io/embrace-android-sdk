@@ -1129,6 +1129,31 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
+    fun `no session part envelope is assembled when multi file persistence is enabled`() {
+        createOrchestrator(ProcessState.FOREGROUND, multiFilePersistenceConfigService())
+        val sessionPartId = checkNotNull(sessionTracker.getActiveSessionPartId())
+        clock.tick(10000)
+        orchestrator.onBackground()
+
+        assertEquals(0, payloadCollator.finalEnvelopeCount)
+        assertEquals(1, payloadCollator.endedWithoutEnvelopeCount)
+        assertEquals(clock.now().millisToNanos(), sessionSpanIn(sessionPartId)?.span?.end_time_unix_nano)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a session part envelope is assembled when multi file persistence is disabled`() {
+        createOrchestrator(ProcessState.FOREGROUND)
+        clock.tick(10000)
+        orchestrator.onBackground()
+
+        assertEquals(1, payloadCollator.finalEnvelopeCount)
+        assertEquals(0, payloadCollator.endedWithoutEnvelopeCount)
+        assertEquals(1, store.storedSessionPartPayloads.size)
+        assertNoInternalErrors()
+    }
+
+    @Test
     fun `no periodic caching is started when multi file persistence is enabled`() {
         createOrchestrator(ProcessState.FOREGROUND, multiFilePersistenceConfigService())
         assertEquals(0, sessionCacheExecutor.scheduledTasksCount())

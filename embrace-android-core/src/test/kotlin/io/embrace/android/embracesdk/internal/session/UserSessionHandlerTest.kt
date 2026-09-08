@@ -12,12 +12,14 @@ import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeSessionPartTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
+import io.embrace.android.embracesdk.fakes.createPersistenceBehavior
 import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionPartToken
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPartEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPartPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
@@ -33,7 +35,11 @@ import io.embrace.android.embracesdk.internal.session.message.PayloadMessageColl
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -170,6 +176,63 @@ internal class UserSessionHandlerTest {
 
         payloadFactory.endPayloadWithCrash(ProcessState.FOREGROUND, clock.now(), initial, "crashId")
         assertEquals(0, spanRepository.completedOtelSpans().size)
+    }
+
+    @Test
+    fun `backgrounding still flushes completed spans when no envelope is built`() {
+        enableMultiFilePersistence()
+        startFakeSession()
+        initializeServices()
+        spanService.recordSpan("test-span") {}
+        assertEquals(1, spanRepository.completedOtelSpans().size)
+
+        clock.tick(15000L)
+        assertNull(payloadFactory.endPayloadWithState(ProcessState.FOREGROUND, clock.now(), initial))
+        assertEquals(0, spanRepository.completedOtelSpans().size)
+    }
+
+    @Test
+    fun `crash ending still flushes completed spans when no envelope is built`() {
+        enableMultiFilePersistence()
+        startFakeSession()
+        initializeServices()
+        spanService.recordSpan("test-span") {}
+        assertEquals(1, spanRepository.completedOtelSpans().size)
+
+        assertNull(payloadFactory.endPayloadWithCrash(ProcessState.FOREGROUND, clock.now(), initial, "crashId"))
+        assertEquals(0, spanRepository.completedOtelSpans().size)
+    }
+
+    @Test
+    fun `the session part span is stopped when no envelope is built`() {
+        enableMultiFilePersistence()
+        startFakeSession()
+        initializeServices()
+        val endingSpan = checkNotNull(currentSessionPartSpan.current())
+
+        clock.tick(15000L)
+        assertNull(payloadFactory.endPayloadWithState(ProcessState.FOREGROUND, clock.now(), initial))
+
+        assertFalse(endingSpan.isRecording)
+        assertNotEquals(endingSpan, currentSessionPartSpan.current())
+    }
+
+    @Test
+    fun `in flight spans are not snapshotted when no envelope is built`() {
+        enableMultiFilePersistence()
+        startFakeSession()
+        initializeServices()
+        val inFlight = checkNotNull(spanService.startSpan("in-flight-span"))
+
+        clock.tick(15000L)
+        assertNull(payloadFactory.endPayloadWithState(ProcessState.FOREGROUND, clock.now(), initial))
+        assertTrue(inFlight.isRecording)
+    }
+
+    private fun enableMultiFilePersistence() {
+        configService.persistenceBehavior = createPersistenceBehavior(
+            remoteCfg = RemoteConfig(pctMultiFilePersistenceEnabled = 100.0f),
+        )
     }
 
     private fun startFakeSession(): SessionPartToken {

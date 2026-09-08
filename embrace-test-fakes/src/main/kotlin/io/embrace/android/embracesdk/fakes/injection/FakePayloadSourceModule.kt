@@ -86,4 +86,12 @@ private class FakeSessionPartEnvelopeSource(
             partPayloadSource.getSessionPartPayload(endType, startNewSession, crashId)
         )
     }
+
+    override fun endSessionPart(
+        endType: SessionPartSnapshotType,
+        startNewSession: Boolean,
+        crashId: String?,
+    ) {
+        partPayloadSource.endSessionPart(endType, startNewSession, crashId)
+    }
 }

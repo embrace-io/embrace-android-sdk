@@ -59,7 +59,7 @@ interface PayloadFactory {
     /**
      * Ends a session manually.
      */
-    fun endSessionWithManual(timestamp: Long, initial: SessionPartToken): Envelope<SessionPartPayload>
+    fun endSessionWithManual(timestamp: Long, initial: SessionPartToken): Envelope<SessionPartPayload>?
 
     /**
      * Create and return and empty [Envelope] for a [LogPayload] based on the current state of the SDK

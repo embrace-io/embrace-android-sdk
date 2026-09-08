@@ -17,6 +17,8 @@ class FakePayloadMessageCollator(
 
     val sessionCount: AtomicInteger = AtomicInteger(0)
     val baCount: AtomicInteger = AtomicInteger(0)
+    var finalEnvelopeCount: Int = 0
+    var endedWithoutEnvelopeCount: Int = 0
 
     override fun buildInitialPart(params: InitialEnvelopeParams): SessionPartToken = with(params) {
         when (processState) {
@@ -42,9 +44,19 @@ class FakePayloadMessageCollator(
     override fun buildFinalEnvelope(
         params: FinalEnvelopeParams,
     ): Envelope<SessionPartPayload> {
+        finalEnvelopeCount++
+        endSessionPartSpan(params)
+        return Envelope(data = SessionPartPayload())
+    }
+
+    override fun endSessionPart(params: FinalEnvelopeParams) {
+        endedWithoutEnvelopeCount++
+        endSessionPartSpan(params)
+    }
+
+    private fun endSessionPartSpan(params: FinalEnvelopeParams) {
         if (params.endType != SessionPartSnapshotType.PERIODIC_CACHE) {
             currentSessionPartSpan.endSession(startNewSession = params.startNewSession)
         }
-        return Envelope(data = SessionPartPayload())
     }
 }

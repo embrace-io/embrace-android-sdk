@@ -590,9 +590,6 @@ internal class SessionOrchestratorImpl(
     }
 
     private fun processEndMessage(envelope: Envelope<SessionPartPayload>?, transitionType: TransitionType) {
-        if (multiFilePersistenceEnabled()) {
-            return
-        }
         envelope?.let {
             payloadStore?.storeSessionPartPayload(envelope, transitionType)
         }

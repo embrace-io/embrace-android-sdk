@@ -9,7 +9,12 @@ class FakeEnvelopeResourceSource : EnvelopeResourceSource {
     var customValues = mutableMapOf<String, String>()
     val listeners = mutableListOf<(EnvelopeResource) -> Unit>()
 
-    override fun getEnvelopeResource(): EnvelopeResource = resource
+    var readCount: Int = 0
+
+    override fun getEnvelopeResource(): EnvelopeResource {
+        readCount++
+        return resource
+    }
 
     override fun add(key: String, value: String) {
         customValues[key] = value

@@ -11,6 +11,8 @@ import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -151,6 +153,22 @@ internal class SdkInitEnvironmentAttributesTest {
         )
         assertEquals("verify", verifyOnly[SdkInitAttributeKeys.ART_COMPILER_FILTER])
         assertFalse(verifyOnly.containsKey(SdkInitAttributeKeys.APP_IMAGE_AT_INIT))
+
+        val odexReadError = environmentAttributes(
+            compileStateProvider = {
+                ArtOptimizationState(artCompilerFilter = null, hasAppImage = true)
+            },
+        )
+        assertNull(odexReadError[SdkInitAttributeKeys.ART_COMPILER_FILTER])
+        assertTrue(odexReadError.containsKey(SdkInitAttributeKeys.APP_IMAGE_AT_INIT))
+
+        val missingApk = environmentAttributes(
+            compileStateProvider = {
+                ArtOptimizationState(artCompilerFilter = "speed", hasAppImage = false)
+            },
+        )
+        assertEquals("speed", missingApk[SdkInitAttributeKeys.ART_COMPILER_FILTER])
+        assertFalse(missingApk.containsKey(SdkInitAttributeKeys.APP_IMAGE_AT_INIT))
 
         val unknown = environmentAttributes(compileStateProvider = { null })
         assertFalse(unknown.containsKey(SdkInitAttributeKeys.ART_COMPILER_FILTER))

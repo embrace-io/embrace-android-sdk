@@ -13,7 +13,7 @@ import java.io.File
  * [artCompilerFilter] How ART is compiling this app's primary DEX.
  * [hasAppImage] Whether the APK has the right files to allow an optimized DEX compilation by ART
  */
-class ArtOptimizationState(
+class ArtOptimizationState internal constructor(
     val artCompilerFilter: String?,
     val hasAppImage: Boolean,
 ) {

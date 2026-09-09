@@ -3,140 +3,259 @@ package io.embrace.android.embracesdk.internal.utils.event
 import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import java.util.Collections
+import java.util.IdentityHashMap
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * A simple typed `EventBus` that can emit events of any type (allowing the direct use of platform events where appropriate). A handler
- * for a type receives events of any subtype as well, including subtypes reached through interfaces, allowing `sealed class` or
- * `sealed interface` hierarchies of events (or similar) if desired. Events are always emitted on the calling thread, and the bus is
- * thread safe.
+ * A typed event bus where a handler for a type also receives events of any subtype, including subtypes reached through interfaces.
+ * Events are emitted on the calling thread, concrete types are handled before their supertypes, and `Any` receives nothing. A
+ * [StickyEvent] is retained and replayed to handlers registered after it.
  *
- * Handlers registered against a concrete event type are invoked before those registered against its supertypes. `Any` is not part of any
- * type hierarchy walked by this bus, so a handler registered against `Any` never receives events.
- *
- * Handlers are expected to be registered once during initialisation and left in place; [removeHandler] exists for edge cases and tests.
- * Registration is therefore the cold path, and all type hierarchy resolution is done there rather than during [emit].
+ * Handlers are expected to be registered during initialisation, before any thread that emits exists; registering one while another
+ * thread is emitting risks that handler silently receiving nothing for an event type.
  */
 class EventBus(private val internalErrorHandler: InternalErrorHandler) {
+
+    private val eventTypeRegistry = EventTypeRegistry()
 
     /**
      * Handlers registered directly against a given type.
      */
-    private val registered = ConcurrentHashMap<Class<*>, Handlers>()
+    private val registered = ConcurrentHashMap<Class<*>, HandlerSet>()
+
+    private val dispatch = ConcurrentHashMap<Class<*>, DispatchHandlerSet>()
+
+    private val stickyEvents = StickyEventStore(eventTypeRegistry)
 
     /**
-     * Handlers resolved over the full type hierarchy of a concrete event class, populated lazily by [emit] and cleared by [mutate]. Written
-     * only while holding this bus's monitor, so an entry cannot be published from a resolution that a registration has already invalidated;
-     * [emit] reads it without locking.
+     * Handlers already reported as having thrown, so that each is reported once. Identity keyed, as registration is.
      */
-    private val dispatch = ConcurrentHashMap<Class<*>, Handlers>()
+    private val loggedFailures = Collections.synchronizedSet(Collections.newSetFromMap(IdentityHashMap<EventHandler<*>, Boolean>()))
 
-    private val loggedFailures = Collections.synchronizedSet<EventHandler<*>>(HashSet())
-
+    /**
+     * Registers [handler] against [type] and every subtype of it, replaying any applicable [StickyEvent] before returning. Registering
+     * a handler already registered against [type] does nothing.
+     */
     fun <E : Any> addHandler(type: Class<E>, handler: EventHandler<E>) {
-        mutate(handlersFor(type)) { it.add(handler) }
+        if (mutate(handlersFor(type)) { it.add(handler) }) {
+            replayStickyEvent(type, handler)
+        }
     }
 
     inline fun <reified E : Any> addHandler(handler: EventHandler<E>) {
         addHandler(E::class.java, handler)
     }
 
+    /**
+     * Unregisters [handler] from [type], forgetting any failure reported for it so that registering it again reports again.
+     */
     fun <E : Any> removeHandler(type: Class<E>, handler: EventHandler<E>) {
-        mutate(registered[type]) { it.remove(handler) }
+        if (mutate(registered[type]) { it.remove(handler) }) {
+            loggedFailures.remove(handler)
+        }
     }
 
+    /**
+     * Emits [event] to every handler registered against its type or any of its supertypes, on the calling thread.
+     */
     fun <E : Any> emit(event: E) {
-        val type = event.javaClass
-        val handlers = dispatch[type]?.values ?: resolve(type)
+        // retained before delivery, so a handler registering concurrently sees the event twice rather than not at all
+        if (event is StickyEvent) {
+            stickyEvents.retain(event)
+        }
 
-        for (i in handlers.indices) {
-            @Suppress("UNCHECKED_CAST")
-            val handler = handlers[i] as EventHandler<E>
+        deliver(event)
+    }
+
+    /**
+     * Replays the retained [StickyEvent]s applicable to [type] to a newly registered [handler].
+     */
+    private fun <E : Any> replayStickyEvent(type: Class<E>, handler: EventHandler<E>) {
+        // not gated on [type] being a StickyEvent: a handler on an unmarked supertype receives these on dispatch, so also here
+        for (event in stickyEvents.applicableTo(type)) {
             try {
-                handler.onEvent(event)
+                handler.onEvent(type.cast(event))
             } catch (failure: Exception) {
-                if (loggedFailures.add(handler)) {
-                    internalErrorHandler.trackInternalError(InternalErrorType.EventBusHandlerFail, failure)
-                }
+                reportFailure(handler, failure)
             }
         }
     }
 
-    private fun handlersFor(type: Class<*>): Handlers {
+    private fun <E : Any> deliver(event: E) {
+        val type = event.javaClass
+        val handlers = resolveDispatchHandlers(type)
+        handlers.deliver(event)
+    }
+
+    private fun reportFailure(handler: EventHandler<*>, failure: Exception) {
+        if (loggedFailures.add(handler)) {
+            internalErrorHandler.trackInternalError(InternalErrorType.EventBusHandlerFail, failure)
+        }
+    }
+
+    private fun handlersFor(type: Class<*>): HandlerSet {
         registered[type]?.let { return it }
 
-        val created = Handlers()
+        val created = HandlerSet()
         return registered.putIfAbsent(type, created) ?: created
     }
 
     /**
-     * Applies a registration change and invalidates the resolved handlers. Every mutation must go through here so that [dispatch] cannot be
-     * left holding a stale resolution. Both this and [resolve] hold the bus's monitor, which is what stops a resolution that read the
-     * pre-change handlers from being published after the invalidation. Registration is cold, so the lock is uncontended; `mutate` is inline
-     * and `clear` allocates nothing, as dozens of handlers are registered during startup.
+     * Applies [action] to [handlerSet], discarding the resolved handlers if it changed anything, and reports whether it did.
      */
-    private inline fun mutate(handlers: Handlers?, action: (Handlers) -> Unit) {
-        synchronized(this) {
-            handlers?.let(action)
-            dispatch.clear()
+    private inline fun mutate(handlerSet: HandlerSet?, action: (HandlerSet) -> Boolean): Boolean {
+        if (handlerSet == null || !action(handlerSet)) {
+            return false
         }
+
+        dispatch.clear()
+        return true
     }
 
     /**
-     * Resolves and caches the handlers for a concrete event class, on first emit of that class and again after any registration change.
+     * Flattens the handlers registered anywhere in [type]'s hierarchy into the order they are to be invoked in.
      */
-    @Synchronized
-    private fun resolve(type: Class<*>): Array<EventHandler<*>> {
-        // another thread may have resolved this type while this one waited for the monitor
-        dispatch[type]?.let { return it.values }
+    private fun resolveDispatchHandlers(type: Class<*>): DispatchHandlerSet {
+        // another thread may have resolved this type already
+        dispatch[type]?.let { return it }
 
         val collected = mutableListOf<EventHandler<*>>()
-        collectHandlers(type, collected, mutableSetOf())
-
-        val resolved = Handlers(collected.toTypedArray())
-        dispatch[type] = resolved
-        return resolved.values
-    }
-
-    /**
-     * Walks [type], its interfaces, and its superclass, collecting the handlers registered against each. The visited set both terminates
-     * the walk and stops a type reachable by more than one path - as interfaces commonly are - from contributing its handlers twice.
-     */
-    private fun collectHandlers(
-        type: Class<*>,
-        collected: MutableList<EventHandler<*>>,
-        visited: MutableSet<Class<*>>,
-    ) {
-        if (type == Any::class.java || !visited.add(type)) {
-            return
+        for (candidate in eventTypeRegistry.hierarchyOf(type)) {
+            registered[candidate]?.let { collected.addAll(it.handlers) }
         }
 
-        registered[type]?.let { collected.addAll(it.values) }
-        type.interfaces.forEach { collectHandlers(it, collected, visited) }
-        type.superclass?.let { collectHandlers(it, collected, visited) }
+        val resolved = DispatchHandlerSet(collected.toTypedArray())
+        return dispatch.putIfAbsent(type, resolved) ?: resolved
     }
 
     /**
-     * A copy-on-write set of handlers. Used both for the handlers registered against a single type and for the handlers resolved over a
-     * concrete event class's type hierarchy, so there is only one representation to keep in step. Holding them as an array lets [emit]
-     * iterate without allocating, and [values] is volatile so that it can do so without locking.
+     * A copy-on-write set of the handlers registered directly against one type.
      */
-    private class Handlers(initial: Array<EventHandler<*>> = emptyArray()) {
-
+    private class HandlerSet {
         @Volatile
-        var values: Array<EventHandler<*>> = initial
+        var handlers: Array<EventHandler<*>> = emptyArray()
             private set
 
         @Synchronized
-        fun add(handler: EventHandler<*>) {
-            if (values.none { it === handler }) {
-                values += handler
+        fun add(handler: EventHandler<*>): Boolean {
+            if (handlers.none { it === handler }) {
+                handlers += handler
+                return true
             }
+            return false
         }
 
         @Synchronized
-        fun remove(handler: EventHandler<*>) {
-            values = values.filterNot { it === handler }.toTypedArray()
+        fun remove(handler: EventHandler<*>): Boolean {
+            val existingHandlers = handlers
+            if (existingHandlers.none { it === handler }) {
+                return false
+            }
+            handlers = existingHandlers.filterNot { it === handler }.toTypedArray()
+            return true
         }
+    }
+
+    /**
+     * The handlers resolved over one event class's whole hierarchy, in the order they are to be invoked. Fixed at construction, as a
+     * registration discards it rather than updating it.
+     */
+    private inner class DispatchHandlerSet(private val handlers: Array<EventHandler<*>>) {
+        fun <E : Any> deliver(event: E) {
+            for (handler in handlers) {
+                @Suppress("UNCHECKED_CAST")
+                val typed = handler as EventHandler<E>
+                try {
+                    typed.onEvent(event)
+                } catch (failure: Exception) {
+                    reportFailure(handler, failure)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * The most recently emitted [StickyEvent] for each state family, keyed on the family so that a newer value supersedes the older.
+ *
+ * Nothing is ever evicted, so a [StickyEvent] must not reference anything shorter lived than the process - an `Activity` or `View`
+ * reachable from a retained event leaks for the rest of it.
+ */
+private class StickyEventStore(private val eventTypeRegistry: EventTypeRegistry) {
+
+    private val retained = ConcurrentHashMap<Class<*>, StickyEvent>()
+
+    fun retain(event: StickyEvent) {
+        retained[eventTypeRegistry.familyKeyOf(event.javaClass)] = event
+    }
+
+    /**
+     * The retained events a handler registered against [type] is to receive, tested against each event's own class rather than the
+     * family it is keyed under.
+     */
+    fun applicableTo(type: Class<*>): List<StickyEvent> {
+        if (retained.isEmpty()) {
+            return emptyList()
+        }
+
+        return retained.values.filter { eventTypeRegistry.isSubtype(it.javaClass, of = type) }
+    }
+}
+
+/**
+ * Answers questions about an event type's place in its own type hierarchy, memoising every answer.
+ *
+ * A type hierarchy is fixed for the life of the process, so nothing here is ever invalidated, and answering for one type also caches
+ * the answer for every supertype reached on the way.
+ */
+private class EventTypeRegistry {
+
+    private val hierarchies = ConcurrentHashMap<Class<*>, Array<Class<*>>>()
+
+    private val familyKeys = ConcurrentHashMap<Class<*>, Class<*>>()
+
+    /**
+     * [type]'s hierarchy in the order handlers are to be invoked: the type, then its interfaces depth first in declaration order, then
+     * its superclass. A type reached by more than one path appears only at the first, and `Any` is never included.
+     */
+    fun hierarchyOf(type: Class<*>): Array<Class<*>> {
+        if (type == Any::class.java) {
+            return emptyArray()
+        }
+        hierarchies[type]?.let { return it }
+
+        val hierarchy = linkedSetOf(type)
+        type.interfaces.forEach { hierarchy.addAll(hierarchyOf(it)) }
+        type.superclass?.let { hierarchy.addAll(hierarchyOf(it)) }
+
+        val resolved = hierarchy.toTypedArray()
+        return hierarchies.putIfAbsent(type, resolved) ?: resolved
+    }
+
+    /**
+     * Whether [type] is [of] or a subtype of it. `Any` is not part of any hierarchy here, so it is never [of].
+     */
+    fun isSubtype(type: Class<*>, of: Class<*>): Boolean = of in hierarchyOf(type)
+
+    /**
+     * The type a [StickyEvent] class is retained against: the most senior type in its hierarchy declaring [StickyEvent] directly, or
+     * the class itself where two unrelated types declare it and neither is senior.
+     */
+    fun familyKeyOf(type: Class<*>): Class<*> {
+        familyKeys[type]?.let { return it }
+
+        val resolved = resolveFamilyKey(type)
+        return familyKeys.putIfAbsent(type, resolved) ?: resolved
+    }
+
+    /**
+     * Picks the candidate that is a supertype of all the others; a redundant redeclaration means position cannot be relied on.
+     */
+    private fun resolveFamilyKey(type: Class<*>): Class<*> {
+        val candidates = hierarchyOf(type).filter { StickyEvent::class.java in it.interfaces }
+
+        return candidates.firstOrNull { candidate ->
+            candidates.all { it === candidate || isSubtype(it, of = candidate) }
+        } ?: type
     }
 }

@@ -62,6 +62,10 @@ internal class ByteArrayExtensionsTest {
         assertEquals(61, repetitive.indexOf("aab".toByteArray()))
         assertEquals(62, repetitive.indexOf("ab".toByteArray()))
         assertEquals(63, repetitive.indexOf("b".toByteArray()))
+
+        // fromIndex landing exactly on the last offset the content can still fit at, where it does match
+        assertEquals(62, repetitive.indexOf("ab".toByteArray(), 62))
+        assertEquals(63, repetitive.indexOf("b".toByteArray(), 63))
     }
 
     @Test

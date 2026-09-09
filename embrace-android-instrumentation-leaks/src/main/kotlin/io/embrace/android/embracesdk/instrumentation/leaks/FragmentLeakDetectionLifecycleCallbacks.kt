@@ -7,6 +7,7 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 
 /**
@@ -16,6 +17,8 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 internal class FragmentLeakDetectionLifecycleCallbacks(
     private val leakDetector: LeakDetector,
     private val activeSessionIdsProvider: () -> SessionIdsSnapshot,
+    private val logger: InternalLogger,
+    private val webViewLeakDetectionEnabled: Boolean = false,
 ) : FragmentManager.FragmentLifecycleCallbacks(), FragmentSupport {
 
     private val pendingViews = FragmentViewMap()
@@ -39,9 +42,24 @@ internal class FragmentLeakDetectionLifecycleCallbacks(
         leakDetector.trackOpened(v)
     }
 
+    override fun onFragmentResumed(fm: FragmentManager, f: Fragment) {
+        if (webViewLeakDetectionEnabled) {
+            WebViewLeakScanner.scan(f.view, logger) { webView ->
+                leakDetector.trackOpened(webView)
+            }
+        }
+    }
+
     override fun onFragmentViewDestroyed(fm: FragmentManager, f: Fragment) {
         val view = pendingViews.closed(f) ?: return
-        leakDetector.trackClosed(view, LeakContext(FRAGMENT_VIEW_OBJECT_TYPE, activeSessionIdsProvider()))
+        val sessionIds = activeSessionIdsProvider()
+        leakDetector.trackClosed(view, LeakContext(FRAGMENT_VIEW_OBJECT_TYPE, sessionIds))
+
+        if (webViewLeakDetectionEnabled) {
+            WebViewLeakScanner.scan(view, logger) { webView ->
+                leakDetector.trackClosed(webView, LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, sessionIds))
+            }
+        }
     }
 
     private companion object {

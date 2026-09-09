@@ -23,6 +23,7 @@ class FakeAutoDataCaptureBehavior(
     private val activityProcessLifecycleTrackerEnabled: Boolean = false,
     private val activityLeakDetectionEnabled: Boolean = false,
     private val fragmentLeakDetectionEnabled: Boolean = false,
+    private val webViewLeakDetectionEnabled: Boolean = false,
 ) : AutoDataCaptureBehavior {
 
     override fun isThermalStatusCaptureEnabled(): Boolean = thermalStatusCaptureEnabled
@@ -45,4 +46,5 @@ class FakeAutoDataCaptureBehavior(
     override fun isActivityProcessLifecycleTrackerEnabled(): Boolean = activityProcessLifecycleTrackerEnabled
     override fun isActivityLeakDetectionEnabled(): Boolean = activityLeakDetectionEnabled
     override fun isFragmentLeakDetectionEnabled(): Boolean = fragmentLeakDetectionEnabled
+    override fun isWebViewLeakDetectionEnabled(): Boolean = webViewLeakDetectionEnabled
 }

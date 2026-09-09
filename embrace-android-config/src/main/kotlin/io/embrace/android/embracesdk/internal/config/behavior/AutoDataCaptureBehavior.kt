@@ -105,4 +105,9 @@ interface AutoDataCaptureBehavior {
      * Whether Fragment and Fragment View leak detection is enabled.
      */
     fun isFragmentLeakDetectionEnabled(): Boolean
+
+    /**
+     * Whether WebView leak detection is enabled.
+     */
+    fun isWebViewLeakDetectionEnabled(): Boolean
 }

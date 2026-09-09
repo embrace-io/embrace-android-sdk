@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.startup
 
-import io.embrace.android.embracesdk.internal.instrumentation.startup.ArtOptimizationState.Companion.ART_COMPILER_FILTER_KEY
-import io.embrace.android.embracesdk.internal.instrumentation.startup.ArtOptimizationState.Companion.NUL_CHAR
+import io.embrace.android.embracesdk.internal.instrumentation.startup.ArtOptimizationState.Companion.FILTER_VALUE_END
+import io.embrace.android.embracesdk.internal.instrumentation.startup.ArtOptimizationState.Companion.artCompilerFilterKey
 import io.embrace.android.embracesdk.internal.utils.indexOf
 import io.embrace.android.embracesdk.internal.utils.readHead
 import java.io.File
@@ -36,6 +36,8 @@ class ArtOptimizationState(
             return try {
                 val filter = runCatching {
                     if (odex.isFile) {
+                        // Find the ART compiler filter in the header of the odex file.
+                        // We read the chunk of it the filter is expected to land in as bytes and scan for it.
                         findArtCompilerFilter(odex.readHead(HEADER_SCAN_BYTES))
                     } else {
                         null
@@ -51,18 +53,17 @@ class ArtOptimizationState(
         }
 
         /**
-         * The value that follows [ART_COMPILER_FILTER_KEY] and a [NUL_CHAR] in [buffer]. Null if the key is not found,
-         * the value is empty, or the value's terminating NUL is not in [buffer].
+         * Find the ART compiler filter string in the given [buffer], which is located immediately after its key (represented by the
+         * bytes in [artCompilerFilterKey]) up to [FILTER_VALUE_END]. Return null if no match is found.
          */
         private fun findArtCompilerFilter(buffer: ByteArray): String? {
-            val key = (ART_COMPILER_FILTER_KEY + NUL_CHAR).toByteArray(Charsets.US_ASCII)
-            val keyLocation = buffer.indexOf(key)
+            val keyLocation = buffer.indexOf(artCompilerFilterKey)
             if (keyLocation < 0) {
                 return null
             }
-            val start = keyLocation + key.size
+            val start = keyLocation + artCompilerFilterKey.size
             var end = start
-            while (end < buffer.size && buffer[end] != 0.toByte()) {
+            while (end < buffer.size && buffer[end] != FILTER_VALUE_END) {
                 end++
             }
             return if (end > start && end < buffer.size) {
@@ -80,8 +81,17 @@ class ArtOptimizationState(
             else -> null
         }
 
-        private const val ART_COMPILER_FILTER_KEY: String = "compiler-filter"
-        private const val NUL_CHAR = "\u0000"
+        /**
+         * The ART compiler filter is embedded in the odex header following the bytes that represent the string `compiler-filter\u0000`.
+         * Make this the constant key that we scan for in the chunk of bytes we get back for the header.
+         */
+        private val artCompilerFilterKey = ("compiler-filter\u0000").toByteArray(Charsets.US_ASCII)
+
+        /**
+         * The NUL byte immediately after the compiler filter value. If this is not found, the value is not considered valid as it
+         * might have been truncated.
+         */
+        private const val FILTER_VALUE_END = 0.toByte()
         private const val HEADER_SCAN_BYTES: Int = 64 * 1024
     }
 }

@@ -22,18 +22,19 @@ fun ByteArray.indexOf(contentToFind: ByteArray, fromIndex: Int = 0): Int {
 }
 
 /**
- * Whether the bytes starting at [offset] equal [contentToFind]
+ * Whether the bytes starting at [offset] equal [contentToFind], deferring to Kotlin's [contentEquals], which is
+ * an inline alias for `java.util.Arrays.equals(byte[], byte[])`.
+ *
+ * Note: the eventual use of the two-argument form is deliberate. The vectorized look up that exists in API 33+
+ * is removed by D8 if minSdk is below 35, so and is not reachable in production. It's toss-up whether taking
+ * a copy of array section to conform to the simpler API actually improve performance, but not having to maintain
+ * additional code as well as runtime costs not actually being that material at reasonable input values means
+ * deferring to it is preferred over having a hand-coded comparison that does this by scanning the byte array.
  */
-fun ByteArray.regionMatches(offset: Int, contentToFind: ByteArray): Boolean {
-    if (offset < 0 || offset + contentToFind.size > size) {
+private fun ByteArray.regionMatches(offset: Int, contentToFind: ByteArray): Boolean {
+    // Fail fast if a match isn't possible given the offset and the size of the content to be matched
+    if (offset < 0 || contentToFind.size > size - offset) {
         return false
     }
-    var j = 0
-    while (j < contentToFind.size) {
-        if (this[offset + j] != contentToFind[j]) {
-            return false
-        }
-        j++
-    }
-    return true
+    return copyOfRange(offset, offset + contentToFind.size).contentEquals(contentToFind)
 }

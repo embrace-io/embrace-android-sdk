@@ -85,7 +85,7 @@ class NativeSymbolTest {
             worker = fakeBackgroundWorker(),
             serializer = serializer,
             okHttpClient = lazyOf(okHttpClient),
-            abis = arrayOf(arch),
+            primaryAbi = arch,
             sdkVersion = "1.2.3",
             apiLevel = 36,
             logger = FakeInternalLogger(),

@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal
 import android.os.Build
 
 /**
- * Information about the the device or OS that can be retrieved without disk or platform API access
+ * Information about the device, app, or OS that can be retrieved without disk or platform API access
  */
 data class SystemInfo(
     /**
@@ -40,6 +40,12 @@ data class SystemInfo(
      * Name of the model of the device.
      */
     val deviceModel: String = getDeviceModel(),
+
+    /**
+     * The primary supported ABI, expected to be the one the current app instance is running under. [Build.UNKNOWN] if
+     * the platform does not report one or the first reported one isn't in [SUPPORTED_ABIS].
+     */
+    val primaryAbi: String = getPrimaryAbi(),
 )
 
 internal fun getOsBuild(): String {
@@ -83,6 +89,17 @@ internal fun getDeviceModel(): String {
 }
 
 /**
+ * Return the primary supported ABI or [Build.UNKNOWN] otherwise.
+ */
+internal fun getPrimaryAbi(): String {
+    return try {
+        Build.SUPPORTED_ABIS?.firstOrNull()?.takeIf { it in SUPPORTED_ABIS } ?: Build.UNKNOWN
+    } catch (t: Throwable) {
+        Build.UNKNOWN
+    }
+}
+
+/**
  * Tries to determine whether the device is an emulator by looking for known models and
  * manufacturers which correspond to emulators.
  *
@@ -99,3 +116,8 @@ fun SystemInfo.isEmulator(): Boolean =
         deviceManufacturer.contains("Genymotion") ||
         Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic") ||
         Build.PRODUCT.equals("google_sdk")
+
+/**
+ * The ABIs the SDK supports.
+ */
+private val SUPPORTED_ABIS: Set<String> = setOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")

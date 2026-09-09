@@ -140,7 +140,7 @@ internal class ConfigServiceImplTest {
             worker = fakeBackgroundWorker(),
             serializer = serializer,
             okHttpClient = lazyOf(okHttpClient),
-            abis = arrayOf("arm64-v8a"),
+            primaryAbi = "arm64-v8a",
             sdkVersion = "1.2.3",
             apiLevel = 36,
             logger = FakeInternalLogger(),

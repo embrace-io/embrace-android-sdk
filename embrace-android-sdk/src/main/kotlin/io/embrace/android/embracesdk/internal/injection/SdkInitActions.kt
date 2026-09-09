@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCap
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStateDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStatusDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.startup.ArtOptimizationState
 import io.embrace.android.embracesdk.internal.instrumentation.startup.sdkInitEnvironmentAttributes
 import io.embrace.android.embracesdk.internal.instrumentation.startup.toSdkInitDurationAttributes
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -282,6 +283,12 @@ internal fun ModuleGraph.markSdkInitComplete(sdkInitDurationsProvider: () -> Map
                         packageInfo = instrumentationModule.instrumentationArgs.packageInfo,
                         nowMs = initModule.clock.now(),
                         prefsFileSizeProvider = { defaultPrefsFile(coreModule.context)?.length() },
+                        artOptimizationProvider = {
+                            ArtOptimizationState.create(
+                                apkPath = coreModule.context.applicationInfo?.sourceDir,
+                                primaryAbi = initModule.systemInfo.primaryAbi,
+                            )
+                        },
                     )
             },
         )

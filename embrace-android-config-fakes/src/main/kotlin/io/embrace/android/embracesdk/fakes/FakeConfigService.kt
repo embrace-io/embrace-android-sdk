@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.fakes.behavior.FakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.internal.config.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.config.CpuAbi
 import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.BackgroundActivityBehavior
@@ -59,7 +58,6 @@ class FakeConfigService(
         "com.fake.package",
     ),
     override var deviceId: String = "",
-    override val cpuAbi: CpuAbi = CpuAbi.ARM64_V8A,
     override val nativeSymbolMap: Map<String, String>? = emptyMap(),
 ) : ConfigService {
     override fun isOnlyUsingOtelExporters(): Boolean = onlyUsingOtelExporters

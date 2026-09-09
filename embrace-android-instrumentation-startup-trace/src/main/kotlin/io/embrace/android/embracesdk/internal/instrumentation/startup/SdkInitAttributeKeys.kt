@@ -126,12 +126,12 @@ object SdkInitAttributeKeys {
     const val PREFS_FILE_BYTES: String = "prefs-file-bytes"
 
     /**
-     * The compile filter used by ART for compiling the app's primary DEX. It gives clues as to how
+     * The compiler filter used by ART for compiling the app's primary DEX. It gives clues as to how
      * much optimization could have been done by ART to reduce DEX compilation time.
      *
      * More details can be found here: https://source.android.com/docs/core/runtime/configure
      */
-    const val ART_COMPILE_FILTER: String = "art-compile-filter"
+    const val ART_COMPILER_FILTER: String = "art-compiler-filter"
 
     /**
      * True when the app image (base.art) exist when the SDK initializes. Its presence indicates that

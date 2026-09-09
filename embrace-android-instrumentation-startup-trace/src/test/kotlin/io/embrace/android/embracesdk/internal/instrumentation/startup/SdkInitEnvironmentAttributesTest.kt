@@ -135,13 +135,13 @@ internal class SdkInitEnvironmentAttributesTest {
     }
 
     @Test
-    fun `record compile filter and ART optimization state if available`() {
+    fun `record compiler filter and ART optimization state if available`() {
         val compiled = environmentAttributes(
             compileStateProvider = {
                 ArtOptimizationState(artCompilerFilter = "speed-profile", hasAppImage = true)
             },
         )
-        assertEquals("speed-profile", compiled[SdkInitAttributeKeys.ART_COMPILE_FILTER])
+        assertEquals("speed-profile", compiled[SdkInitAttributeKeys.ART_COMPILER_FILTER])
         assertEquals("true", compiled[SdkInitAttributeKeys.APP_IMAGE_AT_INIT])
 
         val verifyOnly = environmentAttributes(
@@ -149,11 +149,11 @@ internal class SdkInitEnvironmentAttributesTest {
                 ArtOptimizationState(artCompilerFilter = "verify", hasAppImage = false)
             },
         )
-        assertEquals("verify", verifyOnly[SdkInitAttributeKeys.ART_COMPILE_FILTER])
+        assertEquals("verify", verifyOnly[SdkInitAttributeKeys.ART_COMPILER_FILTER])
         assertFalse(verifyOnly.containsKey(SdkInitAttributeKeys.APP_IMAGE_AT_INIT))
 
         val unknown = environmentAttributes(compileStateProvider = { null })
-        assertFalse(unknown.containsKey(SdkInitAttributeKeys.ART_COMPILE_FILTER))
+        assertFalse(unknown.containsKey(SdkInitAttributeKeys.ART_COMPILER_FILTER))
         assertFalse(unknown.containsKey(SdkInitAttributeKeys.APP_IMAGE_AT_INIT))
 
         // Check to see it doesn't throw

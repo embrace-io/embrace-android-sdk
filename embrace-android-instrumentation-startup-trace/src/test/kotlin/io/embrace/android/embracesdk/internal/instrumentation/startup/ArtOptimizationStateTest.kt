@@ -57,20 +57,20 @@ internal class ArtOptimizationStateTest {
         writeOdex(createOatHeader("everything", 40_000))
         assertEquals("everything", createState().artCompilerFilter)
 
-        // compile filter beyond part of header that is read - filter unknown but an app image was found
+        // compiler filter beyond part of header that is read - filter unknown but an app image was found
         writeOdex(createOatHeader("speed", 70_000))
         val filterNotFoundState = createState()
         assertNull(filterNotFoundState.artCompilerFilter)
         assertTrue(filterNotFoundState.hasAppImage)
 
-        // compile filter value cut off by the end of the part that is read - no filter rather than a truncated one
+        // compiler filter value cut off by the end of the part that is read - no filter rather than a truncated one
         val filterValueOffset = String(createOatHeader("speed-profile", 0), Charsets.US_ASCII).indexOf("speed-profile")
         writeOdex(createOatHeader("speed-profile", 65_536 - filterValueOffset - 3))
         assertNull(createState().artCompilerFilter)
     }
 
     @Test
-    fun `an odex without a readable compile filter reports no filter`() {
+    fun `an odex without a readable compiler filter reports no filter`() {
         writeOdex("no oat header here".toByteArray())
         assertNull(createState().artCompilerFilter)
 

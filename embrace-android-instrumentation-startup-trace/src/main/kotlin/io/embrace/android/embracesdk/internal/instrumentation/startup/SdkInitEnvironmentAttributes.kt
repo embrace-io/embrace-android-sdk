@@ -6,7 +6,7 @@ import android.os.Build.VERSION_CODES
 import android.os.PowerManager
 import android.os.SystemClock
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.APP_IMAGE_AT_INIT
-import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.ART_COMPILE_FILTER
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.ART_COMPILER_FILTER
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.LOW_MEMORY
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.MEM_AVAILABLE_PCT
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.PREFS_FILE_BYTES
@@ -111,7 +111,7 @@ private fun MutableMap<String, String>.putArtOptimizationAttributes(
     val state = runCatching { artOptimizationStateProvider() }.getOrNull()
     if (state != null) {
         state.artCompilerFilter?.let {
-            put(ART_COMPILE_FILTER, it)
+            put(ART_COMPILER_FILTER, it)
         }
         if (state.hasAppImage) {
             put(APP_IMAGE_AT_INIT, "true")

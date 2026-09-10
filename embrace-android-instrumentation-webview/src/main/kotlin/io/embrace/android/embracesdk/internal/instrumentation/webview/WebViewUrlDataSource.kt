@@ -5,9 +5,10 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.WebViewFragmentCapture
 
 /**
- * Captures custom breadcrumbs.
+ * Captures the URLs of pages loaded in a webview.
  */
 class WebViewUrlDataSource(
     args: InstrumentationArgs,
@@ -19,21 +20,34 @@ class WebViewUrlDataSource(
 
     private val breadcrumbBehavior: BreadcrumbBehavior = args.configService.breadcrumbBehavior
 
-    private companion object {
-        private const val QUERY_PARAMETER_DELIMITER = "?"
-    }
-
     fun logWebView(url: String?) {
         captureTelemetry(inputValidation = { url != null }) {
-            // Check if web view query params should be captured.
-            var parsedUrl: String = url ?: ""
-            if (!breadcrumbBehavior.isWebViewBreadcrumbQueryParamCaptureEnabled()) {
-                val queryOffset = url?.indexOf(QUERY_PARAMETER_DELIMITER) ?: 0
-                if (queryOffset > 0) {
-                    parsedUrl = url?.substring(0, queryOffset) ?: ""
-                }
-            }
-            addSessionPartEvent(SchemaType.WebViewUrl(parsedUrl), clock.now())
+            addSessionPartEvent(SchemaType.WebViewUrl(sanitizeUrl(url ?: "")), clock.now())
+        }
+    }
+
+    /**
+     * Applies the query and fragment settings to a captured URL. The URL is split once at the first
+     * '#' so that each setting applies to its own component and neither depends on the other.
+     */
+    private fun sanitizeUrl(url: String): String {
+        val fragmentOffset = url.indexOf('#')
+        val hasFragment = fragmentOffset >= 0
+        val base = if (hasFragment) url.substring(0, fragmentOffset) else url
+        val fragment = if (hasFragment) url.substring(fragmentOffset + 1) else ""
+
+        val capturedBase = when {
+            breadcrumbBehavior.isWebViewBreadcrumbQueryParamCaptureEnabled() -> base
+            else -> base.substringBefore('?')
+        }
+
+        if (!hasFragment) {
+            return capturedBase
+        }
+        return when (breadcrumbBehavior.getWebViewBreadcrumbFragmentCapture()) {
+            WebViewFragmentCapture.KEEP -> "$capturedBase#$fragment"
+            WebViewFragmentCapture.REDACT -> capturedBase + "#" + UrlFragmentRedactor.redact(fragment)
+            WebViewFragmentCapture.REMOVE -> capturedBase
         }
     }
 }

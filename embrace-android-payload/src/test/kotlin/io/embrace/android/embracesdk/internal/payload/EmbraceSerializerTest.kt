@@ -1,9 +1,8 @@
 package io.embrace.android.embracesdk.internal.payload
 
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.internal.serialization.fromJson
-import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
+import kotlinx.serialization.builtins.ListSerializer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -18,22 +17,23 @@ internal class EmbraceSerializerTest {
     @Test
     fun testWriteToFile() {
         val stream = ByteArrayOutputStream()
-        serializer.toJson(payload, stream)
+        serializer.toJson(payload, Attribute.serializer(), stream)
         assertTrue(stream.toByteArray().isNotEmpty())
     }
 
     @Test
     fun testLoadObject() {
-        val stream = serializer.toJson(payload).byteInputStream()
-        val result: Attribute = serializer.fromJson(stream)
+        val stream = serializer.toJson(payload, Attribute.serializer()).byteInputStream()
+        val result: Attribute = serializer.fromJson(stream, Attribute.serializer())
         assertEquals(payload, result)
     }
 
     @Test
     fun testLoadListOfObjects() {
         val listOfObjects = listOf(payload, payload2)
-        val stream = serializer.toJson(listOfObjects).byteInputStream()
-        val result: List<Attribute> = serializer.fromJson(stream)
+        val listSerializer = ListSerializer(Attribute.serializer())
+        val stream = serializer.toJson(listOfObjects, listSerializer).byteInputStream()
+        val result: List<Attribute> = serializer.fromJson(stream, listSerializer)
         assertEquals(2, result.size)
         assertEquals(payload, result[0])
         assertEquals(payload2, result[1])

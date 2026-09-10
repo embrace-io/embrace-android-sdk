@@ -10,4 +10,10 @@ enum class ReturnType(val descriptor: String) {
     STRING("()Ljava/lang/String;"),
     STRING_LIST("()Ljava/util/List;"),
     MAP("()Ljava/util/Map;"),
+
+    /**
+     * An enum constant. The descriptor depends on which enum the method returns, so it is supplied
+     * per method by [InstrumentedConfigMethod] rather than being fixed here.
+     */
+    ENUM(""),
 }

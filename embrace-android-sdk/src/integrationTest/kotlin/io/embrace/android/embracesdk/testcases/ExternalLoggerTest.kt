@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalSemconv::class)
+
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -16,7 +18,9 @@ import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.toStringMap
+import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceOtelExportAssertionInterface
@@ -75,6 +79,7 @@ internal class ExternalLoggerTest {
     fun `record a log with otel logging API during a session`() {
         var logTime: Long = -1L
         var observedTime: Long = -1L
+        var trackStartMs: Long = -1L
         var exportedOTelLog: LogRecordData? = null
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
@@ -88,6 +93,8 @@ internal class ExternalLoggerTest {
                 observedTime = clock.now().millisToNanos()
                 clock.tick()
                 recordSession {
+                    trackStartMs = clock.now()
+                    embrace.trackExperiment(id = "checkout-flow", variant = "variant-a", startedAt = trackStartMs)
                     logTime = clock.now().millisToNanos()
                     embrace.addUserSessionProperty("session-attr", "blah", PropertyScope.PERMANENT)
                     embLogger.emit(
@@ -100,6 +107,7 @@ internal class ExternalLoggerTest {
                         severityText = "DANG",
                     ) {
                         setStringAttribute("foo", "bar")
+                        setStringAttribute(EmbCommonAttributes.EMB_EXPERIMENTS, "spoof")
                     }
                     clock.tick(2000L)
                 }
@@ -128,6 +136,13 @@ internal class ExternalLoggerTest {
                         expectedProcessState = ProcessState.FOREGROUND,
                         expectedSessionProperties = mapOf("session-attr" to "blah"),
                         expectedAttributes = mapOf("foo" to "bar"),
+                    )
+
+                    // the experiments attribute is reserved: the caller-set value is replaced by the real records,
+                    // which reach the customer-registered exporter
+                    assertEquals(
+                        "e:checkout-flow:variant-a:$trackStartMs",
+                        attributes[EmbCommonAttributes.EMB_EXPERIMENTS],
                     )
                 }
                 assertEquals(exportedOTelLog.toEmbracePayload(), getSingleLogEnvelope().getLastLog())

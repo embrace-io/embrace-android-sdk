@@ -1,8 +1,12 @@
 package io.embrace.android.gradle.plugin.instrumentation.config.arch.sdk
 
 import io.embrace.android.gradle.plugin.instrumentation.config.arch.boolMethod
+import io.embrace.android.gradle.plugin.instrumentation.config.arch.enumMethod
 import io.embrace.android.gradle.plugin.instrumentation.config.arch.modelSdkConfigClass
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
+
+private const val WEB_VIEW_FRAGMENT_CAPTURE_CLASS =
+    "io.embrace.android.embracesdk.internal.config.instrumented.schema.WebViewFragmentCapture"
 
 fun createEnabledFeatureConfigInstrumentation(cfg: VariantConfig) = modelSdkConfigClass {
     boolMethod("isNativeCrashCaptureEnabled") { cfg.embraceConfig?.ndkEnabled }
@@ -22,6 +26,9 @@ fun createEnabledFeatureConfigInstrumentation(cfg: VariantConfig) = modelSdkConf
         boolMethod("isBackgroundActivityCaptureEnabled") { backgroundActivityConfig?.backgroundActivityCaptureEnabled }
         boolMethod("isWebViewBreadcrumbCaptureEnabled") { webViewConfig?.captureWebViews }
         boolMethod("isWebViewBreadcrumbQueryParamCaptureEnabled") { webViewConfig?.captureQueryParams }
+        enumMethod("getWebViewBreadcrumbFragmentCapture", WEB_VIEW_FRAGMENT_CAPTURE_CLASS) {
+            webViewConfig?.fragmentCapture?.name
+        }
         boolMethod("isFcmPiiDataCaptureEnabled") { captureFcmPiiData }
         boolMethod("isRequestContentLengthCaptureEnabled") { networking?.captureRequestContentLength }
         boolMethod("isOkHttpResponseBodySizeCaptureEnabled") { networking?.captureOkHttpResponseBodySize }

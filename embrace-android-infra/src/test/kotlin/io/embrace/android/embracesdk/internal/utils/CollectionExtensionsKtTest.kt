@@ -2,8 +2,10 @@ package io.embrace.android.embracesdk.internal.utils
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -67,5 +69,41 @@ internal class CollectionExtensionsKtTest {
         completedTasks.forEachIndexed { index, task ->
             assertEquals("Execution order wrong. Order found: $completedTasks", expectedOrder[index], task)
         }
+    }
+
+    @Test
+    fun `drain removes and returns all elements in queue order`() {
+        val queue = ConcurrentLinkedQueue(listOf("a", "b", "c"))
+
+        assertEquals(listOf("a", "b", "c"), queue.drain())
+        assertTrue(queue.isEmpty())
+        assertEquals(emptyList<String>(), queue.drain())
+
+        queue.add("d")
+        assertEquals(listOf("d"), queue.drain())
+    }
+
+    @Test
+    fun `elements added during a drain are returned or retained but never dropped`() {
+        // Add logic to the polling to modify the queue to ensure modifications during iteration and processed in the expected way.
+        var addedOnEmpty = false
+        val queue = object : ConcurrentLinkedQueue<String>(listOf("a", "b")) {
+            override fun poll(): String? {
+                val polled = super.poll()
+                if (polled == "a") {
+                    add("c")
+                } else if (polled == null && !addedOnEmpty) {
+                    addedOnEmpty = true
+                    add("d")
+                }
+                return polled
+            }
+        }
+
+        // "c" is enqueued before the drain is finished, so it is part of this drain
+        assertEquals(listOf("a", "b", "c"), queue.drain())
+
+        // "d" is enqueued right after the drains sees the queue being empty, so it is retained for the next one rather than dropped
+        assertEquals(listOf("d"), queue.toList())
     }
 }

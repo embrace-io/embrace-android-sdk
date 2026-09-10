@@ -18,6 +18,7 @@ class FakeTelemetryDestination(
     val logEvents: MutableList<FakeLogData> = mutableListOf()
     val addedEvents = mutableListOf<FakeSessionEvent>()
     val attributes = mutableMapOf<String, String>()
+    val sessionPartAttributeWrites: MutableList<Pair<String, String>> = mutableListOf()
     val createdSpans: MutableList<FakeSpanToken> = mutableListOf()
     val createdStateTokens: MutableList<FakeSessionPartStateToken<*>> = mutableListOf()
     fun completedSpans(): List<FakeSpanToken> = createdSpans.filterNot(FakeSpanToken::isRecording)
@@ -39,6 +40,7 @@ class FakeTelemetryDestination(
 
     override fun addSessionPartAttribute(key: String, value: String) {
         attributes[key] = value
+        sessionPartAttributeWrites.add(key to value)
     }
 
     override fun removeSessionPartAttribute(key: String) {

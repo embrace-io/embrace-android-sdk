@@ -104,6 +104,13 @@ interface EnabledFeatureConfig {
     fun isWebViewBreadcrumbQueryParamCaptureEnabled(): Boolean = true
 
     /**
+     * How the URL fragment is captured in WebView breadcrumbs.
+     *
+     * sdk_config.webview.fragment_capture
+     */
+    fun getWebViewBreadcrumbFragmentCapture(): WebViewFragmentCapture = WebViewFragmentCapture.KEEP
+
+    /**
      * Gates whether the FCM feature should capture PII data
      *
      * sdk_config.capture_fcm_pii_data

@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestinati
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
+import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentTrackingService
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
@@ -21,5 +22,6 @@ interface EssentialServiceModule {
     val sessionPartTracker: SessionPartTracker
     val sessionIdsProvider: SessionIdsProvider
     val userSessionPropertiesService: UserSessionPropertiesService
+    val experimentTrackingService: ExperimentTrackingService
     val telemetryDestination: TelemetryDestination
 }

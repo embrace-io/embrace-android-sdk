@@ -2,7 +2,7 @@ plugins {
     id("embrace-prod-android-conventions")
 }
 
-description = "Embrace Android SDK: Activity, Fragment and Fragment View Leak Detection"
+description = "Embrace Android SDK: Activity, Fragment, Fragment View and WebView Leak Detection"
 
 android {
     namespace = "io.embrace.android.embracesdk.instrumentation.leaks"

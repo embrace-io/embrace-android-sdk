@@ -17,6 +17,10 @@
       "className": "EnabledFeatureConfigImpl",
       "methods": [
         {
+          "signature": "getWebViewBreadcrumbFragmentCapture()Lio/embrace/android/embracesdk/internal/config/instrumented/schema/WebViewFragmentCapture;",
+          "returnValue": "REDACT"
+        },
+        {
           "signature": "is3rdPartySigHandlerDetectionEnabled()Z",
           "returnValue": "true"
         },

@@ -3,16 +3,14 @@ package io.embrace.android.embracesdk.testcases.features
 import android.util.Base64
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeBase64SharedObjectFilesMap
-import io.embrace.android.embracesdk.internal.config.CpuAbi
 import io.embrace.android.embracesdk.internal.payload.NativeSymbols
-import io.embrace.android.embracesdk.internal.serialization.toJson
 
 fun createNativeSymbolsForCurrentArch(
     symbols: Map<String, String>,
-    abi: CpuAbi = CpuAbi.ARMEABI_V7A,
+    abi: String = "armeabi-v7a",
 ): FakeBase64SharedObjectFilesMap {
-    val symbols = NativeSymbols(mapOf(abi.archName to symbols))
-    val json = TestPlatformSerializer().toJson(symbols)
+    val symbols = NativeSymbols(mapOf(abi to symbols))
+    val json = TestPlatformSerializer().toJson(symbols, NativeSymbols.serializer())
 
     val encoded = Base64.encodeToString(
         json.toByteArray(),

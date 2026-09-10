@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBeh
 import io.embrace.android.embracesdk.internal.config.behavior.BackgroundActivityBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.ExperimentBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
@@ -59,6 +60,11 @@ interface ConfigService {
      * How sessions should behave.
      */
     val sessionBehavior: UserSessionBehavior
+
+    /**
+     * How the experiments tracking API should behave.
+     */
+    val experimentBehavior: ExperimentBehavior
 
     /**
      * How network call capture should behave.
@@ -131,13 +137,6 @@ interface ConfigService {
      * Unique identifier for this device that is persisted per-install.
      */
     val deviceId: String
-
-    /**
-     * The primary CPU architecture. We assume that for the vast majority of devices
-     * all CPUs have the same ABI (technically not true, but a reasonable enough for
-     * simpler data analysis)
-     */
-    val cpuAbi: CpuAbi
 
     /**
      * The current native symbols.

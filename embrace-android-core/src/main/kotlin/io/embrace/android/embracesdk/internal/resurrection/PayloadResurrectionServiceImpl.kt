@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalSemconv::class)
+
 package io.embrace.android.embracesdk.internal.resurrection
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -13,6 +15,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCr
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValues
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.spans.toFailedSpan
@@ -30,7 +33,9 @@ import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.internal.session.getUserSessionProperties
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import java.io.IOException
 import java.io.InputStream
 import java.util.concurrent.CopyOnWriteArrayList
@@ -207,7 +212,7 @@ internal class PayloadResurrectionServiceImpl(
     private fun lastSessionPartForUserSession(
         payloads: List<StoredTelemetryMetadata>,
         terminatedUserSessionId: String,
-    ): StoredTelemetryMetadata? = terminatedUserSessionId?.let {
+    ): StoredTelemetryMetadata? = terminatedUserSessionId.let {
         payloads
             .filter { payload -> payload.envelopeType == SupportedEnvelopeType.SESSION && payload.userSessionId == terminatedUserSessionId }
             .maxByOrNull { payload -> payload.timestamp }
@@ -323,7 +328,7 @@ internal class PayloadResurrectionServiceImpl(
         }
         val deadSessionPartSpan = deadPart.getSessionPartSpan()
         val sessionPartId = deadSessionPartSpan?.resolveSessionPartIdForCrashMatch()
-        val appState = deadSessionPartSpan?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE)
+
         val nativeCrash = if (nativeCrashService != null && sessionPartId != null) {
             nativeCrashProvider(sessionPartId)?.apply {
                 val nativeCrashEnvelopeMetadata = createNativeCrashEnvelopeMetadata(
@@ -341,13 +346,14 @@ internal class PayloadResurrectionServiceImpl(
                 nativeCrashService.sendNativeCrash(
                     nativeCrash = this,
                     userSessionProperties = deadPart.getUserSessionProperties(),
-                    metadata = if (appState != null) {
-                        mapOf(
-                            EmbSessionAttributes.EMB_STATE to appState,
-                            EmbSessionAttributes.EMB_PROCESS_IDENTIFIER to processIdentifier,
-                        )
-                    } else {
-                        emptyMap()
+                    metadata = buildMap {
+                        put(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER, processIdentifier)
+                        deadSessionPartSpan.attributes?.findAttributeValues(
+                            setOf(
+                                EmbSessionAttributes.EMB_STATE,
+                                EmbCommonAttributes.EMB_EXPERIMENTS,
+                            ),
+                        )?.let(::putAll)
                     },
                 )
 

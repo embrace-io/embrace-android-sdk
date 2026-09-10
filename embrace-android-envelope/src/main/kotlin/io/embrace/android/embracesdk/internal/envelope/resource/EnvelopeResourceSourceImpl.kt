@@ -43,7 +43,7 @@ class EnvelopeResourceSourceImpl(
             unityBuildId = hosted.unityBuildIdNumber,
             deviceManufacturer = device.systemInfo.deviceManufacturer,
             deviceModel = device.systemInfo.deviceModel,
-            deviceArchitecture = configService.cpuAbi.archName,
+            deviceArchitecture = device.systemInfo.primaryAbi,
             jailbroken = device.isJailbroken,
             diskTotalCapacity = device.internalStorageTotalCapacity.value,
             osType = device.systemInfo.osType,

@@ -2,17 +2,17 @@ package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
-import io.embrace.android.embracesdk.assertions.toMap
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.impl.EmbSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
+import io.embrace.android.embracesdk.internal.otel.sdk.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
-import io.embrace.android.embracesdk.internal.otel.sdk.toEmbracePayload
+import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
@@ -78,6 +78,7 @@ internal class ExternalTracerTest {
         var endTimeMs: Long? = null
         var childEndTimeMs: Long? = null
         var stacktrace: String? = null
+        var trackStartMs: Long = -1L
 
         testRule.runTest(
             persistedRemoteConfig = remoteConfig,
@@ -88,6 +89,8 @@ internal class ExternalTracerTest {
                 embOpenTelemetry = embrace.getOpenTelemetryKotlin()
                 initializeTracer()
                 recordSession {
+                    trackStartMs = clock.now()
+                    embrace.trackExperiment(id = "checkout-flow", variant = "variant-a", startedAt = trackStartMs)
                     val span = embTracer.startSpan("external-span")
                     startTimeMs = clock.now()
                     val parentContext = embOpenTelemetry.context.root().storeSpan(span)
@@ -106,6 +109,7 @@ internal class ExternalTracerTest {
                     embTracer.startSpan("no-parent").end()
 
                     span.setLongAttribute("failures", 1L)
+                    span.setStringAttribute(EmbCommonAttributes.EMB_EXPERIMENTS, "spoof")
                     endTimeMs = clock.tick()
                     span.end()
                     embTracer.startSpan("another-parent-with-tracer").end()
@@ -127,6 +131,16 @@ internal class ExternalTracerTest {
                 assertNotEquals(parent.traceId, embraceSpan.traceId)
                 assertNotEquals(parent.traceId, anotherTracerSpan.traceId)
                 assertNotEquals(parent.traceId, noParent.traceId)
+
+                // the experiments attribute cannot be set via the OTel API
+                assertNull(parent.attributes?.singleOrNull { it.key == EmbCommonAttributes.EMB_EXPERIMENTS })
+
+                // but the SDK-written value on the session span reaches the customer span exporter
+                val exportedSessionSpan = spanExporter.exportedSpans.single { it.name == "emb-session" }
+                assertEquals(
+                    "e:checkout-flow:variant-a:$trackStartMs",
+                    exportedSessionSpan.attributes[EmbCommonAttributes.EMB_EXPERIMENTS],
+                )
                 assertEmbraceSpanData(
                     span = parent,
                     expectedStartTimeMs = checkNotNull(startTimeMs),

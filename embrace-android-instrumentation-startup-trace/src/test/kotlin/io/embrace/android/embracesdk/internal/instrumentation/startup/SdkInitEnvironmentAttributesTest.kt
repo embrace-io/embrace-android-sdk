@@ -11,6 +11,8 @@ import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -134,10 +136,53 @@ internal class SdkInitEnvironmentAttributesTest {
         assertEquals("45", attributes[SdkInitAttributeKeys.SECONDS_SINCE_BOOT])
     }
 
+    @Test
+    fun `record compiler filter and ART optimization state if available`() {
+        val compiled = environmentAttributes(
+            compileStateProvider = {
+                ArtOptimizationState(artCompilerFilter = "speed-profile", hasAppImage = true)
+            },
+        )
+        assertEquals("speed-profile", compiled[SdkInitAttributeKeys.ART_COMPILER_FILTER])
+        assertEquals("true", compiled[SdkInitAttributeKeys.APP_IMAGE_AT_INIT])
+
+        val verifyOnly = environmentAttributes(
+            compileStateProvider = {
+                ArtOptimizationState(artCompilerFilter = "verify", hasAppImage = false)
+            },
+        )
+        assertEquals("verify", verifyOnly[SdkInitAttributeKeys.ART_COMPILER_FILTER])
+        assertFalse(verifyOnly.containsKey(SdkInitAttributeKeys.APP_IMAGE_AT_INIT))
+
+        val odexReadError = environmentAttributes(
+            compileStateProvider = {
+                ArtOptimizationState(artCompilerFilter = null, hasAppImage = true)
+            },
+        )
+        assertNull(odexReadError[SdkInitAttributeKeys.ART_COMPILER_FILTER])
+        assertTrue(odexReadError.containsKey(SdkInitAttributeKeys.APP_IMAGE_AT_INIT))
+
+        val missingApk = environmentAttributes(
+            compileStateProvider = {
+                ArtOptimizationState(artCompilerFilter = "speed", hasAppImage = false)
+            },
+        )
+        assertEquals("speed", missingApk[SdkInitAttributeKeys.ART_COMPILER_FILTER])
+        assertFalse(missingApk.containsKey(SdkInitAttributeKeys.APP_IMAGE_AT_INIT))
+
+        val unknown = environmentAttributes(compileStateProvider = { null })
+        assertFalse(unknown.containsKey(SdkInitAttributeKeys.ART_COMPILER_FILTER))
+        assertFalse(unknown.containsKey(SdkInitAttributeKeys.APP_IMAGE_AT_INIT))
+
+        // Check to see it doesn't throw
+        environmentAttributes(compileStateProvider = { error("bleep bloop oh noes") })
+    }
+
     private fun environmentAttributes(
         prefsFileSizeProvider: () -> Long? = { null },
         powerManagerProvider: () -> PowerManager? = { context.getSystemService(Context.POWER_SERVICE) as? PowerManager },
         versionChecker: VersionChecker = BuildVersionChecker,
+        compileStateProvider: () -> ArtOptimizationState? = { null },
     ): Map<String, String> = sdkInitEnvironmentAttributes(
         powerManagerProvider = powerManagerProvider,
         activityManagerProvider = { context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager },
@@ -146,6 +191,7 @@ internal class SdkInitEnvironmentAttributesTest {
         versionChecker = versionChecker,
         uptimeMs = { fakeUptimeMs },
         prefsFileSizeProvider = prefsFileSizeProvider,
+        artOptimizationProvider = compileStateProvider,
     )
 
     private companion object {

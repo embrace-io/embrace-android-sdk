@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.utils
 
+import java.util.Queue
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -53,3 +54,9 @@ fun <T> MutableMap<String, AtomicInteger>.lockAndRun(key: String, code: () -> T)
 fun <T> Collection<T>.threadSafeToList(): List<T> {
     return ArrayList(this)
 }
+
+/**
+ * Removes and returns the contents of the queue as a list, one element at a time via [Queue.poll], until a poll returns null.
+ * This method is threadsafe as long as the implementation's [poll] method is threadsafe.
+ */
+fun <T : Any> Queue<T>.drain(): List<T> = generateSequence(::poll).toList()

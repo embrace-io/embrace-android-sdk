@@ -25,7 +25,6 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.config.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.ConfigServiceImpl
-import io.embrace.android.embracesdk.internal.config.CpuAbi
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.CoreModuleImpl
@@ -41,15 +40,19 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.sharedOb
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
+import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.prefs.createKeyValueStore
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.session.lifecycle.AndroidxProcessLifecycleTracker
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.internal.worker.Worker.Background.NonIoRegWorker
+import io.embrace.android.embracesdk.internal.payload.Attribute
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
+import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -139,7 +142,7 @@ internal class EmbraceSetupInterface(
                 hasConfiguredOtlpExport = openTelemetryModule.otelSdkConfig::hasConfiguredOtlpExport,
                 sdkVersion = BuildConfig.VERSION_NAME,
                 apiLevel = Build.VERSION.SDK_INT,
-                abis = Build.SUPPORTED_ABIS,
+                primaryAbi = initModule.systemInfo.primaryAbi,
                 logger = initModule.logger,
             )
             DecoratedConfigService(impl)
@@ -230,7 +233,7 @@ internal class EmbraceSetupInterface(
     ) {
         crashData.getCrashFile().createNewFile()
         val key = crashData.getCrashFile().absolutePath
-        val json = serializer.toJson(crashData.nativeCrash)
+        val json = serializer.toJson(crashData.nativeCrash, NativeCrashData.serializer())
         fakeJniDelegate.addCrashRaw(key, json)
     }
 
@@ -286,6 +289,7 @@ internal class EmbraceSetupInterface(
         inactivityTimeoutSeconds: Int = 1800,
         cacheIncompletePartPayload: Boolean = false,
         isBackgroundOnly: Boolean = false,
+        deadProcessExperiments: String? = null,
     ): Long {
         val userSessionStartTimeMs: Long = sdkStartTimeMs - maxDurationSeconds.seconds.inWholeMilliseconds - 60_000
         val lastActivityMs: Long = userSessionStartTimeMs + inactivityTimeoutSeconds.seconds.inWholeMilliseconds - 10_000
@@ -299,16 +303,21 @@ internal class EmbraceSetupInterface(
         )
         if (cacheIncompletePartPayload) {
             val metadata = fakeCachedSessionStoredTelemetryMetadata.copy(timestamp = userSessionStartTimeMs)
+            val envelope = fakeIncompleteSessionEnvelope(
+                userSessionId = userSessionId,
+                startMs = metadata.timestamp,
+                lastHeartbeatTimeMs = metadata.timestamp + 1_000L,
+                processIdentifier = metadata.processIdentifier
+            )
             checkNotNull(fakeCacheStorageService) {
                 "Fake storage layer not initialized"
             }.addPayload(
                 metadata = metadata,
-                data = fakeIncompleteSessionEnvelope(
-                    userSessionId = userSessionId,
-                    startMs = metadata.timestamp,
-                    lastHeartbeatTimeMs = metadata.timestamp + 1_000L,
-                    processIdentifier = metadata.processIdentifier
-                )
+                data = if (deadProcessExperiments == null) {
+                    envelope
+                } else {
+                    envelope.withExperimentsOnSessionPartSpan(deadProcessExperiments)
+                }
             )
         }
 
@@ -316,6 +325,25 @@ internal class EmbraceSetupInterface(
     }
 
     fun getClock(): FakeClock = fakeClock
+
+    /**
+     * Returns a copy of the envelope whose dead session part span carries the given serialized experiment records.
+     */
+    @OptIn(ExperimentalSemconv::class)
+    private fun Envelope<SessionPartPayload>.withExperimentsOnSessionPartSpan(records: String): Envelope<SessionPartPayload> =
+        copy(
+            data = data.copy(
+                spanSnapshots = data.spanSnapshots?.map { span ->
+                    if (span.name == "emb-session") {
+                        span.copy(
+                            attributes = span.attributes?.plus(Attribute(EmbCommonAttributes.EMB_EXPERIMENTS, records)),
+                        )
+                    } else {
+                        span
+                    }
+                },
+            ),
+        )
 
     fun getSpanRepository(): SpanRepository = fakeInitModule.openTelemetryModule.spanRepository
 
@@ -371,6 +399,5 @@ internal class EmbraceSetupInterface(
             "99",
             "com.fake.package",
         )
-        override val cpuAbi: CpuAbi = CpuAbi.ARM64_V8A
     }
 }

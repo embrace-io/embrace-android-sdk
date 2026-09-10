@@ -22,6 +22,7 @@ class AutoDataCaptureBehaviorImpl(
         const val SCREEN_LOAD_CAPTURE_ENABLED_DEFAULT = false
         const val ACTIVITY_LEAK_DETECTION_ENABLED_DEFAULT = false
         const val FRAGMENT_LEAK_DETECTION_ENABLED_DEFAULT = false
+        const val WEB_VIEW_LEAK_DETECTION_ENABLED_DEFAULT = false
     }
 
     private val local = local.enabledFeatures
@@ -78,4 +79,8 @@ class AutoDataCaptureBehaviorImpl(
     override fun isFragmentLeakDetectionEnabled(): Boolean =
         thresholdCheck.isBehaviorEnabled(remote?.pctFragmentLeakDetectionEnabled)
             ?: FRAGMENT_LEAK_DETECTION_ENABLED_DEFAULT
+
+    override fun isWebViewLeakDetectionEnabled(): Boolean =
+        thresholdCheck.isBehaviorEnabled(remote?.pctWebViewLeakDetectionEnabled)
+            ?: WEB_VIEW_LEAK_DETECTION_ENABLED_DEFAULT
 }

@@ -286,6 +286,27 @@ internal class AutoDataCaptureBehaviorImplTest {
         )
     }
 
+    @Test
+    fun `webview leak detection disabled when remote field null`() {
+        assertFalse(createAutoDataCaptureBehavior(remoteCfg = null).isWebViewLeakDetectionEnabled())
+    }
+
+    @Test
+    fun `webview leak detection enabled when pct is 100`() {
+        assertTrue(
+            createBehavior(remote = RemoteConfig(pctWebViewLeakDetectionEnabled = 100.0f))
+                .isWebViewLeakDetectionEnabled(),
+        )
+    }
+
+    @Test
+    fun `webview leak detection disabled when pct is 0`() {
+        assertFalse(
+            createBehavior(remote = RemoteConfig(pctWebViewLeakDetectionEnabled = 0.0f))
+                .isWebViewLeakDetectionEnabled(),
+        )
+    }
+
     private fun createBehavior(
         localUiLoadTracingEnabled: Boolean = true,
         localUiLoadTracingTraceAllEnabled: Boolean = true,

@@ -32,7 +32,6 @@ import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartSpan
@@ -45,6 +44,7 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule.Compan
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.opentelemetry.kotlin.logging.SeverityNumber
 import io.opentelemetry.kotlin.semconv.LogAttributes
+import kotlinx.serialization.builtins.ListSerializer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -328,7 +328,10 @@ internal class JvmCrashFeatureTest {
                     expectedState = "foreground"
                 )
                 val exceptionInfo = LegacyExceptionInfo.ofThrowable(testException)
-                val expectedExceptionCause = serializer.toJson(listOf(exceptionInfo))
+                val expectedExceptionCause = serializer.toJson(
+                    listOf(exceptionInfo),
+                    ListSerializer(LegacyExceptionInfo.serializer())
+                )
                 val expectedJsException = "{\"n\":\"name\",\"m\":\"message\",\"t\":\"type\",\"st\":\"stacktrace\"}"
 
                 val message = payloadStorageService.getPersistedSession()
@@ -393,7 +396,10 @@ internal class JvmCrashFeatureTest {
         )
 
         val exceptionInfo = LegacyExceptionInfo.ofThrowable(testException)
-        val expectedExceptionCause = serializer.toJson(listOf(exceptionInfo))
+        val expectedExceptionCause = serializer.toJson(
+            listOf(exceptionInfo),
+            ListSerializer(LegacyExceptionInfo.serializer())
+        )
 
         attributes?.assertMatches(
             mapOf(

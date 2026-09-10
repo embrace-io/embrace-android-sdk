@@ -11,6 +11,12 @@ package io.embrace.android.embracesdk.semconv
 object EmbCommonAttributes {
 
     /**
+     * A blob that represents the state of all active experiments in which this app is participating in.
+     */
+    @ExperimentalSemconv
+    const val EMB_EXPERIMENTS: String = "emb.experiments"
+
+    /**
      * Set this to true when the telemetry is known to have been created through a manual instrumentation API call.
      */
     @ExperimentalSemconv

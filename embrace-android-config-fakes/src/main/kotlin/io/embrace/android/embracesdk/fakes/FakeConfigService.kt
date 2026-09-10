@@ -4,12 +4,12 @@ import io.embrace.android.embracesdk.fakes.behavior.FakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.internal.config.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.config.CpuAbi
 import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.BackgroundActivityBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.ExperimentBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
@@ -39,6 +39,7 @@ class FakeConfigService(
     override var threadBlockageBehavior: ThreadBlockageBehavior = createThreadBlockageBehavior(),
     override var vitalsBehavior: VitalsBehavior = createVitalsBehavior(),
     override var sessionBehavior: UserSessionBehavior = createSessionBehavior(),
+    override var experimentBehavior: ExperimentBehavior = createExperimentBehavior(),
     override var networkBehavior: NetworkBehavior = FakeNetworkBehavior(),
     override var dataCaptureEventBehavior: DataCaptureEventBehavior = createDataCaptureEventBehavior(),
     override var sdkModeBehavior: SdkModeBehavior = createSdkModeBehavior(),
@@ -59,7 +60,6 @@ class FakeConfigService(
         "com.fake.package",
     ),
     override var deviceId: String = "",
-    override val cpuAbi: CpuAbi = CpuAbi.ARM64_V8A,
     override val nativeSymbolMap: Map<String, String>? = emptyMap(),
 ) : ConfigService {
     override fun isOnlyUsingOtelExporters(): Boolean = onlyUsingOtelExporters

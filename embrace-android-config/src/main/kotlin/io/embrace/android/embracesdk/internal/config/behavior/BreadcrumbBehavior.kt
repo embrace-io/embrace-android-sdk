@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.WebViewFragmentCapture
+
 interface BreadcrumbBehavior {
 
     fun getCustomBreadcrumbLimit(): Int
@@ -26,6 +28,13 @@ interface BreadcrumbBehavior {
      * Control whether query params for webviews are captured.
      */
     fun isWebViewBreadcrumbQueryParamCaptureEnabled(): Boolean
+
+    /**
+     * Controls how the URL fragment for webviews is captured. A fragment carries OAuth
+     * implicit-grant 'access_token' and OpenID Connect 'id_token' values by specification, and it
+     * also carries the hash route the user was on, so both keeping and dropping it lose something.
+     */
+    fun getWebViewBreadcrumbFragmentCapture(): WebViewFragmentCapture
 
     fun isFcmPiiDataCaptureEnabled(): Boolean
 

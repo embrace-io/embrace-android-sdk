@@ -9,6 +9,7 @@ import org.junit.Assert.assertSame
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowBuild
 
 @RunWith(AndroidJUnit4::class)
 internal class SystemInfoTest {
@@ -36,5 +37,21 @@ internal class SystemInfoTest {
             assertEquals("5.0.2", osVersion)
             assertEquals("", osBuild)
         }
+    }
+
+    @Test
+    fun `primary ABI is the first supported ABI listed in the BUILD object`() {
+        ShadowBuild.setSupportedAbis(arrayOf("arm64-v8a", "armeabi-v7a"))
+        assertEquals("arm64-v8a", SystemInfo().primaryAbi)
+
+        ShadowBuild.setSupportedAbis(arrayOf("x86_64", "x86"))
+        assertEquals("x86_64", SystemInfo().primaryAbi)
+
+        ShadowBuild.setSupportedAbis(emptyArray())
+        assertEquals(Build.UNKNOWN, SystemInfo().primaryAbi)
+
+        // Takes the first regardless if subsequent ones are supported
+        ShadowBuild.setSupportedAbis(arrayOf("riscv64", "arm64-v8a"))
+        assertEquals(Build.UNKNOWN, SystemInfo().primaryAbi)
     }
 }

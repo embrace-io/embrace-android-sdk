@@ -23,6 +23,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
+import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testcases.features.createNativeSymbolsForCurrentArch
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -37,6 +38,7 @@ import io.embrace.android.embracesdk.testframework.assertions.assertSessionIds
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -55,6 +57,7 @@ internal class UserSessionResurrectionTest {
 
     @Test
     fun `resurrected session part from JVM crash keeps old user session id when new user session is created offline`() {
+        val deadProcessExperiments = "e:dead-exp:variant-z:168000000000"
         testRule.runTest(
             setupAction = {
                 fakeNetworkConnectivityService.connectivityStatus = ConnectivityStatus.None
@@ -62,6 +65,7 @@ internal class UserSessionResurrectionTest {
                     sdkStartTimeMs = DEFAULT_SDK_START_TIME_MS,
                     userSessionId = DEFAULT_EXPIRED_USER_SESSION_ID,
                     cacheIncompletePartPayload = true,
+                    deadProcessExperiments = deadProcessExperiments,
                 )
             },
             testCaseAction = {
@@ -75,6 +79,13 @@ internal class UserSessionResurrectionTest {
                 assertEquals(DEFAULT_EXPIRED_USER_SESSION_ID, resurrected.getUserSessionId())
                 assertNotEquals(DEFAULT_EXPIRED_USER_SESSION_ID, live.getUserSessionId())
                 assertNotNull(live.getUserSessionId())
+
+                // a session recovered from a dead process carries that process's experiments verbatim, crash or no crash
+                assertEquals(
+                    deadProcessExperiments,
+                    resurrected.getSessionPartSpan()?.attributes?.findAttributeValue(EmbCommonAttributes.EMB_EXPERIMENTS),
+                )
+                assertNull(live.getSessionPartSpan()?.attributes?.findAttributeValue(EmbCommonAttributes.EMB_EXPERIMENTS))
             },
         )
     }

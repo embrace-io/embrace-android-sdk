@@ -17,4 +17,5 @@ public interface SdkApi :
     SdkStateApi,
     OTelApi,
     BreadcrumbApi,
-    InstrumentationApi
+    InstrumentationApi,
+    ExperimentApi

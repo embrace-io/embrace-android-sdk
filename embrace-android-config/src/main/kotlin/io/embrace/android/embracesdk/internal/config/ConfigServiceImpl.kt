@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.BackgroundActivity
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
 import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.behavior.ExperimentBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl
@@ -40,7 +41,7 @@ class ConfigServiceImpl(
     worker: BackgroundWorker,
     private val serializer: PlatformSerializer,
     okHttpClient: Lazy<OkHttpClient>,
-    abis: Array<String>,
+    private val primaryAbi: String,
     private val sdkVersion: String,
     private val apiLevel: Int,
     private val logger: InternalLogger,
@@ -108,6 +109,7 @@ class ConfigServiceImpl(
     override val threadBlockageBehavior = ThreadBlockageBehaviorImpl(thresholdCheck, remoteConfig)
     override val vitalsBehavior = VitalsBehaviorImpl(thresholdCheck, remoteConfig)
     override val sessionBehavior = UserSessionBehaviorImpl(remoteConfig)
+    override val experimentBehavior = ExperimentBehaviorImpl(remoteConfig)
     override val networkBehavior = NetworkBehaviorImpl(instrumentedConfig, remoteConfig)
     override val dataCaptureEventBehavior = DataCaptureEventBehaviorImpl(remoteConfig)
     override val sdkModeBehavior = SdkModeBehaviorImpl(thresholdCheck, remoteConfig)
@@ -137,11 +139,9 @@ class ConfigServiceImpl(
         AppFramework.fromString(it)
     } ?: AppFramework.NATIVE
 
-    override val cpuAbi: CpuAbi = CpuAbi.current(abis)
-
     override val nativeSymbolMap: Map<String, String>? by lazy {
         getNativeSymbols()?.let {
-            val arch = cpuAbi.archName
+            val arch = primaryAbi
 
             when {
                 it.symbols.containsKey(arch) -> it.symbols[arch]

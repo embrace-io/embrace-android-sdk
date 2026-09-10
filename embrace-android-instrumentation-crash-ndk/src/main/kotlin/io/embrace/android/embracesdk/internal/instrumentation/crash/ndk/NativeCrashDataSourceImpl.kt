@@ -8,10 +8,11 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
-import io.embrace.android.embracesdk.internal.serialization.toJson
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
 
 internal class NativeCrashDataSourceImpl(
     private val nativeCrashProcessor: NativeCrashProcessor,
@@ -69,7 +70,7 @@ internal class NativeCrashDataSourceImpl(
                 if (!symbols.isNullOrEmpty()) {
                     setAttribute(
                         EmbType.System.NativeCrash.embNativeCrashSymbols,
-                        args.serializer.toJson(symbols),
+                        args.serializer.toJson(symbols, MapSerializer(String.serializer(), String.serializer())),
                         keepBlankishValues = false,
                     )
                 }

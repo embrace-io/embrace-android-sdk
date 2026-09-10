@@ -93,7 +93,9 @@ class UserSessionOrchestrationModuleImpl(
             logModule.logLimitingService,
             payloadSourceModule.metadataService,
             openTelemetryModule.otelSdkConfig.processIdentifier,
-        )
+        ) {
+            essentialServiceModule.experimentTrackingService.getRecords()
+        }
 
         val sessionPartWriter = SessionPartWriterImpl(
             sessionsDir,

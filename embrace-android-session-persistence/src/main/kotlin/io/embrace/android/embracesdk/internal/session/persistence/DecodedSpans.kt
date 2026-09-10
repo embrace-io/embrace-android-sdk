@@ -18,9 +18,10 @@ internal class DecodedSpans(
      * whole log is never held in both representations at once. [spans] is left empty.
      */
     fun drainToPayload(): List<Span> {
-        val payload = ArrayList<Span>(decoded.size)
-        while (decoded.isNotEmpty()) {
-            payload.add(decoded.removeAt(decoded.lastIndex).toPayload())
+        val drained = decoded.size
+        val payload = ArrayList<Span>(drained)
+        for (i in drained - 1 downTo 0) {
+            payload.add(decoded.removeAt(i).toPayload())
         }
         payload.reverse()
         return payload

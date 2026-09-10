@@ -115,7 +115,7 @@ class SessionReconstructionService(
 
         val span = sessionSpan.span
         if (span == null) {
-            trackFailure(IOException("Session span file has no span"))
+            trackFailure(IOException("Session part span file has no span"))
         }
         return span
     }
@@ -266,7 +266,7 @@ class SessionReconstructionService(
             private set
 
         fun spend(spans: Int, truncated: Boolean) {
-            remaining -= spans
+            remaining = (remaining - spans).coerceAtLeast(0)
             exceeded = exceeded || truncated
         }
     }

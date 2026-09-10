@@ -38,8 +38,8 @@ class CompletedSpansWriter(
         try {
             writeImpl(spans)
         } catch (exc: Throwable) {
-            discardSpanFile()
             trackFailure(exc)
+            discardSpanFile()
             false
         }
     }

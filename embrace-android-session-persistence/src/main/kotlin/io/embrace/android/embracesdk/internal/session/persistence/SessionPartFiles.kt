@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.session.persistence
 
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
 import java.io.OutputStream
 
@@ -43,17 +42,6 @@ internal fun writeAtomically(partDir: File, fileName: String, maxBytes: Long, en
             }
         } finally {
             tmpFile.delete()
-        }
-    }
-}
-
-/**
- * Appends [bytes] to [fileName] in [partDir], creating the file if it is not there yet.
- */
-internal fun appendTo(partDir: File, fileName: String, bytes: ByteArray) {
-    SystemTrace.trace("mf-file-append") {
-        FileOutputStream(File(partDir, fileName), true).use { stream ->
-            stream.write(bytes)
         }
     }
 }

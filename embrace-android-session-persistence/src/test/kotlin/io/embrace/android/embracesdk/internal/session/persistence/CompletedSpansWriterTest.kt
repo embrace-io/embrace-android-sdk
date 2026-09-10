@@ -261,6 +261,49 @@ internal class CompletedSpansWriterTest {
         assertNoInternalErrors()
     }
 
+    @Test
+    fun `a write after the file is closed appends to it rather than replacing it`() {
+        assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa1"))))
+        writer.close()
+        assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa2"))))
+
+        assertEquals(listOf("aaaaaaaaaaaaaaa1", "aaaaaaaaaaaaaaa2"), readLog().map(SpanProto::span_id))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `the size of a reopened file counts the spans written before it was closed`() {
+        writer = boundedWriter()
+        assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa1"))))
+        writer.close()
+        assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa2"))))
+        assertFalse(write(spans = listOf(span("aaaaaaaaaaaaaaa3"))))
+
+        assertEquals(twoSpanBudget, logFile().length())
+        assertWriteFailureTracked()
+    }
+
+    @Test
+    fun `closing a writer that has written nothing leaves no file behind`() {
+        writer.close()
+        assertEquals(emptyList<String>(), partDir().list()?.toList())
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `the file is closed once the writer moves on to another session part`() {
+        val other = SessionPartDirectory(timestamp = TIMESTAMP + 1, uuid = UUID)
+        createPartDir(other)
+
+        assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa1"))))
+        assertTrue(write(other, listOf(span("aaaaaaaaaaaaaaa2"))))
+        assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa3"))))
+
+        assertEquals(listOf("aaaaaaaaaaaaaaa1", "aaaaaaaaaaaaaaa3"), readLog().map(SpanProto::span_id))
+        assertEquals(listOf("aaaaaaaaaaaaaaa2"), readLog(other).map(SpanProto::span_id))
+        assertNoInternalErrors()
+    }
+
     private fun boundedWriter(): CompletedSpansWriter =
         CompletedSpansWriter(target { activePart }, logger, twoSpanBudget)
 

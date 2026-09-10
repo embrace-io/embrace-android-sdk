@@ -132,7 +132,7 @@ class SessionPartWriterImpl(
         writers.flushPendingWrites()
 
         worker.submit {
-            writers.sealed = true
+            writers.seal()
             writeTracker.markComplete(sessionPartId)
 
             if (!crashing && !processTerminating) {
@@ -385,5 +385,14 @@ class SessionPartWriterImpl(
         private val writeQueues = listOf(metadataWrites, sessionSpanWrites, spanSnapshotWrites)
 
         fun flushPendingWrites() = writeQueues.forEach(CoalescingWriteQueue::flush)
+
+        /**
+         * Marks this part as fully written and releases the file [completedSpans] holds open.
+         * This must run on the [worker] so that it cannot overlap a write still queued for the part.
+         */
+        fun seal() {
+            sealed = true
+            completedSpans.close()
+        }
     }
 }

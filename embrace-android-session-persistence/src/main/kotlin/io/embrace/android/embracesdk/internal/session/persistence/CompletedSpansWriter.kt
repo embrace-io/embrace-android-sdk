@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 
 /**
@@ -26,6 +27,8 @@ class CompletedSpansWriter(
     @Volatile
     private var reportedOverflow = false
 
+    private var spanFile: SpanFile? = null
+
     /**
      * Appends [spans] to the log for the active session part, leaving the spans already logged in
      * place. A session part in which nothing completed has no log at all, which reconstruction
@@ -35,33 +38,87 @@ class CompletedSpansWriter(
         try {
             writeImpl(spans)
         } catch (exc: Throwable) {
+            discardSpanFile()
             trackFailure(exc)
             false
         }
     }
 
+    /**
+     * Releases the file held open for the session part written to so far.
+     */
+    fun close() {
+        discardSpanFile()
+    }
+
     private fun writeImpl(spans: List<Span>): Boolean {
-        val directory = target.directory ?: return false
-        val partDir = target.partDir(directory, ::trackFailure) ?: return false
+        val spanFile = spanFile() ?: return false
 
         val records = CompletedSpans(spans = spans.map(Span::toProto))
         val bytes = CompletedSpans.ADAPTER.encode(records)
 
-        if (bytes.isNotEmpty() && !fits(partDir, bytes.size)) {
+        if (bytes.isNotEmpty() && spanFile.size + bytes.size > maxBytes) {
             if (!reportedOverflow) {
                 reportedOverflow = true
                 trackFailure(IOException(OVERSIZED_PART_FILE_MSG))
             }
             return false
         }
-        appendTo(partDir, COMPLETED_SPANS_FILE_NAME, bytes)
+        spanFile.append(bytes)
         return true
     }
 
-    private fun fits(partDir: File, byteCount: Int): Boolean =
-        File(partDir, COMPLETED_SPANS_FILE_NAME).length() + byteCount <= maxBytes
+    /**
+     * The file to append to, or null if the active session part has no directory on disk.
+     */
+    private fun spanFile(): SpanFile? {
+        val directory = target.directory ?: return null
+        spanFile?.let { open ->
+            if (open.directory == directory) {
+                return open
+            }
+            discardSpanFile()
+        }
+        val partDir = target.partDir(directory, ::trackFailure) ?: return null
+        return SpanFile(directory, File(partDir, COMPLETED_SPANS_FILE_NAME)).also { spanFile = it }
+    }
+
+    private fun discardSpanFile() {
+        val file = spanFile ?: return
+        spanFile = null
+        try {
+            file.close()
+        } catch (exc: IOException) {
+            trackFailure(exc)
+        }
+    }
 
     private fun trackFailure(exc: Throwable) {
         logger.trackInternalError(InternalErrorType.CompletedSpansWriteFail, exc)
+    }
+
+    /**
+     * The completed spans file for one session part, kept open across the appends made to it.
+     */
+    private class SpanFile(val directory: SessionPartDirectory, private val file: File) {
+
+        private var stream: FileOutputStream? = null
+
+        // assume file size doesn't change after first lookup
+        var size: Long = file.length()
+            private set
+
+        /**
+         * Appends [bytes] to the file, opening it if this is the first append.
+         */
+        fun append(bytes: ByteArray) {
+            val stream = stream ?: FileOutputStream(file, true).also { stream = it }
+            stream.write(bytes)
+            size += bytes.size
+        }
+
+        fun close() {
+            stream?.close()
+        }
     }
 }

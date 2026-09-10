@@ -15,9 +15,12 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDir
  * One session's worth of telemetry, in the form each persistence layer needs to serialize it.
  *
  * [completedSpanCount] sets how much work the session did, which is the main thing that decides
- * how big it is once persisted.
+ * how big it is once persisted. [attributesPerSpan] sets how much each of those spans carries.
  */
-internal class SimpleSessionFixture(private val completedSpanCount: Int = COMPLETED_SPAN_COUNT) {
+internal class SimpleSessionFixture(
+    private val completedSpanCount: Int = COMPLETED_SPAN_COUNT,
+    private val attributesPerSpan: Int = ATTRIBUTES_PER_SPAN,
+) {
     val completedSpans: List<Span>
     val sessionSpan: Span
     val spanSnapshots: List<Span>
@@ -120,7 +123,7 @@ internal class SimpleSessionFixture(private val completedSpanCount: Int = COMPLE
     }
 
     private fun EmbraceSdkSpan.populate(index: Int) {
-        repeat(ATTRIBUTES_PER_SPAN) { attribute ->
+        repeat(attributesPerSpan) { attribute ->
             addAttribute("work.attribute.$attribute", "work-attribute-value-$index-$attribute")
         }
         addEvent(

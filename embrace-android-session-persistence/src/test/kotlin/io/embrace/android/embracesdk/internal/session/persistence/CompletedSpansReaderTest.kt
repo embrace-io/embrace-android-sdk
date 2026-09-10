@@ -32,6 +32,12 @@ internal class CompletedSpansReaderTest {
         private fun read(bytes: ByteArray, maxBytes: Long): List<SpanProto> =
             Buffer().write(bytes).use { readCompletedSpans(it, maxBytes) }.spans
 
+        private fun readBoundedRecords(bytes: ByteArray, maxRecordBytes: Long): List<SpanProto> =
+            Buffer().write(bytes).use { readCompletedSpans(it, MAX_PART_FILE_BYTES, maxRecordBytes) }.spans
+
+        /** The length a record declares, which is the encoded span the frame wraps. */
+        private fun declaredLengthOf(span: SpanProto): Long = SpanProto.ADAPTER.encode(span).size.toLong()
+
         /** The budget a record consumes, which is the record itself and not the framing round it. */
         private fun budgetOf(vararg spans: SpanProto): Long =
             spans.sumOf { SpanProto.ADAPTER.encode(it).size }.toLong()
@@ -88,6 +94,38 @@ internal class CompletedSpansReaderTest {
     fun `an oversized length prefix does not read past the end of the log`() {
         val log = completedSpansLog(listOf(first)) + OVERSIZED_LENGTH_PREFIX
         assertEquals(listOf(first), read(log))
+    }
+
+    @Test
+    fun `a record declaring more than the record bound is dropped along with the rest of the log`() {
+        val small = paddedSpanProto(paddedSpanId(1), padding = 8)
+        val large = paddedSpanProto(paddedSpanId(2), padding = 4096)
+        val log = completedSpansLog(listOf(small, large, small))
+        assertEquals(listOf(small), readBoundedRecords(log, declaredLengthOf(large) - 1))
+    }
+
+    @Test
+    fun `a record exactly at the record bound reads back`() {
+        val log = completedSpansLog(listOf(first, second))
+        assertEquals(listOf(first, second), readBoundedRecords(log, declaredLengthOf(first)))
+    }
+
+    @Test
+    fun `a first record declaring more than the record bound reads back no spans`() {
+        val log = completedSpansLog(listOf(first, second))
+        assertEquals(emptyList<SpanProto>(), readBoundedRecords(log, declaredLengthOf(first) - 1))
+    }
+
+    @Test
+    fun `a length prefix beyond the record bound is rejected before the body is read`() {
+        val log = completedSpansLog(listOf(first)) + OVERSIZED_LENGTH_PREFIX + completedSpansLog(listOf(second))
+        assertEquals(listOf(first), readBoundedRecords(log, MAX_RECORD_BYTES))
+    }
+
+    @Test
+    fun `a large but legitimate record reads back under the production bound`() {
+        val padded = paddedSpanProto(paddedSpanId(1), padding = 64 * 1024)
+        assertEquals(listOf(padded), readBoundedRecords(completedSpansLog(listOf(padded)), MAX_RECORD_BYTES))
     }
 
     @Test

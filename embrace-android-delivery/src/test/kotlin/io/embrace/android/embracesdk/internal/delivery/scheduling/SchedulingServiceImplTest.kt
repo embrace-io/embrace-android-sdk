@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult
 import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult.Failure
 import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult.Incomplete
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl.Companion.INITIAL_DELAY_MS
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
@@ -765,6 +766,47 @@ internal class SchedulingServiceImplTest {
         assertEquals(7, executionService.sendAttempts())
     }
 
+    @Test
+    fun `a payload larger than the maximum upload size is dropped without a request`() {
+        resetToSingleSessionPartPayload()
+        useMaxPayloadBytes(storedSizeOf(fakeSessionStoredTelemetryMetadata) - 1)
+        waitForResurrectionAndDeliveryAttempt()
+
+        assertEquals(0, executionService.sendAttempts())
+        assertEquals(0, storageService.storedPayloadCount())
+        assertEquals(1, logger.internalErrorMessages.size)
+        assertEquals(
+            InternalErrorType.PayloadDeliveryFail.toString(),
+            logger.internalErrorMessages.single().msg,
+        )
+    }
+
+    @Test
+    fun `a payload exactly at the maximum upload size is sent`() {
+        resetToSingleSessionPartPayload()
+        useMaxPayloadBytes(storedSizeOf(fakeSessionStoredTelemetryMetadata))
+        waitForResurrectionAndDeliveryAttempt()
+
+        assertEquals(1, executionService.sendAttempts())
+        assertEquals(0, storageService.storedPayloadCount())
+        assertTrue(logger.internalErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `an oversized payload does not block later payloads of the same type`() {
+        storageService.clearStorage()
+        val oversized = Envelope(data = SessionPartPayload(spans = List(50) { Span(name = "padding-span-" + it) }))
+        val deliverable = Envelope(data = SessionPartPayload(spans = listOf(Span(name = "s"))))
+        storageService.addPayload(fakeSessionStoredTelemetryMetadata, oversized)
+        storageService.addPayload(fakeSessionStoredTelemetryMetadata2, deliverable)
+        useMaxPayloadBytes(storedSizeOf(fakeSessionStoredTelemetryMetadata2))
+        waitForResurrectionAndDeliveryAttempt(2)
+
+        assertEquals(1, executionService.sendAttempts())
+        assertEquals(deliverable, executionService.getRequests<SessionPartPayload>().single())
+        assertEquals(0, storageService.storedPayloadCount())
+    }
+
     @Test(expected = RejectedExecutionException::class)
     fun `test shutdown`() {
         logger.throwOnInternalError = false
@@ -875,6 +917,26 @@ internal class SchedulingServiceImplTest {
     private fun resetToSingleSessionPartPayload() {
         storageService.clearStorage()
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata)
+    }
+
+    private fun storedSizeOf(metadata: StoredTelemetryMetadata): Long =
+        storageService.payloadSizeBytes(metadata)
+
+    private fun useMaxPayloadBytes(maxPayloadBytes: Long) {
+        logger.throwOnInternalError = false
+        networkConnectivityService.removeNetworkConnectivityListener(schedulingService)
+        schedulingService = SchedulingServiceImpl(
+            storageService = storageService,
+            executionService = executionService,
+            schedulingWorker = BackgroundWorker(schedulingExecutor),
+            deliveryWorker = BackgroundWorker(deliveryExecutor),
+            clock = clock,
+            logger = logger,
+            maxPayloadBytes = maxPayloadBytes,
+        )
+        networkConnectivityService.addNetworkConnectivityListener(schedulingService)
+        networkUpdateDispatchExecutor.awaitExecutionCompletion()
+        schedulingExecutor.awaitExecutionCompletion()
     }
 
     private fun allSendsSucceed() = setExecutionResult(ExecutionResult.Success)

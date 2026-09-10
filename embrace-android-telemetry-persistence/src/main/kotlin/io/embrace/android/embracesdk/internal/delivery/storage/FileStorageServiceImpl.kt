@@ -95,6 +95,9 @@ class FileStorageServiceImpl(
         }
     }
 
+    override fun payloadSizeBytes(metadata: StoredTelemetryMetadata): Long =
+        runCatching { index.fileFor(metadata).length() }.getOrDefault(0L)
+
     override fun getStoredPayloads(): List<StoredTelemetryMetadata> = index.storedEntries()
 }
 

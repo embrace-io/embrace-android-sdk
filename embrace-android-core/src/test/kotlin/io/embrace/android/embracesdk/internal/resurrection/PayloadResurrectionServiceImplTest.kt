@@ -514,6 +514,65 @@ class PayloadResurrectionServiceImplTest {
     }
 
     @Test
+    fun `a session payload larger than the maximum file size is not resurrected`() {
+        cacheStorageService.addPayload(metadata = sessionMetadata, data = deadSessionEnvelope)
+        val service = serviceWithMaxPayloadBytes(cachedSizeOf(sessionMetadata) - 1)
+        service.resurrectOldPayloads(nativeCrashServiceProvider = { nativeCrashService })
+        assertResurrectionFailure()
+    }
+
+    @Test
+    fun `a session payload exactly at the maximum file size is resurrected`() {
+        cacheStorageService.addPayload(metadata = sessionMetadata, data = deadSessionEnvelope)
+        val service = serviceWithMaxPayloadBytes(cachedSizeOf(sessionMetadata))
+        service.resurrectOldPayloads(nativeCrashServiceProvider = { nativeCrashService })
+
+        assertEquals(1, payloadStorageService.storedPayloadCount())
+        assertEquals(0, cacheStorageService.storedPayloadCount())
+        assertTrue(logger.internalErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `a session payload is resurrected under the production file size limit`() {
+        cacheStorageService.addPayload(metadata = sessionMetadata, data = deadSessionEnvelope)
+        assertTrue(cachedSizeOf(sessionMetadata) < MAX_CACHED_PAYLOAD_BYTES)
+        resurrectInBackground()
+
+        assertEquals(1, payloadStorageService.storedPayloadCount())
+        assertEquals(0, cacheStorageService.storedPayloadCount())
+        assertTrue(logger.internalErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `a cached crash envelope larger than the maximum file size does not abort resurrection`() {
+        val deadSessionCrashData = createNativeCrashData(
+            nativeCrashId = "native-crash-1",
+            sessionPartId = "no-session-id",
+        )
+        cacheStorageService.addPayload(
+            metadata = fakeCachedCrashEnvelopeMetadata,
+            data = fakeEmptyLogEnvelope(),
+        )
+        nativeCrashService.addNativeCrashData(deadSessionCrashData)
+
+        val service = serviceWithMaxPayloadBytes(cachedSizeOf(fakeCachedCrashEnvelopeMetadata) - 1)
+        service.resurrectOldPayloads(nativeCrashServiceProvider = { nativeCrashService })
+
+        assertEquals(0, payloadStorageService.storedPayloadCount())
+        assertEquals(0, cacheStorageService.storedPayloadCount())
+        assertTrue(cachedLogEnvelopeStore.createdEnvelopes.isEmpty())
+
+        assertEquals(1, nativeCrashService.nativeCrashesSent.size)
+        assertEquals(deadSessionCrashData, nativeCrashService.nativeCrashesSent.single().first)
+
+        assertEquals(1, logger.internalErrorMessages.size)
+        assertEquals(
+            InternalErrorType.NativeCrashResurrectionError.toString(),
+            logger.internalErrorMessages.single().msg,
+        )
+    }
+
+    @Test
     fun `sessionless native crash sent without envelope data when crash envelope stream returns null`() {
         val deadSessionCrashData = createNativeCrashData(
             nativeCrashId = "native-crash-1",
@@ -802,6 +861,28 @@ class PayloadResurrectionServiceImplTest {
                 Envelope.sessionEnvelopeSerializer,
             )
         }
+    }
+
+    private fun cachedSizeOf(metadata: StoredTelemetryMetadata): Long =
+        cacheStorageService.payloadSizeBytes(metadata)
+
+    private fun serviceWithMaxPayloadBytes(maxPayloadBytes: Long): PayloadResurrectionServiceImpl {
+        return PayloadResurrectionServiceImpl(
+            intakeService = IntakeServiceImpl(
+                schedulingService,
+                payloadStorageService,
+                cacheStorageService,
+                logger,
+                serializer,
+                PriorityWorker(intakeExecutor),
+            ),
+            payloadStorageService = payloadStorageService,
+            cacheStorageService = cacheStorageService,
+            cachedLogEnvelopeStore = cachedLogEnvelopeStore,
+            logger = logger,
+            serializer = serializer,
+            maxPayloadBytes = maxPayloadBytes,
+        )
     }
 
     private fun serviceWithPayloadStream(payloadStream: InputStream?): PayloadResurrectionServiceImpl {

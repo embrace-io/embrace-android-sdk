@@ -22,7 +22,7 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 /**
  * Reads any session parts that were persisted on disk by the multi-file persistence layer,
  * reconstructs each one into an envelope, and hands it to the [IntakeService] for delivery. A
- * session part is deleted once intake has accepted it.
+ * session part is deleted once intake has stored it.
  */
 class SessionPartReader(
     private val directoryStore: SessionPartDirectoryStore,
@@ -60,18 +60,22 @@ class SessionPartReader(
     }
 
     /**
-     * Hands the session part's telemetry to the intake service, then removes it from disk. Session
-     * parts that cannot be reconstructed are deleted rather than retried.
+     * Hands the session part's telemetry to the intake service, and removes it from disk once intake
+     * has stored it. A part that intake drops or fails to store is left alone so that the next launch
+     * can retry it, as this is the only copy of the telemetry. Session parts that cannot be
+     * reconstructed are deleted rather than retried.
      */
     private fun deliver(directory: SessionPartDirectory) {
         val envelope = reconstructionService.reconstruct(directory)
-        if (envelope != null) {
-            intakeService.take(
-                intake = envelope,
-                metadata = directory.createMetadata(envelope),
-            )
+        if (envelope == null) {
+            directoryStore.delete(directory)
+            return
         }
-        directoryStore.delete(directory)
+        intakeService.take(
+            intake = envelope,
+            metadata = directory.createMetadata(envelope),
+            onStored = { directoryStore.delete(directory) },
+        )
     }
 
     private fun SessionPartDirectory.createMetadata(

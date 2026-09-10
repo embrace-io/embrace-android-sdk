@@ -137,7 +137,7 @@ class SessionReconstructionService(
             val dedupedSpans = keepLatestPerSpanId(spans)
             val dedupedSnapshots = keepLatestPerSpanId(remainingSnapshots)
 
-            val duplicates = (spans.size - dedupedSpans.size) + (spanSnapshots.size - dedupedSnapshots.size)
+            val duplicates = (spans.size - dedupedSpans.size) + (remainingSnapshots.size - dedupedSnapshots.size)
             if (duplicates > 0) {
                 logger.trackInternalError(
                     InternalErrorType.DuplicateSpanIds,

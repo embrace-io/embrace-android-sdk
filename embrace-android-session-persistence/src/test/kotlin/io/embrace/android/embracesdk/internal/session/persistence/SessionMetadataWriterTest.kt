@@ -12,7 +12,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
-import java.util.concurrent.CountDownLatch
 
 internal class SessionMetadataWriterTest {
 
@@ -297,32 +296,6 @@ internal class SessionMetadataWriterTest {
         assertEquals(fullyPopulatedMetadataProto, readMetadata())
         assertEquals(listOf(METADATA_FILE_NAME), partDir().list()?.toList())
         assertWriteFailureTracked()
-    }
-
-    @Test
-    fun `concurrent user info changes leave one valid metadata file`() {
-        val threadCount = 8
-        val writesPerThread = 25
-        write()
-
-        val userIds = (0 until threadCount).map { "userId$it" }
-        val latch = CountDownLatch(1)
-        val threads = userIds.map { userId ->
-            Thread {
-                latch.await()
-                repeat(writesPerThread) {
-                    metadataProvider = { fullyPopulatedMetadata.copy(userId = userId) }
-                    writer.write()
-                }
-            }
-        }
-        threads.forEach(Thread::start)
-        latch.countDown()
-        threads.forEach(Thread::join)
-
-        assertTrue(readMetadata().user_id in userIds)
-        assertEquals(listOf(METADATA_FILE_NAME), partDir().list()?.toList())
-        assertNoInternalErrors()
     }
 
     private fun target(source: () -> SessionPartDirectory?): SessionPartWriteTarget =

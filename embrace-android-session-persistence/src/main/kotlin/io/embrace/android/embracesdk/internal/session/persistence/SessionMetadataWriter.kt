@@ -19,19 +19,15 @@ class SessionMetadataWriter(
     private val logger: InternalLogger,
 ) {
 
-    private val lock = Any()
-
     /**
      * Writes the metadata for the active session part, replacing any metadata already on disk.
      */
     fun write(): Boolean = SystemTrace.trace("mf-write-metadata") {
-        synchronized(lock) {
-            try {
-                writeImpl()
-            } catch (exc: Throwable) {
-                trackFailure(exc)
-                false
-            }
+        try {
+            writeImpl()
+        } catch (exc: Throwable) {
+            trackFailure(exc)
+            false
         }
     }
 

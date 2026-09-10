@@ -16,6 +16,7 @@ internal class CoalescingWriteQueueTest {
         private const val DELAY_MS = 5000L
     }
 
+    private lateinit var clock: FakeClock
     private lateinit var executor: BlockingScheduledExecutorService
     private lateinit var queue: CoalescingWriteQueue
 
@@ -34,8 +35,9 @@ internal class CoalescingWriteQueueTest {
 
     @Before
     fun setUp() {
-        executor = BlockingScheduledExecutorService(FakeClock(), blockingMode = false)
-        queue = CoalescingWriteQueue(BackgroundWorker(executor), DELAY_MS)
+        clock = FakeClock()
+        executor = BlockingScheduledExecutorService(clock, blockingMode = false)
+        queue = CoalescingWriteQueue(BackgroundWorker(executor), clock, DELAY_MS)
         writes.clear()
     }
 
@@ -59,8 +61,9 @@ internal class CoalescingWriteQueueTest {
 
     @Test
     fun `the first write is queued on the worker rather than run inline`() {
-        val blockedExecutor = BlockingScheduledExecutorService(FakeClock(), blockingMode = true)
-        val blockedQueue = CoalescingWriteQueue(BackgroundWorker(blockedExecutor), DELAY_MS)
+        val blockedClock = FakeClock()
+        val blockedExecutor = BlockingScheduledExecutorService(blockedClock, blockingMode = true)
+        val blockedQueue = CoalescingWriteQueue(BackgroundWorker(blockedExecutor), blockedClock, DELAY_MS)
 
         blockedQueue.submit(write("first"))
         assertEquals(emptyList<String>(), writes)
@@ -116,6 +119,31 @@ internal class CoalescingWriteQueueTest {
         queue.submit(write("second"))
         executor.moveForwardAndRunBlocked(DELAY_MS)
 
+        assertEquals(listOf("first", "second"), writes)
+    }
+
+    @Test
+    fun `an unbroken run of writes cannot postpone the write past the delay`() {
+        primeQueue()
+        repeat(DELAY_MS.toInt()) { i ->
+            queue.submit(write("write-$i"))
+            executor.moveForwardAndRunBlocked(1)
+        }
+        assertEquals(listOf("write-${DELAY_MS - 1}"), writes)
+    }
+
+    @Test
+    fun `a write submitted once the deadline has passed waits out a fresh delay`() {
+        primeQueue()
+        queue.submit(write("first"))
+        executor.moveForwardAndRunBlocked(DELAY_MS)
+        assertEquals(listOf("first"), writes)
+
+        queue.submit(write("second"))
+        executor.moveForwardAndRunBlocked(DELAY_MS - 1)
+        assertEquals(listOf("first"), writes)
+
+        executor.moveForwardAndRunBlocked(1)
         assertEquals(listOf("first", "second"), writes)
     }
 
@@ -183,8 +211,9 @@ internal class CoalescingWriteQueueTest {
 
     @Test
     fun `flush does not wait for the write to run`() {
-        val blockedExecutor = BlockingScheduledExecutorService(FakeClock(), blockingMode = true)
-        val blockedQueue = CoalescingWriteQueue(BackgroundWorker(blockedExecutor), DELAY_MS)
+        val blockedClock = FakeClock()
+        val blockedExecutor = BlockingScheduledExecutorService(blockedClock, blockingMode = true)
+        val blockedQueue = CoalescingWriteQueue(BackgroundWorker(blockedExecutor), blockedClock, DELAY_MS)
 
         primeQueue(blockedQueue)
         blockedExecutor.runCurrentlyBlocked()
@@ -204,7 +233,7 @@ internal class CoalescingWriteQueueTest {
         val hookedExecutor = ScheduleHookExecutor(executor) {
             checkNotNull(queueRef).submit(write("second"))
         }
-        val reentrantQueue = CoalescingWriteQueue(BackgroundWorker(hookedExecutor), DELAY_MS)
+        val reentrantQueue = CoalescingWriteQueue(BackgroundWorker(hookedExecutor), clock, DELAY_MS)
         queueRef = reentrantQueue
 
         primeQueue(reentrantQueue)

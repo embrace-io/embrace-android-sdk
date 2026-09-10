@@ -6,4 +6,5 @@ package io.embrace.android.embracesdk.internal.session.persistence
 internal class DecodedSpans(
     val spans: List<SpanProto>,
     val corruption: Throwable?,
+    val spanLimitReached: Boolean = false,
 )

@@ -2,8 +2,10 @@ package io.embrace.android.embracesdk.internal.session.persistence
 
 import okio.Buffer
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
 import java.io.IOException
@@ -34,6 +36,11 @@ internal class CompletedSpansReaderTest {
 
         private fun readBoundedRecords(bytes: ByteArray, maxRecordBytes: Long): List<SpanProto> =
             Buffer().write(bytes).use { readCompletedSpans(it, MAX_PART_FILE_BYTES, maxRecordBytes) }.spans
+
+        private fun readBoundedSpans(bytes: ByteArray, maxSpans: Int): DecodedSpans =
+            Buffer().write(bytes).use {
+                readCompletedSpans(it, MAX_PART_FILE_BYTES, MAX_RECORD_BYTES, maxSpans)
+            }
 
         /** The length a record declares, which is the encoded span the frame wraps. */
         private fun declaredLengthOf(span: SpanProto): Long = SpanProto.ADAPTER.encode(span).size.toLong()
@@ -126,6 +133,41 @@ internal class CompletedSpansReaderTest {
     fun `a large but legitimate record reads back under the production bound`() {
         val padded = paddedSpanProto(paddedSpanId(1), padding = 64 * 1024)
         assertEquals(listOf(padded), readBoundedRecords(completedSpansLog(listOf(padded)), MAX_RECORD_BYTES))
+    }
+
+    @Test
+    fun `records past the span limit are dropped`() {
+        val log = completedSpansLog(listOf(first, second, third))
+        assertEquals(listOf(first, second), readBoundedSpans(log, maxSpans = 2).spans)
+    }
+
+    @Test
+    fun `a log at the span limit reads back in full and reports nothing`() {
+        val decoded = readBoundedSpans(completedSpansLog(listOf(first, second)), maxSpans = 2)
+        assertEquals(listOf(first, second), decoded.spans)
+        assertFalse(decoded.spanLimitReached)
+    }
+
+    @Test
+    fun `dropping records past the span limit is reported`() {
+        val log = completedSpansLog(listOf(first, second, third))
+        assertTrue(readBoundedSpans(log, maxSpans = 2).spanLimitReached)
+    }
+
+    @Test
+    fun `a span limit of zero reads back no spans`() {
+        val decoded = readBoundedSpans(completedSpansLog(listOf(first)), maxSpans = 0)
+        assertEquals(emptyList<SpanProto>(), decoded.spans)
+        assertTrue(decoded.spanLimitReached)
+    }
+
+    @Test
+    fun `a record past the span limit is not decoded at all`() {
+        val log = completedSpansLog(listOf(first, second)) + UNDECODABLE_RECORD
+        val decoded = readBoundedSpans(log, maxSpans = 2)
+        assertEquals(listOf(first, second), decoded.spans)
+        assertNull(decoded.corruption)
+        assertTrue(decoded.spanLimitReached)
     }
 
     @Test

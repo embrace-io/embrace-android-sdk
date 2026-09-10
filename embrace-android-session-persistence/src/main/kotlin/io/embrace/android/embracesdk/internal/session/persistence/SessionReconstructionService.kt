@@ -68,21 +68,14 @@ class SessionReconstructionService(
         }
         val metadata = metadataProto.toPayload()
 
-        val sessionSpan = readPartFile(
-            partDir,
-            SESSION_SPAN_FILE_NAME,
-            SessionPartSpan.ADAPTER,
-            SessionPartSpan::format_version,
-        ) ?: return null
+        val span = readSessionSpan(partDir) ?: return null
 
-        val span = sessionSpan.span
-        if (span == null) {
-            trackFailure(IOException("Session span file has no span"))
-            return null
+        val budget = SpanBudget()
+        val completedSpans = readCompletedSpansFile(partDir, budget) ?: return null
+        val persistedSnapshots = readSpanSnapshotsFile(partDir, budget) ?: return null
+        if (budget.exceeded) {
+            trackFailure(IllegalStateException(TOO_MANY_PERSISTED_SPANS_MSG))
         }
-
-        val completedSpans = readCompletedSpansFile(partDir) ?: return null
-        val persistedSnapshots = readSpanSnapshotsFile(partDir) ?: return null
 
         // A session span with no end time never finished, so it is delivered as a snapshot rather
         // than as a completed span. The snapshots file never holds the session span itself.
@@ -112,6 +105,21 @@ class SessionReconstructionService(
         )
     }
 
+    private fun readSessionSpan(partDir: File): SpanProto? {
+        val sessionSpan = readPartFile(
+            partDir,
+            SESSION_SPAN_FILE_NAME,
+            SessionPartSpan.ADAPTER,
+            SessionPartSpan::format_version,
+        ) ?: return null
+
+        val span = sessionSpan.span
+        if (span == null) {
+            trackFailure(IOException("Session span file has no span"))
+        }
+        return span
+    }
+
     /**
      * Removes spans that share a span ID with another span in the payload.
      *
@@ -119,7 +127,7 @@ class SessionReconstructionService(
      * The completed span always supersedes snapshots, and otherwise the span with the latest end time
      * is chosen.
      */
-    private fun dedupeSpanIds(spans: List<Span>, spanSnapshots: List<Span>): DedupedSpans =
+    private fun dedupeSpanIds(spans: List<Span>, spanSnapshots: List<Span>): PartSpans =
         SystemTrace.trace("mf-dedupe-span-ids") {
             val completedIds = spans.mapNotNullTo(HashSet(), Span::spanId)
             val remainingSnapshots = spanSnapshots.filter { snapshot ->
@@ -136,7 +144,7 @@ class SessionReconstructionService(
                     IllegalStateException("Removed duplicate spans from session part payload"),
                 )
             }
-            DedupedSpans(dedupedSpans, dedupedSnapshots)
+            PartSpans(dedupedSpans, dedupedSnapshots)
         }
 
     private fun keepLatestPerSpanId(spans: List<Span>): List<Span> {
@@ -160,29 +168,33 @@ class SessionReconstructionService(
      *
      * An oversized log is truncated rather than rejected.
      */
-    private fun readCompletedSpansFile(partDir: File): List<Span>? = SystemTrace.trace("mf-read-completed-spans") {
-        val src = File(partDir, COMPLETED_SPANS_FILE_NAME)
-        if (!src.exists()) {
-            return@trace emptyList()
+    private fun readCompletedSpansFile(partDir: File, budget: SpanBudget): List<Span>? =
+        SystemTrace.trace("mf-read-completed-spans") {
+            val src = File(partDir, COMPLETED_SPANS_FILE_NAME)
+            if (!src.exists()) {
+                return@trace emptyList()
+            }
+            if (src.length() > MAX_PART_FILE_BYTES) {
+                trackFailure(IOException(OVERSIZED_PART_FILE_MSG))
+            }
+            try {
+                val decoded = src.source().buffer().use { source ->
+                    readCompletedSpans(source, maxSpans = budget.remaining)
+                }
+                decoded.corruption?.let(::trackFailure)
+                budget.spend(decoded.spans.size, truncated = decoded.spanLimitReached)
+                SystemTrace.trace("mf-spans-proto-to-payload") { decoded.spans.map(SpanProto::toPayload) }
+            } catch (exc: Throwable) {
+                trackFailure(exc)
+                null
+            }
         }
-        if (src.length() > MAX_PART_FILE_BYTES) {
-            trackFailure(IOException(OVERSIZED_PART_FILE_MSG))
-        }
-        try {
-            val decoded = src.source().buffer().use(::readCompletedSpans)
-            decoded.corruption?.let(::trackFailure)
-            SystemTrace.trace("mf-spans-proto-to-payload") { decoded.spans.map(SpanProto::toPayload) }
-        } catch (exc: Throwable) {
-            trackFailure(exc)
-            null
-        }
-    }
 
     /**
      * Decodes the span snapshots persisted in a session part directory, or null if the file cannot
      * be read.
      */
-    private fun readSpanSnapshotsFile(partDir: File): List<Span>? {
+    private fun readSpanSnapshotsFile(partDir: File, budget: SpanBudget): List<Span>? {
         if (!File(partDir, SPAN_SNAPSHOTS_FILE_NAME).exists()) {
             return emptyList()
         }
@@ -192,7 +204,9 @@ class SessionReconstructionService(
             SpanSnapshots.ADAPTER,
             SpanSnapshots::format_version,
         ) ?: return null
-        return SystemTrace.trace("mf-spans-proto-to-payload") { snapshots.spans.map(SpanProto::toPayload) }
+        val afforded = snapshots.spans.take(budget.remaining)
+        budget.spend(afforded.size, truncated = afforded.size < snapshots.spans.size)
+        return SystemTrace.trace("mf-spans-proto-to-payload") { afforded.map(SpanProto::toPayload) }
     }
 
     /**
@@ -241,7 +255,21 @@ class SessionReconstructionService(
         logger.trackInternalError(InternalErrorType.SessionReconstructionFail, exc)
     }
 
-    private class DedupedSpans(val spans: List<Span>, val spanSnapshots: List<Span>)
+    private class PartSpans(val spans: List<Span>, val spanSnapshots: List<Span>)
+
+    private class SpanBudget {
+
+        var remaining: Int = MAX_PERSISTED_SPANS
+            private set
+
+        var exceeded: Boolean = false
+            private set
+
+        fun spend(spans: Int, truncated: Boolean) {
+            remaining -= spans
+            exceeded = exceeded || truncated
+        }
+    }
 }
 
 private fun partFileReadSectionName(fileName: String): String = when (fileName) {

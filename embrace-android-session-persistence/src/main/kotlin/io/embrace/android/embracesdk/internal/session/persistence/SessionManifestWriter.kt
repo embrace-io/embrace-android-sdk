@@ -46,16 +46,12 @@ class SessionManifestWriter(
         val partDir = target.partDir(directory, ::trackFailure) ?: return false
 
         // build the message before touching the filesystem
-        val manifest = SessionManifest(
-            format_version = FORMAT_VERSION,
-            envelope_version = envelopeVersion,
-            envelope_type = envelopeType,
-            user_session_id = directory.userSessionId,
-            session_part_id = directory.sessionPartId,
-            shared_lib_symbol_mapping = sharedLibSymbolMapping?.let { symbols ->
-                SharedLibSymbolMapping(symbols = symbols)
-            },
-            resource = resource.toImmutableProto(),
+        val manifest = buildSessionManifest(
+            resource = resource,
+            directory = directory,
+            envelopeVersion = envelopeVersion,
+            envelopeType = envelopeType,
+            sharedLibSymbolMapping = sharedLibSymbolMapping,
         )
 
         writeAtomically(partDir, MANIFEST_FILE_NAME, Long.MAX_VALUE) { stream ->

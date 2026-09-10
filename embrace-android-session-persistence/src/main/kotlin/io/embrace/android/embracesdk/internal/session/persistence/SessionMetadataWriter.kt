@@ -35,7 +35,7 @@ class SessionMetadataWriter(
         val directory = target.directory ?: return false
         val partDir = target.partDir(directory, ::trackFailure) ?: return false
 
-        val metadata = metadataSource().toProto(resourceSource().toMutableProto())
+        val metadata = buildEnvelopeMetadata(metadataSource(), resourceSource())
         writeAtomically(partDir, METADATA_FILE_NAME, Long.MAX_VALUE) { stream ->
             EnvelopeMetadataProto.ADAPTER.encode(stream, metadata)
         }

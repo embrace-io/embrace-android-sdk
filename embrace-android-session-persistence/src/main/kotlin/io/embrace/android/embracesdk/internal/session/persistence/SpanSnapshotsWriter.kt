@@ -33,10 +33,7 @@ class SpanSnapshotsWriter(
         val directory = target.directory ?: return false
         val partDir = target.partDir(directory, ::trackFailure) ?: return false
 
-        val snapshots = SpanSnapshots(
-            format_version = FORMAT_VERSION,
-            spans = spans.map(Span::toProto),
-        )
+        val snapshots = buildSpanSnapshots(spans)
         writeAtomically(partDir, SPAN_SNAPSHOTS_FILE_NAME, MAX_PART_FILE_BYTES) { stream ->
             SpanSnapshots.ADAPTER.encode(stream, snapshots)
         }

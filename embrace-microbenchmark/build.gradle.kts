@@ -12,9 +12,7 @@ android {
     defaultConfig {
         minSdk = 26
         testInstrumentationRunner = "androidx.benchmark.junit4.AndroidBenchmarkRunner"
-
-        // uncomment to allow running on emulator
-        // testInstrumentationRunnerArguments["androidx.benchmark.suppressErrors"] = "EMULATOR,LOW-BATTERY"
+        testInstrumentationRunnerArguments["androidx.benchmark.suppressErrors"] = "EMULATOR,LOW-BATTERY"
     }
 
     testBuildType = "release"
@@ -54,5 +52,6 @@ dependencies {
     androidTestImplementation(project(":embrace-android-infra"))
     androidTestImplementation(project(":embrace-android-utils"))
     androidTestImplementation(project(":embrace-android-payload"))
+    androidTestImplementation(project(":embrace-android-session-persistence"))
     androidTestImplementation(project(":embrace-android-instrumentation-api"))
 }

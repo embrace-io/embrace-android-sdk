@@ -26,10 +26,7 @@ class SessionSpanWriter(
         val directory = target.directory ?: return false
         val partDir = target.partDir(directory, ::trackFailure) ?: return false
 
-        val sessionSpan = SessionPartSpan(
-            format_version = FORMAT_VERSION,
-            span = span.toProto(),
-        )
+        val sessionSpan = buildSessionPartSpan(span)
         writeAtomically(partDir, SESSION_SPAN_FILE_NAME, MAX_PART_FILE_BYTES) { stream ->
             SessionPartSpan.ADAPTER.encode(stream, sessionSpan)
         }

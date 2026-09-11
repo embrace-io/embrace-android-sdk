@@ -50,6 +50,7 @@ include(
     ":embrace-gradle-plugin-integration-tests",
     ":embrace-microbenchmark",
     ":embrace-analysis-common",
+    ":embrace-analysis-stats",
     ":embrace-analysis-test-fixtures",
 )
 

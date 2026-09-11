@@ -31,14 +31,16 @@ internal class MainTest {
 
     @Test
     fun `a dry run reports the trace and nothing else`() {
-        val text = describe(Options(File("a.perfetto-trace"), dryRun = true))
+        val text = describe(Options(File("a.perfetto-trace"), dryRun = true), TraceFormat.PERFETTO)
         assertTrue(text, text.contains("trace: a.perfetto-trace"))
+        assertTrue(text, text.contains("format: ${TraceFormat.PERFETTO.label}"))
         assertTrue(text, !text.contains("not implemented"))
     }
 
     @Test
     fun `a real run says the analysis is not implemented`() {
-        val text = describe(Options(File("a.perfetto-trace"), dryRun = false))
+        val text = describe(Options(File("a.perfetto-trace"), dryRun = false), TraceFormat.PERFETTO)
+        assertTrue(text, text.contains("format: ${TraceFormat.PERFETTO.label}"))
         assertTrue(text, text.contains("no analysis is implemented yet"))
     }
 }

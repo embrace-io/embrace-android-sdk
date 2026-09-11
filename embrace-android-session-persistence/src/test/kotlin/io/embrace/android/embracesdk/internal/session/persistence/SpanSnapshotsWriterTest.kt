@@ -123,6 +123,13 @@ internal class SpanSnapshotsWriterTest {
     }
 
     @Test
+    fun `spans reported as changed do not alter what is written`() {
+        assertTrue(writer.write(snapshots, dirtySpans = listOf(inFlightSpan)))
+        assertEquals(snapshots.map(Span::toProto), readSnapshots().spans)
+        assertNoInternalErrors()
+    }
+
+    @Test
     fun `nothing is written when no session part is active`() {
         assertFalse(write(directory = null))
         assertFalse(snapshotsFile().exists())

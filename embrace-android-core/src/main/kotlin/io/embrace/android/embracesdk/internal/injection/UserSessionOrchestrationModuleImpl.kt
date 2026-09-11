@@ -108,7 +108,8 @@ class UserSessionOrchestrationModuleImpl(
             payloadSourceModule.envelopeMetadataSource,
             openTelemetryModule.currentSessionPartSpan,
             {
-                // don't include the session part span
+                // don't include the session part span: the writer supplies the one belonging to the
+                // session part it is writing for, so a write can't pick up a later part's span
                 openTelemetryModule.spanRepository.getActiveEmbraceSpans()
                     .filterNot { it.hasEmbraceAttribute(EmbType.Ux.Session) }
             },
@@ -119,15 +120,12 @@ class UserSessionOrchestrationModuleImpl(
         )
         essentialServiceModule.userService.addUserInfoListener(sessionPartWriter::onMetadataChanged)
         openTelemetryModule.spanRepository.addCompletedOtelSpansListener { spans ->
-            // don't include the session part span
+            // don't include the session part span: the writer logs it against the session part that
+            // ended, rather than whichever part is current when this fires
             sessionPartWriter.onSpanCompleted(spans.filterNot { it.hasEmbraceAttribute(EmbType.Ux.Session) })
         }
-        openTelemetryModule.spanRepository.addSpanChangeListener { span ->
-            if (span.hasEmbraceAttribute(EmbType.Ux.Session)) {
-                sessionPartWriter.onSessionSpanChanged()
-            } else {
-                sessionPartWriter.onSpanSnapshotChanged()
-            }
+        openTelemetryModule.spanRepository.addSpanChangeListener {
+            sessionPartWriter.onSpanSnapshotChanged()
         }
 
         SessionOrchestratorImpl(

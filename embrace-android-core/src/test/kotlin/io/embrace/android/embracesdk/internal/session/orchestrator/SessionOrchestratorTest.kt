@@ -52,8 +52,10 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
+import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpans
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
-import io.embrace.android.embracesdk.internal.session.persistence.SessionPartSpan
+import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
+import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshots
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
@@ -1085,8 +1087,8 @@ internal class SessionOrchestratorTest {
         orchestrator.onBackground()
         val second = checkNotNull(sessionTracker.getActiveSessionPartId())
 
-        assertEquals(clock.now().millisToNanos(), sessionSpanIn(first)?.span?.end_time_unix_nano)
-        assertNull(sessionSpanIn(second)?.span?.end_time_unix_nano)
+        assertEquals(clock.now().millisToNanos(), sessionSpanIn(first)?.end_time_unix_nano)
+        assertNull(sessionSpanIn(second)?.end_time_unix_nano)
         assertNoInternalErrors()
     }
 
@@ -1097,7 +1099,7 @@ internal class SessionOrchestratorTest {
         clock.tick(10000)
         orchestrator.handleCrash("crash-id")
 
-        assertEquals(clock.now().millisToNanos(), sessionSpanOnDisk(sessionPartId)?.span?.end_time_unix_nano)
+        assertEquals(clock.now().millisToNanos(), sessionSpanOnDisk(sessionPartId)?.end_time_unix_nano)
         assertNoInternalErrors()
     }
 
@@ -1112,7 +1114,7 @@ internal class SessionOrchestratorTest {
         orchestrator.onBackground()
 
         assertNull(sessionTracker.getActiveSessionPartId())
-        assertEquals(clock.now().millisToNanos(), sessionSpanIn(sessionPartId)?.span?.end_time_unix_nano)
+        assertEquals(clock.now().millisToNanos(), sessionSpanIn(sessionPartId)?.end_time_unix_nano)
         assertNoInternalErrors()
     }
 
@@ -1137,7 +1139,7 @@ internal class SessionOrchestratorTest {
 
         assertEquals(0, payloadCollator.finalEnvelopeCount)
         assertEquals(1, payloadCollator.endedWithoutEnvelopeCount)
-        assertEquals(clock.now().millisToNanos(), sessionSpanIn(sessionPartId)?.span?.end_time_unix_nano)
+        assertEquals(clock.now().millisToNanos(), sessionSpanIn(sessionPartId)?.end_time_unix_nano)
         assertNoInternalErrors()
     }
 
@@ -2062,20 +2064,39 @@ internal class SessionOrchestratorTest {
      * Drains the session persistence worker and returns the session span persisted for the given
      * session part, if any.
      */
-    private fun sessionSpanIn(sessionPartId: String): SessionPartSpan? {
+    private fun sessionSpanIn(sessionPartId: String): SpanProto? {
         drainPersistence()
         return sessionSpanOnDisk(sessionPartId)
     }
 
     private fun drainPersistence() = sessionPersistenceExecutor.drainWrites()
 
-    private fun sessionSpanOnDisk(sessionPartId: String): SessionPartSpan? {
+    /**
+     * The session span persisted for the given session part: logged as a completed span once its
+     * part has ended, and held in the span snapshots until then.
+     */
+    private fun sessionSpanOnDisk(sessionPartId: String): SpanProto? {
         val directory = partDirs().single { it.sessionPartId == sessionPartId }
-        return File(File(sessionsDir, directory.dirName), "session_span.pb")
+        val partDir = File(sessionsDir, directory.dirName)
+        return completedSpansOnDisk(partDir).lastOrNull(::isSessionSpan)
+            ?: spanSnapshotsOnDisk(partDir).lastOrNull(::isSessionSpan)
+    }
+
+    private fun completedSpansOnDisk(partDir: File): List<SpanProto> {
+        val bytes = File(partDir, "completed_spans.pb").takeIf(File::isFile)?.readBytes() ?: return emptyList()
+        return CompletedSpans.ADAPTER.decode(bytes).spans
+    }
+
+    private fun spanSnapshotsOnDisk(partDir: File): List<SpanProto> =
+        File(partDir, "span_snapshots.pb")
             .takeIf(File::isFile)
             ?.inputStream()
-            ?.use(SessionPartSpan.ADAPTER::decode)
-    }
+            ?.use(SpanSnapshots.ADAPTER::decode)
+            ?.spans
+            .orEmpty()
+
+    private fun isSessionSpan(span: SpanProto): Boolean =
+        span.attributes.any { it.key == "emb.type" && it.value_ == "ux.session" }
 
     private fun assertNoInternalErrors() {
         assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)

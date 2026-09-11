@@ -23,20 +23,16 @@ interface SessionPartWriter {
     fun onMetadataChanged()
 
     /**
-     * Called when a batch of spans have completed. The session span is persisted separately and
-     * reattached when the session part is read back, so callers must filter it out.
+     * Called when a batch of spans have completed. The session span is logged by this writer when
+     * the session part ends, so callers must filter it out.
      */
     fun onSpanCompleted(spans: List<Span>)
 
     /**
-     * An in-flight span has changed, so the span snapshots on disk are stale.
+     * A span the session part is recording has changed, so the span snapshots on disk are stale.
+     * This includes the session span itself, which is snapshotted until the part ends.
      */
     fun onSpanSnapshotChanged()
-
-    /**
-     * The session part span has changed.
-     */
-    fun onSessionSpanChanged()
 
     /**
      * The process is terminating due to a JVM crash. Blocks until the necessary session part info

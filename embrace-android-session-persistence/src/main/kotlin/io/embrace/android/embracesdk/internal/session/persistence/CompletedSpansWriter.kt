@@ -15,8 +15,7 @@ import java.io.IOException
  * rather than to everything logged for the session part so far. Each record is self contained,
  * which lets [readCompletedSpans] recover every span logged before a process died mid-append.
  *
- * The session span is persisted separately and should not be logged here. Callers are responsible
- * for filtering it out.
+ * The session span of a session part is logged here too, once that part has ended.
  */
 class CompletedSpansWriter(
     private val target: SessionPartWriteTarget,

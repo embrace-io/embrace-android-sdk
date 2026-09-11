@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
+import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpansWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionManifestWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadataWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
@@ -24,7 +25,6 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDir
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTarget
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTracker
 import io.embrace.android.embracesdk.internal.session.persistence.SessionReconstructionService
-import io.embrace.android.embracesdk.internal.session.persistence.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.Assert.assertEquals
@@ -238,7 +238,7 @@ internal class SessionPartReaderTest {
             resourceSource = { EnvelopeResource(appVersion = "1.0.0") },
             logger = logger,
         ).write()
-        SessionSpanWriter(target, logger).write(span)
+        CompletedSpansWriter(target, logger).write(listOf(span))
     }
 
     /**

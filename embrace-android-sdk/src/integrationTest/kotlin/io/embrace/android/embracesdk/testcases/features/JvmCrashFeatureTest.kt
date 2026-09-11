@@ -33,8 +33,9 @@ import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
+import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpans
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
-import io.embrace.android.embracesdk.internal.session.persistence.SessionPartSpan
+import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
@@ -136,7 +137,7 @@ internal class JvmCrashFeatureTest {
                 val sessionSpan = checkNotNull(readSessionSpanOnDisk(sessionPartId)) {
                     "no session span was persisted for part $sessionPartId"
                 }
-                assertEquals(crashTimeMs.millisToNanos(), sessionSpan.span?.end_time_unix_nano)
+                assertEquals(crashTimeMs.millisToNanos(), sessionSpan.end_time_unix_nano)
             }
         )
     }
@@ -418,7 +419,11 @@ internal class JvmCrashFeatureTest {
         assertNotNull(attributes?.findAttributeValue(EmbAndroidAttributes.EMB_ANDROID_THREADS))
     }
 
-    private fun readSessionSpanOnDisk(sessionPartId: String): SessionPartSpan? {
+    /**
+     * The session span persisted for the given part, which is logged as a completed span once the
+     * part has ended.
+     */
+    private fun readSessionSpanOnDisk(sessionPartId: String): SpanProto? {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
         val sessionsDir = StorageLocation.SESSION_SPLIT.asFile(
             logger = FakeInternalLogger(),
@@ -429,9 +434,12 @@ internal class JvmCrashFeatureTest {
             .mapNotNull(SessionPartDirectory::fromDirName)
             .singleOrNull { it.sessionPartId == sessionPartId }
             ?: return null
-        return File(File(sessionsDir, partDir.dirName), "session_span.pb")
+        val bytes = File(File(sessionsDir, partDir.dirName), "completed_spans.pb")
             .takeIf(File::isFile)
-            ?.inputStream()
-            ?.use(SessionPartSpan.ADAPTER::decode)
+            ?.readBytes()
+            ?: return null
+        return CompletedSpans.ADAPTER.decode(bytes).spans.lastOrNull { span ->
+            span.attributes.any { it.key == "emb.type" && it.value_ == "ux.session" }
+        }
     }
 }

@@ -38,7 +38,6 @@ internal class SessionReconstructionServiceManifestTest {
     private lateinit var logger: FakeInternalLogger
     private lateinit var writer: SessionManifestWriter
     private lateinit var metadataWriter: SessionMetadataWriter
-    private lateinit var sessionSpanWriter: SessionSpanWriter
     private lateinit var service: SessionReconstructionService
 
     @Volatile
@@ -60,7 +59,6 @@ internal class SessionReconstructionServiceManifestTest {
             { writtenResource },
             logger,
         )
-        sessionSpanWriter = SessionSpanWriter(target(), logger)
         service = SessionReconstructionService(lazy { sessionsDir }, logger)
         createPartDir(partDirectory)
     }
@@ -88,13 +86,13 @@ internal class SessionReconstructionServiceManifestTest {
         assertTrue(writer.write(resource, envelopeVersion, envelopeType, sharedLibSymbolMapping))
         writtenResource = resource
         assertTrue(metadataWriter.write())
-        assertTrue(sessionSpanWriter.write(fullyPopulatedSpan))
         writeCompletedSpans(directory)
         writeSpanSnapshots(directory)
     }
 
     private fun writeCompletedSpans(directory: SessionPartDirectory = partDirectory) {
-        File(partDir(directory), "completed_spans.pb").writeBytes(completedSpansLog(emptyList()))
+        File(partDir(directory), "completed_spans.pb")
+            .writeBytes(completedSpansLog(listOf(fullyPopulatedSpanProto)))
     }
 
     private fun writeSpanSnapshots(directory: SessionPartDirectory = partDirectory) {

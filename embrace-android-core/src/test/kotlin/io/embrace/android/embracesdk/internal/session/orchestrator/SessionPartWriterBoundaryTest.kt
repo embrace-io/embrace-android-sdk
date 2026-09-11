@@ -14,10 +14,12 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
+import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpans
 import io.embrace.android.embracesdk.internal.session.persistence.EnvelopeMetadataProto
 import io.embrace.android.embracesdk.internal.session.persistence.SessionManifest
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
-import io.embrace.android.embracesdk.internal.session.persistence.SessionPartSpan
+import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
+import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshots
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -39,7 +41,8 @@ internal class SessionPartWriterBoundaryTest {
         private const val SECOND_PART_ID = "cccccccccccccccccccccccccccccccc"
         private const val METADATA_FILE_NAME = "metadata.pb"
         private const val MANIFEST_FILE_NAME = "manifest.pb"
-        private const val SESSION_SPAN_FILE_NAME = "session_span.pb"
+        private const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
+        private const val SPAN_SNAPSHOTS_FILE_NAME = "span_snapshots.pb"
     }
 
     @get:Rule
@@ -54,6 +57,7 @@ internal class SessionPartWriterBoundaryTest {
     private var resourceCount = 0
     private var spanCount = 0
     private lateinit var sessionSpan: FakeEmbraceSdkSpan
+    private val partSpans = mutableMapOf<String, FakeEmbraceSdkSpan>()
     private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
     private val resourceSource = object : EnvelopeResourceSource {
         override fun getEnvelopeResource(): EnvelopeResource =
@@ -73,6 +77,7 @@ internal class SessionPartWriterBoundaryTest {
         writeCount = 0
         resourceCount = 0
         spanCount = 0
+        partSpans.clear()
         sessionSpan = FakeEmbraceSdkSpan().apply { start(clock.now()) }
         currentSessionPartSpan = FakeCurrentSessionPartSpan(clock).apply { sessionPartSpan = sessionSpan }
         writer = SessionPartWriterImpl(
@@ -183,8 +188,8 @@ internal class SessionPartWriterBoundaryTest {
         startPart(SECOND_PART_ID)
         drain()
 
-        assertEquals("span0", sessionSpanIn(FIRST_PART_ID)?.span?.name)
-        assertEquals("span1", sessionSpanIn(SECOND_PART_ID)?.span?.name)
+        assertEquals("span0", sessionSpanIn(FIRST_PART_ID)?.name)
+        assertEquals("span1", sessionSpanIn(SECOND_PART_ID)?.name)
         assertEquals(2, spanCount)
         assertNoInternalErrors()
     }
@@ -198,8 +203,8 @@ internal class SessionPartWriterBoundaryTest {
         writer.onMetadataChanged()
         drain()
 
-        assertEquals("span0", sessionSpanIn(FIRST_PART_ID)?.span?.name)
-        assertEquals("span1", sessionSpanIn(SECOND_PART_ID)?.span?.name)
+        assertEquals("span0", sessionSpanIn(FIRST_PART_ID)?.name)
+        assertEquals("span1", sessionSpanIn(SECOND_PART_ID)?.name)
         assertEquals(2, spanCount)
         assertNoInternalErrors()
     }
@@ -213,11 +218,11 @@ internal class SessionPartWriterBoundaryTest {
         startPart(SECOND_PART_ID)
         drain()
 
-        with(checkNotNull(sessionSpanIn(FIRST_PART_ID)?.span)) {
+        with(checkNotNull(sessionSpanIn(FIRST_PART_ID))) {
             assertEquals("span0", name)
             assertEquals(endedAt.millisToNanos(), end_time_unix_nano)
         }
-        with(checkNotNull(sessionSpanIn(SECOND_PART_ID)?.span)) {
+        with(checkNotNull(sessionSpanIn(SECOND_PART_ID))) {
             assertEquals("span1", name)
             assertNull(end_time_unix_nano)
         }
@@ -234,11 +239,11 @@ internal class SessionPartWriterBoundaryTest {
 
         clock.tick(2000)
         sessionSpan.name = "span-refreshed"
-        writer.onSessionSpanChanged()
+        writer.onSpanSnapshotChanged()
         drain()
 
-        assertEquals("span0", sessionSpanIn(FIRST_PART_ID)?.span?.name)
-        assertEquals("span-refreshed", sessionSpanIn(SECOND_PART_ID)?.span?.name)
+        assertEquals("span0", sessionSpanIn(FIRST_PART_ID)?.name)
+        assertEquals("span-refreshed", sessionSpanIn(SECOND_PART_ID)?.name)
         assertNoInternalErrors()
     }
 
@@ -252,8 +257,8 @@ internal class SessionPartWriterBoundaryTest {
         startPart(SECOND_PART_ID)
         drain()
 
-        assertEquals(listOf("SessionSpanWriteFail"), logger.internalErrorMessages.map { it.msg })
-        assertEquals("span1", sessionSpanIn(SECOND_PART_ID)?.span?.name)
+        assertEquals(listOf("CompletedSpansWriteFail"), logger.internalErrorMessages.map { it.msg })
+        assertEquals("span1", sessionSpanIn(SECOND_PART_ID)?.name)
     }
 
     @Test
@@ -284,6 +289,7 @@ internal class SessionPartWriterBoundaryTest {
 
     private fun startPart(sessionPartId: String) {
         sessionSpan = FakeEmbraceSdkSpan(name = "span${spanCount++}").apply { start(clock.now()) }
+        partSpans[sessionPartId] = sessionSpan
         currentSessionPartSpan.sessionPartSpan = sessionSpan
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, sessionPartId)
     }
@@ -309,10 +315,27 @@ internal class SessionPartWriterBoundaryTest {
             ?.inputStream()
             ?.use(EnvelopeMetadataProto.ADAPTER::decode)
 
-    private fun sessionSpanIn(sessionPartId: String): SessionPartSpan? =
-        partFile(sessionPartId, SESSION_SPAN_FILE_NAME)
+    /**
+     * The session span persisted for [sessionPartId]: logged as a completed span once its part has
+     * ended, and held in the span snapshots until then.
+     */
+    private fun sessionSpanIn(sessionPartId: String): SpanProto? {
+        val spanId = partSpans.getValue(sessionPartId).spanId
+        return completedSpansIn(sessionPartId).lastOrNull { it.span_id == spanId }
+            ?: spanSnapshotsIn(sessionPartId).lastOrNull { it.span_id == spanId }
+    }
+
+    private fun completedSpansIn(sessionPartId: String): List<SpanProto> {
+        val bytes = partFile(sessionPartId, COMPLETED_SPANS_FILE_NAME)?.readBytes() ?: return emptyList()
+        return CompletedSpans.ADAPTER.decode(bytes).spans
+    }
+
+    private fun spanSnapshotsIn(sessionPartId: String): List<SpanProto> =
+        partFile(sessionPartId, SPAN_SNAPSHOTS_FILE_NAME)
             ?.inputStream()
-            ?.use(SessionPartSpan.ADAPTER::decode)
+            ?.use(SpanSnapshots.ADAPTER::decode)
+            ?.spans
+            .orEmpty()
 
     private fun manifestIn(sessionPartId: String): SessionManifest? =
         partFile(sessionPartId, MANIFEST_FILE_NAME)

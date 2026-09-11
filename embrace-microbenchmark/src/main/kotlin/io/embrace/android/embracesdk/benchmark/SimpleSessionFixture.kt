@@ -12,9 +12,15 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 
 /**
- * One short session's worth of telemetry, in the form each persistence layer needs to serialize it.
+ * One session's worth of telemetry, in the form each persistence layer needs to serialize it.
+ *
+ * [completedSpanCount] sets how much work the session did, which is the main thing that decides
+ * how big it is once persisted. [attributesPerSpan] sets how much each of those spans carries.
  */
-internal class SimpleSessionFixture {
+internal class SimpleSessionFixture(
+    private val completedSpanCount: Int = COMPLETED_SPAN_COUNT,
+    private val attributesPerSpan: Int = ATTRIBUTES_PER_SPAN,
+) {
     val completedSpans: List<Span>
     val sessionSpan: Span
     val spanSnapshots: List<Span>
@@ -68,7 +74,7 @@ internal class SimpleSessionFixture {
         val harness = TelemetryDestinationHarness()
         val spanService = harness.createUncappedSpanService()
 
-        repeat(COMPLETED_SPAN_COUNT) { index ->
+        repeat(completedSpanCount) { index ->
             spanService.newSpan("completed-work-$index").apply {
                 start()
                 populate(index)
@@ -96,8 +102,8 @@ internal class SimpleSessionFixture {
         check(spanSnapshots.size == IN_FLIGHT_SPAN_COUNT) {
             "expected $IN_FLIGHT_SPAN_COUNT in-flight spans but snapshotted ${spanSnapshots.size}"
         }
-        check(completedSpans.size == COMPLETED_SPAN_COUNT) {
-            "expected $COMPLETED_SPAN_COUNT completed spans but got ${completedSpans.size}"
+        check(completedSpans.size == completedSpanCount) {
+            "expected $completedSpanCount completed spans but got ${completedSpans.size}"
         }
 
         envelope = Envelope(
@@ -117,7 +123,7 @@ internal class SimpleSessionFixture {
     }
 
     private fun EmbraceSdkSpan.populate(index: Int) {
-        repeat(ATTRIBUTES_PER_SPAN) { attribute ->
+        repeat(attributesPerSpan) { attribute ->
             addAttribute("work.attribute.$attribute", "work-attribute-value-$index-$attribute")
         }
         addEvent(

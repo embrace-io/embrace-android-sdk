@@ -2,8 +2,7 @@
 
 Host tooling for analysing a gzipped perfetto trace. Not published, not shipped in the SDK.
 
-**This decodes a trace but does not yet interpret one.** It reads the file onto the protobuf wire model and
-prints what that holds. Pairing the atrace events into slices, and timing the sections they name, comes next.
+It reads the trace into a list of slices and prints a summary of what it found.
 
 Validation decompresses the first few bytes and checks they open a perfetto packet; anything else is rejected.
 
@@ -19,22 +18,36 @@ Or
 ./gradlew :embrace-perfetto-analysis:analyseTrace --args="<trace> --dry-run"
 ```
 
+```
+perfetto trace analysis
+  trace: macrobenchmark-session-multi-file.perfetto.gz (31606 bytes)
+  format: gzipped perfetto trace
+
+  slices: 1094 across 6 threads
+  span: 2182.39 ms
+  emb- sections: 1089
+    emb-sdk-start: 12.08 ms over 1 call
+    emb-modules-init: 9.33 ms over 1 call
+```
+
 The tool exits 1 on bad usage, and 2 when there is no trace at the given path, the file there is not a
 gzipped perfetto trace, or it could not be read as one. Run through Gradle those surface as a build failure
 naming the exit value, since Gradle returns its own.
 
 ## What it reads
 
-The macrobenchmark's perfetto config captures atrace and process stats only, so atrace is all this decodes.
-`src/main/proto/perfetto/protos/trace.proto` declares the few fields that carries - everything else is skipped.
+The macrobenchmark's perfetto config captures atrace and process stats only, so atrace is all this parses.
+`src/main/proto/perfetto/protos/trace.proto` declares the few fields that carries; everything else in a trace
+is skipped as an unknown field. Begin (`B|<tgid>|<name>`) and end (`E`, or `E|<tgid>`) events are paired into
+slices by a stack per thread. Two details are easy to get wrong:
 
-An atrace event's `print.buf` is a begin (`B|<tgid>|<name>`) or an end (`E`, or `E|<tgid>`). Two details are important:
+- Slices nest by the **thread id** in the ftrace event, not the tgid in the payload. SDK init often runs on a
+  worker while every payload names the main process.
+- Ftrace batches events per CPU, so events arrive out of order and are sorted by timestamp before stacking.
 
-- Slices nest by the **thread id** in the ftrace event, which ftrace calls `pid`, not the tgid in the payload.
-- Ftrace batches events per CPU, so a trace hands them over out of timestamp order.
-
-Thread and process names are not currently read, so threads are numeric. Sections the SDK emits are prefixed `emb-` by
-`EmbTrace`.
+Sections the SDK emits are prefixed `emb-` by `EmbTrace`; `PerfettoTrace.withPrefix` picks them out. Thread
+names are not read, so threads are numeric. Async events, counters, ends that close nothing and slices still
+open at the end of the trace are counted and warned about rather than guessed at.
 
 ## Getting a trace
 

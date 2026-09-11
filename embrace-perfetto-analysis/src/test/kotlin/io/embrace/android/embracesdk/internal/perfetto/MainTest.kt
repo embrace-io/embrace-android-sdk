@@ -1,11 +1,7 @@
 package io.embrace.android.embracesdk.internal.perfetto
 
-import io.embrace.android.embracesdk.internal.perfetto.proto.FtraceEvent
-import io.embrace.android.embracesdk.internal.perfetto.proto.FtraceEventBundle
-import io.embrace.android.embracesdk.internal.perfetto.proto.PrintFtraceEvent
-import io.embrace.android.embracesdk.internal.perfetto.proto.Trace
-import io.embrace.android.embracesdk.internal.perfetto.proto.TracePacket
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -42,43 +38,35 @@ internal class MainTest {
     }
 
     @Test
-    fun `the summary counts what was decoded, including the threads atrace wrote from`() {
+    fun `the summary counts the slices and names the slowest sections`() {
         val text = summarise(
-            Trace(
-                packet = listOf(
-                    TracePacket(
-                        ftrace_events = FtraceEventBundle(
-                            event = listOf(
-                                print(1000, "B|$TID|emb-sdk-start", tid = TID),
-                                print(1100, "B|$OTHER_TID|emb-core-init", tid = OTHER_TID),
-                                FtraceEvent(timestamp = 1200, pid = TID),
-                            ),
-                        ),
-                    ),
-                    TracePacket(ftrace_events = FtraceEventBundle(event = listOf(print(1300, "E|$TID", tid = TID)))),
+            PerfettoTrace(
+                listOf(
+                    TraceSlice("emb-sdk-start", 1, 0, 3_000_000, 0),
+                    TraceSlice("emb-core-init", 1, 0, 2_000_000, 1),
+                    TraceSlice("emb-core-init", 2, 0, 500_000, 0),
+                    TraceSlice("session-workload", 2, 0, 9_000_000, 0),
                 ),
             ),
         )
 
-        assertTrue(text, text.contains("packets: 2"))
-        assertTrue(text, text.contains("ftrace events: 4"))
-        assertTrue(text, text.contains("atrace events: 3 across 2 threads"))
+        assertTrue(text, text.contains("slices: 4 across 2 threads"))
+        assertTrue(text, text.contains("span: 9.00 ms"))
+        assertTrue(text, text.contains("$EMB_PREFIX sections: 3"))
+        assertTrue(text, text.contains("emb-core-init: 2.50 ms over 2 calls"))
+        assertTrue(text, text.contains("emb-sdk-start: 3.00 ms over 1 call"))
+
+        // only the sdk's own sections are ranked
+        assertTrue(text, !text.contains("session-workload"))
     }
 
     @Test
-    fun `an empty trace summarises as empty rather than failing`() {
-        val text = summarise(Trace())
+    fun `anomalies are reported so a truncated trace is not read as a clean one`() {
+        val clean = PerfettoTrace(emptyList())
+        assertFalse(clean.hasAnomalies)
 
-        assertTrue(text, text.contains("packets: 0"))
-        assertTrue(text, text.contains("ftrace events: 0"))
-        assertTrue(text, text.contains("atrace events: 0 across 0 threads"))
-    }
-
-    private fun print(timestamp: Long, payload: String, tid: Int) =
-        FtraceEvent(timestamp = timestamp, pid = tid, print = PrintFtraceEvent(buf = payload))
-
-    private companion object {
-        const val TID = 9874
-        const val OTHER_TID = 9892
+        val truncated = PerfettoTrace(emptyList(), unmatchedEndCount = 3)
+        assertTrue(truncated.hasAnomalies)
+        assertTrue(warning(truncated), warning(truncated).contains("3 unmatched end events"))
     }
 }

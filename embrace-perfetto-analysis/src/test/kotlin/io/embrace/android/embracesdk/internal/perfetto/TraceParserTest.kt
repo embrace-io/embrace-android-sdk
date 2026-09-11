@@ -21,38 +21,39 @@ internal class TraceParserTest {
     val tmp = TemporaryFolder()
 
     @Test
-    fun `a gzipped trace decodes to the packets it was written with`() {
-        val written = trace(bundle(print(1000, "B|$TID|section"), print(1500, "E|$TID")))
-        assertEquals(written, parseTrace(gzipped("trace.gz", written)))
-    }
-
-    @Test
-    fun `events are gathered from every bundle, in the order the trace holds them`() {
-        val inner = print(1100, "B|$TID|inner")
-        val outer = print(1000, "B|$TID|outer")
-        val events = ftraceEvents(
+    fun `print events are gathered from every bundle`() {
+        val events = readAtraceEvents(
             Trace(
                 packet = listOf(
-                    TracePacket(ftrace_events = bundle(inner)),
-                    TracePacket(ftrace_events = bundle(outer)),
+                    TracePacket(ftrace_events = bundle(print(1100, "B|$TID|inner"))),
+                    TracePacket(ftrace_events = bundle(print(1000, "B|$TID|outer"))),
                 ),
             ),
         )
-        assertEquals(listOf(inner, outer), events)
+
+        assertEquals(
+            listOf(
+                AtraceEvent(TID, 1100, "B|$TID|inner"),
+                AtraceEvent(TID, 1000, "B|$TID|outer"),
+            ),
+            events,
+        )
     }
 
     @Test
-    fun `a trace carrying no ftrace events yields none`() {
-        assertEquals(emptyList<FtraceEvent>(), ftraceEvents(Trace()))
-        assertEquals(emptyList<FtraceEvent>(), ftraceEvents(Trace(packet = listOf(TracePacket()))))
-        assertEquals(emptyList<FtraceEvent>(), ftraceEvents(trace(FtraceEventBundle())))
+    fun `anything that is not a print event yields nothing`() {
+        val bundleWithoutPrint = FtraceEventBundle(event = listOf(FtraceEvent(timestamp = 1000, pid = TID)))
+
+        assertEquals(emptyList<AtraceEvent>(), readAtraceEvents(Trace()))
+        assertEquals(emptyList<AtraceEvent>(), readAtraceEvents(Trace(packet = listOf(TracePacket()))))
+        assertEquals(emptyList<AtraceEvent>(), readAtraceEvents(trace(bundleWithoutPrint)))
     }
 
     @Test
-    fun `ftrace events that atrace did not write are separated from those it did`() {
-        val atrace = print(1000, "B|$TID|section")
-        val other = FtraceEvent(timestamp = 1100, pid = TID)
-        assertEquals(listOf(atrace), printEvents(listOf(atrace, other)))
+    fun `a gzipped trace is read end to end`() {
+        val file = gzipped("trace.gz", trace(bundle(print(1000, "B|$TID|section"), print(1500, "E|$TID"))))
+
+        assertEquals(listOf(TraceSlice("section", TID, 1000, 1500, 0)), parseTrace(file).slices)
     }
 
     @Test

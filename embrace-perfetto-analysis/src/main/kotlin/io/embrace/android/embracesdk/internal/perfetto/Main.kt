@@ -7,7 +7,7 @@ internal const val EXIT_USAGE = 1
 internal const val EXIT_BAD_TRACE = 2
 
 private const val USAGE = """
-usage: analyseTrace <trace.perfetto-trace> [options]
+usage: analyseTrace <trace.perfetto.gz> [options]
 
   --dry-run   validate the inputs and report what would be analysed, then stop
   --help, -h  print this message
@@ -29,7 +29,12 @@ fun main(args: Array<String>) {
         System.err.println("no trace file at ${options.trace.absolutePath}")
         exitProcess(EXIT_BAD_TRACE)
     }
-    println(describe(options))
+    val format = validateTrace(options.trace)
+    if (format != TraceFormat.PERFETTO) {
+        System.err.println("${options.trace.absolutePath} is ${format.label}")
+        exitProcess(EXIT_BAD_TRACE)
+    }
+    println(describe(options, format))
 }
 
 internal data class Options(val trace: File, val dryRun: Boolean)
@@ -53,9 +58,10 @@ internal fun parseArgs(args: Array<String>): Options? {
 }
 
 /** Reports the inputs the analysis runs against. */
-internal fun describe(options: Options): String = buildString {
+internal fun describe(options: Options, format: TraceFormat): String = buildString {
     appendLine("perfetto trace analysis")
     appendLine("  trace: ${options.trace.path} (${options.trace.length()} bytes)")
+    appendLine("  format: ${format.label}")
     if (!options.dryRun) {
         appendLine()
         appendLine("no analysis is implemented yet; only --dry-run is wired up.")

@@ -1,8 +1,13 @@
 package io.embrace.android.embracesdk.macrobenchmark
 
+import androidx.benchmark.ExperimentalBenchmarkConfigApi
+import androidx.benchmark.ExperimentalConfig
+import androidx.benchmark.macro.ExperimentalMetricApi
 import androidx.benchmark.macro.StartupMode
-import androidx.benchmark.macro.StartupTimingMetric
+import androidx.benchmark.macro.TraceSectionMetric
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
+import androidx.benchmark.perfetto.ExperimentalPerfettoCaptureApi
+import androidx.benchmark.perfetto.PerfettoConfig
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Until
@@ -19,12 +24,18 @@ internal class SessionBenchmark {
     @get:Rule
     val benchmarkRule = MacrobenchmarkRule()
 
+    @OptIn(ExperimentalBenchmarkConfigApi::class, ExperimentalPerfettoCaptureApi::class, ExperimentalMetricApi::class)
     @Test
     fun sessionEnd() {
         benchmarkRule.measureRepeated(
             packageName = "io.embrace.android.embracesdk.macrobenchmark.app",
-            metrics = listOf(StartupTimingMetric()),
+            // sum reports zero as non-atrace sections are absent
+            metrics = listOf(
+                TraceSectionMetric("emb-sdk-start", mode = TraceSectionMetric.Mode.Sum),
+                TraceSectionMetric("emb-mf-%", mode = TraceSectionMetric.Mode.Sum, label = "emb-mf-sections"),
+            ),
             iterations = 10,
+            experimentalConfig = ExperimentalConfig(perfettoConfig = PerfettoConfig.Text(traceConfig())),
             startupMode = StartupMode.COLD,
             setupBlock = {
                 device.executeShellCommand("pm clear $packageName")
@@ -41,4 +52,8 @@ internal class SessionBenchmark {
             }
         }
     }
+
+    private fun traceConfig(): String =
+        checkNotNull(javaClass.getResourceAsStream("/perfetto-config.pbtx"))
+            .use { it.reader().readText() }
 }

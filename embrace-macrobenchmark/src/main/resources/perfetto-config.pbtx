@@ -1,0 +1,34 @@
+# Field reference: https://perfetto.dev/docs/reference/trace-config-proto
+# atrace_apps: https://perfetto.dev/docs/data-sources/atrace
+#
+# Records the benchmark app's trace sections and nothing else. The default macrobenchmark config
+# enables atrace for every process plus a list of kernel events, which is what makes its traces tens
+# of megabytes; without them a run is ~140 KB. Process stats stay on so that threads such as
+# emb-session-persistence resolve to a name rather than a bare pid.
+buffers {
+  size_kb: 32768
+  fill_policy: RING_BUFFER
+}
+data_sources {
+  config {
+    name: "linux.ftrace"
+    target_buffer: 0
+    ftrace_config {
+      atrace_apps: "io.embrace.android.embracesdk.macrobenchmark.app"
+    }
+  }
+}
+data_sources {
+  config {
+    name: "linux.process_stats"
+    target_buffer: 0
+    process_stats_config {
+      scan_all_processes_on_start: true
+      record_thread_names: true
+    }
+  }
+}
+write_into_file: true
+file_write_period_ms: 2500
+flush_period_ms: 5000
+data_source_stop_timeout_ms: 30000

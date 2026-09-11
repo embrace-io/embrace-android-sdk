@@ -53,8 +53,7 @@ class CompletedSpansWriter(
     private fun writeImpl(spans: List<Span>): Boolean {
         val spanFile = spanFile() ?: return false
 
-        val records = CompletedSpans(spans = spans.map(Span::toProto))
-        val bytes = CompletedSpans.ADAPTER.encode(records)
+        val bytes = CompletedSpans.ADAPTER.encode(buildCompletedSpans(spans))
 
         if (bytes.isNotEmpty() && spanFile.size + bytes.size > maxBytes) {
             if (!reportedOverflow) {

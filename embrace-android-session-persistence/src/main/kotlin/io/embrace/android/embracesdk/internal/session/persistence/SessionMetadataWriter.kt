@@ -47,12 +47,13 @@ class SessionMetadataWriter(
         val directory = target.directory ?: return false
         val partDir = target.partDir(directory, ::trackFailure) ?: return false
 
-        val metadata = metadataSource().toProto(
+        val metadata = buildSessionMetadata(
+            metadata = metadataSource(),
+            resource = resourceSource(),
             directory = directory,
             envelopeVersion = envelopeVersion,
             envelopeType = envelopeType,
             sharedLibSymbolMapping = sharedLibSymbolMapping,
-            resource = resourceSource().toProto(),
         )
 
         writeAtomically(partDir, METADATA_FILE_NAME, Long.MAX_VALUE) { stream ->

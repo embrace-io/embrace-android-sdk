@@ -124,8 +124,8 @@ class UserSessionOrchestrationModuleImpl(
             // ended, rather than whichever part is current when this fires
             sessionPartWriter.onSpanCompleted(spans.filterNot { it.hasEmbraceAttribute(EmbType.Ux.Session) })
         }
-        openTelemetryModule.spanRepository.addSpanChangeListener {
-            sessionPartWriter.onSpanSnapshotChanged()
+        openTelemetryModule.spanRepository.addSpanChangeListener { span ->
+            sessionPartWriter.onSpanSnapshotChanged(span)
         }
 
         SessionOrchestratorImpl(

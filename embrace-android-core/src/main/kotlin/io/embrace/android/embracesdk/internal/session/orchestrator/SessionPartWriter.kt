@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.Span
 
 /**
@@ -29,10 +30,10 @@ interface SessionPartWriter {
     fun onSpanCompleted(spans: List<Span>)
 
     /**
-     * A span the session part is recording has changed, so the span snapshots on disk are stale.
-     * This includes the session span itself, which is snapshotted until the part ends.
+     * [span] has changed, so the snapshot of it on disk is stale. This includes the session span
+     * itself, which is snapshotted until the part ends.
      */
-    fun onSpanSnapshotChanged()
+    fun onSpanSnapshotChanged(span: EmbraceSdkSpan)
 
     /**
      * The process is terminating due to a JVM crash. Blocks until the necessary session part info

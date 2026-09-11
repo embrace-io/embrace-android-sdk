@@ -801,6 +801,18 @@ internal class EmbraceSpanImplTest {
     }
 
     @Test
+    fun `a span has already stopped recording when its stop is notified`() {
+        val recordingWhenNotified = mutableListOf<Boolean>()
+        spanRepository.addSpanChangeListener { span -> recordingWhenNotified.add(span.isRecording) }
+
+        assertTrue(embraceSpan.start())
+        assertEquals(listOf(true), recordingWhenNotified)
+
+        assertTrue(embraceSpan.stop())
+        assertEquals(listOf(true, false), recordingWhenNotified)
+    }
+
+    @Test
     fun `rewriting an attribute with the value it already holds does not notify`() {
         assertTrue(embraceSpan.start())
         val afterStart = notifications.get()

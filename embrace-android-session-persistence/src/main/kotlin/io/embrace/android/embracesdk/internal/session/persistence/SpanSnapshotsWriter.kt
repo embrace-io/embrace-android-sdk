@@ -18,8 +18,15 @@ class SpanSnapshotsWriter(
 
     /**
      * Writes the in-flight spans for the active session part, replacing any already on disk.
+     *
+     * [dirtySpans] are those among [spans] whose state has changed since the last write. These
+     * are supplied so that future changes can persist only them.
      */
-    fun write(spans: List<Span>): Boolean = SystemTrace.trace("mf-write-span-snapshots") {
+    @Suppress("UnusedParameter")
+    fun write(
+        spans: List<Span>,
+        dirtySpans: List<Span> = emptyList(),
+    ): Boolean = SystemTrace.trace("mf-write-span-snapshots") {
         try {
             writeImpl(spans)
         } catch (exc: Throwable) {

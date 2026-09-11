@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.benchmark
 
 import androidx.benchmark.junit4.BenchmarkRule
 import androidx.benchmark.junit4.measureRepeated
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
@@ -13,6 +12,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import java.io.ByteArrayInputStream
 import java.util.zip.GZIPInputStream
 
@@ -24,8 +24,11 @@ import java.util.zip.GZIPInputStream
  * [deserializeSessionMultiFile] measures decoding uncompressed protobuf, mapping it to the payload
  * types, and assembling the envelope.
  */
-@RunWith(AndroidJUnit4::class)
-class PersistenceDeserializationBenchmarks {
+@RunWith(Parameterized::class)
+class PersistenceDeserializationBenchmarks(
+    private val completedSpanCount: Int,
+    private val attributesPerSpan: Int,
+) {
 
     @get:Rule
     val benchmarkRule = BenchmarkRule()
@@ -36,7 +39,7 @@ class PersistenceDeserializationBenchmarks {
 
     @Before
     fun setup() {
-        fixture = StoredSessionFixture()
+        fixture = StoredSessionFixture(SimpleSessionFixture(completedSpanCount, attributesPerSpan))
     }
 
     @Test
@@ -66,5 +69,11 @@ class PersistenceDeserializationBenchmarks {
         check(observed == fixture.expectedSpanCount) {
             "expected ${fixture.expectedSpanCount} spans but read back $observed"
         }
+    }
+
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0,number,#}-spans-{1}-attrs")
+        fun shapes(): List<Array<Any>> = SESSION_SHAPES
     }
 }

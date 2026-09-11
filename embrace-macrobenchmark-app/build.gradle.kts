@@ -1,16 +1,22 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 buildscript {
-    // Only resolved when the flag is set, so a plain checkout needs no prior publish. See the
-    // comment on `instrumentConfig` below.
-    if (providers.gradleProperty("embrace.macrobenchmark.instrument").getOrElse("false").toBoolean()) {
+    // Resolved only if a copy is already in mavenLocal, because a buildscript classpath is resolved
+    // before any task can publish one. See the comment on `instrumentConfig` below.
+    val pluginVersion = providers.gradleProperty("version").get()
+    val localRepo = System.getProperty("maven.repo.local") ?: "${System.getProperty("user.home")}/.m2/repository"
+    val published = file("$localRepo/io/embrace/embrace-gradle-plugin/$pluginVersion").isDirectory
+
+    extra["embracePluginPublished"] = published
+
+    if (published) {
         repositories {
             mavenLocal()
             google()
             mavenCentral()
         }
         dependencies {
-            classpath("io.embrace:embrace-gradle-plugin:${providers.gradleProperty("version").get()}")
+            classpath("io.embrace:embrace-gradle-plugin:$pluginVersion")
         }
     }
 }
@@ -21,20 +27,16 @@ plugins {
 
 /**
  * The Embrace gradle plugin is the only thing that can give the app a real appId: it rewrites
- * `InstrumentedConfigImpl`'s bytecode with the values from `src/main/embrace-config.json`. The
- * plugin is a subproject of this build, so it can only be applied from a published copy:
+ * `InstrumentedConfigImpl`'s bytecode with the values from `src/main/embrace-config.json`, and the
+ * SDK refuses to start without one.
  *
- * ```
- * ./gradlew publishToMavenLocal -Psigning.skip
- * ./gradlew :embrace-macrobenchmark:connectedBenchmarkAndroidTest \
- *     -Pembrace.macrobenchmark.instrument=true
- * ```
- *
- * The flag defaults to false in gradle.properties so that a checkout which hasn't published the
- * plugin still configures and compiles - that is all CI needs from this module. A build without
- * it has no appId, and the SDK refuses to start without one, so it is only good for compiling.
+ * The plugin is a subproject of this build, so it can only be applied from a published copy, and a
+ * buildscript classpath is resolved long before `:embrace-gradle-plugin:publishToMavenLocal` could
+ * run. `:embrace-macrobenchmark:connectedBenchmarkAndroidTest` therefore publishes it for the *next*
+ * build, and a checkout that has never published simply configures without it - that is all CI needs
+ * from this module, and SessionBenchmark reports `sdk-not-started` rather than measuring nothing.
  */
-val instrumentConfig = providers.gradleProperty("embrace.macrobenchmark.instrument").getOrElse("false").toBoolean()
+val instrumentConfig = extra["embracePluginPublished"] as Boolean
 
 if (instrumentConfig) {
     apply(plugin = "io.embrace.gradle")

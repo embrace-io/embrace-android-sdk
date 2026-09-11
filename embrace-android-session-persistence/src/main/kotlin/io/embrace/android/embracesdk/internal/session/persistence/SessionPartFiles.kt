@@ -18,6 +18,14 @@ internal const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
 internal const val SPAN_SNAPSHOTS_FILE_NAME = "span_snapshots.pb"
 
 /**
+ * Field numbers of the records held in the span snapshots log, which is read and written one
+ * record at a time rather than as a single message.
+ */
+internal const val SPAN_SNAPSHOT_VERSION_TAG = 1
+
+internal const val SPAN_SNAPSHOT_RECORD_TAG = 2
+
+/**
  * Writes [fileName] into [partDir] by encoding to a temporary file and then renaming it, so a
  * partially written file is never observed. Any file already at that path is replaced.
  *
@@ -27,12 +35,22 @@ internal const val SPAN_SNAPSHOTS_FILE_NAME = "span_snapshots.pb"
  * The temporary file is always cleaned up, so a failed write leaves the directory as it was found.
  * Throws [IOException] if the file could not be written; callers are responsible for reporting that
  * as an internal error of the appropriate type.
+ *
+ * [onEncoded] runs once the new file is complete and immediately before it replaces [fileName], so
+ * that a caller holding that file open can release it no earlier than it has to.
  */
-internal fun writeAtomically(partDir: File, fileName: String, maxBytes: Long, encode: (OutputStream) -> Unit) {
+internal fun writeAtomically(
+    partDir: File,
+    fileName: String,
+    maxBytes: Long,
+    onEncoded: () -> Unit = {},
+    encode: (OutputStream) -> Unit,
+) {
     SystemTrace.trace("mf-file-write-atomic") {
         val tmpFile = File.createTempFile(fileName, ".tmp", partDir)
         try {
             LimitedOutputStream(tmpFile.outputStream().buffered(), maxBytes).use(encode)
+            onEncoded()
             if (!tmpFile.renameTo(File(partDir, fileName))) {
                 throw IOException("Failed to rename $fileName")
             }

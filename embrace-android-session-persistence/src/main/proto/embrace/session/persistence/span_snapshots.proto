@@ -6,6 +6,11 @@ import "embrace/session/persistence/span.proto";
 
 option java_package = "io.embrace.android.embracesdk.internal.session.persistence";
 
+// The append-only log of in-flight span snapshots for a session part (span_snapshots.pb).
+//
+// Records are read in the order they were written. A format_version record rolls the log up,
+// discarding every record before it; a span record supersedes any earlier record for the same
+// span ID.
 message SpanSnapshots {
   uint32 format_version = 1;
   repeated SpanProto spans = 2;

@@ -126,22 +126,30 @@ class SessionPartDecoder(
         }
 
     /**
-     * Decodes the span snapshots persisted for a session part, or null if they cannot be read.
+     * Decodes the span snapshots logged for a session part, or null if the log cannot be read.
+     *
+     * An oversized log is truncated rather than rejected.
      */
-    private fun readSpanSnapshotsFile(source: SessionPartSource, budget: SpanBudget): List<Span>? {
-        if (!source.exists(SessionPartFile.SPAN_SNAPSHOTS)) {
-            return emptyList()
+    private fun readSpanSnapshotsFile(source: SessionPartSource, budget: SpanBudget): List<Span>? =
+        SystemTrace.trace(SessionPartFile.SPAN_SNAPSHOTS.traceSection) {
+            if (!source.exists(SessionPartFile.SPAN_SNAPSHOTS)) {
+                return@trace emptyList()
+            }
+            if (source.sizeBytes(SessionPartFile.SPAN_SNAPSHOTS) > MAX_PART_FILE_BYTES) {
+                trackFailure(IOException(OVERSIZED_PART_FILE_MSG))
+            }
+            try {
+                val decoded = openOrThrow(source, SessionPartFile.SPAN_SNAPSHOTS).use { src ->
+                    readSpanSnapshots(src, maxSpans = budget.remaining)
+                }
+                decoded.corruption?.let(::trackFailure)
+                budget.spend(decoded.spans.size, truncated = decoded.spanLimitReached)
+                SystemTrace.trace("mf-spans-proto-to-payload") { decoded.drainToPayload() }
+            } catch (exc: Throwable) {
+                trackFailure(exc)
+                null
+            }
         }
-        val snapshots = readPartFile(
-            source,
-            SessionPartFile.SPAN_SNAPSHOTS,
-            SpanSnapshots.ADAPTER,
-            SpanSnapshots::format_version,
-        ) ?: return null
-        val afforded = snapshots.spans.take(budget.remaining)
-        budget.spend(afforded.size, truncated = afforded.size < snapshots.spans.size)
-        return SystemTrace.trace("mf-spans-proto-to-payload") { afforded.map(SpanProto::toPayload) }
-    }
 
     /**
      * Decodes [file] from a session part, or null if it is absent, cannot be read, or was written

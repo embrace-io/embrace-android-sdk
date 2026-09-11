@@ -220,7 +220,9 @@ class SessionPartWriterImpl(
         }
 
     /**
-     * Writes in-flight spans to a snapshot file.
+     * Rolls the span snapshots log up so that it holds every in-flight span. Spans that started in
+     * an earlier session part never report a change in this one, so the log has to be seeded with
+     * the live set rather than built from changes alone.
      */
     private fun queueSpanSnapshotsWrite(writers: PartWriters) = EmbTrace.trace("mf-queue-span-snapshots") {
         val spans = try {
@@ -236,17 +238,31 @@ class SessionPartWriterImpl(
         }
     }
 
+    /**
+     * Appends the spans that have changed since the last write, so the cost of a write is
+     * proportional to what changed rather than to everything in flight.
+     */
     private fun queueSpanSnapshotsRefresh(writers: PartWriters) = EmbTrace.trace("mf-queue-span-snapshots-refresh") {
         execute(writers, InternalErrorType.SpanSnapshotsWriteFail, writers.spanSnapshotWrites::submit) {
-            if (current === writers) {
-                val dirty = snapshotTracker.drainDirtySpans()
-                writers.spanSnapshots.write(
-                    inFlightSpanSource().mapNotNull(EmbraceSdkSpan::snapshot) + writers.sessionSpanSnapshot(),
-                    dirty.mapNotNull(EmbraceSdkSpan::snapshot),
-                )
+            if (current !== writers) {
+                return@execute
+            }
+            // the session span is snapshotted through the part rather than tracked, so that it
+            // drops out of the log once it has ended and a later part's span can't be logged here
+            val changed = snapshotTracker.drainDirtySpans().mapNotNull(EmbraceSdkSpan::snapshot) +
+                writers.sessionSpanSnapshot()
+            if (changed.isNotEmpty()) {
+                writers.spanSnapshots.append(changed) { writers.liveSpanSnapshots() }
             }
         }
     }
+
+    /**
+     * Every span currently recording, as the snapshots log holds them. Only read when the log is
+     * rolled up.
+     */
+    private fun PartWriters.liveSpanSnapshots(): List<Span> =
+        inFlightSpanSource().mapNotNull(EmbraceSdkSpan::snapshot) + sessionSpanSnapshot()
 
     /**
      * This part's own session span, for as long as it is still recording. Once it ends it is logged
@@ -367,12 +383,14 @@ class SessionPartWriterImpl(
         fun flushPendingWrites() = writeQueues.forEach(CoalescingWriteQueue::flush)
 
         /**
-         * Marks this part as fully written and releases the file [completedSpans] holds open.
-         * This must run on the [worker] so that it cannot overlap a write still queued for the part.
+         * Marks this part as fully written and releases the files [completedSpans] and
+         * [spanSnapshots] hold open. This must run on the [worker] so that it cannot overlap a
+         * write still queued for the part.
          */
         fun seal() {
             sealed = true
             completedSpans.close()
+            spanSnapshots.close()
         }
     }
 }

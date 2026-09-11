@@ -257,4 +257,33 @@ internal class CompletedSpansReaderTest {
         val log = completedSpansLog(listOf(first)) + UNKNOWN_FIELD + completedSpansLog(listOf(second))
         assertEquals(listOf(first, second), read(log, budgetOf(first, second)))
     }
+
+    @Test
+    fun `the drain releases every decoded span`() {
+        val decoded = decode(completedSpansLog(listOf(first, second)))
+        assertEquals(listOf(first.span_id, second.span_id), decoded.drainToPayload().map { it.spanId })
+        assertEquals(emptyList<SpanProto>(), decoded.spans)
+    }
+
+    @Test
+    fun `a span added during the drain is left behind by it`() {
+        val decoded = DecodedSpans(AppendingOnRemoval(listOf(first, second), third), corruption = null)
+        assertEquals(listOf(first.span_id, second.span_id), decoded.drainToPayload().map { it.spanId })
+        assertEquals(listOf(third), decoded.spans)
+    }
+
+    private class AppendingOnRemoval(
+        spans: List<SpanProto>,
+        private val added: SpanProto,
+    ) : ArrayList<SpanProto>(spans) {
+
+        private var appended = false
+
+        override fun removeAt(index: Int): SpanProto = super.removeAt(index).also {
+            if (!appended) {
+                appended = true
+                add(added)
+            }
+        }
+    }
 }

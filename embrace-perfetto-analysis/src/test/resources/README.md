@@ -11,3 +11,5 @@ scripts/macrobenchmark.sh --gradle-arg \
   -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.dryRunMode.enable=true
 unzip -p <bundle>.perfetto-trace Trace_output.pb | gzip -9 > macrobenchmark-session-multi-file.perfetto.gz
 ```
+
+`PerfettoTraceFixtureTest` asserts its exact shape, so regenerating it means updating that test.

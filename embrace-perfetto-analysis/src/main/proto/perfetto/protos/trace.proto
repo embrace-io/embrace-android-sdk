@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package perfetto.protos;
+
+option java_package = "io.embrace.android.embracesdk.internal.perfetto.proto";
+
+// A trimmed view of perfetto's trace schema, holding only the fields needed to recover atrace
+// slices. Everything else a real trace carries - the process tree, ftrace stats, clock snapshots,
+// every non-print ftrace event - is left undeclared and skipped as an unknown field on decode.
+message Trace {
+  repeated TracePacket packet = 1;
+}
+
+message TracePacket {
+  FtraceEventBundle ftrace_events = 1;
+}
+
+message FtraceEventBundle {
+  repeated FtraceEvent event = 2;
+}
+
+message FtraceEvent {
+  uint64 timestamp = 1;
+
+  // ftrace calls this `pid`, but it holds a thread id. Slices nest per tid, not per process.
+  uint32 pid = 2;
+
+  // Declared as a plain field rather than inside perfetto's `oneof event`: oneof membership is not
+  // encoded on the wire, so the other event types decode as unknown fields.
+  PrintFtraceEvent print = 3;
+}
+
+message PrintFtraceEvent {
+  string buf = 2;
+}

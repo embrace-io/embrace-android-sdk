@@ -49,22 +49,22 @@ fun sdkInitEnvironmentAttributes(
     prefsFileSizeProvider: () -> Long? = { null },
     artOptimizationProvider: () -> ArtOptimizationState? = { null },
 ): Map<String, String> = buildMap {
-    putAttributes(logger, "thermal") {
+    safePutAttributes(logger, "thermal") {
         putThermalAttributes(powerManagerProvider, versionChecker, logger)
     }
-    putAttributes(logger, "install-recency") {
+    safePutAttributes(logger, "install-recency") {
         putInstallRecencyAttributes(packageInfo, nowMs, logger)
     }
-    putAttributes(logger, "memory") {
+    safePutAttributes(logger, "memory") {
         putMemoryAttributes(activityManagerProvider, logger)
     }
-    putAttributes(logger, SECONDS_SINCE_BOOT) {
+    safePutAttributes(logger, SECONDS_SINCE_BOOT) {
         putSecondsSinceBoot(uptimeMs, logger)
     }
-    putAttributes(logger, PREFS_FILE_BYTES) {
+    safePutAttributes(logger, PREFS_FILE_BYTES) {
         putPrefsFileSize(prefsFileSizeProvider, logger)
     }
-    putAttributes(logger, "art-optimization") {
+    safePutAttributes(logger, "art-optimization") {
         putArtOptimizationAttributes(artOptimizationProvider, logger)
     }
 }
@@ -85,7 +85,7 @@ internal fun InternalLogger.trackAttributeError(key: String, cause: Throwable? =
  * attributes derived from every other source. Each attribute inside the block is expected to handle its own computation
  * failure, but this provides a wrapper so internal errors can be logged for the failure of the whole block.
  */
-internal inline fun MutableMap<String, String>.putAttributes(
+internal inline fun MutableMap<String, String>.safePutAttributes(
     logger: InternalLogger,
     attributesTypeName: String,
     block: MutableMap<String, String>.() -> Unit,

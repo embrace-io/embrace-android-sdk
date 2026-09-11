@@ -103,9 +103,9 @@ class SdkInitResourceUsageTracker(
      * the valid range to denote the failure.
      */
     fun buildAttributes(): Map<String, String> = buildMap {
-        putAttributes(logger, INIT_WINDOW_ATTRIBUTES) { putInitWindowShares() }
-        putAttributes(logger, INIT_DISK_READ_KB) { putDiskReadKb() }
-        putAttributes(logger, INIT_GC_COUNT) { putGcCount() }
+        safePutAttributes(logger, INIT_WINDOW_ATTRIBUTES) { putInitWindowShares() }
+        safePutAttributes(logger, INIT_DISK_READ_KB) { putDiskReadKb() }
+        safePutAttributes(logger, INIT_GC_COUNT) { putGcCount() }
     }
 
     /**

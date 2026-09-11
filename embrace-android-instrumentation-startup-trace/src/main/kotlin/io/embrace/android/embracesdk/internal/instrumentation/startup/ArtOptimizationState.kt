@@ -48,7 +48,7 @@ class ArtOptimizationState internal constructor(
             val art = File(oatDir, apk.nameWithoutExtension + ".art")
 
             // The filter and the app image come from two different files, let them fail independently.
-            val filter = runCatching {
+            val filter = try {
                 if (odex.isFile) {
                     // Find the ART compiler filter in the header of the odex file.
                     // We read the chunk of the header the filter is expected to be in and scan the bytes for the value.
@@ -57,8 +57,8 @@ class ArtOptimizationState internal constructor(
                     // Not finding the file is not an error, so simply return that fact.
                     ART_COMPILER_FILTER_NOT_FOUND
                 }
-            }.getOrElse { throwable ->
-                logger.trackAttributeError(ART_COMPILER_FILTER, throwable)
+            } catch (t: Throwable) {
+                logger.trackAttributeError(ART_COMPILER_FILTER, t)
                 STRING_ERROR
             }
 

@@ -54,6 +54,7 @@ include(
     ":embrace-analysis-perfetto",
     ":embrace-analysis-device",
     ":embrace-analysis-local-refs",
+    ":embrace-analysis-records",
     ":embrace-analysis-test-fixtures",
 )
 

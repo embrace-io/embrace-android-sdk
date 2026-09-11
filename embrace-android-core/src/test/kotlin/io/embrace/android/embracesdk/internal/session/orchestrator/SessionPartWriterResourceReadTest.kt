@@ -23,7 +23,6 @@ import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import okio.Buffer
-import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -37,11 +36,11 @@ internal class SessionPartWriterResourceReadTest {
     private companion object {
         private const val USER_SESSION_ID = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         private const val SESSION_PART_ID = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-        private const val MANIFEST_FILE_NAME = "manifest.pb"
+        private const val METADATA_FILE_NAME = "metadata.pb"
         private const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
         private val SYMBOLS = mapOf("armeabi-v7a" to "my-symbols")
 
-        // spans both halves of the split: the last two properties live in the metadata
+        // covers the fixed properties as well as the two that can change after a part starts
         private val RESOURCE = EnvelopeResource(
             appVersion = "1.2.3",
             appEcosystemId = "com.example.app",
@@ -152,9 +151,8 @@ internal class SessionPartWriterResourceReadTest {
     }
 
     @Test
-    fun `a change to the mutable half of the resource is reconstructed`() {
+    fun `a resource change is reconstructed`() {
         writeSessionPart()
-        val manifest = File(partDir(), MANIFEST_FILE_NAME).readBytes()
 
         resourceSource.changeResource(
             RESOURCE.copy(screenResolution = "1440x3120", reactNativeBundleId = "bundle-2"),
@@ -166,14 +164,13 @@ internal class SessionPartWriterResourceReadTest {
             RESOURCE.copy(screenResolution = "1440x3120", reactNativeBundleId = "bundle-2"),
             envelope.resource,
         )
-        assertArrayEquals(manifest, File(partDir(), MANIFEST_FILE_NAME).readBytes())
         assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
     }
 
     @Test
-    fun `a session part cannot be reconstructed without the manifest`() {
+    fun `a session part cannot be reconstructed without the metadata`() {
         writeSessionPart()
-        File(partDir(), MANIFEST_FILE_NAME).delete()
+        File(partDir(), METADATA_FILE_NAME).delete()
         assertNull(service.reconstruct(directory()))
         assertEquals(listOf("SessionReconstructionFail"), logger.internalErrorMessages.map { it.msg })
     }

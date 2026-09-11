@@ -41,32 +41,18 @@ class SessionReconstructionService(
             return null
         }
 
-        val manifest = readPartFile(
-            partDir,
-            MANIFEST_FILE_NAME,
-            SessionManifest.ADAPTER,
-            SessionManifest::format_version,
-        ) ?: return null
-
-        val immutableResource = manifest.resource
-        if (immutableResource == null) {
-            trackFailure(IOException("Manifest has no resource"))
-            return null
-        }
-
         val metadataProto = readPartFile(
             partDir,
             METADATA_FILE_NAME,
-            EnvelopeMetadataProto.ADAPTER,
-            EnvelopeMetadataProto::format_version,
+            SessionMetadata.ADAPTER,
+            SessionMetadata::format_version,
         ) ?: return null
 
-        val mutableResource = metadataProto.resource
-        if (mutableResource == null) {
+        val resource = metadataProto.resource
+        if (resource == null) {
             trackFailure(IOException("Metadata has no resource"))
             return null
         }
-        val metadata = metadataProto.toPayload()
 
         val budget = SpanBudget()
         val completedSpans = readCompletedSpansFile(partDir, budget) ?: return null
@@ -80,14 +66,14 @@ class SessionReconstructionService(
         val deduped = dedupeSpanIds(completedSpans, spanSnapshots)
 
         return Envelope(
-            resource = immutableResource.toPayload(mutableResource),
-            metadata = metadata,
-            version = manifest.envelope_version,
-            type = manifest.envelope_type,
+            resource = resource.toPayload(),
+            metadata = metadataProto.toPayload(),
+            version = metadataProto.envelope_version,
+            type = metadataProto.envelope_type,
             data = SessionPartPayload(
                 spans = deduped.spans,
                 spanSnapshots = deduped.spanSnapshots,
-                sharedLibSymbolMapping = manifest.shared_lib_symbol_mapping?.symbols,
+                sharedLibSymbolMapping = metadataProto.shared_lib_symbol_mapping?.symbols,
             ),
         )
     }
@@ -245,7 +231,6 @@ class SessionReconstructionService(
 }
 
 private fun partFileReadSectionName(fileName: String): String = when (fileName) {
-    MANIFEST_FILE_NAME -> "mf-read-manifest"
     METADATA_FILE_NAME -> "mf-read-metadata"
     SPAN_SNAPSHOTS_FILE_NAME -> "mf-read-span-snapshots"
     else -> "mf-read-file-other"

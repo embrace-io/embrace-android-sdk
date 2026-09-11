@@ -17,6 +17,8 @@ internal class SessionMetadataWriterTest {
 
     private companion object {
         private const val METADATA_FILE_NAME = "metadata.pb"
+        private const val ENVELOPE_VERSION = "0.1.0"
+        private const val ENVELOPE_TYPE = "spans"
         private const val TIMESTAMP = 1726739283136L
         private const val UUID = "c2610cd1-389f-422a-bfbc-25312c7a599a"
         private const val USER_SESSION_ID = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -44,6 +46,9 @@ internal class SessionMetadataWriterTest {
     private var resourceProvider: () -> EnvelopeResource = { fullyPopulatedResource }
 
     @Volatile
+    private var symbolProvider: () -> Map<String, String>? = { null }
+
+    @Volatile
     private var activePart: SessionPartDirectory? = partDirectory
 
     @Before
@@ -52,13 +57,9 @@ internal class SessionMetadataWriterTest {
         logger = FakeInternalLogger(throwOnInternalError = false)
         metadataProvider = { fullyPopulatedMetadata }
         resourceProvider = { fullyPopulatedResource }
+        symbolProvider = { null }
         activePart = partDirectory
-        writer = SessionMetadataWriter(
-            target { activePart },
-            { metadataProvider() },
-            { resourceProvider() },
-            logger,
-        )
+        writer = createWriter { activePart }
         createPartDir(partDirectory)
     }
 
@@ -74,13 +75,25 @@ internal class SessionMetadataWriterTest {
         write()
 
         val proto = readMetadata()
-        assertEquals(fullyPopulatedMetadataProto, proto)
+        assertEquals(fullyPopulatedMetadataProto(), proto)
         assertEquals("userId", proto.user_id)
         assertEquals("email@example.com", proto.email)
         assertEquals("username", proto.username)
         assertEquals(listOf("persona1", "persona2"), proto.personas)
         assertEquals("Europe/London", proto.timezone_description)
         assertEquals("en_GB", proto.locale)
+    }
+
+    @Test
+    fun `envelope version type session ids and format version are persisted`() {
+        write()
+        with(readMetadata()) {
+            assertEquals(FORMAT_VERSION, format_version)
+            assertEquals(ENVELOPE_VERSION, envelope_version)
+            assertEquals(ENVELOPE_TYPE, envelope_type)
+            assertEquals(USER_SESSION_ID, user_session_id)
+            assertEquals(SESSION_PART_ID, session_part_id)
+        }
     }
 
     @Test
@@ -133,11 +146,16 @@ internal class SessionMetadataWriterTest {
     }
 
     @Test
-    fun `every mutable resource field is persisted`() {
+    fun `every resource field is persisted`() {
         write()
 
         val resource = checkNotNull(readMetadata().resource)
-        assertEquals(fullyPopulatedMutableResourceProto, resource)
+        assertEquals(fullyPopulatedResourceProto, resource)
+        assertEquals(ResourceProto.AppFramework.UNITY, resource.app_framework)
+        assertEquals(53, resource.sdk_simple_version)
+        assertEquals(8, resource.num_cores)
+        assertEquals(123456789L, resource.disk_total_capacity)
+        assertEquals("deviceSocModel", resource.device_soc_model)
         assertEquals(true, resource.jailbroken)
         assertEquals(true, resource.uses_emmc_storage)
         assertEquals("screenResolution", resource.screen_resolution)
@@ -146,6 +164,22 @@ internal class SessionMetadataWriterTest {
             mapOf("custom.key" to "custom.value", "other.key" to "other.value"),
             resource.extras,
         )
+    }
+
+    @Test
+    fun `null resource fields are persisted as absent`() {
+        resourceProvider = { EnvelopeResource() }
+        write()
+
+        val resource = checkNotNull(readMetadata().resource)
+        assertEquals(ResourceProto(), resource)
+        assertNull(resource.app_version)
+        assertNull(resource.app_framework)
+        assertNull(resource.disk_total_capacity)
+        assertNull(resource.num_cores)
+        assertNull(resource.device_soc_model)
+        assertNull(resource.jailbroken)
+        assertNull(resource.screen_resolution)
     }
 
     @Test
@@ -163,6 +197,47 @@ internal class SessionMetadataWriterTest {
         assertEquals("userId", readMetadata().user_id)
         assertEquals(listOf(METADATA_FILE_NAME), partDir().list()?.toList())
         assertNoInternalErrors()
+    }
+
+    @Test
+    fun `absent symbol mapping is persisted as absent`() {
+        symbolProvider = { null }
+        write()
+        assertNull(readMetadata().shared_lib_symbol_mapping)
+    }
+
+    @Test
+    fun `empty symbol mapping is persisted as an empty message`() {
+        symbolProvider = { emptyMap() }
+        write()
+        assertEquals(SharedLibSymbolMapping(), readMetadata().shared_lib_symbol_mapping)
+    }
+
+    @Test
+    fun `populated symbol mapping is persisted`() {
+        val symbols = mapOf("armeabi-v7a" to "my-symbols", "x86" to "other-symbols")
+        symbolProvider = { symbols }
+        write()
+        assertEquals(SharedLibSymbolMapping(symbols = symbols), readMetadata().shared_lib_symbol_mapping)
+    }
+
+    @Test
+    fun `the symbol mapping is sampled once and reused across writes`() {
+        var reads = 0
+        symbolProvider = {
+            reads++
+            mapOf("armeabi-v7a" to "my-symbols")
+        }
+
+        write()
+        writer.write()
+        writer.write()
+
+        assertEquals(1, reads)
+        assertEquals(
+            SharedLibSymbolMapping(symbols = mapOf("armeabi-v7a" to "my-symbols")),
+            readMetadata().shared_lib_symbol_mapping,
+        )
     }
 
     @Test
@@ -184,12 +259,17 @@ internal class SessionMetadataWriterTest {
     }
 
     @Test
-    fun `empty session ids are supported`() {
-        val directory = SessionPartDirectory(timestamp = TIMESTAMP, uuid = UUID)
-        createPartDir(directory)
+    fun `empty session ids are persisted as empty strings`() {
+        val anonymous = SessionPartDirectory(timestamp = TIMESTAMP, uuid = UUID)
+        createPartDir(anonymous)
 
-        assertTrue(write(directory))
-        assertEquals(fullyPopulatedMetadataProto, readMetadata(directory))
+        assertTrue(write(anonymous))
+
+        // the 'none' token in the directory name must not leak into the metadata
+        assertEquals(
+            fullyPopulatedMetadataProto(userSessionId = "", sessionPartId = ""),
+            readMetadata(anonymous),
+        )
     }
 
     @Test
@@ -207,7 +287,9 @@ internal class SessionMetadataWriterTest {
         assertTrue(write(other))
 
         assertEquals("userId", readMetadata().user_id)
+        assertEquals(SESSION_PART_ID, readMetadata().session_part_id)
         assertEquals("otherUserId", readMetadata(other).user_id)
+        assertEquals(other.sessionPartId, readMetadata(other).session_part_id)
         assertNoInternalErrors()
     }
 
@@ -222,7 +304,7 @@ internal class SessionMetadataWriterTest {
     fun `a stale temporary file does not prevent a write`() {
         File(partDir(), "${METADATA_FILE_NAME}1234.tmp").writeText("torn write")
         assertTrue(write())
-        assertEquals(fullyPopulatedMetadataProto, readMetadata())
+        assertEquals(fullyPopulatedMetadataProto(), readMetadata())
         assertNoInternalErrors()
     }
 
@@ -274,13 +356,16 @@ internal class SessionMetadataWriterTest {
     }
 
     @Test
+    fun `failure building the symbol mapping leaves no files on disk`() {
+        symbolProvider = { ExplodingMap() }
+        assertFalse(write())
+        assertEquals(emptyList<String>(), partDir().list()?.toList())
+        assertWriteFailureTracked()
+    }
+
+    @Test
     fun `a failing session part source is reported and does not throw`() {
-        writer = SessionMetadataWriter(
-            target { error("boom") },
-            { metadataProvider() },
-            { resourceProvider() },
-            logger,
-        )
+        writer = createWriter { error("boom") }
 
         assertFalse(writer.write())
         assertEquals(emptyList<String>(), partDir().list()?.toList())
@@ -293,13 +378,21 @@ internal class SessionMetadataWriterTest {
         metadataProvider = { error("boom") }
         assertFalse(writer.write())
 
-        assertEquals(fullyPopulatedMetadataProto, readMetadata())
+        assertEquals(fullyPopulatedMetadataProto(), readMetadata())
         assertEquals(listOf(METADATA_FILE_NAME), partDir().list()?.toList())
         assertWriteFailureTracked()
     }
 
-    private fun target(source: () -> SessionPartDirectory?): SessionPartWriteTarget =
-        SessionPartWriteTarget(lazy { sessionsDir }, source)
+    private fun createWriter(source: () -> SessionPartDirectory?): SessionMetadataWriter =
+        SessionMetadataWriter(
+            target = SessionPartWriteTarget(lazy { sessionsDir }, source),
+            metadataSource = { metadataProvider() },
+            resourceSource = { resourceProvider() },
+            envelopeVersion = ENVELOPE_VERSION,
+            envelopeType = ENVELOPE_TYPE,
+            sharedLibSymbolMappingSource = { symbolProvider() },
+            logger = logger,
+        )
 
     private fun createPartDir(directory: SessionPartDirectory): File =
         File(sessionsDir, directory.dirName).apply { mkdirs() }
@@ -310,8 +403,8 @@ internal class SessionMetadataWriterTest {
     private fun metadataFile(directory: SessionPartDirectory = partDirectory): File =
         File(partDir(directory), METADATA_FILE_NAME)
 
-    private fun readMetadata(directory: SessionPartDirectory = partDirectory): EnvelopeMetadataProto =
-        metadataFile(directory).inputStream().use(EnvelopeMetadataProto.ADAPTER::decode)
+    private fun readMetadata(directory: SessionPartDirectory = partDirectory): SessionMetadata =
+        metadataFile(directory).inputStream().use(SessionMetadata.ADAPTER::decode)
 
     private fun write(directory: SessionPartDirectory? = partDirectory): Boolean {
         activePart = directory
@@ -325,5 +418,14 @@ internal class SessionMetadataWriterTest {
     private fun assertWriteFailureTracked() {
         assertEquals(1, logger.internalErrorMessages.size)
         assertEquals("SessionMetadataWriteFail", logger.internalErrorMessages.single().msg)
+    }
+
+    /**
+     * A map that fails when it is read, standing in for any input that blows up while the metadata
+     * is being built.
+     */
+    private class ExplodingMap : Map<String, String> by mapOf("armeabi-v7a" to "my-symbols") {
+        override val entries: Set<Map.Entry<String, String>>
+            get() = error("boom")
     }
 }

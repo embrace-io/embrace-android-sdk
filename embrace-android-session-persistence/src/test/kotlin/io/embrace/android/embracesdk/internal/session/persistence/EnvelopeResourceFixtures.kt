@@ -39,9 +39,9 @@ internal val fullyPopulatedResource = EnvelopeResource(
     extras = mapOf("custom.key" to "custom.value", "other.key" to "other.value"),
 )
 
-internal val fullyPopulatedImmutableResourceProto = ImmutableResourceProto(
+internal val fullyPopulatedResourceProto = ResourceProto(
     app_version = "appVersion",
-    app_framework = ImmutableResourceProto.AppFramework.UNITY,
+    app_framework = ResourceProto.AppFramework.UNITY,
     build_id = "buildId",
     app_ecosystem_id = "appEcosystemId",
     build_type = "buildType",
@@ -60,9 +60,6 @@ internal val fullyPopulatedImmutableResourceProto = ImmutableResourceProto(
     os_code = "osCode",
     num_cores = 8,
     device_soc_model = "deviceSocModel",
-)
-
-internal val fullyPopulatedMutableResourceProto = MutableResourceProto(
     jailbroken = true,
     screen_resolution = "screenResolution",
     uses_emmc_storage = true,

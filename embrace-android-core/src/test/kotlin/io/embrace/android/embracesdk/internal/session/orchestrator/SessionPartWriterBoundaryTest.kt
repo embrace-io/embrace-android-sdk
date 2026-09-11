@@ -15,8 +15,7 @@ import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpans
-import io.embrace.android.embracesdk.internal.session.persistence.EnvelopeMetadataProto
-import io.embrace.android.embracesdk.internal.session.persistence.SessionManifest
+import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadata
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
 import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshots
@@ -40,7 +39,6 @@ internal class SessionPartWriterBoundaryTest {
         private const val FIRST_PART_ID = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
         private const val SECOND_PART_ID = "cccccccccccccccccccccccccccccccc"
         private const val METADATA_FILE_NAME = "metadata.pb"
-        private const val MANIFEST_FILE_NAME = "manifest.pb"
         private const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
         private const val SPAN_SNAPSHOTS_FILE_NAME = "span_snapshots.pb"
     }
@@ -262,28 +260,13 @@ internal class SessionPartWriterBoundaryTest {
     }
 
     @Test
-    fun `a pending manifest write lands in the session part it was queued for`() {
+    fun `a pending resource read lands in the session part it was queued for`() {
         startPart(FIRST_PART_ID)
         startPart(SECOND_PART_ID)
         drain()
 
-        assertEquals("resource0", manifestIn(FIRST_PART_ID)?.resource?.app_version)
-        assertEquals("resource2", manifestIn(SECOND_PART_ID)?.resource?.app_version)
-        assertNoInternalErrors()
-    }
-
-    @Test
-    fun `a user info change after a boundary does not rewrite either manifest`() {
-        startPart(FIRST_PART_ID)
-        drain()
-        startPart(SECOND_PART_ID)
-        drain()
-
-        writer.onMetadataChanged()
-        drain()
-
-        assertEquals("resource0", manifestIn(FIRST_PART_ID)?.resource?.app_version)
-        assertEquals("resource2", manifestIn(SECOND_PART_ID)?.resource?.app_version)
+        assertEquals("resource0", metadataIn(FIRST_PART_ID)?.resource?.app_version)
+        assertEquals("resource1", metadataIn(SECOND_PART_ID)?.resource?.app_version)
         assertNoInternalErrors()
     }
 
@@ -310,10 +293,10 @@ internal class SessionPartWriterBoundaryTest {
     private fun dirFor(sessionPartId: String): SessionPartDirectory =
         sessionPartDirs().single { it.sessionPartId == sessionPartId }
 
-    private fun metadataIn(sessionPartId: String): EnvelopeMetadataProto? =
+    private fun metadataIn(sessionPartId: String): SessionMetadata? =
         partFile(sessionPartId, METADATA_FILE_NAME)
             ?.inputStream()
-            ?.use(EnvelopeMetadataProto.ADAPTER::decode)
+            ?.use(SessionMetadata.ADAPTER::decode)
 
     /**
      * The session span persisted for [sessionPartId]: logged as a completed span once its part has
@@ -336,11 +319,6 @@ internal class SessionPartWriterBoundaryTest {
             ?.use(SpanSnapshots.ADAPTER::decode)
             ?.spans
             .orEmpty()
-
-    private fun manifestIn(sessionPartId: String): SessionManifest? =
-        partFile(sessionPartId, MANIFEST_FILE_NAME)
-            ?.inputStream()
-            ?.use(SessionManifest.ADAPTER::decode)
 
     private fun partFile(sessionPartId: String, fileName: String): File? =
         File(File(sessionsDir, dirFor(sessionPartId).dirName), fileName).takeIf(File::isFile)

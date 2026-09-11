@@ -19,8 +19,7 @@ import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpans
-import io.embrace.android.embracesdk.internal.session.persistence.EnvelopeMetadataProto
-import io.embrace.android.embracesdk.internal.session.persistence.SessionManifest
+import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadata
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
 import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshots
@@ -48,7 +47,6 @@ internal class SessionPartWriterImplTest {
         private const val SESSION_PART_ID = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
         private const val OTHER_SESSION_PART_ID = "cccccccccccccccccccccccccccccccc"
         private const val METADATA_FILE_NAME = "metadata.pb"
-        private const val MANIFEST_FILE_NAME = "manifest.pb"
         private const val SPAN_SNAPSHOTS_FILE_NAME = "span_snapshots.pb"
         private const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
         private const val ENVELOPE_VERSION = "0.1.0"
@@ -160,8 +158,15 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
 
-        assertEquals("user0", metadataIn(SESSION_PART_ID)?.user_id)
+        val metadata = checkNotNull(metadataIn(SESSION_PART_ID))
+        assertEquals("user0", metadata.user_id)
+        assertEquals(ENVELOPE_VERSION, metadata.envelope_version)
+        assertEquals(ENVELOPE_TYPE, metadata.envelope_type)
+        assertEquals(USER_SESSION_ID, metadata.user_session_id)
+        assertEquals(SESSION_PART_ID, metadata.session_part_id)
+        assertEquals("resource0", metadata.resource?.app_version)
         assertEquals(1, writeCount)
+        assertEquals(1, resourceCount)
         assertNoInternalErrors()
     }
 
@@ -238,7 +243,7 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
 
-        assertInternalErrors("SessionPartDirectoryStoreFail", "SessionManifestWriteFail")
+        assertInternalErrors("SessionPartDirectoryStoreFail", "SessionMetadataWriteFail")
 
         writer.onMetadataChanged()
         drain()
@@ -246,30 +251,15 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartEnded(SESSION_PART_ID)
         drain()
 
-        assertInternalErrors("SessionPartDirectoryStoreFail", "SessionManifestWriteFail")
+        assertInternalErrors("SessionPartDirectoryStoreFail", "SessionMetadataWriteFail")
         assertEquals(0, writeCount)
     }
 
     @Test
-    fun `a manifest is written as soon as a session part starts`() {
-        val writer = createWriter()
-        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
-
-        val manifest = checkNotNull(manifestIn(SESSION_PART_ID))
-        assertEquals(ENVELOPE_VERSION, manifest.envelope_version)
-        assertEquals(ENVELOPE_TYPE, manifest.envelope_type)
-        assertEquals(USER_SESSION_ID, manifest.user_session_id)
-        assertEquals(SESSION_PART_ID, manifest.session_part_id)
-        assertEquals("resource0", manifest.resource?.app_version)
-        assertEquals(2, resourceCount)
-        assertNoInternalErrors()
-    }
-
-    @Test
-    fun `the manifest carries the native symbol map`() {
+    fun `the metadata carries the native symbol map`() {
         val writer = createWriter(configService = configService(enabled = true, nativeSymbolMap = SYMBOLS))
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
-        assertEquals(SYMBOLS, manifestIn(SESSION_PART_ID)?.shared_lib_symbol_mapping?.symbols)
+        assertEquals(SYMBOLS, metadataIn(SESSION_PART_ID)?.shared_lib_symbol_mapping?.symbols)
         assertNoInternalErrors()
     }
 
@@ -277,12 +267,12 @@ internal class SessionPartWriterImplTest {
     fun `no symbol mapping is written when the SDK has no native symbols`() {
         val writer = createWriter(configService = configService(enabled = true, nativeSymbolMap = null))
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
-        assertNull(checkNotNull(manifestIn(SESSION_PART_ID)).shared_lib_symbol_mapping)
+        assertNull(checkNotNull(metadataIn(SESSION_PART_ID)).shared_lib_symbol_mapping)
         assertNoInternalErrors()
     }
 
     @Test
-    fun `each session part gets its own manifest`() {
+    fun `each session part gets its own metadata`() {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
@@ -290,13 +280,13 @@ internal class SessionPartWriterImplTest {
         clock.tick(10000)
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
 
-        assertEquals(SESSION_PART_ID, manifestIn(SESSION_PART_ID)?.session_part_id)
-        assertEquals(OTHER_SESSION_PART_ID, manifestIn(OTHER_SESSION_PART_ID)?.session_part_id)
+        assertEquals(SESSION_PART_ID, metadataIn(SESSION_PART_ID)?.session_part_id)
+        assertEquals(OTHER_SESSION_PART_ID, metadataIn(OTHER_SESSION_PART_ID)?.session_part_id)
         assertNoInternalErrors()
     }
 
     @Test
-    fun `a user info change leaves the manifest untouched`() {
+    fun `a user info change preserves the rest of the metadata`() {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
@@ -304,7 +294,12 @@ internal class SessionPartWriterImplTest {
         repeat(4) { writer.onMetadataChanged() }
         drain()
 
-        assertEquals("resource0", manifestIn(SESSION_PART_ID)?.resource?.app_version)
+        with(checkNotNull(metadataIn(SESSION_PART_ID))) {
+            assertEquals(ENVELOPE_VERSION, envelope_version)
+            assertEquals(ENVELOPE_TYPE, envelope_type)
+            assertEquals(USER_SESSION_ID, user_session_id)
+            assertEquals(SESSION_PART_ID, session_part_id)
+        }
         assertNoInternalErrors()
     }
 
@@ -664,7 +659,7 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertNotNull(sessionSpanIn(OTHER_SESSION_PART_ID))
-        assertNotNull(manifestIn(OTHER_SESSION_PART_ID))
+        assertNotNull(metadataIn(OTHER_SESSION_PART_ID))
         assertEquals(1, logger.internalErrorMessages.size)
     }
 
@@ -947,7 +942,7 @@ internal class SessionPartWriterImplTest {
         writer.onCrash()
 
         assertEquals(listOf(SESSION_PART_ID), partDirs().map(SessionPartDirectory::sessionPartId))
-        assertEquals("resource0", manifestOnDisk(SESSION_PART_ID)?.resource?.app_version)
+        assertEquals("resource0", metadataOnDisk(SESSION_PART_ID)?.resource?.app_version)
         assertEquals("user0", metadataOnDisk(SESSION_PART_ID)?.user_id)
         assertEquals("span0", sessionSpanOnDisk(SESSION_PART_ID)?.name)
         assertNoInternalErrors()
@@ -960,7 +955,6 @@ internal class SessionPartWriterImplTest {
         writer.onMetadataChanged()
         drain()
 
-        assertEquals("resource0", manifestIn(SESSION_PART_ID)?.resource?.app_version)
         assertEquals("user0", metadataIn(SESSION_PART_ID)?.user_id)
         assertEquals(1, writeCount)
         assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.name)
@@ -1540,21 +1534,13 @@ internal class SessionPartWriterImplTest {
             .mapNotNull(SessionPartDirectory::fromDirName)
             .sortedWith(SessionPartDirectory.comparator)
 
-    private fun metadataIn(sessionPartId: String): EnvelopeMetadataProto? {
+    private fun metadataIn(sessionPartId: String): SessionMetadata? {
         drain()
         return metadataOnDisk(sessionPartId)
     }
 
-    private fun metadataOnDisk(sessionPartId: String): EnvelopeMetadataProto? =
-        partFile(sessionPartId, METADATA_FILE_NAME)?.inputStream()?.use(EnvelopeMetadataProto.ADAPTER::decode)
-
-    private fun manifestIn(sessionPartId: String): SessionManifest? {
-        drain()
-        return manifestOnDisk(sessionPartId)
-    }
-
-    private fun manifestOnDisk(sessionPartId: String): SessionManifest? =
-        partFile(sessionPartId, MANIFEST_FILE_NAME)?.inputStream()?.use(SessionManifest.ADAPTER::decode)
+    private fun metadataOnDisk(sessionPartId: String): SessionMetadata? =
+        partFile(sessionPartId, METADATA_FILE_NAME)?.inputStream()?.use(SessionMetadata.ADAPTER::decode)
 
     private fun sessionSpanIn(sessionPartId: String): SpanProto? {
         drain()

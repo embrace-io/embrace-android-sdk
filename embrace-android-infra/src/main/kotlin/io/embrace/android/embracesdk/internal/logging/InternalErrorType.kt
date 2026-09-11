@@ -35,7 +35,6 @@ sealed class InternalErrorType(private val severity: Severity) {
     object IntakeFail : InternalErrorType(ERROR)
     object IntakeUnexpectedType : InternalErrorType(ERROR)
     object PayloadStorageFail : InternalErrorType(ERROR)
-    object SessionManifestWriteFail : InternalErrorType(ERROR)
     object SessionMetadataWriteFail : InternalErrorType(ERROR)
     object SessionPartDirectoryStoreFail : InternalErrorType(ERROR)
     object SessionReconstructionFail : InternalErrorType(ERROR)

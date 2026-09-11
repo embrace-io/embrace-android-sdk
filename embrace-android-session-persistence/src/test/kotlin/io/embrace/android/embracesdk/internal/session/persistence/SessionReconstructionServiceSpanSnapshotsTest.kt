@@ -43,7 +43,6 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
 
     private lateinit var sessionsDir: File
     private lateinit var logger: FakeInternalLogger
-    private lateinit var manifestWriter: SessionManifestWriter
     private lateinit var metadataWriter: SessionMetadataWriter
     private lateinit var snapshotsWriter: SpanSnapshotsWriter
     private lateinit var service: SessionReconstructionService
@@ -56,12 +55,14 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
         logger = FakeInternalLogger(throwOnInternalError = false)
         activePart = partDirectory
-        manifestWriter = SessionManifestWriter(target(), logger)
         metadataWriter = SessionMetadataWriter(
-            target(),
-            { fullyPopulatedMetadata },
-            { fullyPopulatedResource },
-            logger,
+            target = target(),
+            metadataSource = { fullyPopulatedMetadata },
+            resourceSource = { fullyPopulatedResource },
+            envelopeVersion = ENVELOPE_VERSION,
+            envelopeType = ENVELOPE_TYPE,
+            sharedLibSymbolMappingSource = { null },
+            logger = logger,
         )
         snapshotsWriter = SpanSnapshotsWriter(target(), logger)
         service = SessionReconstructionService(lazy { sessionsDir }, logger)
@@ -135,7 +136,6 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
 
     @Test
     fun `a missing snapshots file reconstructs no snapshots`() {
-        writeManifest()
         writeMetadata()
         writeCompletedSpans()
 
@@ -148,7 +148,6 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
     @Test
     fun `a session span that never ended is reconstructed as a span snapshot`() {
         val incomplete = fullyPopulatedSpan.copy(endTimeNanos = null)
-        writeManifest()
         writeMetadata()
         File(partDir(), "completed_spans.pb").writeBytes(completedSpansLog(emptyList()))
         writeSpanSnapshots(snapshots = listOf(incomplete))
@@ -161,7 +160,6 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
 
     @Test
     fun `a directory occupying the snapshots path is reported`() {
-        writeManifest()
         writeMetadata()
         writeCompletedSpans()
         snapshotsFile().mkdirs()
@@ -232,15 +230,9 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         directory: SessionPartDirectory = partDirectory,
         snapshots: List<Span> = emptyList(),
     ) {
-        writeManifest(directory)
         writeMetadata(directory)
         writeCompletedSpans(directory)
         writeSpanSnapshots(directory, snapshots)
-    }
-
-    private fun writeManifest(directory: SessionPartDirectory = partDirectory) {
-        activePart = directory
-        assertTrue(manifestWriter.write(fullyPopulatedResource, ENVELOPE_VERSION, ENVELOPE_TYPE))
     }
 
     private fun writeMetadata(directory: SessionPartDirectory = partDirectory) {

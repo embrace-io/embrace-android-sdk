@@ -48,4 +48,5 @@ sealed class InternalErrorType(private val severity: Severity) {
     object UserSessionCallbackFail : InternalErrorType(ERROR)
     object HttpRequestInfoModifierFail : InternalErrorType(Severity.WARNING)
     object SdkInitPhaseFail : InternalErrorType(ERROR)
+    object SdkInitAttributeCaptureFail : InternalErrorType(ERROR)
 }

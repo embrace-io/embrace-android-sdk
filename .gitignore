@@ -66,3 +66,6 @@ docs/
 
 # Claude output
 claude-output/
+
+# Perf output
+perf/

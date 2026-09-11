@@ -45,6 +45,7 @@ class SessionPartWriterImpl(
     private val directoryStore: SessionPartDirectoryStore =
         SessionPartDirectoryStore(sessionsDir, worker, clock, logger),
     private val writeTracker: SessionPartWriteTracker = SessionPartWriteTracker(),
+    private val snapshotTracker: SpanSnapshotTracker = SpanSnapshotTracker(),
     private val onWritesComplete: () -> Unit = {},
 ) : SessionPartWriter {
 
@@ -151,10 +152,11 @@ class SessionPartWriterImpl(
         queueCompletedSpansWrite(writers, spans)
     }
 
-    override fun onSpanSnapshotChanged() = EmbTrace.trace("mf-span-snapshot-changed") {
+    override fun onSpanSnapshotChanged(span: EmbraceSdkSpan) = EmbTrace.trace("mf-span-snapshot-changed") {
         if (!acceptingWrites()) {
             return@trace
         }
+        snapshotTracker.onSpanChanged(span)
         queueSpanSnapshotsRefresh(current ?: return@trace)
     }
 
@@ -227,7 +229,9 @@ class SessionPartWriterImpl(
             logger.trackInternalError(InternalErrorType.SpanSnapshotsWriteFail, exc)
             return@trace
         }
+        snapshotTracker.seed(spans)
         execute(writers, InternalErrorType.SpanSnapshotsWriteFail, writers.spanSnapshotWrites::submit) {
+            snapshotTracker.drainDirtySpans()
             writers.spanSnapshots.write(spans.mapNotNull(EmbraceSdkSpan::snapshot) + writers.sessionSpanSnapshot())
         }
     }
@@ -235,8 +239,10 @@ class SessionPartWriterImpl(
     private fun queueSpanSnapshotsRefresh(writers: PartWriters) = EmbTrace.trace("mf-queue-span-snapshots-refresh") {
         execute(writers, InternalErrorType.SpanSnapshotsWriteFail, writers.spanSnapshotWrites::submit) {
             if (current === writers) {
+                val dirty = snapshotTracker.drainDirtySpans()
                 writers.spanSnapshots.write(
                     inFlightSpanSource().mapNotNull(EmbraceSdkSpan::snapshot) + writers.sessionSpanSnapshot(),
+                    dirty.mapNotNull(EmbraceSdkSpan::snapshot),
                 )
             }
         }

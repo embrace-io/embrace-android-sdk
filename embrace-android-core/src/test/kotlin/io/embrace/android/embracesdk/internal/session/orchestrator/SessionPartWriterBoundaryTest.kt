@@ -237,7 +237,7 @@ internal class SessionPartWriterBoundaryTest {
 
         clock.tick(2000)
         sessionSpan.name = "span-refreshed"
-        writer.onSpanSnapshotChanged()
+        writer.onSpanSnapshotChanged(sessionSpan)
         drain()
 
         assertEquals("span0", sessionSpanIn(FIRST_PART_ID)?.name)

@@ -1,13 +1,17 @@
 package io.embrace.android.embracesdk.internal.instrumentation.startup
 
-import android.os.Build
 import android.os.Debug
 import android.os.Process
 import android.os.SystemClock
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.INIT_CPU_PCT
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.INIT_DISK_READ_KB
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.INIT_GC_COUNT
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.INIT_GC_COUNT_MIN_API
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.INIT_RUN_DELAY_PCT
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.NUMERIC_ERROR
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import java.io.FileInputStream
 import kotlin.math.roundToLong
 
@@ -21,12 +25,14 @@ import kotlin.math.roundToLong
  * could be triggered by that call.
  */
 class SdkInitResourceUsageTracker(
+    private val logger: InternalLogger,
+    private val versionChecker: VersionChecker = BuildVersionChecker,
     private val threadCpuTimeMs: () -> Long = { SystemClock.currentThreadTimeMillis() },
     private val elapsedRealtimeMs: () -> Long = { SystemClock.elapsedRealtime() },
     private val schedstatPathProvider: () -> String = { "/proc/self/task/${Process.myTid()}/schedstat" },
     private val procFileReader: (path: String) -> ByteArray? = ::readProcFile,
     private val runtimeStatReader: (statName: String) -> String? = { statName ->
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (versionChecker.isAtLeast(INIT_GC_COUNT_MIN_API)) {
             Debug.getRuntimeStat(statName)
         } else {
             null
@@ -62,125 +68,163 @@ class SdkInitResourceUsageTracker(
     private var endProcIo: ByteArray? = null
 
     @Volatile
-    private var startGcCount: Long? = null
+    private var startGcCount: String? = null
 
     @Volatile
-    private var endGcCount: Long? = null
+    private var endGcCount: String? = null
 
     /**
      * Captures the state right before the SDK starts. Should be called as close to the SDK start call as possible.
      */
     fun captureStart() {
-        try {
-            startWallMs = elapsedRealtimeMs()
-            startCpuMs = threadCpuTimeMs()
-            val path = schedstatPathProvider()
-            schedstatPath = path
-            startSchedstat = procFileReader(path)
-            startProcIo = procFileReader(PROC_SELF_IO_PATH)
-            startGcCount = runtimeStatReader(GC_COUNT_STAT)?.toLongOrNull()
-        } catch (_: Throwable) {
-        }
+        startWallMs = safeRead(elapsedRealtimeMs)
+        startCpuMs = safeRead(threadCpuTimeMs)
+        schedstatPath = safeRead(schedstatPathProvider)
+        startSchedstat = readProc(schedstatPath)
+        startProcIo = readProc(PROC_SELF_IO_PATH)
+        startGcCount = safeRead { runtimeStatReader(GC_COUNT_STAT) }
     }
 
     /**
      * Captures the state right before the SDK finishes starting. Should be called as close to when SDK startup ends as possible.
      */
     fun captureEnd() {
-        try {
-            endWallMs = elapsedRealtimeMs()
-            endCpuMs = threadCpuTimeMs()
-            endSchedstat = schedstatPath?.let(procFileReader)
-            endProcIo = procFileReader(PROC_SELF_IO_PATH)
-            endGcCount = runtimeStatReader(GC_COUNT_STAT)?.toLongOrNull()
-        } catch (_: Throwable) {
-        }
+        endWallMs = safeRead(elapsedRealtimeMs)
+        endCpuMs = safeRead(threadCpuTimeMs)
+        endSchedstat = readProc(schedstatPath)
+        endProcIo = readProc(PROC_SELF_IO_PATH)
+        endGcCount = safeRead { runtimeStatReader(GC_COUNT_STAT) }
     }
 
     /**
-     * Computes attributes from the raw data. Attributes without the valid, requisite raw data will be omitted.
-     *
-     * The wall interval (the actual perceived sdk init time) comprises three things: time on-CPU ([INIT_CPU_PCT]),
-     * time runnable but waiting for a CPU ([INIT_RUN_DELAY_PCT]), and time blocked/sleeping (locks, IO, parks).
-     * The values recorded are the most precisely measurable among the three, while the implied third value combines
-     * numbers that are harder to accurately obtain, as well as rounding errors.
-     *
-     * Values are whole percentages of the captured wall interval.
+     * Computes attributes from the raw data captured during init. An attribute whose data this device does not
+     * provide is left out (i.e. the attribute is not recorded). If for an attribute, this device ought to provide the
+     * data, but we still failed to compute its value, the attribute is written with a sentinel value that is outside
+     * the valid range to denote the failure.
      */
-    fun buildAttributes(): Map<String, String> = try {
-        buildMap {
-            val wallStart = startWallMs
-            val wallEnd = endWallMs
-            if (wallStart != null && wallEnd != null && wallEnd > wallStart) {
-                putSchedulingAttributes(wallMs = wallEnd - wallStart)
-                putResourceAttributes()
-            }
-        }
-    } catch (_: Throwable) {
-        emptyMap()
+    fun buildAttributes(): Map<String, String> = buildMap {
+        putAttributes(logger, INIT_WINDOW_ATTRIBUTES) { putInitWindowShares() }
+        putAttributes(logger, INIT_DISK_READ_KB) { putDiskReadKb() }
+        putAttributes(logger, INIT_GC_COUNT) { putGcCount() }
     }
 
-    private fun MutableMap<String, String>.putSchedulingAttributes(wallMs: Long) {
-        deltaOrNull(startCpuMs, endCpuMs)?.let { cpuMs ->
+    /**
+     * Record attributes that represent the shares of the init window which were associated with some known state or work.
+     */
+    private fun MutableMap<String, String>.putInitWindowShares() {
+        val wallStart = startWallMs
+        val wallEnd = endWallMs
+
+        // Record an error when we can't determine the SDK init duration because the requisite date is missing or incoherent
+        if (wallStart == null || wallEnd == null || wallEnd < wallStart) {
+            put(INIT_CPU_PCT, NUMERIC_ERROR)
+            put(INIT_RUN_DELAY_PCT, NUMERIC_ERROR)
+            logger.trackAttributeError(INIT_WINDOW_ATTRIBUTES)
+        } else if (wallEnd != wallStart) {
+            // Only try to compute a percentage if the denominator, the SDK init time, isn't 0.
+            val wallMs = wallEnd - wallStart
+            putCpuPct(wallMs)
+            putRunDelayPct(wallMs)
+        }
+    }
+
+    private fun MutableMap<String, String>.putCpuPct(wallMs: Long) {
+        monotonicCounterDelta(key = INIT_CPU_PCT, start = startCpuMs, end = endCpuMs)?.let { cpuMs ->
             put(INIT_CPU_PCT, wholePercent(cpuMs, wallMs).toString())
         }
-        deltaOrNull(startSchedstat?.let { parseRunDelayNs(it) }, endSchedstat?.let { parseRunDelayNs(it) })?.let { delayNs ->
-            put(INIT_RUN_DELAY_PCT, wholePercent(delayNs / 1_000_000L, wallMs).toString())
+    }
+
+    private fun MutableMap<String, String>.putRunDelayPct(wallMs: Long) {
+        val start = startSchedstat
+        val end = endSchedstat
+        if (start != null && end != null) {
+            monotonicCounterDelta(
+                key = INIT_RUN_DELAY_PCT,
+                start = parseRunDelayNs(start),
+                end = parseRunDelayNs(end),
+            )?.let { delayNs ->
+                put(INIT_RUN_DELAY_PCT, wholePercent(delayNs / 1_000_000L, wallMs).toString())
+            }
         }
     }
 
-    private fun MutableMap<String, String>.putResourceAttributes() {
-        deltaOrNull(startProcIo?.let { parseReadBytes(it) }, endProcIo?.let { parseReadBytes(it) })?.let { bytes ->
-            put(INIT_DISK_READ_KB, (bytes / 1024L).toString())
+    private fun MutableMap<String, String>.putDiskReadKb() {
+        val start = startProcIo
+        val end = endProcIo
+        if (start != null && end != null) {
+            monotonicCounterDelta(
+                key = INIT_DISK_READ_KB,
+                start = parseReadBytes(start),
+                end = parseReadBytes(end),
+            )?.let { bytes ->
+                put(INIT_DISK_READ_KB, (bytes / 1024L).toString())
+            }
         }
-        deltaOrNull(startGcCount, endGcCount)?.let { count ->
-            put(INIT_GC_COUNT, count.toString())
+    }
+
+    private fun MutableMap<String, String>.putGcCount() {
+        if (versionChecker.isAtLeast(INIT_GC_COUNT_MIN_API)) {
+            val start = startGcCount
+            val end = endGcCount
+            if (start != null && end != null) {
+                monotonicCounterDelta(
+                    key = INIT_GC_COUNT,
+                    start = start.toLongOrNull(),
+                    end = end.toLongOrNull(),
+                )?.let { count ->
+                    put(INIT_GC_COUNT, count.toString())
+                }
+            }
         }
     }
 
     /**
-     * The delta between two samples of a cumulative counter, or null when either sample is
-     * missing or the counter went backwards.
+     * Return the increase of a counter as tracked by [start] and [end]. If either number is missing or there was a decrease,
+     * return null, as well as put an entry in the map with the key [key] and the value [NUMERIC_ERROR] to signify the failure
+     * attempt.
      */
-    private fun deltaOrNull(start: Long?, end: Long?): Long? = if (start != null && end != null && end >= start) {
-        end - start
-    } else {
-        null
-    }
-
-    private fun wholePercent(part: Long, whole: Long): Long = (100.0 * part / whole).roundToLong()
+    private fun MutableMap<String, String>.monotonicCounterDelta(key: String, start: Long?, end: Long?): Long? =
+        if (start == null || end == null || end < start) {
+            put(key, NUMERIC_ERROR)
+            logger.trackAttributeError(key)
+            null
+        } else {
+            end - start
+        }
 
     /**
      * Extracts the cumulative run-delay (second field, in nanoseconds) from raw
      * /proc/<pid>/task/<tid>/schedstat contents: "<running_ns> <run_delay_ns> <timeslices>".
      */
-    private fun parseRunDelayNs(raw: ByteArray): Long? = try {
+    private fun parseRunDelayNs(raw: ByteArray): Long? = safeRead {
         raw.decodeToString().trim().split(' ').getOrNull(1)?.toLong()
-    } catch (_: Throwable) {
-        null
     }
 
     /**
      * Extracts the cumulative read_bytes value from raw /proc/self/io contents (a line-keyed
      * file; counts bytes actually fetched from the storage layer).
      */
-    private fun parseReadBytes(raw: ByteArray): Long? = try {
+    private fun parseReadBytes(raw: ByteArray): Long? = safeRead {
         raw.decodeToString()
             .lineSequence()
             .firstOrNull { it.startsWith("read_bytes:") }
             ?.substringAfter(':')
             ?.trim()
             ?.toLong()
-    } catch (_: Throwable) {
-        null
     }
+
+    private fun readProc(path: String?): ByteArray? = path?.let { safeRead { procFileReader(it) } }
+
+    private fun wholePercent(part: Long, whole: Long): Long = (100.0 * part / whole).roundToLong()
+
+    private fun <T> safeRead(read: () -> T): T? = runCatching { read() }.getOrNull()
 }
 
 /**
  * Reads a small procfs file in a single read. This should be fast because it should be backed by memory,
  * not disk.
  */
-private fun readProcFile(path: String): ByteArray? = try {
+private fun readProcFile(path: String): ByteArray? = runCatching {
     FileInputStream(path).use { stream ->
         val buffer = ByteArray(PROC_READ_BUFFER_BYTES)
         val count = stream.read(buffer)
@@ -190,11 +234,10 @@ private fun readProcFile(path: String): ByteArray? = try {
             null
         }
     }
-} catch (_: Throwable) {
-    null
-}
+}.getOrNull()
 
 // /proc/self/io is ~120 bytes, so 1024 covers it with room to spare
 private const val PROC_READ_BUFFER_BYTES = 1024
 private const val PROC_SELF_IO_PATH = "/proc/self/io"
 private const val GC_COUNT_STAT = "art.gc.gc-count"
+private const val INIT_WINDOW_ATTRIBUTES = "init-cpu-shares"

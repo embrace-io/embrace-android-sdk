@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.prefs.createKeyValueStore
 import io.embrace.android.embracesdk.internal.storage.StorageService
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.Worker
 
@@ -44,6 +45,7 @@ internal class ModuleInitBootstrapper(
     private val logModuleSupplier: LogModuleSupplier? = null,
     private val userSessionOrchestrationModuleSupplier: UserSessionOrchestrationModuleSupplier? = null,
     private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier? = null,
+    private val sdkInitResourceUsageTrackerSupplier: Provider<SdkInitResourceUsageTracker>? = null,
 ) : ModuleGraph {
 
     @Volatile
@@ -78,7 +80,9 @@ internal class ModuleInitBootstrapper(
             // stamped before anything else so that the SDK init span covers all the work below,
             // and the perf samples cover the same interval as the span
             val startTimeMs = initModule.clock.now()
-            val resourceUsageTracker = SdkInitResourceUsageTracker().apply { captureStart() }
+            val resourceUsageTracker =
+                sdkInitResourceUsageTrackerSupplier?.invoke() ?: SdkInitResourceUsageTracker(initModule.logger)
+            resourceUsageTracker.captureStart()
             val keyValueStore = lazy { createKeyValueStore(context, initModule.jsonSerializer) }
             val persistedConfig = EmbTrace.trace(
                 sectionName = "persisted-config-load",

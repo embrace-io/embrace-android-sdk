@@ -4,15 +4,15 @@
 # Usage: scripts/run-macrobenchmark.sh [--test CLASS] [--serial SERIAL] [--no-publish]
 #            [--fast-publish] [--suppress-errors LIST] [--gradle-arg ARG] [--dry-run]
 #
-# Two gradle invocations are needed: the app reads embrace.macrobenchmark.instrument at
-# configuration time, so the plugin must be in mavenLocal before the benchmark configures.
+# Two gradle invocations are needed: the app resolves the Embrace gradle plugin on its buildscript
+# classpath, so the plugin must be in mavenLocal before the benchmark configures.
 # Exit codes: 2 preflight, 3 publish, 4 benchmark.
 
 set -eu
 
 die() { printf '%b\n' "$2" >&2; exit "$1"; }
 
-test_filter=io.embrace.android.embracesdk.macrobenchmark.SdkInitBenchmark
+test_filter=io.embrace.android.embracesdk.macrobenchmark.SessionBenchmark
 serial=${ANDROID_SERIAL:-}
 publish=repo
 suppress=""
@@ -48,7 +48,7 @@ fi
 
 api=$("$adb" -s "$serial" shell getprop ro.build.version.sdk | tr -d '\r\n')
 case $api in ''|*[!0-9]*) die 2 "could not read the API level of $serial" ;; esac
-[ "$api" -ge 29 ] || die 2 "$serial is API $api; emb-sdk-start is only emitted on API 29+"
+[ "$api" -ge 29 ] || die 2 "$serial is API $api; the SDK's emb-* trace sections need API 29+"
 
 if [ -z "$suppress" ]; then
     # AGP splits instrumentation-args on commas, so only the FIRST value reaches the device and
@@ -80,7 +80,6 @@ case $publish in
 esac
 
 set -- :embrace-macrobenchmark:connectedBenchmarkAndroidTest \
-    -Pembrace.macrobenchmark.instrument=true \
     "-Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=$suppress" \
     "-Pandroid.testInstrumentationRunnerArguments.class=$test_filter"
 set -- "$@" $extra

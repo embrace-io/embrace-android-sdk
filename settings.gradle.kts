@@ -45,6 +45,7 @@ include(
     ":embrace-android-otel-fakes",
     ":embrace-android-otel-java",
     ":embrace-lint",
+    ":embrace-perfetto-analysis",
     ":embrace-test-common",
     ":embrace-test-fakes",
     ":embrace-benchmark-common",

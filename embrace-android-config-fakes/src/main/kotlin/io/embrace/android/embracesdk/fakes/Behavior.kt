@@ -18,6 +18,8 @@ import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehaviorImp
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.behavior.PersistenceBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.PersistenceBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
@@ -152,3 +154,11 @@ fun createOtelBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     remoteCfg: RemoteConfig? = null,
 ) = OtelBehaviorImpl(thresholdCheck, InstrumentedConfigImpl, remoteCfg)
+
+/**
+ * A [PersistenceBehaviorImpl] that returns default values.
+ */
+fun createPersistenceBehavior(
+    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
+    remoteCfg: RemoteConfig? = null,
+): PersistenceBehavior = PersistenceBehaviorImpl(thresholdCheck, InstrumentedConfigImpl, remoteCfg)

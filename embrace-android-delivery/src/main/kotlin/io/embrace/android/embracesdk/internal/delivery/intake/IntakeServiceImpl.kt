@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
@@ -55,6 +56,7 @@ class IntakeServiceImpl(
         intake: Envelope<*>,
         metadata: StoredTelemetryMetadata,
         staleEntry: StoredTelemetryMetadata?,
+        onStored: (() -> Unit)?,
     ): Future<*> {
         deliveryTracer?.onTake(metadata)
 
@@ -65,7 +67,7 @@ class IntakeServiceImpl(
                 // non-blocking shutdown: reject subsequent submissions but defer the drain to
                 // payloadStore.handleCrash's later intakeService.shutdown() call
                 worker.shutdownAndWait(0)
-                processIntake(intake, metadata, staleEntry)
+                processIntake(intake, metadata, staleEntry, onStored)
                 return immediateFuture()
             }
             return immediateFuture()
@@ -74,7 +76,7 @@ class IntakeServiceImpl(
         // The worker is shut down once a crash is detected, so anything arriving before the service is sealed must be persisted
         // synchronously (like resurrected session parts) or be unrecoverably loss.
         if (state.get() == State.CRASH_RECEIVED) {
-            processIntake(intake, metadata, staleEntry)
+            processIntake(intake, metadata, staleEntry, onStored)
             // Only seal the service if the payload is the crashing session's last session part, after which we take in no more
             // telemetry and let the process die.
             if (metadata.isCrashingPartForCurrentProcess()) {
@@ -92,6 +94,7 @@ class IntakeServiceImpl(
                 intake = intake,
                 metadata = metadata,
                 staleEntry = staleEntry,
+                onStored = onStored,
             )
         }
 
@@ -111,21 +114,29 @@ class IntakeServiceImpl(
         intake: Envelope<*>,
         metadata: StoredTelemetryMetadata,
         staleEntry: StoredTelemetryMetadata?,
+        onStored: (() -> Unit)?,
     ) {
         try {
             val service = when {
                 metadata.complete -> payloadStorageService
                 else -> cacheStorageService
             }
-            service.store(metadata) { stream ->
-                val envelopeSerializer = metadata.envelopeType.envelopeSerializer
-                if (envelopeSerializer != null) {
-                    serializer.toJson(intake, envelopeSerializer, stream)
-                } else { // payload doesn't require serialization
-                    val pair = intake.data as Pair<String, ByteArray>
-                    storeAttachment(stream, pair.second, pair.first)
+            SystemTrace.trace("intake-process") {
+                service.store(metadata) { stream ->
+                    val envelopeSerializer = metadata.envelopeType.envelopeSerializer
+                    if (envelopeSerializer != null) {
+                        SystemTrace.trace("payload-json-serialize") {
+                            serializer.toJson(intake, envelopeSerializer, stream)
+                        }
+                    } else { // payload doesn't require serialization
+                        val pair = intake.data as Pair<String, ByteArray>
+                        storeAttachment(stream, pair.second, pair.first)
+                    }
                 }
             }
+
+            // the payload is now on disk, so any other copy the caller holds is safe to discard
+            onStored?.invoke()
 
             /**
              * Determine which cache entry to clean up:

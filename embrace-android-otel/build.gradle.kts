@@ -11,6 +11,7 @@ android {
 
 dependencies {
     implementation(project(":embrace-android-infra"))
+    implementation(project(":embrace-android-limits"))
     implementation(project(":embrace-android-utils"))
     implementation(project(":embrace-android-payload"))
     implementation(project(":embrace-android-instrumentation-schema"))

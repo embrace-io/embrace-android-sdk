@@ -7,11 +7,14 @@ import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.envelope.metadata.UnitySdkVersionInfo
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.BeforeClass
 import org.junit.Test
 import java.io.File
@@ -76,4 +79,107 @@ internal class EnvelopeResourceSourceImplTest {
         assertEquals(true, envelope.usesEmmcStorage)
         assertEquals("SM8450", envelope.deviceSocModel)
     }
+
+    @Test
+    fun `listener is invoked with the current resource upon registration`() {
+        val source = createSource(FakeDevice())
+        val observed = mutableListOf<EnvelopeResource>()
+
+        source.addChangeListener(observed::add)
+
+        assertEquals(1, observed.size)
+        assertEquals(source.getEnvelopeResource(), observed.single())
+    }
+
+    @Test
+    fun `a changed value notifies listeners`() {
+        val device = FakeDevice(screenResolution = "")
+        val source = createSource(device)
+        val observed = mutableListOf<EnvelopeResource>()
+        source.addChangeListener(observed::add)
+
+        device.screenResolution = "1920x1080"
+        source.notifyIfChanged()
+
+        assertEquals(2, observed.size)
+        assertEquals("", observed.first().screenResolution)
+        assertEquals("1920x1080", observed.last().screenResolution)
+    }
+
+    @Test
+    fun `an unchanged resource does not notify listeners`() {
+        val source = createSource(FakeDevice())
+        val observed = mutableListOf<EnvelopeResource>()
+        source.addChangeListener(observed::add)
+
+        repeat(5) { source.notifyIfChanged() }
+
+        assertEquals(1, observed.size)
+    }
+
+    @Test
+    fun `adding an extra notifies listeners only when the value changes`() {
+        val source = createSource(FakeDevice())
+        val observed = mutableListOf<EnvelopeResource>()
+        source.addChangeListener(observed::add)
+
+        source.add("key", "value")
+        assertEquals(2, observed.size)
+        assertEquals(mapOf("key" to "value"), observed.last().extras)
+
+        // re-adding the same value leaves the resource untouched
+        source.add("key", "value")
+        assertEquals(2, observed.size)
+
+        source.add("key", "other")
+        assertEquals(3, observed.size)
+        assertEquals(mapOf("key" to "other"), observed.last().extras)
+    }
+
+    @Test
+    fun `every listener is notified even if one throws`() {
+        val device = FakeDevice(screenResolution = "")
+        val source = createSource(device)
+        val observed = mutableListOf<EnvelopeResource>()
+
+        source.addChangeListener { error("listener failed") }
+        source.addChangeListener(observed::add)
+
+        device.screenResolution = "1920x1080"
+        source.notifyIfChanged()
+
+        assertEquals(2, observed.size)
+        assertEquals("1920x1080", observed.last().screenResolution)
+    }
+
+    @Test
+    fun `no resource is built when nothing is listening`() {
+        var built = false
+        val device = object : Device by FakeDevice() {
+            override val screenResolution: String
+                get() {
+                    built = true
+                    return "1920x1080"
+                }
+        }
+        val source = createSource(device)
+
+        source.notifyIfChanged()
+        assertTrue(!built)
+
+        val observed = mutableListOf<EnvelopeResource>()
+        source.addChangeListener(observed::add)
+        assertTrue(built)
+        assertSame(observed.single(), observed.last())
+    }
+
+    private fun createSource(device: Device) = EnvelopeResourceSourceImpl(
+        FakeConfigService(),
+        UnitySdkVersionInfo(FakeKeyValueStore()),
+        AppEnvironment.Environment.PROD,
+        device,
+        "",
+        53,
+        { "fakeReactNativeBundleId" },
+    )
 }

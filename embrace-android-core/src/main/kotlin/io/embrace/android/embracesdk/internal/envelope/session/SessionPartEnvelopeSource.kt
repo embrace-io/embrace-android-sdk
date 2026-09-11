@@ -10,4 +10,13 @@ interface SessionPartEnvelopeSource {
         startNewSession: Boolean,
         crashId: String? = null,
     ): Envelope<SessionPartPayload>
+
+    /**
+     * Applies the same side effects as [getEnvelope] without assembling an envelope.
+     */
+    fun endSessionPart(
+        endType: SessionPartSnapshotType,
+        startNewSession: Boolean,
+        crashId: String? = null,
+    )
 }

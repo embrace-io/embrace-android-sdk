@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package embrace.session.persistence;
+
+option java_package = "io.embrace.android.embracesdk.internal.session.persistence";
+
+message SpanProto {
+  string trace_id = 1;
+  string span_id = 2;
+
+  // OtelIds.INVALID_SPAN_ID when the span has no parent.
+  string parent_span_id = 3;
+
+  string name = 4;
+
+  fixed64 start_time_unix_nano = 5;
+  optional fixed64 end_time_unix_nano = 6;
+
+  Status status = 7;
+
+  repeated SpanEventProto events = 8;
+  repeated AttributeProto attributes = 9;
+  repeated LinkProto links = 10;
+
+  enum Status {
+    UNSET = 0;
+    ERROR = 1;
+    OK = 2;
+  }
+}
+
+message SpanEventProto {
+  string name = 1;
+  fixed64 time_unix_nano = 2;
+  repeated AttributeProto attributes = 3;
+}
+
+// Repeated rather than a map, to keep order and duplicate keys
+message AttributeProto {
+  string key = 1;
+  string value = 2;
+}
+
+message LinkProto {
+  string span_id = 1;
+  string trace_id = 2;
+  repeated AttributeProto attributes = 3;
+  bool is_remote = 4;
+}

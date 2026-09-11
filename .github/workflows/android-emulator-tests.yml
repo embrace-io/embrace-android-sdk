@@ -81,7 +81,7 @@ jobs:
           working-directory: ${{ matrix.working-directory }}
           api-level: ${{ matrix.api-level }}
           # Grab the failures from the device so we can include them in results. Exit with non-zero so GH checks still fail.
-          script: ./gradlew connectedCheck -x :embrace-microbenchmark:connectedCheck --stacktrace || (adb logcat '[Embrace]:d' '*:S' -t 100000 > emulator_logcat.log && adb pull /storage/emulated/0/Android/data/io.embrace.android.embracesdk.test/cache/test_failure/ && exit 127)
+          script: ./gradlew connectedCheck -x :embrace-microbenchmark:connectedCheck -x :embrace-macrobenchmark:connectedCheck --stacktrace || (adb logcat '[Embrace]:d' '*:S' -t 100000 > emulator_logcat.log && adb pull /storage/emulated/0/Android/data/io.embrace.android.embracesdk.test/cache/test_failure/ && exit 127)
 
       - name: Archive Test Results
         if: ${{ always() && matrix.working-directory == '.' }}

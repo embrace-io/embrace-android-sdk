@@ -21,6 +21,7 @@ internal class SessionPartSpanAttrPopulatorImpl(
     private val appVersionStartupCounterProvider: () -> Int?,
     private val logLimitingService: LogLimitingService,
     private val metadataService: MetadataService,
+    private val processIdentifier: String,
     private val experimentRecordsProvider: () -> String?,
 ) : SessionPartSpanAttrPopulator {
 
@@ -30,6 +31,7 @@ internal class SessionPartSpanAttrPopulatorImpl(
             addSessionPartAttribute(EmbSessionAttributes.EMB_STATE, sessionPart.processState.name.lowercase(Locale.US))
             addSessionPartAttribute(EmbSessionAttributes.EMB_CLEAN_EXIT, false.toString())
             addSessionPartAttribute(EmbSessionAttributes.EMB_TERMINATED, true.toString())
+            addSessionPartAttribute(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER, processIdentifier)
 
             sessionPart.startType.toString().lowercase(Locale.US).let {
                 addSessionPartAttribute(EmbSessionAttributes.EMB_SESSION_START_TYPE, it)

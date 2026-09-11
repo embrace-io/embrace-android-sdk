@@ -36,6 +36,7 @@ class FakeEnabledFeatureConfig(
     private val endStartupWithAppReady: Boolean = base.isEndStartupWithAppReadyEnabled(),
     private val otelKotlinSdkEnabled: Boolean = base.isOtelKotlinSdkEnabled(),
     private val activityProcessLifecycleTracker: Boolean = base.isActivityProcessLifecycleTrackerEnabled(),
+    private val multiFilePersistence: Boolean = base.isMultiFilePersistenceEnabled(),
 ) : EnabledFeatureConfig {
 
     override fun isActivityBreadcrumbCaptureEnabled(): Boolean = activityBreadcrumbCapture
@@ -66,4 +67,5 @@ class FakeEnabledFeatureConfig(
     override fun isEndStartupWithAppReadyEnabled(): Boolean = endStartupWithAppReady
     override fun isOtelKotlinSdkEnabled(): Boolean = otelKotlinSdkEnabled
     override fun isActivityProcessLifecycleTrackerEnabled(): Boolean = activityProcessLifecycleTracker
+    override fun isMultiFilePersistenceEnabled(): Boolean = multiFilePersistence
 }

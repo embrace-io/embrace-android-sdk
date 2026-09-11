@@ -34,7 +34,7 @@ class FakePayloadSourceModule(
 ) : PayloadSourceModule {
 
     override val resourceSource = FakeEnvelopeResourceSource()
-    private val envelopeMetadataSource = FakeEnvelopeMetadataSource()
+    override val envelopeMetadataSource: FakeEnvelopeMetadataSource = FakeEnvelopeMetadataSource()
 
     override val sessionPartEnvelopeSource: SessionPartEnvelopeSource = FakeSessionPartEnvelopeSource(
         envelopeMetadataSource,
@@ -85,5 +85,13 @@ private class FakeSessionPartEnvelopeSource(
             "spans",
             partPayloadSource.getSessionPartPayload(endType, startNewSession, crashId)
         )
+    }
+
+    override fun endSessionPart(
+        endType: SessionPartSnapshotType,
+        startNewSession: Boolean,
+        crashId: String?,
+    ) {
+        partPayloadSource.endSessionPart(endType, startNewSession, crashId)
     }
 }

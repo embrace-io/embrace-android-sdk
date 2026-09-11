@@ -1,0 +1,230 @@
+package io.embrace.android.embracesdk.internal.session.persistence
+
+import com.squareup.wire.ProtoAdapter
+import com.squareup.wire.ProtoWriter
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.internal.payload.Span
+import okio.Buffer
+import okio.ByteString.Companion.toByteString
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TemporaryFolder
+import java.io.File
+
+internal class SessionReconstructionServiceFileSizeTest {
+
+    private companion object {
+        private const val METADATA_FILE_NAME = "metadata.pb"
+        private const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
+        private const val SPAN_SNAPSHOTS_FILE_NAME = "span_snapshots.pb"
+        private const val ENVELOPE_VERSION = "0.1.0"
+        private const val ENVELOPE_TYPE = "spans"
+        private const val TIMESTAMP = 1726739283136L
+        private const val UUID = "c2610cd1-389f-422a-bfbc-25312c7a599a"
+        private const val USER_SESSION_ID = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        private const val SESSION_PART_ID = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        private const val PADDING_FIELD_NUMBER = 1000
+        private const val PADDING_FIELD_OVERHEAD = 6
+        private const val EMPTY_PADDING_FIELD_BYTES = 3
+        private const val PADDED_SPAN_BYTES = 64 * 1024
+
+        private val partDirectory = SessionPartDirectory(
+            timestamp = TIMESTAMP,
+            uuid = UUID,
+            userSessionId = USER_SESSION_ID,
+            sessionPartId = SESSION_PART_ID,
+        )
+    }
+
+    @get:Rule
+    val tempFolder: TemporaryFolder = TemporaryFolder()
+
+    private lateinit var sessionsDir: File
+    private lateinit var logger: FakeInternalLogger
+    private lateinit var metadataWriter: SessionMetadataWriter
+    private lateinit var snapshotsWriter: SpanSnapshotsWriter
+    private lateinit var service: SessionReconstructionService
+
+    @Volatile
+    private var activePart: SessionPartDirectory? = partDirectory
+
+    @Before
+    fun setUp() {
+        sessionsDir = tempFolder.newFolder("embrace_sessions")
+        logger = FakeInternalLogger(throwOnInternalError = false)
+        activePart = partDirectory
+        metadataWriter = SessionMetadataWriter(
+            target = target(),
+            metadataSource = { fullyPopulatedMetadata },
+            resourceSource = { fullyPopulatedResource },
+            envelopeVersion = ENVELOPE_VERSION,
+            envelopeType = ENVELOPE_TYPE,
+            sharedLibSymbolMappingSource = { null },
+            logger = logger,
+        )
+        snapshotsWriter = SpanSnapshotsWriter(target(), logger)
+        service = SessionReconstructionService(lazy { sessionsDir }, logger)
+        File(sessionsDir, partDirectory.dirName).mkdirs()
+        write()
+    }
+
+    @Test
+    fun `a session part within the maximum file size is reconstructed`() {
+        assertNotNull(service.reconstruct(partDirectory))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `oversized metadata is rejected`() {
+        assertOversizedFileRejected(METADATA_FILE_NAME)
+    }
+
+    @Test
+    fun `oversized span snapshots are rejected`() {
+        assertOversizedFileRejected(SPAN_SNAPSHOTS_FILE_NAME)
+    }
+
+    @Test
+    fun `a file at exactly the maximum size is reconstructed`() {
+        padToSize(METADATA_FILE_NAME, MAX_PART_FILE_BYTES)
+        assertEquals(MAX_PART_FILE_BYTES, partFile(METADATA_FILE_NAME).length())
+        assertNotNull(service.reconstruct(partDirectory))
+        assertNoInternalErrors()
+    }
+
+    /**
+     * The log is decoded a record at a time, so it is truncated to the records that fit.
+     */
+    @Test
+    fun `an oversized completed spans log is reported but still reconstructed`() {
+        padToSize(COMPLETED_SPANS_FILE_NAME, MAX_PART_FILE_BYTES + 1)
+        assertNotNull(service.reconstruct(partDirectory))
+        assertEquals(1, logger.internalErrorMessages.size)
+        assertEquals("SessionReconstructionFail", logger.internalErrorMessages.single().msg)
+    }
+
+    @Test
+    fun `an oversized completed spans log keeps the records it holds`() {
+        val logged = paddedSpanProto(paddedSpanId(0), padding = 1)
+        partFile(COMPLETED_SPANS_FILE_NAME).writeBytes(completedSpansLog(listOf(logged)))
+        padToSize(COMPLETED_SPANS_FILE_NAME, MAX_PART_FILE_BYTES + 1)
+
+        val envelope = checkNotNull(service.reconstruct(partDirectory))
+        assertEquals(listOf(paddedSpan(paddedSpanId(0), padding = 1)), envelope.data.spans)
+    }
+
+    @Test
+    fun `completed span records past the budget are dropped`() {
+        val padded = paddedSpanProto(paddedSpanId(0), PADDED_SPAN_BYTES)
+        val recordBytes = SpanProto.ADAPTER.encode(padded).size
+        val fitting = (MAX_PART_FILE_BYTES / recordBytes).toInt()
+        val logged = List(fitting + 5) { paddedSpanProto(paddedSpanId(it), PADDED_SPAN_BYTES) }
+        partFile(COMPLETED_SPANS_FILE_NAME).writeBytes(completedSpansLog(logged))
+
+        val envelope = checkNotNull(service.reconstruct(partDirectory))
+        assertEquals(fitting, envelope.data.spans?.size)
+        val ids = envelope.data.spans?.mapNotNull(Span::spanId)
+        assertEquals(logged.take(fitting).map(SpanProto::span_id), ids)
+    }
+
+    @Test
+    fun `spans past the persisted span limit are dropped`() {
+        val logged = List(MAX_PERSISTED_SPANS + 5) { paddedSpanProto(paddedSpanId(it), padding = 1) }
+        partFile(COMPLETED_SPANS_FILE_NAME).writeBytes(completedSpansLog(logged))
+        val envelope = checkNotNull(service.reconstruct(partDirectory))
+        val spans = checkNotNull(envelope.data.spans)
+
+        assertEquals(MAX_PERSISTED_SPANS, spans.size)
+        assertEquals(logged.take(MAX_PERSISTED_SPANS).map(SpanProto::span_id), spans.map(Span::spanId))
+
+        assertEquals(emptyList<Span>(), envelope.data.spanSnapshots)
+        assertEquals(1, logger.internalErrorMessages.size)
+        assertEquals("SessionReconstructionFail", logger.internalErrorMessages.single().msg)
+    }
+
+    @Test
+    fun `a part at exactly the persisted span limit keeps every span`() {
+        val logged = List(MAX_PERSISTED_SPANS - 1) { paddedSpanProto(paddedSpanId(it), padding = 1) }
+        partFile(COMPLETED_SPANS_FILE_NAME).writeBytes(completedSpansLog(logged))
+
+        val envelope = checkNotNull(service.reconstruct(partDirectory))
+        assertEquals(MAX_PERSISTED_SPANS - 1, envelope.data.spans?.size)
+        assertEquals(listOf(inFlightSpan), envelope.data.spanSnapshots)
+        assertNoInternalErrors()
+    }
+
+    private fun assertOversizedFileRejected(fileName: String) {
+        padToSize(fileName, MAX_PART_FILE_BYTES + 1)
+        assertNull(service.reconstruct(partDirectory))
+        assertEquals(1, logger.internalErrorMessages.size)
+        assertEquals("SessionReconstructionFail", logger.internalErrorMessages.single().msg)
+    }
+
+    /**
+     * Grows a part file to exactly [size] bytes by appending a length delimited field that no
+     * version of the schema has held, so the padded file still decodes.
+     */
+    private fun padToSize(fileName: String, size: Long) {
+        val file = partFile(fileName)
+        file.appendBytes(paddingBytes(size - file.length()))
+        assertEquals(size, file.length())
+    }
+
+    /**
+     * Encodes padding fields occupying exactly [delta] bytes in total.
+     */
+    private fun paddingBytes(delta: Long): ByteArray {
+        val out = Buffer()
+        var remaining = delta
+        while (true) {
+            val field = paddingField(remaining)
+            if (field != null) {
+                out.write(field)
+                break
+            }
+            out.write(encodePadding(0))
+            remaining -= EMPTY_PADDING_FIELD_BYTES
+        }
+        assertEquals(delta, out.size)
+        return out.readByteArray()
+    }
+
+    /**
+     * A single padding field occupying exactly [delta] bytes, or null if no payload size reaches it.
+     */
+    private fun paddingField(delta: Long): ByteArray? =
+        (EMPTY_PADDING_FIELD_BYTES..PADDING_FIELD_OVERHEAD)
+            .asSequence()
+            .map { overhead -> encodePadding((delta - overhead).toInt()) }
+            .firstOrNull { it.size.toLong() == delta }
+
+    private fun encodePadding(payloadSize: Int): ByteArray {
+        val padding = Buffer()
+        ProtoAdapter.BYTES.encodeWithTag(
+            ProtoWriter(padding),
+            PADDING_FIELD_NUMBER,
+            ByteArray(payloadSize).toByteString(),
+        )
+        return padding.readByteArray()
+    }
+
+    private fun target(): SessionPartWriteTarget =
+        SessionPartWriteTarget(lazy { sessionsDir }) { activePart }
+
+    private fun partFile(fileName: String): File = File(File(sessionsDir, partDirectory.dirName), fileName)
+
+    private fun write() {
+        assertTrue(metadataWriter.write())
+        assertTrue(snapshotsWriter.write(listOf(inFlightSpan)))
+        partFile(COMPLETED_SPANS_FILE_NAME).writeBytes(completedSpansLog(emptyList()))
+    }
+
+    private fun assertNoInternalErrors() {
+        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+    }
+}

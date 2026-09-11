@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.ExperimentBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.behavior.PersistenceBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehaviorImpl
@@ -119,6 +120,8 @@ class ConfigServiceImpl(
     override val networkSpanForwardingBehavior =
         NetworkSpanForwardingBehaviorImpl(traceparentInjectionBehavior, thresholdCheck, instrumentedConfig, remoteConfig)
     override val otelBehavior = persistedConfig.otelBehavior
+    override val persistenceBehavior =
+        PersistenceBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
 
     override val appId: String? = run {
         val id = instrumentedConfig.project.getAppId()

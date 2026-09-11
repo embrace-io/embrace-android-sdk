@@ -61,6 +61,7 @@ internal class SessionOrchestratorImpl(
     private val backgroundWorker: BackgroundWorker,
     private val uuidSource: UuidSource,
     private val startupClassifier: StartupClassifier,
+    private val sessionPartWriter: SessionPartWriter?,
 ) : SessionOrchestrator {
 
     /**
@@ -82,6 +83,7 @@ internal class SessionOrchestratorImpl(
     private var inactivityTimerState: SessionTimerState? = null
     private var maxDurationTimerState: SessionTimerState? = null
     private var backgroundStartupWindowTimerState: SessionTimerState? = null
+    private var lastActivityTimerState: SessionTimerState? = null
 
     @Volatile
     override var userSessionRestoreDecision: UserSessionRestoreDecision? = null
@@ -279,6 +281,10 @@ internal class SessionOrchestratorImpl(
             },
             crashId = crashId,
         )
+
+        EmbTrace.trace("mf-flush-writes") {
+            sessionPartWriter?.onCrash()
+        }
     }
 
     override fun onSessionDataUpdate() {
@@ -358,6 +364,7 @@ internal class SessionOrchestratorImpl(
                 EmbTrace.trace("transition-state-start") {
                     // first, disable any previous periodic caching so the job doesn't overwrite the to-be saved session
                     payloadCachingService?.stopCaching()
+                    lastActivityTimerState?.cancel()
 
                     val endingSession = sessionTracker.getActiveSessionPart()
                     if (endingSession != null) {
@@ -376,6 +383,14 @@ internal class SessionOrchestratorImpl(
                             // End the current session or background activity, if either exist.
                             EmbTrace.trace("end-current-session") {
                                 processEndMessage(oldSessionAction?.invoke(this), transitionType)
+                            }
+
+                            // persist the stopped session part span
+                            EmbTrace.trace("mf-part-ended") {
+                                sessionPartWriter?.onSessionPartEnded(
+                                    sessionPartId = sessionPartId,
+                                    crashing = transitionType == TransitionType.CRASH,
+                                )
                             }
                         },
                         startSessionPartCallback = {
@@ -414,20 +429,27 @@ internal class SessionOrchestratorImpl(
                         boundaryDelegate.prepareForNewSession()
                         sessionPartSpanAttrPopulator.populateSessionPartSpanStartAttrs(newSessionPart, userSession)
                         if (transitionType != TransitionType.CRASH) {
-                            // initiate periodic caching of the payload if a new session has started
-                            EmbTrace.trace("initiate-periodic-caching") {
-                                updatePeriodicCacheAttrs()
-                                val updateIntervalMs = lastActivityUpdateIntervalMs(userSession)
-                                payloadCachingService?.startCaching(newSessionPart, endAppState) { state, timestamp, zygote ->
-                                    synchronized(lock) {
-                                        if (state == ProcessState.FOREGROUND) {
-                                            updateUserSessionActivityIfStale(
-                                                timestamp = timestamp,
-                                                updateIntervalMs = updateIntervalMs,
-                                            )
+                            // create the directory that holds this session part's telemetry
+                            EmbTrace.trace("mf-part-started") {
+                                sessionPartWriter?.onSessionPartStarted(
+                                    timestamp = timestamp,
+                                    userSessionId = userSession?.userSessionId ?: "",
+                                    sessionPartId = newSessionPart.sessionPartId,
+                                )
+                            }
+
+                            scheduleLastActivityUpdate(userSession, endAppState)
+
+                            // initiate periodic caching of the payload if a new session has started.
+                            // the multi file layer writes as telemetry changes, so it needs no tick.
+                            if (!multiFilePersistenceEnabled()) {
+                                EmbTrace.trace("initiate-periodic-caching") {
+                                    updatePeriodicCacheAttrs()
+                                    payloadCachingService?.startCaching(newSessionPart, endAppState) { state, timestamp, zygote ->
+                                        synchronized(lock) {
+                                            updatePeriodicCacheAttrs()
+                                            payloadFactory.snapshotPayload(state, timestamp, zygote)
                                         }
-                                        updatePeriodicCacheAttrs()
-                                        payloadFactory.snapshotPayload(state, timestamp, zygote)
                                     }
                                 }
                             }
@@ -453,6 +475,26 @@ internal class SessionOrchestratorImpl(
                 ),
             )
         }
+    }
+
+    /**
+     * Keeps the persisted last activity time of the user session fresh while the app is in the
+     * foreground, so a process that dies mid-session can tell on relaunch whether the user session
+     * was still active. Nothing else updates it between session part transitions, which can be
+     * hours apart.
+     */
+    private fun scheduleLastActivityUpdate(metadata: UserSessionMetadata?, endProcessState: ProcessState) {
+        if (endProcessState != ProcessState.FOREGROUND) {
+            return
+        }
+        val intervalMs = lastActivityUpdateIntervalMs(metadata)
+        val future = backgroundWorker.scheduleWithFixedDelay(
+            { synchronized(lock) { updateUserSessionActivityIfStale(clock.now(), intervalMs) } },
+            intervalMs,
+            intervalMs,
+            TimeUnit.MILLISECONDS,
+        ) ?: return
+        lastActivityTimerState = SessionTimerState(future)
     }
 
     private fun scheduleMaxDurationTimeout(metadata: UserSessionMetadata?) {
@@ -555,6 +597,9 @@ internal class SessionOrchestratorImpl(
             payloadStore?.storeSessionPartPayload(envelope, transitionType)
         }
     }
+
+    private fun multiFilePersistenceEnabled(): Boolean =
+        configService.persistenceBehavior.isMultiFilePersistenceEnabled()
 
     private fun updatePeriodicCacheAttrs() {
         val now = clock.now().millisToNanos()

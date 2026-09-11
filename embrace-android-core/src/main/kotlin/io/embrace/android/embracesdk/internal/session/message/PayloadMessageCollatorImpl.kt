@@ -30,18 +30,18 @@ internal class PayloadMessageCollatorImpl(
         )
     }
 
-    override fun buildFinalEnvelope(params: FinalEnvelopeParams): Envelope<SessionPartPayload> {
-        val envelope = sessionPartEnvelopeSource.getEnvelope(
+    override fun buildFinalEnvelope(params: FinalEnvelopeParams): Envelope<SessionPartPayload> =
+        sessionPartEnvelopeSource.getEnvelope(
             endType = params.endType,
             startNewSession = params.startNewSession,
             crashId = params.crashId,
         )
-        return Envelope(
-            resource = envelope.resource,
-            metadata = envelope.metadata,
-            data = envelope.data,
-            version = envelope.version,
-            type = envelope.type,
+
+    override fun endSessionPart(params: FinalEnvelopeParams) {
+        sessionPartEnvelopeSource.endSessionPart(
+            endType = params.endType,
+            startNewSession = params.startNewSession,
+            crashId = params.crashId,
         )
     }
 }

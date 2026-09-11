@@ -1,0 +1,768 @@
+<title>Deciding Whether a Benchmark Difference Is Real</title>
+<style>
+  :root {
+    --ground: #f6f5f2; --surface: #fffffe; --surface-2: #edebe5;
+    --ink: #191817; --ink-soft: #4f4c46; --ink-faint: #837f77; --rule: #dbd8d0;
+    --accent: #2f5d63; --accent-soft: #e2edee;
+    --bad: #8f3220; --bad-bg: #f8e6e2; --good: #24664a; --good-bg: #e3efe9;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, ui-serif, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #121414; --surface: #191c1c; --surface-2: #212525;
+      --ink: #e9e7e1; --ink-soft: #a5a29a; --ink-faint: #767369; --rule: #2a2e2e;
+      --accent: #7fb3ba; --accent-soft: #16292b;
+      --bad: #dd8069; --bad-bg: #2f1c17; --good: #5fb08a; --good-bg: #16291f;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #121414; --surface: #191c1c; --surface-2: #212525;
+    --ink: #e9e7e1; --ink-soft: #a5a29a; --ink-faint: #767369; --rule: #2a2e2e;
+    --accent: #7fb3ba; --accent-soft: #16292b;
+    --bad: #dd8069; --bad-bg: #2f1c17; --good: #5fb08a; --good-bg: #16291f;
+  }
+  body {
+    background: var(--ground); color: var(--ink); font-family: var(--serif);
+    font-size: 17px; line-height: 1.65; margin: 0; padding: 0 1.25rem 5rem;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 50rem; margin: 0 auto; }
+  header { padding: 3.5rem 0 1.75rem; border-bottom: 1px solid var(--ink); margin-bottom: 2rem; }
+  .eyebrow {
+    font-family: var(--mono); font-size: .68rem; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 .9rem;
+  }
+  h1 { font-weight: 600; font-size: clamp(2rem, 5vw, 2.7rem); line-height: 1.12; margin: 0 0 .8rem; text-wrap: balance; }
+  .standfirst { font-size: 1.12rem; color: var(--ink-soft); margin: 0; }
+  h2 {
+    font-size: 1.4rem; font-weight: 600; margin: 2.75rem 0 .6rem; text-wrap: balance;
+    padding-top: .4rem; border-top: 1px solid var(--rule);
+  }
+  h3 { font-size: 1.05rem; margin: 1.75rem 0 .4rem; font-family: var(--sans); }
+  p { margin: 0 0 1rem; }
+  code, .m { font-family: var(--mono); font-size: .85em; }
+  .eq {
+    font-family: var(--mono); font-size: .9rem; background: var(--surface); border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent); border-radius: 3px; padding: .8rem 1rem; margin: 1.1rem 0;
+    overflow-x: auto;
+  }
+  .scroller { overflow-x: auto; border: 1px solid var(--rule); border-radius: 4px; background: var(--surface); margin: 1.25rem 0; }
+  table { border-collapse: collapse; width: 100%; font-family: var(--sans); font-size: .85rem; }
+  th, td { text-align: left; padding: .55rem .8rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  thead th {
+    font-family: var(--mono); font-size: .64rem; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--ink-faint); background: var(--surface-2);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .no { color: var(--bad); font-weight: 600; }
+  .yes { color: var(--good); font-weight: 600; }
+  .callout {
+    background: var(--surface); border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+    border-radius: 3px; padding: 1rem 1.2rem; margin: 1.5rem 0; font-family: var(--sans); font-size: .95rem;
+  }
+  .callout.alarm { background: var(--bad-bg); border-left-color: var(--bad); border-color: transparent; }
+  .glossary { margin: 1.25rem 0 2rem; }
+  .glossary h3 {
+    font-family: var(--sans); font-size: .78rem; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--accent); margin: 1.75rem 0 .75rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .glossary dl { margin: 0; display: grid; grid-template-columns: minmax(9rem, 15rem) 1fr; gap: .55rem 1.4rem; }
+  .glossary dt { font-family: var(--sans); font-weight: 650; font-size: .9rem; color: var(--ink); }
+  .glossary dt .alias { display: block; font-weight: 400; font-size: .8rem; color: var(--ink-faint); }
+  .glossary dd { margin: 0; font-size: .93rem; color: var(--ink-soft); max-width: 62ch; }
+  .glossary dd strong { color: var(--ink); font-weight: 600; }
+  @media (max-width: 640px) {
+    .glossary dl { grid-template-columns: 1fr; gap: .2rem; }
+    .glossary dd { margin-bottom: .9rem; }
+  }
+  .callout h3 { margin-top: 0; }
+  .callout p:last-child { margin-bottom: 0; }
+  ul, ol { margin: 0 0 1rem; padding-left: 1.3rem; }
+  li { margin-bottom: .5rem; }
+  .refs { font-family: var(--sans); font-size: .85rem; color: var(--ink-soft); }
+  .refs li { margin-bottom: .7rem; }
+  a { color: var(--accent); }
+  footer { margin-top: 3rem; padding-top: 1.2rem; border-top: 1px solid var(--rule); font-size: .82rem; color: var(--ink-faint); font-family: var(--sans); }
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Methods · startup benchmarking · 2026-08-15</p>
+  <h1>Deciding whether a benchmark difference is real</h1>
+  <p class="standfirst">My reading of the performance-evaluation literature, and what I think it
+  means for how we compare runs. The short version: the hard questions are not <em>which test</em>.
+  They are <em>what counts as one observation</em> — which we had been answering wrong — and
+  <em>which problems a larger sample can actually solve</em>, which is fewer than it looks.</p>
+  <p class="standfirst" style="font-size: .95rem;">No statistics background needed. Every term used
+  here is defined in plain language in the <a href="#glossary">glossary</a> at the end — start
+  there if "clustering" or "p-value" is not already familiar.</p>
+</header>
+
+<h2>Status: what running these methods has taught, 2026-08-17 → 08-26</h2>
+<div class="callout">
+  <p>This brief was written into a world of one pass per arm. The standing design is now
+  <strong>10 passes × 20 iterations</strong>, and everything below was earned by a specific incident
+  or result rather than reasoned out in advance. Where an entry corrects something stated earlier in
+  this document, it says so.</p>
+</div>
+
+<h3>What is now standing practice</h3>
+<ul>
+  <li><strong>The test pair is the cluster bootstrap for the interval and the cluster permutation
+  for p, both at <span class="m">G = 10</span>.</strong> The permutation floor is
+  <span class="m">2/C(20,10) ≈ 1.1×10⁻⁵</span>, against <span class="m">0.029</span> at the old
+  <span class="m">G = 4</span> — several now-published results at <span class="m">p = 5×10⁻⁵</span>
+  were <em>structurally unreportable</em> before the shape change.</li>
+  <li><strong>When the bootstrap CI and the permutation p disagree, report "suggestive", not
+  "supported".</strong> Seen live at <span class="m">p = 0.014</span> with a CI of
+  <span class="m">[−16.24, +0.27]</span> — the signature of large between-pass variance. The
+  CI-excludes-zero criterion is the stricter gate and is the one the published tables verdict on.</li>
+  <li><strong>Judge precision by the CI half-width on the arm median — never by IQR.</strong> An
+  early read used IQR over raw launches to ask whether the shape change bought precision and
+  concluded it had not; IQR measures launch-to-launch spread, which was never the claim. On the
+  right statistic the half-width fell 45–95%.</li>
+  <li><strong>Validity precedes statistics.</strong> Two guards, each of which caught a silent
+  corruption: verify every leg against the device <strong>crash buffer</strong> rather than the
+  harness exit code — one device produced 200 green, complete, plausible traces from a process that
+  crashed on every launch — and refuse pass-level analysis when <span class="m">n ≠ G×m</span>,
+  because positionally-recovered pass boundaries misalign on any dropped trace.</li>
+  <li><strong>No inference shares the host with a live leg.</strong> A quiet host is part of the
+  measurement recipe, so bootstrap and permutation runs are queued for ingest gaps — even when that
+  means published tables carry explicit <em>pending</em> cells. A pending cell beats a number
+  computed under contention.</li>
+</ul>
+
+<h3>Corrections to what this document says above</h3>
+<ul>
+  <li><strong>"Between-pass is 93–99% of the variance" describes the ARM ESTIMATE, not a launch —
+  and it is per device/version, not a fleet constant.</strong> Two decompositions are easy to
+  conflate, and one nearly reached publication as a refutation of the other: the raw <strong>ICC</strong>
+  (the share of a <em>single launch's</em> variance that is between-cluster) versus the split of
+  <span class="m">σ²<sub>between</sub>/G + σ²<sub>within</sub>/(G·n)</span>, which is what run shape
+  is chosen on and whose second term carries a <span class="m">1/n</span> the raw components do not.
+  On the same 200 launches the flagship gives raw ICC <strong>0.027</strong> and an estimator split
+  of <strong>36% between / 64% within</strong> — while the 93–99% on record is the estimator split
+  measured on the A14 at 4×50. Both are right for their own cell. <strong>So "spend the budget on
+  passes, not iterations" does not transfer universally</strong>: where the within-pass term still
+  carries most of the estimate's variance, iterations are not wasted. Always say which decomposition
+  a number is, and compute it per arm rather than inheriting it.</li>
+  <li><strong>Interleaving is the standard for cheap-toggle arms; version arms run block-sequential,
+  on purpose.</strong> The advice above to "interleave arms rather than running them in blocks" holds
+  for factors that switch via runtime state — a device setting, <span class="m">pm compile</span>, a
+  seeded file. An SDK-version switch is a pin flip, a rebuild and a byte-different APK install, and
+  installs drive the compile-parity state machine, so pass-level version interleaving would entangle
+  the effect with install-cycle state. The sequential design substitutes 10 independent installs per
+  arm, cool gates re-normalising thermal state per pass, and an empirical bound on the drift
+  interleaving would have cancelled: the same arm re-measured across days agrees to ~1.5%. <strong>The
+  line:</strong> those bounds carry 10–45% effects; a claimed version effect in the few-percent range
+  deserves interleaved confirmation despite the parity cost.</li>
+  <li><strong>Run shape is series-defining, not a neutral repackaging.</strong> Changing it moved
+  medians device-dependently (Pixel 3 −10 to −19%, A14 +10 to +17%). Within-pass drift is real and
+  replicates with a per-device mechanism, but quantitatively explains only 7–37% of the shift. Treat
+  <span class="m">run_shape</span> like <span class="m">instrument</span>: part of the recipe key,
+  never comparable across values.</li>
+  <li><strong>A corrected test can still be the wrong test.</strong> The section-share drift
+  discriminator survived Benjamini–Hochberg mechanically and then failed its own premise in both
+  directions. FDR fixes the error rate, not the hypothesis.</li>
+</ul>
+
+<h3>Limits discovered by running into them</h3>
+<ul>
+  <li><strong>Tail statistics follow a power gradient — median → p90 → p95 — and that must be
+  reported as power, not inconsistency.</strong> Across the same seven comparisons: 5/7 supported at
+  the median, 5/7 at p90, 3/7 at p95, with zero sign flips above noise. One instructive inversion —
+  a comparison suggestive at the median but <em>supported</em> at p90 — shows that with large
+  variance, which statistic clears the bar can come down to where the variance concentrates.</li>
+  <li><strong>A quiet campaign cannot explain variance, and that is a fact about the design rather
+  than about the explanatory variables.</strong> Joining 28 production attributes to 200 launches
+  found nothing significant at either level, because a cool-gated, settled, single-device run held
+  thermal headroom to a 2.8-point range and never fired <span class="m">low-memory</span> once. The
+  same attributes correlate strongly when state is deliberately ramped. Design the run to vary what
+  you intend to explain, or the analysis is uninformative by construction rather than by finding.</li>
+  <li><strong>A null result is only meaningful if the arms provably differ — and "provably" is harder
+  than it looks.</strong> <em>(2026-08-26)</em> If a config flag silently fails to apply, both arms
+  are the same program and the analysis returns "no significant difference" with clean statistics and
+  nothing anywhere distinguishing that from a real null. The obvious artefact checks do not settle
+  it: identical APK size is what a one-opcode boolean injection <em>should</em> produce, the digest
+  moves for zip metadata alone, and <strong>Android builds are not byte-reproducible</strong> — the
+  same two trees differed by 275 dex byte positions built as a pair and by 11,790 after independent
+  rebuilds, a 43× swing that is entirely noise. Only byte-identical dex is conclusive, and only of
+  failure. <strong>The practical control is to design the A/B so it re-measures something already
+  established independently</strong> — reproducing a known median inside the new run is what licenses
+  reading the new statistic.</li>
+  <li><strong>Reduce for the question after next.</strong> <em>(2026-08-26)</em> Keeping per-launch
+  values is usually framed as a precision matter; it is also a survivability one. Two campaigns
+  computed medians only, were never ingested into a store, and had their traces purged — so when the
+  obvious follow-up arrived ("does the effect hold at p95?"), it was not merely unanswered but
+  <strong>unanswerable</strong>, and needed the whole A/B re-run. Store the per-launch array: it is
+  small, and it is the only artefact from which any future statistic can still be computed.</li>
+  <li><strong>Structure and level need different sample sizes.</strong> <em>(2026-08-26)</em> Which
+  trace sections nest inside which is a property of the code path and is stable across a handful of
+  traces; a duration median is not. Taking both from the same four traces produced a section
+  <em>longer than the window enclosing it</em> — 100.77 ms against 94.46 — because the sample came
+  from the head of the pass most distorted by install aftermath.</li>
+</ul>
+
+<h2>Samples fix variance. They never fix bias.</h2>
+<p>This is the distinction the rest of the document rests on, and it settles most arguments about
+"just run it more times". A confounder is <em>bias</em>. Collecting more data under the same
+confounded skew produces a tighter interval around the wrong number — a confident wrong answer,
+which is more dangerous than an obviously uncertain one because it invites action.</p>
+<p>So "more samples" only answers a problem when the thing being fought is <em>random with respect
+to the comparison</em>. Three questions decide that, and they are worth asking in order before
+adding any data at all.</p>
+
+<h3>1. Is the variation random with respect to the arms, or systematic?</h3>
+<p>If every pass of arm A ran hot and every pass of B ran cold, more passes measure the temperature
+difference more precisely and say nothing about the arms. No sample size repairs this.</p>
+<p>The fix is not statistical. It is <strong>randomisation or blocking</strong>, and its purpose is
+to convert a systematic difference into a random one — at which point replication finally has
+something it can average away. That, and not tidiness, is what interleaving arms is for.</p>
+<ul>
+  <li><strong>Production</strong> gets this from a randomised percentage rollout: random assignment
+  of <em>devices</em> balances confounders nobody named or measured. That is strictly stronger than
+  stratification, which can only handle the confounders you thought of. Restricting to one SoC is
+  then a <em>precision</em> play, not a validity one.</li>
+  <li><strong>Benchmarks</strong> get it from interleaving arms, counterbalancing order across
+  devices, and balancing or pinning known two-state confounders. A benchmark is not purely
+  "controlled" — it controls what it can, randomises what it cannot, and replicates to shrink the
+  residue.</li>
+</ul>
+
+<h3>2. At which level does the variation actually live?</h3>
+<p>Replication only averages away variation <em>at the level being replicated</em>. Adding
+iterations inside a pass reduces iteration-level noise and touches nothing else — which is why a
+device at <span class="m">ρ = 0.67</span> turned 200 iterations into an effective six. Adding
+<em>passes</em> reduces pass-level variance. Match the repetition to the level that carries the
+variance, and measure which level that is rather than assuming.</p>
+
+<h3>3. Is the confounder continuous, or a discrete switch?</h3>
+<p>This one is easy to miss and expensive to get wrong. Replication converges as
+<span class="m">1/√n</span>, which is weak medicine against a <strong>bimodal</strong> confounder.</p>
+<p>Install-time compile parity is a two-state switch worth about <span class="m">±10%</span> around
+the mean. With <span class="m">G</span> independent installs per arm the parity-induced error on one
+arm is <span class="m">10%/√G</span>, and on a <em>difference</em> between two arms it is
+<span class="m">√2 × 10%/√G</span>:</p>
+<div class="scroller">
+<table>
+  <thead><tr><th>installs per arm</th><th>residual parity error on a difference</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td class="no">14.1%</td></tr>
+    <tr><td>4 <em>(our standard)</em></td><td class="no">7.1%</td></tr>
+    <tr><td>16</td><td>3.5%</td></tr>
+    <tr><td>64</td><td class="yes">1.8%</td></tr>
+  </tbody>
+</table>
+</div>
+<p>At four passes per arm, parity alone still injects about <strong>7% of noise into every
+comparison</strong> — roughly half the size of the P17 effect we were trying to measure. Pushing it
+below 2% by replication alone would take about fifty installs per arm, which is never going to
+happen. <strong>Balancing it deliberately — two installs of each state per arm, or pinning with
+<code>pm compile</code> — removes it outright.</strong> For a discrete confounder, blocking beats
+any feasible amount of replication.</p>
+
+<h3>So when do more runs genuinely help?</h3>
+<div class="scroller">
+<table>
+  <thead><tr><th>adding</th><th>helps with</th><th>does nothing for</th></tr></thead>
+  <tbody>
+    <tr><td>more iterations per pass</td><td>iteration-level noise; saturates fast at realistic ρ</td><td>pass- or install-level variation</td></tr>
+    <tr><td>more passes / installs</td><td>random pass-level variation (background churn, thermal jitter), as <span class="m">1/√G</span></td><td>anything systematic that aligns with the arm</td></tr>
+    <tr><td>interleaving / counterbalancing</td><td>converts systematic differences into random ones</td><td>nothing — but it is what makes replication work at all</td></tr>
+    <tr><td>blocking or pinning</td><td>discrete confounders, completely</td><td>continuous noise</td></tr>
+  </tbody>
+</table>
+</div>
+<p><strong>Stop adding runs</strong> when the residual random error sits comfortably below the
+effect worth caring about, or when uncontrolled bias exceeds what any sample size could fix —
+whichever comes first. Past that point the spend buys precision on a biased estimate.</p>
+
+<h2>The mistake worth avoiding</h2>
+<p>Given two sets of launch times, the tempting move is a t-test on the pooled iterations. That is
+wrong here for three independent reasons, and each one pushes the same direction — toward believing
+differences that are not there.</p>
+<p>The distributions are right-skewed with genuine outliers, so the mean describes something nobody
+experiences. That much is well known and easy to fix by comparing medians. The second and third
+problems are the ones that actually bite.</p>
+
+<h2>What varies, and at which level</h2>
+<p>Kalibera and Jones's framing is the one I find most useful: treat a measurement as the sum of
+independent random effects at each level of repetition <span class="m">[1]</span>. For us:</p>
+<div class="eq">measurement = grand mean + install effect + pass effect + iteration effect</div>
+<p>Their central practical claim is that you must find out <em>which level actually carries
+variance</em> from pilot data rather than assuming, and then spend your repetitions there. Adding
+iterations when the variance lives at the install level buys almost nothing.</p>
+<p>We already know where our variance lives, and it is not the iteration. This fleet has a
+documented install-parity effect worth roughly <strong>±20%</strong> — consecutive installs land on
+different AOT compile states — and thermal state moved one device <strong>+31–49%</strong> in a
+single evening. Both are install- or pass-level effects. Iteration-level noise is small by
+comparison.</p>
+
+<h3>The arithmetic that decides everything</h3>
+<p>Iterations inside one pass are correlated: thermal drift, page-cache warming and background
+churn all trend within a run. Kish's design effect quantifies what that costs
+<span class="m">[5]</span>:</p>
+<div class="eq">DEFF = 1 + ρ(m − 1)        n_effective = n ⁄ DEFF</div>
+<p>With <span class="m">m = 50</span> iterations per pass and an intraclass correlation of only
+<span class="m">ρ = 0.1</span>, <span class="m">DEFF = 5.9</span> — fifty iterations carry the
+information of about eight. At <span class="m">ρ = 0.3</span>, they are worth three. A p-value
+computed over pooled iterations is therefore roughly <em>six times smaller than it should be</em>,
+and no quantity of extra iterations repairs it, because the bias is in the structure rather than
+the sample size.</p>
+
+<div class="callout alarm">
+  <h3>The consequence for our own data</h3>
+  <p>P17 ran <strong>one pass per arm</strong>. A cluster-level permutation test on two units has
+  two possible label assignments, which are mirror images of each other, so every arrangement is
+  exactly as extreme as the observed one: <strong>the smallest attainable p-value is 1.0</strong>.
+  This is not "underpowered" — cluster-level inference is <em>undefined</em> at one cluster per
+  arm, and the same is true of the cluster bootstrap, which degenerates to drawing the same pass
+  forever. Meanwhile our standard 4×50 campaign shape, which we adopted for other reasons, turns
+  out to be the minimum that can clear α = 0.05 at all: four passes per arm give
+  <span class="m">C(8,4) = 70</span> arrangements and a floor p of <span class="m">2/70 = 0.029</span>.</p>
+</div>
+
+<h2>Spend the budget on passes, not iterations</h2>
+<p>If the pass is the unit of evidence, an obvious question follows: given a fixed number of
+launches, how should they be split between passes and iterations-per-pass? We had been running
+<span class="m">4×50</span>. The arithmetic says that is close to the worst available choice.</p>
+<p>Under clustering, the variance of an arm decomposes as</p>
+<div class="eq">Var(arm) = σ²<sub>between</sub> ⁄ G  +  σ²<sub>within</sub> ⁄ (G · n)</div>
+<p>for <span class="m">G</span> passes of <span class="m">n</span> iterations. Now hold the total
+<span class="m">N = G · n</span> fixed. The second term becomes
+<span class="m">σ²<sub>within</sub> ⁄ N</span> — a <strong>constant</strong>, independent of how you
+split. Only the first term responds. So <strong>with a fixed launch budget, precision improves
+monotonically with more passes, and the iterations inside a pass buy nothing beyond what the fixed
+total already gives you</strong>.</p>
+<p>That is not a marginal effect here, because our variance is almost entirely between-pass.
+Measured on this fleet at 4×50, the between-pass term is <strong>93–99% of the total</strong> — on
+the Galaxy A14, 20.7 against 0.262. Those fifty iterations per pass were diligently shrinking the
+one percent that does not matter.</p>
+<p>Repricing the same 200 launches, as the 95% CI half-width on one arm's median:</p>
+<div class="scroller">
+<table>
+  <thead><tr><th>device</th><th>4×50</th><th>5×40</th><th>10×20</th><th>20×10</th></tr></thead>
+  <tbody>
+    <tr><td>Pixel 7 Pro</td><td>2.0 ms</td><td>1.8</td><td>1.3</td><td class="yes">1.0</td></tr>
+    <tr><td>Pixel 3</td><td>4.5 ms</td><td>4.0</td><td>2.9</td><td class="yes">2.0</td></tr>
+    <tr><td>Galaxy A14</td><td>9.0 ms</td><td>8.0</td><td>5.7</td><td class="yes">4.1</td></tr>
+    <tr><td>A01 Core</td><td>9.0 ms</td><td>8.2</td><td>6.2</td><td class="yes">4.9</td></tr>
+    <tr><td><strong>floor p</strong></td><td class="no">0.029</td><td>0.008</td><td>~1e-5</td><td class="yes">&lt;1e-9</td></tr>
+  </tbody>
+</table>
+</div>
+<p><strong>Roughly twice the precision for exactly the same number of launches</strong>, and the
+permutation floor collapses along with it. That last row matters as much as the first four: at four
+passes we can never report <span class="m">p &lt; 0.029</span> no matter how large the effect, which
+is precisely why a coherent 17.4% window improvement on the A14 came back unsupported.</p>
+<p>Two further effects push the same way and are not in the formula. <strong>Install parity</strong>
+is assigned per install and is bimodal, so it only averages down as
+<span class="m">1/√G</span> — about 7% residual error on a difference at
+<span class="m">G = 4</span>, about 3% at <span class="m">G = 20</span>. More passes is the only
+lever that touches it. And more passes is the only thing that buys inferential resolution at all.</p>
+<p><strong>We are moving to 10×20 rather than 20×10.</strong> It captures most of the precision at
+half the installs, twenty iterations keeps per-pass diagnostics readable, and installs are the
+flakiest step on entry-tier hardware — doubling them doubles our exposure to the install-timeout
+failures that have already cost several campaign attempts. Pooled p90/p95 support is unaffected by
+the split, since those are computed across all launches rather than within a pass.</p>
+<div class="callout alarm">
+  <h3>Changing the split closes a series</h3>
+  <p>Run shape is part of the recipe key, so a 10×20 run is <em>not</em> comparable to a banked
+  4×50 baseline. Re-baselining is a real cost and should be paid deliberately, when the sensitivity
+  gain is worth restarting the series. Archive the old store rather than deleting it: the old runs
+  remain internally valid, and comparing the two shapes on the same devices and versions is a
+  genuine measurement-invariance check — the medians should agree while the intervals tighten. If
+  they do not agree, something in the harness depends on pass length and we need to know before
+  trusting either.</p>
+</div>
+
+<h2>Which test answers which question</h2>
+<div class="scroller">
+<table>
+  <thead><tr><th>question</th><th>method</th><th>unit resampled</th><th>usable at 1 pass/arm</th></tr></thead>
+  <tbody>
+    <tr><td>Is the typical value different?</td><td>cluster bootstrap CI on the median difference</td><td>whole pass</td><td class="no">no</td></tr>
+    <tr><td>Could this difference be chance?</td><td>permutation test</td><td>whole pass</td><td class="no">no — min p = 1.0</td></tr>
+    <tr><td>How big is the difference?</td><td>Cliff's δ and Vargha–Delaney A12</td><td>—</td><td class="yes">yes, descriptively</td></tr>
+    <tr><td>Are these the same?</td><td>TOST against an equivalence margin</td><td>whole pass</td><td class="no">iteration-level only</td></tr>
+    <tr><td>Did the tail move?</td><td>bootstrap CI on p90/p95</td><td>whole pass</td><td class="no">and needs n ≥ 100/200</td></tr>
+    <tr><td>Many comparisons at once?</td><td>Benjamini–Hochberg FDR</td><td>—</td><td class="yes">yes</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Why the unit of permutation is the whole argument</h3>
+<p>A permutation test asks: under the null, could these labels have been swapped? The assumption is
+exchangeability. Iterations from different arms are <em>not</em> exchangeable — they come from
+different installs, and the install effect is real and large. Permuting iterations tests a null
+nobody believes and inflates the false-positive rate by roughly the design effect
+<span class="m">[6,7]</span>. Permuting passes tests the null we actually mean: that a whole run
+could equally have been labelled either arm.</p>
+
+<h3>Effect size, for data that is not normal</h3>
+<p>Cohen's <em>d</em> assumes normality and equal variances, neither of which holds. Cliff's δ is
+ordinal — it asks how often a value from one arm exceeds one from the other — so skew and outliers
+do not distort it <span class="m">[8]</span>. Vargha–Delaney A12 restates the same quantity as a
+probability of superiority, which I find the most honest thing to report to a non-statistical
+reader: <em>"a random launch on the new build beats a random launch on the old one 63% of the
+time."</em> Conventional thresholds put |δ| below 0.147 as negligible <span class="m">[9]</span>.</p>
+
+<h3>Proving sameness is a different test</h3>
+<p>Our control-version check — "9.0.0's numbers should not move between measurements" — cannot be
+done with a significance test. A non-significant result is consistent with no effect <em>and</em>
+with an effect we lacked the power to see. Equivalence testing (TOST) inverts the null and asks
+whether the difference is confidently <em>within</em> a margin <span class="m">[10]</span>. Our ±4%
+noise band is the natural margin, and it must be declared before looking.</p>
+
+<h2>Where I think the literature does not fit us</h2>
+<p>Two places, and both matter more than the choice of test.</p>
+
+<h3>Install parity is bimodal, not a variance component</h3>
+<p>The nested-variance model assumes each level contributes roughly symmetric noise that averaging
+reduces. Our install-parity effect is not that: it is a <strong>two-state switch</strong> — the APK
+lands on <span class="m">speed-profile</span> or <span class="m">verify</span>, and the window moves
+about 20% accordingly. Averaging over installs does not shrink a bimodal confound the way it shrinks
+Gaussian noise; with an odd number of installs it simply picks a side. The correct treatment is
+<em>blocking</em>, not replication: pin the state with <span class="m">pm compile</span>, or balance
+parities deliberately across arms, and record which state each pass ran in. I have not seen this
+case addressed in the benchmarking papers, which mostly consider continuous variance sources.</p>
+
+<h3>Our dominant risk is confounding, not sampling error</h3>
+<p>Every method above controls for <em>sampling</em> error. None of them protects against a
+systematic difference between arms — a warmer device, a different compile state, a background
+update. Given that our confounds (±20% parity, +31–49% thermal) are <em>larger than most effects we
+are chasing</em>, design controls do more work than statistics: interleave arms rather than running
+them in blocks <span class="m">[4]</span>, counterbalance order across devices, and record the
+conditions so a confound can be detected after the fact. A tight confidence interval around a
+confounded difference is a precise wrong answer.</p>
+
+<h2>Power, and the special case of a diluted measure</h2>
+<p>Sample size scales with the square of the effect you want to see:</p>
+<div class="eq">n per arm ≈ 2 (z<sub>α/2</sub> + z<sub>β</sub>)² · CV² ⁄ effect²   × DEFF</div>
+<p>Halving the detectable effect quadruples the cost. This is why measuring a change through a
+measure that dilutes it is so expensive — the cost rises with the <em>square</em> of the dilution.
+Our concrete case: SDK init is 3.8% of end-to-end launch on one device and 1.0% on another, so a
+15% init improvement becomes a 0.58% and 0.15% change in TTID.</p>
+
+<div class="scroller">
+<table>
+  <thead><tr><th>measure</th><th class="num">effect to detect</th><th class="num">CV</th><th class="num">n per arm</th><th class="num">device time</th></tr></thead>
+  <tbody>
+    <tr><td>TTID — Pixel 3</td><td class="num">0.58%</td><td class="num">4.2%</td><td class="num">5,022</td><td class="num">11.7 h</td></tr>
+    <tr><td>TTID — Galaxy A14</td><td class="num">0.15%</td><td class="num">2.9%</td><td class="num">33,525</td><td class="num">78 h</td></tr>
+    <tr><td>SDK-init window</td><td class="num">15%</td><td class="num">~6%</td><td class="num">16</td><td class="num">minutes</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>So TTID cannot serve as evidence that an SDK-init change helped — not for want of effort, but
+because the effect is below the noise floor before sampling begins, and the confounds are larger
+still. TTID is a <strong>guardrail</strong> (did this make things much worse?), never a detector.
+The question it was standing in for — was the work removed or merely moved past first frame? —
+should be answered with CPU accounting, which measures the resource directly and varies far less
+than wall time.</p>
+
+<h2>Production is a different problem — and you have a tool the benchmark lacks</h2>
+<p>The natural reading is that production trades controllable confounds for sample size: you cannot
+pin the compile state on a stranger's phone, so the best available move is to restrict to a
+homogeneous slice (one SoC) and let volume smooth the rest. That is half right, and the missing
+half is the more powerful one.</p>
+<p><strong>A staged percentage rollout is randomisation.</strong> Randomly assigning devices
+balances confounders you cannot name, measure, or even suspect — which is strictly stronger than
+stratifying on the ones you thought of. Stratification then buys <em>precision</em>; randomisation
+buys <em>validity</em>. They solve different problems and you want both. Two conditions: randomise
+at the <strong>device</strong> level rather than the launch, and ensure assignment cannot be
+self-selected — an opt-in beta cohort is not a random sample.</p>
+
+<h3>The formula that governs sample size</h3>
+<p>For a quantile, the asymptotic sampling variance is</p>
+<div class="eq">Var(q̂<sub>p</sub>) ≈ p(1 − p) ⁄ (n · f(q<sub>p</sub>)²)</div>
+<p>The <strong>density at the quantile</strong> decides everything. Deep in a sparse right tail
+<span class="m">f</span> is small, so the same n buys far less precision at p99 than at p50 — and
+the gap widens as the distribution spreads. The spread can be read straight off telemetry as
+<span class="m">σ = ln(p90/p50) / 1.2816</span>, with no distributional assumption needed to obtain
+it.</p>
+
+<div class="scroller">
+<table>
+  <thead><tr><th>spread (p90/p50)</th><th class="num">σ</th><th class="num">p50</th><th class="num">p90</th><th class="num">p95</th><th class="num">p99</th></tr></thead>
+  <tbody>
+    <tr><td>1.2 — bench-like</td><td class="num">0.14</td><td class="num">147</td><td class="num">273</td><td class="num">417</td><td class="num">1,301</td></tr>
+    <tr><td>1.8 — one SoC</td><td class="num">0.46</td><td class="num">1,524</td><td class="num">2,834</td><td class="num">4,331</td><td class="num">13,515</td></tr>
+    <tr><td>3.0 — mixed fleet</td><td class="num">0.86</td><td class="num">5,322</td><td class="num">9,899</td><td class="num">15,128</td><td class="num">47,214</td></tr>
+  </tbody>
+</table>
+</div>
+<p>Launches needed for ±5% precision, with device-level clustering (DEFF 3). Restricting to one SoC
+cuts σ from 0.86 to 0.46 and the requirement by about 3.5× at every quantile — that is the
+quantifiable payoff of stratifying, and it is real.</p>
+
+<h3>Yes, the distribution matters — in two separate ways</h3>
+<p>For <strong>means</strong>, shape governs whether the central limit theorem has taken hold.
+Berry–Esseen bounds the convergence by the third moment, so the practical requirement scales with
+skewness squared (rule of thumb <span class="m">n ≥ 25·skew²</span>). Latency is log-normal-ish; at
+σ = 0.86 the skewness is about 4.5, so a mean needs thousands of samples merely to be approximately
+normal — and remains outlier-dominated after that. For <strong>quantiles</strong>, shape enters
+through <span class="m">f(q<sub>p</sub>)</span> above: it does not merely scale the answer, it
+decides which quantiles are affordable at all.</p>
+
+<h3>Three ways to make the tail affordable</h3>
+<ul>
+  <li><strong>Extreme value theory instead of empirical quantiles.</strong> Fit a Generalised Pareto
+  distribution to exceedances above a high threshold and extrapolate. This borrows strength from the
+  whole tail shape rather than the handful of points past p99, and is standard practice in
+  hydrology and finance for precisely this problem.</li>
+  <li><strong>Ask for an exceedance rate, not a quantile.</strong> "What share of launches exceed
+  500 ms" is a binomial proportion — more robust, easier to explain, and usually the real question.
+  Pinning a 1% rate to ±0.5pp needs ~4,600 launches against ~13,500 for p99 at ±5%. The precision is
+  absolute, though: demanding ±0.1pp on a 1% rate costs ~114,000.</li>
+  <li><strong>Pre-period adjustment (CUPED).</strong> In a staged rollout every device has
+  pre-exposure launches. Adjusting each device by its own prior behaviour removes variance in
+  proportion to ρ², cutting required sample by the same factor — at ρ = 0.7, roughly half. Given
+  per-device history and a startup counter this is available immediately and costs only analysis.</li>
+</ul>
+
+<div class="callout alarm">
+  <h3>Clustering does not go away in production</h3>
+  <p>Launches are not independent: the same device, installed apps, storage state and network
+  recur. Effective n is closer to the number of <strong>devices</strong> than launches — a million
+  launches from 5,000 devices carries roughly 5,000 devices' worth of information about
+  device-level effects, and less if a few heavy users dominate. Compute the ICC across devices
+  before trusting any n, exactly as with passes in the benchmark.</p>
+</div>
+
+<p>Finally, a rollout is watched continuously, and repeatedly peeking at a fixed-horizon test
+inflates the false-positive rate badly. Use a sequential procedure — mSPRT or confidence sequences —
+whose guarantees hold at every stopping time.</p>
+
+<h2>What I am changing in our practice</h2>
+<ol>
+  <li><strong>Passes, not iterations — and 10×20 is the new default shape.</strong> Four passes per
+  arm is the bare minimum for inference to exist at all; ten is what makes it usable. At a fixed
+  launch budget the within-pass term is a constant, so only the pass count buys precision, and 93–99%
+  of our variance is between-pass. Every pass from an independent install.</li>
+  <li><strong>Interleave arms</strong> rather than running all of A then all of B, so drift cannot
+  align with the comparison.</li>
+  <li><strong>Report the interval and the effect size, never a bare percentage.</strong> A
+  difference without an interval is an anecdote.</li>
+  <li><strong>Report the minimum detectable effect beside every null result.</strong> "No change" is
+  meaningless until paired with "we could only have seen 1.4%".</li>
+  <li><strong>Clear the noise band as well as the p-value.</strong> With large n, trivial
+  differences become significant; ±4% remains the bar for acting.</li>
+  <li><strong>Declare the family before testing</strong> and apply BH-FDR across it
+  <span class="m">[11]</span> — with 17 sections and 4 devices, something will always look
+  significant.</li>
+  <li><strong>Record compile state and thermal state per pass</strong>, so a bimodal confound is
+  visible rather than absorbed into "noise".</li>
+</ol>
+
+<h2 id="glossary">Glossary</h2>
+<p>Plain-language definitions of everything used above. No prior stats background assumed — read
+this first if any of the terms are unfamiliar, or dip in as you go.</p>
+
+<div class="glossary">
+
+<h3>The two things that can be wrong</h3>
+<dl>
+  <dt>Variance<span class="alias">"noise", "scatter"</span></dt>
+  <dd>How much your measurements bounce around when nothing has actually changed. Run the same
+  build twice and get 48 ms then 53 ms — that spread is variance. <strong>More data reduces
+  it.</strong></dd>
+
+  <dt>Bias</dt>
+  <dd>A systematic push in one direction, so your answer is consistently off rather than merely
+  scattered. Measuring one build on a hot phone and the other on a cool one biases the comparison.
+  <strong>More data does NOT reduce it</strong> — you just get a tighter interval around the wrong
+  number.</dd>
+
+  <dt>Confounder</dt>
+  <dd>Something other than the thing you are testing that differs between the two groups and could
+  explain the result. Temperature, install state, background apps. Confounders create bias.</dd>
+
+  <dt>Arm</dt>
+  <dd>One side of a comparison — "the old build" is one arm, "the new build" the other. Borrowed
+  from clinical trials.</dd>
+</dl>
+
+<h3>How a startup benchmark is structured</h3>
+<dl>
+  <dt>Iteration<span class="alias">"launch"</span></dt>
+  <dd>One cold app start, producing one measurement.</dd>
+
+  <dt>Pass</dt>
+  <dd>A batch of iterations run back-to-back from a single install. Twenty launches in a row is one
+  pass. The key point of this document is that <strong>the pass, not the iteration, is the unit of
+  evidence</strong>.</dd>
+
+  <dt>Clustering</dt>
+  <dd>When measurements come in groups that resemble each other more than they resemble the rest.
+  Launches inside one pass share a device state, a temperature, an install — so they are clustered,
+  and cannot be treated as independent.</dd>
+
+  <dt>Install parity<span class="alias">compile state</span></dt>
+  <dd>Android may compile an app differently from one install to the next, and the difference is
+  large. It is fixed for a whole pass, so it behaves like a coin flip per install rather than noise
+  that averages out within a pass.</dd>
+</dl>
+
+<h3>Measuring the damage from clustering</h3>
+<dl>
+  <dt>ICC<span class="alias">intraclass correlation, ρ (rho)</span></dt>
+  <dd>How alike measurements within a cluster are, from 0 to 1. Near 0 means launches in a pass are
+  as different from each other as from any other pass — clustering costs you nothing. Near 1 means
+  they are near-copies, so fifty launches tell you barely more than one.</dd>
+
+  <dt>Design effect<span class="alias">DEFF</span></dt>
+  <dd>How much clustering inflates your uncertainty, calculated as <span class="m">1 + ρ(m−1)</span>
+  for m iterations per pass. A DEFF of 30 means your interval is far wider than the raw count
+  suggests.</dd>
+
+  <dt>Effective n<span class="alias">n_eff</span></dt>
+  <dd>How many <em>genuinely independent</em> measurements you effectively have: the raw count
+  divided by the design effect. Two hundred launches at high ICC can be worth an effective six.</dd>
+</dl>
+
+<h3>Summarizing a set of numbers</h3>
+<dl>
+  <dt>Median</dt>
+  <dd>The middle value — half the launches are faster, half slower. Preferred here over the mean
+  because a few extreme launches drag a mean toward a value nobody actually experiences.</dd>
+
+  <dt>Percentile / quantile<span class="alias">p90, p95</span></dt>
+  <dd>p90 is the value 90% of launches come in under. It describes the slow tail — the launches
+  users notice and complain about.</dd>
+
+  <dt>Right-skewed</dt>
+  <dd>A distribution with a long tail on the slow side. Launches can be arbitrarily slow but never
+  faster than zero, so startup data always looks like this.</dd>
+
+  <dt>CV<span class="alias">coefficient of variation</span></dt>
+  <dd>Spread expressed as a percentage of the typical value, so a 5% CV means the same thing on a
+  15 ms flagship and a 150 ms budget phone.</dd>
+</dl>
+
+<h3>Deciding whether a difference is real</h3>
+<dl>
+  <dt>Confidence interval<span class="alias">CI</span></dt>
+  <dd>A range of plausible values for the true difference. <strong>If it includes zero, "no
+  difference" is still plausible</strong> and you have not shown anything.</dd>
+
+  <dt>p-value</dt>
+  <dd>The probability of seeing a difference at least this large if the two arms were actually
+  identical. Small means "coincidence is an uncomfortable explanation". <strong>It is not the
+  probability that you are right.</strong></dd>
+
+  <dt>Alpha<span class="alias">significance threshold</span></dt>
+  <dd>The p-value cutoff agreed in advance, conventionally 0.05.</dd>
+
+  <dt>Bootstrap</dt>
+  <dd>Estimating uncertainty by resampling your own data thousands of times with replacement and
+  watching how much the answer moves. A <strong>cluster bootstrap</strong> resamples whole passes
+  rather than individual launches, which is what respects the clustering.</dd>
+
+  <dt>Permutation test</dt>
+  <dd>Shuffling the "old build" / "new build" labels many times to see how often chance alone
+  produces a gap as big as the one observed. Requires no assumption about the shape of the data.</dd>
+
+  <dt>Floor p<span class="alias">smallest attainable p-value</span></dt>
+  <dd>With few clusters there are only so many ways to shuffle the labels, which puts a hard floor
+  under the p-value. With four passes per arm that floor is 0.029 — so a design with fewer passes
+  <strong>cannot produce a significant result no matter how large the real effect is</strong>.</dd>
+
+  <dt>Statistical power</dt>
+  <dd>The chance your experiment detects a real effect of a given size. Conventionally aimed at
+  80%.</dd>
+
+  <dt>MDE<span class="alias">minimum detectable effect</span></dt>
+  <dd>The smallest difference your design could reliably have found. <strong>Essential when
+  reporting a null</strong>: "no change" means nothing until paired with "and we could only have
+  seen a change of 8% or larger".</dd>
+
+  <dt>Effect size<span class="alias">Cliff's delta, A12</span></dt>
+  <dd>How big the difference is, separate from how confident you are that it exists. A tiny,
+  meaningless difference can be highly significant given enough data.</dd>
+
+  <dt>Equivalence test<span class="alias">TOST</span></dt>
+  <dd>The test for actively proving two things are <em>the same</em> within some tolerance. An
+  ordinary test failing to find a difference is not proof of sameness.</dd>
+
+  <dt>Multiple comparisons<span class="alias">BH-FDR</span></dt>
+  <dd>Test enough things and something looks significant by luck. Benjamini–Hochberg adjusts for
+  how many tests you ran, so declare the full list before you start.</dd>
+</dl>
+
+<h3>Terms that appear in the production section</h3>
+<dl>
+  <dt>Randomization</dt>
+  <dd>Assigning users or devices to arms by chance. Its power is that it balances confounders you
+  never thought of — which no amount of careful matching can do.</dd>
+
+  <dt>Stratification</dt>
+  <dd>Deliberately restricting or balancing on a known factor, such as comparing only one chipset.
+  Improves precision, but only for factors you already knew to worry about.</dd>
+
+  <dt>Exceedance rate</dt>
+  <dd>The share of launches slower than some threshold — "3% took over 500 ms". Robust and easy to
+  explain, and much cheaper than an extreme percentile <em>when you have production-scale
+  traffic</em>.</dd>
+
+  <dt>CUPED</dt>
+  <dd>Using each device's own before-the-experiment measurements to cancel out its baseline
+  differences, which can cut the required sample size dramatically for free.</dd>
+
+  <dt>EVT<span class="alias">extreme value theory, Generalised Pareto</span></dt>
+  <dd>Fitting a curve to the whole tail to estimate extreme percentiles, instead of relying on the
+  handful of data points beyond p99.</dd>
+
+  <dt>Sequential testing<span class="alias">mSPRT, always-valid inference</span></dt>
+  <dd>Methods designed to be checked repeatedly as data arrives. Peeking at an ordinary test over
+  and over inflates false positives badly; these do not have that problem.</dd>
+
+  <dt>Central limit theorem<span class="alias">CLT</span></dt>
+  <dd>The result that averages tend toward a bell curve as samples grow. It underpins many standard
+  tests, and it arrives slowly for skewed data like ours — one reason to prefer medians and
+  resampling.</dd>
+</dl>
+
+</div>
+
+<h2>Sources</h2>
+<ol class="refs">
+  <li>T. Kalibera &amp; R. Jones, <em>Rigorous Benchmarking in Reasonable Time</em>, ISMM 2013.
+  <a href="https://kar.kent.ac.uk/33611/45/p63-kaliber.pdf">kar.kent.ac.uk</a> · doi:10.1145/2464157.2464160</li>
+  <li>T. Kalibera &amp; R. Jones, <em>Quantifying Performance Changes with Effect Size Confidence
+  Intervals</em>, Univ. of Kent TR 2012 / <a href="https://arxiv.org/abs/2007.10899">arXiv:2007.10899</a></li>
+  <li>A. Georges, D. Buytaert, L. Eeckhout, <em>Statistically Rigorous Java Performance
+  Evaluation</em>, OOPSLA 2007. <a href="https://dri.es/files/oopsla07-georges.pdf">dri.es</a></li>
+  <li>T. Mytkowicz, A. Diwan, M. Hauswirth, P. Sweeney, <em>Producing Wrong Data Without Doing
+  Anything Obviously Wrong!</em>, ASPLOS 2009 — measurement bias and why interleaving matters.</li>
+  <li>L. Kish, <em>Survey Sampling</em>, Wiley 1965 — the design effect.</li>
+  <li>A. C. Cameron &amp; D. L. Miller, <em>A Practitioner's Guide to Cluster-Robust Inference</em>,
+  J. Human Resources 50(2), 2015.
+  <a href="https://cameron.econ.ucdavis.edu/research/Cameron_Miller_JHR_2015_February.pdf">ucdavis.edu</a></li>
+  <li>P. Good, <em>Permutation, Parametric, and Bootstrap Tests of Hypotheses</em>, 3rd ed.,
+  Springer 2005 — exchangeability and the unit of permutation.</li>
+  <li>N. Cliff, <em>Dominance statistics: Ordinal analyses to answer ordinal questions</em>,
+  Psychological Bulletin 114(3), 1993.</li>
+  <li>A. Vargha &amp; H. D. Delaney, <em>A critique and improvement of the CL common language
+  effect size statistic</em>, J. Educational and Behavioral Statistics 25(2), 2000.</li>
+  <li>D. Lakens, <em>Equivalence tests</em>, Social Psychological and Personality Science 8(4), 2017.</li>
+  <li>Y. Benjamini &amp; Y. Hochberg, <em>Controlling the false discovery rate</em>, JRSS-B 57(1), 1995.</li>
+  <li>B. Efron &amp; R. Tibshirani, <em>An Introduction to the Bootstrap</em>, Chapman &amp; Hall 1993.</li>
+</ol>
+
+<footer>
+  Implementation in <code>.claude/skills/_shared/stats.py</code>; the longer literature brief with
+  per-method minimum sample sizes is at
+  <code>claude-output/2026-08-15-benchmark-statistics-methods.md</code>. Fleet figures quoted here
+  are from this project's own measurements: install parity and thermal effects from the outlier
+  investigation, launch-time variability from the thermal run's settled launches, and window
+  variability from the baseline campaign.
+</footer>
+</div>
+
+

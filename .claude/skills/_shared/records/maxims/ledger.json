@@ -1,0 +1,501 @@
+{
+  "candidates": {
+    "D+io share": {
+      "cells": 2,
+      "label": "D+io share",
+      "last_seen": "p7p-cooldown-2026-08-12",
+      "max_lift": 2.7
+    },
+    "S share": {
+      "cells": 1,
+      "label": "S share",
+      "last_seen": "a01-campaign-2026-08-11",
+      "max_lift": 2.5589
+    },
+    "art_classload share": {
+      "cells": 2,
+      "label": "art_classload share",
+      "last_seen": "p7p-cooldown-2026-08-12",
+      "max_lift": 2.0
+    },
+    "art_verify share": {
+      "cells": 2,
+      "label": "art_verify share",
+      "last_seen": "p7p-cooldown-2026-08-12",
+      "max_lift": 2.125
+    },
+    "binder_txn per ms": {
+      "cells": 2,
+      "label": "binder_txn per ms",
+      "last_seen": "p7p-cooldown-2026-08-12",
+      "max_lift": 2.125
+    },
+    "eff_mhz": {
+      "cells": 3,
+      "label": "eff_mhz",
+      "last_seen": "p7p-cooldown-2026-08-12",
+      "max_lift": 2.5
+    },
+    "lock_contention share": {
+      "cells": 2,
+      "label": "lock_contention share",
+      "last_seen": "a01-campaign-2026-08-11",
+      "max_lift": 2.3263
+    },
+    "mem_available": {
+      "cells": 4,
+      "label": "mem_available",
+      "last_seen": "p7p-cooldown-2026-08-12",
+      "max_lift": 2.7
+    },
+    "othercpu:/apex/com.android.art/bin/dex2oat32 share": {
+      "cells": 1,
+      "label": "othercpu:/apex/com.android.art/bin/dex2oat32 share",
+      "last_seen": "pixel-campaign-2026-08-11",
+      "max_lift": 2.2401
+    },
+    "othercpu:/system/bin/surfaceflinger share": {
+      "cells": 3,
+      "label": "othercpu:/system/bin/surfaceflinger share",
+      "last_seen": "a01-campaign-2026-08-11",
+      "max_lift": 2.5922
+    },
+    "othercpu:/vendor/bin/hw/android.hardware.graphics.composer@2.2-service share": {
+      "cells": 1,
+      "label": "othercpu:/vendor/bin/hw/android.hardware.graphics.composer@2.2-service share",
+      "last_seen": "campaign-2026-08-11",
+      "max_lift": 3.1682
+    },
+    "othercpu:com.google.android.gms.persistent share": {
+      "cells": 1,
+      "label": "othercpu:com.google.android.gms.persistent share",
+      "last_seen": "p7p-cooldown-2026-08-12",
+      "max_lift": 1.75
+    },
+    "othercpu:system_server share": {
+      "cells": 3,
+      "label": "othercpu:system_server share",
+      "last_seen": "a01-campaign-2026-08-11",
+      "max_lift": 2.5922
+    }
+  },
+  "maxims": {
+    "compile-state-toggle": {
+      "confirmed": 3,
+      "contradicted": 7,
+      "contradictions": [
+        {
+          "cell": "mid-b / 9.2.0-SNAPSHOT-0811 / default",
+          "device": "mid-b",
+          "observed": "pass medians 59.0 -> 49.7 -> 59.6 -> 59.3 -> 61.0; pure-CPU 1.34x, block-resume 1.28x",
+          "run": "pixel-campaign-2026-08-11"
+        },
+        {
+          "cell": "entry-a / 9.2.0-SNAPSHOT-0811 / default",
+          "device": "entry-a",
+          "observed": "pass medians 108.5 -> 99.6 -> 105.7 -> 103.7 -> 99.4; pure-CPU 1.07x, block-resume 1.08x",
+          "run": "a01-campaign-2026-08-11"
+        },
+        {
+          "cell": "flagship-a / 9.2.0-SNAPSHOT-0811 / default",
+          "device": "flagship-a",
+          "observed": "pass medians 17.0 -> 11.0 -> 13.0 -> 12.6; pure-CPU 1.58x, block-resume 1.39x",
+          "run": "p7p-campaign-2026-08-12"
+        },
+        {
+          "cell": "flagship-a / 9.2.0-SNAPSHOT-0811 / default-cool",
+          "device": "flagship-a",
+          "observed": "pass medians 15.9 -> 11.2 -> 10.8 -> 13.3; pure-CPU 1.70x, block-resume 1.41x",
+          "run": "p7p-cooldown-2026-08-12"
+        },
+        {
+          "cell": "mid-b / 9.2.0-SNAPSHOT-0811 / default-cool",
+          "device": "mid-b",
+          "observed": "pass medians 31.9 -> 37.7 -> 41.6 -> 39.5 -> 42.2; pure-CPU 1.39x, block-resume 1.28x",
+          "run": "cooldown-2026-08-12-pixel"
+        },
+        {
+          "cell": "entry-a / 9.2.0-SNAPSHOT-0811 / default",
+          "device": "entry-a",
+          "observed": "pass medians 105.8 -> 109.7 -> 124.0 -> 107.3; pure-CPU 0.97x, block-resume 1.20x",
+          "run": "a01-mini-2026-08-12"
+        },
+        {
+          "cell": "mid-b / 9.2.0 / profile",
+          "device": "mid-b",
+          "observed": "pass medians 30.5 -> 30.5 -> 30.8; pure-CPU 1.00x, block-resume 1.02x",
+          "run": "2026-08-26-port-side-by-side-mid-b"
+        }
+      ],
+      "devices": {
+        "entry-a": {
+          "confirmed": 0,
+          "contradicted": 2,
+          "thin": 1,
+          "undetected": 0
+        },
+        "flagship-a": {
+          "confirmed": 0,
+          "contradicted": 2,
+          "thin": 0,
+          "undetected": 0
+        },
+        "mid-a": {
+          "confirmed": 3,
+          "contradicted": 0,
+          "thin": 0,
+          "undetected": 0
+        },
+        "mid-b": {
+          "confirmed": 0,
+          "contradicted": 3,
+          "thin": 8,
+          "undetected": 0
+        }
+      },
+      "scope": "device-specific",
+      "statement": "Pass medians alternate between two levels at least 10% apart, with pure-CPU sections within 1.25x and block-and-resume sections 1.5x or more between the two states.",
+      "thin": 9,
+      "undetected": 0
+    },
+    "concurrent-cpu": {
+      "confirmed": 3,
+      "contradicted": 1,
+      "contradictions": [
+        {
+          "cell": "flagship-a / 9.2.0-SNAPSHOT-0811 / default",
+          "device": "flagship-a",
+          "observed": "0.30x on 50 iterations (slow 3/50 vs 40/200)",
+          "run": "p7p-campaign-2026-08-12"
+        }
+      ],
+      "devices": {
+        "entry-a": {
+          "confirmed": 1,
+          "contradicted": 0,
+          "thin": 0,
+          "undetected": 0
+        },
+        "flagship-a": {
+          "confirmed": 0,
+          "contradicted": 1,
+          "thin": 0,
+          "undetected": 1
+        },
+        "mid-a": {
+          "confirmed": 1,
+          "contradicted": 0,
+          "thin": 0,
+          "undetected": 0
+        },
+        "mid-b": {
+          "confirmed": 1,
+          "contradicted": 0,
+          "thin": 9,
+          "undetected": 0
+        }
+      },
+      "scope": "directional",
+      "statement": "Concurrent CPU from other processes makes a slow init likelier, by 1.5x or more where measurable: the highest quartile of other-process on-CPU share of the window, the idle task excluded.",
+      "thin": 9,
+      "undetected": 1
+    },
+    "config-fast-path": {
+      "confirmed": 13,
+      "contradicted": 4,
+      "contradictions": [
+        {
+          "cell": "entry-a / 9.2.0-SNAPSHOT-0811 / default",
+          "device": "entry-a",
+          "observed": "4 of 5 passes; pass 2: iter000 33.1 ms vs rest p50 21.2 ms",
+          "run": "a01-campaign-2026-08-11"
+        },
+        {
+          "cell": "flagship-a / 9.2.0-SNAPSHOT-0811 / default",
+          "device": "flagship-a",
+          "observed": "1 of 4 passes; pass 1: iter000 6.7 ms vs rest p50 5.1 ms",
+          "run": "p7p-campaign-2026-08-12"
+        },
+        {
+          "cell": "entry-a / 9.2.0-SNAPSHOT-0811 / default-cool",
+          "device": "entry-a",
+          "observed": "1 of 1 passes; pass 1: iter000 24.5 ms vs rest p50 21.8 ms",
+          "run": "cooldown-2026-08-12-a01"
+        },
+        {
+          "cell": "entry-a / 9.2.0-SNAPSHOT-0811 / default",
+          "device": "entry-a",
+          "observed": "1 of 4 passes; pass 4: iter000 35.8 ms vs rest p50 23.7 ms",
+          "run": "a01-mini-2026-08-12"
+        }
+      ],
+      "devices": {
+        "entry-a": {
+          "confirmed": 0,
+          "contradicted": 3,
+          "thin": 0,
+          "undetected": 0
+        },
+        "flagship-a": {
+          "confirmed": 1,
+          "contradicted": 1,
+          "thin": 0,
+          "undetected": 0
+        },
+        "mid-a": {
+          "confirmed": 3,
+          "contradicted": 0,
+          "thin": 0,
+          "undetected": 0
+        },
+        "mid-b": {
+          "confirmed": 9,
+          "contradicted": 0,
+          "thin": 0,
+          "undetected": 0
+        }
+      },
+      "scope": "universal",
+      "statement": "Every pass's first launch takes the fresh-install config fast path: its persisted-config-load is below the median of the rest of the pass.",
+      "thin": 0,
+      "undetected": 0
+    },
+    "cpu-closure": {
+      "confirmed": 0,
+      "contradicted": 0,
+      "contradictions": [],
+      "devices": {},
+      "scope": "universal",
+      "statement": "The init span's CPU attributes close: init-cpu-pct plus init-run-delay-pct is between 0 and 100 on at least 98% of launches.",
+      "thin": 0,
+      "undetected": 0
+    },
+    "first-launch": {
+      "confirmed": 1,
+      "contradicted": 5,
+      "contradictions": [
+        {
+          "cell": "mid-a / 9.2.0-SNAPSHOT-0811 / default",
+          "device": "mid-a",
+          "observed": "iter000/rest 0.83x over 4 passes",
+          "run": "a14-campaign2-2026-08-11"
+        },
+        {
+          "cell": "mid-b / 9.2.0-SNAPSHOT-0811 / default",
+          "device": "mid-b",
+          "observed": "iter000/rest 0.81x over 5 passes",
+          "run": "pixel-campaign-2026-08-11"
+        },
+        {
+          "cell": "flagship-a / 9.2.0-SNAPSHOT-0811 / default-cool",
+          "device": "flagship-a",
+          "observed": "iter000/rest 0.78x over 4 passes",
+          "run": "p7p-cooldown-2026-08-12"
+        },
+        {
+          "cell": "mid-b / 9.2.0-SNAPSHOT-0811 / default-cool",
+          "device": "mid-b",
+          "observed": "iter000/rest 0.81x over 5 passes",
+          "run": "cooldown-2026-08-12-pixel"
+        },
+        {
+          "cell": "mid-a / 9.2.0-SNAPSHOT-0811 / default-cool",
+          "device": "mid-a",
+          "observed": "iter000/rest 0.84x over 4 passes",
+          "run": "cooldown-2026-08-12-a14"
+        }
+      ],
+      "devices": {
+        "entry-a": {
+          "confirmed": 1,
+          "contradicted": 0,
+          "thin": 1,
+          "undetected": 1
+        },
+        "flagship-a": {
+          "confirmed": 0,
+          "contradicted": 1,
+          "thin": 0,
+          "undetected": 1
+        },
+        "mid-a": {
+          "confirmed": 0,
+          "contradicted": 2,
+          "thin": 0,
+          "undetected": 1
+        },
+        "mid-b": {
+          "confirmed": 0,
+          "contradicted": 2,
+          "thin": 8,
+          "undetected": 1
+        }
+      },
+      "scope": "directional",
+      "statement": "The first launch after an install is slower than the rest of its pass, by 1.15x or more where measurable.",
+      "thin": 9,
+      "undetected": 4
+    },
+    "gc-rare": {
+      "confirmed": 13,
+      "contradicted": 0,
+      "contradictions": [],
+      "devices": {
+        "flagship-a": {
+          "confirmed": 2,
+          "contradicted": 0,
+          "thin": 0,
+          "undetected": 0
+        },
+        "mid-a": {
+          "confirmed": 1,
+          "contradicted": 0,
+          "thin": 0,
+          "undetected": 0
+        },
+        "mid-b": {
+          "confirmed": 10,
+          "contradicted": 0,
+          "thin": 0,
+          "undetected": 0
+        }
+      },
+      "scope": "universal",
+      "statement": "The SDK's own GC almost never runs during init: a collection of 1 ms or more inside the window on 2% or fewer of iterations on any device above 2 GB of RAM.",
+      "thin": 0,
+      "undetected": 0
+    },
+    "off-cpu": {
+      "confirmed": 5,
+      "contradicted": 0,
+      "contradictions": [],
+      "devices": {
+        "entry-a": {
+          "confirmed": 1,
+          "contradicted": 0,
+          "thin": 0,
+          "undetected": 0
+        },
+        "flagship-a": {
+          "confirmed": 2,
+          "contradicted": 0,
+          "thin": 0,
+          "undetected": 0
+        },
+        "mid-a": {
+          "confirmed": 1,
+          "contradicted": 0,
+          "thin": 0,
+          "undetected": 0
+        },
+        "mid-b": {
+          "confirmed": 1,
+          "contradicted": 0,
+          "thin": 9,
+          "undetected": 0
+        }
+      },
+      "scope": "universal",
+      "statement": "A slow init is one whose main thread was off-CPU: the lowest quartile of on-CPU share is at least 1.5x as likely to be slow.",
+      "thin": 9,
+      "undetected": 0
+    },
+    "restore-vs-create": {
+      "confirmed": 0,
+      "contradicted": 0,
+      "contradictions": [],
+      "devices": {
+        "mid-b": {
+          "confirmed": 0,
+          "contradicted": 0,
+          "thin": 2,
+          "undetected": 0
+        }
+      },
+      "scope": "universal",
+      "statement": "A launch that creates a user session spends at least 2x as long in start-first-session as one that restores the persisted session.",
+      "thin": 2,
+      "undetected": 0
+    },
+    "scheduler-wait": {
+      "confirmed": 2,
+      "contradicted": 0,
+      "contradictions": [],
+      "devices": {
+        "entry-a": {
+          "confirmed": 0,
+          "contradicted": 0,
+          "thin": 0,
+          "undetected": 1
+        },
+        "flagship-a": {
+          "confirmed": 0,
+          "contradicted": 0,
+          "thin": 0,
+          "undetected": 2
+        },
+        "mid-a": {
+          "confirmed": 1,
+          "contradicted": 0,
+          "thin": 0,
+          "undetected": 0
+        },
+        "mid-b": {
+          "confirmed": 1,
+          "contradicted": 0,
+          "thin": 9,
+          "undetected": 0
+        }
+      },
+      "scope": "directional",
+      "statement": "Any scheduler wait makes a slow init likelier, by 2x where the effect is measurable: the highest quartile of runnable-wait share.",
+      "thin": 9,
+      "undetected": 3
+    },
+    "starved-enriched": {
+      "confirmed": 0,
+      "contradicted": 1,
+      "contradictions": [
+        {
+          "cell": "entry-a / 9.2.0-SNAPSHOT-0811 / default",
+          "device": "entry-a",
+          "observed": "2.06x enrichment, 7 starved iterations",
+          "run": "a01-campaign-2026-08-11"
+        }
+      ],
+      "devices": {
+        "entry-a": {
+          "confirmed": 0,
+          "contradicted": 1,
+          "thin": 0,
+          "undetected": 0
+        },
+        "flagship-a": {
+          "confirmed": 0,
+          "contradicted": 0,
+          "thin": 2,
+          "undetected": 0
+        },
+        "mid-a": {
+          "confirmed": 0,
+          "contradicted": 0,
+          "thin": 1,
+          "undetected": 0
+        },
+        "mid-b": {
+          "confirmed": 0,
+          "contradicted": 0,
+          "thin": 10,
+          "undetected": 0
+        }
+      },
+      "scope": "universal",
+      "statement": "Starved inits (runnable-wait share of 20% or more) are at least 3x enriched among slow inits.",
+      "thin": 13,
+      "undetected": 0
+    }
+  },
+  "runs": 19,
+  "source": "bench",
+  "updated_at": "2026-09-06T04:51:25Z"
+}

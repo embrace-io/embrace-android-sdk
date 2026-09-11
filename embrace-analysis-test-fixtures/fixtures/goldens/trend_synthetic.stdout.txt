@@ -1,0 +1,62 @@
+
+==============================================================================
+synth-a  sdk=9.1.0  [build=benchmark compile=profile instrument=emb-sdk-start]
+  conditions={"compile": "profile"}
+  runs=1
+  only one run in this series - no trend yet; repeat the same recipe to start a baseline
+
+==============================================================================
+synth-a  sdk=9.2.0  [build=benchmark compile=profile instrument=emb-sdk-start]
+  conditions={"compile": "profile"}
+  runs=6
+  baseline (first 3 run(s)): median 40.8 ms, p90 43.2 ms, noise band +-4%
+  measured_at              n   median     p90     max  d-median   d-p90  verdict
+  2026-08-01T10:00:00    200     40.3    42.7    49.0     -1.2%   -1.2%  baseline
+  2026-08-02T10:00:00    200     41.3    43.7    50.0     +1.2%   +1.2%  baseline
+  2026-08-03T10:00:00    200     40.8    43.2    49.5     +0.0%   +0.0%  baseline
+  2026-08-04T10:00:00    200     43.3    45.7    52.0     +6.1%   +5.8%  candidate (re-run to confirm)
+  2026-08-05T10:00:00    200     43.8    46.2    52.5     +7.4%   +6.9%  REGRESSION
+  pooled across this series (n=1000): median 41.8  p90 45.4  p95 46.2  max 52.5  p99 50.0
+  ad-hoc comparisons vs this baseline (NOT part of it): 1
+    2026-08-06T10:00:00  9.2.0                  median    41.5 (+1.7%)  p90    43.9 (+1.6%)  within the baseline noise band
+    (a working-tree run is judged against the published baseline, never merged into it; confirm any move with a second run before believing it)
+  SIGNALS DISAPPEARED (present in >=2 earlier runs, absent now): emb-record-startup
+    -> data-integrity finding, NOT an improvement. Check trace health/capture config, then the build and instrument, before trusting this run's numbers.
+  signals newly present: emb-new-thing
+    -> an instrument or recipe change, not a regression; re-baseline deliberately if this is intended.
+  next action: CONFIRMED move: escalate into startup-version-factor-matrix to find which factor carries it
+
+==============================================================================
+synth-b  sdk=9.2.0  [build=benchmark compile=profile instrument=emb-sdk-start]
+  conditions={"compile": "profile"}
+  runs=4
+  baseline (first 3 run(s)): median 30.4 ms, p90 32.8 ms, noise band +-4%
+  measured_at              n   median     p90     max  d-median   d-p90  verdict
+  2026-08-01T12:00:00    200     30.3    32.7    39.0     -0.3%   -0.3%  baseline
+  2026-08-02T12:00:00    200     30.5    32.9    39.2     +0.3%   +0.3%  baseline
+  2026-08-03T12:00:00    200     30.4    32.8    39.1     +0.0%   +0.0%  baseline
+  2026-08-04T12:00:00    200     30.6    39.3    51.3     +0.7%  +19.8%  noise | TAIL-ONLY move (p90) - users feel this even when the median does not
+  pooled across this series (n=800): median 30.3  p90 33.0  p95 35.8  max 51.3  p99 47.7
+  next action: no action - within the noise band
+
+==============================================================================
+synth-c  sdk=9.2.0  [build=benchmark compile=profile instrument=emb-sdk-start]
+  conditions={"compile": "profile"}
+  runs=2
+  baseline (first 1 run(s)): median 80.3 ms, p90 82.7 ms, noise band +-4%
+  measured_at              n   median     p90     max  d-median   d-p90  verdict
+  2026-08-01T14:00:00    200     80.3    82.7    89.0     +0.0%   +0.0%  baseline
+  2026-08-02T14:00:00    200     75.3    77.7    84.0     -6.2%   -6.0%  candidate (re-run to confirm)
+  pooled across this series (n=400): median 77.6  p90 82.2  p95 83.0  max 89.0  p99 needs more samples than this
+  next action: re-run this cell with the same recipe to confirm or dismiss
+
+==============================================================================
+VERSION COMPARISON - different SDK versions on the same device and recipe.
+Separate from the drift report above: a difference here is deliberate (the SDK changed), not drift. With one run per version it is a candidate finding, not a verdict - repeat both versions before calling it real.
+
+synth-a  [build=benchmark compile=profile instrument=emb-sdk-start]
+  9.1.0        median    47.3 ms   n=200   runs=1   +14.3% vs 9.2.0
+  9.2.0        median    41.4 ms   n=1200  runs=6
+
+Reminders: baselines are fixed, not rolling (a rolling baseline hides slow drift); one run is a candidate, two make a regression; never compare across device keys or recipes.
+wrote <repo>/claude-output/2026-08-26-kotlin-port/goldens/trend_synthetic.json

@@ -1,0 +1,91 @@
+{
+ "declared_at": "2026-08-16T00:31:36",
+ "recipe": {
+  "run_shape": {
+   "passes": 10,
+   "iterations": 20
+  },
+  "build_type": "benchmark",
+  "compile_state": "profile",
+  "instrument": "composed",
+  "_comment": "Changing any of these starts a NEW comparable series; see references/store.md"
+ },
+ "devices": {
+  "flagship-a": {
+   "serial": "SERIAL0001",
+   "tier": "flagship",
+   "profile": {
+    "api_level": 35,
+    "release": "15",
+    "vendor": "Google",
+    "soc_family": "GS201",
+    "clusters": [
+     1803000,
+     2348000,
+     2850000
+    ],
+    "ram_class": ">=8GB",
+    "storage_class": "unknown"
+   },
+   "cool_gate_c": 32.0,
+   "retired": false
+  },
+  "mid-b": {
+   "serial": "SERIAL0002",
+   "tier": "entry-mid",
+   "profile": {
+    "api_level": 31,
+    "release": "12",
+    "vendor": "Google",
+    "soc_family": "SDM845",
+    "clusters": [
+     1766400,
+     2803200
+    ],
+    "ram_class": "3-4GB",
+    "storage_class": "unknown"
+   },
+   "cool_gate_c": 32.0,
+   "retired": false
+  },
+  "mid-a": {
+   "serial": "SERIAL0003",
+   "tier": "entry-mid",
+   "profile": {
+    "api_level": 35,
+    "release": "15",
+    "vendor": "samsung",
+    "soc_family": "Exynos 850",
+    "clusters": [
+     2002000
+    ],
+    "ram_class": "3-4GB",
+    "storage_class": "unknown"
+   },
+   "cool_gate_c": 32.0,
+   "retired": false
+  },
+  "entry-a": {
+   "serial": "SERIAL0004",
+   "tier": "entry",
+   "profile": {
+    "api_level": 29,
+    "release": "10",
+    "vendor": "samsung",
+    "soc_family": "mt6739",
+    "clusters": [
+     1495000
+    ],
+    "ram_class": "<=2GB",
+    "storage_class": "unknown"
+   },
+   "cool_gate_c": 32.0,
+   "retired": false
+  }
+ },
+ "_comment": [
+  "device_key is YOUR stable label - rename these to something meaningful and keep them forever; they are the axis every longitudinal report uses.",
+  "tier is a guess from RAM and cluster topology; confirm it by hand.",
+  "cool_gate_c is per device: a plugged-in device's warm idle floor can sit above a naive gate, so set it from an observed idle temperature."
+ ]
+}

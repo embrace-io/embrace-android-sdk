@@ -49,6 +49,17 @@ include(
     ":embrace-bytecode-instrumentation-tests",
     ":embrace-gradle-plugin-integration-tests",
     ":embrace-microbenchmark",
+    ":embrace-analysis-common",
+    ":embrace-analysis-stats",
+    ":embrace-analysis-perfetto",
+    ":embrace-analysis-device",
+    ":embrace-analysis-local-refs",
+    ":embrace-analysis-records",
+    ":embrace-analysis-reports",
+    ":embrace-analysis-maxims",
+    ":embrace-analysis-campaign",
+    ":embrace-analysis-cli",
+    ":embrace-analysis-test-fixtures",
 )
 
 pluginManagement {

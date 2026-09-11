@@ -1,0 +1,17 @@
+# A skill here is its SKILL.md and references/ - there is no code under `.claude/skills` any more. The
+# tooling is the `startup-tools` module, invoked as `tools/startup <command>`; the Python it replaced
+# was deleted at the cutover (2026-09-05), records housekeeping included.
+
+# Local run output: stores, plans with real device serials, probe results, and captured traces.
+# Keep these next to your run artifacts, not in the skill definition.
+*-topology.json
+reference-set.json
+store.jsonl
+plan.json
+*.pftrace
+*.perfetto-trace
+
+# The one place the reference set and stores ARE committed: the shared records root
+# (see _shared/records/README.md). Traces still never are.
+!_shared/records/longitudinal/reference-set.json
+!_shared/records/longitudinal/store.jsonl

@@ -46,6 +46,9 @@ JVM level than it compiles with, so check `kotlinCoreLibrariesVersion` before us
 # Build the example app
 cd examples/ExampleApp && ./gradlew bundleRelease
 
+# Run the SDK startup macrobenchmark and collect its traces
+scripts/macrobenchmark.sh
+
 # Update binary compatibility API dumps
 ./gradlew apiDump
 ```

@@ -1,0 +1,23 @@
+{
+ "synth-a|9.2.0|benchmark|profile|emb-sdk-start|{\"compile\": \"profile\"}": {
+  "band_pct": 4.0,
+  "baseline_median": 40.8,
+  "latest_delta_pct": 7.352941176470589,
+  "next_action": "CONFIRMED move: escalate into startup-version-factor-matrix to find which factor carries it",
+  "runs": 5
+ },
+ "synth-b|9.2.0|benchmark|profile|emb-sdk-start|{\"compile\": \"profile\"}": {
+  "band_pct": 4.0,
+  "baseline_median": 30.4,
+  "latest_delta_pct": 0.6578947368421146,
+  "next_action": "no action - within the noise band",
+  "runs": 4
+ },
+ "synth-c|9.2.0|benchmark|profile|emb-sdk-start|{\"compile\": \"profile\"}": {
+  "band_pct": 4.0,
+  "baseline_median": 80.3,
+  "latest_delta_pct": -6.226650062266501,
+  "next_action": "re-run this cell with the same recipe to confirm or dismiss",
+  "runs": 2
+ }
+}

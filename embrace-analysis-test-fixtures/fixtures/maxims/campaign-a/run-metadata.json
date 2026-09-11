@@ -1,0 +1,29 @@
+{
+ "serial": "FIXTURE-SERIAL-A",
+ "method": "coldStartupBaselineProfile",
+ "build_type": "benchmark",
+ "run_shape": {
+  "passes": 4,
+  "iterations": 20
+ },
+ "device_profile": {
+  "api_level": 35,
+  "release": "15",
+  "vendor": "samsung",
+  "soc_family": "Exynos 850",
+  "clusters": [
+   2002000
+  ],
+  "ram_class": "3-4GB",
+  "storage_class": "unknown"
+ },
+ "cell": {
+  "levels": {
+   "compile": "profile"
+  }
+ },
+ "catalog_pin": "embrace = \"9.2.0\"",
+ "sdk_version": "9.2.0",
+ "repo_head": "abc123",
+ "started": "2026-09-04T18:00:00"
+}

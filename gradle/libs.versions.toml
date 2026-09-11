@@ -48,6 +48,7 @@ minCompileSdk = "34"
 minAgpVersion = "8.0.2"
 compileSdk = "37"
 minSdk = "21"
+clikt = "5.1.0" # startup-tools CLI only
 
 [libraries]
 binary-compatibility-validator = { module = "org.jetbrains.kotlinx:binary-compatibility-validator", version.ref = "binaryCompatibilityValidator" }
@@ -106,6 +107,7 @@ bundletool = { module = "com.android.tools.build:bundletool", version.ref = "bun
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerialization" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+clikt = { module = "com.github.ajalt.clikt:clikt", version.ref = "clikt" }
 opentelemetry-kotlin = { module = "io.opentelemetry.kotlin:core", version.ref = "otelKotlin" }
 opentelemetry-kotlin-api = { module = "io.opentelemetry.kotlin:api", version.ref = "otelKotlin" }
 opentelemetry-kotlin-api-ext = { module = "io.opentelemetry.kotlin:api-ext", version.ref = "otelKotlin" }

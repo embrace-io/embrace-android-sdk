@@ -1,0 +1,27 @@
+iterations pooled: synth-mid=30  synth-entry=12
+
+                                            synth-mid medsynth-mid maxsynth-entry medsynth-entry max
+SDK-init window                                   53.0     140.0     113.8     140.0
+
+sections (ms; %win = section median / device window median):
+section                                     synth-mid medsynth-mid max  %winsynth-entry medsynth-entry max  %win
+emb-embrace-impl-init                             4.24     11.20   8.0      9.10     11.20   8.0
+emb-bootstrapper-init                             3.18      8.40   6.0      6.82      8.40   6.0
+emb-modules-init                                 47.70    126.00  90.0    102.38    126.00  90.0
+emb-persisted-config-load                         9.65     25.75  18.2     22.38     25.75  19.7
+emb-config-service-init                           1.59      4.20   3.0      3.41      4.20   3.0
+emb-span-service-init                            15.90     42.00  30.0     34.12     42.00  30.0
+emb-otel-tracer-init                             13.25     35.00  25.0     28.44     35.00  25.0
+emb-essential-service-init                        1.06      2.80   2.0      2.28      2.80   2.0
+emb-delivery-init                                 2.65      7.00   5.0      5.69      7.00   5.0
+emb-payload-source-init                           4.77     12.60   9.0     10.24     12.60   9.0
+emb-post-init                                     0.53      1.40   1.0      1.14      1.40   1.0
+emb-post-services-setup                           3.18      8.40   6.0      6.82      8.40   6.0
+emb-load-instrumentation                          2.65      7.00   5.0      5.69      7.00   5.0
+emb-install-native-crash-signal-handlers         10.60     28.00  20.0     22.75     28.00  20.0
+emb-load-embrace-native-lib                       9.54     25.20  18.0     20.48     25.20  18.0
+emb-record-startup                                7.12     10.20  13.4        --        --    --
+
+share of window, biggest three per device (med basis):
+  synth-mid: span-service-init 30%, otel-tracer-init 25%, persisted-config-load 18%
+  synth-entry: span-service-init 30%, otel-tracer-init 25%, persisted-config-load 20%

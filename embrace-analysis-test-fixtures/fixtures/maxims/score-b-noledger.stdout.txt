@@ -1,0 +1,12 @@
+maxims: flagship-a / 9.2.0 / profile (run campaign-b, 60 iterations in 3 passes)
+  contradicted off-cpu                1.33x on 15 iterations (slow 2/15 vs 6/60)
+  contradicted scheduler-wait         0.00x on 15 iterations (slow 0/15 vs 6/60)
+  contradicted concurrent-cpu         0.00x on 15 iterations (slow 0/15 vs 6/60)
+  thin         starved-enriched       0 starved and 6 slow iterations of 60
+  confirmed    gc-rare                0.0% of 60 iterations ran own GC
+  contradicted first-launch           iter000/rest 0.79x over 3 passes
+  contradicted config-fast-path       3 of 3 passes; pass 1: iter000 6.0 ms vs rest p50 3.5 ms
+  contradicted compile-state-toggle   pass medians 12.2 -> 12.7 -> 12.2; pure-CPU 1.00x, block-resume 1.00x
+  n/a          restore-vs-create      no passN-cohorts.json (EmbVerify tap not armed)
+  n/a          cpu-closure            no passN-cohorts.json (EmbVerify tap not armed)
+ledger: not recorded (--ledger none)

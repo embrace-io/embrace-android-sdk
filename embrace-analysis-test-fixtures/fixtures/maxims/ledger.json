@@ -1,0 +1,275 @@
+{
+  "candidates": {
+    "othercpu:system_server share": {
+      "cells": 1,
+      "label": "othercpu:system_server share",
+      "last_seen": "campaign-a",
+      "max_lift": 2.0
+    }
+  },
+  "maxims": {
+    "compile-state-toggle": {
+      "confirmed": 1,
+      "contradicted": 1,
+      "contradictions": [
+        {
+          "cell": "flagship-a / 9.2.0 / profile",
+          "device": "flagship-a",
+          "observed": "pass medians 12.2 -> 12.7 -> 12.2; pure-CPU 1.00x, block-resume 1.00x",
+          "run": "campaign-b"
+        }
+      ],
+      "devices": {
+        "flagship-a": {
+          "confirmed": 0,
+          "contradicted": 1,
+          "thin": 0,
+          "undetected": 0
+        },
+        "mid-a": {
+          "confirmed": 1,
+          "contradicted": 0,
+          "thin": 0,
+          "undetected": 0
+        }
+      },
+      "scope": "device-specific",
+      "statement": "Pass medians alternate between two levels at least 10% apart, with pure-CPU sections within 1.25x and block-and-resume sections 1.5x or more between the two states.",
+      "thin": 0,
+      "undetected": 0
+    },
+    "concurrent-cpu": {
+      "confirmed": 1,
+      "contradicted": 1,
+      "contradictions": [
+        {
+          "cell": "flagship-a / 9.2.0 / profile",
+          "device": "flagship-a",
+          "observed": "0.00x on 15 iterations (slow 0/15 vs 6/60)",
+          "run": "campaign-b"
+        }
+      ],
+      "devices": {
+        "flagship-a": {
+          "confirmed": 0,
+          "contradicted": 1,
+          "thin": 0,
+          "undetected": 0
+        },
+        "mid-a": {
+          "confirmed": 1,
+          "contradicted": 0,
+          "thin": 0,
+          "undetected": 0
+        }
+      },
+      "scope": "directional",
+      "statement": "Concurrent CPU from other processes makes a slow init likelier, by 1.5x or more where measurable: the highest quartile of other-process on-CPU share of the window, the idle task excluded.",
+      "thin": 0,
+      "undetected": 0
+    },
+    "config-fast-path": {
+      "confirmed": 1,
+      "contradicted": 1,
+      "contradictions": [
+        {
+          "cell": "flagship-a / 9.2.0 / profile",
+          "device": "flagship-a",
+          "observed": "3 of 3 passes; pass 1: iter000 6.0 ms vs rest p50 3.5 ms",
+          "run": "campaign-b"
+        }
+      ],
+      "devices": {
+        "flagship-a": {
+          "confirmed": 0,
+          "contradicted": 1,
+          "thin": 0,
+          "undetected": 0
+        },
+        "mid-a": {
+          "confirmed": 1,
+          "contradicted": 0,
+          "thin": 0,
+          "undetected": 0
+        }
+      },
+      "scope": "universal",
+      "statement": "Every pass's first launch takes the fresh-install config fast path: its persisted-config-load is below the median of the rest of the pass.",
+      "thin": 0,
+      "undetected": 0
+    },
+    "cpu-closure": {
+      "confirmed": 1,
+      "contradicted": 0,
+      "contradictions": [],
+      "devices": {
+        "mid-a": {
+          "confirmed": 1,
+          "contradicted": 0,
+          "thin": 0,
+          "undetected": 0
+        }
+      },
+      "scope": "universal",
+      "statement": "The init span's CPU attributes close: init-cpu-pct plus init-run-delay-pct is between 0 and 100 on at least 98% of launches.",
+      "thin": 0,
+      "undetected": 0
+    },
+    "first-launch": {
+      "confirmed": 1,
+      "contradicted": 1,
+      "contradictions": [
+        {
+          "cell": "flagship-a / 9.2.0 / profile",
+          "device": "flagship-a",
+          "observed": "iter000/rest 0.79x over 3 passes",
+          "run": "campaign-b"
+        }
+      ],
+      "devices": {
+        "flagship-a": {
+          "confirmed": 0,
+          "contradicted": 1,
+          "thin": 0,
+          "undetected": 0
+        },
+        "mid-a": {
+          "confirmed": 1,
+          "contradicted": 0,
+          "thin": 0,
+          "undetected": 0
+        }
+      },
+      "scope": "directional",
+      "statement": "The first launch after an install is slower than the rest of its pass, by 1.15x or more where measurable.",
+      "thin": 0,
+      "undetected": 0
+    },
+    "gc-rare": {
+      "confirmed": 2,
+      "contradicted": 0,
+      "contradictions": [],
+      "devices": {
+        "flagship-a": {
+          "confirmed": 1,
+          "contradicted": 0,
+          "thin": 0,
+          "undetected": 0
+        },
+        "mid-a": {
+          "confirmed": 1,
+          "contradicted": 0,
+          "thin": 0,
+          "undetected": 0
+        }
+      },
+      "scope": "universal",
+      "statement": "The SDK's own GC almost never runs during init: a collection of 1 ms or more inside the window on 2% or fewer of iterations on any device above 2 GB of RAM.",
+      "thin": 0,
+      "undetected": 0
+    },
+    "off-cpu": {
+      "confirmed": 1,
+      "contradicted": 1,
+      "contradictions": [
+        {
+          "cell": "flagship-a / 9.2.0 / profile",
+          "device": "flagship-a",
+          "observed": "1.33x on 15 iterations (slow 2/15 vs 6/60)",
+          "run": "campaign-b"
+        }
+      ],
+      "devices": {
+        "flagship-a": {
+          "confirmed": 0,
+          "contradicted": 1,
+          "thin": 0,
+          "undetected": 0
+        },
+        "mid-a": {
+          "confirmed": 1,
+          "contradicted": 0,
+          "thin": 0,
+          "undetected": 0
+        }
+      },
+      "scope": "universal",
+      "statement": "A slow init is one whose main thread was off-CPU: the lowest quartile of on-CPU share is at least 1.5x as likely to be slow.",
+      "thin": 0,
+      "undetected": 0
+    },
+    "restore-vs-create": {
+      "confirmed": 1,
+      "contradicted": 0,
+      "contradictions": [],
+      "devices": {
+        "mid-a": {
+          "confirmed": 1,
+          "contradicted": 0,
+          "thin": 0,
+          "undetected": 0
+        }
+      },
+      "scope": "universal",
+      "statement": "A launch that creates a user session spends at least 2x as long in start-first-session as one that restores the persisted session.",
+      "thin": 0,
+      "undetected": 0
+    },
+    "scheduler-wait": {
+      "confirmed": 0,
+      "contradicted": 1,
+      "contradictions": [
+        {
+          "cell": "flagship-a / 9.2.0 / profile",
+          "device": "flagship-a",
+          "observed": "0.00x on 15 iterations (slow 0/15 vs 6/60)",
+          "run": "campaign-b"
+        }
+      ],
+      "devices": {
+        "flagship-a": {
+          "confirmed": 0,
+          "contradicted": 1,
+          "thin": 0,
+          "undetected": 0
+        },
+        "mid-a": {
+          "confirmed": 0,
+          "contradicted": 0,
+          "thin": 0,
+          "undetected": 1
+        }
+      },
+      "scope": "directional",
+      "statement": "Any scheduler wait makes a slow init likelier, by 2x where the effect is measurable: the highest quartile of runnable-wait share.",
+      "thin": 0,
+      "undetected": 1
+    },
+    "starved-enriched": {
+      "confirmed": 1,
+      "contradicted": 0,
+      "contradictions": [],
+      "devices": {
+        "flagship-a": {
+          "confirmed": 0,
+          "contradicted": 0,
+          "thin": 1,
+          "undetected": 0
+        },
+        "mid-a": {
+          "confirmed": 1,
+          "contradicted": 0,
+          "thin": 0,
+          "undetected": 0
+        }
+      },
+      "scope": "universal",
+      "statement": "Starved inits (runnable-wait share of 20% or more) are at least 3x enriched among slow inits.",
+      "thin": 1,
+      "undetected": 0
+    }
+  },
+  "runs": 2,
+  "source": "bench",
+  "updated_at": "2026-09-04T21:00:00Z"
+}

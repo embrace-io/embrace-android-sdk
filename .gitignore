@@ -64,5 +64,15 @@ docs/
 .DS_Store
 .kotlin
 
-# Claude output
+# Claude output (scratch: raw traces, whole campaign directories)
 claude-output/
+
+# The startup tooling's committed records keep each campaign's log despite the *.log rule above, and so
+# do the frozen test fixtures, whose golden inputs include a campaign's log verbatim.
+!.claude/skills/_shared/records/**/*.log
+!embrace-analysis-test-fixtures/fixtures/**/*.log
+
+# One engineer's own device serials, hosts and app ids, for `tools/startup check-local-refs` to match by
+# name. Never committed: the checked-in half of that tool describes the SHAPE of a local reference, this
+# names it.
+.local-refs-tokens

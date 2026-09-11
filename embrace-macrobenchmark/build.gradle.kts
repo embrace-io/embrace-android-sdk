@@ -10,7 +10,8 @@ android {
 
     defaultConfig {
         minSdk = 26
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "io.embrace.android.embracesdk.macrobenchmark.MacrobenchmarkRunner"
+        testInstrumentationRunnerArguments["androidx.benchmark.suppressErrors"] = "EMULATOR"
     }
 
     buildTypes {
@@ -40,6 +41,7 @@ kotlin {
 dependencies {
     implementation(libs.junit)
     implementation(libs.androidx.test.junit)
+    implementation(libs.androidx.test.runner)
     implementation(libs.androidx.benchmark.macro.junit4)
 }
 
@@ -47,4 +49,8 @@ androidComponents {
     beforeVariants(selector().all()) {
         it.enable = it.buildType == "benchmark"
     }
+}
+
+tasks.matching { it.name == "connectedBenchmarkAndroidTest" }.configureEach {
+    dependsOn(":embrace-gradle-plugin:publishToMavenLocal")
 }

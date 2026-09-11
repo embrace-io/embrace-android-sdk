@@ -470,6 +470,49 @@ internal class MultiFilePersistenceParityTest(
         )
     }
 
+    @Test
+    fun `a crashed session part is delivered by the next process launch`() {
+        lateinit var crashedProcessId: String
+        testRule.runTest(
+            persistedRemoteConfig = remoteConfig(),
+            testCaseAction = {
+                recordSession {
+                    embrace.recordSpan("pre-crash-span") { clock.tick(100) }
+                    simulateJvmUncaughtException(RuntimeException("Boom!"))
+                }
+            },
+            assertAction = {
+                crashedProcessId = testRule.bootstrapper.openTelemetryModule.otelSdkConfig.processIdentifier
+            },
+        )
+
+        // tear the crashed process down so the next launch reads the shared storage from scratch
+        testRule.bootstrapper.stop()
+
+        testRule.runTest(
+            persistedRemoteConfig = remoteConfig(),
+            testCaseAction = {},
+            assertAction = {
+                val envelope = deliveredParts().single()
+                val attributes = envelope.findSessionPartSpan().attributes
+                val names = envelope.allSpanNames()
+                assertTrue("pre-crash-span missing: $names", "pre-crash-span" in names)
+                assertNotNull(
+                    "the part delivered by the next launch is not the crashed one",
+                    attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID),
+                )
+                assertEquals(
+                    crashedProcessId,
+                    attributes?.findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER),
+                )
+                assertFalse(
+                    "the delivered part was left on disk",
+                    storedSessionPartDirectories().any { it.sessionPartId == envelope.getSessionPartId() },
+                )
+            },
+        )
+    }
+
     /**
      * Returns the envelope delivered for each session part.
      *

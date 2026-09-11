@@ -49,6 +49,9 @@ cd examples/ExampleApp && ./gradlew bundleRelease
 # Run the SDK startup macrobenchmark and collect its traces
 scripts/macrobenchmark.sh
 
+# Analyse a perfetto trace
+scripts/analyse-trace.sh <trace.perfetto-trace> --dry-run
+
 # Update binary compatibility API dumps
 ./gradlew apiDump
 ```

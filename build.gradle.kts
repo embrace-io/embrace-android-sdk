@@ -16,6 +16,7 @@ kover {
         subprojects { project ->
             val ignoreList = listOf(
                 "embrace-lint",
+                "embrace-perfetto-analysis",
                 "embrace-microbenchmark",
                 "embrace-macrobenchmark",
                 "embrace-macrobenchmark-app",

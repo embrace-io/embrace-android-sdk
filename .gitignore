@@ -67,5 +67,6 @@ docs/
 # Claude output
 claude-output/
 
-# Perf output
+# Perfetto traces (large binary artifacts) and collected benchmark output
 perf/
+*.perfetto-trace

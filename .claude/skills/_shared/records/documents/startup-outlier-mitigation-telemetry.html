@@ -1,0 +1,192 @@
+<title>Reducing & Explaining SDK Startup Outliers — Recommendations</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #FFFFFF;
+    --ink: #1C1E21;
+    --ink-secondary: #55524B;
+    --muted: #8A8577;
+    --line: #E5E2D9;
+    --accent: #D9930D;
+    --accent-soft: #F5E3BC;
+    --good: #3E7C4F;
+    --good-soft: #E4EFE6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #16181C;
+      --surface: #1E2126;
+      --ink: #ECEAE4;
+      --ink-secondary: #B5B1A6;
+      --muted: #7D796E;
+      --line: #33363C;
+      --accent: #E8B04B;
+      --accent-soft: #3A3123;
+      --good: #7FBB8E;
+      --good-soft: #24352A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #16181C;
+    --surface: #1E2126;
+    --ink: #ECEAE4;
+    --ink-secondary: #B5B1A6;
+    --muted: #7D796E;
+    --line: #33363C;
+    --accent: #E8B04B;
+    --accent-soft: #3A3123;
+    --good: #7FBB8E;
+    --good-soft: #24352A;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.55;
+    margin: 0;
+    padding: 40px 24px 72px;
+  }
+  main { max-width: 920px; margin: 0 auto; }
+  h1 { font-size: 1.7rem; letter-spacing: -0.01em; margin: 0 0 4px; text-wrap: balance; }
+  h2 { font-size: 1.15rem; margin: 44px 0 10px; letter-spacing: -0.005em; }
+  .context { color: var(--ink-secondary); font-size: 0.9rem; margin: 0 0 20px; }
+  .principle {
+    background: var(--good-soft);
+    color: var(--good);
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    margin-bottom: 24px;
+  }
+  .item {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 12px 0;
+  }
+  .item h3 { margin: 0 0 4px; font-size: 0.97rem; }
+  .item p { font-size: 0.87rem; margin: 5px 0; color: var(--ink-secondary); }
+  .item p strong { color: var(--ink); }
+  .win {
+    display: inline-block;
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-weight: 700;
+    border-radius: 4px;
+    padding: 1px 7px;
+    margin-left: 8px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    vertical-align: 2px;
+  }
+  code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.85em;
+    background: var(--accent-soft);
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+  a { color: var(--accent); font-weight: 600; }
+  .note { color: var(--ink-secondary); font-size: 0.84rem; margin-top: 10px; }
+  .tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; margin: 14px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
+  th {
+    text-align: left; font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--muted); font-weight: 600; padding: 10px 12px 6px; border-bottom: 1px solid var(--line);
+  }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td.attr { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.8rem; white-space: nowrap; }
+  footer { margin-top: 48px; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--line); padding-top: 16px; }
+  footer p { margin: 4px 0; }
+</style>
+
+<main>
+  <h1>Reducing &amp; Explaining SDK Startup Outliers</h1>
+  <p class="context">Recommendations derived from the four-device startup investigation (1,850+ instrumented cold starts, causal experiments; evidence in the <a href="https://claude.ai/code/artifact/9eda58ea-2446-4bd9-b1ea-228ea7ad7a33">external-factors summary</a> and <a href="https://claude.ai/code/artifact/c8ef75b3-4c83-4335-8b9a-3776699266a0">testing log</a>). Two halves: engineering changes that shrink outlier frequency/severity, and a prod telemetry spec that explains <em>why</em> any given init was slow — without perfetto. Work items ranked by impact live in the companion <strong>tracking doc</strong> (linked in the footer).</p>
+  <p class="note"><strong>Reviewed 2026-08-26 against SDK 9.2.0.</strong> Two changes: <strong>M7 was added</strong> — the OTel engine alternative, worth 15–20% of the window on mid and entry tiers, which is the largest measured lever here and had been missing from this page; and <strong>M1 was re-anchored</strong> to 9.2.0, where the config decode remains the largest single item in the window even though 9.2.0's own big win came from elsewhere in config handling. Where a figure was measured on an earlier build it now says so, rather than referring to an undated "HEAD".</p>
+
+  <div class="principle">Design principle from the findings: SDK init is memory-bound work exposed to environmental interference. Every mitigation either shrinks the window (a smaller target for GC bursts, dexopt storms, and thermal states to hit) or shrinks its memory appetite (less damage per hit). Everything we can't prevent, the telemetry must classify.</div>
+
+  <h2>Part 1 — Reducing outlier frequency and severity</h2>
+
+  <div class="item">
+    <h3>M1 · Make the persisted-config decode faster and overlap it<span class="win">17–28% of window at 9.2.0</span></h3>
+    <p><strong>Why:</strong> the binary config decode (<code>EmbraceBinary.decodeFromStream</code>) is CPU-bound main-thread work — pointer-chasing deserialization, so maximally interference-sensitive — and it is the largest remaining single item in the window. <strong>Still true at 9.2.0, and now located precisely:</strong> <code>emb-persisted-config-load</code> costs 6.0 ms (Pixel 3), 13.0 (A14) and 20.8 (A01 Core), and is the <strong>largest single direct child of the biggest in-window phase on every device measured</strong> — on the A01 Core it alone is 22% of the whole composed window. Note that 9.2.0's own large win came from a <em>different</em> part of config handling (<code>config-service-init</code> fell 84–93%); the decode itself did not go away, which is why this item survives that release rather than being closed by it.</p>
+    <p><strong>Constraint (confirmed):</strong> the load is on the hot path by design — the rest of the SDK depends on its result — so it cannot be removed or deferred past its consumers. The levers are speed and overlap, not removal:</p>
+    <p><strong>How:</strong> (a) <em>overlap</em> — start the decode on a background thread at class-load time (the <code>embrace-impl-init</code>/<code>bootstrapper-init</code> phase runs 2–11 ms <em>before</em> the window opens) and join at the top of <code>modules-init</code>; on most devices the decode finishes inside work that already happens, shrinking its critical-path cost toward zero without moving it off the hot path. (b) <em>faster</em> — trim the decoded payload to what init consumes, avoid transient allocation in the decode (also serves M4). (c) if (a)+(b) still leave low-end paying, a split init-critical mini-record is the structural escalation.</p>
+  </div>
+
+  <div class="item">
+    <h3>M2 · Baseline profile — VERIFIED highly effective, tails most of all<span class="win">done 2026-08-12 · −44–52% worst-case</span></h3>
+    <p><strong>Result (measured 2026-08-12 on the then-current 9.2.0-era build, all four devices, <code>CompilationMode.None</code> vs <code>Partial(Require)</code>, 2×20 per arm):</strong> window p50 −42 to −47% and <strong>max −47 to −52%</strong> on A14 / A01 / P7P — the A01's worst window halved (263 → 125 ms), the A14's p95 dropped 55 ms, and first-post-install launches improved proportionally (A14 iter000: 85/75 → 50/36 ms). The apparent exception was retired by better methodology: <strong>the Pixel 3 / Android 12 "inversion" did NOT survive a properly counterbalanced ABBA re-test (2026-08-13)</strong> — boundary deltas of +5.0% and −6.8% (opposite signs), noise-dominated. On ART 12 the profile is <em>neutral</em>: no benefit, no reliable penalty; the earlier +43%→+23% estimates were ordering/thermal bias (the counterbalancing lesson is in the multi-device skill's methodology). <strong>The recommendation is therefore unconditional fleet-wide.</strong> Bonus finding (X2, same night): Play installs apply cloud profiles at install time (<code>install-dm</code>), and Samsung's SPEG applies local ones — so the profile-compiled state is the <em>prod norm</em> on Play-delivered devices, making the profile arm the prod-representative benchmark arm.</p>
+    <p><strong>Why it was ever doubted:</strong> the benchmark's default CompilationMode resets to fresh-install (<code>verify</code>) state, which never exercises the packaged profile — a with/without comparison run in default mode measures nothing, silently. The prior "no impact" conclusion is considered invalid.</p>
+    <p><strong>Follow-on (benchmarking half IMPLEMENTED in both skills 2026-08-12):</strong> standard runs are now two-arm (default + <code>Partial(Require)</code>) with arm-cooling discipline; no-AOT stays as the coverage canary. Remaining: treat profile delivery/coverage as a first-class outlier mitigation for the entry tier — it is the largest single verified lever found by this investigation.</p>
+  </div>
+
+  <div class="item">
+    <h3>M3 · SDK background-work scheduling — judged by TOTAL app-startup impact, not window attribution<span class="win">needs TTID-based experiment</span></h3>
+    <p><strong>The honest framing (per review):</strong> deferring our background work past the window improves the <em>SDK-attributed</em> number but the work still happens during app startup — that's moving cost to where it's harder to trace back to the SDK, not removing it. The real goal is minimizing total app-startup impact, so any change here must be judged by <strong>TTID/TTFD deltas, not window deltas</strong>.</p>
+    <p><strong>Where deferral is legitimately a win:</strong> (a) work that can move past first-frame entirely (post-TTID idle) leaves the user-visible path; (b) on little-core devices, two memory-bound threads can be slower <em>in total</em> than the same work run sequentially (bandwidth contention is superlinear there) — so de-overlapping can reduce TTID itself, not just re-attribute it. Neither is assumed: the experiment is defer-vs-overlap variants measured by TTID on the A14 and P7P. If TTID is flat, the only defensible change is moving genuinely post-startup work (e.g. config <em>fetch</em>) past first-frame.</p>
+  </div>
+
+  <div class="item">
+    <h3>M4 · Init-path allocation budget<span class="win">low-RAM tier</span></h3>
+    <p><strong>Why:</strong> on the 1 GB Go device the app's <em>own</em> GC ran 64–99 ms inside half the outlier windows — init-time allocation crosses GC thresholds tiny heaps can't absorb.</p>
+    <p><strong>How:</strong> streaming decode with reused buffers; avoid large transient allocations in the window; add an allocation regression check (Debug.getRuntimeStat GC counts around init in integration tests).</p>
+  </div>
+
+  <div class="item">
+    <h3>M5 · Minimize block-and-resume patterns in the window<span class="win">code audit in flight</span></h3>
+    <p><strong>Why:</strong> the sections that inflate ~2× under every adverse condition (<code>config-service-init</code>, <code>payload-source-init</code>, <code>essential-service-init</code>, <code>post-init</code>, <code>delivery-init</code>) share the short-section/resume-sensitive profile — each resume pays cache refill against whatever contaminated the caches.</p>
+    <p><strong>Audit complete — concrete sites identified</strong> (full list with file:line in the plan doc, <code>2026-08-11-startup-outlier-investigation-plan.md</code>): (1) a <code>keyValueStore</code> SYNCHRONIZED-lazy handoff where the main thread can park unboundedly on the config-HTTP worker's monitor — the top-ranked cause, with the race probability rising exactly with CPU pressure; (2) first-use worker <em>thread creation</em> (pthread_create parks the caller) inside three of the five inflating sections; (3) SharedPreferences prewarm/first-read waits landing in two <em>unattributed</em> sections (quick win: add <code>recordDuration</code>); (4) the <code>post-init</code> compound (monitor + prefs read-modify-write + thread start + first span's class loading). Notable exonerations: zero explicit blocking primitives on the path, binder-clean by default, and <code>delivery-init</code>/<code>essential-service-init</code> inflate from cold class-loading, not waits — pointing those two at the baseline profile (M2) instead. The audit also flagged EmbTrace's per-section atrace <code>write()</code> syscalls as a small per-section overhead under tracing — a real (minor) measurement cost, though its candidate role as the A14 pass-toggle explanation was refuted by E15 (the toggle is Samsung install-time compile-state alternation; see the testing log).</p>
+  </div>
+
+  <div class="item">
+    <h3>M7 · Switch the OTel engine to the Kotlin implementation<span class="win">15–20% of window on mid + entry tiers · measured, gated on correctness</span></h3>
+    <p><strong>Added 2026-08-26 — this is the largest measured lever on this page and it was missing from it.</strong> Assembling the OpenTelemetry engine is the single biggest phase of init at 9.2.0 (33–34% of the window on every device measured). The SDK can build it on either an OTel <em>Java</em> implementation or a Kotlin one, and <strong>9.2.0 ships the Java-backed path by default</strong>.</p>
+    <p><strong>Result</strong> (fleet A/B, two worktrees differing only in the config flag, 12 ABBA-mirrored legs × 20 launches per device, zero failed legs): <strong>A14 −9.20 ms / −20.4%</strong> (CI [−17.07, −2.53], p = 0.022), <strong>Pixel 3 −5.30 ms / −17.7%</strong> ([−5.43, −4.95], p = 0.003), <strong>A01 Core −14.54 ms / −15.1%</strong> ([−18.90, −10.97], p = 0.002). The flagship gains only −0.50 ms / −4.3%, and the reason is instructive rather than disappointing: the saving tracks the <em>absolute size</em> of the work removed, and total OTel construction spans 4.4 ms on the flagship to 59.3 ms on the Go device. <strong>An earlier flagship-only measurement concluded "minor lever" and was wrong by fourfold</strong> — ranking a fleet-wide change from the one device with nothing left to remove.</p>
+    <p><strong>Why it is not simply done:</strong> the performance case is settled; correctness is not. Export parity, processor contracts and the remote-rollout path are unvalidated, which is why the flag is off. <strong>Two open measurement gaps before any default flip:</strong> the A/B measured <em>medians only</em>, so the tail is unquantified — a re-run preserving per-launch windows is in flight — and static verification that the two arms differ is weak (Android builds are not byte-reproducible), so the run's own median reproducing the figures above is what will confirm the flag took effect.</p>
+  </div>
+
+  <div class="item">
+    <h3>M6 · Accept-and-classify for the rest</h3>
+    <p>Scheduler placement, other apps' dexopt, system_server GC, and device temperature are genuinely outside anyone's control. The available win is attribution (Part 2), plus prod methodology: segment <code>version_startup_counter == 1</code> as its own cohort before any outlier analysis or alerting.</p>
+  </div>
+
+  <h2>Part 2 — Prod telemetry: explaining slow inits without perfetto</h2>
+  <p class="note" style="margin-top:0"><strong>Pattern:</strong> snapshot cheap counters at window start and end (raw bytes, ~tens of µs per read), compute deltas on a background thread after init, attach as attributes on the sdk-init span next to the existing per-section durations. Feature-detect readability once per device and cache (some vendors SELinux-block nodes that are world-readable by mode — every reader needs a silent fallback). Target &lt;1 ms total main-thread cost.</p>
+
+  <p class="note"><strong>Startup-cost classification</strong> (per review request): <em>none</em> = gathered after startup on a background worker (the signal varies slowly enough that post-window capture is valid); <em>negligible</em> = on-path but &lt;0.1 ms even on slow devices; <em>significant</em> = can reach ≥0.1 ms on slow devices, needs a mitigation or a deliberate decision.</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>factor</th><th>attribute(s)</th><th>source</th><th>what it explains</th><th>startup cost</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Concurrent pressure (top outlier cause; causal +40%/+24%)</td><td class="attr">init-run-delay-pct</td><td>main-thread <code>/proc/self/task/&lt;tid&gt;/schedstat</code> run-delay delta across the window. <strong>Spec corrected 2026-08-12:</strong> the original <code>cpu_pressure</code> via <code>/proc/stat</code> is unimplementable — SELinux blocks apps from global procfs on API 26+ (our bench probes read it from the shell domain, which is why it worked there). schedstat is own-process-readable and is the kernel's direct account of time the thread sat runnable waiting for a CPU — the exact CONTENDED metric from the perfetto analysis, better than an indirect global-busy proxy</td><td>"the device was busy <em>and it cost us specifically this much</em>" — the prod analogue of the bench's r = 0.73 correlate</td><td><strong>negligible</strong> — one ~0.1 ms fixed-buffer procfs read at each window edge, raw bytes only on the hot path, parsed on the span-record worker. <strong>Implemented + device-validated 2026-08-12</strong> (commit 5d47fd334): dose–response 0 → 59 ms under 8 injected CPU hogs; accounting closes against wall; perfetto cross-check agrees</td></tr>
+        <tr><td>Stall decomposition</td><td class="attr"><s>psi-cpu-some-avg10</s> <strong>— REMOVED</strong></td><td><s>single post-init read of <code>/proc/pressure/cpu</code> "some" avg10 (rounded to a whole %), feature-detected — SELinux denies it on many vendors, so absence is a policy artifact, not evidence of calm.</s> <strong>Correction (2026-08-14):</strong> this was never a per-vendor policy variation — AOSP labels <code>/proc/pressure/cpu</code> with its own SELinux type (<code>proc_pressure_cpu</code>, via a <code>genfscon</code> entry in <code>system/sepolicy/private/genfs_contexts</code>) and grants read access only to the <code>lmkd</code> and <code>system_server</code> domains; no app domain (<code>untrusted_app</code>/<code>priv_app</code>/<code>domain</code>) has ever had it, on any OEM tested, back to Android 10 where the type was introduced. <s>Spec narrowed in implementation: the windowed 6-read psi_cpu/mem/io delta set was dropped; the 10 s trailing average read at record time covers the init's neighborhood at zero on-path cost, and run-delay already carries the us-specifically number</s> <strong>REMOVED 2026-08-14:</strong> shipped 2026-08-13 (commit 011d73e72), measured across the full 4-device fleet (Pixel 7 Pro API 35, Galaxy A14 API 35, Pixel 3 API 31, Galaxy A01 Core API 29 — two vendors, three API levels), and pulled after populating on 0/54 launches. The file reads fine from <code>adb shell</code> (that domain keeps broad legacy <code>/proc</code> access an app never gets), which is why host-side checks are misleading — only <code>run-as &lt;pkg&gt; cat /proc/pressure/cpu</code> (Permission denied) tests real app-side readability. There is no app-readable device-wide CPU-contention signal at all as a result; <code>init-run-delay-pct</code> above remains the sole signal in this diagnostic class — verified accurate to within 0–2 points of trace ground truth across 54 graded iterations, but uncorroborated rather than merely primary. Confidence: high but not absolute (no counterexample found on Google/Samsung; further OEMs would corroborate further)</td><td><s>device-wide corroboration for a high run-delay reading — "it wasn't just our thread; the whole device was contended"</s> <strong>— unavailable; no substitute signal exists</strong></td><td><strong>none</strong> — record-worker only. <strong>Implemented 2026-08-13</strong> (commit 011d73e72) → <strong>REMOVED 2026-08-14</strong> (0/54 launches populated across the fleet; SELinux blocks all app domains by AOSP design, not merely some vendors)</td></tr>
+        <tr><td>Main-thread anatomy (most diagnostic single pair)</td><td class="attr">init-cpu-pct (whole % of the window; wall = the span duration itself)</td><td><code>SystemClock.currentThreadTimeMillis()</code> around the window</td><td>"ran slowly" (IPC collapse: cpu≈wall) vs "didn't run" (blocked/preempted: cpu≪wall); with run-delay it fully decomposes the window: cpu + run-delay + blocked = wall (validated to within 2% on-device)</td><td><strong>negligible</strong> — one <code>clock_gettime</code> syscall each end, sub-µs. <strong>Implemented + device-validated 2026-08-12</strong> (commit 5d47fd334)</td></tr>
+        <tr><td>Thermal state</td><td class="attr">thermal-status, thermal-headroom-pct</td><td><code>PowerManager.getCurrentThermalStatus()</code> (API 29+), <code>getThermalHeadroom(0)</code> (API 30+); headroom recorded as a whole % toward the severe-throttle threshold, everything at-or-beyond collapsed into 100 (the headroom scale is uncalibrated up there — thermal-status's severe/critical/emergency levels carry that region)</td><td>the throttle level directly — battery temp understates silicon by 30+ °C</td><td><strong>none</strong> — binder round-trips on the record worker; thermal state changes over seconds, not during a 40 ms window. <strong>Implemented 2026-08-13</strong> (commit 175cc0cf5, in review)</td></tr>
+        <tr><td>Core placement</td><td class="attr">cpus_seen, min_core_class</td><td><code>sched_getcpu()</code> at existing EmbTrace section boundaries + one-time core→max-freq map</td><td>the rare-but-2× "ran on little cores" class</td><td><strong>negligible</strong> — <code>sched_getcpu</code> is vDSO (~ns) at boundaries we already instrument. <strong>Deliberately NOT in the shipped set</strong> — needs a sampling design first; the only remaining unimplemented row besides compile state</td></tr>
+        <tr><td>IO stalls</td><td class="attr">init-maj-faults, init-disk-read-kb</td><td><code>/proc/self/stat</code> majflt (parsed after the last paren — comm can contain spaces/parens), <code>/proc/self/io</code> read_bytes deltas across the window</td><td>storage faults incl. flash contention from concurrent installs; the pair together confirms an IO-class slow run</td><td><strong>negligible</strong> — raw-byte reads on-path, parsed on the record worker. <strong>Implemented 2026-08-13</strong> (commit 011d73e72, in review)</td></tr>
+        <tr><td>Memory pressure</td><td class="attr">mem-available-pct, low-memory, init-gc-count</td><td><code>ActivityManager.getMemoryInfo</code> (record worker; available as a whole % of total so one threshold works fleet-wide); <code>Debug.getRuntimeStat("art.gc.gc-count")</code> delta across the window</td><td>the Go-tier class: reclaim + our own GC during init. <strong>GC spec simplified by the retro classification (2026-08-13):</strong> outlier-window GC is ~99% CONCURRENT copying collection (mutual CPU starvation), blocking pauses ≈1% — so gc-<em>time</em> attrs were dropped; the single aggregate count is a deliberately directional "was there GC at all" signal, with the actual cost already captured by the run-delay/cpu decomposition</td><td>mem/low-memory: <strong>none</strong> (binder, record worker). GC count: <strong>negligible</strong> (runtime-internal read, µs-scale, start+end on-path). <strong>Implemented 2026-08-13</strong> (commit 011d73e72, in review)</td></tr>
+        <tr><td>First-launch proximity</td><td class="attr">seconds-since-install / seconds-since-update, seconds-since-boot</td><td><code>PackageInfo.firstInstallTime/lastUpdateTime</code> (via the memoized <code>InstrumentationArgs.packageInfo</code>); boot recency falls out of the window's <code>elapsedRealtime</code> start for free</td><td>install-aftermath exposure, finer than <code>version_startup_counter</code> alone (which stays); boot recency marks the cold-caches-everywhere class</td><td><strong>none</strong> — binder on the record worker, memoized. <strong>Implemented 2026-08-13</strong> (commits 175cc0cf5 + 011d73e72, in review)</td></tr>
+        <tr><td>Tier cohorting</td><td class="attr">device_soc_model (envelope resource)</td><td><strong>Resolved without new span attrs (2026-08-13):</strong> the SDK already ships the SoC model on every payload's envelope resource (<code>DeviceImpl</code>, API 31+, blank/unknown filtered) — the sdk-init span is joinable to it by construction, so span-attr duplication was dropped. The originally-specced core_count/max_freq are degenerate across modern tiers (same cores, same clock, 3.7× perf). A sub-31 fallback (<code>cpu-identity</code> tuple: cpuinfo part-IDs | cpufreq maxima) was built and then deferred — if it's ever needed it belongs in <code>DeviceImpl</code> on the resource, not on the span</td><td>tier segmentation without device-model lookup tables; "slow" is judged within the SoC cohort</td><td><strong>none</strong> — already shipping</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note"><strong>Shipped state (2026-08-13, committed &amp; PRs in review):</strong> every row above except core placement and compile state is implemented. On-path cost as built: 4 tiny raw-byte procfs reads + 2 clock syscalls + 2 runtime-stat reads per init ≈ 0.15–0.4 ms worst-case on the slowest tier; everything marked <em>none</em> runs on the span-record worker and is memoized. All attribute keys live in one place — <code>SdkInitAttributeKeys</code> — as future semantic-convention candidates (deliberately not registered yet); the producers are <code>SdkInitResourceUsageTracker</code> (window deltas, <code>captureStart/captureEnd</code>) and <code>sdkInitEnvironmentAttributes()</code> (record-time snapshot).</p>
+
+  <p class="note"><strong>The dashboard story this enables:</strong> every slow init classifies into <em>pressured · thermal · IO-stalled · memory-pressured · mis-placed · first-launch · unexplained</em>. The unexplained residual is the health check on the model itself. Regression alerting runs on the quiet cohort (low pressure, thermal_status 0, not first-launch) so environmental noise never masquerades as an SDK regression.</p>
+
+  <p class="note"><strong>Validation before trusting it:</strong> two stages. (1) <em>Presence</em>: the four-device attr-presence sweep (runs tonight, 2026-08-13) verifies every attribute actually appears on real payloads across API 29–35 — SELinux/vendor gaps become findings, not silent holes. (2) <em>Accuracy</em> (P6): one bench campaign grading attribute classifications against perfetto ground truth — we already know exactly which iterations were GC-hit, dexopt-hit, hot, and mis-placed. The core pair is already device-validated (dose–response + accounting closure).</p>
+
+  <footer>
+    <p><strong>Companion docs:</strong> <a href="https://claude.ai/code/artifact/a67bcf10-2835-49e8-95ee-7d10a551fdf9">primer (how the SDK starts)</a> · <a href="https://claude.ai/code/artifact/9eda58ea-2446-4bd9-b1ea-228ea7ad7a33">External Factors — Findings Summary</a> (the evidence behind each item) · <a href="https://claude.ai/code/artifact/c8ef75b3-4c83-4335-8b9a-3776699266a0">testing log</a> (every experiment) · tracking doc: <a href="https://claude.ai/code/artifact/0e08adcf-5b33-43f5-8a7f-abc7679d68b3">Startup Improvements — Project Tracker</a>.</p>
+  </footer>
+</main>

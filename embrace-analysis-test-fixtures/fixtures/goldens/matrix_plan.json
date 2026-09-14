@@ -1,0 +1,307 @@
+{
+ "cells": [
+  {
+   "device": "mid",
+   "group": "version-sweep",
+   "id": "mid|<oldest supported release>|reference",
+   "levels": {
+    "app": "light",
+    "compile": "profile",
+    "contention": "quiet",
+    "install": "settled",
+    "memory": "normal",
+    "thermal": "cool"
+   },
+   "version": "<oldest supported release>"
+  },
+  {
+   "device": "mid",
+   "group": "version-sweep",
+   "id": "mid|<mid release>|reference",
+   "levels": {
+    "app": "light",
+    "compile": "profile",
+    "contention": "quiet",
+    "install": "settled",
+    "memory": "normal",
+    "thermal": "cool"
+   },
+   "version": "<mid release>"
+  },
+  {
+   "device": "mid",
+   "group": "version-sweep",
+   "id": "mid|<previous release>|reference",
+   "levels": {
+    "app": "light",
+    "compile": "profile",
+    "contention": "quiet",
+    "install": "settled",
+    "memory": "normal",
+    "thermal": "cool"
+   },
+   "version": "<previous release>"
+  },
+  {
+   "device": "mid",
+   "group": "version-sweep",
+   "id": "mid|local|reference",
+   "levels": {
+    "app": "light",
+    "compile": "profile",
+    "contention": "quiet",
+    "install": "settled",
+    "memory": "normal",
+    "thermal": "cool"
+   },
+   "version": "local"
+  },
+  {
+   "device": "mid",
+   "group": "factor:compile=none",
+   "id": "mid|<oldest supported release>|compile=none",
+   "levels": {
+    "app": "light",
+    "compile": "none",
+    "contention": "quiet",
+    "install": "settled",
+    "memory": "normal",
+    "thermal": "cool"
+   },
+   "version": "<oldest supported release>"
+  },
+  {
+   "device": "mid",
+   "group": "factor:install=fresh",
+   "id": "mid|<oldest supported release>|install=fresh",
+   "levels": {
+    "app": "light",
+    "compile": "profile",
+    "contention": "quiet",
+    "install": "fresh",
+    "memory": "normal",
+    "thermal": "cool"
+   },
+   "version": "<oldest supported release>"
+  },
+  {
+   "device": "mid",
+   "group": "factor:contention=queueing",
+   "id": "mid|<oldest supported release>|contention=queueing",
+   "levels": {
+    "app": "light",
+    "compile": "profile",
+    "contention": "queueing",
+    "install": "settled",
+    "memory": "normal",
+    "thermal": "cool"
+   },
+   "version": "<oldest supported release>"
+  },
+  {
+   "device": "entry",
+   "group": "combo:worst-realistic",
+   "id": "entry|local|compile=none,install=fresh",
+   "levels": {
+    "app": "light",
+    "compile": "none",
+    "contention": "quiet",
+    "install": "fresh",
+    "memory": "normal",
+    "thermal": "cool"
+   },
+   "version": "local"
+  },
+  {
+   "device": "flagship",
+   "group": "combo:bad-day",
+   "id": "flagship|local|contention=queueing,thermal=hot",
+   "levels": {
+    "app": "light",
+    "compile": "profile",
+    "contention": "queueing",
+    "install": "settled",
+    "memory": "normal",
+    "thermal": "hot"
+   },
+   "version": "local"
+  },
+  {
+   "device": "mid",
+   "group": "factor:compile=none",
+   "id": "mid|<previous release>|compile=none",
+   "levels": {
+    "app": "light",
+    "compile": "none",
+    "contention": "quiet",
+    "install": "settled",
+    "memory": "normal",
+    "thermal": "cool"
+   },
+   "version": "<previous release>"
+  },
+  {
+   "device": "mid",
+   "group": "factor:install=fresh",
+   "id": "mid|<previous release>|install=fresh",
+   "levels": {
+    "app": "light",
+    "compile": "profile",
+    "contention": "quiet",
+    "install": "fresh",
+    "memory": "normal",
+    "thermal": "cool"
+   },
+   "version": "<previous release>"
+  },
+  {
+   "device": "mid",
+   "group": "factor:contention=queueing",
+   "id": "mid|<previous release>|contention=queueing",
+   "levels": {
+    "app": "light",
+    "compile": "profile",
+    "contention": "queueing",
+    "install": "settled",
+    "memory": "normal",
+    "thermal": "cool"
+   },
+   "version": "<previous release>"
+  },
+  {
+   "device": "mid",
+   "group": "factor:compile=none",
+   "id": "mid|local|compile=none",
+   "levels": {
+    "app": "light",
+    "compile": "none",
+    "contention": "quiet",
+    "install": "settled",
+    "memory": "normal",
+    "thermal": "cool"
+   },
+   "version": "local"
+  },
+  {
+   "device": "mid",
+   "group": "factor:install=fresh",
+   "id": "mid|local|install=fresh",
+   "levels": {
+    "app": "light",
+    "compile": "profile",
+    "contention": "quiet",
+    "install": "fresh",
+    "memory": "normal",
+    "thermal": "cool"
+   },
+   "version": "local"
+  },
+  {
+   "device": "mid",
+   "group": "factor:contention=queueing",
+   "id": "mid|local|contention=queueing",
+   "levels": {
+    "app": "light",
+    "compile": "profile",
+    "contention": "queueing",
+    "install": "settled",
+    "memory": "normal",
+    "thermal": "cool"
+   },
+   "version": "local"
+  }
+ ],
+ "plan": {
+  "_comment": [
+   "EXAMPLE plan - copy, then fill in YOUR devices. Nothing here is a recommended device;",
+   "the device_set below is what makes the run interpretable, so choose profiles deliberately",
+   "(see references/design.md > Choosing your device set). Get serials from `adb devices -l`.",
+   "Each device entry records the PROFILE so results stay comparable across runs and machines."
+  ],
+  "anchors": [
+   "<oldest supported release>",
+   "<previous release>",
+   "local"
+  ],
+  "build_type": "benchmark",
+  "combos": [
+   {
+    "device": "entry",
+    "id": "worst-realistic",
+    "levels": {
+     "compile": "none",
+     "install": "fresh"
+    },
+    "version": "local"
+   },
+   {
+    "device": "flagship",
+    "id": "bad-day",
+    "levels": {
+     "contention": "queueing",
+     "thermal": "hot"
+    },
+    "version": "local"
+   }
+  ],
+  "devices": {
+   "entry": {
+    "api_level": 29,
+    "cool_gate_c": 30.0,
+    "ram_class": "<=2GB",
+    "serial": "<serial>",
+    "soc_family": "<from device_probe.py>",
+    "tier": "entry",
+    "vendor": "<oem>"
+   },
+   "flagship": {
+    "api_level": 35,
+    "cool_gate_c": 32.0,
+    "ram_class": ">=8GB",
+    "serial": "<serial>",
+    "soc_family": "<from device_probe.py>",
+    "tier": "flagship",
+    "vendor": "<oem, ideally different from the mid device>"
+   },
+   "mid": {
+    "api_level": 34,
+    "cool_gate_c": 32.0,
+    "ram_class": "4-6GB",
+    "serial": "<serial from adb devices -l>",
+    "soc_family": "<from device_probe.py>",
+    "tier": "mid",
+    "vendor": "<oem>"
+   }
+  },
+  "factor_levels": {
+   "compile": [
+    "none"
+   ],
+   "contention": [
+    "queueing"
+   ],
+   "install": [
+    "fresh"
+   ]
+  },
+  "iterations": 50,
+  "night_budget_hours": 8,
+  "passes": 4,
+  "primary_device": "mid",
+  "reference": {
+   "app": "light",
+   "compile": "profile",
+   "contention": "quiet",
+   "install": "settled",
+   "memory": "normal",
+   "thermal": "cool"
+  },
+  "run_id": "vfm-<yyyy-mm-dd>",
+  "versions": [
+   "<oldest supported release>",
+   "<mid release>",
+   "<previous release>",
+   "local"
+  ]
+ }
+}

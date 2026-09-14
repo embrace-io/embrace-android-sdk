@@ -1,16 +1,11 @@
 package io.embrace.android.embracesdk.internal.arch.navigation
 
 /**
- * Service where navigation controllers can be registered, and when they fire events, they will be dispatched to the listeners.
+ * Service where a navigation source can be registered so that the SDK can ask it to look for a controller on an Activity.
  */
-interface NavigationTrackingService : NavigationTrackingInitListener, NavigationControllerEventListener {
+interface NavigationTrackingService : NavigationTrackingInitListener {
     /**
      * Register listener that receives events related to the initialization of components that control navigation
      */
     var navigationTrackingInitListener: NavigationTrackingInitListener
-
-    /**
-     * Register listener that receives events related to components that control navigation
-     */
-    var navigationControllerEventListener: NavigationControllerEventListener
 }

@@ -17,8 +17,12 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
-import io.embrace.android.embracesdk.fakes.FakeNavigationTrackingService
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ScreenChanged
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ScreenSourceAttached
+import io.embrace.android.embracesdk.internal.arch.navigation.getId
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -30,75 +34,81 @@ import org.robolectric.Robolectric.buildActivity
 internal class NavControllerTrackerTest {
 
     private lateinit var clock: FakeClock
-    private lateinit var fakeTracker: FakeNavigationTrackingService
+    private lateinit var eventBus: EventBus
+    private lateinit var signals: MutableList<NavigationSignal>
     private lateinit var tracker: NavControllerTracker
     private lateinit var logger: FakeInternalLogger
     private lateinit var activity: FragmentActivity
 
+    private val attached get() = signals.filterIsInstance<ScreenSourceAttached>()
+    private val screenChanges get() = signals.filterIsInstance<ScreenChanged>()
+
     @Before
     fun setUp() {
         clock = FakeClock()
-        fakeTracker = FakeNavigationTrackingService()
         logger = FakeInternalLogger()
-        tracker = NavControllerTracker(fakeTracker, clock, logger)
+        signals = mutableListOf()
+        eventBus = EventBus(logger)
+        eventBus.addHandler<NavigationSignal> { signals.add(it) }
+        tracker = NavControllerTracker(eventBus, clock, logger)
         activity = createActivity()
     }
 
     @Test
-    fun `tracking activity with nav controller produces attached and destination callbacks`() {
+    fun `tracking activity with nav controller produces attached and screen change signals`() {
         tracker.trackNavigation(activity)
-        assertEquals(1, fakeTracker.attachedCalls.size)
-        assertEquals(1, fakeTracker.destinationChangedCalls.size)
-        assertEquals("home", fakeTracker.destinationChangedCalls[0].screenName)
+        assertEquals(1, attached.size)
+        assertEquals(1, screenChanges.size)
+        assertEquals("home", screenChanges[0].name)
     }
 
     @Test
-    fun `track on activity with no nav controller produces no callbacks`() {
+    fun `track on activity with no nav controller produces no signals`() {
         tracker.trackNavigation(buildActivity(Activity::class.java).setup().get())
-        assertTrue(fakeTracker.attachedCalls.isEmpty())
+        assertTrue(signals.isEmpty())
     }
 
     @Test
-    fun `track on FragmentActivity without NavHostFragment produces no callbacks`() {
+    fun `track on FragmentActivity without NavHostFragment produces no signals`() {
         tracker.trackNavigation(buildActivity(FragmentActivity::class.java).setup().get())
-        assertTrue(fakeTracker.attachedCalls.isEmpty())
+        assertTrue(signals.isEmpty())
     }
 
     @Test
-    fun `calling track twice on same activity does not produce duplicate callbacks`() {
+    fun `calling track twice on same activity does not produce duplicate signals`() {
         tracker.trackNavigation(activity)
         tracker.trackNavigation(activity)
-        assertEquals(1, fakeTracker.attachedCalls.size)
+        assertEquals(1, attached.size)
     }
 
     @Test
-    fun `tracking different activity instances produces callbacks for each`() {
+    fun `tracking different activity instances produces signals naming each`() {
         val anotherActivity = createActivity()
         tracker.trackNavigation(activity)
         tracker.trackNavigation(anotherActivity)
-        assertEquals(2, fakeTracker.attachedCalls.size)
-        assertEquals(2, fakeTracker.destinationChangedCalls.size)
+        assertEquals(listOf(activity.getId(), anotherActivity.getId()), attached.map { it.instanceId })
+        assertEquals(listOf(activity.getId(), anotherActivity.getId()), screenChanges.map { it.instanceId })
     }
 
     @Test
     fun `destination screen name falls back to label when route is null`() {
         val labelActivity = createActivity(::graphWithRoutelessDestinationWithLabel)
         tracker.trackNavigation(labelActivity)
-        assertEquals("My Home", fakeTracker.destinationChangedCalls[0].screenName)
+        assertEquals("My Home", screenChanges[0].name)
     }
 
     @Test
     fun `destination screen name falls back to navigatorName when route and label are null`() {
         val idActivity = createActivity(::graphWithDestinationWithoutRouteAndLabel)
         tracker.trackNavigation(idActivity)
-        assertEquals("fragment", fakeTracker.destinationChangedCalls[0].screenName)
+        assertEquals("fragment", screenChanges[0].name)
     }
 
     @Test
-    fun `tracking NavController explicitly produces callbacks for the provided activity`() {
+    fun `tracking NavController explicitly produces signals for the provided activity`() {
         tracker.trackNavigation(activity, createTestNavController())
-        assertEquals(1, fakeTracker.attachedCalls.size)
-        assertEquals("home", fakeTracker.destinationChangedCalls[0].screenName)
+        assertEquals(1, attached.size)
+        assertEquals("home", screenChanges[0].name)
     }
 
     @Test
@@ -106,24 +116,24 @@ internal class NavControllerTrackerTest {
         tracker.trackNavigation(activity, createTestNavController("foo"))
         tracker.trackNavigation(activity, createTestNavController("bar"))
         tracker.trackNavigation(activity)
-        assertEquals(1, fakeTracker.attachedCalls.size)
-        assertEquals("foo", fakeTracker.destinationChangedCalls[0].screenName)
+        assertEquals(1, attached.size)
+        assertEquals("foo", screenChanges[0].name)
     }
 
     @Test
     fun `explicit tracking will be ignored if activity has already been discovered`() {
         tracker.trackNavigation(activity)
         tracker.trackNavigation(activity, createTestNavController("foo"))
-        assertEquals(1, fakeTracker.attachedCalls.size)
-        assertEquals("home", fakeTracker.destinationChangedCalls[0].screenName)
+        assertEquals(1, attached.size)
+        assertEquals("home", screenChanges[0].name)
     }
 
     @Test
     fun `error during tracking is logged and does not crash`() {
         val errorLogger = FakeInternalLogger(throwOnInternalError = false)
-        tracker = NavControllerTracker(fakeTracker, clock, errorLogger)
+        tracker = NavControllerTracker(eventBus, clock, errorLogger)
         tracker.trackNavigation(buildActivity(BrokenNavActivity::class.java).setup().get())
-        assertTrue(fakeTracker.attachedCalls.isEmpty())
+        assertTrue(signals.isEmpty())
         assertTrue(
             errorLogger.internalErrorMessages.any {
                 it.msg == InternalErrorType.NavControllerTrackingFail.toString()

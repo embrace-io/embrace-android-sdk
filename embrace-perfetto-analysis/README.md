@@ -2,10 +2,7 @@
 
 Host tooling for analysing a gzipped perfetto trace. Not published, not shipped in the SDK.
 
-**This decodes a trace but does not yet interpret one.** It reads the file onto the protobuf wire model and
-prints what that holds. Pairing the atrace events into slices, and timing the sections they name, comes next.
-
-Validation decompresses the first few bytes and checks they open a perfetto packet; anything else is rejected.
+It reads the file onto the protobuf wire model and pairs the atrace events into slices.
 
 ## Running
 
@@ -35,6 +32,20 @@ An atrace event's `print.buf` is a begin (`B|<tgid>|<name>`) or an end (`E`, or 
 
 Thread and process names are not currently read, so threads are numeric. Sections the SDK emits are prefixed `emb-` by
 `EmbTrace`.
+
+## The model
+
+`TraceInterpreter` turns those events into a `TraceModel`. This contains a `ThreadTimeline` per thread holding slices in
+time order:
+
+```kotlin
+val model = TraceInterpreter().interpret(ftraceEvents(parseTrace(file)))
+model.first("emb-sdk-start")?.durationNanos
+model.slices("emb-mf-file-write-atomic") // every occurrence, ordered by start
+```
+
+Atrace names a section only when it opens, so an end closes whichever begin is innermost on its thread. Anything
+that cannot be paired is counted.
 
 ## Getting a trace
 

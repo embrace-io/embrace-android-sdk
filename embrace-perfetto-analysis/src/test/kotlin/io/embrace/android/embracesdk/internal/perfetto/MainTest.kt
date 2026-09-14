@@ -66,13 +66,32 @@ internal class MainTest {
     }
 
     @Test
+    fun `the summary reports the slices the events paired into, and what did not pair`() {
+        val text = summarise(
+            trace(
+                print(1000, "B|$TID|emb-sdk-start", tid = TID),
+                print(1300, "E|$TID", tid = TID),
+                print(1100, "B|$OTHER_TID|emb-core-init", tid = OTHER_TID),
+            ),
+        )
+
+        assertTrue(text, text.contains("slices: 1 of 1 distinct sections"))
+        assertTrue(text, text.contains("tid $TID: 1 slices"))
+        assertTrue(text, text.contains("skipped: 1 unclosed, 0 unopened, 0 unsupported"))
+    }
+
+    @Test
     fun `an empty trace summarises as empty rather than failing`() {
         val text = summarise(Trace())
 
         assertTrue(text, text.contains("packets: 0"))
         assertTrue(text, text.contains("ftrace events: 0"))
         assertTrue(text, text.contains("atrace events: 0 across 0 threads"))
+        assertTrue(text, text.contains("slices: 0 of 0 distinct sections"))
     }
+
+    private fun trace(vararg events: FtraceEvent) =
+        Trace(packet = listOf(TracePacket(ftrace_events = FtraceEventBundle(event = events.toList()))))
 
     private fun print(timestamp: Long, payload: String, tid: Int) =
         FtraceEvent(timestamp = timestamp, pid = tid, print = PrintFtraceEvent(buf = payload))

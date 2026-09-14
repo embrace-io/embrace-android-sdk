@@ -59,6 +59,7 @@ include(
     ":embrace-analysis-common",
     ":embrace-analysis-stats",
     ":embrace-analysis-perfetto",
+    ":embrace-analysis-device",
     ":embrace-analysis-test-fixtures",
 )
 

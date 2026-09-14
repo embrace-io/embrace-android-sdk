@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
+import okio.BufferedSource
 import java.io.IOException
 
 /**
@@ -100,48 +101,41 @@ class SessionPartDecoder(
     private fun Span.endTime(): Long = endTimeNanos ?: Long.MIN_VALUE
 
     /**
-     * Decodes the completed spans logged for a session part, or null if the log cannot be read.
-     *
-     * An oversized log is truncated rather than rejected.
+     * Decodes the spans [file] holds one record at a time with [read], or null if it cannot be
+     * read. An oversized file is truncated rather than rejected.
      */
+    private fun readSpanCollectionFile(
+        source: SessionPartSource,
+        file: SessionPartFile,
+        budget: SpanBudget,
+        read: (BufferedSource, Int) -> DecodedSpans,
+    ): List<Span>? = SystemTrace.trace(file.traceSection) {
+        if (!source.exists(file)) {
+            return@trace emptyList()
+        }
+        if (source.sizeBytes(file) > MAX_PART_FILE_BYTES) {
+            trackFailure(IOException(OVERSIZED_PART_FILE_MSG))
+        }
+        try {
+            val decoded = openOrThrow(source, file).use { src -> read(src, budget.remaining) }
+            decoded.corruption?.let(::trackFailure)
+            budget.spend(decoded.spans.size, truncated = decoded.spanLimitReached)
+            SystemTrace.trace("mf-spans-proto-to-payload") { decoded.drainToPayload() }
+        } catch (exc: Throwable) {
+            trackFailure(exc)
+            null
+        }
+    }
+
     private fun readCompletedSpansFile(source: SessionPartSource, budget: SpanBudget): List<Span>? =
-        SystemTrace.trace(SessionPartFile.COMPLETED_SPANS.traceSection) {
-            if (!source.exists(SessionPartFile.COMPLETED_SPANS)) {
-                return@trace emptyList()
-            }
-            if (source.sizeBytes(SessionPartFile.COMPLETED_SPANS) > MAX_PART_FILE_BYTES) {
-                trackFailure(IOException(OVERSIZED_PART_FILE_MSG))
-            }
-            try {
-                val decoded = openOrThrow(source, SessionPartFile.COMPLETED_SPANS).use { src ->
-                    readCompletedSpans(src, maxSpans = budget.remaining)
-                }
-                decoded.corruption?.let(::trackFailure)
-                budget.spend(decoded.spans.size, truncated = decoded.spanLimitReached)
-                SystemTrace.trace("mf-spans-proto-to-payload") { decoded.drainToPayload() }
-            } catch (exc: Throwable) {
-                trackFailure(exc)
-                null
-            }
+        readSpanCollectionFile(source, SessionPartFile.COMPLETED_SPANS, budget) { src, maxSpans ->
+            readCompletedSpans(src, maxSpans = maxSpans)
         }
 
-    /**
-     * Decodes the span snapshots persisted for a session part, or null if they cannot be read.
-     */
-    private fun readSpanSnapshotsFile(source: SessionPartSource, budget: SpanBudget): List<Span>? {
-        if (!source.exists(SessionPartFile.SPAN_SNAPSHOTS)) {
-            return emptyList()
+    private fun readSpanSnapshotsFile(source: SessionPartSource, budget: SpanBudget): List<Span>? =
+        readSpanCollectionFile(source, SessionPartFile.SPAN_SNAPSHOTS, budget) { src, maxSpans ->
+            readSpanSnapshots(src, maxSpans = maxSpans)
         }
-        val snapshots = readPartFile(
-            source,
-            SessionPartFile.SPAN_SNAPSHOTS,
-            SpanSnapshots.ADAPTER,
-            SpanSnapshots::format_version,
-        ) ?: return null
-        val afforded = snapshots.spans.take(budget.remaining)
-        budget.spend(afforded.size, truncated = afforded.size < snapshots.spans.size)
-        return SystemTrace.trace("mf-spans-proto-to-payload") { afforded.map(SpanProto::toPayload) }
-    }
 
     /**
      * Decodes [file] from a session part, or null if it is absent, cannot be read, or was written

@@ -236,13 +236,23 @@ class SessionPartWriterImpl(
         }
     }
 
+    /**
+     * Appends the spans that have changed since the last write, so the cost of a write is
+     * proportional to what changed rather than to everything in flight.
+     */
     private fun queueSpanSnapshotsRefresh(writers: PartWriters) = EmbTrace.trace("mf-queue-span-snapshots-refresh") {
         execute(writers, InternalErrorType.SpanSnapshotsWriteFail, writers.spanSnapshotWrites::submit) {
-            if (current === writers) {
-                snapshotTracker.drainDirtySpans()
-                writers.spanSnapshots.write(
-                    inFlightSpanSource().mapNotNull(EmbraceSdkSpan::snapshot) + writers.sessionSpanSnapshot(),
-                )
+            if (current !== writers) {
+                return@execute
+            }
+            // the session span is snapshotted through the part rather than tracked, so that it
+            // drops out of the log once it has ended and a later part's span can't be logged here
+            val changed = snapshotTracker.drainDirtySpans().mapNotNull(EmbraceSdkSpan::snapshot) +
+                writers.sessionSpanSnapshot()
+            if (changed.isNotEmpty()) {
+                writers.spanSnapshots.append(changed) {
+                    inFlightSpanSource().mapNotNull(EmbraceSdkSpan::snapshot) + writers.sessionSpanSnapshot()
+                }
             }
         }
     }

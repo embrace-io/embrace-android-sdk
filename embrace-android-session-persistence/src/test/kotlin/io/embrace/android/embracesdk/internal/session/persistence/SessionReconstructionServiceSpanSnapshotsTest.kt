@@ -169,13 +169,16 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
     }
 
     @Test
-    fun `a truncated snapshots file is reported and does not throw`() {
+    fun `a snapshots file with a torn tail is read back as far as it is intact`() {
         write(snapshots = listOf(inFlightSpan))
         val bytes = snapshotsFile().readBytes()
         snapshotsFile().writeBytes(bytes.copyOf(bytes.size / 2))
 
-        assertNull(service.reconstruct(partDirectory))
-        assertReconstructionFailureTracked()
+        // a process dying mid-append leaves a half written record, which costs that record rather
+        // than the whole session part
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(emptyList<Span>(), payload.spanSnapshots)
+        assertNoInternalErrors()
     }
 
     @Test

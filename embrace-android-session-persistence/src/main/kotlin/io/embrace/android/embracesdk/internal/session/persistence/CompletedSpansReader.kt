@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
-import com.squareup.wire.ProtoReader
 import okio.BufferedSource
-import java.io.EOFException
 
 private const val SPANS_TAG = 1
 
@@ -24,34 +22,23 @@ internal fun readCompletedSpans(
 ): DecodedSpans {
     val spans = mutableListOf<SpanProto>()
     var corruption: Throwable? = null
-    val reader = ProtoReader(source)
-    reader.beginMessage()
-    var remaining = maxBytes
+    val collection = SpanCollectionReader(source, maxBytes, maxRecordBytes)
 
     while (true) {
-        val record = try {
-            when (reader.nextTag()) {
-                -1 -> return DecodedSpans(spans, corruption)
-                SPANS_TAG -> {
-                    if (spans.size >= maxSpans) {
-                        return DecodedSpans(spans, corruption, spanLimitReached = true)
-                    }
-                    if (reader.nextFieldMinLengthInBytes() > maxRecordBytes) {
-                        return DecodedSpans(spans, corruption)
-                    }
-                    reader.readBytes()
+        val record = when (collection.nextTag()) {
+            null -> return DecodedSpans(spans, corruption)
+            SPANS_TAG -> {
+                if (spans.size >= maxSpans) {
+                    return DecodedSpans(spans, corruption, spanLimitReached = true)
                 }
-                else -> {
-                    reader.skip()
-                    continue
-                }
+                collection.readRecord() ?: return DecodedSpans(spans, corruption)
             }
-        } catch (exc: EOFException) {
-            return DecodedSpans(spans, corruption)
-        }
-        remaining -= record.size
-        if (remaining < 0) {
-            return DecodedSpans(spans, corruption)
+            else -> {
+                if (!collection.skipFrame()) {
+                    return DecodedSpans(spans, corruption)
+                }
+                continue
+            }
         }
         try {
             spans.add(SpanProto.ADAPTER.decode(record))

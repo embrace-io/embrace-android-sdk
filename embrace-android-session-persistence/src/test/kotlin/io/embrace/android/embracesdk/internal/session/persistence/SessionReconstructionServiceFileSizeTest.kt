@@ -85,8 +85,15 @@ internal class SessionReconstructionServiceFileSizeTest {
     }
 
     @Test
-    fun `oversized span snapshots are rejected`() {
-        assertOversizedFileRejected(SPAN_SNAPSHOTS_FILE_NAME)
+    fun `oversized span snapshots are reported and read up to the limit`() {
+        padToSize(SPAN_SNAPSHOTS_FILE_NAME, MAX_PART_FILE_BYTES + 1)
+
+        // the log is only ever appended to, so an oversized one still holds the spans logged
+        // before it outgrew the limit
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(listOf(inFlightSpan), payload.spanSnapshots)
+        assertEquals(1, logger.internalErrorMessages.size)
+        assertEquals("SessionReconstructionFail", logger.internalErrorMessages.single().msg)
     }
 
     @Test

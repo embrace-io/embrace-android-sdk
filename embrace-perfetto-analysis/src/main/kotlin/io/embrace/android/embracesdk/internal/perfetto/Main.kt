@@ -11,11 +11,11 @@ internal const val EXIT_BAD_TRACE = 2
 private const val USAGE = """
 usage: analyseTrace <trace.perfetto.gz> [options]
 
-  --operations <a,b,c>      report statistics for these sections
-  --all-operations          report statistics for every section the trace recorded
-  --format markdown|json    how to render those statistics (default: markdown)
-  --dry-run                 validate the inputs and report what would be analysed, then stop
-  --help, -h                print this message
+  --operations <a,b,c>         report statistics for these sections
+  --all-operations             report statistics for every section the trace recorded
+  --format markdown|json|html  how to render those statistics (default: markdown)
+  --dry-run                    validate the inputs and report what would be analysed, then stop
+  --help, -h                   print this message
 
 Normally run via scripts/analyse-trace.sh.
 """
@@ -148,4 +148,5 @@ internal fun statsReport(options: Options, trace: Trace): StatsReport {
 internal fun render(format: ReportFormat, report: StatsReport): String = when (format) {
     ReportFormat.MARKDOWN -> renderMarkdown(report)
     ReportFormat.JSON -> renderJson(report)
+    ReportFormat.HTML -> renderHtml(report)
 }

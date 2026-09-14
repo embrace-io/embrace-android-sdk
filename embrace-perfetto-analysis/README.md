@@ -7,7 +7,7 @@ It reads the file onto the protobuf wire model and pairs the atrace events into 
 ## Running
 
 ```bash
-scripts/analyse-trace.sh <trace.perfetto.gz> [--operations a,b | --all-operations] [--format markdown|json] [--dry-run]
+scripts/analyse-trace.sh <trace.perfetto.gz> [--operations a,b | --all-operations] [--format markdown|json|html] [--dry-run]
 ```
 
 Or

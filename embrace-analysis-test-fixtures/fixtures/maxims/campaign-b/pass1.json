@@ -1,0 +1,682 @@
+[
+ {
+  "trace": "pass1-iter000.perfetto-trace",
+  "window_ms": 9.6,
+  "dur": {
+   "emb-embrace-impl-init": 1.0,
+   "emb-bootstrapper-init": 0.4,
+   "emb-modules-init": 30.0,
+   "emb-span-service-init": 10.0,
+   "emb-otel-tracer-init": 5.0,
+   "emb-post-services-setup": 2.0,
+   "emb-load-instrumentation": 1.5,
+   "emb-install-native-crash-signal-handlers": 3.0,
+   "emb-load-embrace-native-lib": 2.0,
+   "emb-record-startup": 0.3,
+   "emb-power-service-registration": 1.0,
+   "emb-snapshot-session": 0.5,
+   "emb-config-service-init": 2.0,
+   "emb-payload-source-init": 1.0,
+   "emb-essential-service-init": 1.5,
+   "emb-post-init": 1.0,
+   "emb-delivery-init": 0.5,
+   "emb-persisted-config-load": 6.0
+  },
+  "cpu_ms": {
+   "0": 3.36,
+   "4": 3.36
+  },
+  "states": {
+   "emb-modules-init": {
+    "Running": 5.376,
+    "S": 0.5
+   }
+  }
+ },
+ {
+  "trace": "pass1-iter001.perfetto-trace",
+  "window_ms": 12.02,
+  "dur": {
+   "emb-embrace-impl-init": 1.0,
+   "emb-bootstrapper-init": 0.4,
+   "emb-modules-init": 30.0,
+   "emb-span-service-init": 10.0,
+   "emb-otel-tracer-init": 5.0,
+   "emb-post-services-setup": 2.0,
+   "emb-load-instrumentation": 1.5,
+   "emb-install-native-crash-signal-handlers": 3.0,
+   "emb-load-embrace-native-lib": 2.0,
+   "emb-record-startup": 0.3,
+   "emb-power-service-registration": 1.0,
+   "emb-snapshot-session": 0.5,
+   "emb-config-service-init": 2.0,
+   "emb-payload-source-init": 1.0,
+   "emb-essential-service-init": 1.5,
+   "emb-post-init": 1.0,
+   "emb-delivery-init": 0.5,
+   "emb-persisted-config-load": 3.05
+  },
+  "cpu_ms": {
+   "0": 4.207,
+   "4": 4.207
+  },
+  "states": {
+   "emb-modules-init": {
+    "Running": 6.731,
+    "S": 0.5
+   }
+  }
+ },
+ {
+  "trace": "pass1-iter002.perfetto-trace",
+  "window_ms": 12.04,
+  "dur": {
+   "emb-embrace-impl-init": 1.0,
+   "emb-bootstrapper-init": 0.4,
+   "emb-modules-init": 30.0,
+   "emb-span-service-init": 10.0,
+   "emb-otel-tracer-init": 5.0,
+   "emb-post-services-setup": 2.0,
+   "emb-load-instrumentation": 1.5,
+   "emb-install-native-crash-signal-handlers": 3.0,
+   "emb-load-embrace-native-lib": 2.0,
+   "emb-record-startup": 0.3,
+   "emb-power-service-registration": 1.0,
+   "emb-snapshot-session": 0.5,
+   "emb-config-service-init": 2.0,
+   "emb-payload-source-init": 1.0,
+   "emb-essential-service-init": 1.5,
+   "emb-post-init": 1.0,
+   "emb-delivery-init": 0.5,
+   "emb-persisted-config-load": 3.1
+  },
+  "cpu_ms": {
+   "0": 4.214,
+   "4": 4.214
+  },
+  "states": {
+   "emb-modules-init": {
+    "Running": 6.742,
+    "S": 0.5
+   }
+  }
+ },
+ {
+  "trace": "pass1-iter003.perfetto-trace",
+  "window_ms": 12.06,
+  "dur": {
+   "emb-embrace-impl-init": 1.0,
+   "emb-bootstrapper-init": 0.4,
+   "emb-modules-init": 30.0,
+   "emb-span-service-init": 10.0,
+   "emb-otel-tracer-init": 5.0,
+   "emb-post-services-setup": 2.0,
+   "emb-load-instrumentation": 1.5,
+   "emb-install-native-crash-signal-handlers": 3.0,
+   "emb-load-embrace-native-lib": 2.0,
+   "emb-record-startup": 0.3,
+   "emb-power-service-registration": 1.0,
+   "emb-snapshot-session": 0.5,
+   "emb-config-service-init": 2.0,
+   "emb-payload-source-init": 1.0,
+   "emb-essential-service-init": 1.5,
+   "emb-post-init": 1.0,
+   "emb-delivery-init": 0.5,
+   "emb-persisted-config-load": 3.15
+  },
+  "cpu_ms": {
+   "0": 4.221,
+   "4": 4.221
+  },
+  "states": {
+   "emb-modules-init": {
+    "Running": 6.754,
+    "S": 0.5
+   }
+  }
+ },
+ {
+  "trace": "pass1-iter004.perfetto-trace",
+  "window_ms": 12.08,
+  "dur": {
+   "emb-embrace-impl-init": 1.0,
+   "emb-bootstrapper-init": 0.4,
+   "emb-modules-init": 30.0,
+   "emb-span-service-init": 10.0,
+   "emb-otel-tracer-init": 5.0,
+   "emb-post-services-setup": 2.0,
+   "emb-load-instrumentation": 1.5,
+   "emb-install-native-crash-signal-handlers": 3.0,
+   "emb-load-embrace-native-lib": 2.0,
+   "emb-record-startup": 0.3,
+   "emb-power-service-registration": 1.0,
+   "emb-snapshot-session": 0.5,
+   "emb-config-service-init": 2.0,
+   "emb-payload-source-init": 1.0,
+   "emb-essential-service-init": 1.5,
+   "emb-post-init": 1.0,
+   "emb-delivery-init": 0.5,
+   "emb-persisted-config-load": 3.2
+  },
+  "cpu_ms": {
+   "0": 4.228,
+   "4": 4.228
+  },
+  "states": {
+   "emb-modules-init": {
+    "Running": 6.765,
+    "S": 0.5
+   }
+  }
+ },
+ {
+  "trace": "pass1-iter005.perfetto-trace",
+  "window_ms": 12.1,
+  "dur": {
+   "emb-embrace-impl-init": 1.0,
+   "emb-bootstrapper-init": 0.4,
+   "emb-modules-init": 30.0,
+   "emb-span-service-init": 10.0,
+   "emb-otel-tracer-init": 5.0,
+   "emb-post-services-setup": 2.0,
+   "emb-load-instrumentation": 1.5,
+   "emb-install-native-crash-signal-handlers": 3.0,
+   "emb-load-embrace-native-lib": 2.0,
+   "emb-record-startup": 0.3,
+   "emb-power-service-registration": 1.0,
+   "emb-snapshot-session": 0.5,
+   "emb-config-service-init": 2.0,
+   "emb-payload-source-init": 1.0,
+   "emb-essential-service-init": 1.5,
+   "emb-post-init": 1.0,
+   "emb-delivery-init": 0.5,
+   "emb-persisted-config-load": 3.25
+  },
+  "cpu_ms": {
+   "0": 4.235,
+   "4": 4.235
+  },
+  "states": {
+   "emb-modules-init": {
+    "Running": 6.776,
+    "S": 0.5
+   }
+  }
+ },
+ {
+  "trace": "pass1-iter006.perfetto-trace",
+  "window_ms": 12.12,
+  "dur": {
+   "emb-embrace-impl-init": 1.0,
+   "emb-bootstrapper-init": 0.4,
+   "emb-modules-init": 30.0,
+   "emb-span-service-init": 10.0,
+   "emb-otel-tracer-init": 5.0,
+   "emb-post-services-setup": 2.0,
+   "emb-load-instrumentation": 1.5,
+   "emb-install-native-crash-signal-handlers": 3.0,
+   "emb-load-embrace-native-lib": 2.0,
+   "emb-record-startup": 0.3,
+   "emb-power-service-registration": 1.0,
+   "emb-snapshot-session": 0.5,
+   "emb-config-service-init": 2.0,
+   "emb-payload-source-init": 1.0,
+   "emb-essential-service-init": 1.5,
+   "emb-post-init": 1.0,
+   "emb-delivery-init": 0.5,
+   "emb-persisted-config-load": 3.3
+  },
+  "cpu_ms": {
+   "0": 4.242,
+   "4": 4.242
+  },
+  "states": {
+   "emb-modules-init": {
+    "Running": 6.787,
+    "S": 0.5
+   }
+  }
+ },
+ {
+  "trace": "pass1-iter007.perfetto-trace",
+  "window_ms": 18.0,
+  "dur": {
+   "emb-embrace-impl-init": 1.0,
+   "emb-bootstrapper-init": 0.4,
+   "emb-modules-init": 30.0,
+   "emb-span-service-init": 10.0,
+   "emb-otel-tracer-init": 5.0,
+   "emb-post-services-setup": 2.0,
+   "emb-load-instrumentation": 1.5,
+   "emb-install-native-crash-signal-handlers": 3.0,
+   "emb-load-embrace-native-lib": 2.0,
+   "emb-record-startup": 0.3,
+   "emb-power-service-registration": 1.0,
+   "emb-snapshot-session": 0.5,
+   "emb-config-service-init": 2.0,
+   "emb-payload-source-init": 1.0,
+   "emb-essential-service-init": 1.5,
+   "emb-post-init": 1.0,
+   "emb-delivery-init": 0.5,
+   "emb-persisted-config-load": 3.35
+  },
+  "cpu_ms": {
+   "0": 6.3,
+   "4": 6.3
+  },
+  "states": {
+   "emb-modules-init": {
+    "Running": 10.08,
+    "S": 0.5
+   }
+  }
+ },
+ {
+  "trace": "pass1-iter008.perfetto-trace",
+  "window_ms": 12.16,
+  "dur": {
+   "emb-embrace-impl-init": 1.0,
+   "emb-bootstrapper-init": 0.4,
+   "emb-modules-init": 30.0,
+   "emb-span-service-init": 10.0,
+   "emb-otel-tracer-init": 5.0,
+   "emb-post-services-setup": 2.0,
+   "emb-load-instrumentation": 1.5,
+   "emb-install-native-crash-signal-handlers": 3.0,
+   "emb-load-embrace-native-lib": 2.0,
+   "emb-record-startup": 0.3,
+   "emb-power-service-registration": 1.0,
+   "emb-snapshot-session": 0.5,
+   "emb-config-service-init": 2.0,
+   "emb-payload-source-init": 1.0,
+   "emb-essential-service-init": 1.5,
+   "emb-post-init": 1.0,
+   "emb-delivery-init": 0.5,
+   "emb-persisted-config-load": 3.4
+  },
+  "cpu_ms": {
+   "0": 4.256,
+   "4": 4.256
+  },
+  "states": {
+   "emb-modules-init": {
+    "Running": 6.81,
+    "S": 0.5
+   }
+  }
+ },
+ {
+  "trace": "pass1-iter009.perfetto-trace",
+  "window_ms": 12.18,
+  "dur": {
+   "emb-embrace-impl-init": 1.0,
+   "emb-bootstrapper-init": 0.4,
+   "emb-modules-init": 30.0,
+   "emb-span-service-init": 10.0,
+   "emb-otel-tracer-init": 5.0,
+   "emb-post-services-setup": 2.0,
+   "emb-load-instrumentation": 1.5,
+   "emb-install-native-crash-signal-handlers": 3.0,
+   "emb-load-embrace-native-lib": 2.0,
+   "emb-record-startup": 0.3,
+   "emb-power-service-registration": 1.0,
+   "emb-snapshot-session": 0.5,
+   "emb-config-service-init": 2.0,
+   "emb-payload-source-init": 1.0,
+   "emb-essential-service-init": 1.5,
+   "emb-post-init": 1.0,
+   "emb-delivery-init": 0.5,
+   "emb-persisted-config-load": 3.45
+  },
+  "cpu_ms": {
+   "0": 4.263,
+   "4": 4.263
+  },
+  "states": {
+   "emb-modules-init": {
+    "Running": 6.821,
+    "S": 0.5
+   }
+  }
+ },
+ {
+  "trace": "pass1-iter010.perfetto-trace",
+  "window_ms": 12.2,
+  "dur": {
+   "emb-embrace-impl-init": 1.0,
+   "emb-bootstrapper-init": 0.4,
+   "emb-modules-init": 30.0,
+   "emb-span-service-init": 10.0,
+   "emb-otel-tracer-init": 5.0,
+   "emb-post-services-setup": 2.0,
+   "emb-load-instrumentation": 1.5,
+   "emb-install-native-crash-signal-handlers": 3.0,
+   "emb-load-embrace-native-lib": 2.0,
+   "emb-record-startup": 0.3,
+   "emb-power-service-registration": 1.0,
+   "emb-snapshot-session": 0.5,
+   "emb-config-service-init": 2.0,
+   "emb-payload-source-init": 1.0,
+   "emb-essential-service-init": 1.5,
+   "emb-post-init": 1.0,
+   "emb-delivery-init": 0.5,
+   "emb-persisted-config-load": 3.5
+  },
+  "cpu_ms": {
+   "0": 4.27,
+   "4": 4.27
+  },
+  "states": {
+   "emb-modules-init": {
+    "Running": 6.832,
+    "S": 0.5
+   }
+  }
+ },
+ {
+  "trace": "pass1-iter011.perfetto-trace",
+  "window_ms": 12.22,
+  "dur": {
+   "emb-embrace-impl-init": 1.0,
+   "emb-bootstrapper-init": 0.4,
+   "emb-modules-init": 30.0,
+   "emb-span-service-init": 10.0,
+   "emb-otel-tracer-init": 5.0,
+   "emb-post-services-setup": 2.0,
+   "emb-load-instrumentation": 1.5,
+   "emb-install-native-crash-signal-handlers": 3.0,
+   "emb-load-embrace-native-lib": 2.0,
+   "emb-record-startup": 0.3,
+   "emb-power-service-registration": 1.0,
+   "emb-snapshot-session": 0.5,
+   "emb-config-service-init": 2.0,
+   "emb-payload-source-init": 1.0,
+   "emb-essential-service-init": 1.5,
+   "emb-post-init": 1.0,
+   "emb-delivery-init": 0.5,
+   "emb-persisted-config-load": 3.55
+  },
+  "cpu_ms": {
+   "0": 4.277,
+   "4": 4.277
+  },
+  "states": {
+   "emb-modules-init": {
+    "Running": 6.843,
+    "S": 0.5
+   }
+  }
+ },
+ {
+  "trace": "pass1-iter012.perfetto-trace",
+  "window_ms": 12.24,
+  "dur": {
+   "emb-embrace-impl-init": 1.0,
+   "emb-bootstrapper-init": 0.4,
+   "emb-modules-init": 30.0,
+   "emb-span-service-init": 10.0,
+   "emb-otel-tracer-init": 5.0,
+   "emb-post-services-setup": 2.0,
+   "emb-load-instrumentation": 1.5,
+   "emb-install-native-crash-signal-handlers": 3.0,
+   "emb-load-embrace-native-lib": 2.0,
+   "emb-record-startup": 0.3,
+   "emb-power-service-registration": 1.0,
+   "emb-snapshot-session": 0.5,
+   "emb-config-service-init": 2.0,
+   "emb-payload-source-init": 1.0,
+   "emb-essential-service-init": 1.5,
+   "emb-post-init": 1.0,
+   "emb-delivery-init": 0.5,
+   "emb-persisted-config-load": 3.6
+  },
+  "cpu_ms": {
+   "0": 4.284,
+   "4": 4.284
+  },
+  "states": {
+   "emb-modules-init": {
+    "Running": 6.854,
+    "S": 0.5
+   }
+  }
+ },
+ {
+  "trace": "pass1-iter013.perfetto-trace",
+  "window_ms": 12.26,
+  "dur": {
+   "emb-embrace-impl-init": 1.0,
+   "emb-bootstrapper-init": 0.4,
+   "emb-modules-init": 30.0,
+   "emb-span-service-init": 10.0,
+   "emb-otel-tracer-init": 5.0,
+   "emb-post-services-setup": 2.0,
+   "emb-load-instrumentation": 1.5,
+   "emb-install-native-crash-signal-handlers": 3.0,
+   "emb-load-embrace-native-lib": 2.0,
+   "emb-record-startup": 0.3,
+   "emb-power-service-registration": 1.0,
+   "emb-snapshot-session": 0.5,
+   "emb-config-service-init": 2.0,
+   "emb-payload-source-init": 1.0,
+   "emb-essential-service-init": 1.5,
+   "emb-post-init": 1.0,
+   "emb-delivery-init": 0.5,
+   "emb-persisted-config-load": 3.65
+  },
+  "cpu_ms": {
+   "0": 4.291,
+   "4": 4.291
+  },
+  "states": {
+   "emb-modules-init": {
+    "Running": 6.866,
+    "S": 0.5
+   }
+  }
+ },
+ {
+  "trace": "pass1-iter014.perfetto-trace",
+  "window_ms": 12.28,
+  "dur": {
+   "emb-embrace-impl-init": 1.0,
+   "emb-bootstrapper-init": 0.4,
+   "emb-modules-init": 30.0,
+   "emb-span-service-init": 10.0,
+   "emb-otel-tracer-init": 5.0,
+   "emb-post-services-setup": 2.0,
+   "emb-load-instrumentation": 1.5,
+   "emb-install-native-crash-signal-handlers": 3.0,
+   "emb-load-embrace-native-lib": 2.0,
+   "emb-record-startup": 0.3,
+   "emb-power-service-registration": 1.0,
+   "emb-snapshot-session": 0.5,
+   "emb-config-service-init": 2.0,
+   "emb-payload-source-init": 1.0,
+   "emb-essential-service-init": 1.5,
+   "emb-post-init": 1.0,
+   "emb-delivery-init": 0.5,
+   "emb-persisted-config-load": 3.7
+  },
+  "cpu_ms": {
+   "0": 4.298,
+   "4": 4.298
+  },
+  "states": {
+   "emb-modules-init": {
+    "Running": 6.877,
+    "S": 0.5
+   }
+  }
+ },
+ {
+  "trace": "pass1-iter015.perfetto-trace",
+  "window_ms": 18.0,
+  "dur": {
+   "emb-embrace-impl-init": 1.0,
+   "emb-bootstrapper-init": 0.4,
+   "emb-modules-init": 30.0,
+   "emb-span-service-init": 10.0,
+   "emb-otel-tracer-init": 5.0,
+   "emb-post-services-setup": 2.0,
+   "emb-load-instrumentation": 1.5,
+   "emb-install-native-crash-signal-handlers": 3.0,
+   "emb-load-embrace-native-lib": 2.0,
+   "emb-record-startup": 0.3,
+   "emb-power-service-registration": 1.0,
+   "emb-snapshot-session": 0.5,
+   "emb-config-service-init": 2.0,
+   "emb-payload-source-init": 1.0,
+   "emb-essential-service-init": 1.5,
+   "emb-post-init": 1.0,
+   "emb-delivery-init": 0.5,
+   "emb-persisted-config-load": 3.75
+  },
+  "cpu_ms": {
+   "0": 6.3,
+   "4": 6.3
+  },
+  "states": {
+   "emb-modules-init": {
+    "Running": 10.08,
+    "S": 0.5
+   }
+  }
+ },
+ {
+  "trace": "pass1-iter016.perfetto-trace",
+  "window_ms": 12.32,
+  "dur": {
+   "emb-embrace-impl-init": 1.0,
+   "emb-bootstrapper-init": 0.4,
+   "emb-modules-init": 30.0,
+   "emb-span-service-init": 10.0,
+   "emb-otel-tracer-init": 5.0,
+   "emb-post-services-setup": 2.0,
+   "emb-load-instrumentation": 1.5,
+   "emb-install-native-crash-signal-handlers": 3.0,
+   "emb-load-embrace-native-lib": 2.0,
+   "emb-record-startup": 0.3,
+   "emb-power-service-registration": 1.0,
+   "emb-snapshot-session": 0.5,
+   "emb-config-service-init": 2.0,
+   "emb-payload-source-init": 1.0,
+   "emb-essential-service-init": 1.5,
+   "emb-post-init": 1.0,
+   "emb-delivery-init": 0.5,
+   "emb-persisted-config-load": 3.8
+  },
+  "cpu_ms": {
+   "0": 4.312,
+   "4": 4.312
+  },
+  "states": {
+   "emb-modules-init": {
+    "Running": 6.899,
+    "S": 0.5
+   }
+  }
+ },
+ {
+  "trace": "pass1-iter017.perfetto-trace",
+  "window_ms": 12.34,
+  "dur": {
+   "emb-embrace-impl-init": 1.0,
+   "emb-bootstrapper-init": 0.4,
+   "emb-modules-init": 30.0,
+   "emb-span-service-init": 10.0,
+   "emb-otel-tracer-init": 5.0,
+   "emb-post-services-setup": 2.0,
+   "emb-load-instrumentation": 1.5,
+   "emb-install-native-crash-signal-handlers": 3.0,
+   "emb-load-embrace-native-lib": 2.0,
+   "emb-record-startup": 0.3,
+   "emb-power-service-registration": 1.0,
+   "emb-snapshot-session": 0.5,
+   "emb-config-service-init": 2.0,
+   "emb-payload-source-init": 1.0,
+   "emb-essential-service-init": 1.5,
+   "emb-post-init": 1.0,
+   "emb-delivery-init": 0.5,
+   "emb-persisted-config-load": 3.85
+  },
+  "cpu_ms": {
+   "0": 4.319,
+   "4": 4.319
+  },
+  "states": {
+   "emb-modules-init": {
+    "Running": 6.91,
+    "S": 0.5
+   }
+  }
+ },
+ {
+  "trace": "pass1-iter018.perfetto-trace",
+  "window_ms": 12.36,
+  "dur": {
+   "emb-embrace-impl-init": 1.0,
+   "emb-bootstrapper-init": 0.4,
+   "emb-modules-init": 30.0,
+   "emb-span-service-init": 10.0,
+   "emb-otel-tracer-init": 5.0,
+   "emb-post-services-setup": 2.0,
+   "emb-load-instrumentation": 1.5,
+   "emb-install-native-crash-signal-handlers": 3.0,
+   "emb-load-embrace-native-lib": 2.0,
+   "emb-record-startup": 0.3,
+   "emb-power-service-registration": 1.0,
+   "emb-snapshot-session": 0.5,
+   "emb-config-service-init": 2.0,
+   "emb-payload-source-init": 1.0,
+   "emb-essential-service-init": 1.5,
+   "emb-post-init": 1.0,
+   "emb-delivery-init": 0.5,
+   "emb-persisted-config-load": 3.9
+  },
+  "cpu_ms": {
+   "0": 4.326,
+   "4": 4.326
+  },
+  "states": {
+   "emb-modules-init": {
+    "Running": 6.922,
+    "S": 0.5
+   }
+  }
+ },
+ {
+  "trace": "pass1-iter019.perfetto-trace",
+  "window_ms": 12.38,
+  "dur": {
+   "emb-embrace-impl-init": 1.0,
+   "emb-bootstrapper-init": 0.4,
+   "emb-modules-init": 30.0,
+   "emb-span-service-init": 10.0,
+   "emb-otel-tracer-init": 5.0,
+   "emb-post-services-setup": 2.0,
+   "emb-load-instrumentation": 1.5,
+   "emb-install-native-crash-signal-handlers": 3.0,
+   "emb-load-embrace-native-lib": 2.0,
+   "emb-record-startup": 0.3,
+   "emb-power-service-registration": 1.0,
+   "emb-snapshot-session": 0.5,
+   "emb-config-service-init": 2.0,
+   "emb-payload-source-init": 1.0,
+   "emb-essential-service-init": 1.5,
+   "emb-post-init": 1.0,
+   "emb-delivery-init": 0.5,
+   "emb-persisted-config-load": 3.95
+  },
+  "cpu_ms": {
+   "0": 4.333,
+   "4": 4.333
+  },
+  "states": {
+   "emb-modules-init": {
+    "Running": 6.933,
+    "S": 0.5
+   }
+  }
+ }
+]

@@ -51,6 +51,7 @@ include(
     ":embrace-microbenchmark",
     ":embrace-analysis-common",
     ":embrace-analysis-stats",
+    ":embrace-analysis-perfetto",
     ":embrace-analysis-test-fixtures",
 )
 

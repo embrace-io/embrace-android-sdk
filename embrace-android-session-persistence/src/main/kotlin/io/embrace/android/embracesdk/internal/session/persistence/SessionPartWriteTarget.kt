@@ -1,10 +1,14 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
+import io.embrace.android.embracesdk.internal.utils.FileWriteCounters
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal const val MISSING_PART_DIR_MSG = "Not a session part directory"
+
+internal const val MULTI_FILE_BYTES_COUNTER = "mf-bytes-written"
+internal const val MULTI_FILE_FILES_COUNTER = "mf-files-written"
 
 /**
  * Where the telemetry for one session part is written.
@@ -15,6 +19,8 @@ class SessionPartWriteTarget(
 ) {
 
     private val givenUp = AtomicBoolean(false)
+
+    val counters: FileWriteCounters = FileWriteCounters(MULTI_FILE_BYTES_COUNTER, MULTI_FILE_FILES_COUNTER)
 
     val failed: Boolean
         get() = givenUp.get()

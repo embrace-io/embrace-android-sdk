@@ -5,6 +5,8 @@ import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.traceSection
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.utils.CountingOutputStream
+import io.embrace.android.embracesdk.internal.utils.FileWriteCounters
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import java.io.File
@@ -19,10 +21,12 @@ class FileStorageServiceImpl(
     clock: Clock,
     storageLimit: Int = 500,
     maxAgeMs: Long = DEFAULT_MAX_AGE_MS,
+    private val counters: FileWriteCounters = sharedCounters,
 ) : FileStorageService {
 
     private companion object {
         const val DEFAULT_MAX_AGE_MS = 7L * 24L * 60L * 60L * 1_000L
+        val sharedCounters = FileWriteCounters("sf-bytes-written", "sf-files-written")
     }
 
     private val index = StoredEntryIndex(
@@ -57,15 +61,15 @@ class FileStorageServiceImpl(
         // are co-located with payloads and swept on next startup
         val tmpFile = File.createTempFile(metadata.filename, ".tmp", index.rootDir)
         try {
-            tmpFile.outputStream().buffered().use { stream ->
-                action(stream)
-            }
+            val stream = CountingOutputStream(tmpFile.outputStream().buffered())
+            stream.use { action(it) }
 
             // move the complete file to its final location.
             val dst = index.fileFor(metadata)
             dst.parentFile?.mkdirs()
             if (tmpFile.renameTo(dst)) {
                 index.add(metadata)
+                counters.recordWrite(stream.written)
             }
         } finally {
             // clean up the temp file on any failure

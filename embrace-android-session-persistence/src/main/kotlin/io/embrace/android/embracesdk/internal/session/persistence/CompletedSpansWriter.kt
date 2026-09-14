@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
 
 /**
@@ -26,7 +25,7 @@ class CompletedSpansWriter(
     @Volatile
     private var reportedOverflow = false
 
-    private var spanFile: SpanFile? = null
+    private var spanFile: SpanCollectionFile? = null
 
     /**
      * Appends [spans] to the log for the active session part, leaving the spans already logged in
@@ -69,7 +68,7 @@ class CompletedSpansWriter(
     /**
      * The file to append to, or null if the active session part has no directory on disk.
      */
-    private fun spanFile(): SpanFile? {
+    private fun spanFile(): SpanCollectionFile? {
         val directory = target.directory ?: return null
         spanFile?.let { open ->
             if (open.directory == directory) {
@@ -78,7 +77,7 @@ class CompletedSpansWriter(
             discardSpanFile()
         }
         val partDir = target.partDir(directory, ::trackFailure) ?: return null
-        return SpanFile(directory, File(partDir, COMPLETED_SPANS_FILE_NAME)).also { spanFile = it }
+        return SpanCollectionFile(directory, File(partDir, COMPLETED_SPANS_FILE_NAME)).also { spanFile = it }
     }
 
     private fun discardSpanFile() {
@@ -93,30 +92,5 @@ class CompletedSpansWriter(
 
     private fun trackFailure(exc: Throwable) {
         logger.trackInternalError(InternalErrorType.CompletedSpansWriteFail, exc)
-    }
-
-    /**
-     * The completed spans file for one session part, kept open across the appends made to it.
-     */
-    private class SpanFile(val directory: SessionPartDirectory, private val file: File) {
-
-        private var stream: FileOutputStream? = null
-
-        // assume file size doesn't change after first lookup
-        var size: Long = file.length()
-            private set
-
-        /**
-         * Appends [bytes] to the file, opening it if this is the first append.
-         */
-        fun append(bytes: ByteArray) {
-            val stream = stream ?: FileOutputStream(file, true).also { stream = it }
-            stream.write(bytes)
-            size += bytes.size
-        }
-
-        fun close() {
-            stream?.close()
-        }
     }
 }

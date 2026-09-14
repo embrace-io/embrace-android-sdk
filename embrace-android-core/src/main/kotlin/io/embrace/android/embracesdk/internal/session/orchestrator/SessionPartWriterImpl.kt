@@ -239,10 +239,9 @@ class SessionPartWriterImpl(
     private fun queueSpanSnapshotsRefresh(writers: PartWriters) = EmbTrace.trace("mf-queue-span-snapshots-refresh") {
         execute(writers, InternalErrorType.SpanSnapshotsWriteFail, writers.spanSnapshotWrites::submit) {
             if (current === writers) {
-                val dirty = snapshotTracker.drainDirtySpans()
+                snapshotTracker.drainDirtySpans()
                 writers.spanSnapshots.write(
                     inFlightSpanSource().mapNotNull(EmbraceSdkSpan::snapshot) + writers.sessionSpanSnapshot(),
-                    dirty.mapNotNull(EmbraceSdkSpan::snapshot),
                 )
             }
         }
@@ -367,12 +366,13 @@ class SessionPartWriterImpl(
         fun flushPendingWrites() = writeQueues.forEach(CoalescingWriteQueue::flush)
 
         /**
-         * Marks this part as fully written and releases the file [completedSpans] holds open.
+         * Marks this part as fully written and releases the files held open for it.
          * This must run on the [worker] so that it cannot overlap a write still queued for the part.
          */
         fun seal() {
             sealed = true
             completedSpans.close()
+            spanSnapshots.close()
         }
     }
 }

@@ -63,6 +63,7 @@ include(
     ":embrace-analysis-local-refs",
     ":embrace-analysis-records",
     ":embrace-analysis-reports",
+    ":embrace-analysis-maxims",
     ":embrace-analysis-test-fixtures",
 )
 

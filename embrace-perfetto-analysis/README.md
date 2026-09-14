@@ -7,7 +7,8 @@ It reads the file onto the protobuf wire model and pairs the atrace events into 
 ## Running
 
 ```bash
-scripts/analyse-trace.sh <trace.perfetto.gz> [--operations a,b | --all-operations] [--format markdown|json|html] [--dry-run]
+scripts/analyse-trace.sh <trace.perfetto.gz> [--operations a,b | --all-operations] [--format markdown|json|html]
+                        [--output <file>] [--dry-run]
 ```
 
 Or
@@ -16,9 +17,9 @@ Or
 ./gradlew :embrace-perfetto-analysis:analyseTrace --args="<trace> --dry-run"
 ```
 
-The tool exits 1 on bad usage, and 2 when there is no trace at the given path, the file there is not a
-gzipped perfetto trace, or it could not be read as one. Run through Gradle those surface as a build failure
-naming the exit value, since Gradle returns its own.
+The tool exits 1 on bad usage, 2 when there is no trace at the given path, the file there is not a gzipped
+perfetto trace, or it could not be read as one, and 3 when the report could not be written. Run through Gradle
+those surface as a build failure naming the exit value, since Gradle returns its own.
 
 ## What it reads
 
@@ -53,10 +54,12 @@ that cannot be paired is counted.
 
 `--operations <a,b,c>` reports count, total, `wall%`, mean, deviation, min, max and percentiles for those sections;
 `--all-operations` does the same for every section the trace recorded. A section that ran on several threads is
-measured once per thread. Markdown (the default) prints microseconds; `--format json` prints nanoseconds.
+measured once per thread. Statistics always go to the file `--output` names, never to stdout, whichever format
+renders them: markdown (the default) writes microseconds, `--format json` the nanoseconds themselves, and
+`--format html` wraps that same json in a page that reads it.
 
 ```bash
-scripts/analyse-trace.sh trace.perfetto.gz --all-operations --format json
+scripts/analyse-trace.sh trace.perfetto.gz --all-operations --format html --output report.html
 ```
 
 ## Getting a trace

@@ -49,8 +49,8 @@ cd examples/ExampleApp && ./gradlew bundleRelease
 # Run the SDK startup macrobenchmark and collect its traces
 scripts/macrobenchmark.sh
 
-# Analyse a perfetto trace (markdown by default, --format json for a machine-readable dump)
-scripts/analyse-trace.sh <trace.perfetto.gz> --all-operations --format json
+# Analyse a perfetto trace (markdown by default; statistics always go to --output)
+scripts/analyse-trace.sh <trace.perfetto.gz> --all-operations --format json --output report.json
 
 # Update binary compatibility API dumps
 ./gradlew apiDump

@@ -49,6 +49,8 @@ include(
     ":embrace-bytecode-instrumentation-tests",
     ":embrace-gradle-plugin-integration-tests",
     ":embrace-microbenchmark",
+    ":embrace-analysis-common",
+    ":embrace-analysis-test-fixtures",
 )
 
 pluginManagement {

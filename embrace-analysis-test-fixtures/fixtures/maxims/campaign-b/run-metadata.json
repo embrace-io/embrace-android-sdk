@@ -1,0 +1,31 @@
+{
+ "serial": "FIXTURE-SERIAL-B",
+ "method": "coldStartupBaselineProfile",
+ "build_type": "benchmark",
+ "run_shape": {
+  "passes": 3,
+  "iterations": 20
+ },
+ "device_profile": {
+  "api_level": 35,
+  "release": "15",
+  "vendor": "Google",
+  "soc_family": "GS201",
+  "clusters": [
+   1803000,
+   2348000,
+   2850000
+  ],
+  "ram_class": ">=8GB",
+  "storage_class": "unknown"
+ },
+ "cell": {
+  "levels": {
+   "compile": "profile"
+  }
+ },
+ "catalog_pin": "embrace = \"9.2.0\"",
+ "sdk_version": "9.2.0",
+ "repo_head": "abc123",
+ "started": "2026-09-04T19:00:00"
+}

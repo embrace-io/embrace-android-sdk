@@ -1,0 +1,562 @@
+[
+ {
+  "trace": "pass1-iter000.perfetto-trace",
+  "window_ms": 9.6,
+  "states": {
+   "Running": 6.72,
+   "R+": 0.288,
+   "S": 2.0,
+   "D+io:submit_bio_wait": 0.5,
+   "D:futex_wait_queue": 0.1
+  },
+  "inproc": {
+   "emb-io-reg": 1.0
+  },
+  "othercpu": {
+   "swapper": 40.0,
+   "system_server": 2.0,
+   "/system/bin/surfaceflinger": 1.0
+  },
+  "eff_mhz": 2000.0,
+  "run_cl0_ms": 3.36,
+  "run_cl1_ms": 3.36,
+  "art_verify_ms": 1.0,
+  "art_classload_ms": 3.0,
+  "lock_contention_ms": 0.2,
+  "binder_txn_cnt": 0.0,
+  "gc_slice_ms": 0.0,
+  "mem_available": 1500.0
+ },
+ {
+  "trace": "pass1-iter001.perfetto-trace",
+  "window_ms": 12.02,
+  "states": {
+   "Running": 8.414,
+   "R+": 0.361,
+   "S": 2.0,
+   "D+io:submit_bio_wait": 0.5,
+   "D:futex_wait_queue": 0.1
+  },
+  "inproc": {
+   "emb-io-reg": 1.0
+  },
+  "othercpu": {
+   "swapper": 40.0,
+   "system_server": 2.0,
+   "/system/bin/surfaceflinger": 1.0
+  },
+  "eff_mhz": 2000.0,
+  "run_cl0_ms": 4.207,
+  "run_cl1_ms": 4.207,
+  "art_verify_ms": 1.0,
+  "art_classload_ms": 3.0,
+  "lock_contention_ms": 0.2,
+  "binder_txn_cnt": 0.0,
+  "gc_slice_ms": 0.0,
+  "mem_available": 1500.0
+ },
+ {
+  "trace": "pass1-iter002.perfetto-trace",
+  "window_ms": 12.04,
+  "states": {
+   "Running": 8.428,
+   "R+": 0.361,
+   "S": 2.0,
+   "D+io:submit_bio_wait": 0.5,
+   "D:futex_wait_queue": 0.1
+  },
+  "inproc": {
+   "emb-io-reg": 1.0
+  },
+  "othercpu": {
+   "swapper": 40.0,
+   "system_server": 2.0,
+   "/system/bin/surfaceflinger": 1.0
+  },
+  "eff_mhz": 2000.0,
+  "run_cl0_ms": 4.214,
+  "run_cl1_ms": 4.214,
+  "art_verify_ms": 1.0,
+  "art_classload_ms": 3.0,
+  "lock_contention_ms": 0.2,
+  "binder_txn_cnt": 0.0,
+  "gc_slice_ms": 0.0,
+  "mem_available": 1500.0
+ },
+ {
+  "trace": "pass1-iter003.perfetto-trace",
+  "window_ms": 12.06,
+  "states": {
+   "Running": 8.442,
+   "R+": 0.362,
+   "S": 2.0,
+   "D+io:submit_bio_wait": 0.5,
+   "D:futex_wait_queue": 0.1
+  },
+  "inproc": {
+   "emb-io-reg": 1.0
+  },
+  "othercpu": {
+   "swapper": 40.0,
+   "system_server": 2.0,
+   "/system/bin/surfaceflinger": 1.0
+  },
+  "eff_mhz": 2000.0,
+  "run_cl0_ms": 4.221,
+  "run_cl1_ms": 4.221,
+  "art_verify_ms": 1.0,
+  "art_classload_ms": 3.0,
+  "lock_contention_ms": 0.2,
+  "binder_txn_cnt": 0.0,
+  "gc_slice_ms": 0.0,
+  "mem_available": 1500.0
+ },
+ {
+  "trace": "pass1-iter004.perfetto-trace",
+  "window_ms": 12.08,
+  "states": {
+   "Running": 8.456,
+   "R+": 0.362,
+   "S": 2.0,
+   "D+io:submit_bio_wait": 0.5,
+   "D:futex_wait_queue": 0.1
+  },
+  "inproc": {
+   "emb-io-reg": 1.0
+  },
+  "othercpu": {
+   "swapper": 40.0,
+   "system_server": 2.0,
+   "/system/bin/surfaceflinger": 1.0
+  },
+  "eff_mhz": 2000.0,
+  "run_cl0_ms": 4.228,
+  "run_cl1_ms": 4.228,
+  "art_verify_ms": 1.0,
+  "art_classload_ms": 3.0,
+  "lock_contention_ms": 0.2,
+  "binder_txn_cnt": 0.0,
+  "gc_slice_ms": 0.0,
+  "mem_available": 1500.0
+ },
+ {
+  "trace": "pass1-iter005.perfetto-trace",
+  "window_ms": 12.1,
+  "states": {
+   "Running": 8.47,
+   "R+": 0.363,
+   "S": 2.0,
+   "D+io:submit_bio_wait": 0.5,
+   "D:futex_wait_queue": 0.1
+  },
+  "inproc": {
+   "emb-io-reg": 1.0
+  },
+  "othercpu": {
+   "swapper": 40.0,
+   "system_server": 2.0,
+   "/system/bin/surfaceflinger": 1.0
+  },
+  "eff_mhz": 2000.0,
+  "run_cl0_ms": 4.235,
+  "run_cl1_ms": 4.235,
+  "art_verify_ms": 1.0,
+  "art_classload_ms": 3.0,
+  "lock_contention_ms": 0.2,
+  "binder_txn_cnt": 0.0,
+  "gc_slice_ms": 0.0,
+  "mem_available": 1500.0
+ },
+ {
+  "trace": "pass1-iter006.perfetto-trace",
+  "window_ms": 12.12,
+  "states": {
+   "Running": 8.484,
+   "R+": 0.364,
+   "S": 2.0,
+   "D+io:submit_bio_wait": 0.5,
+   "D:futex_wait_queue": 0.1
+  },
+  "inproc": {
+   "emb-io-reg": 1.0
+  },
+  "othercpu": {
+   "swapper": 40.0,
+   "system_server": 2.0,
+   "/system/bin/surfaceflinger": 1.0
+  },
+  "eff_mhz": 2000.0,
+  "run_cl0_ms": 4.242,
+  "run_cl1_ms": 4.242,
+  "art_verify_ms": 1.0,
+  "art_classload_ms": 3.0,
+  "lock_contention_ms": 0.2,
+  "binder_txn_cnt": 0.0,
+  "gc_slice_ms": 0.0,
+  "mem_available": 1500.0
+ },
+ {
+  "trace": "pass1-iter007.perfetto-trace",
+  "window_ms": 18.0,
+  "states": {
+   "Running": 12.6,
+   "R+": 0.54,
+   "S": 2.0,
+   "D+io:submit_bio_wait": 0.5,
+   "D:futex_wait_queue": 0.1
+  },
+  "inproc": {
+   "emb-io-reg": 1.0
+  },
+  "othercpu": {
+   "swapper": 40.0,
+   "system_server": 2.0,
+   "/system/bin/surfaceflinger": 1.0
+  },
+  "eff_mhz": 2000.0,
+  "run_cl0_ms": 6.3,
+  "run_cl1_ms": 6.3,
+  "art_verify_ms": 1.0,
+  "art_classload_ms": 3.0,
+  "lock_contention_ms": 0.2,
+  "binder_txn_cnt": 0.0,
+  "gc_slice_ms": 0.0,
+  "mem_available": 1500.0
+ },
+ {
+  "trace": "pass1-iter008.perfetto-trace",
+  "window_ms": 12.16,
+  "states": {
+   "Running": 8.512,
+   "R+": 0.365,
+   "S": 2.0,
+   "D+io:submit_bio_wait": 0.5,
+   "D:futex_wait_queue": 0.1
+  },
+  "inproc": {
+   "emb-io-reg": 1.0
+  },
+  "othercpu": {
+   "swapper": 40.0,
+   "system_server": 2.0,
+   "/system/bin/surfaceflinger": 1.0
+  },
+  "eff_mhz": 2000.0,
+  "run_cl0_ms": 4.256,
+  "run_cl1_ms": 4.256,
+  "art_verify_ms": 1.0,
+  "art_classload_ms": 3.0,
+  "lock_contention_ms": 0.2,
+  "binder_txn_cnt": 0.0,
+  "gc_slice_ms": 0.0,
+  "mem_available": 1500.0
+ },
+ {
+  "trace": "pass1-iter009.perfetto-trace",
+  "window_ms": 12.18,
+  "states": {
+   "Running": 8.526,
+   "R+": 0.365,
+   "S": 2.0,
+   "D+io:submit_bio_wait": 0.5,
+   "D:futex_wait_queue": 0.1
+  },
+  "inproc": {
+   "emb-io-reg": 1.0
+  },
+  "othercpu": {
+   "swapper": 40.0,
+   "system_server": 2.0,
+   "/system/bin/surfaceflinger": 1.0
+  },
+  "eff_mhz": 2000.0,
+  "run_cl0_ms": 4.263,
+  "run_cl1_ms": 4.263,
+  "art_verify_ms": 1.0,
+  "art_classload_ms": 3.0,
+  "lock_contention_ms": 0.2,
+  "binder_txn_cnt": 0.0,
+  "gc_slice_ms": 0.0,
+  "mem_available": 1500.0
+ },
+ {
+  "trace": "pass1-iter010.perfetto-trace",
+  "window_ms": 12.2,
+  "states": {
+   "Running": 8.54,
+   "R+": 0.366,
+   "S": 2.0,
+   "D+io:submit_bio_wait": 0.5,
+   "D:futex_wait_queue": 0.1
+  },
+  "inproc": {
+   "emb-io-reg": 1.0
+  },
+  "othercpu": {
+   "swapper": 40.0,
+   "system_server": 2.0,
+   "/system/bin/surfaceflinger": 1.0
+  },
+  "eff_mhz": 2000.0,
+  "run_cl0_ms": 4.27,
+  "run_cl1_ms": 4.27,
+  "art_verify_ms": 1.0,
+  "art_classload_ms": 3.0,
+  "lock_contention_ms": 0.2,
+  "binder_txn_cnt": 0.0,
+  "gc_slice_ms": 0.0,
+  "mem_available": 1500.0
+ },
+ {
+  "trace": "pass1-iter011.perfetto-trace",
+  "window_ms": 12.22,
+  "states": {
+   "Running": 8.554,
+   "R+": 0.367,
+   "S": 2.0,
+   "D+io:submit_bio_wait": 0.5,
+   "D:futex_wait_queue": 0.1
+  },
+  "inproc": {
+   "emb-io-reg": 1.0
+  },
+  "othercpu": {
+   "swapper": 40.0,
+   "system_server": 2.0,
+   "/system/bin/surfaceflinger": 1.0
+  },
+  "eff_mhz": 2000.0,
+  "run_cl0_ms": 4.277,
+  "run_cl1_ms": 4.277,
+  "art_verify_ms": 1.0,
+  "art_classload_ms": 3.0,
+  "lock_contention_ms": 0.2,
+  "binder_txn_cnt": 0.0,
+  "gc_slice_ms": 0.0,
+  "mem_available": 1500.0
+ },
+ {
+  "trace": "pass1-iter012.perfetto-trace",
+  "window_ms": 12.24,
+  "states": {
+   "Running": 8.568,
+   "R+": 0.367,
+   "S": 2.0,
+   "D+io:submit_bio_wait": 0.5,
+   "D:futex_wait_queue": 0.1
+  },
+  "inproc": {
+   "emb-io-reg": 1.0
+  },
+  "othercpu": {
+   "swapper": 40.0,
+   "system_server": 2.0,
+   "/system/bin/surfaceflinger": 1.0
+  },
+  "eff_mhz": 2000.0,
+  "run_cl0_ms": 4.284,
+  "run_cl1_ms": 4.284,
+  "art_verify_ms": 1.0,
+  "art_classload_ms": 3.0,
+  "lock_contention_ms": 0.2,
+  "binder_txn_cnt": 0.0,
+  "gc_slice_ms": 0.0,
+  "mem_available": 1500.0
+ },
+ {
+  "trace": "pass1-iter013.perfetto-trace",
+  "window_ms": 12.26,
+  "states": {
+   "Running": 8.582,
+   "R+": 0.368,
+   "S": 2.0,
+   "D+io:submit_bio_wait": 0.5,
+   "D:futex_wait_queue": 0.1
+  },
+  "inproc": {
+   "emb-io-reg": 1.0
+  },
+  "othercpu": {
+   "swapper": 40.0,
+   "system_server": 2.0,
+   "/system/bin/surfaceflinger": 1.0
+  },
+  "eff_mhz": 2000.0,
+  "run_cl0_ms": 4.291,
+  "run_cl1_ms": 4.291,
+  "art_verify_ms": 1.0,
+  "art_classload_ms": 3.0,
+  "lock_contention_ms": 0.2,
+  "binder_txn_cnt": 0.0,
+  "gc_slice_ms": 0.0,
+  "mem_available": 1500.0
+ },
+ {
+  "trace": "pass1-iter014.perfetto-trace",
+  "window_ms": 12.28,
+  "states": {
+   "Running": 8.596,
+   "R+": 0.368,
+   "S": 2.0,
+   "D+io:submit_bio_wait": 0.5,
+   "D:futex_wait_queue": 0.1
+  },
+  "inproc": {
+   "emb-io-reg": 1.0
+  },
+  "othercpu": {
+   "swapper": 40.0,
+   "system_server": 2.0,
+   "/system/bin/surfaceflinger": 1.0
+  },
+  "eff_mhz": 2000.0,
+  "run_cl0_ms": 4.298,
+  "run_cl1_ms": 4.298,
+  "art_verify_ms": 1.0,
+  "art_classload_ms": 3.0,
+  "lock_contention_ms": 0.2,
+  "binder_txn_cnt": 0.0,
+  "gc_slice_ms": 0.0,
+  "mem_available": 1500.0
+ },
+ {
+  "trace": "pass1-iter015.perfetto-trace",
+  "window_ms": 18.0,
+  "states": {
+   "Running": 12.6,
+   "R+": 0.54,
+   "S": 2.0,
+   "D+io:submit_bio_wait": 0.5,
+   "D:futex_wait_queue": 0.1
+  },
+  "inproc": {
+   "emb-io-reg": 1.0
+  },
+  "othercpu": {
+   "swapper": 40.0,
+   "system_server": 2.0,
+   "/system/bin/surfaceflinger": 1.0
+  },
+  "eff_mhz": 2000.0,
+  "run_cl0_ms": 6.3,
+  "run_cl1_ms": 6.3,
+  "art_verify_ms": 1.0,
+  "art_classload_ms": 3.0,
+  "lock_contention_ms": 0.2,
+  "binder_txn_cnt": 0.0,
+  "gc_slice_ms": 0.0,
+  "mem_available": 1500.0
+ },
+ {
+  "trace": "pass1-iter016.perfetto-trace",
+  "window_ms": 12.32,
+  "states": {
+   "Running": 8.624,
+   "R+": 0.37,
+   "S": 2.0,
+   "D+io:submit_bio_wait": 0.5,
+   "D:futex_wait_queue": 0.1
+  },
+  "inproc": {
+   "emb-io-reg": 1.0
+  },
+  "othercpu": {
+   "swapper": 40.0,
+   "system_server": 2.0,
+   "/system/bin/surfaceflinger": 1.0
+  },
+  "eff_mhz": 2000.0,
+  "run_cl0_ms": 4.312,
+  "run_cl1_ms": 4.312,
+  "art_verify_ms": 1.0,
+  "art_classload_ms": 3.0,
+  "lock_contention_ms": 0.2,
+  "binder_txn_cnt": 0.0,
+  "gc_slice_ms": 0.0,
+  "mem_available": 1500.0
+ },
+ {
+  "trace": "pass1-iter017.perfetto-trace",
+  "window_ms": 12.34,
+  "states": {
+   "Running": 8.638,
+   "R+": 0.37,
+   "S": 2.0,
+   "D+io:submit_bio_wait": 0.5,
+   "D:futex_wait_queue": 0.1
+  },
+  "inproc": {
+   "emb-io-reg": 1.0
+  },
+  "othercpu": {
+   "swapper": 40.0,
+   "system_server": 2.0,
+   "/system/bin/surfaceflinger": 1.0
+  },
+  "eff_mhz": 2000.0,
+  "run_cl0_ms": 4.319,
+  "run_cl1_ms": 4.319,
+  "art_verify_ms": 1.0,
+  "art_classload_ms": 3.0,
+  "lock_contention_ms": 0.2,
+  "binder_txn_cnt": 0.0,
+  "gc_slice_ms": 0.0,
+  "mem_available": 1500.0
+ },
+ {
+  "trace": "pass1-iter018.perfetto-trace",
+  "window_ms": 12.36,
+  "states": {
+   "Running": 8.652,
+   "R+": 0.371,
+   "S": 2.0,
+   "D+io:submit_bio_wait": 0.5,
+   "D:futex_wait_queue": 0.1
+  },
+  "inproc": {
+   "emb-io-reg": 1.0
+  },
+  "othercpu": {
+   "swapper": 40.0,
+   "system_server": 2.0,
+   "/system/bin/surfaceflinger": 1.0
+  },
+  "eff_mhz": 2000.0,
+  "run_cl0_ms": 4.326,
+  "run_cl1_ms": 4.326,
+  "art_verify_ms": 1.0,
+  "art_classload_ms": 3.0,
+  "lock_contention_ms": 0.2,
+  "binder_txn_cnt": 0.0,
+  "gc_slice_ms": 0.0,
+  "mem_available": 1500.0
+ },
+ {
+  "trace": "pass1-iter019.perfetto-trace",
+  "window_ms": 12.38,
+  "states": {
+   "Running": 8.666,
+   "R+": 0.371,
+   "S": 2.0,
+   "D+io:submit_bio_wait": 0.5,
+   "D:futex_wait_queue": 0.1
+  },
+  "inproc": {
+   "emb-io-reg": 1.0
+  },
+  "othercpu": {
+   "swapper": 40.0,
+   "system_server": 2.0,
+   "/system/bin/surfaceflinger": 1.0
+  },
+  "eff_mhz": 2000.0,
+  "run_cl0_ms": 4.333,
+  "run_cl1_ms": 4.333,
+  "art_verify_ms": 1.0,
+  "art_classload_ms": 3.0,
+  "lock_contention_ms": 0.2,
+  "binder_txn_cnt": 0.0,
+  "gc_slice_ms": 0.0,
+  "mem_available": 1500.0
+ }
+]

@@ -62,6 +62,28 @@ renders them: markdown (the default) writes microseconds, `--format json` the na
 scripts/analyse-trace.sh trace.perfetto.gz --all-operations --format html --output report.html
 ```
 
+## Iterations (not implemented)
+
+A macrobenchmark run is multiple iterations.
+`scripts/analyse-trace-iterations.sh` reduces a whole run to one report, and
+`scripts/compare-trace-iterations.sh` diffs two of those reports:
+
+```bash
+# one run -> one aggregate
+scripts/macrobenchmark.sh --out perf/macrobenchmark/baseline
+scripts/analyse-trace-iterations.sh perf/macrobenchmark/baseline --all-operations --format json --output baseline.json
+
+# the other run -> another aggregate, then the difference between them
+scripts/analyse-trace-iterations.sh perf/macrobenchmark/candidate --all-operations --format json --output candidate.json
+scripts/compare-trace-iterations.sh baseline.json candidate.json --format html --output comparison.html
+```
+
+`analyse-trace-iterations.sh` aggregates macrobenchmark runs. Its flags are the single-trace ones:
+`--operations`/`--all-operations` choose the sections, `--format` renders markdown, json or html, and `--output`
+is where the report goes — statistics never reach stdout.
+
+`compare-trace-iterations.sh` compares two aggregated runs to see how performance differs for a code change.
+
 ## Getting a trace
 
 `scripts/macrobenchmark.sh` writes traces to `perf/macrobenchmark/<device>/`. androidx.benchmark wraps each one

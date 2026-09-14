@@ -107,3 +107,11 @@ data class StoredTelemetryMetadata(
         }
     }
 }
+
+/**
+ * Names a trace section so that session persistence can be told apart from other telemetry.
+ */
+fun StoredTelemetryMetadata.traceSection(base: String): String = when (envelopeType) {
+    SupportedEnvelopeType.SESSION -> "sp-$base"
+    else -> "$base-${envelopeType.name.lowercase()}"
+}

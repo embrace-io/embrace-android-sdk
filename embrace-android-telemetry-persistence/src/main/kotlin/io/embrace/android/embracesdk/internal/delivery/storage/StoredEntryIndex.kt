@@ -83,7 +83,7 @@ class StoredEntryIndex<T>(
      * count-based limit is then enforced, and the return value indicates whether [newEntry] itself
      * was pruned and so should not be written to disk.
      */
-    fun prune(newEntry: T? = null): Boolean = SystemTrace.trace("storage-index-prune") {
+    fun prune(newEntry: T? = null): Boolean = SystemTrace.trace(layout.pruneSection(newEntry)) {
         // remove entries created before the cutoff
         val cutoffMs = clock.now() - maxAgeMs
         if (cutoffMs > 0L) {

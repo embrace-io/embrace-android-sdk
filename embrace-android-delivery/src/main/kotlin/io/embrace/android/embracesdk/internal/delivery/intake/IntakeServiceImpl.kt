@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.storeAttachment
+import io.embrace.android.embracesdk.internal.delivery.traceSection
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -121,11 +122,11 @@ class IntakeServiceImpl(
                 metadata.complete -> payloadStorageService
                 else -> cacheStorageService
             }
-            SystemTrace.trace("intake-process") {
+            SystemTrace.trace(metadata.traceSection("intake-process")) {
                 service.store(metadata) { stream ->
                     val envelopeSerializer = metadata.envelopeType.envelopeSerializer
                     if (envelopeSerializer != null) {
-                        SystemTrace.trace("payload-json-serialize") {
+                        SystemTrace.trace(metadata.traceSection("payload-json-serialize")) {
                             serializer.toJson(intake, envelopeSerializer, stream)
                         }
                     } else { // payload doesn't require serialization

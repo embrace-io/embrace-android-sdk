@@ -30,6 +30,11 @@ interface StoredEntryLayout<T> {
     fun timestampOf(entry: T): Long
 
     /**
+     * Names the trace section that prune runs under, so each layout is attributable to its layer.
+     */
+    fun pruneSection(entry: T?): String
+
+    /**
      * The order in which entries are removed once the count limit is reached. Entries that sort
      * first are removed first.
      */

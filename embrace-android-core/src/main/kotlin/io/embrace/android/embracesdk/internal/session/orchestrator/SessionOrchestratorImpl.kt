@@ -282,9 +282,7 @@ internal class SessionOrchestratorImpl(
             crashId = crashId,
         )
 
-        EmbTrace.trace("mf-flush-writes") {
-            sessionPartWriter?.onCrash()
-        }
+        sessionPartWriter?.onCrash()
     }
 
     override fun onSessionDataUpdate() {
@@ -386,12 +384,10 @@ internal class SessionOrchestratorImpl(
                             }
 
                             // persist the stopped session part span
-                            EmbTrace.trace("mf-part-ended") {
-                                sessionPartWriter?.onSessionPartEnded(
-                                    sessionPartId = sessionPartId,
-                                    crashing = transitionType == TransitionType.CRASH,
-                                )
-                            }
+                            sessionPartWriter?.onSessionPartEnded(
+                                sessionPartId = sessionPartId,
+                                crashing = transitionType == TransitionType.CRASH,
+                            )
                         },
                         startSessionPartCallback = {
                             // the previous session has fully ended at this point
@@ -430,13 +426,11 @@ internal class SessionOrchestratorImpl(
                         sessionPartSpanAttrPopulator.populateSessionPartSpanStartAttrs(newSessionPart, userSession)
                         if (transitionType != TransitionType.CRASH) {
                             // create the directory that holds this session part's telemetry
-                            EmbTrace.trace("mf-part-started") {
-                                sessionPartWriter?.onSessionPartStarted(
-                                    timestamp = timestamp,
-                                    userSessionId = userSession?.userSessionId ?: "",
-                                    sessionPartId = newSessionPart.sessionPartId,
-                                )
-                            }
+                            sessionPartWriter?.onSessionPartStarted(
+                                timestamp = timestamp,
+                                userSessionId = userSession?.userSessionId ?: "",
+                                sessionPartId = newSessionPart.sessionPartId,
+                            )
 
                             scheduleLastActivityUpdate(userSession, endAppState)
 

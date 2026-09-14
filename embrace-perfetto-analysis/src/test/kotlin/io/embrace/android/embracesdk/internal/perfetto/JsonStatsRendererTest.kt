@@ -15,6 +15,7 @@ internal class JsonStatsRendererTest {
                 "sliceCount": 12,
                 "sectionCount": 3,
                 "threadCount": 2,
+                "traceWindowNanos": 1200000,
                 "stats": {
                     "operations": [
                         {
@@ -23,6 +24,7 @@ internal class JsonStatsRendererTest {
                             "threadName": "main",
                             "count": 2,
                             "sumNanos": 3000,
+                            "traceWindowPercent": 0.25,
                             "minNanos": 1000,
                             "maxNanos": 2000,
                             "meanNanos": 1500.0,
@@ -58,7 +60,7 @@ internal class JsonStatsRendererTest {
     }
 
     private fun report(operations: List<OperationStats>, missing: List<String> = emptyList()) =
-        StatsReport("t.perfetto.gz", 2048, 12, 3, 2, TraceStats(operations, missing))
+        StatsReport("t.perfetto.gz", 2048, 12, 3, 2, 1_200_000, TraceStats(operations, missing))
 
     private fun operation(threadName: String? = "main") = OperationStats(
         name = "op",
@@ -66,6 +68,7 @@ internal class JsonStatsRendererTest {
         threadName = threadName,
         count = 2,
         sumNanos = 3000,
+        traceWindowPercent = 0.25,
         minNanos = 1000,
         maxNanos = 2000,
         meanNanos = 1500.0,

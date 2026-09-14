@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.perfetto
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -66,7 +67,7 @@ internal class StatsCalculatorTest {
             timeline(TID, runOf("op", 10, 10)),
             timeline(OTHER_TID, runOf("op", 30, tid = OTHER_TID)),
         )
-        val stats = calculateStats(model, listOf("op")).operations
+        val stats = calculateStats(model, listOf("op"), WINDOW).operations
         assertEquals(listOf(TID, OTHER_TID), stats.map(OperationStats::tid))
         assertEquals(listOf(2, 1), stats.map(OperationStats::count))
         assertEquals(listOf(20L, 30L), stats.map(OperationStats::sumNanos))
@@ -81,8 +82,46 @@ internal class StatsCalculatorTest {
     }
 
     @Test
+    fun `the share of wall time is measured against the whole trace window`() {
+        val stats = only(model(timeline(TID, runOf("op", 100, 150))), "op", window = 1000)
+        assertEquals(250L, stats.sumNanos)
+        assertEquals(25.0, stats.traceWindowPercent, 0.0)
+    }
+
+    @Test
+    fun `a trace with no window to measure against reports no share rather than a number that is not one`() {
+        val stats = only(model(timeline(TID, runOf("op", 100))), "op", window = 0)
+        assertEquals(0.0, stats.traceWindowPercent, 0.0)
+        assertFalse("$stats", stats.traceWindowPercent.isNaN())
+    }
+
+    @Test
+    fun `both threads share one denominator, so equal work reads as an equal share of the trace`() {
+        val model = model(
+            timeline(TID, runOf("op", 100)),
+            timeline(
+                OTHER_TID,
+                listOf(slice("op", 5000, 5100, OTHER_TID), slice("other", 9000, 9900, OTHER_TID)),
+            ),
+        )
+        val stats = calculateStats(model, listOf("op"), WINDOW).operations
+        assertEquals(listOf(100L, 100L), stats.map(OperationStats::sumNanos))
+        assertEquals(listOf(1.0, 1.0), stats.map(OperationStats::traceWindowPercent))
+        assertEquals(listOf(100L, 4900L), model.threads.values.map(ThreadTimeline::wallSpanNanos))
+    }
+
+    @Test
+    fun `a section nested inside itself is counted in both, reading past 100 rather than being clamped`() {
+        val inner = slice("op", 100, 900)
+        val outer = TraceSlice("op", TID, 0, 1000, 0, listOf(inner))
+        val stats = only(model(timeline(TID, listOf(outer, inner))), "op", window = 1000)
+        assertEquals(1800L, stats.sumNanos)
+        assertEquals(180.0, stats.traceWindowPercent, 0.0)
+    }
+
+    @Test
     fun `a section the trace never recorded is named as missing rather than reported as an empty row`() {
-        val stats = calculateStats(model(timeline(TID, runOf("op", 10))), listOf("op", "absent"))
+        val stats = calculateStats(model(timeline(TID, runOf("op", 10))), listOf("op", "absent"), WINDOW)
         assertEquals(listOf("op"), stats.operations.map(OperationStats::name))
         assertEquals(listOf("absent"), stats.missing)
     }
@@ -90,14 +129,14 @@ internal class StatsCalculatorTest {
     @Test
     fun `a section absent from one thread is simply not reported for it, and is not missing`() {
         val model = model(timeline(TID, runOf("op", 10)), timeline(OTHER_TID, runOf("other", 10, tid = OTHER_TID)))
-        val stats = calculateStats(model, listOf("op"))
+        val stats = calculateStats(model, listOf("op"), WINDOW)
         assertEquals(listOf(TID), stats.operations.map(OperationStats::tid))
         assertTrue(stats.missing.toString(), stats.missing.isEmpty())
     }
 
     @Test
     fun `a section named twice is measured once`() {
-        val stats = calculateStats(model(timeline(TID, runOf("op", 10))), listOf("op", "op"))
+        val stats = calculateStats(model(timeline(TID, runOf("op", 10))), listOf("op", "op"), WINDOW)
         assertEquals(1, stats.operations.size)
     }
 
@@ -107,19 +146,19 @@ internal class StatsCalculatorTest {
             timeline(TID, runOf("b", 1) + slice("a", 10, 11)),
             timeline(OTHER_TID, runOf("b", 1, tid = OTHER_TID) + slice("a", 10, 11, OTHER_TID)),
         )
-        val stats = calculateStats(model, listOf("b", "a")).operations
+        val stats = calculateStats(model, listOf("b", "a"), WINDOW).operations
         assertEquals(listOf("b", "b", "a", "a"), stats.map(OperationStats::name))
         assertEquals(listOf(TID, OTHER_TID, TID, OTHER_TID), stats.map(OperationStats::tid))
     }
 
     @Test
     fun `asking for nothing measures nothing and misses nothing`() {
-        val stats = calculateStats(model(timeline(TID, runOf("op", 10))), emptyList())
+        val stats = calculateStats(model(timeline(TID, runOf("op", 10))), emptyList(), WINDOW)
         assertEquals(TraceStats(emptyList(), emptyList()), stats)
     }
 
-    private fun only(model: TraceModel, name: String) =
-        calculateStats(model, listOf(name)).operations.single()
+    private fun only(model: TraceModel, name: String, window: Long = WINDOW) =
+        calculateStats(model, listOf(name), window).operations.single()
 
     private fun model(vararg timelines: ThreadTimeline) =
         TraceModel(timelines.associateBy(ThreadTimeline::tid), 0, 0, 0)
@@ -140,5 +179,6 @@ internal class StatsCalculatorTest {
     private companion object {
         const val TID = 9874
         const val OTHER_TID = 9891
+        const val WINDOW = 10_000L
     }
 }

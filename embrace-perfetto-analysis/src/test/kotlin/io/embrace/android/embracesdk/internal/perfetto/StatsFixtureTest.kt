@@ -4,6 +4,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 /**
  * Measures the committed macrobenchmark capture. Every expected value was measured from that file,
@@ -11,7 +13,10 @@ import java.io.File
  */
 internal class StatsFixtureTest {
 
-    private val model = trace().let { TraceInterpreter().interpret(ftraceEvents(it), threadNames(it)) }
+    private val trace = parseTrace(fixture())
+    private val events = ftraceEvents(trace)
+    private val model = TraceInterpreter().interpret(events, threadNames(trace))
+    private val window = traceWindowNanos(events)
 
     @Test
     fun `a thread spans its first slice opening to its last slice closing`() {
@@ -19,6 +24,13 @@ internal class StatsFixtureTest {
             listOf(113_728_625L, 35_853_875L, 1_463_365_501L, 8_001_416L, 2_147_276_751L, 5_638_833L),
             model.threads.values.map(ThreadTimeline::wallSpanNanos),
         )
+    }
+
+    @Test
+    fun `the capture spans its first ftrace event to its last, far wider than any one thread`() {
+        assertEquals(2_182_385_126L, window)
+        assertEquals(events.size, printEvents(events).size)
+        assertTrue("$window", model.threads.values.all { it.wallSpanNanos < window })
     }
 
     @Test
@@ -30,6 +42,10 @@ internal class StatsFixtureTest {
             stats.map(OperationStats::threadName),
         )
         assertEquals(listOf(446, 15, 40), stats.map(OperationStats::count))
+        assertEquals(
+            listOf(0.107652, 0.021538, 0.101540),
+            stats.map { round(it.traceWindowPercent) },
+        )
         assertEquals(model.slices(REPEATED).size, stats.sumOf(OperationStats::count))
     }
 
@@ -57,30 +73,32 @@ internal class StatsFixtureTest {
         assertEquals(12_083_458L, stats.maxNanos)
         assertEquals(12_083_458L, stats.sumNanos)
         assertEquals(1.2083458E7, stats.meanNanos, 0.0)
+        assertEquals(0.553681, round(stats.traceWindowPercent), 0.0)
         assertEquals(0.0, stats.stdevNanos, 0.0)
         assertEquals(listOf(12_083_458L), stats.percentiles.map(Percentile::durationNanos).distinct())
     }
 
     @Test
     fun `the statistics of every section the capture recorded stay within their own bounds`() {
-        calculateStats(model, model.names.toList()).operations.forEach { stats ->
+        calculateStats(model, model.names.toList(), window).operations.forEach { stats ->
             val percentiles = stats.percentiles.map(Percentile::durationNanos)
             assertEquals("$stats", percentiles.sorted(), percentiles)
             assertTrue("$stats", stats.minNanos <= percentiles.first() && percentiles.last() <= stats.maxNanos)
             assertTrue("$stats", stats.meanNanos in stats.minNanos.toDouble()..stats.maxNanos.toDouble())
+            assertTrue("$stats", stats.traceWindowPercent in 0.0..100.0)
         }
     }
 
     @Test
     fun `a section the capture never recorded is named as missing rather than silently dropped`() {
-        val stats = calculateStats(model, listOf("emb-sdk-start", "emb-not-in-this-trace"))
+        val stats = calculateStats(model, listOf("emb-sdk-start", "emb-not-in-this-trace"), window)
         assertEquals(listOf("emb-sdk-start"), stats.operations.map(OperationStats::name))
         assertEquals(listOf("emb-not-in-this-trace"), stats.missing)
     }
 
-    private fun statsFor(name: String) = calculateStats(model, listOf(name)).operations
+    private fun statsFor(name: String) = calculateStats(model, listOf(name), window).operations
 
-    private fun trace() = parseTrace(fixture())
+    private fun round(percent: Double) = BigDecimal(percent).setScale(6, RoundingMode.HALF_UP).toDouble()
 
     private fun fixture(): File {
         val resource = checkNotNull(javaClass.getResource("/$FIXTURE")) { "missing test resource $FIXTURE" }

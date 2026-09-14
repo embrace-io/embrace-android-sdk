@@ -51,7 +51,7 @@ that cannot be paired is counted.
 
 ## Statistics
 
-`--operations <a,b,c>` reports count, total, mean, deviation, min, max and percentiles for those sections;
+`--operations <a,b,c>` reports count, total, `wall%`, mean, deviation, min, max and percentiles for those sections;
 `--all-operations` does the same for every section the trace recorded. A section that ran on several threads is
 measured once per thread. Markdown (the default) prints microseconds; `--format json` prints nanoseconds.
 

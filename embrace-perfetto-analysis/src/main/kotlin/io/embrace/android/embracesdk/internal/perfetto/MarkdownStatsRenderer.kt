@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.perfetto
 private const val UNNAMED_THREAD = "-"
 private const val EMPTY_SECTION = "_none_"
 
-private val FIXED_COLUMNS = listOf("operation", "thread", "tid", "count", "total", "mean", "stdev", "min")
+private val FIXED_COLUMNS = listOf("operation", "thread", "tid", "count", "total", "wall%", "mean", "stdev", "min")
 
 internal fun renderMarkdown(report: StatsReport): String = buildString {
     appendLine("# Perfetto trace statistics")
@@ -12,6 +12,7 @@ internal fun renderMarkdown(report: StatsReport): String = buildString {
     append("- recorded: ${report.sliceCount} slices of ${report.sectionCount} distinct sections")
     appendLine(" across ${report.threadCount} threads")
     appendLine("- durations: microseconds")
+    appendLine("- trace window: ${micros(report.traceWindowNanos)}, the span every wall% is a share of")
     appendLine()
     appendLine("## Operations")
     appendLine()
@@ -48,6 +49,7 @@ private fun cells(stats: OperationStats): List<String> = listOf(
     stats.tid.toString(),
     stats.count.toString(),
     micros(stats.sumNanos),
+    percent(stats.traceWindowPercent),
     micros(stats.meanNanos),
     micros(stats.stdevNanos),
     micros(stats.minNanos),

@@ -16,11 +16,12 @@ internal class MarkdownStatsRendererTest {
                 "- trace: t.perfetto.gz (2048 bytes)",
                 "- recorded: 12 slices of 3 distinct sections across 2 threads",
                 "- durations: microseconds",
+                "- trace window: 1200.000, the span every wall% is a share of",
             ),
-            text.lines().take(5),
+            text.lines().take(6),
         )
         assertEquals(
-            listOf("operation", "thread", "tid", "count", "total", "mean", "stdev", "min") +
+            listOf("operation", "thread", "tid", "count", "total", "wall%", "mean", "stdev", "min") +
                 DEFAULT_PERCENTILES.map { "p$it" } + "max",
             row(text, 0),
         )
@@ -30,7 +31,7 @@ internal class MarkdownStatsRendererTest {
     @Test
     fun `a row reports the microseconds of every statistic, in the order the columns name them`() {
         assertEquals(
-            listOf("op", "main", "9874", "2", "3.000", "1.500", "0.500", "1.000") +
+            listOf("op", "main", "9874", "2", "3.000", "0.2500", "1.500", "0.500", "1.000") +
                 List(DEFAULT_PERCENTILES.size) { "2.000" } + "2.000",
             row(renderMarkdown(report()), 2),
         )
@@ -79,7 +80,7 @@ internal class MarkdownStatsRendererTest {
     private fun report(
         operations: List<OperationStats> = listOf(operation()),
         missing: List<String> = emptyList(),
-    ) = StatsReport("t.perfetto.gz", 2048, 12, 3, 2, TraceStats(operations, missing))
+    ) = StatsReport("t.perfetto.gz", 2048, 12, 3, 2, 1_200_000, TraceStats(operations, missing))
 
     private fun operation(
         name: String = "op",
@@ -91,6 +92,7 @@ internal class MarkdownStatsRendererTest {
         threadName = threadName,
         count = 2,
         sumNanos = 3000,
+        traceWindowPercent = 0.25,
         minNanos = 1000,
         maxNanos = 2000,
         meanNanos = 1500.0,

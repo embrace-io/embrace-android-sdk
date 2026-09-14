@@ -7,7 +7,7 @@ It reads the file onto the protobuf wire model and pairs the atrace events into 
 ## Running
 
 ```bash
-scripts/analyse-trace.sh <trace.perfetto.gz> [--dry-run]
+scripts/analyse-trace.sh <trace.perfetto.gz> [--operations a,b | --all-operations] [--format markdown|json] [--dry-run]
 ```
 
 Or
@@ -51,7 +51,13 @@ that cannot be paired is counted.
 
 ## Statistics
 
-It's possible to calculate aggregate stats for a trace on a per-thread, per-operation basis.
+`--operations <a,b,c>` reports count, total, mean, deviation, min, max and percentiles for those sections;
+`--all-operations` does the same for every section the trace recorded. A section that ran on several threads is
+measured once per thread. Markdown (the default) prints microseconds; `--format json` prints nanoseconds.
+
+```bash
+scripts/analyse-trace.sh trace.perfetto.gz --all-operations --format json
+```
 
 ## Getting a trace
 

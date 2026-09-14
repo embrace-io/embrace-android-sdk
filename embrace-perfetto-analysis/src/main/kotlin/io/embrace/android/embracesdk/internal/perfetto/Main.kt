@@ -11,8 +11,11 @@ internal const val EXIT_BAD_TRACE = 2
 private const val USAGE = """
 usage: analyseTrace <trace.perfetto.gz> [options]
 
-  --dry-run   validate the inputs and report what would be analysed, then stop
-  --help, -h  print this message
+  --operations <a,b,c>      report statistics for these sections
+  --all-operations          report statistics for every section the trace recorded
+  --format markdown|json    how to render those statistics (default: markdown)
+  --dry-run                 validate the inputs and report what would be analysed, then stop
+  --help, -h                print this message
 
 Normally run via scripts/analyse-trace.sh.
 """
@@ -36,7 +39,9 @@ fun main(args: Array<String>) {
         System.err.println("${options.trace.absolutePath} is ${format.label}")
         exitProcess(EXIT_BAD_TRACE)
     }
-    println(describe(options, format))
+    if (options.dryRun || !options.reportsStats) {
+        println(describe(options, format))
+    }
     if (options.dryRun) {
         return
     }
@@ -46,27 +51,56 @@ fun main(args: Array<String>) {
         System.err.println(exc.message)
         exitProcess(EXIT_BAD_TRACE)
     }
-    println(summarise(trace))
+    when {
+        options.reportsStats -> println(render(options.format, statsReport(options, trace)))
+        else -> println(summarise(trace))
+    }
 }
 
-internal data class Options(val trace: File, val dryRun: Boolean)
+internal data class Options(
+    val trace: File,
+    val dryRun: Boolean = false,
+    val operations: List<String> = emptyList(),
+    val allOperations: Boolean = false,
+    val format: ReportFormat = ReportFormat.MARKDOWN,
+) {
 
-/**
- * Returns null when the arguments do not name exactly one trace, which the caller reports as a
- * usage error.
- */
+    val reportsStats: Boolean get() = allOperations || operations.isNotEmpty()
+}
+
+/** Returns null for anything the caller should report as a usage error. */
 internal fun parseArgs(args: Array<String>): Options? {
     var trace: String? = null
     var dryRun = false
-    args.forEach { arg ->
+    var operations: List<String>? = null
+    var allOperations = false
+    var format = ReportFormat.MARKDOWN
+    var index = 0
+
+    while (index < args.size) {
+        val arg = args[index]
         when {
             arg == "--dry-run" -> dryRun = true
+            arg == "--all-operations" -> allOperations = true
+            arg == "--operations" -> operations = sectionNames(args.getOrNull(++index)) ?: return null
+            arg == "--format" -> format = ReportFormat.from(args.getOrNull(++index).orEmpty()) ?: return null
             arg.startsWith("-") -> return null
             trace != null -> return null
             else -> trace = arg
         }
+        index++
     }
-    return trace?.let { Options(File(it), dryRun) }
+    if (allOperations && operations != null) {
+        return null
+    }
+    return trace?.let { Options(File(it), dryRun, operations.orEmpty(), allOperations, format) }
+}
+
+private fun sectionNames(value: String?): List<String>? {
+    if (value == null || value.startsWith("-")) {
+        return null
+    }
+    return value.split(",").takeIf { names -> names.none(String::isBlank) }
 }
 
 /** Reports the inputs the analysis runs against. */
@@ -90,4 +124,25 @@ internal fun summarise(trace: Trace): String = buildString {
         appendLine("    tid ${timeline.tid}$named: ${timeline.slices.size} slices")
     }
     append("  skipped: ${model.unclosed} unclosed, ${model.unopened} unopened, ${model.unsupported} unsupported")
+}
+
+internal fun statsReport(options: Options, trace: Trace): StatsReport {
+    val model = TraceInterpreter().interpret(ftraceEvents(trace), threadNames(trace))
+    val requested = when {
+        options.allOperations -> model.names.sorted()
+        else -> options.operations
+    }
+    return StatsReport(
+        tracePath = options.trace.path,
+        traceSizeBytes = options.trace.length(),
+        sliceCount = model.sliceCount,
+        sectionCount = model.names.size,
+        threadCount = model.threads.size,
+        stats = calculateStats(model, requested),
+    )
+}
+
+internal fun render(format: ReportFormat, report: StatsReport): String = when (format) {
+    ReportFormat.MARKDOWN -> renderMarkdown(report)
+    ReportFormat.JSON -> renderJson(report)
 }

@@ -1,0 +1,275 @@
+<title>How the Embrace SDK Starts — A Primer</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #FFFFFF;
+    --ink: #1C1E21;
+    --ink-secondary: #55524B;
+    --muted: #8A8577;
+    --line: #E5E2D9;
+    --accent: #D9930D;
+    --accent-soft: #F5E3BC;
+    --good: #3E7C4F;
+    --good-soft: #E4EFE6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #16181C;
+      --surface: #1E2126;
+      --ink: #ECEAE4;
+      --ink-secondary: #B5B1A6;
+      --muted: #7D796E;
+      --line: #33363C;
+      --accent: #E8B04B;
+      --accent-soft: #3A3123;
+      --good: #7FBB8E;
+      --good-soft: #24352A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #16181C;
+    --surface: #1E2126;
+    --ink: #ECEAE4;
+    --ink-secondary: #B5B1A6;
+    --muted: #7D796E;
+    --line: #33363C;
+    --accent: #E8B04B;
+    --accent-soft: #3A3123;
+    --good: #7FBB8E;
+    --good-soft: #24352A;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 40px 24px 72px;
+  }
+  main { max-width: 860px; margin: 0 auto; }
+  h1 { font-size: 1.7rem; letter-spacing: -0.01em; margin: 0 0 4px; text-wrap: balance; }
+  h2 { font-size: 1.15rem; margin: 40px 0 10px; letter-spacing: -0.005em; }
+  .context { color: var(--ink-secondary); font-size: 0.9rem; margin: 0 0 24px; }
+  p { font-size: 0.93rem; margin: 10px 0; }
+  .phase {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 12px 0;
+  }
+  .phase h3 { margin: 0 0 4px; font-size: 0.98rem; }
+  .phase p { font-size: 0.88rem; margin: 5px 0; color: var(--ink-secondary); }
+  .phase p strong { color: var(--ink); }
+  .docindex { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 18px; margin: 14px 0; }
+  .docindex ul { list-style: none; padding: 0; margin: 10px 0; }
+  .docindex li { margin: 0; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 0.9rem; color: var(--ink-secondary); }
+  .docindex li:last-child { border-bottom: none; }
+  .docindex a { font-size: 0.95rem; }
+  .share {
+    display: inline-block; font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.07em;
+    font-weight: 700; border-radius: 4px; padding: 1px 7px; margin-left: 8px;
+    background: var(--accent-soft); color: var(--accent); vertical-align: 2px;
+  }
+  code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.85em;
+    background: var(--accent-soft); border-radius: 4px; padding: 1px 5px;
+  }
+  a { color: var(--accent); font-weight: 600; }
+  .tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; margin: 14px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.86rem; }
+  th { text-align: left; font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.07em;
+       color: var(--muted); font-weight: 600; padding: 10px 12px 6px; border-bottom: 1px solid var(--line); }
+  th.num, td.num { text-align: right; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-variant-numeric: tabular-nums; }
+  td { padding: 7px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .note { color: var(--ink-secondary); font-size: 0.85rem; margin-top: 10px; }
+  pre.tree {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+    padding: 14px 18px; margin: 14px 0; overflow-x: auto;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.8rem; line-height: 1.5;
+    color: var(--ink);
+  }
+  pre.tree .k { color: var(--ink); font-weight: 600; }
+  pre.tree .t { color: var(--muted); }
+  pre.tree .c { color: var(--ink-secondary); }
+  td.sec { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.8rem; white-space: nowrap; }
+  td.sec.d1 { padding-left: 28px; }
+  td.sec.d2 { padding-left: 44px; }
+  tr.group td { background: var(--accent-soft); color: var(--ink); font-weight: 600; font-size: 0.8rem; }
+  ul { font-size: 0.9rem; margin: 8px 0; padding-left: 24px; }
+  li { margin: 4px 0; }
+  footer { margin-top: 48px; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--line); padding-top: 16px; }
+  footer p { margin: 4px 0; }
+</style>
+
+<main>
+  <h1>How the Embrace SDK Starts — A Primer</h1>
+  <p class="context">The thing our startup-performance work measures, explained for readers who haven't lived in the code. Everything here is grounded in the SDK's actual init path and in 2,000+ instrumented cold starts across four devices (2026-08). Read this first, then pick your next document from the index below.</p>
+  <p class="context"><strong>This describes SDK 9.2.0</strong>, the current published release, and every number below is measured on it — 10 passes × 20 cold launches per device, benchmark build, baseline profile applied. Version matters more than it might seem: 9.2.0 is where two of the phases described below collapsed to a fraction of their former cost, so figures from an earlier release do not describe this one. Where a section name or a structural fact is specific to 9.2.0, it says so.</p>
+
+  <div class="docindex">
+    <ul>
+      <li>🎯 <a href="https://claude.ai/code/artifact/9eda58ea-2446-4bd9-b1ea-228ea7ad7a33">External Factors — Findings Summary</a> — what we've proven affects SDK-init speed and outliers from outside our code (device tier, heat, concurrent work, compile state, install effects), with the evidence for each.</li>
+      <li>🛠️ <a href="https://claude.ai/code/artifact/8818cdf3-30c0-43d4-9bc4-a71fe0525435">Recommendations — Mitigations &amp; Prod Telemetry</a> — the engineering changes that reduce outliers, and the telemetry spec that explains slow startups in production without traces.</li>
+      <li>📋 <a href="https://claude.ai/code/artifact/0e08adcf-5b33-43f5-8a7f-abc7679d68b3">Project Tracker</a> — the work items, grouped into SDK code changes, machine-bound experiments (with device needs and time estimates), and dashboard/backend tasks; statuses updated in place.</li>
+      <li>📈 <a href="https://claude.ai/code/artifact/40218422-0143-4fd8-82ee-6fcb1bce67cb">Timing by Version</a> — how init timing evolved across the published releases 8.3.0 → 9.0.0 → 9.1.0 → 9.2.0 (<strong>−27% to −48% at the median</strong>, device-dependent), what drove it, and why TTID didn't move.</li>
+      <li>🧪 <a href="https://claude.ai/code/artifact/c8ef75b3-4c83-4335-8b9a-3776699266a0">Testing Log</a> — the evidence chain: every experiment in chronological order with verdicts, refutations, and the open-test queue. The audit trail behind everything above.</li>
+    </ul>
+  </div>
+
+  <h2>Where SDK startup sits inside app startup</h2>
+  <p>On a cold start, Android forks a new process for the app, loads its code, and calls the app's <code>Application.onCreate()</code> on the <strong>main thread</strong> — before any UI exists. Host apps call <code>Embrace.start(context)</code> there, so everything below runs on the main thread, inside the app's own startup, before the first frame. The interval users feel — process start to first visible frame — is called <strong>TTID</strong> (time to initial display), typically 200 ms–1.8 s depending on device tier. The SDK's init is one slice of that: at 9.2.0, <strong>11.5 ms on a modern flagship, 32 ms on a 2018 flagship, 45 ms on a 2023 entry-tier phone, and 93 ms on a 1 GB Android Go device</strong> — roughly 3–6% of TTID across tiers <em>as measured on our deliberately light benchmark app</em>. The SDK's work is essentially fixed per device (a heavier host app doesn't add SDK work — it only adds some concurrent pressure, a bounded effect we've characterized), while TTID scales with the app: real production apps commonly cold-start in 1.5–4 s, so the SDK's realistic share there is more like 1–3%, with the bench share close to a worst case.</p>
+  <p><strong>Why the main thread, and why up front?</strong> Deliberate: the SDK's configuration decides how everything else in the SDK behaves (and the SDK wants to observe the app from as early as possible), so its core init is a hot-path dependency — the work can be made faster or overlapped, but not skipped or deferred wholesale.</p>
+
+  <h2>The measured interval: "the window"</h2>
+  <p>The SDK instruments its own init with named trace sections (<code>emb-*</code>), visible in any perfetto system trace. As of 9.2.0 the outermost, <code>emb-sdk-start</code>, wraps the whole <code>Embrace.start()</code> call and matches the SDK's exported <code>emb-embrace-init</code> span to within a millisecond.</p>
+  <p><strong>The number our benchmarks report is not that section, and the difference matters when comparing releases.</strong> <code>emb-sdk-start</code> does not exist before 9.2.0, so a metric defined on it could not reach back across the version history at all. Our benchmarks instead report a <em>composed</em> window — from the start of <code>emb-modules-init</code> to the end of <code>emb-post-services-setup</code> — because those sections exist in every version we measure. Two consequences worth carrying: the composed window is a <strong>subset</strong> of <code>Embrace.start()</code> rather than the whole of it (19 instrumented sections lie outside it, some before and most after), so it understates total SDK-init cost; and every figure in this document is that composed window unless stated otherwise.</p>
+  <p>Two small sections run <em>before</em> the window at class-load time — <code>embrace-impl-init</code> and <code>bootstrapper-init</code>, triggered by the app's first reference to the <code>Embrace</code> class (often an exporter registration before <code>start()</code>).</p>
+
+  <h2>What happens inside the window, in order</h2>
+
+  <div class="phase">
+    <h3>1 · Load the persisted config<span class="share">17–28% of the window</span></h3>
+    <p>The very first act (<code>persisted-config-load</code>): read the remote configuration saved by the <em>previous</em> launch from disk and decode it. This is the SDK's behavioral switchboard — everything downstream consults it. Two important properties: it's a <strong>CPU-bound binary decode</strong>, not a disk wait (the file is small; deserialization is the cost); and it's <strong>bimodal</strong>: on the first-ever launch there is no file, the load no-ops in ~2 ms, and the SDK runs on defaults until the config fetched in the background takes effect next launch.</p>
+    <p>At 9.2.0 it costs <strong>6.0 ms on the Pixel 3, 13.0 ms on the A14 and 20.8 ms on the A01 Core</strong> — and structurally it is the <strong>largest single child</strong> of the biggest phase on every device measured, which is why it is the top standing optimisation target rather than merely a large number.</p>
+  </div>
+
+  <div class="phase">
+    <h3>2 · Stand up workers and core services<span class="share">6–14% combined; small individually</span></h3>
+    <p>Worker thread pools are created (<code>workerthread-init</code>), a SharedPreferences prewarm is kicked off on a background thread, and a chain of small module constructions runs: core, config service (also scheduling the background HTTP config fetch), a disable check, then storage, instrumentation, feature, and data-capture modules. Each is typically under a few ms — but these short sections are the ones most inflated (~2×) when the device is busy, because each involves a wait-and-resume (thread creation, lock handoffs) that pays cache-refill costs on resume.</p>
+    <p><strong>This group is where one half of 9.2.0's win landed.</strong> Across the 9.0.0 → 9.2.0 step <code>config-service-init</code> alone fell by 84–93% — on the A01 Core from 22.2 ms to 1.8 ms. Documents written before 9.2.0 describe this phase as a major cost; at 9.2.0 it is not. Note that the config <em>decode</em> in phase 1 did not go away with it — that remains the single largest child of the biggest phase.</p>
+  </div>
+
+  <div class="phase">
+    <h3>3 · Assemble the OpenTelemetry engine<span class="share">33–34% — the biggest cost</span></h3>
+    <p><code>span-service-init</code>, dominated by <code>otel-tracer-init</code>: constructing the OTel SDK instance — tracer provider, resource, processors, exporters. Pure main-thread CPU and class loading; the single largest block in the window on every device tier, and at 9.2.0 remarkably uniform as a <em>share</em> — 33%, 34% and 33% on the Pixel 3, A14 and A01 Core respectively, despite a threefold span in absolute window size.</p>
+    <p><strong>There is known, unshipped headroom here.</strong> The SDK can build this engine on either an OpenTelemetry <em>Java</em> implementation or a Kotlin one; <strong>9.2.0 ships the Java-backed path by default</strong>. Measured on 9.2.0-era builds, switching to the Kotlin implementation is worth <strong>15–20% of the whole window on mid and entry devices</strong> (A14 −20.4%, Pixel 3 −17.7%, A01 Core −15.1%) and only −4.3% on the flagship, whose OTel construction is already small in absolute terms. It is off by default because correctness work — export parity, processor contracts — is not finished, so treat it as a measured opportunity rather than a property of 9.2.0.</p>
+  </div>
+
+  <div class="phase">
+    <h3>4 · Delivery, payload sources, logging, session bookkeeping<span class="share">15–18% combined</span></h3>
+    <p><code>delivery-init</code> (persistence/scheduling scaffolding — executors only, threads start lazily), <code>payload-source-init</code> (device/resource/metadata describers; some detail collection is pushed to workers), <code>log-init</code>, and <code>user-session-orchestration-init</code> (loading the previous user-session metadata from SharedPreferences — the first main-thread prefs read, which can wait on the prefs file load).</p>
+  </div>
+
+  <div class="phase">
+    <h3>5 · Start the first session<span class="share">2–5% in the lab; 35–40% in production</span></h3>
+    <p><code>post-init</code>, almost all of it <code>start-first-session</code>: the session orchestrator runs the initial session-part transition under a lock. What that costs depends on one piece of on-disk state. If a user session persisted by the previous process is within its inactivity timeout (30 minutes by default) it is <strong>restored</strong>, nothing is written, and the section takes well under a millisecond. Otherwise a new user session is <strong>created and persisted</strong>: the metadata is serialized to JSON and written to SharedPreferences on the main thread, the periodic session cacher's thread is started, and a background-startup timer is scheduled. (The session span itself is created earlier, in <code>span-service-init</code>.)</p>
+    <p><strong>This is the lab-versus-production gap found on 2026-09-03.</strong> Every benchmark relaunches within seconds, so every iteration after the first restores and this phase measures ~0 ms. A real cold start comes hours after the last one and takes the create path. On 9.2.0 that path resolved its JSON serializer at runtime, and the first such lookup in a process loads kotlinx-serialization's whole builtin serializer table (~55 classes) plus reflection: 3–5 ms on an uncompiled Pixel 3, 12 ms on a Pixel 7 Pro launch that also lacked its app image, and 15–19 ms at the production p50 on mid-tier devices, where the median <code>post-init</code> is a third of the whole init. The fix passes a static serializer on the write path; the <code>coldStartupBaselineProfileExpiredUserSession</code> benchmark arm now measures the create path deliberately, and the trace-health pass flags a class-load burst inside this section as the regression signature.</p>
+  </div>
+
+  <div class="phase">
+    <h3>6 · Register the instrumentation<span class="share">6–11%</span></h3>
+    <p><code>post-services-setup</code>: service registrations plus <code>load-instrumentation</code> — discovering and registering the auto-instrumentation providers (network capture, view tracking, etc.) via a ServiceLoader that R8 rewrites at build time. Ends with <code>startup-tracking</code> hooking the app-startup measurement itself. The window closes here; the app continues its own startup toward first frame.</p>
+    <p><strong>The other half of 9.2.0's win is here</strong>, and it is the larger half: on the 9.0.0 → 9.2.0 step this phase improved 67–85% across devices, falling from 38.1 ms to 5.8 ms on the A01 Core. It is also the one phase where the devices disagree — the Pixel 3 improved 67% against 84% on its peers, and that single gap accounts for roughly <strong>79%</strong> of why the Pixel 3 gained least on that step (−29.3%, against −33.7% and −35.2% for the A14 and A01 Core).</p>
+  </div>
+
+  <h2 id="tree">The section tree: what nests in what, in what order, and what each should cost</h2>
+  <p>The six phases above are a narrative grouping. This is the literal structure, read from the 9.2.0 init path: every instrumented section, its parent, and its position. It matters for production data because <strong>9.2.0 exports a subset of these sections as attributes on the <code>emb-embrace-init</code> span</strong> (and on the private <code>sdk-init</code> span), keyed <code>&lt;section&gt;-duration-ms</code> — integer wall-clock milliseconds, first occurrence of each name, snapshotted the moment init completes. Sections marked <span class="k">●</span> below become attributes; those marked <span class="t">○</span> exist only as slices in a system trace.</p>
+<pre class="tree"><span class="k">●</span> <span class="k">embrace-impl-init</span>          <span class="c">class load of Embrace — runs BEFORE the span opens; attribute only</span>
+└─ <span class="k">●</span> <span class="k">bootstrapper-init</span>       <span class="c">ModuleInitBootstrapper construction</span>
+   ├─ <span class="t">○ init-module</span>            <span class="c">clock, serializer, logger, OkHttp client</span>
+   └─ <span class="t">○ otel-module</span>            <span class="c">OTel module shell (engine is built later, in span-service-init)</span>
+
+<span class="t">○ sdk-start</span>                   <span class="c">wraps Embrace.start(); ≈ the exported emb-embrace-init span</span>
+├─ <span class="k">●</span> <span class="k">modules-init</span>            <span class="c">bootstrapper.init(): the span's start stamp is taken here</span>
+│  ├─ <span class="k">●</span> <span class="k">persisted-config-load</span>   <span class="c">read + decode last launch's remote config (phase 1)</span>
+│  ├─ <span class="t">○ workerthread-init</span>        <span class="c">then the SharedPreferences prewarm is posted to a worker</span>
+│  ├─ <span class="t">○ core-init</span>
+│  ├─ <span class="t">○ config-init</span>
+│  │  ├─ <span class="k">●</span> <span class="k">config-service-init</span>  <span class="c">schedules the background HTTP config fetch</span>
+│  │  ├─ <span class="t">○ sdk-disable-check ▸ behavior-check</span>
+│  │  └─ <span class="k">●</span> <span class="k">span-service-init</span>    <span class="c">phase 3</span>
+│  │     └─ <span class="k">●</span> <span class="k">otel-tracer-init</span>   <span class="c">the OTel SDK assembly itself</span>
+│  ├─ <span class="k">●</span> <span class="k">essential-service-init</span>  <span class="c">▸ process-state, network-connectivity, session-properties, user-service (○)</span>
+│  ├─ <span class="t">○ storage-init</span>
+│  ├─ <span class="k">●</span> <span class="k">instrumentation-init</span>
+│  ├─ <span class="t">○ feature-init</span>
+│  ├─ <span class="t">○ data-capture-service-init</span>
+│  ├─ <span class="k">●</span> <span class="k">delivery-init</span>
+│  ├─ <span class="t">○ thread-blockage-init</span>
+│  ├─ <span class="k">●</span> <span class="k">payload-source-init</span>     <span class="c">▸ session-payload-source, resource-source, deviceImpl, metadata-source (○)</span>
+│  ├─ <span class="t">○ log-init</span>
+│  └─ <span class="k">●</span> <span class="k">user-session-orchestration-init</span>  <span class="c">loads the previous user session's metadata</span>
+│     <span class="c">floating: </span><span class="k">● key-value-store-init</span><span class="c"> and </span><span class="k">● prefs-first-read</span><span class="c"> nest wherever the store is first touched — usually</span>
+│     <span class="c">inside essential-service-init's user-service ▸ load-user-info-from-pref, and on whichever thread got there first</span>
+├─ <span class="k">●</span> <span class="k">post-init</span>               <span class="c">cross-module wiring (phase 5)</span>
+│  └─ <span class="k">●</span> <span class="k">start-first-session</span>     <span class="c">▸ transition-state-start, prepare-new-session, create-new-session, initiate-periodic-caching (○)</span>
+├─ <span class="k">●</span> <span class="k">post-services-setup</span>     <span class="c">phase 6</span>
+│  ├─ <span class="t">○ service-registration</span>
+│  ├─ <span class="k">●</span> <span class="k">load-instrumentation</span>
+│  └─ <span class="k">●</span> <span class="k">huc-init</span>                <span class="c">only when HttpUrlConnection capture is enabled (off in the benchmark app)</span>
+└─ <span class="t">○ startup-tracking</span>            <span class="c">after the durations are snapshotted — never an attribute; closes the span</span></pre>
+
+  <p>Five rules for reading the attributes against this tree. <strong>Parents include their children</strong>, so the values never sum to the span: <code>modules-init</code> alone is 83–89% of it, and <code>span-service-init</code> contains <code>otel-tracer-init</code>. <strong>The two class-load sections sit outside the span</strong> — <code>embrace-impl-init</code> and <code>bootstrapper-init</code> are reported on it but happen before its start stamp, so a span can be shorter than one of its own attributes. <strong>The recorded children account for roughly 82–88% of <code>modules-init</code></strong>; the rest is the trace-only module constructions above, which have no attribute. <strong>The three top-level sections tile 95–98% of the span</strong>; the remaining sliver is call overhead. And <strong>the two SharedPreferences sections float</strong>: they record the first touch of the store, on whatever thread made it, so a large <code>prefs-first-read</code> is not necessarily main-thread time.</p>
+
+  <p>What each section should cost, by device tier. Medians and share of the <code>emb-sdk-start</code> window from one 20-launch pass per device on released 9.2.0 (benchmark build, baseline profile applied, 2026-09-01 fixture campaign). Absolute milliseconds are a property of the device; the <em>share</em> is the portable expectation, and the last column is the range across these three tiers.</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>section (attribute: <code>&lt;name&gt;-duration-ms</code>)</th><th class="num">Pixel 7 Pro<br>ms · %</th><th class="num">Galaxy A14<br>ms · %</th><th class="num">Pixel 3<br>ms · %</th><th class="num">expected share</th></tr></thead>
+      <tbody>
+        <tr class="group"><td colspan="5">Outside the span (class load), shown against the window for scale</td></tr>
+        <tr><td class="sec">embrace-impl-init</td><td class="num">1.14 · 9.9%</td><td class="num">2.63 · 6.1%</td><td class="num">6.29 · 19.8%</td><td class="num">6–20% of the span, but not in it</td></tr>
+        <tr><td class="sec d1">bootstrapper-init</td><td class="num">0.86 · 7.4%</td><td class="num">1.74 · 4.0%</td><td class="num">5.03 · 15.9%</td><td class="num">4–16%</td></tr>
+        <tr class="group"><td colspan="5">The span itself — <code>emb-sdk-start</code> median: 11.6 ms · 43.3 ms · 31.7 ms</td></tr>
+        <tr><td class="sec">modules-init</td><td class="num">10.16 · 87%</td><td class="num">38.38 · 89%</td><td class="num">26.31 · 83%</td><td class="num"><strong>83–89%</strong></td></tr>
+        <tr><td class="sec d1">persisted-config-load</td><td class="num">3.43 · 29.5%</td><td class="num">11.71 · 27.1%</td><td class="num">5.95 · 18.7%</td><td class="num"><strong>19–30%</strong></td></tr>
+        <tr><td class="sec d1">config-service-init</td><td class="num">0.29 · 2.5%</td><td class="num">0.84 · 2.0%</td><td class="num">1.32 · 4.2%</td><td class="num">2–4%</td></tr>
+        <tr><td class="sec d1">span-service-init</td><td class="num">2.45 · 21.1%</td><td class="num">17.43 · 40.3%</td><td class="num">9.98 · 31.5%</td><td class="num"><strong>21–40%</strong></td></tr>
+        <tr><td class="sec d2">otel-tracer-init</td><td class="num">1.61 · 13.9%</td><td class="num">14.77 · 34.1%</td><td class="num">7.00 · 22.1%</td><td class="num">14–34%</td></tr>
+        <tr><td class="sec d1">essential-service-init</td><td class="num">0.15 · 1.3%</td><td class="num">0.68 · 1.6%</td><td class="num">0.72 · 2.3%</td><td class="num">1–2%</td></tr>
+        <tr><td class="sec d1">instrumentation-init</td><td class="num">0.13 · 1.1%</td><td class="num">0.17 · 0.4%</td><td class="num">0.50 · 1.6%</td><td class="num">≤ 2%</td></tr>
+        <tr><td class="sec d1">delivery-init</td><td class="num">0.68 · 5.9%</td><td class="num">1.72 · 4.0%</td><td class="num">1.79 · 5.7%</td><td class="num">4–6%</td></tr>
+        <tr><td class="sec d1">payload-source-init</td><td class="num">0.95 · 8.2%</td><td class="num">2.01 · 4.7%</td><td class="num">2.18 · 6.9%</td><td class="num">5–8%</td></tr>
+        <tr><td class="sec d1">user-session-orchestration-init</td><td class="num">0.25 · 2.2%</td><td class="num">0.31 · 0.7%</td><td class="num">0.62 · 2.0%</td><td class="num">1–2%</td></tr>
+        <tr><td class="sec d1">key-value-store-init (floating)</td><td class="num">0.09 · 0.8%</td><td class="num">0.10 · 0.2%</td><td class="num">0.13 · 0.4%</td><td class="num">&lt; 1%</td></tr>
+        <tr><td class="sec d1">prefs-first-read (floating)</td><td class="num">0.11 · 0.9%</td><td class="num">0.13 · 0.3%</td><td class="num">0.13 · 0.4%</td><td class="num">&lt; 1% (worst seen 5.2 ms)</td></tr>
+        <tr><td class="sec">post-init</td><td class="num">0.18 · 1.5%</td><td class="num">0.42 · 1.0%</td><td class="num">1.10 · 3.5%</td><td class="num">1–4%</td></tr>
+        <tr><td class="sec d1">start-first-session</td><td class="num">0.15 · 1.3%</td><td class="num">0.36 · 0.8%</td><td class="num">1.02 · 3.2%</td><td class="num">1–3% (worst seen 12.4 ms)</td></tr>
+        <tr><td class="sec">post-services-setup</td><td class="num">0.73 · 6.3%</td><td class="num">2.31 · 5.3%</td><td class="num">3.56 · 11.2%</td><td class="num"><strong>5–11%</strong></td></tr>
+        <tr><td class="sec d1">load-instrumentation</td><td class="num">0.66 · 5.7%</td><td class="num">2.16 · 5.0%</td><td class="num">3.12 · 9.8%</td><td class="num">5–10%</td></tr>
+        <tr><td class="sec d1">huc-init</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">no bench figure; prod-only when HUC capture is on</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">How to use the last column on production data: judge a device's distribution by its <em>shape</em>, not its milliseconds. A span where <code>persisted-config-load</code> is half the total is a config-decode anomaly (a large or pathological cached config); one where <code>span-service-init</code> is under 15% yet the span is long has lost its time to something outside the recorded children — look at <code>init-run-delay-pct</code> (starved) versus <code>init-cpu-pct</code> (ran slow) before blaming a section. Two "worst seen" figures are in the table because they are the sections that carry the tails on a quiet device: <code>start-first-session</code> when the first span's class loading lands on a cold cache, and <code>prefs-first-read</code> when the main thread reaches the preferences before the prewarm has finished loading them. The shares here come from single 20-launch passes; the phase pills above come from 10×20 campaigns over the composed window, which is why the two sets agree in ordering and disagree by a few points.</p>
+
+  <p class="note">Alongside the durations, the same span carries the init window's execution context: <code>init-cpu-pct</code> and <code>init-run-delay-pct</code> (the init thread's on-CPU and runnable-but-waiting shares of the window), <code>init-disk-read-kb</code> and <code>init-gc-count</code> (process-wide), and the environment at the moment — <code>seconds-since-boot</code>, <code>seconds-since-install</code>, <code>seconds-since-update</code>, <code>mem-available-pct</code>, <code>low-memory</code> (only when true), <code>thermal-status</code> (only when throttled), <code>thermal-headroom-pct</code>, <code>prefs-file-bytes</code> (the host app's preferences file, which explains <code>prefs-first-read</code>), and, from the release after 9.2.0, <code>init-compile-filter</code> and <code>init-app-image</code>: ART's compiler filter for the app's own dex, read from the oat header of its <code>base.odex</code>. <code>speed-profile</code> means a baseline profile drove compilation and the profiled classes are preloaded; <code>verify</code> is the state after an install or update before background dexopt runs, in which class loading and cold code cost several times more. It splits every duration on the span, and anything measured later in the process, into compiled and uncompiled populations, which the 9.2.0 data could only infer. The <a href="https://claude.ai/code/artifact/8818cdf3-30c0-43d4-9bc4-a71fe0525435">recommendations document</a> specifies them; the fleet-validation document grades how well each predicts a slow init.</p>
+
+  <h2>What runs concurrently, off the main thread</h2>
+  <p>During the window, SDK background threads handle the deliberately-off-path work: <strong>loading the native library and installing crash signal handlers</strong> (the biggest concurrent chunk, 5–13 ms of real disk IO + CPU), the <strong>HTTP config fetch</strong> (whose result only applies next launch), the SharedPreferences prewarm, system-service registrations (connectivity, power, thermal), and startup-record bookkeeping. Two things to understand about this concurrency: it's why crash capture is live within a few ms of start even though the window hasn't closed; and on small devices these threads <em>compete with the main thread</em> for cores and memory bandwidth — part of why entry-tier windows inflate under load.</p>
+
+  <h2>Where the main thread actually blocks</h2>
+  <p>A code audit mapped every wait on the path. In rough order of impact: <strong>first-use worker thread creation</strong> (creating a thread parks the caller until the child initializes — sits inside three hot sections); a <strong>shared lazy-initialization lock</strong> that the main thread and the config-HTTP worker can both want (the main thread can park on the worker's monitor — the top-ranked fix target); <strong>SharedPreferences loading</strong> (first read waits for the XML parse; the prewarm converts a disk wait into a lock wait rather than eliminating it); and the unavoidable <strong>config-file read + first-span class loading</strong>. Notably absent: no synchronous network, no explicit latches/sleeps, and no main-thread binder calls in the default path.</p>
+
+  <h2>The numbers to carry in your head</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>device tier</th><th class="num">median</th><th class="num">p95</th><th class="num">max</th><th class="num">8.3.0 median</th><th class="num">8.3.0 → 9.2.0</th></tr></thead>
+      <tbody>
+        <tr><td>2022 flagship (Pixel 7 Pro, Android 15)</td><td class="num">11.5 ms</td><td class="num">17.3</td><td class="num">25.6</td><td class="num">20.9 ms</td><td class="num">−44.9%</td></tr>
+        <tr><td>2018 flagship (Pixel 3, Android 12)</td><td class="num">32.0 ms</td><td class="num">35.4</td><td class="num">38.9</td><td class="num">43.5 ms</td><td class="num">−26.5%</td></tr>
+        <tr><td>2023 entry (Galaxy A14, Android 15)</td><td class="num">45.1 ms</td><td class="num">59.1</td><td class="num">71.7</td><td class="num">75.6 ms</td><td class="num">−40.4%</td></tr>
+        <tr><td>2020 Go-tier (A01 Core, 1 GB, Android 10)</td><td class="num">92.6 ms</td><td class="num">142.0</td><td class="num">217.4</td><td class="num">177.1 ms</td><td class="num">−47.7%</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note"><strong>All figures are SDK 9.2.0</strong>, composed window, 200 cold launches per device (10 passes × 20), benchmark build with the baseline profile applied. <em>Max</em> is the worst launch in that quiet campaign — it is not a worst case: under induced heat or concurrent load these devices reach substantially higher, which is what the external-factors work characterises. The 8.3.0 column is measured the same way, so the improvement column compares like with like.</p>
+  <p class="note">Three facts make these numbers meaningful. The same two costs dominate on every tier — <strong>OTel assembly + config decode is 50–62% of the window</strong> — so the workload is identical and only the hardware changes. The window is <strong>memory-bound work</strong> (class loading, deserialization = pointer-chasing), which is why it degrades under heat, concurrent device activity and weak memory subsystems rather than under "slow CPUs" per se. And compilation state matters enormously: with the shipped baseline profile actually applied (as Play-installed users get), windows are roughly <em>half</em> of the un-compiled numbers — every figure here has it applied.</p>
+
+  <h2>Glossary</h2>
+  <ul>
+    <li><strong>Cold start</strong> — app process doesn't exist; Android creates it fresh. The only start type our benchmarks measure.</li>
+    <li><strong>TTID</strong> — time to initial display: process start → first frame. The user-facing startup number; the SDK window is a slice of it.</li>
+    <li><strong>Window</strong> — the interval our benchmarks report: <em>composed</em> from the start of <code>emb-modules-init</code> to the end of <code>emb-post-services-setup</code>. Defined this way because it exists in every version measured, unlike <code>emb-sdk-start</code>, which 9.2.0 introduced. It is a subset of <code>Embrace.start()</code>, so it understates total init cost.</li>
+    <li><strong>SDK-init span</strong> — the whole <code>Embrace.start()</code> interval: the <code>emb-sdk-start</code> section (9.2.0+) ≈ the exported <code>emb-embrace-init</code> span.</li>
+    <li><strong>Sections</strong> — named <code>emb-*</code> trace slices the SDK emits around each init phase; the unit of our breakdowns. Their nesting and order are in <a href="#tree">the section tree</a>.</li>
+    <li><strong>Section attributes</strong> — 9.2.0+: the duration of each ● section, as <code>&lt;name&gt;-duration-ms</code> on the exported <code>emb-embrace-init</code> span (cold starts) and the private <code>sdk-init</code> span. Parents include children; two are recorded from before the span starts.</li>
+    <li><strong>Baseline profile / AOT</strong> — a shipped list of hot methods that Android compiles to native code at install; without it the init runs interpreted/JIT, roughly 2× slower.</li>
+    <li><strong>iter000 / first launch</strong> — the first-ever cold start after install: no persisted config (fast-path load) but runs inside the install-aftermath burst (Play/installer activity) — analyzed as its own cohort.</li>
+  </ul>
+
+  <footer>
+    <p><strong>Sources.</strong> Section map and blocking-site audit from the SDK source (init path: <code>ModuleInitBootstrapper</code> and modules); timings from the 2026-08 four-device campaigns (records in <code>claude-output/</code>). <strong>Version-anchored 2026-08-26 to SDK 9.2.0:</strong> window figures come from the longitudinal store's 9.2.0 records and the 8.3.0 sweep, per-phase shares from the 9.2.0 section medians, and the engine-alternative figures from the fleet A/B — all at 10×20 with the baseline profile applied. This document previously quoted an undated "HEAD", which is neither installable nor stable, and per-phase shares measured before 9.2.0 collapsed two of them. <strong>Section tree added 2026-09-03</strong> from the 9.2.0 init path (<code>EmbraceImpl</code>, <code>ModuleInitBootstrapper</code>, <code>InitializedModuleGraph</code>, <code>SdkInitActions</code>; attribute plumbing in <code>SectionDurationTracker</code> and <code>StartupServiceImpl</code>); its per-section medians from the 2026-09-01 released-9.2.0 fixture campaign, one 20-launch pass per device (<code>claude-output/2026-08-26-kotlin-port/fixtures/traces/</code>), analysed with <code>startup-tools analyze --all-sections</code>. <strong>Phase 5 rewritten 2026-09-03</strong> after the user-session write investigation (restore versus create path; the earlier claim that the first span is created in that phase was wrong, it is created in <code>span-service-init</code>). Living docs: <a href="https://claude.ai/code/artifact/9eda58ea-2446-4bd9-b1ea-228ea7ad7a33">external factors</a> · <a href="https://claude.ai/code/artifact/8818cdf3-30c0-43d4-9bc4-a71fe0525435">recommendations + telemetry</a> · <a href="https://claude.ai/code/artifact/0e08adcf-5b33-43f5-8a7f-abc7679d68b3">tracker</a> · <a href="https://claude.ai/code/artifact/c8ef75b3-4c83-4335-8b9a-3776699266a0">testing log</a> · <a href="https://claude.ai/code/artifact/40218422-0143-4fd8-82ee-6fcb1bce67cb">timing by version</a>. Methodology and per-device gotchas: the committed <code>startup-analysis</code> and <code>startup-multi-device-analysis</code> skills.</p>
+  </footer>
+</main>

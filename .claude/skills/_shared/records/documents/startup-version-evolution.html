@@ -1,0 +1,443 @@
+<title>SDK Init Timing by Version — 8.3.0 → 9.2.0</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #FFFFFF;
+    --ink: #1C1E21;
+    --ink-secondary: #55524B;
+    --muted: #8A8577;
+    --line: #E5E2D9;
+    --accent: #D9930D;
+    --accent-soft: #F5E3BC;
+    --good: #3E7C4F;
+    --good-soft: #E4EFE6;
+    --bad: #A8442E;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #16181C; --surface: #1E2126; --ink: #ECEAE4; --ink-secondary: #B5B1A6;
+      --muted: #7D796E; --line: #33363C; --accent: #E8B04B; --accent-soft: #3A3123;
+      --good: #7FBB8E; --good-soft: #24352A; --bad: #D98A76;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #16181C; --surface: #1E2126; --ink: #ECEAE4; --ink-secondary: #B5B1A6;
+    --muted: #7D796E; --line: #33363C; --accent: #E8B04B; --accent-soft: #3A3123;
+    --good: #7FBB8E; --good-soft: #24352A; --bad: #D98A76;
+  }
+  body { background: var(--ground); color: var(--ink); font-family: -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.55; margin: 0; padding: 40px 24px 72px; }
+  main { max-width: 880px; margin: 0 auto; }
+  h1 { font-size: 1.6rem; letter-spacing: -0.01em; margin: 0 0 4px; text-wrap: balance; }
+  h2 { font-size: 1.1rem; margin: 36px 0 8px; }
+  h2 .sub { display: block; font-size: 0.72rem; font-weight: 500; color: var(--muted); letter-spacing: 0.02em; }
+  .context { color: var(--ink-secondary); font-size: 0.9rem; margin: 0 0 20px; }
+  p { font-size: 0.92rem; margin: 8px 0; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.85em; background: var(--accent-soft); border-radius: 4px; padding: 1px 5px; }
+  a { color: var(--accent); font-weight: 600; }
+  .tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; margin: 12px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.86rem; }
+  th { text-align: left; font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; padding: 9px 12px 5px; border-bottom: 1px solid var(--line); }
+  th.num, td.num { text-align: right; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-variant-numeric: tabular-nums; }
+  td { padding: 6px 12px; border-bottom: 1px solid var(--line); }
+  tr:last-child td { border-bottom: none; }
+  .better { color: var(--good); font-weight: 600; }
+  .worse { color: var(--bad); }
+  .note { color: var(--ink-secondary); font-size: 0.84rem; }
+  .pending { color: var(--muted); font-style: italic; }
+  .appendix { border-top: 3px double var(--line); margin-top: 56px; padding-top: 8px; }
+  .appendix-banner { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--muted); border-radius: 8px; padding: 12px 16px; margin: 16px 0; }
+  footer { margin-top: 44px; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--line); padding-top: 14px; }
+</style>
+
+<main>
+  <h1>SDK Init Timing by Version</h1>
+  <p class="context">The blocking window — wall-clock time <code>Embrace.start()</code> holds the
+  caller's main thread — across released SDK versions, measured on the standing reference fleet.
+  <strong>Current series (everything in the main body):</strong> 10 passes × 20 iterations per
+  version per device, benchmark build, baseline-profile compile state, <code>composed</code> window
+  instrument, untapped, ingested into the longitudinal store; inference is pass-level (cluster
+  bootstrap CIs, cluster permutation p). Earlier 4×25/4×50 results live in
+  <a href="#appendix">Appendix A</a> with the context they need — run-shape was later shown to move
+  medians device-dependently, so those absolute values are not comparable to this series.
+  Background: <a href="https://claude.ai/code/artifact/a67bcf10-2835-49e8-95ee-7d10a551fdf9">primer</a> ·
+  evidence trail: <a href="https://claude.ai/code/artifact/c8ef75b3-4c83-4335-8b9a-3776699266a0">testing log</a>.</p>
+
+  <p class="note"><strong>Provenance — last updated 2026-08-25 18:45: the version matrix is COMPLETE — the A01
+  Core's 8.3.0 leg landed (X36), so all four devices now span 8.3.0 → 9.2.0. The 9.2.0 attribution
+  question is answered (X35 — the Pixel 3's shortfall is the post-services-setup phase). 12
+  longitudinal + 4 sweep records; no pending cells remain except the structurally untestable
+  flagship 9.1.0 pairs (n=198).</strong> Tables and prose in this document are updated <em>together</em>, never
+  separately: a cell never changes without the surrounding prose being re-checked in the same
+  edit, so if this stamp is current, the words and the numbers agree. Data behind the main body:
+  <strong>X25</strong> (2026-08-16, 8.3.0/9.0.0/9.1.0, all four devices, overnight campaign) and
+  <strong>X30</strong> (2026-08-17, released 9.2.0 from mavenCentral, run from a worktree — flagship
+  ingested 10:07, Pixel 3 10:37, A14 11:20, A01 Core 22:29 after being paused and resumed;
+  <strong>all four devices now carry 9.2.0</strong>). Store: 11 records. Recipe throughout: 10×20, benchmark build, baseline-profile compile state,
+  <code>composed</code> window, untapped, cool-gated, crash-buffer-verified per leg. Stores:
+  <code>claude-output/longitudinal/</code> (durable home) mirroring the live campaign store;
+  significance scripts in <code>claude-output/2026-08-16-x25-artifacts/</code>. Cells marked
+  <em>pending/running</em> are exactly that — they fill, with this stamp advancing, as ingests
+  land and queued tests run at ingest gaps.</p>
+
+  <h2>The window by version: median, p90, p95 (ms)<span class="sub">10×20 series · one table, all three statistics · 9.2.0 collection in progress 2026-08-17 — cells fill as each device's ingest lands</span></h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>device</th><th></th><th class="num">8.3.0</th><th class="num">9.0.0</th><th class="num">9.1.0</th><th class="num">9.2.0</th><th class="num">8.3.0 → 9.2.0</th></tr></thead>
+      <tbody>
+        <tr><td>Pixel 7 Pro (flagship)</td><td>median</td><td class="num">20.90</td><td class="num">18.57</td><td class="num">17.16</td><td class="num"><strong>11.50</strong></td><td class="num better">−45.0%</td></tr>
+        <tr><td></td><td>p90</td><td class="num">25.68</td><td class="num">23.95</td><td class="num">22.40</td><td class="num"><strong>15.69</strong></td><td class="num better">−38.9%</td></tr>
+        <tr><td></td><td>p95</td><td class="num">27.47</td><td class="num">25.11</td><td class="num">24.24</td><td class="num"><strong>17.31</strong></td><td class="num better">−37.0%</td></tr>
+        <tr><td>Pixel 3 (2018 flagship)</td><td>median</td><td class="num">43.43</td><td class="num">42.67</td><td class="num">37.77</td><td class="num"><strong>31.90</strong></td><td class="num better">−26.5%</td></tr>
+        <tr><td></td><td>p90</td><td class="num">44.75</td><td class="num">44.16</td><td class="num">39.55</td><td class="num"><strong>33.64</strong></td><td class="num better">−24.8%</td></tr>
+        <tr><td></td><td>p95</td><td class="num">45.67</td><td class="num">44.73</td><td class="num">39.92</td><td class="num"><strong>35.35</strong></td><td class="num better">−22.6%</td></tr>
+        <tr><td>Galaxy A14 (entry)</td><td>median</td><td class="num">75.55</td><td class="num">69.62</td><td class="num">63.01</td><td class="num"><strong>45.05</strong></td><td class="num better">−40.4%</td></tr>
+        <tr><td></td><td>p90</td><td class="num">84.54</td><td class="num">78.50</td><td class="num">75.01</td><td class="num"><strong>53.00</strong></td><td class="num better">−37.3%</td></tr>
+        <tr><td></td><td>p95</td><td class="num">89.04</td><td class="num">92.27</td><td class="num">81.81</td><td class="num"><strong>59.08</strong></td><td class="num better">−33.7%</td></tr>
+        <tr><td>A01 Core (1 GB Go)</td><td>median</td><td class="num"><strong>176.70</strong></td><td class="num">142.69</td><td class="num">124.86</td><td class="num"><strong>92.58</strong></td><td class="num better">−47.6%</td></tr>
+        <tr><td></td><td>p90</td><td class="num"><strong>199.54</strong></td><td class="num">171.40</td><td class="num">155.21</td><td class="num"><strong>123.98</strong></td><td class="num better">−37.9%</td></tr>
+        <tr><td></td><td>p95</td><td class="num"><strong>211.63</strong></td><td class="num">178.32</td><td class="num">170.40</td><td class="num"><strong>142.03</strong></td><td class="num better">−32.9%</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note"><strong>The matrix is complete as of 2026-08-25</strong> — the A01 Core's 8.3.0
+  leg finally landed (X36), after two earlier failures: device install flakiness capped it at 4 of
+  10 passes in August, and a rebuilt compat patch was wrong until the actual compiler errors were
+  read (<code>addUserSessionProperty</code>/<code>removeUserSessionProperty</code> do not exist in
+  8.3.0 at all, rather than taking a different overload). <strong>The Go tier's full arc is
+  therefore 176.70 → 92.58 ms, −47.6% — 84 ms of main-thread blocking removed</strong>, the largest
+  absolute improvement anywhere in the fleet, on the device where startup hurts most. Its tail
+  moved with it: p90 −37.9%, p95 −32.9%, all supported at the design floor. Within that arc,
+  9.2.0 alone contributed −25.9%. The flagship's
+  9.1.0 median stands but is excluded from pass-level <em>tests</em> (n=198 — two traces yielded no
+  window, and pass boundaries are recovered by position, so testing would misalign every pass).</p>
+
+  <h2>Version-to-version significance: all three statistics<span class="sub">pass-level cluster bootstrap + permutation per statistic · 10 passes per arm · permutation floor 1.1×10⁻⁵ · each comparison shows its median, p90 and p95 rows together · percentages are relative to the FROM-arm's own statistic (a p95 row's % is against that arm's p95, not its median)</span></h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>device</th><th>comparison</th><th></th><th class="num">delta (ms)</th><th class="num">delta (%)</th><th class="num">95% CI (ms)</th><th class="num">95% CI (%)</th><th class="num">p</th><th>verdict</th></tr></thead>
+      <tbody>
+        <tr><td>flagship</td><td>8.3.0 → 9.0.0</td><td>median</td><td class="num">−2.33</td><td class="num">−11.2%</td><td class="num">[−2.73, −1.88]</td><td class="num">[−13.1, −9.0]</td><td class="num">5×10⁻⁵</td><td><strong>supported</strong></td></tr>
+        <tr><td></td><td></td><td>p90</td><td class="num">−1.73</td><td class="num">−6.7%</td><td class="num">[−3.28, −0.27]</td><td class="num">[−12.8, −1.1]</td><td class="num">0.024</td><td><strong>supported</strong></td></tr>
+        <tr><td></td><td></td><td>p95</td><td class="num">−2.36</td><td class="num">−8.6%</td><td class="num">[−5.65, −0.53]</td><td class="num">[−20.6, −1.9]</td><td class="num">0.031</td><td><strong>supported</strong></td></tr>
+        <tr><td>flagship</td><td>9.0.0 → 9.2.0</td><td>median</td><td class="num">−7.07</td><td class="num">−38.1%</td><td class="num">[−7.36, −6.72]</td><td class="num">[−39.6, −36.2]</td><td class="num">5×10⁻⁵</td><td><strong>supported</strong></td></tr>
+        <tr><td></td><td></td><td>p90</td><td class="num">−8.27</td><td class="num">−34.5%</td><td class="num">[−9.48, −6.94]</td><td class="num">[−39.6, −29.0]</td><td class="num">5×10⁻⁵</td><td><strong>supported</strong></td></tr>
+        <tr><td></td><td></td><td>p95</td><td class="num">−7.79</td><td class="num">−31.0%</td><td class="num">[−8.83, −6.42]</td><td class="num">[−35.2, −25.6]</td><td class="num">5×10⁻⁵</td><td><strong>supported</strong></td></tr>
+        <tr><td>flagship</td><td>9.1.0 → 9.2.0</td><td>all</td><td class="num">−5.66 · −6.72 · −6.92</td><td class="num">−33.0 · −30.0 · −28.6%</td><td class="num">level-only</td><td class="num">level-only</td><td class="num">—</td><td>untestable — the 9.1.0 arm's n=198 blocks pass recovery</td></tr>
+        <tr><td>Pixel 3</td><td>8.3.0 → 9.1.0</td><td>median</td><td class="num">−5.66</td><td class="num">−13.0%</td><td class="num">[−5.98, −5.29]</td><td class="num">[−13.8, −12.2]</td><td class="num">5×10⁻⁵</td><td><strong>supported</strong></td></tr>
+        <tr><td></td><td></td><td>p90</td><td class="num">−5.20</td><td class="num">−11.6%</td><td class="num">[−6.06, −4.83]</td><td class="num">[−13.5, −10.8]</td><td class="num">5×10⁻⁵</td><td><strong>supported</strong></td></tr>
+        <tr><td></td><td></td><td>p95</td><td class="num">−5.75</td><td class="num">−12.6%</td><td class="num">[−7.14, −4.33]</td><td class="num">[−15.6, −9.5]</td><td class="num">5×10⁻⁵</td><td><strong>supported</strong></td></tr>
+        <tr><td>Pixel 3</td><td>9.0.0 → 9.1.0</td><td>median</td><td class="num">−4.90</td><td class="num">−11.5%</td><td class="num">[−5.16, −4.48]</td><td class="num">[−12.1, −10.5]</td><td class="num">1×10⁻⁴</td><td><strong>supported</strong></td></tr>
+        <tr><td></td><td></td><td>p90</td><td class="num">−4.61</td><td class="num">−10.4%</td><td class="num">[−5.06, −4.25]</td><td class="num">[−11.5, −9.6]</td><td class="num">5×10⁻⁵</td><td><strong>supported</strong></td></tr>
+        <tr><td></td><td></td><td>p95</td><td class="num">−4.81</td><td class="num">−10.8%</td><td class="num">[−6.14, −3.45]</td><td class="num">[−13.7, −7.7]</td><td class="num">5×10⁻⁵</td><td><strong>supported</strong></td></tr>
+        <tr><td>Pixel 3</td><td>8.3.0 → 9.0.0</td><td>median</td><td class="num">−0.76</td><td class="num">−1.7%</td><td class="num">[−1.06, −0.54]</td><td class="num">[−2.4, −1.2]</td><td class="num">1×10⁻⁴</td><td><strong>supported</strong> (small)</td></tr>
+        <tr><td></td><td></td><td>p90</td><td class="num">−0.59</td><td class="num">−1.3%</td><td class="num">[−1.35, −0.32]</td><td class="num">[−3.0, −0.7]</td><td class="num">0.006</td><td><strong>supported</strong> (small)</td></tr>
+        <tr><td></td><td></td><td>p95</td><td class="num">−0.94</td><td class="num">−2.1%</td><td class="num">[−2.23, +0.80]</td><td class="num">[−4.9, +1.8]</td><td class="num">0.239</td><td>not supported</td></tr>
+        <tr><td>Pixel 3</td><td>9.1.0 → 9.2.0</td><td>median</td><td class="num">−5.87</td><td class="num">−15.5%</td><td class="num">[−6.13, −5.44]</td><td class="num">[−16.2, −14.4]</td><td class="num">5×10⁻⁵</td><td><strong>supported</strong></td></tr>
+        <tr><td></td><td></td><td>p90</td><td class="num">−5.91</td><td class="num">−14.9%</td><td class="num">[−6.28, −3.99]</td><td class="num">[−15.9, −10.1]</td><td class="num">5×10⁻⁵</td><td><strong>supported</strong></td></tr>
+        <tr><td></td><td></td><td>p95</td><td class="num">−4.57</td><td class="num">−11.4%</td><td class="num">[−6.74, −2.70]</td><td class="num">[−16.9, −6.8]</td><td class="num">5×10⁻⁵</td><td><strong>supported</strong></td></tr>
+        <tr><td>A14</td><td>9.1.0 → 9.2.0</td><td>median</td><td class="num">−17.97</td><td class="num">−28.5%</td><td class="num">[−20.87, −15.13]</td><td class="num">[−33.1, −24.0]</td><td class="num">5×10⁻⁵</td><td><strong>supported</strong></td></tr>
+        <tr><td></td><td></td><td>p90</td><td class="num">−22.01</td><td class="num">−29.3%</td><td class="num">[−27.71, −14.13]</td><td class="num">[−36.9, −18.8]</td><td class="num">1×10⁻⁴</td><td><strong>supported</strong></td></tr>
+        <tr><td></td><td></td><td>p95</td><td class="num">−22.74</td><td class="num">−27.8%</td><td class="num">[−29.48, −14.53]</td><td class="num">[−36.0, −17.8]</td><td class="num">1.5×10⁻⁴</td><td><strong>supported</strong></td></tr>
+        <tr><td>A01 Core</td><td>8.3.0 → 9.2.0</td><td>median</td><td class="num">−84.11</td><td class="num">−47.6%</td><td class="num">[−88.41, −80.24]</td><td class="num">[−50.0, −45.4]</td><td class="num">5×10⁻⁵</td><td><strong>supported</strong></td></tr>
+        <tr><td></td><td></td><td>p90</td><td class="num">−75.56</td><td class="num">−37.9%</td><td class="num">[−83.46, −64.89]</td><td class="num">[−41.8, −32.5]</td><td class="num">5×10⁻⁵</td><td><strong>supported</strong></td></tr>
+        <tr><td></td><td></td><td>p95</td><td class="num">−69.59</td><td class="num">−32.9%</td><td class="num">[−84.09, −57.76]</td><td class="num">[−39.7, −27.3]</td><td class="num">5×10⁻⁵</td><td><strong>supported</strong></td></tr>
+        <tr><td>A01 Core</td><td>9.0.0 → 9.1.0</td><td>median</td><td class="num">−17.84</td><td class="num">−12.5%</td><td class="num">[−24.05, −13.93]</td><td class="num">[−16.9, −9.8]</td><td class="num">5×10⁻⁵</td><td><strong>supported</strong></td></tr>
+        <tr><td></td><td></td><td>p90</td><td class="num">−16.19</td><td class="num">−9.4%</td><td class="num">[−24.11, −6.33]</td><td class="num">[−14.1, −3.7]</td><td class="num">0.005</td><td><strong>supported</strong></td></tr>
+        <tr><td></td><td></td><td>p95</td><td class="num">−7.92</td><td class="num">−4.4%</td><td class="num">[−26.35, +1.08]</td><td class="num">[−14.8, +0.6]</td><td class="num">0.224</td><td>not supported</td></tr>
+        <tr><td>A01 Core</td><td>9.1.0 → 9.2.0</td><td>median</td><td class="num">−32.28</td><td class="num">−25.9%</td><td class="num">[−35.98, −28.37]</td><td class="num">[−28.8, −22.7]</td><td class="num">5×10⁻⁵</td><td><strong>supported</strong></td></tr>
+        <tr><td></td><td></td><td>p90</td><td class="num">−31.22</td><td class="num">−20.1%</td><td class="num">[−38.94, −20.82]</td><td class="num">[−25.1, −13.4]</td><td class="num">5×10⁻⁵</td><td><strong>supported</strong></td></tr>
+        <tr><td></td><td></td><td>p95</td><td class="num">−28.37</td><td class="num">−16.6%</td><td class="num">[−45.11, −13.91]</td><td class="num">[−26.5, −8.2]</td><td class="num">0.001</td><td><strong>supported</strong></td></tr>
+        <tr><td>A01 Core</td><td>9.0.0 → 9.2.0</td><td>median</td><td class="num">−50.11</td><td class="num">−35.1%</td><td class="num">[−55.56, −46.89]</td><td class="num">[−38.9, −32.9]</td><td class="num">1×10⁻⁴</td><td><strong>supported</strong></td></tr>
+        <tr><td></td><td></td><td>p90</td><td class="num">−47.41</td><td class="num">−27.7%</td><td class="num">[−53.38, −36.53]</td><td class="num">[−31.1, −21.3]</td><td class="num">5×10⁻⁵</td><td><strong>supported</strong></td></tr>
+        <tr><td></td><td></td><td>p95</td><td class="num">−36.28</td><td class="num">−20.3%</td><td class="num">[−55.25, −28.74]</td><td class="num">[−31.0, −16.1]</td><td class="num">1×10⁻⁴</td><td><strong>supported</strong></td></tr>
+        <tr><td>A14</td><td>9.0.0 → 9.1.0</td><td>median</td><td class="num">−6.61</td><td class="num">−9.5%</td><td class="num">[−10.13, −2.77]</td><td class="num">[−14.6, −4.0]</td><td class="num">0.017</td><td><strong>supported</strong></td></tr>
+        <tr><td></td><td></td><td>p90</td><td class="num">−3.49</td><td class="num">−4.4%</td><td class="num">[−12.60, +2.21]</td><td class="num">[−16.1, +2.8]</td><td class="num">0.129</td><td>not supported</td></tr>
+        <tr><td></td><td></td><td>p95</td><td class="num">−10.45</td><td class="num">−11.3%</td><td class="num">[−17.78, +3.76]</td><td class="num">[−19.3, +4.1]</td><td class="num">0.210</td><td>not supported</td></tr>
+        <tr><td>A14</td><td>8.3.0 → 9.1.0</td><td>median</td><td class="num">−12.53</td><td class="num">−16.6%</td><td class="num">[−16.24, +0.27]</td><td class="num">[−21.5, +0.4]</td><td class="num">0.014</td><td>suggestive — CI grazes 0</td></tr>
+        <tr><td></td><td></td><td>p90</td><td class="num">−9.53</td><td class="num">−11.3%</td><td class="num">[−15.23, −3.49]</td><td class="num">[−18.0, −4.1]</td><td class="num">0.004</td><td><strong>supported</strong></td></tr>
+        <tr><td></td><td></td><td>p95</td><td class="num">−7.22</td><td class="num">−8.1%</td><td class="num">[−15.64, +0.04]</td><td class="num">[−17.6, +0.05]</td><td class="num">0.022</td><td>suggestive — CI grazes 0</td></tr>
+        <tr><td>A14</td><td>8.3.0 → 9.0.0</td><td>median</td><td class="num">−5.92</td><td class="num">−7.8%</td><td class="num">[−9.67, +6.51]</td><td class="num">[−12.8, +8.6]</td><td class="num">0.079</td><td>suggestive</td></tr>
+        <tr><td></td><td></td><td>p90</td><td class="num">−6.05</td><td class="num">−7.2%</td><td class="num">[−9.00, +3.05]</td><td class="num">[−10.6, +3.6]</td><td class="num">0.025</td><td>suggestive — CI spans 0</td></tr>
+        <tr><td></td><td></td><td>p95</td><td class="num">+3.23</td><td class="num">+3.6%</td><td class="num">[−10.89, +9.59]</td><td class="num">[−12.2, +10.8]</td><td class="num">0.703</td><td>not supported</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h2>Reading the changes together</h2>
+  <p><strong>9.2.0 is the headline: the largest single step in the series, at every statistic, on
+  both devices measured so far.</strong> On the flagship it lands 17.16 → 11.50 ms at the median
+  (−33%) with p90 and p95 moving in near-lockstep (−30%, −29%) — for scale, the entire
+  8.3.0 → 9.1.0 arc bought −18% on that device. The number arrives triple-checked: two days before
+  release the same commit measured 12.00 ms as a tapped snapshot, subtracting the tap's
+  independently measured +0.38 ms cost predicts ~11.6, and the released untapped build ingested at
+  11.50 — three campaigns, two build provenances, agreement within 0.1 ms. <strong>But the step's
+  size is device-dependent, and the attribution question sharpened twice in one morning:</strong>
+  on the common 9.0.0 → 9.2.0 step, <strong>three of four devices cluster tightly — flagship −38.1%,
+  A14 −35.3%, A01 Core −35.1% — while the Pixel 3 alone lags at −25.2%.</strong>
+  <strong style="color:var(--good)">ANSWERED 2026-08-25 (X35):</strong> the Pixel 3's shortfall is
+  concentrated in one phase — <code>emb-post-services-setup</code> improved <strong>−67% there
+  against −84% on its peers</strong>, accounting for ~79% of its ~2.6 ms deficit. Containment was
+  measured rather than assumed (24 traces): <code>modules-init</code> is a parent of
+  <code>config-service-init</code>, <code>span-service-init</code> and others, while
+  <code>post-services-setup</code> is an independent sibling — and inside that parent the Pixel 3
+  actually did <em>better</em> than its peers. (That containment was measured on <strong>9.2.0
+  traces only</strong>; the 9.0.0-side structure was filled in on 2026-08-26 by X38, which found
+  <code>modules-init</code>'s child set entirely unmatched by name across the step — so its
+  cross-version <em>duration</em> comparison is sound, but its <em>contents</em> are not
+  like-for-like. The finding above is unaffected, because it rests on
+  <code>post-services-setup</code>, a sibling.) <strong>That argues against the ART-generation
+  hypothesis in its global form</strong>: uniformly weaker codegen would depress every section, but
+  half of them improved more on the Pixel 3. Full analysis:
+  <code>claude-output/2026-08-25-x35-attribution-answer.md</code>. With the entry
+  tier landed, the Pixel 3 is unambiguously the outlier rather than the flagship being special,
+  which is the cleaner form of the question: <em>what does 9.2.0 improve that three devices get and
+  the 2018 Pixel does not?</em> The ART-generation split is the first hypothesis to test — the
+  Pixel 3 is the fleet's oldest OS, and the three that cluster span flagship, mid and Go tiers, so
+  tier and CPU class are ruled out as the discriminator. <strong>Note the engine flip cannot be the
+  explanation:</strong> it defaults off at HEAD and X32 measured it at −4.3% on the flagship, far
+  too small and never shipped. Section-level attribution for 9.2.0 is the open analysis.</p>
+  <p class="note"><strong>In absolute terms the entry tier is the headline: 50 ms of main-thread
+  blocking removed from the Go device</strong> (142.69 → 92.58 ms), against 7 ms on the flagship.
+  The tail moved with it — p90 −27.7%, p95 −20.3% — so the improvement reaches the slow launches
+  that users actually notice, on the device where they hurt most. The p95 improving less than the
+  median (−20.3% vs −35.1%) says the worst launches on that device retain a floor the release did
+  not touch, which is consistent with its outliers being device-owned (GC, install aftermath,
+  storage) rather than SDK-owned.</p>
+  <p><strong>9.2.0 is supported everywhere, at every statistic: all 22 of its pairwise comparisons
+  across the four devices have intervals excluding zero, nearly all at the design floor of
+  5×10⁻⁵.</strong> That uniformity is unusual in this series and is the strongest single result in
+  it — the release improves the median, p90 and p95 on the flagship, both mid devices and the Go
+  device, with no arm dissenting. Its smallest step is the Pixel 3's (−15.5% median) and its
+  largest in absolute terms is the A01's (−50.11 ms).</p>
+  <p><strong>Direction first: of the 21 pre-9.2.0 point estimates across median, p90 and p95,
+  twenty are improvements</strong> — monotonic 8.3.0 → 9.0.0 → 9.1.0 → 9.2.0 at every statistic on every
+  device that completed — and the single positive (A14 p95, 8.3.0 → 9.0.0, +3.23 ms) carries
+  p = 0.70: noise by every test, reported rather than hidden. The tails move <em>with</em> the
+  medians on every device, which rules out the classic failure mode where a median improvement is
+  bought by making the bad launches worse; if anything the flagship's tail improves slightly more
+  gently than its median (−37% p95 vs −45% median from 8.3.0 to 9.2.0), a shape consistent with
+  the residual tail being owned by the device (scheduling, thermal) rather than by SDK work.</p>
+  <p><strong>Support then falls along the expected power gradient, and that gradient is a property
+  of the statistics, not of the effects.</strong> The same seven comparisons grade as: median —
+  five supported, two suggestive; p90 — five supported, one suggestive, one not; p95 — three
+  supported, one suggestive, three not. Order statistics deep in the noisy region need more data
+  than centres do, so support thinning from median → p90 → p95 at a fixed sample size is exactly
+  what real, consistent effects look like; contradiction would look like sign flips, and there are
+  none above noise. One instructive inversion: the A14's 8.3.0 → 9.1.0 is only <em>suggestive</em>
+  at the median but <strong>supported at p90</strong> (−9.53 ms, CI [−15.23, −3.49], p = 0.004) —
+  with between-pass variance as large as that device's, which statistic clears the bar can come
+  down to where the variance happens to concentrate.</p>
+  <p><strong>Device by device:</strong> the Pixel 3 is the precision instrument — five of its six
+  tested tail comparisons sit at or near the design's floor of 5×10⁻⁵, and its one failure (p95 of
+  the tiny 8.3.0 → 9.0.0 step, −0.94 ms) is a real effect too small for that statistic. The
+  flagship's testable pairs all support; its 9.1.0-involving pairs are level-only because that
+  arm's n=198 blocks positional pass recovery. The A14 is the wide-variance device: medians and
+  the p90 endpoint grade, everything deeper in its tail does not — a power statement, not an SDK
+  statement. <strong>9.2.0 so far:</strong> every landed level continues the improvement at every
+  statistic (flagship −45 / −39 / −37 % for median / p90 / p95 from 8.3.0; Pixel 3 −27 / −25 /
+  −23 %), and its significance tests run at the next ingest gap so the bootstrap never
+  shares the host with a live leg. Several p-values in these tables sit at 5×10⁻⁵ — the 4-pass
+  designs this series replaced had a floor of 0.029, so this entire level of support was
+  structurally unreportable before the shape change.</p>
+  <h2>How to read every number here</h2>
+  <p><strong>The metric of record is the SDK init blocking window</strong> — the quantity the SDK
+  owns and the one a customer feels as "the SDK is holding up my startup". TTID is deliberately not
+  used as the arbiter: its minimum detectable effect on this fleet (~80 ms) is ~5× larger than
+  anything SDK init can produce, so TTID flatness is guaranteed by design and carries no
+  information (the full demonstration is in <a href="#appendix">Appendix A</a>). Medians, not
+  means — these distributions are right-skewed and a mean describes something no launch
+  experiences. Inference always treats the <strong>pass</strong> as the unit of evidence: 93–99% of
+  an arm's variance on this fleet is between passes, so launch-level tests would invent precision.</p>
+  <p><strong>The improvement is measured against a rising baseline of value.</strong> What the SDK
+  does during init grows with nearly every release — 9.x captures meaningfully more than 8.3.0 —
+  so window reductions here are cost falling while capability rises. The placement audit (Appendix
+  A) further showed the 8.3.0 → 9.1.0 reduction moved work off the main thread rather than deleting
+  it, with both off-window main-thread checks flat; an equivalent audit for 9.2.0 has not yet run.</p>
+
+  <h2>Caveats — current series</h2>
+  <p class="note">Window source: pre-9.2.0 versions lack <code>emb-sdk-start</code>, so windows are
+  the composed reconstruction (modules-init start → post-services-setup end), which equals the
+  sdk-init span interval by construction; ingest uses the same instrument for 9.2.0 for series
+  consistency. · Pass count is <strong>series-defining</strong>: the shape change from 4×50 to
+  10×20 moved medians device-dependently (Pixel 3 −10 to −19%, A14 +10 to +17%) for reasons that
+  remain unexplained after a 1,000-trace decomposition — within-pass drift is real (Pixel 3 heats,
+  A14 warms up, mechanism confirmed via in-window CPU time) but explains only 7–37% of the shift,
+  and the old-vs-new comparison is confounded with run date; settling it is tracker X28. Never read
+  this series' absolute values against any other shape, including Appendix A. · The A14 alternates
+  fast/slow install-parity states in every version; ten passes per arm represent both states. ·
+  8.3.0 required compat patches to three example screens (API breaks); <code>MainApplication</code>
+  untouched, so init comparability holds. · 9.2.0 legs run from a worktree pinned to the released
+  artifact on mavenCentral, untapped, gates verified off.</p>
+
+  <div class="appendix" id="appendix">
+    <h2>Appendix A — the 4×25 sweep and 4×50-era results (2026-08-12 … 08-15)</h2>
+    <div class="appendix-banner">
+      <p><strong>Why this is an appendix.</strong> Everything below was collected at 4 passes × 25
+      iterations (HEAD rows: a separate 4×50 campaign) before two things were established: that
+      <strong>run shape moves medians device-dependently</strong>, so these absolute values must not
+      be read against the 10×20 series above; and that a 4-pass design's permutation floor is
+      0.029, so its per-device verdicts are structurally weaker than the current table's. What
+      remains valid — and is not re-derived above — is the <em>structural</em> story: which
+      sections drove the 8.x → 9.x improvement, where the work moved, why TTID cannot arbitrate,
+      and the deep-history timeline. Read timings here as internally consistent within this
+      appendix only. The 4×50 longitudinal store built alongside these runs was destroyed by a
+      driver bug on 2026-08-16 (salvaged aggregates:
+      <code>claude-output/2026-08-16-x25-artifacts/LOST-store-salvage.md</code>); its conclusions
+      were already computed and appear below unchanged.</p>
+    </div>
+
+    <h2>Window medians by version (ms)<span class="sub">4×25 per version per device; HEAD from a 4×50 campaign on a different day</span></h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>device</th><th class="num">8.3.0</th><th class="num">8.4.0</th><th class="num">9.0.0</th><th class="num">9.1.0</th><th class="num">HEAD</th><th class="num">8.3.0 → HEAD</th></tr></thead>
+        <tbody>
+          <tr><td>Pixel 7 Pro (flagship)</td><td class="num">18.9</td><td class="num">18.5</td><td class="num">16.6</td><td class="num">14.1</td><td class="num">13.2</td><td class="num better">−30%</td></tr>
+          <tr><td>Pixel 3 (2018 flagship)</td><td class="num">53.3</td><td class="num">53.8</td><td class="num">49.2</td><td class="num">45.8</td><td class="num">38.0</td><td class="num better">−29%</td></tr>
+          <tr><td>Galaxy A14 (entry)</td><td class="num">70.6</td><td class="num">71.2</td><td class="num">67.7</td><td class="num">58.3</td><td class="num">48.4</td><td class="num better">−31%</td></tr>
+          <tr><td>A01 Core (1 GB Go)</td><td class="num">170.4</td><td class="num">179.0</td><td class="num">145.5</td><td class="num">127.0</td><td class="num">101.2</td><td class="num better">−41%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Medians over all four passes — they include each version's warmer later passes,
+    describing the spread of real launches rather than the best one. HEAD came from a separate
+    4×50 campaign on a different day (cross-campaign device-state difference applies) and its
+    window source is <code>emb-sdk-start</code>, ~1 ms wider than the composed fallback. This
+    table remains the only measurement of <strong>8.4.0</strong>, whose every comparison against
+    8.3.0 spanned zero on every device — the one version-step in the whole line with no evidence
+    of change.</p>
+
+    <h2>What changed at each step<span class="sub">4×25 sweep attribution</span></h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>step</th><th>window effect</th><th>what happened</th></tr></thead>
+        <tbody>
+          <tr><td>8.3.0 → 8.4.0</td><td class="num">≈ flat (−6% to +6%, mixed)</td><td>No systematic init-path change; deltas within pass-to-pass noise on every device.</td></tr>
+          <tr><td>8.4.0 → 9.0.0</td><td class="num"><span class="better">−17%</span> on the Go tier; ≈ flat elsewhere</td><td>The <code>config-service-init</code> collapse begins: on the A01 it fell 69 → 21 ms (from ~42% of the window to a 4th-place section). Devices where that section was a smaller share moved little.</td></tr>
+          <tr><td>9.0.0 → 9.1.0</td><td class="num"><span class="better">−9% to −17%</span>, all devices</td><td>Broad improvement across the board — config work continues shrinking (A01 21 → 18 ms; P7P 4.6 → 3.0 ms) plus general init-path reductions.</td></tr>
+          <tr><td>9.1.0 → HEAD</td><td class="num"><span class="better">−15% to −27%</span>, all devices</td><td>Largest single step on three of four devices. Caveats: window source changes at 9.2.0 (&lt;1 ms wider by construction) and the Pixel 3's −27% benefited from a cool first pass; the honest read was a real, roughly −15% step. <em>(The 10×20 series above now measures this step properly: −33% on the flagship.)</em></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>The mechanism: config-service-init's collapse<span class="sub">best-pass medians, ms — the structural finding that survives the shape change</span></h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>device</th><th class="num">8.3.0</th><th class="num">8.4.0</th><th class="num">9.0.0</th><th class="num">9.1.0</th></tr></thead>
+        <tbody>
+          <tr><td>Pixel 7 Pro</td><td class="num">8.2</td><td class="num">7.8</td><td class="num">4.6</td><td class="num">3.0</td></tr>
+          <tr><td>Pixel 3</td><td class="num">12.6</td><td class="num">13.0</td><td class="num">—*</td><td class="num">6.4</td></tr>
+          <tr><td>Galaxy A14</td><td class="num">18.3</td><td class="num">17.3</td><td class="num">12.8</td><td class="num">9.6</td></tr>
+          <tr><td>A01 Core</td><td class="num">68.9</td><td class="num">69.3</td><td class="num">21.3</td><td class="num">18.0</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">*below the top-listed sections in that run's summary; the trajectory is
+    unambiguous from the neighbors. Semantic-drift caveat: 8.x's <code>config-service-init</code>
+    covers a different construction path than 9.x's — treat this as "the config-related cost at
+    init," not a same-code comparison. In 8.x this section was the #2 cost on every device; by
+    9.1.0 it ranks 4th–5th everywhere.</p>
+
+    <h2>The tail (4×25)<span class="sub">p90 / p95 over all 100 launches per version per device — descriptive; the tested 10×20 tail is in the main body</span></h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>device</th><th></th><th class="num">8.3.0</th><th class="num">9.1.0</th><th class="num">HEAD</th><th class="num">8.3.0 → HEAD</th></tr></thead>
+        <tbody>
+          <tr><td>Pixel 7 Pro</td><td>p90</td><td class="num">27.8</td><td class="num">21.8</td><td class="num">18.6</td><td class="num better">−33%</td></tr>
+          <tr><td></td><td>p95</td><td class="num">28.8</td><td class="num">22.6</td><td class="num">21.2</td><td class="num better">−26%</td></tr>
+          <tr><td>Pixel 3</td><td>p90</td><td class="num">59.1</td><td class="num">51.4</td><td class="num">41.3</td><td class="num better">−30%</td></tr>
+          <tr><td></td><td>p95</td><td class="num">60.0</td><td class="num">52.7</td><td class="num">41.7</td><td class="num better">−30%</td></tr>
+          <tr><td>Galaxy A14</td><td>p90</td><td class="num">80.7</td><td class="num">69.1</td><td class="num">55.3</td><td class="num better">−31%</td></tr>
+          <tr><td></td><td>p95</td><td class="num">86.3</td><td class="num">72.0</td><td class="num">63.0</td><td class="num better">−27%</td></tr>
+          <tr><td>A01 Core</td><td>p90</td><td class="num">204.6</td><td class="num">161.5</td><td class="num">127.3</td><td class="num better">−38%</td></tr>
+          <tr><td></td><td>p95</td><td class="num">216.4</td><td class="num">174.5</td><td class="num">138.6</td><td class="num better">−36%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>The tail moved with the median on every device, ruling out the failure mode where a median
+    improvement is bought by making bad launches worse. The observed <em>maximum</em> is
+    deliberately not reported as a result — a max is one unlucky launch, and across these versions
+    it went both ways (down on the Pixels, up on the Samsungs), which is what a coin flip looks
+    like; individual maxima here are dominated by install-aftermath spikes on a pass's first
+    iteration.</p>
+
+    <h2>The 4×25 verdict, with its own design's power<span class="sub">why two devices could not grade what they were looking at</span></h2>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>device</th><th class="num">8.3.0 median</th><th class="num">9.1.0 median</th><th class="num">faster by</th><th>95% CI on the difference</th><th class="num">p</th><th class="num">this design's MDE</th><th>verdict</th></tr></thead>
+      <tbody>
+        <tr><td>Pixel 7 Pro</td><td class="num">18.9 ms</td><td class="num">14.1 ms</td><td class="num"><strong>25.4%</strong> (−4.8 ms)</td><td>[+2.9, +7.5] ms — excludes 0</td><td class="num">0.033</td><td class="num">17%</td><td><strong>supported</strong></td></tr>
+        <tr><td>Pixel 3</td><td class="num">53.3 ms</td><td class="num">45.8 ms</td><td class="num">14.0%</td><td>[−2.8, +13.9] ms — spans 0</td><td class="num">0.20</td><td class="num">18–24%</td><td>under-powered</td></tr>
+        <tr><td>Galaxy A14</td><td class="num">70.6 ms</td><td class="num">58.3 ms</td><td class="num">17.4%</td><td>[−4.6, +20.0] ms — spans 0</td><td class="num">0.29</td><td class="num">23–30%</td><td>under-powered</td></tr>
+        <tr><td>A01 Core (Go)</td><td class="num">170.4 ms</td><td class="num">127.0 ms</td><td class="num"><strong>25.5%</strong> (−43.4 ms)</td><td>[+34.4, +59.4] ms — excludes 0</td><td class="num">0.033</td><td class="num">10–13%</td><td><strong>supported</strong></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>All four devices moved the same direction; the two whose designs could resolve an effect
+    that size confirmed it, and the two that could not were under-powered rather than contradictory
+    (each effect sat below its own device's minimum detectable effect — a property of between-pass
+    variance, not of the SDK). This power failure is precisely what motivated the 10×20 shape the
+    current series uses: at 10 passes both mid devices grade cleanly. The largest absolute saving
+    was on the entry tier — 43 ms of main-thread blocking removed from the Go device.</p>
+
+    <h2>Where the work went: off the main thread, not away<span class="sub">250-trace placement audit, 8.3.0 → 9.1.0</span></h2>
+    <p>A per-trace CPU audit showed the window reduction is a change of <em>placement</em>, not of
+    total cost: main-thread CPU from process start to TTID barely moved (A01 −2.1%, A14 −1.4%)
+    while whole-process pre-TTID CPU rose 6–11% — work shifting to background threads, e.g. the
+    config decode moving to a worker in 9.0. Two checks ruled out the bad versions of that: main
+    thread running time outside the window was flat (+1.6 ms), so work was not deferred back onto
+    the main thread; and main-thread <em>blocked</em> time outside the window was flat (~339 ms),
+    so the reduction was not bought by making the main thread wait on newly-backgrounded work — the
+    failure mode a CPU-only audit is structurally blind to. <strong>Standing rule this
+    established:</strong> a window-only improvement is cost re-attribution until placement is
+    checked; every future window claim (9.2.0's included) owes this audit.</p>
+
+    <h2>TTID cannot answer this question<span class="sub">A14, 4×25 — the demonstration behind the main body's one-line dismissal</span></h2>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>version</th><th>per-pass TTID medians</th><th class="num">pooled median</th><th>95% CI vs 8.3.0</th><th class="num">p</th></tr></thead>
+      <tbody>
+        <tr><td>8.3.0</td><td>993 / 1075 / 1003 / 1060 ms</td><td class="num">1046.0 ms</td><td>—</td><td class="num">—</td></tr>
+        <tr><td>8.4.0</td><td>983 / 1047 / 990 / 1058 ms</td><td class="num">1039.7 ms</td><td>[−48.3, +70.6] — includes 0</td><td class="num">0.80</td></tr>
+        <tr><td>9.0.0</td><td>1054 / 1106 / 1009 / 1082 ms</td><td class="num">1070.6 ms</td><td>[−84.5, +18.3] — includes 0</td><td class="num">0.40</td></tr>
+        <tr><td>9.1.0</td><td>996 / 1063 / 995 / 1060 ms</td><td class="num">1049.6 ms</td><td>[−56.4, +60.7] — includes 0</td><td class="num">0.83</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>Between-pass CV of TTID is 3.7–3.9%, so this design resolves ~7.8% (~80 ms); the window
+    improvements predict ~1.5% (~15 ms). The measurement is blind by 5×, so TTID flatness is
+    guaranteed by the design and carries no information either way — the data cannot distinguish
+    "nothing happened" from "exactly the predicted improvement happened". TTID remains a coarse
+    guard-rail against large regressions only. (P7P TTIDs were excluded from cross-block comparison
+    in this sweep — an environment shift on that device gave ~570–615 ms throughout versus
+    ~282–382 ms in same-day verification, uniform across versions.)</p>
+
+    <h2>Deep history: 6.14.0 / 7.5.0 / 7.9.3<span class="sub">run but not gradable — kept as a timeline, not as measurements</span></h2>
+    <p>An archaeology run extended the line back three majors on the A14 (2 passes × 25 iterations,
+    default mode, joined through an 8.3.0 bridge pass matching to ~1 ms; all builds in the
+    <em>verify</em> compile state). No conclusion is drawn: at 2 passes the smallest attainable p
+    is 0.33, and 6.14.0 had to run plugin-less (swazzler cannot apply on modern AGP), a build
+    difference no sampling removes. As description only: windows read roughly 43 / 70 / 76 ms and
+    <code>config-service-init</code> roughly 1.1 / 2.1 / 19.1 ms — placing the birth of the
+    remote-config cost at the 7.9 era, before its ~29 ms peak at 8.3.0 and collapse in 9.0+.</p>
+
+    <h2>Appendix caveats<span class="sub">as originally stated for the 4×25 sweep</span></h2>
+    <p class="note">Window source: composed fallback throughout (HEAD's <code>emb-sdk-start</code>
+    ~1 ms wider). · 8.3.0/8.4.0 required compat patches to three example screens;
+    <code>MainApplication</code> untouched. · All four versions emit the same section set; the
+    fine-grained sections exist only on HEAD, so 8.x→9.x mechanism attribution rests on
+    <code>config-service-init</code> totals. · The A14's install-parity alternation is represented
+    in both arms (all four passes used). · HEAD was not part of the sweep; its figures came from a
+    separate campaign and are not joined.</p>
+  </div>
+
+  <footer>
+    <p><strong>Current series data:</strong> longitudinal store (<code>baseline/store.jsonl</code>) +
+    sweep store, raw traces in the session scratchpad (<code>combined-10x20/</code>, <code>x30/</code>);
+    analysis scripts in <code>claude-output/2026-08-16-x25-artifacts/</code>.
+    <strong>Appendix data:</strong> 64 sweep passes (<code>claude-output/startup-analysis-2026-08-12-22*/23*.txt</code>)
+    + 16 verification passes; the 4×50 store's salvage is in
+    <code>2026-08-16-x25-artifacts/LOST-store-salvage.md</code>. Living docs:
+    <a href="https://claude.ai/code/artifact/9eda58ea-2446-4bd9-b1ea-228ea7ad7a33">external factors</a> ·
+    <a href="https://claude.ai/code/artifact/0e08adcf-5b33-43f5-8a7f-abc7679d68b3">tracker</a> ·
+    <a href="https://claude.ai/code/artifact/c8ef75b3-4c83-4335-8b9a-3776699266a0">testing log</a>.</p>
+  </footer>
+</main>

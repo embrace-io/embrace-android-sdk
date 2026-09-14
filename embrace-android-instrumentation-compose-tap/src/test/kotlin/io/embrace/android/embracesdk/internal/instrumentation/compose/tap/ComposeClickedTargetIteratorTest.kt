@@ -7,10 +7,10 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.ui.TapSignal
 import io.embrace.android.embracesdk.internal.instrumentation.compose.tap.fakes.FakeScreenViewFactory
 import io.embrace.android.embracesdk.internal.instrumentation.compose.tap.fakes.PositionedFrameLayout
 import io.embrace.android.embracesdk.internal.instrumentation.compose.tap.fakes.PositionedView
-import io.embrace.android.embracesdk.internal.instrumentation.view.taps.TapDataSource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -23,15 +23,15 @@ internal class ComposeClickedTargetIteratorTest {
     private lateinit var context: Context
     private lateinit var args: FakeInstrumentationArgs
     private lateinit var iterator: ComposeClickedTargetIterator
+    private val taps = mutableListOf<TapSignal>()
 
     @Before
     fun setUp() {
         val application: Application = ApplicationProvider.getApplicationContext()
         context = application
         args = FakeInstrumentationArgs(application)
-        val tapDataSource = TapDataSource(args)
-        val composeTapDataSource = ComposeTapDataSource(args) { tapDataSource }
-        iterator = ComposeClickedTargetIterator(args.logger, composeTapDataSource)
+        args.eventBus.addHandler<TapSignal> { taps.add(it) }
+        iterator = ComposeClickedTargetIterator(args.logger, ComposeTapDataSource(args))
     }
 
     @Test
@@ -41,7 +41,7 @@ internal class ComposeClickedTargetIteratorTest {
         iterator.findTarget(decor, x = 540f, y = 1200f)
 
         assertTrue(args.logger.errorMessages.isEmpty())
-        assertTrue(args.destination.addedEvents.isEmpty())
+        assertTrue(taps.isEmpty())
     }
 
     @Test
@@ -51,7 +51,7 @@ internal class ComposeClickedTargetIteratorTest {
         iterator.findTarget(decor, x = 2000f, y = 3000f)
 
         assertTrue(args.logger.errorMessages.isEmpty())
-        assertTrue(args.destination.addedEvents.isEmpty())
+        assertTrue(taps.isEmpty())
     }
 
     @Test
@@ -150,7 +150,7 @@ internal class ComposeClickedTargetIteratorTest {
 
         assertEquals(1, args.logger.errorMessages.size)
         assertEquals("Failed to find target", args.logger.errorMessages[0].msg)
-        assertTrue(args.destination.addedEvents.isEmpty())
+        assertTrue(taps.isEmpty())
     }
 
     @Test
@@ -168,6 +168,6 @@ internal class ComposeClickedTargetIteratorTest {
         iterator.findTarget(decor, x = 50f, y = 50f)
 
         assertTrue(args.logger.errorMessages.isEmpty())
-        assertTrue(args.destination.addedEvents.isEmpty())
+        assertTrue(taps.isEmpty())
     }
 }

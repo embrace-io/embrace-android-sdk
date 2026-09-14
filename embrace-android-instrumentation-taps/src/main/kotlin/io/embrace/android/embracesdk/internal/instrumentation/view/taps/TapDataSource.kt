@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.arch.ui.TapSignal
 
 /**
  * Captures custom breadcrumbs.
@@ -22,7 +23,11 @@ class TapDataSource(
         private const val UNKNOWN_ELEMENT_NAME = "Unknown element"
     }
 
-    fun logComposeTap(coords: Pair<Float, Float>, tag: String) {
+    init {
+        args.eventBus.addHandler<TapSignal> { logTap(Pair(it.x, it.y), it.elementName) }
+    }
+
+    private fun logTap(coords: Pair<Float, Float>, tag: String) {
         captureTelemetry {
             captureUiEvent(coords, tag, TapBreadcrumbType.TAP)
         }
@@ -32,12 +37,12 @@ class TapDataSource(
         captureTelemetry {
             val viewName = try {
                 view.resources.getResourceName(view.id)
-            } catch (ignored: Exception) {
+            } catch (_: Exception) {
                 UNKNOWN_ELEMENT_NAME
             }
             val point: Pair<Float, Float> = try {
                 Pair(view.x, view.y)
-            } catch (ignored: Exception) {
+            } catch (_: Exception) {
                 Pair(0.0f, 0.0f)
             }
             captureUiEvent(point, viewName, breadcrumbType)

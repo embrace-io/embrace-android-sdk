@@ -64,6 +64,7 @@ include(
     ":embrace-analysis-records",
     ":embrace-analysis-reports",
     ":embrace-analysis-maxims",
+    ":embrace-analysis-campaign",
     ":embrace-analysis-test-fixtures",
 )
 

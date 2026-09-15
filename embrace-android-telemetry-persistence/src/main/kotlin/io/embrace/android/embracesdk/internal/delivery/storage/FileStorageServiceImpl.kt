@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.delivery.storage
 
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
+import io.embrace.android.embracesdk.internal.delivery.traceSection
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
@@ -45,7 +46,7 @@ class FileStorageServiceImpl(
     private fun storeImpl(
         metadata: StoredTelemetryMetadata,
         action: SerializationAction,
-    ) = SystemTrace.trace("payload-file-write") {
+    ) = SystemTrace.trace(metadata.traceSection("payload-file-write")) {
         if (index.prune(newEntry = metadata)) {
             return@trace
         }
@@ -118,6 +119,9 @@ internal object StoredTelemetryMetadataLayout : StoredEntryLayout<StoredTelemetr
     }
 
     override fun timestampOf(entry: StoredTelemetryMetadata): Long = entry.timestamp
+
+    override fun pruneSection(entry: StoredTelemetryMetadata?): String =
+        entry?.traceSection("storage-index-prune") ?: "storage-index-prune"
 
     override val removalComparator: Comparator<StoredTelemetryMetadata> =
         compareByDescending(StoredTelemetryMetadata::envelopeType)

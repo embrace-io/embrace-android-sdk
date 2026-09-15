@@ -33,6 +33,7 @@ internal class SessionBenchmark {
             metrics = listOf(
                 TraceSectionMetric("emb-sdk-start", mode = TraceSectionMetric.Mode.Sum),
                 TraceSectionMetric("emb-mf-%", mode = TraceSectionMetric.Mode.Sum, label = "emb-mf-sections"),
+                TraceSectionMetric("emb-sf-%", mode = TraceSectionMetric.Mode.Sum, label = "emb-sf-sections"),
             ),
             iterations = 10,
             experimentalConfig = ExperimentalConfig(perfettoConfig = PerfettoConfig.Text(traceConfig())),

@@ -1480,6 +1480,25 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
+    fun `a completed span batch is owned while writes are accepted`() {
+        val writer = createWriter()
+        assertTrue(writer.onSpanCompleted(listOf(completedSpan("held"))))
+
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        assertTrue(writer.onSpanCompleted(listOf(completedSpan("written"))))
+        assertTrue(writer.onSpanCompleted(emptyList()))
+
+        writer.onCrash()
+        assertFalse(writer.onSpanCompleted(listOf(completedSpan("dropped"))))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a completed span batch is not owned when multi file persistence is disabled`() {
+        assertFalse(createWriter(enabled = false).onSpanCompleted(listOf(completedSpan("network-request"))))
+    }
+
+    @Test
     fun `no completed spans are appended once a crash has been handled`() {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)

@@ -56,7 +56,7 @@ class SessionMetadataWriter(
             sharedLibSymbolMapping = sharedLibSymbolMapping,
         )
 
-        writeAtomically(partDir, METADATA_FILE_NAME, Long.MAX_VALUE) { stream ->
+        writeAtomically(partDir, METADATA_FILE_NAME, Long.MAX_VALUE, target.counters) { stream ->
             SessionMetadata.ADAPTER.encode(stream, metadata)
         }
         return true

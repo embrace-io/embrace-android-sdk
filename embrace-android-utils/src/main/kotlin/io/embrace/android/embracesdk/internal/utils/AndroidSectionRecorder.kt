@@ -25,4 +25,11 @@ object AndroidSectionRecorder : SectionRecorder {
             Trace.endSection()
         }
     }
+
+    override fun setCounter(name: String, value: Long) {
+        if (Build.VERSION.SDK_INT < VERSION_CODES.Q || !Trace.isEnabled()) {
+            return
+        }
+        Trace.setCounter(prefixedTraceName(name), value)
+    }
 }

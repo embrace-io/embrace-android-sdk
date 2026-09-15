@@ -14,7 +14,9 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.utils.CountingOutputStream
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
+import io.embrace.android.embracesdk.internal.utils.TraceCounter
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
@@ -31,6 +33,11 @@ class IntakeServiceImpl(
     private val deliveryTracer: DeliveryTracer? = null,
     private val shutdownTimeoutMs: Long = 3000,
 ) : IntakeService {
+
+    /**
+     * The bytes handed to storage, counted before storage compresses them.
+     */
+    private val serializedBytes = TraceCounter("sf-bytes-serialized")
 
     private val cachingTasks: MutableMap<SupportedEnvelopeType, Future<*>> = ConcurrentHashMap()
     private val lastCachedEntry: MutableMap<SupportedEnvelopeType, StoredTelemetryMetadata> = ConcurrentHashMap()
@@ -124,15 +131,17 @@ class IntakeServiceImpl(
             }
             SystemTrace.trace(metadata.traceSection("intake-process")) {
                 service.store(metadata) { stream ->
+                    val counted = CountingOutputStream(stream)
                     val envelopeSerializer = metadata.envelopeType.envelopeSerializer
                     if (envelopeSerializer != null) {
                         SystemTrace.trace(metadata.traceSection("payload-json-serialize")) {
-                            serializer.toJson(intake, envelopeSerializer, stream)
+                            serializer.toJson(intake, envelopeSerializer, counted)
                         }
                     } else { // payload doesn't require serialization
                         val pair = intake.data as Pair<String, ByteArray>
-                        storeAttachment(stream, pair.second, pair.first)
+                        storeAttachment(counted, pair.second, pair.first)
                     }
+                    serializedBytes.add(counted.written)
                 }
             }
 

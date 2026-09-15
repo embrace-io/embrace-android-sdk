@@ -31,15 +31,17 @@ internal class PayloadMessageCollatorImplTest {
     private lateinit var coreModule: CoreModule
     private lateinit var currentSessionPartSpan: CurrentSessionPartSpan
     private lateinit var collator: PayloadMessageCollatorImpl
+    private lateinit var partPayloadSource: FakeSessionPartPayloadSource
 
     @Before
     fun setUp() {
         initModule = FakeInitModule()
         coreModule = CoreModuleImpl(RuntimeEnvironment.getApplication(), initModule)
+        partPayloadSource = FakeSessionPartPayloadSource()
         val sessionPartEnvelopeSource = SessionPartEnvelopeSourceImpl(
             metadataSource = FakeEnvelopeMetadataSource(),
             resourceSource = FakeEnvelopeResourceSource(),
-            payloadSource = FakeSessionPartPayloadSource(),
+            payloadSource = partPayloadSource,
         )
         currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan
         collator = PayloadMessageCollatorImpl(
@@ -133,6 +135,32 @@ internal class PayloadMessageCollatorImplTest {
             ),
         )
         payload.verifyFinalFieldsPopulated()
+    }
+
+    @Test
+    fun `end a session part without building an envelope`() {
+        val startMsg = collator.buildInitialPart(
+            InitialEnvelopeParams(
+                false,
+                LifeEventType.STATE,
+                5,
+                ProcessState.FOREGROUND,
+                1,
+                1,
+            ),
+        )
+        collator.endSessionPart(
+            FinalEnvelopeParams(
+                initial = startMsg,
+                endType = SessionPartSnapshotType.NORMAL_END,
+                logger = initModule.logger,
+                continueMonitoring = true,
+                crashId = "crashId",
+            ),
+        )
+        assertEquals(1, partPayloadSource.endedWithoutPayloadCount)
+        assertEquals(0, partPayloadSource.payloadBuiltCount)
+        assertEquals(true, partPayloadSource.lastStartNewSession)
     }
 
     @Test

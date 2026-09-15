@@ -9,7 +9,7 @@ import java.io.FileInputStream
 import java.io.InputStream
 import java.security.MessageDigest
 import java.util.Locale
-import java.util.concurrent.Future
+import java.util.concurrent.CopyOnWriteArrayList
 
 internal class RnBundleIdTrackerImpl(
     private val context: Context,
@@ -18,38 +18,61 @@ internal class RnBundleIdTrackerImpl(
     private val metadataBackgroundWorker: BackgroundWorker,
 ) : RnBundleIdTracker {
 
-    private var reactNativeBundleId: Future<String?> =
+    @Volatile
+    private var computedBundleId: String? = null
+
+    private val listeners = CopyOnWriteArrayList<() -> Unit>()
+
+    init {
         if (configService.appFramework == AppFramework.REACT_NATIVE) {
-            metadataBackgroundWorker.submit<String?> {
+            metadataBackgroundWorker.submit {
                 val lastKnownJsBundleUrl = javaScriptBundleURL
                 val lastKnownJsBundleId = javaScriptBundleId
-                if (!lastKnownJsBundleUrl.isNullOrEmpty() && !lastKnownJsBundleId.isNullOrEmpty()) {
+                val bundleId = if (!lastKnownJsBundleUrl.isNullOrEmpty() && !lastKnownJsBundleId.isNullOrEmpty()) {
                     // If we have a lastKnownJsBundleId, we use that as the last known bundle ID.
-                    return@submit lastKnownJsBundleId
+                    lastKnownJsBundleId
                 } else {
                     // If we don't have a lastKnownJsBundleId, we compute the bundle ID from the last known JS bundle URL.
                     // If the last known JS bundle URL is null, we set React Native bundle ID to the buildId.
-                    return@submit computeReactNativeBundleId(
+                    computeReactNativeBundleId(
                         context,
                         lastKnownJsBundleUrl,
                         configService.buildInfo.rnBundleId,
                     )
                 }
+                updateBundleId(bundleId)
             }
-        } else {
-            metadataBackgroundWorker.submit<String?> { configService.buildInfo.buildId }
         }
+    }
 
     /**
      * Return the bundle Id if it was already calculated in background or null if it's not ready yet.
      * This way, we avoid blocking the main thread to wait for the value.
      */
     override fun getReactNativeBundleId(): String? =
-        if (configService.appFramework == AppFramework.REACT_NATIVE && reactNativeBundleId.isDone) {
-            reactNativeBundleId.get()
+        if (configService.appFramework == AppFramework.REACT_NATIVE) {
+            computedBundleId
         } else {
             null
         }
+
+    override fun addChangeListener(listener: () -> Unit) {
+        listeners.add(listener)
+    }
+
+    /**
+     * Publishes a newly computed bundle ID and notifies listeners, so that they observe the new
+     * value rather than the one it replaced.
+     */
+    private fun updateBundleId(bundleId: String?) {
+        computedBundleId = bundleId
+        listeners.forEach { listener ->
+            try {
+                listener()
+            } catch (ignored: Throwable) {
+            }
+        }
+    }
 
     override fun setReactNativeBundleId(
         jsBundleUrl: String?,
@@ -62,7 +85,7 @@ internal class RnBundleIdTrackerImpl(
             javaScriptBundleURL = jsBundleUrl
 
             // Calculate the bundle ID for the new bundle URL
-            reactNativeBundleId = metadataBackgroundWorker.submit<String?> {
+            metadataBackgroundWorker.submit {
                 val bundleId = computeReactNativeBundleId(
                     context,
                     jsBundleUrl,
@@ -72,7 +95,7 @@ internal class RnBundleIdTrackerImpl(
                     // if we have a value for forceUpdate, it means the bundleId is cacheable and we should store it.
                     javaScriptBundleId = bundleId
                 }
-                bundleId
+                updateBundleId(bundleId)
             }
         }
     }

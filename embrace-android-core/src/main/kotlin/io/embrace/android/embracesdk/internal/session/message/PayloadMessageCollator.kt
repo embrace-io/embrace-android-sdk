@@ -16,4 +16,10 @@ interface PayloadMessageCollator {
      * Builds a fully populated payload.
      */
     fun buildFinalEnvelope(params: FinalEnvelopeParams): Envelope<SessionPartPayload>
+
+    /**
+     * Ends the session part, applying the same side effects as [buildFinalEnvelope] but without
+     * assembling an envelope.
+     */
+    fun endSessionPart(params: FinalEnvelopeParams)
 }

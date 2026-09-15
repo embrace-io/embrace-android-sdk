@@ -65,6 +65,21 @@ class FileStorageServiceImplTest {
     }
 
     @Test
+    fun `payload size reports the bytes on disk`() {
+        storeDummyFile(fakeSessionStoredTelemetryMetadata)
+        assertEquals(
+            DUMMY_CONTENT.toByteArray().size.toLong(),
+            service.payloadSizeBytes(fakeSessionStoredTelemetryMetadata),
+        )
+    }
+
+    @Test
+    fun `payload size is zero for a payload that was never stored`() {
+        assertEquals(0L, service.payloadSizeBytes(fakeSessionStoredTelemetryMetadata))
+        assertTrue(logger.internalErrorMessages.isEmpty())
+    }
+
+    @Test
     fun `load payload stream no file`() {
         assertNull(service.loadPayloadAsStream(fakeSessionStoredTelemetryMetadata))
         assertTrue(logger.internalErrorMessages.isEmpty())
@@ -186,6 +201,58 @@ class FileStorageServiceImplTest {
         assertEquals(0, freshService.getStoredPayloads().size)
         assertFalse(bogus.exists())
         assertFalse(orphanTmp.exists())
+    }
+
+    @Test
+    fun `payloads are pruned by count starting with the lowest priority envelope type`() {
+        val limited = createService(storageLimit = 2)
+        val crash = metadata("aaaaaaaa-0000-0000-0000-000000000001", SupportedEnvelopeType.CRASH)
+        val blob = metadata("aaaaaaaa-0000-0000-0000-000000000002", SupportedEnvelopeType.BLOB)
+        val session = metadata("aaaaaaaa-0000-0000-0000-000000000003", SupportedEnvelopeType.SESSION)
+        storeDummyFile(crash, limited)
+        storeDummyFile(blob, limited)
+        storeDummyFile(session, limited)
+
+        assertEquals(setOf(crash.uuid, session.uuid), limited.getStoredPayloads().map { it.uuid }.toSet())
+        assertNull(limited.loadPayloadAsStream(blob))
+    }
+
+    @Test
+    fun `a new payload is not written when it is the one pruned by count`() {
+        val limited = createService(storageLimit = 2)
+        val crash = metadata("aaaaaaaa-0000-0000-0000-000000000001", SupportedEnvelopeType.CRASH)
+        val session = metadata("aaaaaaaa-0000-0000-0000-000000000002", SupportedEnvelopeType.SESSION)
+        val blob = metadata("aaaaaaaa-0000-0000-0000-000000000003", SupportedEnvelopeType.BLOB)
+        storeDummyFile(crash, limited)
+        storeDummyFile(session, limited)
+        storeDummyFile(blob, limited)
+
+        assertEquals(setOf(crash.uuid, session.uuid), limited.getStoredPayloads().map { it.uuid }.toSet())
+        assertNull(limited.loadPayloadAsStream(blob))
+    }
+
+    private fun createService(storageLimit: Int) = FileStorageServiceImpl(
+        lazy { outputDir },
+        PriorityWorker(executor),
+        logger,
+        clock,
+        storageLimit = storageLimit,
+        maxAgeMs = MAX_AGE_MS,
+    )
+
+    private fun metadata(uuid: String, envelopeType: SupportedEnvelopeType) = StoredTelemetryMetadata(
+        timestamp = clock.now(),
+        uuid = uuid,
+        processIdentifier = "proc1",
+        envelopeType = envelopeType,
+        complete = true,
+        payloadType = PayloadType.SESSION,
+    )
+
+    private fun storeDummyFile(metadata: StoredTelemetryMetadata, service: FileStorageService) {
+        service.store(metadata) {
+            it.write(DUMMY_CONTENT.toByteArray())
+        }
     }
 
     private fun storeDummyFile(metadata: StoredTelemetryMetadata) {

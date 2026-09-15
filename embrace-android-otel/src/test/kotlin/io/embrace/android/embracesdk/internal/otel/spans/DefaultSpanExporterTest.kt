@@ -118,6 +118,20 @@ internal class DefaultSpanExporterTest {
     }
 
     @Test
+    fun `a throwing completed spans listener neither fails the export nor stops external exporters`() {
+        val spanRepository = SpanRepository()
+        spanRepository.addCompletedOtelSpansListener { error("listener failed") }
+        val externalExporter = FakeSpanExporter()
+
+        val result = exporter(spanRepository, listOf(externalExporter))
+            .exportInline(listOf(span("public-span")))
+
+        assertEquals(OperationResultCode.Success, result)
+        assertEquals(1, spanRepository.completedOtelSpans().size)
+        assertEquals("public-span", externalExporter.exportedSpans.single().name)
+    }
+
+    @Test
     fun `nothing is exported when the export check fails`() {
         val spanRepository = SpanRepository()
         val externalExporter = FakeSpanExporter()

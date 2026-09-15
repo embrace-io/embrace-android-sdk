@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.File
 import java.util.Locale
+import java.util.concurrent.CopyOnWriteArrayList
 
 class DeviceImpl(
     private val windowManagerProvider: Provider<WindowManager?>,
@@ -20,9 +21,17 @@ class DeviceImpl(
     override val systemInfo: SystemInfo,
     private val logger: InternalLogger,
 ) : Device {
+
+    @Volatile
     override var isJailbroken: Boolean? = false
+
+    @Volatile
     override var screenResolution: String = ""
+
+    @Volatile
     override var usesEmmcStorage: Boolean? = null
+
+    private val listeners = CopyOnWriteArrayList<() -> Unit>()
 
     private val jailbreakLocations: List<String> = listOf(
         "/sbin/",
@@ -41,15 +50,33 @@ class DeviceImpl(
         asyncRetrieveUsesEmmcStorage()
     }
 
+    /**
+     * Registers a [listener] invoked whenever one of the asynchronously retrieved values changes.
+     */
+    fun addChangeListener(listener: () -> Unit) {
+        listeners.add(listener)
+    }
+
+    private fun notifyChanged() {
+        listeners.forEach { listener ->
+            try {
+                listener()
+            } catch (ignored: Throwable) {
+            }
+        }
+    }
+
     private fun asyncRetrieveUsesEmmcStorage() {
         backgroundWorker.submit {
             usesEmmcStorage = detectUsesEmmcStorage()
+            notifyChanged()
         }
     }
 
     private fun asyncRetrieveScreenResolution() {
         backgroundWorker.submit {
             screenResolution = getScreenResolution(windowManagerProvider())
+            notifyChanged()
         }
     }
 
@@ -74,6 +101,7 @@ class DeviceImpl(
     private fun asyncRetrieveIsJailbroken() {
         backgroundWorker.submit {
             isJailbroken = checkIfIsJailbroken()
+            notifyChanged()
         }
     }
 

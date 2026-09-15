@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSnapshotType
+import io.embrace.android.embracesdk.internal.utils.EmbTrace
 
 internal class PayloadFactoryImpl(
     private val payloadMessageCollator: PayloadMessageCollator,
@@ -55,9 +56,11 @@ internal class PayloadFactoryImpl(
         timestamp: Long,
         initial: SessionPartToken,
     ): Envelope<SessionPartPayload>? =
-        when (state) {
-            ProcessState.FOREGROUND -> snapshotSession(initial)
-            ProcessState.BACKGROUND -> snapshotBackgroundActivity(initial)
+        EmbTrace.trace("sf-payload-snapshot-build") {
+            when (state) {
+                ProcessState.FOREGROUND -> snapshotSession(initial)
+                ProcessState.BACKGROUND -> snapshotBackgroundActivity(initial)
+            }
         }
 
     override fun startSessionWithManual(
@@ -85,8 +88,8 @@ internal class PayloadFactoryImpl(
         )
     }
 
-    override fun endSessionWithManual(timestamp: Long, initial: SessionPartToken): Envelope<SessionPartPayload> {
-        return payloadMessageCollator.buildFinalEnvelope(
+    override fun endSessionWithManual(timestamp: Long, initial: SessionPartToken): Envelope<SessionPartPayload>? {
+        return endSessionPart(
             FinalEnvelopeParams(
                 initial = initial,
                 endType = SessionPartSnapshotType.NORMAL_END,
@@ -146,8 +149,8 @@ internal class PayloadFactoryImpl(
         )
     }
 
-    private fun endSessionWithState(initial: SessionPartToken): Envelope<SessionPartPayload> {
-        return payloadMessageCollator.buildFinalEnvelope(
+    private fun endSessionWithState(initial: SessionPartToken): Envelope<SessionPartPayload>? {
+        return endSessionPart(
             FinalEnvelopeParams(
                 initial = initial,
                 endType = SessionPartSnapshotType.NORMAL_END,
@@ -164,7 +167,7 @@ internal class PayloadFactoryImpl(
 
         // kept for backwards compat. the backend expects the start time to be 1 ms greater
         // than the adjacent session, and manually adjusts.
-        return payloadMessageCollator.buildFinalEnvelope(
+        return endSessionPart(
             FinalEnvelopeParams(
                 initial = initial,
                 endType = SessionPartSnapshotType.NORMAL_END,
@@ -177,8 +180,8 @@ internal class PayloadFactoryImpl(
     private fun endSessionWithCrash(
         initial: SessionPartToken,
         crashId: String,
-    ): Envelope<SessionPartPayload> {
-        return payloadMessageCollator.buildFinalEnvelope(
+    ): Envelope<SessionPartPayload>? {
+        return endSessionPart(
             FinalEnvelopeParams(
                 initial = initial,
                 endType = SessionPartSnapshotType.JVM_CRASH,
@@ -196,7 +199,7 @@ internal class PayloadFactoryImpl(
         if (!isBackgroundActivityEnabled()) {
             return null
         }
-        return payloadMessageCollator.buildFinalEnvelope(
+        return endSessionPart(
             FinalEnvelopeParams(
                 initial = initial,
                 endType = SessionPartSnapshotType.JVM_CRASH,
@@ -234,6 +237,20 @@ internal class PayloadFactoryImpl(
             ),
         )
     }
+
+    /**
+     * Ends the session part described by [params], returning its envelope if one is needed.
+     */
+    private fun endSessionPart(params: FinalEnvelopeParams): Envelope<SessionPartPayload>? =
+        when {
+            envelopeRequired() -> payloadMessageCollator.buildFinalEnvelope(params)
+            else -> {
+                payloadMessageCollator.endSessionPart(params)
+                null
+            }
+        }
+
+    private fun envelopeRequired(): Boolean = !configService.persistenceBehavior.isMultiFilePersistenceEnabled()
 
     private fun isBackgroundActivityEnabled(): Boolean = configService.backgroundActivityBehavior.isBackgroundActivityCaptureEnabled()
 }

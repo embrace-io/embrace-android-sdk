@@ -9,10 +9,14 @@ import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.storeAttachment
+import io.embrace.android.embracesdk.internal.delivery.traceSection
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.utils.CountingOutputStream
+import io.embrace.android.embracesdk.internal.utils.SystemTrace
+import io.embrace.android.embracesdk.internal.utils.TraceCounter
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
@@ -29,6 +33,11 @@ class IntakeServiceImpl(
     private val deliveryTracer: DeliveryTracer? = null,
     private val shutdownTimeoutMs: Long = 3000,
 ) : IntakeService {
+
+    /**
+     * The bytes handed to storage, counted before storage compresses them.
+     */
+    private val serializedBytes = TraceCounter("sf-bytes-serialized")
 
     private val cachingTasks: MutableMap<SupportedEnvelopeType, Future<*>> = ConcurrentHashMap()
     private val lastCachedEntry: MutableMap<SupportedEnvelopeType, StoredTelemetryMetadata> = ConcurrentHashMap()
@@ -55,6 +64,7 @@ class IntakeServiceImpl(
         intake: Envelope<*>,
         metadata: StoredTelemetryMetadata,
         staleEntry: StoredTelemetryMetadata?,
+        onStored: (() -> Unit)?,
     ): Future<*> {
         deliveryTracer?.onTake(metadata)
 
@@ -65,7 +75,7 @@ class IntakeServiceImpl(
                 // non-blocking shutdown: reject subsequent submissions but defer the drain to
                 // payloadStore.handleCrash's later intakeService.shutdown() call
                 worker.shutdownAndWait(0)
-                processIntake(intake, metadata, staleEntry)
+                processIntake(intake, metadata, staleEntry, onStored)
                 return immediateFuture()
             }
             return immediateFuture()
@@ -74,7 +84,7 @@ class IntakeServiceImpl(
         // The worker is shut down once a crash is detected, so anything arriving before the service is sealed must be persisted
         // synchronously (like resurrected session parts) or be unrecoverably loss.
         if (state.get() == State.CRASH_RECEIVED) {
-            processIntake(intake, metadata, staleEntry)
+            processIntake(intake, metadata, staleEntry, onStored)
             // Only seal the service if the payload is the crashing session's last session part, after which we take in no more
             // telemetry and let the process die.
             if (metadata.isCrashingPartForCurrentProcess()) {
@@ -92,6 +102,7 @@ class IntakeServiceImpl(
                 intake = intake,
                 metadata = metadata,
                 staleEntry = staleEntry,
+                onStored = onStored,
             )
         }
 
@@ -111,21 +122,31 @@ class IntakeServiceImpl(
         intake: Envelope<*>,
         metadata: StoredTelemetryMetadata,
         staleEntry: StoredTelemetryMetadata?,
+        onStored: (() -> Unit)?,
     ) {
         try {
             val service = when {
                 metadata.complete -> payloadStorageService
                 else -> cacheStorageService
             }
-            service.store(metadata) { stream ->
-                val envelopeSerializer = metadata.envelopeType.envelopeSerializer
-                if (envelopeSerializer != null) {
-                    serializer.toJson(intake, envelopeSerializer, stream)
-                } else { // payload doesn't require serialization
-                    val pair = intake.data as Pair<String, ByteArray>
-                    storeAttachment(stream, pair.second, pair.first)
+            SystemTrace.trace(metadata.traceSection("intake-process")) {
+                service.store(metadata) { stream ->
+                    val counted = CountingOutputStream(stream)
+                    val envelopeSerializer = metadata.envelopeType.envelopeSerializer
+                    if (envelopeSerializer != null) {
+                        SystemTrace.trace(metadata.traceSection("payload-json-serialize")) {
+                            serializer.toJson(intake, envelopeSerializer, counted)
+                        }
+                    } else { // payload doesn't require serialization
+                        val pair = intake.data as Pair<String, ByteArray>
+                        storeAttachment(counted, pair.second, pair.first)
+                    }
+                    serializedBytes.add(counted.written)
                 }
             }
+
+            // the payload is now on disk, so any other copy the caller holds is safe to discard
+            onStored?.invoke()
 
             /**
              * Determine which cache entry to clean up:

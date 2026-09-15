@@ -12,6 +12,12 @@ class FakeIntakeService : IntakeService {
     var intakeList: MutableList<FakePayloadIntake<*>> = mutableListOf()
     var cacheList: MutableList<FakePayloadIntake<*>> = mutableListOf()
 
+    /**
+     * Whether an intake is treated as stored. Set to false to simulate a payload that the intake
+     * service dropped or failed to persist, in which case the onStored callback is not invoked.
+     */
+    var storeSucceeds: Boolean = true
+
     @Suppress("UNCHECKED_CAST")
     inline fun <reified T : Any> getIntakes(complete: Boolean = true): List<FakePayloadIntake<T>> {
         val dst = when (complete) {
@@ -25,12 +31,20 @@ class FakeIntakeService : IntakeService {
         shutdownCount++
     }
 
-    override fun take(intake: Envelope<*>, metadata: StoredTelemetryMetadata, staleEntry: StoredTelemetryMetadata?): Future<*> {
+    override fun take(
+        intake: Envelope<*>,
+        metadata: StoredTelemetryMetadata,
+        staleEntry: StoredTelemetryMetadata?,
+        onStored: (() -> Unit)?,
+    ): Future<*> {
         val dst = when (metadata.complete) {
             true -> intakeList
             false -> cacheList
         }
         dst.add(FakePayloadIntake(intake, metadata))
+        if (storeSucceeds) {
+            onStored?.invoke()
+        }
         return fakeFuture
     }
 

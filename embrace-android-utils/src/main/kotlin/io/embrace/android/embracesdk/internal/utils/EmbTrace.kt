@@ -62,4 +62,15 @@ object EmbTrace {
             }
         }
     }
+
+    /**
+     * Set the counter named [name] to [value] in the system trace. The name of the counter will be
+     * [name] prefixed by "emb-" and truncated to 127 characters.
+     */
+    fun counter(name: String, value: Long) {
+        if (Build.VERSION.SDK_INT < VERSION_CODES.Q || !Trace.isEnabled()) {
+            return
+        }
+        Trace.setCounter(prefixedTraceName(name), value)
+    }
 }

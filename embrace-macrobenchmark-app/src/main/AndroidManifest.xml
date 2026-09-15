@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <application
+        android:name=".BenchmarkApplication"
+        android:allowBackup="false"
+        android:label="Embrace Macrobenchmark"
+        tools:targetApi="29">
+
+        <!-- required so macrobenchmark can attach a perfetto trace to a non-debuggable build -->
+        <profileable android:shell="true" />
+
+        <activity
+            android:name=".BenchmarkActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

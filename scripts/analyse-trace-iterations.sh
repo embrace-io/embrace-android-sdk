@@ -7,8 +7,9 @@
 # perf/macrobenchmark/<device>/. The run's own benchmarkData.json says which of the traces there belong
 # to it, so traces left behind by earlier runs are ignored.
 #
-# PARTLY IMPLEMENTED: the run's traces are read and summarised, but nothing aggregates them into a
-# report yet, so anything but --help and --dry-run exits 9.
+# Every section is measured once per iteration, as that iteration's total, so a run of ten iterations
+# is ten observations of each. The report goes beside the directory as <dir>-report.<extension>
+# unless --output names it.
 
 set -eu
 

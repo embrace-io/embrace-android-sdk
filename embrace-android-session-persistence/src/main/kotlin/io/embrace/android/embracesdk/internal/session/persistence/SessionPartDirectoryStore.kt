@@ -72,6 +72,13 @@ class SessionPartDirectoryStore(
         index.delete(directory)
     }
 
+    /**
+     * Removes every session part from disk, along with the directory that holds them.
+     */
+    fun deleteAll() {
+        index.deleteAll()
+    }
+
     private fun createImpl(directory: SessionPartDirectory) {
         if (index.prune(newEntry = directory)) {
             return

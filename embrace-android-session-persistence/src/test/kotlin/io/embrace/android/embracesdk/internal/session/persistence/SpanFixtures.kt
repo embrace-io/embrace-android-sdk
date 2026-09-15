@@ -97,6 +97,14 @@ internal fun completedSpansLog(spans: List<SpanProto>): ByteArray = Buffer().app
     spans.forEach { write(CompletedSpans.ADAPTER.encode(CompletedSpans(spans = listOf(it)))) }
 }.readByteArray()
 
+/** A rollup, which stamps the format version and discards everything before it. */
+internal fun spanSnapshotsRollup(spans: List<SpanProto>): ByteArray =
+    SpanSnapshots.ADAPTER.encode(SpanSnapshots(format_version = FORMAT_VERSION, spans = spans))
+
+/** An append, which carries no version field and so adds to what is already there. */
+internal fun spanSnapshotsAppend(spans: List<SpanProto>): ByteArray =
+    SpanSnapshots.ADAPTER.encode(SpanSnapshots(spans = spans))
+
 internal fun paddedSpan(spanId: String, padding: Int): Span = Span(
     traceId = "6c9b1f2ec1d34f3c9a7d0b8e5f2a4c11",
     spanId = spanId,

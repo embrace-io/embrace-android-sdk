@@ -997,21 +997,23 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
-    fun `a span snapshot change rewrites the in-flight spans`() {
+    fun `a span snapshot change is appended to the spans already logged`() {
         val writer = createWriter()
         inFlightSpans = listOf(inFlightSpan("network-request"))
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
 
-        inFlightSpans = listOf(inFlightSpan("view-load"))
-        writer.onSpanSnapshotChanged(inFlightSpans.single())
+        val viewLoad = inFlightSpan("view-load")
+        inFlightSpans = inFlightSpans + viewLoad
+        writer.onSpanSnapshotChanged(viewLoad)
 
-        assertEquals(listOf("view-load"), inFlightSpanNamesIn(SESSION_PART_ID))
+        // the change costs one record rather than a rewrite of everything in flight
+        assertEquals(listOf("network-request", "view-load"), inFlightSpanNamesIn(SESSION_PART_ID))
         assertNoInternalErrors()
     }
 
     @Test
-    fun `the in-flight spans are gathered when the write runs rather than when it is queued`() {
+    fun `a span snapshot change is written when the queued write runs rather than when it is queued`() {
         var reads = 0
         onSpanSnapshotsRead = { reads++ }
         val writer = createWriter()
@@ -1021,32 +1023,65 @@ internal class SessionPartWriterImplTest {
 
         inFlightSpans = listOf(inFlightSpan("network-request"))
         writer.onSpanSnapshotChanged(inFlightSpans.single())
-        assertEquals(1, reads)
         assertEquals(emptyList<String>(), inFlightSpanNamesOnDisk(SESSION_PART_ID))
 
         drain()
-        assertEquals(2, reads)
         assertEquals(listOf("network-request"), inFlightSpanNamesOnDisk(SESSION_PART_ID))
+
+        assertEquals(1, reads)
         assertNoInternalErrors()
     }
 
     @Test
-    fun `a burst of span snapshot changes is coalesced into one write of the latest spans`() {
-        var reads = 0
+    fun `a burst of span snapshot changes is coalesced into one append`() {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
 
-        onSpanSnapshotsRead = { reads++ }
-        repeat(4) { index ->
+        val viewLoad = inFlightSpan("view-load")
+        inFlightSpans = listOf(viewLoad)
+        repeat(4) {
             clock.tick(1000)
-            inFlightSpans = listOf(inFlightSpan("view-load-$index"))
-            writer.onSpanSnapshotChanged(inFlightSpans.single())
+            writer.onSpanSnapshotChanged(viewLoad)
         }
         drain()
 
-        assertEquals(1, reads)
-        assertEquals(listOf("view-load-3"), inFlightSpanNamesIn(SESSION_PART_ID))
+        assertEquals(
+            listOf("span0", "view-load"),
+            spanSnapshotNamesOnDisk(SESSION_PART_ID),
+        )
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a change to another span does not log the session span again`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        val viewLoad = inFlightSpan("view-load")
+        inFlightSpans = listOf(viewLoad)
+        writer.onSpanSnapshotChanged(viewLoad)
+        drain()
+
+        assertEquals(listOf("span0", "view-load"), spanSnapshotNamesOnDisk(SESSION_PART_ID))
+        assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.name)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a session span change is logged once for the session span alone`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        clock.tick(2000)
+        sessionSpan.name = "span1"
+        writer.onSpanSnapshotChanged(sessionSpan)
+        drain()
+
+        assertEquals(listOf("span0", "span1"), spanSnapshotNamesOnDisk(SESSION_PART_ID))
+        assertEquals("span1", sessionSpanIn(SESSION_PART_ID)?.name)
         assertNoInternalErrors()
     }
 

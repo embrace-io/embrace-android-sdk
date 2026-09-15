@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
+import okio.BufferedSource
 import java.io.IOException
 
 /**
@@ -35,14 +36,15 @@ class SessionPartDecoder(
 
         val budget = SpanBudget()
         val completedSpans = readCompletedSpansFile(source, budget) ?: return null
-        val spanSnapshots = readSpanSnapshotsFile(source, budget) ?: return null
+        val completedIds = completedSpans.mapNotNullTo(HashSet(), Span::spanId)
+        val spanSnapshots = readSpanSnapshotsFile(source, budget, completedIds) ?: return null
         if (budget.exceeded) {
             trackFailure(IllegalStateException(TOO_MANY_PERSISTED_SPANS_MSG))
         }
 
         // the session span is logged as a completed span once it ends, and is held in the snapshots
         // file until then, so it needs no handling of its own here
-        val deduped = dedupeSpanIds(completedSpans, spanSnapshots)
+        val deduped = dedupeSpanIds(completedSpans, completedIds, spanSnapshots)
 
         return Envelope(
             resource = resource.toPayload(),
@@ -63,10 +65,13 @@ class SessionPartDecoder(
      * The same span can reach the payload twice if a snapshot and completed span file get out of sync.
      * The completed span always supersedes snapshots, and otherwise the span with the latest end time
      * is chosen.
+     *
+     * [completedIds] is the span IDs held by [spans]. The reader is given the same set so that it
+     * can skip those records, which leaves this a backstop for anything it could not drop, such as
+     * a record that decoded after the span limit had been reached.
      */
-    private fun dedupeSpanIds(spans: List<Span>, spanSnapshots: List<Span>): PartSpans =
+    private fun dedupeSpanIds(spans: List<Span>, completedIds: Set<String>, spanSnapshots: List<Span>): PartSpans =
         SystemTrace.trace("mf-dedupe-span-ids") {
-            val completedIds = spans.mapNotNullTo(HashSet(), Span::spanId)
             val remainingSnapshots = spanSnapshots.filter { snapshot ->
                 val id = snapshot.spanId
                 id == null || id !in completedIds
@@ -100,48 +105,45 @@ class SessionPartDecoder(
     private fun Span.endTime(): Long = endTimeNanos ?: Long.MIN_VALUE
 
     /**
-     * Decodes the completed spans logged for a session part, or null if the log cannot be read.
-     *
-     * An oversized log is truncated rather than rejected.
+     * Decodes the spans [file] holds one record at a time with [read], or null if it cannot be
+     * read. An oversized file is truncated rather than rejected.
      */
+    private fun readSpanCollectionFile(
+        source: SessionPartSource,
+        file: SessionPartFile,
+        budget: SpanBudget,
+        read: (BufferedSource, Int) -> DecodedSpans,
+    ): List<Span>? = SystemTrace.trace(file.traceSection) {
+        if (!source.exists(file)) {
+            return@trace emptyList()
+        }
+        if (source.sizeBytes(file) > MAX_PART_FILE_BYTES) {
+            trackFailure(IOException(OVERSIZED_PART_FILE_MSG))
+        }
+        try {
+            val decoded = openOrThrow(source, file).use { src -> read(src, budget.remaining) }
+            decoded.corruption?.let(::trackFailure)
+            budget.spend(decoded.spans.size, truncated = decoded.spanLimitReached)
+            SystemTrace.trace("mf-spans-proto-to-payload") { decoded.drainToPayload() }
+        } catch (exc: Throwable) {
+            trackFailure(exc)
+            null
+        }
+    }
+
     private fun readCompletedSpansFile(source: SessionPartSource, budget: SpanBudget): List<Span>? =
-        SystemTrace.trace(SessionPartFile.COMPLETED_SPANS.traceSection) {
-            if (!source.exists(SessionPartFile.COMPLETED_SPANS)) {
-                return@trace emptyList()
-            }
-            if (source.sizeBytes(SessionPartFile.COMPLETED_SPANS) > MAX_PART_FILE_BYTES) {
-                trackFailure(IOException(OVERSIZED_PART_FILE_MSG))
-            }
-            try {
-                val decoded = openOrThrow(source, SessionPartFile.COMPLETED_SPANS).use { src ->
-                    readCompletedSpans(src, maxSpans = budget.remaining)
-                }
-                decoded.corruption?.let(::trackFailure)
-                budget.spend(decoded.spans.size, truncated = decoded.spanLimitReached)
-                SystemTrace.trace("mf-spans-proto-to-payload") { decoded.drainToPayload() }
-            } catch (exc: Throwable) {
-                trackFailure(exc)
-                null
-            }
+        readSpanCollectionFile(source, SessionPartFile.COMPLETED_SPANS, budget) { src, maxSpans ->
+            readCompletedSpans(src, maxSpans = maxSpans)
         }
 
-    /**
-     * Decodes the span snapshots persisted for a session part, or null if they cannot be read.
-     */
-    private fun readSpanSnapshotsFile(source: SessionPartSource, budget: SpanBudget): List<Span>? {
-        if (!source.exists(SessionPartFile.SPAN_SNAPSHOTS)) {
-            return emptyList()
+    private fun readSpanSnapshotsFile(
+        source: SessionPartSource,
+        budget: SpanBudget,
+        completedIds: Set<String>,
+    ): List<Span>? =
+        readSpanCollectionFile(source, SessionPartFile.SPAN_SNAPSHOTS, budget) { src, maxSpans ->
+            readSpanSnapshots(src, maxSpans = maxSpans, supersededIds = completedIds)
         }
-        val snapshots = readPartFile(
-            source,
-            SessionPartFile.SPAN_SNAPSHOTS,
-            SpanSnapshots.ADAPTER,
-            SpanSnapshots::format_version,
-        ) ?: return null
-        val afforded = snapshots.spans.take(budget.remaining)
-        budget.spend(afforded.size, truncated = afforded.size < snapshots.spans.size)
-        return SystemTrace.trace("mf-spans-proto-to-payload") { afforded.map(SpanProto::toPayload) }
-    }
 
     /**
      * Decodes [file] from a session part, or null if it is absent, cannot be read, or was written

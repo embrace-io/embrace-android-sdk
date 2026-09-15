@@ -70,6 +70,40 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
     }
 
     @Test
+    fun `a log grown by appends reconstructs to the latest state of each span`() {
+        write(snapshots = listOf(inFlightSpan))
+        val updated = inFlightSpan.copy(name = "emb-network-request-updated")
+        append(listOf(secondSnapshot))
+        append(listOf(updated))
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(listOf(updated, secondSnapshot), payload.spanSnapshots)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a rollup in the middle of a log discards the records before it`() {
+        write(snapshots = listOf(inFlightSpan))
+        append(listOf(secondSnapshot))
+        assertTrue(snapshotsWriter.write(listOf(endedSnapshot)))
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(listOf(endedSnapshot), payload.spanSnapshots)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `an appended snapshot of a span already logged as completed is dropped`() {
+        write(snapshots = listOf(inFlightSpan))
+        append(listOf(fullyPopulatedSpan))
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(listOf(inFlightSpan), payload.spanSnapshots)
+        assertEquals(listOf(fullyPopulatedSpan), payload.spans)
+        assertNoInternalErrors()
+    }
+
+    @Test
     fun `span snapshots are reconstructed in the order they were written`() {
         write(snapshots = listOf(inFlightSpan, secondSnapshot))
 
@@ -169,13 +203,14 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
     }
 
     @Test
-    fun `a truncated snapshots file is reported and does not throw`() {
+    fun `a snapshots file with a torn tail is read back as far as it is intact`() {
         write(snapshots = listOf(inFlightSpan))
         val bytes = snapshotsFile().readBytes()
         snapshotsFile().writeBytes(bytes.copyOf(bytes.size / 2))
 
-        assertNull(service.reconstruct(partDirectory))
-        assertReconstructionFailureTracked()
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(emptyList<Span>(), payload.spanSnapshots)
+        assertNoInternalErrors()
     }
 
     @Test
@@ -251,6 +286,14 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
     ) {
         activePart = directory
         assertTrue(snapshotsWriter.write(snapshots))
+    }
+
+    private fun append(
+        snapshots: List<Span>,
+        directory: SessionPartDirectory = partDirectory,
+    ) {
+        activePart = directory
+        assertTrue(snapshotsWriter.append(snapshots) { snapshots })
     }
 
     private fun writeSnapshotsBytes(

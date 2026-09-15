@@ -53,8 +53,8 @@ scripts/macrobenchmark.sh
 scripts/analyse-trace.sh <trace.perfetto.gz>
 scripts/analyse-trace.sh <trace.perfetto.gz> --operations emb-sdk-start --format json --output report.json
 
-# Aggregate every iteration of one macrobenchmark run (placeholder task, exits 9: not implemented)
-scripts/analyse-trace-iterations.sh perf/macrobenchmark/<device> --format json --output agg.json
+# Read every iteration of one macrobenchmark run and summarise each (exits 9: nothing aggregates them yet)
+scripts/analyse-trace-iterations.sh perf/macrobenchmark/<device> --dry-run
 
 # Compare two of those aggregates (placeholder task, exits 9: not implemented)
 scripts/compare-trace-iterations.sh baseline.json candidate.json --output comparison.md

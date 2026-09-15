@@ -14,6 +14,8 @@ import org.junit.rules.TemporaryFolder
 import java.io.File
 import java.io.IOException
 import java.util.zip.GZIPOutputStream
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 internal class TraceParserTest {
 
@@ -24,6 +26,27 @@ internal class TraceParserTest {
     fun `a gzipped trace decodes to the packets it was written with`() {
         val written = trace(bundle(print(1000, "B|$TID|section"), print(1500, "E|$TID")))
         assertEquals(written, parseTrace(gzipped("trace.gz", written)))
+    }
+
+    @Test
+    fun `the containers a trace arrives in all decode to the same trace`() {
+        val written = trace(bundle(print(1000, "B|$TID|section"), print(1500, "E|$TID")))
+        assertEquals(written, parseTrace(bundled("bundle.perfetto-trace", "Trace_output.pb", written)))
+        assertEquals(written, parseTrace(gzipped("trace.gz", written)))
+        assertEquals(written, parseTrace(raw("trace.pb", written)))
+    }
+
+    @Test
+    fun `a bundle is read by the file it holds rather than the name that file was given`() {
+        val written = trace(bundle(print(1000, "B|$TID|section")))
+        assertEquals(written, parseTrace(bundled("renamed.perfetto-trace", "other_name.pb", written)))
+    }
+
+    @Test
+    fun `a bundle holding nothing is rejected rather than read as an empty trace`() {
+        val empty = tmp.newFile("empty.perfetto-trace").apply { ZipOutputStream(outputStream()).use { } }
+        val exc = assertThrows(IOException::class.java) { parseTrace(empty) }
+        assertTrue(exc.message, exc.message?.contains("empty.perfetto-trace") == true)
     }
 
     @Test
@@ -104,6 +127,16 @@ internal class TraceParserTest {
 
     private fun gzipped(name: String, content: Trace): File = tmp.newFile(name).apply {
         GZIPOutputStream(outputStream()).use { it.write(content.encode()) }
+    }
+
+    private fun raw(name: String, content: Trace): File = tmp.newFile(name).apply { writeBytes(content.encode()) }
+
+    private fun bundled(name: String, entry: String, content: Trace): File = tmp.newFile(name).apply {
+        ZipOutputStream(outputStream()).use { zip ->
+            zip.putNextEntry(ZipEntry(entry))
+            zip.write(content.encode())
+            zip.closeEntry()
+        }
     }
 
     private companion object {

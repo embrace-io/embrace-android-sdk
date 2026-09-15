@@ -7,12 +7,20 @@ import io.embrace.android.embracesdk.internal.perfetto.proto.Trace
 import io.embrace.android.embracesdk.internal.perfetto.proto.TracePacket
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.io.IOException
 
 internal class MainTest {
+
+    @get:Rule
+    val folder = TemporaryFolder()
 
     @Test
     fun `a trace path is parsed, with dry run off by default`() {
@@ -42,18 +50,23 @@ internal class MainTest {
         assertFalse(options.allOperations)
         assertFalse(options.reportsStats)
         assertEquals(ReportFormat.MARKDOWN, options.format)
+        assertNull(options.output)
     }
 
     @Test
     fun `sections are named as one comma separated list, or asked for wholesale`() {
-        val named = checkNotNull(parseArgs(arrayOf(TRACE, "--operations", "emb-sdk-start,emb-core-init")))
+        val named = checkNotNull(
+            parseArgs(arrayOf(TRACE, "--operations", "emb-sdk-start,emb-core-init", "--output", OUTPUT)),
+        )
         assertEquals(listOf("emb-sdk-start", "emb-core-init"), named.operations)
         assertTrue(named.reportsStats)
+        assertEquals(File(OUTPUT), named.output)
 
-        val all = checkNotNull(parseArgs(arrayOf("--all-operations", "--format", "json", TRACE)))
+        val all = checkNotNull(parseArgs(arrayOf("--all-operations", "--format", "html", "--output", OUTPUT, TRACE)))
         assertEquals(File(TRACE), all.trace)
         assertTrue(all.allOperations)
-        assertEquals(ReportFormat.JSON, all.format)
+        assertEquals(ReportFormat.HTML, all.format)
+        assertEquals(File(OUTPUT), all.output)
     }
 
     @Test
@@ -62,21 +75,57 @@ internal class MainTest {
             arrayOf(TRACE, "--format"),
             arrayOf(TRACE, "--format", "xml"),
             arrayOf(TRACE, "--operations"),
-            arrayOf(TRACE, "--operations", "--format", "json"),
-            arrayOf(TRACE, "--operations", "emb-sdk-start,"),
-            arrayOf(TRACE, "--operations", "emb-sdk-start", "--all-operations"),
-            arrayOf(TRACE, "--all-operations", "--operations", "emb-sdk-start"),
+            arrayOf(TRACE, "--operations", "--output", OUTPUT),
+            arrayOf(TRACE, "--operations", "emb-sdk-start,", "--output", OUTPUT),
+            arrayOf(TRACE, "--operations", "emb-sdk-start", "--all-operations", "--output", OUTPUT),
+            arrayOf(TRACE, "--all-operations", "--operations", "emb-sdk-start", "--output", OUTPUT),
         ).forEach { args ->
             assertNull(args.joinToString(" "), parseArgs(args))
         }
     }
 
     @Test
-    fun `the format decides the document, which is the whole of what a statistics run prints`() {
+    fun `every format names the file it goes to, and a file is no use without statistics for it`() {
+        listOf(
+            arrayOf(TRACE, "--all-operations"),
+            arrayOf(TRACE, "--all-operations", "--format", "markdown"),
+            arrayOf(TRACE, "--operations", "emb-sdk-start", "--format", "json"),
+            arrayOf(TRACE, "--output"),
+            arrayOf(TRACE, "--output", "--format", "html"),
+            arrayOf(TRACE, "--output", OUTPUT),
+            arrayOf(TRACE, "--output", OUTPUT, "--dry-run"),
+        ).forEach { args ->
+            assertNull(args.joinToString(" "), parseArgs(args))
+        }
+        assertNotNull(parseArgs(arrayOf(TRACE, "--all-operations", "--output", OUTPUT)))
+    }
+
+    @Test
+    fun `the format decides the document, which is the whole of what a statistics run writes`() {
         val report = StatsReport("t.gz", 2048, 12, 3, 2, 1_200_000, TraceStats(emptyList(), emptyList()))
         assertTrue(render(ReportFormat.MARKDOWN, report).startsWith("# Perfetto trace statistics"))
         assertTrue(render(ReportFormat.JSON, report).startsWith("{"))
         assertTrue(render(ReportFormat.HTML, report).startsWith("<!doctype html>"))
+    }
+
+    @Test
+    fun `a statistics run writes the document to the file it was given, and reports where that went`() {
+        val events = trace(print(1000, "B|$TID|emb-zeta", tid = TID), print(1100, "E|$TID", tid = TID))
+        val output = File(folder.root, "report.html")
+        val options = Options(
+            trace = File(TRACE),
+            operations = listOf("emb-zeta"),
+            format = ReportFormat.HTML,
+            output = output,
+        )
+        assertEquals("wrote html statistics to ${output.path}", writeStats(options, events))
+        assertEquals(renderHtml(statsReport(options, events)), output.readText())
+    }
+
+    @Test
+    fun `a document that cannot be written fails rather than being dropped`() {
+        val options = Options(trace = File(TRACE), allOperations = true, output = File(folder.root, "absent/report"))
+        assertThrows(IOException::class.java) { writeStats(options, Trace()) }
     }
 
     @Test
@@ -112,9 +161,17 @@ internal class MainTest {
 
     @Test
     fun `the inputs are reported before anything is read`() {
-        val text = describe(Options(File("a.perfetto-trace"), dryRun = true), TraceFormat.PERFETTO)
+        val options = Options(
+            File("a.perfetto-trace"),
+            dryRun = true,
+            allOperations = true,
+            format = ReportFormat.JSON,
+            output = File(OUTPUT),
+        )
+        val text = describe(options, TraceFormat.PERFETTO)
         assertTrue(text, text.contains("trace: a.perfetto-trace"))
         assertTrue(text, text.contains("format: ${TraceFormat.PERFETTO.label}"))
+        assertTrue(text, text.contains("report: $OUTPUT (json)"))
     }
 
     @Test
@@ -176,5 +233,6 @@ internal class MainTest {
         const val TID = 9874
         const val OTHER_TID = 9892
         const val TRACE = "a.perfetto-trace"
+        const val OUTPUT = "report.json"
     }
 }

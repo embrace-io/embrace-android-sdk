@@ -12,6 +12,32 @@ message Trace {
 
 message TracePacket {
   FtraceEventBundle ftrace_events = 1;
+
+  // Thread and process names, which the atrace events themselves do not carry.
+  ProcessTree process_tree = 2;
+}
+
+// The macrobenchmark config captures process stats alongside atrace, and this is where they name the
+// threads the atrace events came from. Only the identifying fields are declared.
+message ProcessTree {
+  repeated Process processes = 1;
+  repeated Thread threads = 2;
+
+  message Process {
+    int32 pid = 1;
+
+    // Repeated, but the first entry is the process name.
+    repeated string cmdline = 3;
+  }
+
+  message Thread {
+    int32 tid = 1;
+
+    // Perfetto numbers the name before the tgid here, the opposite way round to its Process message.
+    // The kernel truncates it to 15 characters, so a longer thread name arrives cut short.
+    string name = 2;
+    int32 tgid = 3;
+  }
 }
 
 message FtraceEventBundle {

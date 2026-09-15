@@ -79,14 +79,15 @@ internal fun describe(options: Options, format: TraceFormat): String = buildStri
 internal fun summarise(trace: Trace): String = buildString {
     val events = ftraceEvents(trace)
     val prints = printEvents(events)
-    val model = TraceInterpreter().interpret(prints)
+    val model = TraceInterpreter().interpret(prints, threadNames(trace))
     appendLine("  packets: ${trace.packet.size}")
     appendLine("  ftrace events: ${events.size}")
     // ftrace calls this `pid`, but it holds a thread id
     appendLine("  atrace events: ${prints.size} across ${model.threads.size} threads")
     appendLine("  slices: ${model.sliceCount} of ${model.names.size} distinct sections")
     model.threads.values.forEach { timeline ->
-        appendLine("    tid ${timeline.tid}: ${timeline.slices.size} slices")
+        val named = timeline.name?.let { " ($it)" }.orEmpty()
+        appendLine("    tid ${timeline.tid}$named: ${timeline.slices.size} slices")
     }
     append("  skipped: ${model.unclosed} unclosed, ${model.unopened} unopened, ${model.unsupported} unsupported")
 }

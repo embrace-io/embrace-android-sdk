@@ -30,8 +30,9 @@ An atrace event's `print.buf` is a begin (`B|<tgid>|<name>`) or an end (`E`, or 
 - Slices nest by the **thread id** in the ftrace event, which ftrace calls `pid`, not the tgid in the payload.
 - Ftrace batches events per CPU, so a trace hands them over out of timestamp order.
 
-Thread and process names are not currently read, so threads are numeric. Sections the SDK emits are prefixed `emb-` by
-`EmbTrace`.
+Thread names come from the process stats, not from atrace. A main thread has no entry of its own and takes the process
+name; the kernel truncates the rest to 15 chars, so `emb-http-requests` reads `emb-http-reques`. Sections the SDK emits
+are prefixed `emb-` by `EmbTrace`.
 
 ## The model
 
@@ -39,13 +40,18 @@ Thread and process names are not currently read, so threads are numeric. Section
 time order:
 
 ```kotlin
-val model = TraceInterpreter().interpret(ftraceEvents(parseTrace(file)))
+val trace = parseTrace(file)
+val model = TraceInterpreter().interpret(ftraceEvents(trace), threadNames(trace))
 model.first("emb-sdk-start")?.durationNanos
 model.slices("emb-mf-file-write-atomic") // every occurrence, ordered by start
 ```
 
 Atrace names a section only when it opens, so an end closes whichever begin is innermost on its thread. Anything
 that cannot be paired is counted.
+
+## Statistics
+
+It's possible to calculate aggregate stats for a trace on a per-thread, per-operation basis.
 
 ## Getting a trace
 

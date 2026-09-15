@@ -18,18 +18,18 @@ internal class TraceInterpreter {
     private var unopened = 0
     private var unsupported = 0
 
-    fun interpret(events: List<FtraceEvent>): TraceModel {
+    fun interpret(events: List<FtraceEvent>, threadNames: Map<Int, String> = emptyMap()): TraceModel {
         unclosed = 0
         unopened = 0
         unsupported = 0
         val threads = printEvents(events)
             .groupBy(FtraceEvent::pid)
             .toSortedMap()
-            .mapValues { (tid, threadEvents) -> timeline(tid, threadEvents) }
+            .mapValues { (tid, threadEvents) -> timeline(tid, threadNames[tid], threadEvents) }
         return TraceModel(threads, unclosed, unopened, unsupported)
     }
 
-    private fun timeline(tid: Int, events: List<FtraceEvent>): ThreadTimeline {
+    private fun timeline(tid: Int, name: String?, events: List<FtraceEvent>): ThreadTimeline {
         val stack = ArrayDeque<OpenSlice>()
         val roots = mutableListOf<TraceSlice>()
 
@@ -41,7 +41,7 @@ internal class TraceInterpreter {
             }
         }
         drain(stack, roots)
-        return ThreadTimeline(tid, roots.flatMap(::flatten).sortedBy(TraceSlice::startNanos))
+        return ThreadTimeline(tid, name, roots.flatMap(::flatten).sortedBy(TraceSlice::startNanos))
     }
 
     private fun close(tid: Int, endNanos: Long, stack: ArrayDeque<OpenSlice>, roots: MutableList<TraceSlice>) {

@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.perfetto
 
 import io.embrace.android.embracesdk.internal.perfetto.proto.FtraceEvent
 import io.embrace.android.embracesdk.internal.perfetto.proto.FtraceEventBundle
+import io.embrace.android.embracesdk.internal.perfetto.proto.ProcessTree
 import io.embrace.android.embracesdk.internal.perfetto.proto.Trace
 import io.embrace.android.embracesdk.internal.perfetto.proto.TracePacket
 import okio.buffer
@@ -31,3 +32,18 @@ internal fun ftraceEvents(trace: Trace): List<FtraceEvent> = trace.packet
  * is what atrace wrote and nothing else.
  */
 internal fun printEvents(events: List<FtraceEvent>): List<FtraceEvent> = events.filter { it.print != null }
+
+/**
+ * Names the threads a trace recorded, taken from the process stats captured alongside atrace.
+ *
+ * A process's main thread has no entry of its own, since the kernel names it after the process, so
+ * it takes the process name instead. Every other name comes from the thread table.
+ */
+internal fun threadNames(trace: Trace): Map<Int, String> {
+    val trees = trace.packet.mapNotNull(TracePacket::process_tree)
+    val processes = trees.flatMap(ProcessTree::processes)
+        .mapNotNull { process -> process.cmdline.firstOrNull()?.let { process.pid to it } }
+    val threads = trees.flatMap(ProcessTree::threads)
+        .mapNotNull { thread -> thread.name.takeIf(String::isNotEmpty)?.let { thread.tid to it } }
+    return (processes + threads).toMap()
+}

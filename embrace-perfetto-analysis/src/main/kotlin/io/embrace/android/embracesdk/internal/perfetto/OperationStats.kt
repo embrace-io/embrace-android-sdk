@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.perfetto
 
+import kotlinx.serialization.Serializable
+
 /**
  * What one section cost on one thread, across every occurrence recorded there. A section that ran on
  * two threads is two of these.
@@ -15,6 +17,7 @@ package io.embrace.android.embracesdk.internal.perfetto
  * @param stdevNanos the population deviation, not the sample one. Zero when the section ran once.
  * @param percentiles the distribution at [DEFAULT_PERCENTILES], in ascending rank.
  */
+@Serializable
 internal data class OperationStats(
     val name: String,
     val tid: Int,

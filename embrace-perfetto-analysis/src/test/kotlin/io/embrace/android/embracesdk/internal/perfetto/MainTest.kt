@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.perfetto.proto.PrintFtraceEvent
 import io.embrace.android.embracesdk.internal.perfetto.proto.Trace
 import io.embrace.android.embracesdk.internal.perfetto.proto.TracePacket
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -32,6 +33,68 @@ internal class MainTest {
         ).forEach { args ->
             assertNull(args.joinToString(" "), parseArgs(args))
         }
+    }
+
+    @Test
+    fun `no statistics are asked for by default`() {
+        val options = checkNotNull(parseArgs(arrayOf(TRACE)))
+        assertEquals(emptyList<String>(), options.operations)
+        assertFalse(options.allOperations)
+        assertFalse(options.reportsStats)
+        assertEquals(ReportFormat.MARKDOWN, options.format)
+    }
+
+    @Test
+    fun `sections are named as one comma separated list, or asked for wholesale`() {
+        val named = checkNotNull(parseArgs(arrayOf(TRACE, "--operations", "emb-sdk-start,emb-core-init")))
+        assertEquals(listOf("emb-sdk-start", "emb-core-init"), named.operations)
+        assertTrue(named.reportsStats)
+
+        val all = checkNotNull(parseArgs(arrayOf("--all-operations", "--format", "json", TRACE)))
+        assertEquals(File(TRACE), all.trace)
+        assertTrue(all.allOperations)
+        assertEquals(ReportFormat.JSON, all.format)
+    }
+
+    @Test
+    fun `an option whose value is missing, unknown, or contradictory is a usage error`() {
+        listOf(
+            arrayOf(TRACE, "--format"),
+            arrayOf(TRACE, "--format", "xml"),
+            arrayOf(TRACE, "--operations"),
+            arrayOf(TRACE, "--operations", "--format", "json"),
+            arrayOf(TRACE, "--operations", "emb-sdk-start,"),
+            arrayOf(TRACE, "--operations", "emb-sdk-start", "--all-operations"),
+            arrayOf(TRACE, "--all-operations", "--operations", "emb-sdk-start"),
+        ).forEach { args ->
+            assertNull(args.joinToString(" "), parseArgs(args))
+        }
+    }
+
+    @Test
+    fun `the format decides the document, which is the whole of what a statistics run prints`() {
+        val report = StatsReport("t.gz", 2048, 12, 3, 2, TraceStats(emptyList(), emptyList()))
+        assertTrue(render(ReportFormat.MARKDOWN, report).startsWith("# Perfetto trace statistics"))
+        assertTrue(render(ReportFormat.JSON, report).startsWith("{"))
+    }
+
+    @Test
+    fun `a report measures the sections asked for, names the rest as missing, and sorts them all`() {
+        val events = trace(
+            print(1000, "B|$TID|emb-zeta", tid = TID),
+            print(1100, "E|$TID", tid = TID),
+            print(1200, "B|$TID|emb-alpha", tid = TID),
+            print(1300, "E|$TID", tid = TID),
+        )
+        val named = statsReport(Options(File(TRACE), operations = listOf("emb-zeta", "emb-absent")), events)
+        assertEquals(listOf("emb-zeta"), named.stats.operations.map(OperationStats::name))
+        assertEquals(listOf("emb-absent"), named.stats.missing)
+        assertEquals(2, named.sliceCount)
+        assertEquals(2, named.sectionCount)
+        assertEquals(1, named.threadCount)
+
+        val all = statsReport(Options(File(TRACE), allOperations = true), events)
+        assertEquals(listOf("emb-alpha", "emb-zeta"), all.stats.operations.map(OperationStats::name))
     }
 
     @Test
@@ -99,5 +162,6 @@ internal class MainTest {
     private companion object {
         const val TID = 9874
         const val OTHER_TID = 9892
+        const val TRACE = "a.perfetto-trace"
     }
 }

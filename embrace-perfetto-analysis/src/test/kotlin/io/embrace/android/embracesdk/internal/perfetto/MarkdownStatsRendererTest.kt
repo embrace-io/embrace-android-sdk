@@ -1,0 +1,100 @@
+package io.embrace.android.embracesdk.internal.perfetto
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+internal class MarkdownStatsRendererTest {
+
+    @Test
+    fun `the capture is described above a table that names its columns`() {
+        val text = renderMarkdown(report())
+        assertEquals(
+            listOf(
+                "# Perfetto trace statistics",
+                "",
+                "- trace: t.perfetto.gz (2048 bytes)",
+                "- recorded: 12 slices of 3 distinct sections across 2 threads",
+                "- durations: microseconds",
+            ),
+            text.lines().take(5),
+        )
+        assertEquals(
+            listOf("operation", "thread", "tid", "count", "total", "mean", "stdev", "min") +
+                DEFAULT_PERCENTILES.map { "p$it" } + "max",
+            row(text, 0),
+        )
+        assertEquals(row(text, 0).size, row(text, 1).size)
+    }
+
+    @Test
+    fun `a row reports the microseconds of every statistic, in the order the columns name them`() {
+        assertEquals(
+            listOf("op", "main", "9874", "2", "3.000", "1.500", "0.500", "1.000") +
+                List(DEFAULT_PERCENTILES.size) { "2.000" } + "2.000",
+            row(renderMarkdown(report()), 2),
+        )
+    }
+
+    @Test
+    fun `a section that ran on two threads is one row for each, rather than pooled into one`() {
+        val text = renderMarkdown(report(listOf(operation(), operation(tid = 9892, threadName = "emb-io-reg"))))
+        assertEquals(listOf("main", "emb-io-reg"), listOf(row(text, 2)[1], row(text, 3)[1]))
+        assertEquals(listOf("9874", "9892"), listOf(row(text, 2)[2], row(text, 3)[2]))
+    }
+
+    @Test
+    fun `a thread the trace named nothing for leaves the tid to identify it`() {
+        assertEquals("-", row(renderMarkdown(report(listOf(operation(threadName = null)))), 2)[1])
+    }
+
+    @Test
+    fun `a pipe in a section name is escaped, rather than ending the column early`() {
+        val text = renderMarkdown(report(listOf(operation(name = "a|b"))))
+        assertTrue(text, text.contains("| a\\|b | main |"))
+    }
+
+    @Test
+    fun `sections that were asked for but never recorded are listed under their own heading`() {
+        val text = renderMarkdown(report(missing = listOf("absent", "also-absent")))
+        assertEquals(listOf("- absent", "- also-absent"), text.lines().takeLast(2))
+    }
+
+    @Test
+    fun `the headings and their placeholders stay put when the report holds nothing`() {
+        val text = renderMarkdown(report(emptyList()))
+        assertEquals(
+            listOf("# Perfetto trace statistics", "## Operations", "## Missing"),
+            text.lines().filter { it.startsWith("#") },
+        )
+        assertEquals(2, text.lines().count { it == "_none_" })
+    }
+
+    private fun row(text: String, index: Int): List<String> {
+        val lines = text.lines()
+        val table = lines.subList(lines.indexOf("## Operations") + 2, lines.size)
+        return table[index].removeSurrounding("| ", " |").split(" | ")
+    }
+
+    private fun report(
+        operations: List<OperationStats> = listOf(operation()),
+        missing: List<String> = emptyList(),
+    ) = StatsReport("t.perfetto.gz", 2048, 12, 3, 2, TraceStats(operations, missing))
+
+    private fun operation(
+        name: String = "op",
+        tid: Int = 9874,
+        threadName: String? = "main",
+    ) = OperationStats(
+        name = name,
+        tid = tid,
+        threadName = threadName,
+        count = 2,
+        sumNanos = 3000,
+        minNanos = 1000,
+        maxNanos = 2000,
+        meanNanos = 1500.0,
+        stdevNanos = 500.0,
+        percentiles = DEFAULT_PERCENTILES.map { Percentile(it, 2000) },
+    )
+}

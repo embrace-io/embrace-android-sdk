@@ -2,6 +2,7 @@ import io.gitlab.arturbosch.detekt.Detekt
 
 plugins {
     id("embrace-jvm-conventions")
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.wire)
 }
 
@@ -21,6 +22,7 @@ wire {
 }
 
 dependencies {
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.wire.runtime)
 }
 

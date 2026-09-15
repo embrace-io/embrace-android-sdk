@@ -5,9 +5,15 @@ import kotlin.math.sqrt
 private const val PERCENT_SCALE = 100.0
 
 /**
- * Calculates aggregate statistics for a list of given operations.
+ * Calculates aggregate statistics for a list of given operations, and for every counter the trace
+ * recorded - a counter is never asked for by name, since a capture holds only a handful.
  */
-internal fun calculateStats(model: TraceModel, operations: List<String>, traceWindowNanos: Long): TraceStats {
+internal fun calculateStats(
+    model: TraceModel,
+    operations: List<String>,
+    traceWindowNanos: Long,
+    traceStartNanos: Long,
+): TraceStats {
     val requested = operations.distinct()
     val (recorded, missing) = requested.partition { model.slices(it).isNotEmpty() }
     val stats = recorded.flatMap { name ->
@@ -18,7 +24,7 @@ internal fun calculateStats(model: TraceModel, operations: List<String>, traceWi
                 stats(name, model.threads.getValue(tid), occurrences, traceWindowNanos)
             }
     }
-    return TraceStats(stats, missing)
+    return TraceStats(stats, missing, calculateCounters(model, traceStartNanos))
 }
 
 private fun stats(

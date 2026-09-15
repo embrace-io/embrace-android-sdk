@@ -161,7 +161,7 @@ internal fun statsReport(options: Options, trace: Trace): StatsReport {
         sectionCount = model.names.size,
         threadCount = model.threads.size,
         traceWindowNanos = window,
-        stats = calculateStats(model, requested, window),
+        stats = calculateStats(model, requested, window, traceStartNanos(events)),
     )
 }
 

@@ -4,6 +4,7 @@ private const val UNNAMED_THREAD = "-"
 private const val EMPTY_SECTION = "_none_"
 
 private val FIXED_COLUMNS = listOf("operation", "thread", "tid", "count", "total", "wall%", "mean", "stdev", "min")
+private val COUNTER_COLUMNS = listOf("counter", "tid", "samples", "first", "last", "max", "total")
 
 internal fun renderMarkdown(report: StatsReport): String = buildString {
     appendLine("# Perfetto trace statistics")
@@ -17,6 +18,12 @@ internal fun renderMarkdown(report: StatsReport): String = buildString {
     appendLine("## Operations")
     appendLine()
     appendOperations(report.stats.operations)
+    appendLine()
+    appendLine("## Counters")
+    appendLine()
+    appendLine("- totals: cumulative, summing every run a counter made, so one that restarts still adds up")
+    appendLine()
+    appendCounters(report.stats.counters)
     appendLine()
     appendLine("## Missing")
     appendLine()
@@ -33,6 +40,16 @@ private fun StringBuilder.appendOperations(operations: List<OperationStats>) {
     appendLine(row(columns))
     appendLine(row(columns.map { "---" }))
     operations.forEach { appendLine(row(cells(it))) }
+}
+
+private fun StringBuilder.appendCounters(counters: List<CounterStats>) {
+    if (counters.isEmpty()) {
+        appendLine(EMPTY_SECTION)
+        return
+    }
+    appendLine(row(COUNTER_COLUMNS))
+    appendLine(row(COUNTER_COLUMNS.map { "---" }))
+    counters.forEach { appendLine(row(counterCells(it))) }
 }
 
 private fun StringBuilder.appendMissing(missing: List<String>) {
@@ -54,6 +71,16 @@ private fun cells(stats: OperationStats): List<String> = listOf(
     micros(stats.stdevNanos),
     micros(stats.minNanos),
 ) + stats.percentiles.map { micros(it.durationNanos) } + micros(stats.maxNanos)
+
+private fun counterCells(stats: CounterStats): List<String> = listOf(
+    stats.name,
+    stats.tids.joinToString(","),
+    stats.sampleCount.toString(),
+    stats.firstValue.toString(),
+    stats.lastValue.toString(),
+    stats.maxValue.toString(),
+    stats.total.toString(),
+)
 
 private fun row(cells: List<String>): String =
     cells.joinToString(" | ", "| ", " |") { it.replace("|", "\\|") }

@@ -59,6 +59,56 @@ internal class StatsReportFixtureTest {
         assertEquals(report.stats.operations.size, dataRows(renderMarkdown(report)).size)
     }
 
+    @Test
+    fun `every counter the capture recorded is reported, whether or not a section was asked for`() {
+        val counters = report(listOf(STARTUP)).stats.counters
+        assertEquals(
+            listOf(
+                "emb-mf-bytes-written",
+                "emb-mf-files-written",
+                "emb-sf-bytes-serialized",
+                "emb-sf-bytes-written",
+                "emb-sf-files-written",
+            ),
+            counters.map(CounterStats::name),
+        )
+        assertEquals(77, counters.sumOf(CounterStats::sampleCount))
+    }
+
+    @Test
+    fun `a counter that restarted with the next session part totals both runs, not just the last`() {
+        val files = report(listOf(STARTUP)).stats.counters.single { it.name == "emb-mf-files-written" }
+        assertEquals(listOf(6951), files.tids)
+        assertEquals(37, files.sampleCount)
+        assertEquals(listOf(1L, 13L, 24L), listOf(files.firstValue, files.lastValue, files.maxValue))
+        assertEquals(37L, files.total)
+    }
+
+    @Test
+    fun `a counter sampled once reports that value as everything it counted`() {
+        val serialized = report(listOf(STARTUP)).stats.counters.single { it.name == "emb-sf-bytes-serialized" }
+        assertEquals(1, serialized.sampleCount)
+        assertEquals(listOf(38_632L, 38_632L), listOf(serialized.total, serialized.maxValue))
+    }
+
+    @Test
+    fun `the markdown counters table renders a row for each, in the order the report holds them`() {
+        val rows = counterRows(renderMarkdown(report(listOf(STARTUP))))
+        assertEquals(5, rows.size)
+        assertEquals(
+            listOf("emb-mf-files-written", "6951", "37", "1", "13", "24", "37"),
+            rows[1],
+        )
+    }
+
+    private fun counterRows(text: String): List<List<String>> {
+        val lines = text.lines()
+        return lines.drop(lines.indexOf("## Counters"))
+            .filter { it.startsWith("|") }
+            .drop(2)
+            .map(::cells)
+    }
+
     private fun report(operations: List<String>) = statsReport(options(operations = operations), trace)
 
     private fun options(operations: List<String> = emptyList(), allOperations: Boolean = false) =
@@ -68,7 +118,7 @@ internal class StatsReportFixtureTest {
 
     private fun dataRows(text: String): List<String> {
         val lines = text.lines()
-        return lines.subList(lines.indexOf("## Operations") + 4, lines.indexOf("## Missing") - 1)
+        return lines.subList(lines.indexOf("## Operations") + 4, lines.indexOf("## Counters") - 1)
     }
 
     private fun fixture(): File {

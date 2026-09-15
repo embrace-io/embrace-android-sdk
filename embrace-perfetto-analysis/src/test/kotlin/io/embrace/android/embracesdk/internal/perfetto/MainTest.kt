@@ -1,10 +1,18 @@
 package io.embrace.android.embracesdk.internal.perfetto
 
+import io.embrace.android.embracesdk.internal.perfetto.cli.CliOptions
 import io.embrace.android.embracesdk.internal.perfetto.proto.FtraceEvent
 import io.embrace.android.embracesdk.internal.perfetto.proto.FtraceEventBundle
 import io.embrace.android.embracesdk.internal.perfetto.proto.PrintFtraceEvent
 import io.embrace.android.embracesdk.internal.perfetto.proto.Trace
 import io.embrace.android.embracesdk.internal.perfetto.proto.TracePacket
+import io.embrace.android.embracesdk.internal.perfetto.report.ReportFormat
+import io.embrace.android.embracesdk.internal.perfetto.report.render
+import io.embrace.android.embracesdk.internal.perfetto.report.renderHtml
+import io.embrace.android.embracesdk.internal.perfetto.stats.OperationStats
+import io.embrace.android.embracesdk.internal.perfetto.stats.StatsReport
+import io.embrace.android.embracesdk.internal.perfetto.stats.TraceStats
+import io.embrace.android.embracesdk.internal.perfetto.trace.TraceFormat
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue

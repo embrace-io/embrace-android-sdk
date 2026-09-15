@@ -1,5 +1,10 @@
 package io.embrace.android.embracesdk.internal.perfetto
 
+import io.embrace.android.embracesdk.internal.perfetto.cli.CliOptions
+import io.embrace.android.embracesdk.internal.perfetto.cli.CliSpec
+import io.embrace.android.embracesdk.internal.perfetto.cli.parseArgs
+import io.embrace.android.embracesdk.internal.perfetto.iterations.IterationTrace
+import io.embrace.android.embracesdk.internal.perfetto.report.ReportFormat
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule

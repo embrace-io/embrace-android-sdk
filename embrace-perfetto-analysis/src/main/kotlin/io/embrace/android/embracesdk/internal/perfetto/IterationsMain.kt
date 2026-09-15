@@ -1,5 +1,14 @@
 package io.embrace.android.embracesdk.internal.perfetto
 
+import io.embrace.android.embracesdk.internal.perfetto.cli.CliOptions
+import io.embrace.android.embracesdk.internal.perfetto.cli.CliSpec
+import io.embrace.android.embracesdk.internal.perfetto.cli.asksForHelp
+import io.embrace.android.embracesdk.internal.perfetto.cli.parseArgs
+import io.embrace.android.embracesdk.internal.perfetto.iterations.IterationTrace
+import io.embrace.android.embracesdk.internal.perfetto.iterations.discoverIterations
+import io.embrace.android.embracesdk.internal.perfetto.trace.TraceFormat
+import io.embrace.android.embracesdk.internal.perfetto.trace.parseTrace
+import io.embrace.android.embracesdk.internal.perfetto.trace.validateTrace
 import java.io.IOException
 import kotlin.system.exitProcess
 

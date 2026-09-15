@@ -5,14 +5,8 @@ import io.embrace.android.embracesdk.internal.perfetto.cli.CliSpec
 import io.embrace.android.embracesdk.internal.perfetto.cli.asksForHelp
 import io.embrace.android.embracesdk.internal.perfetto.cli.parseArgs
 import io.embrace.android.embracesdk.internal.perfetto.iterations.IterationTrace
-import io.embrace.android.embracesdk.internal.perfetto.iterations.discoverIterations
 import io.embrace.android.embracesdk.internal.perfetto.report.renderIterations
 import io.embrace.android.embracesdk.internal.perfetto.stats.IterationsReport
-import io.embrace.android.embracesdk.internal.perfetto.stats.StatsReport
-import io.embrace.android.embracesdk.internal.perfetto.stats.aggregateIterations
-import io.embrace.android.embracesdk.internal.perfetto.trace.TraceFormat
-import io.embrace.android.embracesdk.internal.perfetto.trace.parseTrace
-import io.embrace.android.embracesdk.internal.perfetto.trace.validateTrace
 import java.io.IOException
 import kotlin.system.exitProcess
 
@@ -40,28 +34,14 @@ fun main(args: Array<String>) {
         System.err.println(SPEC.usage)
         exitProcess(EXIT_USAGE)
     }
-    if (!options.input.isDirectory) {
-        System.err.println("no run directory at ${options.input.absolutePath}")
-        exitProcess(EXIT_BAD_TRACE)
-    }
-    val iterations = try {
-        discoverIterations(options.input)
-    } catch (exc: IOException) {
-        System.err.println(exc.message)
-        exitProcess(EXIT_BAD_TRACE)
-    }
-    if (iterations.isEmpty()) {
-        System.err.println("no iteration traces in ${options.input.absolutePath}")
-        exitProcess(EXIT_BAD_TRACE)
-    }
+    val iterations = discoverRun(options.input)
     println(describeIterations(options, iterations))
     if (options.dryRun) {
         return
     }
-    val reports = iterations.groupBy(IterationTrace::benchmark)
-        .mapValues { (_, traces) -> traces.map { loadIteration(options, it) } }
+    val report = loadRun(options.input, iterations, options.operations)
     try {
-        println(writeIterations(options, aggregateIterations(options.input.path, reports)))
+        println(writeIterations(options, report))
     } catch (exc: IOException) {
         System.err.println("could not write the report: ${exc.message}")
         exitProcess(EXIT_BAD_OUTPUT)
@@ -71,10 +51,7 @@ fun main(args: Array<String>) {
 internal fun describeIterations(options: CliOptions, iterations: List<IterationTrace>): String = buildString {
     appendLine("perfetto iteration analysis")
     appendLine("  dir: ${options.input.path}")
-    iterations.groupBy(IterationTrace::benchmark).forEach { (benchmark, traces) ->
-        val plural = if (traces.size == 1) "iteration" else "iterations"
-        appendLine("  benchmark: $benchmark (${traces.size} $plural)")
-    }
+    append(describeBenchmarks(iterations, "  "))
     append("  report: ${options.output.path} (${options.format.flag})")
 }
 
@@ -84,22 +61,4 @@ internal fun describeIteration(iteration: IterationTrace): String =
 internal fun writeIterations(options: CliOptions, report: IterationsReport): String {
     options.output.writeText(renderIterations(options.format, report))
     return "wrote ${options.format.flag} statistics to ${options.output.path}"
-}
-
-/**
- */
-private fun loadIteration(options: CliOptions, iteration: IterationTrace): StatsReport {
-    val format = validateTrace(iteration.file)
-    if (format != TraceFormat.PERFETTO) {
-        System.err.println("${iteration.file.absolutePath} is ${format.label}")
-        exitProcess(EXIT_BAD_TRACE)
-    }
-    val trace = try {
-        parseTrace(iteration.file)
-    } catch (exc: IOException) {
-        System.err.println(exc.message)
-        exitProcess(EXIT_BAD_TRACE)
-    }
-    println("${describeIteration(iteration)}\n${summarise(trace)}")
-    return statsReport(iteration.file, trace, options.operations)
 }

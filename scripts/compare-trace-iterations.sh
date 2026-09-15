@@ -6,8 +6,10 @@
 # Both inputs are run directories, as scripts/analyse-trace-iterations.sh takes one of. Each is
 # aggregated the same way, so neither has to be analysed first.
 #
-# PARTLY IMPLEMENTED: both runs are read and aggregated, but nothing compares them or writes a
-# report yet, so an invocation that gets that far exits 9.
+# Both runs are compared and what moved is summarised on stdout. A section counts as having moved
+# only when the shift in its mean clears both runs' deviations added together.
+#
+# PARTLY IMPLEMENTED: nothing renders the comparison yet, so an invocation that gets that far exits 9.
 
 set -eu
 

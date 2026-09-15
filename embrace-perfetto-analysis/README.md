@@ -122,8 +122,11 @@ names exactly that run's traces, so it decides which of them belong to the run a
 
 `compare-trace-iterations.sh` compares two runs to see how performance differs for a code change. It takes the
 run directories themselves, not reports, and aggregates each exactly as `analyse-trace-iterations.sh` does, so
-neither has to be analysed first and `--operations` narrows both alike. It reads both runs today but does not
-yet diff them or write the report, and exits 9 once it has.
+neither has to be analysed first and `--operations` narrows both alike. Only what both runs recorded is
+compared; a benchmark, section or counter that only one of them has is named instead.
+
+Writing the report is not implemented yet: both runs are compared and what moved is summarised on stdout,
+then it exits 9.
 
 ## Getting a trace
 

@@ -12,8 +12,9 @@ import java.io.File
 import java.io.IOException
 import kotlin.system.exitProcess
 
-
-/** The traces of the run collected into [dir], or exits saying why there are none to read. */
+/**
+ * The traces of the run collected into [dir], or exits saying why there are none to read.
+ */
 internal fun discoverRun(dir: File): List<IterationTrace> {
     if (!dir.isDirectory) {
         System.err.println("no run directory at ${dir.absolutePath}")

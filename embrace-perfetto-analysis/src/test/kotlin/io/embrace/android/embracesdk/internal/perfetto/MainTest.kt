@@ -214,6 +214,19 @@ internal class MainTest {
     }
 
     @Test
+    fun `the summary reports the counter samples the events carried, named and counted`() {
+        val text = summarise(
+            trace(
+                print(1000, "C|$TID|emb-sf-bytes-written|4096", tid = TID),
+                print(1100, "C|$TID|emb-sf-files-written|1", tid = TID),
+                print(1200, "C|$TID|emb-sf-bytes-written|8192", tid = OTHER_TID),
+            ),
+        )
+        assertTrue(text, text.contains("counters: 3 samples of 2 distinct counters"))
+        assertTrue(text, text.contains("skipped: 0 unclosed, 0 unopened, 0 unsupported"))
+    }
+
+    @Test
     fun `an empty trace summarises as empty rather than failing`() {
         val text = summarise(Trace())
 
@@ -221,6 +234,7 @@ internal class MainTest {
         assertTrue(text, text.contains("ftrace events: 0"))
         assertTrue(text, text.contains("atrace events: 0 across 0 threads"))
         assertTrue(text, text.contains("slices: 0 of 0 distinct sections"))
+        assertTrue(text, text.contains("counters: 0 samples of 0 distinct counters"))
     }
 
     private fun trace(vararg events: FtraceEvent) =

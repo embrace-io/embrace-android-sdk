@@ -3,7 +3,8 @@ package io.embrace.android.embracesdk.internal.perfetto
 import io.embrace.android.embracesdk.internal.perfetto.proto.FtraceEvent
 
 /**
- * Pairs atrace begin and end events into the slices they describe.
+ * Pairs atrace begin and end events into the slices they describe, and collects the counter samples
+ * recorded alongside them.
  *
  * Atrace names a section only when it opens, so an end closes whichever begin is innermost on its
  * thread. Two things follow: slices stack per **thread**, using the ftrace event's `pid` rather than
@@ -17,16 +18,18 @@ internal class TraceInterpreter {
     private var unclosed = 0
     private var unopened = 0
     private var unsupported = 0
+    private val counters = mutableListOf<TraceCounterSample>()
 
     fun interpret(events: List<FtraceEvent>, threadNames: Map<Int, String> = emptyMap()): TraceModel {
         unclosed = 0
         unopened = 0
         unsupported = 0
+        counters.clear()
         val threads = printEvents(events)
             .groupBy(FtraceEvent::pid)
             .toSortedMap()
             .mapValues { (tid, threadEvents) -> timeline(tid, threadNames[tid], threadEvents) }
-        return TraceModel(threads, unclosed, unopened, unsupported)
+        return TraceModel(threads, counters.toList(), unclosed, unopened, unsupported)
     }
 
     private fun timeline(tid: Int, name: String?, events: List<FtraceEvent>): ThreadTimeline {
@@ -37,6 +40,8 @@ internal class TraceInterpreter {
             when (val payload = parseAtracePayload(event.print?.buf.orEmpty())) {
                 is AtracePayload.Begin -> stack.addLast(OpenSlice(payload.name, event.timestamp, stack.size))
                 AtracePayload.End -> close(tid, event.timestamp, stack, roots)
+                is AtracePayload.Counter ->
+                    counters.add(TraceCounterSample(payload.name, tid, event.timestamp, payload.value))
                 is AtracePayload.Unsupported -> unsupported++
             }
         }

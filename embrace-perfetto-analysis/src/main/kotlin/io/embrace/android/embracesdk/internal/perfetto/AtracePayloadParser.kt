@@ -24,18 +24,33 @@ internal fun parseAtracePayload(buf: String): AtracePayload {
     return when {
         kind == BEGIN && delimited -> begin(payload)
         kind == END && (fields.isEmpty() || delimited) -> AtracePayload.End
+        kind == COUNTER && delimited -> counter(payload)
         kind == ASYNC_BEGIN && delimited -> AtracePayload.Unsupported.AsyncBegin(payload)
         kind == ASYNC_END && delimited -> AtracePayload.Unsupported.AsyncEnd(payload)
-        kind == COUNTER && delimited -> AtracePayload.Unsupported.Counter(payload)
         else -> AtracePayload.Unsupported.Unrecognised(payload)
     }
 }
 
 /** Reads `B|<tgid>|<name>`, taking the name as everything past the tgid so a `|` within it survives. */
 private fun begin(payload: String): AtracePayload {
-    val name = payload.substringAfter(SEPARATOR).substringAfter(SEPARATOR, missingDelimiterValue = "")
+    val name = payload.pastTgid()
     return when {
         name.isEmpty() -> AtracePayload.Unsupported.Unrecognised(payload)
         else -> AtracePayload.Begin(name)
     }
 }
+
+/** Reads `C|<tgid>|<name>|<value>`, taking the value as the last field so a `|` within the name survives. */
+private fun counter(payload: String): AtracePayload {
+    val fields = payload.pastTgid()
+    val name = fields.substringBeforeLast(SEPARATOR, missingDelimiterValue = "")
+    val value = fields.substringAfterLast(SEPARATOR).toLongOrNull()
+    return when {
+        name.isEmpty() || value == null -> AtracePayload.Unsupported.Unrecognised(payload)
+        else -> AtracePayload.Counter(name, value)
+    }
+}
+
+/** Everything past the kind and the tgid, or empty when the payload holds no more. */
+private fun String.pastTgid(): String =
+    substringAfter(SEPARATOR).substringAfter(SEPARATOR, missingDelimiterValue = "")

@@ -46,7 +46,7 @@ command rather than passing the module's `testInstrumentationRunnerArguments`.
 
 ## Traces
 
-The benchmark records only the app's own [atrace sections](https://perfetto.dev/docs/data-sources/atrace).
+The benchmark records only the app's own [atrace sections](https://perfetto.dev/docs/data-sources/atrace) and counters.
 The default macrobenchmark config captures system-wide scheduling data as well, which costs tens of
 megabytes an iteration; this drastically reduces size for analysis. The tradeoff
 is that lots of other data is omitted.

@@ -21,14 +21,14 @@ internal class StatsFixtureTest {
     @Test
     fun `a thread spans its first slice opening to its last slice closing`() {
         assertEquals(
-            listOf(113_728_625L, 35_853_875L, 1_463_365_501L, 8_001_416L, 2_147_276_751L, 5_638_833L),
+            listOf(148_400_959L, 63_548_625L, 1_980_180_042L, 8_953_042L, 2_476_584_376L, 6_738_291L),
             model.threads.values.map(ThreadTimeline::wallSpanNanos),
         )
     }
 
     @Test
     fun `the capture spans its first ftrace event to its last, far wider than any one thread`() {
-        assertEquals(2_182_385_126L, window)
+        assertEquals(2_536_707_168L, window)
         assertEquals(events.size, printEvents(events).size)
         assertTrue("$window", model.threads.values.all { it.wallSpanNanos < window })
     }
@@ -36,14 +36,14 @@ internal class StatsFixtureTest {
     @Test
     fun `a section that ran on three threads is measured once per thread, not pooled across them`() {
         val stats = statsFor(REPEATED)
-        assertEquals(listOf(9874, 9892, 9894), stats.map(OperationStats::tid))
+        assertEquals(listOf(6922, 6939, 6941), stats.map(OperationStats::tid))
         assertEquals(
             listOf("io.embrace.android.embracesdk.macrobenchmark.app", "emb-http-reques", "emb-non-io-reg"),
             stats.map(OperationStats::threadName),
         )
         assertEquals(listOf(446, 15, 40), stats.map(OperationStats::count))
         assertEquals(
-            listOf(0.107652, 0.021538, 0.101540),
+            listOf(0.083038, 0.031227, 0.001776),
             stats.map { round(it.traceWindowPercent) },
         )
         assertEquals(model.slices(REPEATED).size, stats.sumOf(OperationStats::count))
@@ -53,13 +53,13 @@ internal class StatsFixtureTest {
     fun `a repeated section is summarised by durations the capture recorded`() {
         val stats = statsFor(REPEATED).first()
         assertEquals(446, stats.count)
-        assertEquals(2_349_381L, stats.sumNanos)
-        assertEquals(541L, stats.minNanos)
-        assertEquals(230_209L, stats.maxNanos)
-        assertEquals(5267.670, stats.meanNanos, 0.001)
-        assertEquals(12_383.513, stats.stdevNanos, 0.001)
+        assertEquals(2_106_424L, stats.sumNanos)
+        assertEquals(458L, stats.minNanos)
+        assertEquals(163_458L, stats.maxNanos)
+        assertEquals(4722.924, stats.meanNanos, 0.001)
+        assertEquals(9197.381, stats.stdevNanos, 0.001)
         assertEquals(
-            listOf(Percentile(50, 3_584), Percentile(90, 7_209), Percentile(95, 9_584), Percentile(99, 36_250)),
+            listOf(Percentile(50, 3_542), Percentile(90, 6_542), Percentile(95, 8_209), Percentile(99, 26_000)),
             stats.percentiles,
         )
     }
@@ -67,15 +67,15 @@ internal class StatsFixtureTest {
     @Test
     fun `a section that ran once reports that duration as every statistic, deviating by nothing`() {
         val stats = statsFor("emb-sdk-start").single()
-        assertEquals(9874, stats.tid)
+        assertEquals(6922, stats.tid)
         assertEquals(1, stats.count)
-        assertEquals(12_083_458L, stats.minNanos)
-        assertEquals(12_083_458L, stats.maxNanos)
-        assertEquals(12_083_458L, stats.sumNanos)
-        assertEquals(1.2083458E7, stats.meanNanos, 0.0)
-        assertEquals(0.553681, round(stats.traceWindowPercent), 0.0)
+        assertEquals(17_266_417L, stats.minNanos)
+        assertEquals(17_266_417L, stats.maxNanos)
+        assertEquals(17_266_417L, stats.sumNanos)
+        assertEquals(1.7266417E7, stats.meanNanos, 0.0)
+        assertEquals(0.680663, round(stats.traceWindowPercent), 0.0)
         assertEquals(0.0, stats.stdevNanos, 0.0)
-        assertEquals(listOf(12_083_458L), stats.percentiles.map(Percentile::durationNanos).distinct())
+        assertEquals(listOf(17_266_417L), stats.percentiles.map(Percentile::durationNanos).distinct())
     }
 
     @Test

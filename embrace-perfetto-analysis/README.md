@@ -2,8 +2,8 @@
 
 Host tooling for analysing a gzipped perfetto trace. Not published, not shipped in the SDK.
 
-**This is currently a skeleton.** It checks that the file it is given is a gzipped perfetto trace, and supports
-`--help` and `--dry-run`. No analysis is implemented yet, and nothing here decides how a trace should be read.
+**This decodes a trace but does not yet interpret one.** It reads the file onto the protobuf wire model and
+prints what that holds. Pairing the atrace events into slices, and timing the sections they name, comes next.
 
 Validation decompresses the first few bytes and checks they open a perfetto packet; anything else is rejected.
 
@@ -19,9 +19,22 @@ Or
 ./gradlew :embrace-perfetto-analysis:analyseTrace --args="<trace> --dry-run"
 ```
 
-The tool exits 1 on bad usage, and 2 when there is no trace at the given path or the file there is not a
-gzipped perfetto trace. Run through Gradle those surface as a build failure naming the exit value, since Gradle
-returns its own.
+The tool exits 1 on bad usage, and 2 when there is no trace at the given path, the file there is not a
+gzipped perfetto trace, or it could not be read as one. Run through Gradle those surface as a build failure
+naming the exit value, since Gradle returns its own.
+
+## What it reads
+
+The macrobenchmark's perfetto config captures atrace and process stats only, so atrace is all this decodes.
+`src/main/proto/perfetto/protos/trace.proto` declares the few fields that carries - everything else is skipped.
+
+An atrace event's `print.buf` is a begin (`B|<tgid>|<name>`) or an end (`E`, or `E|<tgid>`). Two details are important:
+
+- Slices nest by the **thread id** in the ftrace event, which ftrace calls `pid`, not the tgid in the payload.
+- Ftrace batches events per CPU, so a trace hands them over out of timestamp order.
+
+Thread and process names are not currently read, so threads are numeric. Sections the SDK emits are prefixed `emb-` by
+`EmbTrace`.
 
 ## Getting a trace
 

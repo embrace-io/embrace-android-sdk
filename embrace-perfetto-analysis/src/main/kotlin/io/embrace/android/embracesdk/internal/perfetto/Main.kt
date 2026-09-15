@@ -1,6 +1,9 @@
 package io.embrace.android.embracesdk.internal.perfetto
 
+import io.embrace.android.embracesdk.internal.perfetto.proto.FtraceEvent
+import io.embrace.android.embracesdk.internal.perfetto.proto.Trace
 import java.io.File
+import java.io.IOException
 import kotlin.system.exitProcess
 
 internal const val EXIT_USAGE = 1
@@ -35,6 +38,16 @@ fun main(args: Array<String>) {
         exitProcess(EXIT_BAD_TRACE)
     }
     println(describe(options, format))
+    if (options.dryRun) {
+        return
+    }
+    val trace = try {
+        parseTrace(options.trace)
+    } catch (exc: IOException) {
+        System.err.println(exc.message)
+        exitProcess(EXIT_BAD_TRACE)
+    }
+    println(summarise(trace))
 }
 
 internal data class Options(val trace: File, val dryRun: Boolean)
@@ -62,8 +75,13 @@ internal fun describe(options: Options, format: TraceFormat): String = buildStri
     appendLine("perfetto trace analysis")
     appendLine("  trace: ${options.trace.path} (${options.trace.length()} bytes)")
     appendLine("  format: ${format.label}")
-    if (!options.dryRun) {
-        appendLine()
-        appendLine("no analysis is implemented yet; only --dry-run is wired up.")
-    }
+}
+
+internal fun summarise(trace: Trace): String = buildString {
+    val events = ftraceEvents(trace)
+    val prints = printEvents(events)
+    appendLine("  packets: ${trace.packet.size}")
+    appendLine("  ftrace events: ${events.size}")
+    // ftrace calls this `pid`, but it holds a thread id
+    append("  atrace events: ${prints.size} across ${prints.map(FtraceEvent::pid).distinct().size} threads")
 }

@@ -73,7 +73,7 @@ internal class MainTest {
 
     @Test
     fun `the format decides the document, which is the whole of what a statistics run prints`() {
-        val report = StatsReport("t.gz", 2048, 12, 3, 2, TraceStats(emptyList(), emptyList()))
+        val report = StatsReport("t.gz", 2048, 12, 3, 2, 1_200_000, TraceStats(emptyList(), emptyList()))
         assertTrue(render(ReportFormat.MARKDOWN, report).startsWith("# Perfetto trace statistics"))
         assertTrue(render(ReportFormat.JSON, report).startsWith("{"))
     }
@@ -95,6 +95,18 @@ internal class MainTest {
 
         val all = statsReport(Options(File(TRACE), allOperations = true), events)
         assertEquals(listOf("emb-alpha", "emb-zeta"), all.stats.operations.map(OperationStats::name))
+    }
+
+    @Test
+    fun `the window a report measures shares against runs to events atrace never wrote`() {
+        val events = trace(
+            print(1000, "B|$TID|emb-zeta", tid = TID),
+            print(2000, "E|$TID", tid = TID),
+            FtraceEvent(timestamp = 5000, pid = TID),
+        )
+        val report = statsReport(Options(File(TRACE), operations = listOf("emb-zeta")), events)
+        assertEquals(4000L, report.traceWindowNanos)
+        assertEquals(25.0, report.stats.operations.single().traceWindowPercent, 0.0)
     }
 
     @Test

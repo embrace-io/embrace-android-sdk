@@ -10,5 +10,6 @@ internal data class StatsReport(
     val sliceCount: Int,
     val sectionCount: Int,
     val threadCount: Int,
+    val traceWindowNanos: Long,
     val stats: TraceStats,
 )

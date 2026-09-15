@@ -11,6 +11,8 @@ import kotlinx.serialization.Serializable
  * @param threadName what the trace called [tid], or null when it named no thread with that id.
  * @param count how many times the section ran on this thread.
  * @param sumNanos the time every occurrence took together.
+ * @param traceWindowPercent what share of the whole trace window [sumNanos] accounts for. That window is the
+ * capture's first ftrace event to its last. The value does not necessarily sum to 100 and is an approximation
  * @param minNanos the shortest occurrence.
  * @param maxNanos the longest occurrence.
  * @param meanNanos [sumNanos] over [count].
@@ -24,6 +26,7 @@ internal data class OperationStats(
     val threadName: String?,
     val count: Int,
     val sumNanos: Long,
+    val traceWindowPercent: Double,
     val minNanos: Long,
     val maxNanos: Long,
     val meanNanos: Double,

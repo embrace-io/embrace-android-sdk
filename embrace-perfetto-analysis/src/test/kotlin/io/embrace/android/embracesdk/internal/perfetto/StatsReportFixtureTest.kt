@@ -15,6 +15,7 @@ internal class StatsReportFixtureTest {
         assertEquals(1094, report.sliceCount)
         assertEquals(86, report.sectionCount)
         assertEquals(6, report.threadCount)
+        assertEquals(2_182_385_126L, report.traceWindowNanos)
         assertEquals(listOf(ABSENT), report.stats.missing)
     }
 
@@ -23,7 +24,7 @@ internal class StatsReportFixtureTest {
         val ran = "12083.458"
         assertEquals(
             listOf(STARTUP, MAIN_THREAD, "9874", "1") +
-                listOf(ran, ran, "0.000", ran) +
+                listOf(ran, "0.5537", ran, "0.000", ran) +
                 List(DEFAULT_PERCENTILES.size) { ran } + ran,
             cells(dataRows(renderMarkdown(report(listOf(STARTUP)))).single()),
         )
@@ -35,9 +36,10 @@ internal class StatsReportFixtureTest {
         assertEquals(listOf(MAIN_THREAD, "emb-http-reques", "emb-non-io-reg"), rows.map { it[1] })
         assertEquals(listOf("9874", "9892", "9894"), rows.map { it[2] })
         assertEquals(listOf("446", "15", "40"), rows.map { it[3] })
+        assertEquals(listOf("0.1077", "0.0215", "0.1015"), rows.map { it[5] })
         assertEquals(
             listOf("2349.381", "5.268", "12.384", "0.541", "3.584", "7.209", "9.584", "36.250", "230.209"),
-            rows.first().drop(4),
+            rows.first().let { listOf(it[4]) + it.drop(6) },
         )
     }
 

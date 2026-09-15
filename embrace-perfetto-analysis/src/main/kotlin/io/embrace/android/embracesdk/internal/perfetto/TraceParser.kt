@@ -47,3 +47,15 @@ internal fun threadNames(trace: Trace): Map<Int, String> {
         .mapNotNull { thread -> thread.name.takeIf(String::isNotEmpty)?.let { thread.tid to it } }
     return (processes + threads).toMap()
 }
+
+/**
+ * The wall clock window the capture covers, from its first ftrace event to its last. This is an
+ * approximation and gives a ballpark figure only.
+ *
+ * This spans every ftrace event, whether or not atrace wrote it, so time the trace recorded with no
+ * instrumented section running on it still counts. Zero when the trace holds no events.
+ */
+internal fun traceWindowNanos(events: List<FtraceEvent>): Long = when {
+    events.isEmpty() -> 0L
+    else -> events.maxOf(FtraceEvent::timestamp) - events.minOf(FtraceEvent::timestamp)
+}

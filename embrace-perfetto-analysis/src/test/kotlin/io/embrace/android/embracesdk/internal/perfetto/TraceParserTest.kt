@@ -56,6 +56,32 @@ internal class TraceParserTest {
     }
 
     @Test
+    fun `the window spans events atrace did not write, not just the ones it did`() {
+        val events = listOf(
+            FtraceEvent(timestamp = 500, pid = TID),
+            print(1000, "B|$TID|section"),
+            print(1500, "E|$TID"),
+            FtraceEvent(timestamp = 3000, pid = TID),
+        )
+        assertEquals(2500L, traceWindowNanos(events))
+        assertEquals(500L, traceWindowNanos(printEvents(events)))
+    }
+
+    @Test
+    fun `the window spans the earliest event to the latest, whatever order they arrive in`() {
+        val ordered = listOf(print(1000, "B|$TID|section"), print(1500, "E|$TID"), print(9000, "E|$TID"))
+        assertEquals(8000L, traceWindowNanos(ordered))
+        assertEquals(8000L, traceWindowNanos(ordered.reversed()))
+        assertEquals(8000L, traceWindowNanos(listOf(ordered[1], ordered[2], ordered[0])))
+    }
+
+    @Test
+    fun `a trace with nothing to span reports no window rather than failing`() {
+        assertEquals(0L, traceWindowNanos(emptyList()))
+        assertEquals(0L, traceWindowNanos(listOf(print(1000, "B|$TID|section"))))
+    }
+
+    @Test
     fun `a file that is not a readable trace is rejected rather than read as empty`() {
         val raw = tmp.newFile("raw").apply { writeBytes(byteArrayOf(0x0a, 0x55, 0x32, 0x4e)) }
         assertThrows(IOException::class.java) { parseTrace(raw) }

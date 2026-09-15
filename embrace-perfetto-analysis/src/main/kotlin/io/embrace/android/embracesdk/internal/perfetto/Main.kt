@@ -127,7 +127,9 @@ internal fun summarise(trace: Trace): String = buildString {
 }
 
 internal fun statsReport(options: Options, trace: Trace): StatsReport {
-    val model = TraceInterpreter().interpret(ftraceEvents(trace), threadNames(trace))
+    val events = ftraceEvents(trace)
+    val model = TraceInterpreter().interpret(events, threadNames(trace))
+    val window = traceWindowNanos(events)
     val requested = when {
         options.allOperations -> model.names.sorted()
         else -> options.operations
@@ -138,7 +140,8 @@ internal fun statsReport(options: Options, trace: Trace): StatsReport {
         sliceCount = model.sliceCount,
         sectionCount = model.names.size,
         threadCount = model.threads.size,
-        stats = calculateStats(model, requested),
+        traceWindowNanos = window,
+        stats = calculateStats(model, requested, window),
     )
 }
 

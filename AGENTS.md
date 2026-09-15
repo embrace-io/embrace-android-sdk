@@ -56,7 +56,7 @@ scripts/analyse-trace.sh <trace.perfetto.gz> --operations emb-sdk-start --format
 # Reduce a whole macrobenchmark run to one report, one observation per iteration
 scripts/analyse-trace-iterations.sh perf/macrobenchmark/<device>
 
-# Compare two runs (reads and aggregates both; the comparison itself exits 9: not implemented)
+# Compare two runs (summarises what moved on stdout; writing the report exits 9: not implemented)
 scripts/compare-trace-iterations.sh perf/macrobenchmark/<baseline> perf/macrobenchmark/<candidate>
 
 # Update binary compatibility API dumps

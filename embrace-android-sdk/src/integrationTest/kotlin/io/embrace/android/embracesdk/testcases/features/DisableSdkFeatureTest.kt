@@ -33,6 +33,9 @@ internal class DisableSdkFeatureTest {
         private const val TEST_FILE_NAME = "test_file"
         private const val DUMMY_CONTENT = "Hello, world!"
 
+        // when multi-file persistence is disabled the SDK wipes the session part directory
+        private val STARTUP_SWEPT_DIRS = setOf(StorageLocation.SESSION_SPLIT)
+
         private fun File.sentinelFile(): File = File(File(this, TEST_SUBDIR_NAME), TEST_FILE_NAME)
     }
 
@@ -40,12 +43,12 @@ internal class DisableSdkFeatureTest {
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
-    private lateinit var embraceDirs: List<File>
+    private lateinit var embraceDirs: Map<StorageLocation, File>
 
     @Before
     fun setUp() {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
-        embraceDirs = StorageLocation.entries.map { it.asFile(
+        embraceDirs = StorageLocation.entries.associateWith { it.asFile(
             logger = FakeInternalLogger(),
             rootDirSupplier = { ctx.filesDir },
             fallbackDirSupplier = { ctx.cacheDir }
@@ -58,7 +61,7 @@ internal class DisableSdkFeatureTest {
             setupAction = {
                 getEmbLogger().throwOnInternalError = false
                 // create some dummy values in embrace directories to see if they get deleted
-                embraceDirs.forEach {
+                embraceDirs.values.forEach {
                     it.sentinelFile().apply {
                         parentFile?.mkdirs()
                         writeText(DUMMY_CONTENT)
@@ -66,7 +69,7 @@ internal class DisableSdkFeatureTest {
                 }
             },
             testCaseAction = {
-                embraceDirs.forEach {
+                embraceDirs.filterKeys { it !in STARTUP_SWEPT_DIRS }.values.forEach {
                     assertEquals(DUMMY_CONTENT, it.sentinelFile().readText())
                 }
                 recordSession {
@@ -88,7 +91,7 @@ internal class DisableSdkFeatureTest {
                 returnIfConditionMet(
                     desiredValueSupplier = { true },
                     dataProvider = {
-                        embraceDirs.all {
+                        embraceDirs.values.all {
                             !it.sentinelFile().exists()
                         }
                     },
@@ -139,7 +142,7 @@ internal class DisableSdkFeatureTest {
                 returnIfConditionMet(
                     desiredValueSupplier = { true },
                     dataProvider = {
-                        embraceDirs.all {
+                        embraceDirs.values.all {
                             !it.sentinelFile().exists()
                         }
                     },

@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionReconst
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
@@ -27,6 +28,7 @@ import java.util.concurrent.TimeoutException
  * session part is deleted once intake has stored it.
  */
 class SessionPartReader(
+    private val sessionsDir: Lazy<File>,
     private val directoryStore: SessionPartDirectoryStore,
     private val reconstructionService: SessionReconstructionService,
     private val intakeService: IntakeService,
@@ -43,6 +45,7 @@ class SessionPartReader(
      */
     fun readPersistedSessionParts() {
         if (!configService.persistenceBehavior.isMultiFilePersistenceEnabled()) {
+            deletePersistedSessionParts()
             return
         }
         worker.submit {
@@ -62,6 +65,14 @@ class SessionPartReader(
                         break
                     }
                 }
+            }
+        }
+    }
+
+    private fun deletePersistedSessionParts() {
+        worker.submit {
+            EmbTrace.trace("mf-delete-session-parts") {
+                sessionsDir.value.deleteRecursively()
             }
         }
     }

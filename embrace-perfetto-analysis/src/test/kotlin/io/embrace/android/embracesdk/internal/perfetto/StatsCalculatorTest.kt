@@ -67,7 +67,7 @@ internal class StatsCalculatorTest {
             timeline(TID, runOf("op", 10, 10)),
             timeline(OTHER_TID, runOf("op", 30, tid = OTHER_TID)),
         )
-        val stats = calculateStats(model, listOf("op"), WINDOW).operations
+        val stats = calculateStats(model, listOf("op"), WINDOW, START).operations
         assertEquals(listOf(TID, OTHER_TID), stats.map(OperationStats::tid))
         assertEquals(listOf(2, 1), stats.map(OperationStats::count))
         assertEquals(listOf(20L, 30L), stats.map(OperationStats::sumNanos))
@@ -104,7 +104,7 @@ internal class StatsCalculatorTest {
                 listOf(slice("op", 5000, 5100, OTHER_TID), slice("other", 9000, 9900, OTHER_TID)),
             ),
         )
-        val stats = calculateStats(model, listOf("op"), WINDOW).operations
+        val stats = calculateStats(model, listOf("op"), WINDOW, START).operations
         assertEquals(listOf(100L, 100L), stats.map(OperationStats::sumNanos))
         assertEquals(listOf(1.0, 1.0), stats.map(OperationStats::traceWindowPercent))
         assertEquals(listOf(100L, 4900L), model.threads.values.map(ThreadTimeline::wallSpanNanos))
@@ -121,7 +121,7 @@ internal class StatsCalculatorTest {
 
     @Test
     fun `a section the trace never recorded is named as missing rather than reported as an empty row`() {
-        val stats = calculateStats(model(timeline(TID, runOf("op", 10))), listOf("op", "absent"), WINDOW)
+        val stats = calculateStats(model(timeline(TID, runOf("op", 10))), listOf("op", "absent"), WINDOW, START)
         assertEquals(listOf("op"), stats.operations.map(OperationStats::name))
         assertEquals(listOf("absent"), stats.missing)
     }
@@ -129,14 +129,14 @@ internal class StatsCalculatorTest {
     @Test
     fun `a section absent from one thread is simply not reported for it, and is not missing`() {
         val model = model(timeline(TID, runOf("op", 10)), timeline(OTHER_TID, runOf("other", 10, tid = OTHER_TID)))
-        val stats = calculateStats(model, listOf("op"), WINDOW)
+        val stats = calculateStats(model, listOf("op"), WINDOW, START)
         assertEquals(listOf(TID), stats.operations.map(OperationStats::tid))
         assertTrue(stats.missing.toString(), stats.missing.isEmpty())
     }
 
     @Test
     fun `a section named twice is measured once`() {
-        val stats = calculateStats(model(timeline(TID, runOf("op", 10))), listOf("op", "op"), WINDOW)
+        val stats = calculateStats(model(timeline(TID, runOf("op", 10))), listOf("op", "op"), WINDOW, START)
         assertEquals(1, stats.operations.size)
     }
 
@@ -146,19 +146,19 @@ internal class StatsCalculatorTest {
             timeline(TID, runOf("b", 1) + slice("a", 10, 11)),
             timeline(OTHER_TID, runOf("b", 1, tid = OTHER_TID) + slice("a", 10, 11, OTHER_TID)),
         )
-        val stats = calculateStats(model, listOf("b", "a"), WINDOW).operations
+        val stats = calculateStats(model, listOf("b", "a"), WINDOW, START).operations
         assertEquals(listOf("b", "b", "a", "a"), stats.map(OperationStats::name))
         assertEquals(listOf(TID, OTHER_TID, TID, OTHER_TID), stats.map(OperationStats::tid))
     }
 
     @Test
     fun `asking for nothing measures nothing and misses nothing`() {
-        val stats = calculateStats(model(timeline(TID, runOf("op", 10))), emptyList(), WINDOW)
-        assertEquals(TraceStats(emptyList(), emptyList()), stats)
+        val stats = calculateStats(model(timeline(TID, runOf("op", 10))), emptyList(), WINDOW, START)
+        assertEquals(TraceStats(emptyList(), emptyList(), emptyList()), stats)
     }
 
     private fun only(model: TraceModel, name: String, window: Long = WINDOW) =
-        calculateStats(model, listOf(name), window).operations.single()
+        calculateStats(model, listOf(name), window, START).operations.single()
 
     private fun model(vararg timelines: ThreadTimeline) =
         TraceModel(timelines.associateBy(ThreadTimeline::tid), emptyList(), 0, 0, 0)
@@ -180,5 +180,6 @@ internal class StatsCalculatorTest {
         const val TID = 9874
         const val OTHER_TID = 9891
         const val WINDOW = 10_000L
+        const val START = 0L
     }
 }

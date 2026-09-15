@@ -39,11 +39,36 @@ internal class JsonStatsRendererTest {
                     ],
                     "missing": [
                         "absent"
+                    ],
+                    "counters": [
+                        {
+                            "name": "emb-sf-bytes-written",
+                            "tids": [
+                                9874
+                            ],
+                            "sampleCount": 2,
+                            "firstValue": 1024,
+                            "lastValue": 4096,
+                            "maxValue": 4096,
+                            "total": 4096,
+                            "readings": [
+                                {
+                                    "tid": 9874,
+                                    "offsetNanos": 0,
+                                    "value": 1024
+                                },
+                                {
+                                    "tid": 9874,
+                                    "offsetNanos": 500,
+                                    "value": 4096
+                                }
+                            ]
+                        }
                     ]
                 }
             }
         """.trimIndent()
-        assertEquals(expected, renderJson(report(listOf(operation()), listOf("absent"))))
+        assertEquals(expected, renderJson(report(listOf(operation()), listOf("absent"), listOf(counter()))))
     }
 
     @Test
@@ -57,10 +82,25 @@ internal class JsonStatsRendererTest {
         val text = renderJson(report(emptyList()))
         assertTrue(text, text.contains(""""operations": []"""))
         assertTrue(text, text.contains(""""missing": []"""))
+        assertTrue(text, text.contains(""""counters": []"""))
     }
 
-    private fun report(operations: List<OperationStats>, missing: List<String> = emptyList()) =
-        StatsReport("t.perfetto.gz", 2048, 12, 3, 2, 1_200_000, TraceStats(operations, missing))
+    private fun report(
+        operations: List<OperationStats>,
+        missing: List<String> = emptyList(),
+        counters: List<CounterStats> = emptyList(),
+    ) = StatsReport("t.perfetto.gz", 2048, 12, 3, 2, 1_200_000, TraceStats(operations, missing, counters))
+
+    private fun counter() = CounterStats(
+        name = "emb-sf-bytes-written",
+        tids = listOf(9874),
+        sampleCount = 2,
+        firstValue = 1024,
+        lastValue = 4096,
+        maxValue = 4096,
+        total = 4096,
+        readings = listOf(CounterReading(9874, 0, 1024), CounterReading(9874, 500, 4096)),
+    )
 
     private fun operation(threadName: String? = "main") = OperationStats(
         name = "op",

@@ -59,3 +59,10 @@ internal fun traceWindowNanos(events: List<FtraceEvent>): Long = when {
     events.isEmpty() -> 0L
     else -> events.maxOf(FtraceEvent::timestamp) - events.minOf(FtraceEvent::timestamp)
 }
+
+/**
+ * The instant the capture begins, which every counter reading is an offset from. Zero when the trace
+ * holds no events.
+ */
+internal fun traceStartNanos(events: List<FtraceEvent>): Long =
+    events.minOfOrNull(FtraceEvent::timestamp) ?: 0L

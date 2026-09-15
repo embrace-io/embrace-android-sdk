@@ -41,9 +41,18 @@ internal class HtmlStatsRendererTest {
 
     @Test
     fun `a report with nothing in it still renders a page rather than failing`() {
-        val page = renderHtml(report(emptyList()))
+        val page = renderHtml(report(emptyList(), emptyList()))
         assertTrue(page, page.contains(""""operations": []"""))
+        assertTrue(page, page.contains(""""counters": []"""))
         assertTrue(page, page.contains(DETAILS_BEGIN))
+    }
+
+    @Test
+    fun `the page reads every counter the report carries, rather than dropping them`() {
+        val page = renderHtml(report(counters = listOf(counter())))
+        val script = page.substringAfter("</script>")
+        assertTrue(script, script.contains("report.stats.counters"))
+        assertTrue(page, page.contains(""""name": "$COUNTER""""))
     }
 
     private fun embedded(page: String) =
@@ -51,8 +60,21 @@ internal class HtmlStatsRendererTest {
 
     private fun occurrences(page: String, marker: String) = page.split(marker).size - 1
 
-    private fun report(operations: List<OperationStats> = listOf(operation())) =
-        StatsReport("t.perfetto.gz", 2048, 12, 3, 2, 1_200_000, TraceStats(operations, listOf("absent")))
+    private fun report(
+        operations: List<OperationStats> = listOf(operation()),
+        counters: List<CounterStats> = listOf(counter()),
+    ) = StatsReport("t.perfetto.gz", 2048, 12, 3, 2, 1_200_000, TraceStats(operations, listOf("absent"), counters))
+
+    private fun counter(name: String = COUNTER) = CounterStats(
+        name = name,
+        tids = listOf(9874),
+        sampleCount = 2,
+        firstValue = 1024,
+        lastValue = 4096,
+        maxValue = 4096,
+        total = 4096,
+        readings = listOf(CounterReading(9874, 0, 1024), CounterReading(9874, 500, 4096)),
+    )
 
     private fun operation(name: String = OPERATION) = OperationStats(
         name = name,
@@ -70,6 +92,7 @@ internal class HtmlStatsRendererTest {
 
     private companion object {
         const val OPERATION = "emb-sdk-start"
+        const val COUNTER = "emb-sf-bytes-written"
         const val DETAILS_BEGIN = "<!-- DETAILS:BEGIN -->"
         const val DETAILS_END = "<!-- DETAILS:END -->"
         const val SCRIPT_BLOCKS = 2

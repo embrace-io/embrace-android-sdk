@@ -274,22 +274,25 @@ internal fun ModuleGraph.markSdkInitComplete(sdkInitDurationsProvider: () -> Map
                 sdkInitDurations.toSdkInitDurationAttributes() +
                     resourceUsageTracker.buildAttributes() +
                     sdkInitEnvironmentAttributes(
-                        activityManagerProvider = {
-                            instrumentationModule.instrumentationArgs.systemService(Context.ACTIVITY_SERVICE)
-                        },
+                        nowMs = initModule.clock.now(),
+                        logger = initModule.logger,
+                        packageInfo = instrumentationModule.instrumentationArgs.packageInfo,
                         powerManagerProvider = {
                             instrumentationModule.instrumentationArgs.systemService(Context.POWER_SERVICE)
                         },
-                        packageInfo = instrumentationModule.instrumentationArgs.packageInfo,
-                        nowMs = initModule.clock.now(),
-                        prefsFileSizeProvider = { defaultPrefsFile(coreModule.context)?.length() },
-                        artOptimizationProvider = {
-                            ArtOptimizationState.create(
-                                apkPath = coreModule.context.applicationInfo?.sourceDir,
-                                primaryAbi = initModule.systemInfo.primaryAbi,
-                            )
+                        activityManagerProvider = {
+                            instrumentationModule.instrumentationArgs.systemService(Context.ACTIVITY_SERVICE)
                         },
-                    )
+                        prefsFileSizeProvider = { defaultPrefsFile(coreModule.context)?.length() },
+                    ) {
+                        coreModule.context.applicationInfo?.sourceDir?.let { sourceDir ->
+                            ArtOptimizationState.create(
+                                apkPath = sourceDir,
+                                primaryAbi = initModule.systemInfo.primaryAbi,
+                                logger = initModule.logger,
+                            )
+                        }
+                    }
             },
         )
     }

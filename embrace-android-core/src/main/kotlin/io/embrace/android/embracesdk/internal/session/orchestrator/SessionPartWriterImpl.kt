@@ -78,60 +78,63 @@ class SessionPartWriterImpl(
         if (!acceptingWrites()) {
             return
         }
-        val writers = PartWriters(
-            SessionPartDirectory(
-                timestamp = timestamp,
-                uuid = uuidSource.createUuid(),
-                userSessionId = userSessionId,
-                sessionPartId = sessionPartId,
-            ),
-        )
+        EmbTrace.trace("mf-part-started") {
+            val writers = PartWriters(
+                SessionPartDirectory(
+                    timestamp = timestamp,
+                    uuid = uuidSource.createUuid(),
+                    userSessionId = userSessionId,
+                    sessionPartId = sessionPartId,
+                ),
+            )
 
-        writeTracker.markWriting(sessionPartId)
+            writeTracker.markWriting(sessionPartId)
 
-        // the session span is snapshotted after it has stopped, so it must hold on to its events and
-        // links until this part's writes have completed
-        writers.span?.retainDataAfterStop()
-        directoryStore.create(writers.directory)
+            // the session span is snapshotted after it has stopped, so it must hold on to its events and
+            // links until this part's writes have completed
+            writers.span?.retainDataAfterStop()
+            directoryStore.create(writers.directory)
 
-        synchronized(bufferLock) {
-            if (carriedOverSpans.isNotEmpty()) {
-                queueCompletedSpansWrite(writers, carriedOverSpans.toList())
-                carriedOverSpans.clear()
+            synchronized(bufferLock) {
+                if (carriedOverSpans.isNotEmpty()) {
+                    queueCompletedSpansWrite(writers, carriedOverSpans.toList())
+                    carriedOverSpans.clear()
+                }
+                current = writers
             }
-            current = writers
-        }
 
-        queueMetadataWrite(writers)
-        queueSpanSnapshotsWrite(writers)
-        registerResourceChangeListener()
+            queueMetadataWrite(writers)
+            queueSpanSnapshotsWrite(writers)
+            registerResourceChangeListener()
+        }
     }
 
     override fun onSessionPartEnded(sessionPartId: String, crashing: Boolean) {
         if (!acceptingWrites()) {
             return
         }
-
-        val writers = synchronized(bufferLock) {
-            val ref = current ?: return
-            if (ref.directory.sessionPartId != sessionPartId) {
-                return
+        EmbTrace.trace("mf-part-ended") {
+            val writers = synchronized(bufferLock) {
+                val ref = current ?: return
+                if (ref.directory.sessionPartId != sessionPartId) {
+                    return
+                }
+                current = null
+                ref
             }
-            current = null
-            ref
-        }
-        queueEndedSessionSpanWrite(writers)
-        queueSpanSnapshotsWrite(writers)
-        writers.flushPendingWrites()
+            queueEndedSessionSpanWrite(writers)
+            queueSpanSnapshotsWrite(writers)
+            writers.flushPendingWrites()
 
-        worker.submit {
-            writers.seal()
-            writeTracker.markComplete(sessionPartId)
+            worker.submit {
+                writers.seal()
+                writeTracker.markComplete(sessionPartId)
 
-            if (!crashing && !processTerminating) {
-                notifyWritesComplete()
+                if (!crashing && !processTerminating) {
+                    notifyWritesComplete()
+                }
+                writers.span?.releaseRetainedData()
             }
-            writers.span?.releaseRetainedData()
         }
     }
 
@@ -152,12 +155,14 @@ class SessionPartWriterImpl(
         queueCompletedSpansWrite(writers, spans)
     }
 
-    override fun onSpanSnapshotChanged(span: EmbraceSdkSpan) = EmbTrace.trace("mf-span-snapshot-changed") {
+    override fun onSpanSnapshotChanged(span: EmbraceSdkSpan) {
         if (!acceptingWrites()) {
-            return@trace
+            return
         }
-        snapshotTracker.onSpanChanged(span)
-        queueSpanSnapshotsRefresh(current ?: return@trace)
+        EmbTrace.trace("mf-span-snapshot-changed") {
+            snapshotTracker.onSpanChanged(span)
+            queueSpanSnapshotsRefresh(current ?: return@trace)
+        }
     }
 
     private fun onResourceChanged() {
@@ -171,11 +176,13 @@ class SessionPartWriterImpl(
         if (!persistenceEnabled() || processTerminating) {
             return
         }
-        processTerminating = true
+        EmbTrace.trace("mf-flush-writes") {
+            processTerminating = true
 
-        // flush then wait for pending writes
-        current?.flushPendingWrites()
-        worker.shutdownAndWait(CRASH_DRAIN_TIMEOUT_MS)
+            // flush then wait for pending writes
+            current?.flushPendingWrites()
+            worker.shutdownAndWait(CRASH_DRAIN_TIMEOUT_MS)
+        }
     }
 
     /**

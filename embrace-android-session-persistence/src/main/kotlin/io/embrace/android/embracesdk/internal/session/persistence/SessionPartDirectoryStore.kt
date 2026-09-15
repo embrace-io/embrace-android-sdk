@@ -99,5 +99,7 @@ internal object SessionPartDirectoryLayout : StoredEntryLayout<SessionPartDirect
 
     override fun timestampOf(entry: SessionPartDirectory): Long = entry.timestamp
 
+    override fun pruneSection(entry: SessionPartDirectory?): String = "mf-storage-index-prune"
+
     override val removalComparator: Comparator<SessionPartDirectory> = SessionPartDirectory.comparator
 }

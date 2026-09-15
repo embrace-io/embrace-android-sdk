@@ -79,10 +79,10 @@ class SpanSnapshotsWriter(
         val written = recordsFor(spans, maxBytes - ROLLUP_HEADER_BYTES)
 
         discardFile()
-        writeAtomically(partDir, SPAN_SNAPSHOTS_FILE_NAME, maxBytes) { stream ->
+        writeAtomically(partDir, SPAN_SNAPSHOTS_FILE_NAME, maxBytes, target.counters) { stream ->
             SpanSnapshots.ADAPTER.encode(stream, SpanSnapshots(format_version = FORMAT_VERSION, spans = written))
         }
-        file = SpanCollectionFile(directory, File(partDir, SPAN_SNAPSHOTS_FILE_NAME))
+        file = SpanCollectionFile(directory, File(partDir, SPAN_SNAPSHOTS_FILE_NAME), target.counters)
         records = written.size
         return true
     }

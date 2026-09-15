@@ -77,7 +77,8 @@ class CompletedSpansWriter(
             discardSpanFile()
         }
         val partDir = target.partDir(directory, ::trackFailure) ?: return null
-        return SpanCollectionFile(directory, File(partDir, COMPLETED_SPANS_FILE_NAME)).also { spanFile = it }
+        return SpanCollectionFile(directory, File(partDir, COMPLETED_SPANS_FILE_NAME), target.counters)
+            .also { spanFile = it }
     }
 
     private fun discardSpanFile() {

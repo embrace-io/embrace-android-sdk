@@ -5,12 +5,6 @@ import java.io.IOException
 
 private const val UNSUPPORTED_VERSION_MSG = "Unsupported format version in session part file"
 
-/** A record stamping the format version, which discards every record before it. */
-private const val VERSION_TAG = 1
-
-/** A record holding one span, which supersedes any earlier record for the same span ID. */
-private const val SPAN_TAG = 2
-
 /**
  * Decodes the append-only span snapshots held in [source], returning the latest known state of each
  * span still recording.
@@ -20,17 +14,27 @@ internal fun readSpanSnapshots(
     maxBytes: Long = MAX_PART_FILE_BYTES,
     maxRecordBytes: Long = MAX_RECORD_BYTES,
     maxSpans: Int = MAX_PERSISTED_SPANS,
-): DecodedSpans = SnapshotDecoder(SpanCollectionReader(source, maxBytes, maxRecordBytes), maxSpans).read()
+    maxRecords: Int = MAX_PERSISTED_SPANS,
+): DecodedSpans = SnapshotDecoder(
+    SpanCollectionReader(source, maxBytes, maxRecordBytes),
+    maxSpans,
+    maxRecords,
+).read()
 
 /**
  * Accumulates the latest state of each span as the records are read.
  */
-private class SnapshotDecoder(private val collection: SpanCollectionReader, private val maxSpans: Int) {
+private class SnapshotDecoder(
+    private val collection: SpanCollectionReader,
+    private val maxSpans: Int,
+    private val maxRecords: Int,
+) {
 
     private val snapshots = LinkedHashMap<String, SpanProto>()
     private var corruption: Throwable? = null
     private var versioned = false
     private var truncated = false
+    private var records = 0
 
     fun read(): DecodedSpans {
         var reading = true
@@ -43,15 +47,17 @@ private class SnapshotDecoder(private val collection: SpanCollectionReader, priv
         return DecodedSpans(snapshots.values.toMutableList(), corruption, truncated)
     }
 
-    private fun readRecord(): Boolean = when (collection.nextTag()) {
-        null -> false
-        VERSION_TAG -> readRollup()
-        SPAN_TAG -> readSnapshot()
-        else -> collection.skipFrame()
+    private fun readRecord(): Boolean {
+        val tag = collection.nextTag() ?: return stop()
+        return when (tag) {
+            SPAN_SNAPSHOT_VERSION_TAG -> readRollup()
+            SPAN_SNAPSHOT_RECORD_TAG -> readSnapshot()
+            else -> collection.skipFrame()
+        }
     }
 
     private fun readRollup(): Boolean {
-        val version = collection.readVarint32() ?: return false
+        val version = collection.readVarint32() ?: return stop()
         if (version != FORMAT_VERSION) {
             throw IOException(UNSUPPORTED_VERSION_MSG)
         }
@@ -61,7 +67,10 @@ private class SnapshotDecoder(private val collection: SpanCollectionReader, priv
     }
 
     private fun readSnapshot(): Boolean {
-        val record = collection.readRecord() ?: return false
+        if (++records > maxRecords) {
+            return truncate()
+        }
+        val record = collection.readRecord() ?: return stop()
         val span = try {
             SpanProto.ADAPTER.decode(record)
         } catch (exc: Exception) {
@@ -70,10 +79,20 @@ private class SnapshotDecoder(private val collection: SpanCollectionReader, priv
             return true
         }
         if (snapshots.size >= maxSpans && !snapshots.containsKey(span.span_id)) {
-            truncated = true
-            return false
+            return truncate()
         }
         snapshots[span.span_id] = span
         return true
+    }
+
+    /** Stops where the collection did, which is truncation only if a limit is what stopped it. */
+    private fun stop(): Boolean {
+        truncated = truncated || collection.stoppedAtLimit
+        return false
+    }
+
+    private fun truncate(): Boolean {
+        truncated = true
+        return false
     }
 }

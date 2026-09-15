@@ -35,6 +35,11 @@ interface SectionRecorder {
      * Closes the section most recently opened by [beginSection] on this thread.
      */
     fun endSection()
+
+    /**
+     * Sets the counter named [name] to [value] for the process being traced.
+     */
+    fun setCounter(name: String, value: Long)
 }
 
 /**
@@ -59,5 +64,13 @@ object SystemTrace {
                 recorder.endSection()
             }
         }
+    }
+
+    /**
+     * Set the counter named [name] to [value]. The name of the counter will be prefixed by "emb-"
+     * and truncated to [MAX_TRACE_NAME_LENGTH], the same as a section name.
+     */
+    fun counter(name: String, value: Long) {
+        recorder?.setCounter(name, value)
     }
 }

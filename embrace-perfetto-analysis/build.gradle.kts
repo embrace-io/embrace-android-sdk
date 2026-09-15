@@ -33,3 +33,19 @@ tasks.register<JavaExec>("analyseTrace") {
     classpath = sourceSets["main"].runtimeClasspath
     workingDir = rootProject.projectDir
 }
+
+tasks.register<JavaExec>("analyseIterations") {
+    group = "verification"
+    description = "Aggregates statistics across every iteration trace of a macrobenchmark run. Not implemented."
+    mainClass.set("io.embrace.android.embracesdk.internal.perfetto.IterationsMainKt")
+    classpath = sourceSets["main"].runtimeClasspath
+    workingDir = rootProject.projectDir
+}
+
+tasks.register<JavaExec>("compareIterations") {
+    group = "verification"
+    description = "Compares two aggregates written by analyseIterations. Not implemented."
+    mainClass.set("io.embrace.android.embracesdk.internal.perfetto.CompareMainKt")
+    classpath = sourceSets["main"].runtimeClasspath
+    workingDir = rootProject.projectDir
+}

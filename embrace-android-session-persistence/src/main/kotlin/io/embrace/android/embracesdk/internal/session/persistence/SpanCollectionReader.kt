@@ -11,12 +11,16 @@ import java.io.EOFException
  */
 internal class SpanCollectionReader(
     source: BufferedSource,
-    maxBytes: Long,
+    private val maxBytes: Long,
     private val maxRecordBytes: Long,
 ) {
 
     private val reader = ProtoReader(source)
     private var remaining = maxBytes
+
+    /** Whether reading stopped at a limit rather than at the end of what was written. */
+    var stoppedAtLimit: Boolean = false
+        private set
 
     init {
         reader.beginMessage()
@@ -50,13 +54,18 @@ internal class SpanCollectionReader(
     fun readRecord(): ByteString? {
         val record = try {
             if (reader.nextFieldMinLengthInBytes() > maxRecordBytes) {
-                return null
+                return stopAtLimit()
             }
             reader.readBytes()
         } catch (exc: EOFException) {
             return null
         }
         remaining -= record.size
-        return record.takeIf { remaining >= 0 }
+        return if (remaining < 0) stopAtLimit() else record
+    }
+
+    private fun stopAtLimit(): ByteString? {
+        stoppedAtLimit = true
+        return null
     }
 }

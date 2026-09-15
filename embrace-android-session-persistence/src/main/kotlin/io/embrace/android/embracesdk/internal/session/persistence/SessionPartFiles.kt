@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
+import io.embrace.android.embracesdk.internal.utils.FileWriteCounters
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import java.io.File
 import java.io.IOException
@@ -17,6 +18,11 @@ internal const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
 
 internal const val SPAN_SNAPSHOTS_FILE_NAME = "span_snapshots.pb"
 
+/** Field numbers of the records held in span_snapshots.pb, which is read one record at a time. */
+internal const val SPAN_SNAPSHOT_VERSION_TAG = 1
+
+internal const val SPAN_SNAPSHOT_RECORD_TAG = 2
+
 /**
  * Writes [fileName] into [partDir] by encoding to a temporary file and then renaming it, so a
  * partially written file is never observed. Any file already at that path is replaced.
@@ -28,14 +34,22 @@ internal const val SPAN_SNAPSHOTS_FILE_NAME = "span_snapshots.pb"
  * Throws [IOException] if the file could not be written; callers are responsible for reporting that
  * as an internal error of the appropriate type.
  */
-internal fun writeAtomically(partDir: File, fileName: String, maxBytes: Long, encode: (OutputStream) -> Unit) {
+internal fun writeAtomically(
+    partDir: File,
+    fileName: String,
+    maxBytes: Long,
+    counters: FileWriteCounters,
+    encode: (OutputStream) -> Unit,
+) {
     SystemTrace.trace("mf-file-write-atomic") {
         val tmpFile = File.createTempFile(fileName, ".tmp", partDir)
         try {
-            LimitedOutputStream(tmpFile.outputStream().buffered(), maxBytes).use(encode)
+            val stream = LimitedOutputStream(tmpFile.outputStream().buffered(), maxBytes)
+            stream.use(encode)
             if (!tmpFile.renameTo(File(partDir, fileName))) {
                 throw IOException("Failed to rename $fileName")
             }
+            counters.recordWrite(stream.written)
         } finally {
             tmpFile.delete()
         }
@@ -50,7 +64,8 @@ private class LimitedOutputStream(
     private val limit: Long,
 ) : OutputStream() {
 
-    private var written: Long = 0
+    var written: Long = 0
+        private set
 
     override fun write(b: Int) {
         checkLimit(1)

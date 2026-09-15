@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.session.persistence
 import io.embrace.android.embracesdk.internal.payload.Span
 
 /**
- * The spans read back from a completed spans file, including the first exception (if any) found when decoding
+ * The spans read back from a session part file, including the first exception (if any) found when decoding
  */
 internal class DecodedSpans(
     private val decoded: MutableList<SpanProto>,

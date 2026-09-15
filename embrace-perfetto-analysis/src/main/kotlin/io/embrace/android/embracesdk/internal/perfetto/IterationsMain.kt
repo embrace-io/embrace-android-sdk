@@ -21,8 +21,9 @@ perf/macrobenchmark/<device>/. The run's own benchmarkData.json decides which of
 belong to it, so traces left behind by earlier runs are ignored. Without --output the report goes
 beside the directory, as <dir>-report.<extension>. Normally run via scripts/analyse-trace-iterations.sh.
 
-PARTLY IMPLEMENTED: the run's traces are found, read and summarised, but nothing aggregates them into
-a report yet, so every invocation but --help and --dry-run exits $EXIT_NOT_IMPLEMENTED.
+PARTLY IMPLEMENTED: the run's traces are found, read and summarised, and the aggregate report has a
+model and its markdown, json and html renderers, but nothing folds the traces into one yet, so every
+invocation but --help and --dry-run exits $EXIT_NOT_IMPLEMENTED.
 embrace-perfetto-analysis/README.md describes what it will produce.
 """,
 )

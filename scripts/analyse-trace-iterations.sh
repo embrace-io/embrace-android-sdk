@@ -4,9 +4,11 @@
 # Usage: scripts/analyse-trace-iterations.sh <dir> [options]
 #
 # <dir> holds one .perfetto-trace per iteration, as scripts/macrobenchmark.sh collects them into
-# perf/macrobenchmark/<device>/.
+# perf/macrobenchmark/<device>/. The run's own benchmarkData.json says which of the traces there belong
+# to it, so traces left behind by earlier runs are ignored.
 #
-# NOT IMPLEMENTED: the task behind this is a placeholder that exits 9; only --help does anything.
+# PARTLY IMPLEMENTED: the run's traces are read and summarised, but nothing aggregates them into a
+# report yet, so anything but --help and --dry-run exits 9.
 
 set -eu
 

@@ -1,6 +1,6 @@
 # Embrace Android SDK: Perfetto analysis
 
-Host tooling for analysing a gzipped perfetto trace. Not published, not shipped in the SDK.
+Host tooling for analysing a perfetto trace. Not published, not shipped in the SDK.
 
 It reads the file onto the protobuf wire model and pairs the atrace events into slices.
 
@@ -17,9 +17,13 @@ Or
 ./gradlew :embrace-perfetto-analysis:analyseTrace --args="<trace> --dry-run"
 ```
 
-The tool exits 1 on bad usage, 2 when there is no trace at the given path, the file there is not a gzipped
-perfetto trace, or it could not be read as one, and 3 when the report could not be written. Run through Gradle
-those surface as a build failure naming the exit value, since Gradle returns its own.
+The tool exits 1 on bad usage, 2 when there is no trace at the given path, the file there is not a perfetto
+trace, or it could not be read as one, and 3 when the report could not be written. Run through Gradle those
+surface as a build failure naming the exit value, since Gradle returns its own.
+
+A trace is taken in whichever container it arrived in, decided by its leading bytes rather than its suffix: the
+zip androidx.benchmark pulls off a device, a gzip, or the bare protobuf. A zip is read by the file it holds
+rather than that file's name, since a bundle only ever holds the one trace.
 
 ## What it reads
 
@@ -85,7 +89,7 @@ scripts/analyse-trace.sh trace.perfetto.gz --format html            # -> trace-r
 scripts/analyse-trace.sh trace.perfetto.gz --output report.html --format html
 ```
 
-## Iterations (not implemented)
+## Iterations (partly implemented)
 
 A macrobenchmark run is multiple iterations.
 `scripts/analyse-trace-iterations.sh` reduces a whole run to one report, and
@@ -102,15 +106,27 @@ scripts/compare-trace-iterations.sh baseline.json candidate.json --format html -
 ```
 
 `analyse-trace-iterations.sh` aggregates macrobenchmark runs. Its options are the single-trace ones, and mean
-the same things.
+the same things, except that the report a run defaults to is named for the directory and sits beside it, as
+`<dir>-report.<extension>`.
 
-`compare-trace-iterations.sh` compares two aggregated runs to see how performance differs for a code change.
+Today it finds the run's traces, reads each one, and summarises what each holds. Nothing aggregates those into a
+report yet, so a full run prints what it read and then exits 9; `--dry-run`, which promises only to say what
+would be analysed, exits 0.
+
+`grab-macrobenchmark-output.sh` copies into its destination without clearing it, so a directory reused across
+runs holds the traces of several. The `<package>-benchmarkData.json` androidx.benchmark rewrites on every run
+names exactly that run's traces, so it decides which of them belong to the run and the rest are ignored.
+
+`compare-trace-iterations.sh` compares two aggregated runs to see how performance differs for a code change. It
+is still a placeholder that exits 9.
 
 ## Getting a trace
 
 `scripts/macrobenchmark.sh` writes traces to `perf/macrobenchmark/<device>/`. androidx.benchmark wraps each one
-in a zip, so unpack and recompress before analysing:
+in a zip, which both commands read as it is - there is nothing to unpack first.
+
+Recompressing is only worth it for a trace committed as a test fixture, where the size matters:
 
 ```bash
-unzip -p <bundle>.perfetto-trace Trace_output.pb | gzip > trace.perfetto.gz
+unzip -p <bundle>.perfetto-trace Trace_output.pb | gzip -9 > trace.perfetto.gz
 ```

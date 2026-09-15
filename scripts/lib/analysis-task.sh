@@ -12,6 +12,10 @@ run_analysis() {
     task=$1
     shift
 
+    if [ "$#" -eq 0 ]; then
+        exec "$root/gradlew" -q --console=plain -p "$root" ":embrace-perfetto-analysis:$task"
+    fi
+
     # quoted one at a time, since gradle splits --args on whitespace
     args=""
     for arg in "$@"; do

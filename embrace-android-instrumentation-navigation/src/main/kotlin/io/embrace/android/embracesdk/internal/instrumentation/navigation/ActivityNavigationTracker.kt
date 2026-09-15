@@ -4,23 +4,25 @@ import android.app.Activity
 import android.app.Application
 import android.os.Build
 import android.os.Bundle
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityPaused
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityResumed
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityStarted
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.Backgrounded
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
+import io.embrace.android.embracesdk.internal.arch.navigation.getId
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.ActivityPaused
-import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.ActivityResumed
-import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.ActivityStarted
-import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.Backgrounded
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 
 /**
  * Tracks Activities coming into and out of view through [Application.ActivityLifecycleCallbacks], but listens to [ProcessStateListener]
  * when it comes to tracking app backgrounding in order to synchronize with the rest of the SDK's app backgrounding logic.
  *
- * The time that this component's listeners fire is the canonical time for the event, whenever it is processed downstream.
+ * The time that this component's listeners fire is the canonical time for the signal, whenever it is processed downstream.
  */
 internal class ActivityNavigationTracker(
     private val clock: Clock,
-    private val onEvent: (NavigationEvent) -> Unit,
+    private val eventBus: EventBus,
     private val navigationTrackingService: NavigationTrackingService,
 ) : Application.ActivityLifecycleCallbacks, ProcessStateListener {
 
@@ -63,7 +65,7 @@ internal class ActivityNavigationTracker(
     }
 
     override fun onBackground() {
-        onEvent(Backgrounded(clock.now()))
+        eventBus.emit(Backgrounded(clock.now()))
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
@@ -73,17 +75,17 @@ internal class ActivityNavigationTracker(
     override fun onForeground() {}
 
     private fun handleActivityStarted(activity: Activity) {
-        onEvent(ActivityStarted(activity, clock.now()))
+        eventBus.emit(ActivityStarted(activity.getId(), clock.now()))
     }
 
     private fun handleActivityResumed(activity: Activity) {
-        onEvent(ActivityResumed(activity, clock.now()))
+        eventBus.emit(ActivityResumed(activity.getId(), activity.localClassName, clock.now()))
 
-        // Add NavController tracking after the resume event is fired to mimic how the rememberNavController Composable will do it.
+        // Add screen source tracking after the resume signal is emitted to mimic how the rememberNavController Composable will do it.
         navigationTrackingService.trackNavigation(activity)
     }
 
     private fun handleActivityPaused(activity: Activity) {
-        onEvent(ActivityPaused(activity, clock.now()))
+        eventBus.emit(ActivityPaused(activity.getId(), clock.now()))
     }
 }

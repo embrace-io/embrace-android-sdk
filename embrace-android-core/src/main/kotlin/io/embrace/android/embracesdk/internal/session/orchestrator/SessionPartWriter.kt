@@ -26,8 +26,10 @@ interface SessionPartWriter {
     /**
      * Called when a batch of spans have completed. The session span is logged by this writer when
      * the session part ends, so callers must filter it out.
+     *
+     * Returns whether this writer has taken ownership of the batch, so the caller need not retain it.
      */
-    fun onSpanCompleted(spans: List<Span>)
+    fun onSpanCompleted(spans: List<Span>): Boolean
 
     /**
      * [span] has changed, so the snapshot of it on disk is stale. This includes the session span

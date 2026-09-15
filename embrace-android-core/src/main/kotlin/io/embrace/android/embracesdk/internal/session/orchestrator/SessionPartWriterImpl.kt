@@ -145,14 +145,26 @@ class SessionPartWriterImpl(
         queueMetadataWrite(current ?: return)
     }
 
-    override fun onSpanCompleted(spans: List<Span>) {
-        if (!acceptingWrites() || spans.isEmpty()) {
-            return
+    /**
+     * Ownership means accepted rather than written: the batch is queued onto the [worker] or held
+     * for the next part. An empty batch counts as owned, as the session span the caller filtered out
+     * of it is logged by this writer when the part ends.
+     */
+    override fun onSpanCompleted(spans: List<Span>): Boolean {
+        if (!acceptingWrites()) {
+            return false
+        }
+        if (spans.isEmpty()) {
+            return true
         }
         val writers = current ?: synchronized(bufferLock) {
-            current ?: return carryOver(spans)
+            current ?: run {
+                carryOver(spans)
+                return true
+            }
         }
         queueCompletedSpansWrite(writers, spans)
+        return true
     }
 
     override fun onSpanSnapshotChanged(span: EmbraceSdkSpan) {

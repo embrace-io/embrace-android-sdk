@@ -30,10 +30,17 @@ internal class SpanSnapshotsWriterTest {
         )
 
         private val snapshots = listOf(fullyPopulatedSpan, inFlightSpan)
+
+        private fun snapshot(spanId: String, name: String) =
+            inFlightSpan.copy(spanId = spanId, name = name)
     }
 
     @get:Rule
     val tempFolder: TemporaryFolder = TemporaryFolder()
+
+    private val first = snapshot("aaaaaaaaaaaaaaa1", "emb-first")
+    private val second = snapshot("aaaaaaaaaaaaaaa2", "emb-second")
+    private val third = snapshot("aaaaaaaaaaaaaaa3", "emb-third")
 
     private lateinit var sessionsDir: File
     private lateinit var logger: FakeInternalLogger
@@ -119,13 +126,6 @@ internal class SpanSnapshotsWriterTest {
         assertTrue(writer.write(updated))
         assertEquals(updated.map(Span::toProto), readSnapshots().spans)
         assertEquals(listOf(SPAN_SNAPSHOTS_FILE_NAME), partDir().list()?.toList())
-        assertNoInternalErrors()
-    }
-
-    @Test
-    fun `spans reported as changed do not alter what is written`() {
-        assertTrue(writer.write(snapshots, dirtySpans = listOf(inFlightSpan)))
-        assertEquals(snapshots.map(Span::toProto), readSnapshots().spans)
         assertNoInternalErrors()
     }
 
@@ -236,18 +236,182 @@ internal class SpanSnapshotsWriterTest {
     }
 
     @Test
-    fun `oversized span snapshots are not written`() {
-        assertFalse(write(span = listOf(paddedSpan(paddedSpanId(0), MAX_PART_FILE_BYTES.toInt() + 1))))
-        assertEquals(emptyList<String>(), partDir().list()?.toList())
+    fun `a span too large for the log is dropped and the spans before it are kept`() {
+        val oversized = paddedSpan(paddedSpanId(0), MAX_PART_FILE_BYTES.toInt() + 1)
+        assertTrue(write(span = listOf(first, oversized, second)))
+        assertEquals(protos(first), readSnapshots().spans)
+        assertEquals(listOf(SPAN_SNAPSHOTS_FILE_NAME), partDir().list()?.toList())
         assertWriteFailureTracked()
     }
 
     @Test
-    fun `oversized span snapshots leave the previous ones intact`() {
-        assertTrue(write())
-        assertFalse(write(span = listOf(paddedSpan(paddedSpanId(0), MAX_PART_FILE_BYTES.toInt() + 1))))
-        assertEquals(fullyPopulatedSpanSnapshotsProto, readSnapshots())
-        assertEquals(listOf(SPAN_SNAPSHOTS_FILE_NAME), partDir().list()?.toList())
+    fun `a span larger than one record is dropped and the spans round it are kept`() {
+        val oversized = paddedSpan(paddedSpanId(0), MAX_RECORD_BYTES.toInt())
+        assertTrue(write(span = listOf(first, oversized, second)))
+        assertEquals(protos(first, second), readSnapshots().spans)
+        assertWriteFailureTracked()
+    }
+
+    @Test
+    fun `an append adds to the file rather than replacing it`() {
+        assertTrue(write(span = listOf(first)))
+        assertTrue(append(listOf(second)))
+        assertEquals(protos(first, second), loggedRecords())
+        assertEquals(protos(first, second), latestSnapshots())
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `an append supersedes the record already recorded for a span`() {
+        assertTrue(write(span = listOf(first, second)))
+        val updated = first.copy(name = "renamed")
+        assertTrue(append(listOf(updated)))
+
+        assertEquals(protos(first, second, updated), loggedRecords())
+        assertEquals(protos(updated, second), latestSnapshots())
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `appending nothing leaves the file untouched`() {
+        assertTrue(write(span = listOf(first)))
+        assertTrue(writer.append(emptyList()) { error("live spans read for an empty append") })
+        assertEquals(protos(first), loggedRecords())
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `an append with no records yet rolls up the live spans`() {
+        assertTrue(append(listOf(second), live = listOf(first, second)))
+        assertEquals(protos(first, second), loggedRecords())
+        assertEquals(FORMAT_VERSION, readSnapshots().format_version)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `the file is rolled up once it would hold more snapshots than the limit allows`() {
+        writer = writerWith(maxRecords = 3)
+        assertTrue(write(span = listOf(first, second)))
+        assertTrue(append(listOf(third), live = listOf(first, second, third)))
+        assertEquals(protos(first, second, third), loggedRecords())
+
+        val updated = first.copy(name = "renamed")
+        assertTrue(append(listOf(updated), live = listOf(updated, second, third)))
+        assertEquals(protos(updated, second, third), loggedRecords())
+        assertEquals(protos(updated, second, third), latestSnapshots())
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `the file is appended to again after a rollup`() {
+        writer = writerWith(maxRecords = 4)
+        assertTrue(write(span = listOf(first, second)))
+        val renamedFirst = first.copy(name = "renamed first")
+        val renamedSecond = second.copy(name = "renamed second")
+        assertTrue(append(listOf(renamedFirst)))
+        assertTrue(append(listOf(renamedSecond)))
+        assertEquals(protos(first, second, renamedFirst, renamedSecond), loggedRecords())
+
+        val rolledUp = listOf(first.copy(name = "rolled up"), renamedSecond)
+        assertTrue(append(listOf(rolledUp.first()), live = rolledUp))
+        assertEquals(rolledUp.map(Span::toProto), loggedRecords())
+
+        val appended = renamedSecond.copy(name = "appended")
+        assertTrue(append(listOf(appended)))
+        assertEquals((rolledUp + appended).map(Span::toProto), loggedRecords())
+        assertEquals(protos(rolledUp.first(), appended), latestSnapshots())
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `the live spans are only read when the file is rolled up`() {
+        writer = writerWith(maxRecords = 3)
+        assertTrue(write(span = listOf(first, second)))
+
+        var reads = 0
+        val live = {
+            reads++
+            listOf(first, second)
+        }
+        assertTrue(writer.append(listOf(first), live))
+        assertEquals(0, reads)
+        assertTrue(writer.append(listOf(first), live))
+        assertEquals(1, reads)
+    }
+
+    @Test
+    fun `the file stays within the record limit as spans keep changing`() {
+        writer = writerWith(maxRecords = 4)
+        assertTrue(write(span = listOf(first, second)))
+
+        var live = listOf(first, second)
+        repeat(50) { index ->
+            val changed = live[index % 2].copy(name = "change $index")
+            live = live.map { if (it.spanId == changed.spanId) changed else it }
+            assertTrue(append(listOf(changed), live = live))
+            assertTrue(loggedRecords().size <= 4)
+        }
+        assertEquals(live.map(Span::toProto), latestSnapshots())
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `an append that would overflow the part file rolls the file up`() {
+        val rolledUp = listOf(first, second)
+        val updated = first.copy(name = "renamed")
+        writer = writerWith(maxBytes = rollupSize(rolledUp) + appendSize(listOf(updated)) - 1)
+
+        assertTrue(write(span = rolledUp))
+        assertTrue(append(listOf(updated), live = listOf(updated, second)))
+        assertEquals(protos(updated, second), loggedRecords())
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `an append rolls up into the session part that is now active`() {
+        val other = SessionPartDirectory(timestamp = TIMESTAMP + 4, uuid = UUID)
+        createPartDir(other)
+        assertTrue(write(span = listOf(first)))
+
+        assertTrue(append(listOf(second), live = listOf(second), directory = other))
+        assertEquals(protos(first), loggedRecords())
+        assertEquals(protos(second), loggedRecords(other))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `nothing is appended once the session part is no longer active`() {
+        assertTrue(write(span = listOf(first)))
+        assertFalse(append(listOf(second), directory = null))
+        assertEquals(protos(first), loggedRecords())
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `the next append rolls up once the log has been closed`() {
+        assertTrue(write(span = listOf(first)))
+        writer.close()
+        assertTrue(append(listOf(second), live = listOf(first, second)))
+        assertEquals(protos(first, second), loggedRecords())
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `an oversized span is dropped from an append and reported once`() {
+        assertTrue(write(span = listOf(first)))
+        val oversized = paddedSpan(paddedSpanId(0), MAX_RECORD_BYTES.toInt())
+        repeat(3) {
+            assertFalse(append(listOf(oversized)))
+        }
+        assertEquals(protos(first), loggedRecords())
+        assertWriteFailureTracked()
+    }
+
+    @Test
+    fun `an append to a session part directory that has gone is reported`() {
+        assertTrue(write(span = listOf(first)))
+        partDir().deleteRecursively()
+        assertFalse(append(listOf(second)))
         assertWriteFailureTracked()
     }
 
@@ -273,6 +437,41 @@ internal class SpanSnapshotsWriterTest {
         activePart = directory
         return writer.write(span)
     }
+
+    private fun writerWith(
+        maxBytes: Long = MAX_PART_FILE_BYTES,
+        maxRecordBytes: Long = MAX_RECORD_BYTES,
+        maxRecords: Int = MAX_PERSISTED_SPANS,
+    ): SpanSnapshotsWriter =
+        SpanSnapshotsWriter(target { activePart }, logger, maxBytes, maxRecordBytes, maxRecords)
+
+    private fun append(
+        spans: List<Span>,
+        live: List<Span> = spans,
+        directory: SessionPartDirectory? = partDirectory,
+    ): Boolean {
+        activePart = directory
+        return writer.append(spans) { live }
+    }
+
+    private fun loggedRecords(directory: SessionPartDirectory = partDirectory): List<SpanProto> =
+        readSnapshots(directory).spans
+
+    /**
+     * The state each span was last written with, in the order the spans first appear in the file,
+     * which is what a reader of the log reconstructs.
+     */
+    private fun latestSnapshots(directory: SessionPartDirectory = partDirectory): List<SpanProto> =
+        loggedRecords(directory).associateByTo(LinkedHashMap(), SpanProto::span_id).values.toList()
+
+    private fun protos(vararg spans: Span): List<SpanProto> = spans.map(Span::toProto)
+
+    private fun rollupSize(spans: List<Span>): Long = SpanSnapshots.ADAPTER.encodedSize(
+        SpanSnapshots(format_version = FORMAT_VERSION, spans = spans.map(Span::toProto)),
+    ).toLong()
+
+    private fun appendSize(spans: List<Span>): Long =
+        SpanSnapshots.ADAPTER.encodedSize(SpanSnapshots(spans = spans.map(Span::toProto))).toLong()
 
     private fun assertNoInternalErrors() {
         assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)

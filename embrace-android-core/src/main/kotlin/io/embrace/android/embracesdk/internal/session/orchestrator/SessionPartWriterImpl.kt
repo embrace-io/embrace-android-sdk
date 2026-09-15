@@ -239,17 +239,25 @@ class SessionPartWriterImpl(
         snapshotTracker.seed(spans)
         execute(writers, InternalErrorType.SpanSnapshotsWriteFail, writers.spanSnapshotWrites::submit) {
             snapshotTracker.drainDirtySpans()
+            snapshotTracker.drainSessionSpanChange()
             writers.spanSnapshots.write(spans.mapNotNull(EmbraceSdkSpan::snapshot) + writers.sessionSpanSnapshot())
         }
     }
 
     private fun queueSpanSnapshotsRefresh(writers: PartWriters) = EmbTrace.trace("mf-queue-span-snapshots-refresh") {
         execute(writers, InternalErrorType.SpanSnapshotsWriteFail, writers.spanSnapshotWrites::submit) {
-            if (current === writers) {
-                snapshotTracker.drainDirtySpans()
-                writers.spanSnapshots.write(
-                    inFlightSpanSource().mapNotNull(EmbraceSdkSpan::snapshot) + writers.sessionSpanSnapshot(),
-                )
+            if (current !== writers) {
+                return@execute
+            }
+            val sessionSpan = when {
+                snapshotTracker.drainSessionSpanChange() -> writers.sessionSpanSnapshot()
+                else -> emptyList()
+            }
+            val changed = snapshotTracker.drainDirtySpans().mapNotNull(EmbraceSdkSpan::snapshot) + sessionSpan
+            if (changed.isNotEmpty()) {
+                writers.spanSnapshots.append(changed) {
+                    inFlightSpanSource().mapNotNull(EmbraceSdkSpan::snapshot) + writers.sessionSpanSnapshot()
+                }
             }
         }
     }

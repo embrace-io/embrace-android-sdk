@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Tracks the spans that are recording, and those among them whose latest state has yet to reach
@@ -13,6 +14,7 @@ class SpanSnapshotTracker {
 
     private val inFlight: MutableSet<EmbraceSdkSpan> = Collections.newSetFromMap(ConcurrentHashMap())
     private val dirty: MutableSet<EmbraceSdkSpan> = Collections.newSetFromMap(ConcurrentHashMap())
+    private val sessionSpanDirty = AtomicBoolean(false)
 
     /**
      * Every span known to be recording.
@@ -24,6 +26,7 @@ class SpanSnapshotTracker {
      */
     fun onSpanChanged(span: EmbraceSdkSpan) {
         if (span.isSessionSpan()) {
+            sessionSpanDirty.set(true)
             return
         }
         if (span.isRecording) {
@@ -60,6 +63,8 @@ class SpanSnapshotTracker {
         }
         return drained
     }
+
+    fun drainSessionSpanChange(): Boolean = sessionSpanDirty.getAndSet(false)
 
     private fun EmbraceSdkSpan.isSessionSpan(): Boolean = hasEmbraceAttribute(EmbType.Ux.Session)
 }

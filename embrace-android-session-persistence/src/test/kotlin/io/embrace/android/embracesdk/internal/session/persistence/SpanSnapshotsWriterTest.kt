@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.internal.session.persistence
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
+import okio.buffer
+import okio.source
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -457,12 +459,9 @@ internal class SpanSnapshotsWriterTest {
     private fun loggedRecords(directory: SessionPartDirectory = partDirectory): List<SpanProto> =
         readSnapshots(directory).spans
 
-    /**
-     * The state each span was last written with, in the order the spans first appear in the file,
-     * which is what a reader of the log reconstructs.
-     */
+    /** The latest state of each span the log holds, as reconstruction reads it back. */
     private fun latestSnapshots(directory: SessionPartDirectory = partDirectory): List<SpanProto> =
-        loggedRecords(directory).associateByTo(LinkedHashMap(), SpanProto::span_id).values.toList()
+        snapshotsFile(directory).source().buffer().use { readSpanSnapshots(it).spans }
 
     private fun protos(vararg spans: Span): List<SpanProto> = spans.map(Span::toProto)
 

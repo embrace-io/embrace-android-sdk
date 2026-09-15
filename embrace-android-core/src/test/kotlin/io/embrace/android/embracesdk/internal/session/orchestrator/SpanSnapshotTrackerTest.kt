@@ -5,6 +5,8 @@ import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -133,6 +135,46 @@ internal class SpanSnapshotTrackerTest {
         tracker.seed(listOf(sessionSpan()))
         assertEquals(emptyList<EmbraceSdkSpan>(), tracker.inFlightSpans())
         assertEquals(emptyList<EmbraceSdkSpan>(), tracker.drainDirtySpans())
+    }
+
+    @Test
+    fun `nothing is reported for a session span that has not changed`() {
+        assertFalse(tracker.drainSessionSpanChange())
+    }
+
+    @Test
+    fun `a session span change is reported once`() {
+        tracker.onSpanChanged(sessionSpan())
+        assertTrue(tracker.drainSessionSpanChange())
+        assertFalse(tracker.drainSessionSpanChange())
+    }
+
+    @Test
+    fun `a session span that changed more than once is only reported once`() {
+        repeat(3) { tracker.onSpanChanged(sessionSpan()) }
+        assertTrue(tracker.drainSessionSpanChange())
+        assertFalse(tracker.drainSessionSpanChange())
+    }
+
+    @Test
+    fun `a session span change is reported again after the next change`() {
+        tracker.onSpanChanged(sessionSpan())
+        tracker.drainSessionSpanChange()
+        tracker.onSpanChanged(sessionSpan())
+        assertTrue(tracker.drainSessionSpanChange())
+    }
+
+    @Test
+    fun `a session span that stopped is still reported as changed`() {
+        tracker.onSpanChanged(sessionSpan().apply { stop() })
+        assertTrue(tracker.drainSessionSpanChange())
+        assertEquals(emptyList<EmbraceSdkSpan>(), tracker.inFlightSpans())
+    }
+
+    @Test
+    fun `a change to another span is not reported as a session span change`() {
+        tracker.onSpanChanged(startedSpan())
+        assertFalse(tracker.drainSessionSpanChange())
     }
 
     private fun startedSpan(name: String = "span") =

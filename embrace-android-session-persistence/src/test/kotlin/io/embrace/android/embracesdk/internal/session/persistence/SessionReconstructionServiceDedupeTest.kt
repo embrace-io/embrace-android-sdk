@@ -113,11 +113,11 @@ internal class SessionReconstructionServiceDedupeTest {
     }
 
     @Test
-    fun `duplicate snapshots keep the one that ended last`() {
+    fun `a later snapshot record supersedes an earlier one for the same span`() {
         write(snapshots = listOf(earlySpan, lateSpan))
 
         assertEquals(listOf(lateSpan), service.reconstruct(partDirectory)?.data?.spanSnapshots)
-        assertDuplicatesTracked()
+        assertNoInternalErrors()
     }
 
     @Test

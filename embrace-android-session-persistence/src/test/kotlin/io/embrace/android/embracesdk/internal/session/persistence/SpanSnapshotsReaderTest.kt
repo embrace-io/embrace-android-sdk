@@ -40,6 +40,21 @@ internal class SpanSnapshotsReaderTest {
                 readSpanSnapshots(it, MAX_PART_FILE_BYTES, MAX_RECORD_BYTES, maxSpans)
             }
 
+        private fun decodeSuperseding(
+            bytes: ByteArray,
+            supersededIds: Set<String>,
+            maxSpans: Int = MAX_PERSISTED_SPANS,
+        ): DecodedSpans = Buffer().write(bytes).use {
+            readSpanSnapshots(
+                it,
+                MAX_PART_FILE_BYTES,
+                MAX_RECORD_BYTES,
+                maxSpans,
+                MAX_PERSISTED_SPANS,
+                supersededIds,
+            )
+        }
+
         private fun decodeBoundedRecordCount(bytes: ByteArray, maxRecords: Int): DecodedSpans =
             Buffer().write(bytes).use {
                 readSpanSnapshots(it, MAX_PART_FILE_BYTES, MAX_RECORD_BYTES, MAX_PERSISTED_SPANS, maxRecords)
@@ -250,6 +265,45 @@ internal class SpanSnapshotsReaderTest {
         val file = spanSnapshotsRollup(listOf(first, second)) + spanSnapshotsAppend(listOf(superseding))
         val decoded = decodeBoundedSpans(file, maxSpans = 2)
         assertEquals(listOf(superseding, second), decoded.spans)
+        assertFalse(decoded.spanLimitReached)
+    }
+
+    @Test
+    fun `a record superseding a span already held applies past the span limit`() {
+        val superseding = first.copy(name = "superseded")
+        val file = spanSnapshotsRollup(listOf(first, second)) +
+            spanSnapshotsAppend(listOf(third)) +
+            spanSnapshotsAppend(listOf(superseding))
+
+        val decoded = decodeBoundedSpans(file, maxSpans = 2)
+        assertEquals(listOf(superseding, second), decoded.spans)
+        assertTrue(decoded.spanLimitReached)
+    }
+
+    @Test
+    fun `a span dropped by the span limit stays dropped when it is logged again`() {
+        val file = spanSnapshotsRollup(listOf(first, second)) +
+            spanSnapshotsAppend(listOf(third)) +
+            spanSnapshotsAppend(listOf(third.copy(name = "later")))
+
+        val decoded = decodeBoundedSpans(file, maxSpans = 2)
+        assertEquals(listOf(first, second), decoded.spans)
+        assertTrue(decoded.spanLimitReached)
+    }
+
+    @Test
+    fun `a record for a span already logged as completed is skipped`() {
+        val file = spanSnapshotsRollup(listOf(first, second))
+        val decoded = decodeSuperseding(file, supersededIds = setOf(first.span_id))
+        assertEquals(listOf(second), decoded.spans)
+        assertFalse(decoded.spanLimitReached)
+    }
+
+    @Test
+    fun `a record for a completed span does not spend the span limit`() {
+        val file = spanSnapshotsRollup(listOf(first, second, third))
+        val decoded = decodeSuperseding(file, supersededIds = setOf(first.span_id), maxSpans = 2)
+        assertEquals(listOf(second, third), decoded.spans)
         assertFalse(decoded.spanLimitReached)
     }
 

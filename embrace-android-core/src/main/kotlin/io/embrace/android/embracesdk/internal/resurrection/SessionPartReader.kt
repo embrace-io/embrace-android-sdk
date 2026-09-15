@@ -18,6 +18,8 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionReconst
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 /**
  * Reads any session parts that were persisted on disk by the multi-file persistence layer,
@@ -45,16 +47,21 @@ class SessionPartReader(
         }
         worker.submit {
             EmbTrace.trace("mf-read-session-parts") {
-                directoryStore.storedDirectories()
+                val directories = directoryStore.storedDirectories()
                     .filterNot { writeTracker.isWriting(it.sessionPartId) }
                     .sortedWith(SessionPartDirectory.comparator)
-                    .forEach { directory ->
-                        runCatching {
-                            deliver(directory)
-                        }.onFailure {
-                            logger.trackInternalError(InternalErrorType.SessionPartReadFail, it)
-                        }
+
+                for (directory in directories) {
+                    val proceed = runCatching {
+                        deliver(directory)
+                    }.onFailure {
+                        logger.trackInternalError(InternalErrorType.SessionPartReadFail, it)
+                    }.getOrDefault(true)
+
+                    if (!proceed) {
+                        break
                     }
+                }
             }
         }
     }
@@ -65,17 +72,27 @@ class SessionPartReader(
      * can retry it, as this is the only copy of the telemetry. Session parts that cannot be
      * reconstructed are deleted rather than retried.
      */
-    private fun deliver(directory: SessionPartDirectory) {
+    private fun deliver(directory: SessionPartDirectory): Boolean {
         val envelope = reconstructionService.reconstruct(directory)
         if (envelope == null) {
             directoryStore.delete(directory)
-            return
+            return true
         }
-        intakeService.take(
+        val task = intakeService.take(
             intake = envelope,
             metadata = directory.createMetadata(envelope),
             onStored = { directoryStore.delete(directory) },
         )
+        return try {
+            task.get(INTAKE_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+            true
+        } catch (exc: TimeoutException) {
+            logger.trackInternalError(InternalErrorType.IntakeFail, exc)
+            false
+        } catch (exc: InterruptedException) {
+            Thread.currentThread().interrupt()
+            false
+        }
     }
 
     private fun SessionPartDirectory.createMetadata(
@@ -93,4 +110,8 @@ class SessionPartReader(
 
     private fun Envelope<SessionPartPayload>.findProcessIdentifier(): String? =
         getSessionPartSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER)
+
+    private companion object {
+        private const val INTAKE_TIMEOUT_MS = 5_000L
+    }
 }

@@ -8,10 +8,13 @@ import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.createPersistenceBehavior
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
+import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
+import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.envelope.session.SESSION_ENVELOPE_TYPE
 import io.embrace.android.embracesdk.internal.envelope.session.SESSION_ENVELOPE_VERSION
 import io.embrace.android.embracesdk.internal.payload.Attribute
+import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
@@ -33,6 +36,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 internal class SessionPartReaderTest {
 
@@ -207,7 +213,137 @@ internal class SessionPartReaderTest {
         assertDeleted(partDirectory)
     }
 
-    private fun createReader(enabled: Boolean = true) = SessionPartReader(
+    @Test
+    fun `each session part is handed over to intake before the next one is delivered`() {
+        persist(laterPartDirectory)
+        persist(partDirectory)
+
+        val recording = RecordingIntakeService()
+        createReader(intakeService = recording).readPersistedSessionParts()
+        assertEquals(
+            listOf(
+                "take:${partDirectory.sessionPartId}",
+                "wait:${partDirectory.sessionPartId}",
+                "take:${laterPartDirectory.sessionPartId}",
+                "wait:${laterPartDirectory.sessionPartId}",
+            ),
+            recording.events,
+        )
+        assertDeleted(partDirectory, laterPartDirectory)
+    }
+
+    @Test
+    fun `the pass is abandoned when intake does not store a part in time`() {
+        persist(laterPartDirectory)
+        persist(partDirectory)
+
+        val stalled = StalledIntakeService()
+        createReader(intakeService = stalled).readPersistedSessionParts()
+
+        assertEquals(listOf(partDirectory.sessionPartId), stalled.takenPartIds)
+        assertEquals(setOf(partDirectory, laterPartDirectory), directoryStore.storedDirectories().toSet())
+        assertEquals(
+            setOf(partDirectory.dirName, laterPartDirectory.dirName),
+            sessionsDir.list()?.toSet() ?: emptySet<String>(),
+        )
+        assertTrue(logger.internalErrorMessages.any { it.throwable is TimeoutException })
+    }
+
+    @Test
+    fun `parts left behind by an abandoned pass are delivered by the next pass`() {
+        persist(laterPartDirectory)
+        persist(partDirectory)
+        createReader(intakeService = StalledIntakeService()).readPersistedSessionParts()
+        createReader().readPersistedSessionParts()
+
+        assertEquals(
+            listOf(partDirectory.sessionPartId, laterPartDirectory.sessionPartId),
+            intakeService.intakeList.map { it.metadata.sessionPartId },
+        )
+        assertDeleted(partDirectory, laterPartDirectory)
+    }
+
+    @Test
+    fun `a session part that intake drops without stalling does not abandon the pass`() {
+        persist(laterPartDirectory)
+        persist(partDirectory)
+        intakeService.storeSucceeds = false
+        createReader().readPersistedSessionParts()
+
+        assertEquals(
+            listOf(partDirectory.sessionPartId, laterPartDirectory.sessionPartId),
+            intakeService.intakeList.map { it.metadata.sessionPartId },
+        )
+        assertEquals(setOf(partDirectory, laterPartDirectory), directoryStore.storedDirectories().toSet())
+        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+    }
+
+    @Test
+    fun `a session part that cannot be reconstructed does not abandon the pass`() {
+        persist(laterPartDirectory)
+        persist(partDirectory)
+        assertTrue(File(File(sessionsDir, partDirectory.dirName), METADATA_FILE_NAME).delete())
+        createReader().readPersistedSessionParts()
+
+        assertEquals(
+            listOf(laterPartDirectory.sessionPartId),
+            intakeService.intakeList.map { it.metadata.sessionPartId },
+        )
+        assertDeleted(partDirectory, laterPartDirectory)
+    }
+
+    private class RecordingIntakeService : IntakeService {
+        val events: MutableList<String> = mutableListOf()
+
+        override fun shutdown() {}
+
+        override fun take(
+            intake: Envelope<*>,
+            metadata: StoredTelemetryMetadata,
+            staleEntry: StoredTelemetryMetadata?,
+            onStored: (() -> Unit)?,
+        ): Future<*> {
+            val partId = metadata.sessionPartId
+            events.add("take:$partId")
+            onStored?.invoke()
+            return object : Future<Unit> {
+                override fun cancel(mayInterruptIfRunning: Boolean) = false
+                override fun isCancelled() = false
+                override fun isDone() = true
+                override fun get() = error("the reader must always wait with a timeout")
+                override fun get(timeout: Long, unit: TimeUnit) {
+                    events.add("wait:$partId")
+                }
+            }
+        }
+    }
+
+    private class StalledIntakeService : IntakeService {
+        val takenPartIds: MutableList<String> = mutableListOf()
+
+        override fun shutdown() {}
+
+        override fun take(
+            intake: Envelope<*>,
+            metadata: StoredTelemetryMetadata,
+            staleEntry: StoredTelemetryMetadata?,
+            onStored: (() -> Unit)?,
+        ): Future<*> {
+            takenPartIds.add(metadata.sessionPartId)
+            return object : Future<Unit> {
+                override fun cancel(mayInterruptIfRunning: Boolean) = false
+                override fun isCancelled() = false
+                override fun isDone() = false
+                override fun get() = error("the reader must always wait with a timeout")
+                override fun get(timeout: Long, unit: TimeUnit): Unit = throw TimeoutException("stalled")
+            }
+        }
+    }
+
+    private fun createReader(
+        enabled: Boolean = true,
+        intakeService: IntakeService = this.intakeService,
+    ) = SessionPartReader(
         directoryStore = directoryStore,
         reconstructionService = SessionReconstructionService(lazy { sessionsDir }, logger),
         intakeService = intakeService,

@@ -6,10 +6,9 @@
 # Both inputs are run directories, as scripts/analyse-trace-iterations.sh takes one of. Each is
 # aggregated the same way, so neither has to be analysed first.
 #
-# Both runs are compared and what moved is summarised on stdout. A section counts as having moved
-# only when the shift in its mean clears both runs' deviations added together.
-#
-# PARTLY IMPLEMENTED: nothing renders the comparison yet, so an invocation that gets that far exits 9.
+# A section counts as having moved only when the shift in its mean clears both runs' deviations added
+# together. Without --output the report goes beside the baseline, named for both runs, so it does not
+# write over the report either of them aggregates to on its own.
 
 set -eu
 

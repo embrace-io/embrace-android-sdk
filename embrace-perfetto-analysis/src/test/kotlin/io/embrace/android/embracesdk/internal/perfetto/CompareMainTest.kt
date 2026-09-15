@@ -32,10 +32,10 @@ internal class CompareMainTest {
     }
 
     @Test
-    fun `a comparison is named for the baseline directory when nothing else names it`() {
+    fun `a comparison is named for both runs, so it does not write over either one's own report`() {
         val options = checkNotNull(parseArgs(SPEC, arrayOf(BASELINE, CANDIDATE, "--format", "json")))
         assertEquals(listOf(File(BASELINE), File(CANDIDATE)), options.inputs)
-        assertEquals(File("perf/macrobenchmark/baseline-report.json"), options.output)
+        assertEquals(File("perf/macrobenchmark/baseline-vs-candidate-report.json"), options.output)
     }
 
     @Test

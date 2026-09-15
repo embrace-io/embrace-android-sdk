@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.perfetto.report
 
+import io.embrace.android.embracesdk.internal.perfetto.stats.ComparisonReport
 import io.embrace.android.embracesdk.internal.perfetto.stats.IterationsReport
 import io.embrace.android.embracesdk.internal.perfetto.stats.StatsReport
 
@@ -15,4 +16,11 @@ internal fun renderIterations(format: ReportFormat, report: IterationsReport): S
     ReportFormat.MARKDOWN -> renderIterationsMarkdown(report)
     ReportFormat.JSON -> renderIterationsJson(report)
     ReportFormat.HTML -> renderIterationsHtml(report)
+}
+
+/** Renders two runs set against each other in whichever format was asked for. */
+internal fun renderComparison(format: ReportFormat, report: ComparisonReport): String = when (format) {
+    ReportFormat.MARKDOWN -> renderComparisonMarkdown(report)
+    ReportFormat.JSON -> renderComparisonJson(report)
+    ReportFormat.HTML -> renderComparisonHtml(report)
 }

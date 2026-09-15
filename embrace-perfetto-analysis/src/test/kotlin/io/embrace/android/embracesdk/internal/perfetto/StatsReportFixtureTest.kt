@@ -13,18 +13,18 @@ internal class StatsReportFixtureTest {
     fun `the report describes the capture it measured, whichever sections were asked for`() {
         val report = report(listOf(STARTUP, ABSENT))
         assertEquals(1094, report.sliceCount)
-        assertEquals(86, report.sectionCount)
+        assertEquals(87, report.sectionCount)
         assertEquals(6, report.threadCount)
-        assertEquals(2_182_385_126L, report.traceWindowNanos)
+        assertEquals(2_536_707_168L, report.traceWindowNanos)
         assertEquals(listOf(ABSENT), report.stats.missing)
     }
 
     @Test
     fun `a section that ran once renders as one markdown row of microseconds`() {
-        val ran = "12083.458"
+        val ran = "17266.417"
         assertEquals(
-            listOf(STARTUP, MAIN_THREAD, "9874", "1") +
-                listOf(ran, "0.5537", ran, "0.000", ran) +
+            listOf(STARTUP, MAIN_THREAD, "6922", "1") +
+                listOf(ran, "0.6807", ran, "0.000", ran) +
                 List(DEFAULT_PERCENTILES.size) { ran } + ran,
             cells(dataRows(renderMarkdown(report(listOf(STARTUP)))).single()),
         )
@@ -34,11 +34,11 @@ internal class StatsReportFixtureTest {
     fun `a section that ran on three threads renders a row for each, thread named and tid ascending`() {
         val rows = dataRows(renderMarkdown(report(listOf(REPEATED)))).map(::cells)
         assertEquals(listOf(MAIN_THREAD, "emb-http-reques", "emb-non-io-reg"), rows.map { it[1] })
-        assertEquals(listOf("9874", "9892", "9894"), rows.map { it[2] })
+        assertEquals(listOf("6922", "6939", "6941"), rows.map { it[2] })
         assertEquals(listOf("446", "15", "40"), rows.map { it[3] })
-        assertEquals(listOf("0.1077", "0.0215", "0.1015"), rows.map { it[5] })
+        assertEquals(listOf("0.0830", "0.0312", "0.0018"), rows.map { it[5] })
         assertEquals(
-            listOf("2349.381", "5.268", "12.384", "0.541", "3.584", "7.209", "9.584", "36.250", "230.209"),
+            listOf("2106.424", "4.723", "9.197", "0.458", "3.542", "6.542", "8.209", "26.000", "163.458"),
             rows.first().let { listOf(it[4]) + it.drop(6) },
         )
     }
@@ -46,7 +46,7 @@ internal class StatsReportFixtureTest {
     @Test
     fun `json carries the nanoseconds themselves, so nothing is rounded for a machine`() {
         val text = renderJson(report(listOf(STARTUP)))
-        assertTrue(text, text.contains(""""sumNanos": 12083458"""))
+        assertTrue(text, text.contains(""""sumNanos": 17266417"""))
         assertTrue(text, text.contains(""""threadName": "$MAIN_THREAD""""))
     }
 
@@ -55,7 +55,7 @@ internal class StatsReportFixtureTest {
         val report = statsReport(options(allOperations = true), trace)
         val names = report.stats.operations.map(OperationStats::name).distinct()
         assertEquals(names.sorted(), names)
-        assertEquals(86, names.size)
+        assertEquals(87, names.size)
         assertEquals(report.stats.operations.size, dataRows(renderMarkdown(report)).size)
     }
 

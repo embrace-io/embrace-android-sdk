@@ -136,6 +136,7 @@ internal fun summarise(trace: Trace): String = buildString {
         val named = timeline.name?.let { " ($it)" }.orEmpty()
         appendLine("    tid ${timeline.tid}$named: ${timeline.slices.size} slices")
     }
+    appendLine("  counters: ${model.counterSampleCount} samples of ${model.counterNames.size} distinct counters")
     append("  skipped: ${model.unclosed} unclosed, ${model.unopened} unopened, ${model.unsupported} unsupported")
 }
 

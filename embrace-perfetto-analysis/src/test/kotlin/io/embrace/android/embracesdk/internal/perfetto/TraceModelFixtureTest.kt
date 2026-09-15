@@ -25,9 +25,9 @@ internal class TraceModelFixtureTest {
 
     @Test
     fun `slices are stacked per thread, keyed and ordered by thread id`() {
-        assertEquals(listOf(9874, 9891, 9892, 9894, 9904, 9905), model.threads.keys.toList())
+        assertEquals(listOf(6922, 6938, 6939, 6941, 6951, 6952), model.threads.keys.toList())
         assertEquals(
-            listOf(946, 12, 34, 43, 55, 4),
+            listOf(945, 12, 34, 44, 55, 4),
             model.threads.values.map { it.slices.size },
         )
     }
@@ -42,12 +42,12 @@ internal class TraceModelFixtureTest {
 
     @Test
     fun `the sections the sdk emits are searchable by name`() {
-        assertEquals(86, model.names.size)
+        assertEquals(87, model.names.size)
 
         val start = checkNotNull(model.first("emb-sdk-start"))
-        assertEquals(9874, start.tid)
+        assertEquals(6922, start.tid)
         assertEquals(0, start.depth)
-        assertEquals(12_083_458L, start.durationNanos)
+        assertEquals(17_266_417L, start.durationNanos)
         assertEquals(1, model.slices("emb-sdk-start").size)
     }
 
@@ -88,6 +88,30 @@ internal class TraceModelFixtureTest {
                 assertTrue("$child outside $slice", child.endNanos <= slice.endNanos)
             }
         }
+    }
+
+    @Test
+    fun `the counters the sdk records are searchable by name, sampled in the order they were written`() {
+        assertEquals(77, model.counterSampleCount)
+        assertEquals(
+            listOf(
+                "emb-mf-bytes-written",
+                "emb-mf-files-written",
+                "emb-sf-bytes-serialized",
+                "emb-sf-bytes-written",
+                "emb-sf-files-written",
+            ),
+            model.counterNames.sorted(),
+        )
+        assertEquals(38_632L, model.counterSamples("emb-sf-bytes-serialized").single().value)
+        assertEquals(emptyList<TraceCounterSample>(), model.counterSamples("emb-not-a-counter"))
+    }
+
+    @Test
+    fun `a multi-file counter totals one session part, so the next part restarts it at zero`() {
+        val files = model.counterSamples("emb-mf-files-written")
+        assertEquals(listOf(6951), files.map(TraceCounterSample::tid).distinct())
+        assertEquals((1L..24L).toList() + (1L..13L).toList(), files.map(TraceCounterSample::value))
     }
 
     @Test

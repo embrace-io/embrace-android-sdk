@@ -18,9 +18,9 @@ internal class PerfettoTraceFixtureTest {
 
     @Test
     fun `the capture decodes to the ftrace events it holds`() {
-        assertEquals(32, trace.packet.size)
-        assertEquals(2188, events.size)
-        assertEquals(2188, printEvents(events).size)
+        assertEquals(33, trace.packet.size)
+        assertEquals(2265, events.size)
+        assertEquals(2265, printEvents(events).size)
     }
 
     @Test
@@ -35,7 +35,7 @@ internal class PerfettoTraceFixtureTest {
                 "emb-session-per",
                 "emb-data-persis",
             ),
-            listOf(9874, 9891, 9892, 9894, 9904, 9905).map(names::get),
+            listOf(6922, 6938, 6939, 6941, 6951, 6952).map(names::get),
         )
     }
 
@@ -51,16 +51,19 @@ internal class PerfettoTraceFixtureTest {
 
     @Test
     fun `atrace wrote from every thread the benchmark ran on`() {
-        assertEquals(listOf(9874, 9891, 9892, 9894, 9904, 9905), events.map(FtraceEvent::pid).distinct().sorted())
-        assertEquals(1892, events.count { it.pid == 9874 })
+        assertEquals(listOf(6922, 6938, 6939, 6941, 6951, 6952), events.map(FtraceEvent::pid).distinct().sorted())
+        assertEquals(1890, events.count { it.pid == 6922 })
     }
 
     @Test
-    fun `the payloads are atrace begin and end events, carrying the sections the sdk emits`() {
+    fun `the payloads are atrace begins, ends and counters, carrying what the sdk emits`() {
         val payloads = events.mapNotNull { it.print?.buf?.substringBefore('\n') }
-        assertTrue(payloads.all { it.startsWith("B|") || it == "E" || it.startsWith("E|") })
+        assertTrue(payloads.all { it.startsWith("B|") || it == "E" || it.startsWith("E|") || it.startsWith("C|") })
         assertEquals(1094, payloads.count { it.startsWith("B|") })
+        assertEquals(1094, payloads.count { it == "E" || it.startsWith("E|") })
+        assertEquals(77, payloads.count { it.startsWith("C|") })
         assertTrue(payloads.any { it.endsWith("|emb-sdk-start") })
+        assertTrue(payloads.any { it.startsWith("C|") && it.contains("|emb-mf-bytes-written|") })
     }
 
     @Test

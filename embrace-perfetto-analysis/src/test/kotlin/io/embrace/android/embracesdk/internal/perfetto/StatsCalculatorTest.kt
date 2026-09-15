@@ -161,7 +161,7 @@ internal class StatsCalculatorTest {
         calculateStats(model, listOf(name), window).operations.single()
 
     private fun model(vararg timelines: ThreadTimeline) =
-        TraceModel(timelines.associateBy(ThreadTimeline::tid), 0, 0, 0)
+        TraceModel(timelines.associateBy(ThreadTimeline::tid), emptyList(), 0, 0, 0)
 
     private fun timeline(tid: Int, slices: List<TraceSlice>, name: String? = null) = ThreadTimeline(tid, name, slices)
 

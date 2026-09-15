@@ -75,7 +75,8 @@ Every section the trace recorded is reported with its count, total, `wall%`, mea
 percentiles; `--operations <a,b,c>` narrows that to the sections named (`--all-operations` spells out the
 default).
 
-A section that ran on several threads is measured once per thread. Statistics always go to a file,
+A section is measured once, pooling every occurrence the trace recorded wherever it ran, so a section
+that used several threads is one row rather than one per thread. Statistics always go to a file,
 never to stdout: `--output` names it, and without one it is `<input>-report.<format extension>` beside the
 input. Markdown (the default) writes microseconds, `--format json` the nanoseconds themselves, and
 `--format html` wraps that same json in a page that reads it.

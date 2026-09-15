@@ -16,20 +16,12 @@ internal fun calculateStats(
 ): TraceStats {
     val requested = operations.distinct()
     val (recorded, missing) = requested.partition { model.slices(it).isNotEmpty() }
-    val stats = recorded.flatMap { name ->
-        model.slices(name)
-            .groupBy(TraceSlice::tid)
-            .toSortedMap()
-            .map { (tid, occurrences) ->
-                stats(name, model.threads.getValue(tid), occurrences, traceWindowNanos)
-            }
-    }
+    val stats = recorded.map { name -> stats(name, model.slices(name), traceWindowNanos) }
     return TraceStats(stats, missing, calculateCounters(model, traceStartNanos))
 }
 
 private fun stats(
     name: String,
-    timeline: ThreadTimeline,
     occurrences: List<TraceSlice>,
     traceWindowNanos: Long,
 ): OperationStats {
@@ -38,8 +30,6 @@ private fun stats(
     val meanNanos = sumNanos.toDouble() / durations.size
     return OperationStats(
         name = name,
-        tid = timeline.tid,
-        threadName = timeline.name,
         count = durations.size,
         sumNanos = sumNanos,
         traceWindowPercent = percentOf(sumNanos, traceWindowNanos),

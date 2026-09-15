@@ -2,6 +2,10 @@ package io.embrace.android.embracesdk.internal.instrumentation.startup
 
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ArtOptimizationState.Companion.FILTER_VALUE_END
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ArtOptimizationState.Companion.artCompilerFilterKey
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.ART_COMPILER_FILTER
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.ART_COMPILER_FILTER_NOT_FOUND
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.STRING_ERROR
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.indexOf
 import io.embrace.android.embracesdk.internal.utils.readHead
 import java.io.File
@@ -10,56 +14,69 @@ import java.io.File
  * Clues about how much optimization has been done to improve the performance of ART's DEX compilation
  * at runtime:
  *
- * [artCompilerFilter] How ART is compiling this app's primary DEX.
- * [hasAppImage] Whether the APK has the right files to allow an optimized DEX compilation by ART
+ * [artCompilerFilter] How ART has compiled this app's primary DEX. It will be [ART_COMPILER_FILTER_NOT_FOUND] if
+ * the filter was not found and there was no unexpected failure, and [STRING_ERROR] if there was a failure when
+ * we tried to obtain the value.
+ * [hasAppImage] Whether the APK has the right files to support an optimized DEX compilation by ART
  */
 class ArtOptimizationState internal constructor(
-    val artCompilerFilter: String?,
+    val artCompilerFilter: String,
     val hasAppImage: Boolean,
 ) {
 
     companion object {
 
         /**
-         * Construct this by looking the base.odex for the primary APK at [apkPath] based on the standard accessible location for
-         * a typical app (i.e. <apk dir>/oat/<isa>/base.odex), where <isa> follows from the device's [primaryAbi]. This might
-         * result in a false-negative if the odex is found in another location, as is the case for some pre-installed apps.
+         * Construct this by looking at the .odex and .art files for the primary APK at [apkPath] based on the standard accessible
+         * location for a typical app (i.e. <apk dir>/oat/<isa>/base.odex), where <isa> follows from the device's [primaryAbi].
          *
-         * Returns null if the ABI is not one the SDK supports or if the APK cannot be found.
+         * Returns null only when there is no location to look in: either [apkPath] names no directory that could hold an oat one
+         * beside it, or the [primaryAbi] does not map to a supported ISA. It means the instrumentation doesn't support this app
+         * installation on this device for determining the ART optimization state attributes. This is an expected scenario so no
+         * errors are logged.
+         *
+         * This is different than the case if the location is valid but the expected files are not found. In that case, we
+         * can populate [artCompilerFilter] and [hasAppImage] properly. This is the case when an app's primary DEX has not been
+         * compiled, indicating a startup without the benefit of ART optimization.
          */
-        fun create(apkPath: String?, primaryAbi: String): ArtOptimizationState? {
-            val apk = apkPath?.let(::File) ?: return null
+        fun create(apkPath: String, primaryAbi: String, logger: InternalLogger): ArtOptimizationState? {
+            val apk = File(apkPath)
+            val apkDir = apk.parentFile ?: return null
             val isa = getIsa(primaryAbi) ?: return null
-            val oatDir = File(apk.parentFile ?: return null, "oat/$isa")
+            val oatDir = File(apkDir, "oat/$isa")
             val odex = File(oatDir, apk.nameWithoutExtension + ".odex")
             val art = File(oatDir, apk.nameWithoutExtension + ".art")
-            return try {
-                val filter = runCatching {
-                    if (odex.isFile) {
-                        // Find the ART compiler filter in the header of the odex file.
-                        // We read the chunk of it the filter is expected to land in as bytes and scan for it.
-                        findArtCompilerFilter(odex.readHead(HEADER_SCAN_BYTES))
-                    } else {
-                        null
-                    }
-                }.getOrNull()
-                ArtOptimizationState(
-                    artCompilerFilter = filter,
-                    hasAppImage = art.isFile,
-                )
-            } catch (_: Throwable) {
-                null
+
+            // The filter and the app image come from two different files, let them fail independently.
+            val filter = try {
+                if (odex.isFile) {
+                    // Find the ART compiler filter in the header of the odex file.
+                    // We read the chunk of the header the filter is expected to be in and scan the bytes for the value.
+                    findArtCompilerFilter(odex.readHead(HEADER_SCAN_BYTES))
+                } else {
+                    // Not finding the file is not an error, so simply return that fact.
+                    ART_COMPILER_FILTER_NOT_FOUND
+                }
+            } catch (t: Throwable) {
+                logger.trackAttributeError(ART_COMPILER_FILTER, t)
+                STRING_ERROR
             }
+
+            return ArtOptimizationState(
+                artCompilerFilter = filter,
+                hasAppImage = art.isFile,
+            )
         }
 
         /**
          * Find the ART compiler filter string in the given [buffer], which is located immediately after its key (represented by the
-         * bytes in [artCompilerFilterKey]) up to [FILTER_VALUE_END]. Return null if no match is found.
+         * bytes in [artCompilerFilterKey]) up to [FILTER_VALUE_END]. Returns [ART_COMPILER_FILTER_NOT_FOUND] if there is no match,
+         * or if the value it found ran past the end of the buffer and so may have been truncated.
          */
-        private fun findArtCompilerFilter(buffer: ByteArray): String? {
+        private fun findArtCompilerFilter(buffer: ByteArray): String {
             val keyLocation = buffer.indexOf(artCompilerFilterKey)
             if (keyLocation < 0) {
-                return null
+                return ART_COMPILER_FILTER_NOT_FOUND
             }
             val start = keyLocation + artCompilerFilterKey.size
             var end = start
@@ -69,7 +86,7 @@ class ArtOptimizationState internal constructor(
             return if (end > start && end < buffer.size) {
                 String(buffer, start, end - start, Charsets.US_ASCII)
             } else {
-                null
+                ART_COMPILER_FILTER_NOT_FOUND
             }
         }
 

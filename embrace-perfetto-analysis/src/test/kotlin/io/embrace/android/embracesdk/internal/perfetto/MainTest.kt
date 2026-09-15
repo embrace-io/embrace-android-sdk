@@ -76,6 +76,7 @@ internal class MainTest {
         val report = StatsReport("t.gz", 2048, 12, 3, 2, 1_200_000, TraceStats(emptyList(), emptyList()))
         assertTrue(render(ReportFormat.MARKDOWN, report).startsWith("# Perfetto trace statistics"))
         assertTrue(render(ReportFormat.JSON, report).startsWith("{"))
+        assertTrue(render(ReportFormat.HTML, report).startsWith("<!doctype html>"))
     }
 
     @Test

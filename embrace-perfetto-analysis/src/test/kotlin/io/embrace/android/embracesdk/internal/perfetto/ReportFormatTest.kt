@@ -10,6 +10,7 @@ internal class ReportFormatTest {
     fun `a flag names one format exactly, rather than any spelling of it`() {
         assertEquals(ReportFormat.MARKDOWN, ReportFormat.from("markdown"))
         assertEquals(ReportFormat.JSON, ReportFormat.from("json"))
-        listOf("JSON", "Json", " json", "md", "").forEach { flag -> assertNull(flag, ReportFormat.from(flag)) }
+        assertEquals(ReportFormat.HTML, ReportFormat.from("html"))
+        listOf("JSON", "Json", " json", "md", "htm", "").forEach { flag -> assertNull(flag, ReportFormat.from(flag)) }
     }
 }

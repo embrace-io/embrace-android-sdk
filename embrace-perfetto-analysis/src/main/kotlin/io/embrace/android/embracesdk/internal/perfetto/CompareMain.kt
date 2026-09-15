@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.perfetto
 
+import io.embrace.android.embracesdk.internal.perfetto.cli.CliSpec
+import io.embrace.android.embracesdk.internal.perfetto.cli.asksForHelp
 import kotlin.system.exitProcess
 
 private val SPEC = CliSpec(

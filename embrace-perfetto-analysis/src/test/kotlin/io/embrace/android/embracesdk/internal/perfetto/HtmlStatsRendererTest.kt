@@ -78,8 +78,6 @@ internal class HtmlStatsRendererTest {
 
     private fun operation(name: String = OPERATION) = OperationStats(
         name = name,
-        tid = 9874,
-        threadName = "main",
         count = 2,
         sumNanos = 3000,
         traceWindowPercent = 0.25,

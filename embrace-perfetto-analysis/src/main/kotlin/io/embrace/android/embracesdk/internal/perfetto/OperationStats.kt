@@ -3,13 +3,11 @@ package io.embrace.android.embracesdk.internal.perfetto
 import kotlinx.serialization.Serializable
 
 /**
- * What one section cost on one thread, across every occurrence recorded there. A section that ran on
- * two threads is two of these.
+ * What one section cost across every occurrence the trace recorded, wherever it ran. A section that
+ * ran on several threads is pooled into one of these rather than split per thread.
  *
  * @param name the section, as atrace recorded it.
- * @param tid the thread that ran these occurrences.
- * @param threadName what the trace called [tid], or null when it named no thread with that id.
- * @param count how many times the section ran on this thread.
+ * @param count how many times the section ran.
  * @param sumNanos the time every occurrence took together.
  * @param traceWindowPercent what share of the whole trace window [sumNanos] accounts for. That window is the
  * capture's first ftrace event to its last. The value does not necessarily sum to 100 and is an approximation
@@ -22,8 +20,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 internal data class OperationStats(
     val name: String,
-    val tid: Int,
-    val threadName: String?,
     val count: Int,
     val sumNanos: Long,
     val traceWindowPercent: Double,

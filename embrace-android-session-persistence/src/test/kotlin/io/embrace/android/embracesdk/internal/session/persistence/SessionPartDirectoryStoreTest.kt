@@ -203,6 +203,37 @@ internal class SessionPartDirectoryStoreTest {
         create(partDirectory)
         store.delete(partDirectory)
         store.delete(partDirectory)
+        assertEquals(emptyList<SessionPartDirectory>(), store.storedDirectories())
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `deleting everything removes the sessions root along with untracked files`() {
+        create(partDirectory)
+        create(partDirectory.copy(timestamp = NOW + 1))
+        File(sessionsDir, "junk.txt").writeText("not a session part")
+        store.deleteAll()
+
+        assertFalse(sessionsDir.exists())
+        assertEquals(emptyList<SessionPartDirectory>(), store.storedDirectories())
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `directories can be created again after everything is deleted`() {
+        create(partDirectory)
+        store.deleteAll()
+        create(partDirectory)
+
+        assertEquals(listOf(partDirectory.dirName), dirNames())
+        assertEquals(listOf(partDirectory), store.storedDirectories())
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `deleting everything when nothing has been stored is tolerated`() {
+        store.deleteAll()
+        store.deleteAll()
 
         assertEquals(emptyList<SessionPartDirectory>(), store.storedDirectories())
         assertNoInternalErrors()

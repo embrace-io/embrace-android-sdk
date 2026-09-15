@@ -30,6 +30,7 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionReconst
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -193,12 +194,29 @@ internal class SessionPartReaderTest {
     }
 
     @Test
-    fun `reading persisted session parts is a no-op when multi file persistence is disabled`() {
+    fun `everything on disk is deleted when multi file persistence is disabled`() {
         persist(partDirectory)
-
+        persist(laterPartDirectory)
+        assertTrue(File(sessionsDir, "unparseable.tmp").createNewFile())
         createReader(enabled = false).readPersistedSessionParts()
 
+        assertEquals(emptyList<Any>(), intakeService.intakeList)
+        assertEquals(emptyList<Any>(), intakeService.cacheList)
+        assertEquals(emptyList<SessionPartDirectory>(), directoryStore.storedDirectories())
+        assertFalse(sessionsDir.exists())
+        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+    }
+
+    @Test
+    fun `deleting is queued on the worker rather than run on the calling thread`() {
+        persist(partDirectory)
+        readExecutor.blockingMode = true
+        createReader(enabled = false).readPersistedSessionParts()
         assertNothingDelivered(retained = listOf(partDirectory))
+
+        readExecutor.runCurrentlyBlocked()
+        assertEquals(emptyList<SessionPartDirectory>(), directoryStore.storedDirectories())
+        assertFalse(sessionsDir.exists())
     }
 
     @Test

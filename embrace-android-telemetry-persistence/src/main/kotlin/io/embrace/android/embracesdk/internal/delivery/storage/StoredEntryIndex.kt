@@ -79,6 +79,20 @@ class StoredEntryIndex<T>(
     }
 
     /**
+     * Removes everything under the root directory, including the root itself and any files that are
+     * not tracked by the index. The root directory is recreated the next time an entry is written.
+     */
+    fun deleteAll() {
+        try {
+            rootDir.deleteRecursively()
+        } catch (exc: Throwable) {
+            logger.trackInternalError(errorType, exc)
+        } finally {
+            entries.clear()
+        }
+    }
+
+    /**
      * Removes all entries created before the age cutoff. When [newEntry] is non-null the
      * count-based limit is then enforced, and the return value indicates whether [newEntry] itself
      * was pruned and so should not be written to disk.

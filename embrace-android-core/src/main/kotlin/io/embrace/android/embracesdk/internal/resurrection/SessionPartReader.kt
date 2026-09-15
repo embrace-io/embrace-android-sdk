@@ -43,6 +43,7 @@ class SessionPartReader(
      */
     fun readPersistedSessionParts() {
         if (!configService.persistenceBehavior.isMultiFilePersistenceEnabled()) {
+            deletePersistedSessionParts()
             return
         }
         worker.submit {
@@ -62,6 +63,14 @@ class SessionPartReader(
                         break
                     }
                 }
+            }
+        }
+    }
+
+    private fun deletePersistedSessionParts() {
+        worker.submit {
+            EmbTrace.trace("mf-delete-session-parts") {
+                directoryStore.deleteAll()
             }
         }
     }

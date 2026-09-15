@@ -2,9 +2,12 @@ package io.embrace.android.embracesdk.internal.utils
 
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.ByteArrayOutputStream
+import java.io.IOException
+import java.io.OutputStream
 
 internal class CountingOutputStreamTest {
 
@@ -55,5 +58,20 @@ internal class CountingOutputStreamTest {
         )
         stream.close()
         assertTrue(closed)
+    }
+
+    @Test
+    fun `a write the delegate rejects is not counted`() {
+        val stream = CountingOutputStream(
+            object : OutputStream() {
+                override fun write(b: Int): Unit = throw IOException("disk full")
+
+                override fun write(b: ByteArray, off: Int, len: Int): Unit = throw IOException("disk full")
+            },
+        )
+
+        assertThrows(IOException::class.java) { stream.write(1) }
+        assertThrows(IOException::class.java) { stream.write(byteArrayOf(1, 2, 3)) }
+        assertEquals(0L, stream.written)
     }
 }

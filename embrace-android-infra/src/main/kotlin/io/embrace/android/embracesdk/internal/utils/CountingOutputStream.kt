@@ -11,13 +11,13 @@ class CountingOutputStream(private val delegate: OutputStream) : OutputStream() 
         private set
 
     override fun write(b: Int) {
-        written++
         delegate.write(b)
+        written++
     }
 
     override fun write(b: ByteArray, off: Int, len: Int) {
-        written += len
         delegate.write(b, off, len)
+        written += len
     }
 
     override fun flush() = delegate.flush()

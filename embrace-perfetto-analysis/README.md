@@ -7,7 +7,7 @@ It reads the file onto the protobuf wire model and pairs the atrace events into 
 ## Running
 
 ```bash
-scripts/analyse-trace.sh <trace.perfetto.gz> [--operations a,b | --all-operations] [--format markdown|json|html]
+scripts/analyse-trace.sh <trace.perfetto.gz> [--operations a,b] [--format markdown|json|html]
                         [--output <file>] [--dry-run]
 ```
 
@@ -71,14 +71,18 @@ the capture.
 
 ## Statistics
 
-`--operations <a,b,c>` reports count, total, `wall%`, mean, deviation, min, max and percentiles for those sections;
-`--all-operations` does the same for every section the trace recorded. A section that ran on several threads is
-measured once per thread. Statistics always go to the file `--output` names, never to stdout, whichever format
-renders them: markdown (the default) writes microseconds, `--format json` the nanoseconds themselves, and
+Every section the trace recorded is reported with its count, total, `wall%`, mean, deviation, min, max and
+percentiles; `--operations <a,b,c>` narrows that to the sections named (`--all-operations` spells out the
+default).
+
+A section that ran on several threads is measured once per thread. Statistics always go to a file,
+never to stdout: `--output` names it, and without one it is `<input>-report.<format extension>` beside the
+input. Markdown (the default) writes microseconds, `--format json` the nanoseconds themselves, and
 `--format html` wraps that same json in a page that reads it.
 
 ```bash
-scripts/analyse-trace.sh trace.perfetto.gz --all-operations --format html --output report.html
+scripts/analyse-trace.sh trace.perfetto.gz --format html            # -> trace-report.html
+scripts/analyse-trace.sh trace.perfetto.gz --output report.html --format html
 ```
 
 ## Iterations (not implemented)
@@ -90,16 +94,15 @@ A macrobenchmark run is multiple iterations.
 ```bash
 # one run -> one aggregate
 scripts/macrobenchmark.sh --out perf/macrobenchmark/baseline
-scripts/analyse-trace-iterations.sh perf/macrobenchmark/baseline --all-operations --format json --output baseline.json
+scripts/analyse-trace-iterations.sh perf/macrobenchmark/baseline --format json --output baseline.json
 
 # the other run -> another aggregate, then the difference between them
-scripts/analyse-trace-iterations.sh perf/macrobenchmark/candidate --all-operations --format json --output candidate.json
+scripts/analyse-trace-iterations.sh perf/macrobenchmark/candidate --format json --output candidate.json
 scripts/compare-trace-iterations.sh baseline.json candidate.json --format html --output comparison.html
 ```
 
-`analyse-trace-iterations.sh` aggregates macrobenchmark runs. Its flags are the single-trace ones:
-`--operations`/`--all-operations` choose the sections, `--format` renders markdown, json or html, and `--output`
-is where the report goes — statistics never reach stdout.
+`analyse-trace-iterations.sh` aggregates macrobenchmark runs. Its options are the single-trace ones, and mean
+the same things.
 
 `compare-trace-iterations.sh` compares two aggregated runs to see how performance differs for a code change.
 

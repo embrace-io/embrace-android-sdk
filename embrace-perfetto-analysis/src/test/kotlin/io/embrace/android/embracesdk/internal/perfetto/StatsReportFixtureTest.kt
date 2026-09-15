@@ -52,7 +52,7 @@ internal class StatsReportFixtureTest {
 
     @Test
     fun `asking for every section reports each one in name order, with a row per thread`() {
-        val report = statsReport(options(allOperations = true), trace)
+        val report = statsReport(options(), trace)
         val names = report.stats.operations.map(OperationStats::name).distinct()
         assertEquals(names.sorted(), names)
         assertEquals(87, names.size)
@@ -111,8 +111,8 @@ internal class StatsReportFixtureTest {
 
     private fun report(operations: List<String>) = statsReport(options(operations = operations), trace)
 
-    private fun options(operations: List<String> = emptyList(), allOperations: Boolean = false) =
-        Options(fixture(), operations = operations, allOperations = allOperations)
+    private fun options(operations: List<String> = emptyList()) =
+        CliOptions(inputs = listOf(fixture()), operations = operations, output = File("report.md"))
 
     private fun cells(row: String) = row.removeSurrounding("| ", " |").split(" | ")
 

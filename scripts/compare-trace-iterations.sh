@@ -1,8 +1,7 @@
 #!/bin/sh
-# Compares two aggregates written by scripts/analyse-trace-iterations.sh.
+# Compares two aggregates written by scripts/analyse-trace-iterations.sh. Run with --help for the options.
 #
-# Usage: scripts/compare-trace-iterations.sh <baseline.json> <candidate.json>
-#                                            [--format markdown|json|html] [--output <file>] [--dry-run]
+# Usage: scripts/compare-trace-iterations.sh <baseline.json> <candidate.json> [options]
 #
 # Both inputs are the json aggregates, not trace directories and not rendered reports.
 #
@@ -10,19 +9,6 @@
 
 set -eu
 
-root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+. "$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)/lib/analysis-task.sh"
 
-if [ $# -lt 2 ]; then
-    printf 'usage: %s <baseline.json> <candidate.json> [--format markdown|json|html] [--output <file>] [--dry-run]\n' "$0" >&2
-    exit 1
-fi
-
-# quoted one at a time, since gradle splits --args on whitespace
-args="'$1' '$2'"
-shift 2
-for arg in "$@"; do
-    args="$args '$arg'"
-done
-
-exec "$root/gradlew" -q --console=plain -p "$root" :embrace-perfetto-analysis:compareIterations \
-    --args="$args"
+run_analysis compareIterations "$@"

@@ -28,6 +28,7 @@ internal class SessionPartWriterTrackerTest {
     private companion object {
         private const val USER_SESSION_ID = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         private const val SESSION_PART_ID = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        private const val OTHER_SESSION_PART_ID = "cccccccccccccccccccccccccccccccc"
     }
 
     @get:Rule
@@ -91,6 +92,20 @@ internal class SessionPartWriterTrackerTest {
 
         executor.runCurrentlyBlocked()
         assertFalse(writeTracker.isWriting(SESSION_PART_ID))
+    }
+
+    @Test
+    fun `a session part displaced by the next one stops being marked`() {
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        executor.runCurrentlyBlocked()
+
+        // the part loses its end, so starting the next one has to complete it
+        currentSessionPartSpan.endSession(startNewSession = true)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
+        executor.runCurrentlyBlocked()
+
+        assertFalse(writeTracker.isWriting(SESSION_PART_ID))
+        assertTrue(writeTracker.isWriting(OTHER_SESSION_PART_ID))
     }
 
     @Test

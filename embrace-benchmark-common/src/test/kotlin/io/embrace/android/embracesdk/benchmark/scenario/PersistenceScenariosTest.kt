@@ -51,6 +51,18 @@ internal class PersistenceScenariosTest {
     }
 
     @Test
+    fun `every scenario is short enough to macrobenchmark`() {
+        PersistenceScenarios.all.forEach { scenario ->
+            val scope = scope()
+            scenario.action(scope)
+            assertTrue(
+                "${scenario.id} lasts ${scope.elapsedMs}ms, which is too long to run repeatedly on a device",
+                scope.elapsedMs <= MAX_SESSION_MS,
+            )
+        }
+    }
+
+    @Test
     fun `no scenario emits telemetry faster than a real app would`() {
         PersistenceScenarios.all.forEach { scenario ->
             val scope = scope()
@@ -143,6 +155,7 @@ internal class PersistenceScenariosTest {
         const val START_TIME_MS = 1_692_201_601_000L
         const val MINUTE_MS = 60_000L
         const val MIN_SESSION_MS = 10_000L
+        const val MAX_SESSION_MS = 30_000L
         const val MAX_CALLS_PER_MINUTE = 600L
     }
 }

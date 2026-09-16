@@ -43,12 +43,12 @@ object PersistenceScenarios {
         }
 
         embrace.addBreadcrumb("home shown")
-        advanceTime(20_000)
+        advanceTime(10_000)
     }
 
     val browseFeed: ScenarioSpec = ScenarioSpec(
         id = "browse_feed",
-        description = "3min scrolling a feed, opening items and returning",
+        description = "6 feed pages, each opening one item",
     ) {
         embrace.addUserSessionProperty("user.tier", "free", PropertyScope.USER_SESSION)
 
@@ -61,20 +61,20 @@ object PersistenceScenarios {
             embrace.addBreadcrumb("scrolled to page $page")
 
             // user reads the page, then opens one item from it
-            advanceTime(18_000)
+            advanceTime(1_400)
             embrace.recordSpan("item-detail-load", attributes = mapOf("item.id" to "$page-2")) {
                 request("https://api.example.com/v1/items/$page-2")
                 request("https://cdn.example.com/hero/$page-2.webp", bytesReceived = 180_000)
                 advanceTime(220)
             }
             embrace.addBreadcrumb("opened item $page-2")
-            advanceTime(11_000)
+            advanceTime(600)
         }
     }
 
     val checkoutFlow: ScenarioSpec = ScenarioSpec(
         id = "checkout_flow",
-        description = "2min checkout with a failed payment and a successful retry",
+        description = "checkout with a failed payment and a successful retry",
     ) {
         embrace.addUserSessionProperty("user.tier", "member", PropertyScope.USER_SESSION)
         embrace.addUserSessionProperty("cart.currency", "GBP", PropertyScope.USER_SESSION)
@@ -84,14 +84,14 @@ object PersistenceScenarios {
             advanceTime(240)
         }
         embrace.addBreadcrumb("cart reviewed")
-        advanceTime(22_000)
+        advanceTime(3_000)
 
         embrace.recordSpan("delivery-options-load") {
             request("https://api.example.com/v1/delivery/options")
             advanceTime(190)
         }
         embrace.addBreadcrumb("delivery selected")
-        advanceTime(26_000)
+        advanceTime(3_500)
 
         embrace.recordSpan("payment-submit") {
             request("https://pay.example.com/v1/charge", method = HttpMethod.POST, statusCode = 503)
@@ -108,18 +108,18 @@ object PersistenceScenarios {
             severity = Severity.WARNING,
             properties = mapOf("order.id" to "A-99213"),
         )
-        advanceTime(14_000)
+        advanceTime(2_500)
 
         embrace.recordSpan("order-confirmation-load") {
             request("https://api.example.com/v1/orders/A-99213")
             advanceTime(200)
         }
-        advanceTime(9_000)
+        advanceTime(2_000)
     }
 
     val interruptedSession: ScenarioSpec = ScenarioSpec(
         id = "interrupted_session",
-        description = "4min session interrupted four times by leaving and returning to the app",
+        description = "session interrupted four times by leaving and returning to the app",
     ) {
         repeat(4) { visit ->
             embrace.recordSpan("screen-load", attributes = mapOf("screen.name" to "inbox")) {
@@ -127,19 +127,19 @@ object PersistenceScenarios {
                 advanceTime(170)
             }
             embrace.addBreadcrumb("inbox opened, visit $visit")
-            advanceTime(24_000)
+            advanceTime(2_000)
 
             // away replying to a message, or reading the notification that pulled them out
-            backgroundAndReturn(ms = 30_000)
+            backgroundAndReturn(ms = 1_500)
         }
 
         embrace.addBreadcrumb("returned to inbox")
-        advanceTime(15_000)
+        advanceTime(3_000)
     }
 
     val longEngagedSession: ScenarioSpec = ScenarioSpec(
         id = "long_engaged_session",
-        description = "20min session across ~36 screens with a break in the middle",
+        description = "~36 screens with a break in the middle",
     ) {
         embrace.addUserSessionProperty("user.tier", "member", PropertyScope.USER_SESSION)
 
@@ -150,11 +150,11 @@ object PersistenceScenarios {
                 advanceTime(200)
             }
             embrace.addBreadcrumb("browsed category-$step")
-            advanceTime(30_000)
+            advanceTime(300)
         }
 
-        // the user puts the phone down for a couple of minutes, then picks it back up
-        backgroundAndReturn(ms = 120_000)
+        // stands in for the user putting the phone down for a couple of minutes
+        backgroundAndReturn(ms = 1_500)
 
         repeat(18) { step ->
             embrace.recordSpan("screen-load", attributes = mapOf("screen.name" to "saved-$step")) {
@@ -162,7 +162,7 @@ object PersistenceScenarios {
                 advanceTime(180)
             }
             embrace.addBreadcrumb("reviewed saved-$step")
-            advanceTime(15_000)
+            advanceTime(200)
         }
     }
 

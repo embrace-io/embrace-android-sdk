@@ -15,7 +15,14 @@ and declines a manual end for an iteration that inherits one. The app depends on
 scripts/macrobenchmark.sh
 ```
 
-That runs the benchmark and copies the perfetto traces to `perf/macrobenchmark/<device>/`.
+That runs `SessionBenchmark` and copies the perfetto traces to `perf/macrobenchmark/<device>/`.
+Pass `--test` to run a different one:
+
+```bash
+scripts/macrobenchmark.sh --out perf/macrobenchmark/scenarios \
+    --test io.embrace.android.embracesdk.macrobenchmark.PersistenceScenarioBenchmark
+```
+
 The two halves are usable separately: `scripts/run-macrobenchmark.sh --help` and
 `scripts/grab-macrobenchmark-output.sh [dest]`.
 

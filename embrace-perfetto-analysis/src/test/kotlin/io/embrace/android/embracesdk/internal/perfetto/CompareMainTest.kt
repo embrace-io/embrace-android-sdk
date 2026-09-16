@@ -5,7 +5,10 @@ import io.embrace.android.embracesdk.internal.perfetto.cli.CliSpec
 import io.embrace.android.embracesdk.internal.perfetto.cli.parseArgs
 import io.embrace.android.embracesdk.internal.perfetto.iterations.IterationTrace
 import io.embrace.android.embracesdk.internal.perfetto.report.ReportFormat
+import io.embrace.android.embracesdk.internal.perfetto.stats.BenchmarkComparison
+import io.embrace.android.embracesdk.internal.perfetto.stats.ComparisonReport
 import io.embrace.android.embracesdk.internal.perfetto.stats.IterationsReport
+import io.embrace.android.embracesdk.internal.perfetto.stats.OperationComparison
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -53,6 +56,70 @@ internal class CompareMainTest {
         )
     }
 
+    @Test
+    fun `the comparison is summarised one line per benchmark, naming only what one run has`() {
+        val text = summariseComparison(
+            ComparisonReport(
+                baselinePath = BASELINE,
+                candidatePath = CANDIDATE,
+                benchmarks = listOf(
+                    comparison(SESSION, sections = 14, slower = 3, faster = 2, candidateOnly = listOf("emb-new")),
+                    comparison(FIXTURE, sections = 1, slower = 0, faster = 0),
+                ),
+                baselineOnly = emptyList(),
+                candidateOnly = listOf(EXTRA),
+            ),
+        )
+        assertEquals(
+            listOf(
+                "  $SESSION: 14 sections compared, 3 slower, 2 faster, 1 only in candidate",
+                "  $FIXTURE: 1 section compared, 0 slower, 0 faster",
+                "  $EXTRA: only in candidate, so nothing to compare it with",
+            ),
+            text.lines(),
+        )
+    }
+
+    @Test
+    fun `two runs with no benchmark in common say so rather than summarising nothing`() {
+        val text =
+            summariseComparison(ComparisonReport(BASELINE, CANDIDATE, emptyList(), listOf(SESSION), listOf(EXTRA)))
+        assertTrue(text, text.contains("  $SESSION: only in baseline"))
+        assertTrue(text, text.contains("  $EXTRA: only in candidate"))
+    }
+
+    private fun comparison(
+        benchmark: String,
+        sections: Int,
+        slower: Int,
+        faster: Int,
+        candidateOnly: List<String> = emptyList(),
+    ) = BenchmarkComparison(
+        benchmark = benchmark,
+        baselineIterations = 10,
+        candidateIterations = 10,
+        slower = slower,
+        faster = faster,
+        operations = List(sections) { operationComparison() },
+        counters = emptyList(),
+        baselineOnly = emptyList(),
+        candidateOnly = candidateOnly,
+    )
+
+    private fun operationComparison() = OperationComparison(
+        name = "emb-sdk-start",
+        baselineMeanNanos = 1000.0,
+        candidateMeanNanos = 1000.0,
+        deltaNanos = 0.0,
+        deltaPercent = 0.0,
+        baselineStdevNanos = 0.0,
+        candidateStdevNanos = 0.0,
+        noiseNanos = 0.0,
+        moved = false,
+        baselineIterations = 10,
+        candidateIterations = 10,
+    )
+
     private fun options() = CliOptions(
         inputs = listOf(File(BASELINE), File(CANDIDATE)),
         format = ReportFormat.HTML,
@@ -68,6 +135,7 @@ internal class CompareMainTest {
         const val OUTPUT = "comparison.html"
         const val SESSION = "SessionBenchmark.sessionEnd"
         const val FIXTURE = "TraceFixtureBenchmark.sessionEndTraceFixture"
+        const val EXTRA = "StartupBenchmark.coldStart"
         val SPEC = CliSpec("compareIterations", listOf("<baseline-dir>", "<candidate-dir>"))
     }
 }

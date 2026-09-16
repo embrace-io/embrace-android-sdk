@@ -44,7 +44,7 @@ tasks.register<JavaExec>("analyseIterations") {
 
 tasks.register<JavaExec>("compareIterations") {
     group = "verification"
-    description = "Compares two macrobenchmark runs. Reads both; the comparison is not implemented."
+    description = "Compares two macrobenchmark runs. Writing the report is not implemented."
     mainClass.set("io.embrace.android.embracesdk.internal.perfetto.CompareMainKt")
     classpath = sourceSets["main"].runtimeClasspath
     workingDir = rootProject.projectDir

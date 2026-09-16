@@ -47,6 +47,8 @@ internal fun iterationSummary(index: Int, windowNanos: Long) = IterationSummary(
 internal fun aggregateOperation(
     name: String = OPERATION,
     percentiles: List<Percentile> = DEFAULT_PERCENTILES.map { Percentile(it, 2000) },
+    meanNanos: Double = 1500.0,
+    stdevNanos: Double = 500.0,
 ) = AggregateOperationStats(
     name = name,
     iterations = 2,
@@ -55,21 +57,21 @@ internal fun aggregateOperation(
     traceWindowPercent = 0.25,
     minNanos = 1000,
     maxNanos = 2000,
-    meanNanos = 1500.0,
-    stdevNanos = 500.0,
+    meanNanos = meanNanos,
+    stdevNanos = stdevNanos,
     variationPercent = 33.3333,
     percentiles = percentiles,
     values = listOf(IterationValue(0, 1000), IterationValue(1, 2000)),
 )
 
-internal fun aggregateCounter(name: String = COUNTER) = AggregateCounterStats(
+internal fun aggregateCounter(name: String = COUNTER, meanTotal: Double = 2560.0) = AggregateCounterStats(
     name = name,
     iterations = 2,
     sampleCount = 4,
     meanSamples = 2.0,
     minTotal = 1024,
     maxTotal = 4096,
-    meanTotal = 2560.0,
+    meanTotal = meanTotal,
     sumTotal = 5120,
     values = listOf(IterationValue(0, 1024), IterationValue(1, 4096)),
 )

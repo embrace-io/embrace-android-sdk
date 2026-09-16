@@ -94,16 +94,17 @@ scripts/analyse-trace.sh trace.perfetto.gz --output report.html --format html
 
 A macrobenchmark run is multiple iterations.
 `scripts/analyse-trace-iterations.sh` reduces a whole run to one report, and
-`scripts/compare-trace-iterations.sh` diffs two of those reports (still a placeholder):
+`scripts/compare-trace-iterations.sh` diffs two runs:
 
 ```bash
-# one run -> one aggregate
+# one run -> one report
 scripts/macrobenchmark.sh --out perf/macrobenchmark/baseline
-scripts/analyse-trace-iterations.sh perf/macrobenchmark/baseline --format json --output baseline.json
+scripts/analyse-trace-iterations.sh perf/macrobenchmark/baseline
 
-# the other run -> another aggregate, then the difference between them
-scripts/analyse-trace-iterations.sh perf/macrobenchmark/candidate --format json --output candidate.json
-scripts/compare-trace-iterations.sh baseline.json candidate.json --format html --output comparison.html
+# two runs -> the difference between them
+scripts/macrobenchmark.sh --out perf/macrobenchmark/candidate
+scripts/compare-trace-iterations.sh perf/macrobenchmark/baseline perf/macrobenchmark/candidate \
+    --format html --output comparison.html
 ```
 
 `analyse-trace-iterations.sh` aggregates macrobenchmark runs. Its options are the single-trace ones, and mean
@@ -120,8 +121,10 @@ reported with how many iterations recorded it, its occurrences per iteration, `w
 runs holds the traces of several. The `<package>-benchmarkData.json` androidx.benchmark rewrites on every run
 names exactly that run's traces, so it decides which of them belong to the run and the rest are ignored.
 
-`compare-trace-iterations.sh` compares two aggregated runs to see how performance differs for a code change. It
-is still a placeholder that exits 9.
+`compare-trace-iterations.sh` compares two runs to see how performance differs for a code change. It takes the
+run directories themselves, not reports, and aggregates each exactly as `analyse-trace-iterations.sh` does, so
+neither has to be analysed first and `--operations` narrows both alike. It reads both runs today but does not
+yet diff them or write the report, and exits 9 once it has.
 
 ## Getting a trace
 

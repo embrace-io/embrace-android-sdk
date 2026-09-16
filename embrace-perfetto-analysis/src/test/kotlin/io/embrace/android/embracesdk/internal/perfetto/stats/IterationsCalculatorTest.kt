@@ -9,7 +9,7 @@ internal class IterationsCalculatorTest {
     @Test
     fun `a section on two threads within one iteration is one observation, not two`() {
         val stats = operation(
-            run(iteration(operation(tid = 1, count = 2, sumNanos = 1000), operation(tid = 2, count = 1, sumNanos = 500))),
+            run(iteration(operation(count = 2, sumNanos = 1000), operation(count = 1, sumNanos = 500))),
         )
         assertEquals(listOf(IterationValue(0, 1500)), stats.values)
         assertEquals(1, stats.iterations)
@@ -44,7 +44,7 @@ internal class IterationsCalculatorTest {
     fun `the window share of an iteration is what every thread of it accounts for, averaged over the run`() {
         val stats = operation(
             run(
-                iteration(operation(tid = 1, sumNanos = 100, windowPercent = 1.0), operation(tid = 2, sumNanos = 50, windowPercent = 0.5)),
+                iteration(operation(sumNanos = 100, windowPercent = 1.0), operation(sumNanos = 50, windowPercent = 0.5)),
                 iteration(operation(sumNanos = 150, windowPercent = 2.5)),
             ),
         )
@@ -173,14 +173,11 @@ internal class IterationsCalculatorTest {
 
     private fun operation(
         name: String = OPERATION,
-        tid: Int = 1,
         count: Int = 1,
         sumNanos: Long,
         windowPercent: Double = 0.0,
     ) = OperationStats(
         name = name,
-        tid = tid,
-        threadName = "main",
         count = count,
         sumNanos = sumNanos,
         traceWindowPercent = windowPercent,

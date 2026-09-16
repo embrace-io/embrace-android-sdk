@@ -1,13 +1,24 @@
 package io.embrace.android.embracesdk.internal.perfetto
 
+import io.embrace.android.embracesdk.internal.perfetto.cli.CliOptions
+import io.embrace.android.embracesdk.internal.perfetto.cli.CliSpec
+import io.embrace.android.embracesdk.internal.perfetto.cli.asksForHelp
+import io.embrace.android.embracesdk.internal.perfetto.cli.parseArgs
+import io.embrace.android.embracesdk.internal.perfetto.model.TraceInterpreter
 import io.embrace.android.embracesdk.internal.perfetto.proto.Trace
+import io.embrace.android.embracesdk.internal.perfetto.report.render
+import io.embrace.android.embracesdk.internal.perfetto.stats.StatsReport
+import io.embrace.android.embracesdk.internal.perfetto.stats.calculateStats
+import io.embrace.android.embracesdk.internal.perfetto.trace.TraceFormat
+import io.embrace.android.embracesdk.internal.perfetto.trace.ftraceEvents
+import io.embrace.android.embracesdk.internal.perfetto.trace.parseTrace
+import io.embrace.android.embracesdk.internal.perfetto.trace.printEvents
+import io.embrace.android.embracesdk.internal.perfetto.trace.threadNames
+import io.embrace.android.embracesdk.internal.perfetto.trace.traceStartNanos
+import io.embrace.android.embracesdk.internal.perfetto.trace.traceWindowNanos
+import io.embrace.android.embracesdk.internal.perfetto.trace.validateTrace
 import java.io.IOException
 import kotlin.system.exitProcess
-
-internal const val EXIT_USAGE = 1
-internal const val EXIT_BAD_TRACE = 2
-internal const val EXIT_BAD_OUTPUT = 3
-internal const val EXIT_NOT_IMPLEMENTED = 9
 
 private val SPEC = CliSpec(
     command = "analyseTrace",
@@ -100,10 +111,4 @@ internal fun statsReport(options: CliOptions, trace: Trace): StatsReport {
         traceWindowNanos = window,
         stats = calculateStats(model, requested, window, traceStartNanos(events)),
     )
-}
-
-internal fun render(format: ReportFormat, report: StatsReport): String = when (format) {
-    ReportFormat.MARKDOWN -> renderMarkdown(report)
-    ReportFormat.JSON -> renderJson(report)
-    ReportFormat.HTML -> renderHtml(report)
 }

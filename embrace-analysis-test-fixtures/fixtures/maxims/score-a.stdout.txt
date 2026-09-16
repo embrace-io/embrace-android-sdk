@@ -1,0 +1,13 @@
+maxims: mid-a / 9.2.0 / profile (run campaign-a, 80 iterations in 4 passes)
+  confirmed    off-cpu                2.50x on 20 iterations (slow 10/20 vs 16/80)
+  undetected   scheduler-wait         1.00x on 20 iterations (slow 4/20 vs 16/80)
+  confirmed    concurrent-cpu         2.00x on 20 iterations (slow 8/20 vs 16/80)
+  confirmed    starved-enriched       5.00x enrichment, 4 starved iterations
+  confirmed    gc-rare                1.2% of 80 iterations ran own GC
+  confirmed    first-launch           iter000/rest 1.27x over 4 passes
+  confirmed    config-fast-path       every pass's iter000 below the rest's median over 4 passes
+  confirmed    compile-state-toggle   pass medians 41.2 -> 51.2 -> 41.2 -> 51.2; pure-CPU 1.00x, block-resume 2.00x
+  confirmed    restore-vs-create      created p50 3.50 ms (n=8) vs restored p50 0.20 ms (n=72)
+  confirmed    cpu-closure            80/80 launches close to 100%
+  candidates: othercpu:system_server share 2.00x
+ledger: <ledger> now 1 runs

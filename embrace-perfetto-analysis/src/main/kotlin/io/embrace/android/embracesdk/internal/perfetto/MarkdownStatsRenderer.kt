@@ -1,9 +1,8 @@
 package io.embrace.android.embracesdk.internal.perfetto
 
-private const val UNNAMED_THREAD = "-"
 private const val EMPTY_SECTION = "_none_"
 
-private val FIXED_COLUMNS = listOf("operation", "thread", "tid", "count", "total", "wall%", "mean", "stdev", "min")
+private val FIXED_COLUMNS = listOf("operation", "count", "total", "wall%", "mean", "stdev", "min")
 private val COUNTER_COLUMNS = listOf("counter", "tid", "samples", "first", "last", "max", "total")
 
 internal fun renderMarkdown(report: StatsReport): String = buildString {
@@ -62,8 +61,6 @@ private fun StringBuilder.appendMissing(missing: List<String>) {
 
 private fun cells(stats: OperationStats): List<String> = listOf(
     stats.name,
-    stats.threadName ?: UNNAMED_THREAD,
-    stats.tid.toString(),
     stats.count.toString(),
     micros(stats.sumNanos),
     percent(stats.traceWindowPercent),

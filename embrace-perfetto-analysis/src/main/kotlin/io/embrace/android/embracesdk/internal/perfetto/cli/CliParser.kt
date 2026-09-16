@@ -53,20 +53,20 @@ private fun build(spec: CliSpec, inputs: List<String>, values: Map<String, Strin
         dryRun = "--dry-run" in flags,
         operations = operations,
         format = format,
-        output = values["--output"]?.let(::File) ?: reportPath(files.first(), format),
+        output = values["--output"]?.let(::File) ?: reportPath(files, format),
     )
 }
 
 /**
- * Where a report goes when `--output` did not say: alongside the input it was read from, named after it.
+ * Where a report goes when `--output` did not say: beside the first input, named after all of them.
  *
  * `perf/run/trace.perfetto.gz` reports to `perf/run/trace-report.md`. Everything from the first dot is an
  * extension to drop, since a trace arrives as `.perfetto.gz` or `.perfetto-trace`.
  */
-private fun reportPath(input: File, format: ReportFormat): File {
-    val base = input.name.substringBefore('.')
-    val name = if (base.isBlank()) "report" else "$base-report"
-    return File(input.parentFile, "$name.${format.extension}")
+private fun reportPath(inputs: List<File>, format: ReportFormat): File {
+    val bases = inputs.map { it.name.substringBefore('.') }.filter(String::isNotBlank)
+    val name = if (bases.isEmpty()) "report" else bases.joinToString("-vs-") + "-report"
+    return File(inputs.first().parentFile, "$name.${format.extension}")
 }
 
 /** An option's value is whatever follows it, unless that is another option or nothing at all. */

@@ -8,6 +8,8 @@
   --rule: #e1e0d9;
   --series: #2a78d6;
   --accent-wash: #eef4fd;
+  --regression: #c2401f;
+  --improvement: #1d7a4d;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -20,6 +22,8 @@
     --rule: #2c2c2a;
     --series: #3987e5;
     --accent-wash: #16243a;
+    --regression: #e4664a;
+    --improvement: #3fae78;
   }
 }
 * { box-sizing: border-box; }
@@ -93,6 +97,8 @@ figcaption { margin-bottom: 10px; color: var(--ink-secondary); }
   border-left: 1px solid var(--rule);
 }
 .bar { height: 14px; border-radius: 0 4px 4px 0; background: var(--series); }
+.bar.slower { background: var(--regression); }
+.bar.faster { background: var(--improvement); }
 .bar-value { color: var(--ink-secondary); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .scroll { overflow: auto; max-height: 70vh; }
 table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
@@ -117,3 +123,4 @@ mark { background: var(--accent-wash); color: inherit; font-weight: 600; }
 #counters thead th:hover { color: var(--ink-secondary); }
 #counters th:nth-child(2), #counters td:nth-child(2) { text-align: right; }
 .missing { margin: 0; padding-left: 20px; color: var(--ink-secondary); }
+#comparison th:nth-child(2), #comparison td:nth-child(2) { text-align: right; }

@@ -158,6 +158,7 @@ var REPORT_UI = (function () {
     }).slice(0, limit);
   }
 
+  /** Bars scale against the first item, so pass them largest first. An item's kind styles its bar. */
   function drawBars(barsEl, items) {
     barsEl.textContent = '';
     var largest = items.length ? items[0].value : 0;
@@ -173,7 +174,7 @@ var REPORT_UI = (function () {
       var track = document.createElement('div');
       track.className = 'bar-track';
       var bar = document.createElement('div');
-      bar.className = 'bar';
+      bar.className = item.kind ? 'bar ' + item.kind : 'bar';
       bar.style.width = (largest ? (item.value / largest) * 88 : 0) + '%';
       var label = document.createElement('span');
       label.className = 'bar-value';

@@ -126,8 +126,16 @@ run directories themselves, not reports, and aggregates each exactly as `analyse
 neither has to be analysed first and `--operations` narrows both alike. Only what both runs recorded is
 compared; a benchmark, section or counter that only one of them has is named instead.
 
-Writing the report is not implemented yet: both runs are compared and what moved is summarised on stdout,
-then it exits 9.
+The report renders like any other: markdown by default, `--format json` for the numbers themselves, and
+`--format html` for a page that reads that json back. Without `--output` it goes beside the baseline named
+for both runs, `baseline-vs-candidate-report.md`, so it does not write over the report either run
+aggregates to on its own. The html page charts sections by how far they moved, colouring the bar by which
+way, and its `moved only` box hides everything the noise band swallowed.
+
+```bash
+scripts/compare-trace-iterations.sh perf/macrobenchmark/baseline perf/macrobenchmark/candidate \
+    --format html --output comparison.html
+```
 
 ## Getting a trace
 

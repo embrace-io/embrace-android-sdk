@@ -4,4 +4,3 @@ package io.embrace.android.embracesdk.internal.perfetto
 internal const val EXIT_USAGE = 1
 internal const val EXIT_BAD_TRACE = 2
 internal const val EXIT_BAD_OUTPUT = 3
-internal const val EXIT_NOT_IMPLEMENTED = 9

@@ -5,9 +5,11 @@ import io.embrace.android.embracesdk.internal.perfetto.cli.CliSpec
 import io.embrace.android.embracesdk.internal.perfetto.cli.asksForHelp
 import io.embrace.android.embracesdk.internal.perfetto.cli.parseArgs
 import io.embrace.android.embracesdk.internal.perfetto.iterations.IterationTrace
+import io.embrace.android.embracesdk.internal.perfetto.report.renderComparison
 import io.embrace.android.embracesdk.internal.perfetto.stats.ComparisonReport
 import io.embrace.android.embracesdk.internal.perfetto.stats.IterationsReport
 import io.embrace.android.embracesdk.internal.perfetto.stats.compareRuns
+import java.io.IOException
 import kotlin.system.exitProcess
 
 private val SPEC = CliSpec(
@@ -19,13 +21,12 @@ is aggregated exactly as that command aggregates it: the aggregates themselves a
 has to be analysed first. --operations therefore narrows both runs alike. Normally run via
 scripts/compare-trace-iterations.sh.
 
-Both runs are read and compared, section by section, and what moved is summarised on stdout. A section
-only counts as having moved when the shift in its mean clears both runs' deviations added together, so
-a noisy run does not read as a regression.
+Both runs are read and compared, section by section. A section only counts as having moved when the
+shift in its mean clears both runs' deviations added together, so a noisy run does not read as a
+regression. Without --output the report goes beside the baseline, named for both runs, so it does not
+write over what either aggregates to on its own.
 
-Writing the report is NOT IMPLEMENTED: nothing renders the comparison yet, so --format and --output say
-where it would go and an invocation that gets that far exits $EXIT_NOT_IMPLEMENTED.
-embrace-perfetto-analysis/README.md describes what it will produce.
+embrace-perfetto-analysis/README.md describes what the report holds.
 """,
 )
 
@@ -50,9 +51,14 @@ fun main(args: Array<String>) {
     val candidateRun = loadRun(candidateDir, candidate, options.operations)
     println(summariseRun(BASELINE, baselineRun))
     println(summariseRun(CANDIDATE, candidateRun))
-    println(summariseComparison(compareRuns(baselineRun, candidateRun)))
-    System.err.println("writing a comparison report is not implemented yet; run with --help for the intended usage")
-    exitProcess(EXIT_NOT_IMPLEMENTED)
+    val comparison = compareRuns(baselineRun, candidateRun)
+    println(summariseComparison(comparison))
+    try {
+        println(writeComparison(options, comparison))
+    } catch (exc: IOException) {
+        System.err.println("could not write the report: ${exc.message}")
+        exitProcess(EXIT_BAD_OUTPUT)
+    }
 }
 
 internal fun describeComparison(
@@ -89,6 +95,11 @@ internal fun summariseComparison(report: ComparisonReport): String = buildString
         append("  neither run has a benchmark the other does, so nothing was compared")
     }
 }.trimEnd()
+
+internal fun writeComparison(options: CliOptions, report: ComparisonReport): String {
+    options.output.writeText(renderComparison(options.format, report))
+    return "wrote ${options.format.flag} comparison to ${options.output.path}"
+}
 
 private fun tally(count: Int, noun: String): String = "$count $noun${if (count == 1) "" else "s"}"
 

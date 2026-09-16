@@ -30,7 +30,7 @@ paragraph &mdash; plain HTML, extended as far as it needs to go. Nothing else on
 <section class="panel">
 <h2>Operations</h2>
 <div class="controls">
-<input type="search" id="search" placeholder="filter by section or thread" autocomplete="off">
+<input type="search" id="search" placeholder="filter by section" autocomplete="off">
 <label class="control"><input type="checkbox" id="charted" checked> chart</label>
 <label class="control">by
 <select id="metric">
@@ -80,8 +80,6 @@ sums every run it made rather than reading its last value.</p>
 
   var columns = [
     { label: 'operation', key: 'name', kind: 'text' },
-    { label: 'thread', key: 'threadName', kind: 'text' },
-    { label: 'tid', key: 'tid', kind: 'number' },
     { label: 'count', key: 'count', kind: 'number' },
     { label: 'total', key: 'sumNanos', kind: 'duration' },
     { label: 'wall%', key: 'traceWindowPercent', kind: 'percent' },
@@ -102,7 +100,7 @@ sums every run it made rather than reading its last value.</p>
     { label: 'total', key: 'total', kind: 'tally' }
   ];
 
-  var sortBy = columns[4];
+  var sortBy = columns.filter(function (column) { return column.key === 'sumNanos'; })[0];
   var descending = true;
 
   function value(operation, column) {
@@ -137,7 +135,7 @@ sums every run it made rather than reading its last value.</p>
     ui.drawBars(document.getElementById('bars'), top.map(function (operation) {
       return {
         name: operation.name,
-        title: operation.name + ' on ' + (operation.threadName || operation.tid),
+        title: operation.name,
         value: operation[key],
         text: ui.formatCell(kind, operation[key])
       };
@@ -152,6 +150,29 @@ sums every run it made rather than reading its last value.</p>
       counterColumns,
       ui.counterCell
     );
+    document.getElementById('counters').hidden = counters.length === 0;
+    document.getElementById('no-counters').hidden = counters.length > 0;
+  }
+
+  function drawCounters() {
+    var head = document.getElementById('counter-columns');
+    counterColumns.forEach(function (column) {
+      var th = document.createElement('th');
+      th.textContent = column.label;
+      head.appendChild(th);
+    });
+
+    var body = document.getElementById('counter-rows');
+    counters.forEach(function (counter) {
+      var tr = document.createElement('tr');
+      counterColumns.forEach(function (column) {
+        var td = document.createElement('td');
+        td.textContent = counterCell(counter, column);
+        tr.appendChild(td);
+      });
+      body.appendChild(tr);
+    });
+
     document.getElementById('counters').hidden = counters.length === 0;
     document.getElementById('no-counters').hidden = counters.length > 0;
   }
@@ -177,7 +198,7 @@ sums every run it made rather than reading its last value.</p>
 
   function draw() {
     var query = document.getElementById('search').value.trim();
-    var rows = ui.filterRows(operations, query, ['name', 'threadName']);
+    var rows = ui.filterRows(operations, query, ['name']);
     document.getElementById('matched').textContent = rows.length + ' of ' + operations.length + ' rows';
     ui.drawHeader(document.getElementById('columns'), columns, sortBy, descending, onSort);
     ui.drawRows(document.getElementById('rows'), ui.sortRows(rows, value, sortBy, descending), columns, cell, query);

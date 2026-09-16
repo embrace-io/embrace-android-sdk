@@ -5,125 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Perfetto trace statistics</title>
 <style>
-:root {
-  color-scheme: light;
-  --plane: #f9f9f7;
-  --surface: #fcfcfb;
-  --ink: #0b0b0b;
-  --ink-secondary: #52514e;
-  --ink-muted: #898781;
-  --rule: #e1e0d9;
-  --series: #2a78d6;
-  --accent-wash: #eef4fd;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    --plane: #0d0d0d;
-    --surface: #1a1a19;
-    --ink: #ffffff;
-    --ink-secondary: #c3c2b7;
-    --ink-muted: #898781;
-    --rule: #2c2c2a;
-    --series: #3987e5;
-    --accent-wash: #16243a;
-  }
-}
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  padding-block: 32px;
-  padding-inline: 16px;
-  background: var(--plane);
-  color: var(--ink);
-  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
-}
-main { max-width: 1120px; margin: 0 auto; }
-h1 { margin: 0; font-size: 22px; }
-h2 { margin: 0 0 12px; font-size: 15px; font-weight: 600; }
-header { margin-bottom: 20px; }
-.capture { margin: 6px 0 0; color: var(--ink-secondary); overflow-wrap: anywhere; }
-.panel {
-  margin-bottom: 20px;
-  padding: 16px;
-  background: var(--surface);
-  border: 1px solid var(--rule);
-  border-radius: 8px;
-}
-.tiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
-  margin-bottom: 20px;
-}
-.tile {
-  padding: 12px 16px;
-  background: var(--surface);
-  border: 1px solid var(--rule);
-  border-radius: 8px;
-}
-.tile .value { font-size: 24px; font-weight: 600; }
-.tile .label { color: var(--ink-secondary); }
-.hint, .empty { margin: 0; color: var(--ink-secondary); }
-.hint { margin-bottom: 8px; }
-.details :last-child { margin-bottom: 0; }
-.details :first-child { margin-top: 0; }
-.controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 16px; }
-.control { display: flex; gap: 6px; align-items: center; color: var(--ink-secondary); }
-input[type="search"], select {
-  padding: 6px 10px;
-  background: var(--plane);
-  color: inherit;
-  font: inherit;
-  border: 1px solid var(--rule);
-  border-radius: 6px;
-}
-input[type="search"] { flex: 1 1 220px; min-width: 0; }
-.matched { margin-left: auto; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
-.chart { margin: 0 0 20px; }
-figcaption { margin-bottom: 10px; color: var(--ink-secondary); }
-.bar-row { display: flex; gap: 12px; align-items: center; margin-bottom: 6px; }
-.bar-name {
-  flex: 0 0 34%;
-  overflow: hidden;
-  text-align: right;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--ink-secondary);
-}
-.bar-track {
-  display: flex;
-  flex: 1 1 auto;
-  gap: 8px;
-  align-items: center;
-  min-width: 0;
-  border-left: 1px solid var(--rule);
-}
-.bar { height: 14px; border-radius: 0 4px 4px 0; background: var(--series); }
-.bar-value { color: var(--ink-secondary); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.scroll { overflow: auto; max-height: 70vh; }
-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-th, td { padding: 6px 10px; text-align: right; white-space: nowrap; }
-th:first-child, td:first-child { text-align: left; }
-thead th {
-  position: sticky;
-  top: 0;
-  background: var(--surface);
-  border-bottom: 1px solid var(--rule);
-  color: var(--ink-secondary);
-  cursor: pointer;
-  font-weight: 600;
-  user-select: none;
-}
-thead th:hover { color: var(--ink); }
-th .arrow { color: var(--ink-muted); }
-tbody tr:nth-child(even) { background: var(--plane); }
-tbody tr:hover { background: var(--accent-wash); }
-mark { background: var(--accent-wash); color: inherit; font-weight: 600; }
-#counters thead th { cursor: default; }
-#counters thead th:hover { color: var(--ink-secondary); }
-#counters th:nth-child(2), #counters td:nth-child(2) { text-align: right; }
-.missing { margin: 0; padding-left: 20px; color: var(--ink-secondary); }
+{{styles}}
 </style>
 </head>
 <body>
@@ -152,10 +34,10 @@ paragraph &mdash; plain HTML, extended as far as it needs to go. Nothing else on
 <label class="control"><input type="checkbox" id="charted" checked> chart</label>
 <label class="control">by
 <select id="metric">
-<option value="sumNanos">total time</option>
-<option value="meanNanos">mean time</option>
-<option value="maxNanos">longest run</option>
-<option value="count">occurrences</option>
+<option value="sumNanos" data-kind="duration">total time</option>
+<option value="meanNanos" data-kind="duration">mean time</option>
+<option value="maxNanos" data-kind="duration">longest run</option>
+<option value="count" data-kind="number">occurrences</option>
 </select>
 </label>
 <span class="matched" id="matched"></span>
@@ -184,9 +66,12 @@ sums every run it made rather than reading its last value.</p>
 </main>
 <script type="application/json" id="report">{{report}}</script>
 <script>
+{{script}}
+
 (function () {
   'use strict';
 
+  var ui = REPORT_UI;
   var report = JSON.parse(document.getElementById('report').textContent);
   var operations = report.stats.operations;
   var counters = report.stats.counters;
@@ -222,116 +107,14 @@ sums every run it made rather than reading its last value.</p>
     return column.rank === undefined ? operation[column.key] : operation.percentiles[column.rank].durationNanos;
   }
 
-  function duration(nanos) {
-    if (nanos < 1e3) { return Math.round(nanos) + ' ns'; }
-    if (nanos < 1e6) { return (nanos / 1e3).toFixed(2) + ' µs'; }
-    if (nanos < 1e9) { return (nanos / 1e6).toFixed(2) + ' ms'; }
-    return (nanos / 1e9).toFixed(2) + ' s';
-  }
-
-  /** Keeps a share that rounds away at two places, since most sections hold a thousandth of the window. */
-  function share(percent) {
-    if (percent >= 10) { return percent.toFixed(1) + '%'; }
-    if (percent >= 0.1) { return percent.toFixed(2) + '%'; }
-    return percent.toFixed(3) + '%';
-  }
-
-  function bytes(count) {
-    if (count < 1024) { return count + ' bytes'; }
-    if (count < 1048576) { return (count / 1024).toFixed(1) + ' KiB'; }
-    return (count / 1048576).toFixed(1) + ' MiB';
-  }
-
-  /** A counter that tallies bytes reads as a size; one that tallies files reads as the count it is. */
-  function talliesBytes(counter) {
-    return counter.name.indexOf('bytes') >= 0;
-  }
-
-  function counterCell(counter, column) {
-    var held = counter[column.key];
-    if (column.kind === 'text') { return held; }
-    if (column.kind === 'tids') { return held.join(', '); }
-    if (column.kind === 'tally' && talliesBytes(counter)) { return bytes(held); }
-    return held.toLocaleString();
-  }
-
   function cell(operation, column) {
-    var held = value(operation, column);
-    if (column.kind === 'duration') { return duration(held); }
-    if (column.kind === 'percent') { return share(held); }
-    if (held === null) { return '-'; }
-    return String(held);
+    return ui.formatCell(column.kind, value(operation, column));
   }
 
-  function matches(query) {
-    if (!query) { return operations.slice(); }
-    var needle = query.toLowerCase();
-    return operations.filter(function (operation) {
-      return operation.name.toLowerCase().indexOf(needle) >= 0;
-    });
-  }
-
-  function sorted(rows) {
-    return rows.slice().sort(function (left, right) {
-      var a = value(left, sortBy);
-      var b = value(right, sortBy);
-      var order = sortBy.kind === 'text' ? String(a || '').localeCompare(String(b || '')) : a - b;
-      return descending ? -order : order;
-    });
-  }
-
-  /** Marks the matched run so a hit is visible in a long section name, without trusting it as markup. */
-  function highlight(target, text, query) {
-    var at = query ? text.toLowerCase().indexOf(query.toLowerCase()) : -1;
-    if (at < 0) {
-      target.textContent = text;
-      return;
-    }
-    var hit = document.createElement('mark');
-    hit.textContent = text.substr(at, query.length);
-    target.appendChild(document.createTextNode(text.substr(0, at)));
-    target.appendChild(hit);
-    target.appendChild(document.createTextNode(text.substr(at + query.length)));
-  }
-
-  function drawHeader() {
-    var head = document.getElementById('columns');
-    head.textContent = '';
-    columns.forEach(function (column) {
-      var th = document.createElement('th');
-      th.textContent = column.label;
-      if (column === sortBy) {
-        var arrow = document.createElement('span');
-        arrow.className = 'arrow';
-        arrow.textContent = descending ? ' ▼' : ' ▲';
-        th.appendChild(arrow);
-      }
-      th.addEventListener('click', function () {
-        descending = column === sortBy ? !descending : column.kind !== 'text';
-        sortBy = column;
-        draw();
-      });
-      head.appendChild(th);
-    });
-  }
-
-  function drawRows(rows, query) {
-    var body = document.getElementById('rows');
-    body.textContent = '';
-    rows.forEach(function (operation) {
-      var tr = document.createElement('tr');
-      columns.forEach(function (column) {
-        var td = document.createElement('td');
-        if (column.kind === 'text') {
-          highlight(td, cell(operation, column), query);
-        } else {
-          td.textContent = cell(operation, column);
-        }
-        tr.appendChild(td);
-      });
-      body.appendChild(tr);
-    });
-    document.getElementById('no-matches').hidden = rows.length > 0;
+  function onSort(column) {
+    descending = column === sortBy ? !descending : column.kind !== 'text';
+    sortBy = column;
+    draw();
   }
 
   function drawChart(rows) {
@@ -340,41 +123,35 @@ sums every run it made rather than reading its last value.</p>
     if (chart.hidden) { return; }
 
     var metric = document.getElementById('metric');
+    var picked = metric.options[metric.selectedIndex];
     var key = metric.value;
-    var top = rows.slice().sort(function (left, right) { return right[key] - left[key]; }).slice(0, chartLimit);
-    var largest = top.length ? top[0][key] : 0;
-    var format = key === 'count' ? String : duration;
+    var kind = picked.getAttribute('data-kind');
+    var top = ui.topBy(rows, function (operation) { return operation[key]; }, chartLimit);
 
     document.getElementById('chart-caption').textContent =
       (top.length < rows.length ? 'Top ' + top.length + ' of ' + rows.length : rows.length + ' sections') +
-      ' by ' + metric.options[metric.selectedIndex].text;
+      ' by ' + picked.text;
 
-    var bars = document.getElementById('bars');
-    bars.textContent = '';
-    top.forEach(function (operation) {
-      var row = document.createElement('div');
-      row.className = 'bar-row';
+    ui.drawBars(document.getElementById('bars'), top.map(function (operation) {
+      return {
+        name: operation.name,
+        title: operation.name,
+        value: operation[key],
+        text: ui.formatCell(kind, operation[key])
+      };
+    }));
+  }
 
-      var name = document.createElement('div');
-      name.className = 'bar-name';
-      name.textContent = operation.name;
-      name.title = operation.name;
-
-      var track = document.createElement('div');
-      track.className = 'bar-track';
-      var bar = document.createElement('div');
-      bar.className = 'bar';
-      bar.style.width = (largest ? (operation[key] / largest) * 88 : 0) + '%';
-      var label = document.createElement('span');
-      label.className = 'bar-value';
-      label.textContent = format(operation[key]);
-      track.appendChild(bar);
-      track.appendChild(label);
-
-      row.appendChild(name);
-      row.appendChild(track);
-      bars.appendChild(row);
-    });
+  function drawCounters() {
+    ui.drawTable(
+      document.getElementById('counter-columns'),
+      document.getElementById('counter-rows'),
+      counters,
+      counterColumns,
+      ui.counterCell
+    );
+    document.getElementById('counters').hidden = counters.length === 0;
+    document.getElementById('no-counters').hidden = counters.length > 0;
   }
 
   function drawCounters() {
@@ -402,49 +179,30 @@ sums every run it made rather than reading its last value.</p>
 
   function drawCapture() {
     document.getElementById('capture').textContent =
-      report.tracePath + ' · ' + bytes(report.traceSizeBytes);
+      report.tracePath + ' · ' + ui.bytes(report.traceSizeBytes);
 
     var tiles = [
       { value: report.sliceCount.toLocaleString(), label: 'slices' },
       { value: report.sectionCount.toLocaleString(), label: 'distinct sections' },
       { value: report.threadCount.toLocaleString(), label: 'threads' },
       { value: operations.length.toLocaleString(), label: 'measured' },
-      { value: duration(report.traceWindowNanos), label: 'trace window' }
+      { value: ui.duration(report.traceWindowNanos), label: 'trace window' }
     ];
-    counters.filter(talliesBytes).forEach(function (counter) {
-      tiles.push({ value: bytes(counter.total), label: counter.name.replace(/^emb-/, '') });
+    counters.filter(ui.talliesBytes).forEach(function (counter) {
+      tiles.push({ value: ui.bytes(counter.total), label: counter.name.replace(/^emb-/, '') });
     });
-    var holder = document.getElementById('tiles');
-    tiles.forEach(function (tile) {
-      var box = document.createElement('div');
-      box.className = 'tile';
-      var value = document.createElement('div');
-      value.className = 'value';
-      value.textContent = tile.value;
-      var label = document.createElement('div');
-      label.className = 'label';
-      label.textContent = tile.label;
-      box.appendChild(value);
-      box.appendChild(label);
-      holder.appendChild(box);
-    });
+    ui.drawTiles(document.getElementById('tiles'), tiles);
 
-    var missing = document.getElementById('missing');
-    missing.hidden = report.stats.missing.length === 0;
-    document.getElementById('no-missing').hidden = !missing.hidden;
-    report.stats.missing.forEach(function (name) {
-      var item = document.createElement('li');
-      item.textContent = name;
-      missing.appendChild(item);
-    });
+    ui.drawList(document.getElementById('missing'), document.getElementById('no-missing'), report.stats.missing);
   }
 
   function draw() {
     var query = document.getElementById('search').value.trim();
-    var rows = matches(query);
+    var rows = ui.filterRows(operations, query, ['name']);
     document.getElementById('matched').textContent = rows.length + ' of ' + operations.length + ' rows';
-    drawHeader();
-    drawRows(sorted(rows), query);
+    ui.drawHeader(document.getElementById('columns'), columns, sortBy, descending, onSort);
+    ui.drawRows(document.getElementById('rows'), ui.sortRows(rows, value, sortBy, descending), columns, cell, query);
+    document.getElementById('no-matches').hidden = rows.length > 0;
     drawChart(rows);
   }
 

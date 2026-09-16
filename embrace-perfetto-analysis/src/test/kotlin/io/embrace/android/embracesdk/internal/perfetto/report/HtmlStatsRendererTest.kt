@@ -62,6 +62,14 @@ internal class HtmlStatsRendererTest {
         assertTrue(page, page.contains(""""name": "$COUNTER""""))
     }
 
+    @Test
+    fun `the page draws itself with the shared stylesheet and toolkit inlined, asking for neither over the network`() {
+        val page = renderHtml(report())
+        assertTrue(page, page.contains("var REPORT_UI"))
+        assertTrue(page, page.contains("color-scheme: light"))
+        assertFalse(page, page.contains("{{"))
+    }
+
     private fun embedded(page: String) =
         page.substringAfter("""<script type="application/json" id="report">""").substringBefore("</script>")
 

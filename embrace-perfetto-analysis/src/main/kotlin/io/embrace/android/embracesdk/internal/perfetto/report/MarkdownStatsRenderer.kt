@@ -4,8 +4,6 @@ import io.embrace.android.embracesdk.internal.perfetto.stats.CounterStats
 import io.embrace.android.embracesdk.internal.perfetto.stats.OperationStats
 import io.embrace.android.embracesdk.internal.perfetto.stats.StatsReport
 
-private const val EMPTY_SECTION = "_none_"
-
 private val FIXED_COLUMNS = listOf("operation", "count", "total", "wall%", "mean", "stdev", "min")
 private val COUNTER_COLUMNS = listOf("counter", "tid", "samples", "first", "last", "max", "total")
 
@@ -26,41 +24,16 @@ internal fun renderMarkdown(report: StatsReport): String = buildString {
     appendLine()
     appendLine("- totals: cumulative, summing every run a counter made, so one that restarts still adds up")
     appendLine()
-    appendCounters(report.stats.counters)
+    appendTable(COUNTER_COLUMNS, report.stats.counters.map(::counterCells))
     appendLine()
     appendLine("## Missing")
     appendLine()
-    appendMissing(report.stats.missing)
+    appendBullets(report.stats.missing)
 }.trimEnd()
 
 private fun StringBuilder.appendOperations(operations: List<OperationStats>) {
-    val first = operations.firstOrNull()
-    if (first == null) {
-        appendLine(EMPTY_SECTION)
-        return
-    }
-    val columns = FIXED_COLUMNS + first.percentiles.map { "p${it.rank}" } + "max"
-    appendLine(row(columns))
-    appendLine(row(columns.map { "---" }))
-    operations.forEach { appendLine(row(cells(it))) }
-}
-
-private fun StringBuilder.appendCounters(counters: List<CounterStats>) {
-    if (counters.isEmpty()) {
-        appendLine(EMPTY_SECTION)
-        return
-    }
-    appendLine(row(COUNTER_COLUMNS))
-    appendLine(row(COUNTER_COLUMNS.map { "---" }))
-    counters.forEach { appendLine(row(counterCells(it))) }
-}
-
-private fun StringBuilder.appendMissing(missing: List<String>) {
-    if (missing.isEmpty()) {
-        appendLine(EMPTY_SECTION)
-        return
-    }
-    missing.forEach { appendLine("- $it") }
+    val ranks = operations.firstOrNull()?.percentiles.orEmpty().map { "p${it.rank}" }
+    appendTable(FIXED_COLUMNS + ranks + "max", operations.map(::cells))
 }
 
 private fun cells(stats: OperationStats): List<String> = listOf(
@@ -82,6 +55,3 @@ private fun counterCells(stats: CounterStats): List<String> = listOf(
     stats.maxValue.toString(),
     stats.total.toString(),
 )
-
-private fun row(cells: List<String>): String =
-    cells.joinToString(" | ", "| ", " |") { it.replace("|", "\\|") }

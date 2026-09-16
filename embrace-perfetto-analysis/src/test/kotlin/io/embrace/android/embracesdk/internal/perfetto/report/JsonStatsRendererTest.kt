@@ -26,8 +26,6 @@ internal class JsonStatsRendererTest {
                     "operations": [
                         {
                             "name": "op",
-                            "tid": 9874,
-                            "threadName": "main",
                             "count": 2,
                             "sumNanos": 3000,
                             "traceWindowPercent": 0.25,
@@ -78,12 +76,6 @@ internal class JsonStatsRendererTest {
     }
 
     @Test
-    fun `a thread the trace named nothing for is null rather than an empty name`() {
-        val text = renderJson(report(listOf(operation(threadName = null))))
-        assertTrue(text, text.contains(""""threadName": null"""))
-    }
-
-    @Test
     fun `a report with nothing in it renders empty arrays rather than omitting the keys`() {
         val text = renderJson(report(emptyList()))
         assertTrue(text, text.contains(""""operations": []"""))
@@ -108,10 +100,8 @@ internal class JsonStatsRendererTest {
         readings = listOf(CounterReading(9874, 0, 1024), CounterReading(9874, 500, 4096)),
     )
 
-    private fun operation(threadName: String? = "main") = OperationStats(
+    private fun operation() = OperationStats(
         name = "op",
-        tid = 9874,
-        threadName = threadName,
         count = 2,
         sumNanos = 3000,
         traceWindowPercent = 0.25,

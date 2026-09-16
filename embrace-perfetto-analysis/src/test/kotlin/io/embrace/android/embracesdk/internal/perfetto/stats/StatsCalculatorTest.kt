@@ -5,14 +5,13 @@ import io.embrace.android.embracesdk.internal.perfetto.model.TraceModel
 import io.embrace.android.embracesdk.internal.perfetto.model.TraceSlice
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 internal class StatsCalculatorTest {
 
     @Test
-    fun `every statistic is measured across the occurrences on one thread`() {
+    fun `every statistic is measured across every occurrence`() {
         val stats = only(model(timeline(TID, runOf("op", 2, 4, 4, 4, 5, 5, 7, 9))), "op")
         assertEquals(8, stats.count)
         assertEquals(40L, stats.sumNanos)
@@ -54,26 +53,16 @@ internal class StatsCalculatorTest {
     }
 
     @Test
-    fun `a result carries what the trace called the thread, alongside the id that identifies it`() {
-        val model = model(timeline(TID, runOf("op", 10), name = "emb-io-reg"))
-        assertEquals("emb-io-reg", only(model, "op").threadName)
-    }
-
-    @Test
-    fun `a thread the trace named nothing for reports no name, leaving the id to stand alone`() {
-        assertNull(only(model(timeline(TID, runOf("op", 10))), "op").threadName)
-    }
-
-    @Test
-    fun `occurrences group by thread, so a section that ran on two yields a result for each`() {
+    fun `occurrences pool across threads, so a section that ran on two yields one result`() {
         val model = model(
             timeline(TID, runOf("op", 10, 10)),
             timeline(OTHER_TID, runOf("op", 30, tid = OTHER_TID)),
         )
-        val stats = calculateStats(model, listOf("op"), WINDOW, START).operations
-        assertEquals(listOf(TID, OTHER_TID), stats.map(OperationStats::tid))
-        assertEquals(listOf(2, 1), stats.map(OperationStats::count))
-        assertEquals(listOf(20L, 30L), stats.map(OperationStats::sumNanos))
+        val stats = calculateStats(model, listOf("op"), WINDOW, START).operations.single()
+        assertEquals(3, stats.count)
+        assertEquals(50L, stats.sumNanos)
+        assertEquals(10L, stats.minNanos)
+        assertEquals(30L, stats.maxNanos)
     }
 
     @Test
@@ -99,7 +88,7 @@ internal class StatsCalculatorTest {
     }
 
     @Test
-    fun `both threads share one denominator, so equal work reads as an equal share of the trace`() {
+    fun `both threads count against one denominator, so their work pools into a single share`() {
         val model = model(
             timeline(TID, runOf("op", 100)),
             timeline(
@@ -107,9 +96,9 @@ internal class StatsCalculatorTest {
                 listOf(slice("op", 5000, 5100, OTHER_TID), slice("other", 9000, 9900, OTHER_TID)),
             ),
         )
-        val stats = calculateStats(model, listOf("op"), WINDOW, START).operations
-        assertEquals(listOf(100L, 100L), stats.map(OperationStats::sumNanos))
-        assertEquals(listOf(1.0, 1.0), stats.map(OperationStats::traceWindowPercent))
+        val stats = calculateStats(model, listOf("op"), WINDOW, START).operations.single()
+        assertEquals(200L, stats.sumNanos)
+        assertEquals(2.0, stats.traceWindowPercent, 0.0)
         assertEquals(listOf(100L, 4900L), model.threads.values.map(ThreadTimeline::wallSpanNanos))
     }
 
@@ -130,10 +119,10 @@ internal class StatsCalculatorTest {
     }
 
     @Test
-    fun `a section absent from one thread is simply not reported for it, and is not missing`() {
+    fun `a section only one thread ran is reported once, and is not missing`() {
         val model = model(timeline(TID, runOf("op", 10)), timeline(OTHER_TID, runOf("other", 10, tid = OTHER_TID)))
         val stats = calculateStats(model, listOf("op"), WINDOW, START)
-        assertEquals(listOf(TID), stats.operations.map(OperationStats::tid))
+        assertEquals(listOf("op"), stats.operations.map(OperationStats::name))
         assertTrue(stats.missing.toString(), stats.missing.isEmpty())
     }
 
@@ -144,14 +133,13 @@ internal class StatsCalculatorTest {
     }
 
     @Test
-    fun `results keep the order the sections were asked in, then ascending thread id`() {
+    fun `results keep the order the sections were asked in`() {
         val model = model(
             timeline(TID, runOf("b", 1) + slice("a", 10, 11)),
             timeline(OTHER_TID, runOf("b", 1, tid = OTHER_TID) + slice("a", 10, 11, OTHER_TID)),
         )
         val stats = calculateStats(model, listOf("b", "a"), WINDOW, START).operations
-        assertEquals(listOf("b", "b", "a", "a"), stats.map(OperationStats::name))
-        assertEquals(listOf(TID, OTHER_TID, TID, OTHER_TID), stats.map(OperationStats::tid))
+        assertEquals(listOf("b", "a"), stats.map(OperationStats::name))
     }
 
     @Test

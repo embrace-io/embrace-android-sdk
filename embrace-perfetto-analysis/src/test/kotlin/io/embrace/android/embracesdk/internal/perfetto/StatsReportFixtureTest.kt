@@ -23,7 +23,7 @@ internal class StatsReportFixtureTest {
     fun `a section that ran once renders as one markdown row of microseconds`() {
         val ran = "17266.417"
         assertEquals(
-            listOf(STARTUP, MAIN_THREAD, "6922", "1") +
+            listOf(STARTUP, "1") +
                 listOf(ran, "0.6807", ran, "0.000", ran) +
                 List(DEFAULT_PERCENTILES.size) { ran } + ran,
             cells(dataRows(renderMarkdown(report(listOf(STARTUP)))).single()),
@@ -31,15 +31,13 @@ internal class StatsReportFixtureTest {
     }
 
     @Test
-    fun `a section that ran on three threads renders a row for each, thread named and tid ascending`() {
-        val rows = dataRows(renderMarkdown(report(listOf(REPEATED)))).map(::cells)
-        assertEquals(listOf(MAIN_THREAD, "emb-http-reques", "emb-non-io-reg"), rows.map { it[1] })
-        assertEquals(listOf("6922", "6939", "6941"), rows.map { it[2] })
-        assertEquals(listOf("446", "15", "40"), rows.map { it[3] })
-        assertEquals(listOf("0.0830", "0.0312", "0.0018"), rows.map { it[5] })
+    fun `a section that ran on three threads renders a single pooled row`() {
+        val row = dataRows(renderMarkdown(report(listOf(REPEATED)))).map(::cells).single()
+        assertEquals("501", row[1])
+        assertEquals("0.1160", row[3])
         assertEquals(
-            listOf("2106.424", "4.723", "9.197", "0.458", "3.542", "6.542", "8.209", "26.000", "163.458"),
-            rows.first().let { listOf(it[4]) + it.drop(6) },
+            listOf("2943.592", "5.875", "15.114", "0.458", "3.500", "6.917", "9.792", "88.125", "165.083"),
+            listOf(row[2]) + row.drop(4),
         )
     }
 
@@ -47,13 +45,14 @@ internal class StatsReportFixtureTest {
     fun `json carries the nanoseconds themselves, so nothing is rounded for a machine`() {
         val text = renderJson(report(listOf(STARTUP)))
         assertTrue(text, text.contains(""""sumNanos": 17266417"""))
-        assertTrue(text, text.contains(""""threadName": "$MAIN_THREAD""""))
+        assertTrue(text, text.contains(""""count": 1"""))
     }
 
     @Test
-    fun `asking for every section reports each one in name order, with a row per thread`() {
+    fun `asking for every section reports each one once, in name order`() {
         val report = statsReport(options(), trace)
-        val names = report.stats.operations.map(OperationStats::name).distinct()
+        val names = report.stats.operations.map(OperationStats::name)
+        assertEquals(names.distinct(), names)
         assertEquals(names.sorted(), names)
         assertEquals(87, names.size)
         assertEquals(report.stats.operations.size, dataRows(renderMarkdown(report)).size)
@@ -128,7 +127,6 @@ internal class StatsReportFixtureTest {
 
     private companion object {
         const val FIXTURE = "macrobenchmark-session-multi-file.perfetto.gz"
-        const val MAIN_THREAD = "io.embrace.android.embracesdk.macrobenchmark.app"
         const val STARTUP = "emb-sdk-start"
         const val REPEATED = "emb-mf-span-snapshot-changed"
         const val ABSENT = "emb-not-in-this-trace"

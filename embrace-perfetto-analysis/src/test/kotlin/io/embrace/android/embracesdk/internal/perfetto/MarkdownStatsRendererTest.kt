@@ -21,7 +21,7 @@ internal class MarkdownStatsRendererTest {
             text.lines().take(6),
         )
         assertEquals(
-            listOf("operation", "thread", "tid", "count", "total", "wall%", "mean", "stdev", "min") +
+            listOf("operation", "count", "total", "wall%", "mean", "stdev", "min") +
                 DEFAULT_PERCENTILES.map { "p$it" } + "max",
             row(text, 0),
         )
@@ -31,28 +31,23 @@ internal class MarkdownStatsRendererTest {
     @Test
     fun `a row reports the microseconds of every statistic, in the order the columns name them`() {
         assertEquals(
-            listOf("op", "main", "9874", "2", "3.000", "0.2500", "1.500", "0.500", "1.000") +
+            listOf("op", "2", "3.000", "0.2500", "1.500", "0.500", "1.000") +
                 List(DEFAULT_PERCENTILES.size) { "2.000" } + "2.000",
             row(renderMarkdown(report()), 2),
         )
     }
 
     @Test
-    fun `a section that ran on two threads is one row for each, rather than pooled into one`() {
-        val text = renderMarkdown(report(listOf(operation(), operation(tid = 9892, threadName = "emb-io-reg"))))
-        assertEquals(listOf("main", "emb-io-reg"), listOf(row(text, 2)[1], row(text, 3)[1]))
-        assertEquals(listOf("9874", "9892"), listOf(row(text, 2)[2], row(text, 3)[2]))
-    }
-
-    @Test
-    fun `a thread the trace named nothing for leaves the tid to identify it`() {
-        assertEquals("-", row(renderMarkdown(report(listOf(operation(threadName = null)))), 2)[1])
+    fun `each section is one row, named once and never repeated per thread`() {
+        val text = renderMarkdown(report(listOf(operation(), operation(name = "other", count = 7))))
+        assertEquals(listOf("op", "other"), listOf(row(text, 2)[0], row(text, 3)[0]))
+        assertEquals(listOf("2", "7"), listOf(row(text, 2)[1], row(text, 3)[1]))
     }
 
     @Test
     fun `a pipe in a section name is escaped, rather than ending the column early`() {
         val text = renderMarkdown(report(listOf(operation(name = "a|b"))))
-        assertTrue(text, text.contains("| a\\|b | main |"))
+        assertTrue(text, text.contains("| a\\|b | 2 |"))
     }
 
     @Test
@@ -124,15 +119,9 @@ internal class MarkdownStatsRendererTest {
         readings = emptyList(),
     )
 
-    private fun operation(
-        name: String = "op",
-        tid: Int = 9874,
-        threadName: String? = "main",
-    ) = OperationStats(
+    private fun operation(name: String = "op", count: Int = 2) = OperationStats(
         name = name,
-        tid = tid,
-        threadName = threadName,
-        count = 2,
+        count = count,
         sumNanos = 3000,
         traceWindowPercent = 0.25,
         minNanos = 1000,

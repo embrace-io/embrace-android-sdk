@@ -104,7 +104,7 @@ figcaption { margin-bottom: 10px; color: var(--ink-secondary); }
 .scroll { overflow: auto; max-height: 70vh; }
 table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 th, td { padding: 6px 10px; text-align: right; white-space: nowrap; }
-th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+th:first-child, td:first-child { text-align: left; }
 thead th {
   position: sticky;
   top: 0;
@@ -148,7 +148,7 @@ paragraph &mdash; plain HTML, extended as far as it needs to go. Nothing else on
 <section class="panel">
 <h2>Operations</h2>
 <div class="controls">
-<input type="search" id="search" placeholder="filter by section or thread" autocomplete="off">
+<input type="search" id="search" placeholder="filter by section" autocomplete="off">
 <label class="control"><input type="checkbox" id="charted" checked> chart</label>
 <label class="control">by
 <select id="metric">
@@ -195,8 +195,6 @@ sums every run it made rather than reading its last value.</p>
 
   var columns = [
     { label: 'operation', key: 'name', kind: 'text' },
-    { label: 'thread', key: 'threadName', kind: 'text' },
-    { label: 'tid', key: 'tid', kind: 'number' },
     { label: 'count', key: 'count', kind: 'number' },
     { label: 'total', key: 'sumNanos', kind: 'duration' },
     { label: 'wall%', key: 'traceWindowPercent', kind: 'percent' },
@@ -217,7 +215,7 @@ sums every run it made rather than reading its last value.</p>
     { label: 'total', key: 'total', kind: 'tally' }
   ];
 
-  var sortBy = columns[4];
+  var sortBy = columns.filter(function (column) { return column.key === 'sumNanos'; })[0];
   var descending = true;
 
   function value(operation, column) {
@@ -269,8 +267,7 @@ sums every run it made rather than reading its last value.</p>
     if (!query) { return operations.slice(); }
     var needle = query.toLowerCase();
     return operations.filter(function (operation) {
-      return operation.name.toLowerCase().indexOf(needle) >= 0 ||
-        (operation.threadName || '').toLowerCase().indexOf(needle) >= 0;
+      return operation.name.toLowerCase().indexOf(needle) >= 0;
     });
   }
 
@@ -361,7 +358,7 @@ sums every run it made rather than reading its last value.</p>
       var name = document.createElement('div');
       name.className = 'bar-name';
       name.textContent = operation.name;
-      name.title = operation.name + ' on ' + (operation.threadName || operation.tid);
+      name.title = operation.name;
 
       var track = document.createElement('div');
       track.className = 'bar-track';

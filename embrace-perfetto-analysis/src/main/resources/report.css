@@ -97,7 +97,7 @@ figcaption { margin-bottom: 10px; color: var(--ink-secondary); }
 .scroll { overflow: auto; max-height: 70vh; }
 table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 th, td { padding: 6px 10px; text-align: right; white-space: nowrap; }
-th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+th:first-child, td:first-child { text-align: left; }
 thead th {
   position: sticky;
   top: 0;

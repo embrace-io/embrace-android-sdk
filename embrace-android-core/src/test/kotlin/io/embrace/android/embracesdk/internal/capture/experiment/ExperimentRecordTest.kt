@@ -42,6 +42,18 @@ internal class ExperimentRecordTest {
     }
 
     @Test
+    fun `serializes an open feature flag with a variant`() {
+        val record = ExperimentRecord(
+            kind = ExperimentKind.FEATURE_FLAG,
+            id = "id",
+            variant = "variant",
+            startTimeMs = 100L,
+            endTimeMs = null,
+        )
+        assertEquals("f:id:variant:100", record.serialize())
+    }
+
+    @Test
     fun `serializes an ended record`() {
         val record = ExperimentRecord(
             kind = ExperimentKind.EXPERIMENT,

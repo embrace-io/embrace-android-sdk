@@ -4,5 +4,6 @@ import io.embrace.android.embracesdk.experiments.TrackedFeatureFlag
 
 internal class TrackedFeatureFlagImpl(
     override val id: String,
+    override val variant: String?,
     override val startedAt: Long?,
 ) : TrackedFeatureFlag

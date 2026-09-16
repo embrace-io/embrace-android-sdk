@@ -42,17 +42,17 @@ public interface ExperimentApi {
     public fun untrackExperiments(ids: List<String>, endedAt: Long? = null)
 
     /**
-     * Creates a [TrackedFeatureFlag] with an optional timestamp [startedAt] in milliseconds from epoch observed from the client-side
-     * that denotes when the flag was first applied.
+     * Creates a [TrackedFeatureFlag] with an optional [variant] and a timestamp [startedAt] in milliseconds from epoch observed from
+     * the client-side that denotes when the flag was first applied.
      */
-    public fun createFeatureFlag(id: String, startedAt: Long? = null): TrackedFeatureFlag
+    public fun createFeatureFlag(id: String, variant: String? = null, startedAt: Long? = null): TrackedFeatureFlag
 
     /**
-     * Tracks a single enabled feature flag that applies to this app instance. A null [startedAt] means the time at which this call
-     * is made will be used.
+     * Tracks a single enabled feature flag that applies to this app instance, optionally with the [variant] of the flag that was
+     * applied. A null [startedAt] means the time at which this call is made will be used.
      */
-    public fun trackFeatureFlag(id: String, startedAt: Long? = null): Unit =
-        trackFeatureFlags(listOf(createFeatureFlag(id, startedAt)))
+    public fun trackFeatureFlag(id: String, variant: String? = null, startedAt: Long? = null): Unit =
+        trackFeatureFlags(listOf(createFeatureFlag(id, variant, startedAt)))
 
     /**
      * Tracks the given enabled feature flags that apply to this app instance.

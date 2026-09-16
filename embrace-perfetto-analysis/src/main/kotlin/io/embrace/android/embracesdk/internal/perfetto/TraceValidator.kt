@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.perfetto
 
 import java.io.File
 import java.io.IOException
-import java.util.zip.GZIPInputStream
 
 /** How many bytes are decompressed to decide what a file holds. */
 private const val HEADER_BYTES = 8
@@ -19,14 +18,14 @@ private const val MAX_VARINT_BYTES = 5
 private const val CONTINUATION_BIT = 0x80
 
 /**
- * Reports whether [trace] is a gzipped perfetto trace, by decompressing its first few bytes.
- * Anything else - not gzip, gzip of something other than a trace, unreadable - is [UNKNOWN].
- * Nothing beyond the header is read: this only decides whether analysing the file is worth
- * attempting.
+ * Reports whether [trace] is a perfetto trace, by unwrapping its container and reading the first few
+ * bytes. Anything else - a container holding something other than a trace, an unreadable file - is
+ * [UNKNOWN]. Nothing beyond the header is read: this only decides whether analysing the file is worth
+ * attempting. See [traceStream] for the containers a trace arrives in.
  */
 internal fun validateTrace(trace: File): TraceFormat = try {
-    GZIPInputStream(trace.inputStream()).use { gzip ->
-        traceFormat(gzip.readNBytes(HEADER_BYTES))
+    traceStream(trace).use { stream ->
+        traceFormat(stream.readNBytes(HEADER_BYTES))
     }
 } catch (exc: IOException) {
     TraceFormat.UNKNOWN

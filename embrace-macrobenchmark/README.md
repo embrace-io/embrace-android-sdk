@@ -51,7 +51,9 @@ The default macrobenchmark config captures system-wide scheduling data as well, 
 megabytes an iteration; this drastically reduces size for analysis. The tradeoff
 is that lots of other data is omitted.
 
-androidx.benchmark wraps each trace in a zip, so unpack before use:
+androidx.benchmark wraps each trace in a zip. `scripts/analyse-trace.sh` and
+`scripts/analyse-trace-iterations.sh` read that as it is; unpack one only to open it in something that
+will not, such as the perfetto UI:
 
 ```bash
 unzip -p <bundle>.perfetto-trace Trace_output.pb > trace.perfetto

@@ -56,6 +56,26 @@ internal class MarkdownStatsRendererTest {
     }
 
     @Test
+    fun `counters are tabled under their own heading, as the integers they tally rather than durations`() {
+        val text = renderMarkdown(report(counters = listOf(counter())))
+        assertEquals(
+            listOf("counter", "tid", "samples", "first", "last", "max", "total"),
+            counterRow(text, 0),
+        )
+        assertEquals(counterRow(text, 0).size, counterRow(text, 1).size)
+        assertEquals(
+            listOf("emb-mf-bytes-written", "6951", "37", "1024", "40960", "98304", "139264"),
+            counterRow(text, 2),
+        )
+    }
+
+    @Test
+    fun `a counter two threads published names each of them, since they share the one tally`() {
+        val text = renderMarkdown(report(counters = listOf(counter(tids = listOf(6951, 6952)))))
+        assertEquals("6951,6952", counterRow(text, 2)[1])
+    }
+
+    @Test
     fun `sections that were asked for but never recorded are listed under their own heading`() {
         val text = renderMarkdown(report(missing = listOf("absent", "also-absent")))
         assertEquals(listOf("- absent", "- also-absent"), text.lines().takeLast(2))
@@ -65,22 +85,44 @@ internal class MarkdownStatsRendererTest {
     fun `the headings and their placeholders stay put when the report holds nothing`() {
         val text = renderMarkdown(report(emptyList()))
         assertEquals(
-            listOf("# Perfetto trace statistics", "## Operations", "## Missing"),
+            listOf("# Perfetto trace statistics", "## Operations", "## Counters", "## Missing"),
             text.lines().filter { it.startsWith("#") },
         )
-        assertEquals(2, text.lines().count { it == "_none_" })
+        assertEquals(3, text.lines().count { it == "_none_" })
     }
 
     private fun row(text: String, index: Int): List<String> {
         val lines = text.lines()
         val table = lines.subList(lines.indexOf("## Operations") + 2, lines.size)
-        return table[index].removeSurrounding("| ", " |").split(" | ")
+        return cells(table[index])
     }
+
+    private fun counterRow(text: String, index: Int): List<String> {
+        val lines = text.lines()
+        return cells(lines.drop(lines.indexOf("## Counters")).filter { it.startsWith("|") }[index])
+    }
+
+    private fun cells(row: String) = row.removeSurrounding("| ", " |").split(" | ")
 
     private fun report(
         operations: List<OperationStats> = listOf(operation()),
         missing: List<String> = emptyList(),
-    ) = StatsReport("t.perfetto.gz", 2048, 12, 3, 2, 1_200_000, TraceStats(operations, missing))
+        counters: List<CounterStats> = emptyList(),
+    ) = StatsReport("t.perfetto.gz", 2048, 12, 3, 2, 1_200_000, TraceStats(operations, missing, counters))
+
+    private fun counter(
+        name: String = "emb-mf-bytes-written",
+        tids: List<Int> = listOf(6951),
+    ) = CounterStats(
+        name = name,
+        tids = tids,
+        sampleCount = 37,
+        firstValue = 1024,
+        lastValue = 40960,
+        maxValue = 98304,
+        total = 139264,
+        readings = emptyList(),
+    )
 
     private fun operation(
         name: String = "op",

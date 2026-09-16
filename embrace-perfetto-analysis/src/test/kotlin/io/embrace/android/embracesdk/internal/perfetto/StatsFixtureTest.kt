@@ -17,6 +17,7 @@ internal class StatsFixtureTest {
     private val events = ftraceEvents(trace)
     private val model = TraceInterpreter().interpret(events, threadNames(trace))
     private val window = traceWindowNanos(events)
+    private val start = traceStartNanos(events)
 
     @Test
     fun `a thread spans its first slice opening to its last slice closing`() {
@@ -80,7 +81,7 @@ internal class StatsFixtureTest {
 
     @Test
     fun `the statistics of every section the capture recorded stay within their own bounds`() {
-        calculateStats(model, model.names.toList(), window).operations.forEach { stats ->
+        calculateStats(model, model.names.toList(), window, start).operations.forEach { stats ->
             val percentiles = stats.percentiles.map(Percentile::durationNanos)
             assertEquals("$stats", percentiles.sorted(), percentiles)
             assertTrue("$stats", stats.minNanos <= percentiles.first() && percentiles.last() <= stats.maxNanos)
@@ -91,12 +92,12 @@ internal class StatsFixtureTest {
 
     @Test
     fun `a section the capture never recorded is named as missing rather than silently dropped`() {
-        val stats = calculateStats(model, listOf("emb-sdk-start", "emb-not-in-this-trace"), window)
+        val stats = calculateStats(model, listOf("emb-sdk-start", "emb-not-in-this-trace"), window, start)
         assertEquals(listOf("emb-sdk-start"), stats.operations.map(OperationStats::name))
         assertEquals(listOf("emb-not-in-this-trace"), stats.missing)
     }
 
-    private fun statsFor(name: String) = calculateStats(model, listOf(name), window).operations
+    private fun statsFor(name: String) = calculateStats(model, listOf(name), window, start).operations
 
     private fun round(percent: Double) = BigDecimal(percent).setScale(6, RoundingMode.HALF_UP).toDouble()
 

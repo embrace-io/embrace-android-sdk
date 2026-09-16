@@ -62,6 +62,13 @@ model.counterNames
 model.counterSamples("emb-sf-bytes-written") // every sample, ordered by start
 ```
 
+Every counter the trace recorded goes into the statistics report, whichever sections were asked for. Each is
+reported once, across every thread that published it, as its sample count, first, last and maximum values, and
+its `total`. The values are cumulative, so `total` sums every run a counter made rather than reading its last
+value: a counter whose owner is rebuilt starts again from zero, as the multi-file writer's does per session part.
+Markdown and HTML table those aggregates; json carries the individual readings too, each offset from the start of
+the capture.
+
 ## Statistics
 
 `--operations <a,b,c>` reports count, total, `wall%`, mean, deviation, min, max and percentiles for those sections;

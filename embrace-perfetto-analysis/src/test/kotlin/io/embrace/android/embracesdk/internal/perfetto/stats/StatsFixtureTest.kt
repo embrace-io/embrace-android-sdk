@@ -43,32 +43,24 @@ internal class StatsFixtureTest {
     }
 
     @Test
-    fun `a section that ran on three threads is measured once per thread, not pooled across them`() {
-        val stats = statsFor(REPEATED)
-        assertEquals(listOf(6922, 6939, 6941), stats.map(OperationStats::tid))
-        assertEquals(
-            listOf("io.embrace.android.embracesdk.macrobenchmark.app", "emb-http-reques", "emb-non-io-reg"),
-            stats.map(OperationStats::threadName),
-        )
-        assertEquals(listOf(446, 15, 40), stats.map(OperationStats::count))
-        assertEquals(
-            listOf(0.083038, 0.031227, 0.001776),
-            stats.map { round(it.traceWindowPercent) },
-        )
-        assertEquals(model.slices(REPEATED).size, stats.sumOf(OperationStats::count))
+    fun `a section that ran on three threads is pooled into one result, not measured per thread`() {
+        val stats = statsFor(REPEATED).single()
+        assertEquals(501, stats.count)
+        assertEquals(model.slices(REPEATED).size, stats.count)
+        assertEquals(0.11604, round(stats.traceWindowPercent), 0.0)
     }
 
     @Test
     fun `a repeated section is summarised by durations the capture recorded`() {
-        val stats = statsFor(REPEATED).first()
-        assertEquals(446, stats.count)
-        assertEquals(2_106_424L, stats.sumNanos)
+        val stats = statsFor(REPEATED).single()
+        assertEquals(501, stats.count)
+        assertEquals(2_943_592L, stats.sumNanos)
         assertEquals(458L, stats.minNanos)
-        assertEquals(163_458L, stats.maxNanos)
-        assertEquals(4722.924, stats.meanNanos, 0.001)
-        assertEquals(9197.381, stats.stdevNanos, 0.001)
+        assertEquals(165_083L, stats.maxNanos)
+        assertEquals(5875.433, stats.meanNanos, 0.001)
+        assertEquals(15114.260, stats.stdevNanos, 0.001)
         assertEquals(
-            listOf(Percentile(50, 3_542), Percentile(90, 6_542), Percentile(95, 8_209), Percentile(99, 26_000)),
+            listOf(Percentile(50, 3_500), Percentile(90, 6_917), Percentile(95, 9_792), Percentile(99, 88_125)),
             stats.percentiles,
         )
     }
@@ -76,7 +68,6 @@ internal class StatsFixtureTest {
     @Test
     fun `a section that ran once reports that duration as every statistic, deviating by nothing`() {
         val stats = statsFor("emb-sdk-start").single()
-        assertEquals(6922, stats.tid)
         assertEquals(1, stats.count)
         assertEquals(17_266_417L, stats.minNanos)
         assertEquals(17_266_417L, stats.maxNanos)

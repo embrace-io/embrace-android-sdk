@@ -35,9 +35,9 @@ class SessionPartDecoder(
         }
 
         val budget = SpanBudget()
-        val completedSpans = readCompletedSpansFile(source, budget) ?: return null
+        val completedSpans = readCompletedSpansFile(source, budget)
         val completedIds = completedSpans.mapNotNullTo(HashSet(), Span::spanId)
-        val spanSnapshots = readSpanSnapshotsFile(source, budget, completedIds) ?: return null
+        val spanSnapshots = readSpanSnapshotsFile(source, budget, completedIds)
         if (budget.exceeded) {
             trackFailure(IllegalStateException(TOO_MANY_PERSISTED_SPANS_MSG))
         }
@@ -105,7 +105,7 @@ class SessionPartDecoder(
     private fun Span.endTime(): Long = endTimeNanos ?: Long.MIN_VALUE
 
     /**
-     * Decodes the spans [file] holds one record at a time with [read], or null if it cannot be
+     * Decodes the spans [file] holds one record at a time with [read], or no spans if it cannot be
      * read. An oversized file is truncated rather than rejected.
      */
     private fun readSpanCollectionFile(
@@ -113,7 +113,7 @@ class SessionPartDecoder(
         file: SessionPartFile,
         budget: SpanBudget,
         read: (BufferedSource, Int) -> DecodedSpans,
-    ): List<Span>? = SystemTrace.trace(file.traceSection) {
+    ): List<Span> = SystemTrace.trace(file.traceSection) {
         if (!source.exists(file)) {
             return@trace emptyList()
         }
@@ -123,15 +123,16 @@ class SessionPartDecoder(
         try {
             val decoded = openOrThrow(source, file).use { src -> read(src, budget.remaining) }
             decoded.corruption?.let(::trackFailure)
-            budget.spend(decoded.spans.size, truncated = decoded.spanLimitReached)
-            SystemTrace.trace("mf-spans-proto-to-payload") { decoded.drainToPayload() }
+            val payload = SystemTrace.trace("mf-spans-proto-to-payload") { decoded.drainToPayload() }
+            budget.spend(payload.size, truncated = decoded.spanLimitReached)
+            payload
         } catch (exc: Throwable) {
             trackFailure(exc)
-            null
+            emptyList()
         }
     }
 
-    private fun readCompletedSpansFile(source: SessionPartSource, budget: SpanBudget): List<Span>? =
+    private fun readCompletedSpansFile(source: SessionPartSource, budget: SpanBudget): List<Span> =
         readSpanCollectionFile(source, SessionPartFile.COMPLETED_SPANS, budget) { src, maxSpans ->
             readCompletedSpans(src, maxSpans = maxSpans)
         }
@@ -140,7 +141,7 @@ class SessionPartDecoder(
         source: SessionPartSource,
         budget: SpanBudget,
         completedIds: Set<String>,
-    ): List<Span>? =
+    ): List<Span> =
         readSpanCollectionFile(source, SessionPartFile.SPAN_SNAPSHOTS, budget) { src, maxSpans ->
             readSpanSnapshots(src, maxSpans = maxSpans, supersededIds = completedIds)
         }

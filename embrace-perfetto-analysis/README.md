@@ -90,11 +90,11 @@ scripts/analyse-trace.sh trace.perfetto.gz --format html            # -> trace-r
 scripts/analyse-trace.sh trace.perfetto.gz --output report.html --format html
 ```
 
-## Iterations (partly implemented)
+## Iterations
 
 A macrobenchmark run is multiple iterations.
 `scripts/analyse-trace-iterations.sh` reduces a whole run to one report, and
-`scripts/compare-trace-iterations.sh` diffs two of those reports:
+`scripts/compare-trace-iterations.sh` diffs two of those reports (still a placeholder):
 
 ```bash
 # one run -> one aggregate
@@ -108,11 +108,13 @@ scripts/compare-trace-iterations.sh baseline.json candidate.json --format html -
 
 `analyse-trace-iterations.sh` aggregates macrobenchmark runs. Its options are the single-trace ones, and mean
 the same things, except that the report a run defaults to is named for the directory and sits beside it, as
-`<dir>-report.<extension>`.
+`<dir>-report.<extension>`. `--dry-run` says which traces would be read, then stops.
 
-Today it finds the run's traces, reads each one, and summarises what each holds. Nothing aggregates those into a
-report yet, so a full run prints what it read and then exits 9; `--dry-run`, which promises only to say what
-would be analysed, exits 0.
+The observation is the **iteration**, not the occurrence: a section that ran four times across two threads
+within one iteration counts once, as that iteration's total. Ten iterations are therefore ten observations of
+each section however busy any of them was, which is what makes one run comparable with another. Each section is
+reported with how many iterations recorded it, its occurrences per iteration, `wall%`, and the mean, deviation,
+`cv%`, min, max and percentiles of those per-iteration totals.
 
 `grab-macrobenchmark-output.sh` copies into its destination without clearing it, so a directory reused across
 runs holds the traces of several. The `<package>-benchmarkData.json` androidx.benchmark rewrites on every run

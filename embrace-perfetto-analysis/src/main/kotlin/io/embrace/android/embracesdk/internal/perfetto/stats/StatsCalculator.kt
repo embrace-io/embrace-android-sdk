@@ -57,10 +57,10 @@ private fun percentOf(sumNanos: Long, traceWindowNanos: Long): Double = when (tr
  * nanoseconds squares to around 1e16, and a sum of those over a few hundred occurrences runs past
  * what a Long holds)
  */
-private fun stdev(durations: LongArray, meanNanos: Double): Double {
-    val variance = durations.sumOf { duration ->
-        val deviation = duration - meanNanos
+internal fun stdev(values: LongArray, mean: Double): Double {
+    val variance = values.sumOf { value ->
+        val deviation = value - mean
         deviation * deviation
-    } / durations.size
+    } / values.size
     return sqrt(variance)
 }

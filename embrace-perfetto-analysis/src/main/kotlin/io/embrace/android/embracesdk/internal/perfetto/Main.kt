@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.perfetto.trace.threadNames
 import io.embrace.android.embracesdk.internal.perfetto.trace.traceStartNanos
 import io.embrace.android.embracesdk.internal.perfetto.trace.traceWindowNanos
 import io.embrace.android.embracesdk.internal.perfetto.trace.validateTrace
+import java.io.File
 import java.io.IOException
 import kotlin.system.exitProcess
 
@@ -94,17 +95,17 @@ internal fun writeStats(options: CliOptions, trace: Trace): String {
     return "wrote ${options.format.flag} statistics to ${options.output.path}"
 }
 
-internal fun statsReport(options: CliOptions, trace: Trace): StatsReport {
+internal fun statsReport(options: CliOptions, trace: Trace): StatsReport =
+    statsReport(options.input, trace, options.operations)
+
+internal fun statsReport(file: File, trace: Trace, operations: List<String>): StatsReport {
     val events = ftraceEvents(trace)
     val model = TraceInterpreter().interpret(events, threadNames(trace))
     val window = traceWindowNanos(events)
-    val requested = when {
-        options.allOperations -> model.names.sorted()
-        else -> options.operations
-    }
+    val requested = operations.ifEmpty { model.names.sorted() }
     return StatsReport(
-        tracePath = options.input.path,
-        traceSizeBytes = options.input.length(),
+        tracePath = file.path,
+        traceSizeBytes = file.length(),
         sliceCount = model.sliceCount,
         sectionCount = model.names.size,
         threadCount = model.threads.size,

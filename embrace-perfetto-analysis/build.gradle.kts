@@ -36,7 +36,7 @@ tasks.register<JavaExec>("analyseTrace") {
 
 tasks.register<JavaExec>("analyseIterations") {
     group = "verification"
-    description = "Aggregates statistics across every iteration trace of a macrobenchmark run. Not implemented."
+    description = "Aggregates statistics across every iteration trace of a macrobenchmark run."
     mainClass.set("io.embrace.android.embracesdk.internal.perfetto.IterationsMainKt")
     classpath = sourceSets["main"].runtimeClasspath
     workingDir = rootProject.projectDir

@@ -6,6 +6,10 @@ import io.embrace.android.embracesdk.internal.perfetto.cli.asksForHelp
 import io.embrace.android.embracesdk.internal.perfetto.cli.parseArgs
 import io.embrace.android.embracesdk.internal.perfetto.iterations.IterationTrace
 import io.embrace.android.embracesdk.internal.perfetto.iterations.discoverIterations
+import io.embrace.android.embracesdk.internal.perfetto.report.renderIterations
+import io.embrace.android.embracesdk.internal.perfetto.stats.IterationsReport
+import io.embrace.android.embracesdk.internal.perfetto.stats.StatsReport
+import io.embrace.android.embracesdk.internal.perfetto.stats.aggregateIterations
 import io.embrace.android.embracesdk.internal.perfetto.trace.TraceFormat
 import io.embrace.android.embracesdk.internal.perfetto.trace.parseTrace
 import io.embrace.android.embracesdk.internal.perfetto.trace.validateTrace
@@ -21,10 +25,8 @@ perf/macrobenchmark/<device>/. The run's own benchmarkData.json decides which of
 belong to it, so traces left behind by earlier runs are ignored. Without --output the report goes
 beside the directory, as <dir>-report.<extension>. Normally run via scripts/analyse-trace-iterations.sh.
 
-PARTLY IMPLEMENTED: the run's traces are found, read and summarised, and the aggregate report has a
-model and its markdown, json and html renderers, but nothing folds the traces into one yet, so every
-invocation but --help and --dry-run exits $EXIT_NOT_IMPLEMENTED.
-embrace-perfetto-analysis/README.md describes what it will produce.
+Every section is measured once per iteration, as that iteration's total, so a run of ten iterations
+is ten observations of each. embrace-perfetto-analysis/README.md describes what the report holds.
 """,
 )
 
@@ -56,9 +58,14 @@ fun main(args: Array<String>) {
     if (options.dryRun) {
         return
     }
-    iterations.forEach { println(loadIteration(it)) }
-    System.err.println("aggregating iterations is not implemented yet; no report was written to ${options.output.path}")
-    exitProcess(EXIT_NOT_IMPLEMENTED)
+    val reports = iterations.groupBy(IterationTrace::benchmark)
+        .mapValues { (_, traces) -> traces.map { loadIteration(options, it) } }
+    try {
+        println(writeIterations(options, aggregateIterations(options.input.path, reports)))
+    } catch (exc: IOException) {
+        System.err.println("could not write the report: ${exc.message}")
+        exitProcess(EXIT_BAD_OUTPUT)
+    }
 }
 
 internal fun describeIterations(options: CliOptions, iterations: List<IterationTrace>): String = buildString {
@@ -74,11 +81,14 @@ internal fun describeIterations(options: CliOptions, iterations: List<IterationT
 internal fun describeIteration(iteration: IterationTrace): String =
     "${iteration.benchmark} iteration ${iteration.index}: ${iteration.file.name} (${iteration.file.length()} bytes)"
 
+internal fun writeIterations(options: CliOptions, report: IterationsReport): String {
+    options.output.writeText(renderIterations(options.format, report))
+    return "wrote ${options.format.flag} statistics to ${options.output.path}"
+}
+
 /**
- * Reads one iteration's trace and summarises what it holds.
- * A trace that cannot be read ends the run.
  */
-private fun loadIteration(iteration: IterationTrace): String {
+private fun loadIteration(options: CliOptions, iteration: IterationTrace): StatsReport {
     val format = validateTrace(iteration.file)
     if (format != TraceFormat.PERFETTO) {
         System.err.println("${iteration.file.absolutePath} is ${format.label}")
@@ -90,5 +100,6 @@ private fun loadIteration(iteration: IterationTrace): String {
         System.err.println(exc.message)
         exitProcess(EXIT_BAD_TRACE)
     }
-    return "${describeIteration(iteration)}\n${summarise(trace)}"
+    println("${describeIteration(iteration)}\n${summarise(trace)}")
+    return statsReport(iteration.file, trace, options.operations)
 }

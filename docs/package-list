@@ -4,6 +4,7 @@ $dokka.linkExtension:html
 module:embrace-android-api
 io.embrace.android.embracesdk
 io.embrace.android.embracesdk.annotation
+io.embrace.android.embracesdk.experiments
 io.embrace.android.embracesdk.network
 io.embrace.android.embracesdk.network.http
 io.embrace.android.embracesdk.spans

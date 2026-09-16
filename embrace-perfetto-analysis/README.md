@@ -26,7 +26,8 @@ those surface as a build failure naming the exit value, since Gradle returns its
 The macrobenchmark's perfetto config captures atrace and process stats only, so atrace is all this decodes.
 `src/main/proto/perfetto/protos/trace.proto` declares the few fields that carries - everything else is skipped.
 
-An atrace event's `print.buf` is a begin (`B|<tgid>|<name>`) or an end (`E`, or `E|<tgid>`). Two details are important:
+An atrace event's `print.buf` is a begin (`B|<tgid>|<name>`), an end (`E`, or `E|<tgid>`), or a counter sample
+(`C|<tgid>|<name>|<value>`). Two details are important for slices:
 
 - Slices nest by the **thread id** in the ftrace event, which ftrace calls `pid`, not the tgid in the payload.
 - Ftrace batches events per CPU, so a trace hands them over out of timestamp order.
@@ -49,6 +50,17 @@ model.slices("emb-mf-file-write-atomic") // every occurrence, ordered by start
 
 Atrace names a section only when it opens, so an end closes whichever begin is innermost on its thread. Anything
 that cannot be paired is counted.
+
+## Counters
+
+A counter is a value at an instant rather than a duration: a sample stands until the next sample of the same name.
+The SDK publishes its byte and file totals through `TraceCounter`, which reaches `android.os.Trace.setCounter` and
+lands in the trace as an atrace counter event.
+
+```kotlin
+model.counterNames
+model.counterSamples("emb-sf-bytes-written") // every sample, ordered by start
+```
 
 ## Statistics
 

@@ -29,10 +29,22 @@ internal class AtracePayloadParserTest {
     }
 
     @Test
-    fun `payloads that are not synchronous slices are recognised rather than discarded`() {
+    fun `a counter carries its name and value, with the value taken as the last field`() {
+        assertEquals(AtracePayload.Counter("emb-sf-bytes-written", 4096), parseAtracePayload("C|$TGID|emb-sf-bytes-written|4096\n"))
+        assertEquals(AtracePayload.Counter("a|b", -3), parseAtracePayload("C|$TGID|a|b|-3"))
+    }
+
+    @Test
+    fun `a counter with no value, or one that is not a number, is unrecognised rather than zero`() {
+        listOf("C|$TGID|queue", "C|$TGID|queue|", "C|$TGID|queue|three", "C|$TGID|3").forEach { payload ->
+            assertEquals(payload, AtracePayload.Unsupported.Unrecognised(payload), parseAtracePayload(payload))
+        }
+    }
+
+    @Test
+    fun `payloads that are not synchronous slices or counters are recognised rather than discarded`() {
         assertEquals(AtracePayload.Unsupported.AsyncBegin("S|$TGID|work|7"), parseAtracePayload("S|$TGID|work|7\n"))
         assertEquals(AtracePayload.Unsupported.AsyncEnd("F|$TGID|work|7"), parseAtracePayload("F|$TGID|work|7"))
-        assertEquals(AtracePayload.Unsupported.Counter("C|$TGID|queue|3"), parseAtracePayload("C|$TGID|queue|3"))
     }
 
     @Test
@@ -49,6 +61,7 @@ internal class AtracePayloadParserTest {
             "B|$TGID",
             "B|$TGID|",
             "Elephant",
+            "C|$TGID",
             "X|$TGID|something",
         ).forEach { payload ->
             assertEquals(

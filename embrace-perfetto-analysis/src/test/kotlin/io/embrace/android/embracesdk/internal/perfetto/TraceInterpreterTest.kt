@@ -124,9 +124,9 @@ internal class TraceInterpreterTest {
     fun `payloads that are not synchronous slices are counted without disturbing the nesting`() {
         val model = build(
             begin("outer"),
-            event(1100, "C|$TGID|queue|3"),
+            event(1100, "S|$TGID|async|7"),
             begin("inner", timestamp = 1200),
-            event(1250, "S|$TGID|async|7"),
+            event(1250, "F|$TGID|async|7"),
             end(timestamp = 1300),
             event(1350, "not an atrace payload"),
             end(timestamp = 1400),
@@ -136,6 +136,37 @@ internal class TraceInterpreterTest {
         assertEquals(0, model.unopened)
         assertEquals(2, model.sliceCount)
         assertSame(model.first("outer"), checkNotNull(model.first("inner")).parent)
+    }
+
+    @Test
+    fun `a counter becomes a sample timed by the event that wrote it, not a slice`() {
+        val model = build(begin("outer"), counter("bytes-written", 4096, timestamp = 1100), end(timestamp = 1200))
+        assertEquals(TraceCounterSample("bytes-written", TID, 1100, 4096), model.counterSamples("bytes-written").single())
+        assertEquals(setOf("bytes-written"), model.counterNames)
+        assertEquals(1, model.sliceCount)
+        assertEquals(0, model.unsupported)
+    }
+
+    @Test
+    fun `samples are ordered by when they were written, interleaving the threads that wrote them`() {
+        val model = build(
+            counter("bytes-written", 300, timestamp = 1300, tid = TID),
+            counter("bytes-written", 100, timestamp = 1100, tid = OTHER_TID),
+            counter("files-written", 1, timestamp = 1200, tid = TID),
+            counter("bytes-written", 200, timestamp = 1200, tid = TID),
+        )
+        val samples = model.counterSamples("bytes-written")
+        assertEquals(listOf(100L, 200L, 300L), samples.map(TraceCounterSample::value))
+        assertEquals(listOf(OTHER_TID, TID, TID), samples.map(TraceCounterSample::tid))
+        assertEquals(4, model.counterSampleCount)
+        assertEquals(emptyList<TraceCounterSample>(), model.counterSamples("absent"))
+    }
+
+    @Test
+    fun `a counter that does not parse is counted as unsupported rather than sampled`() {
+        val model = build(event(1000, "C|$TGID|no-value"))
+        assertEquals(1, model.unsupported)
+        assertEquals(0, model.counterSampleCount)
     }
 
     @Test
@@ -183,17 +214,21 @@ internal class TraceInterpreterTest {
         assertEquals(0, model.sliceCount)
         assertEquals(emptySet<String>(), model.names)
         assertNull(model.first("anything"))
+        assertEquals(0, model.counterSampleCount)
+        assertEquals(emptySet<String>(), model.counterNames)
     }
 
     @Test
     fun `a second trace read by one interpreter reports itself, not the sum of both`() {
         val interpreter = TraceInterpreter()
-        interpreter.interpret(listOf(begin("unclosed"), end(), end()))
+        interpreter.interpret(listOf(begin("unclosed"), end(), end(), counter("bytes-written", 4096)))
 
         val model = interpreter.interpret(listOf(begin("clean"), end()))
         assertEquals(0, model.unclosed)
         assertEquals(0, model.unopened)
         assertEquals(1, model.sliceCount)
+        assertEquals(0, model.counterSampleCount)
+        assertEquals(emptyList<TraceCounterSample>(), model.counterSamples("bytes-written"))
     }
 
     private fun build(vararg events: FtraceEvent) = TraceInterpreter().interpret(events.toList())
@@ -203,6 +238,9 @@ internal class TraceInterpreterTest {
     private fun begin(name: String, timestamp: Long = nextTimestamp()) = event(timestamp, "B|$TGID|$name")
 
     private fun end(timestamp: Long = nextTimestamp()) = event(timestamp, "E|$TGID")
+
+    private fun counter(name: String, value: Long, timestamp: Long = nextTimestamp(), tid: Int = TID) =
+        event(timestamp, "C|$TGID|$name|$value", tid)
 
     private fun event(timestamp: Long, payload: String, tid: Int = TID) =
         FtraceEvent(timestamp = timestamp, pid = tid, print = PrintFtraceEvent(buf = "$payload\n"))

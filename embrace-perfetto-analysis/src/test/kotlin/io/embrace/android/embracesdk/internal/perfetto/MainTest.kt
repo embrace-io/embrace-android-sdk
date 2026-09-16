@@ -6,9 +6,6 @@ import io.embrace.android.embracesdk.internal.perfetto.proto.PrintFtraceEvent
 import io.embrace.android.embracesdk.internal.perfetto.proto.Trace
 import io.embrace.android.embracesdk.internal.perfetto.proto.TracePacket
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -23,84 +20,6 @@ internal class MainTest {
     val folder = TemporaryFolder()
 
     @Test
-    fun `a trace path is parsed, with dry run off by default`() {
-        assertEquals(Options(File("a.perfetto-trace"), dryRun = false), parseArgs(arrayOf("a.perfetto-trace")))
-        assertEquals(
-            Options(File("a.perfetto-trace"), dryRun = true),
-            parseArgs(arrayOf("a.perfetto-trace", "--dry-run")),
-        )
-    }
-
-    @Test
-    fun `arguments that do not name exactly one trace are rejected`() {
-        listOf(
-            arrayOf(),
-            arrayOf("--dry-run"),
-            arrayOf("a.perfetto-trace", "b.perfetto-trace"),
-            arrayOf("--unknown", "a.perfetto-trace"),
-        ).forEach { args ->
-            assertNull(args.joinToString(" "), parseArgs(args))
-        }
-    }
-
-    @Test
-    fun `no statistics are asked for by default`() {
-        val options = checkNotNull(parseArgs(arrayOf(TRACE)))
-        assertEquals(emptyList<String>(), options.operations)
-        assertFalse(options.allOperations)
-        assertFalse(options.reportsStats)
-        assertEquals(ReportFormat.MARKDOWN, options.format)
-        assertNull(options.output)
-    }
-
-    @Test
-    fun `sections are named as one comma separated list, or asked for wholesale`() {
-        val named = checkNotNull(
-            parseArgs(arrayOf(TRACE, "--operations", "emb-sdk-start,emb-core-init", "--output", OUTPUT)),
-        )
-        assertEquals(listOf("emb-sdk-start", "emb-core-init"), named.operations)
-        assertTrue(named.reportsStats)
-        assertEquals(File(OUTPUT), named.output)
-
-        val all = checkNotNull(parseArgs(arrayOf("--all-operations", "--format", "html", "--output", OUTPUT, TRACE)))
-        assertEquals(File(TRACE), all.trace)
-        assertTrue(all.allOperations)
-        assertEquals(ReportFormat.HTML, all.format)
-        assertEquals(File(OUTPUT), all.output)
-    }
-
-    @Test
-    fun `an option whose value is missing, unknown, or contradictory is a usage error`() {
-        listOf(
-            arrayOf(TRACE, "--format"),
-            arrayOf(TRACE, "--format", "xml"),
-            arrayOf(TRACE, "--operations"),
-            arrayOf(TRACE, "--operations", "--output", OUTPUT),
-            arrayOf(TRACE, "--operations", "emb-sdk-start,", "--output", OUTPUT),
-            arrayOf(TRACE, "--operations", "emb-sdk-start", "--all-operations", "--output", OUTPUT),
-            arrayOf(TRACE, "--all-operations", "--operations", "emb-sdk-start", "--output", OUTPUT),
-        ).forEach { args ->
-            assertNull(args.joinToString(" "), parseArgs(args))
-        }
-    }
-
-    @Test
-    fun `every format names the file it goes to, and a file is no use without statistics for it`() {
-        listOf(
-            arrayOf(TRACE, "--all-operations"),
-            arrayOf(TRACE, "--all-operations", "--format", "markdown"),
-            arrayOf(TRACE, "--operations", "emb-sdk-start", "--format", "json"),
-            arrayOf(TRACE, "--output"),
-            arrayOf(TRACE, "--output", "--format", "html"),
-            arrayOf(TRACE, "--output", OUTPUT),
-            arrayOf(TRACE, "--output", OUTPUT, "--dry-run"),
-        ).forEach { args ->
-            assertNull(args.joinToString(" "), parseArgs(args))
-        }
-        assertNotNull(parseArgs(arrayOf(TRACE, "--all-operations", "--output", OUTPUT)))
-    }
-
-    @Test
     fun `the format decides the document, which is the whole of what a statistics run writes`() {
         val report = StatsReport("t.gz", 2048, 12, 3, 2, 1_200_000, TraceStats(emptyList(), emptyList(), emptyList()))
         assertTrue(render(ReportFormat.MARKDOWN, report).startsWith("# Perfetto trace statistics"))
@@ -112,19 +31,15 @@ internal class MainTest {
     fun `a statistics run writes the document to the file it was given, and reports where that went`() {
         val events = trace(print(1000, "B|$TID|emb-zeta", tid = TID), print(1100, "E|$TID", tid = TID))
         val output = File(folder.root, "report.html")
-        val options = Options(
-            trace = File(TRACE),
-            operations = listOf("emb-zeta"),
-            format = ReportFormat.HTML,
-            output = output,
-        )
+        val options = options(operations = listOf("emb-zeta"), format = ReportFormat.HTML, output = output)
+
         assertEquals("wrote html statistics to ${output.path}", writeStats(options, events))
         assertEquals(renderHtml(statsReport(options, events)), output.readText())
     }
 
     @Test
     fun `a document that cannot be written fails rather than being dropped`() {
-        val options = Options(trace = File(TRACE), allOperations = true, output = File(folder.root, "absent/report"))
+        val options = options(output = File(folder.root, "absent/report"))
         assertThrows(IOException::class.java) { writeStats(options, Trace()) }
     }
 
@@ -136,14 +51,14 @@ internal class MainTest {
             print(1200, "B|$TID|emb-alpha", tid = TID),
             print(1300, "E|$TID", tid = TID),
         )
-        val named = statsReport(Options(File(TRACE), operations = listOf("emb-zeta", "emb-absent")), events)
+        val named = statsReport(options(operations = listOf("emb-zeta", "emb-absent")), events)
         assertEquals(listOf("emb-zeta"), named.stats.operations.map(OperationStats::name))
         assertEquals(listOf("emb-absent"), named.stats.missing)
         assertEquals(2, named.sliceCount)
         assertEquals(2, named.sectionCount)
         assertEquals(1, named.threadCount)
 
-        val all = statsReport(Options(File(TRACE), allOperations = true), events)
+        val all = statsReport(options(), events)
         assertEquals(listOf("emb-alpha", "emb-zeta"), all.stats.operations.map(OperationStats::name))
     }
 
@@ -154,22 +69,15 @@ internal class MainTest {
             print(2000, "E|$TID", tid = TID),
             FtraceEvent(timestamp = 5000, pid = TID),
         )
-        val report = statsReport(Options(File(TRACE), operations = listOf("emb-zeta")), events)
+        val report = statsReport(options(operations = listOf("emb-zeta")), events)
         assertEquals(4000L, report.traceWindowNanos)
         assertEquals(25.0, report.stats.operations.single().traceWindowPercent, 0.0)
     }
 
     @Test
     fun `the inputs are reported before anything is read`() {
-        val options = Options(
-            File("a.perfetto-trace"),
-            dryRun = true,
-            allOperations = true,
-            format = ReportFormat.JSON,
-            output = File(OUTPUT),
-        )
-        val text = describe(options, TraceFormat.PERFETTO)
-        assertTrue(text, text.contains("trace: a.perfetto-trace"))
+        val text = describe(options(format = ReportFormat.JSON), TraceFormat.PERFETTO)
+        assertTrue(text, text.contains("trace: $TRACE"))
         assertTrue(text, text.contains("format: ${TraceFormat.PERFETTO.label}"))
         assertTrue(text, text.contains("report: $OUTPUT (json)"))
     }
@@ -236,6 +144,12 @@ internal class MainTest {
         assertTrue(text, text.contains("slices: 0 of 0 distinct sections"))
         assertTrue(text, text.contains("counters: 0 samples of 0 distinct counters"))
     }
+
+    private fun options(
+        operations: List<String> = emptyList(),
+        format: ReportFormat = ReportFormat.MARKDOWN,
+        output: File = File(OUTPUT),
+    ) = CliOptions(inputs = listOf(File(TRACE)), operations = operations, format = format, output = output)
 
     private fun trace(vararg events: FtraceEvent) =
         Trace(packet = listOf(TracePacket(ftrace_events = FtraceEventBundle(event = events.toList()))))

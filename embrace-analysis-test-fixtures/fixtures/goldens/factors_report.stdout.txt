@@ -1,0 +1,56 @@
+external-factor analysis: 3 passes, 18 iterations
+
+1. pass-level factor means (rates are CPU-ms per window-ms)
+  pass  win p50  run p50  eff_mhz  lim_cl1 sysserv rate  sf rate other rate  artload   d_io  swap MB
+     1     45.0     31.5     2020     2350        0.195    0.034      0.271     3.62   3.55      2.0
+     2     51.0     35.7     1960     2350        0.165    0.029      0.229     3.62   3.87      2.0
+     3     46.0     32.2     2020     2350        0.186    0.032      0.259     3.62   3.64      2.0
+
+2. pooled correlations with window delta (vs own pass median), n=18
+  eff_mhz (weighted CPU clock)         r =   0.04
+  little share                         r =  -0.34
+  system_server CPU rate               r =   0.68
+  surfaceflinger CPU rate              r =  -0.89
+  other-proc CPU rate (excl idle)      r =   0.55
+  in-proc bg-thread CPU rate           r =   0.63
+  main-thread D/io ms                  r =   0.90
+  main-thread runnable ms              r =   0.91
+  ART class-load ms (in window)        r =   0.86
+  ART verify ms (in window)            r =   0.86
+  lock contention ms                   r =   0.86
+  GC slice ms (in proc)                r =  -0.23
+  binder txns (main thread)            r =   0.86
+  process swap bytes                   r =   0.77
+  MemAvailable                         r =  -0.86
+  (sanity) run ms                      r =   0.91
+
+3. outlier catalogue — 4 iterations with delta > +4 ms
+           iter    win     Δ    run   MHz  lit% ss rate sf rate   oth  d_io   rq artload verify  lock   gc
+  pass2:it005   68.0 +17.0   47.6  1850     2    0.21    0.02  0.28  6.22  4.8    4.25   1.00  1.00 0.00
+  pass3:it004   56.0 +10.0   39.2  2100    90    0.21    0.03  0.25  5.04  3.9    4.00   0.90  0.80 1.50
+  pass1:it005   50.0  +5.0   35.0  2150     2    0.28    0.03  0.38  5.50  3.5    4.25   1.00  1.00 0.00
+  pass3:it005   51.0  +5.0   35.7  2150     2    0.27    0.03  0.37  5.54  3.6    4.25   1.00  1.00 0.00
+  --- baseline (|Δ|<2 ms, n=6): run 32.5, ss rate 0.19, sf rate 0.03, oth 0.26, d_io 3.67, artload 3.62, verify 0.75
+
+4. extreme outliers — top competitors and blocked functions
+  pass2:it005 win 68.0 (Δ+17.0)  competitors[ms]: swapper 50.0, system_server 14.0, com.google.android.gms 3.0, surfaceflinger 1.5
+       blocked_on: do_page_fault 4.54, submit_bio_wait 0.68
+  pass3:it004 win 56.0 (Δ+10.0)  competitors[ms]: swapper 50.0, system_server 12.0, surfaceflinger 1.5, android.hardware.sensors@2.0-service 0.4
+       blocked_on: futex_wait_queue 3.68, do_page_fault 0.56
+  pass2:it004 win 54.0 (Δ+3.0)  competitors[ms]: swapper 50.0, system_server 12.0, surfaceflinger 1.5, android.hardware.sensors@2.0-service 0.4
+       blocked_on: futex_wait_queue 3.62, do_page_fault 0.54
+  pass2:it003 win 52.0 (Δ+1.0)  competitors[ms]: swapper 50.0, system_server 10.0, com.google.android.gms 3.0, surfaceflinger 1.5
+       blocked_on: submit_bio_wait 3.06, futex_wait_queue 0.52
+  pass3:it005 win 51.0 (Δ+5.0)  competitors[ms]: swapper 50.0, system_server 14.0, com.google.android.gms 3.0, surfaceflinger 1.5
+       blocked_on: do_page_fault 4.03, submit_bio_wait 0.51
+  pass1:it005 win 50.0 (Δ+5.0)  competitors[ms]: swapper 50.0, system_server 14.0, com.google.android.gms 3.0, surfaceflinger 1.5
+       blocked_on: do_page_fault 4.00, submit_bio_wait 0.50
+  pass2:it002 win 50.0 (Δ-1.0)  competitors[ms]: swapper 50.0, system_server 8.0, surfaceflinger 1.5, android.hardware.sensors@2.0-service 0.4
+       blocked_on: do_page_fault 2.50, submit_bio_wait 0.50
+  pass1:it004 win 48.0 (Δ+3.0)  competitors[ms]: swapper 50.0, system_server 12.0, surfaceflinger 1.5, android.hardware.sensors@2.0-service 0.4
+       blocked_on: futex_wait_queue 3.44, do_page_fault 0.48
+
+5. main-thread D-state blocked_function totals across all iterations, ms
+  do_page_fault                                    22.6
+  futex_wait_queue                                 19.0
+  submit_bio_wait                                  15.7

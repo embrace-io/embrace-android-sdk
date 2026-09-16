@@ -49,7 +49,7 @@ internal class ExperimentsDataDeliveryTest {
                     embrace.trackExperiment(id = "checkout-flow", variant = "variant-a", startedAt = trackStartMs)
 
                     val flagStartMs = clock.tick()
-                    embrace.trackFeatureFlag(id = "dark-mode", startedAt = flagStartMs)
+                    embrace.trackFeatureFlag(id = "dark-mode", variant = "amoled", startedAt = flagStartMs)
 
                     val untrackEndMs = clock.tick()
                     embrace.untrackExperiment("checkout-flow", endedAt = untrackEndMs)

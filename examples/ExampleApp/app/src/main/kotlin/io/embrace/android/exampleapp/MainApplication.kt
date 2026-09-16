@@ -51,8 +51,25 @@ class MainApplication : Application(), ImageLoaderFactory {
         Embrace.addJavaLogRecordExporter(LogcatLogRecordExporter())
         Embrace.setResourceAttribute("my.cool.resource.id", "innit")
 
+        // declare experiment and feature flag state before the SDK starts, so it is buffered and applied at init
+        Embrace.trackExperiments(
+            listOf(
+                Embrace.createExperiment(id = "exp-1", variant = "control"),
+                Embrace.createExperiment(id = "common", variant = "treatment"),
+                Embrace.createExperiment(id = "exp-2", variant = "foo"),
+            ),
+        )
+        Embrace.trackFeatureFlags(
+            listOf(
+                Embrace.createFeatureFlag(id = "ff-1"),
+                Embrace.createFeatureFlag(id = "ff-2", variant = "derp"),
+                Embrace.createFeatureFlag(id = "common"),
+            ),
+        )
+
         // start embrace SDK
         Embrace.start(this)
+        Embrace.logInfo(message = "experiments applied pre startup")
         Embrace.setUserIdentifier("test-bloke")
         Embrace.logInfo(message = "We out here")
 

@@ -34,7 +34,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
-import java.util.concurrent.Future
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -746,7 +745,7 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
-    fun `a crash flushes the debounced writes before the worker is shut down`() {
+    fun `a crash flushes the debounced and batched writes before the worker is shut down`() {
         val events = mutableListOf<String>()
         val recordingExecutor = ShutdownRecordingExecutor(executor) { events.add("shutdown") }
         executor.blockingMode = false
@@ -757,12 +756,16 @@ internal class SessionPartWriterImplTest {
         assertEquals(listOf("metadata-write"), events)
         events.clear()
 
+        // neither write has run when the crash arrives: one is debounced, the other still batched
         writer.onMetadataChanged()
+        writer.onSpanCompleted(listOf(completedSpan("network-request")))
         assertEquals(emptyList<String>(), events)
+        assertEquals(emptyList<String>(), completedSpanNamesOnDisk(SESSION_PART_ID))
 
         writer.onCrash()
         assertEquals(listOf("metadata-write", "shutdown"), events)
         assertEquals("user1", metadataOnDisk(SESSION_PART_ID)?.user_id)
+        assertEquals(listOf("network-request"), completedSpanNamesOnDisk(SESSION_PART_ID))
         assertNoInternalErrors()
     }
 
@@ -819,17 +822,23 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
 
-        // every write queued when the part starts is the first one for its file
-        assertEquals(listOf(0L, 0L), delays)
+        // the metadata write queued when the part starts is the first for its file, and the span
+        // snapshot rollup is not debounced at all
+        assertEquals(listOf(0L), delays)
         delays.clear()
 
         writer.onMetadataChanged()
         assertEquals(listOf(SessionPartWriterImpl.METADATA_WRITE_DELAY_MS), delays)
         delays.clear()
+        drain()
 
-        writer.endPart()
-        writer.onSessionPartEnded(SESSION_PART_ID)
+        writer.onSpanSnapshotChanged(inFlightSpan("network-request"))
         assertEquals(listOf(SessionPartWriterImpl.SPAN_SNAPSHOT_WRITE_DELAY_MS), delays)
+        delays.clear()
+        drain()
+
+        writer.onSpanCompleted(listOf(completedSpan("network-request")))
+        assertEquals(listOf(SessionPartWriterImpl.COMPLETED_SPANS_WRITE_DELAY_MS), delays)
         drain()
         assertNoInternalErrors()
     }
@@ -905,24 +914,25 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
-    fun `completed spans queued behind the seal of their part are held for the next one`() {
-        val hooked = SubmitHookExecutor(executor)
-        val writer = createWriter(worker = BackgroundWorker(hooked))
+    fun `completed spans still buffered when a session part ends are appended to it`() {
+        val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
 
-        hooked.onSubmit = {
-            writer.endPart()
-            writer.onSessionPartEnded(SESSION_PART_ID)
-        }
+        // the batch is still waiting out its delay when the part ends
         writer.onSpanCompleted(listOf(completedSpan("network-request")))
+        assertEquals(emptyList<String>(), completedSpanNamesOnDisk(SESSION_PART_ID))
+
+        writer.endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
         drain()
-        assertEquals(listOf("span0"), completedSpanNamesOnDisk(SESSION_PART_ID))
+
+        // the buffered span lands in its own part, ahead of that part's session span
+        assertEquals(listOf("network-request", "span0"), completedSpanNamesOnDisk(SESSION_PART_ID))
 
         clock.tick(1000)
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
-
-        assertEquals(listOf("network-request"), completedSpanNamesIn(OTHER_SESSION_PART_ID))
+        assertEquals(emptyList<String>(), completedSpanNamesIn(OTHER_SESSION_PART_ID))
         assertNoInternalErrors()
     }
 
@@ -1242,18 +1252,16 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
-    fun `a span snapshot write reports the spans that changed since the last one`() {
+    fun `a span snapshot write appends the spans that changed since the last one`() {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
-        assertEquals(emptyList<EmbraceSdkSpan>(), snapshotTracker.drainDirtySpans())
 
         val span = inFlightSpan("view-load")
         inFlightSpans = listOf(span)
         writer.onSpanSnapshotChanged(span)
         drain()
 
-        assertEquals(emptyList<EmbraceSdkSpan>(), snapshotTracker.drainDirtySpans())
         assertEquals(listOf("view-load"), inFlightSpanNamesOnDisk(SESSION_PART_ID))
         assertNoInternalErrors()
     }
@@ -1387,6 +1395,25 @@ internal class SessionPartWriterImplTest {
         writer.onSpanCompleted(listOf(completedSpan("network-request")))
 
         assertEquals(listOf("network-request"), completedSpanNamesIn(SESSION_PART_ID))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a burst of span changes arms one write per file`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        val viewLoad = inFlightSpan("view-load")
+        inFlightSpans = listOf(viewLoad)
+        repeat(5) { writer.onSpanSnapshotChanged(viewLoad) }
+        repeat(5) { writer.onSpanCompleted(listOf(completedSpan("span-$it"))) }
+
+        // one armed write per file for the whole burst, rather than one per span
+        assertEquals(2, executor.scheduledTasksCount())
+        drain()
+        assertEquals(List(5) { "span-$it" }, completedSpanNamesOnDisk(SESSION_PART_ID))
+        assertEquals(listOf("span0", "view-load"), spanSnapshotNamesOnDisk(SESSION_PART_ID))
         assertNoInternalErrors()
     }
 
@@ -1610,20 +1637,6 @@ internal class SessionPartWriterImplTest {
                 onFirstSchedule()
             }
             return delegate.schedule(command, delay, unit)
-        }
-    }
-
-    private class SubmitHookExecutor(
-        private val delegate: ScheduledExecutorService,
-    ) : ScheduledExecutorService by delegate {
-
-        var onSubmit: () -> Unit = {}
-
-        override fun submit(task: Runnable?): Future<*> {
-            val hook = onSubmit
-            onSubmit = {}
-            hook()
-            return delegate.submit(task)
         }
     }
 

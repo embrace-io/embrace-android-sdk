@@ -30,7 +30,8 @@ import java.io.File
 /**
  * Writes session part telemetry to disk, if the multi-file persistence layer is enabled.
  * All filesystem work is queued on a single-threaded [worker]. A queued write that is superseded
- * before it runs is cancelled to avoid duplicate work.
+ * before it runs is cancelled to avoid duplicate work, except for appends, which are batched into
+ * one write rather than dropped.
  */
 class SessionPartWriterImpl(
     private val sessionsDir: Lazy<File>,
@@ -58,6 +59,7 @@ class SessionPartWriterImpl(
 
         const val METADATA_WRITE_DELAY_MS: Long = 500
         const val SPAN_SNAPSHOT_WRITE_DELAY_MS: Long = 1000
+        const val COMPLETED_SPANS_WRITE_DELAY_MS: Long = 1000
     }
 
     /**
@@ -131,6 +133,8 @@ class SessionPartWriterImpl(
     }
 
     private fun finish(writers: PartWriters, crashing: Boolean) {
+        // the spans reported before the part ended land before the writes that ending it queues
+        writers.completedSpanWrites.flush()
         queueSpanSnapshotsWrite(writers)
         writers.flushPendingWrites()
 
@@ -174,8 +178,7 @@ class SessionPartWriterImpl(
                 return true
             }
         }
-        queueCompletedSpansWrite(writers, spans)
-        return true
+        return queueCompletedSpansWrite(writers, spans)
     }
 
     override fun onSpanSnapshotChanged(span: EmbraceSdkSpan) {
@@ -184,7 +187,9 @@ class SessionPartWriterImpl(
         }
         EmbTrace.trace("mf-span-snapshot-changed") {
             snapshotTracker.onSpanChanged(span)
-            queueSpanSnapshotsRefresh(current ?: return@trace)
+            if (!processTerminating) {
+                current?.spanSnapshotWrites?.submit(listOf(span))
+            }
         }
     }
 
@@ -243,42 +248,14 @@ class SessionPartWriterImpl(
             return@trace
         }
         snapshotTracker.seed(spans)
-        execute(writers, InternalErrorType.SpanSnapshotsWriteFail, writers.spanSnapshotWrites::submit) {
-            snapshotTracker.drainDirtySpans()
+        execute(writers, InternalErrorType.SpanSnapshotsWriteFail, { worker.submit(it) }) {
             writers.spanSnapshots.write(writers.snapshotsOf(spans))
         }
     }
 
-    private fun queueSpanSnapshotsRefresh(writers: PartWriters) = EmbTrace.trace("mf-queue-span-snapshots-refresh") {
-        execute(writers, InternalErrorType.SpanSnapshotsWriteFail, writers.spanSnapshotWrites::submit) {
-            if (current !== writers) {
-                return@execute
-            }
-            val changed = writers.snapshotsOf(snapshotTracker.drainDirtySpans())
-            if (changed.isNotEmpty()) {
-                writers.spanSnapshots.append(changed) { writers.snapshotsOf(inFlightSpanSource()) }
-            }
-        }
-    }
-
-    /**
-     * Snapshots the spans of [spans] that belong to this session part.
-     */
-    private fun PartWriters.snapshotsOf(spans: List<EmbraceSdkSpan>): List<Span> =
-        spans.filter { it.spanId == sessionSpanId || !it.isSessionSpan() }.mapNotNull(EmbraceSdkSpan::snapshot)
-
-    private fun EmbraceSdkSpan.isSessionSpan(): Boolean = hasEmbraceAttribute(EmbType.Ux.Session)
-
-    private fun queueCompletedSpansWrite(writers: PartWriters, spans: List<Span>) =
+    private fun queueCompletedSpansWrite(writers: PartWriters, spans: List<Span>): Boolean =
         EmbTrace.trace("mf-queue-completed-spans") {
-            execute(null, InternalErrorType.CompletedSpansWriteFail, { worker.submit(it) }) {
-                if (writers.sealed) {
-                    // the part sealed while this write was queued. Hold the spans for the next one
-                    synchronized(bufferLock) { carryOver(spans) }
-                } else {
-                    writers.completedSpans.write(spans)
-                }
-            }
+            writers.completedSpanWrites.submit(spans)
         }
 
     /**
@@ -286,7 +263,7 @@ class SessionPartWriterImpl(
      * dropped, as is a session span: it belongs to the part that was current when it stopped, and a
      * part holding two session spans cannot be read back.
      */
-    private fun carryOver(spans: List<Span>) {
+    internal fun carryOver(spans: List<Span>) {
         spans.forEach { span ->
             if (span.hasEmbraceAttribute(EmbType.Ux.Session)) {
                 reportOrphanedSessionSpan()
@@ -317,14 +294,19 @@ class SessionPartWriterImpl(
             if (writers?.abandoned == true) {
                 return@Runnable
             }
-            try {
-                action()
-            } catch (exc: Throwable) {
-                logger.trackInternalError(errorType, exc)
-            }
+            guard(errorType, action)
         }
         if (!processTerminating) {
             submit(task)
+        }
+    }
+
+    /** Runs [action], tracking any failure as an internal error rather than letting it escape. */
+    internal fun guard(errorType: InternalErrorType, action: () -> Unit) {
+        try {
+            action()
+        } catch (exc: Throwable) {
+            logger.trackInternalError(errorType, exc)
         }
     }
 
@@ -379,11 +361,68 @@ class SessionPartWriterImpl(
         val spanSnapshots = SpanSnapshotsWriter(target, logger)
 
         val metadataWrites = CoalescingWriteQueue(worker, clock, METADATA_WRITE_DELAY_MS)
-        val spanSnapshotWrites = CoalescingWriteQueue(worker, clock, SPAN_SNAPSHOT_WRITE_DELAY_MS)
 
-        private val writeQueues = listOf(metadataWrites, spanSnapshotWrites)
+        /**
+         * The spans whose latest state has yet to reach disk. One that changes many times in a
+         * burst is written once, as the batch holds the state read when it is written.
+         */
+        val spanSnapshotWrites = BatchingWriteQueue(
+            worker = worker,
+            delayMs = SPAN_SNAPSHOT_WRITE_DELAY_MS,
+            // the span last submitted for an ID supersedes the ones before it
+            compact = { spans -> spans.associateBy { it.spanId ?: it }.values.toList() },
+            write = ::writeSpanSnapshots,
+        )
 
-        fun flushPendingWrites() = writeQueues.forEach(CoalescingWriteQueue::flush)
+        val completedSpanWrites = BatchingWriteQueue(
+            worker = worker,
+            delayMs = COMPLETED_SPANS_WRITE_DELAY_MS,
+            write = ::writeCompletedSpans,
+        )
+
+        /**
+         * Snapshots the spans of [spans] that belong to this session part.
+         */
+        fun snapshotsOf(spans: List<EmbraceSdkSpan>): List<Span> =
+            spans.filter { it.spanId == sessionSpanId || !it.isSessionSpan() }
+                .mapNotNull(EmbraceSdkSpan::snapshot)
+
+        private fun EmbraceSdkSpan.isSessionSpan(): Boolean = hasEmbraceAttribute(EmbType.Ux.Session)
+
+        /**
+         * Appends the state of the spans that changed since the last write, on the [worker]. One
+         * that ended while it was buffered is left out, as it is logged as a completed span.
+         */
+        private fun writeSpanSnapshots(spans: List<EmbraceSdkSpan>) {
+            if (abandoned || current !== this) {
+                return
+            }
+            guard(InternalErrorType.SpanSnapshotsWriteFail) {
+                val changed = snapshotsOf(spans).filter { it.endTimeNanos == null }
+                if (changed.isNotEmpty()) {
+                    spanSnapshots.append(changed) { snapshotsOf(inFlightSpanSource()) }
+                }
+            }
+        }
+
+        /**
+         * Appends completed spans to this part's log, on the [worker]. The part can have sealed
+         * while the batch was buffered, in which case the spans are held for the next one.
+         */
+        private fun writeCompletedSpans(spans: List<Span>) =
+            guard(InternalErrorType.CompletedSpansWriteFail) {
+                if (sealed) {
+                    synchronized(bufferLock) { carryOver(spans) }
+                } else {
+                    completedSpans.write(spans)
+                }
+            }
+
+        fun flushPendingWrites() {
+            completedSpanWrites.flush()
+            metadataWrites.flush()
+            spanSnapshotWrites.flush()
+        }
 
         /**
          * Marks this part as fully written and releases the files held open for it.

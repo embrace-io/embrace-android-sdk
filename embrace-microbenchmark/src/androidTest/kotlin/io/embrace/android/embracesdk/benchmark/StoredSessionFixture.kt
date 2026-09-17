@@ -2,11 +2,10 @@ package io.embrace.android.embracesdk.benchmark
 
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpans
+import io.embrace.android.embracesdk.internal.session.persistence.SpanCollection
 import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadata
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartFile
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartSource
-import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshots
 import io.embrace.android.embracesdk.internal.session.persistence.buildCompletedSpans
 import io.embrace.android.embracesdk.internal.session.persistence.buildSessionMetadata
 import io.embrace.android.embracesdk.internal.session.persistence.buildSpanSnapshots
@@ -35,11 +34,11 @@ internal class StoredSessionFixture(session: SimpleSessionFixture = SimpleSessio
                 sharedLibSymbolMapping = null,
             ),
         ),
-        SessionPartFile.SPAN_SNAPSHOTS to SpanSnapshots.ADAPTER.encode(
+        SessionPartFile.SPAN_SNAPSHOTS to SpanCollection.ADAPTER.encode(
             buildSpanSnapshots(session.spanSnapshots),
         ),
         // the session span is logged as a completed span once the session ends
-        SessionPartFile.COMPLETED_SPANS to CompletedSpans.ADAPTER.encode(
+        SessionPartFile.COMPLETED_SPANS to SpanCollection.ADAPTER.encode(
             buildCompletedSpans(session.completedSpans + session.sessionSpan),
         ),
     )

@@ -12,20 +12,20 @@ import java.io.EOFException
 internal class CompletedSpansReaderTest {
 
     private companion object {
-        /** Field 2 as a varint, which no version of the log has ever held. */
-        private val UNKNOWN_FIELD = byteArrayOf(0x10, 0x01)
+        /** Field 3 as a varint, which no version of the log has ever held. */
+        private val UNKNOWN_FIELD = byteArrayOf(0x18, 0x01)
 
         /** Field 1 tagged with wire type 6, which is not a field encoding protobuf defines. */
         private val INVALID_FIELD_ENCODING = byteArrayOf(0x0E)
 
-        /** Field 1, length delimited, claiming more bytes than any log could hold. */
-        private val OVERSIZED_LENGTH_PREFIX = byteArrayOf(0x0A, -1, -1, -1, -1, 0x07)
+        /** Field 2, length delimited, claiming more bytes than any log could hold. */
+        private val OVERSIZED_LENGTH_PREFIX = byteArrayOf(0x12, -1, -1, -1, -1, 0x07)
 
         /** An intact frame round a record body holding an invalid field encoding. */
-        private val UNDECODABLE_RECORD = byteArrayOf(0x0A, 0x01, 0x0E)
+        private val UNDECODABLE_RECORD = byteArrayOf(0x12, 0x01, 0x0E)
 
         /** An intact frame round a record body that stops part way through a field. */
-        private val TORN_RECORD_BODY = byteArrayOf(0x0A, 0x01, 0x0A)
+        private val TORN_RECORD_BODY = byteArrayOf(0x12, 0x01, 0x0A)
 
         private fun span(id: String) = fullyPopulatedSpanProto.copy(span_id = id)
 
@@ -83,7 +83,7 @@ internal class CompletedSpansReaderTest {
 
     @Test
     fun `a record holding several spans reads all of them back`() {
-        val batched = CompletedSpans.ADAPTER.encode(CompletedSpans(spans = listOf(first, second)))
+        val batched = SpanCollection.ADAPTER.encode(SpanCollection(spans = listOf(first, second)))
         assertEquals(listOf(first, second), read(batched))
     }
 

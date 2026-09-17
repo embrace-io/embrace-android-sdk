@@ -33,7 +33,7 @@ import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
-import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpans
+import io.embrace.android.embracesdk.internal.session.persistence.SpanCollection
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
@@ -438,7 +438,7 @@ internal class JvmCrashFeatureTest {
             .takeIf(File::isFile)
             ?.readBytes()
             ?: return null
-        return CompletedSpans.ADAPTER.decode(bytes).spans.lastOrNull { span ->
+        return SpanCollection.ADAPTER.decode(bytes).spans.lastOrNull { span ->
             span.attributes.any { it.key == "emb.type" && it.value_ == "ux.session" }
         }
     }

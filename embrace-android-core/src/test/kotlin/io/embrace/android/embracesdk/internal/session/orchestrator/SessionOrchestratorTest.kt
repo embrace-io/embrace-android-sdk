@@ -52,10 +52,9 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
-import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpans
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
+import io.embrace.android.embracesdk.internal.session.persistence.SpanCollection
 import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
-import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshots
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
@@ -2087,14 +2086,14 @@ internal class SessionOrchestratorTest {
 
     private fun completedSpansOnDisk(partDir: File): List<SpanProto> {
         val bytes = File(partDir, "completed_spans.pb").takeIf(File::isFile)?.readBytes() ?: return emptyList()
-        return CompletedSpans.ADAPTER.decode(bytes).spans
+        return SpanCollection.ADAPTER.decode(bytes).spans
     }
 
     private fun spanSnapshotsOnDisk(partDir: File): List<SpanProto> =
         File(partDir, "span_snapshots.pb")
             .takeIf(File::isFile)
             ?.inputStream()
-            ?.use(SpanSnapshots.ADAPTER::decode)
+            ?.use(SpanCollection.ADAPTER::decode)
             ?.spans
             .orEmpty()
 

@@ -26,7 +26,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.session.getSessionProperty
-import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpans
+import io.embrace.android.embracesdk.internal.session.persistence.SpanCollection
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -697,7 +697,7 @@ internal class MultiFilePersistenceParityTest(
             .takeIf(File::isFile)
             ?.readBytes()
             ?: return emptyList()
-        return CompletedSpans.ADAPTER.decode(bytes).spans.filter { span ->
+        return SpanCollection.ADAPTER.decode(bytes).spans.filter { span ->
             span.attributes.any { it.key == "emb.type" && it.value_ == "ux.session" }
         }
     }

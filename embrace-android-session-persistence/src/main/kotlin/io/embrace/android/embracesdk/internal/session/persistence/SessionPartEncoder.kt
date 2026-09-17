@@ -26,13 +26,15 @@ fun buildSessionMetadata(
 /**
  * Builds the full set of in-flight spans for a session part.
  */
-fun buildSpanSnapshots(spans: List<Span>): SpanSnapshots = SpanSnapshots(
+fun buildSpanSnapshots(spans: List<Span>): SpanCollection = SpanCollection(
     format_version = FORMAT_VERSION,
     spans = spans.map(Span::toProto),
 )
 
 /**
- * Builds one self contained record to append to a session part's span log.
+ * Builds the full log of ended spans for a session part, stamped with the format version.
  */
-fun buildCompletedSpans(spans: List<Span>): CompletedSpans =
-    CompletedSpans(spans = spans.map(Span::toProto))
+fun buildCompletedSpans(spans: List<Span>): SpanCollection = SpanCollection(
+    spans = spans.map(Span::toProto),
+    format_version = FORMAT_VERSION,
+)

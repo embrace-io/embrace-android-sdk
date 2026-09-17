@@ -18,11 +18,10 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpans
 import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadata
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
+import io.embrace.android.embracesdk.internal.session.persistence.SpanCollection
 import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
-import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshots
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
@@ -1763,7 +1762,7 @@ internal class SessionPartWriterImplTest {
     private fun spanSnapshotsOnDisk(sessionPartId: String): List<SpanProto> =
         partFile(sessionPartId, SPAN_SNAPSHOTS_FILE_NAME)
             ?.inputStream()
-            ?.use(SpanSnapshots.ADAPTER::decode)
+            ?.use(SpanCollection.ADAPTER::decode)
             ?.spans
             .orEmpty()
 
@@ -1787,7 +1786,7 @@ internal class SessionPartWriterImplTest {
 
     private fun completedSpansOnDisk(sessionPartId: String): List<SpanProto> {
         val bytes = partFile(sessionPartId, COMPLETED_SPANS_FILE_NAME)?.readBytes() ?: return emptyList()
-        return CompletedSpans.ADAPTER.decode(bytes).spans
+        return SpanCollection.ADAPTER.decode(bytes).spans
     }
 
     private fun partFile(sessionPartId: String, fileName: String): File? {

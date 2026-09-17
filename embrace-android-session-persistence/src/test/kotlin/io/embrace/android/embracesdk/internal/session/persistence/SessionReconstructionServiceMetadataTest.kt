@@ -279,8 +279,8 @@ internal class SessionReconstructionServiceMetadataTest {
         File(partDir(directory), "completed_spans.pb")
             .writeBytes(completedSpansLog(listOf(fullyPopulatedSpanProto)))
         File(partDir(directory), "span_snapshots.pb").writeBytes(
-            SpanSnapshots.ADAPTER.encode(
-                SpanSnapshots(format_version = FORMAT_VERSION, spans = listOf(inFlightSpanProto)),
+            SpanCollection.ADAPTER.encode(
+                SpanCollection(format_version = FORMAT_VERSION, spans = listOf(inFlightSpanProto)),
             ),
         )
     }

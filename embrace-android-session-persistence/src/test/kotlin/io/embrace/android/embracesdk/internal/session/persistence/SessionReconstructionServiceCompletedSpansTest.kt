@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.session.persistence
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.payload.Span
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -174,12 +173,13 @@ internal class SessionReconstructionServiceCompletedSpansTest {
     }
 
     @Test
-    fun `an invalid field encoding behind an intact record is reported and does not throw`() {
+    fun `an invalid field encoding costs the log but not the rest of the session part`() {
         write(spans = listOf(endedSpanProto))
         completedSpansFile().appendBytes(INVALID_FIELD_ENCODING)
         completedSpansFile().appendBytes(completedSpansLog(listOf(secondEndedSpanProto)))
 
-        assertNull(service.reconstruct(partDirectory))
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(emptyList<Span>(), payload.spans)
         assertReconstructionFailureTracked()
     }
 
@@ -208,7 +208,7 @@ internal class SessionReconstructionServiceCompletedSpansTest {
     fun `a completed spans log holding nothing but a malformed frame is reported and does not throw`() {
         write()
         completedSpansFile().writeBytes(INVALID_FIELD_ENCODING)
-        assertNull(service.reconstruct(partDirectory))
+        assertEquals(emptyList<Span>(), service.reconstruct(partDirectory)?.data?.spans)
         assertReconstructionFailureTracked()
     }
 
@@ -228,7 +228,7 @@ internal class SessionReconstructionServiceCompletedSpansTest {
         writeMetadata()
         completedSpansFile().mkdirs()
 
-        assertNull(service.reconstruct(partDirectory))
+        assertEquals(emptyList<Span>(), service.reconstruct(partDirectory)?.data?.spans)
         assertReconstructionFailureTracked()
     }
 

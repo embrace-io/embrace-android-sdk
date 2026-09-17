@@ -11,8 +11,9 @@ private const val SPANS_TAG = 1
  * a single bad record taking down the entire batch.
  *
  * A process can die part way through an append, so a log that stops mid-record is expected and is
- * not reported: every record written in full before it is returned. A record that is all
- * present but does not decode is corruption and throws.
+ * not reported: every record written in full before it is returned. A record that is all present
+ * but does not decode is corruption, as is a frame that cannot be followed at all. Both are
+ * reported alongside the records that did read back.
  */
 internal fun readCompletedSpans(
     source: BufferedSource,
@@ -24,18 +25,24 @@ internal fun readCompletedSpans(
     var corruption: Throwable? = null
     val collection = SpanCollectionReader(source, maxBytes, maxRecordBytes)
 
+    fun decoded(spanLimitReached: Boolean = false) = DecodedSpans(
+        spans,
+        corruption ?: collection.corruption,
+        spanLimitReached || collection.stoppedAtLimit,
+    )
+
     while (true) {
         val record = when (collection.nextTag()) {
-            null -> return DecodedSpans(spans, corruption)
+            null -> return decoded()
             SPANS_TAG -> {
                 if (spans.size >= maxSpans) {
-                    return DecodedSpans(spans, corruption, spanLimitReached = true)
+                    return decoded(spanLimitReached = true)
                 }
-                collection.readRecord() ?: return DecodedSpans(spans, corruption)
+                collection.readRecord() ?: return decoded()
             }
             else -> {
                 if (!collection.skipFrame()) {
-                    return DecodedSpans(spans, corruption)
+                    return decoded()
                 }
                 continue
             }

@@ -6,9 +6,8 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
 import org.junit.Test
-import java.io.IOException
+import java.io.EOFException
 
 internal class CompletedSpansReaderTest {
 
@@ -25,17 +24,25 @@ internal class CompletedSpansReaderTest {
         /** An intact frame round a record body holding an invalid field encoding. */
         private val UNDECODABLE_RECORD = byteArrayOf(0x0A, 0x01, 0x0E)
 
+        /** An intact frame round a record body that stops part way through a field. */
+        private val TORN_RECORD_BODY = byteArrayOf(0x0A, 0x01, 0x0A)
+
         private fun span(id: String) = fullyPopulatedSpanProto.copy(span_id = id)
 
         private fun decode(bytes: ByteArray): DecodedSpans = Buffer().write(bytes).use(::readCompletedSpans)
 
         private fun read(bytes: ByteArray): List<SpanProto> = decode(bytes).spans
 
-        private fun read(bytes: ByteArray, maxBytes: Long): List<SpanProto> =
-            Buffer().write(bytes).use { readCompletedSpans(it, maxBytes) }.spans
+        private fun decode(bytes: ByteArray, maxBytes: Long): DecodedSpans =
+            Buffer().write(bytes).use { readCompletedSpans(it, maxBytes) }
+
+        private fun read(bytes: ByteArray, maxBytes: Long): List<SpanProto> = decode(bytes, maxBytes).spans
+
+        private fun decodeBoundedRecords(bytes: ByteArray, maxRecordBytes: Long): DecodedSpans =
+            Buffer().write(bytes).use { readCompletedSpans(it, MAX_PART_FILE_BYTES, maxRecordBytes) }
 
         private fun readBoundedRecords(bytes: ByteArray, maxRecordBytes: Long): List<SpanProto> =
-            Buffer().write(bytes).use { readCompletedSpans(it, MAX_PART_FILE_BYTES, maxRecordBytes) }.spans
+            decodeBoundedRecords(bytes, maxRecordBytes).spans
 
         private fun readBoundedSpans(bytes: ByteArray, maxSpans: Int): DecodedSpans =
             Buffer().write(bytes).use {
@@ -155,6 +162,31 @@ internal class CompletedSpansReaderTest {
     }
 
     @Test
+    fun `dropping records past the byte budget is reported`() {
+        val log = completedSpansLog(listOf(first, second, third))
+        assertTrue(decode(log, budgetOf(first, second)).spanLimitReached)
+    }
+
+    @Test
+    fun `a log exactly filling the byte budget reports nothing`() {
+        val log = completedSpansLog(listOf(first, second))
+        assertFalse(decode(log, budgetOf(first, second)).spanLimitReached)
+    }
+
+    @Test
+    fun `dropping a record past the record bound is reported`() {
+        val large = paddedSpanProto(paddedSpanId(2), padding = 4096)
+        val log = completedSpansLog(listOf(first, large))
+        assertTrue(decodeBoundedRecords(log, declaredLengthOf(large) - 1).spanLimitReached)
+    }
+
+    @Test
+    fun `a log within the record bound reports nothing`() {
+        val log = completedSpansLog(listOf(first, second))
+        assertFalse(decodeBoundedRecords(log, declaredLengthOf(first)).spanLimitReached)
+    }
+
+    @Test
     fun `a span limit of zero reads back no spans`() {
         val decoded = readBoundedSpans(completedSpansLog(listOf(first)), maxSpans = 0)
         assertEquals(emptyList<SpanProto>(), decoded.spans)
@@ -171,13 +203,12 @@ internal class CompletedSpansReaderTest {
     }
 
     @Test
-    fun `a malformed frame throws even with no records behind it`() {
-        try {
-            read(INVALID_FIELD_ENCODING)
-            fail("expected a malformed frame to throw")
-        } catch (expected: IOException) {
-            // a short frame is a torn append, but a malformed one is corruption at any offset
-        }
+    fun `a malformed frame with no records in front of it is reported`() {
+        // a short frame is a torn append, but a malformed one is corruption at any offset
+        val decoded = decode(INVALID_FIELD_ENCODING)
+        assertEquals(emptyList<SpanProto>(), decoded.spans)
+        assertNotNull(decoded.corruption)
+        assertFalse(decoded.spanLimitReached)
     }
 
     @Test
@@ -187,15 +218,20 @@ internal class CompletedSpansReaderTest {
     }
 
     @Test
-    fun `a malformed frame behind an intact record throws so the caller can report it`() {
+    fun `a malformed frame keeps the records in front of it and costs the rest of the log`() {
+        // the frames behind it cannot be found again, but what already read back is still good
         val log = completedSpansLog(listOf(first)) + INVALID_FIELD_ENCODING + completedSpansLog(listOf(second))
 
-        try {
-            read(log)
-            fail("expected corruption with records behind it to throw")
-        } catch (expected: IOException) {
-            // the records before it are still lost, but reporting beats delivering a partial log
-        }
+        val decoded = decode(log)
+        assertEquals(listOf(first), decoded.spans)
+        assertNotNull(decoded.corruption)
+        assertFalse(decoded.spanLimitReached)
+    }
+
+    @Test
+    fun `an undecodable record in front of a malformed frame is the failure reported`() {
+        val log = completedSpansLog(listOf(first)) + TORN_RECORD_BODY + INVALID_FIELD_ENCODING
+        assertTrue(decode(log).corruption is EOFException)
     }
 
     @Test

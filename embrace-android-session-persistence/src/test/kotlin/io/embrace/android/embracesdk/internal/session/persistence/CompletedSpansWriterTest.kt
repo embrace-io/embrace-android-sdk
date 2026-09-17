@@ -34,7 +34,7 @@ internal class CompletedSpansWriterTest {
 
         private val oversized = paddedSpan("aaaaaaaaaaaaaaa2", padding = 4096)
 
-        private val twoSpanBudget = 2L * SpanCollection.ADAPTER.encode(
+        private val twoSpanBudget = spanCollectionHeader().size + 2L * SpanCollection.ADAPTER.encode(
             SpanCollection(spans = listOf(span("aaaaaaaaaaaaaaa1").toProto())),
         ).size
 
@@ -100,10 +100,9 @@ internal class CompletedSpansWriterTest {
     }
 
     @Test
-    fun `an empty list creates a log holding no spans`() {
+    fun `an empty list creates no log at all`() {
         assertTrue(write(spans = emptyList()))
-        assertTrue(logFile().isFile)
-        assertEquals(emptyList<SpanProto>(), readLog())
+        assertFalse(logFile().exists())
         assertNoInternalErrors()
     }
 
@@ -320,7 +319,7 @@ internal class CompletedSpansWriterTest {
         repeat(3) {
             assertTrue(write(spans = listOf(oversized)))
         }
-        assertEquals(emptyList<String>(), readLog().map(SpanProto::span_id))
+        assertFalse(logFile().exists())
         assertWriteFailureTracked()
     }
 

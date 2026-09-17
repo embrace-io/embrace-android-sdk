@@ -7,6 +7,10 @@ import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import java.io.File
 import java.io.IOException
 
+/** The record that stamps the format version, written once when the log is created. */
+private val VERSION_HEADER: ByteArray =
+    SpanCollection.ADAPTER.encode(SpanCollection(format_version = FORMAT_VERSION))
+
 /**
  * Appends ended spans to the log a session part directory holds.
  *
@@ -56,9 +60,14 @@ class CompletedSpansWriter(
     private fun writeImpl(spans: List<Span>): Boolean {
         val spanFile = spanFile() ?: return false
 
-        val bytes = SpanCollection.ADAPTER.encode(SpanCollection(spans = recordsFor(spans)))
+        val records = recordsFor(spans)
+        if (records.isEmpty()) {
+            return true
+        }
+        val header = if (spanFile.size == 0L) VERSION_HEADER else ByteArray(0)
+        val bytes = header + SpanCollection.ADAPTER.encode(SpanCollection(spans = records))
 
-        if (bytes.isNotEmpty() && spanFile.size + bytes.size > maxBytes) {
+        if (spanFile.size + bytes.size > maxBytes) {
             if (!reportedOverflow) {
                 reportedOverflow = true
                 trackFailure(IOException(OVERSIZED_PART_FILE_MSG))

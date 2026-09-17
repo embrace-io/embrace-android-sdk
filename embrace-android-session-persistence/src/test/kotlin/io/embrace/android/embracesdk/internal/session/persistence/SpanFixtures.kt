@@ -93,7 +93,13 @@ internal val fullyPopulatedSpanSnapshotsProto = SpanCollection(
     spans = listOf(fullyPopulatedSpanProto, inFlightSpanProto),
 )
 
-internal fun completedSpansLog(spans: List<SpanProto>): ByteArray = Buffer().apply {
+internal fun spanCollectionHeader(version: Int = FORMAT_VERSION): ByteArray =
+    SpanCollection.ADAPTER.encode(SpanCollection(format_version = version))
+
+internal fun completedSpansLog(spans: List<SpanProto>): ByteArray =
+    spanCollectionHeader() + completedSpansAppend(spans)
+
+internal fun completedSpansAppend(spans: List<SpanProto>): ByteArray = Buffer().apply {
     spans.forEach { write(SpanCollection.ADAPTER.encode(SpanCollection(spans = listOf(it)))) }
 }.readByteArray()
 

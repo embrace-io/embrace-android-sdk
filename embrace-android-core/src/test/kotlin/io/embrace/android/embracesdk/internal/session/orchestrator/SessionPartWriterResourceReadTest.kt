@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDir
 import io.embrace.android.embracesdk.internal.session.persistence.SessionReconstructionService
 import io.embrace.android.embracesdk.internal.session.persistence.SpanCollection
 import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
+import io.embrace.android.embracesdk.internal.session.persistence.buildSpanCollectionHeader
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import okio.Buffer
@@ -195,6 +196,7 @@ internal class SessionPartWriterResourceReadTest {
         writePartFile(
             COMPLETED_SPANS_FILE_NAME,
             Buffer().apply {
+                write(SpanCollection.ADAPTER.encode(buildSpanCollectionHeader()))
                 write(SpanCollection.ADAPTER.encode(SpanCollection(spans = listOf(completedSpan))))
             }.readByteArray(),
         )

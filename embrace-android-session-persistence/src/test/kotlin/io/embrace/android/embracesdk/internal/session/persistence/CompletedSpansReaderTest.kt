@@ -6,8 +6,10 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Test
 import java.io.EOFException
+import java.io.IOException
 
 internal class CompletedSpansReaderTest {
 
@@ -62,8 +64,31 @@ internal class CompletedSpansReaderTest {
     private val third = span("aaaaaaaaaaaaaaa3")
 
     @Test
-    fun `an empty log reads back no spans`() {
-        assertEquals(emptyList<SpanProto>(), read(byteArrayOf()))
+    fun `a log holding only the version record reads back no spans`() {
+        val decoded = decode(spanCollectionHeader())
+        assertEquals(emptyList<SpanProto>(), decoded.spans)
+        assertFalse(decoded.spanLimitReached)
+        assertNull(decoded.corruption)
+    }
+
+    @Test
+    fun `an empty log is rejected`() {
+        assertRejected(byteArrayOf())
+    }
+
+    @Test
+    fun `a log holding no version record at all is rejected`() {
+        assertRejected(completedSpansAppend(listOf(first)))
+    }
+
+    @Test
+    fun `a log stamped with another format version is rejected`() {
+        assertRejected(spanCollectionHeader(FORMAT_VERSION + 1))
+    }
+
+    @Test
+    fun `a version record discards every record logged before it`() {
+        assertEquals(listOf(second), read(completedSpansLog(listOf(first)) + completedSpansLog(listOf(second))))
     }
 
     @Test
@@ -83,7 +108,7 @@ internal class CompletedSpansReaderTest {
 
     @Test
     fun `a record holding several spans reads all of them back`() {
-        val batched = SpanCollection.ADAPTER.encode(SpanCollection(spans = listOf(first, second)))
+        val batched = spanCollectionHeader() + completedSpansAppend(listOf(first, second))
         assertEquals(listOf(first, second), read(batched))
     }
 
@@ -97,10 +122,15 @@ internal class CompletedSpansReaderTest {
     fun `every truncation of a log reads back one of its prefixes`() {
         val spans = listOf(first, second, third)
         val log = completedSpansLog(spans)
+        val header = spanCollectionHeader().size
 
         (0..log.size).forEach { length ->
-            val recovered = read(log.copyOf(length))
-            assertEquals("truncated to $length bytes", spans.take(recovered.size), recovered)
+            if (length < header) {
+                assertRejected(log.copyOf(length))
+            } else {
+                val recovered = read(log.copyOf(length))
+                assertEquals("truncated to $length bytes", spans.take(recovered.size), recovered)
+            }
         }
     }
 
@@ -132,7 +162,7 @@ internal class CompletedSpansReaderTest {
 
     @Test
     fun `a length prefix beyond the record bound is rejected before the body is read`() {
-        val log = completedSpansLog(listOf(first)) + OVERSIZED_LENGTH_PREFIX + completedSpansLog(listOf(second))
+        val log = completedSpansLog(listOf(first)) + OVERSIZED_LENGTH_PREFIX + completedSpansAppend(listOf(second))
         assertEquals(listOf(first), readBoundedRecords(log, MAX_RECORD_BYTES))
     }
 
@@ -203,24 +233,26 @@ internal class CompletedSpansReaderTest {
     }
 
     @Test
-    fun `a malformed frame with no records in front of it is reported`() {
+    fun `a malformed frame with no records in front of it is rejected`() {
         // a short frame is a torn append, but a malformed one is corruption at any offset
-        val decoded = decode(INVALID_FIELD_ENCODING)
-        assertEquals(emptyList<SpanProto>(), decoded.spans)
-        assertNotNull(decoded.corruption)
-        assertFalse(decoded.spanLimitReached)
+        assertRejected(INVALID_FIELD_ENCODING)
+    }
+
+    @Test
+    fun `a malformed frame with no records in front of it reports what went wrong`() {
+        assertNotNull(assertRejected(INVALID_FIELD_ENCODING).cause)
     }
 
     @Test
     fun `a field a later SDK added is skipped`() {
-        val log = completedSpansLog(listOf(first)) + UNKNOWN_FIELD + completedSpansLog(listOf(second))
+        val log = completedSpansLog(listOf(first)) + UNKNOWN_FIELD + completedSpansAppend(listOf(second))
         assertEquals(listOf(first, second), read(log))
     }
 
     @Test
     fun `a malformed frame keeps the records in front of it and costs the rest of the log`() {
         // the frames behind it cannot be found again, but what already read back is still good
-        val log = completedSpansLog(listOf(first)) + INVALID_FIELD_ENCODING + completedSpansLog(listOf(second))
+        val log = completedSpansLog(listOf(first)) + INVALID_FIELD_ENCODING + completedSpansAppend(listOf(second))
 
         val decoded = decode(log)
         assertEquals(listOf(first), decoded.spans)
@@ -236,7 +268,7 @@ internal class CompletedSpansReaderTest {
 
     @Test
     fun `an undecodable record is dropped and the records either side of it are kept`() {
-        val log = completedSpansLog(listOf(first)) + UNDECODABLE_RECORD + completedSpansLog(listOf(second))
+        val log = completedSpansLog(listOf(first)) + UNDECODABLE_RECORD + completedSpansAppend(listOf(second))
         assertEquals(listOf(first, second), read(log))
     }
 
@@ -248,7 +280,7 @@ internal class CompletedSpansReaderTest {
 
     @Test
     fun `a log every record of which is undecodable reads back no spans`() {
-        val decoded = decode(UNDECODABLE_RECORD + UNDECODABLE_RECORD)
+        val decoded = decode(spanCollectionHeader() + UNDECODABLE_RECORD + UNDECODABLE_RECORD)
         assertEquals(emptyList<SpanProto>(), decoded.spans)
         assertNotNull(decoded.corruption)
     }
@@ -260,7 +292,7 @@ internal class CompletedSpansReaderTest {
 
     @Test
     fun `an undecodable record counts against the budget`() {
-        val log = completedSpansLog(listOf(first)) + UNDECODABLE_RECORD + completedSpansLog(listOf(second))
+        val log = completedSpansLog(listOf(first)) + UNDECODABLE_RECORD + completedSpansAppend(listOf(second))
         assertEquals(listOf(first), read(log, budgetOf(first, second)))
     }
 
@@ -290,7 +322,7 @@ internal class CompletedSpansReaderTest {
 
     @Test
     fun `a field a later SDK added does not count against the budget`() {
-        val log = completedSpansLog(listOf(first)) + UNKNOWN_FIELD + completedSpansLog(listOf(second))
+        val log = completedSpansLog(listOf(first)) + UNKNOWN_FIELD + completedSpansAppend(listOf(second))
         assertEquals(listOf(first, second), read(log, budgetOf(first, second)))
     }
 
@@ -306,6 +338,16 @@ internal class CompletedSpansReaderTest {
         val decoded = DecodedSpans(AppendingOnRemoval(listOf(first, second), third), corruption = null)
         assertEquals(listOf(first.span_id, second.span_id), decoded.drainToPayload().map { it.spanId })
         assertEquals(listOf(third), decoded.spans)
+    }
+
+    private fun assertRejected(log: ByteArray): IOException {
+        try {
+            read(log)
+        } catch (expected: IOException) {
+            return expected
+        }
+        fail("expected a log that cannot be read back to throw")
+        error("unreachable")
     }
 
     private class AppendingOnRemoval(

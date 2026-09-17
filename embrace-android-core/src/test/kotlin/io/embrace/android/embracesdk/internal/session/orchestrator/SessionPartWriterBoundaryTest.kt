@@ -98,36 +98,17 @@ internal class SessionPartWriterBoundaryTest {
     }
 
     @Test
-    fun `a pending metadata write lands in the session part it was queued for`() {
-        startPart(FIRST_PART_ID)
-        drain()
-        assertEquals("user0", metadataIn(FIRST_PART_ID)?.user_id)
-        writer.onMetadataChanged()
-        assertEquals("user0", metadataIn(FIRST_PART_ID)?.user_id)
-
-        // next part begins before write completed
-        startPart(SECOND_PART_ID)
-        drain()
-
-        // the queued write went to the first part. it ran after the second part's own writes, as
-        // those are not debounced, hence the higher user id
-        assertEquals("user2", metadataIn(FIRST_PART_ID)?.user_id)
-        assertEquals("user1", metadataIn(SECOND_PART_ID)?.user_id)
-        assertEquals(3, writeCount)
-        assertNoInternalErrors()
-    }
-
-    @Test
     fun `only the last metadata write queued before a boundary lands in the older part`() {
         startPart(FIRST_PART_ID)
         drain()
         repeat(2) { writer.onMetadataChanged() }
+        endPart(FIRST_PART_ID)
         startPart(SECOND_PART_ID)
         drain()
 
         // the first of the queued writes was superseded, and the one that ran went to the first part
-        assertEquals("user2", metadataIn(FIRST_PART_ID)?.user_id)
-        assertEquals("user1", metadataIn(SECOND_PART_ID)?.user_id)
+        assertEquals("user1", metadataIn(FIRST_PART_ID)?.user_id)
+        assertEquals("user2", metadataIn(SECOND_PART_ID)?.user_id)
         assertEquals(3, writeCount)
         assertNoInternalErrors()
     }
@@ -137,6 +118,7 @@ internal class SessionPartWriterBoundaryTest {
         startPart(FIRST_PART_ID)
         drain()
         writer.onMetadataChanged()
+        assertEquals("user0", metadataIn(FIRST_PART_ID)?.user_id)
 
         // the orchestrator always ends a part before the next one starts, and ending it flushes
         // the debounced write rather than leaving it armed
@@ -154,6 +136,7 @@ internal class SessionPartWriterBoundaryTest {
     fun `a user info change after a boundary targets the new session part`() {
         startPart(FIRST_PART_ID)
         drain()
+        endPart(FIRST_PART_ID)
         startPart(SECOND_PART_ID)
         drain()
 
@@ -167,35 +150,10 @@ internal class SessionPartWriterBoundaryTest {
     }
 
     @Test
-    fun `a pending metadata write for a deleted session part is reported and does not stop the new part`() {
-        startPart(FIRST_PART_ID)
-        drain()
-        writer.onMetadataChanged()
-        File(sessionsDir, dirFor(FIRST_PART_ID).dirName).deleteRecursively()
-
-        startPart(SECOND_PART_ID)
-        drain()
-        assertEquals(listOf("SessionMetadataWriteFail"), logger.internalErrorMessages.map { it.msg })
-        assertEquals("user1", metadataIn(SECOND_PART_ID)?.user_id)
-        assertEquals(2, writeCount)
-    }
-
-    @Test
-    fun `a pending session span write lands in the session part it was queued for`() {
-        startPart(FIRST_PART_ID)
-        startPart(SECOND_PART_ID)
-        drain()
-
-        assertEquals("span0", sessionSpanIn(FIRST_PART_ID)?.name)
-        assertEquals("span1", sessionSpanIn(SECOND_PART_ID)?.name)
-        assertEquals(2, spanCount)
-        assertNoInternalErrors()
-    }
-
-    @Test
     fun `a user info change after a boundary does not rewrite either session span`() {
         startPart(FIRST_PART_ID)
         drain()
+        endPart(FIRST_PART_ID)
         startPart(SECOND_PART_ID)
         drain()
         writer.onMetadataChanged()
@@ -232,6 +190,7 @@ internal class SessionPartWriterBoundaryTest {
     fun `a session span change after a boundary only updates the newer session part`() {
         startPart(FIRST_PART_ID)
         drain()
+        endPart(FIRST_PART_ID)
         startPart(SECOND_PART_ID)
         drain()
 
@@ -262,12 +221,27 @@ internal class SessionPartWriterBoundaryTest {
     @Test
     fun `a pending resource read lands in the session part it was queued for`() {
         startPart(FIRST_PART_ID)
+        endPart(FIRST_PART_ID)
         startPart(SECOND_PART_ID)
         drain()
 
         assertEquals("resource0", metadataIn(FIRST_PART_ID)?.resource?.app_version)
         assertEquals("resource1", metadataIn(SECOND_PART_ID)?.resource?.app_version)
         assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a session part displaced by the next one has its session span written`() {
+        startPart(FIRST_PART_ID)
+        drain()
+
+        // the first part loses its end, so starting the second finishes it in the end's place
+        currentSessionPartSpan.endSession(startNewSession = false)
+        startPart(SECOND_PART_ID)
+        drain()
+
+        assertEquals(partSpans.getValue(FIRST_PART_ID).spanId, completedSpansIn(FIRST_PART_ID).last().span_id)
+        assertInternalErrors("SessionPartEndMissed")
     }
 
     private fun startPart(sessionPartId: String) {
@@ -322,6 +296,10 @@ internal class SessionPartWriterBoundaryTest {
 
     private fun partFile(sessionPartId: String, fileName: String): File? =
         File(File(sessionsDir, dirFor(sessionPartId).dirName), fileName).takeIf(File::isFile)
+
+    private fun assertInternalErrors(vararg expected: String) {
+        assertEquals(expected.sorted(), logger.internalErrorMessages.map { it.msg }.sorted())
+    }
 
     private fun assertNoInternalErrors() {
         assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)

@@ -123,6 +123,8 @@ internal class SessionPartWriterImplTest {
         drain()
 
         clock.tick(10000)
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
 
         val directories = sessionPartDirs()
@@ -137,6 +139,8 @@ internal class SessionPartWriterImplTest {
 
         // start another part before the worker has had a chance to create the first directory
         clock.tick(10000)
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
 
         val directories = sessionPartDirs()
@@ -280,6 +284,8 @@ internal class SessionPartWriterImplTest {
         drain()
 
         clock.tick(10000)
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
 
         assertEquals(SESSION_PART_ID, metadataIn(SESSION_PART_ID)?.session_part_id)
@@ -325,7 +331,9 @@ internal class SessionPartWriterImplTest {
         drain()
 
         clock.tick(10000)
-        sessionSpan.name = "span1"
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        sessionSpan = checkNotNull(currentSessionPartSpan.sessionPartSpan).apply { name = "span1" }
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
         drain()
 
@@ -512,7 +520,23 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
-    fun `an end for a session part other than the current one is ignored`() {
+    fun `a session part started while another one is open is reported`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+
+        clock.tick(10000)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
+        drain()
+
+        assertInternalErrors("SessionPartEndMissed")
+        assertEquals(
+            "Session part started before the previous one ended",
+            logger.internalErrorMessages.single().throwable?.message,
+        )
+    }
+
+    @Test
+    fun `an end for a session part other than the current one is reported`() {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
@@ -525,7 +549,11 @@ internal class SessionPartWriterImplTest {
 
         assertEquals(submitCount, executor.submitCount)
         assertNull(sessionSpanIn(SESSION_PART_ID)?.end_time_unix_nano)
-        assertNoInternalErrors()
+        assertInternalErrors("SessionPartEndMissed")
+        assertEquals(
+            "Session part ended after another had started",
+            logger.internalErrorMessages.single().throwable?.message,
+        )
     }
 
     @Test
@@ -908,10 +936,14 @@ internal class SessionPartWriterImplTest {
             writer.onCrash()
         }
         clock.tick(1000)
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
 
+        // the crash lands while the ending part reads its in-flight spans, so the next part never
+        // gets as far as a directory of its own
         assertTrue(executor.isShutdown)
-        assertNull(inFlightSpanNamesOnDisk(OTHER_SESSION_PART_ID))
+        assertEquals(listOf(SESSION_PART_ID), partDirs().map(SessionPartDirectory::sessionPartId))
         assertNoInternalErrors()
     }
 
@@ -1125,6 +1157,8 @@ internal class SessionPartWriterImplTest {
         writer.onSpanSnapshotChanged(inFlightSpans.single())
 
         clock.tick(10000)
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
         inFlightSpans = listOf(inFlightSpan("next-part-span"))
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
         drain()
@@ -1396,10 +1430,13 @@ internal class SessionPartWriterImplTest {
         writer.onSpanCompleted(listOf(completedSpan("first")))
 
         clock.tick(10000)
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
         writer.onSpanCompleted(listOf(completedSpan("second")))
 
-        assertEquals(listOf("first"), completedSpanNamesIn(SESSION_PART_ID))
+        // the first part's own session span is logged alongside what completed while it was active
+        assertEquals(listOf("first", "span0"), completedSpanNamesIn(SESSION_PART_ID))
         assertEquals(listOf("second"), completedSpanNamesIn(OTHER_SESSION_PART_ID))
         assertNoInternalErrors()
     }
@@ -1447,6 +1484,8 @@ internal class SessionPartWriterImplTest {
         assertEquals(listOf("network-request"), completedSpanNamesOnDisk(SESSION_PART_ID))
 
         clock.tick(10000)
+        endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
 
         assertEquals(emptyList<String?>(), completedSpanNamesIn(OTHER_SESSION_PART_ID))

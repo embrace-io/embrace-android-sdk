@@ -96,6 +96,13 @@ class SessionPartWriterImpl(
             directoryStore.create(writers.directory)
 
             synchronized(bufferLock) {
+                // a part should always end before the next one starts. the orphan is dropped before
+                // it is finished, so a failure to finish it cannot leave it as the current part
+                current?.let { orphan ->
+                    current = null
+                    reportMissedEnd("Session part started before the previous one ended")
+                    finish(orphan, crashing = false)
+                }
                 if (carriedOverSpans.isNotEmpty()) {
                     queueCompletedSpansWrite(writers, carriedOverSpans.toList())
                     carriedOverSpans.clear()
@@ -117,26 +124,37 @@ class SessionPartWriterImpl(
             val writers = synchronized(bufferLock) {
                 val ref = current ?: return
                 if (ref.directory.sessionPartId != sessionPartId) {
+                    reportMissedEnd("Session part ended after another had started")
                     return
                 }
                 current = null
                 ref
             }
-            queueEndedSessionSpanWrite(writers)
-            queueSpanSnapshotsWrite(writers)
-            writers.flushPendingWrites()
-
-            worker.submit {
-                writers.seal()
-                writeTracker.markComplete(sessionPartId)
-
-                if (!crashing && !processTerminating) {
-                    notifyWritesComplete()
-                }
-                writers.span?.releaseRetainedData()
-            }
+            finish(writers, crashing)
         }
     }
+
+    private fun finish(writers: PartWriters, crashing: Boolean) {
+        queueEndedSessionSpanWrite(writers)
+        queueSpanSnapshotsWrite(writers)
+        writers.flushPendingWrites()
+
+        if (processTerminating) {
+            return
+        }
+        worker.submit {
+            writers.seal()
+            writeTracker.markComplete(writers.directory.sessionPartId)
+
+            if (!crashing && !processTerminating) {
+                notifyWritesComplete()
+            }
+            writers.span?.releaseRetainedData()
+        }
+    }
+
+    private fun reportMissedEnd(msg: String) =
+        logger.trackInternalError(InternalErrorType.SessionPartEndMissed, IllegalStateException(msg))
 
     override fun onMetadataChanged() {
         if (!acceptingWrites()) {

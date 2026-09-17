@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.perfetto.stats
 
-import io.embrace.android.embracesdk.internal.perfetto.model.ThreadTimeline
 import io.embrace.android.embracesdk.internal.perfetto.model.TraceModel
 import io.embrace.android.embracesdk.internal.perfetto.model.TraceSlice
 import kotlin.math.sqrt

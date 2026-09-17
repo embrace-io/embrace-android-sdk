@@ -57,6 +57,7 @@ class UserSessionOrchestrationModuleImpl(
 
     override val sessionPartReader: SessionPartReader? = deliveryModule?.let { delivery ->
         SessionPartReader(
+            sessionsDir = sessionsDir,
             directoryStore = sessionPartDirectoryStore,
             reconstructionService = SessionReconstructionService(sessionsDir, initModule.logger),
             intakeService = delivery.intakeService,

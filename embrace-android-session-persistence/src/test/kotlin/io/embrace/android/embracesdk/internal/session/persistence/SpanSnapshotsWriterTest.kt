@@ -180,10 +180,11 @@ internal class SpanSnapshotsWriterTest {
     }
 
     @Test
-    fun `a stale temporary file does not prevent a write`() {
-        File(partDir(), "${SPAN_SNAPSHOTS_FILE_NAME}1234.tmp").writeText("torn write")
+    fun `a stale temporary file is reclaimed by the next write`() {
+        File(partDir(), "$SPAN_SNAPSHOTS_FILE_NAME.tmp").writeText("torn write")
         assertTrue(write())
         assertEquals(fullyPopulatedSpanSnapshotsProto, readSnapshots())
+        assertEquals(listOf(SPAN_SNAPSHOTS_FILE_NAME), partDir().list()?.toList())
         assertNoInternalErrors()
     }
 

@@ -301,10 +301,11 @@ internal class SessionMetadataWriterTest {
     }
 
     @Test
-    fun `a stale temporary file does not prevent a write`() {
-        File(partDir(), "${METADATA_FILE_NAME}1234.tmp").writeText("torn write")
+    fun `a stale temporary file is reclaimed by the next write`() {
+        File(partDir(), "$METADATA_FILE_NAME.tmp").writeText("torn write")
         assertTrue(write())
         assertEquals(fullyPopulatedMetadataProto(), readMetadata())
+        assertEquals(listOf(METADATA_FILE_NAME), partDir().list()?.toList())
         assertNoInternalErrors()
     }
 

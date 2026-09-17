@@ -31,6 +31,9 @@ internal const val SPAN_SNAPSHOT_RECORD_TAG = 2
  * already at that path untouched.
  *
  * The temporary file is always cleaned up, so a failed write leaves the directory as it was found.
+ * Its name is derived from [fileName], so one orphaned by a process that died mid-write is
+ * reclaimed by the next write of that file rather than adding to what is held on disk.
+ *
  * Throws [IOException] if the file could not be written; callers are responsible for reporting that
  * as an internal error of the appropriate type.
  */
@@ -42,7 +45,7 @@ internal fun writeAtomically(
     encode: (OutputStream) -> Unit,
 ) {
     SystemTrace.trace("mf-file-write-atomic") {
-        val tmpFile = File.createTempFile(fileName, ".tmp", partDir)
+        val tmpFile = File(partDir, "$fileName.tmp")
         try {
             val stream = LimitedOutputStream(tmpFile.outputStream().buffered(), maxBytes)
             stream.use(encode)

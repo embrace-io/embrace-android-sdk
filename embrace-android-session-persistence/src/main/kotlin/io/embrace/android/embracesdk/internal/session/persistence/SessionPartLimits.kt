@@ -3,8 +3,13 @@ package io.embrace.android.embracesdk.internal.session.persistence
 /**
  * Upper bound on the size of a session part file. This is meant as an upper bound to prevent memory
  * exhaustion and is considered unlikely for the vast majority of runs.
+ *
+ * Part files hold uncompressed protobuf, so this is not comparable to the 3Mb ceiling on the
+ * gzipped payload: a part is only compressed once it has been reconstructed into an envelope and
+ * serialized to JSON, by which point it occupies an eighth or less of what it did here. That
+ * ceiling is enforced where the compressed bytes can be measured, in the scheduling service.
  */
-internal const val MAX_PART_FILE_BYTES: Long = 3L * 1024 * 1024
+internal const val MAX_PART_FILE_BYTES: Long = 12L * 1024 * 1024
 
 /**
  * Upper bound on the size of a single record in the completed spans file.

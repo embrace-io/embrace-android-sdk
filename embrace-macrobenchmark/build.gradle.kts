@@ -39,6 +39,7 @@ kotlin {
 }
 
 dependencies {
+    implementation(project(":embrace-benchmark-common"))
     implementation(libs.junit)
     implementation(libs.androidx.test.junit)
     implementation(libs.androidx.test.runner)

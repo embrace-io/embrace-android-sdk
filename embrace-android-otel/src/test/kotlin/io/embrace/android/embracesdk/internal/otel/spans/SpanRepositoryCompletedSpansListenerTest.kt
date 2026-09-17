@@ -146,7 +146,18 @@ internal class SpanRepositoryCompletedSpansListenerTest {
         owned = true
         repository.storeCompletedOtelSpans(listOf(span("b")))
         assertEquals(listOf(listOf("a"), listOf("b")), observed.map { batch -> batch.map(Span::name) })
-        assertTrue(repository.completedOtelSpans().isEmpty())
+        assertEquals(listOf("a"), repository.completedOtelSpans().map(Span::name))
+    }
+
+    @Test
+    fun `a batch declined earlier is still flushable after a later batch is taken`() {
+        var owned = false
+        repository.addCompletedOtelSpansListener { owned }
+        repository.storeCompletedOtelSpans(listOf(span("a")))
+
+        owned = true
+        repository.storeCompletedOtelSpans(listOf(span("b")))
+        assertEquals(listOf("a"), repository.flushOtelSpans().map(Span::name))
     }
 
     @Test

@@ -166,7 +166,7 @@ class SpanRepository {
             notifyOwningListener(listener, spans) || owned
         }
         if (owned) {
-            completedSpanData.clear()
+            completedSpanData.removeAll(spans)
         }
     }
 

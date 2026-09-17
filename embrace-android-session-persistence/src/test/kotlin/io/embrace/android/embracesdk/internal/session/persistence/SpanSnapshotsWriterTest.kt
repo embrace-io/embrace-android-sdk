@@ -249,7 +249,8 @@ internal class SpanSnapshotsWriterTest {
 
     @Test
     fun `a span larger than one record is dropped and the spans round it are kept`() {
-        val oversized = paddedSpan(paddedSpanId(0), MAX_RECORD_BYTES.toInt())
+        val oversized = paddedSpan(paddedSpanId(0), padding = 4096)
+        writer = writerWith(maxRecordBytes = justUnder(oversized))
         assertTrue(write(span = listOf(first, oversized, second)))
         assertEquals(protos(first, second), readSnapshots().spans)
         assertWriteFailureTracked()
@@ -401,8 +402,9 @@ internal class SpanSnapshotsWriterTest {
 
     @Test
     fun `an oversized span is dropped from an append and reported once`() {
+        val oversized = paddedSpan(paddedSpanId(0), padding = 4096)
+        writer = writerWith(maxRecordBytes = justUnder(oversized))
         assertTrue(write(span = listOf(first)))
-        val oversized = paddedSpan(paddedSpanId(0), MAX_RECORD_BYTES.toInt())
         repeat(3) {
             assertFalse(append(listOf(oversized)))
         }
@@ -440,6 +442,9 @@ internal class SpanSnapshotsWriterTest {
         activePart = directory
         return writer.write(span)
     }
+
+    private fun justUnder(span: Span): Long =
+        SpanSnapshots.ADAPTER.encodedSize(SpanSnapshots(spans = listOf(span.toProto()))).toLong() - 1
 
     private fun writerWith(
         maxBytes: Long = MAX_PART_FILE_BYTES,

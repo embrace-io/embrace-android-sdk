@@ -9,6 +9,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.io.IOException
 
 internal class SessionPartWriteTargetTest {
 
@@ -63,6 +64,49 @@ internal class SessionPartWriteTargetTest {
         assertNull(partDir())
         assertTrue(target.failed)
         assertEquals(MISSING_PART_DIR_MSG, reported.single().message)
+    }
+
+    @Test
+    fun `a write failure is reported as itself while the part directory is there`() {
+        createPartDir(partDirectory)
+        val failure = IOException("disk full")
+
+        target.reportWriteFailure(failure, reported::add)
+
+        assertEquals(listOf(failure), reported)
+        assertFalse(target.failed)
+    }
+
+    @Test
+    fun `a write failure on a part directory that has gone is reported as the missing directory`() {
+        val failure = IOException("stream closed")
+
+        target.reportWriteFailure(failure, reported::add)
+
+        // the directory going is why the write failed, and is what the part is given up for
+        assertEquals(MISSING_PART_DIR_MSG, reported.single().message)
+        assertTrue(target.failed)
+    }
+
+    @Test
+    fun `a write failure is reported as itself when no session part is active`() {
+        activePart = null
+        val failure = IOException("disk full")
+
+        target.reportWriteFailure(failure, reported::add)
+
+        assertEquals(listOf(failure), reported)
+        assertFalse(target.failed)
+    }
+
+    @Test
+    fun `a write failure is reported as itself when the active part cannot be resolved`() {
+        target = SessionPartWriteTarget(lazy { sessionsDir }) { error("boom") }
+        val failure = IOException("disk full")
+
+        target.reportWriteFailure(failure, reported::add)
+
+        assertEquals(listOf(failure), reported)
     }
 
     @Test

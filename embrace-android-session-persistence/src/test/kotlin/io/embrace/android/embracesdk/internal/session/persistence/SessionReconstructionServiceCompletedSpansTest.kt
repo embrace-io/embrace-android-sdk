@@ -165,7 +165,7 @@ internal class SessionReconstructionServiceCompletedSpansTest {
     fun `a field a later SDK added is skipped rather than failing the log`() {
         write(spans = listOf(endedSpanProto))
         completedSpansFile().appendBytes(UNKNOWN_FIELD)
-        completedSpansFile().appendBytes(completedSpansLog(listOf(secondEndedSpanProto)))
+        completedSpansFile().appendBytes(completedSpansAppend(listOf(secondEndedSpanProto)))
 
         val spans = checkNotNull(service.reconstruct(partDirectory)?.data?.spans)
         assertEquals(listOf(endedSpan, secondEndedSpan), spans)
@@ -176,7 +176,7 @@ internal class SessionReconstructionServiceCompletedSpansTest {
     fun `an invalid field encoding costs the records behind it but not those in front`() {
         write(spans = listOf(endedSpanProto))
         completedSpansFile().appendBytes(INVALID_FIELD_ENCODING)
-        completedSpansFile().appendBytes(completedSpansLog(listOf(secondEndedSpanProto)))
+        completedSpansFile().appendBytes(completedSpansAppend(listOf(secondEndedSpanProto)))
 
         val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
         assertEquals(listOf(endedSpan), payload.spans)
@@ -202,7 +202,7 @@ internal class SessionReconstructionServiceCompletedSpansTest {
     fun `an undecodable record is reported but does not lose the rest of the log`() {
         write(spans = listOf(endedSpanProto))
         completedSpansFile().appendBytes(UNDECODABLE_RECORD)
-        completedSpansFile().appendBytes(completedSpansLog(listOf(secondEndedSpanProto)))
+        completedSpansFile().appendBytes(completedSpansAppend(listOf(secondEndedSpanProto)))
 
         val spans = checkNotNull(service.reconstruct(partDirectory)?.data?.spans)
         assertEquals(listOf(endedSpan, secondEndedSpan), spans)

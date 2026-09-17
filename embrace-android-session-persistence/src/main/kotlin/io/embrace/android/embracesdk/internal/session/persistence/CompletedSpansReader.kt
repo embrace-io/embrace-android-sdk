@@ -5,51 +5,41 @@ import okio.BufferedSource
 /**
  * Decodes the append-only log of completed spans held in [source].
  *
- * Records are decoded one at a time rather than with [CompletedSpans.ADAPTER], because this avoids
- * a single bad record taking down the entire batch.
- *
- * A process can die part way through an append, so a log that stops mid-record is expected and is
- * not reported: every record written in full before it is returned. A record that is all present
- * but does not decode is corruption, as is a frame that cannot be followed at all. Both are
- * reported alongside the records that did read back.
+ * Every record is kept, in the order it was appended, because a span only reaches this log once it
+ * has ended and so is never superseded by a later record.
  */
 internal fun readCompletedSpans(
     source: BufferedSource,
     maxBytes: Long = MAX_PART_FILE_BYTES,
     maxRecordBytes: Long = MAX_RECORD_BYTES,
     maxSpans: Int = MAX_PERSISTED_SPANS,
-): DecodedSpans {
-    val spans = mutableListOf<SpanProto>()
-    var corruption: Throwable? = null
-    val collection = SpanCollectionReader(source, maxBytes, maxRecordBytes)
+): DecodedSpans = CompletedSpansDecoder(
+    SpanCollectionReader(source, maxBytes, maxRecordBytes),
+    maxSpans,
+).read()
 
-    fun decoded(spanLimitReached: Boolean = false) = DecodedSpans(
-        spans,
-        corruption ?: collection.corruption,
-        spanLimitReached || collection.stoppedAtLimit,
-    )
+/**
+ * Accumulates the ended spans in the order they were logged.
+ */
+private class CompletedSpansDecoder(
+    collection: SpanCollectionReader,
+    private val maxSpans: Int,
+) : SpanRecordDecoder(collection) {
 
-    while (true) {
-        val record = when (collection.nextTag()) {
-            null -> return decoded()
-            SPAN_COLLECTION_RECORD_TAG -> {
-                if (spans.size >= maxSpans) {
-                    return decoded(spanLimitReached = true)
-                }
-                collection.readRecord() ?: return decoded()
-            }
-            else -> {
-                if (!collection.skipFrame()) {
-                    return decoded()
-                }
-                continue
-            }
+    private val spans = mutableListOf<SpanProto>()
+
+    override fun decoded(): MutableList<SpanProto> = spans
+
+    override fun reset() {
+        spans.clear()
+    }
+
+    override fun readRecord(): Boolean {
+        if (spans.size >= maxSpans) {
+            return truncate()
         }
-        try {
-            spans.add(SpanProto.ADAPTER.decode(record))
-        } catch (exc: Exception) {
-            // keep exc associated with first bad record, then continue
-            corruption = corruption ?: exc
-        }
+        val record = collection.readRecord() ?: return stop()
+        decodeSpan(record)?.let(spans::add)
+        return true
     }
 }

@@ -35,6 +35,27 @@ class SessionPartWriteTarget(
         }
 
     /**
+     * Reports [exc] through [track], unless the session part directory has gone: [partDir] reports
+     * that instead, which gives the part up rather than leaving every later write to fail the same
+     * way. A writer that appends through a file it holds open only learns the directory went by
+     * failing, so it asks here rather than reporting what it caught.
+     *
+     * If the part cannot be resolved at all, [exc] is reported, because that is the failure worth
+     * knowing about and nothing else will report it.
+     */
+    fun reportWriteFailure(exc: Throwable, track: (Throwable) -> Unit) {
+        val gone = try {
+            val directory = directory
+            directory != null && partDir(directory, track) == null
+        } catch (unresolvable: Throwable) {
+            false
+        }
+        if (!gone) {
+            track(exc)
+        }
+    }
+
+    /**
      * The directory holding [directory]'s telemetry, or null if it is not on disk.
      */
     fun partDir(directory: SessionPartDirectory, onMissing: (Throwable) -> Unit): File? {

@@ -34,7 +34,7 @@ internal class CompletedSpansWriterTest {
 
         private val oversized = paddedSpan("aaaaaaaaaaaaaaa2", padding = 4096)
 
-        private val twoSpanBudget = 2L * SpanCollection.ADAPTER.encode(
+        private val twoSpanBudget = spanCollectionHeader().size + 2L * SpanCollection.ADAPTER.encode(
             SpanCollection(spans = listOf(span("aaaaaaaaaaaaaaa1").toProto())),
         ).size
 
@@ -100,10 +100,9 @@ internal class CompletedSpansWriterTest {
     }
 
     @Test
-    fun `an empty list creates a log holding no spans`() {
+    fun `an empty list creates no log at all`() {
         assertTrue(write(spans = emptyList()))
-        assertTrue(logFile().isFile)
-        assertEquals(emptyList<SpanProto>(), readLog())
+        assertFalse(logFile().exists())
         assertNoInternalErrors()
     }
 
@@ -243,6 +242,45 @@ internal class CompletedSpansWriterTest {
     }
 
     @Test
+    fun `a batch is written up to the record cap rather than dropped whole`() {
+        writer = recordCappedWriter(maxRecords = 2)
+
+        assertTrue(
+            write(
+                spans = listOf(
+                    span("aaaaaaaaaaaaaaa1"),
+                    span("aaaaaaaaaaaaaaa2"),
+                    span("aaaaaaaaaaaaaaa3"),
+                ),
+            ),
+        )
+
+        assertEquals(listOf("aaaaaaaaaaaaaaa1", "aaaaaaaaaaaaaaa2"), readLog().map(SpanProto::span_id))
+        assertWriteFailureTracked()
+    }
+
+    @Test
+    fun `the record cap counts the spans logged across appends`() {
+        writer = recordCappedWriter(maxRecords = 2)
+        assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa1"))))
+        assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa2"))))
+
+        assertFalse(write(spans = listOf(span("aaaaaaaaaaaaaaa3"))))
+
+        assertEquals(listOf("aaaaaaaaaaaaaaa1", "aaaaaaaaaaaaaaa2"), readLog().map(SpanProto::span_id))
+        assertWriteFailureTracked()
+    }
+
+    @Test
+    fun `a log at the record cap is reported once however many appends are dropped`() {
+        writer = recordCappedWriter(maxRecords = 1)
+        assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa1"))))
+
+        repeat(5) { assertFalse(write(spans = listOf(span("aaaaaaaaaaaaaaa2")))) }
+        assertWriteFailureTracked()
+    }
+
+    @Test
     fun `a full log is reported once however many appends are dropped`() {
         writer = boundedWriter()
         write(spans = listOf(span("aaaaaaaaaaaaaaa1")))
@@ -318,9 +356,26 @@ internal class CompletedSpansWriterTest {
     fun `a span larger than one record is reported once`() {
         writer = recordBoundedWriter()
         repeat(3) {
-            assertTrue(write(spans = listOf(oversized)))
+            assertFalse(write(spans = listOf(oversized)))
         }
-        assertEquals(emptyList<String>(), readLog().map(SpanProto::span_id))
+        assertFalse(logFile().exists())
+        assertWriteFailureTracked()
+    }
+
+    @Test
+    fun `a batch is written up to the point the log fills rather than dropped whole`() {
+        writer = boundedWriter()
+        assertTrue(
+            write(
+                spans = listOf(
+                    span("aaaaaaaaaaaaaaa1"),
+                    span("aaaaaaaaaaaaaaa2"),
+                    span("aaaaaaaaaaaaaaa3"),
+                ),
+            ),
+        )
+        assertEquals(listOf("aaaaaaaaaaaaaaa1", "aaaaaaaaaaaaaaa2"), readLog().map(SpanProto::span_id))
+        assertEquals(twoSpanBudget, logFile().length())
         assertWriteFailureTracked()
     }
 
@@ -328,6 +383,9 @@ internal class CompletedSpansWriterTest {
         val bound = SpanCollection.ADAPTER.encodedSize(SpanCollection(spans = listOf(oversized.toProto()))) - 1L
         return CompletedSpansWriter(target { activePart }, logger, MAX_PART_FILE_BYTES, bound)
     }
+
+    private fun recordCappedWriter(maxRecords: Int): CompletedSpansWriter =
+        CompletedSpansWriter(target { activePart }, logger, MAX_PART_FILE_BYTES, MAX_RECORD_BYTES, maxRecords)
 
     private fun boundedWriter(): CompletedSpansWriter =
         CompletedSpansWriter(target { activePart }, logger, twoSpanBudget)

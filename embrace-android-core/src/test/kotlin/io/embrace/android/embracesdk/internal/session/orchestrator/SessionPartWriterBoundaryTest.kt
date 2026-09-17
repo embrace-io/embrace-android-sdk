@@ -9,9 +9,11 @@ import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.createPersistenceBehavior
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpans
@@ -76,7 +78,7 @@ internal class SessionPartWriterBoundaryTest {
         resourceCount = 0
         spanCount = 0
         partSpans.clear()
-        sessionSpan = FakeEmbraceSdkSpan().apply { start(clock.now()) }
+        sessionSpan = FakeEmbraceSdkSpan(type = EmbType.Ux.Session).apply { start(clock.now()) }
         currentSessionPartSpan = FakeCurrentSessionPartSpan(clock).apply { sessionPartSpan = sessionSpan }
         writer = SessionPartWriterImpl(
             lazy { sessionsDir },
@@ -92,7 +94,7 @@ internal class SessionPartWriterBoundaryTest {
             resourceSource,
             { EnvelopeMetadata(userId = "user${writeCount++}") },
             currentSessionPartSpan,
-            { emptyList() },
+            ::activeSpans,
             FakeTelemetryService(),
         )
     }
@@ -236,23 +238,29 @@ internal class SessionPartWriterBoundaryTest {
         drain()
 
         // the first part loses its end, so starting the second finishes it in the end's place
-        currentSessionPartSpan.endSession(startNewSession = false)
+        writer.onSpanCompleted(currentSessionPartSpan.endSession(startNewSession = false))
         startPart(SECOND_PART_ID)
         drain()
 
         assertEquals(partSpans.getValue(FIRST_PART_ID).spanId, completedSpansIn(FIRST_PART_ID).last().span_id)
+
+        val displacedBy = partSpans.getValue(SECOND_PART_ID).spanId
+        assertNull(spanSnapshotsIn(FIRST_PART_ID).firstOrNull { it.span_id == displacedBy })
         assertInternalErrors("SessionPartEndMissed")
     }
 
+    private fun activeSpans(): List<EmbraceSdkSpan> =
+        listOfNotNull(currentSessionPartSpan.current()?.takeIf { it.isRecording })
+
     private fun startPart(sessionPartId: String) {
-        sessionSpan = FakeEmbraceSdkSpan(name = "span${spanCount++}").apply { start(clock.now()) }
+        sessionSpan = FakeEmbraceSdkSpan(name = "span${spanCount++}", type = EmbType.Ux.Session).apply { start(clock.now()) }
         partSpans[sessionPartId] = sessionSpan
         currentSessionPartSpan.sessionPartSpan = sessionSpan
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, sessionPartId)
     }
 
     private fun endPart(sessionPartId: String) {
-        currentSessionPartSpan.endSession(startNewSession = true)
+        writer.onSpanCompleted(currentSessionPartSpan.endSession(startNewSession = true))
         writer.onSessionPartEnded(sessionPartId)
         sessionSpan = checkNotNull(currentSessionPartSpan.sessionPartSpan)
     }

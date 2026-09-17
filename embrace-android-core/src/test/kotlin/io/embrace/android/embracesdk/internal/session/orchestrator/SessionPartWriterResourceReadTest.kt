@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.createPersistenceBehavior
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
@@ -86,7 +87,7 @@ internal class SessionPartWriterResourceReadTest {
         logger = FakeInternalLogger(throwOnInternalError = false)
         inFlightSpan = FakeEmbraceSdkSpan(name = "emb-network-request").apply { start(clock.now()) }
         inFlightSpans = listOf(inFlightSpan)
-        sessionSpan = FakeEmbraceSdkSpan(name = "emb-session").apply { start(clock.now()) }
+        sessionSpan = FakeEmbraceSdkSpan(name = "emb-session", type = EmbType.Ux.Session).apply { start(clock.now()) }
         currentSessionPartSpan = FakeCurrentSessionPartSpan(clock).apply { sessionPartSpan = sessionSpan }
         resourceSource = FakeEnvelopeResourceSource().apply { resource = RESOURCE }
         writer = SessionPartWriterImpl(
@@ -104,7 +105,7 @@ internal class SessionPartWriterResourceReadTest {
             resourceSource,
             EnvelopeMetadataSource { EnvelopeMetadata(userId = "my-user-id") },
             currentSessionPartSpan,
-            { inFlightSpans },
+            ::activeSpans,
             FakeTelemetryService(),
         )
         service = SessionReconstructionService(lazy { sessionsDir }, logger)
@@ -125,7 +126,7 @@ internal class SessionPartWriterResourceReadTest {
     fun `the session span written at the start of the part is reconstructed as a snapshot`() {
         val envelope = checkNotNull(writeSessionPart())
         val expected = checkNotNull(sessionSpan.snapshot())
-        assertEquals(expected, envelope.data.spanSnapshots?.last()?.withoutHeartbeat())
+        assertEquals(expected, envelope.data.spanSnapshots?.single { it.spanId == sessionSpan.spanId }?.withoutHeartbeat())
         assertNull(envelope.data.spans?.find { it.spanId == sessionSpan.spanId })
         assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
     }
@@ -146,7 +147,12 @@ internal class SessionPartWriterResourceReadTest {
     @Test
     fun `the in-flight spans are reconstructed as snapshots`() {
         val envelope = checkNotNull(writeSessionPart())
-        assertEquals(checkNotNull(inFlightSpan.snapshot()), envelope.data.spanSnapshots?.first())
+        assertEquals(
+            checkNotNull(inFlightSpan.snapshot()),
+            envelope.data.spanSnapshots?.single {
+                it.spanId == inFlightSpan.spanId
+            },
+        )
         assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
     }
 
@@ -175,6 +181,9 @@ internal class SessionPartWriterResourceReadTest {
         assertEquals(listOf("SessionReconstructionFail"), logger.internalErrorMessages.map { it.msg })
     }
 
+    private fun activeSpans(): List<EmbraceSdkSpan> =
+        listOfNotNull(currentSessionPartSpan.current()?.takeIf { it.isRecording }) + inFlightSpans
+
     /**
      * Starts a session part, then hand-writes the completed spans, which no production writer
      * produces yet, so the directory holds everything reconstruction requires.
@@ -193,7 +202,7 @@ internal class SessionPartWriterResourceReadTest {
     }
 
     private fun endSessionPart() {
-        currentSessionPartSpan.endSession(startNewSession = true)
+        writer.onSpanCompleted(currentSessionPartSpan.endSession(startNewSession = true))
         writer.onSessionPartEnded(SESSION_PART_ID)
         drain()
     }

@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
@@ -32,6 +33,7 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.semconv.EmbSpanAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.testcases.features.createNativeSymbolsForCurrentArch
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -460,9 +462,15 @@ internal class MultiFilePersistenceParityTest(
                             1,
                             storedSessionPartDirectories().size,
                         )
+                        val sessionSpans = sessionSpansOnDisk()
+                        assertEquals(
+                            "wrong number of session spans logged for the crashed part",
+                            1,
+                            sessionSpans.size,
+                        )
                         assertNotNull(
                             "the crashed session part was left unsealed on disk",
-                            sessionSpanOnDisk()?.end_time_unix_nano,
+                            sessionSpans.single().end_time_unix_nano,
                         )
                     }
                 }
@@ -510,6 +518,101 @@ internal class MultiFilePersistenceParityTest(
                     storedSessionPartDirectories().any { it.sessionPartId == envelope.getSessionPartId() },
                 )
             },
+        )
+    }
+
+    @Test
+    fun `each session part holds exactly one session span`() {
+        testRule.runTest(
+            persistedRemoteConfig = remoteConfig(),
+            testCaseAction = {
+                recordSession()
+                clock.tick(20000)
+                recordSession()
+            },
+            assertAction = {
+                val parts = deliveredParts(expectedParts = 2)
+                parts.forEach(::assertExactlyOneSessionSpan)
+                deliveredParts(expectedParts = 2, state = ProcessState.BACKGROUND)
+                    .forEach(::assertExactlyOneSessionSpan)
+                assertEquals(
+                    "the same session span was delivered for both parts",
+                    2,
+                    parts.map { it.findSessionPartSpan().spanId }.distinct().size,
+                )
+            },
+        )
+    }
+
+    @Test
+    fun `a span in flight across a part boundary does not disturb either session span`() {
+        lateinit var span: EmbraceSpan
+        testRule.runTest(
+            persistedRemoteConfig = remoteConfig(backgroundActivity = BackgroundActivityRemoteConfig(0f)),
+            testCaseAction = {
+                recordSession {
+                    span = checkNotNull(embrace.startSpan("cross-part-span"))
+                }
+                clock.tick(20000)
+                recordSession {
+                    span.stop()
+                }
+            },
+            assertAction = {
+                val parts = deliveredParts(expectedParts = 2)
+                parts.forEach(::assertExactlyOneSessionSpan)
+                assertTrue(
+                    "cross-part-span was not snapshotted by the part it started in",
+                    parts.any { part -> part.data.spanSnapshots.orEmpty().any { it.name == "cross-part-span" } },
+                )
+                assertTrue(
+                    "cross-part-span was not completed in the part it stopped in",
+                    parts.any { part -> part.data.spans.orEmpty().any { it.name == "cross-part-span" } },
+                )
+            },
+        )
+    }
+
+    @Test
+    fun `the session span's events and links survive being persisted`() {
+        testRule.runTest(
+            persistedRemoteConfig = remoteConfig(),
+            testCaseAction = {
+                recordSession {
+                    embrace.recordSpan("linked-span") {
+                        clock.tick(100)
+                    }
+                    clock.tick(WRITE_DEBOUNCE_WAIT_MS * 2)
+                    embrace.addBreadcrumb("last gasp")
+                }
+            },
+            assertAction = {
+                val sessionSpan = deliveredParts().single().findSessionPartSpan()
+                assertEquals(
+                    "the session span lost its events",
+                    1,
+                    sessionSpan.findEventsOfType(EmbType.System.Breadcrumb).size,
+                )
+                assertTrue(
+                    "the session span lost its links: ${sessionSpan.links}",
+                    sessionSpan.links.orEmpty().any {
+                        it.attributes?.findAttributeValue(EmbSpanAttributes.EMB_LINK_TYPE) == "ENDED_IN"
+                    },
+                )
+            },
+        )
+    }
+
+    private fun assertExactlyOneSessionSpan(envelope: Envelope<SessionPartPayload>) {
+        assertEquals(
+            "wrong number of session spans in the delivered part",
+            1,
+            envelope.data.spans.orEmpty().count { it.hasEmbraceAttribute(EmbType.Ux.Session) },
+        )
+        assertEquals(
+            "a session span was delivered as a snapshot",
+            0,
+            envelope.data.spanSnapshots.orEmpty().count { it.hasEmbraceAttribute(EmbType.Ux.Session) },
         )
     }
 
@@ -585,16 +688,16 @@ internal class MultiFilePersistenceParityTest(
         (data.spans.orEmpty() + data.spanSnapshots.orEmpty()).mapNotNull(Span::name)
 
     /**
-     * The session span persisted for the newest session part, which is logged as a completed span
-     * once that part has ended.
+     * The session spans logged for the newest session part. A part that can be read back holds
+     * exactly one, so anything else here is a leak from an adjacent part.
      */
-    private fun sessionSpanOnDisk(): SpanProto? {
-        val directory = storedSessionPartDirectories().maxWithOrNull(SessionPartDirectory.comparator) ?: return null
+    private fun sessionSpansOnDisk(): List<SpanProto> {
+        val directory = storedSessionPartDirectories().maxWithOrNull(SessionPartDirectory.comparator) ?: return emptyList()
         val bytes = File(File(sessionsDir(), directory.dirName), COMPLETED_SPANS_FILE_NAME)
             .takeIf(File::isFile)
             ?.readBytes()
-            ?: return null
-        return CompletedSpans.ADAPTER.decode(bytes).spans.lastOrNull { span ->
+            ?: return emptyList()
+        return CompletedSpans.ADAPTER.decode(bytes).spans.filter { span ->
             span.attributes.any { it.key == "emb.type" && it.value_ == "ux.session" }
         }
     }

@@ -1225,6 +1225,21 @@ internal class SessionOrchestratorTest {
             )
         }
 
+        val sessionPartWriter = SessionPartWriterImpl(
+            lazy { sessionsDir },
+            BackgroundWorker(sessionPersistenceExecutor),
+            configService,
+            TestUuidSource(),
+            clock,
+            logger,
+            FakeEnvelopeResourceSource(),
+            FakeEnvelopeMetadataSource(),
+            currentSessionPartSpan,
+            { emptyList() },
+            FakeTelemetryService(),
+        )
+        currentSessionPartSpan.onSessionSpanCompleted = { sessionPartWriter.onSpanCompleted(it) }
+
         orchestrator = SessionOrchestratorImpl(
             appStateTracker,
             payloadFactory,
@@ -1254,19 +1269,7 @@ internal class SessionOrchestratorTest {
             BackgroundWorker(inactivityWorkerExecutor),
             TestUuidSource(),
             startupClassifier,
-            SessionPartWriterImpl(
-                lazy { sessionsDir },
-                BackgroundWorker(sessionPersistenceExecutor),
-                configService,
-                TestUuidSource(),
-                clock,
-                logger,
-                FakeEnvelopeResourceSource(),
-                FakeEnvelopeMetadataSource(),
-                currentSessionPartSpan,
-                { emptyList() },
-                FakeTelemetryService(),
-            ),
+            sessionPartWriter,
         ).apply {
             start()
         }

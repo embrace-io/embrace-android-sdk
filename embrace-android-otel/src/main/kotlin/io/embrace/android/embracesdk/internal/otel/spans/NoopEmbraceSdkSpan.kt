@@ -56,10 +56,6 @@ object NoopEmbraceSdkSpan : EmbraceSdkSpan {
 
     override fun snapshot(): Span? = null
 
-    override fun retainDataAfterStop() = Unit
-
-    override fun releaseRetainedData() = Unit
-
     override fun hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean = false
 
     override fun getSystemAttribute(key: String): String? = null

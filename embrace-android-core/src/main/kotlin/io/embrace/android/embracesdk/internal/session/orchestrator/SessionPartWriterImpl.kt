@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
@@ -9,6 +10,7 @@ import io.embrace.android.embracesdk.internal.envelope.session.SESSION_ENVELOPE_
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
+import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpansWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadataWriter
@@ -89,10 +91,6 @@ class SessionPartWriterImpl(
             )
 
             writeTracker.markWriting(sessionPartId)
-
-            // the session span is snapshotted after it has stopped, so it must hold on to its events and
-            // links until this part's writes have completed
-            writers.span?.retainDataAfterStop()
             directoryStore.create(writers.directory)
 
             synchronized(bufferLock) {
@@ -133,7 +131,6 @@ class SessionPartWriterImpl(
     }
 
     private fun finish(writers: PartWriters, crashing: Boolean) {
-        queueEndedSessionSpanWrite(writers)
         queueSpanSnapshotsWrite(writers)
         writers.flushPendingWrites()
 
@@ -147,7 +144,6 @@ class SessionPartWriterImpl(
             if (!crashing && !processTerminating) {
                 notifyWritesComplete()
             }
-            writers.span?.releaseRetainedData()
         }
     }
 
@@ -163,8 +159,7 @@ class SessionPartWriterImpl(
 
     /**
      * Ownership means accepted rather than written: the batch is queued onto the [worker] or held
-     * for the next part. An empty batch counts as owned, as the session span the caller filtered out
-     * of it is logged by this writer when the part ends.
+     * for the next part. An empty batch counts as owned.
      */
     override fun onSpanCompleted(spans: List<Span>): Boolean {
         if (!acceptingWrites()) {
@@ -238,23 +233,6 @@ class SessionPartWriterImpl(
     }
 
     /**
-     * Logs the session span of a part that has ended as one of its completed spans.
-     *
-     * The span is deliberately not carried over to the next session part if this write is late: it
-     * belongs to this part alone, and a part holding two session spans cannot be read back. It
-     * cannot be late in practice, as the write that seals the part is queued after this one onto
-     * the same single threaded worker.
-     */
-    private fun queueEndedSessionSpanWrite(writers: PartWriters) =
-        EmbTrace.trace("mf-queue-ended-session-span") {
-            val span = writers.span ?: return@trace
-            execute(null, InternalErrorType.CompletedSpansWriteFail, { worker.submit(it) }) {
-                val snapshot = span.snapshot()?.takeIf { it.endTimeNanos != null } ?: return@execute
-                writers.completedSpans.write(listOf(snapshot))
-            }
-        }
-
-    /**
      * Writes in-flight spans to a snapshot file.
      */
     private fun queueSpanSnapshotsWrite(writers: PartWriters) = EmbTrace.trace("mf-queue-span-snapshots") {
@@ -267,8 +245,7 @@ class SessionPartWriterImpl(
         snapshotTracker.seed(spans)
         execute(writers, InternalErrorType.SpanSnapshotsWriteFail, writers.spanSnapshotWrites::submit) {
             snapshotTracker.drainDirtySpans()
-            snapshotTracker.drainSessionSpanChange()
-            writers.spanSnapshots.write(spans.mapNotNull(EmbraceSdkSpan::snapshot) + writers.sessionSpanSnapshot())
+            writers.spanSnapshots.write(writers.snapshotsOf(spans))
         }
     }
 
@@ -277,28 +254,20 @@ class SessionPartWriterImpl(
             if (current !== writers) {
                 return@execute
             }
-            val sessionSpan = when {
-                snapshotTracker.drainSessionSpanChange() -> writers.sessionSpanSnapshot()
-                else -> emptyList()
-            }
-            val changed = snapshotTracker.drainDirtySpans().mapNotNull(EmbraceSdkSpan::snapshot) + sessionSpan
+            val changed = writers.snapshotsOf(snapshotTracker.drainDirtySpans())
             if (changed.isNotEmpty()) {
-                writers.spanSnapshots.append(changed) {
-                    inFlightSpanSource().mapNotNull(EmbraceSdkSpan::snapshot) + writers.sessionSpanSnapshot()
-                }
+                writers.spanSnapshots.append(changed) { writers.snapshotsOf(inFlightSpanSource()) }
             }
         }
     }
 
     /**
-     * This part's own session span, for as long as it is still recording. Once it ends it is logged
-     * as a completed span instead, so it is left out of the snapshots from then on.
-     *
-     * [inFlightSpanSource] never supplies it: the span is bound to the session part here so that a
-     * write can never pick up the span of a later part.
+     * Snapshots the spans of [spans] that belong to this session part.
      */
-    private fun PartWriters.sessionSpanSnapshot(): List<Span> =
-        listOfNotNull(span?.snapshot()?.takeIf { it.endTimeNanos == null })
+    private fun PartWriters.snapshotsOf(spans: List<EmbraceSdkSpan>): List<Span> =
+        spans.filter { it.spanId == sessionSpanId || !it.isSessionSpan() }.mapNotNull(EmbraceSdkSpan::snapshot)
+
+    private fun EmbraceSdkSpan.isSessionSpan(): Boolean = hasEmbraceAttribute(EmbType.Ux.Session)
 
     private fun queueCompletedSpansWrite(writers: PartWriters, spans: List<Span>) =
         EmbTrace.trace("mf-queue-completed-spans") {
@@ -314,17 +283,25 @@ class SessionPartWriterImpl(
 
     /**
      * Holds [spans] until the next session part starts. Spans beyond [MAX_CARRIED_OVER_SPANS] are
-     * dropped.
+     * dropped, as is a session span: it belongs to the part that was current when it stopped, and a
+     * part holding two session spans cannot be read back.
      */
     private fun carryOver(spans: List<Span>) {
         spans.forEach { span ->
-            if (carriedOverSpans.size >= MAX_CARRIED_OVER_SPANS) {
+            if (span.hasEmbraceAttribute(EmbType.Ux.Session)) {
+                reportOrphanedSessionSpan()
+            } else if (carriedOverSpans.size >= MAX_CARRIED_OVER_SPANS) {
                 telemetryService.trackAppliedLimit(CARRIED_OVER_SPAN_LIMIT_TYPE, AppliedLimitType.DROP)
             } else {
                 carriedOverSpans.add(span)
             }
         }
     }
+
+    private fun reportOrphanedSessionSpan() = logger.trackInternalError(
+        InternalErrorType.OrphanedSessionSpan,
+        IllegalStateException("Session span completed with no session part to write it to"),
+    )
 
     /**
      * Runs [action] on the [worker] via [submit], tracking any failure as an internal error rather
@@ -386,7 +363,7 @@ class SessionPartWriterImpl(
         val abandoned: Boolean
             get() = sealed || target.failed
 
-        val span: EmbraceSdkSpan? = currentSessionPartSpan.current()
+        val sessionSpanId: String? = currentSessionPartSpan.current()?.spanId
 
         val metadata = SessionMetadataWriter(
             target = target,

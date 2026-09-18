@@ -16,6 +16,7 @@ class FakeSpanProcessor(
 
     override fun isEndRequired(): Boolean = true
     override fun isStartRequired(): Boolean = true
+    override fun isOnEndingRequired(): Boolean = false
 
     override fun onEnding(span: ReadWriteSpan) {
     }

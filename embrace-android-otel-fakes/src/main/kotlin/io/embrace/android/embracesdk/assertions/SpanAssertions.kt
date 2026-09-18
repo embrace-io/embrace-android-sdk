@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttributeKey
-import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -14,7 +13,6 @@ import io.embrace.android.embracesdk.semconv.EmbSpanAttributes
 import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes.EMB_STATE_INITIAL_VALUE
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
 
 /**
  * Finds the first Span Event matching the given [EmbType]
@@ -64,7 +62,7 @@ fun Span.assertNavigationStateSpan(
     stateUninitialized: Boolean = true,
     transitionTimesMs: List<Long> = listOf(),
     newStateValues: List<String> = listOf(),
-)  {
+) {
     val startStateValue = if (stateUninitialized) {
         "Initializing"
     } else {
@@ -78,14 +76,14 @@ fun Span.assertNavigationStateSpan(
 }
 
 /**
- * Validate that a state span has the given initial value and transition times with the associated state values
+ * Validate that a state span has the given initial value and transition events with the given times with the associated state values.
  */
 fun Span.assertStateSpan(
-    initialValue: String,
+    initialValue: Any,
     transitionTimesMs: List<Long> = listOf(),
-    newStateValues: List<String> = listOf(),
+    newStateValues: List<Any> = listOf(),
 ) {
-    assertTrue(hasEmbraceAttributeValue(EMB_STATE_INITIAL_VALUE, initialValue))
+    assertInitialStateValue(initialValue)
     with(checkNotNull(events)) {
         assertEquals(transitionTimesMs.size, size)
         transitionTimesMs.indices.forEach {
@@ -95,6 +93,26 @@ fun Span.assertStateSpan(
             )
         }
     }
+}
+
+/**
+ * Validate that a state span's initial value is the system value [value], recorded along with its value type.
+ */
+fun Span.assertSystemInitialStateValue(value: Any): Unit = stateSpanAttributes().assertSystemStateValue(value, EMB_STATE_INITIAL_VALUE)
+
+/**
+ * Validate that a state span's initial value is the non-system value [value], recorded with no value type.
+ */
+fun Span.assertNonSystemInitialStateValue(value: Any): Unit = stateSpanAttributes().assertNonSystemStateValue(value, EMB_STATE_INITIAL_VALUE)
+
+/**
+ * Validate that a state span's initial value is [value], recorded with its value type only if it is a system value.
+ */
+internal fun Span.assertInitialStateValue(value: Any): Unit = stateSpanAttributes().assertStateValue(value, EMB_STATE_INITIAL_VALUE)
+
+private fun Span.stateSpanAttributes(): Map<String, String> {
+    assertIsType(EmbType.State)
+    return checkNotNull(attributes).toMap()
 }
 
 fun List<Attribute>?.assertSdkInitSectionDurationsRecorded() {

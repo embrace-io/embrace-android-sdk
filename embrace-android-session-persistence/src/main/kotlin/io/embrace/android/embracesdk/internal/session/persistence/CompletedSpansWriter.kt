@@ -20,10 +20,14 @@ class CompletedSpansWriter(
     private val target: SessionPartWriteTarget,
     private val logger: InternalLogger,
     private val maxBytes: Long = MAX_PART_FILE_BYTES,
+    private val maxRecordBytes: Long = MAX_RECORD_BYTES,
 ) {
 
     @Volatile
     private var reportedOverflow = false
+
+    @Volatile
+    private var reportedDrop = false
 
     private var spanFile: SpanCollectionFile? = null
 
@@ -52,7 +56,7 @@ class CompletedSpansWriter(
     private fun writeImpl(spans: List<Span>): Boolean {
         val spanFile = spanFile() ?: return false
 
-        val bytes = CompletedSpans.ADAPTER.encode(buildCompletedSpans(spans))
+        val bytes = CompletedSpans.ADAPTER.encode(CompletedSpans(spans = recordsFor(spans)))
 
         if (bytes.isNotEmpty() && spanFile.size + bytes.size > maxBytes) {
             if (!reportedOverflow) {
@@ -63,6 +67,19 @@ class CompletedSpansWriter(
         }
         spanFile.append(bytes)
         return true
+    }
+
+    private fun recordsFor(spans: List<Span>): List<SpanProto> {
+        val written = ArrayList<SpanProto>(spans.size)
+        for (span in spans) {
+            val record = span.toProto()
+            if (CompletedSpans.ADAPTER.encodedSize(CompletedSpans(spans = listOf(record))) > maxRecordBytes) {
+                reportDrop()
+            } else {
+                written.add(record)
+            }
+        }
+        return written
     }
 
     /**
@@ -88,6 +105,13 @@ class CompletedSpansWriter(
             file.close()
         } catch (exc: IOException) {
             trackFailure(exc)
+        }
+    }
+
+    private fun reportDrop() {
+        if (!reportedDrop) {
+            reportedDrop = true
+            trackFailure(IOException(DROPPED_COMPLETED_SPAN_MSG))
         }
     }
 

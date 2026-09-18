@@ -137,6 +137,26 @@ internal class SessionReconstructionServiceFileSizeTest {
     }
 
     @Test
+    fun `a completed span past the record limit does not cost the spans logged after it`() {
+        val oversized = paddedSpan(paddedSpanId(1), padding = 4096)
+        val bound = CompletedSpans.ADAPTER.encodedSize(CompletedSpans(spans = listOf(oversized.toProto()))) - 1L
+        val logged = listOf(
+            paddedSpan(paddedSpanId(0), padding = 1),
+            oversized,
+            paddedSpan(paddedSpanId(2), padding = 1),
+        )
+
+        val writer = CompletedSpansWriter(target(), logger, MAX_PART_FILE_BYTES, bound)
+        assertTrue(writer.write(logged))
+        writer.close()
+
+        val envelope = checkNotNull(service.reconstruct(partDirectory))
+        assertEquals(listOf(paddedSpanId(0), paddedSpanId(2)), envelope.data.spans?.map(Span::spanId))
+        assertEquals(1, logger.internalErrorMessages.size)
+        assertEquals("CompletedSpansWriteFail", logger.internalErrorMessages.single().msg)
+    }
+
+    @Test
     fun `spans past the persisted span limit are dropped`() {
         val logged = List(MAX_PERSISTED_SPANS + 5) { paddedSpanProto(paddedSpanId(it), padding = 1) }
         partFile(COMPLETED_SPANS_FILE_NAME).writeBytes(completedSpansLog(logged))

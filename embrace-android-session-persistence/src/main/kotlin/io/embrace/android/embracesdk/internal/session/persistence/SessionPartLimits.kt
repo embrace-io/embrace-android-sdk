@@ -12,9 +12,15 @@ package io.embrace.android.embracesdk.internal.session.persistence
 internal const val MAX_PART_FILE_BYTES: Long = 12L * 1024 * 1024
 
 /**
- * Upper bound on the size of a single record in the completed spans file.
+ * Upper bound on the size of a single span record, fir both the completed spans file and the span
+ * snapshots file.
+ *
+ * This is a backstop against memory exhaustion rather than a capture limit, so it sits above the
+ * largest span the SDK's own limits can produce. A session part span with a lot of experiments,
+ * user session properties, and breadcrumbs could plausibly measure around 940Kb. In reality we would
+ * not expect many spans to hit this limit.
  */
-internal const val MAX_RECORD_BYTES: Long = 512L * 1024
+internal const val MAX_RECORD_BYTES: Long = 1024L * 1024
 
 /**
  * Upper bound on the number of spans materialised from one session part, counting completed spans
@@ -29,3 +35,5 @@ internal const val OVERSIZED_PART_FILE_MSG = "Session part file exceeds the maxi
 internal const val TOO_MANY_PERSISTED_SPANS_MSG = "Session part holds more spans than can be delivered"
 
 internal const val DROPPED_SPAN_SNAPSHOT_MSG = "Span snapshots dropped to keep the log within its limits"
+
+internal const val DROPPED_COMPLETED_SPAN_MSG = "Completed span dropped to keep the log within its limits"

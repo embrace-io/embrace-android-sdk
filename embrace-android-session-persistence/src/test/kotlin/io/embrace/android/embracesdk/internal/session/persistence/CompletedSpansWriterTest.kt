@@ -32,6 +32,8 @@ internal class CompletedSpansWriterTest {
 
         private val completed = listOf(fullyPopulatedSpan)
 
+        private val oversized = paddedSpan("aaaaaaaaaaaaaaa2", padding = 4096)
+
         private val twoSpanBudget = 2L * CompletedSpans.ADAPTER.encode(
             CompletedSpans(spans = listOf(span("aaaaaaaaaaaaaaa1").toProto())),
         ).size
@@ -302,6 +304,29 @@ internal class CompletedSpansWriterTest {
         assertEquals(listOf("aaaaaaaaaaaaaaa1", "aaaaaaaaaaaaaaa3"), readLog().map(SpanProto::span_id))
         assertEquals(listOf("aaaaaaaaaaaaaaa2"), readLog(other).map(SpanProto::span_id))
         assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a span larger than one record is dropped and the spans round it are kept`() {
+        writer = recordBoundedWriter()
+        assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa1"), oversized, span("aaaaaaaaaaaaaaa3"))))
+        assertEquals(listOf("aaaaaaaaaaaaaaa1", "aaaaaaaaaaaaaaa3"), readLog().map(SpanProto::span_id))
+        assertWriteFailureTracked()
+    }
+
+    @Test
+    fun `a span larger than one record is reported once`() {
+        writer = recordBoundedWriter()
+        repeat(3) {
+            assertTrue(write(spans = listOf(oversized)))
+        }
+        assertEquals(emptyList<String>(), readLog().map(SpanProto::span_id))
+        assertWriteFailureTracked()
+    }
+
+    private fun recordBoundedWriter(): CompletedSpansWriter {
+        val bound = CompletedSpans.ADAPTER.encodedSize(CompletedSpans(spans = listOf(oversized.toProto()))) - 1L
+        return CompletedSpansWriter(target { activePart }, logger, MAX_PART_FILE_BYTES, bound)
     }
 
     private fun boundedWriter(): CompletedSpansWriter =

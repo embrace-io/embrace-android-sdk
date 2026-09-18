@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.arch.schema.recordedStateValueType
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
@@ -257,6 +258,12 @@ class TelemetryDestinationImpl(
                 attributes = transitionAttributes.toMutableMap()
                     .apply {
                         put(EmbStateTransitionAttributes.EMB_STATE_NEW_VALUE, newValue.toString())
+                        val valueType = recordedStateValueType(newValue)
+                        if (valueType != null) {
+                            put(EmbStateTransitionAttributes.EMB_STATE_VALUE_TYPE, valueType)
+                        } else {
+                            remove(EmbStateTransitionAttributes.EMB_STATE_VALUE_TYPE)
+                        }
                         if (unrecordedTransitions.notInSession > 0) {
                             setEmbraceAttribute(EmbStateTransitionAttributes.EMB_STATE_NOT_IN_SESSION, unrecordedTransitions.notInSession)
                         }

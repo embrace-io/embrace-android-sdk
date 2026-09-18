@@ -92,7 +92,7 @@ class InstrumentationRegistryImpl(
             .filterIsInstance<StateDataSource<*>>()
             .forEach { stateDataSource ->
                 if (stateDataSource.isActive()) {
-                    stateAttributes[stateDataSource.stateAttributeKey] = stateDataSource.getCurrentStateValue()
+                    stateAttributes.putAll(stateDataSource.currentStateAttributes())
                 }
             }
 

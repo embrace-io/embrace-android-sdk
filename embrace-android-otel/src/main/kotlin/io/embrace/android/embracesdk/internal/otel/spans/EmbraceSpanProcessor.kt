@@ -39,6 +39,7 @@ internal class EmbraceSpanProcessor(
 
     override fun isStartRequired() = true
     override fun isEndRequired() = true
+    override fun isOnEndingRequired() = false
     override suspend fun forceFlush(): OperationResultCode = spanExporter.forceFlush()
     override suspend fun shutdown(): OperationResultCode = OperationResultCode.Success
 }

@@ -134,23 +134,13 @@ internal class ExperimentTrackingServiceImpl(
         }
     }
 
-    private fun TrackedData.toRecord(): ExperimentRecord = when (this) {
-        is TrackedData.Experiment -> ExperimentRecord(
-            kind = ExperimentKind.EXPERIMENT,
-            id = id.stripWhitespace(),
-            variant = variant?.stripWhitespace()?.ifEmpty { null },
-            startTimeMs = startTimeMs,
-            endTimeMs = null,
-        )
-
-        is TrackedData.FeatureFlag -> ExperimentRecord(
-            kind = ExperimentKind.FEATURE_FLAG,
-            id = id.stripWhitespace(),
-            variant = null,
-            startTimeMs = startTimeMs,
-            endTimeMs = null,
-        )
-    }
+    private fun TrackedData.toRecord(): ExperimentRecord = ExperimentRecord(
+        kind = kind,
+        id = id.stripWhitespace(),
+        variant = variant?.stripWhitespace()?.ifEmpty { null },
+        startTimeMs = startTimeMs,
+        endTimeMs = null,
+    )
 
     private fun isValid(record: ExperimentRecord): Boolean {
         if (record.id.isEmpty() || record.id.length > maxIdLength) {

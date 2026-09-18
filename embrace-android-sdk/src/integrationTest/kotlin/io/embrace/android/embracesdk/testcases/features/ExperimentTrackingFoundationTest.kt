@@ -37,19 +37,20 @@ internal class ExperimentTrackingFoundationTest {
                 )
                 embrace.trackFeatureFlags(
                     listOf(
-                        embrace.createFeatureFlag("dark-mode", bufferedExperimentStartMs),
-                        embrace.createFeatureFlag("new-ui", bufferedExperimentStartMs),
+                        embrace.createFeatureFlag("dark-mode", startedAt = bufferedExperimentStartMs),
+                        embrace.createFeatureFlag("new-ui", "rounded", bufferedExperimentStartMs),
                     ),
                 )
                 embrace.trackExperiment("color-palette", "blue")
             },
             testCaseAction = {
                 recordSession {
+                    // re-tracking a known flag with a variant is dropped, like re-tracking a known experiment
                     flagStartMs = clock.tick()
                     embrace.trackFeatureFlags(
                         listOf(
-                            embrace.createFeatureFlag("dark-mode"),
-                            embrace.createFeatureFlag("http3"),
+                            embrace.createFeatureFlag("dark-mode", "amoled"),
+                            embrace.createFeatureFlag("http3", variant = "draft-29"),
                         ),
                     )
 
@@ -75,8 +76,8 @@ internal class ExperimentTrackingFoundationTest {
                     "e:checkout-flow:variant-a:$bufferedExperimentStartMs:$untrackEndMs;" +
                         "e:color-palette:yellow:$bufferedExperimentStartMs;" +
                         "f:dark-mode::$bufferedExperimentStartMs;" +
-                        "f:new-ui::$bufferedExperimentStartMs;" +
-                        "f:http3::$flagStartMs;" +
+                        "f:new-ui:rounded:$bufferedExperimentStartMs;" +
+                        "f:http3:draft-29:$flagStartMs;" +
                         "e:dark-mode::$sharedIdExperimentStartMs;" +
                         "e:promo::$variantlessExperimentStartMs"
                 assertEquals(

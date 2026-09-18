@@ -101,11 +101,11 @@ internal class ExperimentApiDelegateTest {
         delegate.trackExperiment("exp4", "v2", 123456789L)
         delegate.trackFeatureFlags(
             listOf(
-                TrackedFeatureFlagImpl("flag1", 987654321L),
-                TrackedFeatureFlagImpl("flag2", 987654321L),
+                TrackedFeatureFlagImpl("flag1", "on", 987654321L),
+                TrackedFeatureFlagImpl("flag2", null, 987654321L),
             ),
         )
-        delegate.trackFeatureFlag("flag3", startedAt = 987654321L)
+        delegate.trackFeatureFlag("flag3", variant = "v3", startedAt = 987654321L)
         delegate.untrackExperiments(listOf("exp1", "exp2"), 555555555L)
         delegate.untrackExperiment("exp3", 555555555L)
         delegate.untrackExperiment("exp4", 555555566L)
@@ -137,24 +137,24 @@ internal class ExperimentApiDelegateTest {
             listOf(
                 ExperimentApiCall.Track(
                     listOf(
-                        TrackedData.Experiment("exp1", 123456789L, "v1"),
-                        TrackedData.Experiment("exp2", 123456789L, "v1"),
+                        TrackedData.experiment("exp1", 123456789L, "v1"),
+                        TrackedData.experiment("exp2", 123456789L, "v1"),
                     ),
                 ),
                 ExperimentApiCall.Track(
                     listOf(
-                        TrackedData.Experiment("exp2", 123456789L, "v2"),
-                        TrackedData.Experiment("exp3", 123456789L, "v1"),
+                        TrackedData.experiment("exp2", 123456789L, "v2"),
+                        TrackedData.experiment("exp3", 123456789L, "v1"),
                     ),
                 ),
-                ExperimentApiCall.Track(listOf(TrackedData.Experiment("exp4", 123456789L, "v2"))),
+                ExperimentApiCall.Track(listOf(TrackedData.experiment("exp4", 123456789L, "v2"))),
                 ExperimentApiCall.Track(
                     listOf(
-                        TrackedData.FeatureFlag("flag1", 987654321L),
-                        TrackedData.FeatureFlag("flag2", 987654321L),
+                        TrackedData.featureFlag("flag1", 987654321L, "on"),
+                        TrackedData.featureFlag("flag2", 987654321L, null),
                     ),
                 ),
-                ExperimentApiCall.Track(listOf(TrackedData.FeatureFlag("flag3", 987654321L))),
+                ExperimentApiCall.Track(listOf(TrackedData.featureFlag("flag3", 987654321L, "v3"))),
                 ExperimentApiCall.Untrack(ExperimentKind.EXPERIMENT, listOf("exp1", "exp2"), 555555555L),
                 ExperimentApiCall.Untrack(ExperimentKind.EXPERIMENT, listOf("exp3"), 555555555L),
                 ExperimentApiCall.Untrack(ExperimentKind.EXPERIMENT, listOf("exp4"), 555555566L),
@@ -178,7 +178,7 @@ internal class ExperimentApiDelegateTest {
         val flushTime = clock.now()
         delegate.flushPendingCalls()
 
-        val experiment = fakeExperimentTrackingService.trackedData.single() as TrackedData.Experiment
+        val experiment = fakeExperimentTrackingService.trackedData.single()
         assertTrue(experiment.startTimeMs in beforeMs..afterMs)
         assertTrue(experiment.startTimeMs != flushTime)
         val untrackCall = fakeExperimentTrackingService.untrackCalls.single()
@@ -218,7 +218,7 @@ internal class ExperimentApiDelegateTest {
         delegate.trackExperiment("exp1", variant = "v1", startedAt = 111L)
 
         assertEquals(
-            listOf<TrackedData>(TrackedData.Experiment(id = "exp1", startTimeMs = 111L, variant = "v1")),
+            listOf(TrackedData.experiment(id = "exp1", startTimeMs = 111L, variant = "v1")),
             fakeExperimentTrackingService.trackedData,
         )
         assertEquals(listOf("track_experiment"), telemetryService.apiCalls)
@@ -241,10 +241,10 @@ internal class ExperimentApiDelegateTest {
     fun `trackFeatureFlag after SDK start calls into the internal service immediately`() {
         sdkCallChecker.started.set(true)
 
-        delegate.trackFeatureFlag("flag1", startedAt = 333L)
+        delegate.trackFeatureFlag("flag1", variant = "on", startedAt = 333L)
 
         assertEquals(
-            listOf<TrackedData>(TrackedData.FeatureFlag(id = "flag1", startTimeMs = 333L)),
+            listOf(TrackedData.featureFlag(id = "flag1", startTimeMs = 333L, variant = "on")),
             fakeExperimentTrackingService.trackedData,
         )
         assertEquals(listOf("track_feature_flag"), telemetryService.apiCalls)
@@ -273,7 +273,7 @@ internal class ExperimentApiDelegateTest {
         delegate.untrackExperiment("exp1")
 
         assertEquals(
-            listOf<TrackedData>(TrackedData.FeatureFlag(id = "flag1", startTimeMs = trackTimeMs)),
+            listOf(TrackedData.featureFlag(id = "flag1", startTimeMs = trackTimeMs, variant = null)),
             fakeExperimentTrackingService.trackedData,
         )
         assertEquals(
@@ -288,8 +288,8 @@ internal class ExperimentApiDelegateTest {
 
         delegate.trackExperiment("exp1", variant = "v1", startedAt = 111L)
         delegate.trackExperiments(listOf(delegate.createExperiment("exp1", variant = "v1", startedAt = 111L)))
-        delegate.trackFeatureFlag("flag1", startedAt = 222L)
-        delegate.trackFeatureFlags(listOf(delegate.createFeatureFlag("flag1", startedAt = 222L)))
+        delegate.trackFeatureFlag("flag1", variant = "on", startedAt = 222L)
+        delegate.trackFeatureFlags(listOf(delegate.createFeatureFlag("flag1", variant = "on", startedAt = 222L)))
         delegate.untrackExperiment("exp1", endedAt = 333L)
         delegate.untrackExperiments(listOf("exp1"), endedAt = 333L)
 

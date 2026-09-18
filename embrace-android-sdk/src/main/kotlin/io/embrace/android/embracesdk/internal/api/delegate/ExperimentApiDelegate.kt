@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
+import io.embrace.android.embracesdk.experiments.TrackedEntry
 import io.embrace.android.embracesdk.experiments.TrackedExperiment
 import io.embrace.android.embracesdk.experiments.TrackedFeatureFlag
 import io.embrace.android.embracesdk.internal.api.ExperimentApi
@@ -42,18 +43,18 @@ internal class ExperimentApiDelegate(
         TrackedExperimentImpl(id, variant, startedAt)
 
     override fun trackExperiments(experiments: List<TrackedExperiment>) {
-        track("track_experiment", experiments.map { it.toData() })
+        track("track_experiment", experiments.toData(ExperimentKind.EXPERIMENT))
     }
 
     override fun untrackExperiments(ids: List<String>, endedAt: Long?) {
         untrack("untrack_experiment", ExperimentKind.EXPERIMENT, ids, endedAt ?: now())
     }
 
-    override fun createFeatureFlag(id: String, startedAt: Long?): TrackedFeatureFlag =
-        TrackedFeatureFlagImpl(id, startedAt)
+    override fun createFeatureFlag(id: String, variant: String?, startedAt: Long?): TrackedFeatureFlag =
+        TrackedFeatureFlagImpl(id, variant, startedAt)
 
     override fun trackFeatureFlags(flags: List<TrackedFeatureFlag>) {
-        track("track_feature_flag", flags.map { it.toData() })
+        track("track_feature_flag", flags.toData(ExperimentKind.FEATURE_FLAG))
     }
 
     override fun untrackFeatureFlags(ids: List<String>, endedAt: Long?) {
@@ -122,18 +123,15 @@ internal class ExperimentApiDelegate(
         return admitted
     }
 
-    private fun TrackedExperiment.toData(): TrackedData =
-        TrackedData.Experiment(
-            id = id,
-            startTimeMs = startedAt ?: now(),
-            variant = variant,
-        )
-
-    private fun TrackedFeatureFlag.toData(): TrackedData =
-        TrackedData.FeatureFlag(
-            id = id,
-            startTimeMs = startedAt ?: now(),
-        )
+    private fun List<TrackedEntry>.toData(kind: ExperimentKind): List<TrackedData> =
+        map { entry ->
+            TrackedData(
+                kind = kind,
+                id = entry.id,
+                startTimeMs = entry.startedAt ?: now(),
+                variant = entry.variant,
+            )
+        }
 
     /**
      * A buffered API call made prior to SDK init completion.

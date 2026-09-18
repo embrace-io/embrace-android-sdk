@@ -15,6 +15,8 @@ class BasicNavHostFragmentActivity : TestNavHostFragmentActivity() {
             fragment<Fragment>("home")
             fragment<Fragment>("about")
             fragment<Fragment>("contacts")
+            // A route that shares the same string literal as a system state value, but should be treated as distinct
+            fragment<Fragment>("Backgrounded")
         }
     }
 }

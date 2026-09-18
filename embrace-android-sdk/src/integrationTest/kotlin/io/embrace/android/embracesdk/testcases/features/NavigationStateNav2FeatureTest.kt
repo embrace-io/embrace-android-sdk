@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.testcases.features
 import android.app.Activity
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertNavigationStateSpan
+import io.embrace.android.embracesdk.assertions.assertSystemNewStateValue
+import io.embrace.android.embracesdk.assertions.assertNonSystemNewStateValue
 import io.embrace.android.embracesdk.assertions.getNavigationStateSpan
 import io.embrace.android.embracesdk.fakes.ActivityFindNavControllerActivity
 import io.embrace.android.embracesdk.fakes.ArgTemplateNavHostFragmentActivity
@@ -17,6 +19,7 @@ import io.embrace.android.embracesdk.fakes.SerializableRouteNavHostFragmentActiv
 import io.embrace.android.embracesdk.fakes.TestNavControllerActivity
 import io.embrace.android.embracesdk.fakes.ViewFindNavControllerActivity
 import io.embrace.android.embracesdk.fakes.WrappedContextComposeNavHostActivity
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NavigationState.Screen
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.AppExecutionTimestamps
@@ -224,6 +227,28 @@ internal class NavigationStateNav2FeatureTest {
                     ),
                     newStateValues = listOf(activityController.get().localClassName, "home", "general"),
                 )
+            },
+        )
+    }
+
+    @Test
+    fun `destination named like the SDK background placeholder is recorded as a distinct app screen`() {
+        val activityController = Robolectric.buildActivity(BasicNavHostFragmentActivity::class.java)
+        testRule.runTest(
+            persistedRemoteConfig = enabledRemoteConfig,
+            testCaseAction = {
+                simulateNavControllerActivityNavigation(
+                    routes = listOf("Backgrounded"),
+                    activityController = activityController,
+                )
+            },
+            assertAction = {
+                val stateSpan = checkNotNull(getSingleSessionEnvelope().getNavigationStateSpan())
+                val events = checkNotNull(stateSpan.events)
+                events[0].assertNonSystemNewStateValue(Screen.Named(activityController.get().localClassName))
+                events[1].assertNonSystemNewStateValue(Screen.Named("home"))
+                events[2].assertNonSystemNewStateValue(Screen.Named("Backgrounded"))
+                events[3].assertSystemNewStateValue(Screen.Backgrounded)
             },
         )
     }

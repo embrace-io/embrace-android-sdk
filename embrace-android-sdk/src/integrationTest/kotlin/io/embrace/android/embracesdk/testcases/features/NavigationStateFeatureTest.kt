@@ -3,15 +3,23 @@ package io.embrace.android.embracesdk.testcases.features
 import android.app.Activity
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertNavigationStateSpan
+import io.embrace.android.embracesdk.assertions.assertSystemStateValue
+import io.embrace.android.embracesdk.assertions.assertNonSystemStateValue
+import io.embrace.android.embracesdk.assertions.getLogs
 import io.embrace.android.embracesdk.assertions.getNavigationStateSpan
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NavigationState.Screen
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.AppExecutionTimestamps
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.LIFECYCLE_EVENT_GAP
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.actions.SessionPartTimestamps
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
@@ -23,7 +31,13 @@ internal class NavigationStateFeatureTest {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+        EmbraceSetupInterface(
+            workersToFake = listOf(Worker.Background.LogMessageWorker),
+        ).apply {
+            getFakedWorkerExecutor(Worker.Background.LogMessageWorker).blockingMode = false
+        }
+    }
 
     private val disabledRemoteConfig = RemoteConfig(pctNavigationStateCaptureEnabled = 0.0f)
     private val enabledRemoteConfig = RemoteConfig(pctNavigationStateCaptureEnabled = 100.0f)
@@ -64,15 +78,23 @@ internal class NavigationStateFeatureTest {
             Robolectric.buildActivity(SettingsActivity::class.java),
             Robolectric.buildActivity(ProfileActivity::class.java)
         )
+        lateinit var logWorkerExecutor: BlockingScheduledExecutorService
         testRule.runTest(
             persistedRemoteConfig = enabledRemoteConfig,
+            setupAction = {
+                logWorkerExecutor = getFakedWorkerExecutor(Worker.Background.LogMessageWorker).apply {
+                    blockingMode = true
+                }
+            },
             testCaseAction = {
+                embrace.logInfo("navigation")
                 firstSessionTimestamps = simulateOpeningActivities(
                     addStartupActivity = false,
                     startInBackground = true,
                     activitiesAndActions = listOf(
                         loadedActivities[0] to {
                             foregroundTimes.add(clock.now())
+                            embrace.logInfo("navigation")
                         },
                         loadedActivities[1] to {
                             foregroundTimes.add(clock.now())
@@ -83,6 +105,8 @@ internal class NavigationStateFeatureTest {
                     )
                 )
                 secondSessionTimestamps = recordSession(activityClass = ProfileActivity::class.java)
+                clock.tick(2000L)
+                logWorkerExecutor.runCurrentlyBlocked()
             },
             assertAction = {
                 val sessionPayloads = getSessionEnvelopes(2)
@@ -100,6 +124,11 @@ internal class NavigationStateFeatureTest {
                     transitionTimesMs = listOf(secondSessionTimestamps.startTimeMs, secondSessionTimestamps.endTimeMs),
                     newStateValues = listOf(loadedActivities.last().get().localClassName)
                 )
+
+                val logs = getSingleLogEnvelope().getLogs { it.body == "navigation" }
+                assertEquals(2, logs.size)
+                logs[0].assertSystemStateValue(NAVIGATION_STATE_KEY, Screen.Initializing)
+                logs[1].assertNonSystemStateValue(NAVIGATION_STATE_KEY, Screen.Named(loadedActivities[0].get().localClassName))
             },
         )
     }
@@ -171,4 +200,8 @@ internal class NavigationStateFeatureTest {
     class HomeActivity : Activity()
     class SettingsActivity : Activity()
     class ProfileActivity : Activity()
+
+    private companion object {
+        const val NAVIGATION_STATE_KEY = "emb.state.screen-automatic"
+    }
 }

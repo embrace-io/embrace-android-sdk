@@ -15,7 +15,7 @@ class NavigationStateDataSource(
 ) : StateDataSource<Screen>(
     args = args,
     stateTypeFactory = ::NavigationState,
-    defaultValue = Screen(name = INITIALIZING),
+    defaultValue = Screen.Initializing,
     maxTransitions = MAX_NAVIGATION_STATE_TRANSITIONS,
 ),
     NavigationControllerEventListener {
@@ -48,12 +48,11 @@ class NavigationStateDataSource(
         broker.onEvent(NavigationEvent.NavControllerDestinationChanged(activity, screenName, timestampMs))
     }
 
-    fun onScreenLoad(loadTimeMs: Long, screenName: String) {
-        onStateChange(newState = Screen(name = screenName), transitionTimeMs = loadTimeMs)
+    fun onScreenLoad(loadTimeMs: Long, screen: Screen) {
+        onStateChange(newState = screen, transitionTimeMs = loadTimeMs)
     }
 
     companion object {
-        private const val INITIALIZING = "Initializing"
         private const val MAX_NAVIGATION_STATE_TRANSITIONS = 1000
     }
 }

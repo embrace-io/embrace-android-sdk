@@ -387,8 +387,43 @@ sealed class SchemaType(
 
     class NavigationState(initialValue: Screen) :
         State<NavigationState.Screen>(initialValue, "screen-automatic") {
-        data class Screen(private val name: String) {
+
+        /**
+         * The value of the navigation state. A screen observed from the app is [Named], with a [name] that can be any arbitrary strings.
+         * Others, representing state values where there really isn't a screen with a derivable name to map to, identify themselves as
+         * system values so we can disambiguate them from screens that happen to share the same string name.
+         */
+        sealed class Screen(
+            private val name: String,
+            override val isSystemValue: Boolean,
+        ) : TypedStateValue {
+
+            /**
+             * A screen with a name derived from the app, e.g. an Activity's class came or the destination set by a navigation library.
+             */
+            class Named(name: String) : Screen(name, false)
+
+            /**
+             * No screen has been observed since the SDK started.
+             */
+            object Initializing : Screen("Initializing", true)
+
+            /**
+             * The app is in the background so no screen is visible.
+             */
+            object Backgrounded : Screen("Backgrounded", true)
+
+            /**
+             * A navigation controller has been attached but has not reported a destination, so no screen is considered visible.
+             */
+            object NavControllerInitializing : Screen("NavController Initializing", true)
+
             override fun toString(): String = name
+
+            override fun equals(other: Any?): Boolean =
+                other is Screen && other.name == name && other.isSystemValue == isSystemValue
+
+            override fun hashCode(): Int = 31 * name.hashCode() + isSystemValue.hashCode()
         }
     }
 

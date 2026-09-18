@@ -6,9 +6,9 @@ import io.embrace.android.embracesdk.internal.payload.Span
 /**
  * A queue of completed spans that are waiting to be written to disk.
  */
-internal fun completedSpansQueue(): SpanQueue<Span> = SpanQueue(identityOf = Span::spanId)
+internal fun completedSpansQueue(): TelemetryQueue<Span> = TelemetryQueue(identityOf = Span::spanId)
 
 /**
  * A queue of span snapshots that are waiting to be written to disk.
  */
-internal fun spanSnapshotsQueue(): SpanQueue<EmbraceSdkSpan> = SpanQueue(identityOf = EmbraceSdkSpan::spanId)
+internal fun spanSnapshotsQueue(): TelemetryQueue<EmbraceSdkSpan> = TelemetryQueue(identityOf = EmbraceSdkSpan::spanId)

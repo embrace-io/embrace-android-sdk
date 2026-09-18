@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger
  *
  * [identityOf] supplies the key a record is deduplicated by (the span ID).
  */
-internal class SpanQueue<T>(
+internal class TelemetryQueue<T>(
     private val compactThreshold: Int = COMPACT_THRESHOLD,
     private val identityOf: (T) -> Any?,
 ) {
@@ -22,6 +22,16 @@ internal class SpanQueue<T>(
 
     val size: Int
         get() = buffered.get()
+
+    /**
+     * Buffers [item], compacting the queue if it grows past [compactThreshold].
+     */
+    fun add(item: T) {
+        queue.add(item)
+        if (buffered.addAndGet(1) >= compactThreshold) {
+            compact()
+        }
+    }
 
     /**
      * Buffers [items], compacting the queue if it grows past [compactThreshold].

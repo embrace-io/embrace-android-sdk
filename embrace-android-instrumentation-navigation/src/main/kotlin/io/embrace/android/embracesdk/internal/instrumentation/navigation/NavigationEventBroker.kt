@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.navigation
 
 import androidx.annotation.UiThread
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NavigationState.Screen
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -9,12 +10,12 @@ import java.util.concurrent.atomic.AtomicReference
  * broker only needs to hand them off to be processed in order.
  */
 internal class NavigationEventBroker(
-    private val onScreenLoad: (loadTimeMs: Long, newScreenName: String) -> Unit,
+    private val onScreenLoad: (loadTimeMs: Long, newScreen: Screen) -> Unit,
 ) {
     private val lastEvent = AtomicReference<NavigationEvent?>(null)
     private val activityStartTimes = mutableMapOf<Int, Long>()
-    private val visibleScreens = mutableMapOf<Int, String>()
-    private val lastNavControllerDestinations = mutableMapOf<Int, String>()
+    private val visibleScreens = mutableMapOf<Int, Screen>()
+    private val lastNavControllerDestinations = mutableMapOf<Int, Screen>()
 
     @UiThread
     fun onEvent(event: NavigationEvent) {
@@ -31,7 +32,7 @@ internal class NavigationEventBroker(
                     // If the activity doesn't have a NavController, set the activity name as the activity's visible screen
                     // and update the destination based on what screens are visible
                     if (!lastNavControllerDestinations.contains(event.componentId)) {
-                        visibleScreens[event.componentId] = event.name
+                        visibleScreens[event.componentId] = Screen.Named(event.name)
                         calculateStateAndNotifyLoad(
                             activityStartTime = startTime,
                             eventTime = event.timestampMs,
@@ -55,18 +56,19 @@ internal class NavigationEventBroker(
                 visibleScreens.remove(event.componentId)
             }
             is NavigationEvent.NavControllerAttached -> {
-                lastNavControllerDestinations[event.componentId] = NAV_CONTROLLER_INIT
+                lastNavControllerDestinations[event.componentId] = Screen.NavControllerInitializing
             }
             is NavigationEvent.NavControllerDestinationChanged -> {
-                lastNavControllerDestinations[event.componentId] = event.name
-                visibleScreens[event.componentId] = event.name
+                val destination = Screen.Named(event.name)
+                lastNavControllerDestinations[event.componentId] = destination
+                visibleScreens[event.componentId] = destination
                 calculateStateAndNotifyLoad(
                     eventTime = event.timestampMs,
                     event = event,
                 )
             }
             is NavigationEvent.Backgrounded -> {
-                notifyLoad(event)
+                notifyLoad(event, stateValue = Screen.Backgrounded)
             }
         }
     }
@@ -86,7 +88,7 @@ internal class NavigationEventBroker(
     private fun notifyLoad(
         event: NavigationEvent,
         loadTime: Long = event.timestampMs,
-        stateValue: String = event.name,
+        stateValue: Screen = Screen.Named(event.name),
     ) {
         val notify = lastEvent.getAndSet(event)?.let {
             it.componentId != event.componentId || it.name != event.name
@@ -95,11 +97,5 @@ internal class NavigationEventBroker(
         if (notify) {
             onScreenLoad(loadTime, stateValue)
         }
-    }
-
-    private companion object {
-        // A state where the NavController is attached but the default destination has not been loaded, which should be rare
-        // as a destination update to the default is fired synchronously as the controller attaches.
-        const val NAV_CONTROLLER_INIT = "NavController Initializing"
     }
 }

@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.assertions
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NavigationState.Screen
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttributeKey
@@ -56,7 +57,9 @@ fun Span.hasLinkToEmbraceSpan(linkedSpan: Span, type: LinkType): Boolean =
 
 
 /**
- * Validate a Navigation State span
+ * Validates a Navigation State session part span with the given [newStateValues] representing the names of the screens derived from the
+ * app. Based on whether the state is initialized when the session part started, it will look for the appropriate [Screen] as its
+ * initial value, and [Screen.Backgrounded] as its ending value, with the appropriate state type attributes.
  */
 fun Span.assertNavigationStateSpan(
     stateUninitialized: Boolean = true,
@@ -64,14 +67,14 @@ fun Span.assertNavigationStateSpan(
     newStateValues: List<String> = listOf(),
 ) {
     val startStateValue = if (stateUninitialized) {
-        "Initializing"
+        Screen.Initializing
     } else {
-        "Backgrounded"
+        Screen.Backgrounded
     }
     assertStateSpan(
         initialValue = startStateValue,
         transitionTimesMs = transitionTimesMs,
-        newStateValues = newStateValues + "Backgrounded",
+        newStateValues = newStateValues.map { Screen.Named(it) } + Screen.Backgrounded,
     )
 }
 

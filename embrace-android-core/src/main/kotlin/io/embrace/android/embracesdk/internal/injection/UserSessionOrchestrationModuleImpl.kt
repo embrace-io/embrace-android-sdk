@@ -44,6 +44,8 @@ class UserSessionOrchestrationModuleImpl(
 
     private val sessionPersistenceWorker = workerThreadModule.backgroundWorker(Worker.Background.SessionPersistenceWorker)
 
+    private val sessionReadWorker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
+
     private val sessionPartDirectoryStore = SessionPartDirectoryStore(
         sessionsDir,
         sessionPersistenceWorker,
@@ -63,7 +65,6 @@ class UserSessionOrchestrationModuleImpl(
             processIdProvider = { openTelemetryModule.otelSdkConfig.processIdentifier },
             configService = configService,
             logger = initModule.logger,
-            worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
         )
     }
 
@@ -110,7 +111,11 @@ class UserSessionOrchestrationModuleImpl(
             initModule.telemetryService,
             sessionPartDirectoryStore,
             sessionPartWriteTracker,
-            onWritesComplete = { sessionPartReader?.readPersistedSessionParts() },
+            onWritesComplete = {
+                sessionPartReader?.let { reader ->
+                    sessionReadWorker.submit { reader.readPersistedSessionParts() }
+                }
+            },
         )
         essentialServiceModule.userService.addUserInfoListener(sessionPartWriter::onMetadataChanged)
         openTelemetryModule.spanRepository.addCompletedOtelSpansListener(sessionPartWriter::onSpanCompleted)

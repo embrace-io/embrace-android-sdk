@@ -16,7 +16,6 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDir
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTracker
 import io.embrace.android.embracesdk.internal.session.persistence.SessionReconstructionService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -36,20 +35,23 @@ class SessionPartReader(
     private val processIdProvider: () -> String,
     private val configService: ConfigService,
     private val logger: InternalLogger,
-    private val worker: BackgroundWorker,
 ) {
 
     /**
-     * Queues a read of every completed session part on disk. The work runs on [worker] so that it
-     * does not hold up telemetry queued on the session persistence worker.
+     * Reads every completed session part on disk, returning only once each one has been handed to
+     * the [IntakeService] and stored. Never throws: callers run this inline on their own critical
+     * path and have to keep going regardless of what the read layer does.
+     *
+     * This performs disk I/O and waits on intake, so the caller is responsible for already being on
+     * a background thread, and for not calling it from a thread that intake itself runs on.
      */
     fun readPersistedSessionParts() {
         if (!configService.persistenceBehavior.isMultiFilePersistenceEnabled()) {
             deletePersistedSessionParts()
             return
         }
-        worker.submit {
-            EmbTrace.trace("mf-read-session-parts") {
+        EmbTrace.trace("mf-read-session-parts") {
+            runCatching {
                 val directories = directoryStore.storedDirectories()
                     .filterNot { writeTracker.isWriting(it.sessionPartId) }
                     .sortedWith(SessionPartDirectory.comparator)
@@ -65,14 +67,18 @@ class SessionPartReader(
                         break
                     }
                 }
+            }.onFailure {
+                logger.trackInternalError(InternalErrorType.SessionPartReadFail, it)
             }
         }
     }
 
     private fun deletePersistedSessionParts() {
-        worker.submit {
-            EmbTrace.trace("mf-delete-session-parts") {
+        EmbTrace.trace("mf-delete-session-parts") {
+            runCatching {
                 sessionsDir.value.deleteRecursively()
+            }.onFailure {
+                logger.trackInternalError(InternalErrorType.SessionPartReadFail, it)
             }
         }
     }

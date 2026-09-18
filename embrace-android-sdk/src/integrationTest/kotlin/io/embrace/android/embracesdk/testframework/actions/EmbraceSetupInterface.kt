@@ -42,15 +42,24 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jniDeleg
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.sharedObjectLoaderTestOverride
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
+import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
+import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
+import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.prefs.createKeyValueStore
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.lifecycle.AndroidxProcessLifecycleTracker
+import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpansWriter
+import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadataWriter
+import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
+import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTarget
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.UuidSource
@@ -62,6 +71,7 @@ import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.robolectric.Shadows
 import org.robolectric.shadows.ShadowLooper
+import java.io.File
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.Duration.Companion.days
@@ -234,6 +244,70 @@ internal class EmbraceSetupInterface(
             }
         }
     }
+
+    /**
+     * Writes a completed session part to the multi file persistence directory, as a previous process
+     * launch would have left it behind. The SDK reads it back during startup.
+     */
+    fun persistSessionPart(
+        userSessionId: String,
+        sessionPartId: String,
+        timestamp: Long = fakeClock.now(),
+        uuid: String = "c2610cd1-389f-422a-bfbc-25312c7a599a",
+        processIdentifier: String = this.processIdentifier,
+    ) {
+        val directory = SessionPartDirectory(
+            timestamp = timestamp,
+            uuid = uuid,
+            userSessionId = userSessionId,
+            sessionPartId = sessionPartId,
+        )
+        val sessionsDir = StorageLocation.SESSION_SPLIT.asFile(
+            logger = fakeInitModule.logger,
+            rootDirSupplier = { fakeCoreModule.context.filesDir },
+            fallbackDirSupplier = { fakeCoreModule.context.cacheDir },
+        )
+        check(File(sessionsDir.value, directory.dirName).mkdirs()) {
+            "Could not create session part directory ${directory.dirName}"
+        }
+
+        val target = SessionPartWriteTarget(sessionsDir) { directory }
+        SessionMetadataWriter(
+            target = target,
+            metadataSource = { EnvelopeMetadata() },
+            resourceSource = { EnvelopeResource(appVersion = "2.5.1") },
+            envelopeVersion = "0.1.0",
+            envelopeType = "spans",
+            sharedLibSymbolMappingSource = { null },
+            logger = fakeInitModule.logger,
+        ).write()
+        CompletedSpansWriter(target, fakeInitModule.logger).write(
+            listOf(persistedSessionSpan(userSessionId, sessionPartId, timestamp, processIdentifier)),
+        )
+    }
+
+    private fun persistedSessionSpan(
+        userSessionId: String,
+        sessionPartId: String,
+        timestamp: Long,
+        processIdentifier: String,
+    ) = Span(
+        traceId = "6c9b1f2ec1d34f3c9a7d0b8e5f2a4c11",
+        spanId = "aaaaaaaaaaaaaaa1",
+        name = "emb-session",
+        startTimeNanos = timestamp.millisToNanos(),
+        endTimeNanos = (timestamp + 1000L).millisToNanos(),
+        status = Span.Status.UNSET,
+        events = emptyList(),
+        attributes = listOf(
+            Attribute(key = "emb.type", data = "ux.session"),
+            Attribute(key = EmbSessionAttributes.EMB_STATE, data = "foreground"),
+            Attribute(key = EmbSessionAttributes.EMB_PROCESS_IDENTIFIER, data = processIdentifier),
+            Attribute(key = EmbSessionAttributes.EMB_SESSION_PART_ID, data = sessionPartId),
+            Attribute(key = EmbSessionAttributes.EMB_USER_SESSION_ID, data = userSessionId),
+        ),
+        links = emptyList(),
+    )
 
     /**
      * Setup a fake native crash on disk

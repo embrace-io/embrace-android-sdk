@@ -202,6 +202,57 @@ internal class TelemetryQueueTest {
     }
 
     @Test
+    fun `removing a record drops it from the next drain`() {
+        val queue = telemetryQueue()
+        queue.add(listOf(record("a", 1), record("b", 1)))
+
+        queue.remove(record("a", 2))
+        assertEquals(1, queue.size)
+        assertEquals(listOf(record("b", 1)), queue.drain())
+    }
+
+    @Test
+    fun `removing a record drops every copy of it that is buffered`() {
+        val queue = telemetryQueue()
+        queue.add(listOf(record("a", 1), record("b", 1), record("a", 2)))
+
+        queue.remove(record("a", 3))
+        assertEquals(1, queue.size)
+        assertEquals(listOf(record("b", 1)), queue.drain())
+    }
+
+    @Test
+    fun `removing a record that was never buffered does nothing`() {
+        val queue = telemetryQueue()
+        queue.add(record("a", 1))
+
+        queue.remove(record("b", 1))
+        assertEquals(1, queue.size)
+        assertEquals(listOf(record("a", 1)), queue.drain())
+    }
+
+    @Test
+    fun `a record with no key removes nothing`() {
+        val queue = telemetryQueue()
+        queue.add(listOf(record(null, 1), record("a", 1)))
+
+        queue.remove(record(null, 2))
+        assertEquals(2, queue.size)
+        assertEquals(listOf(record(null, 1), record("a", 1)), queue.drain())
+    }
+
+    @Test
+    fun `a removed record can be buffered again`() {
+        val queue = telemetryQueue()
+        queue.add(record("a", 1))
+        queue.remove(record("a", 1))
+        assertEquals(0, queue.size)
+
+        queue.add(record("a", 2))
+        assertEquals(listOf(record("a", 2)), queue.drain())
+    }
+
+    @Test
     fun `records added from several threads are all drained exactly once`() {
         val queue = telemetryQueue()
         val threads = 4

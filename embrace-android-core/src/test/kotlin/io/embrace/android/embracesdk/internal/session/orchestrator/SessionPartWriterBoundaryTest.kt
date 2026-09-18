@@ -216,8 +216,8 @@ internal class SessionPartWriterBoundaryTest {
         startPart(SECOND_PART_ID)
         drain()
 
-        // ending a part flushes its metadata ahead of its snapshots, so that write is the one that
-        // finds the directory gone, and the part is given up so no later write reports it again
+        // ending a part flushes its metadata first, so that write is the one that finds the
+        // directory gone, and the part is given up so no later write reports it again
         assertEquals(listOf("SessionMetadataWriteFail"), logger.internalErrorMessages.map { it.msg })
         assertEquals("span1", sessionSpanIn(SECOND_PART_ID)?.name)
     }

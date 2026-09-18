@@ -47,6 +47,22 @@ internal class TelemetryQueue<T>(
     }
 
     /**
+     * Removes any instances of [item] that are in the queue.
+     */
+    fun remove(item: T) {
+        val key = identityOf(item) ?: return
+        synchronized(drainLock) {
+            val items = queue.iterator()
+            while (items.hasNext()) {
+                if (identityOf(items.next()) == key) {
+                    items.remove()
+                    buffered.decrementAndGet()
+                }
+            }
+        }
+    }
+
+    /**
      * Returns every telemetry object that should be written after removing them from the queue.
      * Compaction occurs to remove duplicates before this returns.
      */

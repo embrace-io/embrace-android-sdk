@@ -374,15 +374,38 @@ internal class SpanSnapshotsReaderTest {
     }
 
     @Test
-    fun `a malformed frame throws even with no records behind it`() {
+    fun `a malformed frame before the rollup record is rejected`() {
         assertRejected(INVALID_FIELD_ENCODING)
     }
 
     @Test
-    fun `a malformed frame behind an intact record throws so the caller can report it`() {
-        assertRejected(
-            spanSnapshotsRollup(listOf(first)) + INVALID_FIELD_ENCODING + spanSnapshotsAppend(listOf(second)),
-        )
+    fun `a file rejected for a malformed frame reports the frame as the cause`() {
+        assertNotNull(assertRejected(INVALID_FIELD_ENCODING).cause)
+    }
+
+    @Test
+    fun `a file rejected for holding no rollup record reports no cause`() {
+        assertNull(assertRejected(spanSnapshotsAppend(listOf(first))).cause)
+    }
+
+    @Test
+    fun `a malformed frame past the rollup record is rejected`() {
+        assertRejected(spanSnapshotsAppend(listOf(first)) + INVALID_FIELD_ENCODING)
+    }
+
+    @Test
+    fun `a malformed frame keeps the records in front of it and costs the rest of the file`() {
+        val file = spanSnapshotsRollup(listOf(first)) + INVALID_FIELD_ENCODING + spanSnapshotsAppend(listOf(second))
+        val decoded = decode(file)
+        assertEquals(listOf(first), decoded.spans)
+        assertNotNull(decoded.corruption)
+        assertFalse(decoded.spanLimitReached)
+    }
+
+    @Test
+    fun `a rollup record holding a malformed varint is rejected`() {
+        val malformedVarint = byteArrayOf(0x08) + ByteArray(11) { -1 }
+        assertNotNull(assertRejected(malformedVarint).cause)
     }
 
     @Test
@@ -398,12 +421,15 @@ internal class SpanSnapshotsReaderTest {
         assertEquals(emptyList<SpanProto>(), decoded.spans)
     }
 
-    private fun assertRejected(file: ByteArray) {
+    /** Asserts [file] is rejected whole, and hands back the rejection so its cause can be read. */
+    private fun assertRejected(file: ByteArray): IOException {
         try {
             read(file)
-            fail("expected a file that cannot be read back to throw")
         } catch (expected: IOException) {
             // a file the reader cannot make sense of is reported rather than delivered in part
+            return expected
         }
+        fail("expected a file that cannot be read back to throw")
+        error("unreachable")
     }
 }

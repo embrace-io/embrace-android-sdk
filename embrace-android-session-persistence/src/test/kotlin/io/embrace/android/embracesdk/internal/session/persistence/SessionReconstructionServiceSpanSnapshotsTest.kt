@@ -28,6 +28,8 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
             sessionPartId = SESSION_PART_ID,
         )
 
+        private val INVALID_FIELD_ENCODING = byteArrayOf(0x0E)
+
         private val secondSnapshot = inFlightSpan.copy(spanId = "aaaaaaaaaaaaaaa5")
 
         private val endedSnapshot = inFlightSpan.copy(
@@ -212,6 +214,18 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
         assertEquals(emptyList<Span>(), payload.spanSnapshots)
         assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a malformed frame past the rollup keeps the snapshots in front of it`() {
+        write(snapshots = listOf(inFlightSpan))
+        snapshotsFile().appendBytes(INVALID_FIELD_ENCODING)
+        append(listOf(secondSnapshot))
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(listOf(fullyPopulatedSpan), payload.spans)
+        assertEquals(listOf(inFlightSpan), payload.spanSnapshots)
+        assertReconstructionFailureTracked()
     }
 
     @Test

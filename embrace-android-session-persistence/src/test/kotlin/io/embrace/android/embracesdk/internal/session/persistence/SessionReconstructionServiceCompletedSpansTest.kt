@@ -173,13 +173,28 @@ internal class SessionReconstructionServiceCompletedSpansTest {
     }
 
     @Test
-    fun `an invalid field encoding costs the log but not the rest of the session part`() {
+    fun `an invalid field encoding costs the records behind it but not those in front`() {
         write(spans = listOf(endedSpanProto))
         completedSpansFile().appendBytes(INVALID_FIELD_ENCODING)
         completedSpansFile().appendBytes(completedSpansLog(listOf(secondEndedSpanProto)))
 
         val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
-        assertEquals(emptyList<Span>(), payload.spans)
+        assertEquals(listOf(endedSpan), payload.spans)
+        assertReconstructionFailureTracked()
+    }
+
+    @Test
+    fun `a completed span in front of an invalid field encoding still supersedes its snapshot`() {
+        writeMetadata()
+        completedSpansFile().writeBytes(completedSpansLog(listOf(endedSpanProto)))
+        completedSpansFile().appendBytes(INVALID_FIELD_ENCODING)
+        File(partDir(), "span_snapshots.pb").writeBytes(
+            spanSnapshotsRollup(listOf(endedSpanProto.copy(end_time_unix_nano = null))),
+        )
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(listOf(endedSpan), payload.spans)
+        assertEquals(emptyList<Span>(), payload.spanSnapshots)
         assertReconstructionFailureTracked()
     }
 

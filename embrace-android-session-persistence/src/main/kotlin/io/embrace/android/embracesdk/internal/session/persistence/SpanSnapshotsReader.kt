@@ -43,15 +43,17 @@ private class SnapshotDecoder(
     private var truncated = false
     private var records = 0
 
+    private val failure: Throwable? get() = corruption ?: collection.corruption
+
     fun read(): DecodedSpans {
         var reading = true
         while (reading) {
             reading = readRecord()
         }
         if (!versioned) {
-            throw IOException(UNSUPPORTED_VERSION_MSG)
+            throw IOException(UNSUPPORTED_VERSION_MSG, failure)
         }
-        return DecodedSpans(snapshots.values.toMutableList(), corruption, truncated)
+        return DecodedSpans(snapshots.values.toMutableList(), failure, truncated)
     }
 
     private fun readRecord(): Boolean {

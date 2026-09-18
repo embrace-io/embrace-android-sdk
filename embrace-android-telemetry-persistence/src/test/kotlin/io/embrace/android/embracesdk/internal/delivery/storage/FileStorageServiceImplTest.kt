@@ -183,6 +183,22 @@ class FileStorageServiceImplTest {
     }
 
     @Test
+    fun `a stale temp file is reclaimed by the next store of the same payload`() {
+        // simulate a temp file left behind by a process killed mid-write
+        File(outputDir, "${fakeSessionStoredTelemetryMetadata.filename}.tmp").writeText("torn write")
+
+        storeDummyFile(fakeSessionStoredTelemetryMetadata)
+
+        service.loadPayloadAsStream(fakeSessionStoredTelemetryMetadata)?.use {
+            assertEquals(DUMMY_CONTENT, it.bufferedReader().readText())
+        }
+        assertEquals(
+            listOf(fakeSessionStoredTelemetryMetadata.filename),
+            outputDir.list()?.toList(),
+        )
+    }
+
+    @Test
     fun `unparseable files are swept when building the index`() {
         // simulate a payload written by a format this version can't parse
         val bogus = File(outputDir, "not-a-valid-name").apply { writeText("x") }

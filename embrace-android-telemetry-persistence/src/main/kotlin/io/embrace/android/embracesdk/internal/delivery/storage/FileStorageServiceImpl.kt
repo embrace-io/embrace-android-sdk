@@ -57,9 +57,10 @@ class FileStorageServiceImpl(
 
         // write to a temporary file then rename it, to avoid sending incomplete files
         // to the backend (i.e. where the process terminates or there isn't any disk space).
-        // create temp file inside the payload dir so any orphans
-        // are co-located with payloads and swept on next startup
-        val tmpFile = File.createTempFile(metadata.filename, ".tmp", index.rootDir)
+        // create temp file inside the payload dir so any orphans are co-located with payloads and
+        // swept on next startup, and name it after the payload so an orphan is overwritten by the
+        // next attempt rather than duplicated
+        val tmpFile = File(index.rootDir, "${metadata.filename}.tmp")
         try {
             val stream = CountingOutputStream(tmpFile.outputStream().buffered())
             stream.use { action(it) }

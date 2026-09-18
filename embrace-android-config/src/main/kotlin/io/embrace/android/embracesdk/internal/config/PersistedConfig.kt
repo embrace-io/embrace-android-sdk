@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.config
 
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehaviorImpl
@@ -27,6 +28,7 @@ class PersistedConfig(
     instrumentedConfig: InstrumentedConfig,
     keyValueStore: Lazy<KeyValueStore>,
     uuidSource: UuidSource,
+    clock: Clock,
 ) {
 
     /**
@@ -41,12 +43,18 @@ class PersistedConfig(
             serializer = serializer,
             storageDir = File(filesDir, STORAGE_DIR_NAME),
             deviceIdProvider = { deviceId },
+            deliveredAtProvider = { clock.now() },
         )
     }
 
     internal val response: StoredConfigResponse? = runCatching { store?.loadResponse() }.getOrNull()
 
     internal val remoteConfig: RemoteConfig? = response?.cfg
+
+    /**
+     * When the [remoteConfig] was retrieved from the server.
+     */
+    val configDeliveredAt: Long = response?.deliveredAt ?: clock.now()
 
     /**
      * Resolved lazily so that the common case (binary cache) never has to touch the [KeyValueStore].

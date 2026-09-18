@@ -187,6 +187,7 @@ internal class OkHttpDataSourceTest {
                     statusCodes = setOf(200, 500),
                 ),
             ),
+            configDeliveredAt = sdkClock.now(),
         )
     }
 

@@ -76,4 +76,10 @@ interface NetworkBehavior {
      * Domain count limiter for network requests
      */
     val domainCountLimiter: DomainCountLimiter
+
+    /**
+     * When the currently-active remote config was actually delivered by the server, used to anchor
+     * [NetworkCaptureRuleRemoteConfig.expiresIn] to a real deadline.
+     */
+    val configDeliveredAt: Long
 }

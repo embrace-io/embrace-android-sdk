@@ -32,7 +32,8 @@ fun createSessionBehavior(
 fun createNetworkBehavior(
     remoteCfg: RemoteConfig? = null,
     disabledUrlPatterns: List<String>? = null,
-): NetworkBehavior = NetworkBehaviorImpl(InstrumentedConfigImpl, remoteCfg, disabledUrlPatterns)
+    configDeliveredAt: Long = FakeClock.DEFAULT_FAKE_CURRENT_TIME,
+): NetworkBehavior = NetworkBehaviorImpl(InstrumentedConfigImpl, remoteCfg, configDeliveredAt, disabledUrlPatterns)
 
 /**
  * A [TraceparentInjectionBehaviorImpl] that returns default values.

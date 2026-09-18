@@ -11,6 +11,7 @@ import java.io.File
 internal class RemoteConfigStoreImpl(
     private val serializer: PlatformSerializer,
     private val storageDir: File,
+    private val deliveredAtProvider: () -> Long = { 0L },
     private val deviceIdProvider: () -> String,
 ) : RemoteConfigStore {
 
@@ -32,6 +33,7 @@ internal class RemoteConfigStoreImpl(
                 cfg = cached.remoteConfig,
                 etag = cached.etag,
                 deviceId = cached.deviceId,
+                deliveredAt = cached.deliveredAt,
             )
         } catch (_: IllegalArgumentException) {
             // delete the cache file if it appears to be corrupted
@@ -97,6 +99,7 @@ internal class RemoteConfigStoreImpl(
                 deviceId = deviceIdProvider(),
                 etag = response.etag,
                 remoteConfig = cfg,
+                deliveredAt = deliveredAtProvider(),
             )
             cachedConfigFile.outputStream().buffered().use { stream ->
                 EmbraceBinary.encodeToStream(CachedConfiguration.serializer(), cached, stream)

@@ -144,9 +144,10 @@ internal class SessionPartWriterBoundaryTest {
         writer.onMetadataChanged()
         drain()
 
-        assertEquals("user0", metadataIn(FIRST_PART_ID)?.user_id)
-        assertEquals("user2", metadataIn(SECOND_PART_ID)?.user_id)
-        assertEquals(3, writeCount)
+        // ending the first part flushed it once more, so it holds the read taken at that point
+        assertEquals("user1", metadataIn(FIRST_PART_ID)?.user_id)
+        assertEquals("user3", metadataIn(SECOND_PART_ID)?.user_id)
+        assertEquals(4, writeCount)
         assertNoInternalErrors()
     }
 
@@ -206,7 +207,7 @@ internal class SessionPartWriterBoundaryTest {
     }
 
     @Test
-    fun `a pending session span write for a deleted session part is reported and does not stop the new part`() {
+    fun `a pending write for a deleted session part is reported once and does not stop the new part`() {
         startPart(FIRST_PART_ID)
         drain()
         clock.tick(10000)
@@ -215,7 +216,9 @@ internal class SessionPartWriterBoundaryTest {
         startPart(SECOND_PART_ID)
         drain()
 
-        assertEquals(listOf("SpanSnapshotsWriteFail"), logger.internalErrorMessages.map { it.msg })
+        // ending a part flushes its metadata ahead of its snapshots, so that write is the one that
+        // finds the directory gone, and the part is given up so no later write reports it again
+        assertEquals(listOf("SessionMetadataWriteFail"), logger.internalErrorMessages.map { it.msg })
         assertEquals("span1", sessionSpanIn(SECOND_PART_ID)?.name)
     }
 
@@ -226,8 +229,8 @@ internal class SessionPartWriterBoundaryTest {
         startPart(SECOND_PART_ID)
         drain()
 
-        assertEquals("resource0", metadataIn(FIRST_PART_ID)?.resource?.app_version)
-        assertEquals("resource1", metadataIn(SECOND_PART_ID)?.resource?.app_version)
+        assertEquals("resource1", metadataIn(FIRST_PART_ID)?.resource?.app_version)
+        assertEquals("resource2", metadataIn(SECOND_PART_ID)?.resource?.app_version)
         assertNoInternalErrors()
     }
 

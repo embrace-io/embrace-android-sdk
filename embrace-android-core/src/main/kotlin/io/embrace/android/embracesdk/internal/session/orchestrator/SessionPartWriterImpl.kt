@@ -111,7 +111,7 @@ class SessionPartWriterImpl(
                 current = writers
             }
 
-            queueMetadataWrite(writers)
+            queueMetadataWrite(writers, WriteStrategy.IMMEDIATE)
             queueSpanSnapshotsWrite(writers)
             registerResourceChangeListener()
         }
@@ -159,7 +159,7 @@ class SessionPartWriterImpl(
         if (!acceptingWrites()) {
             return
         }
-        queueMetadataWrite(current ?: return)
+        queueMetadataWrite(current ?: return, WriteStrategy.DEBOUNCED)
     }
 
     /**
@@ -197,7 +197,7 @@ class SessionPartWriterImpl(
         if (!acceptingWrites()) {
             return
         }
-        queueMetadataWrite(current ?: return)
+        queueMetadataWrite(current ?: return, WriteStrategy.DEBOUNCED)
     }
 
     override fun onCrash() {
@@ -231,11 +231,12 @@ class SessionPartWriterImpl(
         }
     }
 
-    private fun queueMetadataWrite(writers: PartWriters) = EmbTrace.trace("mf-queue-metadata") {
-        execute(writers, InternalErrorType.SessionMetadataWriteFail, writers.metadataWrites::submit) {
-            writers.metadata.write()
+    private fun queueMetadataWrite(writers: PartWriters, timing: WriteStrategy) =
+        EmbTrace.trace("mf-queue-metadata") {
+            if (!processTerminating) {
+                writers.metadataWrites.write(timing, MetadataChange)
+            }
         }
-    }
 
     /**
      * Writes in-flight spans to a snapshot file.
@@ -297,8 +298,7 @@ class SessionPartWriterImpl(
     )
 
     /**
-     * Runs [action] on the [worker] via [submit], tracking any failure as an internal error rather
-     * than letting it escape - the telemetry gathered inside [action] can throw.
+     * Runs [action] on the [worker] via [submit], guarded by [guard].
      */
     private fun execute(
         writers: PartWriters?,
@@ -381,7 +381,14 @@ class SessionPartWriterImpl(
         val completedSpans = CompletedSpansWriter(target, logger)
         val spanSnapshots = SpanSnapshotsWriter(target, logger)
 
-        val metadataWrites = CoalescingWriteQueue(worker, clock, METADATA_WRITE_DELAY_MS)
+        val metadataWrites = TelemetryWriteScheduler(
+            worker = worker,
+            delayMs = METADATA_WRITE_DELAY_MS,
+            queue = metadataChangeQueue(),
+            guard = guard(InternalErrorType.SessionMetadataWriteFail) { abandoned },
+            onWrite = { metadata.write() },
+        )
+
         val spanSnapshotWrites = CoalescingWriteQueue(worker, clock, SPAN_SNAPSHOT_WRITE_DELAY_MS)
 
         val completedSpanWrites = TelemetryWriteScheduler(
@@ -392,10 +399,9 @@ class SessionPartWriterImpl(
             onWrite = ::writeCompletedSpans,
         )
 
-        private val writeQueues = listOf(metadataWrites, spanSnapshotWrites)
-
         fun flushPendingWrites() {
-            writeQueues.forEach(CoalescingWriteQueue::flush)
+            metadataWrites.flush()
+            spanSnapshotWrites.flush()
             completedSpanWrites.flush()
         }
 

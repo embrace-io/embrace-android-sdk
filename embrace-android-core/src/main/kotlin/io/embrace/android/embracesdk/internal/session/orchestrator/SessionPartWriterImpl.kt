@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.session.orchestrator.TelemetryWriteScheduler.WriteStrategy
 import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpansWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadataWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
@@ -58,6 +59,7 @@ class SessionPartWriterImpl(
 
         const val METADATA_WRITE_DELAY_MS: Long = 500
         const val SPAN_SNAPSHOT_WRITE_DELAY_MS: Long = 1000
+        const val COMPLETED_SPAN_WRITE_DELAY_MS: Long = 1000
     }
 
     /**
@@ -102,8 +104,9 @@ class SessionPartWriterImpl(
                     finish(orphan, crashing = false)
                 }
                 if (carriedOverSpans.isNotEmpty()) {
-                    queueCompletedSpansWrite(writers, carriedOverSpans.toList())
-                    carriedOverSpans.clear()
+                    val batch = carriedOverSpans.toList()
+                    writers.completedSpanWrites.write(WriteStrategy.IMMEDIATE, batch)
+                    carriedOverSpans.removeAll(batch)
                 }
                 current = writers
             }
@@ -176,7 +179,7 @@ class SessionPartWriterImpl(
                 return true
             }
         }
-        queueCompletedSpansWrite(writers, spans)
+        writers.completedSpanWrites.write(WriteStrategy.DEBOUNCED, spans)
         return true
     }
 
@@ -271,24 +274,12 @@ class SessionPartWriterImpl(
 
     private fun EmbraceSdkSpan.isSessionSpan(): Boolean = hasEmbraceAttribute(EmbType.Ux.Session)
 
-    private fun queueCompletedSpansWrite(writers: PartWriters, spans: List<Span>) =
-        EmbTrace.trace("mf-queue-completed-spans") {
-            execute(null, InternalErrorType.CompletedSpansWriteFail, { worker.submit(it) }) {
-                if (writers.sealed) {
-                    // the part sealed while this write was queued. Hold the spans for the next one
-                    synchronized(bufferLock) { carryOver(spans) }
-                } else {
-                    writers.completedSpans.write(spans)
-                }
-            }
-        }
-
     /**
      * Holds [spans] until the next session part starts. Spans beyond [MAX_CARRIED_OVER_SPANS] are
      * dropped, as is a session span: it belongs to the part that was current when it stopped, and a
      * part holding two session spans cannot be read back.
      */
-    private fun carryOver(spans: List<Span>) {
+    internal fun carryOver(spans: List<Span>) {
         spans.forEach { span ->
             if (span.hasEmbraceAttribute(EmbType.Ux.Session)) {
                 reportOrphanedSessionSpan()
@@ -315,18 +306,28 @@ class SessionPartWriterImpl(
         submit: (Runnable) -> Unit,
         action: () -> Unit,
     ) {
-        val task = Runnable {
-            if (writers?.abandoned == true) {
-                return@Runnable
-            }
-            try {
-                action()
-            } catch (exc: Throwable) {
-                logger.trackInternalError(errorType, exc)
-            }
-        }
+        val task = guard(errorType) { writers?.abandoned == true }(Runnable(action))
         if (!processTerminating) {
             submit(task)
+        }
+    }
+
+    /**
+     * Wraps a write so that it is dropped once [abandoned] reports the session part is done with,
+     * and so that a failure is tracked as an internal error rather than escaping onto the [worker].
+     */
+    internal fun guard(
+        errorType: InternalErrorType,
+        abandoned: () -> Boolean = { false },
+    ): (Runnable) -> Runnable = { task ->
+        Runnable {
+            if (!abandoned()) {
+                try {
+                    task.run()
+                } catch (exc: Throwable) {
+                    logger.trackInternalError(errorType, exc)
+                }
+            }
         }
     }
 
@@ -383,9 +384,29 @@ class SessionPartWriterImpl(
         val metadataWrites = CoalescingWriteQueue(worker, clock, METADATA_WRITE_DELAY_MS)
         val spanSnapshotWrites = CoalescingWriteQueue(worker, clock, SPAN_SNAPSHOT_WRITE_DELAY_MS)
 
+        val completedSpanWrites = TelemetryWriteScheduler(
+            worker = worker,
+            delayMs = COMPLETED_SPAN_WRITE_DELAY_MS,
+            queue = TelemetryQueue(identityOf = Span::spanId),
+            guard = guard(InternalErrorType.CompletedSpansWriteFail),
+            onWrite = ::writeCompletedSpans,
+        )
+
         private val writeQueues = listOf(metadataWrites, spanSnapshotWrites)
 
-        fun flushPendingWrites() = writeQueues.forEach(CoalescingWriteQueue::flush)
+        fun flushPendingWrites() {
+            writeQueues.forEach(CoalescingWriteQueue::flush)
+            completedSpanWrites.flush()
+        }
+
+        private fun writeCompletedSpans(spans: List<Span>) {
+            when {
+                spans.isEmpty() -> Unit
+                // the part sealed while this write was queued. Hold the spans for the next one
+                sealed -> synchronized(bufferLock) { carryOver(spans) }
+                else -> completedSpans.write(spans)
+            }
+        }
 
         /**
          * Marks this part as fully written and releases the files held open for it.

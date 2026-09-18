@@ -60,6 +60,7 @@ import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpans
 import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadataWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTarget
+import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshotsWriter
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.UuidSource
@@ -255,6 +256,8 @@ internal class EmbraceSetupInterface(
         timestamp: Long = fakeClock.now(),
         uuid: String = "c2610cd1-389f-422a-bfbc-25312c7a599a",
         processIdentifier: String = this.processIdentifier,
+        sealed: Boolean = true,
+        inFlightSpans: List<Span> = emptyList(),
     ) {
         val directory = SessionPartDirectory(
             timestamp = timestamp,
@@ -281,9 +284,18 @@ internal class EmbraceSetupInterface(
             sharedLibSymbolMappingSource = { null },
             logger = fakeInitModule.logger,
         ).write()
-        CompletedSpansWriter(target, fakeInitModule.logger).write(
-            listOf(persistedSessionSpan(userSessionId, sessionPartId, timestamp, processIdentifier)),
-        )
+        val sessionSpan = persistedSessionSpan(userSessionId, sessionPartId, timestamp, processIdentifier, sealed)
+        if (sealed) {
+            CompletedSpansWriter(target, fakeInitModule.logger).apply {
+                write(listOf(sessionSpan))
+                close()
+            }
+        } else {
+            SpanSnapshotsWriter(target, fakeInitModule.logger).apply {
+                write(listOf(sessionSpan) + inFlightSpans)
+                close()
+            }
+        }
     }
 
     private fun persistedSessionSpan(
@@ -291,12 +303,13 @@ internal class EmbraceSetupInterface(
         sessionPartId: String,
         timestamp: Long,
         processIdentifier: String,
+        sealed: Boolean,
     ) = Span(
         traceId = "6c9b1f2ec1d34f3c9a7d0b8e5f2a4c11",
         spanId = "aaaaaaaaaaaaaaa1",
         name = "emb-session",
         startTimeNanos = timestamp.millisToNanos(),
-        endTimeNanos = (timestamp + 1000L).millisToNanos(),
+        endTimeNanos = (timestamp + SESSION_PART_DURATION_MS).millisToNanos().takeIf { sealed },
         status = Span.Status.UNSET,
         events = emptyList(),
         attributes = listOf(
@@ -505,6 +518,9 @@ internal class EmbraceSetupInterface(
         private const val INIT_DISK_READ_KB = 48L
         private const val INIT_GC_COUNT = 2L
         private const val FAKE_SCHEDSTAT_PATH = "/proc/self/task/123/schedstat"
+
+        /** How long a session part persisted by [persistSessionPart] ran for. */
+        private const val SESSION_PART_DURATION_MS = 1000L
 
         /**
          * Function that returns a lambda that returns 0 when it has been invoked an odd number of times, and [evenReadValue]

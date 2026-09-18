@@ -14,6 +14,7 @@ import kotlin.math.min
 class NetworkBehaviorImpl(
     private val local: InstrumentedConfig,
     private val remote: RemoteConfig?,
+    override val configDeliveredAt: Long,
     private val disabledUrlPatterns: List<String>? = null,
 ) : NetworkBehavior {
 

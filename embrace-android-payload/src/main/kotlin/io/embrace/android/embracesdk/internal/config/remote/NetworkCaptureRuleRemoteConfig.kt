@@ -37,7 +37,7 @@ data class NetworkCaptureRuleRemoteConfig(
     val urlRegex: String,
 
     /**
-     * Remaining milliseconds until the rule expires.
+     * Remaining seconds until the rule expires.
      */
     @SerialName("expires_in")
     val expiresIn: Long = 0,

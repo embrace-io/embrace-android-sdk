@@ -94,6 +94,7 @@ internal class ModuleInitBootstrapper(
                     instrumentedConfig = initModule.instrumentedConfig,
                     keyValueStore = keyValueStore,
                     uuidSource = initModule.uuidSource,
+                    clock = initModule.clock,
                 )
             }
             openTelemetryModule.setOtelBehavior(persistedConfig.otelBehavior)

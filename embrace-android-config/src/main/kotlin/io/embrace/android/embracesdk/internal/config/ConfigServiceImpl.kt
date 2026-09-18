@@ -109,7 +109,8 @@ class ConfigServiceImpl(
     override val vitalsBehavior = VitalsBehaviorImpl(thresholdCheck, remoteConfig)
     override val sessionBehavior = UserSessionBehaviorImpl(remoteConfig)
     override val experimentBehavior = ExperimentBehaviorImpl(remoteConfig)
-    override val networkBehavior = NetworkBehaviorImpl(instrumentedConfig, remoteConfig)
+    override val networkBehavior =
+        NetworkBehaviorImpl(instrumentedConfig, remoteConfig, persistedConfig.configDeliveredAt)
     override val dataCaptureEventBehavior = DataCaptureEventBehaviorImpl(remoteConfig)
     override val sdkModeBehavior = SdkModeBehaviorImpl(thresholdCheck, remoteConfig)
     override val appExitInfoBehavior =

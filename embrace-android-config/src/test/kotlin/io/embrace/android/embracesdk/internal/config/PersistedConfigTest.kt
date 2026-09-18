@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.config
 
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.TestUuidSource
@@ -165,6 +166,7 @@ internal class PersistedConfigTest {
                 serializer = serializer,
                 storageDir = File(filesDir, PersistedConfig.STORAGE_DIR_NAME),
                 deviceIdProvider = { cachedDeviceId },
+                deliveredAtProvider = { 1L },
             ).saveResponse(ConfigHttpResponse(persisted, "etag"))
         } else if (persisted != null) {
             val storageDir = File(filesDir, PersistedConfig.STORAGE_DIR_NAME).apply { mkdirs() }
@@ -181,6 +183,7 @@ internal class PersistedConfigTest {
             ),
             keyValueStore = store,
             uuidSource = TestUuidSource(),
+            clock = FakeClock(),
         )
     }
 }

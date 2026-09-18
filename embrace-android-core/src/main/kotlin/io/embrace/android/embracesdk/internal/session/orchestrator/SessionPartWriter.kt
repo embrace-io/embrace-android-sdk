@@ -24,8 +24,7 @@ interface SessionPartWriter {
     fun onMetadataChanged()
 
     /**
-     * Called when a batch of spans have completed. The session span is logged by this writer when
-     * the session part ends, so callers must filter it out.
+     * Called when a batch of spans have completed.
      *
      * Returns whether this writer has taken ownership of the batch, so the caller need not retain it.
      */

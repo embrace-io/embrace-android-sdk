@@ -1,10 +1,8 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
-import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.resurrection.SessionPartReader
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
@@ -108,23 +106,14 @@ class UserSessionOrchestrationModuleImpl(
             payloadSourceModule.resourceSource,
             payloadSourceModule.envelopeMetadataSource,
             openTelemetryModule.currentSessionPartSpan,
-            {
-                // don't include the session part span: the writer supplies the one belonging to the
-                // session part it is writing for, so a write can't pick up a later part's span
-                openTelemetryModule.spanRepository.getActiveEmbraceSpans()
-                    .filterNot { it.hasEmbraceAttribute(EmbType.Ux.Session) }
-            },
+            openTelemetryModule.spanRepository::getActiveEmbraceSpans,
             initModule.telemetryService,
             sessionPartDirectoryStore,
             sessionPartWriteTracker,
             onWritesComplete = { sessionPartReader?.readPersistedSessionParts() },
         )
         essentialServiceModule.userService.addUserInfoListener(sessionPartWriter::onMetadataChanged)
-        openTelemetryModule.spanRepository.addCompletedOtelSpansListener { spans ->
-            // don't include the session part span: the writer logs it against the session part that
-            // ended, rather than whichever part is current when this fires
-            sessionPartWriter.onSpanCompleted(spans.filterNot { it.hasEmbraceAttribute(EmbType.Ux.Session) })
-        }
+        openTelemetryModule.spanRepository.addCompletedOtelSpansListener(sessionPartWriter::onSpanCompleted)
         openTelemetryModule.spanRepository.addSpanChangeListener { span ->
             sessionPartWriter.onSpanSnapshotChanged(span)
         }

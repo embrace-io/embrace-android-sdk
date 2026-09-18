@@ -90,14 +90,16 @@ internal class SimpleSessionFixture(
         }
         spanSnapshots = inFlight.mapNotNull(EmbraceSdkSpan::snapshot)
 
-        val sessionPartSpan = checkNotNull(harness.currentSessionPartSpan.current()) {
+        val sessionPartSpanId = checkNotNull(harness.currentSessionPartSpan.current()?.spanId) {
             "no session part span to end"
         }
-        sessionPartSpan.retainDataAfterStop()
 
+        // the session span is exported as it stops, so it arrives in the flushed batch like any other
         val flushed = harness.currentSessionPartSpan.endSession(startNewSession = false)
-        sessionSpan = checkNotNull(sessionPartSpan.snapshot()) { "session span produced no snapshot" }
-        completedSpans = flushed.filterNot { it.spanId == sessionSpan.spanId }
+        sessionSpan = checkNotNull(flushed.singleOrNull { it.spanId == sessionPartSpanId }) {
+            "session span missing from the flushed spans"
+        }
+        completedSpans = flushed.filterNot { it.spanId == sessionPartSpanId }
 
         check(spanSnapshots.size == IN_FLIGHT_SPAN_COUNT) {
             "expected $IN_FLIGHT_SPAN_COUNT in-flight spans but snapshotted ${spanSnapshots.size}"

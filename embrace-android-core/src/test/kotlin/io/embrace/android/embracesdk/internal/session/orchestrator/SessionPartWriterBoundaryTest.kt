@@ -144,10 +144,10 @@ internal class SessionPartWriterBoundaryTest {
         writer.onMetadataChanged()
         drain()
 
-        // ending the first part flushed it once more, so it holds the read taken at that point
-        assertEquals("user1", metadataIn(FIRST_PART_ID)?.user_id)
-        assertEquals("user3", metadataIn(SECOND_PART_ID)?.user_id)
-        assertEquals(4, writeCount)
+        // nothing was buffered when the first part ended, so it holds the read taken when it started
+        assertEquals("user0", metadataIn(FIRST_PART_ID)?.user_id)
+        assertEquals("user2", metadataIn(SECOND_PART_ID)?.user_id)
+        assertEquals(3, writeCount)
         assertNoInternalErrors()
     }
 
@@ -216,9 +216,9 @@ internal class SessionPartWriterBoundaryTest {
         startPart(SECOND_PART_ID)
         drain()
 
-        // ending a part flushes its metadata first, so that write is the one that finds the
-        // directory gone, and the part is given up so no later write reports it again
-        assertEquals(listOf("SessionMetadataWriteFail"), logger.internalErrorMessages.map { it.msg })
+        // the session span queued by the end of the part is the first write to find the directory
+        // gone, and the part is given up so no later write reports it again
+        assertEquals(listOf("CompletedSpansWriteFail"), logger.internalErrorMessages.map { it.msg })
         assertEquals("span1", sessionSpanIn(SECOND_PART_ID)?.name)
     }
 
@@ -229,8 +229,8 @@ internal class SessionPartWriterBoundaryTest {
         startPart(SECOND_PART_ID)
         drain()
 
-        assertEquals("resource1", metadataIn(FIRST_PART_ID)?.resource?.app_version)
-        assertEquals("resource2", metadataIn(SECOND_PART_ID)?.resource?.app_version)
+        assertEquals("resource0", metadataIn(FIRST_PART_ID)?.resource?.app_version)
+        assertEquals("resource1", metadataIn(SECOND_PART_ID)?.resource?.app_version)
         assertNoInternalErrors()
     }
 

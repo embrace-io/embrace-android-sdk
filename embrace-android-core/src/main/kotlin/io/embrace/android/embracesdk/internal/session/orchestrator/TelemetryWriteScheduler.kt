@@ -79,14 +79,7 @@ internal class TelemetryWriteScheduler<T>(
         if (!armed.compareAndSet(false, true)) {
             return
         }
-        val write = guard(
-            Runnable {
-                val drained = queue.drain()
-                if (drained.isNotEmpty()) {
-                    onWrite(drained)
-                }
-            },
-        )
+        val write = writeTask()
         val task = Runnable {
             armed.set(false)
             write.run()
@@ -103,15 +96,27 @@ internal class TelemetryWriteScheduler<T>(
     }
 
     /**
-     * Disarms any waiting writes and enqueues a new write on the worker with no delay.
+     * Disarms any waiting writes and enqueues a new write on the worker with no delay. Nothing is
+     * enqueued if the queue holds no telemetry, as an empty write is wasted work.
      *
      * If a Runnable is already in-progress it is allowed to complete.
      */
     fun flush() {
         disarm()
-        val task = guard(Runnable { onWrite(queue.drain()) })
-        runCatching { worker.submit(task) }
+        if (queue.size == 0) {
+            return
+        }
+        runCatching { worker.submit(writeTask()) }
     }
+
+    private fun writeTask(): Runnable = guard(
+        Runnable {
+            val drained = queue.drain()
+            if (drained.isNotEmpty()) {
+                onWrite(drained)
+            }
+        },
+    )
 
     private fun disarm() {
         trigger.getAndSet(null)?.cancel(false)

@@ -96,8 +96,10 @@ class SessionPartWriterImpl(
             directoryStore.create(writers.directory)
 
             synchronized(bufferLock) {
-                // a part should always end before the next one starts.
+                // a part should always end before the next one starts. the orphan is dropped before
+                // it is finished, so a failure to finish it cannot leave it as the current part
                 current?.let { orphan ->
+                    current = null
                     reportMissedEnd("Session part started before the previous one ended")
                     finish(orphan, crashing = false)
                 }

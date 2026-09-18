@@ -7,14 +7,6 @@ import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import java.io.File
 import java.io.IOException
 
-/** Bytes the file costs before any span is written to it. */
-private val ROLLUP_HEADER_BYTES: Long =
-    SpanCollection.ADAPTER.encodedSize(SpanCollection(format_version = FORMAT_VERSION)).toLong()
-
-/** Bytes [record] costs once framed as one span record of the file. */
-private fun recordSize(record: SpanProto): Long =
-    SpanCollection.ADAPTER.encodedSize(SpanCollection(spans = listOf(record))).toLong()
-
 /**
  * Writes the in-flight spans for a session part to its directory, appending to what is already
  * there rather than rewriting it.
@@ -64,7 +56,7 @@ class SpanSnapshotsWriter(
                 appendImpl(spans, liveSpans)
             } catch (exc: Throwable) {
                 discardFile()
-                reportAppendFailure(exc)
+                target.reportWriteFailure(exc, ::trackFailure)
                 false
             }
         }
@@ -76,7 +68,7 @@ class SpanSnapshotsWriter(
     private fun writeImpl(spans: List<Span>): Boolean {
         val directory = target.directory ?: return false
         val partDir = target.partDir(directory, ::trackFailure) ?: return false
-        val written = recordsFor(spans, maxBytes - ROLLUP_HEADER_BYTES)
+        val written = spanRecords(spans, maxBytes - VERSION_HEADER_BYTES, maxRecordBytes, ::reportDrop)
 
         discardFile()
         writeAtomically(partDir, SPAN_SNAPSHOTS_FILE_NAME, maxBytes, target.counters) { stream ->
@@ -95,7 +87,7 @@ class SpanSnapshotsWriter(
         // the file is seeded with the live set rather than built from changes alone
         val file = openFile() ?: return write(liveSpans())
 
-        val appended = recordsFor(spans, maxBytes)
+        val appended = spanRecords(spans, maxBytes, maxRecordBytes, ::reportDrop)
         if (appended.isEmpty()) {
             return false
         }
@@ -117,31 +109,6 @@ class SpanSnapshotsWriter(
     private fun exceedsLimits(file: SpanCollectionFile, incoming: Int, count: Int): Boolean =
         records + count > maxRecords || file.size + incoming > maxBytes
 
-    /**
-     * The records to write for [spans], dropping any span the file cannot hold: one that would
-     * take it past [budget], and one larger than [maxRecordBytes], which the reader stops at and so
-     * would cost every record written after it.
-     */
-    private fun recordsFor(spans: List<Span>, budget: Long): List<SpanProto> {
-        val written = ArrayList<SpanProto>(spans.size)
-        var remaining = budget
-        for (span in spans) {
-            val record = span.toProto()
-            val size = recordSize(record)
-            if (size > remaining) {
-                reportDrop()
-                break
-            }
-            if (size > maxRecordBytes) {
-                reportDrop()
-            } else {
-                remaining -= size
-                written.add(record)
-            }
-        }
-        return written
-    }
-
     /** The file to append to, or null if there is none yet for the session part written to. */
     private fun openFile(): SpanCollectionFile? {
         val open = file ?: return null
@@ -159,18 +126,6 @@ class SpanSnapshotsWriter(
         try {
             open.close()
         } catch (exc: IOException) {
-            trackFailure(exc)
-        }
-    }
-
-    /**
-     * Reports a failed append. An append writes through the file it holds open rather than through
-     * [target], so a part directory that has gone is reported through the target instead, which
-     * gives the part up rather than leaving every later write to fail the same way.
-     */
-    private fun reportAppendFailure(exc: Throwable) {
-        val directory = target.directory
-        if (directory == null || target.partDir(directory, ::trackFailure) != null) {
             trackFailure(exc)
         }
     }

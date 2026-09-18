@@ -21,15 +21,20 @@ class CompletedSpansWriter(
     private val logger: InternalLogger,
     private val maxBytes: Long = MAX_PART_FILE_BYTES,
     private val maxRecordBytes: Long = MAX_RECORD_BYTES,
+    private val maxRecords: Int = MAX_PERSISTED_SPANS,
 ) {
-
-    @Volatile
-    private var reportedOverflow = false
 
     @Volatile
     private var reportedDrop = false
 
-    private var spanFile: SpanCollectionFile? = null
+    private var file: SpanCollectionFile? = null
+
+    /**
+     * Records written to the log held open. An error that forces the file to be discarded restarts
+     * the count, so this bounds what one open file writes rather than the log as a whole. The byte
+     * budget is re-read from disk on reopening and stays exact.
+     */
+    private var records = 0
 
     /**
      * Appends [spans] to the log for the active session part, leaving the spans already logged in
@@ -40,8 +45,8 @@ class CompletedSpansWriter(
         try {
             writeImpl(spans)
         } catch (exc: Throwable) {
-            trackFailure(exc)
-            discardSpanFile()
+            discardFile()
+            target.reportWriteFailure(exc, ::trackFailure)
             false
         }
     }
@@ -50,59 +55,61 @@ class CompletedSpansWriter(
      * Releases the file held open for the session part written to so far.
      */
     fun close() {
-        discardSpanFile()
+        discardFile()
     }
 
     private fun writeImpl(spans: List<Span>): Boolean {
-        val spanFile = spanFile() ?: return false
-
-        val bytes = SpanCollection.ADAPTER.encode(SpanCollection(spans = recordsFor(spans)))
-
-        if (bytes.isNotEmpty() && spanFile.size + bytes.size > maxBytes) {
-            if (!reportedOverflow) {
-                reportedOverflow = true
-                trackFailure(IOException(OVERSIZED_PART_FILE_MSG))
-            }
+        if (spans.isEmpty()) {
+            return true
+        }
+        val file = openFile() ?: return false
+        val header = if (file.size == 0L) VERSION_HEADER else ByteArray(0)
+        val budget = maxBytes - file.size - header.size
+        val written = spanRecords(spans, budget, maxRecordBytes, ::reportDrop).capped()
+        if (written.isEmpty()) {
             return false
         }
-        spanFile.append(bytes)
+        file.append(header + SpanCollection.ADAPTER.encode(SpanCollection(spans = written)))
+        records += written.size
         return true
     }
 
-    private fun recordsFor(spans: List<Span>): List<SpanProto> {
-        val written = ArrayList<SpanProto>(spans.size)
-        for (span in spans) {
-            val record = span.toProto()
-            if (SpanCollection.ADAPTER.encodedSize(SpanCollection(spans = listOf(record))) > maxRecordBytes) {
-                reportDrop()
-            } else {
-                written.add(record)
-            }
+    /**
+     * The records of this batch the log can still hold. Reconstruction refuses to read past
+     * [maxRecords] spans of a session part, so anything beyond it costs the write without ever
+     * being delivered.
+     */
+    private fun List<SpanProto>.capped(): List<SpanProto> {
+        val allowed = (maxRecords - records).coerceAtLeast(0)
+        if (size <= allowed) {
+            return this
         }
-        return written
+        reportDrop()
+        return take(allowed)
     }
 
     /**
      * The file to append to, or null if the active session part has no directory on disk.
      */
-    private fun spanFile(): SpanCollectionFile? {
+    private fun openFile(): SpanCollectionFile? {
         val directory = target.directory ?: return null
-        spanFile?.let { open ->
+        file?.let { open ->
             if (open.directory == directory) {
                 return open
             }
-            discardSpanFile()
+            discardFile()
         }
         val partDir = target.partDir(directory, ::trackFailure) ?: return null
         return SpanCollectionFile(directory, File(partDir, COMPLETED_SPANS_FILE_NAME), target.counters)
-            .also { spanFile = it }
+            .also { file = it }
     }
 
-    private fun discardSpanFile() {
-        val file = spanFile ?: return
-        spanFile = null
+    private fun discardFile() {
+        val open = file ?: return
+        file = null
+        records = 0
         try {
-            file.close()
+            open.close()
         } catch (exc: IOException) {
             trackFailure(exc)
         }

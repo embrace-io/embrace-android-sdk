@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
 import okio.BufferedSource
-import java.io.IOException
 
 /**
  * Decodes the append-only span snapshots held in [source], returning the latest known state of each
@@ -29,62 +28,27 @@ internal fun readSpanSnapshots(
  * Accumulates the latest state of each span as the records are read.
  */
 private class SnapshotDecoder(
-    private val collection: SpanCollectionReader,
+    collection: SpanCollectionReader,
     private val maxSpans: Int,
     private val maxRecords: Int,
     private val supersededIds: Set<String>,
-) {
+) : SpanRecordDecoder(collection) {
 
     private val snapshots = LinkedHashMap<String, SpanProto>()
-    private var corruption: Throwable? = null
-    private var versioned = false
-    private var truncated = false
     private var records = 0
 
-    private val failure: Throwable? get() = corruption ?: collection.corruption
+    override fun decoded(): MutableList<SpanProto> = snapshots.values.toMutableList()
 
-    fun read(): DecodedSpans {
-        var reading = true
-        while (reading) {
-            reading = readRecord()
-        }
-        if (!versioned) {
-            throw IOException(UNSUPPORTED_VERSION_MSG, failure)
-        }
-        return DecodedSpans(snapshots.values.toMutableList(), failure, truncated)
-    }
-
-    private fun readRecord(): Boolean {
-        val tag = collection.nextTag() ?: return stop()
-        return when (tag) {
-            SPAN_COLLECTION_VERSION_TAG -> readRollup()
-            SPAN_COLLECTION_RECORD_TAG -> readSnapshot()
-            else -> collection.skipFrame()
-        }
-    }
-
-    private fun readRollup(): Boolean {
-        val version = collection.readVarint32() ?: return stop()
-        if (version != FORMAT_VERSION) {
-            throw IOException(UNSUPPORTED_VERSION_MSG)
-        }
-        versioned = true
+    override fun reset() {
         snapshots.clear()
-        return true
     }
 
-    private fun readSnapshot(): Boolean {
+    override fun readRecord(): Boolean {
         if (++records > maxRecords) {
             return truncate()
         }
         val record = collection.readRecord() ?: return stop()
-        val span = try {
-            SpanProto.ADAPTER.decode(record)
-        } catch (exc: Exception) {
-            // keep exc associated with first bad record, then continue
-            corruption = corruption ?: exc
-            return true
-        }
+        val span = decodeSpan(record) ?: return true
         if (span.span_id in supersededIds) {
             return true
         }
@@ -94,16 +58,5 @@ private class SnapshotDecoder(
         }
         snapshots[span.span_id] = span
         return true
-    }
-
-    /** Stops where the collection did, which is truncation only if a limit is what stopped it. */
-    private fun stop(): Boolean {
-        truncated = truncated || collection.stoppedAtLimit
-        return false
-    }
-
-    private fun truncate(): Boolean {
-        truncated = true
-        return false
     }
 }

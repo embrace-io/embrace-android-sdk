@@ -24,6 +24,11 @@ fun buildSessionMetadata(
 )
 
 /**
+ * Builds the record a span collection opens with, stamping the layout its spans are written in.
+ */
+fun buildSpanCollectionHeader(): SpanCollection = SpanCollection(format_version = FORMAT_VERSION)
+
+/**
  * Builds the full set of in-flight spans for a session part.
  */
 fun buildSpanSnapshots(spans: List<Span>): SpanCollection = SpanCollection(

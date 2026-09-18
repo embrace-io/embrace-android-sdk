@@ -72,6 +72,27 @@ class PayloadStorageServiceImplTest {
     }
 
     @Test
+    fun `payload size reports the gzipped bytes on disk`() {
+        val fileContents = "test".repeat(1000)
+        service.store(metadata) {
+            it.write(fileContents.toByteArray())
+        }
+        val file = outputDir.listFiles()?.single() ?: error("File not found")
+
+        val observed = service.payloadSizeBytes(metadata)
+        assertEquals(file.length(), observed)
+
+        // the payload is persisted gzipped, so the size reported is the compressed size
+        assertTrue(observed < fileContents.toByteArray().size)
+    }
+
+    @Test
+    fun `payload size is zero for a non existent file`() {
+        assertEquals(0L, service.payloadSizeBytes(metadata))
+        assertTrue(logger.internalErrorMessages.isEmpty())
+    }
+
+    @Test
     fun `delete non existent file`() {
         service.delete(metadata) // no exception thrown
         assertTrue(checkNotNull(outputDir.listFiles()).isEmpty())

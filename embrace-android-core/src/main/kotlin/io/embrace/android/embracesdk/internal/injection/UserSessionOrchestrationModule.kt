@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.internal.resurrection.SessionPartReader
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 
@@ -9,4 +10,5 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrches
 interface UserSessionOrchestrationModule {
     val sessionOrchestrator: SessionOrchestrator
     val sessionIdsProvider: SessionIdsProvider
+    val sessionPartReader: SessionPartReader?
 }

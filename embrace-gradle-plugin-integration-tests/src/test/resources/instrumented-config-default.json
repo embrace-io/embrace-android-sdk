@@ -48,6 +48,9 @@
           "signature": "isJvmCrashCaptureEnabled()Z"
         },
         {
+          "signature": "isMultiFilePersistenceEnabled()Z"
+        },
+        {
           "signature": "isNativeCrashCaptureEnabled()Z"
         },
         {

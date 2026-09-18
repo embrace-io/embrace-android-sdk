@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perfetto run comparison</title>
+<style>
+{{styles}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<h1>Perfetto run comparison</h1>
+<p class="capture" id="capture"></p>
+</header>
+
+<section class="tiles" id="tiles"></section>
+
+<section class="panel">
+<h2>Details</h2>
+<div class="details">
+<!-- DETAILS:BEGIN -->
+<p class="empty">No details yet. Write the analysis between the markers either side of this
+paragraph &mdash; plain HTML, extended as far as it needs to go. Nothing else on the page is hand-written.</p>
+<!-- DETAILS:END -->
+</div>
+</section>
+
+<section class="panel" id="unpaired" hidden>
+<h2>Benchmarks only one run ran</h2>
+<p class="hint">Only what both runs did can be compared. These are not below.</p>
+<ul class="missing" id="unpaired-list"></ul>
+</section>
+
+<section class="panel">
+<h2>Operations</h2>
+<p class="hint">Delta is the candidate less the baseline, so a positive delta is a regression. A section has
+moved only when its delta clears the noise &mdash; both runs' deviations added together &mdash; so a section
+that reads as a large percentage of a run that disagrees with itself by more has not moved at all.</p>
+<div class="controls">
+<label class="control">benchmark
+<select id="benchmark"></select>
+</label>
+<input type="search" id="search" placeholder="filter by section" autocomplete="off">
+<label class="control"><input type="checkbox" id="moved-only"> moved only</label>
+<label class="control"><input type="checkbox" id="charted" checked> chart</label>
+<label class="control">by
+<select id="metric">
+<option value="deltaNanos" data-kind="delta">delta</option>
+<option value="deltaPercent" data-kind="delta-percent">delta %</option>
+<option value="candidateMeanNanos" data-kind="duration">candidate mean</option>
+<option value="baselineMeanNanos" data-kind="duration">baseline mean</option>
+</select>
+</label>
+<span class="matched" id="matched"></span>
+</div>
+<figure class="chart" id="chart"><figcaption id="chart-caption"></figcaption><div id="bars"></div></figure>
+<div class="scroll"><table id="comparison"><thead><tr id="columns"></tr></thead><tbody id="rows"></tbody></table></div>
+<p class="empty" id="no-matches" hidden>Nothing matches that filter.</p>
+</section>
+
+<section class="panel">
+<h2>Counters</h2>
+<p class="hint">Mean cumulative total per iteration. There is no noise band here: a counter is a total the SDK
+published rather than a duration measured, so read its delta as what the code did.</p>
+<div class="scroll"><table id="counters"><thead><tr id="counter-columns"></tr></thead><tbody id="counter-rows"></tbody></table></div>
+<p class="empty" id="no-counters" hidden>Neither run recorded one both did.</p>
+</section>
+
+<section class="panel">
+<h2>Only in baseline</h2>
+<p class="hint">Sections and counters the baseline recorded and the candidate did not, so there is nothing to
+set them against.</p>
+<ul class="missing" id="baseline-only"></ul>
+<p class="empty" id="no-baseline-only" hidden>None.</p>
+</section>
+
+<section class="panel">
+<h2>Only in candidate</h2>
+<p class="hint">Sections and counters the candidate recorded and the baseline did not.</p>
+<ul class="missing" id="candidate-only"></ul>
+<p class="empty" id="no-candidate-only" hidden>None.</p>
+</section>
+
+<noscript><p class="empty">This report is drawn from the json below it, so it needs javascript.</p></noscript>
+</main>
+<script type="application/json" id="report">{{report}}</script>
+<script>
+{{script}}
+
+(function () {
+  'use strict';
+
+  var ui = REPORT_UI;
+  var report = JSON.parse(document.getElementById('report').textContent);
+  var benchmarks = report.benchmarks;
+  var selected = benchmarks.length ? benchmarks[0] : emptyBenchmark();
+  var chartLimit = 15;
+
+  var columns = [
+    { label: 'operation', key: 'name', kind: 'text' },
+    { label: 'base', key: 'baselineMeanNanos', kind: 'duration' },
+    { label: 'cand', key: 'candidateMeanNanos', kind: 'duration' },
+    { label: 'delta', key: 'deltaNanos', kind: 'delta' },
+    { label: 'delta%', key: 'deltaPercent', kind: 'delta-percent' },
+    { label: 'noise', key: 'noiseNanos', kind: 'duration' },
+    { label: 'moved', key: 'moved', kind: 'moved' },
+    { label: 'base iters', key: 'baselineIterations', kind: 'count' },
+    { label: 'cand iters', key: 'candidateIterations', kind: 'count' }
+  ];
+
+  var counterColumns = [
+    { label: 'counter', key: 'name', kind: 'text' },
+    { label: 'base', key: 'baselineMeanTotal', kind: 'tally' },
+    { label: 'cand', key: 'candidateMeanTotal', kind: 'tally' },
+    { label: 'delta', key: 'delta', kind: 'delta-tally' },
+    { label: 'delta%', key: 'deltaPercent', kind: 'delta-percent' },
+    { label: 'base iters', key: 'baselineIterations', kind: 'count' },
+    { label: 'cand iters', key: 'candidateIterations', kind: 'count' }
+  ];
+
+  var sortBy = columns[3];
+  var descending = true;
+
+  function emptyBenchmark() {
+    return {
+      benchmark: '', baselineIterations: 0, candidateIterations: 0, slower: 0, faster: 0,
+      operations: [], counters: [], baselineOnly: [], candidateOnly: []
+    };
+  }
+
+  /** A sign the reader can see, since a delta of zero is neither a gain nor a loss. */
+  function sign(value) {
+    if (value > 0) { return '+'; }
+    return value < 0 ? '-' : '';
+  }
+
+  /** The shared formatters scale by magnitude, so a negative has to be signed by hand around them. */
+  function signed(nanos) {
+    return sign(nanos) + ui.duration(Math.abs(nanos));
+  }
+
+  function signedShare(percent) {
+    return sign(percent) + ui.share(Math.abs(percent));
+  }
+
+  function format(kind, held) {
+    if (kind === 'delta') { return signed(held); }
+    if (kind === 'delta-percent') { return signedShare(held); }
+    if (kind === 'moved') { return held ? 'yes' : 'no'; }
+    return ui.formatCell(kind, held);
+  }
+
+  function value(operation, column) {
+    return operation[column.key];
+  }
+
+  function cell(operation, column) {
+    return format(column.kind, value(operation, column));
+  }
+
+  function counterCell(counter, column) {
+    var held = counter[column.key];
+    if (column.kind === 'delta-percent') { return signedShare(held); }
+    if (column.kind === 'delta-tally') {
+      return sign(held) + (ui.talliesBytes(counter) ? ui.bytes(Math.abs(held)) : Math.abs(held).toLocaleString());
+    }
+    return ui.counterCell(counter, column);
+  }
+
+  function onSort(column) {
+    descending = column === sortBy ? !descending : column.kind !== 'text';
+    sortBy = column;
+    draw();
+  }
+
+  function onBenchmark() {
+    selected = benchmarks[document.getElementById('benchmark').selectedIndex] || emptyBenchmark();
+    sortBy = columns[3];
+    descending = true;
+    drawSelected();
+  }
+
+  function drawBenchmarks() {
+    var picker = document.getElementById('benchmark');
+    benchmarks.forEach(function (benchmark) {
+      var option = document.createElement('option');
+      option.textContent = benchmark.benchmark + ' (' + benchmark.operations.length + ')';
+      picker.appendChild(option);
+    });
+    picker.disabled = benchmarks.length < 2;
+  }
+
+  /** Benchmarks are compared in pairs, so one run having its own is a difference the table cannot show. */
+  function drawUnpaired() {
+    var names = report.baselineOnly.map(function (name) { return name + ' (baseline only)'; })
+      .concat(report.candidateOnly.map(function (name) { return name + ' (candidate only)'; }));
+    document.getElementById('unpaired').hidden = names.length === 0;
+    var list = document.getElementById('unpaired-list');
+    list.textContent = '';
+    names.forEach(function (name) {
+      var item = document.createElement('li');
+      item.textContent = name;
+      list.appendChild(item);
+    });
+  }
+
+  /** Bars are drawn by how far a section moved, whichever way, with the direction left to the colour. */
+  function drawChart(rows) {
+    var chart = document.getElementById('chart');
+    chart.hidden = !document.getElementById('charted').checked || rows.length === 0;
+    if (chart.hidden) { return; }
+
+    var metric = document.getElementById('metric');
+    var picked = metric.options[metric.selectedIndex];
+    var key = metric.value;
+    var kind = picked.getAttribute('data-kind');
+    var top = ui.topBy(rows, function (operation) { return Math.abs(operation[key]); }, chartLimit);
+
+    document.getElementById('chart-caption').textContent =
+      (top.length < rows.length ? 'Top ' + top.length + ' of ' + rows.length : rows.length + ' sections') +
+      ' by ' + picked.text;
+
+    ui.drawBars(document.getElementById('bars'), top.map(function (operation) {
+      return {
+        name: operation.name,
+        title: operation.name + ': ' + signed(operation.deltaNanos) + ' against a noise of ' +
+          ui.duration(operation.noiseNanos),
+        value: Math.abs(operation[key]),
+        text: format(kind, operation[key]),
+        kind: operation.moved ? (operation.deltaNanos > 0 ? 'slower' : 'faster') : ''
+      };
+    }));
+  }
+
+  function drawCounters() {
+    ui.drawTable(
+      document.getElementById('counter-columns'),
+      document.getElementById('counter-rows'),
+      selected.counters,
+      counterColumns,
+      counterCell
+    );
+    document.getElementById('counters').hidden = selected.counters.length === 0;
+    document.getElementById('no-counters').hidden = selected.counters.length > 0;
+  }
+
+  function drawCapture() {
+    document.getElementById('capture').textContent =
+      report.baselinePath + '  →  ' + report.candidatePath;
+  }
+
+  function drawTiles() {
+    ui.drawTiles(document.getElementById('tiles'), [
+      { value: selected.operations.length.toLocaleString(), label: 'sections compared' },
+      { value: selected.slower.toLocaleString(), label: 'slower' },
+      { value: selected.faster.toLocaleString(), label: 'faster' },
+      {
+        value: (selected.operations.length - selected.slower - selected.faster).toLocaleString(),
+        label: 'within the noise'
+      }
+    ]);
+  }
+
+  function drawSelected() {
+    drawTiles();
+    drawCounters();
+    ui.drawList(
+      document.getElementById('baseline-only'), document.getElementById('no-baseline-only'), selected.baselineOnly
+    );
+    ui.drawList(
+      document.getElementById('candidate-only'), document.getElementById('no-candidate-only'), selected.candidateOnly
+    );
+    draw();
+  }
+
+  function draw() {
+    var query = document.getElementById('search').value.trim();
+    var rows = ui.filterRows(selected.operations, query, ['name']);
+    if (document.getElementById('moved-only').checked) {
+      rows = rows.filter(function (operation) { return operation.moved; });
+    }
+    document.getElementById('matched').textContent =
+      rows.length + ' of ' + selected.operations.length + ' rows';
+    ui.drawHeader(document.getElementById('columns'), columns, sortBy, descending, onSort);
+    ui.drawRows(document.getElementById('rows'), ui.sortRows(rows, value, sortBy, descending), columns, cell, query);
+    document.getElementById('no-matches').hidden = rows.length > 0;
+    drawChart(rows);
+  }
+
+  document.getElementById('search').addEventListener('input', draw);
+  document.getElementById('moved-only').addEventListener('change', draw);
+  document.getElementById('charted').addEventListener('change', draw);
+  document.getElementById('metric').addEventListener('change', draw);
+  document.getElementById('benchmark').addEventListener('change', onBenchmark);
+  drawBenchmarks();
+  drawCapture();
+  drawUnpaired();
+  drawSelected();
+})();
+</script>
+</body>
+</html>

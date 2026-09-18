@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.delivery.storedTelemetryComparator
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import java.io.IOException
 import java.io.InputStream
 import java.net.ConnectException
 import java.net.NoRouteToHostException
@@ -34,6 +35,7 @@ class SchedulingServiceImpl(
     private val clock: Clock,
     private val logger: InternalLogger,
     private val deliveryTracer: DeliveryTracer? = null,
+    private val maxPayloadBytes: Long = MAX_UPLOAD_PAYLOAD_BYTES,
 ) : SchedulingService {
 
     private val blockedEndpoints: MutableMap<Endpoint, Long> = ConcurrentHashMap()
@@ -175,23 +177,7 @@ class SchedulingServiceImpl(
         deliveryTracer?.onExecuteDelivery(payload)
         activeSends.add(payload)
         deliveryWorker.submit {
-            // Do not execute if the network isn't ready
-            val result: ExecutionResult = if (!connectionStatus.ready()) {
-                ExecutionResult.NetworkNotReady
-            } else {
-                try {
-                    payload.toStream()?.use { stream ->
-                        executionService.attemptHttpRequest(
-                            payloadStream = { stream },
-                            envelopeType = payload.envelopeType,
-                            payloadType = payload.payloadTypesHeader,
-                        )
-                    } ?: ExecutionResult.NotAttempted
-                } catch (t: Throwable) {
-                    logger.trackInternalError(InternalErrorType.DeliverySchedulingFail, t)
-                    ExecutionResult.Incomplete(exception = t, retry = false)
-                }
-            }
+            val result: ExecutionResult = attemptDelivery(payload)
 
             // Block the connection right away to prevent future delivery if the request just run dictates that
             if (result.failedToConnect()) {
@@ -203,6 +189,42 @@ class SchedulingServiceImpl(
                 deliveryTracer?.onProcessingDeliveryResult(payload, result)
                 result.processDeliveryResult(payload)
             }
+        }
+    }
+
+    /**
+     * Runs the delivery attempt for [payload] on the delivery worker, returning the result the
+     * scheduling thread should then process.
+     *
+     * The payload is not sent if the network isn't ready, or if it is larger than the SDK will
+     * upload. The size is checked before the request is prepared because the stored bytes are sent
+     * as the request body verbatim, so an oversized file is an oversized request.
+     */
+    private fun attemptDelivery(payload: StoredTelemetryMetadata): ExecutionResult {
+        if (!connectionStatus.ready()) {
+            return ExecutionResult.NetworkNotReady
+        }
+
+        val sizeBytes = storageService.payloadSizeBytes(payload)
+        if (sizeBytes > maxPayloadBytes) {
+            logger.trackInternalError(
+                type = InternalErrorType.PayloadDeliveryFail,
+                throwable = IOException("$OVERSIZED_UPLOAD_MSG: $sizeBytes bytes"),
+            )
+            return ExecutionResult.PayloadTooLarge(sizeBytes)
+        }
+
+        return try {
+            payload.toStream()?.use { stream ->
+                executionService.attemptHttpRequest(
+                    payloadStream = { stream },
+                    envelopeType = payload.envelopeType,
+                    payloadType = payload.payloadTypesHeader,
+                )
+            } ?: ExecutionResult.NotAttempted
+        } catch (t: Throwable) {
+            logger.trackInternalError(InternalErrorType.DeliverySchedulingFail, t)
+            ExecutionResult.Incomplete(exception = t, retry = false)
         }
     }
 
@@ -321,7 +343,9 @@ class SchedulingServiceImpl(
         this is ExecutionResult.Incomplete && (connectionBlockingExceptions.any { it.isInstance(exception) })
 
     private fun ExecutionResult.connectedToServer(): Boolean =
-        this !is ExecutionResult.NetworkNotReady && this !is ExecutionResult.NotAttempted
+        this !is ExecutionResult.NetworkNotReady &&
+            this !is ExecutionResult.NotAttempted &&
+            this !is ExecutionResult.PayloadTooLarge
 
     private data class RetryInstance(
         val failedAttempts: Int,

@@ -12,9 +12,7 @@ android {
     defaultConfig {
         minSdk = 26
         testInstrumentationRunner = "androidx.benchmark.junit4.AndroidBenchmarkRunner"
-
-        // uncomment to allow running on emulator
-        // testInstrumentationRunnerArguments["androidx.benchmark.suppressErrors"] = "EMULATOR,LOW-BATTERY"
+        testInstrumentationRunnerArguments["androidx.benchmark.suppressErrors"] = "EMULATOR,LOW-BATTERY"
     }
 
     testBuildType = "release"
@@ -30,6 +28,7 @@ android {
             isMinifyEnabled = false
         }
     }
+    testOptions.unitTests.isReturnDefaultValues = true
 }
 
 kotlin {
@@ -40,19 +39,24 @@ kotlin {
 }
 
 dependencies {
+    implementation(libs.opentelemetry.kotlin.api)
+    implementation(libs.opentelemetry.kotlin.compat)
+    implementation(platform(libs.okhttp.bom))
+    implementation(libs.okhttp)
+    implementation(project(":embrace-android-sdk"))
+    implementation(project(":embrace-android-core"))
+    implementation(project(":embrace-android-otel"))
+    implementation(project(":embrace-android-infra"))
+    implementation(project(":embrace-android-utils"))
+    implementation(project(":embrace-android-payload"))
+    implementation(project(":embrace-android-session-persistence"))
+    implementation(project(":embrace-android-instrumentation-api"))
+
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.junit)
     androidTestImplementation(libs.androidx.benchmark.junit4)
-    androidTestImplementation(libs.opentelemetry.kotlin.api)
-    androidTestImplementation(libs.opentelemetry.kotlin.compat)
-    androidTestImplementation(platform(libs.okhttp.bom))
-    androidTestImplementation(libs.okhttp)
-    androidTestImplementation(project(":embrace-android-sdk"))
-    androidTestImplementation(project(":embrace-android-core"))
-    androidTestImplementation(project(":embrace-android-otel"))
-    androidTestImplementation(project(":embrace-android-infra"))
-    androidTestImplementation(project(":embrace-android-utils"))
-    androidTestImplementation(project(":embrace-android-payload"))
-    androidTestImplementation(project(":embrace-android-instrumentation-api"))
+
+    testImplementation(libs.junit)
+    testImplementation(project(":embrace-test-common"))
 }

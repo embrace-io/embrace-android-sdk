@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perfetto trace statistics</title>
+<style>
+{{styles}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<h1>Perfetto trace statistics</h1>
+<p class="capture" id="capture"></p>
+</header>
+
+<section class="tiles" id="tiles"></section>
+
+<section class="panel">
+<h2>Details</h2>
+<div class="details">
+<!-- DETAILS:BEGIN -->
+<p class="empty">No details yet. Write the analysis between the markers either side of this
+paragraph &mdash; plain HTML, extended as far as it needs to go. Nothing else on the page is hand-written.</p>
+<!-- DETAILS:END -->
+</div>
+</section>
+
+<section class="panel">
+<h2>Operations</h2>
+<div class="controls">
+<input type="search" id="search" placeholder="filter by section" autocomplete="off">
+<label class="control"><input type="checkbox" id="charted" checked> chart</label>
+<label class="control">by
+<select id="metric">
+<option value="sumNanos" data-kind="duration">total time</option>
+<option value="meanNanos" data-kind="duration">mean time</option>
+<option value="maxNanos" data-kind="duration">longest run</option>
+<option value="count" data-kind="number">occurrences</option>
+</select>
+</label>
+<span class="matched" id="matched"></span>
+</div>
+<figure class="chart" id="chart"><figcaption id="chart-caption"></figcaption><div id="bars"></div></figure>
+<div class="scroll"><table id="operations"><thead><tr id="columns"></tr></thead><tbody id="rows"></tbody></table></div>
+<p class="empty" id="no-matches" hidden>Nothing matches that filter.</p>
+</section>
+
+<section class="panel">
+<h2>Counters</h2>
+<p class="hint">Cumulative totals the sdk published. A counter whose owner is rebuilt restarts at zero, so total
+sums every run it made rather than reading its last value.</p>
+<div class="scroll"><table id="counters"><thead><tr id="counter-columns"></tr></thead><tbody id="counter-rows"></tbody></table></div>
+<p class="empty" id="no-counters" hidden>The trace recorded none.</p>
+</section>
+
+<section class="panel">
+<h2>Missing</h2>
+<p class="hint">Sections the analysis was asked for and the trace never recorded.</p>
+<ul class="missing" id="missing"></ul>
+<p class="empty" id="no-missing" hidden>None.</p>
+</section>
+
+<noscript><p class="empty">This report is drawn from the json below it, so it needs javascript.</p></noscript>
+</main>
+<script type="application/json" id="report">{{report}}</script>
+<script>
+{{script}}
+
+(function () {
+  'use strict';
+
+  var ui = REPORT_UI;
+  var report = JSON.parse(document.getElementById('report').textContent);
+  var operations = report.stats.operations;
+  var counters = report.stats.counters;
+  var ranks = operations.length ? operations[0].percentiles.map(function (p) { return p.rank; }) : [];
+  var chartLimit = 15;
+
+  var columns = [
+    { label: 'operation', key: 'name', kind: 'text' },
+    { label: 'count', key: 'count', kind: 'number' },
+    { label: 'total', key: 'sumNanos', kind: 'duration' },
+    { label: 'wall%', key: 'traceWindowPercent', kind: 'percent' },
+    { label: 'mean', key: 'meanNanos', kind: 'duration' },
+    { label: 'stdev', key: 'stdevNanos', kind: 'duration' },
+    { label: 'min', key: 'minNanos', kind: 'duration' }
+  ].concat(ranks.map(function (rank, index) {
+    return { label: 'p' + rank, rank: index, kind: 'duration' };
+  })).concat([{ label: 'max', key: 'maxNanos', kind: 'duration' }]);
+
+  var counterColumns = [
+    { label: 'counter', key: 'name', kind: 'text' },
+    { label: 'tid', key: 'tids', kind: 'tids' },
+    { label: 'samples', key: 'sampleCount', kind: 'count' },
+    { label: 'first', key: 'firstValue', kind: 'tally' },
+    { label: 'last', key: 'lastValue', kind: 'tally' },
+    { label: 'max', key: 'maxValue', kind: 'tally' },
+    { label: 'total', key: 'total', kind: 'tally' }
+  ];
+
+  var sortBy = columns.filter(function (column) { return column.key === 'sumNanos'; })[0];
+  var descending = true;
+
+  function value(operation, column) {
+    return column.rank === undefined ? operation[column.key] : operation.percentiles[column.rank].durationNanos;
+  }
+
+  function cell(operation, column) {
+    return ui.formatCell(column.kind, value(operation, column));
+  }
+
+  function onSort(column) {
+    descending = column === sortBy ? !descending : column.kind !== 'text';
+    sortBy = column;
+    draw();
+  }
+
+  function drawChart(rows) {
+    var chart = document.getElementById('chart');
+    chart.hidden = !document.getElementById('charted').checked || rows.length === 0;
+    if (chart.hidden) { return; }
+
+    var metric = document.getElementById('metric');
+    var picked = metric.options[metric.selectedIndex];
+    var key = metric.value;
+    var kind = picked.getAttribute('data-kind');
+    var top = ui.topBy(rows, function (operation) { return operation[key]; }, chartLimit);
+
+    document.getElementById('chart-caption').textContent =
+      (top.length < rows.length ? 'Top ' + top.length + ' of ' + rows.length : rows.length + ' sections') +
+      ' by ' + picked.text;
+
+    ui.drawBars(document.getElementById('bars'), top.map(function (operation) {
+      return {
+        name: operation.name,
+        title: operation.name,
+        value: operation[key],
+        text: ui.formatCell(kind, operation[key])
+      };
+    }));
+  }
+
+  function drawCounters() {
+    ui.drawTable(
+      document.getElementById('counter-columns'),
+      document.getElementById('counter-rows'),
+      counters,
+      counterColumns,
+      ui.counterCell
+    );
+    document.getElementById('counters').hidden = counters.length === 0;
+    document.getElementById('no-counters').hidden = counters.length > 0;
+  }
+
+  function drawCounters() {
+    var head = document.getElementById('counter-columns');
+    counterColumns.forEach(function (column) {
+      var th = document.createElement('th');
+      th.textContent = column.label;
+      head.appendChild(th);
+    });
+
+    var body = document.getElementById('counter-rows');
+    counters.forEach(function (counter) {
+      var tr = document.createElement('tr');
+      counterColumns.forEach(function (column) {
+        var td = document.createElement('td');
+        td.textContent = counterCell(counter, column);
+        tr.appendChild(td);
+      });
+      body.appendChild(tr);
+    });
+
+    document.getElementById('counters').hidden = counters.length === 0;
+    document.getElementById('no-counters').hidden = counters.length > 0;
+  }
+
+  function drawCapture() {
+    document.getElementById('capture').textContent =
+      report.tracePath + ' · ' + ui.bytes(report.traceSizeBytes);
+
+    var tiles = [
+      { value: report.sliceCount.toLocaleString(), label: 'slices' },
+      { value: report.sectionCount.toLocaleString(), label: 'distinct sections' },
+      { value: report.threadCount.toLocaleString(), label: 'threads' },
+      { value: operations.length.toLocaleString(), label: 'measured' },
+      { value: ui.duration(report.traceWindowNanos), label: 'trace window' }
+    ];
+    counters.filter(ui.talliesBytes).forEach(function (counter) {
+      tiles.push({ value: ui.bytes(counter.total), label: counter.name.replace(/^emb-/, '') });
+    });
+    ui.drawTiles(document.getElementById('tiles'), tiles);
+
+    ui.drawList(document.getElementById('missing'), document.getElementById('no-missing'), report.stats.missing);
+  }
+
+  function draw() {
+    var query = document.getElementById('search').value.trim();
+    var rows = ui.filterRows(operations, query, ['name']);
+    document.getElementById('matched').textContent = rows.length + ' of ' + operations.length + ' rows';
+    ui.drawHeader(document.getElementById('columns'), columns, sortBy, descending, onSort);
+    ui.drawRows(document.getElementById('rows'), ui.sortRows(rows, value, sortBy, descending), columns, cell, query);
+    document.getElementById('no-matches').hidden = rows.length > 0;
+    drawChart(rows);
+  }
+
+  document.getElementById('search').addEventListener('input', draw);
+  document.getElementById('charted').addEventListener('change', draw);
+  document.getElementById('metric').addEventListener('change', draw);
+  drawCapture();
+  drawCounters();
+  draw();
+})();
+</script>
+</body>
+</html>

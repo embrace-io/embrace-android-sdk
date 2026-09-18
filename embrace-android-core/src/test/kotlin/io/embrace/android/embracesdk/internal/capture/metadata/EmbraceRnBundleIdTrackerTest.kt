@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.capture.metadata
 import android.content.Context
 import android.content.res.AssetManager
 import android.view.WindowManager
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
@@ -11,6 +12,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.ReactNativeSdkVersionInfo
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -214,5 +216,45 @@ internal class EmbraceRnBundleIdTrackerTest {
     private companion object {
         private const val JAVA_SCRIPT_BUNDLE_URL_KEY = "io.embrace.jsbundle.url"
         private const val JAVA_SCRIPT_BUNDLE_ID_KEY = "io.embrace.jsbundle.id"
+    }
+
+    @Test
+    fun `listener is notified once the bundle ID has been computed in the background`() {
+        val executor = BlockingScheduledExecutorService(blockingMode = true)
+        val tracker = RnBundleIdTrackerImpl(context, configService, store, BackgroundWorker(executor))
+        val observed = mutableListOf<String?>()
+        tracker.addChangeListener { observed.add(tracker.getReactNativeBundleId()) }
+        assertEquals(0, observed.size)
+        assertEquals(null, tracker.getReactNativeBundleId())
+
+        // listener should see computed value
+        executor.runCurrentlyBlocked()
+        assertEquals(listOf(buildInfo.rnBundleId), observed)
+    }
+
+    @Test
+    fun `listener is notified when the JavaScript bundle URL changes`() {
+        val executor = BlockingScheduledExecutorService(blockingMode = true)
+        val tracker = RnBundleIdTrackerImpl(context, configService, store, BackgroundWorker(executor))
+        executor.runCurrentlyBlocked()
+
+        val observed = mutableListOf<String?>()
+        tracker.addChangeListener { observed.add(tracker.getReactNativeBundleId()) }
+        tracker.setReactNativeBundleId("index.android.bundle", true)
+        executor.runCurrentlyBlocked()
+
+        assertEquals(1, observed.size)
+        assertEquals(tracker.getReactNativeBundleId(), observed.single())
+    }
+
+    @Test
+    fun `setting an unchanged JavaScript bundle URL does not notify listeners`() {
+        val tracker = createRnBundleIdTracker()
+        tracker.setReactNativeBundleId("index.android.bundle", true)
+
+        var count = 0
+        tracker.addChangeListener { count++ }
+        tracker.setReactNativeBundleId("index.android.bundle")
+        assertEquals(0, count)
     }
 }

@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perfetto iteration statistics</title>
+<style>
+{{styles}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<h1>Perfetto iteration statistics</h1>
+<p class="capture" id="capture"></p>
+</header>
+
+<section class="tiles" id="tiles"></section>
+
+<section class="panel">
+<h2>Details</h2>
+<div class="details">
+<!-- DETAILS:BEGIN -->
+<p class="empty">No details yet. Write the analysis between the markers either side of this
+paragraph &mdash; plain HTML, extended as far as it needs to go. Nothing else on the page is hand-written.</p>
+<!-- DETAILS:END -->
+</div>
+</section>
+
+<section class="panel">
+<h2>Operations</h2>
+<p class="hint">One observation per iteration, each an iteration's total for that section. Threads are pooled:
+a new process per iteration means thread ids do not carry from one to the next.</p>
+<div class="controls">
+<label class="control">benchmark
+<select id="benchmark"></select>
+</label>
+<input type="search" id="search" placeholder="filter by section" autocomplete="off">
+<label class="control"><input type="checkbox" id="charted" checked> chart</label>
+<label class="control">by
+<select id="metric">
+<option value="meanNanos" data-kind="duration">mean time</option>
+<option value="maxNanos" data-kind="duration">slowest iteration</option>
+<option value="variationPercent" data-kind="percent">variation</option>
+<option value="occurrences" data-kind="number">occurrences</option>
+</select>
+</label>
+<span class="matched" id="matched"></span>
+</div>
+<figure class="chart" id="chart"><figcaption id="chart-caption"></figcaption><div id="bars"></div></figure>
+<div class="scroll"><table id="operations"><thead><tr id="columns"></tr></thead><tbody id="rows"></tbody></table></div>
+<p class="empty" id="no-matches" hidden>Nothing matches that filter.</p>
+</section>
+
+<section class="panel">
+<h2>Counters</h2>
+<p class="hint">Cumulative totals per iteration. A counter whose owner is rebuilt restarts at zero, so an
+iteration's total sums every run it made there rather than reading its last value.</p>
+<div class="scroll"><table id="counters"><thead><tr id="counter-columns"></tr></thead><tbody id="counter-rows"></tbody></table></div>
+<p class="empty" id="no-counters" hidden>The run recorded none.</p>
+</section>
+
+<section class="panel">
+<h2>Partial</h2>
+<p class="hint">Sections some iterations recorded and others did not.</p>
+<ul class="missing" id="partial"></ul>
+<p class="empty" id="no-partial" hidden>None.</p>
+</section>
+
+<section class="panel">
+<h2>Missing</h2>
+<p class="hint">Sections the analysis was asked for and no iteration recorded.</p>
+<ul class="missing" id="missing"></ul>
+<p class="empty" id="no-missing" hidden>None.</p>
+</section>
+
+
+<noscript><p class="empty">This report is drawn from the json below it, so it needs javascript.</p></noscript>
+</main>
+<script type="application/json" id="report">{{report}}</script>
+<script>
+{{script}}
+
+(function () {
+  'use strict';
+
+  var ui = REPORT_UI;
+  var report = JSON.parse(document.getElementById('report').textContent);
+  var benchmarks = report.benchmarks;
+  var selected = benchmarks.length ? benchmarks[0] : emptyBenchmark();
+  var chartLimit = 15;
+
+  var counterColumns = [
+    { label: 'counter', key: 'name', kind: 'text' },
+    { label: 'iters', key: 'iterations', kind: 'count' },
+    { label: 'samples/iter', key: 'meanSamples', kind: 'ratio' },
+    { label: 'mean', key: 'meanTotal', kind: 'tally' },
+    { label: 'min', key: 'minTotal', kind: 'tally' },
+    { label: 'max', key: 'maxTotal', kind: 'tally' },
+    { label: 'sum', key: 'sumTotal', kind: 'tally' }
+  ];
+
+  var columns = operationColumns();
+  var sortBy = columns[4];
+  var descending = true;
+
+  function emptyBenchmark() {
+    return { benchmark: '', iterations: [], operations: [], counters: [], partial: [], missing: [] };
+  }
+
+  /** The percentile columns follow whatever ranks the report was taken at, rather than assuming them. */
+  function operationColumns() {
+    var first = selected.operations[0];
+    var ranks = first ? first.percentiles.map(function (p) { return p.rank; }) : [];
+    return [
+      { label: 'operation', key: 'name', kind: 'text' },
+      { label: 'iters', key: 'iterations', kind: 'count' },
+      { label: 'occ/iter', key: 'meanOccurrences', kind: 'ratio' },
+      { label: 'wall%', key: 'traceWindowPercent', kind: 'percent' },
+      { label: 'mean', key: 'meanNanos', kind: 'duration' },
+      { label: 'stdev', key: 'stdevNanos', kind: 'duration' },
+      { label: 'cv%', key: 'variationPercent', kind: 'percent' },
+      { label: 'min', key: 'minNanos', kind: 'duration' }
+    ].concat(ranks.map(function (rank, index) {
+      return { label: 'p' + rank, rank: index, kind: 'duration' };
+    })).concat([{ label: 'max', key: 'maxNanos', kind: 'duration' }]);
+  }
+
+  function value(operation, column) {
+    return column.rank === undefined ? operation[column.key] : operation.percentiles[column.rank].durationNanos;
+  }
+
+  /** A ratio keeps its place rather than rounding to a whole, so a section that runs once reads 1.0. */
+  function format(kind, held) {
+    return kind === 'ratio' ? held.toFixed(1) : ui.formatCell(kind, held);
+  }
+
+  function cell(operation, column) {
+    return format(column.kind, value(operation, column));
+  }
+
+  function counterCell(counter, column) {
+    return column.kind === 'ratio' ? format(column.kind, counter[column.key]) : ui.counterCell(counter, column);
+  }
+
+  function meanWindowNanos() {
+    if (!selected.iterations.length) { return 0; }
+    var total = selected.iterations.reduce(function (sum, iteration) {
+      return sum + iteration.traceWindowNanos;
+    }, 0);
+    return total / selected.iterations.length;
+  }
+
+  function onSort(column) {
+    descending = column === sortBy ? !descending : column.kind !== 'text';
+    sortBy = column;
+    draw();
+  }
+
+  function onBenchmark() {
+    selected = benchmarks[document.getElementById('benchmark').selectedIndex] || emptyBenchmark();
+    columns = operationColumns();
+    sortBy = columns[4];
+    descending = true;
+    drawSelected();
+  }
+
+  function drawBenchmarks() {
+    var picker = document.getElementById('benchmark');
+    benchmarks.forEach(function (benchmark) {
+      var option = document.createElement('option');
+      option.textContent = benchmark.benchmark + ' (' + benchmark.iterations.length + ')';
+      picker.appendChild(option);
+    });
+    picker.disabled = benchmarks.length < 2;
+  }
+
+  function drawChart(rows) {
+    var chart = document.getElementById('chart');
+    chart.hidden = !document.getElementById('charted').checked || rows.length === 0;
+    if (chart.hidden) { return; }
+
+    var metric = document.getElementById('metric');
+    var picked = metric.options[metric.selectedIndex];
+    var key = metric.value;
+    var kind = picked.getAttribute('data-kind');
+    var top = ui.topBy(rows, function (operation) { return operation[key]; }, chartLimit);
+
+    document.getElementById('chart-caption').textContent =
+      (top.length < rows.length ? 'Top ' + top.length + ' of ' + rows.length : rows.length + ' sections') +
+      ' by ' + picked.text;
+
+    ui.drawBars(document.getElementById('bars'), top.map(function (operation) {
+      return {
+        name: operation.name,
+        title: operation.name + ' over ' + operation.iterations + ' iterations',
+        value: operation[key],
+        text: format(kind, operation[key])
+      };
+    }));
+  }
+
+  function drawCounters() {
+    ui.drawTable(
+      document.getElementById('counter-columns'),
+      document.getElementById('counter-rows'),
+      selected.counters,
+      counterColumns,
+      counterCell
+    );
+    document.getElementById('counters').hidden = selected.counters.length === 0;
+    document.getElementById('no-counters').hidden = selected.counters.length > 0;
+  }
+
+  function drawCapture() {
+    document.getElementById('capture').textContent = report.runPath + ' · ' +
+      report.benchmarkCount + ' benchmarks · ' + report.iterationCount + ' iterations';
+  }
+
+  function drawTiles() {
+    var tiles = [
+      { value: report.benchmarkCount.toLocaleString(), label: 'benchmarks' },
+      { value: selected.iterations.length.toLocaleString(), label: 'iterations' },
+      { value: selected.operations.length.toLocaleString(), label: 'measured' },
+      { value: ui.duration(meanWindowNanos()), label: 'mean trace window' }
+    ];
+    selected.counters.filter(ui.talliesBytes).forEach(function (counter) {
+      tiles.push({ value: ui.bytes(counter.meanTotal), label: counter.name.replace(/^emb-/, '') + ' / iter' });
+    });
+    ui.drawTiles(document.getElementById('tiles'), tiles);
+  }
+
+  function drawSelected() {
+    drawTiles();
+    drawCounters();
+    ui.drawList(document.getElementById('partial'), document.getElementById('no-partial'), selected.partial);
+    ui.drawList(document.getElementById('missing'), document.getElementById('no-missing'), selected.missing);
+    draw();
+  }
+
+  function draw() {
+    var query = document.getElementById('search').value.trim();
+    var rows = ui.filterRows(selected.operations, query, ['name']);
+    document.getElementById('matched').textContent =
+      rows.length + ' of ' + selected.operations.length + ' rows';
+    ui.drawHeader(document.getElementById('columns'), columns, sortBy, descending, onSort);
+    ui.drawRows(document.getElementById('rows'), ui.sortRows(rows, value, sortBy, descending), columns, cell, query);
+    document.getElementById('no-matches').hidden = rows.length > 0;
+    drawChart(rows);
+  }
+
+  document.getElementById('search').addEventListener('input', draw);
+  document.getElementById('charted').addEventListener('change', draw);
+  document.getElementById('metric').addEventListener('change', draw);
+  document.getElementById('benchmark').addEventListener('change', onBenchmark);
+  drawBenchmarks();
+  drawCapture();
+  drawSelected();
+})();
+</script>
+</body>
+</html>

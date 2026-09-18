@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeSessionPartPayloadSource
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
+import io.embrace.android.embracesdk.fakes.createPersistenceBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
@@ -70,6 +71,38 @@ internal class PayloadFactoryImplTest {
         verifyPayloadWithState(state = BACKGROUND, zygoteCreated = false, startNewSession = false)
         verifyPayloadWithManual()
     }
+
+    @Test
+    fun `no envelope is built when multi file persistence is enabled`() {
+        configService.persistenceBehavior = createPersistenceBehavior(
+            remoteCfg = RemoteConfig(pctMultiFilePersistenceEnabled = 100.0f),
+        )
+        assertNull(factory.endPayloadWithState(FOREGROUND, 0, newSessionPart()))
+        assertNull(factory.endPayloadWithCrash(FOREGROUND, 0, newSessionPart(), "crashId"))
+        assertNull(factory.endSessionWithManual(0, newSessionPart()))
+        assertEquals(0, partPayloadSource.payloadBuiltCount)
+        assertEquals(3, partPayloadSource.endedWithoutPayloadCount)
+    }
+
+    @Test
+    fun `an envelope is built when multi file persistence is disabled`() {
+        assertNotNull(factory.endPayloadWithState(FOREGROUND, 0, newSessionPart()))
+        assertNotNull(factory.endPayloadWithCrash(FOREGROUND, 0, newSessionPart(), "crashId"))
+        assertNotNull(factory.endSessionWithManual(0, newSessionPart()))
+        assertEquals(3, partPayloadSource.payloadBuiltCount)
+        assertEquals(0, partPayloadSource.endedWithoutPayloadCount)
+    }
+
+    @Test
+    fun `a periodic cache snapshot still builds an envelope when multi file persistence is enabled`() {
+        configService.persistenceBehavior = createPersistenceBehavior(
+            remoteCfg = RemoteConfig(pctMultiFilePersistenceEnabled = 100.0f),
+        )
+        assertNotNull(factory.snapshotPayload(FOREGROUND, 0, newSessionPart()))
+        assertEquals(1, partPayloadSource.payloadBuiltCount)
+    }
+
+    private fun newSessionPart() = checkNotNull(factory.startPayloadWithState(FOREGROUND, 0, false, { 1 }, { 1 }))
 
     private fun verifyPayloadWithState(state: ProcessState, zygoteCreated: Boolean, startNewSession: Boolean) {
         val zygote = factory.startPayloadWithState(state, 0, false, { 1 }, { 1 })

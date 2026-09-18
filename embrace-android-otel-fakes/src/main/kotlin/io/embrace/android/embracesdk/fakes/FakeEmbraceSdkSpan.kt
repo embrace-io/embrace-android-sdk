@@ -170,6 +170,7 @@ class FakeEmbraceSdkSpan(
     override fun asW3cTraceParent(): String? = sdkSpan?.spanContext?.run { "00-${traceId}-${spanId}-01" }
 
     override fun snapshot(): io.embrace.android.embracesdk.internal.payload.Span? {
+        snapshotCount++
         return if (spanId == null) {
             null
         } else {
@@ -187,6 +188,8 @@ class FakeEmbraceSdkSpan(
             )
         }
     }
+
+    var snapshotCount: Int = 0
 
     override fun hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
         attributes.hasEmbraceAttribute(embraceAttribute)

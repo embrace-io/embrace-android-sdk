@@ -46,9 +46,7 @@ internal fun ModuleGraph.postInit() = EmbTrace.trace(sectionName = "post-init", 
 
     initModule.logger.errorHandlerProvider = { featureModule.internalErrorDataSource.dataSource }
     deliveryModule?.payloadCachingService?.run {
-        openTelemetryModule.spanRepository.setSpanUpdateNotifier {
-            reportBackgroundActivityStateChange()
-        }
+        openTelemetryModule.spanRepository.addSpanChangeListener { reportBackgroundActivityStateChange() }
     }
 
     payloadSourceModule.metadataService.precomputeValues()
@@ -218,6 +216,9 @@ internal fun ModuleGraph.postLoadInstrumentation() = safeInit {
 internal fun ModuleGraph.triggerPayloadSend() = safeInit {
     val worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
     worker.submit {
+        // process multi-file session part directories before resurrection can run
+        userSessionOrchestrationModule.sessionPartReader?.readPersistedSessionParts()
+
         val resurrectionService = payloadSourceModule.payloadResurrectionService
         var resurrectionAttempted = false
         if (resurrectionService != null) {

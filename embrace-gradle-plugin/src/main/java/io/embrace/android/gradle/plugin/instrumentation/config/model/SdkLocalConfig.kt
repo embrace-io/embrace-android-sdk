@@ -25,6 +25,12 @@ data class SdkLocalConfig(
     val otel: OpenTelemetryLocalConfig? = null,
 
     /**
+     * Whether session telemetry should be persisted using the multi-file layout
+     */
+    @Json(name = "multi_file_persistence_enabled")
+    val multiFilePersistenceEnabled: Boolean? = null,
+
+    /**
      * View settings
      */
     @Json(name = "view_config")

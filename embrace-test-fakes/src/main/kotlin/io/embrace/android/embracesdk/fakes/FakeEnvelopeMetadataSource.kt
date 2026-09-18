@@ -7,5 +7,10 @@ class FakeEnvelopeMetadataSource : EnvelopeMetadataSource {
 
     var metadata: EnvelopeMetadata = EnvelopeMetadata()
 
-    override fun getEnvelopeMetadata(): EnvelopeMetadata = metadata
+    var readCount: Int = 0
+
+    override fun getEnvelopeMetadata(): EnvelopeMetadata {
+        readCount++
+        return metadata
+    }
 }

@@ -32,6 +32,11 @@ interface PayloadStorageService {
     fun loadPayloadAsStream(metadata: StoredTelemetryMetadata): InputStream?
 
     /**
+     * The number of bytes the payload occupies on disk, or 0 if it is not stored or couldn't be read.
+     */
+    fun payloadSizeBytes(metadata: StoredTelemetryMetadata): Long
+
+    /**
      * Return stored payloads as a list sorted in priority order
      */
     fun getPayloadsByPriority(): List<StoredTelemetryMetadata>

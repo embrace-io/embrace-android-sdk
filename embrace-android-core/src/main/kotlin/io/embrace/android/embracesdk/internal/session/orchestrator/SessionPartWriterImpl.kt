@@ -103,9 +103,8 @@ class SessionPartWriterImpl(
                     finish(orphan, crashing = false)
                 }
                 if (carriedOverSpans.isNotEmpty()) {
-                    val batch = carriedOverSpans.toList()
-                    writers.completedSpanWrites.write(WriteStrategy.IMMEDIATE, batch)
-                    carriedOverSpans.removeAll(batch)
+                    writers.completedSpanWrites.write(WriteStrategy.IMMEDIATE, carriedOverSpans.toList())
+                    carriedOverSpans.clear()
                 }
                 current = writers
             }

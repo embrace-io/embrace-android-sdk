@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.utils.threadSafeToList
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
+import java.util.Collections
+import java.util.IdentityHashMap
 import java.util.Queue
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -166,7 +168,23 @@ class SpanRepository {
             notifyOwningListener(listener, spans) || owned
         }
         if (owned) {
-            completedSpanData.removeAll(spans)
+            dropStored(spans)
+        }
+    }
+
+    /**
+     * Removes [spans] from [completedSpanData] by identity. [Span] is a data class whose `equals`
+     * walks its attributes, events and links, so removing by equality would deep-compare every
+     * stored span against every span in the batch, on the thread that ended the span.
+     */
+    private fun dropStored(spans: List<Span>) {
+        val batch = Collections.newSetFromMap(IdentityHashMap<Span, Boolean>())
+        batch.addAll(spans)
+        val iterator = completedSpanData.iterator()
+        while (iterator.hasNext()) {
+            if (iterator.next() in batch) {
+                iterator.remove()
+            }
         }
     }
 

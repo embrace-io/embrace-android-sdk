@@ -335,7 +335,10 @@ sealed class SchemaType(
 
     /**
      * Base [SchemaType] to handle common logic for States. This includes expecting the type [T] as the value of the State
-     * whose value can be encoded uniquely as a string via [toString], which will be used to presented it in any serialized forms.
+     * whose value can be encoded as a string via [toString], which will be used to presented it in any serialized forms.
+     *
+     * If the string alone does not identify a value uniquely, [T] can implement [TypedStateValue] so that the type of the
+     * value is recorded alongside it to fully represent its uniqueness.
      */
     abstract class State<T : Any>(
         initialValue: T,
@@ -344,9 +347,12 @@ sealed class SchemaType(
         telemetryType = EmbType.State,
         fixedObjectName = "state-$stateName",
     ) {
-        override val schemaAttributes: Map<String, String> = mapOf(
-            EmbStateTransitionAttributes.EMB_STATE_INITIAL_VALUE to initialValue.toString(),
-        )
+        override val schemaAttributes: Map<String, String> = buildMap {
+            put(EmbStateTransitionAttributes.EMB_STATE_INITIAL_VALUE, initialValue.toString())
+            recordedStateValueType(initialValue)?.let { valueType ->
+                put(EmbStateTransitionAttributes.EMB_STATE_VALUE_TYPE, valueType)
+            }
+        }
     }
 
     class NetworkState(

@@ -1,2 +1,3 @@
 io.embrace.android.embracesdk.fakes.TestInstrumentationProvider
 io.embrace.android.embracesdk.fakes.LazyInitInstrumentationProvider
+io.embrace.android.embracesdk.fakes.TypedValueStateInstrumentationProvider

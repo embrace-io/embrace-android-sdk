@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.internal.arch.destination
 
 import io.embrace.android.embracesdk.Severity
+import io.embrace.android.embracesdk.assertions.assertNonSystemStateValue
+import io.embrace.android.embracesdk.assertions.assertSystemStateValue
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
@@ -8,6 +10,8 @@ import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeLogRecord
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.FakeSpanService
+import io.embrace.android.embracesdk.fakes.TypedStateValue
+import io.embrace.android.embracesdk.fakes.TypedValueState
 import io.embrace.android.embracesdk.fakes.getTraceIdFromTraceparent
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
@@ -23,6 +27,7 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
 import io.opentelemetry.kotlin.tracing.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -166,6 +171,33 @@ internal class TelemetryDestinationImplTest {
     }
 
     @Test
+    fun `state capture records the value type only for system values`() {
+        val initialValue = TypedStateValue("init", isSystemValue = true)
+        val nonSystemValue = TypedStateValue("foo")
+        val systemValue = TypedStateValue("sys", isSystemValue = true)
+        val dupeNameValue = TypedStateValue("sys")
+        val token = impl.startSessionPartStateCapture(TypedValueState(initialValue))
+        val span = spanService.createdSpans.single()
+        span.attributes.assertSystemStateValue(initialValue, EmbStateTransitionAttributes.EMB_STATE_INITIAL_VALUE)
+
+        token.update(newValue = nonSystemValue, transitionTimeMs = clock.tick())
+        token.update(newValue = dupeNameValue, transitionTimeMs = clock.tick())
+        token.update(newValue = systemValue, transitionTimeMs = clock.tick())
+        token.update(
+            newValue = dupeNameValue,
+            transitionTimeMs = clock.tick(),
+            transitionAttributes = mapOf(EmbStateTransitionAttributes.EMB_STATE_VALUE_TYPE to "spoofed"),
+        )
+
+        val events = span.events.toList()
+        assertEquals(4, events.size)
+        events[0].attributes.assertNonSystemStateValue(nonSystemValue, EmbStateTransitionAttributes.EMB_STATE_NEW_VALUE)
+        events[1].attributes.assertNonSystemStateValue(dupeNameValue, EmbStateTransitionAttributes.EMB_STATE_NEW_VALUE)
+        events[2].attributes.assertSystemStateValue(systemValue, EmbStateTransitionAttributes.EMB_STATE_NEW_VALUE)
+        events[3].attributes.assertNonSystemStateValue(dupeNameValue, EmbStateTransitionAttributes.EMB_STATE_NEW_VALUE)
+    }
+
+    @Test
     fun `test start span capture`() {
         val span = impl.startSpanCapture(SchemaType.Breadcrumb("Whoops"), 5)
         assertNotNull(span)
@@ -282,7 +314,7 @@ internal class TelemetryDestinationImplTest {
         val token = impl.startSpanCapture(
             name,
             startTimeMs,
-        ) ?: error("Failed to create span")
+        )
         token.stop()
 
         val span = spanService.createdSpans.single()

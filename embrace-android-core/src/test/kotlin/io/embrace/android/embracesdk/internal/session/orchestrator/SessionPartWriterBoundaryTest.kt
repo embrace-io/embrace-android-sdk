@@ -215,7 +215,7 @@ internal class SessionPartWriterBoundaryTest {
         startPart(SECOND_PART_ID)
         drain()
 
-        assertEquals(listOf("CompletedSpansWriteFail"), logger.internalErrorMessages.map { it.msg })
+        assertEquals(listOf("SpanSnapshotsWriteFail"), logger.internalErrorMessages.map { it.msg })
         assertEquals("span1", sessionSpanIn(SECOND_PART_ID)?.name)
     }
 

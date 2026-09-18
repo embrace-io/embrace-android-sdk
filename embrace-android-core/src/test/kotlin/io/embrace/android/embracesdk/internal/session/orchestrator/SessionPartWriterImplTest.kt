@@ -34,7 +34,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
-import java.util.concurrent.Future
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -63,6 +62,7 @@ internal class SessionPartWriterImplTest {
     private lateinit var telemetryService: FakeTelemetryService
 
     private var writeCount = 0
+    private var completedSpanCount = 0
     private var onMetadataRead: () -> Unit = {}
     private val metadataSource = EnvelopeMetadataSource {
         onMetadataRead()
@@ -93,6 +93,7 @@ internal class SessionPartWriterImplTest {
         logger = FakeInternalLogger(throwOnInternalError = false)
         telemetryService = FakeTelemetryService()
         writeCount = 0
+        completedSpanCount = 0
         resourceCount = 0
         onMetadataRead = {}
         inFlightSpans = emptyList()
@@ -827,6 +828,10 @@ internal class SessionPartWriterImplTest {
         assertEquals(listOf(SessionPartWriterImpl.METADATA_WRITE_DELAY_MS), delays)
         delays.clear()
 
+        writer.onSpanCompleted(listOf(completedSpan("network-request")))
+        assertEquals(listOf(SessionPartWriterImpl.COMPLETED_SPAN_WRITE_DELAY_MS), delays)
+        delays.clear()
+
         writer.endPart()
         writer.onSessionPartEnded(SESSION_PART_ID)
         assertEquals(listOf(SessionPartWriterImpl.SPAN_SNAPSHOT_WRITE_DELAY_MS), delays)
@@ -905,24 +910,20 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
-    fun `completed spans queued behind the seal of their part are held for the next one`() {
-        val hooked = SubmitHookExecutor(executor)
-        val writer = createWriter(worker = BackgroundWorker(hooked))
+    fun `completed spans still waiting out their delay are logged against the part that ends`() {
+        val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
 
-        hooked.onSubmit = {
-            writer.endPart()
-            writer.onSessionPartEnded(SESSION_PART_ID)
-        }
         writer.onSpanCompleted(listOf(completedSpan("network-request")))
-        drain()
-        assertEquals(listOf("span0"), completedSpanNamesOnDisk(SESSION_PART_ID))
+        writer.endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        assertEquals(listOf("network-request", "span0"), completedSpanNamesIn(SESSION_PART_ID))
 
         clock.tick(1000)
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
 
-        assertEquals(listOf("network-request"), completedSpanNamesIn(OTHER_SESSION_PART_ID))
+        assertEquals(emptyList<String?>(), completedSpanNamesIn(OTHER_SESSION_PART_ID))
         assertNoInternalErrors()
     }
 
@@ -1404,12 +1405,12 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
-    fun `a span completing does not supersede the spans already appended`() {
+    fun `a span completing does not supersede the spans already buffered`() {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
 
-        // both appends are queued before either runs. assert a coalescing queue is not used
+        // the two batches are buffered into one write, but neither span may be dropped
         writer.onSpanCompleted(listOf(completedSpan("first")))
         writer.onSpanCompleted(listOf(completedSpan("second")))
         drain()
@@ -1613,20 +1614,6 @@ internal class SessionPartWriterImplTest {
         }
     }
 
-    private class SubmitHookExecutor(
-        private val delegate: ScheduledExecutorService,
-    ) : ScheduledExecutorService by delegate {
-
-        var onSubmit: () -> Unit = {}
-
-        override fun submit(task: Runnable?): Future<*> {
-            val hook = onSubmit
-            onSubmit = {}
-            hook()
-            return delegate.submit(task)
-        }
-    }
-
     private class ShutdownRecordingExecutor(
         private val delegate: ScheduledExecutorService,
         private val onShutdown: () -> Unit,
@@ -1643,7 +1630,7 @@ internal class SessionPartWriterImplTest {
 
     private fun completedSpan(name: String) = Span(
         traceId = "6c9b1f2ec1d34f3c9a7d0b8e5f2a4c11",
-        spanId = "aaaaaaaaaaaaaaa2",
+        spanId = "aaaaaaaaaaaa${1000 + completedSpanCount++}",
         name = name,
         startTimeNanos = clock.now().millisToNanos(),
         endTimeNanos = (clock.now() + 1000).millisToNanos(),

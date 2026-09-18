@@ -3,12 +3,13 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 
 /**
- * Exceeds the longest delay that any [CoalescingWriteQueue] in [SessionPartWriterImpl] is armed
- * with, so that advancing time by this much always makes a debounced write due.
+ * Exceeds the longest delay that any write queue in [SessionPartWriterImpl] is armed with, so that
+ * advancing time by this much always makes a debounced write due.
  */
 internal val WRITE_DRAIN_TICK_MS: Long = maxOf(
     SessionPartWriterImpl.METADATA_WRITE_DELAY_MS,
     SessionPartWriterImpl.SPAN_SNAPSHOT_WRITE_DELAY_MS,
+    SessionPartWriterImpl.COMPLETED_SPAN_WRITE_DELAY_MS,
 )
 
 private const val MAX_DRAIN_ITERATIONS = 100

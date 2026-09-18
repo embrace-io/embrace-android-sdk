@@ -48,7 +48,6 @@ class SessionPartWriterImpl(
     private val directoryStore: SessionPartDirectoryStore =
         SessionPartDirectoryStore(sessionsDir, worker, clock, logger),
     private val writeTracker: SessionPartWriteTracker = SessionPartWriteTracker(),
-    private val snapshotTracker: SpanSnapshotTracker = SpanSnapshotTracker(),
     private val onWritesComplete: () -> Unit = {},
 ) : SessionPartWriter {
 
@@ -112,7 +111,7 @@ class SessionPartWriterImpl(
             }
 
             queueMetadataWrite(writers, WriteStrategy.IMMEDIATE)
-            queueSpanSnapshotsWrite(writers)
+            queueSpanSnapshotsSeed(writers)
             registerResourceChangeListener()
         }
     }
@@ -136,7 +135,6 @@ class SessionPartWriterImpl(
     }
 
     private fun finish(writers: PartWriters, crashing: Boolean) {
-        queueSpanSnapshotsWrite(writers)
         writers.flushPendingWrites()
 
         if (processTerminating) {
@@ -188,8 +186,11 @@ class SessionPartWriterImpl(
             return
         }
         EmbTrace.trace("mf-span-snapshot-changed") {
-            snapshotTracker.onSpanChanged(span)
-            queueSpanSnapshotsRefresh(current ?: return@trace)
+            val writers = current ?: return@trace
+            when {
+                span.isRecording -> writers.spanSnapshotWrites.write(WriteStrategy.DEBOUNCED, span)
+                else -> writers.spanSnapshotWrites.remove(span)
+            }
         }
     }
 
@@ -239,41 +240,21 @@ class SessionPartWriterImpl(
         }
 
     /**
-     * Writes in-flight spans to a snapshot file.
+     * Seeds the snapshot file with everything in flight when a session part starts. This is the one
+     * write that knows it holds the complete set, so it goes straight to the worker rather than
+     * through [PartWriters.spanSnapshotWrites], which can only append what it drains.
      */
-    private fun queueSpanSnapshotsWrite(writers: PartWriters) = EmbTrace.trace("mf-queue-span-snapshots") {
+    private fun queueSpanSnapshotsSeed(writers: PartWriters) = EmbTrace.trace("mf-queue-span-snapshots") {
         val spans = try {
             inFlightSpanSource()
         } catch (exc: Throwable) {
             logger.trackInternalError(InternalErrorType.SpanSnapshotsWriteFail, exc)
             return@trace
         }
-        snapshotTracker.seed(spans)
-        execute(writers, InternalErrorType.SpanSnapshotsWriteFail, writers.spanSnapshotWrites::submit) {
-            snapshotTracker.drainDirtySpans()
+        execute(writers, InternalErrorType.SpanSnapshotsWriteFail, { worker.submit(it) }) {
             writers.spanSnapshots.write(writers.snapshotsOf(spans))
         }
     }
-
-    private fun queueSpanSnapshotsRefresh(writers: PartWriters) = EmbTrace.trace("mf-queue-span-snapshots-refresh") {
-        execute(writers, InternalErrorType.SpanSnapshotsWriteFail, writers.spanSnapshotWrites::submit) {
-            if (current !== writers) {
-                return@execute
-            }
-            val changed = writers.snapshotsOf(snapshotTracker.drainDirtySpans())
-            if (changed.isNotEmpty()) {
-                writers.spanSnapshots.append(changed) { writers.snapshotsOf(inFlightSpanSource()) }
-            }
-        }
-    }
-
-    /**
-     * Snapshots the spans of [spans] that belong to this session part.
-     */
-    private fun PartWriters.snapshotsOf(spans: List<EmbraceSdkSpan>): List<Span> =
-        spans.filter { it.spanId == sessionSpanId || !it.isSessionSpan() }.mapNotNull(EmbraceSdkSpan::snapshot)
-
-    private fun EmbraceSdkSpan.isSessionSpan(): Boolean = hasEmbraceAttribute(EmbType.Ux.Session)
 
     /**
      * Holds [spans] until the next session part starts. Spans beyond [MAX_CARRIED_OVER_SPANS] are
@@ -389,8 +370,6 @@ class SessionPartWriterImpl(
             onWrite = { metadata.write() },
         )
 
-        val spanSnapshotWrites = CoalescingWriteQueue(worker, clock, SPAN_SNAPSHOT_WRITE_DELAY_MS)
-
         val completedSpanWrites = TelemetryWriteScheduler(
             worker = worker,
             delayMs = COMPLETED_SPAN_WRITE_DELAY_MS,
@@ -399,10 +378,31 @@ class SessionPartWriterImpl(
             onWrite = ::writeCompletedSpans,
         )
 
+        val spanSnapshotWrites = TelemetryWriteScheduler(
+            worker = worker,
+            delayMs = SPAN_SNAPSHOT_WRITE_DELAY_MS,
+            queue = TelemetryQueue(identityOf = EmbraceSdkSpan::spanId),
+            guard = guard(InternalErrorType.SpanSnapshotsWriteFail) { abandoned },
+            onWrite = ::writeSpanSnapshots,
+        )
+
         fun flushPendingWrites() {
             metadataWrites.flush()
-            spanSnapshotWrites.flush()
             completedSpanWrites.flush()
+            spanSnapshotWrites.flush()
+        }
+
+        fun snapshotsOf(spans: List<EmbraceSdkSpan>): List<Span> =
+            spans.filter { it.spanId == sessionSpanId || !it.isSessionSpan() }
+                .mapNotNull(EmbraceSdkSpan::snapshot)
+
+        private fun EmbraceSdkSpan.isSessionSpan(): Boolean = hasEmbraceAttribute(EmbType.Ux.Session)
+
+        private fun writeSpanSnapshots(spans: List<EmbraceSdkSpan>) {
+            val snapshots = snapshotsOf(spans)
+            if (snapshots.isNotEmpty()) {
+                spanSnapshots.append(snapshots) { snapshotsOf(inFlightSpanSource()) }
+            }
         }
 
         private fun writeCompletedSpans(spans: List<Span>) {

@@ -71,7 +71,7 @@ internal class TelemetryWriteSchedulerTest {
     @Test
     fun `an immediate write disarms the write that was waiting`() {
         scheduler.write(WriteStrategy.DEBOUNCED, "a")
-        scheduler.write(WriteStrategy.IMMEDIATE)
+        scheduler.write(WriteStrategy.IMMEDIATE, emptyList())
         assertEquals(listOf(listOf("a")), writes)
 
         executor.moveForwardAndRunBlocked(DELAY_MS)
@@ -80,7 +80,7 @@ internal class TelemetryWriteSchedulerTest {
 
     @Test
     fun `an immediate write runs even when nothing is buffered`() {
-        scheduler.write(WriteStrategy.IMMEDIATE)
+        scheduler.write(WriteStrategy.IMMEDIATE, emptyList())
         assertEquals(listOf(emptyList<String>()), writes)
     }
 
@@ -140,7 +140,7 @@ internal class TelemetryWriteSchedulerTest {
         executor.moveForwardAndRunBlocked(DELAY_MS)
         assertEquals(1, guardedTasks)
 
-        scheduler.write(WriteStrategy.IMMEDIATE)
+        scheduler.write(WriteStrategy.IMMEDIATE, emptyList())
         assertEquals(2, guardedTasks)
     }
 
@@ -161,7 +161,7 @@ internal class TelemetryWriteSchedulerTest {
     @Test
     fun `a write armed as another one drains writes nothing when it runs`() {
         lateinit var racing: TelemetryWriteScheduler<String>
-        val hooked = ScheduleHookExecutor(executor) { racing.write(WriteStrategy.IMMEDIATE) }
+        val hooked = ScheduleHookExecutor(executor) { racing.write(WriteStrategy.IMMEDIATE, emptyList()) }
         racing = createScheduler(BackgroundWorker(hooked))
 
         racing.write(WriteStrategy.DEBOUNCED, "a")

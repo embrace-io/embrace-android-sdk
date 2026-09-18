@@ -54,11 +54,16 @@ internal class TelemetryWriteScheduler<T>(
      */
     fun write(
         timing: WriteStrategy,
-        items: List<T> = emptyList(),
+        items: List<T>,
     ) {
         queue.add(items)
         applyTiming(timing)
     }
+
+    /**
+     * Removes [item] from the queue.
+     */
+    fun remove(item: T) = queue.remove(item)
 
     private fun applyTiming(timing: WriteStrategy) {
         when (timing) {

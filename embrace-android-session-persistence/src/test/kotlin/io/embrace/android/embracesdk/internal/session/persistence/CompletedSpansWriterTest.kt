@@ -324,6 +324,43 @@ internal class CompletedSpansWriterTest {
     }
 
     @Test
+    fun `the record cap counts the spans logged before the file was closed`() {
+        writer = recordCappedWriter(maxRecords = 2)
+        assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa1"))))
+        writer.close()
+        assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa2"))))
+
+        assertFalse(write(spans = listOf(span("aaaaaaaaaaaaaaa3"))))
+        assertEquals(listOf("aaaaaaaaaaaaaaa1", "aaaaaaaaaaaaaaa2"), readLog().map(SpanProto::span_id))
+        assertWriteFailureTracked()
+    }
+
+    @Test
+    fun `the record cap counts the spans logged before a failed append`() {
+        writer = recordCappedWriter(maxRecords = 2)
+        assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa1"))))
+        assertFalse(write(spans = listOf(Span(attributes = ExplodingList()))))
+        assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa2"))))
+
+        assertFalse(write(spans = listOf(span("aaaaaaaaaaaaaaa3"))))
+        assertEquals(listOf("aaaaaaaaaaaaaaa1", "aaaaaaaaaaaaaaa2"), readLog().map(SpanProto::span_id))
+    }
+
+    @Test
+    fun `each session part directory gets its own record cap`() {
+        val other = SessionPartDirectory(timestamp = TIMESTAMP + 1, uuid = UUID)
+        createPartDir(other)
+        writer = recordCappedWriter(maxRecords = 1)
+
+        assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa1"))))
+        assertTrue(write(other, listOf(span("aaaaaaaaaaaaaaa2"))))
+
+        assertEquals(listOf("aaaaaaaaaaaaaaa1"), readLog().map(SpanProto::span_id))
+        assertEquals(listOf("aaaaaaaaaaaaaaa2"), readLog(other).map(SpanProto::span_id))
+        assertNoInternalErrors()
+    }
+
+    @Test
     fun `closing a writer that has written nothing leaves no file behind`() {
         writer.close()
         assertEquals(emptyList<String>(), partDir().list()?.toList())

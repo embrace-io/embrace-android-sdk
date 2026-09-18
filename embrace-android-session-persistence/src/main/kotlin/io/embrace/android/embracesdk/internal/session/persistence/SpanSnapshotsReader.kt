@@ -3,8 +3,6 @@ package io.embrace.android.embracesdk.internal.session.persistence
 import okio.BufferedSource
 import java.io.IOException
 
-private const val UNSUPPORTED_VERSION_MSG = "Unsupported format version in session part file"
-
 /**
  * Decodes the append-only span snapshots held in [source], returning the latest known state of each
  * span still recording.
@@ -59,8 +57,8 @@ private class SnapshotDecoder(
     private fun readRecord(): Boolean {
         val tag = collection.nextTag() ?: return stop()
         return when (tag) {
-            SPAN_SNAPSHOT_VERSION_TAG -> readRollup()
-            SPAN_SNAPSHOT_RECORD_TAG -> readSnapshot()
+            SPAN_COLLECTION_VERSION_TAG -> readRollup()
+            SPAN_COLLECTION_RECORD_TAG -> readSnapshot()
             else -> collection.skipFrame()
         }
     }

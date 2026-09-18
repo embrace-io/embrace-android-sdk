@@ -17,9 +17,9 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpans
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SessionReconstructionService
+import io.embrace.android.embracesdk.internal.session.persistence.SpanCollection
 import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -195,7 +195,7 @@ internal class SessionPartWriterResourceReadTest {
         writePartFile(
             COMPLETED_SPANS_FILE_NAME,
             Buffer().apply {
-                write(CompletedSpans.ADAPTER.encode(CompletedSpans(spans = listOf(completedSpan))))
+                write(SpanCollection.ADAPTER.encode(SpanCollection(spans = listOf(completedSpan))))
             }.readByteArray(),
         )
         service.reconstruct(directory())

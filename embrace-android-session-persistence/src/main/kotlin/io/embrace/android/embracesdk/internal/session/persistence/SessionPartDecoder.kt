@@ -165,7 +165,7 @@ class SessionPartDecoder(
 
             val version = formatVersion(message)
             if (version != FORMAT_VERSION) {
-                throw IOException("Unsupported format version in session part file")
+                throw IOException(UNSUPPORTED_VERSION_MSG)
             }
             message
         } catch (exc: Throwable) {

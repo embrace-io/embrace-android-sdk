@@ -32,6 +32,8 @@ internal const val MAX_PERSISTED_SPANS: Int = 4000
 
 internal const val OVERSIZED_PART_FILE_MSG = "Session part file exceeds the maximum size"
 
+internal const val UNSUPPORTED_VERSION_MSG = "Unsupported format version in session part file"
+
 internal const val TOO_MANY_PERSISTED_SPANS_MSG = "Session part holds more spans than can be delivered"
 
 internal const val DROPPED_SPAN_SNAPSHOT_MSG = "Span snapshots dropped to keep the log within its limits"

@@ -10,7 +10,7 @@ import java.io.OutputStream
  * Version of the on-disk layout written by this SDK. Data persisted with any other version
  * cannot be read back.
  */
-internal const val FORMAT_VERSION = 2
+internal const val FORMAT_VERSION = 3
 
 internal const val METADATA_FILE_NAME = "metadata.pb"
 
@@ -18,10 +18,10 @@ internal const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
 
 internal const val SPAN_SNAPSHOTS_FILE_NAME = "span_snapshots.pb"
 
-/** Field numbers of the records held in span_snapshots.pb, which is read one record at a time. */
-internal const val SPAN_SNAPSHOT_VERSION_TAG = 1
+/** Field numbers of the records held in a span collection file, which is read one record at a time. */
+internal const val SPAN_COLLECTION_VERSION_TAG = 1
 
-internal const val SPAN_SNAPSHOT_RECORD_TAG = 2
+internal const val SPAN_COLLECTION_RECORD_TAG = 2
 
 /**
  * Writes [fileName] into [partDir] by encoding to a temporary file and then renaming it, so a

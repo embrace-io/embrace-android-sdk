@@ -96,7 +96,7 @@ internal class SpanSnapshotsReaderTest {
 
     @Test
     fun `a file rolled up under another format version is rejected`() {
-        assertRejected(SpanSnapshots.ADAPTER.encode(SpanSnapshots(format_version = FORMAT_VERSION + 1)))
+        assertRejected(SpanCollection.ADAPTER.encode(SpanCollection(format_version = FORMAT_VERSION + 1)))
     }
 
     @Test
@@ -158,7 +158,7 @@ internal class SpanSnapshotsReaderTest {
     fun `every truncation past the rollup record reads back one of its prefixes`() {
         val spans = listOf(first, second, third)
         val file = spanSnapshotsRollup(spans)
-        val rollupBytes = SpanSnapshots.ADAPTER.encode(SpanSnapshots(format_version = FORMAT_VERSION)).size
+        val rollupBytes = SpanCollection.ADAPTER.encode(SpanCollection(format_version = FORMAT_VERSION)).size
 
         (rollupBytes..file.size).forEach { length ->
             val recovered = read(file.copyOf(length))

@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.internal.session.persistence
 
 import okio.BufferedSource
 
-private const val SPANS_TAG = 1
-
 /**
  * Decodes the append-only log of completed spans held in [source].
  *
@@ -34,7 +32,7 @@ internal fun readCompletedSpans(
     while (true) {
         val record = when (collection.nextTag()) {
             null -> return decoded()
-            SPANS_TAG -> {
+            SPAN_COLLECTION_RECORD_TAG -> {
                 if (spans.size >= maxSpans) {
                     return decoded(spanLimitReached = true)
                 }

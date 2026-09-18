@@ -320,10 +320,10 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
     }
 
     private fun writeSnapshotsBytes(
-        snapshots: SpanSnapshots,
+        snapshots: SpanCollection,
         directory: SessionPartDirectory = partDirectory,
     ) {
-        snapshotsFile(directory).writeBytes(SpanSnapshots.ADAPTER.encode(snapshots))
+        snapshotsFile(directory).writeBytes(SpanCollection.ADAPTER.encode(snapshots))
     }
 
     private fun assertNoInternalErrors() {

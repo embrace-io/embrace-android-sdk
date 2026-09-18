@@ -105,7 +105,7 @@ internal class SpanSnapshotsWriterTest {
     @Test
     fun `an empty list of spans is still written`() {
         assertTrue(write(span = emptyList()))
-        assertEquals(SpanSnapshots(format_version = FORMAT_VERSION), readSnapshots())
+        assertEquals(SpanCollection(format_version = FORMAT_VERSION), readSnapshots())
         assertNoInternalErrors()
     }
 
@@ -432,8 +432,8 @@ internal class SpanSnapshotsWriterTest {
     private fun snapshotsFile(directory: SessionPartDirectory = partDirectory): File =
         File(partDir(directory), SPAN_SNAPSHOTS_FILE_NAME)
 
-    private fun readSnapshots(directory: SessionPartDirectory = partDirectory): SpanSnapshots =
-        snapshotsFile(directory).inputStream().use(SpanSnapshots.ADAPTER::decode)
+    private fun readSnapshots(directory: SessionPartDirectory = partDirectory): SpanCollection =
+        snapshotsFile(directory).inputStream().use(SpanCollection.ADAPTER::decode)
 
     private fun write(
         directory: SessionPartDirectory? = partDirectory,
@@ -444,7 +444,7 @@ internal class SpanSnapshotsWriterTest {
     }
 
     private fun justUnder(span: Span): Long =
-        SpanSnapshots.ADAPTER.encodedSize(SpanSnapshots(spans = listOf(span.toProto()))).toLong() - 1
+        SpanCollection.ADAPTER.encodedSize(SpanCollection(spans = listOf(span.toProto()))).toLong() - 1
 
     private fun writerWith(
         maxBytes: Long = MAX_PART_FILE_BYTES,
@@ -471,12 +471,12 @@ internal class SpanSnapshotsWriterTest {
 
     private fun protos(vararg spans: Span): List<SpanProto> = spans.map(Span::toProto)
 
-    private fun rollupSize(spans: List<Span>): Long = SpanSnapshots.ADAPTER.encodedSize(
-        SpanSnapshots(format_version = FORMAT_VERSION, spans = spans.map(Span::toProto)),
+    private fun rollupSize(spans: List<Span>): Long = SpanCollection.ADAPTER.encodedSize(
+        SpanCollection(format_version = FORMAT_VERSION, spans = spans.map(Span::toProto)),
     ).toLong()
 
     private fun appendSize(spans: List<Span>): Long =
-        SpanSnapshots.ADAPTER.encodedSize(SpanSnapshots(spans = spans.map(Span::toProto))).toLong()
+        SpanCollection.ADAPTER.encodedSize(SpanCollection(spans = spans.map(Span::toProto))).toLong()
 
     private fun assertNoInternalErrors() {
         assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)

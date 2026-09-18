@@ -42,14 +42,14 @@ internal class SessionReconstructionServiceCompletedSpansTest {
 
         private val secondEndedSpan = endedSpan.copy(spanId = "aaaaaaaaaaaaaaa5")
 
-        /** Field 2 as a varint, which no version of the log has ever held. */
-        private val UNKNOWN_FIELD = byteArrayOf(0x10, 0x01)
+        /** Field 3 as a varint, which no version of the log has ever held. */
+        private val UNKNOWN_FIELD = byteArrayOf(0x18, 0x01)
 
         /** Field 1 tagged with wire type 6, which is not a field encoding protobuf defines. */
         private val INVALID_FIELD_ENCODING = byteArrayOf(0x0E)
 
         /** An intact frame round a record body holding an invalid field encoding. */
-        private val UNDECODABLE_RECORD = byteArrayOf(0x0A, 0x01, 0x0E)
+        private val UNDECODABLE_RECORD = byteArrayOf(0x12, 0x01, 0x0E)
     }
 
     @get:Rule
@@ -287,7 +287,7 @@ internal class SessionReconstructionServiceCompletedSpansTest {
 
     private fun writeSpanSnapshots(directory: SessionPartDirectory = partDirectory) {
         File(partDir(directory), "span_snapshots.pb").writeBytes(
-            SpanSnapshots.ADAPTER.encode(SpanSnapshots(format_version = FORMAT_VERSION)),
+            SpanCollection.ADAPTER.encode(SpanCollection(format_version = FORMAT_VERSION)),
         )
     }
 

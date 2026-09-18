@@ -34,8 +34,8 @@ internal class CompletedSpansWriterTest {
 
         private val oversized = paddedSpan("aaaaaaaaaaaaaaa2", padding = 4096)
 
-        private val twoSpanBudget = 2L * CompletedSpans.ADAPTER.encode(
-            CompletedSpans(spans = listOf(span("aaaaaaaaaaaaaaa1").toProto())),
+        private val twoSpanBudget = 2L * SpanCollection.ADAPTER.encode(
+            SpanCollection(spans = listOf(span("aaaaaaaaaaaaaaa1").toProto())),
         ).size
 
         private fun span(id: String, name: String = "emb-network-request") =
@@ -325,7 +325,7 @@ internal class CompletedSpansWriterTest {
     }
 
     private fun recordBoundedWriter(): CompletedSpansWriter {
-        val bound = CompletedSpans.ADAPTER.encodedSize(CompletedSpans(spans = listOf(oversized.toProto()))) - 1L
+        val bound = SpanCollection.ADAPTER.encodedSize(SpanCollection(spans = listOf(oversized.toProto()))) - 1L
         return CompletedSpansWriter(target { activePart }, logger, MAX_PART_FILE_BYTES, bound)
     }
 

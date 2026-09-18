@@ -9,9 +9,8 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpans
+import io.embrace.android.embracesdk.internal.session.persistence.SpanCollection
 import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadata
-import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshots
 import io.embrace.android.embracesdk.internal.session.persistence.buildCompletedSpans
 import io.embrace.android.embracesdk.internal.session.persistence.buildSessionMetadata
 import io.embrace.android.embracesdk.internal.session.persistence.buildSpanSnapshots
@@ -96,10 +95,10 @@ class PersistenceSerializationBenchmarks(
         SessionMetadata.ADAPTER.encode(sink, metadata)
 
         val snapshots = buildSpanSnapshots(fixture.spanSnapshots)
-        SpanSnapshots.ADAPTER.encode(sink, snapshots)
+        SpanCollection.ADAPTER.encode(sink, snapshots)
 
         // the session span is logged as a completed span once it ends
-        val completedSpans = CompletedSpans.ADAPTER.encode(
+        val completedSpans = SpanCollection.ADAPTER.encode(
             buildCompletedSpans(fixture.completedSpans + fixture.sessionSpan),
         )
         return sink.bytesWritten + completedSpans.size
@@ -107,8 +106,8 @@ class PersistenceSerializationBenchmarks(
 
     private fun serializeCacheTick() {
         val snapshots = fixture.spanSnapshots + fixture.sessionSpan.withHeartbeat()
-        SpanSnapshots.ADAPTER.encode(sink, buildSpanSnapshots(snapshots))
-        CompletedSpans.ADAPTER.encode(sink, buildCompletedSpans(windowSpans))
+        SpanCollection.ADAPTER.encode(sink, buildSpanSnapshots(snapshots))
+        SpanCollection.ADAPTER.encode(sink, buildCompletedSpans(windowSpans))
     }
 
     private fun Span.withHeartbeat(): Span {

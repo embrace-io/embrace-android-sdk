@@ -9,11 +9,11 @@ import java.io.IOException
 
 /** Bytes the file costs before any span is written to it. */
 private val ROLLUP_HEADER_BYTES: Long =
-    SpanSnapshots.ADAPTER.encodedSize(SpanSnapshots(format_version = FORMAT_VERSION)).toLong()
+    SpanCollection.ADAPTER.encodedSize(SpanCollection(format_version = FORMAT_VERSION)).toLong()
 
 /** Bytes [record] costs once framed as one span record of the file. */
 private fun recordSize(record: SpanProto): Long =
-    SpanSnapshots.ADAPTER.encodedSize(SpanSnapshots(spans = listOf(record))).toLong()
+    SpanCollection.ADAPTER.encodedSize(SpanCollection(spans = listOf(record))).toLong()
 
 /**
  * Writes the in-flight spans for a session part to its directory, appending to what is already
@@ -80,7 +80,7 @@ class SpanSnapshotsWriter(
 
         discardFile()
         writeAtomically(partDir, SPAN_SNAPSHOTS_FILE_NAME, maxBytes, target.counters) { stream ->
-            SpanSnapshots.ADAPTER.encode(stream, SpanSnapshots(format_version = FORMAT_VERSION, spans = written))
+            SpanCollection.ADAPTER.encode(stream, SpanCollection(format_version = FORMAT_VERSION, spans = written))
         }
         file = SpanCollectionFile(directory, File(partDir, SPAN_SNAPSHOTS_FILE_NAME), target.counters)
         records = written.size
@@ -100,7 +100,7 @@ class SpanSnapshotsWriter(
             return false
         }
         // a record with no version field is an update rather than a rollup
-        val bytes = SpanSnapshots.ADAPTER.encode(SpanSnapshots(spans = appended))
+        val bytes = SpanCollection.ADAPTER.encode(SpanCollection(spans = appended))
         if (exceedsLimits(file, bytes.size, appended.size)) {
             return write(liveSpans())
         }

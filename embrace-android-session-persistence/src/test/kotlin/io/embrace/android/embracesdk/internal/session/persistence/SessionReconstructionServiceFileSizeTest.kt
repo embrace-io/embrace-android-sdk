@@ -153,7 +153,7 @@ internal class SessionReconstructionServiceFileSizeTest {
     @Test
     fun `a completed span past the record limit does not cost the spans logged after it`() {
         val oversized = paddedSpan(paddedSpanId(1), padding = 4096)
-        val bound = CompletedSpans.ADAPTER.encodedSize(CompletedSpans(spans = listOf(oversized.toProto()))) - 1L
+        val bound = SpanCollection.ADAPTER.encodedSize(SpanCollection(spans = listOf(oversized.toProto()))) - 1L
         val logged = listOf(
             paddedSpan(paddedSpanId(0), padding = 1),
             oversized,

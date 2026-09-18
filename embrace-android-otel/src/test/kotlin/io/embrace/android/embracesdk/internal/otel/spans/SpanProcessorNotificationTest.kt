@@ -138,6 +138,7 @@ internal class SpanProcessorNotificationTest {
         override fun onEnd(span: ReadableSpan) {}
         override fun isStartRequired() = true
         override fun isEndRequired() = false
+        override fun isOnEndingRequired() = false
         override suspend fun forceFlush(): OperationResultCode = OperationResultCode.Success
         override suspend fun shutdown(): OperationResultCode = OperationResultCode.Success
     }

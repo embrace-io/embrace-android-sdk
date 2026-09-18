@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.network
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
@@ -73,6 +74,61 @@ internal class NetworkCaptureDataSourceTest {
         cfg = RemoteConfig(networkCaptureRules = setOf(rule))
         val result = getService().getNetworkCaptureRules("https://embrace.io/changelog", "GET")
         assertEquals(0, result.size)
+    }
+
+    @Test
+    fun `test capture rule expires once now passes delivery time plus expiresIn`() {
+        val clock = FakeClock()
+        val rule = getDefaultRule(expiresIn = 1) // 1 second
+        cfg = RemoteConfig(networkCaptureRules = setOf(rule))
+        configService = FakeConfigService(
+            networkBehavior = createNetworkBehavior(remoteCfg = cfg, configDeliveredAt = clock.now()),
+        )
+        args = FakeInstrumentationArgs(
+            application = ApplicationProvider.getApplicationContext(),
+            configService = configService,
+            clock = clock,
+        )
+        val dataSource = NetworkCaptureDataSourceImpl(args)
+
+        // still within the window: now == deliveredAt
+        assertEquals(1, dataSource.getNetworkCaptureRules("https://embrace.io/changelog", "GET").size)
+
+        // advance past deliveredAt + expiresIn
+        clock.tick(1001)
+        assertEquals(0, dataSource.getNetworkCaptureRules("https://embrace.io/changelog", "GET").size)
+    }
+
+    @Test
+    fun `test capture rule stays valid across a simulated relaunch with no new fetch`() {
+        val clock = FakeClock()
+        val rule = getDefaultRule(expiresIn = 1) // 1 second
+        cfg = RemoteConfig(networkCaptureRules = setOf(rule))
+        val deliveredAt = clock.now()
+
+        // first "launch": config was just delivered
+        configService = FakeConfigService(
+            networkBehavior = createNetworkBehavior(remoteCfg = cfg, configDeliveredAt = deliveredAt),
+        )
+        args = FakeInstrumentationArgs(
+            application = ApplicationProvider.getApplicationContext(),
+            configService = configService,
+            clock = clock,
+        )
+        assertEquals(1, NetworkCaptureDataSourceImpl(args).getNetworkCaptureRules("https://embrace.io/changelog", "GET").size)
+
+        // simulate a relaunch shortly after: the same cached config is reloaded, so deliveredAt is
+        // unchanged even though a fresh NetworkBehaviorImpl/data source instance is created.
+        clock.tick(500)
+        configService = FakeConfigService(
+            networkBehavior = createNetworkBehavior(remoteCfg = cfg, configDeliveredAt = deliveredAt),
+        )
+        args = FakeInstrumentationArgs(
+            application = ApplicationProvider.getApplicationContext(),
+            configService = configService,
+            clock = clock,
+        )
+        assertEquals(1, NetworkCaptureDataSourceImpl(args).getNetworkCaptureRules("https://embrace.io/changelog", "GET").size)
     }
 
     @Test

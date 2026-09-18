@@ -31,6 +31,9 @@ class SessionMetadataWriter(
         sharedLibSymbolMappingSource()?.let { symbols -> SharedLibSymbolMapping(symbols = symbols) }
     }
 
+    @Volatile
+    private var lastWritten: SessionMetadata? = null
+
     /**
      * Writes the metadata for the active session part, replacing any metadata already on disk.
      */
@@ -56,9 +59,14 @@ class SessionMetadataWriter(
             sharedLibSymbolMapping = sharedLibSymbolMapping,
         )
 
+        if (metadata == lastWritten) {
+            return true
+        }
+
         writeAtomically(partDir, METADATA_FILE_NAME, Long.MAX_VALUE, target.counters) { stream ->
             SessionMetadata.ADAPTER.encode(stream, metadata)
         }
+        lastWritten = metadata
         return true
     }
 

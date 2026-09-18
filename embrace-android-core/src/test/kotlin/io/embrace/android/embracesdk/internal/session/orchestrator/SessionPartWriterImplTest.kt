@@ -64,9 +64,11 @@ internal class SessionPartWriterImplTest {
     private var writeCount = 0
     private var completedSpanCount = 0
     private var onMetadataRead: () -> Unit = {}
+    private var stableContent = false
     private val metadataSource = EnvelopeMetadataSource {
         onMetadataRead()
-        EnvelopeMetadata(userId = "user${writeCount++}")
+        val read = writeCount++
+        EnvelopeMetadata(userId = if (stableContent) "user" else "user$read")
     }
 
     private lateinit var sessionSpan: FakeEmbraceSdkSpan
@@ -77,8 +79,10 @@ internal class SessionPartWriterImplTest {
 
     private var resourceCount = 0
     private val resourceSource = object : EnvelopeResourceSource {
-        override fun getEnvelopeResource(): EnvelopeResource =
-            EnvelopeResource(appVersion = "resource${resourceCount++}")
+        override fun getEnvelopeResource(): EnvelopeResource {
+            val read = resourceCount++
+            return EnvelopeResource(appVersion = if (stableContent) "resource" else "resource$read")
+        }
 
         override fun add(key: String, value: String) = Unit
 
@@ -95,6 +99,7 @@ internal class SessionPartWriterImplTest {
         writeCount = 0
         completedSpanCount = 0
         resourceCount = 0
+        stableContent = false
         onMetadataRead = {}
         inFlightSpans = emptyList()
         onSpanSnapshotsRead = {}
@@ -820,8 +825,8 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
 
-        // every write queued when the part starts is the first one for its file
-        assertEquals(listOf(0L, 0L), delays)
+        // the metadata write goes straight onto the worker, so only the snapshot write is scheduled
+        assertEquals(listOf(0L), delays)
         delays.clear()
 
         writer.onMetadataChanged()
@@ -855,8 +860,9 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartEnded(SESSION_PART_ID)
         drain()
 
-        // the part is no longer current, so the write does not land
-        assertEquals(1, writeCount)
+        // the change arrived while the part was still current, so ending it flushes the change in
+        assertEquals(2, writeCount)
+        assertEquals("user1", metadataOnDisk(SESSION_PART_ID)?.user_id)
         assertNoInternalErrors()
     }
 
@@ -884,7 +890,7 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
-    fun `a write armed as a session part ends does not run after the part is sealed`() {
+    fun `a write armed as a session part ends is flushed into it before it is sealed`() {
         val events = mutableListOf<String>()
         onMetadataRead = { events.add("metadata-write") }
         lateinit var writer: SessionPartWriterImpl
@@ -904,8 +910,9 @@ internal class SessionPartWriterImplTest {
         writer.onMetadataChanged()
         drain()
 
-        assertEquals(listOf("writes-complete"), events)
-        assertEquals("user0", metadataOnDisk(SESSION_PART_ID)?.user_id)
+        // the write is flushed by the part ending, so it lands before the part is sealed
+        assertEquals(listOf("metadata-write", "writes-complete"), events)
+        assertEquals("user1", metadataOnDisk(SESSION_PART_ID)?.user_id)
         assertNoInternalErrors()
     }
 
@@ -979,9 +986,39 @@ internal class SessionPartWriterImplTest {
         writer.onCrash()
 
         assertEquals(listOf(SESSION_PART_ID), partDirs().map(SessionPartDirectory::sessionPartId))
-        assertEquals("resource0", metadataOnDisk(SESSION_PART_ID)?.resource?.app_version)
-        assertEquals("user0", metadataOnDisk(SESSION_PART_ID)?.user_id)
+        assertEquals("resource1", metadataOnDisk(SESSION_PART_ID)?.resource?.app_version)
+        assertEquals("user1", metadataOnDisk(SESSION_PART_ID)?.user_id)
         assertEquals("span0", sessionSpanOnDisk(SESSION_PART_ID)?.name)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a session part end does not rewrite unchanged metadata`() {
+        stableContent = true
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        assertTrue(checkNotNull(partFile(SESSION_PART_ID, METADATA_FILE_NAME)).delete())
+        writer.endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        drain()
+
+        assertNull(partFile(SESSION_PART_ID, METADATA_FILE_NAME))
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a crash does not rewrite unchanged metadata`() {
+        stableContent = true
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        assertTrue(checkNotNull(partFile(SESSION_PART_ID, METADATA_FILE_NAME)).delete())
+        writer.onCrash()
+
+        assertNull(partFile(SESSION_PART_ID, METADATA_FILE_NAME))
         assertNoInternalErrors()
     }
 

@@ -384,6 +384,62 @@ internal class SessionMetadataWriterTest {
         assertWriteFailureTracked()
     }
 
+    @Test
+    fun `metadata that has not changed is not written again`() {
+        assertTrue(write())
+        assertTrue(metadataFile().delete())
+        assertTrue(write())
+
+        assertFalse(metadataFile().isFile)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `changed metadata is written again`() {
+        assertTrue(write())
+        metadataProvider = { fullyPopulatedMetadata.copy(userId = "other-user") }
+        assertTrue(write())
+
+        assertEquals("other-user", readMetadata().user_id)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a changed resource is written again`() {
+        assertTrue(write())
+        resourceProvider = { fullyPopulatedResource.copy(appVersion = "9.9.9") }
+        assertTrue(write())
+
+        assertEquals("9.9.9", readMetadata().resource?.app_version)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `metadata that changed and changed back is not written again`() {
+        assertTrue(write())
+        metadataProvider = { fullyPopulatedMetadata.copy(userId = "other-user") }
+        assertTrue(write())
+
+        metadataProvider = { fullyPopulatedMetadata }
+        assertTrue(write())
+        assertEquals(fullyPopulatedMetadataProto(), readMetadata())
+
+        assertTrue(metadataFile().delete())
+        assertTrue(write())
+        assertFalse(metadataFile().isFile)
+    }
+
+    @Test
+    fun `metadata is written after an earlier write failed`() {
+        metadataProvider = { error("boom") }
+        assertFalse(writer.write())
+        metadataProvider = { fullyPopulatedMetadata }
+        assertTrue(write())
+
+        assertEquals(fullyPopulatedMetadataProto(), readMetadata())
+        assertWriteFailureTracked()
+    }
+
     private fun createWriter(source: () -> SessionPartDirectory?): SessionMetadataWriter =
         SessionMetadataWriter(
             target = SessionPartWriteTarget(lazy { sessionsDir }, source),

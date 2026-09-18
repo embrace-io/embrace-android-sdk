@@ -15,7 +15,7 @@ jobs:
     name: Create Release Branch
     permissions:
       contents: write
-    uses: ./.github/workflows/create-release-branch.yml
+    uses: $/.github/workflows/create-release-branch.yml
     with:
       rc_version: ${{ inputs.rc_version }}
 
@@ -24,7 +24,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    uses: ./.github/workflows/bump-snapshot-version.yml
+    uses: $/.github/workflows/bump-snapshot-version.yml
     with:
       next_version: ${{ inputs.next_version }}
 
@@ -33,7 +33,7 @@ jobs:
     permissions:
       contents: write
     needs: create-release-branch
-    uses: ./.github/workflows/upload-artifacts-to-maven-central.yml # zizmor: ignore[secrets-inherit]
+    uses: $/.github/workflows/upload-artifacts-to-maven-central.yml # zizmor: ignore[secrets-inherit]
     with:
       rc_version: ${{ inputs.rc_version }}
     secrets: inherit
@@ -43,7 +43,7 @@ jobs:
     permissions:
       contents: write
     needs: upload-artifacts-to-sonatype
-    uses: ./.github/workflows/publish-api-docs.yml # zizmor: ignore[secrets-inherit]
+    uses: $/.github/workflows/publish-api-docs.yml # zizmor: ignore[secrets-inherit]
     with:
       rc_version: ${{ inputs.rc_version }}
     secrets: inherit

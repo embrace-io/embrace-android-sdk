@@ -839,6 +839,14 @@ internal class SessionPartWriterImplTest {
         assertEquals(listOf(SessionPartWriterImpl.SPAN_SNAPSHOT_WRITE_DELAY_MS), delays)
         delays.clear()
 
+        writer.onSpanCompleted(listOf(completedSpan("network-request")))
+        assertEquals(listOf(SessionPartWriterImpl.COMPLETED_SPAN_WRITE_DELAY_MS), delays)
+        delays.clear()
+
+        writer.onSpanSnapshotChanged(inFlightSpan("view-load"))
+        assertEquals(listOf(SessionPartWriterImpl.SPAN_SNAPSHOT_WRITE_DELAY_MS), delays)
+        delays.clear()
+
         writer.endPart()
         writer.onSessionPartEnded(SESSION_PART_ID)
         assertEquals(emptyList<Long>(), delays)
@@ -989,8 +997,8 @@ internal class SessionPartWriterImplTest {
         writer.onCrash()
 
         assertEquals(listOf(SESSION_PART_ID), partDirs().map(SessionPartDirectory::sessionPartId))
-        assertEquals("resource0", metadataOnDisk(SESSION_PART_ID)?.resource?.app_version)
-        assertEquals("user0", metadataOnDisk(SESSION_PART_ID)?.user_id)
+        assertEquals("resource1", metadataOnDisk(SESSION_PART_ID)?.resource?.app_version)
+        assertEquals("user1", metadataOnDisk(SESSION_PART_ID)?.user_id)
         assertEquals("span0", sessionSpanOnDisk(SESSION_PART_ID)?.name)
         assertNoInternalErrors()
     }

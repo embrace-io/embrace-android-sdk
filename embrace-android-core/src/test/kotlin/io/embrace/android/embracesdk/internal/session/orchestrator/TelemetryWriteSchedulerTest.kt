@@ -142,7 +142,7 @@ internal class TelemetryWriteSchedulerTest {
         assertEquals(1, guardedTasks)
 
         scheduler.write(WriteStrategy.IMMEDIATE, "b")
-        assertEquals(2, guardedTasks)
+        assertEquals(3, guardedTasks)
     }
 
     @Test

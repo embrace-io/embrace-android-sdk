@@ -96,16 +96,17 @@ internal class TelemetryWriteScheduler<T>(
     }
 
     /**
-     * Disarms any waiting writes and enqueues a new write on the worker with no delay. Nothing is
-     * enqueued if the queue holds no telemetry, as an empty write is wasted work.
+     * Disarms any waiting writes and enqueues a new write on the worker with no delay.
      *
      * If a Runnable is already in-progress it is allowed to complete.
      */
     fun flush() {
-        disarm()
         if (queue.size == 0) {
             return
         }
+        disarm()
+        val task = guard(Runnable { onWrite(queue.drain()) })
+        runCatching { worker.submit(task) }
         runCatching { worker.submit(writeTask()) }
     }
 

@@ -5,6 +5,8 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 50
+    cooldown:
+      default-days: 7
     groups:
       github:
         patterns:
@@ -16,3 +18,5 @@ updates:
     schedule:
       interval: "daily"
     open-pull-requests-limit: 50
+    cooldown:
+      default-days: 7

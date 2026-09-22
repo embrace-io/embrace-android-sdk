@@ -101,10 +101,10 @@ internal class TelemetryWriteScheduler<T>(
      * If a Runnable is already in-progress it is allowed to complete.
      */
     fun flush() {
-        disarm()
         if (queue.size == 0) {
             return
         }
+        disarm()
         val task = guard(Runnable { onWrite(queue.drain()) })
         runCatching { worker.submit(task) }
         runCatching { worker.submit(writeTask()) }

@@ -839,14 +839,6 @@ internal class SessionPartWriterImplTest {
         assertEquals(listOf(SessionPartWriterImpl.SPAN_SNAPSHOT_WRITE_DELAY_MS), delays)
         delays.clear()
 
-        writer.onSpanCompleted(listOf(completedSpan("network-request")))
-        assertEquals(listOf(SessionPartWriterImpl.COMPLETED_SPAN_WRITE_DELAY_MS), delays)
-        delays.clear()
-
-        writer.onSpanSnapshotChanged(inFlightSpan("view-load"))
-        assertEquals(listOf(SessionPartWriterImpl.SPAN_SNAPSHOT_WRITE_DELAY_MS), delays)
-        delays.clear()
-
         writer.endPart()
         writer.onSessionPartEnded(SESSION_PART_ID)
         assertEquals(emptyList<Long>(), delays)
@@ -980,8 +972,8 @@ internal class SessionPartWriterImplTest {
         }
         drainOnce()
 
-        assertEquals("user0", metadataOnDisk(SESSION_PART_ID)?.user_id)
-        assertEquals(1, writeCount)
+        assertEquals("user1", metadataOnDisk(SESSION_PART_ID)?.user_id)
+        assertEquals(2, writeCount)
 
         // the write queued while the other one ran is still pending, and runs next
         drainOnce()

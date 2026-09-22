@@ -862,9 +862,9 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartEnded(SESSION_PART_ID)
         drain()
 
-        // the change arrived while the part was still current, so ending it flushes the change in
-        assertEquals(2, writeCount)
-        assertEquals("user1", metadataOnDisk(SESSION_PART_ID)?.user_id)
+        // the change arrived after the part stopped being current, so it is not written to it
+        assertEquals(1, writeCount)
+        assertEquals("user0", metadataOnDisk(SESSION_PART_ID)?.user_id)
         assertNoInternalErrors()
     }
 
@@ -989,8 +989,8 @@ internal class SessionPartWriterImplTest {
         writer.onCrash()
 
         assertEquals(listOf(SESSION_PART_ID), partDirs().map(SessionPartDirectory::sessionPartId))
-        assertEquals("resource1", metadataOnDisk(SESSION_PART_ID)?.resource?.app_version)
-        assertEquals("user1", metadataOnDisk(SESSION_PART_ID)?.user_id)
+        assertEquals("resource0", metadataOnDisk(SESSION_PART_ID)?.resource?.app_version)
+        assertEquals("user0", metadataOnDisk(SESSION_PART_ID)?.user_id)
         assertEquals("span0", sessionSpanOnDisk(SESSION_PART_ID)?.name)
         assertNoInternalErrors()
     }

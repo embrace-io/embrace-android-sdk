@@ -79,9 +79,10 @@ internal class TelemetryWriteSchedulerTest {
     }
 
     @Test
-    fun `an immediate write runs even when nothing is buffered`() {
+    fun `an immediate write does nothing when nothing is buffered`() {
         scheduler.write(WriteStrategy.IMMEDIATE, emptyList())
-        assertEquals(listOf(emptyList<String>()), writes)
+        assertEquals(emptyList<List<String>>(), writes)
+        assertEquals(0, guardedTasks)
     }
 
     @Test
@@ -140,7 +141,7 @@ internal class TelemetryWriteSchedulerTest {
         executor.moveForwardAndRunBlocked(DELAY_MS)
         assertEquals(1, guardedTasks)
 
-        scheduler.write(WriteStrategy.IMMEDIATE, emptyList())
+        scheduler.write(WriteStrategy.IMMEDIATE, "b")
         assertEquals(2, guardedTasks)
     }
 

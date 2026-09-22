@@ -30,11 +30,10 @@ class CompletedSpansWriter(
     private var file: SpanCollectionFile? = null
 
     /**
-     * Records written to the log held open. An error that forces the file to be discarded restarts
-     * the count, so this bounds what one open file writes rather than the log as a whole. The byte
-     * budget is re-read from disk on reopening and stays exact.
+     * Records logged for [countedDirectory]. Closing the file leaves the log, so the count stands.
      */
     private var records = 0
+    private var countedDirectory: SessionPartDirectory? = null
 
     /**
      * Appends [spans] to the log for the active session part, leaving the spans already logged in
@@ -45,7 +44,7 @@ class CompletedSpansWriter(
         try {
             writeImpl(spans)
         } catch (exc: Throwable) {
-            discardFile()
+            closeFile()
             target.reportWriteFailure(exc, ::trackFailure)
             false
         }
@@ -55,7 +54,7 @@ class CompletedSpansWriter(
      * Releases the file held open for the session part written to so far.
      */
     fun close() {
-        discardFile()
+        closeFile()
     }
 
     private fun writeImpl(spans: List<Span>): Boolean {
@@ -93,21 +92,20 @@ class CompletedSpansWriter(
      */
     private fun openFile(): SpanCollectionFile? {
         val directory = target.directory ?: return null
-        file?.let { open ->
-            if (open.directory == directory) {
-                return open
-            }
-            discardFile()
+        if (directory != countedDirectory) {
+            closeFile()
+            countedDirectory = directory
+            records = 0
         }
+        file?.let { return it }
         val partDir = target.partDir(directory, ::trackFailure) ?: return null
         return SpanCollectionFile(directory, File(partDir, COMPLETED_SPANS_FILE_NAME), target.counters)
             .also { file = it }
     }
 
-    private fun discardFile() {
+    private fun closeFile() {
         val open = file ?: return
         file = null
-        records = 0
         try {
             open.close()
         } catch (exc: IOException) {

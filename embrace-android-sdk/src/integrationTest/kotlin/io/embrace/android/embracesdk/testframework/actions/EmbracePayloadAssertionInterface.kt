@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
+import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -236,6 +237,7 @@ internal class EmbracePayloadAssertionInterface(
 
             if (crashData != null) {
                 assertEquals(checkNotNull(crashData.partEnvelope).getUserSessionId(), getUserSessionId())
+                assertEquals(checkNotNull(crashData.partEnvelope).getSessionPartId(), getSessionPartId())
                 assertEquals(crashData.lastHeartbeatMs, endTimeNanos?.nanosToMillis())
                 assertEquals(
                     crashData.nativeCrash.nativeCrashId,

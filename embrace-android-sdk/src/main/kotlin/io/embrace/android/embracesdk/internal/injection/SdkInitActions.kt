@@ -217,7 +217,7 @@ internal fun ModuleGraph.triggerPayloadSend() = safeInit {
     val worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
     worker.submit {
         // process multi-file session part directories before resurrection can run
-        userSessionOrchestrationModule.sessionPartReader?.readPersistedSessionParts()
+        userSessionOrchestrationModule.sessionPartReader?.readPersistedSessionParts(true)
 
         val resurrectionService = payloadSourceModule.payloadResurrectionService
         var resurrectionAttempted = false

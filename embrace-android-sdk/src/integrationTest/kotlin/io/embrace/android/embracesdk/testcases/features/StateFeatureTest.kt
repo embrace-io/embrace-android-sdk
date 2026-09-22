@@ -1,25 +1,21 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.assertions.assertNoStateValue
-import io.embrace.android.embracesdk.assertions.assertStateTransition
-import io.embrace.android.embracesdk.assertions.assertSystemInitialStateValue
-import io.embrace.android.embracesdk.assertions.assertSystemNewStateValue
-import io.embrace.android.embracesdk.assertions.assertSystemStateValue
 import io.embrace.android.embracesdk.assertions.assertNonSystemInitialStateValue
 import io.embrace.android.embracesdk.assertions.assertNonSystemNewStateValue
 import io.embrace.android.embracesdk.assertions.assertNonSystemStateValue
+import io.embrace.android.embracesdk.assertions.assertStateTransition
+import io.embrace.android.embracesdk.assertions.assertSystemNewStateValue
+import io.embrace.android.embracesdk.assertions.assertSystemStateValue
 import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.assertions.getLogs
 import io.embrace.android.embracesdk.assertions.hasLinkToEmbraceSpan
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.LazyInitStateDataSource
 import io.embrace.android.embracesdk.fakes.TestStateDataSource
-import io.embrace.android.embracesdk.fakes.TypedStateValue
-import io.embrace.android.embracesdk.fakes.TypedValueStateDataSource
+import io.embrace.android.embracesdk.fakes.TestStateValue
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.internal.arch.datasource.StateDataSource
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
@@ -62,9 +58,9 @@ internal class StateFeatureTest {
 
     val stateEnabledRemoteConfig = RemoteConfig(pctStateCaptureEnabledV2 = 100.0f)
     val stateDisabledRemoteConfig = RemoteConfig(pctStateCaptureEnabledV2 = 0.0f)
-    val nonSystemValue = TypedStateValue("foo")
-    val systemValue = TypedStateValue("sys", true)
-    val dupeNameValue = TypedStateValue("sys")
+    val nonSystemValue = TestStateValue.NonSystemValue("foo")
+    val systemValue = TestStateValue.SystemValue("sys")
+    val dupeNameValue = TestStateValue.NonSystemValue("sys")
 
     @Test
     fun `state feature on by default`() {
@@ -317,7 +313,7 @@ internal class StateFeatureTest {
     @Test
     fun `logs have correct current state`() {
         val stateUpdates = listOf("foo", "bar")
-        val stateValues = mutableListOf<String>()
+        val stateValues = mutableListOf<Any>()
         var dataSourceKey: String? = null
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
@@ -537,17 +533,17 @@ internal class StateFeatureTest {
             persistedRemoteConfig = stateEnabledRemoteConfig,
             testCaseAction = {
                 recordSession {
-                    executeTypedValueStateTransitions(listOf(nonSystemValue, systemValue, dupeNameValue))
+                    executeTransitions(listOf(nonSystemValue, systemValue, dupeNameValue))
                 }
                 recordSession {
-                    executeTypedValueStateTransitions(listOf(systemValue, dupeNameValue, nonSystemValue))
+                    executeTransitions(listOf(systemValue, dupeNameValue, nonSystemValue))
                 }
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
 
-                val firstStateSpan = checkNotNull(sessions[0].getStateSpan("emb-state-typed"))
-                firstStateSpan.assertSystemInitialStateValue(TypedStateValue("UNKNOWN", true))
+                val firstStateSpan = checkNotNull(sessions[0].getStateSpan("emb-state-test"))
+                firstStateSpan.assertNonSystemInitialStateValue("UNKNOWN")
                 with(checkNotNull(firstStateSpan.events)) {
                     assertEquals(3, size)
                     this[0].assertNonSystemNewStateValue(nonSystemValue)
@@ -555,7 +551,7 @@ internal class StateFeatureTest {
                     this[2].assertNonSystemNewStateValue(dupeNameValue)
                 }
 
-                val secondStateSpan = checkNotNull(sessions[1].getStateSpan("emb-state-typed"))
+                val secondStateSpan = checkNotNull(sessions[1].getStateSpan("emb-state-test"))
                 secondStateSpan.assertNonSystemInitialStateValue(dupeNameValue)
                 with(checkNotNull(secondStateSpan.events)) {
                     this[0].assertSystemNewStateValue(systemValue)
@@ -578,59 +574,35 @@ internal class StateFeatureTest {
                 }
             },
             testCaseAction = {
-                val dataSource = findDataSource<TypedValueStateDataSource>()
-                valueKey = dataSource.stateAttributeKey
+                valueKey = findDataSource<TestStateDataSource>().stateAttributeKey
                 recordSession {
-                    // The typed data source is lazy so nothing is stamped before its first use
-                    embrace.logInfo("typed")
-                    executeTypedValueStateTransitions(listOf(nonSystemValue))
-                    embrace.logInfo("typed")
-                    executeTypedValueStateTransitions(listOf(systemValue))
-                    embrace.logInfo("typed")
-                    executeTypedValueStateTransitions(listOf(dupeNameValue))
-                    embrace.logInfo("typed")
+                    executeTransitions(listOf(nonSystemValue))
+                    embrace.logInfo("state")
+                    executeTransitions(listOf(systemValue))
+                    embrace.logInfo("state")
+                    executeTransitions(listOf(dupeNameValue))
+                    embrace.logInfo("state")
                     clock.tick(2000L)
                     logWorkerExecutor.runCurrentlyBlocked()
                 }
             },
             assertAction = {
-                val logs = getSingleLogEnvelope().getLogs { it.body == "typed" }
-                assertEquals(4, logs.size)
+                val logs = getSingleLogEnvelope().getLogs { it.body == "state" }
+                assertEquals(3, logs.size)
 
-                logs[0].assertNoStateValue(valueKey)
-                logs[1].assertNonSystemStateValue(valueKey, nonSystemValue)
-                logs[2].assertSystemStateValue(valueKey, systemValue)
-                logs[3].assertNonSystemStateValue(valueKey, dupeNameValue)
+                logs[0].assertNonSystemStateValue(valueKey, nonSystemValue)
+                logs[1].assertSystemStateValue(valueKey, systemValue)
+                logs[2].assertNonSystemStateValue(valueKey, dupeNameValue)
             },
         )
     }
 
-    private fun EmbraceActionInterface.executeTransitions(
-        updates: List<String>,
-        transitionDrops: Int = 0,
-        transitionAttributes: List<Map<String, String>> = emptyList(),
-    ): List<Pair<Long, String>> = executeTransitions(
-        dataSource = findDataSource<TestStateDataSource>(),
-        updates = updates,
-        transitionDrops = transitionDrops,
-        transitionAttributes = transitionAttributes,
-    )
-
-    private fun EmbraceActionInterface.executeTypedValueStateTransitions(
-        updates: List<TypedStateValue>,
-        transitionAttributes: List<Map<String, String>> = emptyList(),
-    ): List<Pair<Long, TypedStateValue>> = executeTransitions(
-        dataSource = findDataSource<TypedValueStateDataSource>(),
-        updates = updates,
-        transitionAttributes = transitionAttributes,
-    )
-
     private fun <T : Any> EmbraceActionInterface.executeTransitions(
-        dataSource: StateDataSource<in T>,
         updates: List<T>,
         transitionDrops: Int = 0,
         transitionAttributes: List<Map<String, String>> = emptyList(),
     ): List<Pair<Long, T>> {
+        val dataSource = findDataSource<TestStateDataSource>()
         val transitions: MutableList<Pair<Long, T>> = mutableListOf()
         repeat(updates.size) { i ->
             transitions.add(Pair(clock.tick(100L), updates[i]))

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.assertions
 
-import io.embrace.android.embracesdk.internal.arch.schema.recordedStateValueType
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes.EMB_STATE_VALUE_TYPE
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -20,7 +20,7 @@ fun Map<String, String>.assertSystemStateValue(
     valueTypeKey: String = EMB_STATE_VALUE_TYPE,
 ) {
     assertEquals(value.toString(), this[valueKey])
-    assertEquals(checkNotNull(recordedStateValueType(value)) { "$value is not a system value" }, this[valueTypeKey])
+    assertEquals(checkNotNull(SchemaType.State.valueType(value)) { "$value is not a system value" }, this[valueTypeKey])
 }
 
 /**
@@ -33,7 +33,7 @@ fun Map<String, String>.assertNonSystemStateValue(
     valueTypeKey: String = EMB_STATE_VALUE_TYPE,
 ) {
     assertEquals(value.toString(), this[valueKey])
-    assertNull("$value is a system value", recordedStateValueType(value))
+    assertNull("$value is a system value", SchemaType.State.valueType(value))
     assertFalse(containsKey(valueTypeKey))
 }
 
@@ -47,5 +47,5 @@ internal fun Map<String, String>.assertStateValue(
     valueTypeKey: String = EMB_STATE_VALUE_TYPE,
 ) {
     assertEquals(value.toString(), this[valueKey])
-    assertEquals(recordedStateValueType(value), this[valueTypeKey])
+    assertEquals(SchemaType.State.valueType(value), this[valueTypeKey])
 }

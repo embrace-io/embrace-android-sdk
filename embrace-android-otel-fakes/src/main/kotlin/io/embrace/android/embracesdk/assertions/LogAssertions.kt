@@ -83,16 +83,6 @@ fun Log.assertSystemStateValue(stateKey: String, value: Any): Unit =
 fun Log.assertNonSystemStateValue(stateKey: String, value: Any): Unit =
     stateAttributes().assertNonSystemStateValue(value, stateKey, stateValueTypeKey(stateKey))
 
-/**
- * Validate that a log is not recorded with a state value under [stateKey], nor its value type.
- */
-fun Log.assertNoStateValue(stateKey: String) {
-    with(stateAttributes()) {
-        assertFalse(containsKey(stateKey))
-        assertFalse(containsKey(stateValueTypeKey(stateKey)))
-    }
-}
-
 private fun Log.stateAttributes(): Map<String, String> = checkNotNull(attributes).toMap()
 
 private fun stateValueTypeKey(stateKey: String): String = "$stateKey.value_type"

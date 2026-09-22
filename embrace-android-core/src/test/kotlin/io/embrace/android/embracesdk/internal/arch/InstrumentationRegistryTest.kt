@@ -9,9 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationProvider
 import io.embrace.android.embracesdk.fakes.TestInstrumentationProvider
 import io.embrace.android.embracesdk.fakes.TestStateDataSource
-import io.embrace.android.embracesdk.fakes.TypedStateValue
-import io.embrace.android.embracesdk.fakes.TypedValueStateDataSource
-import io.embrace.android.embracesdk.fakes.TypedValueStateInstrumentationProvider
+import io.embrace.android.embracesdk.fakes.TestStateValue
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
@@ -128,29 +126,22 @@ internal class InstrumentationRegistryTest {
     @Test
     fun `current states include a value type only for active states whose current value is a system value`() {
         val args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
-        registry.loadInstrumentations(listOf(TestInstrumentationProvider(), TypedValueStateInstrumentationProvider()), args)
-        val testDataSource = checkNotNull(registry.findByType(TestStateDataSource::class))
-        val typedDataSource = checkNotNull(registry.findByType(TypedValueStateDataSource::class))
+        registry.loadInstrumentations(listOf(TestInstrumentationProvider()), args)
+        val dataSource = checkNotNull(registry.findByType(TestStateDataSource::class))
+        assertEquals(mapOf(dataSource.stateAttributeKey to "UNKNOWN"), registry.getCurrentStates())
 
-        // The typed data source is lazy so it contributes nothing until first used
-        assertEquals(mapOf(testDataSource.stateAttributeKey to "UNKNOWN"), registry.getCurrentStates())
-
-        typedDataSource.onStateChange(TypedStateValue("foo", true), args.clock.tick())
+        dataSource.onStateChange(TestStateValue.SystemValue("foo"), args.clock.tick())
         assertEquals(
             mapOf(
-                testDataSource.stateAttributeKey to "UNKNOWN",
-                typedDataSource.stateAttributeKey to TypedStateValue("foo", true),
-                typedDataSource.stateValueTypeAttributeKey to EmbStateTransitionAttributes.EmbStateValueTypeValues.SYSTEM,
+                dataSource.stateAttributeKey to TestStateValue.SystemValue("foo"),
+                dataSource.stateValueTypeAttributeKey to EmbStateTransitionAttributes.EmbStateValueTypeValues.SYSTEM,
             ),
             registry.getCurrentStates(),
         )
 
-        typedDataSource.onStateChange(TypedStateValue("foo"), args.clock.tick())
+        dataSource.onStateChange(TestStateValue.NonSystemValue("foo"), args.clock.tick())
         assertEquals(
-            mapOf(
-                testDataSource.stateAttributeKey to "UNKNOWN",
-                typedDataSource.stateAttributeKey to TypedStateValue("foo"),
-            ),
+            mapOf(dataSource.stateAttributeKey to TestStateValue.NonSystemValue("foo")),
             registry.getCurrentStates(),
         )
     }

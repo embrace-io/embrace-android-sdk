@@ -10,8 +10,8 @@ import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeLogRecord
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.FakeSpanService
-import io.embrace.android.embracesdk.fakes.TypedStateValue
-import io.embrace.android.embracesdk.fakes.TypedValueState
+import io.embrace.android.embracesdk.fakes.TestState
+import io.embrace.android.embracesdk.fakes.TestStateValue
 import io.embrace.android.embracesdk.fakes.getTraceIdFromTraceparent
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
@@ -172,11 +172,11 @@ internal class TelemetryDestinationImplTest {
 
     @Test
     fun `state capture records the value type only for system values`() {
-        val initialValue = TypedStateValue("init", isSystemValue = true)
-        val nonSystemValue = TypedStateValue("foo")
-        val systemValue = TypedStateValue("sys", isSystemValue = true)
-        val dupeNameValue = TypedStateValue("sys")
-        val token = impl.startSessionPartStateCapture(TypedValueState(initialValue))
+        val initialValue = TestStateValue.SystemValue("init")
+        val nonSystemValue = TestStateValue.NonSystemValue("foo")
+        val systemValue = TestStateValue.SystemValue("sys")
+        val dupeNameValue = TestStateValue.NonSystemValue("sys")
+        val token = impl.startSessionPartStateCapture(TestState(initialValue))
         val span = spanService.createdSpans.single()
         span.attributes.assertSystemStateValue(initialValue, EmbStateTransitionAttributes.EMB_STATE_INITIAL_VALUE)
 

@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.arch.schema.recordedStateValueType
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
@@ -32,7 +31,7 @@ abstract class StateDataSource<T : Any>(
     val stateAttributeKey: String = "emb.state.${stateTypeFactory(defaultValue).stateName}"
 
     /**
-     * Attribute key under which the type of the current state value is stored when the state value is typed.
+     * Attribute key under which the type of the current state value is stored when the state value is a system value.
      */
     val stateValueTypeAttributeKey: String = "$stateAttributeKey.value_type"
 
@@ -107,7 +106,7 @@ abstract class StateDataSource<T : Any>(
         val value = currentState.get()
         return buildMap {
             put(stateAttributeKey, value)
-            recordedStateValueType(value)?.let { valueType ->
+            SchemaType.State.valueType(value)?.let { valueType ->
                 put(stateValueTypeAttributeKey, valueType)
             }
         }

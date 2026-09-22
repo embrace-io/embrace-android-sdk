@@ -105,8 +105,6 @@ internal class TelemetryWriteScheduler<T>(
             return
         }
         disarm()
-        val task = guard(Runnable { onWrite(queue.drain()) })
-        runCatching { worker.submit(task) }
         runCatching { worker.submit(writeTask()) }
     }
 

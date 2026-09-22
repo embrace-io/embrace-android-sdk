@@ -229,8 +229,8 @@ internal class SessionPartWriterBoundaryTest {
         startPart(SECOND_PART_ID)
         drain()
 
-        assertEquals("resource1", metadataIn(FIRST_PART_ID)?.resource?.app_version)
-        assertEquals("resource2", metadataIn(SECOND_PART_ID)?.resource?.app_version)
+        assertEquals("resource0", metadataIn(FIRST_PART_ID)?.resource?.app_version)
+        assertEquals("resource1", metadataIn(SECOND_PART_ID)?.resource?.app_version)
         assertNoInternalErrors()
     }
 

@@ -972,8 +972,8 @@ internal class SessionPartWriterImplTest {
         }
         drainOnce()
 
-        assertEquals("user1", metadataOnDisk(SESSION_PART_ID)?.user_id)
-        assertEquals(2, writeCount)
+        assertEquals("user0", metadataOnDisk(SESSION_PART_ID)?.user_id)
+        assertEquals(1, writeCount)
 
         // the write queued while the other one ran is still pending, and runs next
         drainOnce()
@@ -989,8 +989,8 @@ internal class SessionPartWriterImplTest {
         writer.onCrash()
 
         assertEquals(listOf(SESSION_PART_ID), partDirs().map(SessionPartDirectory::sessionPartId))
-        assertEquals("resource1", metadataOnDisk(SESSION_PART_ID)?.resource?.app_version)
-        assertEquals("user1", metadataOnDisk(SESSION_PART_ID)?.user_id)
+        assertEquals("resource0", metadataOnDisk(SESSION_PART_ID)?.resource?.app_version)
+        assertEquals("user0", metadataOnDisk(SESSION_PART_ID)?.user_id)
         assertEquals("span0", sessionSpanOnDisk(SESSION_PART_ID)?.name)
         assertNoInternalErrors()
     }

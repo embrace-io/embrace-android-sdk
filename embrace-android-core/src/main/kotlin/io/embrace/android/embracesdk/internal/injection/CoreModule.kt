@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 
 /**
  * Contains a core set of dependencies that are required by most services/classes in the SDK.
@@ -29,4 +30,5 @@ interface CoreModule {
 
     val store: KeyValueStore
     val ordinalStore: OrdinalStore
+    val eventBus: EventBus
 }

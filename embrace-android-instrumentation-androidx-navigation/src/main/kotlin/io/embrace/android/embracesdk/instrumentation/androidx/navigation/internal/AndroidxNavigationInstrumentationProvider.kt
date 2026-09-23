@@ -4,6 +4,9 @@ import android.app.Activity
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ScreenChanged
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ScreenSourceAttached
+import io.embrace.android.embracesdk.internal.arch.navigation.getId
 
 /**
  * Initializes androidx navigation tracking instrumentation
@@ -11,18 +14,17 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 public class AndroidxNavigationInstrumentationProvider : InstrumentationProvider {
 
     override fun register(args: InstrumentationArgs): DataSourceState<*>? {
-        val navigationControllerEventListener = args.navigationTrackingService
-        NavControllerTracker(navigationControllerEventListener, args.clock, args.logger).apply {
+        NavControllerTracker(args.eventBus, args.clock, args.logger).apply {
             args.navigationTrackingService.navigationTrackingInitListener = this
             trackNavigation = ::trackNavigation
         }
 
         with(args) {
             attachBackStack = fun(activity: Activity) {
-                navigationTrackingService.onControllerAttached(activity, clock.now())
+                eventBus.emit(ScreenSourceAttached(activity.getId(), clock.now()))
             }
             onBackStackDestinationChange = fun(activity: Activity, newDestination: String) {
-                navigationTrackingService.onDestinationChange(activity, newDestination, clock.now())
+                eventBus.emit(ScreenChanged(activity.getId(), newDestination, clock.now()))
             }
         }
         return null

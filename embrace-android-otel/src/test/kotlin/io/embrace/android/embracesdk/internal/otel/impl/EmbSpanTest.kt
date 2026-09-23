@@ -3,12 +3,21 @@ package io.embrace.android.embracesdk.internal.otel.impl
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
+import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.fakes.TestConstants.TESTS_DEFAULT_USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
+import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
+import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
+import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
+import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.opentelemetry.kotlin.Clock
+import io.opentelemetry.kotlin.getTracer
 import io.opentelemetry.kotlin.tracing.StatusData
 import io.opentelemetry.kotlin.tracing.recordException
 import org.junit.Assert.assertEquals
@@ -119,8 +128,63 @@ internal class EmbSpanTest {
             with(last()) {
                 assertEquals("event2", name)
                 assertEquals(event2Time, timestampNanos)
-                assertEquals(10, attributes.size)
+                assertEquals(
+                    mapOf(
+                        "boolean" to "true",
+                        "integer" to "1",
+                        "long" to "2",
+                        "double" to "3.0",
+                        "string" to "value",
+                        "booleanArray" to "[true, false]",
+                        "integerArray" to "[1, 2]",
+                        "longArray" to "[2, 3]",
+                        "doubleArray" to "[3.0, 4.0]",
+                        "stringArray" to "[value, vee]",
+                    ),
+                    attributes,
+                )
             }
+        }
+    }
+
+    @Test
+    fun `event attributes over the limit are truncated to the max event attribute count`() {
+        val dataValidator = DataValidator(telemetryService = FakeTelemetryService())
+        val tracer = createSdkOtelInstance(useKotlinSdk = TESTS_DEFAULT_USE_KOTLIN_SDK, clock = openTelemetryClock)
+            .getTracer("test-tracer")
+        val realSpan = EmbraceSpanFactoryImpl(
+            openTelemetryClock = openTelemetryClock,
+            spanRepository = SpanRepository(),
+            dataValidator = dataValidator,
+            telemetryService = FakeTelemetryService(),
+        ).create(
+            OtelSpanStartArgs(
+                name = "test-span",
+                type = EmbType.Performance.Default,
+                internal = false,
+                private = false,
+                tracer = tracer,
+                openTelemetry = fakeOpenTelemetry(),
+            ),
+        )
+        assertTrue(realSpan.start())
+        val realEmbSpan = EmbSpan(
+            impl = realSpan,
+            clock = openTelemetryClock,
+            openTelemetry = fakeOpenTelemetry(),
+        )
+        val max = dataValidator.otelLimitsConfig.getMaxEventAttributeCount()
+
+        realEmbSpan.addEvent("event") {
+            repeat(max + 5) {
+                setLongAttribute("key$it", it.toLong())
+            }
+        }
+
+        val attributes = checkNotNull(realSpan.events().single().attributes)
+        assertEquals(max, attributes.size)
+        attributes.forEach {
+            assertEquals(checkNotNull(it.key).removePrefix("key"), it.data)
         }
     }
 

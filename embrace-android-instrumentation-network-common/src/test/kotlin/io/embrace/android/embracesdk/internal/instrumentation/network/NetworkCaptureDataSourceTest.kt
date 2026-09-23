@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRe
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.semconv.EmbNetworkCapturedRequestAttributes
+import io.opentelemetry.kotlin.semconv.UrlAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -301,6 +302,93 @@ internal class NetworkCaptureDataSourceTest {
         assertEquals("network_body", telemetryService.appliedLimits[1].first)
         assertEquals(AppliedLimitType.TRUNCATE_STRING, telemetryService.appliedLimits[1].second)
     }
+
+    @Test
+    fun `first configured matching rule wins`() {
+        val firstRule = getDefaultRule(id = "first", urlRegex = "embrace.io/*", maxSize = 2)
+        val secondRule = getDefaultRule(id = "second", urlRegex = "embrace.io/change*", maxSize = 5)
+        cfg = RemoteConfig(networkCaptureRules = setOf(firstRule, secondRule))
+        val service = getService()
+
+        service.recordNetworkRequest(
+            HttpNetworkRequest(
+                url = "https://embrace.io/changelog",
+                httpMethod = "GET",
+                statusCode = 200,
+                startTime = 0,
+                endTime = 1000,
+                body = HttpNetworkRequest.HttpRequestBody(
+                    requestHeaders = null,
+                    requestQueryParams = null,
+                    capturedRequestBody = null,
+                    responseHeaders = null,
+                    capturedResponseBody = "abcdefgh".toByteArray(),
+                    dataCaptureErrorMessage = null,
+                ),
+            ),
+        )
+
+        assertEquals(1, destination.logEvents.size)
+        val attrs = destination.logEvents[0].schemaType.attributes()
+        assertEquals("ab", attrs[EmbNetworkCapturedRequestAttributes.RESPONSE_BODY])
+        assertEquals(firstRule.urlRegex, attrs[UrlAttributes.URL_FULL])
+        assertEquals(
+            firstRule.maxCount - 1,
+            args.store.getInt(NetworkCaptureDataSourceImpl.NETWORK_CAPTURE_RULE_PREFIX_KEY + firstRule.id),
+        )
+        assertNull(args.store.getInt(NetworkCaptureDataSourceImpl.NETWORK_CAPTURE_RULE_PREFIX_KEY + secondRule.id))
+    }
+
+    @Test
+    fun `zero rules performs no capture`() {
+        val service = getService()
+
+        assertFalse(service.shouldCaptureNetworkBody("https://embrace.io/changelog", "GET"))
+        service.recordNetworkRequest(
+            HttpNetworkRequest(
+                url = "https://embrace.io/changelog",
+                httpMethod = "GET",
+                statusCode = 200,
+                startTime = 0,
+                endTime = 1000,
+                body = networkCaptureData,
+            ),
+        )
+        assertEquals(0, destination.logEvents.size)
+    }
+
+    @Test
+    fun `updated rules are applied after a config change`() {
+        val originalRule = getDefaultRule(id = "original", urlRegex = "embrace.io/*")
+        cfg = RemoteConfig(networkCaptureRules = setOf(originalRule))
+        val service = getService()
+
+        service.recordNetworkRequest(fakeRequest("https://embrace.io/changelog"))
+        assertEquals(1, destination.logEvents.size)
+        assertEquals(originalRule.urlRegex, destination.logEvents[0].schemaType.attributes()[UrlAttributes.URL_FULL])
+
+        val updatedRule = getDefaultRule(id = "updated", urlRegex = "httpbin.org/*")
+        configService.networkBehavior = createNetworkBehavior(
+            remoteCfg = RemoteConfig(networkCaptureRules = setOf(updatedRule)),
+        )
+
+        service.recordNetworkRequest(fakeRequest("https://embrace.io/changelog"))
+        assertEquals(1, destination.logEvents.size)
+        assertFalse(service.shouldCaptureNetworkBody("https://embrace.io/changelog", "GET"))
+
+        service.recordNetworkRequest(fakeRequest("https://httpbin.org/get"))
+        assertEquals(2, destination.logEvents.size)
+        assertEquals(updatedRule.urlRegex, destination.logEvents[1].schemaType.attributes()[UrlAttributes.URL_FULL])
+    }
+
+    private fun fakeRequest(url: String) = HttpNetworkRequest(
+        url = url,
+        httpMethod = "GET",
+        statusCode = 200,
+        startTime = 0,
+        endTime = 1000,
+        body = networkCaptureData,
+    )
 
     private fun getService(): NetworkCaptureDataSourceImpl {
         configService = FakeConfigService(

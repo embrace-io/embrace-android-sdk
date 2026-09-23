@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.delivery.storage
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.concurrency.runConcurrently
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
@@ -17,6 +18,9 @@ import org.junit.Test
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 class FileStorageServiceImplTest {
 
@@ -186,6 +190,65 @@ class FileStorageServiceImplTest {
         assertEquals(0, freshService.getStoredPayloads().size)
         assertFalse(bogus.exists())
         assertFalse(orphanTmp.exists())
+    }
+
+    @Test
+    fun `concurrent stores and deletes keep the index in sync with disk`() {
+        val threadCount = 8
+        val payloadsPerThread = 20
+        val deleteExecutor = Executors.newFixedThreadPool(4)
+        val concurrentService = FileStorageServiceImpl(
+            lazy { outputDir },
+            PriorityWorker(deleteExecutor),
+            logger,
+            clock,
+            maxAgeMs = MAX_AGE_MS,
+        )
+        val payloads = List(threadCount) { threadIndex ->
+            List(payloadsPerThread) { payloadIndex ->
+                StoredTelemetryMetadata(
+                    timestamp = clock.now(),
+                    uuid = "aaaaaaaa-0000-0000-${threadIndex.toString().padStart(4, '0')}-" +
+                        payloadIndex.toString().padStart(12, '0'),
+                    processIdentifier = "proc1",
+                    envelopeType = SupportedEnvelopeType.SESSION,
+                    complete = true,
+                    payloadType = PayloadType.SESSION,
+                )
+            }
+        }
+        // every odd-indexed payload deletes its even-indexed predecessor once stored
+        val deleted = payloads.flatMap { threadPayloads ->
+            threadPayloads.filterIndexed { index, _ -> index % 2 == 0 }
+        }.toSet()
+        val stored = payloads.flatten().toSet()
+        val deletesFinished = CountDownLatch(deleted.size)
+
+        try {
+            runConcurrently(threadCount) { threadIndex ->
+                val threadPayloads = payloads[threadIndex]
+                threadPayloads.forEachIndexed { index, metadata ->
+                    concurrentService.store(metadata) {
+                        it.write(DUMMY_CONTENT.toByteArray())
+                    }
+                    if (index % 2 == 1) {
+                        concurrentService.delete(threadPayloads[index - 1]) {
+                            deletesFinished.countDown()
+                        }
+                    }
+                }
+            }
+            // deletes complete asynchronously on the worker, so wait for them separately
+            assertTrue(deletesFinished.await(5, TimeUnit.SECONDS))
+        } finally {
+            deleteExecutor.shutdownNow()
+        }
+        assertTrue(logger.internalErrorMessages.isEmpty())
+
+        val indexedFilenames = concurrentService.getStoredPayloads().map { it.filename }.toSet()
+        val filenamesOnDisk = checkNotNull(outputDir.listFiles()).map { it.name }.toSet()
+        assertEquals(filenamesOnDisk, indexedFilenames)
+        assertEquals((stored - deleted).map { it.filename }.toSet(), indexedFilenames)
     }
 
     private fun storeDummyFile(metadata: StoredTelemetryMetadata) {

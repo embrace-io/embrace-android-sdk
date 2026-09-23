@@ -66,7 +66,8 @@ class DataValidator(
                 maxValueLength = maxValueLength,
             )
         } else {
-            attributes
+            // return a copy so future mutations doesn't affect what is returned
+            attributes.toMap()
         }
     }
 

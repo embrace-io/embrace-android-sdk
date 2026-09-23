@@ -48,6 +48,7 @@ internal class EmbraceActionInterface(
      */
     internal fun recordSession(
         isBackgroundActivityEnabled: Boolean = true,
+        endInBackground: Boolean = true,
         activityClass: Class<out Activity> = Activity::class.java,
         action: EmbraceActionInterface.() -> Unit = {},
     ): SessionPartTimestamps {
@@ -64,6 +65,7 @@ internal class EmbraceActionInterface(
             simulateOpeningActivities(
                 addStartupActivity = false,
                 startInBackground = true,
+                endInBackground = endInBackground,
                 activitiesAndActions = activityAndAction
             ).let { executionTimestamps ->
                 SessionPartTimestamps(
@@ -81,6 +83,7 @@ internal class EmbraceActionInterface(
             simulateOpeningActivities(
                 addStartupActivity = false,
                 startInBackground = true,
+                endInBackground = endInBackground,
                 activitiesAndActions = activityAndAction
             ).let { executionTimestamps ->
                 SessionPartTimestamps(

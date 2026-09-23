@@ -45,7 +45,7 @@ class SessionPartReader(
      * This performs disk I/O and waits on intake, so the caller is responsible for already being on
      * a background thread, and for not calling it from a thread that intake itself runs on.
      */
-    fun readPersistedSessionParts() {
+    fun readPersistedSessionParts(performingResurrection: Boolean = false) {
         if (!configService.persistenceBehavior.isMultiFilePersistenceEnabled()) {
             deletePersistedSessionParts()
             return
@@ -58,7 +58,7 @@ class SessionPartReader(
 
                 for (directory in directories) {
                     val proceed = runCatching {
-                        deliver(directory)
+                        deliver(directory, performingResurrection)
                     }.onFailure {
                         logger.trackInternalError(InternalErrorType.SessionPartReadFail, it)
                     }.getOrDefault(true)
@@ -89,7 +89,7 @@ class SessionPartReader(
      * can retry it, as this is the only copy of the telemetry. Session parts that cannot be
      * reconstructed are deleted rather than retried.
      */
-    private fun deliver(directory: SessionPartDirectory): Boolean {
+    private fun deliver(directory: SessionPartDirectory, performingResurrection: Boolean): Boolean {
         val envelope = reconstructionService.reconstruct(directory)
         if (envelope == null) {
             directoryStore.delete(directory)
@@ -97,7 +97,7 @@ class SessionPartReader(
         }
         val task = intakeService.take(
             intake = envelope,
-            metadata = directory.createMetadata(envelope),
+            metadata = directory.createMetadata(envelope, performingResurrection),
             onStored = { directoryStore.delete(directory) },
         )
         return try {
@@ -114,12 +114,13 @@ class SessionPartReader(
 
     private fun SessionPartDirectory.createMetadata(
         envelope: Envelope<SessionPartPayload>,
+        performingResurrection: Boolean,
     ): StoredTelemetryMetadata = StoredTelemetryMetadata(
         timestamp = timestamp,
         uuid = uuid,
         processIdentifier = envelope.findProcessIdentifier() ?: processIdProvider(),
         envelopeType = SupportedEnvelopeType.SESSION,
-        complete = true,
+        complete = !performingResurrection,
         payloadType = PayloadType.SESSION,
         userSessionId = userSessionId,
         sessionPartId = sessionPartId,

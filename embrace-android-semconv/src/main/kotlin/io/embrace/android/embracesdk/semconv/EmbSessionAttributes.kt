@@ -102,7 +102,6 @@ object EmbSessionAttributes {
 
     /**
      * UUID identifying the session part that the telemetry was recorded in. A user session is composed of one or more consecutive session parts.
-
      */
     @ExperimentalSemconv
     const val EMB_SESSION_PART_ID: String = "emb.session_part_id"
@@ -226,7 +225,6 @@ object EmbSessionAttributes {
 
     /**
      * UUID identifying the user session that the telemetry was recorded in.
-
      */
     @ExperimentalSemconv
     const val EMB_USER_SESSION_ID: String = "emb.user_session_id"

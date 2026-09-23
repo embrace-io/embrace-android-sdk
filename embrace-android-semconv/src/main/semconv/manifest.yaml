@@ -1,8 +1,9 @@
-name: embrace-android
-description: Embrace Android SDK semantic conventions.
+# `schema_url` alone identifies this registry: everything before the last `/` (minus the scheme)
+# is its name, e.g. `embrace.io/schemas/embrace-android`, and the last segment is its version.
 schema_url: https://embrace.io/schemas/embrace-android/0.1.0
+description: Embrace Android SDK semantic conventions.
 dependencies:
-  - name: otel
-    registry_path: https://github.com/open-telemetry/semantic-conventions@v1.43.0[model]
-  - name: embrace
+  - schema_url: https://opentelemetry.io/schemas/1.44.0
+    registry_path: https://github.com/open-telemetry/semantic-conventions@v1.44.0[model]
+  - schema_url: https://embrace.io/schemas/embrace/0.2.0
     registry_path: https://github.com/embrace-io/embrace-semconv@v0.2.0[model]

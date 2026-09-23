@@ -19,7 +19,7 @@ your `PATH`, e.g. run `.github/actions/setup-weaver/install-weaver.sh` from a ch
 the `embrace-semconv` repo. Pass `WEAVER_VERSION` as a parameter to install the same version.
 
 If you change anything under `src/main/semconv/`, `src/main/templates/`, or change the Weaver
-version, rerun the generate task and commit the regenerated source code together with your change*:
+version, rerun the generate task and commit the regenerated source code together with your change:
 
 ```
 ./gradlew :embrace-android-semconv:generateEmbraceSemanticConventions
@@ -33,7 +33,7 @@ model and templates should produce.
 ```
 src/main/
   semconv/
-    manifest.yaml          # registry name + federated dependencies (see "Dependencies")
+    manifest.yaml          # registry identity (schema_url) + federated dependencies (see "Dependencies")
     <domain>.yaml          # attribute definitions + groups, one file per domain
   templates/registry/kotlin/
     weaver.yaml                     # selects which groups generate + the jq filter shaping them
@@ -110,9 +110,9 @@ Generation is driven by the **ref**, not by the definition:
 A group can `ref` an attribute defined:
 
 - **locally** (any `src/main/semconv/*.yaml`),
-- in the **shared Embrace registry** (`embrace` dependency) — e.g. `emb.user_session_id` /
+- in the **shared Embrace registry** (the `embrace-semconv` dependency) — e.g. `emb.user_session_id` /
   `emb.session_part_id`, defined once there and ref'd by `emb.session` here, and
-- in **OpenTelemetry core** (`otel` dependency) — e.g. `- ref: session.id` emits
+- in **OpenTelemetry core** (the core OTel dependency) — e.g. `- ref: session.id` emits
   `SESSION_ID = "session.id"` into whichever `emb.*` class refs it.
 
 A definition's origin affects only the generated **KDoc text** (its `brief`) and Weaver's internal
@@ -132,15 +132,21 @@ It is gated by the *group's* stability, not the individual attribute's. All curr
 
 ## Dependencies (federation)
 
-`manifest.yaml` names this registry and declares its federated dependencies:
+`manifest.yaml` identifies this registry and declares its federated dependencies. A registry's
+identity is its `schema_url`: everything before the last path segment is the registry name, the last
+segment is the version.
 
-| name      | registry                                                   | role                                                                    |
-|-----------|------------------------------------------------------------|-------------------------------------------------------------------------|
-| `otel`    | `open-telemetry/semantic-conventions@v1.43.0`              | core OTel attributes, available to `ref`                                |
-| `embrace` | shared Embrace registry (`semantic-conventions-embrace`)   | cross-platform `emb.*` definitions shared across Embrace SDKs, to `ref` |
+| registry                                                    | role                                                                    |
+|-------------------------------------------------------------|-------------------------------------------------------------------------|
+| `open-telemetry/semantic-conventions@v1.44.0`               | core OTel attributes, available to `ref`                                |
+| `embrace-io/embrace-semconv@v0.2.0`                         | cross-platform `emb.*` definitions shared across Embrace SDKs, to `ref` |
 
 Dependencies bring their definitions into the pool so local `emb.*` groups can `ref` them. They do
 **not** generate classes in this module (filtered out by `startswith("emb.")`).
+
+Each dependency is identified by its `schema_url`. When two registries depend on different versions of
+the same registry (e.g. core OTel), Weaver picks the highest one and issues a warning. Try to keep
+these in sync as much as possible to avoid issues down the road.
 
 ## Working with it
 
@@ -157,15 +163,3 @@ Dependencies bring their definitions into the pool so local `emb.*` groups can `
   backend. Renaming them changes generated class/constant names (downstream churn) and requires
   backend agreement. Renaming a `.yaml` *file* is free (organizational only).
 - **Never hand-edit the generated `Emb*Attributes.kt` files** — regenerate.
-## Regenerating
-
-
-If you change anything under `src/main/semconv/`, `src/main/templates/`, or change the Weaver
-version, rerun the generate task and commit the regenerated source code together with your change*:
-
-```
-./gradlew :embrace-android-semconv:generateEmbraceSemanticConventions
-```
-
-The `Semconv drift` CI workflow fails any PR whose committed generated code doesn't match what the
-model and templates should produce.

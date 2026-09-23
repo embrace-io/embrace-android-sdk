@@ -86,10 +86,10 @@ internal class TelemetryQueueTest {
     }
 
     @Test
-    fun `a record with no key is never dropped`() {
+    fun `a record with no key is dropped`() {
         val queue = telemetryQueue()
         queue.add(listOf(record("a", 1), record(null, 1), record(null, 2), record("a", 2)))
-        assertEquals(listOf(record(null, 1), record(null, 2), record("a", 2)), queue.drain())
+        assertEquals(listOf(record("a", 2)), queue.drain())
     }
 
     @Test
@@ -157,8 +157,8 @@ internal class TelemetryQueueTest {
         queue.add(record("a", 1))
         queue.add(record("a", 2))
 
-        assertEquals(3, queue.size)
-        assertEquals(listOf(record(null, 1), record(null, 2), record("a", 2)), queue.drain())
+        assertEquals(2, queue.size)
+        assertEquals(listOf(record("a", 2)), queue.drain())
     }
 
     @Test
@@ -207,7 +207,7 @@ internal class TelemetryQueueTest {
         queue.add(listOf(record("a", 1), record("b", 1)))
 
         queue.remove(record("a", 2))
-        assertEquals(1, queue.size)
+        assertEquals(2, queue.size)
         assertEquals(listOf(record("b", 1)), queue.drain())
     }
 
@@ -217,7 +217,7 @@ internal class TelemetryQueueTest {
         queue.add(listOf(record("a", 1), record("b", 1), record("a", 2)))
 
         queue.remove(record("a", 3))
-        assertEquals(1, queue.size)
+        assertEquals(3, queue.size)
         assertEquals(listOf(record("b", 1)), queue.drain())
     }
 
@@ -237,8 +237,8 @@ internal class TelemetryQueueTest {
         queue.add(listOf(record(null, 1), record("a", 1)))
 
         queue.remove(record(null, 2))
-        assertEquals(2, queue.size)
-        assertEquals(listOf(record(null, 1), record("a", 1)), queue.drain())
+        assertEquals(1, queue.size)
+        assertEquals(listOf(record("a", 1)), queue.drain())
     }
 
     @Test
@@ -246,7 +246,7 @@ internal class TelemetryQueueTest {
         val queue = telemetryQueue()
         queue.add(record("a", 1))
         queue.remove(record("a", 1))
-        assertEquals(0, queue.size)
+        assertEquals(1, queue.size)
 
         queue.add(record("a", 2))
         assertEquals(listOf(record("a", 2)), queue.drain())

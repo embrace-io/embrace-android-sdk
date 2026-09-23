@@ -372,7 +372,7 @@ class SessionPartWriterImpl(
         val completedSpanWrites = TelemetryWriteScheduler(
             worker = worker,
             delayMs = COMPLETED_SPAN_WRITE_DELAY_MS,
-            queue = TelemetryQueue(identityOf = Span::spanId),
+            queue = completedSpansQueue(),
             guard = guard(InternalErrorType.CompletedSpansWriteFail),
             onWrite = ::writeCompletedSpans,
         )
@@ -380,7 +380,7 @@ class SessionPartWriterImpl(
         val spanSnapshotWrites = TelemetryWriteScheduler(
             worker = worker,
             delayMs = SPAN_SNAPSHOT_WRITE_DELAY_MS,
-            queue = TelemetryQueue(identityOf = EmbraceSdkSpan::spanId),
+            queue = spanSnapshotsQueue(),
             guard = guard(InternalErrorType.SpanSnapshotsWriteFail) { abandoned },
             onWrite = ::writeSpanSnapshots,
         )

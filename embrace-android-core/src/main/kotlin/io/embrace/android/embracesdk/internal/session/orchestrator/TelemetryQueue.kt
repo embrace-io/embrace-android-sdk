@@ -1,6 +1,9 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
+import io.embrace.android.embracesdk.internal.session.orchestrator.TelemetryQueue.Companion.COMPACT_THRESHOLD
+import java.util.Collections
 import java.util.Deque
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -17,6 +20,7 @@ internal class TelemetryQueue<T>(
     private val identityOf: (T) -> Any?,
 ) {
     private val queue: Deque<T> = ConcurrentLinkedDeque()
+    private val pendingRemovals: MutableSet<Any> = Collections.newSetFromMap(ConcurrentHashMap())
     private val buffered = AtomicInteger()
     private val drainLock = Any()
 
@@ -27,7 +31,10 @@ internal class TelemetryQueue<T>(
      * Buffers [item], compacting the queue if it grows past [compactThreshold].
      */
     fun add(item: T) {
+        val id = identityOf(item) ?: return
+        pendingRemovals.remove(id)
         queue.add(item)
+
         if (buffered.addAndGet(1) >= compactThreshold) {
             compact()
         }
@@ -40,10 +47,7 @@ internal class TelemetryQueue<T>(
         if (items.isEmpty()) {
             return
         }
-        queue.addAll(items)
-        if (buffered.addAndGet(items.size) >= compactThreshold) {
-            compact()
-        }
+        items.forEach(::add)
     }
 
     /**
@@ -51,15 +55,7 @@ internal class TelemetryQueue<T>(
      */
     fun remove(item: T) {
         val key = identityOf(item) ?: return
-        synchronized(drainLock) {
-            val items = queue.iterator()
-            while (items.hasNext()) {
-                if (identityOf(items.next()) == key) {
-                    items.remove()
-                    buffered.decrementAndGet()
-                }
-            }
-        }
+        pendingRemovals.add(key)
     }
 
     /**
@@ -84,10 +80,15 @@ internal class TelemetryQueue<T>(
     private fun compact(): Unit = synchronized(drainLock) {
         val superseding = HashSet<Any>()
         val items = queue.descendingIterator()
+
         while (items.hasNext()) {
-            val key = identityOf(items.next()) ?: continue
-            if (!superseding.add(key)) {
+            val ref = items.next()
+            val key = identityOf(ref) ?: continue
+            val id = identityOf(ref)
+
+            if (!superseding.add(key) || pendingRemovals.contains(id)) {
                 items.remove()
+                pendingRemovals.remove(id)
                 buffered.decrementAndGet()
             }
         }

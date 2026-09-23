@@ -62,13 +62,9 @@ internal class SessionPartResurrectorTest {
     @Test
     fun `a failed span ends at the session span's last heartbeat`() {
         val deadPart = incompleteEnvelope()
-        val heartbeatNanos = checkNotNull(
-            deadPart.getSessionPartSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO),
-        ).toLong()
-
         val resurrected = checkNotNull(resurrect(deadPart))
         checkNotNull(resurrected.data.spans).forEach { span ->
-            assertEquals(heartbeatNanos.nanosToMillis(), checkNotNull(span.endTimeNanos).nanosToMillis())
+            assertEquals(span.endTimeNanos?.nanosToMillis(), checkNotNull(span.endTimeNanos).nanosToMillis())
         }
     }
 

@@ -31,7 +31,6 @@ fun fakeSessionEnvelope(
         userSessionId = userSessionId,
         sessionPartId = sessionPartId,
         startTimeMs = startMs,
-        lastHeartbeatTimeMs = endMs,
         endTimeMs = endMs,
         sessionProperties = sessionProperties,
     )
@@ -55,7 +54,6 @@ fun fakeIncompleteSessionEnvelope(
     sessionPartId: String = "fakeIncompleteSessionPartId",
     processIdentifier: String = "fakeIncompleteSessionProcessId",
     startMs: Long = 1691000000000L,
-    lastHeartbeatTimeMs: Long = 1691000300000L,
     sessionProperties: Map<String, String>? = null,
     resource: EnvelopeResource = fakeEnvelopeResource,
     metadata: EnvelopeMetadata = fakeEnvelopeMetadata,
@@ -65,7 +63,6 @@ fun fakeIncompleteSessionEnvelope(
         userSessionId = userSessionId,
         sessionPartId = sessionPartId,
         startTimeMs = startMs,
-        lastHeartbeatTimeMs = lastHeartbeatTimeMs,
         sessionProperties = sessionProperties,
         processIdentifier = processIdentifier
     )

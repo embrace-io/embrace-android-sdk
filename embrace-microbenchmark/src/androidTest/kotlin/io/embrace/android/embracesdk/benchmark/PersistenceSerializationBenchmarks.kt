@@ -105,15 +105,9 @@ class PersistenceSerializationBenchmarks(
     }
 
     private fun serializeCacheTick() {
-        val snapshots = fixture.spanSnapshots + fixture.sessionSpan.withHeartbeat()
+        val snapshots = fixture.spanSnapshots + fixture.sessionSpan
         SpanCollection.ADAPTER.encode(sink, buildSpanSnapshots(snapshots))
         SpanCollection.ADAPTER.encode(sink, buildCompletedSpans(windowSpans))
-    }
-
-    private fun Span.withHeartbeat(): Span {
-        val heartbeat = Attribute(EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO, (endTimeNanos ?: 0L).toString())
-        val existing = attributes.orEmpty().filterNot { it.key == heartbeat.key }
-        return copy(attributes = existing + heartbeat)
     }
 
     companion object {

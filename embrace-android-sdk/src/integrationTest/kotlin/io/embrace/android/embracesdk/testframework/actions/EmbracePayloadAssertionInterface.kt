@@ -238,7 +238,6 @@ internal class EmbracePayloadAssertionInterface(
             if (crashData != null) {
                 assertEquals(checkNotNull(crashData.partEnvelope).getUserSessionId(), getUserSessionId())
                 assertEquals(checkNotNull(crashData.partEnvelope).getSessionPartId(), getSessionPartId())
-                assertEquals(crashData.lastHeartbeatMs, endTimeNanos?.nanosToMillis())
                 assertEquals(
                     crashData.nativeCrash.nativeCrashId,
                     attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID)

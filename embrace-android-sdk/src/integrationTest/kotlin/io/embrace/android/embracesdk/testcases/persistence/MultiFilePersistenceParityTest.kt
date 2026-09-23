@@ -640,34 +640,14 @@ internal class MultiFilePersistenceParityTest(
     ) {
         val sessionSpan = envelope.findSessionPartSpan()
         validatePayloadAgainstGoldenFile(
-            payload = sessionSpan.copy(attributes = sessionSpan.attributes?.withoutHeartbeat()?.sorted()),
+            payload = sessionSpan.copy(attributes = sessionSpan.attributes?.sorted()),
             goldenFileName = GOLDEN_FILE,
             placeholders = mapOf(
                 Placeholder.USER_SESSION_ID to envelope.getUserSessionId(),
                 Placeholder.SESSION_PART_ID to envelope.getSessionPartId(),
             ),
         )
-        assertHeartbeat(sessionSpan)
     }
-
-    /**
-     * The one attribute the two layers deliberately differ on: the legacy layer stamps a heartbeat
-     * on the session span as it caches, and the multi file layer writes none at all - a session part
-     * that ended carries its end time, and one that did not is delivered as a snapshot.
-     */
-    private fun assertHeartbeat(sessionSpan: Span) {
-        val expected = when (persistenceMode) {
-            PersistenceMode.LEGACY -> sessionSpan.startTimeNanos?.toString()
-            PersistenceMode.MULTI_FILE -> null
-        }
-        assertEquals(
-            expected,
-            sessionSpan.attributes?.findAttributeValue(EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO),
-        )
-    }
-
-    private fun List<Attribute>.withoutHeartbeat(): List<Attribute> =
-        filterNot { it.key == EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO }
 
     /**
      * Asserts the basic shape of a delivered session payload. Both persistence paths must satisfy

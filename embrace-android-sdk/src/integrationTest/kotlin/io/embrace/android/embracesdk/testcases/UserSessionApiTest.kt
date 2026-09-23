@@ -102,7 +102,6 @@ internal class UserSessionApiTest {
             EmbSessionAttributes.EMB_PROCESS_IDENTIFIER,
             EmbTelemetryAttributes.EMB_IS_EMULATOR,
             EmbTelemetryAttributes.EMB_OKHTTP3_ON_CLASSPATH,
-            EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO,
             EmbSessionAttributes.EMB_CLOCK_GNSS_DRIFT,
             EmbSessionAttributes.EMB_CLOCK_NETWORK_DRIFT,
         )

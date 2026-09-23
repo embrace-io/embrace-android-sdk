@@ -74,7 +74,6 @@ internal fun createStoredNativeCrashData(
         partEnvelope = if (sessionMetadata != null) {
             fakeIncompleteSessionEnvelope(
                 startMs = sessionMetadata.timestamp,
-                lastHeartbeatTimeMs = sessionMetadata.timestamp + 1000L,
                 userSessionId = nativeCrashData.userSessionId,
                 sessionPartId = nativeCrashData.sessionPartId,
                 sessionProperties = mapOf("dead-session-prop" to "some-val"),

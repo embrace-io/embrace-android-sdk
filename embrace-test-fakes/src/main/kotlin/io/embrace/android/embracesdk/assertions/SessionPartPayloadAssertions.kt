@@ -84,18 +84,6 @@ fun Envelope<SessionPartPayload>.getStartTime(): Long {
 }
 
 /**
- * Return the last heartbeat time in milliseconds from the session part span in the payload
- */
-fun Envelope<SessionPartPayload>.getLastHeartbeatTimeMs(): Long {
-    return checkNotNull(
-        findSessionPartSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO)?.toLongOrNull()
-            ?.nanosToMillis()
-    ) {
-        "No last heartbeat time found in session payload"
-    }
-}
-
-/**
  * Finds the span matching the given [EmbType].
  */
 fun Envelope<SessionPartPayload>.findSpanOfType(telemetryType: EmbType): Span {

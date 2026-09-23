@@ -16,14 +16,12 @@ import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
-import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SessionReconstructionService
 import io.embrace.android.embracesdk.internal.session.persistence.SpanCollection
 import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
 import io.embrace.android.embracesdk.internal.session.persistence.buildSpanCollectionHeader
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import okio.Buffer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -127,7 +125,7 @@ internal class SessionPartWriterResourceReadTest {
     fun `the session span written at the start of the part is reconstructed as a snapshot`() {
         val envelope = checkNotNull(writeSessionPart())
         val expected = checkNotNull(sessionSpan.snapshot())
-        assertEquals(expected, envelope.data.spanSnapshots?.single { it.spanId == sessionSpan.spanId }?.withoutHeartbeat())
+        assertEquals(expected, envelope.data.spanSnapshots?.single { it.spanId == sessionSpan.spanId })
         assertNull(envelope.data.spans?.find { it.spanId == sessionSpan.spanId })
         assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
     }
@@ -140,7 +138,7 @@ internal class SessionPartWriterResourceReadTest {
 
         val envelope = checkNotNull(service.reconstruct(directory()))
         val expected = checkNotNull(sessionSpan.snapshot())
-        assertEquals(expected, envelope.data.spans?.last()?.withoutHeartbeat())
+        assertEquals(expected, envelope.data.spans?.last())
         assertNull(envelope.data.spanSnapshots?.find { it.spanId == sessionSpan.spanId })
         assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
     }
@@ -219,8 +217,4 @@ internal class SessionPartWriterResourceReadTest {
         (sessionsDir.list() ?: emptyArray()).mapNotNull(SessionPartDirectory::fromDirName).single()
 
     private fun drain() = executor.drainWrites()
-
-    private fun Span.withoutHeartbeat(): Span = copy(
-        attributes = attributes?.filterNot { it.key == EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO },
-    )
 }

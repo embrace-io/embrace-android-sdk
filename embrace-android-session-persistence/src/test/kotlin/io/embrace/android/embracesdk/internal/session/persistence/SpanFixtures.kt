@@ -22,7 +22,6 @@ internal val fullyPopulatedSpan = Span(
         ),
     ),
     attributes = listOf(
-        Attribute(key = "emb.heartbeat_time_unix_nano", data = "1726739284136000000"),
         Attribute(key = "emb.terminated", data = "true"),
     ),
     links = listOf(
@@ -51,7 +50,6 @@ internal val fullyPopulatedSpanProto = SpanProto(
         ),
     ),
     attributes = listOf(
-        AttributeProto(key = "emb.heartbeat_time_unix_nano", value_ = "1726739284136000000"),
         AttributeProto(key = "emb.terminated", value_ = "true"),
     ),
     links = listOf(

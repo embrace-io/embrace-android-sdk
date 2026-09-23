@@ -24,7 +24,6 @@ import io.embrace.android.embracesdk.internal.session.getUserSessionProperties
 import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
-import kotlin.math.max
 
 /**
  * Turns a session part persisted by a process that died into the envelope that should be delivered for it.
@@ -100,9 +99,16 @@ class SessionPartResurrector(
         isBackgroundOnly: Boolean,
     ): Envelope<SessionPartPayload>? {
         val completedSpanIds = data.spans?.map { it.spanId }?.toSet() ?: emptySet()
-        val failedSpans = data.spanSnapshots
+        val snapshots = data.spanSnapshots
             ?.filterNot { completedSpanIds.contains(it.spanId) }
-            ?.map { it.toFailedSpan(endTimeMs = getFailedSpanEndTimeMs(this)) }
+
+        // use the most recent endTimeNanos from completed spans as the estimated
+        // end time for snapshots, falling back to 0 if nothing is available.
+        val estimatedEndTime = data.spans?.maxByOrNull {
+            it.endTimeNanos ?: 0
+        }?.endTimeNanos ?: data.spanSnapshots?.maxByOrNull { it.startTimeNanos ?: 0 }?.startTimeNanos
+        val failedSpans = snapshots
+            ?.map { it.toFailedSpan(endTimeMs = estimatedEndTime?.nanosToMillis() ?: 0) }
             ?: emptyList()
         val completedSpans = (data.spans ?: emptyList()) + failedSpans
         val sessionPartSpan = completedSpans.singleOrNull { it.hasEmbraceAttribute(EmbType.Ux.Session) } ?: return null
@@ -177,18 +183,4 @@ class SessionPartResurrector(
      */
     private fun Span.resolveSessionPartIdForCrashMatch(): String? =
         attributes?.findAttributeValue(EmbSessionAttributes.EMB_SESSION_PART_ID)
-
-    /**
-     * To approximate the time of any snapshot to be converted into a failed span, we look to the session part span of the payload and take
-     * either the end time or the last heartbeat time, whichever exists and is later. If the session part span itself is a snapshot, it will
-     * not have an end time, in which case it will fall back to the last heartbeat time. If either exists, it means we can't find a better
-     * time, so we just leave it at 0.
-     */
-    private fun getFailedSpanEndTimeMs(envelope: Envelope<SessionPartPayload>): Long {
-        val sessionPartSpan = envelope.getSessionPartSpan() ?: return 0L
-        val endTimeMs = sessionPartSpan.endTimeNanos ?: 0L
-        val lastHeartbeatTimeMs =
-            sessionPartSpan.attributes?.findAttributeValue(EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO)?.toLongOrNull() ?: 0L
-        return max(endTimeMs, lastHeartbeatTimeMs).nanosToMillis()
-    }
 }

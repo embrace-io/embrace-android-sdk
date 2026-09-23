@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.isEmulator
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceUsageAttributeName
 import io.embrace.android.embracesdk.semconv.EmbTelemetryAttributes
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Service for tracking usage of public APIs, and different internal metrics about the app.
@@ -17,7 +16,7 @@ internal class EmbraceTelemetryService(
     private val okHttpReflectionFacade: OkHttpReflectionFacade = OkHttpReflectionFacade()
     private val usageCountMap = ConcurrentHashMap<String, Int>()
     private val storageTelemetryMap = ConcurrentHashMap<String, String>()
-    private val appliedLimitCountMap = ConcurrentHashMap<String, AtomicInteger>()
+    private val appliedLimitCountMap = ConcurrentHashMap<String, Int>()
     private val appAttributes: Map<String, String> by lazy { computeAppAttributes() }
 
     override fun onPublicApiCalled(name: String) {
@@ -33,7 +32,15 @@ internal class EmbraceTelemetryService(
     override fun trackAppliedLimit(telemetryType: String, limitType: AppliedLimitType) {
         val id = "applied_limit.$telemetryType.${limitType.attributeName}"
         val key = "emb.private.$id"
-        appliedLimitCountMap.getOrPut(key) { AtomicInteger(0) }.incrementAndGet()
+
+        do {
+            val current = appliedLimitCountMap[key]
+            val updated = if (current == null) {
+                appliedLimitCountMap.putIfAbsent(key, 1) == null
+            } else {
+                appliedLimitCountMap.replace(key, current, current + 1)
+            }
+        } while (!updated)
     }
 
     override fun getAndClearTelemetryAttributes(): Map<String, String> {
@@ -53,17 +60,9 @@ internal class EmbraceTelemetryService(
         }
     }
 
-    private fun getAndClearStorageTelemetry(): Map<String, String> {
-        val result = storageTelemetryMap.toMap()
-        storageTelemetryMap.clear()
-        return result
-    }
+    private fun getAndClearStorageTelemetry(): Map<String, String> = storageTelemetryMap.drain { it }
 
-    private fun getAndClearAppliedLimitTelemetry(): Map<String, String> {
-        val result = appliedLimitCountMap.mapValues { it.value.get().toString() }
-        appliedLimitCountMap.clear()
-        return result
-    }
+    private fun getAndClearAppliedLimitTelemetry(): Map<String, String> = appliedLimitCountMap.drain { it.toString() }
 
     /**
      * Interesting attributes about the running app environment. These should be the same for every session, so we only compute them once.
@@ -85,5 +84,19 @@ internal class EmbraceTelemetryService(
             runCatching { systemInfo.isEmulator().toString() }.getOrDefault("unknown")
 
         return appAttributesMap
+    }
+
+    /**
+     * Removes every entry, returning them with values mapped by [transform]. Each key is removed atomically rather than the
+     * map being copied then cleared, so an entry written mid-drain is either returned now or left for the next drain.
+     */
+    private inline fun <V : Any> ConcurrentHashMap<String, V>.drain(transform: (V) -> String): Map<String, String> {
+        val result = mutableMapOf<String, String>()
+        keys.forEach { key ->
+            remove(key)?.let { value ->
+                result[key] = transform(value)
+            }
+        }
+        return result
     }
 }

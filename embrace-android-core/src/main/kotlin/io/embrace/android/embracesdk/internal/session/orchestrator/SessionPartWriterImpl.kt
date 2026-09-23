@@ -56,9 +56,9 @@ class SessionPartWriterImpl(
         private const val MAX_CARRIED_OVER_SPANS: Int = 1000
         private const val CARRIED_OVER_SPAN_LIMIT_TYPE: String = "carried_over_span"
 
-        const val METADATA_WRITE_DELAY_MS: Long = 500
-        const val SPAN_SNAPSHOT_WRITE_DELAY_MS: Long = 1000
-        const val COMPLETED_SPAN_WRITE_DELAY_MS: Long = 1000
+        const val METADATA_WRITE_DELAY_MS: Long = 2000
+        const val SPAN_SNAPSHOT_WRITE_DELAY_MS: Long = 2000
+        const val COMPLETED_SPAN_WRITE_DELAY_MS: Long = 2000
     }
 
     /**

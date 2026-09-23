@@ -1,13 +1,19 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.assertions.assertNonSystemInitialStateValue
+import io.embrace.android.embracesdk.assertions.assertNonSystemNewStateValue
+import io.embrace.android.embracesdk.assertions.assertNonSystemStateValue
 import io.embrace.android.embracesdk.assertions.assertStateTransition
+import io.embrace.android.embracesdk.assertions.assertSystemNewStateValue
+import io.embrace.android.embracesdk.assertions.assertSystemStateValue
 import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.assertions.getLogs
 import io.embrace.android.embracesdk.assertions.hasLinkToEmbraceSpan
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.LazyInitStateDataSource
 import io.embrace.android.embracesdk.fakes.TestStateDataSource
+import io.embrace.android.embracesdk.fakes.TestStateValue
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -52,6 +58,9 @@ internal class StateFeatureTest {
 
     val stateEnabledRemoteConfig = RemoteConfig(pctStateCaptureEnabledV2 = 100.0f)
     val stateDisabledRemoteConfig = RemoteConfig(pctStateCaptureEnabledV2 = 0.0f)
+    val nonSystemValue = TestStateValue.NonSystemValue("foo")
+    val systemValue = TestStateValue.SystemValue("sys")
+    val dupeNameValue = TestStateValue.NonSystemValue("sys")
 
     @Test
     fun `state feature on by default`() {
@@ -67,7 +76,7 @@ internal class StateFeatureTest {
             },
             otelExportAssertion = {
                 assertNotNull(awaitSpansWithType(3, EmbType.State).single { it.name == "emb-state-test" })
-            }
+            },
         )
     }
 
@@ -88,7 +97,7 @@ internal class StateFeatureTest {
                 val message = getSingleSessionEnvelope()
                 assertEquals(0, message.findSpansOfType(EmbType.State).size)
                 assertTrue(throwable is IllegalStateException)
-            }
+            },
         )
     }
 
@@ -100,8 +109,8 @@ internal class StateFeatureTest {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
-                    bgActivityCapture = true
-                )
+                    bgActivityCapture = true,
+                ),
             ),
             persistedRemoteConfig = stateEnabledRemoteConfig,
             testCaseAction = {
@@ -132,7 +141,7 @@ internal class StateFeatureTest {
                     stateSpan.attributes?.hasEmbraceAttributeValue(EmbStateTransitionAttributes.EMB_STATE_INITIAL_VALUE, initialStateValue)
                     initialStateValue = stateUpdates[i]
                 }
-            }
+            },
         )
     }
 
@@ -153,7 +162,7 @@ internal class StateFeatureTest {
             assertAction = {
                 val stateSpan = checkNotNull(getSingleSessionEnvelope().getStateSpan("emb-state-test"))
                 assertEquals(100, checkNotNull(stateSpan.events).size)
-            }
+            },
         )
     }
 
@@ -173,12 +182,12 @@ internal class StateFeatureTest {
                 with(checkNotNull(stateSpan.events).single()) {
                     assertStateTransition(
                         timestampMs = transitions[0].first,
-                        newStateValue = transitions[0].second
+                        newStateValue = transitions[0].second,
                     )
                 }
 
                 stateSpan.hasEmbraceAttributeValue(EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION, 1)
-            }
+            },
         )
     }
 
@@ -204,16 +213,16 @@ internal class StateFeatureTest {
                         this[i].assertStateTransition(
                             timestampMs = transitions[i].first,
                             newStateValue = transitions[i].second,
-                            droppedByInstrumentation = transitionDrops
+                            droppedByInstrumentation = transitionDrops,
                         )
                     }
                 }
                 assertEquals(
                     checkNotNull(sessionPartSpan.startTimeNanos).nanosToMillis() + LIFECYCLE_EVENT_GAP,
-                    checkNotNull(stateSpan.startTimeNanos).nanosToMillis()
+                    checkNotNull(stateSpan.startTimeNanos).nanosToMillis(),
                 )
                 assertEquals(sessionPartSpan.endTimeNanos, stateSpan.endTimeNanos)
-            }
+            },
         )
     }
 
@@ -237,12 +246,12 @@ internal class StateFeatureTest {
                         this[i].assertStateTransition(
                             timestampMs = transitions[i].first,
                             newStateValue = transitions[i].second,
-                            droppedByInstrumentation = transitionDrops
+                            droppedByInstrumentation = transitionDrops,
                         )
                     }
                 }
                 stateSpan.hasEmbraceAttributeValue(EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION, 3)
-            }
+            },
         )
     }
 
@@ -270,10 +279,10 @@ internal class StateFeatureTest {
                     checkNotNull(stateSpan.events).first().assertStateTransition(
                         timestampMs = periodWithTransition[0].first,
                         newStateValue = periodWithTransition[0].second,
-                        notInSession = 1
+                        notInSession = 1,
                     )
                 }
-            }
+            },
         )
     }
 
@@ -297,20 +306,20 @@ internal class StateFeatureTest {
                     val stateSpan = checkNotNull(sessions[i].getStateSpan("emb-state-test"))
                     stateSpan.attributes?.hasEmbraceAttributeValue(EmbStateTransitionAttributes.EMB_STATE_INITIAL_VALUE, "baz")
                 }
-            }
+            },
         )
     }
 
     @Test
     fun `logs have correct current state`() {
         val stateUpdates = listOf("foo", "bar")
-        val stateValues = mutableListOf<String>()
+        val stateValues = mutableListOf<Any>()
         var dataSourceKey: String? = null
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
-                    bgActivityCapture = true
-                )
+                    bgActivityCapture = true,
+                ),
             ),
             persistedRemoteConfig = stateEnabledRemoteConfig,
             testCaseAction = {
@@ -342,12 +351,12 @@ internal class StateFeatureTest {
                     assertTrue(
                         checkNotNull(logs[i].attributes).hasEmbraceAttributeValue(
                             checkNotNull(dataSourceKey),
-                            expectedStateValues[i]
-                        )
+                            expectedStateValues[i],
+                        ),
                     )
                     assertEquals(expectedStateValues[i], stateValues[i])
                 }
-            }
+            },
         )
     }
 
@@ -387,7 +396,7 @@ internal class StateFeatureTest {
                 assertTrue(checkNotNull(events[0].attributes).hasEmbraceAttributeValue("testAttr", "blah"))
                 assertTrue(checkNotNull(events[1].attributes).hasEmbraceAttributeValue("testAttr", "orf"))
                 assertTrue(checkNotNull(events[2].attributes).hasEmbraceAttributeValue("testAttr", "barf"))
-            }
+            },
         )
     }
 
@@ -404,8 +413,8 @@ internal class StateFeatureTest {
                         transitionAttributes = listOf(
                             mapOf(
                                 EmbStateTransitionAttributes.EMB_STATE_NEW_VALUE to "hacked",
-                                EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION to "99"
-                            )
+                                EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION to "99",
+                            ),
                         ),
                     )
                 }
@@ -417,7 +426,7 @@ internal class StateFeatureTest {
                     newStateValue = "real",
                     droppedByInstrumentation = 3,
                 )
-            }
+            },
         )
     }
 
@@ -457,7 +466,7 @@ internal class StateFeatureTest {
                     droppedByInstrumentation = 1,
                     transitionAttributes = attrsThird,
                 )
-            }
+            },
         )
     }
 
@@ -486,7 +495,7 @@ internal class StateFeatureTest {
                     val firstTransition = checkNotNull(events).first()
                     firstTransition.assertStateTransition(initTime, "initialized")
                 }
-            }
+            },
         )
     }
 
@@ -514,17 +523,87 @@ internal class StateFeatureTest {
                 assertEquals(2, logs.size)
                 assertFalse(checkNotNull(logs[0].attributes).hasEmbraceAttributeKey("emb.state.lazy-init"))
                 assertTrue(checkNotNull(logs[1].attributes).hasEmbraceAttributeValue("emb.state.lazy-init", "initialized"))
-            }
+            },
         )
     }
 
-    private fun EmbraceActionInterface.executeTransitions(
-        updates: List<String>,
+    @Test
+    fun `state recorded on spans distinguishes between system and non-system and only adds the state value type for the former`() {
+        testRule.runTest(
+            persistedRemoteConfig = stateEnabledRemoteConfig,
+            testCaseAction = {
+                recordSession {
+                    executeTransitions(listOf(nonSystemValue, systemValue, dupeNameValue))
+                }
+                recordSession {
+                    executeTransitions(listOf(systemValue, dupeNameValue, nonSystemValue))
+                }
+            },
+            assertAction = {
+                val sessions = getSessionEnvelopes(2)
+
+                val firstStateSpan = checkNotNull(sessions[0].getStateSpan("emb-state-test"))
+                firstStateSpan.assertNonSystemInitialStateValue("UNKNOWN")
+                with(checkNotNull(firstStateSpan.events)) {
+                    assertEquals(3, size)
+                    this[0].assertNonSystemNewStateValue(nonSystemValue)
+                    this[1].assertSystemNewStateValue(systemValue)
+                    this[2].assertNonSystemNewStateValue(dupeNameValue)
+                }
+
+                val secondStateSpan = checkNotNull(sessions[1].getStateSpan("emb-state-test"))
+                secondStateSpan.assertNonSystemInitialStateValue(dupeNameValue)
+                with(checkNotNull(secondStateSpan.events)) {
+                    this[0].assertSystemNewStateValue(systemValue)
+                    this[1].assertNonSystemNewStateValue(dupeNameValue)
+                    this[2].assertNonSystemNewStateValue(nonSystemValue)
+                }
+            },
+        )
+    }
+
+    @Test
+    fun `state recorded on logs distinguishes between system and non-system and only adds the state value type for the former`() {
+        lateinit var valueKey: String
+        lateinit var logWorkerExecutor: BlockingScheduledExecutorService
+        testRule.runTest(
+            persistedRemoteConfig = stateEnabledRemoteConfig,
+            setupAction = {
+                logWorkerExecutor = getFakedWorkerExecutor(Worker.Background.LogMessageWorker).apply {
+                    blockingMode = true
+                }
+            },
+            testCaseAction = {
+                valueKey = findDataSource<TestStateDataSource>().stateAttributeKey
+                recordSession {
+                    executeTransitions(listOf(nonSystemValue))
+                    embrace.logInfo("state")
+                    executeTransitions(listOf(systemValue))
+                    embrace.logInfo("state")
+                    executeTransitions(listOf(dupeNameValue))
+                    embrace.logInfo("state")
+                    clock.tick(2000L)
+                    logWorkerExecutor.runCurrentlyBlocked()
+                }
+            },
+            assertAction = {
+                val logs = getSingleLogEnvelope().getLogs { it.body == "state" }
+                assertEquals(3, logs.size)
+
+                logs[0].assertNonSystemStateValue(valueKey, nonSystemValue)
+                logs[1].assertSystemStateValue(valueKey, systemValue)
+                logs[2].assertNonSystemStateValue(valueKey, dupeNameValue)
+            },
+        )
+    }
+
+    private fun <T : Any> EmbraceActionInterface.executeTransitions(
+        updates: List<T>,
         transitionDrops: Int = 0,
         transitionAttributes: List<Map<String, String>> = emptyList(),
-    ): List<Pair<Long, String>> {
-        val transitions: MutableList<Pair<Long, String>> = mutableListOf()
+    ): List<Pair<Long, T>> {
         val dataSource = findDataSource<TestStateDataSource>()
+        val transitions: MutableList<Pair<Long, T>> = mutableListOf()
         repeat(updates.size) { i ->
             transitions.add(Pair(clock.tick(100L), updates[i]))
             dataSource.onStateChange(

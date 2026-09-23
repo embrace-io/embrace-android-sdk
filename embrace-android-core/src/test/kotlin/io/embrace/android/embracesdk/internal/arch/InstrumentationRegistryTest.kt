@@ -7,11 +7,15 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDataSource
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationProvider
+import io.embrace.android.embracesdk.fakes.TestInstrumentationProvider
+import io.embrace.android.embracesdk.fakes.TestStateDataSource
+import io.embrace.android.embracesdk.fakes.TestStateValue
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -117,6 +121,29 @@ internal class InstrumentationRegistryTest {
         registry.loadInstrumentations(listOf(provider), args)
         assertEquals(dataSource, registry.findByType(FakeDataSource::class))
         assertEquals(1, dataSource.enableDataCaptureCount)
+    }
+
+    @Test
+    fun `current states include a value type only for active states whose current value is a system value`() {
+        val args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
+        registry.loadInstrumentations(listOf(TestInstrumentationProvider()), args)
+        val dataSource = checkNotNull(registry.findByType(TestStateDataSource::class))
+        assertEquals(mapOf(dataSource.stateAttributeKey to "UNKNOWN"), registry.getCurrentStates())
+
+        dataSource.onStateChange(TestStateValue.SystemValue("foo"), args.clock.tick())
+        assertEquals(
+            mapOf(
+                dataSource.stateAttributeKey to TestStateValue.SystemValue("foo"),
+                dataSource.stateValueTypeAttributeKey to EmbStateTransitionAttributes.EmbStateValueTypeValues.SYSTEM,
+            ),
+            registry.getCurrentStates(),
+        )
+
+        dataSource.onStateChange(TestStateValue.NonSystemValue("foo"), args.clock.tick())
+        assertEquals(
+            mapOf(dataSource.stateAttributeKey to TestStateValue.NonSystemValue("foo")),
+            registry.getCurrentStates(),
+        )
     }
 
     @Test

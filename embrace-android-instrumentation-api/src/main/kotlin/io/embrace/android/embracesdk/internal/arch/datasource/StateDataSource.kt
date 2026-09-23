@@ -31,6 +31,11 @@ abstract class StateDataSource<T : Any>(
     val stateAttributeKey: String = "emb.state.${stateTypeFactory(defaultValue).stateName}"
 
     /**
+     * Attribute key under which the type of the current state value is stored when the state value is a system value.
+     */
+    val stateValueTypeAttributeKey: String = "$stateAttributeKey.value_type"
+
+    /**
      * If true, state capture will begin when [onDataCaptureEnabled] is called. Otherwise, it will happen lazily when [onStateChange]
      * is first invoked using the new value as the initial state.
      */
@@ -93,6 +98,19 @@ abstract class StateDataSource<T : Any>(
      * Return the current state value
      */
     fun getCurrentStateValue(): T = currentState.get()
+
+    /**
+     * Return the attributes that represent the current state value, i.e. the literal value and type, if applicable.
+     */
+    fun currentStateAttributes(): Map<String, Any> {
+        val value = currentState.get()
+        return buildMap {
+            put(stateAttributeKey, value)
+            SchemaType.State.valueType(value)?.let { valueType ->
+                put(stateValueTypeAttributeKey, valueType)
+            }
+        }
+    }
 
     /**
      * Returns true if the data source is currently active

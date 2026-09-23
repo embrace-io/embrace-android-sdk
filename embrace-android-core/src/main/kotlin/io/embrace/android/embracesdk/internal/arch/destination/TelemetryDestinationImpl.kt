@@ -257,6 +257,12 @@ class TelemetryDestinationImpl(
                 attributes = transitionAttributes.toMutableMap()
                     .apply {
                         put(EmbStateTransitionAttributes.EMB_STATE_NEW_VALUE, newValue.toString())
+                        val valueType = SchemaType.State.valueType(newValue)
+                        if (valueType != null) {
+                            put(EmbStateTransitionAttributes.EMB_STATE_VALUE_TYPE, valueType)
+                        } else {
+                            remove(EmbStateTransitionAttributes.EMB_STATE_VALUE_TYPE)
+                        }
                         if (unrecordedTransitions.notInSession > 0) {
                             setEmbraceAttribute(EmbStateTransitionAttributes.EMB_STATE_NOT_IN_SESSION, unrecordedTransitions.notInSession)
                         }

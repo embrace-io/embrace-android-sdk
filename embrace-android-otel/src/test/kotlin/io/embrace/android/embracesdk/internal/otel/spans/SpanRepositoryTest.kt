@@ -4,10 +4,12 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeSpanData
+import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.toEmbracePayload
+import io.opentelemetry.kotlin.OpenTelemetry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -142,6 +144,41 @@ internal class SpanRepositoryTest {
     }
 
     @Test
+    fun `autoTerminate stops ON_BACKGROUND roots and all descendants with the same end time`() {
+        val openTelemetry = fakeOpenTelemetry()
+        val autoRoot = FakeEmbraceSdkSpan(
+            openTelemetry = openTelemetry,
+            terminationMode = SpanTerminationMode.OnBackground,
+        ).apply { start(0L) }
+        val child = createChildSpan(openTelemetry, parent = autoRoot)
+        val grandchild = createChildSpan(openTelemetry, parent = child)
+        val stoppedChild = createChildSpan(openTelemetry, parent = autoRoot).apply { stop(endTimeMs = 50L) }
+        val childOfStoppedChild = createChildSpan(openTelemetry, parent = stoppedChild)
+        val nonAutoRoot = FakeEmbraceSdkSpan(openTelemetry = openTelemetry).apply { start(0L) }
+        val childOfNonAutoRoot = createChildSpan(openTelemetry, parent = nonAutoRoot)
+        listOf(autoRoot, child, grandchild, stoppedChild, childOfStoppedChild, nonAutoRoot, childOfNonAutoRoot).forEach {
+            repository.trackStartedEmbraceSpan(it)
+        }
+
+        repository.autoTerminateEmbraceSpans(now = 1000L)
+
+        // the whole ON_BACKGROUND tree is stopped at the same time, including descendants of an already-stopped span
+        listOf(autoRoot, child, grandchild, childOfStoppedChild).forEach { span ->
+            assertFalse(span.isRecording)
+            assertEquals(1000L, span.spanEndTimeMs)
+        }
+
+        // a descendant that was already stopped keeps its original end time
+        assertEquals(50L, stoppedChild.spanEndTimeMs)
+
+        // a root without auto termination and its descendants are untouched
+        listOf(nonAutoRoot, childOfNonAutoRoot).forEach { span ->
+            assertTrue(span.isRecording)
+            assertNull(span.spanEndTimeMs)
+        }
+    }
+
+    @Test
     fun `verify default completed otel span state`() {
         assertEquals(0, repository.completedOtelSpans().size)
         assertEquals(0, repository.flushOtelSpans().size)
@@ -204,4 +241,10 @@ internal class SpanRepositoryTest {
         val distinctNames = flushed.mapTo(HashSet()) { it.name }
         assertEquals(totalToStore, distinctNames.size)
     }
+
+    private fun createChildSpan(openTelemetry: OpenTelemetry, parent: FakeEmbraceSdkSpan) =
+        FakeEmbraceSdkSpan(
+            openTelemetry = openTelemetry,
+            parentContext = parent.createContext(openTelemetry),
+        ).apply { start(10L) }
 }

@@ -203,8 +203,8 @@ interface EnabledFeatureConfig {
     fun isActivityProcessLifecycleTrackerEnabled(): Boolean = false
 
     /**
-     * Gates whether the multi-file session persistence layer writes session telemetry in parallel
-     * with the existing single-file payload writer.
+     * Gates whether the multi-file session persistence layer writes session telemetry instead of
+     * the legacy single-file payload writer. Only one of the two is active per launch.
      *
      * sdk_config.multi_file_persistence_enabled
      */

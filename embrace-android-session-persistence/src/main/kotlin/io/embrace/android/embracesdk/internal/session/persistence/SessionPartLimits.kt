@@ -12,7 +12,7 @@ package io.embrace.android.embracesdk.internal.session.persistence
 internal const val MAX_PART_FILE_BYTES: Long = 12L * 1024 * 1024
 
 /**
- * Upper bound on the size of a single span record, fir both the completed spans file and the span
+ * Upper bound on the size of a single span record, for both the completed spans file and the span
  * snapshots file.
  *
  * This is a backstop against memory exhaustion rather than a capture limit, so it sits above the

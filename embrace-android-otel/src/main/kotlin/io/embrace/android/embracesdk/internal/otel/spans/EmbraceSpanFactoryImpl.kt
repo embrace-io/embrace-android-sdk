@@ -236,7 +236,12 @@ private class EmbraceSpanImpl(
             return false
         }
         var successful = false
-        val attemptedEndTimeMs = endTimeMs?.normalizeTimestampAsMillis() ?: deps.openTelemetryClock.now().nanosToMillis()
+        val requestedEndTimeMs = endTimeMs?.normalizeTimestampAsMillis() ?: UNSET_TIME
+        val attemptedEndTimeMs = if (requestedEndTimeMs > UNSET_TIME) {
+            requestedEndTimeMs
+        } else {
+            deps.openTelemetryClock.now().nanosToMillis()
+        }
 
         synchronized(startedSpan) {
             if (!isRecording) {

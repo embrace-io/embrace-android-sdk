@@ -91,4 +91,19 @@ class ThreadStacktraceSamplerTest {
         runActionsConcurrently(listOf(writer) + readers)
         assertEquals(minOf(captureCount, 1000), sampler.retrieveSampleMetadata().size)
     }
+
+    @Test
+    fun `test sample overhead`() {
+        var now = 1000L
+        val sampler = ThreadStacktraceSampler(
+            { now.also { now += 5 } },
+            Thread.currentThread(),
+            sampleLimit,
+            200,
+        )
+        sampler.captureSample()
+        val metadata = sampler.retrieveSampleMetadata().single()
+        assertEquals(1000L, metadata.sampleTimeMs)
+        assertEquals(5L, metadata.sampleOverheadMs)
+    }
 }

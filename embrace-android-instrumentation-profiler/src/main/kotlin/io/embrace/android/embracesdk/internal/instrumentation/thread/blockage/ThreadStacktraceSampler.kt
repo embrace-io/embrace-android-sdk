@@ -30,7 +30,7 @@ class ThreadStacktraceSampler(
                 ThreadSampleMetadata(
                     sample = trace,
                     sampleTimeMs = sampleTimeMs,
-                    sampleOverheadMs = sampleTimeMs - clock.now(),
+                    sampleOverheadMs = clock.now() - sampleTimeMs,
                 ),
             )
         }

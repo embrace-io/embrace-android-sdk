@@ -74,7 +74,7 @@ internal class MultiFilePersistenceParityTest(
     ) = RemoteConfig(
         pctMultiFilePersistenceEnabled = when (persistenceMode) {
             PersistenceMode.MULTI_FILE -> 100.0f
-            PersistenceMode.LEGACY -> null
+            PersistenceMode.LEGACY -> 0.0f
         },
         backgroundActivityConfig = backgroundActivity,
     )

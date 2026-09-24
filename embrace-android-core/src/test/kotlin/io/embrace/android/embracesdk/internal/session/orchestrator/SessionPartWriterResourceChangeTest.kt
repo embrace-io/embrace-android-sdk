@@ -222,12 +222,9 @@ internal class SessionPartWriterResourceChangeTest {
         lazy { sessionsDir },
         BackgroundWorker(executor),
         FakeConfigService(
-            persistenceBehavior = when {
-                enabled -> createPersistenceBehavior(
-                    remoteCfg = RemoteConfig(pctMultiFilePersistenceEnabled = 100.0f),
-                )
-                else -> createPersistenceBehavior()
-            },
+            persistenceBehavior = createPersistenceBehavior(
+                remoteCfg = RemoteConfig(pctMultiFilePersistenceEnabled = if (enabled) 100.0f else 0.0f),
+            ),
         ),
         TestUuidSource(),
         clock,

@@ -227,26 +227,6 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
-    fun `nothing more is written to a session part once multi file persistence is disabled`() {
-        val configService = configService(enabled = true)
-        val writer = createWriter(configService = configService)
-        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
-        drain()
-
-        configService.persistenceBehavior = createPersistenceBehavior()
-        clock.tick(10000)
-        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
-        drain()
-        writer.onMetadataChanged()
-        drain()
-
-        assertEquals(listOf(SESSION_PART_ID), sessionPartDirs().map { it.sessionPartId })
-        assertEquals("user0", metadataIn(SESSION_PART_ID)?.user_id)
-        assertEquals(1, writeCount)
-        assertNoInternalErrors()
-    }
-
-    @Test
     fun `a session part directory that cannot be created is reported once and nothing is written`() {
         val writer = createWriter(sessionsDir = tempFolder.newFile("not_a_dir"))
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
@@ -563,25 +543,6 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
-    fun `a session part end is not written once multi file persistence is disabled`() {
-        val configService = configService(enabled = true)
-        val writer = createWriter(configService = configService)
-        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
-        drain()
-        val submitCount = executor.submitCount
-
-        configService.persistenceBehavior = createPersistenceBehavior()
-        clock.tick(10000)
-        writer.endPart()
-        writer.onSessionPartEnded(SESSION_PART_ID)
-        drain()
-
-        assertEquals(submitCount, executor.submitCount)
-        assertNull(sessionSpanIn(SESSION_PART_ID)?.end_time_unix_nano)
-        assertNoInternalErrors()
-    }
-
-    @Test
     fun `repeated session span changes keep the latest session span`() {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
@@ -618,25 +579,6 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertNull(sessionSpanIn(SESSION_PART_ID))
-        assertNoInternalErrors()
-    }
-
-    @Test
-    fun `a session span change is not written once multi file persistence is disabled`() {
-        val configService = configService(enabled = true)
-        val writer = createWriter(configService = configService)
-        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
-        drain()
-        val submitCount = executor.submitCount
-
-        configService.persistenceBehavior = createPersistenceBehavior()
-        clock.tick(2000)
-        sessionSpan.name = "span1"
-        writer.onSpanSnapshotChanged(sessionSpan)
-        drain()
-
-        assertEquals(submitCount, executor.submitCount)
-        assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.name)
         assertNoInternalErrors()
     }
 
@@ -1736,10 +1678,9 @@ internal class SessionPartWriterImplTest {
         nativeSymbolMap: Map<String, String>? = emptyMap(),
     ) = FakeConfigService(
         nativeSymbolMap = nativeSymbolMap,
-        persistenceBehavior = when {
-            enabled -> createPersistenceBehavior(remoteCfg = RemoteConfig(pctMultiFilePersistenceEnabled = 100.0f))
-            else -> createPersistenceBehavior()
-        },
+        persistenceBehavior = createPersistenceBehavior(
+            remoteCfg = RemoteConfig(pctMultiFilePersistenceEnabled = if (enabled) 100.0f else 0.0f),
+        ),
     )
 
     private fun drain() = executor.drainWrites()

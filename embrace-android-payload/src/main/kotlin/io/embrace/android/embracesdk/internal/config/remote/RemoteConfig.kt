@@ -168,8 +168,8 @@ data class RemoteConfig(
     val vitalsRemoteConfig: VitalsRemoteConfig? = null,
 
     /**
-     * Percentage of devices for which the multi-file session persistence layer writes in parallel
-     * with the existing single-file payload writer.
+     * Percentage of devices for which the multi-file session persistence layer writes session
+     * telemetry instead of the legacy single-file payload writer.
      */
     @SerialName("pct_multi_file_persistence_enabled")
     val pctMultiFilePersistenceEnabled: Float? = null,

@@ -12,7 +12,7 @@ fun LogRecordData.toEmbracePayload(): Log {
         timeUnixNano = timestamp,
         severityNumber = severityNumber?.ordinal,
         severityText = severityText,
-        body = body?.toString(),
-        attributes = attributes.map { (key, value) -> Attribute(key, value.toString()) },
+        body = body?.toPayloadString(),
+        attributes = attributes.map { (key, value) -> Attribute(key, value.toPayloadString()) },
     )
 }

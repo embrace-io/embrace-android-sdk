@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.opentelemetry.kotlin.Clock
+import io.opentelemetry.kotlin.attributes.AnyValue
 import io.opentelemetry.kotlin.getTracer
 import io.opentelemetry.kotlin.tracing.StatusData
 import io.opentelemetry.kotlin.tracing.recordException
@@ -254,5 +255,23 @@ internal class EmbSpanTest {
                 assertEquals("true", attributes["boolean"])
             }
         }
+    }
+
+    @Test
+    fun `any value and byte array attributes are serialized by content`() {
+        with(embSpan) {
+            setAnyValueAttribute("any", AnyValue.LongValue(3L))
+            addEvent("event") {
+                setAnyValueAttribute("any", AnyValue.StringValue("wrapped"))
+                setByteArrayAttribute("bytes", byteArrayOf(1, 2))
+            }
+            addLink(checkNotNull(FakeEmbraceSdkSpan.started().spanContext)) {
+                setAnyValueAttribute("any", AnyValue.BoolValue(true))
+                setByteArrayAttribute("bytes", byteArrayOf(1, 2))
+            }
+        }
+        assertEquals("3", fakeEmbraceSpan.attributes["any"])
+        assertEquals(mapOf("any" to "wrapped", "bytes" to "[1, 2]"), fakeEmbraceSpan.events.single().attributes)
+        assertEquals(mapOf("any" to "true", "bytes" to "[1, 2]"), fakeEmbraceSpan.links.single().attributes)
     }
 }

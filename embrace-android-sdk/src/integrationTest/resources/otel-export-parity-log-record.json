@@ -73,7 +73,7 @@
     "observedTimestampEpochNanos": "169220160030000000",
     "totalAttributeCount": "10",
     "attributes": {
-      "any-value-attr": "__EMBRACE_TEST_IGNORE__",
+      "any-value-attr": "3",
       "boolean-list-attr": "[true, false]",
       "double-attr": "1.5",
       "emb.session_part_id": "__EMBRACE_TEST_IGNORE__",

@@ -47,6 +47,10 @@
           "value": "__EMBRACE_TEST_IGNORE__"
         },
         {
+          "key": "emb.state.screen-automatic.value_type",
+          "value": "system"
+        },
+        {
           "key": "emb.state.test",
           "value": "__EMBRACE_TEST_IGNORE__"
         },

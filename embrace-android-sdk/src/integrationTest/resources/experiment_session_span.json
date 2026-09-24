@@ -185,7 +185,8 @@
             "name": "transition",
             "time_unix_nano": 169220200133000000,
             "attributes": [
-              { "key": "emb.state.new_value", "value": "Backgrounded" }
+              { "key": "emb.state.new_value", "value": "Backgrounded" },
+              { "key": "emb.state.value_type", "value": "system" }
             ]
           }
         ],
@@ -194,6 +195,7 @@
           { "key": "emb.session_part_id", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.state.initial_value", "value": "Initializing" },
           { "key": "emb.state.transition_count", "value": "2" },
+          { "key": "emb.state.value_type", "value": "system" },
           { "key": "emb.type", "value": "state" },
           { "key": "emb.user_session_id", "value": "__EMBRACE_TEST_IGNORE__" }
         ],

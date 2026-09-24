@@ -1,11 +1,14 @@
 package io.embrace.android.embracesdk.internal.telemetry
 
+import io.embrace.android.embracesdk.concurrency.runActionsConcurrently
+import io.embrace.android.embracesdk.concurrency.runConcurrently
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.semconv.EmbTelemetryAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.atomic.AtomicInteger
 
 internal class EmbraceTelemetryServiceTest {
 
@@ -193,4 +196,99 @@ internal class EmbraceTelemetryServiceTest {
         assertTrue(telemetryAttributes.containsKey(EmbTelemetryAttributes.EMB_OKHTTP3))
         assertTrue(telemetryAttributes.containsKey(EmbTelemetryAttributes.EMB_OKHTTP3_ON_CLASSPATH))
     }
+
+    @Test
+    fun `concurrent onPublicApiCalled counts every call`() {
+        val threadCount = 8
+        val callsPerThread = 500
+
+        runConcurrently(threadCount) {
+            repeat(callsPerThread) {
+                embraceTelemetryService.onPublicApiCalled("first_api")
+                embraceTelemetryService.onPublicApiCalled("second_api")
+            }
+        }
+
+        val telemetryAttributes = embraceTelemetryService.getAndClearTelemetryAttributes()
+        val expectedCount = (threadCount * callsPerThread).toString()
+        assertEquals(expectedCount, telemetryAttributes["emb.usage.first_api"])
+        assertEquals(expectedCount, telemetryAttributes["emb.usage.second_api"])
+    }
+
+    @Test
+    fun `concurrent trackAppliedLimit racing getAndClearTelemetryAttributes loses no increments`() {
+        val writerCount = 4
+        val callsPerWriter = 2_000
+        val writersFinished = AtomicInteger(0)
+        var drained = 0
+
+        val writers = List(writerCount) {
+            {
+                try {
+                    repeat(callsPerWriter) {
+                        embraceTelemetryService.trackAppliedLimit("span", AppliedLimitType.DROP)
+                    }
+                } finally {
+                    writersFinished.incrementAndGet()
+                }
+            }
+        }
+        // drains continuously while the writers run, so increments keep landing mid-drain
+        val drainer: () -> Unit = {
+            while (writersFinished.get() < writerCount) {
+                drained += drainSpanDropCount()
+            }
+        }
+        runActionsConcurrently(writers + drainer)
+        drained += drainSpanDropCount()
+
+        assertEquals(writerCount * callsPerWriter, drained)
+    }
+
+    @Test
+    fun `concurrent logStorageTelemetry racing getAndClearTelemetryAttributes loses no entries`() {
+        val rounds = 10
+        val writerCount = 4
+        val entriesPerWriter = 500
+        val expectedKeys = (0 until writerCount).flatMap { writerIndex ->
+            (0 until entriesPerWriter).map { entry -> storageKey(writerIndex, entry) }
+        }.toSet()
+
+        // the window where an entry can be lost is narrow, so repeat to hit it reliably. Each round ends fully drained,
+        // so the same service can be reused.
+        repeat(rounds) {
+            val writersFinished = AtomicInteger(0)
+            val drainedKeys = mutableSetOf<String>()
+
+            val writers = List(writerCount) { writerIndex ->
+                {
+                    try {
+                        repeat(entriesPerWriter) { entry ->
+                            embraceTelemetryService.logStorageTelemetry(mapOf(storageKey(writerIndex, entry) to "1"))
+                        }
+                    } finally {
+                        writersFinished.incrementAndGet()
+                    }
+                }
+            }
+            // drains continuously while the writers run, so entries keep landing mid-drain
+            val drainer: () -> Unit = {
+                while (writersFinished.get() < writerCount) {
+                    drainedKeys += embraceTelemetryService.drainStorageKeys()
+                }
+            }
+            runActionsConcurrently(writers + drainer)
+            drainedKeys += embraceTelemetryService.drainStorageKeys()
+
+            assertEquals(emptySet<String>(), expectedKeys - drainedKeys)
+        }
+    }
+
+    private fun storageKey(writerIndex: Int, entry: Int) = "storage.$writerIndex.$entry"
+
+    private fun TelemetryService.drainStorageKeys(): Set<String> =
+        getAndClearTelemetryAttributes().keys.filter { it.startsWith("storage.") }.toSet()
+
+    private fun drainSpanDropCount(): Int =
+        embraceTelemetryService.getAndClearTelemetryAttributes()["emb.private.applied_limit.span.drop"]?.toInt() ?: 0
 }

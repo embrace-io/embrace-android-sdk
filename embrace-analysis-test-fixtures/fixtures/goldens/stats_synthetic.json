@@ -1,0 +1,845 @@
+{
+ "_ndtri": {
+  "0.001": -3.090232304709404,
+  "0.01": -2.326347874388028,
+  "0.02": -2.0537489090030348,
+  "0.02425": -1.9729610490848712,
+  "0.05": -1.6448536251336814,
+  "0.1": -1.2815515641401563,
+  "0.25": -0.6744897502234225,
+  "0.5": 0.0,
+  "0.75": 0.6744897502234225,
+  "0.9": 1.2815515641401563,
+  "0.95": 1.644853625133699,
+  "0.975": 1.959963986120195,
+  "0.97575": 1.9729610490848712,
+  "0.99": 2.326347874388028,
+  "0.999": 3.090232304709404
+ },
+ "benjamini_hochberg": {
+  "all_none": [
+   null,
+   null
+  ],
+  "alpha_0.05": [
+   true,
+   false,
+   false,
+   null,
+   false,
+   true,
+   false,
+   false
+  ],
+  "alpha_0.10": [
+   true,
+   true,
+   true,
+   null,
+   false,
+   true,
+   true,
+   false
+  ],
+  "empty": [],
+  "inputs": [
+   0.01,
+   0.04,
+   0.03,
+   null,
+   0.2,
+   0.001,
+   0.05,
+   0.9
+  ]
+ },
+ "cliffs_delta": {
+  "a_vs_b": {
+   "a12": 0.3575,
+   "delta": -0.285,
+   "magnitude": "small"
+  },
+  "b_vs_a": {
+   "a12": 0.6425,
+   "delta": 0.285,
+   "magnitude": "small"
+  },
+  "empty_a": {
+   "a12": null,
+   "delta": null,
+   "magnitude": "n/a"
+  },
+  "identical": {
+   "a12": 0.5,
+   "delta": 0.0,
+   "magnitude": "negligible"
+  },
+  "small_[1,2,3]_vs_[2,3,4]": {
+   "a12": 0.7777777777777778,
+   "delta": 0.5555555555555556,
+   "magnitude": "large"
+  }
+ },
+ "cliffs_delta_caveat": {
+  "0.05": "ICC 0.05: clustering is not materially inflating this effect size",
+  "0.1": "ICC 0.10: mildly inflated by clustering; prefer the cluster-level interval",
+  "0.2": "ICC 0.20: mildly inflated by clustering; prefer the cluster-level interval",
+  "0.3": "ICC 0.30 is high: this effect size reflects separation BETWEEN passes as much as any treatment effect. Descriptive only - do not read it as evidence",
+  "0.65": "ICC 0.65 is high: this effect size reflects separation BETWEEN passes as much as any treatment effect. Descriptive only - do not read it as evidence",
+  "None": "ICC unknown - treat the effect size as descriptive only"
+ },
+ "cluster_bootstrap_diff": {
+  "alpha_0.10": {
+   "available": true,
+   "ci": [
+    -7.75,
+    3.0
+   ],
+   "diff": -2.375
+  },
+  "mean": {
+   "available": true,
+   "ci": [
+    -7.2190625,
+    2.450000000000003
+   ],
+   "diff": -2.375
+  },
+  "median_default": {
+   "available": true,
+   "ci": [
+    -8.5,
+    3.875
+   ],
+   "diff": -2.375
+  },
+  "quantile_p90": {
+   "available": true,
+   "ci": [
+    -8.450000000000003,
+    2.799999999999997
+   ],
+   "diff": -3.2750000000000057
+  },
+  "quantile_p95": {
+   "available": true,
+   "ci": [
+    -8.475000000000009,
+    2.9375
+   ],
+   "diff": -3.4750000000000085
+  },
+  "too_few_clusters_3v3": {
+   "available": false,
+   "ci": null,
+   "diff": -1.875,
+   "reason": "cluster bootstrap needs >= 4 clusters per arm; got 3 and 3. With this design the between-pass variance cannot be estimated, and an iteration-level interval would understate uncertainty by roughly the design effect."
+  }
+ },
+ "cluster_permutation_test": {
+  "median_default": {
+   "available": true,
+   "min_attainable_p": 0.007936507936507936,
+   "observed": 2.375,
+   "p": 0.6192380761923808
+  },
+  "quantile_p90": {
+   "available": true,
+   "min_attainable_p": 0.007936507936507936,
+   "observed": 3.2750000000000057,
+   "p": 0.28857114288571145
+  },
+  "too_few_clusters_1v1": {
+   "available": false,
+   "min_attainable_p": 1.0,
+   "p": null,
+   "reason": "only 1+1 clusters, giving 2 distinct assignments; the smallest attainable p-value is 1.00. Cluster-level significance is unreachable BY DESIGN here - collect more passes rather than more iterations."
+  },
+  "too_few_clusters_3v3": {
+   "available": false,
+   "min_attainable_p": 0.1,
+   "p": null,
+   "reason": "only 3+3 clusters, giving 20 distinct assignments; the smallest attainable p-value is 0.10. Cluster-level significance is unreachable BY DESIGN here - collect more passes rather than more iterations."
+  }
+ },
+ "compare": {
+  "default": {
+   "clears_noise_band": true,
+   "clusters": {
+    "A": 5,
+    "B": 5
+   },
+   "design_effect": {
+    "A": {
+     "deff": 7.020109689213894,
+     "icc": 0.8600156698876991,
+     "n": 40,
+     "n_effective": 5.697916666666667
+    },
+    "B": {
+     "deff": 6.578947368421052,
+     "icc": 0.7969924812030075,
+     "n": 40,
+     "n_effective": 6.08
+    }
+   },
+   "effect_size": {
+    "a12": 0.3575,
+    "delta": -0.285,
+    "magnitude": "small"
+   },
+   "median": {
+    "A": 56.875,
+    "B": 54.5
+   },
+   "median_ci": {
+    "available": true,
+    "ci": [
+     -8.5,
+     3.875
+    ],
+    "diff": -2.375
+   },
+   "median_diff_pct": -4.175824175824176,
+   "n": {
+    "A": 40,
+    "B": 40
+   },
+   "permutation": {
+    "available": true,
+    "min_attainable_p": 0.007936507936507936,
+    "observed": 2.375,
+    "p": 0.6192380761923808
+   },
+   "quantiles": {
+    "0.9": {
+     "A": 62.825,
+     "B": 59.55,
+     "ci": {
+      "available": false,
+      "ci": null,
+      "diff": -3.2750000000000057,
+      "reason": "n below the 100 needed before a p90 interval has usable coverage - point estimate only"
+     },
+     "support": {
+      "A": 4,
+      "B": 4
+     }
+    },
+    "0.95": {
+     "A": 64.025,
+     "B": 60.55,
+     "ci": {
+      "available": false,
+      "ci": null,
+      "diff": -3.4750000000000085,
+      "reason": "n below the 200 needed before a p95 interval has usable coverage - point estimate only"
+     },
+     "support": {
+      "A": 2,
+      "B": 2
+     }
+    }
+   }
+  },
+  "noise2_q50_q90": {
+   "clears_noise_band": true,
+   "clusters": {
+    "A": 5,
+    "B": 5
+   },
+   "design_effect": {
+    "A": {
+     "deff": 7.020109689213894,
+     "icc": 0.8600156698876991,
+     "n": 40,
+     "n_effective": 5.697916666666667
+    },
+    "B": {
+     "deff": 6.578947368421052,
+     "icc": 0.7969924812030075,
+     "n": 40,
+     "n_effective": 6.08
+    }
+   },
+   "effect_size": {
+    "a12": 0.3575,
+    "delta": -0.285,
+    "magnitude": "small"
+   },
+   "median": {
+    "A": 56.875,
+    "B": 54.5
+   },
+   "median_ci": {
+    "available": true,
+    "ci": [
+     -8.5,
+     3.875
+    ],
+    "diff": -2.375
+   },
+   "median_diff_pct": -4.175824175824176,
+   "n": {
+    "A": 40,
+    "B": 40
+   },
+   "permutation": {
+    "available": true,
+    "min_attainable_p": 0.007936507936507936,
+    "observed": 2.375,
+    "p": 0.6192380761923808
+   },
+   "quantiles": {
+    "0.5": {
+     "A": 56.875,
+     "B": 54.5,
+     "ci": {
+      "available": true,
+      "ci": [
+       -8.5,
+       3.875
+      ],
+      "diff": -2.375
+     },
+     "support": {
+      "A": 20,
+      "B": 20
+     }
+    },
+    "0.9": {
+     "A": 62.825,
+     "B": 59.55,
+     "ci": {
+      "available": false,
+      "ci": null,
+      "diff": -3.2750000000000057,
+      "reason": "n below the 100 needed before a p90 interval has usable coverage - point estimate only"
+     },
+     "support": {
+      "A": 4,
+      "B": 4
+     }
+    }
+   }
+  },
+  "too_few_clusters_3v3": {
+   "clears_noise_band": false,
+   "clusters": {
+    "A": 3,
+    "B": 3
+   },
+   "design_effect": {
+    "A": {
+     "deff": 5.930501930501931,
+     "icc": 0.704357418643133,
+     "n": 24,
+     "n_effective": 4.046875
+    },
+    "B": {
+     "deff": 5.194805194805195,
+     "icc": 0.5992578849721707,
+     "n": 24,
+     "n_effective": 4.62
+    }
+   },
+   "effect_size": {
+    "a12": 0.3333333333333333,
+    "delta": -0.3333333333333333,
+    "magnitude": "medium"
+   },
+   "median": {
+    "A": 53.875,
+    "B": 52.0
+   },
+   "median_ci": {
+    "available": false,
+    "ci": null,
+    "diff": -1.875,
+    "reason": "cluster bootstrap needs >= 4 clusters per arm; got 3 and 3. With this design the between-pass variance cannot be estimated, and an iteration-level interval would understate uncertainty by roughly the design effect."
+   },
+   "median_diff_pct": -3.480278422273782,
+   "n": {
+    "A": 24,
+    "B": 24
+   },
+   "permutation": {
+    "available": false,
+    "min_attainable_p": 0.1,
+    "p": null,
+    "reason": "only 3+3 clusters, giving 20 distinct assignments; the smallest attainable p-value is 0.10. Cluster-level significance is unreachable BY DESIGN here - collect more passes rather than more iterations."
+   },
+   "quantiles": {
+    "0.9": {
+     "A": 57.85,
+     "B": 55.349999999999994,
+     "ci": {
+      "available": false,
+      "ci": null,
+      "diff": -2.500000000000007,
+      "reason": "n below the 100 needed before a p90 interval has usable coverage - point estimate only"
+     },
+     "support": {
+      "A": 2,
+      "B": 2
+     }
+    },
+    "0.95": {
+     "A": 58.425,
+     "B": 56.349999999999994,
+     "ci": {
+      "available": false,
+      "ci": null,
+      "diff": -2.075000000000003,
+      "reason": "n below the 200 needed before a p95 interval has usable coverage - point estimate only"
+     },
+     "support": {
+      "A": 1,
+      "B": 1
+     }
+    }
+   }
+  }
+ },
+ "constants": {
+  "DEFAULT_RESAMPLES": 10000,
+  "MIN_CLUSTERS_PER_ARM": 4,
+  "QUANTILE_MIN_N": {
+   "0.9": 100,
+   "0.95": 200,
+   "0.99": 1000
+  }
+ },
+ "cuped_variance_reduction": {
+  "-0.5": {
+   "n_multiplier": 0.75,
+   "variance_removed": 0.25
+  },
+  "-1.5": {
+   "n_multiplier": 0.0,
+   "variance_removed": 1.0
+  },
+  "0.0": {
+   "n_multiplier": 1.0,
+   "variance_removed": 0.0
+  },
+  "0.7": {
+   "n_multiplier": 0.51,
+   "variance_removed": 0.48999999999999994
+  },
+  "1.5": {
+   "n_multiplier": 0.0,
+   "variance_removed": 1.0
+  }
+ },
+ "design_effect": {
+  "a": {
+   "deff": 7.020109689213894,
+   "icc": 0.8600156698876991,
+   "n": 40,
+   "n_effective": 5.697916666666667
+  },
+  "b": {
+   "deff": 6.578947368421052,
+   "icc": 0.7969924812030075,
+   "n": 40,
+   "n_effective": 6.08
+  },
+  "empty": {
+   "deff": null,
+   "icc": null,
+   "n": 0,
+   "n_effective": null
+  },
+  "single_cluster": {
+   "deff": null,
+   "icc": null,
+   "n": 8,
+   "n_effective": null
+  }
+ },
+ "dilution": {
+  "share100_change3": 3.0,
+  "share35_change-10": -3.5,
+  "share4_change25": 1.0
+ },
+ "icc_oneway": {
+  "a": 0.8600156698876991,
+  "b": 0.7969924812030075,
+  "constant_clusters": null,
+  "single_cluster": null,
+  "singletons_only": null
+ },
+ "inputs": {
+  "a_clusters": [
+   [
+    48.0,
+    50.25,
+    52.5,
+    49.75,
+    52.0,
+    49.25,
+    51.5,
+    53.75
+   ],
+   [
+    51.0,
+    53.25,
+    55.5,
+    52.75,
+    55.0,
+    52.25,
+    54.5,
+    56.75
+   ],
+   [
+    54.0,
+    56.25,
+    58.5,
+    55.75,
+    58.0,
+    55.25,
+    57.5,
+    59.75
+   ],
+   [
+    57.0,
+    59.25,
+    61.5,
+    58.75,
+    61.0,
+    58.25,
+    60.5,
+    62.75
+   ],
+   [
+    60.0,
+    62.25,
+    64.5,
+    61.75,
+    64.0,
+    61.25,
+    63.5,
+    65.75
+   ]
+  ],
+  "a_flat_sorted": [
+   48.0,
+   49.25,
+   49.75,
+   50.25,
+   51.0,
+   51.5,
+   52.0,
+   52.25,
+   52.5,
+   52.75,
+   53.25,
+   53.75,
+   54.0,
+   54.5,
+   55.0,
+   55.25,
+   55.5,
+   55.75,
+   56.25,
+   56.75,
+   57.0,
+   57.5,
+   58.0,
+   58.25,
+   58.5,
+   58.75,
+   59.25,
+   59.75,
+   60.0,
+   60.5,
+   61.0,
+   61.25,
+   61.5,
+   61.75,
+   62.25,
+   62.75,
+   63.5,
+   64.0,
+   64.5,
+   65.75
+  ],
+  "a_formula": "a[c][i] = 50 + 3*c + ((i*7) % 5) - 2 + 0.25*i, c in 0..4, i in 0..7",
+  "b_clusters": [
+   [
+    46.0,
+    49.5,
+    48.0,
+    51.5,
+    50.0,
+    48.5,
+    52.0,
+    50.5
+   ],
+   [
+    48.5,
+    52.0,
+    50.5,
+    54.0,
+    52.5,
+    51.0,
+    54.5,
+    53.0
+   ],
+   [
+    51.0,
+    54.5,
+    53.0,
+    56.5,
+    55.0,
+    53.5,
+    57.0,
+    55.5
+   ],
+   [
+    53.5,
+    57.0,
+    55.5,
+    59.0,
+    57.5,
+    56.0,
+    59.5,
+    58.0
+   ],
+   [
+    56.0,
+    59.5,
+    58.0,
+    61.5,
+    60.0,
+    58.5,
+    62.0,
+    60.5
+   ]
+  ],
+  "b_flat_sorted": [
+   46.0,
+   48.0,
+   48.5,
+   48.5,
+   49.5,
+   50.0,
+   50.5,
+   50.5,
+   51.0,
+   51.0,
+   51.5,
+   52.0,
+   52.0,
+   52.5,
+   53.0,
+   53.0,
+   53.5,
+   53.5,
+   54.0,
+   54.5,
+   54.5,
+   55.0,
+   55.5,
+   55.5,
+   56.0,
+   56.0,
+   56.5,
+   57.0,
+   57.0,
+   57.5,
+   58.0,
+   58.0,
+   58.5,
+   59.0,
+   59.5,
+   59.5,
+   60.0,
+   60.5,
+   61.5,
+   62.0
+  ],
+  "b_formula": "b[c][i] = 48 + 2.5*c + ((i*3) % 5) - 2 + 0.5*i, c in 0..4, i in 0..7",
+  "resamples": 10000,
+  "seed": 12345
+ },
+ "min_detectable_effect": {
+  "n0": null,
+  "n200_cv15": 4.2023775,
+  "n200_cv15_deff5": 9.396801757115623,
+  "n50_cv20_power0.5": 9.93746
+ },
+ "n_for_exceedance_rate": {
+  "rate0.05_abs0.01": 1825,
+  "rate0.05_abs0.01_deff3": 5475,
+  "rate0.5_abs0.05": 385
+ },
+ "n_for_quantile": {
+  "sigma0.3_p0.5_rel0.02": 1358,
+  "sigma0.4_p0.99_rel0.05_deff2": 6853,
+  "sigma0.4_p0.9_rel0.05": 719,
+  "sigma0.6_p0.95_rel0.1_z1.645": 436
+ },
+ "practical": {
+  "-4_vs_4": true,
+  "0_vs_0": true,
+  "3.9_vs_4": false,
+  "5_vs_4": true
+ },
+ "quantile": {
+  "a_flat": {
+   "0.0": 48.0,
+   "0.1": 50.925000000000004,
+   "0.25": 53.125,
+   "0.5": 56.875,
+   "0.75": 60.625,
+   "0.9": 62.825,
+   "0.95": 64.025,
+   "0.99": 65.26249999999999,
+   "1.0": 65.75
+  },
+  "b_flat": {
+   "0.0": 46.0,
+   "0.1": 49.4,
+   "0.25": 51.375,
+   "0.5": 54.5,
+   "0.75": 57.625,
+   "0.9": 59.55,
+   "0.95": 60.55,
+   "0.99": 61.805,
+   "1.0": 62.0
+  },
+  "empty": "NaN",
+  "singleton_42.5": 42.5,
+  "two_values_[1,3]": {
+   "0.0": 1.0,
+   "0.1": 1.2000000000000002,
+   "0.25": 1.5,
+   "0.5": 2.0,
+   "0.75": 2.5,
+   "0.9": 2.8000000000000003,
+   "0.95": 2.8999999999999995,
+   "0.99": 2.9799999999999995,
+   "1.0": 3.0
+  }
+ },
+ "quantile_ci_trustworthy": {
+  "100": {
+   "0.5": true,
+   "0.9": true,
+   "0.95": false,
+   "0.99": false,
+   "0.999": false
+  },
+  "1000": {
+   "0.5": true,
+   "0.9": true,
+   "0.95": true,
+   "0.99": true,
+   "0.999": false
+  },
+  "20": {
+   "0.5": false,
+   "0.9": false,
+   "0.95": false,
+   "0.99": false,
+   "0.999": false
+  },
+  "200": {
+   "0.5": true,
+   "0.9": true,
+   "0.95": true,
+   "0.99": false,
+   "0.999": false
+  },
+  "50": {
+   "0.5": true,
+   "0.9": false,
+   "0.95": false,
+   "0.99": false,
+   "0.999": false
+  }
+ },
+ "quantile_support": {
+  "100": {
+   "0.5": 50,
+   "0.9": 10,
+   "0.95": 5,
+   "0.99": 1,
+   "0.999": 0
+  },
+  "1000": {
+   "0.5": 500,
+   "0.9": 100,
+   "0.95": 50,
+   "0.99": 10,
+   "0.999": 1
+  },
+  "20": {
+   "0.5": 10,
+   "0.9": 2,
+   "0.95": 1,
+   "0.99": 0,
+   "0.999": 0
+  },
+  "200": {
+   "0.5": 100,
+   "0.9": 20,
+   "0.95": 10,
+   "0.99": 2,
+   "0.999": 0
+  },
+  "50": {
+   "0.5": 25,
+   "0.9": 5,
+   "0.95": 3,
+   "0.99": 1,
+   "0.999": 0
+  }
+ },
+ "required_n": {
+  "cv15_effect5": 142,
+  "cv15_effect5_deff0.5": 142,
+  "cv15_effect5_deff3.2": 453,
+  "cv15_effect5_power0.5": 112,
+  "cv30_effect2": 3532,
+  "effect0": null
+ },
+ "sigma_from_quantile_ratio": {
+  "1.0": 0.0,
+  "1.5": 0.3163861049444861,
+  "2.0": 0.5408656188293053,
+  "3.7": 1.0208975236156008
+ },
+ "tost_equivalence": {
+  "margin_10": {
+   "available": true,
+   "ci_pct": [
+    -14.945054945054945,
+    6.813186813186813
+   ],
+   "equivalent": false,
+   "margin_pct": 10.0
+  },
+  "margin_2": {
+   "available": true,
+   "ci_pct": [
+    -14.945054945054945,
+    6.813186813186813
+   ],
+   "equivalent": false,
+   "margin_pct": 2.0
+  },
+  "too_few_clusters": {
+   "available": false,
+   "equivalent": null,
+   "reason": "cluster bootstrap needs >= 4 clusters per arm; got 2 and 2. With this design the between-pass variance cannot be estimated, and an iteration-level interval would understate uncertainty by roughly the design effect."
+  },
+  "zero_baseline": {
+   "available": false,
+   "equivalent": null,
+   "reason": "baseline median is zero"
+  }
+ }
+}

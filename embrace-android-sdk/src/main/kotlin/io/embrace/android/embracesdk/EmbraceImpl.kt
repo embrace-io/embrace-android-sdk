@@ -155,7 +155,8 @@ internal class EmbraceImpl(
                 val rootDir = bootstrapper.coreModule.context.filesDir
                 val fallbackDir = bootstrapper.coreModule.context.cacheDir
                 stop()
-                Executors.newSingleThreadExecutor().execute {
+                val executor = Executors.newSingleThreadExecutor()
+                executor.execute {
                     runCatching {
                         StorageLocation.entries.map {
                             it.asFile(
@@ -170,6 +171,8 @@ internal class EmbraceImpl(
                         Log.e("[Embrace]", "An error occurred while trying to disable Embrace SDK.", exception)
                     }
                 }
+                // lets the queued deletion finish, then releases the worker thread
+                executor.shutdown()
             }
         }
     }

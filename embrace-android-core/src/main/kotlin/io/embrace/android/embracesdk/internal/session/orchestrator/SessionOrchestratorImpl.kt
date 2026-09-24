@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.arch.startup.StartupType
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -596,8 +595,6 @@ internal class SessionOrchestratorImpl(
         configService.persistenceBehavior.isMultiFilePersistenceEnabled()
 
     private fun updatePeriodicCacheAttrs() {
-        val now = clock.now().millisToNanos()
-        destination.addSessionPartAttribute(EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO, now.toString())
         destination.addSessionPartAttribute(EmbSessionAttributes.EMB_TERMINATED, true.toString())
     }
 

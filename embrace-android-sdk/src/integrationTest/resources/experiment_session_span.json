@@ -235,7 +235,6 @@
           { "key": "emb.disk_free_bytes", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.error_log_count", "value": "0" },
           { "key": "emb.experiments", "value": "e:checkout-flow:variant-a:169220160030:169220160032;f:dark-mode:amoled:169220160031" },
-          { "key": "emb.heartbeat_time_unix_nano", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.is_emulator", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.kotlin_on_classpath", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "emb.okhttp3", "value": "__EMBRACE_TEST_IGNORE__" },

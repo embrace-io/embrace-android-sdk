@@ -391,7 +391,6 @@ internal class EmbraceSetupInterface(
             val envelope = fakeIncompleteSessionEnvelope(
                 userSessionId = userSessionId,
                 startMs = metadata.timestamp,
-                lastHeartbeatTimeMs = metadata.timestamp + 1_000L,
                 processIdentifier = metadata.processIdentifier
             )
             checkNotNull(fakeCacheStorageService) {

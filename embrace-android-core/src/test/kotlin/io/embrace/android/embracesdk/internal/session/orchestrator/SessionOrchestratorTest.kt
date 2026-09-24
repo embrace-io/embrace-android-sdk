@@ -464,42 +464,6 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
-    fun `test foreground session part span heartbeat`() {
-        createOrchestrator(ProcessState.BACKGROUND)
-        orchestrator.onForeground()
-        assertHeartbeatMatchesClock()
-        assertEquals("true", destination.attributes[EmbSessionAttributes.EMB_TERMINATED])
-
-        // run periodic cache
-        clock.tick(2000)
-        sessionCacheExecutor.runCurrentlyBlocked()
-        assertHeartbeatMatchesClock()
-        assertEquals("true", destination.attributes[EmbSessionAttributes.EMB_TERMINATED])
-
-        // end with crash
-        orchestrator.handleCrash("my-crash-id")
-        assertEquals("false", destination.attributes[EmbSessionAttributes.EMB_TERMINATED])
-    }
-
-    @Test
-    fun `test background session part span heartbeat`() {
-        createOrchestrator(ProcessState.BACKGROUND)
-        assertHeartbeatMatchesClock()
-        assertEquals("true", destination.attributes[EmbSessionAttributes.EMB_TERMINATED])
-
-        // run periodic cache
-        clock.tick(6000)
-        orchestrator.onSessionDataUpdate()
-        sessionCacheExecutor.runCurrentlyBlocked()
-        assertHeartbeatMatchesClock()
-        assertEquals("true", destination.attributes[EmbSessionAttributes.EMB_TERMINATED])
-
-        // end with crash
-        orchestrator.handleCrash("my-crash-id")
-        assertEquals("false", destination.attributes[EmbSessionAttributes.EMB_TERMINATED])
-    }
-
-    @Test
     fun `user session last activity time is updated every minute for default inactivity timeout`() {
         createOrchestrator(startingProcessState = ProcessState.FOREGROUND)
         val initial = activeUserSession().lastActivityMs
@@ -1006,11 +970,6 @@ internal class SessionOrchestratorTest {
         assertEquals(userSession.startTimeMs, sessionPart.startTime)
     }
 
-    private fun assertHeartbeatMatchesClock() {
-        val attr = checkNotNull(destination.attributes[EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO])
-        assertEquals(clock.now(), attr.toLong().nanosToMillis())
-    }
-
     @Test
     fun `initial session part creates a session part directory`() {
         createOrchestrator(ProcessState.FOREGROUND, multiFilePersistenceConfigService())
@@ -1163,9 +1122,6 @@ internal class SessionOrchestratorTest {
         sessionCacheExecutor.runCurrentlyBlocked()
 
         assertEquals(emptyList<Any>(), store.cachedSessionPartPayloads)
-
-        // the writer stamps its own heartbeat as it writes, so the legacy attrs are not needed
-        assertNull(destination.attributes[EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO])
         assertNoInternalErrors()
     }
 

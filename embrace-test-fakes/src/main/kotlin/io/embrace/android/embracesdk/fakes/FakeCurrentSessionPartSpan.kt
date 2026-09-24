@@ -85,7 +85,6 @@ class FakeCurrentSessionPartSpan(
     private fun newSessionPartSpan(startTimeMs: Long) =
         FakeEmbraceSdkSpan.sessionPartSpan(
             userSessionId = "fake-session-span-id",
-            startTimeMs = startTimeMs,
-            lastHeartbeatTimeMs = startTimeMs
+            startTimeMs = startTimeMs
         )
 }

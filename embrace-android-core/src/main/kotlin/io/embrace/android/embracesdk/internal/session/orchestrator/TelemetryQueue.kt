@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.internal.session.orchestrator.TelemetryQueue.Companion.COMPACT_THRESHOLD
+import java.util.Collections
 import java.util.Deque
-import java.util.Queue
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -20,7 +20,7 @@ internal class TelemetryQueue<T>(
     private val identityOf: (T) -> Any?,
 ) {
     private val queue: Deque<T> = ConcurrentLinkedDeque()
-    private val pendingRemovals: Queue<Any> = ConcurrentLinkedQueue()
+    private val pendingRemovals: MutableSet<Any> = Collections.newSetFromMap(ConcurrentHashMap())
     private val buffered = AtomicInteger()
     private val drainLock = Any()
 

@@ -97,30 +97,31 @@ class UserSessionOrchestrationModuleImpl(
             essentialServiceModule.experimentTrackingService.getRecords()
         }
 
-        val sessionPartWriter = SessionPartWriterImpl(
-            sessionsDir,
-            sessionPersistenceWorker,
-            configService,
-            initModule.uuidSource,
-            initModule.clock,
-            initModule.logger,
-            payloadSourceModule.resourceSource,
-            payloadSourceModule.envelopeMetadataSource,
-            openTelemetryModule.currentSessionPartSpan,
-            openTelemetryModule.spanRepository::getActiveEmbraceSpans,
-            initModule.telemetryService,
-            sessionPartDirectoryStore,
-            sessionPartWriteTracker,
-            onWritesComplete = {
-                sessionPartReader?.let { reader ->
+        val sessionPartWriter: SessionPartWriterImpl? = sessionPartReader?.let { reader ->
+            SessionPartWriterImpl(
+                sessionsDir,
+                sessionPersistenceWorker,
+                configService,
+                initModule.uuidSource,
+                initModule.clock,
+                initModule.logger,
+                payloadSourceModule.resourceSource,
+                payloadSourceModule.envelopeMetadataSource,
+                openTelemetryModule.currentSessionPartSpan,
+                openTelemetryModule.spanRepository::getActiveEmbraceSpans,
+                initModule.telemetryService,
+                sessionPartDirectoryStore,
+                sessionPartWriteTracker,
+                onWritesComplete = {
                     sessionReadWorker.submit { reader.readPersistedSessionParts() }
+                },
+            ).also { writer ->
+                essentialServiceModule.userService.addUserInfoListener(writer::onMetadataChanged)
+                openTelemetryModule.spanRepository.addCompletedOtelSpansListener(writer::onSpanCompleted)
+                openTelemetryModule.spanRepository.addSpanChangeListener { span ->
+                    writer.onSpanSnapshotChanged(span)
                 }
-            },
-        )
-        essentialServiceModule.userService.addUserInfoListener(sessionPartWriter::onMetadataChanged)
-        openTelemetryModule.spanRepository.addCompletedOtelSpansListener(sessionPartWriter::onSpanCompleted)
-        openTelemetryModule.spanRepository.addSpanChangeListener { span ->
-            sessionPartWriter.onSpanSnapshotChanged(span)
+            }
         }
 
         SessionOrchestratorImpl(

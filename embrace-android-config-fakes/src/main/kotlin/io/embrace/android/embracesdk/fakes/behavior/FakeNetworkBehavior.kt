@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes.behavior
 
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeDomainCountLimiter
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
@@ -17,6 +18,7 @@ class FakeNetworkBehavior(
     val rules: Set<NetworkCaptureRuleRemoteConfig> = emptySet(),
     val captureBodyEncryptionEnabled: Boolean = false,
     val publicKey: String? = null,
+    override val configDeliveredAt: Long = FakeClock.DEFAULT_FAKE_CURRENT_TIME,
 ) : NetworkBehavior {
 
     override fun isRequestContentLengthCaptureEnabled(): Boolean = false

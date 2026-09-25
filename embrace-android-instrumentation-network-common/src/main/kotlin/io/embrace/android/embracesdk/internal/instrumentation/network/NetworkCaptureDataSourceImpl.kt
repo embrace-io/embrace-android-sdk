@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
+import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
 class NetworkCaptureDataSourceImpl(
@@ -140,8 +141,9 @@ class NetworkCaptureDataSourceImpl(
 
     /**
      * Returns the network capture rule that matches the URL and method of the network call.
-     * The rule must be apply only the number of times set on NetworkCaptureRule.max_count.
-     * The rule expire_in field must be > 0. Otherwise the rule is expired and shouldn't be apply.
+     * The rule must be applied only the number of times set on NetworkCaptureRule.max_count, and only
+     * until it expires: [NetworkCaptureRuleRemoteConfig.expiresIn] seconds after the config that
+     * delivered it was fetched from the server.
      */
     internal fun getNetworkCaptureRules(url: String, method: String): Set<NetworkCaptureRuleRemoteConfig> {
         val networkCaptureRules = configService.networkBehavior.getNetworkCaptureRules().toMutableSet()
@@ -154,8 +156,14 @@ class NetworkCaptureDataSourceImpl(
             return emptySet()
         }
 
+        val configDeliveredAt = configService.networkBehavior.configDeliveredAt
+        // capture a single consistent time to check all the rules against
+        val now = clock.now()
         val applicableRules = networkCaptureRules.filter { rule ->
-            rule.method.contains(method) && rule.urlRegex.toRegex().containsMatchIn(url) && rule.expiresIn > 0
+            rule.method.contains(method) &&
+                rule.urlRegex.toRegex().containsMatchIn(url) &&
+                rule.expiresIn > 0 &&
+                now < configDeliveredAt + TimeUnit.SECONDS.toMillis(rule.expiresIn)
         }.toMutableSet()
 
         val rulesToRemove = mutableSetOf<NetworkCaptureRuleRemoteConfig>()

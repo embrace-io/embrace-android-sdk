@@ -1,17 +1,17 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
+import io.embrace.android.embracesdk.internal.config.resolved.BreadcrumbConfig
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
-import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
+import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.spans.TracingApi
 
@@ -54,7 +54,7 @@ class FakeOpenTelemetryModule(
         sensitiveKeysBehavior: SensitiveKeysBehavior,
         bypassValidation: Boolean,
         otelBehavior: OtelBehavior,
-        breadcrumbBehavior: BreadcrumbBehavior,
+        breadcrumbConfig: BreadcrumbConfig,
     ) {
         // no-op
     }

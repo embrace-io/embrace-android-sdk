@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeThreadBlockageBehavior
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -34,6 +35,20 @@ internal class ThreadBlockageServiceSupplierTest {
                 application,
                 configService = FakeConfigService(
                     autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(threadBlockageServiceEnabled = false),
+                ),
+            ),
+        )
+        assertNull(service)
+    }
+
+    @Test
+    fun testRemoteBehaviorDisabled() {
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        val service = createThreadBlockageService(
+            FakeInstrumentationArgs(
+                application,
+                configService = FakeConfigService(
+                    threadBlockageBehavior = FakeThreadBlockageBehavior(captureEnabled = false),
                 ),
             ),
         )

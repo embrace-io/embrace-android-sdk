@@ -26,7 +26,4 @@ data class ThreadBlockageRemoteConfig(
 
     @SerialName("min_duration")
     val minDuration: Int? = null,
-
-    @SerialName("monitor_thread_priority")
-    val monitorThreadPriority: Int? = null,
 )

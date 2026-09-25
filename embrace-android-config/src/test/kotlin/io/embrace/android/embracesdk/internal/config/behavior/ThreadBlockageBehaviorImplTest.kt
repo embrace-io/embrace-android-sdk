@@ -17,7 +17,6 @@ internal class ThreadBlockageBehaviorImplTest {
         stacktraceFrameLimit = 300,
         intervalsPerSession = 10,
         minDuration = 2000,
-        monitorThreadPriority = 3,
     )
 
     @Test

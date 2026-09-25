@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.otel.payload.toPayloadString
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
@@ -57,7 +58,7 @@ class EmbSpan(
     }
 
     override fun setAnyValueAttribute(key: String, value: AnyValue) {
-        setStringAttribute(key, value.toString())
+        setStringAttribute(key, value.toPayloadString().orEmpty())
     }
 
     override fun end(): Unit = end(timestamp = clock.now())
@@ -76,13 +77,13 @@ class EmbSpan(
     override fun addEvent(name: String, timestamp: Long?, attributes: (AttributesMutator.() -> Unit)?) {
         val container = EmbAttributesMutator()
         attributes?.invoke(container)
-        impl.addEvent(name, timestamp, container.attributes.mapValues { it.value.toString() })
+        impl.addEvent(name, timestamp, container.attributes.mapValues { it.value.toPayloadString().orEmpty() })
     }
 
     override fun addLink(spanContext: SpanContext, attributes: (AttributesMutator.() -> Unit)?) {
         val container = EmbAttributesMutator()
         attributes?.invoke(container)
-        impl.addLink(spanContext, container.attributes.mapValues { it.value.toString() })
+        impl.addLink(spanContext, container.attributes.mapValues { it.value.toPayloadString().orEmpty() })
     }
 
     val attributes: Map<String, Any>

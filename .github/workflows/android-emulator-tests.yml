@@ -90,5 +90,6 @@ jobs:
           name: android-emulator-${{ matrix.working-directory }}-test-results
           path: |
             embrace-android-sdk/build/reports/androidTests/connected
+            embrace-minified-test-app/build/reports/androidTests/connected
             test_failure
             emulator_logcat.log

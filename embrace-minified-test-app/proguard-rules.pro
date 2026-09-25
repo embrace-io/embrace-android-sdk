@@ -1,0 +1,3 @@
+-keep class io.embrace.android.embracesdk.minified.** { *; }
+-keep class androidx.tracing.** { *; }
+-keep class kotlin.** { *; }

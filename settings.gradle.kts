@@ -55,6 +55,7 @@ include(
     ":embrace-microbenchmark",
     ":embrace-macrobenchmark",
     ":embrace-macrobenchmark-app",
+    ":embrace-minified-test-app",
 )
 
 pluginManagement {

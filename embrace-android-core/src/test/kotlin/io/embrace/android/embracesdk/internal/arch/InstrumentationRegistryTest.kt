@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDataSource
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationProvider
+import io.embrace.android.embracesdk.fakes.LazyInitStateDataSource
 import io.embrace.android.embracesdk.fakes.TestInstrumentationProvider
 import io.embrace.android.embracesdk.fakes.TestStateDataSource
 import io.embrace.android.embracesdk.fakes.TestStateValue
@@ -176,6 +177,33 @@ internal class InstrumentationRegistryTest {
         assertEquals("Datasource added during registry iteration should not be touched", 0, newDataSource.sessionChanges)
         registry.onPostSessionChange()
         assertEquals(1, newDataSource.sessionChanges)
+    }
+
+    @Test
+    fun `getCurrentStates includes only active state sources`() {
+        val args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
+        val activeStateSource = TestStateDataSource(args)
+        val inactiveStateSource = LazyInitStateDataSource(args)
+        registry.add(DataSourceState({ activeStateSource }))
+        registry.add(DataSourceState({ inactiveStateSource }))
+        registry.add(DataSourceState({ dataSource }))
+        activeStateSource.onStateChange("active_value", 1000L)
+
+        // non-state sources and state sources that haven't started capturing are excluded
+        assertEquals(
+            mapOf(activeStateSource.stateAttributeKey to "active_value"),
+            registry.getCurrentStates(),
+        )
+
+        // a lazily-initialized state source is included once its first state change activates it
+        inactiveStateSource.onStateChange("lazy_value", 2000L)
+        assertEquals(
+            mapOf(
+                activeStateSource.stateAttributeKey to "active_value",
+                inactiveStateSource.stateAttributeKey to "lazy_value",
+            ),
+            registry.getCurrentStates(),
+        )
     }
 
     private class BlockingTestDataSource(

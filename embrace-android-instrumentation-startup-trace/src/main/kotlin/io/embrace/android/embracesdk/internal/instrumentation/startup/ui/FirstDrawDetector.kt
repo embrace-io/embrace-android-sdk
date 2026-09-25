@@ -27,6 +27,10 @@ internal class FirstDrawDetector(
 
     private val loadingActivities: MutableMap<Int, Runnable> = ConcurrentHashMap()
 
+    // Registrations waiting for their first draw, keyed by instance ID. The token lets a draw listener tell whether
+    // its registration is still current, so unregistering or reregistering before the first draw stops it.
+    private val pendingDraws: ConcurrentHashMap<Int, Any> = ConcurrentHashMap()
+
     override fun registerFirstDrawCallback(
         activity: Activity,
         drawBeginCallback: () -> Unit,
@@ -36,13 +40,17 @@ internal class FirstDrawDetector(
         if (!trackingLoad(instanceId)) {
             val window = activity.window
             if (window.callback != null) {
+                val registrationToken = Any()
+                pendingDraws[instanceId] = registrationToken
                 window.onDecorViewReady {
                     val decorView = window.decorView
                     decorView.onNextDraw {
-                        if (!trackingLoad(instanceId)) {
+                        if (pendingDraws.remove(instanceId, registrationToken) && !trackingLoad(instanceId)) {
                             drawBeginCallback()
-                            loadingActivities[instanceId] = Runnable { drawCompleteCallback() }
-                            decorView.viewTreeObserver.registerFrameCommitCallback(drawCompleteCallback)
+                            // the same instance must be registered and stored so that it can be unregistered later
+                            val frameCommitCallback = Runnable { drawCompleteCallback() }
+                            loadingActivities[instanceId] = frameCommitCallback
+                            decorView.viewTreeObserver.registerFrameCommitCallback(frameCommitCallback)
                         }
                     }
                 }
@@ -64,6 +72,7 @@ internal class FirstDrawDetector(
 
     override fun unregisterFirstDrawCallback(activity: Activity) {
         val instanceId = traceInstanceId(activity)
+        pendingDraws.remove(instanceId)
         loadingActivities[instanceId]?.let { firstDrawCallback ->
             runCatching {
                 activity.window.decorView.viewTreeObserver.unregisterFrameCommitCallback(firstDrawCallback)

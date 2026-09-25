@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.instrumentation.leaks
 
+import io.embrace.android.embracesdk.concurrency.runActionsConcurrently
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -8,6 +9,9 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
 
 internal class LeakDetectorTest {
 
@@ -221,6 +225,67 @@ internal class LeakDetectorTest {
         detector.onSentinelReclaimed(ref)
 
         assertTrue(detector.suspects().isEmpty())
+    }
+
+    @Test
+    fun `concurrent trackClosed and onSentinelReclaimed keep watched consistent`() {
+        val threadCount = 8
+        val opsPerThread = 500
+        val total = threadCount * opsPerThread
+        // held strongly for the duration of the test so that nothing tracked can be collected for real
+        val referents = ConcurrentLinkedQueue<Any>()
+        val closedRefs = LinkedBlockingQueue<LeakDetector.TrackedReference>()
+        val reclaimed = mutableListOf<LeakDetector.TrackedReference>()
+        var collectedCount = 0
+
+        val workers = List(threadCount) { threadIndex ->
+            {
+                repeat(opsPerThread) { op ->
+                    val referent = Any()
+                    referents.add(referent)
+                    detector.trackOpened(referent)
+                    val ref = checkNotNull(detector.trackClosed(referent, threadIndex * opsPerThread + op))
+                    if (detector.trackClosed(referent) != null) {
+                        error("a closed lifecycle must not be tracked twice")
+                    }
+                    closedRefs.add(ref)
+                }
+            }
+        }
+        // drains closed references while the workers are still producing them, so reclaims overlap closes
+        val reclaimer: () -> Unit = {
+            repeat(total) {
+                val ref = checkNotNull(closedRefs.poll(10, TimeUnit.SECONDS))
+                if ((ref.token as Int) % 4 == 0) {
+                    // the collection that reclaimed the sentinel reclaimed the tracked object too
+                    ref.target.clear()
+                    collectedCount++
+                    if (detector.onSentinelReclaimed(ref) != null) {
+                        error("a collected object must not be re-watched")
+                    }
+                } else {
+                    val confirmation = checkNotNull(detector.onSentinelReclaimed(ref))
+                    if (detector.onSentinelReclaimed(confirmation) != null) {
+                        error("confirming must end the sentinel chain")
+                    }
+                }
+                reclaimed.add(ref)
+            }
+        }
+
+        runActionsConcurrently(workers + reclaimer)
+
+        assertEquals(total, referents.size)
+        assertEquals(total, reclaimed.size)
+        assertEquals(total - collectedCount, detector.suspects().size)
+        assertEquals(
+            (0 until total).filter { it % 4 != 0 }.toSet(),
+            detector.suspects().map { it.token }.toSet(),
+        )
+        assertTrue(
+            "every reference has already been handled, so none may still be watched",
+            reclaimed.all { detector.onSentinelReclaimed(it) == null },
+        )
     }
 
     /**

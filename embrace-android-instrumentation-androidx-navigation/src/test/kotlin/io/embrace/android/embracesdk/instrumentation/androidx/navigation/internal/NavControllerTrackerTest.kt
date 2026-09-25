@@ -15,6 +15,7 @@ import androidx.navigation.fragment.fragment
 import androidx.navigation.testing.TestNavHostController
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.concurrency.runConcurrently
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeNavigationTrackingService
@@ -129,6 +130,29 @@ internal class NavControllerTrackerTest {
                 it.msg == InternalErrorType.NavControllerTrackingFail.toString()
             },
         )
+    }
+
+    @Test
+    fun `concurrent trackNavigation calls attach once and log no error`() {
+        val threadCount = 8
+        val rounds = 25
+        // an explicit controller means only the activity's identity is used, so it doesn't need to go through its lifecycle
+        val pairs = List(rounds) {
+            buildActivity(FragmentActivity::class.java).get() to createTestNavController()
+        }
+
+        // a fresh activity and controller per round, so every round races a first-time attach
+        pairs.forEach { (roundActivity, controller) ->
+            runConcurrently(threadCount) {
+                tracker.trackNavigation(roundActivity, controller)
+            }
+        }
+
+        assertTrue(logger.internalErrorMessages.isEmpty())
+        pairs.forEach { (roundActivity, _) ->
+            assertEquals(1, fakeTracker.attachedCalls.count { it.activity === roundActivity })
+            assertEquals(1, fakeTracker.destinationChangedCalls.count { it.activity === roundActivity })
+        }
     }
 
     private fun createActivity(

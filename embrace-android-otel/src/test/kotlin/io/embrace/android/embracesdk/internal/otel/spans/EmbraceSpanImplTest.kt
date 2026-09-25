@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.assertions.validateLinkToSpan
 import io.embrace.android.embracesdk.assertions.validateSystemLink
+import io.embrace.android.embracesdk.concurrency.runActionsConcurrently
+import io.embrace.android.embracesdk.concurrency.runConcurrently
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
@@ -64,6 +66,7 @@ import java.util.Queue
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 internal class EmbraceSpanImplTest {
@@ -78,6 +81,8 @@ internal class EmbraceSpanImplTest {
     private lateinit var embraceSpanFactory: EmbraceSpanFactory
     private val notifications = AtomicInteger(0)
     private val updateNotified: Boolean get() = notifications.get() > 0
+    private val exportedSpanAttributes: List<Map<String, Any>>
+        get() = spanExporter.exportedSpans.map { it.attributes }
     private var stoppedSpanId: String? = null
 
     @Before
@@ -625,6 +630,14 @@ internal class EmbraceSpanImplTest {
     }
 
     @Test
+    fun `OTel clock used if end time passed is zero`() {
+        assertTrue(embraceSpan.start())
+        val stopTimeMs = fakeClock.tick()
+        assertTrue(embraceSpan.stop(endTimeMs = 0L))
+        assertEquals(stopTimeMs.millisToNanos(), embraceSpan.snapshot()?.endTimeNanos)
+    }
+
+    @Test
     fun `start time from span builder used if no start time passed into start method`() {
         val timeOnWrapper = fakeClock.tick()
         val wrapper = createWrapperForInternalSpan(startTimeMs = timeOnWrapper)
@@ -672,7 +685,7 @@ internal class EmbraceSpanImplTest {
     }
 
     @Test
-    fun `custom attributes are redacted if their key is sensitive when getting a span snapshot`() {
+    fun `custom attributes are redacted if their key is sensitive in span snapshots and exported spans`() {
         // given a span with a sensitive key
         embraceSpan = embraceSpanFactory.create(createWrapperForInternalSpan())
         embraceSpan.start()
@@ -685,6 +698,13 @@ internal class EmbraceSpanImplTest {
         // then the sensitive keys should be redacted
         assertTrue(snapshot?.attributes?.any { it.key == "password" && it.data == REDACTED_LABEL } ?: false)
         assertTrue(snapshot?.attributes?.any { it.key == "status" && it.data == "ok" } ?: false)
+        assertEquals(REDACTED_LABEL, embraceSpan.attributes()["password"])
+
+        // and when the span is stopped, the attributes exported to the OTel span are redacted too
+        assertTrue(embraceSpan.stop())
+        val exported = exportedSpanAttributes.single()
+        assertEquals(REDACTED_LABEL, exported["password"])
+        assertEquals("ok", exported["status"])
     }
 
     @Test
@@ -714,35 +734,20 @@ internal class EmbraceSpanImplTest {
      */
     @Test
     fun `concurrent system event adds respect the limit exactly`() {
-        val telemetryService = ConcurrentTelemetryService()
-        embraceSpanFactory = EmbraceSpanFactoryImpl(
-            openTelemetryClock = FakeOtelKotlinClock(fakeClock),
-            spanRepository = spanRepository,
-            dataValidator = DataValidator(telemetryService = telemetryService),
-            stopCallback = ::stopCallback,
-            redactionFunction = ::redactionFunction,
-            telemetryService = telemetryService,
-        )
+        val telemetryService = useConcurrentTelemetryService()
         embraceSpan = createInternalEmbraceSdkSpan()
         assertTrue(embraceSpan.start())
 
         val max = dataValidator.otelLimitsConfig.getMaxSystemEventCount()
         val attemptsPerThread = max / THREAD_COUNT + 1000
         val successes = AtomicInteger(0)
-        val startSignal = CountDownLatch(1)
-        val threads = (0 until THREAD_COUNT).map { threadIndex ->
-            Thread {
-                startSignal.await()
-                repeat(attemptsPerThread) { attempt ->
-                    if (embraceSpan.addSystemEvent("event-$threadIndex-$attempt", null, null)) {
-                        successes.incrementAndGet()
-                    }
+        runConcurrently(THREAD_COUNT) { threadIndex ->
+            repeat(attemptsPerThread) { attempt ->
+                if (embraceSpan.addSystemEvent("event-$threadIndex-$attempt", null, null)) {
+                    successes.incrementAndGet()
                 }
-            }.apply { start() }
+            }
         }
-
-        startSignal.countDown()
-        threads.forEach { it.join(THREAD_JOIN_TIMEOUT_MS) }
 
         assertEquals(max, successes.get())
         assertEquals(max, embraceSpan.events().size)
@@ -914,6 +919,125 @@ internal class EmbraceSpanImplTest {
         }
     }
 
+    @Test
+    fun `concurrent custom attribute adds respect the limit exactly`() {
+        val telemetryService = useConcurrentTelemetryService()
+        embraceSpan = createInternalEmbraceSdkSpan()
+        assertTrue(embraceSpan.start())
+
+        val max = dataValidator.otelLimitsConfig.getMaxCustomAttributeCount()
+        val successes = AtomicInteger(0)
+        runConcurrently(CONCURRENT_THREAD_COUNT) { threadIndex ->
+            repeat(CONCURRENT_OPS_PER_THREAD) { attempt ->
+                if (embraceSpan.addAttribute("key-$threadIndex-$attempt", "value")) {
+                    successes.incrementAndGet()
+                }
+            }
+        }
+
+        assertEquals(max, successes.get())
+        val customAttributes = checkNotNull(embraceSpan.snapshot()?.attributes).filterNot {
+            checkNotNull(it.key).startsWith("emb.")
+        }
+        assertEquals(max, customAttributes.size)
+
+        // every add that lost the race to the limit reported the drop exactly once
+        val expectedDrops = CONCURRENT_THREAD_COUNT * CONCURRENT_OPS_PER_THREAD - max
+        assertEquals(expectedDrops, telemetryService.appliedLimits.size)
+        assertTrue(telemetryService.appliedLimits.all { it == "span_attribute" to AppliedLimitType.DROP })
+    }
+
+    @Test
+    fun `concurrent system attribute add remove and snapshot`() {
+        embraceSpan = createInternalEmbraceSdkSpan()
+        assertTrue(embraceSpan.start())
+
+        // each writer owns its keys, so the final state of every key is decided by that writer's last op
+        val writers = List(CONCURRENT_THREAD_COUNT) { writerIndex ->
+            {
+                repeat(CONCURRENT_OPS_PER_THREAD) { op ->
+                    embraceSpan.addSystemAttribute(keptKey(writerIndex), "value-$op")
+                    embraceSpan.addSystemAttribute(removedKey(writerIndex), "value-$op")
+                    embraceSpan.removeSystemAttribute(keptKey(writerIndex))
+                    embraceSpan.removeSystemAttribute(removedKey(writerIndex))
+                }
+                embraceSpan.addSystemAttribute(keptKey(writerIndex), "final-$writerIndex")
+            }
+        }
+        val readers = List(CONCURRENT_THREAD_COUNT) {
+            {
+                repeat(CONCURRENT_OPS_PER_THREAD) {
+                    val snapshotAttributes = checkNotNull(embraceSpan.snapshot()?.attributes)
+                    assertEquals(
+                        EmbType.System.LowPower.value,
+                        snapshotAttributes.findAttributeValue(EmbType.System.LowPower.key),
+                    )
+                    assertTrue(embraceSpan.hasEmbraceAttribute(EmbType.System.LowPower))
+                    snapshotAttributes.filter { checkNotNull(it.key).startsWith("owned-") }.forEach {
+                        assertTrue(checkNotNull(it.data).matches(OWNED_VALUE_PATTERN))
+                    }
+                    embraceSpan.getSystemAttribute(keptKey(0))?.let {
+                        assertTrue(it.matches(OWNED_VALUE_PATTERN))
+                    }
+                }
+            }
+        }
+
+        runActionsConcurrently(writers + readers)
+
+        repeat(CONCURRENT_THREAD_COUNT) { writerIndex ->
+            assertEquals("final-$writerIndex", embraceSpan.getSystemAttribute(keptKey(writerIndex)))
+            assertNull(embraceSpan.getSystemAttribute(removedKey(writerIndex)))
+        }
+        val ownedAttributes = checkNotNull(embraceSpan.snapshot()?.attributes)
+            .filter { checkNotNull(it.key).startsWith("owned-") }
+            .associate { checkNotNull(it.key) to checkNotNull(it.data) }
+        val expectedOwnedAttributes = List(CONCURRENT_THREAD_COUNT) { keptKey(it) to "final-$it" }.toMap()
+        assertEquals(expectedOwnedAttributes, ownedAttributes)
+        assertTrue(embraceSpan.hasEmbraceAttribute(EmbType.System.LowPower))
+    }
+
+    @Test
+    fun `removeSystemAttribute racing stop`() {
+        embraceSpan = createInternalEmbraceSdkSpan()
+        assertTrue(embraceSpan.start())
+
+        // the writer churns from before the stop starts until after it has finished, so the stop always lands
+        // inside the add/remove churn
+        val writerRunning = CountDownLatch(1)
+        val stopFinished = AtomicBoolean(false)
+        runActionsConcurrently(
+            listOf(
+                {
+                    writerRunning.countDown()
+                    while (!stopFinished.get()) {
+                        embraceSpan.addSystemAttribute(RACY_KEY, RACY_VALUE)
+                        embraceSpan.removeSystemAttribute(RACY_KEY)
+                    }
+                },
+                {
+                    try {
+                        assertTrue(writerRunning.await(THREAD_JOIN_TIMEOUT_MS, TimeUnit.MILLISECONDS))
+                        assertTrue(embraceSpan.stop())
+                    } finally {
+                        stopFinished.set(true)
+                    }
+                },
+            ),
+        )
+
+        assertFalse(embraceSpan.isRecording)
+        assertFalse(embraceSpan.stop())
+        val exported = exportedSpanAttributes.single()
+        exported[RACY_KEY]?.let {
+            assertEquals(RACY_VALUE, it)
+        }
+        assertEquals(EmbType.System.LowPower.value, exported[EmbType.System.LowPower.key])
+        embraceSpan.snapshot()?.attributes?.findAttributeValue(RACY_KEY)?.let {
+            assertEquals(RACY_VALUE, it)
+        }
+    }
+
     /**
      * The fakes back their state with non-thread-safe collections, which the thousands of concurrent
      * dropped adds in the test above would corrupt.
@@ -983,6 +1107,27 @@ internal class EmbraceSpanImplTest {
         assertEquals(stoppedSpanId, spanId)
     }
 
+    /**
+     * Rebuilds [embraceSpanFactory] around a [ConcurrentTelemetryService] so drops recorded from many threads
+     * can be counted exactly.
+     */
+    private fun useConcurrentTelemetryService(): ConcurrentTelemetryService {
+        val concurrentTelemetryService = ConcurrentTelemetryService()
+        embraceSpanFactory = EmbraceSpanFactoryImpl(
+            openTelemetryClock = FakeOtelKotlinClock(fakeClock),
+            spanRepository = spanRepository,
+            dataValidator = DataValidator(telemetryService = concurrentTelemetryService),
+            stopCallback = ::stopCallback,
+            redactionFunction = ::redactionFunction,
+            telemetryService = concurrentTelemetryService,
+        )
+        return concurrentTelemetryService
+    }
+
+    private fun keptKey(writerIndex: Int) = "owned-kept-$writerIndex"
+
+    private fun removedKey(writerIndex: Int) = "owned-removed-$writerIndex"
+
     private fun redactionFunction(key: String, value: String): String {
         return if (key == "password") {
             REDACTED_LABEL
@@ -1003,5 +1148,10 @@ internal class EmbraceSpanImplTest {
         private const val REDACTED_LABEL = "<redacted>"
         private const val THREAD_COUNT = 4
         private const val THREAD_JOIN_TIMEOUT_MS = 30_000L
+        private const val CONCURRENT_THREAD_COUNT = 8
+        private const val CONCURRENT_OPS_PER_THREAD = 500
+        private const val RACY_KEY = "racy-key"
+        private const val RACY_VALUE = "racy-value"
+        private val OWNED_VALUE_PATTERN = Regex("(value|final)-\\d+")
     }
 }

@@ -10,14 +10,17 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 typealias ThreadBlockageServiceSupplier = (args: InstrumentationArgs) -> ThreadBlockageService?
 
 fun createThreadBlockageService(args: InstrumentationArgs): ThreadBlockageService? {
-    if (!args.configService.autoDataCaptureBehavior.isThreadBlockageCaptureEnabled()) {
+    val configService = args.configService
+    if (!configService.autoDataCaptureBehavior.isThreadBlockageCaptureEnabled() ||
+        !configService.threadBlockageBehavior.isThreadBlockageCaptureEnabled()
+    ) {
         return null
     }
 
     val watchdogWorker by lazy { args.backgroundWorker(Worker.Background.ThreadBlockageWatchdogWorker) }
     val looper by lazy { Looper.getMainLooper() }
 
-    val anrBehavior = args.configService.threadBlockageBehavior
+    val anrBehavior = configService.threadBlockageBehavior
     val stacktraceSampler by lazy {
         ThreadBlockageSampler(
             clock = args.clock,

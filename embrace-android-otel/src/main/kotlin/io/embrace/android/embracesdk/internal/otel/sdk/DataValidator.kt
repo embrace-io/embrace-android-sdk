@@ -33,7 +33,8 @@ class DataValidator(
 
     fun truncateAttributes(attributes: Map<String, String>, internal: Boolean, countOverride: Int? = null): Map<String, String> {
         if (!internal && bypassValidation()) {
-            return attributes
+            // return a copy so future mutations doesn't affect what is returned
+            return attributes.toMap()
         }
         val limits = SpanLimits.of(internal)
         return enforcer.truncateAttributes(

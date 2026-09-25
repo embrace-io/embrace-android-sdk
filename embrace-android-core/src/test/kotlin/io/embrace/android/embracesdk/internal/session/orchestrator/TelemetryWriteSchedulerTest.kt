@@ -176,7 +176,7 @@ internal class TelemetryWriteSchedulerTest {
         TelemetryWriteScheduler(
             worker = worker,
             delayMs = DELAY_MS,
-            queue = TelemetryQueue { it },
+            queue = CompactingTelemetryQueue { it },
             guard = { task ->
                 Runnable {
                     guardedTasks++

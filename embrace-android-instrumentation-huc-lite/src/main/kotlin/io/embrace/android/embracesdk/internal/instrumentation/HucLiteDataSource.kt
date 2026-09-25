@@ -63,9 +63,6 @@ class HucLiteDataSource(
         }
     }
 
-    override fun onDataCaptureDisabled() {
-    }
-
     fun createRequestData(
         wrappedConnection: HttpsURLConnection,
         clock: Clock,

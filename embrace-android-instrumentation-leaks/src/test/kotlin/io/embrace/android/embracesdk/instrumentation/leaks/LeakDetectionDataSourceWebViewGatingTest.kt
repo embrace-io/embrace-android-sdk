@@ -28,7 +28,7 @@ internal class LeakDetectionDataSourceWebViewGatingTest {
 
     @After
     fun tearDown() {
-        dataSource.onDataCaptureDisabled()
+        dataSource.leakDetector.stop()
     }
 
     @Test

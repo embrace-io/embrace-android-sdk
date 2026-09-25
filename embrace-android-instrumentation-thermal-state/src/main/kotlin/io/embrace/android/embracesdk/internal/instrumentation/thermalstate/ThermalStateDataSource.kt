@@ -31,8 +31,6 @@ class ThermalStateDataSource(
     // fetched lazily so the system service isn't retrieved on the main thread during SDK startup
     private val powerManagerProvider: Provider<PowerManager?> = { args.systemService(Context.POWER_SERVICE) }
 
-    private var thermalStatusListener: PowerManager.OnThermalStatusChangedListener? = null
-
     private var span: SpanToken? = null
 
     override fun onDataCaptureEnabled() {
@@ -42,7 +40,6 @@ class ThermalStateDataSource(
                 val listener = PowerManager.OnThermalStatusChangedListener {
                     handleThermalStateChange(it)
                 }
-                thermalStatusListener = listener
 
                 // Android API only accepts an executor. We don't want to directly expose those
                 // to everything in the codebase so we decorate the BackgroundWorker here as an
@@ -51,15 +48,6 @@ class ThermalStateDataSource(
                     backgroundWorker.submit(runnable = it)
                 }
                 pm.addThermalStatusListener(executor, listener)
-            }
-        }
-    }
-
-    override fun onDataCaptureDisabled() {
-        backgroundWorker.submit {
-            thermalStatusListener?.let {
-                powerManagerProvider()?.removeThermalStatusListener(it)
-                thermalStatusListener = null
             }
         }
     }

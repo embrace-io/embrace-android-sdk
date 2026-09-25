@@ -34,8 +34,4 @@ internal class PowerSaveModeReceiver(
             }
         }
     }
-
-    fun unregister(ctx: Context) {
-        ctx.unregisterReceiver(this)
-    }
 }

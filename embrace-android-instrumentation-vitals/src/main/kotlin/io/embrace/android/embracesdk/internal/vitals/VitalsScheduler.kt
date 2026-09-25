@@ -11,10 +11,8 @@ internal interface VitalsScheduler {
 
 internal class HandlerVitalsScheduler : VitalsScheduler {
 
-    private var handlerThread: HandlerThread? = null
-
     /**
-     * Handler backed by the dedicated vitals thread. Valid only between [start] and [stop]; also used by
+     * Handler backed by the dedicated vitals thread. Valid only after [start]; also used by
      * the data source for the frame-metrics and display-change callbacks so everything shares one thread.
      */
     lateinit var handler: Handler
@@ -25,19 +23,7 @@ internal class HandlerVitalsScheduler : VitalsScheduler {
      */
     fun start() {
         val thread = HandlerThread(HANDLER_THREAD_NAME).apply { start() }
-        handlerThread = thread
         handler = Handler(thread.looper)
-    }
-
-    /**
-     * Cancels all pending settles and stops the backing thread.
-     */
-    fun stop() {
-        handlerThread?.let { thread ->
-            handler.removeCallbacksAndMessages(null)
-            thread.quitSafely()
-        }
-        handlerThread = null
     }
 
     override fun post(action: Runnable) {

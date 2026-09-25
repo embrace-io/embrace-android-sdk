@@ -36,10 +36,6 @@ class NavigationStateDataSource(
         args.processStateTracker.addListener(activityNavigationTracker)
     }
 
-    override fun onDataCaptureDisabled() {
-        args.application.unregisterActivityLifecycleCallbacks(activityNavigationTracker)
-    }
-
     override fun onControllerAttached(activity: Activity, timestampMs: Long) {
         broker.onEvent(NavigationEvent.NavControllerAttached(activity, timestampMs))
     }

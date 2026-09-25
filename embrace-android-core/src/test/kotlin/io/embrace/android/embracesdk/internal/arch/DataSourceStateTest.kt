@@ -24,7 +24,6 @@ internal class DataSourceStateTest {
 
         state.enableDataCapture()
         assertEquals(1, source.enableDataCaptureCount)
-        assertEquals(0, source.disableDataCaptureCount)
     }
 
     @Test
@@ -38,7 +37,6 @@ internal class DataSourceStateTest {
 
         state.enableDataCapture()
         assertEquals(1, source.enableDataCaptureCount)
-        assertEquals(0, source.disableDataCaptureCount)
     }
 
     @Test
@@ -53,7 +51,6 @@ internal class DataSourceStateTest {
         // enabling data capture is a no-op when the config gate is closed
         state.enableDataCapture()
         assertEquals(0, source.enableDataCaptureCount)
-        assertEquals(0, source.disableDataCaptureCount)
     }
 
     @Test

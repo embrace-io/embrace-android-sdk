@@ -11,12 +11,6 @@ package io.embrace.android.embracesdk.semconv
 object EmbAeiAttributes {
 
     /**
-     * The session ID associated with the AEI event.
-     */
-    @ExperimentalSemconv
-    const val AEI_SESSION_ID: String = "aei_session_id"
-
-    /**
      * The session part ID where the AEI occurred.
      */
     @ExperimentalSemconv

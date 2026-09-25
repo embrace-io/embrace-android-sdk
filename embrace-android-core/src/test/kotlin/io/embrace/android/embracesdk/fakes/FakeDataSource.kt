@@ -15,7 +15,6 @@ class FakeDataSource(
     override val instrumentationName: String = "fake_data_source"
 
     var enableDataCaptureCount: Int = 0
-    var disableDataCaptureCount: Int = 0
     var resetCount: Int = 0
     var sessionEnds = 0
     var sessionChanges = 0
@@ -29,11 +28,6 @@ class FakeDataSource(
     override fun onDataCaptureEnabled() {
         ctx.registerComponentCallbacks(this)
         enableDataCaptureCount++
-    }
-
-    override fun onDataCaptureDisabled() {
-        ctx.unregisterComponentCallbacks(this)
-        disableDataCaptureCount++
     }
 
     override fun resetDataCaptureLimits() {

@@ -45,11 +45,6 @@ class LeakDetectionDataSource(args: InstrumentationArgs) :
         leakDetector.start()
     }
 
-    override fun onDataCaptureDisabled() {
-        application.unregisterActivityLifecycleCallbacks(callbacks)
-        leakDetector.stop()
-    }
-
     /**
      * Encodes every currently-tracked suspect into one session attribute, back-attributed to whichever session part
      * originally tracked each one closed - see [encodeLeakSuspects]. Nothing is written when there is nothing to report,

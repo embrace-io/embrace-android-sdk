@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSourceImpl
@@ -16,24 +15,19 @@ class FeatureModuleImpl(
     storageService: StorageService,
 ) : FeatureModule {
 
-    override val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource> by lazy {
-        DataSourceState(
-            factory = {
-                BreadcrumbDataSource(instrumentationModule.instrumentationArgs)
-            },
-        ).apply {
-            instrumentationModule.instrumentationRegistry.add(this)
+    override val breadcrumbDataSource: BreadcrumbDataSource? by lazy {
+        instrumentationModule.instrumentationRegistry.add {
+            BreadcrumbDataSource(instrumentationModule.instrumentationArgs)
         }
     }
 
-    override val internalErrorDataSource: DataSourceState<InternalErrorDataSource> by lazy {
-        DataSourceState<InternalErrorDataSource>(
-            factory = {
+    override val internalErrorDataSource: InternalErrorDataSource? by lazy {
+        instrumentationModule.instrumentationRegistry.add {
+            if (configService.dataCaptureEventBehavior.isInternalExceptionCaptureEnabled()) {
                 InternalErrorDataSourceImpl(instrumentationModule.instrumentationArgs)
-            },
-            configGate = { configService.dataCaptureEventBehavior.isInternalExceptionCaptureEnabled() },
-        ).apply {
-            instrumentationModule.instrumentationRegistry.add(this)
+            } else {
+                null
+            }
         }
     }
 

@@ -5,8 +5,8 @@ package io.embrace.android.embracesdk.internal.arch.datasource
  * of data that will be sent to Embrace. It attempts to enforce limits and input validation
  * by default.
  *
- * [DataSourceState] is closely related. It is responsible for determining when a data source
- * should be turned on/off, according to the SDK's configuration and the process lifecycle.
+ * [DataSourceState] is closely related. It creates a data source, or returns null if the SDK's
+ * configuration disables it.
  */
 interface DataSource {
 

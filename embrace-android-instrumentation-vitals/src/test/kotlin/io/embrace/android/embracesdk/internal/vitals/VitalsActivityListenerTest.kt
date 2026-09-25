@@ -24,6 +24,7 @@ internal class VitalsActivityListenerTest {
     private val fakeStrategy = object : FrameMetricsStrategy {
         override fun vsyncNanos(frameMetrics: FrameMetrics): Long = 0L
         override fun jankNanos(frameMetrics: FrameMetrics): Long = 0L
+        override fun frameIntervalNanos(frameMetrics: FrameMetrics): Long = 0L
     }
 
     private lateinit var args: FakeInstrumentationArgs

@@ -101,6 +101,55 @@ internal class FrameMetricsStrategyTest {
         assertEquals(0L, strategy().jankNanos(firstDraw))
     }
 
+    @Config(sdk = [N, O, S])
+    @Test
+    fun `a frame that is not dropped is one expected frame, however long it took`() {
+        // 20ms at a 16ms interval: over one interval but within the 2x budget
+        val slowButNotDropped = frameMetrics(totalDurationNanos = 20_000_000L, deadlineNanos = 16_000_000L)
+        assertEquals(1L, strategy().expectedFrames(slowButNotDropped, jankNanos = 0L))
+    }
+
+    @Config(sdk = [N, O, S])
+    @Test
+    fun `a dropped frame is the vsyncs it occupied, rounded up`() {
+        // API 31+ divides by DEADLINE, below by the refresh interval; both are 16ms here
+        val strategy = strategy()
+        val fortyMs = frameMetrics(totalDurationNanos = 40_000_000L, deadlineNanos = 16_000_000L)
+        assertEquals(3L, strategy.expectedFrames(fortyMs, strategy.jankNanos(fortyMs)))
+
+        val exactlyThree = frameMetrics(totalDurationNanos = 48_000_000L, deadlineNanos = 16_000_000L)
+        assertEquals(3L, strategy.expectedFrames(exactlyThree, strategy.jankNanos(exactlyThree)))
+
+        val oneSecond = frameMetrics(totalDurationNanos = 1_000_000_000L, deadlineNanos = 16_000_000L)
+        assertEquals(63L, strategy.expectedFrames(oneSecond, strategy.jankNanos(oneSecond)))
+    }
+
+    @Config(sdk = [N, O])
+    @Test
+    fun `below API 31 expected frames track a live refresh-rate change`() {
+        val strategy = strategy(intervalNanos = 16_000_000L)
+        val fortyMs = frameMetrics(totalDurationNanos = 40_000_000L)
+        strategy.onRefreshIntervalChanged(8_000_000L) // 125Hz
+        assertEquals(5L, strategy.expectedFrames(fortyMs, strategy.jankNanos(fortyMs)))
+    }
+
+    @Config(sdk = [O, S])
+    @Test
+    fun `a first-draw frame is one expected frame`() {
+        val strategy = strategy()
+        val firstDraw = frameMetrics(totalDurationNanos = 100_000_000L, firstDraw = true, deadlineNanos = 16_000_000L)
+        assertEquals(1L, strategy.expectedFrames(firstDraw, strategy.jankNanos(firstDraw)))
+    }
+
+    @Config(sdk = [S])
+    @Test
+    fun `a nonsense deadline is not truncated, so the counts can clamp it`() {
+        // a 1ns DEADLINE makes a 3s frame 3e9 vsyncs, past the Int range
+        val strategy = strategy()
+        val threeSeconds = frameMetrics(totalDurationNanos = 3_000_000_000L, deadlineNanos = 1L)
+        assertEquals(3_000_000_000L, strategy.expectedFrames(threeSeconds, strategy.jankNanos(threeSeconds)))
+    }
+
     private fun strategy(intervalNanos: Long = 16_000_000L, multiplier: Double = 2.0) =
         FrameMetricsStrategy.create(intervalNanos, multiplier)
 

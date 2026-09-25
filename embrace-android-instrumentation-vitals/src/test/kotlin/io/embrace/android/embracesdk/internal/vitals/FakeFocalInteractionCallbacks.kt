@@ -13,7 +13,7 @@ internal class FakeFocalInteractionCallbacks : FocalInteractionCallbacks {
     val navigationStarts = mutableListOf<Pair<String?, Long>>()
     val navigationEnds = mutableListOf<Pair<String?, Long>>()
 
-    override fun onFrame(vsyncNanos: Long, frameDispatchNanos: Long, jankNanos: Long) {}
+    override fun onFrame(vsyncNanos: Long, frameDispatchNanos: Long, jankNanos: Long, expectedFrames: Long) {}
     override fun onScreenStart() { screenStartCount++ }
     override fun onScreenStop() { screenStopCount++ }
     override fun onInteractionStart() { interactionStartCount++ }

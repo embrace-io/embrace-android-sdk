@@ -9,10 +9,10 @@ internal interface FocalInteractionCallbacks {
     /**
      * A frame was redrawn: [vsyncNanos] is its vsync — when it became visible to the user;
      * [frameDispatchNanos] is when the rendering engine first dispatched work to build it (its vsync less
-     * the full time it took to produce — far before the vsync for a stuck frame); and [jankNanos] is how
-     * far it overran its budget.
+     * the full time it took to produce — far before the vsync for a stuck frame); [jankNanos] is how
+     * far it overran its budget; and [expectedFrames] is how many vsyncs it occupied (1 unless it was dropped).
      */
-    fun onFrame(vsyncNanos: Long, frameDispatchNanos: Long, jankNanos: Long)
+    fun onFrame(vsyncNanos: Long, frameDispatchNanos: Long, jankNanos: Long, expectedFrames: Long)
 
     /**
      * A new screen began (Activity resumed).

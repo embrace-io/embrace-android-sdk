@@ -29,6 +29,8 @@ internal class FocalMomentTracker(
     private val heldIdleThresholdMs: Long = DEFAULT_HELD_IDLE_THRESHOLD_MS,
     // Only non-null for a sampled fraction of devices; see VitalsBehavior.isSmoothnessFrameTraceEnabled.
     private val frameTraceRecorder: FrameTraceRecorder? = null,
+    // Receives every frame, whatever the smoothness state; called on the Vitals thread.
+    private val onFrameCounted: (dropped: Boolean, expectedFrames: Long) -> Unit = { _, _ -> },
 ) : FocalInteractionCallbacks {
 
     // Reused hop Runnable instances (main thread -> Vitals thread); allocate them here to make certain they're off the hot path
@@ -48,7 +50,7 @@ internal class FocalMomentTracker(
     private var bufferedEndNanos = 0L
 
     @WorkerThread
-    override fun onFrame(vsyncNanos: Long, frameDispatchNanos: Long, jankNanos: Long) {
+    override fun onFrame(vsyncNanos: Long, frameDispatchNanos: Long, jankNanos: Long, expectedFrames: Long) {
         if (capturing) {
             recordFrame(vsyncNanos, frameDispatchNanos, jankNanos)
             settle.notifyActivity(vsyncNanos.nanosToMillis())
@@ -65,8 +67,9 @@ internal class FocalMomentTracker(
             }
         }
 
-        // the screen load tracks its own frames, independent of the smoothness state
+        // the screen load and the frame counts track their own frames, independent of the smoothness state
         screenLoadTracker.onFrame(vsyncNanos)
+        onFrameCounted(jankNanos > 0L, expectedFrames)
     }
 
     @WorkerThread

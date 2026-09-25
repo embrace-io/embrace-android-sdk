@@ -4,10 +4,14 @@ import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.behavior.FakeVitalsBehavior
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
+import io.embrace.android.embracesdk.semconv.EmbFrameCountsAttributes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -75,5 +79,42 @@ internal class VitalsDataSourceTest {
             List(2) { "vitals_data_source" to AppliedLimitType.DROP },
             telemetryService.appliedLimits,
         )
+    }
+
+    @Test
+    fun `a foreground session part records its frame counts when it ends`() {
+        val args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
+        val dataSource = VitalsDataSource(args)
+        dataSource.countFrame(dropped = true, expectedFrames = 7) // before the part started
+        dataSource.onPostSessionChange()
+        dataSource.countFrame(dropped = false, expectedFrames = 1)
+        dataSource.countFrame(dropped = true, expectedFrames = 3)
+
+        dataSource.onPreSessionEnd()
+
+        assertEquals("2", args.destination.attributes[EmbFrameCountsAttributes.SMOOTHNESS_DROPPED_FRAMES])
+        assertEquals("4", args.destination.attributes[EmbFrameCountsAttributes.SMOOTHNESS_EXPECTED_FRAMES])
+    }
+
+    @Test
+    fun `a background session part records no frame counts, and does not carry them into the next part`() {
+        val processStateTracker = FakeProcessStateTracker(ProcessState.BACKGROUND)
+        val args =
+            FakeInstrumentationArgs(ApplicationProvider.getApplicationContext(), processStateTracker = processStateTracker)
+        val dataSource = VitalsDataSource(args)
+        dataSource.onPostSessionChange()
+        dataSource.countFrame(dropped = true, expectedFrames = 2)
+
+        dataSource.onPreSessionEnd()
+        assertTrue(args.destination.sessionPartAttributeWrites.isEmpty())
+
+        // the app foregrounds: the next part counts only its own frames
+        processStateTracker.state = ProcessState.FOREGROUND
+        dataSource.onPostSessionChange()
+        dataSource.countFrame(dropped = false, expectedFrames = 1)
+        dataSource.onPreSessionEnd()
+
+        assertEquals("0", args.destination.attributes[EmbFrameCountsAttributes.SMOOTHNESS_DROPPED_FRAMES])
+        assertEquals("1", args.destination.attributes[EmbFrameCountsAttributes.SMOOTHNESS_EXPECTED_FRAMES])
     }
 }

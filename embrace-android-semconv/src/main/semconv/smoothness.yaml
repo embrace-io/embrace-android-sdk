@@ -13,8 +13,25 @@ attribute_groups:
       - ref: smoothness.held_idle_threshold_ms
       - ref: smoothness.jank_heuristic_multiplier
       - ref: smoothness.frame_trace
+  - id: emb.frame_counts
+    visibility: public
+    stability: development
+    brief: "Embrace dropped and expected frame counts over an interval, such as a foreground session part or a screen (experimental)"
+    attributes:
+      - ref: smoothness.dropped_frames
+      - ref: smoothness.expected_frames
 
 attributes:
+  - key: smoothness.dropped_frames
+    type: int
+    brief: "Number of vsyncs in the interval that showed no new frame because a frame overran its deadline by more than the jank heuristic multiplier."
+    stability: development
+    examples: [0, 12]
+  - key: smoothness.expected_frames
+    type: int
+    brief: "Number of vsyncs in the interval: each rendered frame, plus the vsyncs its dropped frames spanned."
+    stability: development
+    examples: [1200, 36000]
   - key: smoothness.outcome
     type: string
     brief: "How the focal moment ended."

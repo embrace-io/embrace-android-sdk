@@ -32,6 +32,26 @@ internal interface FrameMetricsStrategy {
         vsyncNanos(frameMetrics) - frameMetrics.getMetric(FrameMetrics.TOTAL_DURATION)
 
     /**
+     * The frame interval (without the jank heuristic multiplier) the frame was expected to render within.
+     */
+    @WorkerThread
+    fun frameIntervalNanos(frameMetrics: FrameMetrics): Long
+
+    /**
+     * The vsyncs a frame occupied: 1 if it met its budget ([jankNanos] is 0), otherwise its duration in frame intervals, rounded up.
+     * Unbounded here: [FrameCounts.frame] clamps it.
+     */
+    @WorkerThread
+    fun expectedFrames(frameMetrics: FrameMetrics, jankNanos: Long): Long {
+        val intervalNanos = frameIntervalNanos(frameMetrics)
+        if (jankNanos == 0L || intervalNanos <= 0L) {
+            return 1L
+        }
+        val total = frameMetrics.getMetric(FrameMetrics.TOTAL_DURATION)
+        return (total + intervalNanos - 1) / intervalNanos
+    }
+
+    /**
      * Updates the display refresh interval used as the frame budget for devices that don't include the [FrameMetrics.DEADLINE]
      */
     @WorkerThread
@@ -89,6 +109,9 @@ private class Api31FrameMetricsStrategy(private val jankHeuristicMultiplier: Dou
         val budget = (frameMetrics.getMetric(FrameMetrics.DEADLINE) * jankHeuristicMultiplier).toLong()
         return (total - budget).coerceAtLeast(0L)
     }
+
+    override fun frameIntervalNanos(frameMetrics: FrameMetrics): Long =
+        frameMetrics.getMetric(FrameMetrics.DEADLINE)
 }
 
 /**
@@ -110,6 +133,8 @@ private class Api26FrameMetricsStrategy(
         val budget = (refreshIntervalNanos * jankHeuristicMultiplier).toLong()
         return (frameMetrics.getMetric(FrameMetrics.TOTAL_DURATION) - budget).coerceAtLeast(0L)
     }
+
+    override fun frameIntervalNanos(frameMetrics: FrameMetrics): Long = refreshIntervalNanos
 
     override fun onRefreshIntervalChanged(intervalNanos: Long) {
         refreshIntervalNanos = intervalNanos
@@ -134,6 +159,8 @@ private class LegacyFrameMetricsStrategy(
         val budget = (refreshIntervalNanos * jankHeuristicMultiplier).toLong()
         return (frameMetrics.getMetric(FrameMetrics.TOTAL_DURATION) - budget).coerceAtLeast(0L)
     }
+
+    override fun frameIntervalNanos(frameMetrics: FrameMetrics): Long = refreshIntervalNanos
 
     override fun onRefreshIntervalChanged(intervalNanos: Long) {
         refreshIntervalNanos = intervalNanos

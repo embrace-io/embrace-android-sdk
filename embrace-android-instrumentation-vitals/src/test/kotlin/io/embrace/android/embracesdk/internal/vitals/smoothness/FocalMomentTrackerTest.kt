@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.internal.vitals.smoothness
 
 import android.os.SystemClock
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.internal.vitals.FrameCounts
+import io.embrace.android.embracesdk.internal.vitals.counts
 import io.embrace.android.embracesdk.internal.vitals.fake.FakeVitalsScheduler
 import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadTracker
 import org.junit.Assert.assertEquals
@@ -19,12 +21,15 @@ internal class FocalMomentTrackerTest {
     private val scheduler = FakeVitalsScheduler()
     private val emitted = mutableListOf<SmoothnessResult>()
 
+    private var frameCounts = FrameCounts.ZERO
+
     private val tracker = FocalMomentTracker(
         scheduler = scheduler,
         reporter = SmoothnessReporter(emit = emitted::add),
         clock = { 0L },
         // Inert here: with no navigation signals the screen-load tracker stays idle and ignores frames.
         screenLoadTracker = ScreenLoadTracker(scheduler = scheduler, clock = { 0L }, emit = {}),
+        onFrameCounted = { dropped, expectedFrames -> frameCounts += FrameCounts.frame(dropped, expectedFrames) },
     )
 
     // The tracker reads time from SystemClock.uptimeMillis; Robolectric keeps it paused until advance()
@@ -279,10 +284,20 @@ internal class FocalMomentTrackerTest {
         )
 
         sampledInTracker.onInteractionStart()
-        sampledInTracker.onFrame(vsyncNanos = start + 16.ms, frameDispatchNanos = start + 16.ms, jankNanos = 0L)
+        sampledInTracker.onFrame(vsyncNanos = start + 16.ms, frameDispatchNanos = start + 16.ms, jankNanos = 0L, expectedFrames = 1)
         sampledInTracker.onScreenStop()
 
         assertNotNull(sampledInEmitted.single().frameTraceBase64)
+    }
+
+    @Test
+    fun `every frame is counted, inside or outside a focal moment`() {
+        redraw(vsyncNanos = start, jankNanos = 40.ms, expectedFrames = 4) // before any focal moment
+        tracker.onInteractionStart()
+        redraw(vsyncNanos = start + 16.ms)
+        redraw(vsyncNanos = start + 32.ms)
+
+        assertEquals(3 to 6, frameCounts.counts())
     }
 
     private fun advance(millis: Long) = ShadowSystemClock.advanceBy(Duration.ofMillis(millis))
@@ -297,8 +312,13 @@ internal class FocalMomentTrackerTest {
      * A frame delivered on the Vitals thread; processed synchronously. [frameDispatchNanos] defaults to
      * the vsync (an instantaneous frame); pass an earlier value to model a frame whose render took time.
      */
-    private fun redraw(vsyncNanos: Long, jankNanos: Long = 0L, frameDispatchNanos: Long = vsyncNanos) {
-        tracker.onFrame(vsyncNanos, frameDispatchNanos, jankNanos)
+    private fun redraw(
+        vsyncNanos: Long,
+        jankNanos: Long = 0L,
+        frameDispatchNanos: Long = vsyncNanos,
+        expectedFrames: Long = 1L,
+    ) {
+        tracker.onFrame(vsyncNanos, frameDispatchNanos, jankNanos, expectedFrames)
     }
 
     /** Milliseconds expressed in the nanosecond base the tracker works in. */

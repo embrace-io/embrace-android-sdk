@@ -7,10 +7,13 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.utils.threadSafeToList
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
+import java.util.Collections
+import java.util.IdentityHashMap
 import java.util.Queue
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Stores the spans of the current session. Two distinct representations are held:
@@ -18,14 +21,16 @@ import java.util.concurrent.ConcurrentMap
  * - [EmbraceSdkSpan] instances: the in-progress and completed Embrace span objects, tracked so their
  *   references can be retrieved by their associated spanId. Accessed via the `*EmbraceSpan(s)` methods.
  * - [Span]: the completed spans exported through the OTel pipeline that are pending delivery
- *   off-device. Accessed via the `*OtelSpan(s)` methods.
+ *   off-device, excluding any batch a listener has taken ownership of. Accessed via the
+ *   `*OtelSpan(s)` methods.
  */
 class SpanRepository {
     private val spans: ConcurrentMap<String, EmbraceSdkSpan> = ConcurrentHashMap()
-    private var spanUpdateNotifier: (() -> Unit)? = null
+    private val spanChangeListeners = CopyOnWriteArrayList<(EmbraceSdkSpan) -> Unit>()
 
     private val completedSpanData: Queue<Span> = ConcurrentLinkedQueue()
     private val flushLock = Any()
+    private val completedSpansListeners = CopyOnWriteArrayList<(List<Span>) -> Boolean>()
 
     /**
      * Track the [EmbraceSpan] if it has been started and it's not already tracked.
@@ -95,17 +100,22 @@ class SpanRepository {
     }
 
     /**
-     * Set a function to be invoked when a span has been updated
+     * Registers a [listener] invoked with a span immediately after any of its state has changed,
+     * including its start and stop. The caller is responsible for deriving initial state.
+     *
+     * The listener is invoked on the thread that mutated the span and must not block or perform I/O.
      */
-    fun setSpanUpdateNotifier(notifier: () -> Unit) {
-        spanUpdateNotifier = notifier
+    fun addSpanChangeListener(listener: (EmbraceSdkSpan) -> Unit) {
+        spanChangeListeners.add(listener)
     }
 
     /**
-     * Call to notify the repository that a span has been updated
+     * Call to notify the repository that the state of [span] has changed.
      */
-    fun notifySpanUpdate() {
-        spanUpdateNotifier?.invoke()
+    fun notifySpanChanged(span: EmbraceSdkSpan) {
+        spanChangeListeners.forEach { listener ->
+            notifyListener(listener, span)
+        }
     }
 
     /**
@@ -120,12 +130,77 @@ class SpanRepository {
      * Stores [Span] for spans that have been completed and exported. Supports concurrent invocations.
      */
     fun storeCompletedOtelSpans(spans: List<Span>): StoreDataResult {
-        try {
-            completedSpanData += spans
-        } catch (t: Throwable) {
-            return StoreDataResult.FAILURE
+        synchronized(flushLock) {
+            try {
+                completedSpanData += spans
+            } catch (t: Throwable) {
+                return StoreDataResult.FAILURE
+            }
+            handOver(spans, completedSpansListeners)
         }
         return StoreDataResult.SUCCESS
+    }
+
+    /**
+     * Registers a [listener] invoked with each batch of completed [Span] immediately after it has
+     * been stored, so that spans can be persisted. It returns whether it has taken ownership of the
+     * batch, in which case this repository stops retaining it.
+     *
+     * Spans already stored when the listener registers are handed to it as one batch upon registration.
+     *
+     * The listener runs under the flush lock, so it must not block or perform I/O.
+     */
+    fun addCompletedOtelSpansListener(listener: (List<Span>) -> Boolean) {
+        synchronized(flushLock) {
+            completedSpansListeners.add(listener)
+            handOver(completedOtelSpans(), listOf(listener))
+        }
+    }
+
+    /**
+     * Offers [spans] to [listeners], dropping the stored copy once one of them takes ownership.
+     */
+    private fun handOver(spans: List<Span>, listeners: List<(List<Span>) -> Boolean>) {
+        if (spans.isEmpty()) {
+            return
+        }
+        val owned = listeners.fold(false) { owned, listener ->
+            notifyOwningListener(listener, spans) || owned
+        }
+        if (owned) {
+            dropStored(spans)
+        }
+    }
+
+    /**
+     * Removes [spans] from [completedSpanData] by identity. [Span] is a data class whose `equals`
+     * walks its attributes, events and links, so removing by equality would deep-compare every
+     * stored span against every span in the batch, on the thread that ended the span.
+     */
+    private fun dropStored(spans: List<Span>) {
+        val batch = Collections.newSetFromMap(IdentityHashMap<Span, Boolean>())
+        batch.addAll(spans)
+        val iterator = completedSpanData.iterator()
+        while (iterator.hasNext()) {
+            if (iterator.next() in batch) {
+                iterator.remove()
+            }
+        }
+    }
+
+    private fun <T> notifyListener(listener: (T) -> Unit, value: T) {
+        try {
+            listener(value)
+        } catch (ignored: Throwable) {
+        }
+    }
+
+    private fun notifyOwningListener(listener: (List<Span>) -> Boolean, spans: List<Span>): Boolean {
+        return try {
+            listener(spans)
+        } catch (ignored: Throwable) {
+            false
+        }
     }
 
     /**

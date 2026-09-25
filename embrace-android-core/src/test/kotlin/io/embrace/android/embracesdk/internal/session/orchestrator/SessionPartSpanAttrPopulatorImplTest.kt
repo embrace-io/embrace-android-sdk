@@ -46,6 +46,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
             { 7 },
             FakeLogLimitingService(),
             FakeMetadataService(),
+            PROCESS_ID,
             { null },
         )
     }
@@ -68,6 +69,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
         assertEquals("43200", attrs[EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS])
         assertEquals("1800", attrs[EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS])
         assertEquals("id", attrs[EmbSessionAttributes.EMB_SESSION_PART_ID])
+        assertEquals(PROCESS_ID, attrs[EmbSessionAttributes.EMB_PROCESS_IDENTIFIER])
         assertFalse(attrs.containsKey(EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART))
     }
 
@@ -169,6 +171,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
             appVersionStartupCounterProvider = { 7 },
             logLimitingService = FakeLogLimitingService(),
             metadataService = FakeMetadataService(),
+            processIdentifier = PROCESS_ID,
             experimentRecordsProvider = { experiments },
         )
 
@@ -191,6 +194,7 @@ internal class SessionPartSpanAttrPopulatorImplTest {
             appVersionStartupCounterProvider = { 7 },
             logLimitingService = FakeLogLimitingService(),
             metadataService = metadataService,
+            processIdentifier = PROCESS_ID,
             experimentRecordsProvider = { null },
         )
 
@@ -208,6 +212,10 @@ internal class SessionPartSpanAttrPopulatorImplTest {
             EmbSessionAttributes.EMB_CLOCK_GNSS_DRIFT to "10",
         )
         assertEquals(expected, attrs)
+    }
+
+    private companion object {
+        const val PROCESS_ID = "process-id"
     }
 
     private fun testClassifiedUserSession(isBackgroundOnly: Boolean) = UserSessionMetadata.Classified(

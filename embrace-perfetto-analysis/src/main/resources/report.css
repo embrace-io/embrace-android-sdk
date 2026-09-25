@@ -1,0 +1,126 @@
+:root {
+  color-scheme: light;
+  --plane: #f9f9f7;
+  --surface: #fcfcfb;
+  --ink: #0b0b0b;
+  --ink-secondary: #52514e;
+  --ink-muted: #898781;
+  --rule: #e1e0d9;
+  --series: #2a78d6;
+  --accent-wash: #eef4fd;
+  --regression: #c2401f;
+  --improvement: #1d7a4d;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --plane: #0d0d0d;
+    --surface: #1a1a19;
+    --ink: #ffffff;
+    --ink-secondary: #c3c2b7;
+    --ink-muted: #898781;
+    --rule: #2c2c2a;
+    --series: #3987e5;
+    --accent-wash: #16243a;
+    --regression: #e4664a;
+    --improvement: #3fae78;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding-block: 32px;
+  padding-inline: 16px;
+  background: var(--plane);
+  color: var(--ink);
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+main { max-width: 1120px; margin: 0 auto; }
+h1 { margin: 0; font-size: 22px; }
+h2 { margin: 0 0 12px; font-size: 15px; font-weight: 600; }
+header { margin-bottom: 20px; }
+.capture { margin: 6px 0 0; color: var(--ink-secondary); overflow-wrap: anywhere; }
+.panel {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+}
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.tile {
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+}
+.tile .value { font-size: 24px; font-weight: 600; }
+.tile .label { color: var(--ink-secondary); }
+.hint, .empty { margin: 0; color: var(--ink-secondary); }
+.hint { margin-bottom: 8px; }
+.details :last-child { margin-bottom: 0; }
+.details :first-child { margin-top: 0; }
+.controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 16px; }
+.control { display: flex; gap: 6px; align-items: center; color: var(--ink-secondary); }
+input[type="search"], select {
+  padding: 6px 10px;
+  background: var(--plane);
+  color: inherit;
+  font: inherit;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+}
+input[type="search"] { flex: 1 1 220px; min-width: 0; }
+.matched { margin-left: auto; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+.chart { margin: 0 0 20px; }
+figcaption { margin-bottom: 10px; color: var(--ink-secondary); }
+.bar-row { display: flex; gap: 12px; align-items: center; margin-bottom: 6px; }
+.bar-name {
+  flex: 0 0 34%;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-secondary);
+}
+.bar-track {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  border-left: 1px solid var(--rule);
+}
+.bar { height: 14px; border-radius: 0 4px 4px 0; background: var(--series); }
+.bar.slower { background: var(--regression); }
+.bar.faster { background: var(--improvement); }
+.bar-value { color: var(--ink-secondary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.scroll { overflow: auto; max-height: 70vh; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 10px; text-align: right; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+thead th {
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--rule);
+  color: var(--ink-secondary);
+  cursor: pointer;
+  font-weight: 600;
+  user-select: none;
+}
+thead th:hover { color: var(--ink); }
+th .arrow { color: var(--ink-muted); }
+tbody tr:nth-child(even) { background: var(--plane); }
+tbody tr:hover { background: var(--accent-wash); }
+mark { background: var(--accent-wash); color: inherit; font-weight: 600; }
+#counters thead th { cursor: default; }
+#counters thead th:hover { color: var(--ink-secondary); }
+#counters th:nth-child(2), #counters td:nth-child(2) { text-align: right; }
+.missing { margin: 0; padding-left: 20px; color: var(--ink-secondary); }
+#comparison th:nth-child(2), #comparison td:nth-child(2) { text-align: right; }

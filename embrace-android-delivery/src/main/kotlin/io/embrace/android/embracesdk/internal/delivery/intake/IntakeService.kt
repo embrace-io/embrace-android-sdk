@@ -21,10 +21,15 @@ interface IntakeService : Shutdownable {
      * Stores the payload [intake] on disk as its JSON representation and associate it in the storage layer with [metadata].
      *
      * If [staleEntry] is non-null, the payload associated with it will be deleted once the new payload is successfully stored.
+     *
+     * [onStored] is invoked once [intake] has been written to disk, which typically happens on a worker thread. It is not invoked
+     * if the payload was dropped or could not be stored, so a caller that holds the only other copy of the telemetry can use it to
+     * find out when discarding that copy is safe.
      */
     fun take(
         intake: Envelope<*>,
         metadata: StoredTelemetryMetadata,
         staleEntry: StoredTelemetryMetadata? = null,
+        onStored: (() -> Unit)? = null,
     ): Future<*>
 }

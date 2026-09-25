@@ -1,0 +1,337 @@
+package io.embrace.android.embracesdk.internal.session.persistence
+
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.internal.payload.Span
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TemporaryFolder
+import java.io.File
+
+internal class SessionReconstructionServiceSpanSnapshotsTest {
+
+    private companion object {
+        private const val SPAN_SNAPSHOTS_FILE_NAME = "span_snapshots.pb"
+        private const val ENVELOPE_VERSION = "0.1.0"
+        private const val ENVELOPE_TYPE = "spans"
+        private const val TIMESTAMP = 1726739283136L
+        private const val UUID = "c2610cd1-389f-422a-bfbc-25312c7a599a"
+        private const val USER_SESSION_ID = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        private const val SESSION_PART_ID = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+
+        private val partDirectory = SessionPartDirectory(
+            timestamp = TIMESTAMP,
+            uuid = UUID,
+            userSessionId = USER_SESSION_ID,
+            sessionPartId = SESSION_PART_ID,
+        )
+
+        private val INVALID_FIELD_ENCODING = byteArrayOf(0x0E)
+
+        private val secondSnapshot = inFlightSpan.copy(spanId = "aaaaaaaaaaaaaaa5")
+
+        private val endedSnapshot = inFlightSpan.copy(
+            spanId = "aaaaaaaaaaaaaaa6",
+            endTimeNanos = 1726739283900000000L,
+            status = Span.Status.OK,
+        )
+    }
+
+    @get:Rule
+    val tempFolder: TemporaryFolder = TemporaryFolder()
+
+    private lateinit var sessionsDir: File
+    private lateinit var logger: FakeInternalLogger
+    private lateinit var metadataWriter: SessionMetadataWriter
+    private lateinit var snapshotsWriter: SpanSnapshotsWriter
+    private lateinit var service: SessionReconstructionService
+
+    @Volatile
+    private var activePart: SessionPartDirectory? = partDirectory
+
+    @Before
+    fun setUp() {
+        sessionsDir = tempFolder.newFolder("embrace_sessions")
+        logger = FakeInternalLogger(throwOnInternalError = false)
+        activePart = partDirectory
+        metadataWriter = SessionMetadataWriter(
+            target = target(),
+            metadataSource = { fullyPopulatedMetadata },
+            resourceSource = { fullyPopulatedResource },
+            envelopeVersion = ENVELOPE_VERSION,
+            envelopeType = ENVELOPE_TYPE,
+            sharedLibSymbolMappingSource = { null },
+            logger = logger,
+        )
+        snapshotsWriter = SpanSnapshotsWriter(target(), logger)
+        service = SessionReconstructionService(lazy { sessionsDir }, logger)
+        createPartDir(partDirectory)
+    }
+
+    @Test
+    fun `a log grown by appends reconstructs to the latest state of each span`() {
+        write(snapshots = listOf(inFlightSpan))
+        val updated = inFlightSpan.copy(name = "emb-network-request-updated")
+        append(listOf(secondSnapshot))
+        append(listOf(updated))
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(listOf(updated, secondSnapshot), payload.spanSnapshots)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a rollup in the middle of a log discards the records before it`() {
+        write(snapshots = listOf(inFlightSpan))
+        append(listOf(secondSnapshot))
+        assertTrue(snapshotsWriter.write(listOf(endedSnapshot)))
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(listOf(endedSnapshot), payload.spanSnapshots)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `an appended snapshot of a span already logged as completed is dropped`() {
+        write(snapshots = listOf(inFlightSpan))
+        append(listOf(fullyPopulatedSpan))
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(listOf(inFlightSpan), payload.spanSnapshots)
+        assertEquals(listOf(fullyPopulatedSpan), payload.spans)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `span snapshots are reconstructed in the order they were written`() {
+        write(snapshots = listOf(inFlightSpan, secondSnapshot))
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(listOf(inFlightSpan, secondSnapshot), payload.spanSnapshots)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a finished session span leaves the persisted snapshots alone`() {
+        write(snapshots = listOf(inFlightSpan))
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(listOf(inFlightSpan), payload.spanSnapshots)
+        assertEquals(listOf(fullyPopulatedSpan), payload.spans)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `an empty snapshots file reconstructs no snapshots`() {
+        write()
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(emptyList<Span>(), payload.spanSnapshots)
+        assertEquals(listOf(fullyPopulatedSpan), payload.spans)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a snapshot carrying an end time is still reconstructed as a snapshot`() {
+        write(snapshots = listOf(endedSnapshot))
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(listOf(endedSnapshot), payload.spanSnapshots)
+        assertEquals(listOf(fullyPopulatedSpan), payload.spans)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `the latest span snapshots are reconstructed after they are overwritten`() {
+        write(snapshots = listOf(inFlightSpan))
+        writeSpanSnapshots(snapshots = listOf(secondSnapshot))
+
+        assertEquals(listOf(secondSnapshot), service.reconstruct(partDirectory)?.data?.spanSnapshots)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `each session part directory reconstructs its own span snapshots`() {
+        val other = SessionPartDirectory(
+            timestamp = TIMESTAMP + 1,
+            uuid = "d3721de2-490a-533b-cacd-36423d8b6aab",
+            userSessionId = "cccccccccccccccccccccccccccccccc",
+            sessionPartId = "dddddddddddddddddddddddddddddddd",
+        )
+        createPartDir(other)
+        write(snapshots = listOf(inFlightSpan))
+        write(other, snapshots = listOf(secondSnapshot))
+
+        assertEquals(listOf(inFlightSpan), service.reconstruct(partDirectory)?.data?.spanSnapshots)
+        assertEquals(listOf(secondSnapshot), service.reconstruct(other)?.data?.spanSnapshots)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a missing snapshots file reconstructs no snapshots`() {
+        writeMetadata()
+        writeCompletedSpans()
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(emptyList<Span>(), payload.spanSnapshots)
+        assertEquals(listOf(fullyPopulatedSpan), payload.spans)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a session span that never ended is reconstructed as a span snapshot`() {
+        val incomplete = fullyPopulatedSpan.copy(endTimeNanos = null)
+        writeMetadata()
+        File(partDir(), "completed_spans.pb").writeBytes(completedSpansLog(emptyList()))
+        writeSpanSnapshots(snapshots = listOf(incomplete))
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(listOf(incomplete), payload.spanSnapshots)
+        assertEquals(emptyList<Span>(), payload.spans)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a directory occupying the snapshots path is reported`() {
+        writeMetadata()
+        writeCompletedSpans()
+        snapshotsFile().mkdirs()
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(listOf(fullyPopulatedSpan), payload.spans)
+        assertEquals(emptyList<Span>(), payload.spanSnapshots)
+        assertReconstructionFailureTracked()
+    }
+
+    @Test
+    fun `a snapshots file with a torn tail is read back as far as it is intact`() {
+        write(snapshots = listOf(inFlightSpan))
+        val bytes = snapshotsFile().readBytes()
+        snapshotsFile().writeBytes(bytes.copyOf(bytes.size / 2))
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(emptyList<Span>(), payload.spanSnapshots)
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a malformed frame past the rollup keeps the snapshots in front of it`() {
+        write(snapshots = listOf(inFlightSpan))
+        snapshotsFile().appendBytes(INVALID_FIELD_ENCODING)
+        append(listOf(secondSnapshot))
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(listOf(fullyPopulatedSpan), payload.spans)
+        assertEquals(listOf(inFlightSpan), payload.spanSnapshots)
+        assertReconstructionFailureTracked()
+    }
+
+    @Test
+    fun `a snapshots file holding arbitrary bytes is reported and does not throw`() {
+        write()
+        snapshotsFile().writeBytes(byteArrayOf(-1, -1, -1, -1, -1, -1))
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(listOf(fullyPopulatedSpan), payload.spans)
+        assertEquals(emptyList<Span>(), payload.spanSnapshots)
+        assertReconstructionFailureTracked()
+    }
+
+    @Test
+    fun `an empty snapshots file is reported`() {
+        write()
+        snapshotsFile().writeBytes(byteArrayOf())
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(listOf(fullyPopulatedSpan), payload.spans)
+        assertEquals(emptyList<Span>(), payload.spanSnapshots)
+        assertReconstructionFailureTracked()
+    }
+
+    @Test
+    fun `snapshots holding no format version are reported`() {
+        write()
+        writeSnapshotsBytes(fullyPopulatedSpanSnapshotsProto.copy(format_version = 0))
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(listOf(fullyPopulatedSpan), payload.spans)
+        assertEquals(emptyList<Span>(), payload.spanSnapshots)
+        assertReconstructionFailureTracked()
+    }
+
+    @Test
+    fun `an unsupported snapshots format version is reported`() {
+        write()
+        writeSnapshotsBytes(fullyPopulatedSpanSnapshotsProto.copy(format_version = FORMAT_VERSION + 1))
+
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        assertEquals(listOf(fullyPopulatedSpan), payload.spans)
+        assertEquals(emptyList<Span>(), payload.spanSnapshots)
+        assertReconstructionFailureTracked()
+    }
+
+    private fun target(): SessionPartWriteTarget =
+        SessionPartWriteTarget(lazy { sessionsDir }) { activePart }
+
+    private fun createPartDir(directory: SessionPartDirectory): File =
+        File(sessionsDir, directory.dirName).apply { mkdirs() }
+
+    private fun partDir(directory: SessionPartDirectory = partDirectory): File =
+        File(sessionsDir, directory.dirName)
+
+    private fun snapshotsFile(directory: SessionPartDirectory = partDirectory): File =
+        File(partDir(directory), SPAN_SNAPSHOTS_FILE_NAME)
+
+    private fun write(
+        directory: SessionPartDirectory = partDirectory,
+        snapshots: List<Span> = emptyList(),
+    ) {
+        writeMetadata(directory)
+        writeCompletedSpans(directory)
+        writeSpanSnapshots(directory, snapshots)
+    }
+
+    private fun writeMetadata(directory: SessionPartDirectory = partDirectory) {
+        activePart = directory
+        assertTrue(metadataWriter.write())
+    }
+
+    private fun writeCompletedSpans(directory: SessionPartDirectory = partDirectory) {
+        File(partDir(directory), "completed_spans.pb")
+            .writeBytes(completedSpansLog(listOf(fullyPopulatedSpanProto)))
+    }
+
+    private fun writeSpanSnapshots(
+        directory: SessionPartDirectory = partDirectory,
+        snapshots: List<Span> = emptyList(),
+    ) {
+        activePart = directory
+        assertTrue(snapshotsWriter.write(snapshots))
+    }
+
+    private fun append(
+        snapshots: List<Span>,
+        directory: SessionPartDirectory = partDirectory,
+    ) {
+        activePart = directory
+        assertTrue(snapshotsWriter.append(snapshots) { snapshots })
+    }
+
+    private fun writeSnapshotsBytes(
+        snapshots: SpanCollection,
+        directory: SessionPartDirectory = partDirectory,
+    ) {
+        snapshotsFile(directory).writeBytes(SpanCollection.ADAPTER.encode(snapshots))
+    }
+
+    private fun assertNoInternalErrors() {
+        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+    }
+
+    private fun assertReconstructionFailureTracked() {
+        assertEquals(1, logger.internalErrorMessages.size)
+        assertEquals("SessionReconstructionFail", logger.internalErrorMessages.single().msg)
+    }
+}

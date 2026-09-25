@@ -1,6 +1,9 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
+import io.embrace.android.embracesdk.internal.delivery.storage.asFile
+import io.embrace.android.embracesdk.internal.resurrection.SessionPartReader
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
@@ -9,7 +12,12 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.OrchestratorB
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestratorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSpanAttrPopulatorImpl
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartWriterImpl
+import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectoryStore
+import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTracker
+import io.embrace.android.embracesdk.internal.session.persistence.SessionReconstructionService
 import io.embrace.android.embracesdk.internal.worker.Worker
+import java.io.File
 
 class UserSessionOrchestrationModuleImpl(
     initModule: InitModule,
@@ -27,6 +35,38 @@ class UserSessionOrchestrationModuleImpl(
 ) : UserSessionOrchestrationModule {
 
     override val sessionIdsProvider: SessionIdsProvider get() = essentialServiceModule.sessionIdsProvider
+
+    private val sessionsDir: Lazy<File> = StorageLocation.SESSION_SPLIT.asFile(
+        logger = initModule.logger,
+        rootDirSupplier = { coreModule.context.filesDir },
+        fallbackDirSupplier = { coreModule.context.cacheDir },
+    )
+
+    private val sessionPersistenceWorker = workerThreadModule.backgroundWorker(Worker.Background.SessionPersistenceWorker)
+
+    private val sessionReadWorker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
+
+    private val sessionPartDirectoryStore = SessionPartDirectoryStore(
+        sessionsDir,
+        sessionPersistenceWorker,
+        initModule.clock,
+        initModule.logger,
+    )
+
+    private val sessionPartWriteTracker = SessionPartWriteTracker()
+
+    override val sessionPartReader: SessionPartReader? = deliveryModule?.let { delivery ->
+        SessionPartReader(
+            sessionsDir = sessionsDir,
+            directoryStore = sessionPartDirectoryStore,
+            reconstructionService = SessionReconstructionService(sessionsDir, initModule.logger),
+            intakeService = delivery.intakeService,
+            writeTracker = sessionPartWriteTracker,
+            processIdProvider = { openTelemetryModule.otelSdkConfig.processIdentifier },
+            configService = configService,
+            logger = initModule.logger,
+        )
+    }
 
     override val sessionOrchestrator: SessionOrchestrator = run {
         val payloadMessageCollator = PayloadMessageCollatorImpl(
@@ -52,8 +92,35 @@ class UserSessionOrchestrationModuleImpl(
             appVersionStartupCounterProvider,
             logModule.logLimitingService,
             payloadSourceModule.metadataService,
+            openTelemetryModule.otelSdkConfig.processIdentifier,
         ) {
             essentialServiceModule.experimentTrackingService.getRecords()
+        }
+
+        val sessionPartWriter = SessionPartWriterImpl(
+            sessionsDir,
+            sessionPersistenceWorker,
+            configService,
+            initModule.uuidSource,
+            initModule.clock,
+            initModule.logger,
+            payloadSourceModule.resourceSource,
+            payloadSourceModule.envelopeMetadataSource,
+            openTelemetryModule.currentSessionPartSpan,
+            openTelemetryModule.spanRepository::getActiveEmbraceSpans,
+            initModule.telemetryService,
+            sessionPartDirectoryStore,
+            sessionPartWriteTracker,
+            onWritesComplete = {
+                sessionPartReader?.let { reader ->
+                    sessionReadWorker.submit { reader.readPersistedSessionParts() }
+                }
+            },
+        )
+        essentialServiceModule.userService.addUserInfoListener(sessionPartWriter::onMetadataChanged)
+        openTelemetryModule.spanRepository.addCompletedOtelSpansListener(sessionPartWriter::onSpanCompleted)
+        openTelemetryModule.spanRepository.addSpanChangeListener { span ->
+            sessionPartWriter.onSpanSnapshotChanged(span)
         }
 
         SessionOrchestratorImpl(
@@ -75,6 +142,7 @@ class UserSessionOrchestrationModuleImpl(
             workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
             initModule.uuidSource,
             initModule.startupClassifier,
+            sessionPartWriter,
         )
     }
 }

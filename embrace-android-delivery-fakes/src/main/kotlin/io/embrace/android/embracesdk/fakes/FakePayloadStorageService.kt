@@ -75,6 +75,9 @@ class FakePayloadStorageService(
         }
     }
 
+    override fun payloadSizeBytes(metadata: StoredTelemetryMetadata): Long =
+        cachedPayloads[metadata]?.size?.toLong() ?: 0L
+
     override fun delete(metadata: StoredTelemetryMetadata, callback: () -> Unit) {
         if (worker == null) {
             deleteSynchronous(metadata, callback)

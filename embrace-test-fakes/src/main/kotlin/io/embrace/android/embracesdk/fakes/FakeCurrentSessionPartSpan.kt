@@ -18,6 +18,9 @@ class FakeCurrentSessionPartSpan(
     var initializedCallCount: Int = 0
     var sessionPartSpan: FakeEmbraceSdkSpan? = null
 
+    /** Invoked with the stopped session span whenever [endSession] ends one, as the OTel export does. */
+    var onSessionSpanCompleted: (List<Span>) -> Unit = {}
+
     /**
      * Records the [canAddEvent] arg for each call, so tests can assert how an event was classified.
      */
@@ -56,6 +59,7 @@ class FakeCurrentSessionPartSpan(
         }
         endingSessionPartSpan.stop(errorCode, clock.now())
         val payload = listOf(checkNotNull(endingSessionPartSpan.snapshot()))
+        onSessionSpanCompleted(payload)
         sessionIteration.incrementAndGet()
         sessionPartSpan = if (appTerminationCause == null) newSessionPartSpan(clock.now()) else null
         return payload
@@ -81,7 +85,6 @@ class FakeCurrentSessionPartSpan(
     private fun newSessionPartSpan(startTimeMs: Long) =
         FakeEmbraceSdkSpan.sessionPartSpan(
             userSessionId = "fake-session-span-id",
-            startTimeMs = startTimeMs,
-            lastHeartbeatTimeMs = startTimeMs
+            startTimeMs = startTimeMs
         )
 }

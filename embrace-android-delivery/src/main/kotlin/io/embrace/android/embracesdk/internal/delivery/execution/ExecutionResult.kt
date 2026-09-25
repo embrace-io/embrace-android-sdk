@@ -45,6 +45,12 @@ sealed class ExecutionResult(
     data class Incomplete(val exception: Throwable, val retry: Boolean) : ExecutionResult(retry)
 
     /**
+     * An execution attempt was not made because the payload is larger than the SDK will upload. Retrying
+     * would not make it deliverable, so the payload is discarded.
+     */
+    data class PayloadTooLarge(val sizeBytes: Long) : ExecutionResult(false)
+
+    /**
      * Execution was not attempted because the network isn't ready. It should be sent at the next possible time.
      */
     object NetworkNotReady : ExecutionResult(true)

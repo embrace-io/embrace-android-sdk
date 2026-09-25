@@ -46,6 +46,19 @@ JVM level than it compiles with, so check `kotlinCoreLibrariesVersion` before us
 # Build the example app
 cd examples/ExampleApp && ./gradlew bundleRelease
 
+# Run the SDK startup macrobenchmark and collect its traces
+scripts/macrobenchmark.sh
+
+# Analyse a perfetto trace (every section, markdown, to <trace>-report.md; --help for the options)
+scripts/analyse-trace.sh <trace.perfetto.gz>
+scripts/analyse-trace.sh <trace.perfetto.gz> --operations emb-sdk-start --format json --output report.json
+
+# Reduce a whole macrobenchmark run to one report, one observation per iteration
+scripts/analyse-trace-iterations.sh perf/macrobenchmark/<device>
+
+# Compare two runs, section by section, to <baseline>-vs-<candidate>-report.md
+scripts/compare-trace-iterations.sh perf/macrobenchmark/<baseline> perf/macrobenchmark/<candidate>
+
 # Update binary compatibility API dumps
 ./gradlew apiDump
 ```

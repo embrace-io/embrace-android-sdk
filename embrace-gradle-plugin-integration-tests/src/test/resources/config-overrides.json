@@ -39,6 +39,7 @@
     "anr": {
       "capture_unity_thread": true
     },
+    "multi_file_persistence_enabled": true,
     "view_config": {
       "enable_automatic_activity_capture": false
     },

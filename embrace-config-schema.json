@@ -65,6 +65,11 @@
           },
           "minProperties": 1
         },
+        "multi_file_persistence_enabled": {
+          "description": "Persists session telemetry using the multi-file layout, written in parallel with the existing single-file payload writer. Can be overridden by remote config.",
+          "default": false,
+          "type": "boolean"
+        },
         "view_config": {
           "type": "object",
           "properties": {

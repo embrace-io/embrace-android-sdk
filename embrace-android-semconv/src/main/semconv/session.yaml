@@ -11,7 +11,6 @@ attribute_groups:
       - ref: emb.session_number
       - ref: emb.clean_exit
       - ref: emb.terminated
-      - ref: emb.heartbeat_time_unix_nano
       - ref: emb.crash_id
       - ref: emb.session_start_type
       - ref: emb.session_end_type
@@ -63,11 +62,6 @@ attributes:
     brief: "Whether the session was terminated."
     stability: development
     examples: ["true", "false"]
-  - key: emb.heartbeat_time_unix_nano
-    type: string
-    brief: "Last known time that the session existed (nanoseconds since epoch)."
-    stability: development
-    examples: ["1617983000000000000"]
   - key: emb.crash_id
     type: string
     brief: "The crash report ID tied to the session."

@@ -214,7 +214,6 @@ internal class UserSessionResurrectionTest {
                         userSessionId = persistedId,
                         processIdentifier = priorProcessId,
                         startMs = DEFAULT_SDK_START_TIME_MS - 900L,
-                        lastHeartbeatTimeMs = DEFAULT_SDK_START_TIME_MS - 800L,
                     ),
                 )
             },
@@ -272,7 +271,6 @@ internal class UserSessionResurrectionTest {
                 partEnvelope = fakeIncompleteSessionEnvelope(
                     userSessionId = userSessionId,
                     startMs = sessionMetadata.timestamp,
-                    lastHeartbeatTimeMs = sessionMetadata.timestamp + 1_000L,
                 )
             )
         }

@@ -170,6 +170,7 @@ class FakeEmbraceSdkSpan(
     override fun asW3cTraceParent(): String? = sdkSpan?.spanContext?.run { "00-${traceId}-${spanId}-01" }
 
     override fun snapshot(): io.embrace.android.embracesdk.internal.payload.Span? {
+        snapshotCount++
         return if (spanId == null) {
             null
         } else {
@@ -187,6 +188,8 @@ class FakeEmbraceSdkSpan(
             )
         }
     }
+
+    var snapshotCount: Int = 0
 
     override fun hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
         attributes.hasEmbraceAttribute(embraceAttribute)
@@ -251,7 +254,6 @@ class FakeEmbraceSdkSpan(
         fun sessionPartSpan(
             userSessionId: String,
             startTimeMs: Long,
-            lastHeartbeatTimeMs: Long?,
             endTimeMs: Long? = null,
             sessionProperties: Map<String, String>? = null,
             processIdentifier: String = "fake-process-id",
@@ -273,10 +275,6 @@ class FakeEmbraceSdkSpan(
                 setSystemAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionPartId)
                 setSystemAttribute(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER, processIdentifier)
                 setSystemAttribute(EmbSessionAttributes.EMB_STATE, "foreground")
-                setSystemAttribute(
-                    EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO,
-                    (lastHeartbeatTimeMs ?: this.spanStartTimeMs)!!.millisToNanos().toString()
-                )
                 if (endTimeMs != null) {
                     stop(endTimeMs = endTimeMs)
                 }

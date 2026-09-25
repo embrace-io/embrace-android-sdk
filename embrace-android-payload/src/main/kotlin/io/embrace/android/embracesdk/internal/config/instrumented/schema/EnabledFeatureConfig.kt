@@ -201,4 +201,12 @@ interface EnabledFeatureConfig {
      * sdk_config.automatic_data_capture.activity_process_lifecycle_tracker_enabled
      */
     fun isActivityProcessLifecycleTrackerEnabled(): Boolean = false
+
+    /**
+     * Gates whether the multi-file session persistence layer writes session telemetry instead of
+     * the legacy single-file payload writer. Only one of the two is active per launch.
+     *
+     * sdk_config.multi_file_persistence_enabled
+     */
+    fun isMultiFilePersistenceEnabled(): Boolean = false
 }

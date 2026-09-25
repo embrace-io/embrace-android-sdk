@@ -18,7 +18,7 @@ uiautomator = "2.4.0"
 kotlinxSerialization = "1.11.0"
 benchmarkMacroJunit4 = "1.5.0"
 coil = "2.7.0"
-metro = "1.4.3"
+metro = "1.4.4"
 media3 = "1.11.1"
 
 [libraries]

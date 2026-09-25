@@ -5,11 +5,16 @@ import android.hardware.display.DisplayManager
 import android.os.Build
 import android.view.Display
 import androidx.annotation.RequiresApi
+import androidx.annotation.VisibleForTesting
+import androidx.annotation.WorkerThread
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
+import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
 import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadResult
 import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadTracker
@@ -17,6 +22,7 @@ import io.embrace.android.embracesdk.internal.vitals.smoothness.FocalMomentTrack
 import io.embrace.android.embracesdk.internal.vitals.smoothness.FrameTraceRecorder
 import io.embrace.android.embracesdk.internal.vitals.smoothness.SmoothnessReporter
 import io.embrace.android.embracesdk.internal.vitals.smoothness.SmoothnessResult
+import io.embrace.android.embracesdk.semconv.EmbFrameCountsAttributes
 
 /**
  * Owns the OS plumbing for the smoothness vital: the frame-metrics listener and touch callback, both
@@ -32,7 +38,20 @@ internal class VitalsDataSource(
     // exhaust the session's shared internal-span budget and starve other instrumentation. Reset per session part.
     limitStrategy = UpToLimitStrategy(args.configService.config.vitals::spanLimit),
     instrumentationName = "vitals_data_source",
-) {
+),
+    SessionPartEndListener,
+    SessionPartChangeListener {
+
+    @Volatile
+    private var foregroundSessionPart = false
+
+    // Cumulative frame counts; each layer (e.g. the session part) reports the difference from its own start. Written only on the
+    // vitals frame thread, read from any thread.
+    @Volatile
+    private var frameCounts = FrameCounts.ZERO
+
+    @Volatile
+    private var sessionPartStart = FrameCounts.ZERO
 
     // Extracts per-frame jank; below API 31 the budget tracks the display's refresh interval.
     private val frameMetricsStrategy: FrameMetricsStrategy = FrameMetricsStrategy.create(
@@ -64,6 +83,7 @@ internal class VitalsDataSource(
     }
 
     override fun onDataCaptureEnabled() {
+        startSessionPart()
         val vitalsScheduler = HandlerVitalsScheduler().apply { start() }
         val handler = vitalsScheduler.handler
 
@@ -94,6 +114,7 @@ internal class VitalsDataSource(
             idleThresholdMs = cfg.smoothnessIdleThresholdMs,
             heldIdleThresholdMs = cfg.smoothnessHeldIdleThresholdMs,
             frameTraceRecorder = if (cfg.smoothnessFrameTraceEnabled) FrameTraceRecorder() else null,
+            onFrameCounted = ::countFrames,
         )
         focalTracker = tracker
 
@@ -105,6 +126,32 @@ internal class VitalsDataSource(
         )
         args.application.registerActivityLifecycleCallbacks(listener)
         args.processStateTracker.addListener(processStateListener)
+    }
+
+    override fun onPreSessionEnd() {
+        if (!foregroundSessionPart) {
+            return
+        }
+        val counts = frameCounts - sessionPartStart
+        // not via captureTelemetry: that would count this against the span limit
+        destination.addSessionPartAttribute(EmbFrameCountsAttributes.SMOOTHNESS_DROPPED_FRAMES, counts.dropped.toString())
+        destination.addSessionPartAttribute(EmbFrameCountsAttributes.SMOOTHNESS_EXPECTED_FRAMES, counts.expected.toString())
+    }
+
+    override fun onPostSessionChange() {
+        startSessionPart()
+    }
+
+    @WorkerThread
+    @VisibleForTesting
+    internal fun countFrames(dropped: Boolean, expectedFrames: Int) {
+        frameCounts += FrameCounts.frame(dropped, expectedFrames)
+    }
+
+    // Decided when the part starts: by the time it ends, the process state may already reflect the next part.
+    private fun startSessionPart() {
+        sessionPartStart = frameCounts
+        foregroundSessionPart = args.processStateTracker.getAppState() == ProcessState.FOREGROUND
     }
 
     private fun emitSmoothnessResult(result: SmoothnessResult) {

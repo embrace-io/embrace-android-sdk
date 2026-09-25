@@ -4,8 +4,8 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.WebViewFragmentCapture
+import io.embrace.android.embracesdk.internal.config.resolved.BreadcrumbConfig
 
 /**
  * Captures the URLs of pages loaded in a webview.
@@ -14,11 +14,11 @@ class WebViewUrlDataSource(
     args: InstrumentationArgs,
 ) : DataSourceImpl(
     args = args,
-    limitStrategy = UpToLimitStrategy(args.configService.breadcrumbBehavior::getWebViewBreadcrumbLimit),
+    limitStrategy = UpToLimitStrategy { args.configService.config.breadcrumb.webViewLimit },
     instrumentationName = "webview_url_data_source",
 ) {
 
-    private val breadcrumbBehavior: BreadcrumbBehavior = args.configService.breadcrumbBehavior
+    private val breadcrumbConfig: BreadcrumbConfig = args.configService.config.breadcrumb
 
     fun logWebView(url: String?) {
         captureTelemetry(inputValidation = { url != null }) {
@@ -37,14 +37,14 @@ class WebViewUrlDataSource(
         val fragment = if (hasFragment) url.substring(fragmentOffset + 1) else ""
 
         val capturedBase = when {
-            breadcrumbBehavior.isWebViewBreadcrumbQueryParamCaptureEnabled() -> base
+            breadcrumbConfig.captureWebViewQueryParams -> base
             else -> base.substringBefore('?')
         }
 
         if (!hasFragment) {
             return capturedBase
         }
-        return when (breadcrumbBehavior.getWebViewBreadcrumbFragmentCapture()) {
+        return when (breadcrumbConfig.webViewFragmentCapture) {
             WebViewFragmentCapture.KEEP -> "$capturedBase#$fragment"
             WebViewFragmentCapture.REDACT -> capturedBase + "#" + UrlFragmentRedactor.redact(fragment)
             WebViewFragmentCapture.REMOVE -> capturedBase

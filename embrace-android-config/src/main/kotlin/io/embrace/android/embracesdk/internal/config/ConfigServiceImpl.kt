@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavio
 import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.BackgroundActivityBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
-import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.ExperimentBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehaviorImpl
@@ -19,6 +18,8 @@ import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehavio
 import io.embrace.android.embracesdk.internal.config.behavior.VitalsBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
+import io.embrace.android.embracesdk.internal.config.resolved.resolveConfig
 import io.embrace.android.embracesdk.internal.config.source.CombinedRemoteConfigSource
 import io.embrace.android.embracesdk.internal.config.source.ConfigEndpoint
 import io.embrace.android.embracesdk.internal.config.source.OkHttpRemoteConfigSource
@@ -98,12 +99,13 @@ class ConfigServiceImpl(
         combinedRemoteConfigSource?.scheduleConfigRequests()
     }
 
+    override val config: EmbraceConfig = resolveConfig(instrumentedConfig, remoteConfig)
+
     private val thresholdCheck: BehaviorThresholdCheck = persistedConfig.thresholdCheck
     override val backgroundActivityBehavior =
         BackgroundActivityBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
     override val autoDataCaptureBehavior =
         AutoDataCaptureBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
-    override val breadcrumbBehavior = BreadcrumbBehaviorImpl(instrumentedConfig, remoteConfig)
     override val sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(instrumentedConfig)
     override val logMessageBehavior = LogMessageBehaviorImpl(remoteConfig)
     override val threadBlockageBehavior = ThreadBlockageBehaviorImpl(thresholdCheck, remoteConfig)

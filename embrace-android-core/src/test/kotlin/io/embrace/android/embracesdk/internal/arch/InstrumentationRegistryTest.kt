@@ -213,7 +213,6 @@ internal class InstrumentationRegistryTest {
         override val instrumentationName: String = "blocking_test_data_source"
 
         override fun onDataCaptureEnabled() {}
-        override fun onDataCaptureDisabled() {}
         override fun resetDataCaptureLimits() {}
         override fun <T> captureTelemetry(
             inputValidation: () -> Boolean,

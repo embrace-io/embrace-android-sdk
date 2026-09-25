@@ -28,10 +28,6 @@ abstract class DataSourceImpl(
         // no-op
     }
 
-    override fun onDataCaptureDisabled() {
-        // no-op
-    }
-
     @CallSuper
     override fun resetDataCaptureLimits() {
         limitStrategy.resetDataCaptureLimits()

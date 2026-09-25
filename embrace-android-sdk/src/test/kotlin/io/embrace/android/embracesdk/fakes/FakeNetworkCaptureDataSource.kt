@@ -19,10 +19,6 @@ class FakeNetworkCaptureDataSource : NetworkCaptureDataSource {
         TODO("Not yet implemented")
     }
 
-    override fun onDataCaptureDisabled() {
-        TODO("Not yet implemented")
-    }
-
     override fun resetDataCaptureLimits() {
         TODO("Not yet implemented")
     }

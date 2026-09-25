@@ -13,11 +13,14 @@ import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 // This lint error seems spurious as it only flags methods annotated with @JvmStatic even though the accessor is generated regardless
 // for lazily initialized members
-class WorkerThreadModuleImpl : WorkerThreadModule, RejectedExecutionHandler {
+class WorkerThreadModuleImpl(
+    private val watchdogIdleTimeoutMs: Long = WATCHDOG_IDLE_TIMEOUT_MS,
+) : WorkerThreadModule, RejectedExecutionHandler {
 
     private val executors: MutableMap<Worker, ExecutorService> = ConcurrentHashMap()
     private val priorityWorkers: MutableMap<Worker, PriorityWorker<*>> = ConcurrentHashMap()
@@ -56,6 +59,12 @@ class WorkerThreadModuleImpl : WorkerThreadModule, RejectedExecutionHandler {
             } else {
                 ScheduledThreadPoolExecutor(1, threadFactory, this).apply {
                     removeOnCancelPolicy = true
+
+                    // thread is unused in background, allow cleanup
+                    if (worker == Worker.Background.ThreadBlockageWatchdogWorker) {
+                        setKeepAliveTime(watchdogIdleTimeoutMs, TimeUnit.MILLISECONDS)
+                        allowCoreThreadTimeOut(true)
+                    }
                 }
             }
         }
@@ -82,5 +91,9 @@ class WorkerThreadModuleImpl : WorkerThreadModule, RejectedExecutionHandler {
                 this.name = "emb-${name.threadName}"
             }
         }
+    }
+
+    private companion object {
+        const val WATCHDOG_IDLE_TIMEOUT_MS = 60_000L
     }
 }

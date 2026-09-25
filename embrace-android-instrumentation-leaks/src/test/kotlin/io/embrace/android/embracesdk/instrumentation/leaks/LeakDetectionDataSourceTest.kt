@@ -29,7 +29,7 @@ internal class LeakDetectionDataSourceTest {
 
     @After
     fun tearDown() {
-        dataSource.onDataCaptureDisabled()
+        dataSource.leakDetector.stop()
     }
 
     @Test

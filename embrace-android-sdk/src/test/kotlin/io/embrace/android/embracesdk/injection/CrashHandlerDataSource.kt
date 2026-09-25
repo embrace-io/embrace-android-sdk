@@ -23,9 +23,6 @@ internal class CrashHandlerDataSource : JvmCrashDataSource {
     override fun onDataCaptureEnabled() {
     }
 
-    override fun onDataCaptureDisabled() {
-    }
-
     override fun resetDataCaptureLimits() {
     }
 

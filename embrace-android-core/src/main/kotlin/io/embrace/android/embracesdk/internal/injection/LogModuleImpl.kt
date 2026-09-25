@@ -25,7 +25,7 @@ class LogModuleImpl(
     )
 
     override val logOrchestrator: LogOrchestrator = LogOrchestratorImpl(
-        workerThreadModule.backgroundWorker(Worker.Background.LogMessageWorker),
+        workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
         initModule.clock,
         openTelemetryModule.logSink,
         deliveryModule?.payloadStore,

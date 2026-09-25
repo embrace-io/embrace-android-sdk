@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.BackgroundActivityBehavior
@@ -21,8 +19,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.OtelBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehavior
@@ -37,14 +33,6 @@ const val FAKE_DEVICE_ID = "D586C4E25C064764BF53A808A38B92FE"
 private val behaviorThresholdCheck = BehaviorThresholdCheck {
     FAKE_DEVICE_ID
 }
-
-/**
- * A [ThreadBlockageBehavior] that returns default values.
- */
-fun createThreadBlockageBehavior(
-    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: RemoteConfig? = null,
-): ThreadBlockageBehavior = ThreadBlockageBehaviorImpl(thresholdCheck, remoteCfg)
 
 /**
  * A [VitalsBehaviorImpl] that returns default values.
@@ -113,14 +101,6 @@ fun createSdkModeBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     remoteCfg: RemoteConfig? = null,
 ): SdkModeBehavior = SdkModeBehaviorImpl(thresholdCheck, remoteCfg)
-
-/**
- * A [AppExitInfoBehavior] that returns default values.
- */
-fun createAppExitInfoBehavior(
-    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: RemoteConfig? = null,
-): AppExitInfoBehavior = AppExitInfoBehaviorImpl(thresholdCheck, InstrumentedConfigImpl, remoteCfg)
 
 /**
  * A [TraceparentInjectionBehaviorImpl] that returns default values.

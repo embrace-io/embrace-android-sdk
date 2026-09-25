@@ -7,11 +7,12 @@ import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
-import io.embrace.android.embracesdk.fakes.behavior.FakeAppExitInfoBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.config.resolved.AeiConfig
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -96,9 +97,7 @@ internal class AeiDataSourceImplTest {
 
     @Before
     fun setUp() {
-        configService = FakeConfigService(
-            appExitInfoBehavior = FakeAppExitInfoBehavior(),
-        )
+        configService = FakeConfigService()
     }
 
     @Test
@@ -371,7 +370,7 @@ internal class AeiDataSourceImplTest {
         // given a trace that exceeds the limit
         every { mockAppExitInfo.traceInputStream } returns "a".repeat(500).byteInputStream()
 
-        configService.appExitInfoBehavior = FakeAppExitInfoBehavior(enabled = true, traceMaxLimit = 100)
+        configService.config = EmbraceConfig(aei = { AeiConfig(traceMaxLimit = { 100 }) })
         every {
             mockActivityManager.getHistoricalProcessExitReasons(
                 any(),
@@ -394,7 +393,7 @@ internal class AeiDataSourceImplTest {
         every { mockAppExitInfo.reason } returns ApplicationExitInfo.REASON_CRASH_NATIVE
 
         configService = FakeConfigService(
-            appExitInfoBehavior = FakeAppExitInfoBehavior(enabled = true, traceMaxLimit = 100),
+            config = EmbraceConfig(aei = { AeiConfig(traceMaxLimit = { 100 }) }),
             autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(ndkEnabled = true),
         )
         every {

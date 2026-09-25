@@ -24,7 +24,6 @@ import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.behavior.FakeUserSessionBehavior
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
-import io.embrace.android.embracesdk.fakes.createPersistenceBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
@@ -38,6 +37,8 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
+import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingServiceImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -1999,9 +2000,7 @@ internal class SessionOrchestratorTest {
 
     private fun multiFilePersistenceConfigService() = FakeConfigService(
         backgroundActivityBehavior = backgroundActivityBehavior(true),
-        persistenceBehavior = createPersistenceBehavior(
-            remoteCfg = RemoteConfig(pctMultiFilePersistenceEnabled = 100.0f),
-        ),
+        config = EmbraceConfig(persistence = { PersistenceConfig(multiFileEnabled = { true }) }),
     )
 
     /**

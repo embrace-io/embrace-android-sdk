@@ -46,7 +46,7 @@ class SessionPartReader(
      * a background thread, and for not calling it from a thread that intake itself runs on.
      */
     fun readPersistedSessionParts(performingResurrection: Boolean = false) {
-        if (!configService.persistenceBehavior.isMultiFilePersistenceEnabled()) {
+        if (!configService.config.persistence.multiFileEnabled) {
             deletePersistedSessionParts()
             return
         }

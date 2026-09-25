@@ -250,7 +250,7 @@ internal class PayloadFactoryImpl(
             }
         }
 
-    private fun envelopeRequired(): Boolean = !configService.persistenceBehavior.isMultiFilePersistenceEnabled()
+    private fun envelopeRequired(): Boolean = !configService.config.persistence.multiFileEnabled
 
     private fun isBackgroundActivityEnabled(): Boolean = configService.backgroundActivityBehavior.isBackgroundActivityCaptureEnabled()
 }

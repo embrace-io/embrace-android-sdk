@@ -8,8 +8,8 @@ import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.TestUuidSource
-import io.embrace.android.embracesdk.fakes.createPersistenceBehavior
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
+import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
@@ -222,9 +222,7 @@ internal class SessionPartWriterResourceChangeTest {
         lazy { sessionsDir },
         BackgroundWorker(executor),
         FakeConfigService(
-            persistenceBehavior = createPersistenceBehavior(
-                remoteCfg = RemoteConfig(pctMultiFilePersistenceEnabled = if (enabled) 100.0f else 0.0f),
-            ),
+            config = EmbraceConfig(persistence = { PersistenceConfig(multiFileEnabled = { enabled }) }),
         ),
         TestUuidSource(),
         clock,

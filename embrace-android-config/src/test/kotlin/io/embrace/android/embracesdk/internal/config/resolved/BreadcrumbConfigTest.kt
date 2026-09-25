@@ -16,7 +16,7 @@ internal class BreadcrumbConfigTest {
     @Test
     fun `defaults match resolved default local config`() {
         val defaults = EmbraceConfig().breadcrumb
-        val resolved = resolveConfig(InstrumentedConfigImpl, null).breadcrumb
+        val resolved = resolveConfig(InstrumentedConfigImpl, null, unreadBucket).breadcrumb
         with(defaults) {
             assertEquals(100, customLimit)
             assertEquals(100, tapLimit)

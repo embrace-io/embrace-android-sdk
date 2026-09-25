@@ -165,15 +165,16 @@ abstract class StateDataSource<T : Any>(
     }
 
     private fun AtomicReference<UnrecordedTransitions>.incrementCount(notInSession: Int = 0, droppedByInstrumentation: Int = 0) {
-        synchronized(this) {
-            set(
-                get().let { oldValue ->
-                    UnrecordedTransitions(
-                        notInSession = oldValue.notInSession + notInSession,
-                        droppedByInstrumentation = oldValue.droppedByInstrumentation + droppedByInstrumentation,
-                    )
-                },
+        while (true) { // CAS loop
+            val oldValue = get()
+            val replacement = UnrecordedTransitions(
+                notInSession = oldValue.notInSession + notInSession,
+                droppedByInstrumentation = oldValue.droppedByInstrumentation + droppedByInstrumentation,
             )
+
+            if (compareAndSet(oldValue, replacement)) {
+                return
+            }
         }
     }
 }

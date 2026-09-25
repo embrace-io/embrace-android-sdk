@@ -54,5 +54,7 @@ private fun Any?.toJsonElement(): JsonElement = when (this) {
     null -> JsonNull
     is Map<*, *> -> JsonObject(entries.associate { (key, value) -> key.toString() to value.toJsonElement() })
     is List<*> -> JsonArray(map { it.toJsonElement() })
+    is Boolean -> JsonPrimitive(this)
+    is Number -> JsonPrimitive(this)
     else -> JsonPrimitive(toString())
 }

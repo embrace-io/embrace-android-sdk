@@ -4,9 +4,10 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
-import io.embrace.android.embracesdk.fakes.behavior.FakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.WebViewFragmentCapture
+import io.embrace.android.embracesdk.internal.config.resolved.BreadcrumbConfig
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.opentelemetry.kotlin.semconv.UrlAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -31,10 +32,13 @@ internal class WebViewUrlDataSourceTest {
         args = FakeInstrumentationArgs(
             ApplicationProvider.getApplicationContext(),
             configService = FakeConfigService(
-                breadcrumbBehavior = FakeBreadcrumbBehavior(
-                    queryParamCaptureEnabled = queryParamCaptureEnabled,
-                    fragmentCapture = fragmentCapture,
-                    webViewBreadcrumbCaptureEnabled = true,
+                config = EmbraceConfig(
+                    breadcrumb = {
+                        BreadcrumbConfig(
+                            captureWebViewQueryParams = { queryParamCaptureEnabled },
+                            webViewFragmentCapture = { fragmentCapture },
+                        )
+                    },
                 ),
             ),
         )

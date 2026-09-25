@@ -1,13 +1,11 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.fakes.behavior.FakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.internal.config.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.BackgroundActivityBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.ExperimentBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehavior
@@ -21,6 +19,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBeha
 import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.VitalsBehavior
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 
 /**
@@ -29,12 +28,12 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
  * data. Beware of this difference in implementation compared to the real EmbraceConfigService
  */
 class FakeConfigService(
+    override var config: EmbraceConfig = EmbraceConfig(),
     override var appFramework: AppFramework = AppFramework.NATIVE,
     override var appId: String = "abcde",
     var onlyUsingOtelExporters: Boolean = false,
     override var backgroundActivityBehavior: BackgroundActivityBehavior = createBackgroundActivityBehavior(),
     override var autoDataCaptureBehavior: AutoDataCaptureBehavior = createAutoDataCaptureBehavior(),
-    override var breadcrumbBehavior: BreadcrumbBehavior = FakeBreadcrumbBehavior(),
     override var logMessageBehavior: LogMessageBehavior = createLogMessageBehavior(),
     override var threadBlockageBehavior: ThreadBlockageBehavior = createThreadBlockageBehavior(),
     override var vitalsBehavior: VitalsBehavior = createVitalsBehavior(),

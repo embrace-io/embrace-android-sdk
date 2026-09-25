@@ -11,6 +11,7 @@ import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.buildFile
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
 import io.embrace.android.gradle.plugin.util.serialization.MoshiSerializer
+import kotlinx.serialization.Serializable
 import okio.buffer
 import okio.gzip
 import okio.source
@@ -60,4 +61,5 @@ class GenerateRnSourcemapTaskIntegrationTest {
 }
 
 @JsonClass(generateAdapter = true)
+@Serializable
 data class BundleAndSourceMap(val bundle: String, val sourcemap: String)

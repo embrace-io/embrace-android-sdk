@@ -29,7 +29,6 @@ private val BACKGROUND_WORKERS = listOf(
     Worker.Background.NonIoRegWorker,
     Worker.Background.IoRegWorker,
     Worker.Background.PeriodicCacheWorker,
-    Worker.Background.LogMessageWorker,
     Worker.Background.DeliverySchedulingWorker,
     Worker.Background.HttpRequestWorker,
 )

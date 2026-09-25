@@ -72,9 +72,8 @@ internal class UserSessionIdPropagationTest {
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
         EmbraceSetupInterface(
             fakeStorageLayer = true,
-            workersToFake = listOf(Worker.Background.LogMessageWorker, Worker.Background.NonIoRegWorker),
+            workersToFake = listOf(Worker.Background.NonIoRegWorker),
         ).apply {
-            getFakedWorkerExecutor(Worker.Background.LogMessageWorker).blockingMode = false
             getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).blockingMode = false
         }.also {
             payloadStorageService = checkNotNull(it.fakePayloadStorageService)
@@ -513,6 +512,6 @@ internal class UserSessionIdPropagationTest {
 
     private fun EmbraceActionInterface.flushLogBatch() {
         clock.tick(2000L)
-        testRule.setup.getFakedWorkerExecutor(Worker.Background.LogMessageWorker).runCurrentlyBlocked()
+        testRule.setup.getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).runCurrentlyBlocked()
     }
 }

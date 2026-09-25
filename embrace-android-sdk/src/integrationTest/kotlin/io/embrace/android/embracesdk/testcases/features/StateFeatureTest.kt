@@ -50,9 +50,9 @@ internal class StateFeatureTest {
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
         EmbraceSetupInterface(
-            workersToFake = listOf(Worker.Background.LogMessageWorker),
+            workersToFake = listOf(Worker.Background.NonIoRegWorker),
         ).apply {
-            getFakedWorkerExecutor(Worker.Background.LogMessageWorker).blockingMode = false
+            getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).blockingMode = false
         }
     }
 
@@ -504,7 +504,7 @@ internal class StateFeatureTest {
         lateinit var logWorkerExecutor: BlockingScheduledExecutorService
         testRule.runTest(
             setupAction = {
-                logWorkerExecutor = getFakedWorkerExecutor(Worker.Background.LogMessageWorker).apply {
+                logWorkerExecutor = getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).apply {
                     blockingMode = true
                 }
             },
@@ -569,7 +569,7 @@ internal class StateFeatureTest {
         testRule.runTest(
             persistedRemoteConfig = stateEnabledRemoteConfig,
             setupAction = {
-                logWorkerExecutor = getFakedWorkerExecutor(Worker.Background.LogMessageWorker).apply {
+                logWorkerExecutor = getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).apply {
                     blockingMode = true
                 }
             },

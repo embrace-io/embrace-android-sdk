@@ -93,12 +93,12 @@ internal class ExportedTelemetryParityValidator {
     )
 
     /**
-     * Represents attributes as a sorted map of stringified values, dropping the attributes that only
+     * Represents attributes as a sorted map of typed values, dropping the attributes that only
      * one implementation emits and redacting the values that are non-deterministic between runs.
      */
-    private fun OtelJavaAttributes.representAsMap(): Map<String, String> =
+    private fun OtelJavaAttributes.representAsMap(): Map<String, Any> =
         asMap().entries
-            .map { it.key.key to it.value.toString() }
+            .map { it.key.key to it.value }
             .filterNot { (key, _) -> key in DIVERGENT_ATTRIBUTES }
             .associate { (key, value) ->
                 key to when (key) {

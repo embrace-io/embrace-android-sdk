@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.sdk
 
 import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.payload.toPayloadString
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Link
@@ -22,19 +23,19 @@ fun SpanData.toEmbracePayload(): Span = Span(
     endTimeNanos = endTimestamp ?: 0,
     status = status.toEmbracePayload(),
     events = events.map(SpanEventData::toEmbracePayload),
-    attributes = attributes.map { Attribute(it.key, it.value.toString()) },
+    attributes = attributes.map { Attribute(it.key, it.value.toPayloadString()) },
     links = links.map(SpanLinkData::toEmbracePayload),
 )
 
 fun SpanLinkData.toEmbracePayload(): Link = Link(
     spanId = spanContext.spanId,
     traceId = spanContext.traceId,
-    attributes = attributes.map { Attribute(it.key, it.value.toString()) },
+    attributes = attributes.map { Attribute(it.key, it.value.toPayloadString()) },
     isRemote = spanContext.isRemote,
 )
 
 fun SpanEventData.toEmbracePayload(): SpanEvent = SpanEvent(
     name = name,
     timestampNanos = timestamp,
-    attributes = attributes.map { Attribute(it.key, it.value.toString()) },
+    attributes = attributes.map { Attribute(it.key, it.value.toPayloadString()) },
 )

@@ -12,7 +12,7 @@ typealias ThreadBlockageServiceSupplier = (args: InstrumentationArgs) -> ThreadB
 fun createThreadBlockageService(args: InstrumentationArgs): ThreadBlockageService? {
     val configService = args.configService
     if (!configService.autoDataCaptureBehavior.isThreadBlockageCaptureEnabled() ||
-        !configService.threadBlockageBehavior.isThreadBlockageCaptureEnabled()
+        !configService.config.threadBlockage.captureEnabled
     ) {
         return null
     }
@@ -20,14 +20,14 @@ fun createThreadBlockageService(args: InstrumentationArgs): ThreadBlockageServic
     val watchdogWorker by lazy { args.backgroundWorker(Worker.Background.ThreadBlockageWatchdogWorker) }
     val looper by lazy { Looper.getMainLooper() }
 
-    val anrBehavior = configService.threadBlockageBehavior
+    val cfg = configService.config.threadBlockage
     val stacktraceSampler by lazy {
         ThreadBlockageSampler(
             clock = args.clock,
             targetThread = looper.thread,
-            maxIntervalsPerSession = anrBehavior.getMaxIntervalsPerSession(),
-            maxSamplesPerInterval = anrBehavior.getMaxStacktracesPerInterval(),
-            stacktraceFrameLimit = anrBehavior.getStacktraceFrameLimit(),
+            maxIntervalsPerSession = cfg.maxIntervalsPerSession,
+            maxSamplesPerInterval = cfg.maxStacktracesPerInterval,
+            stacktraceFrameLimit = cfg.stacktraceFrameLimit,
         )
     }
     val blockedThreadDetector by lazy {
@@ -36,8 +36,8 @@ fun createThreadBlockageService(args: InstrumentationArgs): ThreadBlockageServic
             clock = args.clock,
             looper = looper,
             logger = args.logger,
-            intervalMs = anrBehavior.getSamplingIntervalMs(),
-            blockedDurationThreshold = anrBehavior.getMinDuration(),
+            intervalMs = cfg.sampleIntervalMs,
+            blockedDurationThreshold = cfg.minDurationMs,
             listener = stacktraceSampler,
         )
     }

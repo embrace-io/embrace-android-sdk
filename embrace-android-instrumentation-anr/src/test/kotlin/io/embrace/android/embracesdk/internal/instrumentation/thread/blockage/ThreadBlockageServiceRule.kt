@@ -6,8 +6,9 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
-import io.embrace.android.embracesdk.fakes.behavior.FakeThreadBlockageBehavior
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
+import io.embrace.android.embracesdk.internal.config.resolved.ThreadBlockageConfig
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.every
@@ -30,7 +31,7 @@ internal class ThreadBlockageServiceRule<T : ScheduledExecutorService>(
     lateinit var fakeAppStateTracker: FakeProcessStateTracker
     lateinit var service: ThreadBlockageServiceImpl
     lateinit var blockedThreadDetector: BlockedThreadDetector
-    lateinit var behavior: FakeThreadBlockageBehavior
+    lateinit var config: ThreadBlockageConfig
     lateinit var watchdogExecutorService: T
     lateinit var watchdogMonitorThread: AtomicReference<Thread>
     lateinit var stacktraceSampler: ThreadBlockageSampler
@@ -43,25 +44,25 @@ internal class ThreadBlockageServiceRule<T : ScheduledExecutorService>(
         looper = mockk(relaxed = true) {
             every { thread } returns Thread.currentThread()
         }
-        behavior = FakeThreadBlockageBehavior()
+        config = ThreadBlockageConfig(sampleIntervalMs = { 5 })
         watchdogMonitorThread = AtomicReference(Thread.currentThread())
-        fakeConfigService = FakeConfigService(threadBlockageBehavior = behavior)
+        fakeConfigService = FakeConfigService(config = EmbraceConfig(threadBlockage = { config }))
         fakeAppStateTracker = FakeProcessStateTracker(ProcessState.FOREGROUND)
         watchdogExecutorService = scheduledExecutorSupplier.invoke()
         worker = BackgroundWorker(watchdogExecutorService)
         stacktraceSampler = ThreadBlockageSampler(
             clock = clock,
             targetThread = looper.thread,
-            maxIntervalsPerSession = fakeConfigService.threadBlockageBehavior.getMaxIntervalsPerSession(),
-            maxSamplesPerInterval = fakeConfigService.threadBlockageBehavior.getMaxStacktracesPerInterval(),
-            stacktraceFrameLimit = fakeConfigService.threadBlockageBehavior.getStacktraceFrameLimit(),
+            maxIntervalsPerSession = config.maxIntervalsPerSession,
+            maxSamplesPerInterval = config.maxStacktracesPerInterval,
+            stacktraceFrameLimit = config.stacktraceFrameLimit,
         )
         blockedThreadDetector = BlockedThreadDetector(
             watchdogWorker = worker,
             clock = clock,
             looper = looper,
-            blockedDurationThreshold = fakeConfigService.threadBlockageBehavior.getMinDuration(),
-            intervalMs = fakeConfigService.threadBlockageBehavior.getSamplingIntervalMs(),
+            blockedDurationThreshold = config.minDurationMs,
+            intervalMs = config.sampleIntervalMs,
             listener = stacktraceSampler,
             logger = logger,
         )

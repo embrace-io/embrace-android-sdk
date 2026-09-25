@@ -6,6 +6,8 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 fun resolveConfig(local: InstrumentedConfig, remote: RemoteConfig?, bucket: Lazy<Float>): EmbraceConfig = EmbraceConfig(
     breadcrumb = { resolveBreadcrumb(local, remote) },
     persistence = { resolvePersistence(local, remote, bucket) },
+    threadBlockage = { resolveThreadBlockage(remote, bucket) },
+    aei = { resolveAei(local, remote, bucket) },
 )
 
 fun resolveBreadcrumb(local: InstrumentedConfig, remote: RemoteConfig?): BreadcrumbConfig {
@@ -32,3 +34,26 @@ fun resolvePersistence(local: InstrumentedConfig, remote: RemoteConfig?, bucket:
                 ?: local.enabledFeatures.isMultiFilePersistenceEnabled()
         },
     )
+
+fun resolveThreadBlockage(remote: RemoteConfig?, bucket: Lazy<Float>): ThreadBlockageConfig {
+    val cfg = remote?.threadBlockageRemoteConfig
+    return ThreadBlockageConfig(
+        captureEnabled = { rolloutEnabled(cfg?.pctEnabled?.toFloat(), bucket) },
+        sampleIntervalMs = { cfg?.sampleIntervalMs },
+        maxStacktracesPerInterval = { cfg?.maxStacktracesPerInterval },
+        stacktraceFrameLimit = { cfg?.stacktraceFrameLimit },
+        maxIntervalsPerSession = { cfg?.intervalsPerSession },
+        minDurationMs = { cfg?.minDuration },
+    )
+}
+
+fun resolveAei(local: InstrumentedConfig, remote: RemoteConfig?, bucket: Lazy<Float>): AeiConfig {
+    val cfg = remote?.appExitInfoConfig
+    return AeiConfig(
+        captureEnabled = {
+            rolloutEnabled(cfg?.pctAeiCaptureEnabled, bucket) ?: local.enabledFeatures.isAeiCaptureEnabled()
+        },
+        traceMaxLimit = { cfg?.appExitInfoTracesLimit },
+        maxNum = { cfg?.aeiMaxNum },
+    )
+}

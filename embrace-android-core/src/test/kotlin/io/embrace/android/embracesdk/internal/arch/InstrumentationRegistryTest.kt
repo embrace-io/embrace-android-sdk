@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.fakes.TestInstrumentationProvider
 import io.embrace.android.embracesdk.fakes.TestStateDataSource
 import io.embrace.android.embracesdk.fakes.TestStateValue
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
-import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -60,14 +59,25 @@ internal class InstrumentationRegistryTest {
     }
 
     @Test
+    fun `add creates and enables the data source`() {
+        assertEquals(dataSource, registry.add { dataSource })
+        assertEquals(dataSource, registry.findByType(FakeDataSource::class))
+        assertEquals(1, dataSource.enableDataCaptureCount)
+    }
+
+    @Test
+    fun `add ignores a factory that returns null`() {
+        assertNull(registry.add<FakeDataSource> { null })
+        assertNull(registry.findByType(FakeDataSource::class))
+    }
+
+    @Test
     fun `verify session lifecycle listeners`() {
         val provider =
             FakeInstrumentationProvider(
                 priority = 1000,
                 action = {},
-                dataSourceState = DataSourceState(
-                    factory = { dataSource },
-                ),
+                dataSourceState = { dataSource },
             )
 
         assertEquals(0, dataSource.sessionEnds)
@@ -93,7 +103,7 @@ internal class InstrumentationRegistryTest {
         var registerCount = 0
         val provider = FakeInstrumentationProvider(
             action = { registerCount++ },
-            dataSourceState = DataSourceState(factory = { dataSource }),
+            dataSourceState = { dataSource },
             asyncInit = true,
         )
 
@@ -116,7 +126,7 @@ internal class InstrumentationRegistryTest {
         val args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
         val provider = FakeInstrumentationProvider(
             action = {},
-            dataSourceState = DataSourceState(factory = { dataSource }),
+            dataSourceState = { dataSource },
         )
 
         registry.loadInstrumentations(listOf(provider), args)
@@ -153,13 +163,9 @@ internal class InstrumentationRegistryTest {
         val continueIteration = CountDownLatch(1)
         val newDataSource = FakeDataSource(RuntimeEnvironment.getApplication())
 
-        registry.add(
-            DataSourceState(
-                factory = {
-                    BlockingTestDataSource(iterationStarted, continueIteration)
-                },
-            ),
-        )
+        registry.add {
+            BlockingTestDataSource(iterationStarted, continueIteration)
+        }
 
         val executor = Executors.newSingleThreadExecutor()
         try {
@@ -167,7 +173,7 @@ internal class InstrumentationRegistryTest {
                 registry.onPostSessionChange()
             }
             assertTrue(iterationStarted.await(1, TimeUnit.SECONDS))
-            registry.add(DataSourceState({ newDataSource }))
+            registry.add { newDataSource }
             continueIteration.countDown()
             iterationDone.get(1, TimeUnit.SECONDS)
         } finally {
@@ -184,9 +190,9 @@ internal class InstrumentationRegistryTest {
         val args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
         val activeStateSource = TestStateDataSource(args)
         val inactiveStateSource = LazyInitStateDataSource(args)
-        registry.add(DataSourceState({ activeStateSource }))
-        registry.add(DataSourceState({ inactiveStateSource }))
-        registry.add(DataSourceState({ dataSource }))
+        registry.add { activeStateSource }
+        registry.add { inactiveStateSource }
+        registry.add { dataSource }
         activeStateSource.onStateChange("active_value", 1000L)
 
         // non-state sources and state sources that haven't started capturing are excluded

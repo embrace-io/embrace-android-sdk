@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.reflect.KClass
+import kotlin.reflect.safeCast
 
 /**
  * Orchestrates all data sources that could potentially be used in the SDK. This is a convenient
@@ -17,42 +18,35 @@ class InstrumentationRegistryImpl(
     private val logger: InternalLogger,
 ) : InstrumentationRegistry {
 
-    private val dataSourceStates = CopyOnWriteArrayList<DataSourceState<*>>()
+    private val dataSources = CopyOnWriteArrayList<DataSource>()
 
     override fun onPreSessionEnd() {
-        dataSourceStates
-            .filter { it.dataSource is SessionPartEndListener }
-            .map { it.dataSource as SessionPartEndListener }
+        dataSources
+            .filterIsInstance<SessionPartEndListener>()
             .forEach {
                 it.onPreSessionEnd()
             }
     }
 
     override fun onPostSessionChange() {
-        dataSourceStates.forEach {
-            it.dataSource?.run {
-                resetDataCaptureLimits()
-                if (this is SessionPartChangeListener) {
-                    onPostSessionChange()
-                }
+        dataSources.forEach {
+            it.resetDataCaptureLimits()
+            if (it is SessionPartChangeListener) {
+                it.onPostSessionChange()
             }
         }
     }
 
-    override fun add(state: DataSourceState<*>) {
-        dataSourceStates.add(state)
-        // enable data capture once the state is registered
-        state.enableDataCapture()
+    override fun <T : DataSource> add(state: DataSourceState<T>): T? {
+        val dataSource = state() ?: return null
+        dataSources.add(dataSource)
+        // enable data capture once the data source is registered
+        dataSource.onDataCaptureEnabled()
+        return dataSource
     }
 
-    @Suppress("UNCHECKED_CAST")
     override fun <T : DataSource> findByType(clazz: KClass<T>): T? {
-        val element = dataSourceStates.firstOrNull {
-            val obj = it.dataSource
-            obj != null && clazz.isInstance(obj)
-        }
-        val state = element as? DataSourceState<T>
-        return state?.dataSource
+        return dataSources.firstNotNullOfOrNull { clazz.safeCast(it) }
     }
 
     /**
@@ -76,9 +70,7 @@ class InstrumentationRegistryImpl(
 
     private fun registerProvider(provider: InstrumentationProvider, args: InstrumentationArgs) {
         try {
-            provider.register(args)?.let { dataSourceState ->
-                add(dataSourceState)
-            }
+            provider.register(args)?.let { add(it) }
         } catch (exc: Throwable) {
             logger.trackInternalError(InternalErrorType.InstrumentationRegFail, exc)
         }
@@ -87,8 +79,7 @@ class InstrumentationRegistryImpl(
     override fun getCurrentStates(): Map<String, Any> {
         val stateAttributes = mutableMapOf<String, Any>()
 
-        dataSourceStates
-            .mapTo(ArrayList(dataSourceStates.size)) { it.dataSource }
+        dataSources
             .filterIsInstance<StateDataSource<*>>()
             .forEach { stateDataSource ->
                 if (stateDataSource.isActive()) {

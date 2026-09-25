@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.vitals
 import android.os.Build
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 
 /**
@@ -10,13 +11,16 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
  */
 class VitalsInstrumentationProvider : InstrumentationProvider {
 
-    override fun register(args: InstrumentationArgs): DataSourceState<*>? {
+    override fun register(args: InstrumentationArgs): DataSourceState<DataSource>? {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
             return null
         }
-        return DataSourceState(
-            factory = { VitalsDataSource(args) },
-            configGate = { args.configService.autoDataCaptureBehavior.isSmoothnessCaptureEnabled() },
-        )
+        return {
+            if (args.configService.autoDataCaptureBehavior.isSmoothnessCaptureEnabled()) {
+                VitalsDataSource(args)
+            } else {
+                null
+            }
+        }
     }
 }

@@ -28,7 +28,6 @@ import io.embrace.android.embracesdk.fakes.createPersistenceBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
-import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
 import io.embrace.android.embracesdk.internal.arch.startup.StartupType
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
@@ -1172,12 +1171,7 @@ internal class SessionOrchestratorTest {
         instrumentationRegistry = InstrumentationRegistryImpl(
             logger,
         ).apply {
-            add(
-                DataSourceState(
-                    factory = { fakeDataSource },
-                    configGate = { true },
-                ),
-            )
+            add { fakeDataSource }
         }
 
         val sessionPartWriter = SessionPartWriterImpl(

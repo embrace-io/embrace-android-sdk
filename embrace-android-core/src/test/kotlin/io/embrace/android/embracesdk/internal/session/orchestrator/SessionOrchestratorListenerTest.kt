@@ -27,7 +27,6 @@ import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
-import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.capture.session.PropertyScope
@@ -379,12 +378,7 @@ internal class SessionOrchestratorListenerTest {
         instrumentationRegistry = InstrumentationRegistryImpl(
             logger,
         ).apply {
-            add(
-                DataSourceState(
-                    factory = { fakeDataSource },
-                    configGate = { true },
-                ),
-            )
+            add { fakeDataSource }
         }
 
         orchestrator = SessionOrchestratorImpl(

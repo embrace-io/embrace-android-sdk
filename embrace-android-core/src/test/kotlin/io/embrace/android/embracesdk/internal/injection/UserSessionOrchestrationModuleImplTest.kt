@@ -6,14 +6,14 @@ import io.embrace.android.embracesdk.fakes.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeStorageService
-import io.embrace.android.embracesdk.fakes.createPersistenceBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
+import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
 import io.embrace.android.embracesdk.internal.payload.Span
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -50,9 +50,7 @@ internal class UserSessionOrchestrationModuleImplTest {
         val initModule = FakeInitModule()
         val workerThreadModule = FakeWorkerThreadModule(fakeInitModule = initModule)
         val configService = FakeConfigService(
-            persistenceBehavior = createPersistenceBehavior(
-                remoteCfg = RemoteConfig(pctMultiFilePersistenceEnabled = 100.0f),
-            ),
+            config = EmbraceConfig(persistence = { PersistenceConfig(multiFileEnabled = { true }) }),
         )
         val coreModule = FakeCoreModule()
         val essentialServiceModule = FakeEssentialServiceModule()

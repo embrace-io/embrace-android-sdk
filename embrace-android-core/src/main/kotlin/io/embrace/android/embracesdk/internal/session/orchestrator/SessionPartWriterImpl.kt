@@ -323,7 +323,7 @@ class SessionPartWriterImpl(
     }
 
     private fun persistenceEnabled(): Boolean =
-        configService.persistenceBehavior.isMultiFilePersistenceEnabled()
+        configService.config.persistence.multiFileEnabled
 
     /**
      * Whether new telemetry should still be recorded. [onCrash] flushes what already exists and

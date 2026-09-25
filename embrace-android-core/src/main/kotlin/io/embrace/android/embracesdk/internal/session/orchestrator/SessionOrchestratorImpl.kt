@@ -592,7 +592,7 @@ internal class SessionOrchestratorImpl(
     }
 
     private fun multiFilePersistenceEnabled(): Boolean =
-        configService.persistenceBehavior.isMultiFilePersistenceEnabled()
+        configService.config.persistence.multiFileEnabled
 
     private fun updatePeriodicCacheAttrs() {
         destination.addSessionPartAttribute(EmbSessionAttributes.EMB_TERMINATED, true.toString())

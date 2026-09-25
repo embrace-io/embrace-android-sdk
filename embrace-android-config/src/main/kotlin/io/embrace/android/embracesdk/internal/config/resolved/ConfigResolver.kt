@@ -3,8 +3,9 @@ package io.embrace.android.embracesdk.internal.config.resolved
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 
-fun resolveConfig(local: InstrumentedConfig, remote: RemoteConfig?): EmbraceConfig = EmbraceConfig(
+fun resolveConfig(local: InstrumentedConfig, remote: RemoteConfig?, bucket: Lazy<Float>): EmbraceConfig = EmbraceConfig(
     breadcrumb = { resolveBreadcrumb(local, remote) },
+    persistence = { resolvePersistence(local, remote, bucket) },
 )
 
 fun resolveBreadcrumb(local: InstrumentedConfig, remote: RemoteConfig?): BreadcrumbConfig {
@@ -23,3 +24,11 @@ fun resolveBreadcrumb(local: InstrumentedConfig, remote: RemoteConfig?): Breadcr
         captureFcmPiiData = features::isFcmPiiDataCaptureEnabled,
     )
 }
+
+fun resolvePersistence(local: InstrumentedConfig, remote: RemoteConfig?, bucket: Lazy<Float>): PersistenceConfig =
+    PersistenceConfig(
+        multiFileEnabled = {
+            rolloutEnabled(remote?.pctMultiFilePersistenceEnabled, bucket)
+                ?: local.enabledFeatures.isMultiFilePersistenceEnabled()
+        },
+    )

@@ -5,6 +5,8 @@ package io.embrace.android.embracesdk.internal.config.resolved
  */
 class EmbraceConfig(
     breadcrumb: () -> BreadcrumbConfig = ::BreadcrumbConfig,
+    persistence: () -> PersistenceConfig = ::PersistenceConfig,
 ) {
     val breadcrumb: BreadcrumbConfig by lazy(breadcrumb)
+    val persistence: PersistenceConfig by lazy(persistence)
 }

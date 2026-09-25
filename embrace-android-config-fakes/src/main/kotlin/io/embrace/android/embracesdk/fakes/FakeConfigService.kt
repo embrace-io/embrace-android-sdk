@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.internal.config.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.BackgroundActivityBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehavior
@@ -14,7 +13,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForward
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.VitalsBehavior
@@ -34,14 +32,12 @@ class FakeConfigService(
     override var backgroundActivityBehavior: BackgroundActivityBehavior = createBackgroundActivityBehavior(),
     override var autoDataCaptureBehavior: AutoDataCaptureBehavior = createAutoDataCaptureBehavior(),
     override var logMessageBehavior: LogMessageBehavior = createLogMessageBehavior(),
-    override var threadBlockageBehavior: ThreadBlockageBehavior = createThreadBlockageBehavior(),
     override var vitalsBehavior: VitalsBehavior = createVitalsBehavior(),
     override var sessionBehavior: UserSessionBehavior = createSessionBehavior(),
     override var experimentBehavior: ExperimentBehavior = createExperimentBehavior(),
     override var networkBehavior: NetworkBehavior = FakeNetworkBehavior(),
     override var dataCaptureEventBehavior: DataCaptureEventBehavior = createDataCaptureEventBehavior(),
     override var sdkModeBehavior: SdkModeBehavior = createSdkModeBehavior(),
-    override var appExitInfoBehavior: AppExitInfoBehavior = createAppExitInfoBehavior(),
     override var traceparentInjectionBehavior: TraceparentInjectionBehavior = createTraceparentInjectionBehavior(),
     override var networkSpanForwardingBehavior: NetworkSpanForwardingBehavior =
         createNetworkSpanForwardingBehavior(traceparentInjectionBehavior),

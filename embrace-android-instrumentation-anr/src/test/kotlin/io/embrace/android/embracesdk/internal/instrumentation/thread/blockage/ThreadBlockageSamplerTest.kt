@@ -1,8 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.behavior.FakeThreadBlockageBehavior
+import io.embrace.android.embracesdk.internal.config.resolved.ThreadBlockageConfig
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED_INTERVAL
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.UNBLOCKED
@@ -21,7 +20,7 @@ private const val BASELINE_MS = 16000000000
 internal class ThreadBlockageSamplerTest {
     private val thread = Thread.currentThread()
     private val clock = FakeClock()
-    private val behavior = FakeConfigService().threadBlockageBehavior
+    private val config = ThreadBlockageConfig()
     private lateinit var sampler: ThreadBlockageSampler
 
     @Before
@@ -30,9 +29,9 @@ internal class ThreadBlockageSamplerTest {
         sampler = ThreadBlockageSampler(
             clock,
             thread,
-            behavior.getMaxIntervalsPerSession(),
-            behavior.getMaxStacktracesPerInterval(),
-            behavior.getStacktraceFrameLimit(),
+            config.maxIntervalsPerSession,
+            config.maxStacktracesPerInterval,
+            config.stacktraceFrameLimit,
         )
     }
 
@@ -167,13 +166,13 @@ internal class ThreadBlockageSamplerTest {
 
     @Test
     fun `verify truncation of stacktrace respects the config`() {
-        val behavior = FakeThreadBlockageBehavior(frameLimit = 5)
+        val config = ThreadBlockageConfig(stacktraceFrameLimit = { 5 })
         val sampler = ThreadBlockageSampler(
             clock,
             thread,
-            behavior.getMaxIntervalsPerSession(),
-            behavior.getMaxStacktracesPerInterval(),
-            behavior.getStacktraceFrameLimit(),
+            config.maxIntervalsPerSession,
+            config.maxStacktracesPerInterval,
+            config.stacktraceFrameLimit,
         )
 
         sampler.onThreadBlockageEvent(BLOCKED, clock.now())
@@ -435,7 +434,7 @@ internal class ThreadBlockageSamplerTest {
 
         assertEquals(20, first.size)
         assertEquals(
-            behavior.getMaxIntervalsPerSession(),
+            config.maxIntervalsPerSession,
             first.count { it.samples != null },
         )
         assertEquals(

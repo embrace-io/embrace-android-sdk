@@ -28,7 +28,7 @@ class AeiInstrumentationProvider : InstrumentationProvider {
                     ordinalStore = args.ordinalStore,
                 )
             },
-            configGate = { args.configService.appExitInfoBehavior.isAeiCaptureEnabled() },
+            configGate = { args.configService.config.aei.captureEnabled },
         )
     }
 }

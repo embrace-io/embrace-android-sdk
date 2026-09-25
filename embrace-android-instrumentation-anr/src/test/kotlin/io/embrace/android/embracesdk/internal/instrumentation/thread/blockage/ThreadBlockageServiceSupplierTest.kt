@@ -6,7 +6,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
-import io.embrace.android.embracesdk.fakes.behavior.FakeThreadBlockageBehavior
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
+import io.embrace.android.embracesdk.internal.config.resolved.ThreadBlockageConfig
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -48,7 +49,7 @@ internal class ThreadBlockageServiceSupplierTest {
             FakeInstrumentationArgs(
                 application,
                 configService = FakeConfigService(
-                    threadBlockageBehavior = FakeThreadBlockageBehavior(captureEnabled = false),
+                    config = EmbraceConfig(threadBlockage = { ThreadBlockageConfig(captureEnabled = { false }) }),
                 ),
             ),
         )

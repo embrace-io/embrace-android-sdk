@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.arch
 
-import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceFactory
 
 /**
  * Provides instrumentation that can be initialized using SPI.
@@ -8,12 +9,13 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 interface InstrumentationProvider {
 
     /**
-     * Registers instrumentation and returns a [DataSourceState] that can be controlled by the SDK.
+     * Registers instrumentation and returns a [DataSourceFactory] that the SDK invokes to create a [DataSource].
+     * The factory should return null if data capture is disabled by config.
      *
      * If instrumentation cannot be created for an expected reason (e.g. if the API level of the device
      * is too low), then it's permissible to return null
      */
-    fun register(args: InstrumentationArgs): DataSourceState<*>?
+    fun register(args: InstrumentationArgs): DataSourceFactory<DataSource>?
 
     /**
      * The priority at which this instrumentation should be loaded. This is specified so that

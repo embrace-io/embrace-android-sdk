@@ -44,7 +44,7 @@ internal fun ModuleGraph.postInit() = EmbTrace.trace(sectionName = "post-init", 
         breadcrumbConfig = configService.config.breadcrumb,
     )
 
-    initModule.logger.errorHandlerProvider = { featureModule.internalErrorDataSource.dataSource }
+    initModule.logger.errorHandlerProvider = { featureModule.internalErrorDataSource }
     deliveryModule?.payloadCachingService?.run {
         openTelemetryModule.spanRepository.addSpanChangeListener { reportBackgroundActivityStateChange() }
     }

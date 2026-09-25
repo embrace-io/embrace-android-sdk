@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.arch
 
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
-import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceFactory
 import kotlin.reflect.KClass
 
 /**
@@ -10,10 +10,10 @@ import kotlin.reflect.KClass
 interface InstrumentationRegistry : SessionPartEndListener, SessionPartChangeListener {
 
     /**
-     * Adds a feature to the registry. The SDK will control when a feature is enabled/disabled
-     * based on the declared values in the [state] parameter.
+     * Creates a data source from [state] and adds it to the registry, enabling data capture.
+     * Returns the data source, or null if [state] did not create one.
      */
-    fun add(state: DataSourceState<*>)
+    fun <T : DataSource> add(state: DataSourceFactory<T>): T?
 
     /**
      * Finds a feature by its DataSource type. This is generally discouraged but may be

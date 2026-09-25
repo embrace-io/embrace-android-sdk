@@ -2,7 +2,8 @@ package io.embrace.android.embracesdk.internal.instrumentation.network
 
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
-import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceFactory
 
 @Volatile
 private var networkCaptureDataSource: NetworkCaptureDataSource? = null
@@ -12,13 +13,11 @@ fun retrieveNetworkCaptureDataSource(): NetworkCaptureDataSource? {
 }
 
 class NetworkCaptureInstrumentationProvider : InstrumentationProvider {
-    override fun register(args: InstrumentationArgs): DataSourceState<*>? {
-        return DataSourceState(
-            factory = {
-                networkCaptureDataSource = NetworkCaptureDataSourceImpl(args)
-                networkCaptureDataSource
-            },
-        )
+    override fun register(args: InstrumentationArgs): DataSourceFactory<DataSource>? {
+        return {
+            networkCaptureDataSource = NetworkCaptureDataSourceImpl(args)
+            networkCaptureDataSource
+        }
     }
 
     // higher priority as other network instrumentation can rely on this being initialized first

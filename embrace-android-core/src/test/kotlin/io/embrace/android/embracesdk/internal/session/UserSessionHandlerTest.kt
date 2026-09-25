@@ -12,14 +12,14 @@ import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeSessionPartTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
-import io.embrace.android.embracesdk.fakes.createPersistenceBehavior
 import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionPartToken
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
+import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPartEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPartPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
@@ -230,9 +230,7 @@ internal class UserSessionHandlerTest {
     }
 
     private fun enableMultiFilePersistence() {
-        configService.persistenceBehavior = createPersistenceBehavior(
-            remoteCfg = RemoteConfig(pctMultiFilePersistenceEnabled = 100.0f),
-        )
+        configService.config = EmbraceConfig(persistence = { PersistenceConfig(multiFileEnabled = { true }) })
     }
 
     private fun startFakeSession(): SessionPartToken {

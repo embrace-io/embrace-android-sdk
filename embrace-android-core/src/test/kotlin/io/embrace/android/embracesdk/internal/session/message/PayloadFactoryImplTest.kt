@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeSessionPartPayloadSource
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
-import io.embrace.android.embracesdk.fakes.createPersistenceBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
@@ -12,6 +11,8 @@ import io.embrace.android.embracesdk.internal.arch.state.ProcessState.BACKGROUND
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState.FOREGROUND
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
+import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -74,9 +75,7 @@ internal class PayloadFactoryImplTest {
 
     @Test
     fun `no envelope is built when multi file persistence is enabled`() {
-        configService.persistenceBehavior = createPersistenceBehavior(
-            remoteCfg = RemoteConfig(pctMultiFilePersistenceEnabled = 100.0f),
-        )
+        configService.config = EmbraceConfig(persistence = { PersistenceConfig(multiFileEnabled = { true }) })
         assertNull(factory.endPayloadWithState(FOREGROUND, 0, newSessionPart()))
         assertNull(factory.endPayloadWithCrash(FOREGROUND, 0, newSessionPart(), "crashId"))
         assertNull(factory.endSessionWithManual(0, newSessionPart()))
@@ -95,9 +94,7 @@ internal class PayloadFactoryImplTest {
 
     @Test
     fun `a periodic cache snapshot still builds an envelope when multi file persistence is enabled`() {
-        configService.persistenceBehavior = createPersistenceBehavior(
-            remoteCfg = RemoteConfig(pctMultiFilePersistenceEnabled = 100.0f),
-        )
+        configService.config = EmbraceConfig(persistence = { PersistenceConfig(multiFileEnabled = { true }) })
         assertNotNull(factory.snapshotPayload(FOREGROUND, 0, newSessionPart()))
         assertEquals(1, partPayloadSource.payloadBuiltCount)
     }

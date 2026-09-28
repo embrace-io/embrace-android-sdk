@@ -6,7 +6,11 @@ package io.embrace.android.embracesdk.internal.config.resolved
 class EmbraceConfig(
     breadcrumb: () -> BreadcrumbConfig = { BreadcrumbConfig() },
     persistence: () -> PersistenceConfig = { PersistenceConfig() },
+    threadBlockage: () -> ThreadBlockageConfig = { ThreadBlockageConfig() },
+    aei: () -> AeiConfig = { AeiConfig() },
 ) {
     val breadcrumb: BreadcrumbConfig = breadcrumb()
     val persistence: PersistenceConfig = persistence()
+    val threadBlockage: ThreadBlockageConfig = threadBlockage()
+    val aei: AeiConfig = aei()
 }

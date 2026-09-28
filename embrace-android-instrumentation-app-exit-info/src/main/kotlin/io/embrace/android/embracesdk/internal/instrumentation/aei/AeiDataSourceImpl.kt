@@ -51,7 +51,7 @@ internal class AeiDataSourceImpl(
 
     private fun processAeiRecords() {
         val activityManager = activityManagerProvider() ?: return
-        val maxNum = configService.appExitInfoBehavior.appExitInfoMaxNum()
+        val maxNum = configService.config.aei.maxNum
         val records = activityManager.getHistoricalProcessExitReasons(null, 0, maxNum).take(SDK_AEI_SEND_LIMIT)
         val deliveredIds = store.deliveredAeiIds
 
@@ -61,7 +61,7 @@ internal class AeiDataSourceImpl(
         store.deliveredAeiIds = sentRecords.map { it.getAeiId() }.toSet()
 
         unsentRecords.forEach {
-            val obj = it.constructAeiObject(versionChecker, configService.appExitInfoBehavior.getTraceMaxLimit())
+            val obj = it.constructAeiObject(versionChecker, configService.config.aei.traceMaxLimit)
             val crashNumber = obj?.getOrdinal { ordinalStore.incrementAndGet(Ordinal.CRASH) }
             val aeiNumber = obj?.getOrdinal { ordinalStore.incrementAndGet(Ordinal.AEI_CRASH) }
             if (obj == null) {

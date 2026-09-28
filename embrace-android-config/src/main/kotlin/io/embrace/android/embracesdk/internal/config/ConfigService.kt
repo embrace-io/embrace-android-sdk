@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.config
 
-import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.BackgroundActivityBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehavior
@@ -11,7 +10,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForward
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.VitalsBehavior
@@ -46,11 +44,6 @@ interface ConfigService {
     val logMessageBehavior: LogMessageBehavior
 
     /**
-     * How thread blockage functionality should behave.
-     */
-    val threadBlockageBehavior: ThreadBlockageBehavior
-
-    /**
      * How the vitals (smoothness / screen-load) feature's thresholds should behave.
      */
     val vitalsBehavior: VitalsBehavior
@@ -79,11 +72,6 @@ interface ConfigService {
      * Provides whether the SDK should enable certain 'behavior' modes, such as 'integration mode'
      */
     val sdkModeBehavior: SdkModeBehavior
-
-    /**
-     * Provides behavior for the app exit info feature
-     */
-    val appExitInfoBehavior: AppExitInfoBehavior
 
     /**
      * How the traceparent injection feature should behave

@@ -247,7 +247,7 @@ internal class ThreadBlockageServiceImplTest {
     @Test
     fun testReachedIntervalCaptureLimit() {
         with(rule) {
-            val limit = rule.behavior.intervalsPerSessionImpl
+            val limit = rule.config.maxIntervalsPerSession
             repeat(limit) { count ->
                 createThreadBlockageInterval()
                 assertEquals(count + 1, stacktraceSampler.getThreadBlockageIntervals().size)

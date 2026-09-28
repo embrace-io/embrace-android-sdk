@@ -14,7 +14,7 @@ class TapDataSource(
     args: InstrumentationArgs,
 ) : DataSourceImpl(
     args = args,
-    limitStrategy = UpToLimitStrategy(args.configService.breadcrumbBehavior::getTapBreadcrumbLimit),
+    limitStrategy = UpToLimitStrategy { args.configService.config.breadcrumb.tapLimit },
     instrumentationName = "tap_data_source",
 ) {
 
@@ -50,7 +50,7 @@ class TapDataSource(
         breadcrumbType: TapBreadcrumbType,
     ) {
         val finalPoint = when {
-            configService.breadcrumbBehavior.isViewClickCoordinateCaptureEnabled() -> coords
+            configService.config.breadcrumb.captureViewClickCoordinates -> coords
             else -> Pair(0.0f, 0.0f)
         }
         val coords = this.run {

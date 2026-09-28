@@ -15,7 +15,7 @@ class PushNotificationDataSource(
     args: InstrumentationArgs,
 ) : DataSourceImpl(
     args = args,
-    limitStrategy = UpToLimitStrategy(args.configService.breadcrumbBehavior::getCustomBreadcrumbLimit),
+    limitStrategy = UpToLimitStrategy { args.configService.config.breadcrumb.customLimit },
     instrumentationName = "push_notification_data_source",
 ) {
 
@@ -48,7 +48,7 @@ class PushNotificationDataSource(
         type: PushNotificationBreadcrumb.NotificationType,
     ) {
         captureTelemetry {
-            val captureFcmPiiData = configService.breadcrumbBehavior.isFcmPiiDataCaptureEnabled()
+            val captureFcmPiiData = configService.config.breadcrumb.captureFcmPiiData
             addSessionPartEvent(
                 SchemaType.PushNotification(
                     title = if (captureFcmPiiData) title else null,

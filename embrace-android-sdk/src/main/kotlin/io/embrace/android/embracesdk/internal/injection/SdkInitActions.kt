@@ -41,7 +41,7 @@ internal fun ModuleGraph.postInit() = EmbTrace.trace(sectionName = "post-init", 
         sensitiveKeysBehavior = configService.sensitiveKeysBehavior,
         bypassValidation = configService.isOnlyUsingOtelExporters(),
         otelBehavior = configService.otelBehavior,
-        breadcrumbBehavior = configService.breadcrumbBehavior,
+        breadcrumbConfig = configService.config.breadcrumb,
     )
 
     initModule.logger.errorHandlerProvider = { featureModule.internalErrorDataSource.dataSource }

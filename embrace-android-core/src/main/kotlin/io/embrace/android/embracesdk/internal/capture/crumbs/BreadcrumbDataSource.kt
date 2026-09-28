@@ -13,7 +13,7 @@ class BreadcrumbDataSource(
     args: InstrumentationArgs,
 ) : DataSourceImpl(
     args = args,
-    limitStrategy = UpToLimitStrategy(args.configService.breadcrumbBehavior::getCustomBreadcrumbLimit),
+    limitStrategy = UpToLimitStrategy { args.configService.config.breadcrumb.customLimit },
     instrumentationName = "breadcrumb_data_source",
 ) {
 

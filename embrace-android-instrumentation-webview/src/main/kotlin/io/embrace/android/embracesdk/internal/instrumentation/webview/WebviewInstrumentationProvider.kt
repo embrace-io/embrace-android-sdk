@@ -17,7 +17,7 @@ class WebviewInstrumentationProvider : InstrumentationProvider {
                 webViewUrlDataSource = WebViewUrlDataSource(args)
                 webViewUrlDataSource
             },
-            configGate = { args.configService.breadcrumbBehavior.isWebViewBreadcrumbCaptureEnabled() },
+            configGate = { args.configService.config.breadcrumb.captureWebViews },
         )
     }
 }

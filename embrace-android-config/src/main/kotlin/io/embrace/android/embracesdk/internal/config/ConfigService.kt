@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.config
 import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.BackgroundActivityBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.ExperimentBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehavior
@@ -17,6 +16,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBeha
 import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.VitalsBehavior
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 
 /**
@@ -27,6 +27,11 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
 interface ConfigService {
 
     /**
+     * The resolved config.
+     */
+    val config: EmbraceConfig
+
+    /**
      * How background activity functionality should behave.
      */
     val backgroundActivityBehavior: BackgroundActivityBehavior
@@ -35,11 +40,6 @@ interface ConfigService {
      * How automatic data capture functionality should behave.
      */
     val autoDataCaptureBehavior: AutoDataCaptureBehavior
-
-    /**
-     * How automatic breadcrumb functionality should behave.
-     */
-    val breadcrumbBehavior: BreadcrumbBehavior
 
     /**
      * How log message functionality should behave.

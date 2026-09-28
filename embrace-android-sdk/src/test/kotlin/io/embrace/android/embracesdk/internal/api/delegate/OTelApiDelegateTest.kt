@@ -13,12 +13,11 @@ import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
-import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -89,14 +88,15 @@ internal class OTelApiDelegateTest {
     }
 
     @Test
-    fun `get opentelemetry kotlin before start`() {
+    fun `get opentelemetry kotlin binds late`() {
         sdkCallChecker.started.set(false)
-        assertEquals(NoopOpenTelemetry, delegate.getOpenTelemetryKotlin())
-    }
+        val otel = delegate.getOpenTelemetryKotlin()
+        val tracer = otel.tracerProvider.getTracer("test")
+        assertFalse(tracer.startSpan("before").isRecording())
 
-    @Test
-    fun `get opentelemetry kotlin after start`() {
-        assertNotEquals(NoopOpenTelemetry, delegate.getOpenTelemetryKotlin())
+        sdkCallChecker.started.set(true)
+        assertSame(otel, delegate.getOpenTelemetryKotlin())
+        assertTrue(tracer.startSpan("after").isRecording())
     }
 
     @Test

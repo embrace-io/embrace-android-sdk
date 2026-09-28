@@ -350,20 +350,19 @@ internal class ExternalTracerTest {
     }
 
     @Test
-    fun `getOpenTelemetryKotlin returns noop before SDK start`() {
+    fun `tracer obtained before SDK start binds to SDK once started`() {
         testRule.runTest(
             persistedRemoteConfig = remoteConfig,
             preSdkStartAction = {
-                val otelKotlin = embrace.getOpenTelemetryKotlin()
-                val tracer = otelKotlin.getTracer("test-tracer")
-                val span = tracer.startSpan("test-span")
-
-                // Noop span should not be recording
+                embTracer = embrace.getOpenTelemetryKotlin().getTracer("test-tracer")
+                val span = embTracer.startSpan("test-span")
                 assertFalse(span.isRecording())
                 span.end()
             },
             testCaseAction = {},
-            assertAction = {}
+            assertAction = {
+                assertTrue(embTracer.startSpan("test-span").isRecording())
+            }
         )
     }
 

@@ -49,11 +49,13 @@ internal class OTelApiDelegate(
         bootstrapper.openTelemetryModule.otelSdkConfig.setResourceAttribute(key, value)
     }
 
-    override fun getOpenTelemetryKotlin(): OpenTelemetry {
-        return if (sdkCallChecker.started.get()) {
+    private val openTelemetryKotlin = LateBindingOpenTelemetry {
+        if (sdkCallChecker.started.get()) {
             bootstrapper.openTelemetryModule.otelSdkWrapper.openTelemetryKotlin
         } else {
             NoopOpenTelemetry
         }
     }
+
+    override fun getOpenTelemetryKotlin(): OpenTelemetry = openTelemetryKotlin
 }

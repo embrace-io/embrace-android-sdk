@@ -69,11 +69,9 @@ internal class ThermalStateDataSourceTest {
     }
 
     @Test
-    fun onEnableAndDisable() {
+    fun onEnable() {
         verify(exactly = 0) { mockPowerManager.addThermalStatusListener(any(), any()) }
         dataSource.onDataCaptureEnabled()
         verify(exactly = 1) { mockPowerManager.addThermalStatusListener(any(), any()) }
-        dataSource.onDataCaptureDisabled()
-        verify(exactly = 1) { mockPowerManager.removeThermalStatusListener(any()) }
     }
 }

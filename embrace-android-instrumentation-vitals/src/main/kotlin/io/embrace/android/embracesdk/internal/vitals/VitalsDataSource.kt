@@ -51,10 +51,7 @@ internal class VitalsDataSource(
         override fun onDisplayRemoved(displayId: Int) {}
     }
 
-    private var scheduler: HandlerVitalsScheduler? = null
-    private var activityListener: VitalsActivityListener? = null
-
-    // held so the app-state listener can forward backgrounding into the tracker; nulled on disable
+    // held so the app-state listener can forward backgrounding into the tracker
     @Volatile
     private var focalTracker: FocalMomentTracker? = null
 
@@ -68,7 +65,6 @@ internal class VitalsDataSource(
 
     override fun onDataCaptureEnabled() {
         val vitalsScheduler = HandlerVitalsScheduler().apply { start() }
-        scheduler = vitalsScheduler
         val handler = vitalsScheduler.handler
 
         // Below API 31 the budget comes from [refreshRate]; track refresh-rate changes to keep it live.
@@ -107,22 +103,8 @@ internal class VitalsDataSource(
             frameMetricsHandler = handler,
             frameMetricsStrategy = frameMetricsStrategy,
         )
-        activityListener = listener
         args.application.registerActivityLifecycleCallbacks(listener)
         args.processStateTracker.addListener(processStateListener)
-    }
-
-    override fun onDataCaptureDisabled() {
-        focalTracker = null
-        activityListener?.let(args.application::unregisterActivityLifecycleCallbacks)
-        activityListener = null
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-            args.systemService<DisplayManager>(Context.DISPLAY_SERVICE)
-                ?.unregisterDisplayListener(displayListener)
-        }
-        // Cancels any pending settle for an open focal moment and stops the vitals thread.
-        scheduler?.stop()
-        scheduler = null
     }
 
     private fun emitSmoothnessResult(result: SmoothnessResult) {

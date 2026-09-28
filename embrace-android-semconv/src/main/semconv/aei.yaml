@@ -6,7 +6,6 @@ attribute_groups:
     stability: development
     brief: "Embrace Application Exit Info attributes"
     attributes:
-      - ref: aei_session_id
       - ref: aei_user_session_id
       - ref: aei_session_part_id
       - ref: session_id_error
@@ -20,11 +19,6 @@ attribute_groups:
       - ref: trace_status
 
 attributes:
-  - key: aei_session_id
-    type: string
-    brief: "The session ID associated with the AEI event."
-    stability: development
-    examples: ["abc123"]
   - key: aei_user_session_id
     type: string
     brief: "The user session ID where the AEI occurred."

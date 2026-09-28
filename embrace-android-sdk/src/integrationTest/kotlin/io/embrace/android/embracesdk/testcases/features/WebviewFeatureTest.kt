@@ -30,7 +30,7 @@ internal class WebviewFeatureTest {
             },
             assertAction = {
                 val message = getSingleSessionEnvelope()
-                val events = message.findSessionPartSpan().findEventsOfType(EmbType.System.WebViewInfo)
+                val events = message.findSessionPartSpan().findEventsOfType(EmbType.Ux.WebView)
                 assertEquals(1, events.size)
 
                 val event = events[0]

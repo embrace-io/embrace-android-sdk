@@ -25,14 +25,6 @@ interface DataSource {
     fun onDataCaptureEnabled()
 
     /**
-     * Disables data capture. This should include unregistering any listeners, and resetting
-     * any state (if applicable).
-     *
-     * You should NOT attempt to track state within the [DataSource] with a boolean flag.
-     */
-    fun onDataCaptureDisabled()
-
-    /**
      * Resets any data capture limits since the last time [onDataCaptureEnabled] was called.
      */
     fun resetDataCaptureLimits()

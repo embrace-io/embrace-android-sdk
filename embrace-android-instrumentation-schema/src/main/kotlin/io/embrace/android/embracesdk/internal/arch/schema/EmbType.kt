@@ -101,8 +101,6 @@ sealed class EmbType(type: String, subtype: String?) : EmbraceAttribute {
         object NetworkCapturedRequest : System("network_capture", SendMode.IMMEDIATE)
 
         object NetworkStatus : System("network_status")
-
-        object WebViewInfo : System("webview_info")
     }
 
     object State : EmbType("state", null)

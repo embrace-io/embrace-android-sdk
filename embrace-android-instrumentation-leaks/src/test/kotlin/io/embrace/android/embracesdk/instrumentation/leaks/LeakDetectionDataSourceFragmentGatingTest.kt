@@ -27,7 +27,7 @@ internal class LeakDetectionDataSourceFragmentGatingTest {
 
     @After
     fun tearDown() {
-        dataSource.onDataCaptureDisabled()
+        dataSource.leakDetector.stop()
     }
 
     @Test

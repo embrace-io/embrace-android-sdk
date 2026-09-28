@@ -1,28 +1,19 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.remote.LogRemoteConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.resolved.LogMessageConfig
+import io.embrace.android.embracesdk.internal.config.resolved.resolveLogMessage
 
 /**
  * Provides the behavior that should be followed for remote log message functionality.
  */
-class LogMessageBehaviorImpl(
-    remote: RemoteConfig?,
-) : LogMessageBehavior {
+class LogMessageBehaviorImpl(private val config: LogMessageConfig) : LogMessageBehavior {
 
-    private companion object {
-        private const val DEFAULT_LOG_INFO_LIMIT = 100
-        private const val DEFAULT_LOG_WARNING_LIMIT = 200
-        private const val DEFAULT_LOG_ERROR_LIMIT = 500
-    }
+    constructor(remote: RemoteConfig?) : this(resolveLogMessage(behaviorInputs(InstrumentedConfigImpl, remote)))
 
-    private val remote: LogRemoteConfig? = remote?.logConfig
-
-    override fun getLogMessageMaximumAllowedLength(): Int {
-        return remote?.logMessageMaximumAllowedLength ?: LOG_MESSAGE_MAXIMUM_ALLOWED_LENGTH
-    }
-
-    override fun getInfoLogLimit(): Int = remote?.logInfoLimit ?: DEFAULT_LOG_INFO_LIMIT
-    override fun getWarnLogLimit(): Int = remote?.logWarnLimit ?: DEFAULT_LOG_WARNING_LIMIT
-    override fun getErrorLogLimit(): Int = remote?.logErrorLimit ?: DEFAULT_LOG_ERROR_LIMIT
+    override fun getLogMessageMaximumAllowedLength(): Int = config.maxLength
+    override fun getInfoLogLimit(): Int = config.infoLimit
+    override fun getWarnLogLimit(): Int = config.warnLimit
+    override fun getErrorLogLimit(): Int = config.errorLimit
 }

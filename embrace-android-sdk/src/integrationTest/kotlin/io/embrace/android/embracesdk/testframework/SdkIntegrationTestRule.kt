@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdC
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.config.resolved.resolveBreadcrumb
+import io.embrace.android.embracesdk.internal.config.resolved.resolveConfig
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.DeliveryModule
@@ -167,7 +167,7 @@ internal class SdkIntegrationTestRule(
                 sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(instrumentedConfig),
                 bypassValidation = false,
                 otelBehavior = OtelBehaviorImpl(BehaviorThresholdCheck { "123456" }, instrumentedConfig, persistedRemoteConfig),
-                breadcrumbConfig = resolveBreadcrumb(instrumentedConfig, persistedRemoteConfig)
+                breadcrumbConfig = resolveConfig(instrumentedConfig, persistedRemoteConfig, BehaviorThresholdCheck { "123456" }.bucket).breadcrumb
             )
 
             if (startSdk) {

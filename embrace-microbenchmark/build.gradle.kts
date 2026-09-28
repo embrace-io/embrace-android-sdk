@@ -49,6 +49,7 @@ dependencies {
     implementation(project(":embrace-android-infra"))
     implementation(project(":embrace-android-utils"))
     implementation(project(":embrace-android-payload"))
+    implementation(project(":embrace-android-config"))
     implementation(project(":embrace-android-session-persistence"))
     implementation(project(":embrace-android-instrumentation-api"))
 

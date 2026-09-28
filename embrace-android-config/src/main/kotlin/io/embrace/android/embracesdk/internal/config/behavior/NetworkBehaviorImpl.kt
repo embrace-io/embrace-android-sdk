@@ -4,25 +4,23 @@ import io.embrace.android.embracesdk.internal.config.PatternCache
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.resolved.NetworkConfig
+import io.embrace.android.embracesdk.internal.config.resolved.resolveNetwork
 import io.embrace.android.embracesdk.internal.network.logging.DomainCountLimiter
 import io.embrace.android.embracesdk.internal.network.logging.EmbraceDomainCountLimiter
-import kotlin.math.min
 
 /**
  * Provides the behavior that functionality relating to network call capture should follow.
  */
 class NetworkBehaviorImpl(
-    private val local: InstrumentedConfig,
-    private val remote: RemoteConfig?,
-    private val disabledUrlPatterns: List<String>? = null,
+    private val config: NetworkConfig,
+    private val disabledUrlPatterns: Collection<String>? = null,
 ) : NetworkBehavior {
 
-    companion object {
+    constructor(local: InstrumentedConfig, remote: RemoteConfig?, disabledUrlPatterns: List<String>? = null) :
+        this(resolveNetwork(behaviorInputs(local, remote)), disabledUrlPatterns)
 
-        const val DEFAULT_NETWORK_CALL_LIMIT: Int = 1000
-
-        const val DEFAULT_REQUEST_SPAN_TIMEOUT_MS: Long = 600_000L
-
+    private companion object {
         private val dirtyKeyList = listOf(
             "-----BEGIN PUBLIC KEY-----",
             "-----END PUBLIC KEY-----",
@@ -33,20 +31,15 @@ class NetworkBehaviorImpl(
         )
     }
 
-    private val cfg = local.networkCapture
     private val patternCache = PatternCache()
 
-    override fun isRequestContentLengthCaptureEnabled(): Boolean =
-        local.enabledFeatures.isRequestContentLengthCaptureEnabled()
+    override fun isRequestContentLengthCaptureEnabled(): Boolean = config.requestContentLengthCaptureEnabled
 
-    override fun isOkHttpResponseBodySizeCaptureEnabled(): Boolean =
-        local.enabledFeatures.isOkHttpResponseBodySizeCaptureEnabled()
+    override fun isOkHttpResponseBodySizeCaptureEnabled(): Boolean = config.okHttpResponseBodySizeCaptureEnabled
 
-    override fun isHttpUrlConnectionCaptureEnabled(): Boolean =
-        local.enabledFeatures.isHttpUrlConnectionCaptureEnabled()
+    override fun isHttpUrlConnectionCaptureEnabled(): Boolean = config.httpUrlConnectionCaptureEnabled
 
-    override fun isHucLiteInstrumentationEnabled(): Boolean =
-        local.enabledFeatures.isHucLiteInstrumentationEnabled() && !local.enabledFeatures.isHttpUrlConnectionCaptureEnabled()
+    override fun isHucLiteInstrumentationEnabled(): Boolean = config.hucLiteInstrumentationEnabled
 
     override val domainCountLimiter: DomainCountLimiter by lazy {
         EmbraceDomainCountLimiter(
@@ -55,28 +48,14 @@ class NetworkBehaviorImpl(
         )
     }
 
-    override fun getLimitsByDomain(): Map<String, Int> {
-        val limits = remote?.networkConfig?.domainLimits ?: cfg.getLimitsByDomain()
-            .mapValues { it.value.toInt() }
-        val limitCeiling = getRequestLimitPerDomain()
+    override fun getLimitsByDomain(): Map<String, Int> = config.limitsByDomain
 
-        return limits.mapValues {
-            min(it.value, limitCeiling)
-        }
-    }
+    override fun getRequestLimitPerDomain(): Int = config.requestLimitPerDomain
 
-    override fun getRequestLimitPerDomain(): Int = min(
-        remote?.networkConfig?.defaultCaptureLimit ?: DEFAULT_NETWORK_CALL_LIMIT,
-        cfg.getRequestLimitPerDomain(),
-    )
-
-    override fun getRequestSpanTimeoutMs(): Long =
-        remote?.dataConfig?.networkRequestSpanTimeoutMs ?: DEFAULT_REQUEST_SPAN_TIMEOUT_MS
+    override fun getRequestSpanTimeoutMs(): Long = config.requestSpanTimeoutMs
 
     override fun isUrlEnabled(url: String): Boolean {
-        val patterns = disabledUrlPatterns
-            ?: remote?.disabledUrlPatterns
-            ?: cfg.getIgnoredRequestPatternList()
+        val patterns = disabledUrlPatterns ?: config.disabledUrlPatterns
         return !patternCache.doesStringContainMatchInSet(url, patterns)
     }
 
@@ -84,7 +63,7 @@ class NetworkBehaviorImpl(
         getNetworkBodyCapturePublicKey() != null
 
     override fun getNetworkBodyCapturePublicKey(): String? {
-        var keyToClean = cfg.getNetworkBodyCapturePublicKey()
+        var keyToClean = config.networkBodyCapturePublicKey
         if (keyToClean != null) {
             for (dirty in dirtyKeyList) {
                 keyToClean = keyToClean?.replace(dirty.toRegex(), "")
@@ -93,6 +72,5 @@ class NetworkBehaviorImpl(
         return keyToClean
     }
 
-    override fun getNetworkCaptureRules(): Set<NetworkCaptureRuleRemoteConfig> =
-        remote?.networkCaptureRules ?: emptySet()
+    override fun getNetworkCaptureRules(): Set<NetworkCaptureRuleRemoteConfig> = config.networkCaptureRules
 }

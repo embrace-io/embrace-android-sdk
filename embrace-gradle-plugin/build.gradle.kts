@@ -1,3 +1,7 @@
+import io.embrace.gradle.configmodel.ConfigTarget
+import io.embrace.gradle.configmodel.generateConfigJsonSchema
+import io.embrace.gradle.configmodel.generateConfigSources
+
 plugins {
     id("embrace-jvm-conventions")
     id("java-gradle-plugin")
@@ -28,6 +32,9 @@ dependencies {
     testImplementation(libs.mockwebserver)
     testImplementation(project(":embrace-test-common"))
 }
+
+generateConfigSources(ConfigTarget.PLUGIN)
+generateConfigJsonSchema()
 
 buildConfig {
     val version: String by project

@@ -2,85 +2,37 @@ package io.embrace.android.embracesdk.internal.config.behavior
 
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
+import io.embrace.android.embracesdk.internal.config.resolved.resolveAutoDataCapture
 
 /**
  * Provides the behavior that should be followed for select services that automatically
  * capture data.
  */
-class AutoDataCaptureBehaviorImpl(
-    private val thresholdCheck: BehaviorThresholdCheck,
-    local: InstrumentedConfig,
-    private val remote: RemoteConfig?,
-) : AutoDataCaptureBehavior {
+class AutoDataCaptureBehaviorImpl(private val config: AutoDataCaptureConfig) : AutoDataCaptureBehavior {
 
-    private companion object {
-        const val THERMAL_STATUS_ENABLED_DEFAULT = true
-        const val UI_LOAD_REMOTE_ENABLED_DEFAULT = true
-        const val STATE_CAPTURE_ENABLED_DEFAULT = true
-        const val NAVIGATION_STATE_CAPTURE_ENABLED_DEFAULT = true
-        const val SMOOTHNESS_CAPTURE_ENABLED_DEFAULT = false
-        const val SCREEN_LOAD_CAPTURE_ENABLED_DEFAULT = false
-        const val ACTIVITY_LEAK_DETECTION_ENABLED_DEFAULT = false
-        const val FRAGMENT_LEAK_DETECTION_ENABLED_DEFAULT = false
-        const val WEB_VIEW_LEAK_DETECTION_ENABLED_DEFAULT = false
-    }
+    constructor(thresholdCheck: BehaviorThresholdCheck, local: InstrumentedConfig, remote: RemoteConfig?) :
+        this(resolveAutoDataCapture(behaviorInputs(local, remote, thresholdCheck)))
 
-    private val local = local.enabledFeatures
-
-    override fun isThermalStatusCaptureEnabled(): Boolean {
-        return thresholdCheck.isBehaviorEnabled(remote?.dataConfig?.pctThermalStatusEnabled)
-            ?: THERMAL_STATUS_ENABLED_DEFAULT
-    }
-
-    override fun isPowerSaveModeCaptureEnabled(): Boolean = local.isPowerSaveModeCaptureEnabled()
-    override fun isNetworkConnectivityCaptureEnabled(): Boolean =
-        local.isNetworkConnectivityCaptureEnabled()
-
-    override fun isThreadBlockageCaptureEnabled(): Boolean = local.isThreadBlockageCaptureEnabled()
-    override fun isJvmCrashCaptureEnabled(): Boolean = local.isJvmCrashCaptureEnabled()
-    override fun isComposeClickCaptureEnabled(): Boolean =
-        remote?.killSwitchConfig?.jetpackCompose ?: local.isComposeClickCaptureEnabled()
-
-    override fun is3rdPartySigHandlerDetectionEnabled(): Boolean =
-        remote?.killSwitchConfig?.sigHandlerDetection ?: local.is3rdPartySigHandlerDetectionEnabled()
-
-    override fun isNativeCrashCaptureEnabled(): Boolean = local.isNativeCrashCaptureEnabled()
-    override fun isDiskUsageCaptureEnabled(): Boolean = local.isDiskUsageCaptureEnabled()
-    override fun isUiLoadTracingEnabled(): Boolean = local.isUiLoadTracingEnabled() && uiLoadEnabledRemotely()
-    override fun isUiLoadTracingTraceAll(): Boolean = local.isUiLoadTracingTraceAll() && uiLoadEnabledRemotely()
-
-    private fun uiLoadEnabledRemotely(): Boolean =
-        remote?.uiLoadInstrumentationEnabled ?: UI_LOAD_REMOTE_ENABLED_DEFAULT
-
-    override fun isEndStartupWithAppReadyEnabled(): Boolean = local.isEndStartupWithAppReadyEnabled()
-    override fun isStateCaptureEnabled(): Boolean =
-        thresholdCheck.isBehaviorEnabled(remote?.pctStateCaptureEnabledV2) ?: STATE_CAPTURE_ENABLED_DEFAULT
-
-    override fun isNetworkCallbackConnectivityServiceEnabled(): Boolean =
-        thresholdCheck.isBehaviorEnabled(remote?.pctNetworkCallbackConnectivityServiceEnabled) ?: false
-
-    override fun isNavigationStateCaptureEnabled(): Boolean =
-        thresholdCheck.isBehaviorEnabled(remote?.pctNavigationStateCaptureEnabled) ?: NAVIGATION_STATE_CAPTURE_ENABLED_DEFAULT
-
-    override fun isSmoothnessCaptureEnabled(): Boolean =
-        thresholdCheck.isBehaviorEnabled(remote?.pctSmoothnessEnabled) ?: SMOOTHNESS_CAPTURE_ENABLED_DEFAULT
-
-    override fun isScreenLoadCaptureEnabled(): Boolean =
-        thresholdCheck.isBehaviorEnabled(remote?.pctScreenLoadEnabled) ?: SCREEN_LOAD_CAPTURE_ENABLED_DEFAULT
-
-    override fun isActivityProcessLifecycleTrackerEnabled(): Boolean =
-        thresholdCheck.isBehaviorEnabled(remote?.pctActivityProcessLifecycleTrackerEnabled)
-            ?: local.isActivityProcessLifecycleTrackerEnabled()
-
-    override fun isActivityLeakDetectionEnabled(): Boolean =
-        thresholdCheck.isBehaviorEnabled(remote?.pctActivityLeakDetectionEnabled)
-            ?: ACTIVITY_LEAK_DETECTION_ENABLED_DEFAULT
-
-    override fun isFragmentLeakDetectionEnabled(): Boolean =
-        thresholdCheck.isBehaviorEnabled(remote?.pctFragmentLeakDetectionEnabled)
-            ?: FRAGMENT_LEAK_DETECTION_ENABLED_DEFAULT
-
-    override fun isWebViewLeakDetectionEnabled(): Boolean =
-        thresholdCheck.isBehaviorEnabled(remote?.pctWebViewLeakDetectionEnabled)
-            ?: WEB_VIEW_LEAK_DETECTION_ENABLED_DEFAULT
+    override fun isThermalStatusCaptureEnabled(): Boolean = config.thermalStatusCaptureEnabled
+    override fun isPowerSaveModeCaptureEnabled(): Boolean = config.powerSaveModeCaptureEnabled
+    override fun isNetworkConnectivityCaptureEnabled(): Boolean = config.networkConnectivityCaptureEnabled
+    override fun isThreadBlockageCaptureEnabled(): Boolean = config.threadBlockageCaptureEnabled
+    override fun isJvmCrashCaptureEnabled(): Boolean = config.jvmCrashCaptureEnabled
+    override fun isComposeClickCaptureEnabled(): Boolean = config.composeClickCaptureEnabled
+    override fun is3rdPartySigHandlerDetectionEnabled(): Boolean = config.thirdPartySigHandlerDetectionEnabled
+    override fun isNativeCrashCaptureEnabled(): Boolean = config.nativeCrashCaptureEnabled
+    override fun isDiskUsageCaptureEnabled(): Boolean = config.diskUsageCaptureEnabled
+    override fun isUiLoadTracingEnabled(): Boolean = config.uiLoadTracingEnabled
+    override fun isUiLoadTracingTraceAll(): Boolean = config.uiLoadTracingTraceAll
+    override fun isEndStartupWithAppReadyEnabled(): Boolean = config.endStartupWithAppReadyEnabled
+    override fun isStateCaptureEnabled(): Boolean = config.stateCaptureEnabled
+    override fun isNetworkCallbackConnectivityServiceEnabled(): Boolean = config.networkCallbackConnectivityServiceEnabled
+    override fun isNavigationStateCaptureEnabled(): Boolean = config.navigationStateCaptureEnabled
+    override fun isSmoothnessCaptureEnabled(): Boolean = config.smoothnessCaptureEnabled
+    override fun isScreenLoadCaptureEnabled(): Boolean = config.screenLoadCaptureEnabled
+    override fun isActivityProcessLifecycleTrackerEnabled(): Boolean = config.activityProcessLifecycleTrackerEnabled
+    override fun isActivityLeakDetectionEnabled(): Boolean = config.activityLeakDetectionEnabled
+    override fun isFragmentLeakDetectionEnabled(): Boolean = config.fragmentLeakDetectionEnabled
+    override fun isWebViewLeakDetectionEnabled(): Boolean = config.webViewLeakDetectionEnabled
 }

@@ -36,11 +36,11 @@ class VariantConfigValidatorTest {
         apiToken: String? = null,
         ndkEnabled: Boolean? = null,
     ) = EmbraceVariantConfig(
-        appId,
-        apiToken,
-        ndkEnabled,
-        null,
-        null,
+        appId = appId,
+        apiToken = apiToken,
+        ndkEnabled = ndkEnabled,
+        sdkConfig = null,
+        unityConfig = null,
     )
 
     private fun assertValidationFailure(

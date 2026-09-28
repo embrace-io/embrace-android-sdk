@@ -1,28 +1,20 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.instrumented.schema.EnabledFeatureConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
-import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.resolved.BackgroundActivityConfig
+import io.embrace.android.embracesdk.internal.config.resolved.resolveBackgroundActivity
 
 /**
  * Provides the behavior that the Background Activity feature should follow.
  */
-class BackgroundActivityBehaviorImpl(
-    private val thresholdCheck: BehaviorThresholdCheck,
-    local: InstrumentedConfig,
-    remote: RemoteConfig?,
-) : BackgroundActivityBehavior {
+class BackgroundActivityBehaviorImpl(private val config: BackgroundActivityConfig) : BackgroundActivityBehavior {
 
-    private val local: EnabledFeatureConfig = local.enabledFeatures
-    private val remote: BackgroundActivityRemoteConfig? = remote?.backgroundActivityConfig
+    constructor(thresholdCheck: BehaviorThresholdCheck, local: InstrumentedConfig, remote: RemoteConfig?) :
+        this(resolveBackgroundActivity(behaviorInputs(local, remote, thresholdCheck)))
 
-    override fun isBackgroundActivityCaptureEnabled(): Boolean {
-        return remote?.threshold?.let(thresholdCheck::isBehaviorEnabled)
-            ?: local.isBackgroundActivityCaptureEnabled()
-    }
-
-    override fun getManualBackgroundActivityLimit(): Int = 100
-    override fun getMinBackgroundActivityDuration(): Long = 5000L
-    override fun getMaxCachedActivities(): Int = 30
+    override fun isBackgroundActivityCaptureEnabled(): Boolean = config.captureEnabled
+    override fun getManualBackgroundActivityLimit(): Int = config.manualBackgroundActivityLimit
+    override fun getMinBackgroundActivityDuration(): Long = config.minBackgroundActivityDuration
+    override fun getMaxCachedActivities(): Int = config.maxCachedActivities
 }

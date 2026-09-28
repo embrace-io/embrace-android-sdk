@@ -13,6 +13,7 @@ dependencies {
     implementation(project(":embrace-android-infra"))
     implementation(project(":embrace-android-utils"))
     implementation(project(":embrace-android-payload"))
+    implementation(project(":embrace-android-config"))
     implementation(project(":embrace-android-instrumentation-schema"))
     implementation(project(":embrace-android-semconv"))
     implementation(project(":embrace-android-api"))

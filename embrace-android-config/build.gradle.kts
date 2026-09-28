@@ -1,5 +1,9 @@
+import io.embrace.gradle.configmodel.ConfigTarget
+import io.embrace.gradle.configmodel.generateConfigSources
+
 plugins {
     id("embrace-prod-jvm-conventions")
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 dependencies {
@@ -12,3 +16,5 @@ dependencies {
     testImplementation(project(":embrace-android-config-fakes"))
     testImplementation(libs.mockwebserver)
 }
+
+generateConfigSources(ConfigTarget.SDK)

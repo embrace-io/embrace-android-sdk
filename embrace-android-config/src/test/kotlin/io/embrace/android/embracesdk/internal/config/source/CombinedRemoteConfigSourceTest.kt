@@ -25,7 +25,7 @@ class CombinedRemoteConfigSourceTest {
 
     @Before
     fun setUp() {
-        remoteConfig = RemoteConfig(92)
+        remoteConfig = RemoteConfig(threshold = 92)
         executorService = BlockingScheduledExecutorService()
         remoteConfigSource = FakeRemoteConfigSource(ConfigHttpResponse(remoteConfig, "another"))
         remoteConfigStore = FakeRemoteConfigStore()

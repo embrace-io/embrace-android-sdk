@@ -50,12 +50,12 @@ internal class DataCaptureLimitTest {
 
     /**
      * The session span caps breadcrumbs at [BreadcrumbConfig.customLimit] as well as the breadcrumb data
-     * source. Raising the remote limit above [BreadcrumbConfig.DEFAULT_LIMIT] proves that the session span reads the
+     * source. Raising the remote limit above [BreadcrumbConfig.DEFAULT_CUSTOM_LIMIT] proves that the session span reads the
      * configured value rather than falling back to the default.
      */
     @Test
     fun `remotely raised breadcrumb limit is honoured by the session span`() {
-        val raisedLimit = BreadcrumbConfig.DEFAULT_LIMIT + 50
+        val raisedLimit = BreadcrumbConfig.DEFAULT_CUSTOM_LIMIT + 50
         testRule.runTest(
             persistedRemoteConfig = RemoteConfig(uiConfig = UiRemoteConfig(breadcrumbs = raisedLimit)),
             testCaseAction = {
@@ -97,6 +97,6 @@ internal class DataCaptureLimitTest {
     private fun assertBreadcrumbsMatchLimit(envelope: Envelope<SessionPartPayload>) {
         val sessionPartSpan = envelope.findSessionPartSpan()
         val crumbs = sessionPartSpan.findEventsOfType(EmbType.System.Breadcrumb)
-        assertEquals(BreadcrumbConfig.DEFAULT_LIMIT, crumbs.size)
+        assertEquals(BreadcrumbConfig.DEFAULT_CUSTOM_LIMIT, crumbs.size)
     }
 }

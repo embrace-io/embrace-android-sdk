@@ -14,6 +14,7 @@ import io.embrace.android.gradle.plugin.instrumentation.config.model.TapsLocalCo
 import io.embrace.android.gradle.plugin.instrumentation.config.model.ThreadBlockageLocalConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.ViewLocalConfig
+import io.embrace.android.gradle.plugin.instrumentation.config.model.WebViewFragmentCapture
 import io.embrace.android.gradle.plugin.instrumentation.config.model.WebViewLocalConfig
 import org.junit.Test
 
@@ -75,10 +76,10 @@ class EnabledFeatureConfigInstrumentationKtTest {
         val instrumentation = createEnabledFeatureConfigInstrumentation(
             cfg.copy(
                 embraceConfig = EmbraceVariantConfig(
-                    null,
-                    null,
-                    true,
-                    SdkLocalConfig(
+                    appId = null,
+                    apiToken = null,
+                    ndkEnabled = true,
+                    sdkConfig = SdkLocalConfig(
                         threadBlockage = ThreadBlockageLocalConfig(
                             captureUnityThread = true,
                         ),
@@ -126,13 +127,13 @@ class EnabledFeatureConfigInstrumentationKtTest {
                         webViewConfig = WebViewLocalConfig(
                             captureWebViews = true,
                             captureQueryParams = true,
-                            fragmentCapture = WebViewLocalConfig.FragmentCapture.REDACT,
+                            fragmentCapture = WebViewFragmentCapture.REDACT,
                         ),
                         viewConfig = ViewLocalConfig(
                             enableAutomaticActivityCapture = true,
                         ),
                     ),
-                    null,
+                    unityConfig = null,
                 ),
             ),
         )
@@ -146,15 +147,15 @@ class EnabledFeatureConfigInstrumentationKtTest {
         val instrumentation = createEnabledFeatureConfigInstrumentation(
             cfg.copy(
                 embraceConfig = EmbraceVariantConfig(
-                    null,
-                    null,
-                    true,
-                    SdkLocalConfig(
+                    appId = null,
+                    apiToken = null,
+                    ndkEnabled = true,
+                    sdkConfig = SdkLocalConfig(
                         automaticDataCaptureConfig = AutomaticDataCaptureLocalConfig(
                             uiLoadPerfTracingDisabled = true,
                         ),
                     ),
-                    null,
+                    unityConfig = null,
                 ),
             ),
         )
@@ -172,15 +173,15 @@ class EnabledFeatureConfigInstrumentationKtTest {
         val instrumentation = createEnabledFeatureConfigInstrumentation(
             cfg.copy(
                 embraceConfig = EmbraceVariantConfig(
-                    null,
-                    null,
-                    true,
-                    SdkLocalConfig(
+                    appId = null,
+                    apiToken = null,
+                    ndkEnabled = true,
+                    sdkConfig = SdkLocalConfig(
                         automaticDataCaptureConfig = AutomaticDataCaptureLocalConfig(
                             uiLoadPerfTracingSelectedOnly = true,
                         ),
                     ),
-                    null,
+                    unityConfig = null,
                 ),
             ),
         )
@@ -198,16 +199,16 @@ class EnabledFeatureConfigInstrumentationKtTest {
         val instrumentation = createEnabledFeatureConfigInstrumentation(
             cfg.copy(
                 embraceConfig = EmbraceVariantConfig(
-                    null,
-                    null,
-                    true,
-                    SdkLocalConfig(
+                    appId = null,
+                    apiToken = null,
+                    ndkEnabled = true,
+                    sdkConfig = SdkLocalConfig(
                         automaticDataCaptureConfig = AutomaticDataCaptureLocalConfig(
                             uiLoadPerfTracingDisabled = true,
                             uiLoadPerfTracingSelectedOnly = true,
                         ),
                     ),
-                    null,
+                    unityConfig = null,
                 ),
             ),
         )
@@ -225,13 +226,13 @@ class EnabledFeatureConfigInstrumentationKtTest {
         val instrumentation = createEnabledFeatureConfigInstrumentation(
             cfg.copy(
                 embraceConfig = EmbraceVariantConfig(
-                    null,
-                    null,
-                    true,
-                    SdkLocalConfig(
+                    appId = null,
+                    apiToken = null,
+                    ndkEnabled = true,
+                    sdkConfig = SdkLocalConfig(
                         automaticDataCaptureConfig = AutomaticDataCaptureLocalConfig(),
                     ),
-                    null,
+                    unityConfig = null,
                 ),
             ),
         )

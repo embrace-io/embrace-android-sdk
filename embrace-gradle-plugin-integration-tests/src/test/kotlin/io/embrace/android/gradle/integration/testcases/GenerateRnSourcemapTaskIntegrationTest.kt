@@ -1,6 +1,5 @@
 package io.embrace.android.gradle.integration.testcases
 
-import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.FormPart
 import io.embrace.android.embracesdk.validateBodyApiToken
 import io.embrace.android.embracesdk.validateBodyAppId
@@ -60,6 +59,5 @@ class GenerateRnSourcemapTaskIntegrationTest {
     }
 }
 
-@JsonClass(generateAdapter = true)
 @Serializable
 data class BundleAndSourceMap(val bundle: String, val sourcemap: String)

@@ -1,6 +1,5 @@
 plugins {
     id("embrace-jvm-conventions")
-    alias(libs.plugins.google.ksp)
     id("org.jetbrains.kotlin.plugin.serialization")
     id("java-gradle-plugin")
     id("maven-publish")
@@ -13,8 +12,6 @@ dependencies {
     implementation(libs.agp.api)
 
     // JSON construction and parsing
-    implementation(libs.moshi)
-    kspTest(libs.moshi.kotlin.codegen)
     implementation(libs.kotlinx.serialization.json.gradle.plugin)
 
     implementation(libs.junit)

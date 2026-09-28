@@ -3,7 +3,6 @@ plugins {
     id("java-gradle-plugin")
     id("groovy")
     id("com.vanniktech.maven.publish")
-    alias(libs.plugins.google.ksp)
     id("org.jetbrains.kotlin.plugin.serialization")
     alias(libs.plugins.buildconfig)
 }
@@ -15,14 +14,11 @@ dependencies {
 
     implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp)
-    implementation(libs.moshi)
-    ksp(libs.moshi.kotlin.codegen)
     implementation(libs.kotlinx.serialization.json.gradle.plugin)
     implementation(libs.zstd.jni)
     implementation(libs.asm.util)
 
     testImplementation(libs.agp.api)
-    kspTest(libs.moshi.kotlin.codegen)
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.mockwebserver)

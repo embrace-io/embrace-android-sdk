@@ -1,6 +1,5 @@
 package io.embrace.android.gradle.plugin.tasks.ndk
 
-import com.squareup.moshi.JsonClass
 import kotlinx.serialization.Serializable
 
 /**
@@ -11,7 +10,6 @@ import kotlinx.serialization.Serializable
  *   - Keys are shared object filenames (e.g., "libexample1.so")
  *   - Values are SHA1 hashes of the compressed files
  */
-@JsonClass(generateAdapter = true)
 @Serializable
 data class ArchitecturesToHashedSharedObjectFilesMap(
     val symbols: Map<String, Map<String, String>>,

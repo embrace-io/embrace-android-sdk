@@ -1,7 +1,5 @@
 package io.embrace.android.gradle.plugin.util.serialization
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
@@ -72,13 +70,10 @@ class JsonSerializerTest {
     }
 }
 
-@JsonClass(generateAdapter = true)
 @Serializable
 class TestObject(
-    @Json(name = "name")
     @SerialName("name")
     val name: String,
-    @Json(name = "team")
     @SerialName("team")
     val team: String,
 )

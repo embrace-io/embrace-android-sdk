@@ -233,7 +233,8 @@ From `CONTRIBUTING.md`:
 ### Adding a New Payload Model
 
 1. Add to `embrace-android-payload` module
-2. Use Moshi annotations: `@JsonClass(generateAdapter = true)` and `@Json(name = "...")`
+2. Use kotlinx.serialization annotations: `@Serializable` and `@SerialName("...")`, and pass the generated
+   serializer explicitly (e.g. `Foo.serializer()`); never resolve serializers at runtime
 3. Use `data class` with `val` properties (immutability enforced by detekt)
 4. No business logic in payload classes (enforced by detekt)
 

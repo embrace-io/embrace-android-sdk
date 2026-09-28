@@ -1,13 +1,11 @@
 package io.embrace.android.gradle.plugin.instrumentation.json
 
-import com.squareup.moshi.Moshi
 import io.embrace.android.gradle.plugin.instrumentation.strategy.ClassVisitStrategy
 import io.embrace.android.gradle.plugin.instrumentation.visitor.BytecodeClassInsertionParams
 import io.embrace.android.gradle.plugin.instrumentation.visitor.BytecodeInstrumentationFeature
 import io.embrace.android.gradle.plugin.instrumentation.visitor.BytecodeMethodInsertionParams
 import io.embrace.android.gradle.plugin.instrumentation.visitor.BytecodeMethodOverrideParams
-import okio.buffer
-import okio.source
+import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
 
 fun readBytecodeInstrumentationFeatures(): List<BytecodeInstrumentationFeature> {
     val configFeatures = readBytecodeInstrumentationConfig()
@@ -19,11 +17,7 @@ private fun readBytecodeInstrumentationConfig(): InstrumentationConfigFeatures {
     val stream = classLoader.getResourceAsStream("bytecode_instrumentation_features.json")
         ?: error("Bytecode instrumentation config file not found")
 
-    return stream.use {
-        val moshi = Moshi.Builder().build()
-        val adapter = moshi.adapter(InstrumentationConfigFeatures::class.java)
-        adapter.fromJson(it.source().buffer())
-    } ?: error("Failed to parse bytecode instrumentation config file")
+    return JsonSerializer().fromJson(stream, InstrumentationConfigFeatures.serializer())
 }
 
 private fun InstrumentationConfigFeature.convertInstrumentationConfigFeature(): BytecodeInstrumentationFeature =

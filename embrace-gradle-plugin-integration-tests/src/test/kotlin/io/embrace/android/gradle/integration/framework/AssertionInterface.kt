@@ -11,7 +11,8 @@ import io.embrace.android.gradle.plugin.buildreporter.BuildTelemetryRequest
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
 import io.embrace.android.gradle.plugin.tasks.buildinfo.BuildInfoExport
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadHandshakeRequest
-import io.embrace.android.gradle.plugin.util.serialization.MoshiSerializer
+import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
+import kotlinx.serialization.serializer
 import okhttp3.mockwebserver.RecordedRequest
 import okio.Buffer
 import org.junit.Assert.assertEquals
@@ -55,7 +56,7 @@ class AssertionInterface(
      */
     inline fun <reified T> deserializeRequestBody(request: RecordedRequest): T {
         val json = request.body.use(Buffer::readUtf8)
-        return MoshiSerializer().fromJson(json, T::class.java)
+        return JsonSerializer().fromJson(json, serializer<T>())
     }
 
     /**
@@ -66,7 +67,7 @@ class AssertionInterface(
         expectedPath: String,
     ): T {
         val json = projectDir.file(expectedPath).readText()
-        return MoshiSerializer().fromJson(json, T::class.java)
+        return JsonSerializer().fromJson(json, serializer<T>())
     }
 
     /**
@@ -322,7 +323,7 @@ class AssertionInterface(
      */
     fun AssertionInterface.readBuildInfoExport(projectDir: File, variant: String): BuildInfoExport {
         val file = projectDir.buildFile("outputs/embrace/build-info/$variant/embrace-build-info.json")
-        return MoshiSerializer().fromJson(file.readText(), BuildInfoExport::class.java)
+        return JsonSerializer().fromJson(file.readText(), BuildInfoExport.serializer())
     }
 
     /**

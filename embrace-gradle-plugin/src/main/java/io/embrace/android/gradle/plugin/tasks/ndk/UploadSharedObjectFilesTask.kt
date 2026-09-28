@@ -5,7 +5,7 @@ import io.embrace.android.gradle.plugin.network.OkHttpNetworkService
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTask
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTaskImpl
 import io.embrace.android.gradle.plugin.tasks.handleHttpCallResult
-import io.embrace.android.gradle.plugin.util.serialization.MoshiSerializer
+import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.model.ObjectFactory
@@ -38,7 +38,7 @@ abstract class UploadSharedObjectFilesTask @Inject constructor(
     objectFactory: ObjectFactory,
 ) : EmbraceUploadTask, EmbraceUploadTaskImpl(objectFactory) {
 
-    private val serializer = MoshiSerializer()
+    private val serializer = JsonSerializer()
     private val logger = EmbraceLogger(UploadSharedObjectFilesTask::class.java)
 
     @get:Input
@@ -74,7 +74,7 @@ abstract class UploadSharedObjectFilesTask @Inject constructor(
     private fun getArchToFilenameToHashMap() = try {
         serializer.fromJson(
             architecturesToHashedSharedObjectFilesMapJson.get().asFile.bufferedReader().use { it.readText() },
-            ArchitecturesToHashedSharedObjectFilesMap::class.java,
+            ArchitecturesToHashedSharedObjectFilesMap.serializer(),
         ).symbols
     } catch (exception: Exception) {
         error("Failed to read the architectures to hashed shared object files map: ${exception.message}")

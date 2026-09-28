@@ -10,7 +10,7 @@ import io.embrace.android.gradle.integration.framework.IntegrationTestDefaults
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.buildFile
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
-import io.embrace.android.gradle.plugin.util.serialization.MoshiSerializer
+import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
 import kotlinx.serialization.Serializable
 import okio.buffer
 import okio.gzip
@@ -53,7 +53,7 @@ class GenerateRnSourcemapTaskIntegrationTest {
         // unzip the file - this will fail if the file is not gzipped
         outputFile.source().gzip().buffer().use { source ->
             // deserialize the JSON - this will fail if the JSON is not valid
-            val bundleAndSourceMap = MoshiSerializer().fromJson(source.readUtf8(), BundleAndSourceMap::class.java)
+            val bundleAndSourceMap = JsonSerializer().fromJson(source.readUtf8(), BundleAndSourceMap.serializer())
             assertEquals("Fake bundle", bundleAndSourceMap.bundle)
             assertEquals("Fake sourcemap", bundleAndSourceMap.sourcemap)
         }

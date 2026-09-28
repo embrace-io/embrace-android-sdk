@@ -4,7 +4,7 @@ import io.embrace.android.gradle.plugin.network.NetworkService
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadHandshake
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadHandshakeRequest
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadHandshakeResponse
-import io.embrace.android.gradle.plugin.util.serialization.MoshiSerializer
+import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -49,7 +49,7 @@ class NdkUploadHandshakeTest {
               "archs": {}
             }
         """.trim().replace("\\s".toRegex(), "")
-        val serializedRequest = MoshiSerializer().toJson(request)
+        val serializedRequest = JsonSerializer().toJson(request, NdkUploadHandshakeRequest.serializer())
         assertEquals(expectedRequest, serializedRequest)
     }
 
@@ -87,7 +87,7 @@ class NdkUploadHandshakeTest {
               }
             }
         """.trim().replace("\\s".toRegex(), "")
-        val serializedRequest = MoshiSerializer().toJson(request)
+        val serializedRequest = JsonSerializer().toJson(request, NdkUploadHandshakeRequest.serializer())
         assertEquals(expectedRequest, serializedRequest)
     }
 
@@ -99,7 +99,7 @@ class NdkUploadHandshakeTest {
             }
         """.trim().replace("\\s".toRegex(), "")
         val deserializedResponse =
-            MoshiSerializer().fromJson(response, NdkUploadHandshakeResponse::class.java)
+            JsonSerializer().fromJson(response, NdkUploadHandshakeResponse.serializer())
         assertNotNull(deserializedResponse.symbols)
         assertTrue(deserializedResponse.symbols!!.isEmpty())
     }
@@ -126,7 +126,7 @@ class NdkUploadHandshakeTest {
         """.replace("\\s".toRegex(), "")
 
         val deserializedResponse =
-            MoshiSerializer().fromJson(response, NdkUploadHandshakeResponse::class.java)
+            JsonSerializer().fromJson(response, NdkUploadHandshakeResponse.serializer())
         val expectedResponse = NdkUploadHandshakeResponse(
             symbols = mapOf(
                 "x86" to listOf("libnative.so"),

@@ -4,7 +4,7 @@ import io.embrace.android.gradle.plugin.EmbraceLogger
 import io.embrace.android.gradle.plugin.hash.calculateSha1ForFile
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.tasks.EmbraceTask
-import io.embrace.android.gradle.plugin.util.serialization.MoshiSerializer
+import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
@@ -35,7 +35,7 @@ abstract class HashSharedObjectFilesTask @Inject constructor(
     override val variantData: Property<AndroidCompactedVariantData> =
         objectFactory.property(AndroidCompactedVariantData::class.java)
 
-    private val serializer = MoshiSerializer()
+    private val serializer = JsonSerializer()
     private val logger = EmbraceLogger(HashSharedObjectFilesTask::class.java)
 
     @get:InputDirectory
@@ -56,7 +56,7 @@ abstract class HashSharedObjectFilesTask @Inject constructor(
             // Serialize the map to JSON and write it to the output file
             val serializableMap = ArchitecturesToHashedSharedObjectFilesMap(outputMap)
             architecturesToHashedSharedObjectFilesMap.get().asFile.outputStream().use { outputStream ->
-                serializer.toJson(serializableMap, ArchitecturesToHashedSharedObjectFilesMap::class.java, outputStream)
+                serializer.toJson(serializableMap, ArchitecturesToHashedSharedObjectFilesMap.serializer(), outputStream)
             }
         } catch (exception: Exception) {
             logger.error("An error has occurred while hashing shared object files", exception)

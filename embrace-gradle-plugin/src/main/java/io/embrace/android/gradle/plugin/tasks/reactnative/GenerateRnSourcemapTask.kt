@@ -1,16 +1,16 @@
 package io.embrace.android.gradle.plugin.tasks.reactnative
 
-import com.squareup.moshi.JsonWriter
 import io.embrace.android.gradle.plugin.EmbraceLogger
 import io.embrace.android.gradle.plugin.hash.calculateMD5ForFile
 import io.embrace.android.gradle.plugin.network.OkHttpNetworkService
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTask
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTaskImpl
 import io.embrace.android.gradle.plugin.tasks.handleHttpCallResult
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import okio.buffer
 import okio.gzip
 import okio.sink
-import okio.source
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.tasks.InputFile
@@ -96,16 +96,11 @@ abstract class GenerateRnSourcemapTask @Inject constructor(
         try {
             sourceMapAndBundleJsonFile.parentFile.mkdirs()
             sourceMapAndBundleJsonFile.sink().gzip().buffer().use { sink ->
-                JsonWriter.of(sink).use { jsonWriter ->
-                    with(jsonWriter) {
-                        beginObject()
-                        name(KEY_NAME_BUNDLE)
-                        bundleFile.source().buffer().use { value(it.readUtf8()) }
-                        name(KEY_NAME_SOURCE_MAP)
-                        sourceMapFile.source().buffer().use { value(it.readUtf8()) }
-                        endObject()
-                    }
+                val json = buildJsonObject {
+                    put(KEY_NAME_BUNDLE, bundleFile.readText())
+                    put(KEY_NAME_SOURCE_MAP, sourceMapFile.readText())
                 }
+                sink.writeUtf8(json.toString())
             }
         } catch (e: Exception) {
             val msg = "Failed to generate bundle zip file with bundleFile: $bundleFile and sourceMapFile: $sourceMapFile"

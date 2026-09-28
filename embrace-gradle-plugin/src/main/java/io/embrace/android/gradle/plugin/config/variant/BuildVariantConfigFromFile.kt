@@ -1,14 +1,13 @@
 package io.embrace.android.gradle.plugin.config.variant
 
-import com.squareup.moshi.JsonDataException
-import com.squareup.moshi.Moshi
 import io.embrace.android.gradle.plugin.EmbraceLogger
 import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.system.JavaSystemWrapper
 import io.embrace.android.gradle.plugin.system.SystemWrapper
-import okio.buffer
-import okio.source
+import io.embrace.android.gradle.plugin.util.serialization.configFileJson
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.builtins.nullable
 import org.gradle.api.file.Directory
 import java.io.File
 
@@ -62,12 +61,12 @@ private fun buildVariantConfiguration(configFile: File, systemWrapper: SystemWra
         VariantConfigurationValidator.validate(configuration)
 
         configuration
-    } catch (ex: JsonDataException) {
+    } catch (ex: SerializationException) {
         throw IllegalArgumentException(
             "Embrace config file ${configFile.absoluteFile} contains an unrecognized key.\n" +
                 "Please check your embrace-config.json for typos or unsupported options.\n" +
                 "Available options are documented here: https://embrace.io/docs/android/configuration/configuration-file/\n" +
-                "Error: ${ex.localizedMessage}",
+                "Error: ${ex.localizedMessage?.lineSequence()?.first()}",
         )
     } catch (ex: Throwable) {
         throw IllegalArgumentException(
@@ -109,8 +108,4 @@ private fun getAppIdFromEnv(config: EmbraceVariantConfig, systemWrapper: SystemW
 }
 
 private fun readConfigurationFromFile(configFile: File): EmbraceVariantConfig? =
-    configFile.inputStream().source().buffer().use { buffer ->
-        val moshi = Moshi.Builder().build()
-        val adapter = moshi.adapter(EmbraceVariantConfig::class.java).failOnUnknown()
-        adapter.fromJson(buffer)
-    }
+    configFileJson.decodeFromString(EmbraceVariantConfig.serializer().nullable, configFile.readText())

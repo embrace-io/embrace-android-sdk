@@ -26,11 +26,6 @@
         "automatic_data_capture": {
           "type": "object",
           "properties": {
-            "memory_info": {
-              "description": "Enables memory warning capture",
-              "default": true,
-              "type": "boolean"
-            },
             "power_save_mode_info": {
               "description": "Enables power save mode capture.",
               "default": true,
@@ -58,8 +53,8 @@
           "type": "object",
           "properties": {
             "capture_coordinates": {
-              "description": "Set to false to disable capturing tap coordinates.",
-              "default": true,
+              "description": "Set to true to enable capturing tap coordinates.",
+              "default": false,
               "type": "boolean"
             }
           },
@@ -158,8 +153,8 @@
               "uniqueItems": true
             },
             "capture_request_content_length": {
-              "description": "Disable capture of network length which can interfere with certain streaming network requests.",
-              "default": true,
+              "description": "Enable capture of network length which can interfere with certain streaming network requests.",
+              "default": false,
               "type": "boolean"
             },
             "capture_okhttp_response_body_size": {
@@ -178,7 +173,7 @@
             },
             "enable_native_monitoring": {
               "description": "Enable capture of network requests made using the native Java network API.",
-              "default": true,
+              "default": false,
               "type": "boolean"
             },
             "enable_network_span_forwarding": {
@@ -249,32 +244,9 @@
           },
           "minProperties": 1
         },
-        "session": {
-          "type": "object",
-          "properties": {
-            "components": {
-              "description": "Allowlist of session components that should be included in the session payload. The presence of this property denotes that the gating feature is enabled.",
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "uniqueItems": true
-            },
-            "send_full_for": {
-              "description": "List of events allowed to send a full session payload if the gating feature is enabled.",
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "minItems": 1,
-              "uniqueItems": true
-            }
-          },
-          "minProperties": 1
-        },
         "sig_handler_detection": {
           "description": "Enables 3rd party signal handler detection.",
-          "default": true,
+          "default": false,
           "type": "boolean"
         },
         "app_exit_info": {

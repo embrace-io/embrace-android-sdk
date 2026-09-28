@@ -9,14 +9,14 @@ import org.junit.Test
 internal class SpanQueuesTest {
 
     @Test
-    fun `a completed span queue identifies spans by their span ID`() {
+    fun `a completed span queue never compacts`() {
         val queue = completedSpansQueue()
         val other = Span(spanId = "other", name = "other")
-        val superseded = Span(spanId = "span", name = "stale")
-        val latest = Span(spanId = "span", name = "fresh")
+        val first = Span(spanId = "span", name = "first")
+        val second = Span(spanId = "span", name = "second")
 
-        queue.add(listOf(superseded, other, latest))
-        assertEquals(listOf(other, latest), queue.drain())
+        queue.add(listOf(first, other, second))
+        assertEquals(listOf(first, other, second), queue.drain())
     }
 
     @Test

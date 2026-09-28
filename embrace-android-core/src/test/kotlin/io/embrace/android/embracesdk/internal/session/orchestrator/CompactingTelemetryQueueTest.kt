@@ -7,7 +7,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-internal class TelemetryQueueTest {
+internal class CompactingTelemetryQueueTest {
 
     @Test
     fun `a drained queue returns what was buffered, in order`() {
@@ -279,7 +279,7 @@ internal class TelemetryQueueTest {
         assertEquals(0, queue.size)
     }
 
-    private fun telemetryQueue() = TelemetryQueue<Record>(compactThreshold = THRESHOLD, identityOf = Record::key)
+    private fun telemetryQueue() = CompactingTelemetryQueue<Record>(compactThreshold = THRESHOLD, identityOf = Record::key)
 
     private fun record(key: String?, version: Int = 0) = Record(key, version)
 

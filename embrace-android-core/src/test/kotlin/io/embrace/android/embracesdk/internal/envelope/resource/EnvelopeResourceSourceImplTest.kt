@@ -13,6 +13,7 @@ import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.BeforeClass
@@ -173,8 +174,35 @@ internal class EnvelopeResourceSourceImplTest {
         assertSame(observed.single(), observed.last())
     }
 
-    private fun createSource(device: Device) = EnvelopeResourceSourceImpl(
-        FakeConfigService(),
+    @Test
+    fun `no pct rollouts key when none are enabled`() {
+        val resource = createSource(FakeDevice()).getEnvelopeResource()
+        assertFalse(resource.extras.containsKey(EnvelopeResourceSourceImpl.KEY_PCT_ROLLOUTS))
+    }
+
+    @Test
+    fun `enabled pct rollouts are added to the resource alongside other extras`() {
+        val configService = FakeConfigService(
+            enabledPctRollouts = listOf("mfp", "aei"),
+        )
+        val source = createSource(FakeDevice(), configService)
+        source.add("key", "value")
+
+        assertEquals(
+            mapOf(
+                "key" to "value",
+                EnvelopeResourceSourceImpl.KEY_PCT_ROLLOUTS to
+                    "aei;mfp",
+            ),
+            source.getEnvelopeResource().extras,
+        )
+    }
+
+    private fun createSource(
+        device: Device,
+        configService: FakeConfigService = FakeConfigService(),
+    ) = EnvelopeResourceSourceImpl(
+        configService,
         UnitySdkVersionInfo(FakeKeyValueStore()),
         AppEnvironment.Environment.PROD,
         device,

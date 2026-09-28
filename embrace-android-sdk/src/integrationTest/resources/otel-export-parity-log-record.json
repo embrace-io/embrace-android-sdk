@@ -46,7 +46,7 @@
       "emb.state.test": "UNKNOWN",
       "emb.user_session_id": "__EMBRACE_TEST_IGNORE__",
       "log.record.uid": "__EMBRACE_TEST_IGNORE__",
-      "long-attr": "42",
+      "long-attr": 42,
       "string-attr": "value"
     },
     "instrumentationScopeName": "external-logger",
@@ -73,9 +73,12 @@
     "observedTimestampEpochNanos": "169220160030000000",
     "totalAttributeCount": "10",
     "attributes": {
-      "any-value-attr": "3",
-      "boolean-list-attr": "[true, false]",
-      "double-attr": "1.5",
+      "any-value-attr": 3,
+      "boolean-list-attr": [
+        true,
+        false
+      ],
+      "double-attr": 1.5,
       "emb.session_part_id": "__EMBRACE_TEST_IGNORE__",
       "emb.state": "foreground",
       "emb.state.network": "unverified",

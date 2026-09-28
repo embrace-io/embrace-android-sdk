@@ -15,5 +15,6 @@ fun Any.toPayloadString(): String? = when (this) {
     is AnyValue.ListValue -> values.map { it.toPayloadString() }.toString()
     is AnyValue.MapValue -> values.mapValues { it.value.toPayloadString() }.toString()
     is ByteArray -> contentToString()
+    is List<*> -> map { it?.toPayloadString() }.toString()
     else -> toString()
 }

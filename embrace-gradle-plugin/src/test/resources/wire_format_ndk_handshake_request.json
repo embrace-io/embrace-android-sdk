@@ -1,0 +1,9 @@
+{
+  "app": "app",
+  "token": "token",
+  "archs": {
+    "arm64-v8a": {
+      "libfoo.so": "hash"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "symbols": {
+    "arm64-v8a": {
+      "libfoo.so": "hash1",
+      "libbar.so": "hash2"
+    }
+  }
+}

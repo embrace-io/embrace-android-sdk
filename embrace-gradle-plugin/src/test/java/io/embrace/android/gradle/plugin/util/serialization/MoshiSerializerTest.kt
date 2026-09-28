@@ -5,27 +5,25 @@ import com.squareup.moshi.JsonClass
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Test
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 
 class MoshiSerializerTest {
     private val moshiSerializer = MoshiSerializer()
 
     @Test
-    fun `toJson throws exception when serialization fails`() {
-        val data = Any()
-        try {
-            moshiSerializer.toJson(data)
-        } catch (e: IllegalArgumentException) {
-            assertEquals(IllegalArgumentException::class.java, e::class.java)
+    fun `toJson throws IllegalArgumentException when serialization fails`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            moshiSerializer.toJson(Double.NaN)
         }
     }
 
     @Test
-    fun `toJson throws exception when data is null`() {
-        try {
+    fun `toJson throws IllegalArgumentException when data is null`() {
+        assertThrows(IllegalArgumentException::class.java) {
             moshiSerializer.toJson(null)
-        } catch (e: IllegalArgumentException) {
-            assertEquals(IllegalArgumentException::class.java, e::class.java)
         }
     }
 
@@ -38,22 +36,29 @@ class MoshiSerializerTest {
     }
 
     @Test
-    fun `fromJson throws exception when deserialization fails`() {
-        val nonJsonString = "This is not a JSON string"
-        try {
-            moshiSerializer.fromJson(nonJsonString, TestObject::class.java)
-        } catch (e: IllegalArgumentException) {
-            assertEquals(IllegalArgumentException::class.java, e::class.java)
+    fun `toJson writes to and closes the stream`() {
+        var closed = false
+        val stream = object : ByteArrayOutputStream() {
+            override fun close() {
+                closed = true
+            }
+        }
+        moshiSerializer.toJson(TestObject("Francisco", "Independiente"), TestObject::class.java, stream)
+        assertEquals("""{"name":"Francisco","team":"Independiente"}""", stream.toString(Charsets.UTF_8.name()))
+        assertEquals(true, closed)
+    }
+
+    @Test
+    fun `fromJson throws IllegalArgumentException when deserialization fails`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            moshiSerializer.fromJson("This is not a JSON string", TestObject::class.java)
         }
     }
 
     @Test
-    fun `fromJson throws exception when json is empty`() {
-        val emptyJsonString = ""
-        try {
-            moshiSerializer.fromJson(emptyJsonString, TestObject::class.java)
-        } catch (e: IllegalArgumentException) {
-            assertEquals(IllegalArgumentException::class.java, e::class.java)
+    fun `fromJson throws IllegalArgumentException when json is empty`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            moshiSerializer.fromJson("", TestObject::class.java)
         }
     }
 
@@ -63,6 +68,13 @@ class MoshiSerializerTest {
         val testObject = moshiSerializer.fromJson(json, TestObject::class.java)
         assertEquals("Francisco", testObject.name)
         assertEquals("Independiente", testObject.team)
+    }
+
+    @Test
+    fun `fromJson reads from a stream`() {
+        val json = """{"name":"Francisco","team":"Independiente"}"""
+        val testObject = moshiSerializer.fromJson(ByteArrayInputStream(json.toByteArray()), TestObject::class.java)
+        assertEquals("Francisco", testObject.name)
     }
 }
 

@@ -102,11 +102,12 @@ class SessionPartResurrector(
         val snapshots = data.spanSnapshots
             ?.filterNot { completedSpanIds.contains(it.spanId) }
 
-        // use the most recent endTimeNanos from completed spans as the estimated
-        // end time for snapshots, falling back to 0 if nothing is available.
-        val estimatedEndTime = data.spans?.maxByOrNull {
-            it.endTimeNanos ?: 0
-        }?.endTimeNanos ?: data.spanSnapshots?.maxByOrNull { it.startTimeNanos ?: 0 }?.startTimeNanos
+        // estimate the end time for snapshots as the latest of any completed span's end and any snapshot's start,
+        // falling back to 0 if nothing is available. completed spans can predate the snapshots (e.g. spans carried
+        // over from the previous part), so their end alone could fall before a snapshot started.
+        val latestCompletedEnd = data.spans?.mapNotNull { it.endTimeNanos }?.maxOrNull()
+        val latestSnapshotStart = snapshots?.mapNotNull { it.startTimeNanos }?.maxOrNull()
+        val estimatedEndTime = listOfNotNull(latestCompletedEnd, latestSnapshotStart).maxOrNull()
         val failedSpans = snapshots
             ?.map { it.toFailedSpan(endTimeMs = estimatedEndTime?.nanosToMillis() ?: 0) }
             ?: emptyList()

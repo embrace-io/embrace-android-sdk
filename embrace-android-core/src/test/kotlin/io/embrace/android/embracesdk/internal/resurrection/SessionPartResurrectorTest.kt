@@ -69,6 +69,28 @@ internal class SessionPartResurrectorTest {
     }
 
     @Test
+    fun `a failed span never ends before it started when completed spans predate the part`() {
+        val deadPart = incompleteEnvelope()
+        val snapshots = checkNotNull(deadPart.data.spanSnapshots)
+        val sessionStart = checkNotNull(checkNotNull(deadPart.getSessionPartSpan()).startTimeNanos)
+        val carriedOver = snapshots.last().copy(
+            spanId = "carried-over-span-id",
+            startTimeNanos = sessionStart - 2_000_000_000L,
+            endTimeNanos = sessionStart - 1_000_000_000L,
+        )
+        val withCarriedOverSpan = deadPart.copy(data = deadPart.data.copy(spans = listOf(carriedOver)))
+
+        val resurrected = checkNotNull(resurrect(withCarriedOverSpan))
+        val latestSnapshotStart = snapshots.maxOf { checkNotNull(it.startTimeNanos) }
+        checkNotNull(resurrected.data.spans)
+            .filter { it.spanId != carriedOver.spanId }
+            .forEach { span ->
+                assertEquals(latestSnapshotStart.nanosToMillis(), checkNotNull(span.endTimeNanos).nanosToMillis())
+                assertTrue(checkNotNull(span.endTimeNanos) >= checkNotNull(span.startTimeNanos))
+            }
+    }
+
+    @Test
     fun `a snapshot already present as a completed span is not converted again`() {
         val deadPart = incompleteEnvelope()
         val sessionSnapshot = checkNotNull(deadPart.getSessionPartSpan())

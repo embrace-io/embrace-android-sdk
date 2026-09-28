@@ -28,9 +28,9 @@ internal class ExperimentsDataDeliveryTest {
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
         EmbraceSetupInterface(
-            workersToFake = listOf(Worker.Background.LogMessageWorker),
+            workersToFake = listOf(Worker.Background.NonIoRegWorker),
         ).apply {
-            getFakedWorkerExecutor(Worker.Background.LogMessageWorker).blockingMode = false
+            getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).blockingMode = false
         }
     }
 
@@ -153,7 +153,7 @@ internal class ExperimentsDataDeliveryTest {
 
     private fun EmbraceActionInterface.flushLogBatch() {
         clock.tick(LOG_BATCH_FLUSH_MS)
-        testRule.setup.getFakedWorkerExecutor(Worker.Background.LogMessageWorker).moveForwardAndRunBlocked(LOG_BATCH_FLUSH_MS)
+        testRule.setup.getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).moveForwardAndRunBlocked(LOG_BATCH_FLUSH_MS)
     }
 
     private companion object {

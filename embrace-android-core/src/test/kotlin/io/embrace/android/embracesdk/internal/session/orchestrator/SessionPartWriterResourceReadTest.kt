@@ -9,9 +9,9 @@ import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.TestUuidSource
-import io.embrace.android.embracesdk.fakes.createPersistenceBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
+import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
@@ -94,9 +94,7 @@ internal class SessionPartWriterResourceReadTest {
             BackgroundWorker(executor),
             FakeConfigService(
                 nativeSymbolMap = SYMBOLS,
-                persistenceBehavior = createPersistenceBehavior(
-                    remoteCfg = RemoteConfig(pctMultiFilePersistenceEnabled = 100.0f),
-                ),
+                config = EmbraceConfig(persistence = { PersistenceConfig(multiFileEnabled = { true }) }),
             ),
             TestUuidSource(),
             clock,

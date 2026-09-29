@@ -5,11 +5,14 @@ import android.os.Build
 import android.view.FrameMetrics
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
+import io.embrace.android.embracesdk.assertions.getNavigationStateSpan
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.semconv.EmbFrameCountsAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -19,7 +22,8 @@ import org.robolectric.annotation.Config
 import org.robolectric.shadows.FrameMetricsBuilder
 
 /**
- * Frames rendered are counted by the vitals instrumentation and recorded in total on the foreground session part.
+ * Frames rendered on each screen are counted by the vitals instrumentation and recorded on the navigation transition that leaves the
+ * screen, and in total on the foreground session part.
  *
  * Runs on API 30, where the jank budget is the 60Hz refresh interval (16.67ms) times the default 2x multiplier: Robolectric's
  * [FrameMetricsBuilder] can't set the API 31+ `DEADLINE`.
@@ -32,10 +36,13 @@ internal class FrameCountsFeatureTest {
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
-    private val remoteConfig = RemoteConfig(pctSmoothnessEnabled = 100.0f)
+    private val remoteConfig = RemoteConfig(
+        pctNavigationStateCaptureEnabled = 100.0f,
+        pctSmoothnessEnabled = 100.0f,
+    )
 
     @Test
-    fun `frame counts are recorded per foreground session part`() {
+    fun `frame counts are recorded per screen on navigation transitions and per foreground session part`() {
         val activities = listOf(
             Robolectric.buildActivity(HomeActivity::class.java),
             Robolectric.buildActivity(SettingsActivity::class.java),
@@ -59,11 +66,26 @@ internal class FrameCountsFeatureTest {
             },
             assertAction = {
                 val session = getSessionEnvelopes(1).single()
+                val transitions = checkNotNull(checkNotNull(session.getNavigationStateSpan()).events)
+                assertEquals(4, transitions.size)
+
+                // leaving the Initializing system state records nothing
+                assertNull(transitions[0].attributes?.findAttributeValue(EmbFrameCountsAttributes.SMOOTHNESS_DROPPED_FRAMES))
+                transitions[1].assertFrameCounts(dropped = 2, expected = 5) // leaving Home
+                transitions[2].assertFrameCounts(dropped = 0, expected = 1) // leaving Settings
+                transitions[3].assertFrameCounts(dropped = 3, expected = 4) // leaving Profile, to Backgrounded
+
                 val sessionAttrs = checkNotNull(session.findSessionPartSpan().attributes)
                 assertEquals("5", sessionAttrs.findAttributeValue(EmbFrameCountsAttributes.SMOOTHNESS_DROPPED_FRAMES))
                 assertEquals("10", sessionAttrs.findAttributeValue(EmbFrameCountsAttributes.SMOOTHNESS_EXPECTED_FRAMES))
             },
         )
+    }
+
+    private fun SpanEvent.assertFrameCounts(dropped: Int, expected: Int) {
+        val attrs = checkNotNull(attributes)
+        assertEquals(dropped.toString(), attrs.findAttributeValue(EmbFrameCountsAttributes.SMOOTHNESS_DROPPED_FRAMES))
+        assertEquals(expected.toString(), attrs.findAttributeValue(EmbFrameCountsAttributes.SMOOTHNESS_EXPECTED_FRAMES))
     }
 
     /** Delivers one frame per entry to the Activity's frame-metrics listeners, each taking that many milliseconds to render. */

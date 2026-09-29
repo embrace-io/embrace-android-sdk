@@ -6,7 +6,7 @@ import io.embrace.android.gradle.integration.framework.smali.SmaliConfigReader
 import io.embrace.android.gradle.integration.framework.smali.SmaliMethod
 import io.embrace.android.gradle.integration.framework.smali.SmaliParser
 import io.embrace.android.gradle.plugin.tasks.ndk.ArchitecturesToHashedSharedObjectFilesMap
-import io.embrace.android.gradle.plugin.util.serialization.MoshiSerializer
+import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -88,7 +88,7 @@ class AndroidNdkTest {
 
                 // Decode the base64 string into a map
                 val json = Base64.getDecoder().decode(method.returnValue).toString(Charsets.UTF_8)
-                val symbols = MoshiSerializer().fromJson(json, ArchitecturesToHashedSharedObjectFilesMap::class.java).symbols
+                val symbols = JsonSerializer().fromJson(json, ArchitecturesToHashedSharedObjectFilesMap.serializer()).symbols
 
                 // Verify all expected architectures and libraries are present
                 defaultExpectedArchs.forEach { arch ->

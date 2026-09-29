@@ -2,7 +2,7 @@ package io.embrace.android.gradle.plugin.tasks.buildinfo
 
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.tasks.EmbraceTask
-import io.embrace.android.gradle.plugin.util.serialization.MoshiSerializer
+import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.model.ObjectFactory
@@ -26,7 +26,7 @@ abstract class ExportBuildInfoTask @Inject constructor(
     override val variantData: Property<AndroidCompactedVariantData> =
         objectFactory.property(AndroidCompactedVariantData::class.java)
 
-    private val serializer = MoshiSerializer()
+    private val serializer = JsonSerializer()
 
     @get:Input
     val buildId: Property<String> = objectFactory.property(String::class.java)
@@ -46,7 +46,7 @@ abstract class ExportBuildInfoTask @Inject constructor(
         )
         outputFile.get().asFile.apply {
             parentFile.mkdirs()
-            outputStream().use { serializer.toJson(buildInfo, BuildInfoExport::class.java, it) }
+            outputStream().use { serializer.toJson(buildInfo, BuildInfoExport.serializer(), it) }
         }
     }
 

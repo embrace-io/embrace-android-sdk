@@ -1,11 +1,9 @@
 package io.embrace.android.gradle.integration.framework.smali
 
-import com.squareup.moshi.Moshi
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.gradle.integration.framework.ApkDisassembler
 import io.embrace.android.gradle.integration.framework.findArtifact
-import okio.buffer
-import okio.source
+import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
 import java.io.File
 
 class SmaliConfigReader {
@@ -18,9 +16,6 @@ class SmaliConfigReader {
     }
 
     fun readExpectedConfig(resName: String): ExpectedSmaliConfig {
-        val adapter = Moshi.Builder().build().adapter(ExpectedSmaliConfig::class.java)
-        return ResourceReader.readResource(resName).source().buffer().use {
-            checkNotNull(adapter.fromJson(it))
-        }
+        return JsonSerializer().fromJson(ResourceReader.readResource(resName), ExpectedSmaliConfig.serializer())
     }
 }

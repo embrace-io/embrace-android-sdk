@@ -5,7 +5,7 @@ import io.embrace.android.gradle.fakes.FakeConfigFileDirectory
 import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.WebViewLocalConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
-import io.embrace.android.gradle.plugin.util.serialization.MoshiSerializer
+import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -80,8 +80,8 @@ class ConfigFileParsingTest {
     }
 
     @Test
-    fun `quoted boolean is rejected`() {
-        assertRejected("""{"ndk_enabled": "true"}""")
+    fun `quoted boolean is accepted`() {
+        assertEquals(true, parse("""{"ndk_enabled": "true"}""")?.ndkEnabled)
     }
 
     @Test
@@ -133,7 +133,7 @@ class ConfigFileParsingTest {
 
     private fun encode(config: EmbraceVariantConfig): String {
         val stream = ByteArrayOutputStream()
-        MoshiSerializer().toJson(config, EmbraceVariantConfig::class.java, stream)
+        JsonSerializer().toJson(config, EmbraceVariantConfig.serializer(), stream)
         return stream.toString(Charsets.UTF_8.name())
     }
 

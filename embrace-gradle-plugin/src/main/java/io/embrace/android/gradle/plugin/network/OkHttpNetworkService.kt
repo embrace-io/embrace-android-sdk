@@ -6,7 +6,8 @@ import io.embrace.android.gradle.plugin.tasks.common.RequestParams
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadHandshakeRequest
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadHandshakeResponse
 import io.embrace.android.gradle.plugin.util.serialization.EmbraceSerializer
-import io.embrace.android.gradle.plugin.util.serialization.MoshiSerializer
+import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
+import kotlinx.serialization.SerializationStrategy
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
@@ -47,7 +48,7 @@ class OkHttpNetworkService(
     private val serializer: ThreadLocal<EmbraceSerializer> =
         object : ThreadLocal<EmbraceSerializer>() {
             override fun initialValue(): EmbraceSerializer {
-                return MoshiSerializer()
+                return JsonSerializer()
             }
         }
     private val defaultBodyDeserializer = { stream: InputStream ->
@@ -58,6 +59,7 @@ class OkHttpNetworkService(
         return makePostRequest<BuildTelemetryRequest, String>(
             endpoint = EmbraceEndpoint.BUILD_DATA,
             payload = request,
+            payloadSerializer = BuildTelemetryRequest.serializer(),
             deserializationAction = defaultBodyDeserializer,
         )
     }
@@ -69,8 +71,9 @@ class OkHttpNetworkService(
         return makePostRequest<NdkUploadHandshakeRequest, NdkUploadHandshakeResponse>(
             endpoint = EmbraceEndpoint.NDK_HANDSHAKE,
             payload = handshake,
+            payloadSerializer = NdkUploadHandshakeRequest.serializer(),
             appId = appId,
-        ) { serializer.get().fromJson(it, NdkUploadHandshakeResponse::class.java) }
+        ) { serializer.get().fromJson(it, NdkUploadHandshakeResponse.serializer()) }
     }
 
     override fun uploadNdkSymbolFile(
@@ -115,14 +118,15 @@ class OkHttpNetworkService(
         )
     }
 
-    private inline fun <reified T, reified O> makePostRequest(
+    private inline fun <T, reified O> makePostRequest(
         endpoint: EmbraceEndpoint,
         payload: T,
+        payloadSerializer: SerializationStrategy<T>,
         appId: String? = null,
         deserializationAction: (stream: InputStream) -> O,
     ): HttpCallResult {
         val body = StreamedRequestBody(mediaTypeJson) {
-            serializer.get().toJson(payload, T::class.java, it)
+            serializer.get().toJson(payload, payloadSerializer, it)
         }
         return makeRequest<O>(
             requestProvider = {

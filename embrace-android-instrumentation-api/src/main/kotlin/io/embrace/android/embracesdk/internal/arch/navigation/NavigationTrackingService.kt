@@ -13,4 +13,14 @@ interface NavigationTrackingService : NavigationTrackingInitListener, Navigation
      * Register listener that receives events related to components that control navigation
      */
     var navigationControllerEventListener: NavigationControllerEventListener
+
+    /**
+     * Adds a [source] of attributes describing the screen being left.
+     */
+    fun addScreenAttributesSource(source: ScreenAttributesSource)
+
+    /**
+     * Writes the attributes from every registered source to [sink]; called by the instrumentation that records screen transitions.
+     */
+    fun collectScreenAttributes(sink: (key: String, value: String) -> Unit)
 }

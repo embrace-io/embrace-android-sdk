@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
+import io.embrace.android.embracesdk.internal.arch.navigation.ScreenAttributesSource
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
@@ -45,13 +46,25 @@ internal class VitalsDataSource(
     @Volatile
     private var foregroundSessionPart = false
 
-    // Cumulative frame counts; each layer (e.g. the session part) reports the difference from its own start. Written only on the
+    // Cumulative frame counts; each layer (session part, screen) reports the difference from its own start. Written only on the
     // vitals frame thread, read from any thread.
     @Volatile
     private var frameCounts = FrameCounts.ZERO
 
     @Volatile
     private var sessionPartStart = FrameCounts.ZERO
+
+    @Volatile
+    private var screenStart = FrameCounts.ZERO
+
+    // Writes the frame counts for the screen being left.
+    private val screenAttributesSource = ScreenAttributesSource { sink ->
+        val now = frameCounts
+        val counts = now - screenStart
+        screenStart = now
+        sink(EmbFrameCountsAttributes.SMOOTHNESS_DROPPED_FRAMES, counts.dropped.toString())
+        sink(EmbFrameCountsAttributes.SMOOTHNESS_EXPECTED_FRAMES, counts.expected.toString())
+    }
 
     // Extracts per-frame jank; below API 31 the budget tracks the display's refresh interval.
     private val frameMetricsStrategy: FrameMetricsStrategy = FrameMetricsStrategy.create(
@@ -126,6 +139,7 @@ internal class VitalsDataSource(
         )
         args.application.registerActivityLifecycleCallbacks(listener)
         args.processStateTracker.addListener(processStateListener)
+        args.navigationTrackingService.addScreenAttributesSource(screenAttributesSource)
     }
 
     override fun onPreSessionEnd() {

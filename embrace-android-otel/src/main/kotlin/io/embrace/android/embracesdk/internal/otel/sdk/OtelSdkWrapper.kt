@@ -9,6 +9,8 @@ import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalLinkCount
 import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
 import io.embrace.android.embracesdk.internal.otel.impl.EmbOpenTelemetry
 import io.embrace.android.embracesdk.internal.otel.impl.EmbTracerProvider
+import io.embrace.android.embracesdk.internal.otel.logs.PrivateTelemetryFilteringLogRecordProcessor
+import io.embrace.android.embracesdk.internal.otel.spans.PrivateTelemetryFilteringSpanProcessor
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.opentelemetry.kotlin.Clock
@@ -69,6 +71,7 @@ class OtelSdkWrapper(
                 }
                 export {
                     val processors = listOf(configuration.spanProcessor) + configuration.getExternalSpanProcessors()
+                        .map(::PrivateTelemetryFilteringSpanProcessor)
                     compositeSpanProcessor(*processors.toTypedArray())
                 }
             },
@@ -79,6 +82,7 @@ class OtelSdkWrapper(
                 }
                 export {
                     val processors = listOf(configuration.logRecordProcessor) + configuration.getExternalLogRecordProcessors()
+                        .map(::PrivateTelemetryFilteringLogRecordProcessor)
                     compositeLogRecordProcessor(*processors.toTypedArray())
                 }
             },

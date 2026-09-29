@@ -12,6 +12,7 @@ class FakeSpanProcessor(
 ) : SpanProcessor {
 
     val startedSpanNames = mutableListOf<String>()
+    val endingSpanNames = mutableListOf<String>()
     val endedSpanNames = mutableListOf<String>()
 
     override fun isEndRequired(): Boolean = true
@@ -19,6 +20,7 @@ class FakeSpanProcessor(
     override fun isOnEndingRequired(): Boolean = false
 
     override fun onEnding(span: ReadWriteSpan) {
+        endingSpanNames.add(span.name)
     }
 
     override fun onEnd(span: ReadableSpan) {

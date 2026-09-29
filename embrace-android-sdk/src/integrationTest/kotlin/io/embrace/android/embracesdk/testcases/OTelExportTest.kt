@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Severity
+import io.embrace.android.embracesdk.assertions.getLogWithAttributeValue
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeLogRecordProcessor
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaLogRecordExporter
@@ -14,14 +15,18 @@ import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.toStringMap
 import io.embrace.android.embracesdk.otel.java.addJavaLogRecordExporter
 import io.embrace.android.embracesdk.otel.java.addJavaLogRecordProcessor
 import io.embrace.android.embracesdk.otel.java.addJavaSpanExporter
 import io.embrace.android.embracesdk.otel.java.addJavaSpanProcessor
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -152,6 +157,47 @@ internal class OTelExportTest {
             otelExportAssertion = {
                 awaitLogs(1) { it.body.asString() == logMessage }
                 assertTrue(processor.processedLogBodies.contains(logMessage))
+            }
+        )
+    }
+
+    @Test
+    fun `private telemetry is not passed to user-supplied processors or exporters`() {
+        val spanProcessor = FakeSpanProcessor()
+        val logProcessor = FakeLogRecordProcessor()
+        val spanExporter = FakeSpanExporter()
+        val logExporter = FakeLogRecordExporter()
+        lateinit var logger: InternalLogger
+
+        testRule.runTest(
+            setupAction = {
+                logger = getEmbLogger().apply { throwOnInternalError = false }
+            },
+            preSdkStartAction = {
+                embrace.addSpanProcessor(spanProcessor)
+                embrace.addLogRecordProcessor(logProcessor)
+                embrace.addSpanExporter(spanExporter)
+                embrace.addLogRecordExporter(logExporter)
+            },
+            testCaseAction = {
+                recordSession {
+                    embrace.startSpan("public-span").stop()
+                    embrace.logMessage("public-log", Severity.INFO)
+                    logger.trackInternalError(InternalErrorType.InternalInterfaceFail, RuntimeException("internal"))
+                }
+            },
+            assertAction = {
+                assertNotNull(getSingleLogEnvelope().getLogWithAttributeValue(ExceptionAttributes.EXCEPTION_MESSAGE, "internal"))
+                assertNotNull(getSingleSessionEnvelope())
+
+                assertEquals(listOf("public-log"), logProcessor.processedLogBodies)
+                assertTrue(spanProcessor.endedSpanNames.containsAll(listOf("public-span", "emb-session")))
+                assertFalse((spanProcessor.startedSpanNames + spanProcessor.endedSpanNames).contains("emb-sdk-init"))
+
+                assertEquals(listOf("public-log"), logExporter.exportedLogs.map { it.body })
+                val exportedSpanNames = spanExporter.exportedSpans.map { it.name }
+                assertTrue(exportedSpanNames.containsAll(listOf("public-span", "emb-session")))
+                assertFalse(exportedSpanNames.contains("emb-sdk-init"))
             }
         )
     }

@@ -58,6 +58,7 @@ internal class OtelSpanStartArgsTest {
         args.startSpan(startTime).assertSpan(
             expectedName = "emb-test",
             expectedStartTimeMs = startTime,
+            expectedPrivate = true,
         )
         assertEquals(originalStartTime, args.startTimeMs)
     }
@@ -142,8 +143,10 @@ internal class OtelSpanStartArgsTest {
         expectedName: String,
         expectedSpanKind: SpanKind = SpanKind.INTERNAL,
         expectedStartTimeMs: Long,
+        expectedPrivate: Boolean = false,
     ) {
         val data = (this as ReadableSpan).toSpanData()
+        assertEquals(expectedPrivate, data.attributes.containsKey(PrivateSpan.key))
         assertEquals(expectedName, data.name)
         assertEquals(expectedSpanKind, data.spanKind)
         assertEquals(expectedStartTimeMs.millisToNanos(), data.startTimestamp)

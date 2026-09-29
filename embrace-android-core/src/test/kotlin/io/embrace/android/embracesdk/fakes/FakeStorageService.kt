@@ -7,8 +7,6 @@ import java.nio.file.Files
 
 class FakeStorageService : StorageService {
 
-    var shouldThrow = false
-
     val cacheDirectory: File by lazy {
         Files.createTempDirectory("cache_temp").toFile()
     }
@@ -24,13 +22,6 @@ class FakeStorageService : StorageService {
 
     override fun getConfigCacheDir(): File =
         File(cacheDirectory, "emb_config_cache")
-
-    override fun getOrCreateNativeCrashDir(): File {
-        if (shouldThrow) {
-            throw SecurityException("getOrCreateNativeCrashDir failed")
-        }
-        return File(filesDirectory, "ndk")
-    }
 
     override fun listFiles(filter: FilenameFilter): List<File> {
         val filesDir = filesDirectory.listFiles(filter) ?: emptyArray()

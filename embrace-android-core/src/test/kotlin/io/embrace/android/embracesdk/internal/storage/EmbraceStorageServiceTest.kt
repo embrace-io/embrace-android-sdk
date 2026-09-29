@@ -97,13 +97,6 @@ internal class EmbraceStorageServiceTest {
     }
 
     @Test
-    fun `test getNativeCrashDir returns files dir`() {
-        val storageDirForNativeCrash = storageManager.getOrCreateNativeCrashDir()
-        assertNotNull(storageDirForNativeCrash)
-        assertEquals("$embraceFilesDir/ndk", storageDirForNativeCrash.absolutePath)
-    }
-
-    @Test
     fun `test storageTelemetry is logged correctly`() {
         val fileInCache = File(cacheDir, "test_cache.txt").also { it.writeText("hello") }
         val fileInFiles = File(embraceFilesDir, "test_files.txt").also { it.writeText("hello again!") }

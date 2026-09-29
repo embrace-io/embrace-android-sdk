@@ -344,7 +344,7 @@ internal class SessionOrchestratorTest {
         assertEquals(1, payloadCollator.sessionCount.get())
         orchestrator.endSessionWithManual()
         assertEquals(2, payloadCollator.sessionCount.get())
-        checkNotNull(store.storedSessionPartPayloads.last().first)
+        checkNotNull(store.storedSessionPartPayloads.last())
     }
 
     @Test
@@ -357,7 +357,7 @@ internal class SessionOrchestratorTest {
 
         orchestrator.endSessionWithManual()
         assertEquals(2, payloadCollator.sessionCount.get())
-        checkNotNull(store.storedSessionPartPayloads.last().first)
+        checkNotNull(store.storedSessionPartPayloads.last())
     }
 
     @Test
@@ -444,7 +444,7 @@ internal class SessionOrchestratorTest {
     fun `test session part span cold start`() {
         createOrchestrator(ProcessState.BACKGROUND)
         orchestrator.onForeground()
-        checkNotNull(store.storedSessionPartPayloads.last().first)
+        checkNotNull(store.storedSessionPartPayloads.last())
     }
 
     @Test
@@ -452,7 +452,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(ProcessState.BACKGROUND)
         orchestrator.onForeground()
         orchestrator.onBackground()
-        checkNotNull(store.storedSessionPartPayloads.last().first)
+        checkNotNull(store.storedSessionPartPayloads.last())
     }
 
     @Test
@@ -460,7 +460,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(ProcessState.BACKGROUND)
         orchestrator.onForeground()
         orchestrator.handleCrash("my-crash-id")
-        checkNotNull(store.storedSessionPartPayloads.last().first)
+        checkNotNull(store.storedSessionPartPayloads.last())
     }
 
     @Test

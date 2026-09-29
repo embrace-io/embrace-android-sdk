@@ -25,10 +25,5 @@ enum class StorageLocation(val dir: String) {
     /**
      * Session telemetry grouped under one directory per session part
      */
-    SESSION("embrace_sessions"),
-
-    /**
-     * Session telemetry grouped under one directory per session part
-     */
     SESSION_SPLIT("embrace_sessions_split"),
 }

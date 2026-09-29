@@ -74,7 +74,6 @@ internal class FakeApiServer(
 
             // IMPORTANT NOTE: this response is not used until the SDK next starts!
             Endpoint.CONFIG -> handleConfigRequest(request)
-            else -> error("Unsupported endpoint $endpoint")
         }
     }
 

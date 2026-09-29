@@ -8,5 +8,4 @@ enum class Endpoint(
     SESSIONS("spans", "v2"),
     CONFIG("config", "v2"),
     ATTACHMENTS("attachments", "v2"),
-    UNKNOWN("unknown", "v1"),
 }

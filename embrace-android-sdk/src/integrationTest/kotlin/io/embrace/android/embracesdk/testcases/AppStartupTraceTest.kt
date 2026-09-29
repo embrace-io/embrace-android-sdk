@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.testcases
 
 import android.os.Build
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertError
 import io.embrace.android.embracesdk.assertions.assertSdkInitSectionDurationsRecorded
 import io.embrace.android.embracesdk.assertions.findSpansOfType
@@ -28,6 +27,7 @@ import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.ACTIVITY_GAP
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.LIFECYCLE_EVENT_GAP
@@ -39,18 +39,21 @@ import org.junit.Assert.assertNotNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.Robolectric
 import org.robolectric.annotation.Config
 import java.util.zip.GZIPInputStream
 
 @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
-@RunWith(AndroidJUnit4::class)
-internal class AppStartupTraceTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class AppStartupTraceTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
     private lateinit var payloadStorageService: FakePayloadStorageService
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
         EmbraceSetupInterface(
             fakeStorageLayer = true,
             workersToFake = listOf(
@@ -525,5 +528,11 @@ internal class AppStartupTraceTest {
             .single { envelope ->
                 envelope.getSessionPartSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID) != null
             }
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

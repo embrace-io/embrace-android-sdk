@@ -85,6 +85,12 @@ import org.junit.rules.ExternalResource
  * production.
  */
 internal class SdkIntegrationTestRule(
+
+    /**
+     * The opentelemetry-kotlin implementation to run against. When null, the test controls it via [RemoteConfig],
+     * which selects the compat implementation by default.
+     */
+    val otelSdkMode: OtelSdkMode? = null,
     private val embraceSetupInterfaceSupplier: Provider<EmbraceSetupInterface> = { EmbraceSetupInterface() },
 ) : ExternalResource() {
 
@@ -130,9 +136,12 @@ internal class SdkIntegrationTestRule(
         assertAction: EmbracePayloadAssertionInterface.() -> Unit = {},
         otelExportAssertion: EmbraceOtelExportAssertionInterface.() -> Unit = {},
     ) {
+        val localConfig = otelSdkMode?.applyTo(instrumentedConfig) ?: instrumentedConfig
+        val persistedConfig = otelSdkMode?.applyTo(persistedRemoteConfig) ?: persistedRemoteConfig
+        val serverConfig = otelSdkMode?.applyTo(serverResponseConfig) ?: serverResponseConfig
         setup = embraceSetupInterfaceSupplier()
         val deliveryTracer = DeliveryTracer()
-        val apiServer = FakeApiServer(serverResponseConfig, deliveryTracer, serverResponseConfigJson)
+        val apiServer = FakeApiServer(serverConfig, deliveryTracer, serverResponseConfigJson)
         val server: MockWebServer = MockWebServer().apply {
             protocols = listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
             dispatcher = apiServer
@@ -142,7 +151,7 @@ internal class SdkIntegrationTestRule(
 
         preSdkStart = EmbracePreSdkStartInterface(setup) { embraceImpl }
         bootstrapper = setup.createBootstrapper(
-            instrumentedConfig.copy(
+            localConfig.copy(
                 baseUrls = FakeBaseUrlConfig(configImpl = baseUrl, dataImpl = baseUrl)
             ),
             deliveryTracer
@@ -162,12 +171,12 @@ internal class SdkIntegrationTestRule(
             embraceImpl.addLogRecordExporter(logExporter.toOtelKotlinLogRecordExporter())
 
             // persist config here before the SDK starts up: the SDK reads it during start()
-            persistConfig(persistedRemoteConfig)
+            persistConfig(persistedConfig)
             bootstrapper.openTelemetryModule.applyConfiguration(
-                sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(instrumentedConfig),
+                sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(localConfig),
                 bypassValidation = false,
-                otelBehavior = OtelBehaviorImpl(BehaviorThresholdCheck { "123456" }, instrumentedConfig, persistedRemoteConfig),
-                breadcrumbConfig = resolveBreadcrumb(instrumentedConfig, persistedRemoteConfig)
+                otelBehavior = OtelBehaviorImpl(BehaviorThresholdCheck { "123456" }, localConfig, persistedConfig),
+                breadcrumbConfig = resolveBreadcrumb(localConfig, persistedConfig)
             )
 
             if (startSdk) {
@@ -177,6 +186,13 @@ internal class SdkIntegrationTestRule(
                     expectSdkToStart,
                     embraceImpl.isStarted
                 )
+                otelSdkMode?.takeIf { embraceImpl.isStarted }?.let { mode ->
+                    assertEquals(
+                        "SDK did not select the $mode opentelemetry-kotlin implementation.",
+                        mode.useKotlinSdk,
+                        bootstrapper.openTelemetryModule.otelSdkWrapper.useKotlinSdk,
+                    )
+                }
                 awaitAsyncInstrumentation()
             }
         }
@@ -223,7 +239,9 @@ internal class SdkIntegrationTestRule(
      * Teardown the Embrace SDK, closing any resources as required
      */
     override fun after() {
-        embraceImpl.stop()
+        if (::embraceImpl.isInitialized) {
+            embraceImpl.stop()
+        }
     }
 
     companion object {

@@ -1,18 +1,21 @@
 package io.embrace.android.embracesdk.testcases.features
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSpanByName
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertMatches
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
-@RunWith(AndroidJUnit4::class)
-internal class SensitiveKeysRedactionFeatureTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class SensitiveKeysRedactionFeatureTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     private val instrumentedConfig = FakeInstrumentedConfig(
         redaction = FakeRedactionConfig(sensitiveKeys = listOf("password"))
@@ -20,7 +23,7 @@ internal class SensitiveKeysRedactionFeatureTest {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     @Test
     fun `custom span properties are redacted if they are sensitive`() {
@@ -75,5 +78,11 @@ internal class SensitiveKeysRedactionFeatureTest {
                 ))
             }
         )
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

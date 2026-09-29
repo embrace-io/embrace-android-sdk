@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.testcases
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
@@ -13,6 +12,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.LogDiff
@@ -24,21 +24,24 @@ import kotlinx.serialization.KSerializer
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 import java.util.zip.GZIPInputStream
 
 /**
  * Verifies that the session part span and log payload emitted by the SDK for basic scenarios match
  * known-good JSON golden files.
  */
-@RunWith(AndroidJUnit4::class)
-internal class UserSessionGoldenFileTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class UserSessionGoldenFileTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     private lateinit var payloadStorageService: FakePayloadStorageService
     private val testSerializer = TestPlatformSerializer()
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
         EmbraceSetupInterface(fakeStorageLayer = true).also {
             payloadStorageService = checkNotNull(it.fakePayloadStorageService)
         }
@@ -257,5 +260,11 @@ internal class UserSessionGoldenFileTest {
                 )
             }
         )
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

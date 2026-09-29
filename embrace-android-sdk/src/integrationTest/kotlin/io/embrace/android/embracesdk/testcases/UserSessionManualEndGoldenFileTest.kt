@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.testcases
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.assertions.SessionPartDiff
 import io.embrace.android.embracesdk.testframework.assertions.UserSessionDiff
@@ -8,16 +8,19 @@ import io.embrace.android.embracesdk.testframework.assertions.assertPayloadsMatc
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
 /**
  * Verifies the session part spans emitted when a user session is manually ended.
  */
-@RunWith(AndroidJUnit4::class)
-internal class UserSessionManualEndGoldenFileTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class UserSessionManualEndGoldenFileTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     /**
      * Manually ending a session starts a new one and sets the termination reason correctly
@@ -39,5 +42,11 @@ internal class UserSessionManualEndGoldenFileTest {
                 )
             }
         )
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

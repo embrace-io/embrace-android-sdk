@@ -2,7 +2,6 @@
 
 package io.embrace.android.embracesdk.testcases
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.assertions.getSessionPartId
@@ -14,13 +13,12 @@ import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.toStringMap
 import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceOtelExportAssertionInterface
@@ -44,13 +42,16 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
-@RunWith(AndroidJUnit4::class)
-internal class ExternalLoggerTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class ExternalLoggerTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     private val instrumentedConfig = FakeInstrumentedConfig(
         enabledFeatures = FakeEnabledFeatureConfig(
@@ -66,10 +67,6 @@ internal class ExternalLoggerTest {
     private lateinit var embOpenTelemetry: OpenTelemetry
     private lateinit var embLogger: Logger
 
-    private val remoteConfig = RemoteConfig(
-        otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = 100.0f) // Enable Kotlin SDK
-    )
-
     @Before
     fun setup() {
         logExporter = FakeLogRecordExporter()
@@ -83,7 +80,6 @@ internal class ExternalLoggerTest {
         var exportedOTelLog: LogRecordData? = null
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
-            persistedRemoteConfig = remoteConfig,
             preSdkStartAction = {
                 setupExporter()
                 embrace.setResourceAttribute("my-resource-attr", "foo")
@@ -163,7 +159,6 @@ internal class ExternalLoggerTest {
         var exportedOTelLog: LogRecordData? = null
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
-            persistedRemoteConfig = remoteConfig,
             preSdkStartAction = {
                 setupExporter()
                 embrace.setResourceAttribute("my-resource-attr", "foo")
@@ -228,7 +223,6 @@ internal class ExternalLoggerTest {
     fun `user id is stamped on exported log when set`() {
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
-            persistedRemoteConfig = remoteConfig,
             preSdkStartAction = {
                 setupExporter()
             },
@@ -255,7 +249,6 @@ internal class ExternalLoggerTest {
     fun `exception passed to the otel logging API is recorded on the exported log`() {
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
-            persistedRemoteConfig = remoteConfig,
             preSdkStartAction = {
                 setupExporter()
             },
@@ -322,7 +315,9 @@ internal class ExternalLoggerTest {
         assertEquals(expectedBody, body)
         assertEquals(expectedObservedTimestamp, observedTimestamp)
         assertEquals(expectedTimestamp, timestamp)
-        assertEquals(expectedSpanContext, spanContext)
+        assertEquals(expectedSpanContext.traceId, spanContext.traceId)
+        assertEquals(expectedSpanContext.spanId, spanContext.spanId)
+        assertEquals(expectedSpanContext.isValid, spanContext.isValid)
         assertEquals(expectedSeverityNumber.severityNumber, severityNumber?.severityNumber)
         assertEquals(expectedSeverityText, severityText)
         with(checkNotNull(attributes.mapValues { it.value.toString() })) {
@@ -361,5 +356,11 @@ internal class ExternalLoggerTest {
                 assertEquals(expectedOTelLog.attributes[attr.key].toString(), attr.value)
             }
         }
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

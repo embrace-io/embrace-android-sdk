@@ -28,6 +28,7 @@ class BuildTelemetryCollector {
         behavior: PluginBehavior,
         providerFactory: ProviderFactory,
         variantConfigs: ListProperty<VariantConfig>,
+        buildIds: Provider<Map<String, String>>,
         agpWrapper: AgpWrapper,
     ): Provider<BuildTelemetryRequest> {
         // first, get telemetry that is ok to capture during the configuration phase
@@ -59,11 +60,14 @@ class BuildTelemetryCollector {
                     VariantBuildTelemetry(
                         variantName = config.variantName,
                         appId = config.embraceConfig?.appId,
-                        buildId = config.buildId,
                     )
                 },
                 kotlinVersion = getKotlinVersion(project),
                 kotlinJvmTarget = getKotlinJvmTarget(project),
+            )
+        }.zip(buildIds) { request, ids -> // zip rather than reading in provider to avoid resolving in configuration phase
+            request.copy(
+                variantBuildTelemetry = request.variantBuildTelemetry?.map { it.copy(buildId = ids[it.variantName]) },
             )
         }
     }

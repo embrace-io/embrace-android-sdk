@@ -11,12 +11,14 @@ import io.embrace.android.gradle.plugin.buildreporter.BuildTelemetryRequest
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
 import io.embrace.android.gradle.plugin.tasks.buildinfo.BuildInfoExport
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadHandshakeRequest
+import io.embrace.android.gradle.plugin.util.INVALID_BUILD_ID
 import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
 import kotlinx.serialization.serializer
 import okhttp3.mockwebserver.RecordedRequest
 import okio.Buffer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import java.io.File
@@ -26,6 +28,12 @@ class AssertionInterface(
 ) {
 
     private val multipartFormReader: MultipartFormReader = MultipartFormReader()
+
+    /**
+     * The console output of the most recent build.
+     */
+    var buildOutput: String = ""
+        internal set
 
     /**
      * Fetches a request sent to the mock server with the given endpoint.
@@ -102,7 +110,8 @@ class AssertionInterface(
             assertNotNull(jdkVersion)
             assertFalse(checkNotNull(isEdmEnabled))
 
-            // assert variants match expected list and contain unique build IDs
+            // assert variants match expected list and contain unique build IDs, other than variants
+            // that share INVALID_BUILD_ID because they neither upload nor export their build ID
             val variants = checkNotNull(variantBuildTelemetry)
             variants.forEachIndexed { i, variant ->
                 assertNotNull(variant.buildId)
@@ -111,7 +120,8 @@ class AssertionInterface(
                     assertEquals(expectedAppIds[i], variant.appId)
                 }
             }
-            assertEquals(variants.size, variants.map { it.buildId }.distinct().count())
+            val uniqueBuildIds = variants.mapNotNull { it.buildId }.filter { it != INVALID_BUILD_ID }
+            assertEquals(uniqueBuildIds.size, uniqueBuildIds.distinct().size)
             if (additionalAssertions != null) {
                 additionalAssertions(this)
             }
@@ -165,6 +175,7 @@ class AssertionInterface(
             parts[0].validateBodyAppId(sortedAppIds[i])
             parts[1].validateBodyApiToken(IntegrationTestDefaults.API_TOKEN)
             parts[2].validateBodyBuildId(sortedBuildIds?.get(i))
+            assertNotEquals(INVALID_BUILD_ID, parts[2].data)
             parts[3].validateMappingFile("mapping.txt")
         }
     }

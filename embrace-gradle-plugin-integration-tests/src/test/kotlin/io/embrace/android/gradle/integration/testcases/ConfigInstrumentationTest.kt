@@ -7,6 +7,7 @@ import io.embrace.android.gradle.integration.framework.ProjectType
 import io.embrace.android.gradle.integration.framework.smali.SmaliConfigReader
 import io.embrace.android.gradle.integration.framework.smali.SmaliMethod
 import io.embrace.android.gradle.integration.framework.smali.SmaliParser
+import io.embrace.android.gradle.plugin.util.INVALID_BUILD_ID
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -63,6 +64,29 @@ class ConfigInstrumentationTest {
                 verifyInstrumentedConfig(projectDir, "instrumented-config-overrides.json")
             },
         )
+    }
+
+    @Test
+    fun `invalid build ID instrumented when mapping upload disabled`() {
+        rule.runTest(
+            fixture = "android-with-code",
+            task = "assembleRelease",
+            additionalArgs = listOf("-x", "lintVitalRelease", "-Pembrace.disableMappingFileUpload=true"),
+            projectType = ProjectType.ANDROID,
+            assertions = { projectDir ->
+                assertEquals(INVALID_BUILD_ID, readInstrumentedBuildId(projectDir))
+            },
+        )
+    }
+
+    private fun readInstrumentedBuildId(projectDir: File): String? {
+        val reader = SmaliConfigReader()
+        val file = reader.readSmaliFiles(projectDir, classNames).single { it.name == "ProjectConfigImpl.smali" }
+        val expected = reader.readExpectedConfig("instrumented-config-default.json").values
+            .single { it.className == "ProjectConfigImpl" }
+        return SmaliParser().parse(file, expected.methods).methods
+            .single { it.signature.contains("getBuildId") }
+            .returnValue
     }
 
     private fun AssertionInterface.verifyInstrumentedConfig(projectDir: File, resName: String) {

@@ -3,7 +3,9 @@ package io.embrace.android.gradle.integration.testcases
 import io.embrace.android.gradle.integration.framework.IntegrationTestDefaults
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.ProjectType
+import io.embrace.android.gradle.plugin.util.INVALID_BUILD_ID
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -38,6 +40,21 @@ class ExportBuildInfoTest {
                 assertEquals(IntegrationTestDefaults.APP_ID, buildInfo.appId)
                 assertEquals("release", buildInfo.variantName)
                 assertTrue(buildInfo.buildId.isNotBlank())
+            },
+        )
+    }
+
+    @Test
+    fun `build info exported with unique build ID when mapping upload disabled`() {
+        rule.runTest(
+            fixture = "android-simple",
+            task = "assembleRelease",
+            projectType = ProjectType.ANDROID,
+            additionalArgs = listOf("-Pembrace.exportBuildInfo=true", "-Pembrace.disableMappingFileUpload=true"),
+            assertions = { projectDir ->
+                val buildInfo = readBuildInfoExport(projectDir, "release")
+                assertTrue(buildInfo.buildId.matches(Regex("[A-F0-9]{32}")))
+                assertNotEquals(INVALID_BUILD_ID, buildInfo.buildId)
             },
         )
     }

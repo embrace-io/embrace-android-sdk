@@ -379,7 +379,7 @@ internal class SessionOrchestratorImpl(
                         endSessionPartCallback = {
                             // End the current session or background activity, if either exist.
                             EmbTrace.trace("end-current-session") {
-                                processEndMessage(oldSessionAction?.invoke(this), transitionType)
+                                processEndMessage(oldSessionAction?.invoke(this))
                             }
 
                             // persist the stopped session part span
@@ -585,9 +585,9 @@ internal class SessionOrchestratorImpl(
         }
     }
 
-    private fun processEndMessage(envelope: Envelope<SessionPartPayload>?, transitionType: TransitionType) {
+    private fun processEndMessage(envelope: Envelope<SessionPartPayload>?) {
         envelope?.let {
-            payloadStore?.storeSessionPartPayload(envelope, transitionType)
+            payloadStore?.storeSessionPartPayload(envelope)
         }
     }
 

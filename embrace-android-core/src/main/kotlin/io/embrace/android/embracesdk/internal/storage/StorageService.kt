@@ -26,11 +26,6 @@ interface StorageService {
     fun getConfigCacheDir(): File
 
     /**
-     * Returns a [File] instance referencing the directory where the native crash files are stored.
-     */
-    fun getOrCreateNativeCrashDir(): File
-
-    /**
      * Returns a list of files from the files and cache directories that match the [filter].
      */
     fun listFiles(filter: FilenameFilter = FilenameFilter { _, _ -> true }): List<File>
@@ -40,8 +35,3 @@ interface StorageService {
      */
     fun logStorageTelemetry()
 }
-
-/**
- * Directory name for the native crash files that are stored in the files directory.
- */
-const val NATIVE_CRASH_FILE_FOLDER: String = "ndk"

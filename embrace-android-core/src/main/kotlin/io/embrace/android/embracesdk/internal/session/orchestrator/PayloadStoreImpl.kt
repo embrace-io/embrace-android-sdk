@@ -26,10 +26,7 @@ internal class PayloadStoreImpl(
     private val sessionIdsProvider: () -> SessionIdsSnapshot,
 ) : PayloadStore {
 
-    override fun storeSessionPartPayload(
-        envelope: Envelope<SessionPartPayload>,
-        transitionType: TransitionType,
-    ) {
+    override fun storeSessionPartPayload(envelope: Envelope<SessionPartPayload>) {
         intakeService.take(
             intake = envelope,
             metadata = createMetadata(
@@ -50,7 +47,7 @@ internal class PayloadStoreImpl(
         )
     }
 
-    override fun storeLogPayload(envelope: Envelope<LogPayload>, attemptImmediateRequest: Boolean) {
+    override fun storeLogPayload(envelope: Envelope<LogPayload>) {
         val type = findSupportedEnvelopeType(envelope.data.logs)
         val payloadType = getPayloadType(envelope)
         val payloadTypesHeader = getPayloadTypesHeader(envelope)

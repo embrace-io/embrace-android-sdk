@@ -15,7 +15,7 @@ interface PayloadStore : CrashTeardownHandler {
      * Stores a final session payload that will have no further modifications
      * (i.e. the session ended or crashed)
      */
-    fun storeSessionPartPayload(envelope: Envelope<SessionPartPayload>, transitionType: TransitionType)
+    fun storeSessionPartPayload(envelope: Envelope<SessionPartPayload>)
 
     /**
      * Stores a session snapshot that is likely to have further modifications.
@@ -25,7 +25,7 @@ interface PayloadStore : CrashTeardownHandler {
     /**
      * Stores a log payload that will have no further modifications.
      */
-    fun storeLogPayload(envelope: Envelope<LogPayload>, attemptImmediateRequest: Boolean)
+    fun storeLogPayload(envelope: Envelope<LogPayload>)
 
     /**
      * Stores a log attachment.

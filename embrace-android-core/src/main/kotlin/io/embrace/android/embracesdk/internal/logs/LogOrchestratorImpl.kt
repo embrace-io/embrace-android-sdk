@@ -34,7 +34,7 @@ internal class LogOrchestratorImpl(
 
         val envelope = logEnvelopeSource.getBatchedLogEnvelope()
         if (!envelope.data.logs.isNullOrEmpty()) {
-            payloadStore?.storeLogPayload(envelope, !saveOnly)
+            payloadStore?.storeLogPayload(envelope)
         }
     }
 
@@ -44,11 +44,7 @@ internal class LogOrchestratorImpl(
 
     override fun onLogsAdded() {
         logEnvelopeSource.getSingleLogEnvelopes().forEach { logRequest ->
-            if (logRequest.defer) {
-                payloadStore?.storeLogPayload(logRequest.payload, false)
-            } else {
-                payloadStore?.storeLogPayload(logRequest.payload, true)
-            }
+            payloadStore?.storeLogPayload(logRequest.payload)
         }
 
         lastLogTime.set(clock.now())

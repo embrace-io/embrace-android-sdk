@@ -147,10 +147,7 @@ internal class LogOrchestratorTest {
 
         // Verify the logs are sent
         assertTrue(logSink.logsForNextBatch().isEmpty())
-        store.storedLogPayloads.single().let { (envelope, attemptImmediateRequest) ->
-            assertEquals(4, envelope.data.logs?.size)
-            assertFalse(attemptImmediateRequest)
-        }
+        assertEquals(4, store.storedLogPayloads.single().data.logs?.size)
     }
 
     @Test
@@ -181,7 +178,7 @@ internal class LogOrchestratorTest {
         assertEquals(
             "Too many logs in payload",
             50,
-            store.storedLogPayloads[0].first.data.logs?.size,
+            store.storedLogPayloads[0].data.logs?.size,
         )
     }
 
@@ -201,16 +198,11 @@ internal class LogOrchestratorTest {
         // Verify the log is not in the LogSink but is saved
         assertNull(logSink.pollUnbatchedLog())
 
-        store.storedLogPayloads.single().let { (_, attemptImmediateRequest) ->
-            assertFalse(attemptImmediateRequest)
-        }
+        assertEquals(1, store.storedLogPayloads.size)
     }
 
     private fun verifyPayload(numberOfLogs: Int) {
-        store.storedLogPayloads.single().let { (envelope, attemptImmediateRequest) ->
-            assertEquals(numberOfLogs, envelope.data.logs?.size)
-            assertTrue(attemptImmediateRequest)
-        }
+        assertEquals(numberOfLogs, store.storedLogPayloads.single().data.logs?.size)
     }
 
     private fun verifyPayloadNotSent() {

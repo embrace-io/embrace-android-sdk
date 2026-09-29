@@ -47,7 +47,7 @@ class V2PayloadStoreTest {
     @Test
     fun `test store session`() {
         val envelope = fakeSessionEnvelope()
-        store.storeSessionPartPayload(envelope, TransitionType.ON_BACKGROUND)
+        store.storeSessionPartPayload(envelope)
         verifySessionIntake(
             envelope,
             intakeService.getIntakes(),
@@ -58,7 +58,7 @@ class V2PayloadStoreTest {
     @Test
     fun `test store session with crash`() {
         val envelope = fakeSessionEnvelope()
-        store.storeSessionPartPayload(envelope, TransitionType.CRASH)
+        store.storeSessionPartPayload(envelope)
         verifySessionIntake(
             envelope,
             intakeService.getIntakes(),
@@ -69,7 +69,7 @@ class V2PayloadStoreTest {
     @Test
     fun `test log`() {
         val envelope = Envelope(data = LogPayload())
-        store.storeLogPayload(envelope, true)
+        store.storeLogPayload(envelope)
 
         val intake = intakeService.getIntakes<LogPayload>().single()
         assertSame(envelope, intake.envelope)
@@ -149,7 +149,7 @@ class V2PayloadStoreTest {
                 ),
             ),
         )
-        store.storeLogPayload(envelope, true)
+        store.storeLogPayload(envelope)
     }
 
     private fun getLastLogMetadata(): StoredTelemetryMetadata {

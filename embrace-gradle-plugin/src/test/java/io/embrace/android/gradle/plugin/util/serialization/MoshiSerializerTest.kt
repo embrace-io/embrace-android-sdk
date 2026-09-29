@@ -2,6 +2,8 @@ package io.embrace.android.gradle.plugin.util.serialization
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -65,7 +67,12 @@ class MoshiSerializerTest {
 }
 
 @JsonClass(generateAdapter = true)
+@Serializable
 class TestObject(
-    @Json(name = "name") val name: String,
-    @Json(name = "team") val team: String,
+    @Json(name = "name")
+    @SerialName("name")
+    val name: String,
+    @Json(name = "team")
+    @SerialName("team")
+    val team: String,
 )

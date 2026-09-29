@@ -1,9 +1,7 @@
 package io.embrace.android.gradle.network
 
-import com.squareup.moshi.JsonClass
 import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
 @Serializable
 data class NdkHandshakeRequestBody(
     val app: String,

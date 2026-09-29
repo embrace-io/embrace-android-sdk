@@ -77,7 +77,7 @@ interface TelemetryDestination {
         type: EmbType = EmbType.Performance.Default,
         internal: Boolean = true,
         private: Boolean = false,
-        attributes: Map<String, String> = emptyMap(),
+        attributes: Map<String, Any> = emptyMap(),
         events: List<SpanEvent> = emptyList(),
     )
 

@@ -32,12 +32,12 @@ sealed class SchemaType(
     val telemetryType: EmbType,
     val fixedObjectName: String = "",
 ) {
-    protected abstract val schemaAttributes: Map<String, String>
+    protected abstract val schemaAttributes: Map<String, Any>
 
     /**
      * The attributes defined for this schema that should be used to populate telemetry objects
      */
-    fun attributes(): Map<String, String> {
+    fun attributes(): Map<String, Any> {
         val sendMode = telemetryType.sendMode
         return if (sendMode == SendMode.DEFAULT) {
             schemaAttributes
@@ -168,24 +168,24 @@ sealed class SchemaType(
     }
 
     class Log(attributes: TelemetryAttributes) : SchemaType(EmbType.System.Log) {
-        override val schemaAttributes: Map<String, String> = attributes.snapshot()
+        override val schemaAttributes: Map<String, Any> = attributes.snapshot()
     }
 
     class Exception(attributes: TelemetryAttributes) :
         SchemaType(EmbType.System.Exception) {
-        override val schemaAttributes: Map<String, String> = attributes.snapshot()
+        override val schemaAttributes: Map<String, Any> = attributes.snapshot()
     }
 
     class JvmCrash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.Crash) {
-        override val schemaAttributes: Map<String, String> = attributes.snapshot()
+        override val schemaAttributes: Map<String, Any> = attributes.snapshot()
     }
 
     class ReactNativeCrash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.ReactNativeCrash) {
-        override val schemaAttributes: Map<String, String> = attributes.snapshot()
+        override val schemaAttributes: Map<String, Any> = attributes.snapshot()
     }
 
     class NativeCrash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.NativeCrash) {
-        override val schemaAttributes: Map<String, String> = attributes.snapshot()
+        override val schemaAttributes: Map<String, Any> = attributes.snapshot()
     }
 
     object LowPower : SchemaType(
@@ -450,7 +450,7 @@ sealed class SchemaType(
     ) : SchemaType(
         telemetryType = EmbType.Custom(type, subType, sendMode),
     ) {
-        override val schemaAttributes: Map<String, String> = attributes.snapshot()
+        override val schemaAttributes: Map<String, Any> = attributes.snapshot()
     }
 }
 

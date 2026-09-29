@@ -266,7 +266,7 @@ internal class NetworkCaptureDataSourceTest {
 
         assertEquals(1, destination.logEvents.size)
         val attrs = destination.logEvents[0].schemaType.attributes()
-        assertFalse(checkNotNull(attrs[EmbNetworkCapturedRequestAttributes.ENCRYPTED_PAYLOAD]).isBlank())
+        assertFalse(checkNotNull(attrs[EmbNetworkCapturedRequestAttributes.ENCRYPTED_PAYLOAD]).toString().isBlank())
         assertNull(attrs[EmbNetworkCapturedRequestAttributes.REQUEST_BODY])
         assertNull(attrs[EmbNetworkCapturedRequestAttributes.RESPONSE_BODY])
         assertNull(attrs[EmbNetworkCapturedRequestAttributes.REQUEST_QUERY])

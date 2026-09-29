@@ -493,7 +493,7 @@ internal class AeiDataSourceImplTest {
         assertEquals(16, args.destination.logEvents.size)
     }
 
-    private fun getAeiLogAttrs(): Map<String, String> {
+    private fun getAeiLogAttrs(): Map<String, Any> {
         val logEventData = args.destination.logEvents.single()
         assertEquals(LogSeverity.INFO, logEventData.severity)
         assertEquals(EmbType.System.Exit, logEventData.schemaType.telemetryType)

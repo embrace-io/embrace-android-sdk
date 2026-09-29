@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehav
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -213,6 +214,34 @@ internal class EmbraceLogServiceTest {
         assertTrue(fakeTelemetryService.appliedLimits.contains("log_attribute_key" to AppliedLimitType.TRUNCATE_STRING))
         assertTrue(
             fakeTelemetryService.appliedLimits.contains("log_attribute_value" to AppliedLimitType.TRUNCATE_STRING),
+        )
+    }
+
+    @Test
+    fun `non-string values keep their type unless their payload string is over the limit`() {
+        val bytes = byteArrayOf(1, 2)
+        val longList = List(300) { "abcde" }
+        logService.log(
+            message = "message",
+            severity = LogSeverity.INFO,
+            attributes = mapOf(
+                "long" to 5L,
+                "bool" to true,
+                "list" to listOf("a", "b"),
+                "bytes" to bytes,
+                "longList" to longList,
+            ),
+            schemaProvider = ::Log,
+        )
+        val attributes = destination.logEvents.single().schemaType.attributes()
+        assertEquals(5L, attributes["long"])
+        assertEquals(true, attributes["bool"])
+        assertEquals(listOf("a", "b"), attributes["list"])
+        assertSame(bytes, attributes["bytes"])
+        assertEquals(longList.toString().take(1021) + "...", attributes["longList"])
+        assertEquals(
+            1,
+            fakeTelemetryService.appliedLimits.count { it == "log_attribute_value" to AppliedLimitType.TRUNCATE_STRING },
         )
     }
 

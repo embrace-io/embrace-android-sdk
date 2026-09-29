@@ -134,6 +134,21 @@ val generateExpectedNames = tasks.register<GenerateExpectedNamesTask>("generateE
     outputDir.set(layout.buildDirectory.dir("generated/expectedNames"))
 }
 
+// If the app crashes before the runner starts (e.g. R8 removed a class the runner needs), AGP
+// reports zero tests and still passes. Treat that as a failure.
+tasks.matching { it.name == "connectedMinifiedAndroidTest" }.configureEach {
+    val resultsDir = layout.buildDirectory.dir("outputs/androidTest-results/connected/minified")
+    doLast {
+        val testCount = resultsDir.get().asFile.walk()
+            .filter { it.name.startsWith("TEST-") && it.extension == "xml" }
+            .flatMap { Regex("<testcase ").findAll(it.readText()) }
+            .count()
+        check(testCount > 0) {
+            "No tests ran. The app probably crashed on launch; check logcat for a FATAL EXCEPTION."
+        }
+    }
+}
+
 androidComponents {
     onVariants { variant ->
         variant.androidTest?.sources?.assets?.addGeneratedSourceDirectory(

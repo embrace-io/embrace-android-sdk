@@ -19,8 +19,8 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 internal class RemoteConfigTest {
 
-    private val sdkDisabledConfig = RemoteConfig(0)
-    private val sdkEnabledConfig = RemoteConfig(100)
+    private val sdkDisabledConfig = RemoteConfig(threshold = 0)
+    private val sdkEnabledConfig = RemoteConfig(threshold = 100)
 
     @Rule
     @JvmField

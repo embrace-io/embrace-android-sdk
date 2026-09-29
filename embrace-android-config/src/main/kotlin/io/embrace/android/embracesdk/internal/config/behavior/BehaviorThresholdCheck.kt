@@ -65,4 +65,9 @@ class BehaviorThresholdCheck(
     }
 
     fun getNormalizedDeviceId(): Float = normalizedId
+
+    /**
+     * This device's rollout bucket, for resolving config.
+     */
+    val bucket: Lazy<Float> = lazy { normalizedId }
 }

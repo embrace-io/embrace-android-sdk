@@ -391,7 +391,7 @@ internal class CurrentSessionPartSpanImplTests {
 
     @Test
     fun `check breadcrumb span event limit`() {
-        repeat(BreadcrumbConfig.DEFAULT_LIMIT) {
+        repeat(BreadcrumbConfig.DEFAULT_CUSTOM_LIMIT) {
             assertTrue(currentSessionPartSpan.canAddEvent(isBreadcrumb = true))
         }
         assertFalse(currentSessionPartSpan.canAddEvent(isBreadcrumb = true))
@@ -409,7 +409,7 @@ internal class CurrentSessionPartSpanImplTests {
         repeat(DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART) {
             currentSessionPartSpan.canAddEvent(isBreadcrumb = false)
         }
-        repeat(BreadcrumbConfig.DEFAULT_LIMIT) {
+        repeat(BreadcrumbConfig.DEFAULT_CUSTOM_LIMIT) {
             currentSessionPartSpan.canAddEvent(isBreadcrumb = true)
         }
         assertFalse(currentSessionPartSpan.canAddEvent(isBreadcrumb = false))
@@ -464,7 +464,7 @@ internal class CurrentSessionPartSpanImplTests {
      */
     private fun createSessionPartSpan(
         otelBehaviorSupplier: Provider<OtelBehavior?> = { null },
-        customBreadcrumbLimitSupplier: Provider<Int> = { BreadcrumbConfig.DEFAULT_LIMIT },
+        customBreadcrumbLimitSupplier: Provider<Int> = { BreadcrumbConfig.DEFAULT_CUSTOM_LIMIT },
     ): CurrentSessionPartSpanImpl {
         val repository = SpanRepository()
         val otelClock = FakeOtelKotlinClock()
@@ -872,7 +872,7 @@ internal class CurrentSessionPartSpanImplTests {
             openTelemetrySupplier = ::openTelemetry,
             uuidSource = TestUuidSource(),
             otelBehaviorSupplier = { null },
-            customBreadcrumbLimitSupplier = { BreadcrumbConfig.DEFAULT_LIMIT },
+            customBreadcrumbLimitSupplier = { BreadcrumbConfig.DEFAULT_CUSTOM_LIMIT },
         )
         assertFalse(sessionPartSpan.readySession())
     }

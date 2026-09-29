@@ -42,7 +42,7 @@ internal class RemoteConfigStoreImplTest {
         store = RemoteConfigStoreImpl(TestPlatformSerializer(), nestedDir) { deviceId }
         assertFalse(nestedDir.exists())
 
-        val config = RemoteConfig(50)
+        val config = RemoteConfig(threshold = 50)
         store.saveResponse(ConfigHttpResponse(config, "etag"))
 
         val loaded = checkNotNull(store.loadResponse())
@@ -52,7 +52,7 @@ internal class RemoteConfigStoreImplTest {
 
     @Test
     fun `config without an etag loads from the json path`() {
-        val config = RemoteConfig(50)
+        val config = RemoteConfig(threshold = 50)
         store.saveResponse(ConfigHttpResponse(config, null))
         assertFalse(etagFile().exists())
 
@@ -69,7 +69,7 @@ internal class RemoteConfigStoreImplTest {
         assertNull(store.loadResponse())
 
         // store a config
-        val config = RemoteConfig(50)
+        val config = RemoteConfig(threshold = 50)
         store.saveResponse(ConfigHttpResponse(config, "etag"))
 
         // load the config
@@ -77,7 +77,7 @@ internal class RemoteConfigStoreImplTest {
         assertEquals(config, loaded.cfg)
         assertEquals("etag", loaded.etag)
 
-        val newConfig = RemoteConfig(100)
+        val newConfig = RemoteConfig(threshold = 100)
         store.saveResponse(ConfigHttpResponse(newConfig, "another"))
 
         val newLoaded = checkNotNull(store.loadResponse())
@@ -91,7 +91,7 @@ internal class RemoteConfigStoreImplTest {
 
     @Test
     fun `fast path returns device id from binary cache`() {
-        val config = RemoteConfig(50)
+        val config = RemoteConfig(threshold = 50)
         store.saveResponse(ConfigHttpResponse(config, "etag"))
 
         val loaded = checkNotNull(store.loadResponse())
@@ -103,7 +103,7 @@ internal class RemoteConfigStoreImplTest {
 
     @Test
     fun `corrupt binary cache falls back to json path`() {
-        val config = RemoteConfig(50)
+        val config = RemoteConfig(threshold = 50)
         store.saveResponse(ConfigHttpResponse(config, "etag"))
 
         // corrupt the binary fast-path blob
@@ -118,7 +118,7 @@ internal class RemoteConfigStoreImplTest {
 
     @Test
     fun `corrupt binary cache is deleted to avoid reloading it`() {
-        val config = RemoteConfig(50)
+        val config = RemoteConfig(threshold = 50)
         store.saveResponse(ConfigHttpResponse(config, "etag"))
         assertTrue(cachedConfigFile().exists())
 
@@ -135,7 +135,7 @@ internal class RemoteConfigStoreImplTest {
 
     @Test
     fun `unreadable binary cache is preserved as the error may be recoverable`() {
-        val config = RemoteConfig(50)
+        val config = RemoteConfig(threshold = 50)
         store.saveResponse(ConfigHttpResponse(config, "etag"))
         assertTrue(cachedConfigFile().exists())
 
@@ -150,7 +150,7 @@ internal class RemoteConfigStoreImplTest {
 
     @Test
     fun `corrupt json config is deleted to avoid reloading it`() {
-        val config = RemoteConfig(50)
+        val config = RemoteConfig(threshold = 50)
         store.saveResponse(ConfigHttpResponse(config, "etag"))
 
         // force the slow path: a missing binary cache is a clean miss that falls back to json.
@@ -170,7 +170,7 @@ internal class RemoteConfigStoreImplTest {
         val serializer = TestPlatformSerializer()
         store = RemoteConfigStoreImpl(serializer, dir) { deviceId }
 
-        val config = RemoteConfig(50)
+        val config = RemoteConfig(threshold = 50)
         store.saveResponse(ConfigHttpResponse(config, "etag"))
 
         // force the slow path so the json deserialization is actually exercised.
@@ -188,7 +188,7 @@ internal class RemoteConfigStoreImplTest {
 
     @Test
     fun `a non-Exception failure while loading degrades to no config`() {
-        val config = RemoteConfig(50)
+        val config = RemoteConfig(threshold = 50)
         store.saveResponse(ConfigHttpResponse(config, "etag"))
         cachedConfigFile().delete()
 
@@ -206,7 +206,7 @@ internal class RemoteConfigStoreImplTest {
             dir,
         ) { error("device id unavailable") }
 
-        val config = RemoteConfig(50)
+        val config = RemoteConfig(threshold = 50)
         store.saveResponse(ConfigHttpResponse(config, "etag"))
 
         // the failed blob is deleted so the fast path is skipped...

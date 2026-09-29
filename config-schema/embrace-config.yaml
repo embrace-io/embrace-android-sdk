@@ -1,0 +1,911 @@
+# The Embrace SDK configuration schema, grouped by the feature each option affects. An option declares its SDK
+# default, the remote config field it is read from and its embrace-config.json field together, and the Kotlin and
+# embrace-config-schema.json for all of them are generated from here. See buildSrc/README.md for the format.
+
+android:
+  packages:
+    remote: io.embrace.android.embracesdk.internal.config.remote
+    local: io.embrace.android.gradle.plugin.instrumentation.config.model
+    instrumented: io.embrace.android.embracesdk.internal.config.instrumented.schema
+    instrumented_impl: io.embrace.android.embracesdk.internal.config.instrumented
+    resolved: io.embrace.android.embracesdk.internal.config.resolved
+    plugin: io.embrace.android.gradle.plugin.instrumentation.config.arch.sdk
+    plugin_dsl: io.embrace.android.gradle.plugin.instrumentation.config.arch
+
+  # SDK interfaces whose method bodies the Gradle plugin rewrites with values from embrace-config.json. The plugin
+  # matches methods by class, name and descriptor, and may run against an SDK of a different version, so these
+  # names must never change.
+  instrumented:
+    - {name: BaseUrlConfig, property: baseUrls, doc: Declares the base URLs the SDK should use in HTTP requests}
+    - {name: EnabledFeatureConfig, property: enabledFeatures, doc: Declares what features are enabled/disabled across the entire SDK.}
+    - {name: NetworkCaptureConfig, property: networkCapture, doc: Declares how the SDK should capture network requests}
+    - {name: OtelLimitsConfig, property: otelLimits, doc: Declares the limits for OTel data capture.}
+    - name: ProjectConfig
+      property: project
+      doc: Declares metadata about the app project
+      plugin_params: [cfg, reactNativeBundleId, variantOutputInfo]
+    - {name: RedactionConfig, property: redaction, doc: Declares how the SDK should redact sensitive data}
+    - name: Base64SharedObjectFilesMap
+      property: symbols
+      doc: A Base64 encoded string of the shared object files that are used to symbolicate crashes.
+      plugin_params: [encodedSharedObjectFilesMap]
+
+json_schema:
+  id: https://json.schemastore.org/embrace-config-schema-1.0.0.json
+  title: Embrace Config Schema
+  description: JSON Schema definition for the Embrace configuration file.
+
+enums:
+  - name: WebViewFragmentCapture
+    doc: |
+      How the fragment of a webview URL (the part after the '#') should be treated when it is captured.
+
+      The Gradle plugin selects a constant by name, so renaming one is a breaking change.
+    values:
+      - {name: KEEP, json: keep, doc: Capture the fragment unaltered.}
+      - {name: REDACT, json: redact, doc: Drop the values from any key/value pairs and any long unstructured segment.}
+      - {name: REMOVE, json: remove, doc: Do not capture the fragment at all.}
+
+# The JSON objects that hold the fields of several features. The remote config is served by the Embrace API, and the
+# local config is embrace-config.json, read by the Gradle plugin at build time.
+remote:
+  root: {class: RemoteConfig, doc: Configuration of the SDK set by the Embrace API.}
+  objects:
+    - key: ui
+      class: UiRemoteConfig
+      property: uiConfig
+      doc: Settings relating to the user interface, such as the breadcrumb limits.
+      class_doc: Configuration values relating to the user interface of the app.
+    - key: network
+      class: NetworkRemoteConfig
+      property: networkConfig
+      doc: Settings defining the capture limits for network calls.
+      class_doc: |
+        Configures limit of number of requests for network calls per domain.
+
+        If the default capture limit is specified as zero, then the config operates in allow-list
+        mode, meaning only specified domains will be tracked.
+    - key: session_control
+      class: SessionRemoteConfig
+      property: sessionConfig
+      doc: Settings defining session control is enabled or not
+      class_doc: |
+        It serves as a session controller components. It determines if session may be ended in
+        the background. It also determines which components will be sent as part of the
+        session payload. This feature may be enabled/disabled.
+    - {key: logs, class: LogRemoteConfig, property: logConfig, doc: Settings defining the log configuration., class_doc: Configuration values relating to the logs of the app.}
+    - {key: anr, class: ThreadBlockageRemoteConfig, property: threadBlockageRemoteConfig, class_doc: Configuration values relating to thread blockage tracking}
+    - {key: data, class: DataRemoteConfig, property: dataConfig, class_doc: Configuration values relating to data capture of the SDK}
+    - key: killswitch
+      class: KillSwitchRemoteConfig
+      property: killSwitchConfig
+      class_doc: |
+        This contains config values which can turn risky functionality completely off.
+        In normal circumstances these should never actually be used 🤞.
+    - {key: app_exit_info, class: AppExitInfoConfig, property: appExitInfoConfig}
+    - key: background
+      class: BackgroundActivityRemoteConfig
+      property: backgroundActivityConfig
+      class_doc: Configuration values relating to the background activity capturing on the app.
+    - key: network_span_forwarding
+      class: NetworkSpanForwardingRemoteConfig
+      property: networkSpanForwardingRemoteConfig
+      deprecated: Superseded by the flat nsfPctEnabled key; retained for back-compat with persisted/old payloads.
+    - {key: otel_kotlin_sdk, class: OtelKotlinSdkConfig, property: otelKotlinSdkConfig}
+    - key: user_session
+      class: UserSessionRemoteConfig
+      property: userSession
+      class_doc: |
+        Remote configuration for user session behavior, including maximum session duration and
+        inactivity timeout.
+    - key: vitals
+      class: VitalsRemoteConfig
+      property: vitalsRemoteConfig
+      doc: Settings defining the thresholds used by the vitals (smoothness / screen-load) feature.
+      class_doc: Configuration values relating to the thresholds used by the vitals (smoothness / screen-load) feature.
+
+local:
+  root: {class: EmbraceVariantConfig, doc: This data class holds all embrace configuration that is dependent on the variant being built.}
+  objects:
+    - {key: sdk_config, class: SdkLocalConfig}
+    - {key: unity, class: UnityConfig, property: unityConfig, class_doc: Unity-specific configuration.}
+    - {key: sdk_config.automatic_data_capture, class: AutomaticDataCaptureLocalConfig, property: automaticDataCaptureConfig, doc: Service enablement config settings}
+    - {key: sdk_config.taps, class: TapsLocalConfig, doc: Taps}
+    - {key: sdk_config.otel, class: OpenTelemetryLocalConfig, doc: OpenTelemetry config settings}
+    - {key: sdk_config.view_config, class: ViewLocalConfig, doc: View settings}
+    - {key: sdk_config.webview, class: WebViewLocalConfig, property: webViewConfig, doc: Webview settings}
+    - {key: sdk_config.crash_handler, class: CrashHandlerLocalConfig, doc: Crash handler settings, class_doc: Represents the crash handler element specified in the Embrace config file.}
+    - {key: sdk_config.compose, class: ComposeLocalConfig, property: composeConfig, doc: Compose settings}
+    - key: sdk_config.networking
+      class: NetworkLocalConfig
+      doc: Networking moment settings
+      class_doc: Represents the networking configuration element specified in the Embrace config file.
+    - {key: sdk_config.anr, class: ThreadBlockageLocalConfig, property: threadBlockage, doc: ANR settings}
+    - {key: sdk_config.app, class: AppLocalConfig, doc: App settings}
+    - key: sdk_config.background_activity
+      class: BackgroundActivityLocalConfig
+      property: backgroundActivityConfig
+      doc: Background activity config settings
+      class_doc: Represents the background activity configuration element specified in the Embrace config file.
+    - {key: sdk_config.base_urls, class: BaseUrlLocalConfig, doc: Base URL settings, class_doc: Represents the base URLs element specified in the Embrace config file.}
+    - {key: sdk_config.app_exit_info, class: AppExitInfoLocalConfig, property: appExitInfoConfig, doc: App exit info settings}
+
+# Each feature is generated as a slice of EmbraceConfig. Unless an option names a `resolver`, its value is the remote
+# value, then the local value, then the default.
+features:
+  - name: breadcrumb
+    doc: Resolved breadcrumb config.
+    options:
+      - {name: customLimit, type: Int, default: 100, remote: ui.breadcrumbs, doc: The maximum number of custom breadcrumbs to send per session.}
+      - {name: fragmentLimit, type: Int, default: 100, remote: ui.fragments}
+      - {name: tapLimit, type: Int, default: 100, remote: ui.taps}
+      - {name: webViewLimit, type: Int, default: 100, remote: ui.web_views}
+      - name: captureViewClickCoordinates
+        type: Boolean
+        default: false
+        doc: Gates view click coordinate capture
+        local: {key: sdk_config.taps.capture_coordinates, description: Set to true to enable capturing tap coordinates.}
+        android: {instrumented: EnabledFeatureConfig.isViewClickCoordinateCaptureEnabled}
+      - name: captureActivities
+        type: Boolean
+        default: true
+        doc: Gates activity lifecycle breadcrumb capture.
+        local:
+          key: sdk_config.view_config.enable_automatic_activity_capture
+          description: Enables capturing activity lifecycle changes in breadcrumbs.
+        android: {instrumented: EnabledFeatureConfig.isActivityBreadcrumbCaptureEnabled}
+      - name: captureWebViews
+        type: Boolean
+        default: true
+        doc: Gates WebView breadcrumb capture
+        local: {key: sdk_config.webview.enable, name: captureWebViews, description: Set to false to disable capturing of web views.}
+        android: {instrumented: EnabledFeatureConfig.isWebViewBreadcrumbCaptureEnabled}
+      - name: captureWebViewQueryParams
+        type: Boolean
+        default: true
+        doc: Gates query parameter capture in WebView breadcrumbs
+        local:
+          key: sdk_config.webview.capture_query_params
+          description: >-
+            Set to false to disable capturing of web view query parameters. If webview:enable is set to false, this
+            setting has no effect since all capture of web view information is disabled.
+        android: {instrumented: EnabledFeatureConfig.isWebViewBreadcrumbQueryParamCaptureEnabled}
+      - name: webViewFragmentCapture
+        type: WebViewFragmentCapture
+        default: KEEP
+        doc: How the URL fragment is captured in WebView breadcrumbs.
+        local:
+          key: sdk_config.webview.fragment_capture
+          description: >-
+            Controls how the URL fragment - the part after the '#' - is captured for web views. One of keep, redact
+            or remove. 'keep' captures it unaltered. 'redact' removes the values from any key=value pairs and drops
+            long unstructured segments, while preserving hash routes and short anchors; pick this to avoid capturing
+            tokens without losing the route the user was on. 'remove' discards the fragment entirely. Independent of
+            capture_query_params. If webview:enable is set to false, this setting has no effect since all capture of
+            web view information is disabled.
+        android: {instrumented: EnabledFeatureConfig.getWebViewBreadcrumbFragmentCapture}
+      - name: captureFcmPiiData
+        type: Boolean
+        default: false
+        doc: Gates whether the FCM feature should capture PII data
+        local: {key: sdk_config.capture_fcm_pii_data, description: Enables PII data within FCM capture.}
+        android: {instrumented: EnabledFeatureConfig.isFcmPiiDataCaptureEnabled}
+
+  - name: persistence
+    doc: Resolved persistence config.
+    options:
+      - name: multiFileEnabled
+        type: Boolean
+        default: false
+        doc: |
+          Gates whether the multi-file session persistence layer writes session telemetry instead of
+          the legacy single-file payload writer. Only one of the two is active per launch.
+        remote: {key: pct_multi_file_persistence_enabled, type: Float, rollout: true}
+        local:
+          key: sdk_config.multi_file_persistence_enabled
+          description: >-
+            Persists session telemetry using the multi-file layout, written in parallel with the existing
+            single-file payload writer. Can be overridden by remote config.
+        android: {instrumented: EnabledFeatureConfig.isMultiFilePersistenceEnabled}
+
+  - name: aei
+    doc: Resolved app exit info (AEI) config.
+    options:
+      - name: captureEnabled
+        type: Boolean
+        default: true
+        doc: Gates AEI capture
+        remote: {key: app_exit_info.pct_aei_enabled_v2, name: pctAeiCaptureEnabled, type: Float, rollout: true}
+        local: {key: sdk_config.app_exit_info.aei_enabled, name: aeiCaptureEnabled, description: Enables Application Exit Info capture.}
+        android: {instrumented: EnabledFeatureConfig.isAeiCaptureEnabled}
+      - name: traceMaxLimit
+        type: Int
+        default: 10485760
+        doc: The maximum size in bytes of AppExitInfo ndk/anr traces that are captured.
+        remote: {key: app_exit_info.app_exit_info_traces_limit, name: appExitInfoTracesLimit}
+      - name: maxNum
+        type: Int
+        default: 0
+        doc: The maximum number of AppExitInfo records to capture. 0 means no limit.
+        remote: app_exit_info.aei_max_num
+
+  - name: autoDataCapture
+    doc: Resolved config for services that automatically capture data.
+    options:
+      - name: thermalStatusCaptureEnabled
+        type: Boolean
+        default: true
+        doc: Whether the SDK should automatically capture thermal status data
+        remote: {key: data.pct_thermal_status_enabled, type: Float, rollout: true}
+      - name: powerSaveModeCaptureEnabled
+        type: Boolean
+        default: true
+        doc: Gates power save mode capture
+        local:
+          key: sdk_config.automatic_data_capture.power_save_mode_info
+          name: powerSaveModeServiceEnabled
+          description: Enables power save mode capture.
+        android: {instrumented: EnabledFeatureConfig.isPowerSaveModeCaptureEnabled}
+      - name: networkConnectivityCaptureEnabled
+        type: Boolean
+        default: true
+        doc: Gates network connectivity capture
+        local:
+          key: sdk_config.automatic_data_capture.network_connectivity_info
+          name: networkConnectivityServiceEnabled
+          description: Enables network connectivity capture.
+        android: {instrumented: EnabledFeatureConfig.isNetworkConnectivityCaptureEnabled}
+      - name: threadBlockageCaptureEnabled
+        type: Boolean
+        default: true
+        doc: Gates thread blockage capture
+        local:
+          key: sdk_config.automatic_data_capture.anr_info
+          name: threadBlockageServiceEnabled
+          description: Enables ANR capture.
+        android: {instrumented: EnabledFeatureConfig.isThreadBlockageCaptureEnabled}
+      - name: jvmCrashCaptureEnabled
+        type: Boolean
+        default: true
+        doc: Gates JVM crash handler
+        local:
+          key: sdk_config.crash_handler.enabled
+          description: Set to false to prevent the SDK from connecting to the uncaught exception handler.
+        android: {instrumented: EnabledFeatureConfig.isJvmCrashCaptureEnabled}
+      - name: composeClickCaptureEnabled
+        type: Boolean
+        default: false
+        doc: Gates compose click capture
+        remote: killswitch.jetpack_compose
+        local:
+          key: sdk_config.compose.capture_compose_onclick
+          name: captureComposeOnClick
+          description: Enables capture of Jetpack Compose click events.
+        android: {instrumented: EnabledFeatureConfig.isComposeClickCaptureEnabled}
+      - name: thirdPartySigHandlerDetectionEnabled
+        type: Boolean
+        default: false
+        doc: Gates 3rd party signal handler detection
+        remote: killswitch.sig_handler_detection
+        local: {key: sdk_config.sig_handler_detection, description: Enables 3rd party signal handler detection.}
+        android: {instrumented: EnabledFeatureConfig.is3rdPartySigHandlerDetectionEnabled}
+      - name: nativeCrashCaptureEnabled
+        type: Boolean
+        default: true
+        doc: Gates native crash handler
+        local: {key: ndk_enabled, description: Enables NDK crash capture}
+        android: {instrumented: EnabledFeatureConfig.isNativeCrashCaptureEnabled}
+      - name: diskUsageCaptureEnabled
+        type: Boolean
+        default: true
+        doc: Gates disk usage capture
+        local:
+          key: sdk_config.app.report_disk_usage
+          description: >-
+            The SDK collects the disk usage for the app. You can disable this if your app has a large number of local
+            files to prevent excessive resource usage, especially on lower-end devices.
+        android: {instrumented: EnabledFeatureConfig.isDiskUsageCaptureEnabled}
+      - name: uiLoadTracingEnabled
+        type: Boolean
+        default: true
+        doc: |
+          Gates whether the SDK will capture traces for the performance of the opening of Activities.
+
+          Will be true if sdk_config.automatic_data_capture.ui_load_tracing_disabled is not true
+        remote: {key: ui_load_instrumentation_enabled_v2, name: uiLoadInstrumentationEnabled}
+        android:
+          instrumented: EnabledFeatureConfig.isUiLoadTracingEnabled
+          plugin_value: "cfg.embraceConfig?.sdkConfig?.let { it.automaticDataCaptureConfig?.uiLoadPerfTracingDisabled != true }"
+          resolver: resolveUiLoadTracingEnabled
+      - name: uiLoadTracingTraceAll
+        type: Boolean
+        default: true
+        doc: |
+          Gates whether the SDK will default to automatically capture traces for the performance of the opening of all Activities.
+
+          Will be true NEITHER of the following is true:
+          - sdk_config.automatic_data_capture.ui_load_tracing_disabled
+          - sdk_config.automatic_data_capture.ui_load_tracing_selected_only
+        remote: ui_load_instrumentation_enabled_v2
+        android:
+          instrumented: EnabledFeatureConfig.isUiLoadTracingTraceAll
+          plugin_value: >-
+            cfg.embraceConfig?.sdkConfig?.let { sdk ->
+            sdk.automaticDataCaptureConfig?.let { it.uiLoadPerfTracingSelectedOnly != true && it.uiLoadPerfTracingDisabled != true }
+            ?: true }
+          resolver: resolveUiLoadTracingTraceAll
+      - name: endStartupWithAppReadyEnabled
+        type: Boolean
+        default: false
+        doc: |
+          Requires appReady() to be invoked manually to end appStartup. If that is not called before the app backgrounds, it is considered
+          to have been abandoned.
+        local: {key: sdk_config.automatic_data_capture.end_startup_with_app_ready, name: endStartupWithAppReadyEnabled, internal: true}
+        android: {instrumented: EnabledFeatureConfig.isEndStartupWithAppReadyEnabled}
+      - name: stateCaptureEnabled
+        type: Boolean
+        default: true
+        doc: Whether the state-as-span feature is enabled
+        remote: {key: pct_state_enabled_v2, name: pctStateCaptureEnabledV2, type: Float, rollout: true}
+      - name: networkCallbackConnectivityServiceEnabled
+        type: Boolean
+        default: false
+        doc: Whether the NetworkCallback-based connectivity service implementation is enabled
+        remote: {key: pct_network_callback_connectivity_service_enabled, type: Float, rollout: true}
+      - name: navigationStateCaptureEnabled
+        type: Boolean
+        default: true
+        doc: Whether navigation state capture is enabled
+        remote: {key: pct_screen_tracking_enabled, name: pctNavigationStateCaptureEnabled, type: Float, rollout: true}
+      - name: smoothnessCaptureEnabled
+        type: Boolean
+        default: false
+        doc: Whether smoothness vital capture is enabled
+        remote: {key: pct_smoothness_enabled, type: Float, rollout: true}
+      - name: screenLoadCaptureEnabled
+        type: Boolean
+        default: false
+        doc: Whether screen-load vital capture is enabled
+        remote: {key: pct_screen_load_enabled, type: Float, rollout: true}
+      - name: activityProcessLifecycleTrackerEnabled
+        type: Boolean
+        default: false
+        doc: |
+          Gates whether the activity-callback-based process lifecycle tracker is used to detect
+          foreground/background transitions instead of the androidx ProcessLifecycleOwner implementation.
+        remote: {key: pct_activity_process_lifecycle_tracker_enabled, type: Float, rollout: true}
+        local:
+          key: sdk_config.automatic_data_capture.activity_process_lifecycle_tracker_enabled
+          description: >-
+            Detect foreground/background transitions by observing activity lifecycle callbacks directly, instead of
+            using androidx's ProcessLifecycleOwner. Can be overridden by remote config.
+        android: {instrumented: EnabledFeatureConfig.isActivityProcessLifecycleTrackerEnabled}
+      - name: activityLeakDetectionEnabled
+        type: Boolean
+        default: false
+        doc: Whether Activity leak detection is enabled.
+        remote: {key: pct_activity_leak_detection_enabled, type: Float, rollout: true}
+      - name: fragmentLeakDetectionEnabled
+        type: Boolean
+        default: false
+        doc: Whether Fragment and Fragment View leak detection is enabled.
+        remote: {key: pct_fragment_leak_detection_enabled, type: Float, rollout: true}
+      - name: webViewLeakDetectionEnabled
+        type: Boolean
+        default: false
+        doc: Whether WebView leak detection is enabled.
+        remote: {key: pct_web_view_leak_detection_enabled, type: Float, rollout: true}
+    local_fields:
+      - {key: sdk_config.automatic_data_capture.ui_load_tracing_disabled, name: uiLoadPerfTracingDisabled, type: Boolean, internal: true}
+      - {key: sdk_config.automatic_data_capture.ui_load_tracing_selected_only, name: uiLoadPerfTracingSelectedOnly, type: Boolean, internal: true}
+
+  - name: backgroundActivity
+    doc: Resolved background activity config.
+    options:
+      - name: captureEnabled
+        type: Boolean
+        default: false
+        doc: Gates background activity capture
+        remote: {key: background.threshold, type: Float, rollout: true}
+        local:
+          key: sdk_config.background_activity.capture_enabled
+          name: backgroundActivityCaptureEnabled
+          description: Enables background activity capture.
+        android: {instrumented: EnabledFeatureConfig.isBackgroundActivityCaptureEnabled}
+      - {name: manualBackgroundActivityLimit, type: Int, default: 100, doc: The maximum number of client defined background activities.}
+      - {name: minBackgroundActivityDuration, type: Long, default: 5000, doc: The minimum duration of a client defined background activity.}
+      - {name: maxCachedActivities, type: Int, default: 30, doc: The maximum number of background activities cached to disk at the same time.}
+
+  - name: dataCaptureEvent
+    doc: Resolved config for events where data can be captured.
+    options:
+      - name: internalExceptionCaptureEnabled
+        type: Boolean
+        default: true
+        doc: Whether internal exception capture is enabled.
+        remote: internal_exception_capture_enabled
+      - name: disabledEventAndLogPatterns
+        type: Set<String>?
+        doc: Regular expressions matching event names and log messages which should be disabled. Null disables nothing.
+        remote: disabled_event_and_log_patterns
+
+  - name: experiment
+    doc: Resolved config for the Experiments API.
+    options:
+      - name: experimentCountLimit
+        type: Int
+        default: 500
+        doc: The combined maximum number of tracked experiments and feature flags, counting both active and ended records.
+        remote: {key: experiment_max_count, clamp: {max: 5000}}
+      - name: idLengthLimit
+        type: Int
+        default: 128
+        doc: The maximum length of an ID for the experiments API.
+        remote: {key: experiment_id_max_length, clamp: {max: 1024}}
+      - name: variantLengthLimit
+        type: Int
+        default: 128
+        doc: The maximum length of an experiment variant.
+        remote: {key: experiment_variant_max_length, clamp: {max: 1024}}
+
+  - name: logMessage
+    doc: Resolved log message config.
+    options:
+      - name: maxLength
+        type: Int
+        default: 128
+        doc: The length log messages are truncated to.
+        remote: {key: logs.max_length, name: logMessageMaximumAllowedLength}
+      - {name: infoLimit, type: Int, default: 100, doc: The limit of info logs that can be sent., remote: {key: logs.info_limit, name: logInfoLimit}}
+      - {name: warnLimit, type: Int, default: 200, doc: The limit of warning logs that can be sent., remote: {key: logs.warn_limit, name: logWarnLimit}}
+      - {name: errorLimit, type: Int, default: 500, doc: The limit of error logs that can be sent., remote: {key: logs.error_limit, name: logErrorLimit}}
+
+  - name: network
+    doc: Resolved network call capture config.
+    options:
+      - name: requestContentLengthCaptureEnabled
+        type: Boolean
+        default: false
+        doc: Gates whether request content length should be captured
+        local:
+          key: sdk_config.networking.capture_request_content_length
+          description: Enable capture of network length which can interfere with certain streaming network requests.
+        android: {instrumented: EnabledFeatureConfig.isRequestContentLengthCaptureEnabled}
+      - name: okHttpResponseBodySizeCaptureEnabled
+        type: Boolean
+        default: false
+        doc: |
+          Gates whether the size of an OkHttp response body is captured when the response has no
+          Content-Length header. Determining the size in that case requires buffering the entire body
+          into memory, which can cause excessive heap usage or OOM for large/streaming responses, so
+          this is disabled by default.
+        local:
+          key: sdk_config.networking.capture_okhttp_response_body_size
+          name: captureOkHttpResponseBodySize
+          description: >-
+            Enable capture of an OkHttp response body's size when it has no Content-Length header. This buffers the
+            whole body into memory so is disabled by default to avoid excessive heap usage on large or streaming
+            responses.
+        android: {instrumented: EnabledFeatureConfig.isOkHttpResponseBodySizeCaptureEnabled}
+      - name: httpUrlConnectionCaptureEnabled
+        type: Boolean
+        default: false
+        doc: Gates whether HttpUrlConnection network requests should be captured
+        local:
+          key: sdk_config.networking.enable_native_monitoring
+          description: Enable capture of network requests made using the native Java network API.
+        android: {instrumented: EnabledFeatureConfig.isHttpUrlConnectionCaptureEnabled}
+      - name: hucLiteInstrumentationEnabled
+        type: Boolean
+        default: true
+        doc: Gates whether HUC Lite instrumentation should be enabled. It is off whenever HttpUrlConnection capture is on.
+        local: {key: sdk_config.networking.enable_huc_lite_instrumentation, internal: true}
+        android:
+          instrumented: EnabledFeatureConfig.isHucLiteInstrumentationEnabled
+          resolver: resolveHucLiteInstrumentationEnabled
+      - name: requestLimitPerDomain
+        type: Int
+        default: 1000
+        doc: The network request capture limit for domains without a specific limit. The local value is a ceiling on the remote one.
+        remote: {key: network.defaultCaptureLimit, doc: The default request capture limit for non-specified domains.}
+        local:
+          key: sdk_config.networking.default_capture_limit
+          description: Default capture limit for specified domains.
+        android:
+          instrumented: NetworkCaptureConfig.getRequestLimitPerDomain
+          resolver: resolveRequestLimitPerDomain
+      - name: limitsByDomain
+        type: Map<String, Int>
+        default: {}
+        doc: The maximum number of requests captured per domain suffix, each capped at requestLimitPerDomain.
+        remote: {key: network.domains, name: domainLimits, doc: Map of domain suffix to maximum number of requests.}
+        local:
+          key: sdk_config.networking.domains
+          type: List<DomainLocalConfig>
+          description: List of domain names and their respective limits.
+        android:
+          instrumented: NetworkCaptureConfig.getLimitsByDomain
+          instrumented_type: Map<String, String>
+          instrumented_default: {}
+          plugin_value: "cfg.embraceConfig?.sdkConfig?.networking?.domains?.associate { it.domain to it.limit.toString() }"
+          resolver: resolveLimitsByDomain
+      - name: requestSpanTimeoutMs
+        type: Long
+        default: 600000
+        doc: |
+          The fallback duration in milliseconds after which an in-flight network request span is assumed
+          to have leaked and is dropped, used when the HTTP client exposes no call-level timeout of its own.
+        remote: data.network_request_span_timeout_ms
+      - name: disabledUrlPatterns
+        type: Set<String>
+        default: []
+        doc: Patterns for requests that should not be captured
+        remote: {key: disabled_url_patterns, doc: List of regular expressions of URLs which should not be logged.}
+        local:
+          key: sdk_config.networking.disabled_url_patterns
+          type: List<String>
+          description: >-
+            Specify one or more regular expressions to exclude network request with URLs matching one of the regular
+            expressions from being captured.
+        android:
+          instrumented: NetworkCaptureConfig.getIgnoredRequestPatternList
+          instrumented_type: List<String>
+          instrumented_default: []
+          resolver: resolveDisabledUrlPatterns
+      - name: networkBodyCapturePublicKey
+        type: String?
+        doc: The key that should be used to capture network request bodies, if any
+        local:
+          key: sdk_config.capture_public_key
+          description: Declares the key that should be used to capture network request bodies, if any.
+        android: {instrumented: NetworkCaptureConfig.getNetworkBodyCapturePublicKey}
+      - name: networkCaptureRules
+        type: Set<NetworkCaptureRuleRemoteConfig>
+        default: []
+        doc: The rules for capturing network call bodies
+        remote: {key: network_capture, name: networkCaptureRules, doc: Rules that will allow the specification of network requests to be captured}
+    remote_types:
+      - name: NetworkCaptureRuleRemoteConfig
+        doc: Criteria to determine if a network body call should be captured or not.
+        fields:
+          - {key: id, type: String, required: true, doc: Rule id}
+          - key: duration
+            type: Long
+            required: true
+            nullable: true
+            doc: Duration of the network call in milliseconds. Disregard if it is less than 5000ms.
+          - {key: method, type: String, required: true, doc: Http method to be captured.}
+          - {key: url, name: urlRegex, type: String, required: true, doc: Url regex. If the url matches this the call must be captured.}
+          - {key: expires_in, type: Long, default: 0, doc: Remaining milliseconds until the rule expires.}
+          - {key: max_size, type: Long, default: 102400, doc: Maximum size of the network body. The data must be trimmed if it exceeds it.}
+          - {key: max_count, type: Int, default: 5, doc: How many times this rule should be applied.}
+          - key: status_codes
+            type: Set<Int>
+            default: []
+            doc: |
+              Status codes to be captured.
+              -1 for capturing fail network requests.
+    local_types:
+      - name: DomainLocalConfig
+        doc: Represents each domain element specified in the Embrace config file.
+        fields:
+          - {key: domain_name, name: domain, type: String, required: true, description: Domain URL.}
+          - {key: domain_limit, name: limit, type: Int, required: true, description: Limit for the number of requests to be tracked.}
+
+  - name: networkSpanForwarding
+    doc: Resolved network span forwarding config.
+    options:
+      - name: enabled
+        type: Boolean
+        default: false
+        doc: |
+          Gates whether network span forwarding should be enabled. The remote percentage falls back to the
+          deprecated network_span_forwarding.pct_enabled.
+        remote:
+          key: nsf_pct_enabled
+          type: Float
+          rollout: true
+          doc: |
+            Percentage of devices for which network span forwarding is enabled.
+            Replacement for the flag in the deprecated [networkSpanForwardingRemoteConfig]
+        local:
+          key: sdk_config.networking.enable_network_span_forwarding
+          description: Enables network span forwarding.
+        android:
+          instrumented: EnabledFeatureConfig.isNetworkSpanForwardingEnabled
+          resolver: resolveNetworkSpanForwardingEnabled
+
+  - name: otel
+    doc: Resolved OpenTelemetry config.
+    options:
+      - name: kotlinSdkEnabled
+        type: Boolean
+        default: false
+        doc: Gates whether opentelemetry-kotlin-implementation should be used instead of opentelemetry-kotlin-compat.
+        remote: {key: otel_kotlin_sdk.pct_enabled, type: Float, rollout: true}
+        local: {key: sdk_config.otel.enable_otel_kotlin_sdk, name: otelKotlinSdkEnabled, internal: true}
+        android: {instrumented: EnabledFeatureConfig.isOtelKotlinSdkEnabled}
+      - name: maxCustomSpansPerSessionPart
+        type: Int
+        default: 500
+        doc: The maximum number of spans created via the public API that can be recorded in a session part.
+        remote: {key: data.max_custom_spans_per_session, clamp: {min: 0}}
+      - name: maxInternalSpansPerSessionPart
+        type: Int
+        default: 1500
+        doc: |
+          The maximum number of spans created by the SDK's own instrumentation, other than network request spans,
+          that can be recorded in a session part.
+        remote: {key: data.max_internal_spans_per_session, clamp: {min: 0}}
+      - name: maxNetworkSpansPerSessionPart
+        type: Int
+        default: 2000
+        doc: The maximum number of network request spans that can be recorded in a session part.
+        remote: {key: data.max_network_spans_per_session, clamp: {min: 0}}
+      - name: maxSpanEventsPerSessionPart
+        type: Int
+        default: 1000
+        doc: The maximum number of general span events that may be added to a session part span.
+        remote:
+          key: data.max_span_events_per_session_part
+          doc: |
+            The maximum number of non-breadcrumb span events that may be added to a session part span.
+            Breadcrumbs are counted against a separate limit - see [UiRemoteConfig.breadcrumbs].
+      - name: periodicCacheIntervalMs
+        type: Long
+        default: 2000
+        doc: The interval in milliseconds between periodic caching of the in-progress session part to disk.
+        remote: {key: data.periodic_cache_interval_ms, clamp: {min: 2000, max: 120000}}
+
+  - name: sdkMode
+    doc: Resolved SDK mode config.
+    options:
+      - name: enabled
+        type: Boolean
+        default: true
+        doc: Whether the SDK is enabled on this device.
+        remote:
+          key: threshold
+          type: Int
+          rollout: true
+          doc: |
+            Used to determine whether or not the SDK should be activated for this device. The threshold
+            identifies the percentage of devices for which the SDK is enabled. A threshold of 100 means
+            that the SDK is enabled for all devices, whilst 0 means it is disabled for all devices.
+
+  - name: sensitiveKeys
+    doc: Resolved sensitive key redaction config.
+    options:
+      - name: denylist
+        type: List<String>?
+        doc: Provides a list of sensitive keys whose values should be redacted on capture.
+        local:
+          key: sdk_config.sensitive_keys_denylist
+          description: List of sensitive keys whose values should be redacted on capture.
+        android: {instrumented: RedactionConfig.getSensitiveKeysDenylist}
+
+  - name: threadBlockage
+    doc: Resolved thread blockage config.
+    options:
+      - name: captureEnabled
+        type: Boolean
+        default: true
+        doc: Whether thread blockage stack trace capture is enabled.
+        remote: {key: anr.pct_enabled, type: Int, rollout: true}
+      - name: sampleIntervalMs
+        type: Long
+        default: 100
+        doc: Time between stack trace captures for time intervals after the start of a thread blockage
+        remote: {key: anr.interval, name: sampleIntervalMs}
+      - {name: maxStacktracesPerInterval, type: Int, default: 80, doc: Maximum captured stacktraces for a single thread blockage interval., remote: {key: anr.per_interval, name: maxStacktracesPerInterval}}
+      - {name: stacktraceFrameLimit, type: Int, default: 200, doc: Maximum number of frames to keep in thread blockage stacktrace samples, remote: {key: anr.max_depth, name: stacktraceFrameLimit}}
+      - {name: maxIntervalsPerSession, type: Int, default: 5, doc: Maximum captured thread blockage intervals for a session., remote: {key: anr.per_session, name: intervalsPerSession}}
+      - {name: minDurationMs, type: Int, default: 1000, doc: Minimum duration of a thread blockage interval, remote: {key: anr.min_duration, name: minDuration}}
+    local_fields:
+      - {key: sdk_config.anr.capture_unity_thread, type: Boolean, description: Enables Unity ANR capture., schema_default: false}
+
+  - name: traceparentInjection
+    doc: Resolved W3C traceparent injection config.
+    options:
+      - name: enabled
+        type: Boolean
+        default: false
+        doc: |
+          Gates whether the W3C traceparent header should be injected on outgoing network requests one is not already present.
+          This is required to be enabled for network span forwarding to work.
+        remote: {key: traceparent_injection_pct_enabled, type: Float, rollout: true}
+        local: {key: sdk_config.networking.enable_traceparent_injection, internal: true}
+        android:
+          instrumented: EnabledFeatureConfig.isTraceparentInjectionEnabled
+          resolver: resolveTraceparentInjectionEnabled
+      - name: legacyFallbackEnabled
+        type: Boolean
+        default: false
+        doc: |
+          Whether injection is enabled for every host by the deprecated network_span_forwarding.pct_enabled, which
+          applies only when nsf_pct_enabled is unset.
+        remote: {key: network_span_forwarding.pct_enabled, type: Float, rollout: true}
+        android: {resolver: resolveTraceparentLegacyFallbackEnabled}
+      - name: onlyAllowDomains
+        type: List<String>?
+        doc: |
+          Declares the list of hostnames for which traceparent injection and network span forwarding are permitted.
+          If it's null, all hosts are allowed. If it's empty, all hosts are denied.
+          Entries can be exact hostnames or a leading-dot domain suffix that matches all subdomains (e.g. ".test.com" matches "foo.test.com").
+        local: {key: sdk_config.networking.traceparent_only_allow_domains, internal: true}
+        android: {instrumented: NetworkCaptureConfig.getTraceparentOnlyAllowDomains}
+
+  - name: userSession
+    doc: Resolved user session config.
+    options:
+      - {name: sessionControlEnabled, type: Boolean, default: false, doc: Whether session control is enabled., remote: {key: session_control.enable, name: isEnabled}}
+      - name: sessionPropertyLimit
+        type: Int
+        default: 100
+        doc: The maximum number of properties that can be attached to a session
+        remote: {key: max_session_properties, name: maxUserSessionProperties, clamp: {max: 200}}
+      - name: maxDurationSeconds
+        type: Int
+        default: 43200
+        doc: The maximum duration of a user session in seconds. Remote values outside the valid range are ignored.
+        remote: {key: user_session.max_duration_seconds, valid_range: {min: 3600, max: 86400}}
+      - name: inactivityTimeoutSeconds
+        type: Int
+        default: 1800
+        doc: |
+          The inactivity timeout of a user session in seconds. Remote values outside the valid range, or longer than
+          maxDurationSeconds, are ignored.
+        remote: {key: user_session.inactivity_timeout_seconds, valid_range: {min: 30, max: 86400}}
+        android: {resolver: resolveInactivityTimeoutSeconds}
+      - name: minSessionDurationMs
+        type: Long
+        default: 5000
+        doc: The minimum duration a session must last before it can be ended manually, in milliseconds.
+
+  - name: vitals
+    doc: Resolved config for the vitals (smoothness / screen-load) feature.
+    options:
+      - name: smoothnessIdleThresholdMs
+        type: Long
+        default: 100
+        doc: How long a smoothness focal moment must be idle (no redraw, no touch) before it is considered settled.
+        remote: vitals.smoothness_idle_threshold_ms
+      - name: smoothnessHeldIdleThresholdMs
+        type: Long
+        default: 500
+        doc: The "press and hold" settle threshold used when no move event arrives within the idle threshold.
+        remote: vitals.smoothness_held_idle_threshold_ms
+      - name: jankHeuristicMultiplier
+        type: Double
+        default: 2.0
+        doc: The grace multiplier applied to a frame's budget/deadline before it is considered janky.
+        remote: vitals.jank_heuristic_multiplier
+      - name: screenLoadIdleThresholdMs
+        type: Long
+        default: 1000
+        doc: How long a screen-load destination must be idle before it is considered settled.
+        remote: vitals.screen_load_idle_threshold_ms
+      - name: screenLoadTimeoutMs
+        type: Long
+        default: 30000
+        doc: Maximum time a screen-load is allowed to run before being force-reported as timed out.
+        remote: vitals.screen_load_timeout_ms
+      - name: screenLoadNavTimeoutMs
+        type: Long
+        default: 500
+        doc: Maximum time between a tap and the navigation start event for the two to be linked as one screen load.
+        remote: vitals.screen_load_nav_timeout_ms
+      - name: smoothnessFrameTraceEnabled
+        type: Boolean
+        default: false
+        doc: |
+          Whether this device is sampled-in to record a per-frame duration trace alongside the smoothness result,
+          as a diagnostic aid while smoothness thresholds are being tuned.
+        remote: {key: vitals.smoothness_frame_trace_pct_enabled, type: Float, rollout: true}
+      - name: spanLimit
+        type: Int
+        default: 250
+        doc: |
+          The maximum number of vitals spans (smoothness and screen-load combined) that may be emitted per session
+          part. Vitals emits a span per user gesture and per navigation, so this caps the share of the session's
+          span budget that the feature can consume.
+        remote: vitals.span_limit
+
+  - name: app
+    doc: Resolved metadata about the app project.
+    options:
+      - name: appId
+        type: String?
+        doc: The project's appId
+        local: {key: app_id, description: Your 5 character app ID., min_length: 5, max_length: 5}
+        android: {instrumented: ProjectConfig.getAppId}
+      - name: appFramework
+        type: String?
+        doc: The project's app framework
+        local:
+          key: sdk_config.app_framework
+          description: Project's app framework, one of react_native, unity, flutter or native.
+        android: {instrumented: ProjectConfig.getAppFramework}
+      - name: buildId
+        type: String?
+        doc: The project's buildId. This is not possible to specify in the embrace-config.json.
+        android: {instrumented: ProjectConfig.getBuildId, plugin_value: cfg.buildId}
+      - name: buildType
+        type: String?
+        doc: The project's buildType. This is not possible to specify in the embrace-config.json.
+        android: {instrumented: ProjectConfig.getBuildType, plugin_value: cfg.buildType}
+      - name: buildFlavor
+        type: String?
+        doc: The project's buildFlavor. This is not possible to specify in the embrace-config.json.
+        android: {instrumented: ProjectConfig.getBuildFlavor, plugin_value: cfg.buildFlavor}
+      - name: reactNativeBundleId
+        type: String?
+        doc: The project's React Native bundleId. This is not possible to specify in the embrace-config.json.
+        android: {instrumented: ProjectConfig.getReactNativeBundleId, plugin_value: reactNativeBundleId}
+      - name: versionName
+        type: String?
+        doc: The project's version name. This is not possible to specify in the embrace-config.json.
+        android: {instrumented: ProjectConfig.getVersionName, plugin_value: variantOutputInfo.versionName}
+      - name: versionCode
+        type: String?
+        doc: The project's version code. This is not possible to specify in the embrace-config.json.
+        android: {instrumented: ProjectConfig.getVersionCode, plugin_value: variantOutputInfo.versionCode}
+      - name: packageName
+        type: String?
+        doc: The project's package name. This is not possible to specify in the embrace-config.json.
+        android: {instrumented: ProjectConfig.getPackageName, plugin_value: variantOutputInfo.packageName}
+    # Read only by the Gradle plugin, to upload build artifacts.
+    local_fields:
+      - {key: api_token, type: String, description: Your API 32-hexdigit token., min_length: 32, max_length: 32}
+      - {key: unity.symbols_archive_name, type: String, description: Custom file name for unity symbols}
+
+  - name: baseUrls
+    doc: Resolved base URLs the SDK should use in HTTP requests.
+    options:
+      - name: config
+        type: String?
+        doc: Config base URL
+        local: {key: sdk_config.base_urls.config, description: Base config URL for the SDK.}
+        android: {instrumented: BaseUrlConfig.getConfig}
+      - name: data
+        type: String?
+        doc: Data base URL
+        local: {key: sdk_config.base_urls.data, description: Base data URL for the SDK.}
+        android: {instrumented: BaseUrlConfig.getData}
+
+  - name: symbols
+    doc: Resolved native symbol config.
+    options:
+      - name: base64SharedObjectFilesMap
+        type: String?
+        doc: |
+          A Base64 encoded string of the shared object files that are used to symbolicate crashes.
+
+          Once decoded, this string should be a JSON object with the following structure:
+          {
+            "symbols": {
+               "arm64-v8a": {
+                   "libemb-donuts.so":"11e1c3cc39fc506d06fcdb75bb4d005345aba95e",
+                   "libemb-crisps.so":"ace3755e21c6961e9c3e329216eeb7333840074b"
+               }
+               ...
+          }
+        android: {instrumented: Base64SharedObjectFilesMap.getBase64SharedObjectFilesMap, plugin_value: encodedSharedObjectFilesMap}
+
+  - name: telemetryLimits
+    doc: Resolved limits for OTel data capture. These are not yet configurable.
+    options:
+      - {name: maxInternalNameLength, type: Int, default: 2000, android: {instrumented: OtelLimitsConfig.getMaxInternalNameLength}}
+      - {name: maxNameLength, type: Int, default: 128, android: {instrumented: OtelLimitsConfig.getMaxNameLength}}
+      - {name: maxCustomEventCount, type: Int, default: 10, android: {instrumented: OtelLimitsConfig.getMaxCustomEventCount}}
+      - {name: maxSystemEventCount, type: Int, default: 2000, android: {instrumented: OtelLimitsConfig.getMaxSystemEventCount}}
+      - {name: maxCustomAttributeCount, type: Int, default: 100, android: {instrumented: OtelLimitsConfig.getMaxCustomAttributeCount}}
+      - {name: maxSystemAttributeCount, type: Int, default: 300, android: {instrumented: OtelLimitsConfig.getMaxSystemAttributeCount}}
+      - {name: maxEventAttributeCount, type: Int, default: 10, android: {instrumented: OtelLimitsConfig.getMaxEventAttributeCount}}
+      - {name: maxCustomLinkCount, type: Int, default: 10, android: {instrumented: OtelLimitsConfig.getMaxCustomLinkCount}}
+      - {name: maxSystemLinkCount, type: Int, default: 100, android: {instrumented: OtelLimitsConfig.getMaxSystemLinkCount}}
+      - {name: maxInternalAttributeKeyLength, type: Int, default: 1000, android: {instrumented: OtelLimitsConfig.getMaxInternalAttributeKeyLength}}
+      - {name: maxInternalAttributeValueLength, type: Int, default: 2000, android: {instrumented: OtelLimitsConfig.getMaxInternalAttributeValueLength}}
+      - {name: maxCustomAttributeKeyLength, type: Int, default: 128, android: {instrumented: OtelLimitsConfig.getMaxCustomAttributeKeyLength}}
+      - {name: maxCustomAttributeValueLength, type: Int, default: 1024, android: {instrumented: OtelLimitsConfig.getMaxCustomAttributeValueLength}}
+      - {name: exceptionEventName, type: String, default: exception, android: {instrumented: OtelLimitsConfig.getExceptionEventName}}

@@ -98,24 +98,20 @@ class ConfigServiceImpl(
 
     private val thresholdCheck: BehaviorThresholdCheck = persistedConfig.thresholdCheck
 
-    override val config: EmbraceConfig =
-        resolveConfig(instrumentedConfig, remoteConfig, lazy(thresholdCheck::getNormalizedDeviceId))
-    override val backgroundActivityBehavior =
-        BackgroundActivityBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
-    override val autoDataCaptureBehavior =
-        AutoDataCaptureBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
-    override val sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(instrumentedConfig)
-    override val logMessageBehavior = LogMessageBehaviorImpl(remoteConfig)
-    override val vitalsBehavior = VitalsBehaviorImpl(thresholdCheck, remoteConfig)
-    override val sessionBehavior = UserSessionBehaviorImpl(remoteConfig)
-    override val experimentBehavior = ExperimentBehaviorImpl(remoteConfig)
-    override val networkBehavior = NetworkBehaviorImpl(instrumentedConfig, remoteConfig)
-    override val dataCaptureEventBehavior = DataCaptureEventBehaviorImpl(remoteConfig)
-    override val sdkModeBehavior = SdkModeBehaviorImpl(thresholdCheck, remoteConfig)
-    override val traceparentInjectionBehavior =
-        TraceparentInjectionBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
+    override val config: EmbraceConfig = resolveConfig(instrumentedConfig, remoteConfig, thresholdCheck.bucket)
+    override val backgroundActivityBehavior = BackgroundActivityBehaviorImpl(config.backgroundActivity)
+    override val autoDataCaptureBehavior = AutoDataCaptureBehaviorImpl(config.autoDataCapture)
+    override val sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(config.sensitiveKeys)
+    override val logMessageBehavior = LogMessageBehaviorImpl(config.logMessage)
+    override val vitalsBehavior = VitalsBehaviorImpl(config.vitals)
+    override val sessionBehavior = UserSessionBehaviorImpl(config.userSession)
+    override val experimentBehavior = ExperimentBehaviorImpl(config.experiment)
+    override val networkBehavior = NetworkBehaviorImpl(config.network)
+    override val dataCaptureEventBehavior = DataCaptureEventBehaviorImpl(config.dataCaptureEvent)
+    override val sdkModeBehavior = SdkModeBehaviorImpl(config.sdkMode)
+    override val traceparentInjectionBehavior = TraceparentInjectionBehaviorImpl(config.traceparentInjection)
     override val networkSpanForwardingBehavior =
-        NetworkSpanForwardingBehaviorImpl(traceparentInjectionBehavior, thresholdCheck, instrumentedConfig, remoteConfig)
+        NetworkSpanForwardingBehaviorImpl(traceparentInjectionBehavior, config.networkSpanForwarding)
     override val otelBehavior = persistedConfig.otelBehavior
 
     override val appId: String? = run {

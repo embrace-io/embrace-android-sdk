@@ -87,6 +87,9 @@ All modules use convention plugins instead of duplicating build configuration. W
 convention plugin rather than configuring build settings directly — see `buildSrc/src/main/kotlin/embrace-*-conventions.gradle.kts`
 for the available plugins and what each applies.
 
+All SDK config (remote and local models, defaults, `EmbraceConfig` and `embrace-config-schema.json`) is generated from
+`config-schema/embrace-config.yaml`; see `buildSrc/README.md` for how to add an option.
+
 ---
 
 ## Code Style & Formatting

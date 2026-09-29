@@ -1,33 +1,19 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
+import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import kotlin.math.min
+import io.embrace.android.embracesdk.internal.config.resolved.ExperimentConfig
+import io.embrace.android.embracesdk.internal.config.resolved.resolveExperiment
 
-class ExperimentBehaviorImpl(
-    private val remote: RemoteConfig?,
-) : ExperimentBehavior {
+class ExperimentBehaviorImpl(private val config: ExperimentConfig) : ExperimentBehavior {
 
-    override fun getMaxExperimentCount(): Int = min(
-        remote?.experimentMaxCount ?: DEFAULT_EXPERIMENT_COUNT_LIMIT,
-        MAX_EXPERIMENT_COUNT_LIMIT,
-    )
+    constructor(remote: RemoteConfig?) : this(resolveExperiment(behaviorInputs(InstrumentedConfigImpl, remote)))
 
-    override fun getMaxIdLength(): Int = min(
-        remote?.experimentIdMaxLength ?: DEFAULT_ID_LENGTH_LIMIT,
-        MAX_ID_LENGTH_LIMIT,
-    )
-
-    override fun getMaxVariantLength(): Int = min(
-        remote?.experimentVariantMaxLength ?: DEFAULT_VARIANT_LENGTH_LIMIT,
-        MAX_VARIANT_LENGTH_LIMIT,
-    )
+    override fun getMaxExperimentCount(): Int = config.experimentCountLimit
+    override fun getMaxIdLength(): Int = config.idLengthLimit
+    override fun getMaxVariantLength(): Int = config.variantLengthLimit
 
     companion object {
-        const val DEFAULT_EXPERIMENT_COUNT_LIMIT: Int = 500
-        const val MAX_EXPERIMENT_COUNT_LIMIT: Int = 5000
-        const val DEFAULT_ID_LENGTH_LIMIT: Int = 128
-        const val MAX_ID_LENGTH_LIMIT: Int = 1024
-        const val DEFAULT_VARIANT_LENGTH_LIMIT: Int = 128
-        const val MAX_VARIANT_LENGTH_LIMIT: Int = 1024
+        const val MAX_EXPERIMENT_COUNT_LIMIT: Int = ExperimentConfig.EXPERIMENT_COUNT_LIMIT_MAX
     }
 }

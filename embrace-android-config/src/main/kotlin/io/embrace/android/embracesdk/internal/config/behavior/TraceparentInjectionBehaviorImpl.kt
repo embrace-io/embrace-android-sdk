@@ -1,46 +1,21 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.instrumented.schema.EnabledFeatureConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
-import io.embrace.android.embracesdk.internal.config.instrumented.schema.NetworkCaptureConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.resolved.TraceparentInjectionConfig
+import io.embrace.android.embracesdk.internal.config.resolved.resolveTraceparentInjection
 
-class TraceparentInjectionBehaviorImpl(
-    private val thresholdCheck: BehaviorThresholdCheck,
-    local: InstrumentedConfig,
-    remote: RemoteConfig?,
-) : TraceparentInjectionBehavior {
+class TraceparentInjectionBehaviorImpl(private val config: TraceparentInjectionConfig) : TraceparentInjectionBehavior {
 
-    private val enabledFeatures: EnabledFeatureConfig = local.enabledFeatures
-    private val networkCapture: NetworkCaptureConfig = local.networkCapture
-    private val injectionPctEnabled: Float? = remote?.traceparentInjectionPctEnabled
-    private val allowlistMatcher = HostAllowlistMatcher(networkCapture.getTraceparentOnlyAllowDomains())
-    private val enableLegacyFallback: Boolean =
-        if (remote == null || remote.nsfPctEnabled != null) {
-            false
-        } else {
-            @Suppress("DEPRECATION")
-            val fallbackConfig = remote.networkSpanForwardingRemoteConfig
-            if (fallbackConfig == null) {
-                false
-            } else {
-                thresholdCheck.isBehaviorEnabled(fallbackConfig.pctEnabled) == true
-            }
-        }
+    constructor(thresholdCheck: BehaviorThresholdCheck, local: InstrumentedConfig, remote: RemoteConfig?) :
+        this(resolveTraceparentInjection(behaviorInputs(local, remote, thresholdCheck)))
 
-    override fun isTraceparentInjectionEnabled(): Boolean =
-        if (enableLegacyFallback) {
-            true
-        } else {
-            if (injectionPctEnabled == null) {
-                enabledFeatures.isTraceparentInjectionEnabled()
-            } else {
-                thresholdCheck.isBehaviorEnabled(injectionPctEnabled)
-            }
-        }
+    private val allowlistMatcher = HostAllowlistMatcher(config.onlyAllowDomains)
+
+    override fun isTraceparentInjectionEnabled(): Boolean = config.enabled
 
     override fun shouldInjectTraceparent(host: String?): Boolean =
-        isTraceparentInjectionEnabled() && (enableLegacyFallback || allowlistMatcher.isAllowed(host))
+        config.enabled && (config.legacyFallbackEnabled || allowlistMatcher.isAllowed(host))
 
     /**
      * Case-insensitively matches a request host against the local allowlist of hostnames. If the allowList is not provided at init time,

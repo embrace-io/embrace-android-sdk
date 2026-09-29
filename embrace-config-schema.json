@@ -3,26 +3,73 @@
   "description": "JSON Schema definition for the Embrace configuration file.",
   "id": "https://json.schemastore.org/embrace-config-schema-1.0.0.json",
   "properties": {
-    "app_id": {
-      "description": "Your 5 character app ID.",
-      "type": "string",
-      "maxLength": 5,
-      "minLength": 5
-    },
-    "api_token": {
-      "description": "Your API 32-hexdigit token.",
-      "type": "string",
-      "maxLength": 32,
-      "minLength": 32
-    },
-    "ndk_enabled": {
-      "description": "Enables NDK crash capture",
-      "default": true,
-      "type": "boolean"
-    },
     "sdk_config": {
       "type": "object",
       "properties": {
+        "taps": {
+          "type": "object",
+          "properties": {
+            "capture_coordinates": {
+              "description": "Set to true to enable capturing tap coordinates.",
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          "minProperties": 1
+        },
+        "view_config": {
+          "type": "object",
+          "properties": {
+            "enable_automatic_activity_capture": {
+              "description": "Enables capturing activity lifecycle changes in breadcrumbs.",
+              "default": true,
+              "type": "boolean"
+            }
+          },
+          "minProperties": 1
+        },
+        "webview": {
+          "type": "object",
+          "properties": {
+            "enable": {
+              "description": "Set to false to disable capturing of web views.",
+              "default": true,
+              "type": "boolean"
+            },
+            "capture_query_params": {
+              "description": "Set to false to disable capturing of web view query parameters. If webview:enable is set to false, this setting has no effect since all capture of web view information is disabled.",
+              "default": true,
+              "type": "boolean"
+            },
+            "fragment_capture": {
+              "description": "Controls how the URL fragment - the part after the '#' - is captured for web views. One of keep, redact or remove. 'keep' captures it unaltered. 'redact' removes the values from any key=value pairs and drops long unstructured segments, while preserving hash routes and short anchors; pick this to avoid capturing tokens without losing the route the user was on. 'remove' discards the fragment entirely. Independent of capture_query_params. If webview:enable is set to false, this setting has no effect since all capture of web view information is disabled.",
+              "default": "keep",
+              "type": "string"
+            }
+          },
+          "minProperties": 1
+        },
+        "capture_fcm_pii_data": {
+          "description": "Enables PII data within FCM capture.",
+          "default": false,
+          "type": "boolean"
+        },
+        "multi_file_persistence_enabled": {
+          "description": "Persists session telemetry using the multi-file layout, written in parallel with the existing single-file payload writer. Can be overridden by remote config.",
+          "default": false,
+          "type": "boolean"
+        },
+        "app_exit_info": {
+          "type": "object",
+          "properties": {
+            "aei_enabled": {
+              "description": "Enables Application Exit Info capture.",
+              "default": true,
+              "type": "boolean"
+            }
+          },
+          "minProperties": 1
+        },
         "automatic_data_capture": {
           "type": "object",
           "properties": {
@@ -49,54 +96,6 @@
           },
           "minProperties": 1
         },
-        "taps": {
-          "type": "object",
-          "properties": {
-            "capture_coordinates": {
-              "description": "Set to true to enable capturing tap coordinates.",
-              "default": false,
-              "type": "boolean"
-            }
-          },
-          "minProperties": 1
-        },
-        "multi_file_persistence_enabled": {
-          "description": "Persists session telemetry using the multi-file layout, written in parallel with the existing single-file payload writer. Can be overridden by remote config.",
-          "default": false,
-          "type": "boolean"
-        },
-        "view_config": {
-          "type": "object",
-          "properties": {
-            "enable_automatic_activity_capture": {
-              "description": "Enables capturing activity lifecycle changes in breadcrumbs.",
-              "default": true,
-              "type": "boolean"
-            }
-          },
-          "minProperties": 1
-        },
-        "webview": {
-          "type": "object",
-          "properties": {
-            "capture_query_params": {
-              "description": "Set to false to disable capturing of web view query parameters. If webview:enable is set to false, this setting has no effect since all capture of web view information is disabled.",
-              "default": true,
-              "type": "boolean"
-            },
-            "enable": {
-              "description": "Set to false to disable capturing of web views.",
-              "default": true,
-              "type": "boolean"
-            },
-            "fragment_capture": {
-              "description": "Controls how the URL fragment - the part after the '#' - is captured for web views. One of keep, redact or remove. 'keep' captures it unaltered. 'redact' removes the values from any key=value pairs and drops long unstructured segments, while preserving hash routes and short anchors; pick this to avoid capturing tokens without losing the route the user was on. 'remove' discards the fragment entirely. Independent of capture_query_params. If webview:enable is set to false, this setting has no effect since all capture of web view information is disabled.",
-              "default": "keep",
-              "type": "string"
-            }
-          },
-          "minProperties": 1
-        },
         "crash_handler": {
           "type": "object",
           "properties": {
@@ -119,14 +118,51 @@
           },
           "minProperties": 1
         },
-        "capture_fcm_pii_data": {
-          "description": "Enables PII data within FCM capture.",
+        "sig_handler_detection": {
+          "description": "Enables 3rd party signal handler detection.",
           "default": false,
           "type": "boolean"
+        },
+        "app": {
+          "type": "object",
+          "properties": {
+            "report_disk_usage": {
+              "description": "The SDK collects the disk usage for the app. You can disable this if your app has a large number of local files to prevent excessive resource usage, especially on lower-end devices.",
+              "default": true,
+              "type": "boolean"
+            }
+          },
+          "minProperties": 1
+        },
+        "background_activity": {
+          "type": "object",
+          "properties": {
+            "capture_enabled": {
+              "description": "Enables background activity capture.",
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          "minProperties": 1
         },
         "networking": {
           "type": "object",
           "properties": {
+            "capture_request_content_length": {
+              "description": "Enable capture of network length which can interfere with certain streaming network requests.",
+              "default": false,
+              "type": "boolean"
+            },
+            "capture_okhttp_response_body_size": {
+              "description": "Enable capture of an OkHttp response body's size when it has no Content-Length header. This buffers the whole body into memory so is disabled by default to avoid excessive heap usage on large or streaming responses.",
+              "default": false,
+              "type": "boolean"
+            },
+            "enable_native_monitoring": {
+              "description": "Enable capture of network requests made using the native Java network API.",
+              "default": false,
+              "type": "boolean"
+            },
             "default_capture_limit": {
               "description": "Default capture limit for specified domains.",
               "default": 1000,
@@ -152,16 +188,6 @@
               "minItems": 1,
               "uniqueItems": true
             },
-            "capture_request_content_length": {
-              "description": "Enable capture of network length which can interfere with certain streaming network requests.",
-              "default": false,
-              "type": "boolean"
-            },
-            "capture_okhttp_response_body_size": {
-              "description": "Enable capture of an OkHttp response body's size when it has no Content-Length header. This buffers the whole body into memory so is disabled by default to avoid excessive heap usage on large or streaming responses.",
-              "default": false,
-              "type": "boolean"
-            },
             "disabled_url_patterns": {
               "description": "Specify one or more regular expressions to exclude network request with URLs matching one of the regular expressions from being captured.",
               "type": "array",
@@ -170,11 +196,6 @@
               },
               "minItems": 1,
               "uniqueItems": true
-            },
-            "enable_native_monitoring": {
-              "description": "Enable capture of network requests made using the native Java network API.",
-              "default": false,
-              "type": "boolean"
             },
             "enable_network_span_forwarding": {
               "description": "Enables network span forwarding.",
@@ -185,8 +206,8 @@
           "minProperties": 1
         },
         "capture_public_key": {
-          "type": "string",
-          "description": "Declares the key that should be used to capture network request bodies, if any."
+          "description": "Declares the key that should be used to capture network request bodies, if any.",
+          "type": "string"
         },
         "sensitive_keys_denylist": {
           "description": "List of sensitive keys whose values should be redacted on capture.",
@@ -208,27 +229,9 @@
           },
           "minProperties": 1
         },
-        "app": {
-          "type": "object",
-          "properties": {
-            "report_disk_usage": {
-              "description": "The SDK collects the disk usage for the app. You can disable this if your app has a large number of local files to prevent excessive resource usage, especially on lower-end devices.",
-              "default": true,
-              "type": "boolean"
-            }
-          },
-          "minProperties": 1
-        },
-        "background_activity": {
-          "type": "object",
-          "properties": {
-            "capture_enabled": {
-              "description": "Enables background activity capture.",
-              "default": false,
-              "type": "boolean"
-            }
-          },
-          "minProperties": 1
+        "app_framework": {
+          "description": "Project's app framework, one of react_native, unity, flutter or native.",
+          "type": "string"
         },
         "base_urls": {
           "type": "object",
@@ -243,29 +246,26 @@
             }
           },
           "minProperties": 1
-        },
-        "sig_handler_detection": {
-          "description": "Enables 3rd party signal handler detection.",
-          "default": false,
-          "type": "boolean"
-        },
-        "app_exit_info": {
-          "type": "object",
-          "properties": {
-            "aei_enabled": {
-              "description": "Enables Application Exit Info capture.",
-              "default": true,
-              "type": "boolean"
-            }
-          },
-          "minProperties": 1
-        },
-        "app_framework": {
-          "type": "string",
-          "description": "Project's app framework, one of react_native, unity, flutter or native."
         }
       },
       "minProperties": 1
+    },
+    "ndk_enabled": {
+      "description": "Enables NDK crash capture",
+      "default": true,
+      "type": "boolean"
+    },
+    "app_id": {
+      "description": "Your 5 character app ID.",
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 5
+    },
+    "api_token": {
+      "description": "Your API 32-hexdigit token.",
+      "type": "string",
+      "minLength": 32,
+      "maxLength": 32
     },
     "unity": {
       "type": "object",

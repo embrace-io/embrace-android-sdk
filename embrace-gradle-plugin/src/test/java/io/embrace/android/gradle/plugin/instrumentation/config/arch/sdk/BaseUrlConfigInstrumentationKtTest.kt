@@ -35,16 +35,16 @@ class BaseUrlConfigInstrumentationKtTest {
         val instrumentation = createBaseUrlConfigInstrumentation(
             cfg.copy(
                 embraceConfig = EmbraceVariantConfig(
-                    null,
-                    null,
-                    null,
-                    SdkLocalConfig(
+                    appId = null,
+                    apiToken = null,
+                    ndkEnabled = null,
+                    sdkConfig = SdkLocalConfig(
                         baseUrls = BaseUrlLocalConfig(
                             config = "config.example.com",
                             data = "data.example.com",
                         ),
                     ),
-                    null,
+                    unityConfig = null,
                 ),
             ),
         )

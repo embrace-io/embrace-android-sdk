@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
+import io.embrace.android.embracesdk.internal.config.resolved.OtelConfig
+
 /**
  * Provides the behavior for OpenTelemetry configuration
  */
@@ -43,13 +45,13 @@ interface OtelBehavior {
         /**
          * The default limit on non-breadcrumb span events per session part span.
          */
-        const val DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART: Int = 1000
+        const val DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART: Int = OtelConfig.DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART
     }
 }
 
-const val DEFAULT_MAX_CUSTOM_SPANS_PER_SESSION_PART: Int = 500
-const val DEFAULT_MAX_INTERNAL_SPANS_PER_SESSION_PART: Int = 1500
-const val DEFAULT_MAX_NETWORK_SPANS_PER_SESSION_PART: Int = 2000
-const val DEFAULT_PERIODIC_CACHE_INTERVAL_MS: Long = 2000L
-const val MIN_PERIODIC_CACHE_INTERVAL_MS: Long = 2000L
-const val MAX_PERIODIC_CACHE_INTERVAL_MS: Long = 120000L
+const val DEFAULT_MAX_CUSTOM_SPANS_PER_SESSION_PART: Int = OtelConfig.DEFAULT_MAX_CUSTOM_SPANS_PER_SESSION_PART
+const val DEFAULT_MAX_INTERNAL_SPANS_PER_SESSION_PART: Int = OtelConfig.DEFAULT_MAX_INTERNAL_SPANS_PER_SESSION_PART
+const val DEFAULT_MAX_NETWORK_SPANS_PER_SESSION_PART: Int = OtelConfig.DEFAULT_MAX_NETWORK_SPANS_PER_SESSION_PART
+const val DEFAULT_PERIODIC_CACHE_INTERVAL_MS: Long = OtelConfig.DEFAULT_PERIODIC_CACHE_INTERVAL_MS
+const val MIN_PERIODIC_CACHE_INTERVAL_MS: Long = OtelConfig.PERIODIC_CACHE_INTERVAL_MS_MIN
+const val MAX_PERIODIC_CACHE_INTERVAL_MS: Long = OtelConfig.PERIODIC_CACHE_INTERVAL_MS_MAX

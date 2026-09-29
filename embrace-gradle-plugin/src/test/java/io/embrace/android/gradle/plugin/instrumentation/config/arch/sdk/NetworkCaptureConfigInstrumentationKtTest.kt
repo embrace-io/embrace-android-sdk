@@ -40,10 +40,10 @@ class NetworkCaptureConfigInstrumentationKtTest {
             createNetworkCaptureConfigInstrumentation(
                 cfg.copy(
                     embraceConfig = EmbraceVariantConfig(
-                        null,
-                        null,
-                        null,
-                        SdkLocalConfig(
+                        appId = null,
+                        apiToken = null,
+                        ndkEnabled = null,
+                        sdkConfig = SdkLocalConfig(
                             capturePublicKey = "my_key",
                             networking = NetworkLocalConfig(
                                 defaultCaptureLimit = 567,
@@ -55,7 +55,7 @@ class NetworkCaptureConfigInstrumentationKtTest {
                                 traceparentOnlyAllowDomains = listOf("foo.test.com", ".example.com"),
                             ),
                         ),
-                        null,
+                        unityConfig = null,
                     ),
                 ),
             )

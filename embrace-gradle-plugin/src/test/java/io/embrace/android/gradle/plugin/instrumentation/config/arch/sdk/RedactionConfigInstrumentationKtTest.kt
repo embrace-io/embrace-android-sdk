@@ -33,13 +33,13 @@ class RedactionConfigInstrumentationKtTest {
         val instrumentation = createRedactionConfigInstrumentation(
             cfg.copy(
                 embraceConfig = EmbraceVariantConfig(
-                    null,
-                    null,
-                    null,
-                    SdkLocalConfig(
+                    appId = null,
+                    apiToken = null,
+                    ndkEnabled = null,
+                    sdkConfig = SdkLocalConfig(
                         sensitiveKeysDenylist = listOf("password"),
                     ),
-                    null,
+                    unityConfig = null,
                 ),
             ),
         )

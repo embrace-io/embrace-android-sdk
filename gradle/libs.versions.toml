@@ -10,6 +10,8 @@ koverGradlePlugin = "0.9.9"
 lint = "32.3.1"
 openTelemetryCore = "1.66.0"
 moshi = "1.15.2" # only used by the Gradle-plugin
+snakeyaml = "2.6"
+kotlinpoet = "2.4.0"
 lifecycle = "2.7.0" # version pinned to 2.7.0 because of AGP bug
 annotation = "1.10.0"
 otelKotlin = "0.8.0"
@@ -62,6 +64,8 @@ detekt-gradle-plugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plu
 dokka-gradle-plugin = { module = "org.jetbrains.dokka:org.jetbrains.dokka.gradle.plugin", version.ref = "dokka" }
 vanniktech-maven-publish = { module = "com.vanniktech.maven.publish:com.vanniktech.maven.publish.gradle.plugin", version.ref = "vanniktechMavenPublish" }
 kover = { module = "org.jetbrains.kotlinx:kover-gradle-plugin", version.ref = "koverGradlePlugin" }
+snakeyaml = { module = "org.yaml:snakeyaml", version.ref = "snakeyaml" }
+kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
 agp = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlinGradlePlugin" }
 kotlin-serialization-compiler-plugin = { module = "org.jetbrains.kotlin:kotlin-serialization-compiler-plugin-embeddable", version.ref = "kotlinGradlePlugin" }

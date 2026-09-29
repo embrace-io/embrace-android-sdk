@@ -14,11 +14,11 @@ class ProjectConfigInstrumentationKtTest {
         null,
         null,
         embraceConfig = EmbraceVariantConfig(
-            "",
-            "",
-            null,
-            null,
-            null,
+            appId = "",
+            apiToken = "",
+            ndkEnabled = null,
+            sdkConfig = null,
+            unityConfig = null,
         ),
     )
 

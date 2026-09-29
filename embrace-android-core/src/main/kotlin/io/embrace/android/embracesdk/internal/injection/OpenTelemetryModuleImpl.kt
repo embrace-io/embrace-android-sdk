@@ -137,7 +137,7 @@ class OpenTelemetryModuleImpl(
         uuidSource = initModule.uuidSource,
         otelBehaviorSupplier = { otelBehavior },
         // adding guard in case this is accessed before we fetch the config
-        customBreadcrumbLimitSupplier = { breadcrumbConfig?.customLimit ?: BreadcrumbConfig.DEFAULT_LIMIT },
+        customBreadcrumbLimitSupplier = { breadcrumbConfig?.customLimit ?: BreadcrumbConfig.DEFAULT_CUSTOM_LIMIT },
     ).also {
         internalSpanStopCallback = it::spanStopCallback
     }

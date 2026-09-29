@@ -14,6 +14,7 @@ dependencies {
     implementation(project(":embrace-android-limits"))
     implementation(project(":embrace-android-utils"))
     implementation(project(":embrace-android-payload"))
+    implementation(project(":embrace-android-config"))
     implementation(project(":embrace-android-instrumentation-schema"))
     implementation(project(":embrace-android-semconv"))
     compileOnly(project(":embrace-android-api"))

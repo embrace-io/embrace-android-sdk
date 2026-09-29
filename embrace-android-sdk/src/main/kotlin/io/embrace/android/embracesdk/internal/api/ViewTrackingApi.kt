@@ -19,28 +19,4 @@ internal interface ViewTrackingApi {
      * @param name the name of the view to log
      */
     fun endView(name: String): Boolean
-
-    /**
-     * Logs a React Native Redux Action.
-     */
-    @Deprecated("This function has no effect.")
-    fun logRnAction(
-        name: String,
-        startTime: Long,
-        endTime: Long,
-        properties: Map<String?, Any?>,
-        bytesSent: Int,
-        output: String,
-    )
-
-    /**
-     * Logs the fact that a particular view was entered.
-     *
-     * If the previously logged view has the same name, a duplicate view breadcrumb will not be
-     * logged.
-     *
-     * @param screen the name of the view to log
-     */
-    @Deprecated("This function has no effect.")
-    fun logRnView(screen: String)
 }

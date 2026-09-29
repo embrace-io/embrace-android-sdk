@@ -24,19 +24,4 @@ internal class ViewTrackingApiDelegate(
         }
         return false
     }
-
-    @Deprecated("This function has no effect.")
-    override fun logRnAction(
-        name: String,
-        startTime: Long,
-        endTime: Long,
-        properties: Map<String?, Any?>,
-        bytesSent: Int,
-        output: String,
-    ) {
-    }
-
-    @Deprecated("This function has no effect.")
-    override fun logRnView(screen: String) {
-    }
 }

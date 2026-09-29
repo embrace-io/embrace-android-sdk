@@ -57,17 +57,17 @@ interface EmbraceSdkSpan : EmbraceSpan {
     /**
      * Get the value of the attribute with the given key. Returns null if the attribute does not exist.
      */
-    fun getSystemAttribute(key: String): String?
+    fun getSystemAttribute(key: String): Any?
 
     /**
      * Set the value of the attribute with the given key, overwriting the original value if it's already set
      */
-    fun setSystemAttribute(key: String, value: String)
+    fun setSystemAttribute(key: String, value: Any)
 
     /**
      * Add the given key value pair as a system attribute to ths span
      */
-    fun addSystemAttribute(key: String, value: String)
+    fun addSystemAttribute(key: String, value: Any)
 
     /**
      * Remove the system attribute with the given key name
@@ -80,8 +80,23 @@ interface EmbraceSdkSpan : EmbraceSpan {
     fun addSystemEvent(
         name: String,
         timestampMs: Long?,
-        attributes: Map<String, String>?,
+        attributes: Map<String, Any>?,
     ): Boolean
+
+    /**
+     * Typed equivalent of [addAttribute].
+     */
+    fun addCustomAttribute(key: String, value: Any): Boolean
+
+    /**
+     * Typed equivalent of [addEvent].
+     */
+    fun addCustomEvent(name: String, timestampMs: Long?, attributes: Map<String, Any>): Boolean
+
+    /**
+     * Typed equivalent of [addLink].
+     */
+    fun addCustomLink(linkedSpanContext: SpanContext, attributes: Map<String, Any>): Boolean
 
     fun getStartTimeMs(): Long?
 
@@ -91,7 +106,7 @@ interface EmbraceSdkSpan : EmbraceSpan {
     fun addSystemLink(
         linkedSpanContext: SpanContext,
         type: LinkType,
-        attributes: Map<String, String> = emptyMap(),
+        attributes: Map<String, Any> = emptyMap(),
     ): Boolean
 
     /**

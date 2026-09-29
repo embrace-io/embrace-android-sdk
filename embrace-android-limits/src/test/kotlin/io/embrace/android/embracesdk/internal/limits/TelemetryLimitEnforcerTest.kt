@@ -70,6 +70,25 @@ internal class TelemetryLimitEnforcerTest {
     }
 
     @Test
+    fun `non-string values keep their type unless their string form is over the limit`() {
+        assertEquals(
+            mapOf("long" to 1234567L, "list" to listOf("a", "b"), "longer" to "12345...", "longerList" to "[shor..."),
+            enforcer().truncateAttributes(
+                attributes = mapOf(
+                    "long" to 1234567L,
+                    "list" to listOf("a", "b"),
+                    "longer" to 1234567890123L,
+                    "longerList" to listOf("short", "vwxyz12345"),
+                ),
+                maxCount = 5,
+                maxKeyLength = 10,
+                maxValueLength = 8,
+            ),
+        )
+        assertEquals(2, telemetryService.appliedLimits.count { it.first == "span_attribute_value" })
+    }
+
+    @Test
     fun `exempt attribute keys keep their full value`() {
         val enforcer = enforcer(exemptFromValueTruncation = { it == "stacktrace" })
         assertEquals(

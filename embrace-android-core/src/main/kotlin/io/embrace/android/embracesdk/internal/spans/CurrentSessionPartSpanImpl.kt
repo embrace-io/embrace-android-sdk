@@ -283,12 +283,12 @@ internal class CurrentSessionPartSpanImpl(
          * span, after which the attributes referenced by [partLinkAttrs] no longer change for the lifetime of the part.
          */
         @Volatile
-        var linkAttrs: Map<String, String>? = null
+        var linkAttrs: Map<String, Any>? = null
 
         val isReady: Boolean get() = span.isRecording
     }
 
-    private fun SessionPartState.cachedPartLinkAttrs(): Map<String, String> {
+    private fun SessionPartState.cachedPartLinkAttrs(): Map<String, Any> {
         linkAttrs?.let { return it }
         val attrs = span.partLinkAttrs()
         if (attrs.containsKey(EmbSessionAttributes.EMB_USER_SESSION_ID)) {
@@ -300,7 +300,7 @@ internal class CurrentSessionPartSpanImpl(
     /**
      * Attributes for a span link that references the session part represented by this span.
      */
-    private fun EmbraceSdkSpan.partLinkAttrs(): Map<String, String> = buildMap {
+    private fun EmbraceSdkSpan.partLinkAttrs(): Map<String, Any> = buildMap {
         getSystemAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID)?.let {
             put(EmbSessionAttributes.EMB_SESSION_PART_ID, it)
         }

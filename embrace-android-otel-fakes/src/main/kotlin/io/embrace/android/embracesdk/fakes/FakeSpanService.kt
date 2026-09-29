@@ -86,7 +86,7 @@ class FakeSpanService : SpanService {
         type: EmbType,
         internal: Boolean,
         private: Boolean,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<SpanEvent>,
         terminationMode: SpanTerminationMode,
         code: () -> T,
@@ -102,7 +102,7 @@ class FakeSpanService : SpanService {
         type: EmbType,
         internal: Boolean,
         private: Boolean,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<SpanEvent>,
         errorCode: ErrorCodeAttribute?,
     ): Boolean {
@@ -115,9 +115,9 @@ class FakeSpanService : SpanService {
                 private = private,
             ).apply {
                 start(startTimeMs)
-                attributes.forEach { (key, value) -> addAttribute(key, value) }
+                attributes.forEach { (key, value) -> addCustomAttribute(key, value) }
                 events.forEach {
-                    addEvent(it.name, it.timestampNanos, it.attributes)
+                    addCustomEvent(it.name, it.timestampNanos, it.attributes)
                 }
                 stopWithErrorCode(errorCode, endTimeMs)
             }

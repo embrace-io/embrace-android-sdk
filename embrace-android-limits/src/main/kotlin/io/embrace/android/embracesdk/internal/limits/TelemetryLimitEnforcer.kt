@@ -14,6 +14,7 @@ class TelemetryLimitEnforcer(
     val otelLimits: OtelLimitsConfig = OtelLimitsConfigImpl,
     private val telemetryService: TelemetryService,
     private val exemptFromValueTruncation: (String) -> Boolean = { false },
+    private val valueToString: (Any) -> String = Any::toString,
 ) {
 
     fun truncateName(name: String, maxLength: Int): String {
@@ -25,11 +26,11 @@ class TelemetryLimitEnforcer(
     }
 
     fun truncateAttributes(
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         maxCount: Int,
         maxKeyLength: Int,
         maxValueLength: Int,
-    ): Map<String, String> {
+    ): Map<String, Any> {
         val truncatedEntries = attributes.entries.take(maxCount)
         if (truncatedEntries.size < attributes.size) {
             telemetryService.trackAppliedLimit(SPAN_ATTRIBUTE_TELEMETRY_TYPE, AppliedLimitType.TRUNCATE_ATTRIBUTES)
@@ -44,7 +45,7 @@ class TelemetryLimitEnforcer(
         }
     }
 
-    fun truncateAttribute(key: String, value: String, maxKeyLength: Int, maxValueLength: Int): Pair<String, String> {
+    fun truncateAttribute(key: String, value: Any, maxKeyLength: Int, maxValueLength: Int): Pair<String, Any> {
         val truncatedKey = PropertyUtils.truncate(key, maxKeyLength)
         if (truncatedKey != key) {
             telemetryService.trackAppliedLimit(SPAN_ATTRIBUTE_KEY_TELEMETRY_TYPE, AppliedLimitType.TRUNCATE_STRING)
@@ -53,13 +54,21 @@ class TelemetryLimitEnforcer(
         val truncatedValue = if (exemptFromValueTruncation(key)) {
             value
         } else {
-            PropertyUtils.truncate(value, maxValueLength)
+            truncateValue(value, maxValueLength)
         }
         if (truncatedValue != value) {
             telemetryService.trackAppliedLimit(SPAN_ATTRIBUTE_VALUE_TELEMETRY_TYPE, AppliedLimitType.TRUNCATE_STRING)
         }
 
         return Pair(truncatedKey, truncatedValue)
+    }
+
+    private fun truncateValue(value: Any, maxLength: Int): Any {
+        if (value is String) {
+            return PropertyUtils.truncate(value, maxLength)
+        }
+        val stringValue = valueToString(value)
+        return if (stringValue.length > maxLength) PropertyUtils.truncate(stringValue, maxLength) else value
     }
 
     /**

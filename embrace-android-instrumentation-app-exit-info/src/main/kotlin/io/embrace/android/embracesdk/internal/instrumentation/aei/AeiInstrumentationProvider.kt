@@ -5,20 +5,21 @@ import android.content.Context
 import android.os.Build
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
-import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceFactory
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 class AeiInstrumentationProvider : InstrumentationProvider {
 
     override val asyncInit: Boolean = true
 
-    override fun register(args: InstrumentationArgs): DataSourceState<*>? {
+    override fun register(args: InstrumentationArgs): DataSourceFactory<DataSource>? {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
             return null
         }
 
-        return DataSourceState(
-            factory = {
+        return {
+            if (args.configService.config.aei.captureEnabled) {
                 AeiDataSourceImpl(
                     args = args,
                     backgroundWorker = args.backgroundWorker(worker = Worker.Background.NonIoRegWorker),
@@ -27,8 +28,9 @@ class AeiInstrumentationProvider : InstrumentationProvider {
                     store = args.store,
                     ordinalStore = args.ordinalStore,
                 )
-            },
-            configGate = { args.configService.config.aei.captureEnabled },
-        )
+            } else {
+                null
+            }
+        }
     }
 }

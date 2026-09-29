@@ -1,0 +1,30 @@
+{
+  "id": "id",
+  "variant_build_telemetry": [
+    {
+      "variant_name": "release",
+      "app_id": "abcde",
+      "build_id": "build"
+    },
+    {
+      "variant_name": "debug"
+    }
+  ],
+  "embrace_plugin_version": "8.0.0",
+  "gradle_version": "9.0",
+  "agp_version": "9.4.1",
+  "build_cache_enabled": true,
+  "config_cache_enabled": false,
+  "gradle_parallel_execution_enabled": true,
+  "isolated_projects_enabled": false,
+  "jvm_args": "-Xmx2g",
+  "os": "Mac",
+  "jdk_version": "17",
+  "unity_edm_enabled": false,
+  "unity_edm_version": "1.2",
+  "kgp_version": "2.4.20",
+  "kotlin_jvm_target": "11",
+  "source_compatibility": "11",
+  "min_sdk": 21,
+  "compile_sdk": 36
+}

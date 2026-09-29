@@ -1,0 +1,85 @@
+{
+  "app_id": "abcde",
+  "api_token": "12345678901234567890123456789012",
+  "ndk_enabled": true,
+  "sdk_config": {
+    "automatic_data_capture": {
+      "power_save_mode_info": true,
+      "network_connectivity_info": false,
+      "anr_info": true,
+      "ui_load_tracing_disabled": false,
+      "ui_load_tracing_selected_only": true,
+      "end_startup_with_app_ready": false,
+      "activity_process_lifecycle_tracker_enabled": true
+    },
+    "taps": {
+      "capture_coordinates": false
+    },
+    "otel": {
+      "enable_otel_kotlin_sdk": true
+    },
+    "multi_file_persistence_enabled": true,
+    "view_config": {
+      "enable_automatic_activity_capture": false
+    },
+    "webview": {
+      "enable": true,
+      "capture_query_params": false,
+      "fragment_capture": "redact"
+    },
+    "crash_handler": {
+      "enabled": true
+    },
+    "compose": {
+      "capture_compose_onclick": true
+    },
+    "capture_fcm_pii_data": false,
+    "networking": {
+      "default_capture_limit": 100,
+      "domains": [
+        {
+          "domain_name": "example.com",
+          "domain_limit": 10
+        }
+      ],
+      "capture_request_content_length": true,
+      "capture_okhttp_response_body_size": false,
+      "disabled_url_patterns": [
+        "a.*",
+        "b.*"
+      ],
+      "enable_native_monitoring": true,
+      "enable_huc_lite_instrumentation": false,
+      "enable_network_span_forwarding": true,
+      "enable_traceparent_injection": false,
+      "traceparent_only_allow_domains": [
+        "example.com"
+      ]
+    },
+    "capture_public_key": "key",
+    "sensitive_keys_denylist": [
+      "password"
+    ],
+    "anr": {
+      "capture_unity_thread": true
+    },
+    "app": {
+      "report_disk_usage": false
+    },
+    "background_activity": {
+      "capture_enabled": true
+    },
+    "base_urls": {
+      "config": "https://config.example.com",
+      "data": "https://data.example.com"
+    },
+    "sig_handler_detection": false,
+    "app_exit_info": {
+      "aei_enabled": true
+    },
+    "app_framework": "native"
+  },
+  "unity": {
+    "symbols_archive_name": "symbols.zip"
+  }
+}

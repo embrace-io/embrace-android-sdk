@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.testcases
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeLogRecordProcessor
@@ -19,22 +18,27 @@ import io.embrace.android.embracesdk.otel.java.addJavaLogRecordExporter
 import io.embrace.android.embracesdk.otel.java.addJavaLogRecordProcessor
 import io.embrace.android.embracesdk.otel.java.addJavaSpanExporter
 import io.embrace.android.embracesdk.otel.java.addJavaSpanProcessor
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
 @Suppress("DEPRECATION")
-@RunWith(AndroidJUnit4::class)
-internal class OTelExportTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class OTelExportTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     @Test
     fun `session part span exported to user-supplied exporter`() {
@@ -201,6 +205,8 @@ internal class OTelExportTest {
 
     @Test
     fun `span exported to user-supplied SpanProcessor using Java API`() {
+        // TODO: future: opentelemetry-kotlin's SpanProcessorAdapter only forwards compat spans, so regular mode drops them
+        assumeTrue(otelSdkMode == OtelSdkMode.COMPAT)
         val processor = FakeOtelJavaSpanProcessor()
         val spanName = "test-java-processor-span"
 
@@ -223,6 +229,8 @@ internal class OTelExportTest {
 
     @Test
     fun `log record exported to user-supplied LogRecordProcessor using Java API`() {
+        // TODO: future: opentelemetry-kotlin's LogRecordProcessorAdapter only forwards compat logs, so regular mode drops them
+        assumeTrue(otelSdkMode == OtelSdkMode.COMPAT)
         val processor = FakeOtelJavaLogRecordProcessor()
 
         testRule.runTest(
@@ -425,5 +433,11 @@ internal class OTelExportTest {
                 assertEquals(listOf("a", "b", "c"), calls)
             }
         )
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

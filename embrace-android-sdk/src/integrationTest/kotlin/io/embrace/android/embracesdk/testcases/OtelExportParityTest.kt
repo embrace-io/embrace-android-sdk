@@ -1,12 +1,10 @@
 package io.embrace.android.embracesdk.testcases
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.toStringMap
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceOtelExportAssertionInterface
@@ -23,133 +21,32 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
 /**
- * Asserts that the telemetry exported for common tracing & logging operations is a 1:1 match between
- * the opentelemetry-kotlin 'compat' implementation and the 'KMP' implementation.
+ * Asserts that the telemetry exported for common tracing & logging operations matches the same golden files
+ * under every [OtelSdkMode], i.e. that the opentelemetry-kotlin 'compat' and 'regular' implementations are a
+ * 1:1 match.
  */
-@RunWith(AndroidJUnit4::class)
-internal class OtelExportParityTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class OtelExportParityTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     private lateinit var otel: OpenTelemetry
     private lateinit var tracer: Tracer
     private lateinit var logger: Logger
 
-    /**
-     * The rest of this class relies on [remoteConfig] actually switching the implementation under test.
-     * Without these two, a regression that stopped the persisted config reaching the OTel module would
-     * silently run every 'kmp implementation' case against the compat implementation and still pass.
-     */
     @Test
-    fun `persisted config selects the compat implementation`() {
-        assertSdkImplementationSelected(useKotlinSdk = false)
-    }
-
-    @Test
-    fun `persisted config selects the kmp implementation`() {
-        assertSdkImplementationSelected(useKotlinSdk = true)
-    }
-
-    @Test
-    fun `trace export matches golden file using compat implementation`() {
-        assertTraceExport(useKotlinSdk = false)
-    }
-
-    @Test
-    fun `trace export matches golden file using kmp implementation`() {
-        assertTraceExport(useKotlinSdk = true)
-    }
-
-    @Test
-    fun `log export matches golden file using compat implementation`() {
-        assertLogExport(useKotlinSdk = false)
-    }
-
-    @Test
-    fun `log export matches golden file using kmp implementation`() {
-        assertLogExport(useKotlinSdk = true)
-    }
-
-    @Test
-    fun `span attribute export matches golden file using compat implementation`() {
-        assertSpanAttributeExport(useKotlinSdk = false)
-    }
-
-    @Test
-    fun `span attribute export matches golden file using kmp implementation`() {
-        assertSpanAttributeExport(useKotlinSdk = true)
-    }
-
-    @Test
-    fun `span event export matches golden file using compat implementation`() {
-        assertSpanEventExport(useKotlinSdk = false)
-    }
-
-    @Test
-    fun `span event export matches golden file using kmp implementation`() {
-        assertSpanEventExport(useKotlinSdk = true)
-    }
-
-    @Ignore("Requires fix to compat context implementation")
-    @Test
-    fun `span relationship export matches golden file using compat implementation`() {
-        assertSpanRelationshipExport(useKotlinSdk = false)
-    }
-
-    @Test
-    fun `span relationship export matches golden file using kmp implementation`() {
-        assertSpanRelationshipExport(useKotlinSdk = true)
-    }
-
-    @Test
-    fun `log record export matches golden file using compat implementation`() {
-        assertLogRecordExport(useKotlinSdk = false)
-    }
-
-    @Test
-    fun `log record export matches golden file using kmp implementation`() {
-        assertLogRecordExport(useKotlinSdk = true)
-    }
-
-    @Ignore("Requires fix to compat context implementation")
-    @Test
-    fun `log span context export matches golden file using compat implementation`() {
-        assertLogSpanContextExport(useKotlinSdk = false)
-    }
-
-    @Test
-    fun `log span context export matches golden file using kmp implementation`() {
-        assertLogSpanContextExport(useKotlinSdk = true)
-    }
-
-    private fun assertSdkImplementationSelected(useKotlinSdk: Boolean) {
+    fun `trace export matches golden file`() {
         testRule.runTest(
-            persistedRemoteConfig = remoteConfig(useKotlinSdk),
-            testCaseAction = {
-                recordSession {
-                    embrace.startSpan(SPAN_NAME)?.stop()
-                }
-            },
-            assertAction = {
-                assertEquals(
-                    useKotlinSdk,
-                    testRule.bootstrapper.openTelemetryModule.otelSdkWrapper.useKotlinSdk,
-                )
-            },
-        )
-    }
-
-    private fun assertTraceExport(useKotlinSdk: Boolean) {
-        testRule.runTest(
-            persistedRemoteConfig = remoteConfig(useKotlinSdk),
             testCaseAction = {
                 recordSession {
                     embrace.startSpan(SPAN_NAME).apply {
@@ -167,9 +64,9 @@ internal class OtelExportParityTest {
         )
     }
 
-    private fun assertLogExport(useKotlinSdk: Boolean) {
+    @Test
+    fun `log export matches golden file`() {
         testRule.runTest(
-            persistedRemoteConfig = remoteConfig(useKotlinSdk),
             testCaseAction = {
                 recordSession {
                     embrace.logMessage(LOG_MESSAGE, Severity.WARNING, mapOf("my-attribute" to "my-value"))
@@ -187,9 +84,9 @@ internal class OtelExportParityTest {
     /**
      * Exercises every attribute setter on the OTel tracing API
      */
-    private fun assertSpanAttributeExport(useKotlinSdk: Boolean) {
+    @Test
+    fun `span attribute export matches golden file`() {
         assertOtelApiParity(
-            useKotlinSdk = useKotlinSdk,
             testCaseAction = {
                 recordSession {
                     val span = tracer.startSpan(
@@ -233,9 +130,9 @@ internal class OtelExportParityTest {
     /**
      * Exercises the span event API
      */
-    private fun assertSpanEventExport(useKotlinSdk: Boolean) {
+    @Test
+    fun `span event export matches golden file`() {
         assertOtelApiParity(
-            useKotlinSdk = useKotlinSdk,
             testCaseAction = {
                 recordSession {
                     val span = tracer.startSpan("event-span")
@@ -268,9 +165,9 @@ internal class OtelExportParityTest {
      * Exercises the ways in which one span can reference another: an explicit parent context, and links
      * added both at creation time and afterwards.
      */
-    private fun assertSpanRelationshipExport(useKotlinSdk: Boolean) {
+    @Test
+    fun `span relationship export matches golden file`() {
         assertOtelApiParity(
-            useKotlinSdk = useKotlinSdk,
             testCaseAction = {
                 recordSession {
                     val parent = tracer.startSpan("aaa-parent-span")
@@ -309,9 +206,9 @@ internal class OtelExportParityTest {
     /**
      * Exercises the fields of a log record emitted via the OTel logging API, across several severities.
      */
-    private fun assertLogRecordExport(useKotlinSdk: Boolean) {
+    @Test
+    fun `log record export matches golden file`() {
         assertOtelApiParity(
-            useKotlinSdk = useKotlinSdk,
             testCaseAction = {
                 recordSession {
                     val observedTimestamp = clock.now().millisToNanos()
@@ -360,11 +257,11 @@ internal class OtelExportParityTest {
     /**
      * Exercises correlating a log record with a span by emitting it with a context that holds one.
      */
-    private fun assertLogSpanContextExport(useKotlinSdk: Boolean) {
+    @Test
+    fun `log span context export matches golden file`() {
         var spanContext: SpanContext? = null
 
         assertOtelApiParity(
-            useKotlinSdk = useKotlinSdk,
             testCaseAction = {
                 recordSession {
                     val span = tracer.startSpan("log-parent-span")
@@ -414,12 +311,10 @@ internal class OtelExportParityTest {
      * Runs a test case that drives telemetry through the OTel API surface obtained from the SDK.
      */
     private fun assertOtelApiParity(
-        useKotlinSdk: Boolean,
         testCaseAction: EmbraceActionInterface.() -> Unit,
         otelExportAssertion: EmbraceOtelExportAssertionInterface.() -> Unit,
     ) {
         testRule.runTest(
-            persistedRemoteConfig = remoteConfig(useKotlinSdk),
             testCaseAction = {
                 otel = embrace.getOpenTelemetryKotlin()
                 tracer = otel.tracerProvider.getTracer(name = TRACER_NAME, version = "1.0.0")
@@ -445,14 +340,11 @@ internal class OtelExportParityTest {
         awaitLogs(expectedCount) { it.instrumentationScopeInfo.name == LOGGER_NAME }
             .sortedBy { it.bodyValue?.asString() }
 
-    /**
-     * Selects the implementation under test.
-     */
-    private fun remoteConfig(useKotlinSdk: Boolean) = RemoteConfig(
-        otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = if (useKotlinSdk) 100.0f else 0.0f),
-    )
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
 
-    private companion object {
         private const val SPAN_NAME = "test-span"
         private const val LOG_MESSAGE = "test message"
         private const val TRACER_NAME = "external-tracer"

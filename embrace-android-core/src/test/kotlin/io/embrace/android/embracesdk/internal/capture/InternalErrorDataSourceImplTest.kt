@@ -57,7 +57,7 @@ internal class InternalErrorDataSourceImplTest {
         assertEquals(10, args.destination.logEvents.size)
     }
 
-    private fun assertInternalErrorLogged(data: FakeLogData): Map<String, String> {
+    private fun assertInternalErrorLogged(data: FakeLogData): Map<String, Any> {
         assertEquals(LogSeverity.ERROR, data.severity)
         assertEquals("", data.message)
         assertEquals(EmbType.System.InternalError, data.schemaType.telemetryType)

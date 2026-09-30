@@ -87,6 +87,24 @@ internal class TelemetryDestinationImplTest {
         verifyAndResetSessionUpdate()
     }
 
+    @Test
+    fun `typed log attributes are emitted as their payload string`() {
+        impl = createDestination()
+        impl.addLog(
+            schemaType = Log(
+                TelemetryAttributes(
+                    customAttributes = mapOf("long" to 5L, "list" to listOf("a", "b"), "bytes" to byteArrayOf(1, 2)),
+                ),
+            ),
+            severity = LogSeverity.INFO,
+            message = "test",
+        )
+        val attributes = logger.logs.single().attributes
+        assertEquals("5", attributes["long"])
+        assertEquals("[a, b]", attributes["list"])
+        assertEquals("[1, 2]", attributes["bytes"])
+    }
+
     private fun FakeLogRecord.assertFakeEvent(
         expectedTimestamp: Long,
         expectedMessage: String?,

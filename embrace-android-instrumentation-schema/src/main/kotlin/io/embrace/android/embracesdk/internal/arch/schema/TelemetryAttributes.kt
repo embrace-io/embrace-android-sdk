@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.isBlankish
  * Object that aggregates various attributes and returns a [Map] that represents the values at the current state
  */
 class TelemetryAttributes(
-    private val customAttributes: Map<String, String>? = null,
+    private val customAttributes: Map<String, Any>? = null,
 ) {
     private val map: MutableMap<String, String> = mutableMapOf()
 
@@ -14,8 +14,8 @@ class TelemetryAttributes(
      * Return a snapshot of the current values of the attributes set on this as a [Map]. Schema keys will always overwrite any previous
      * entries set on the object.
      */
-    fun snapshot(): Map<String, String> {
-        val result = mutableMapOf<String, String>()
+    fun snapshot(): Map<String, Any> {
+        val result = mutableMapOf<String, Any>()
         customAttributes?.let { result.putAll(it) }
 
         result.putAll(map)

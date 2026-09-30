@@ -83,7 +83,7 @@ class FakeTelemetryDestination(
             type = schemaType.telemetryType,
             internal = true,
             private = false,
-            initialAttrs = schemaType.attributes() + mapOf(schemaType.telemetryType.asPair()),
+            initialAttrs = (schemaType.attributes() + mapOf(schemaType.telemetryType.asPair())).mapValues { it.value.toString() },
             events = mutableListOf(),
             uuidSource = uuidSource,
             timeoutMs = timeoutMs,
@@ -127,7 +127,7 @@ class FakeTelemetryDestination(
         type: EmbType,
         internal: Boolean,
         private: Boolean,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<SpanEvent>,
     ) {
         val token = FakeSpanToken(
@@ -139,7 +139,7 @@ class FakeTelemetryDestination(
             type = type,
             internal = internal,
             private = private,
-            initialAttrs = attributes,
+            initialAttrs = attributes.mapValues { it.value.toString() },
             events = events.toMutableList(),
             uuidSource = uuidSource,
         )

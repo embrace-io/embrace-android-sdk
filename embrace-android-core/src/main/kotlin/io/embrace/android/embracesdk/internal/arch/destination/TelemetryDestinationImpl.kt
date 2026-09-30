@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.otel.payload.toPayloadString
 import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
@@ -64,7 +65,7 @@ class TelemetryDestinationImpl(
             with(schemaType) {
                 setStringAttribute(telemetryType.key, telemetryType.value)
                 attributes().forEach {
-                    setStringAttribute(it.key, it.value)
+                    setStringAttribute(it.key, it.value.toPayloadString().orEmpty())
                 }
             }
         }
@@ -103,7 +104,7 @@ class TelemetryDestinationImpl(
             type = schemaType.telemetryType,
         ).apply {
             schemaType.attributes().forEach {
-                addAttribute(it.key, it.value)
+                addCustomAttribute(it.key, it.value)
             }
             sessionUpdateAction?.invoke()
         }
@@ -153,7 +154,7 @@ class TelemetryDestinationImpl(
         type: EmbType,
         internal: Boolean,
         private: Boolean,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<SpanEvent>,
     ) {
         val parentRef = retrieveParentReference(parent)

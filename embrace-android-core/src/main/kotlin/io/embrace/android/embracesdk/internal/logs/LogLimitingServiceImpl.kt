@@ -6,10 +6,11 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 class LogLimitingServiceImpl(
     configService: ConfigService,
 ) : LogLimitingService {
+    private val cfg = configService.config.log
     private val logCounters = mapOf(
-        LogSeverity.INFO to LogCounter(configService.logMessageBehavior::getInfoLogLimit),
-        LogSeverity.WARNING to LogCounter(configService.logMessageBehavior::getWarnLogLimit),
-        LogSeverity.ERROR to LogCounter(configService.logMessageBehavior::getErrorLogLimit),
+        LogSeverity.INFO to LogCounter(cfg::infoLimit),
+        LogSeverity.WARNING to LogCounter(cfg::warnLimit),
+        LogSeverity.ERROR to LogCounter(cfg::errorLimit),
     )
 
     override fun getCount(logSeverity: LogSeverity): Int = logCounters.getValue(logSeverity).getCount()

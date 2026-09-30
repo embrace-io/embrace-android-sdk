@@ -5,13 +5,14 @@ import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
-import io.embrace.android.embracesdk.fakes.behavior.FakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Log
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
+import io.embrace.android.embracesdk.internal.config.resolved.LogConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import org.junit.Assert.assertEquals
@@ -72,10 +73,14 @@ internal class EmbraceLogServiceTest {
         // given a config with log limits
         val testLogLimit = 5
         fakeConfigService = FakeConfigService(
-            logMessageBehavior = FakeLogMessageBehavior(
-                infoLogLimit = testLogLimit,
-                warnLogLimit = testLogLimit,
-                errorLogLimit = testLogLimit,
+            config = EmbraceConfig(
+                log = {
+                    LogConfig(
+                        infoLimit = { testLogLimit },
+                        warnLimit = { testLogLimit },
+                        errorLimit = { testLogLimit },
+                    )
+                },
             ),
         )
         logLimitingService = LogLimitingServiceImpl(fakeConfigService)
@@ -110,7 +115,7 @@ internal class EmbraceLogServiceTest {
     fun `a max length smaller than 3 does not add ellipsis`() {
         // given a config with a log message limit smaller than 3
         fakeConfigService = FakeConfigService(
-            logMessageBehavior = FakeLogMessageBehavior(logMessageMaximumAllowedLength = 2),
+            config = EmbraceConfig(log = { LogConfig(maxMessageLength = { 2 }) }),
         )
         logService = createEmbraceLogService()
 
@@ -126,7 +131,7 @@ internal class EmbraceLogServiceTest {
     fun `a log message bigger than the max length is trimmed`() {
         // given a config with message limit
         fakeConfigService = FakeConfigService(
-            logMessageBehavior = FakeLogMessageBehavior(logMessageMaximumAllowedLength = 5),
+            config = EmbraceConfig(log = { LogConfig(maxMessageLength = { 5 }) }),
         )
         logService = createEmbraceLogService()
 
@@ -147,7 +152,7 @@ internal class EmbraceLogServiceTest {
         // given a config with message limit and app framework Unity
         fakeConfigService = FakeConfigService(
             appFramework = AppFramework.UNITY,
-            logMessageBehavior = FakeLogMessageBehavior(logMessageMaximumAllowedLength = 5),
+            config = EmbraceConfig(log = { LogConfig(maxMessageLength = { 5 }) }),
         )
         logService = createEmbraceLogService()
 

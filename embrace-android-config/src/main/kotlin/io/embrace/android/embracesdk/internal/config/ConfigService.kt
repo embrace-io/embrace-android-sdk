@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBeh
 import io.embrace.android.embracesdk.internal.config.behavior.BackgroundActivityBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.ExperimentBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
@@ -37,11 +36,6 @@ interface ConfigService {
      * How automatic data capture functionality should behave.
      */
     val autoDataCaptureBehavior: AutoDataCaptureBehavior
-
-    /**
-     * How log message functionality should behave.
-     */
-    val logMessageBehavior: LogMessageBehavior
 
     /**
      * How the vitals (smoothness / screen-load) feature's thresholds should behave.

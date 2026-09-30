@@ -118,7 +118,15 @@ internal class OpenTelemetrySdkTest {
 
     @Test
     fun `verify that the default StorageContext is used if Java SDK is used`() {
-        sdk = createSdkWrapper()
+        System.clearProperty("io.opentelemetry.context.contextStorageProvider")
+        sdk = createSdkWrapper(useKotlinSdk = false)
+        assertEquals("default", System.getProperty("io.opentelemetry.context.contextStorageProvider"))
+    }
+
+    @Test
+    fun `verify that the default StorageContext is used if Kotlin SDK is used`() {
+        System.clearProperty("io.opentelemetry.context.contextStorageProvider")
+        sdk = createSdkWrapper(useKotlinSdk = true)
         assertEquals("default", System.getProperty("io.opentelemetry.context.contextStorageProvider"))
     }
 
@@ -167,13 +175,13 @@ internal class OpenTelemetrySdkTest {
         return configuration
     }
 
-    private fun createSdkWrapper(): OtelSdkWrapper {
+    private fun createSdkWrapper(useKotlinSdk: Boolean = false): OtelSdkWrapper {
         configuration = createOtelSdkConfig()
         return OtelSdkWrapper(
             otelClock = FakeOtelKotlinClock(FakeClock()),
             configuration = configuration,
             spanService = FakeSpanService(),
-            useKotlinSdk = false,
+            useKotlinSdk = useKotlinSdk,
         )
     }
 }

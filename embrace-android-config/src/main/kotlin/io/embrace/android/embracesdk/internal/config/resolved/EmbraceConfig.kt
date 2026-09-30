@@ -14,6 +14,7 @@ class EmbraceConfig(
     sdkMode: () -> SdkModeConfig = { SdkModeConfig() },
     backgroundActivity: () -> BackgroundActivityConfig = { BackgroundActivityConfig() },
     autoDataCapture: () -> AutoDataCaptureConfig = { AutoDataCaptureConfig() },
+    dataCaptureEvent: () -> DataCaptureEventConfig = { DataCaptureEventConfig() },
 ) {
     val breadcrumb: BreadcrumbConfig = breadcrumb()
     val persistence: PersistenceConfig = persistence()
@@ -25,4 +26,5 @@ class EmbraceConfig(
     val sdkMode: SdkModeConfig = sdkMode()
     val backgroundActivity: BackgroundActivityConfig = backgroundActivity()
     val autoDataCapture: AutoDataCaptureConfig = autoDataCapture()
+    val dataCaptureEvent: DataCaptureEventConfig = dataCaptureEvent()
 }

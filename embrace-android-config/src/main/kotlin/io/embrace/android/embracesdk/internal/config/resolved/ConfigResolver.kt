@@ -14,6 +14,7 @@ fun resolveConfig(local: InstrumentedConfig, remote: RemoteConfig?, bucket: Lazy
     sdkMode = { resolveSdkMode(remote, bucket) },
     backgroundActivity = { resolveBackgroundActivity(local, remote, bucket) },
     autoDataCapture = { resolveAutoDataCapture(local, remote, bucket) },
+    dataCaptureEvent = { resolveDataCaptureEvent(remote) },
 )
 
 fun resolveBreadcrumb(local: InstrumentedConfig, remote: RemoteConfig?): BreadcrumbConfig {
@@ -148,3 +149,8 @@ fun resolveAutoDataCapture(
         webViewLeakDetectionEnabled = { rolloutEnabled(remote?.pctWebViewLeakDetectionEnabled, bucket) },
     )
 }
+
+fun resolveDataCaptureEvent(remote: RemoteConfig?): DataCaptureEventConfig = DataCaptureEventConfig(
+    internalExceptionCaptureEnabled = { remote?.internalExceptionCaptureEnabled },
+    disabledEventAndLogPatterns = { remote?.disabledEventAndLogPatterns },
+)

@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.config
 
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
-import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
@@ -98,7 +97,6 @@ class ConfigServiceImpl(
     override val sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(instrumentedConfig)
     override val sessionBehavior = UserSessionBehaviorImpl(remoteConfig)
     override val networkBehavior = NetworkBehaviorImpl(instrumentedConfig, remoteConfig)
-    override val dataCaptureEventBehavior = DataCaptureEventBehaviorImpl(remoteConfig)
     override val traceparentInjectionBehavior =
         TraceparentInjectionBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
     override val networkSpanForwardingBehavior =

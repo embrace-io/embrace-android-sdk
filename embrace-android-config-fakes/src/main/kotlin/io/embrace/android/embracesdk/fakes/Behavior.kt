@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
-import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
@@ -36,13 +34,6 @@ fun createNetworkBehavior(
     remoteCfg: RemoteConfig? = null,
     disabledUrlPatterns: List<String>? = null,
 ): NetworkBehavior = NetworkBehaviorImpl(InstrumentedConfigImpl, remoteCfg, disabledUrlPatterns)
-
-/**
- * A [DataCaptureEventBehaviorImpl] that returns default values.
- */
-fun createDataCaptureEventBehavior(
-    remoteCfg: RemoteConfig? = null,
-): DataCaptureEventBehavior = DataCaptureEventBehaviorImpl(remoteCfg)
 
 /**
  * A [TraceparentInjectionBehaviorImpl] that returns default values.

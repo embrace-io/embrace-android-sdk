@@ -34,6 +34,11 @@ tasks.withType<Test>().configureEach {
 
     // avoid default behavior of parallelisation as it can lead to resource exhaustion on CI (and locally)
     maxParallelForks = 1
+
+    // fixtures consume SDK artifacts from mavenLocal, which aren't inputs to this task. Always run the
+    // tests so that SDK changes can't be hidden by a cached or up-to-date result.
+    outputs.cacheIf("fixtures consume mavenLocal artifacts that aren't task inputs") { false }
+    outputs.upToDateWhen { false }
 }
 
 group = "io.embrace"

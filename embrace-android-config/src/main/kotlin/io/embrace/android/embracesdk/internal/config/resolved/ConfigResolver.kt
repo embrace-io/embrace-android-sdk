@@ -11,6 +11,7 @@ fun resolveConfig(local: InstrumentedConfig, remote: RemoteConfig?, bucket: Lazy
     log = { resolveLog(remote) },
     experiment = { resolveExperiment(remote) },
     vitals = { resolveVitals(remote, bucket) },
+    sdkMode = { resolveSdkMode(remote, bucket) },
 )
 
 fun resolveBreadcrumb(local: InstrumentedConfig, remote: RemoteConfig?): BreadcrumbConfig {
@@ -90,3 +91,7 @@ fun resolveVitals(remote: RemoteConfig?, bucket: Lazy<Float>): VitalsConfig {
         spanLimit = { cfg?.spanLimit },
     )
 }
+
+fun resolveSdkMode(remote: RemoteConfig?, bucket: Lazy<Float>): SdkModeConfig = SdkModeConfig(
+    sdkDisabled = { rolloutEnabled(remote?.threshold?.toFloat(), bucket)?.not() },
+)

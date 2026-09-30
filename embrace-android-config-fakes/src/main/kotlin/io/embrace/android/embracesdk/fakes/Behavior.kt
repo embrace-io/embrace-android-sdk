@@ -12,8 +12,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehaviorImp
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehaviorImpl
@@ -65,14 +63,6 @@ fun createAutoDataCaptureBehavior(
 fun createDataCaptureEventBehavior(
     remoteCfg: RemoteConfig? = null,
 ): DataCaptureEventBehavior = DataCaptureEventBehaviorImpl(remoteCfg)
-
-/**
- * A [SdkModeBehaviorImpl] that returns default values.
- */
-fun createSdkModeBehavior(
-    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: RemoteConfig? = null,
-): SdkModeBehavior = SdkModeBehaviorImpl(thresholdCheck, remoteCfg)
 
 /**
  * A [TraceparentInjectionBehaviorImpl] that returns default values.

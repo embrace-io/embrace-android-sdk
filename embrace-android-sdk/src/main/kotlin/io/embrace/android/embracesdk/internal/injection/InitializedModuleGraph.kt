@@ -87,7 +87,7 @@ internal class InitializedModuleGraph(
     }.apply {
         EmbTrace.trace("sdk-disable-check") {
             EmbTrace.trace("behavior-check") {
-                if (sdkModeBehavior.isSdkDisabled()) {
+                if (config.sdkMode.sdkDisabled) {
                     // bail out early. Caught at a higher-level that relies on this specific type
                     throw SdkDisabledException()
                 }

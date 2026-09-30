@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehavior
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
@@ -27,7 +26,6 @@ class FakeConfigService(
     override var traceparentInjectionBehavior: TraceparentInjectionBehavior = createTraceparentInjectionBehavior(),
     override var networkSpanForwardingBehavior: NetworkSpanForwardingBehavior =
         createNetworkSpanForwardingBehavior(traceparentInjectionBehavior),
-    override var sensitiveKeysBehavior: SensitiveKeysBehavior = createSensitiveKeysBehavior(),
     override val otelBehavior: OtelBehavior = createOtelBehavior(),
     override var enabledPctRollouts: List<String> = emptyList(),
     override var buildInfo: BuildInfo = BuildInfo(

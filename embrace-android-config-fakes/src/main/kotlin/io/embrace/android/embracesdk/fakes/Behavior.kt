@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehaviorImp
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehavior
@@ -52,11 +51,6 @@ fun createNetworkSpanForwardingBehavior(
     remoteConfig: RemoteConfig? = null,
 ): NetworkSpanForwardingBehavior =
     NetworkSpanForwardingBehaviorImpl(traceparentInjectionBehavior, thresholdCheck, InstrumentedConfigImpl, remoteConfig)
-
-/**
- * A [SensitiveKeysBehaviorImpl] that returns default values.
- */
-fun createSensitiveKeysBehavior() = SensitiveKeysBehaviorImpl(InstrumentedConfigImpl)
 
 /**
  * An [OtelBehaviorImpl] that returns default values.

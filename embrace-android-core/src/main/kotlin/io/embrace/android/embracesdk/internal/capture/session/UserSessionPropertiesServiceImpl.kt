@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.capture.session
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
@@ -16,6 +17,7 @@ internal class UserSessionPropertiesServiceImpl(
 ) : UserSessionPropertiesService {
 
     private var listener: ((Map<String, String>) -> Unit)? = null
+    private val sensitiveKeysBehavior = SensitiveKeysBehavior(configService.config.sensitiveKeys)
 
     private val props by lazy {
         EmbraceUserSessionProperties(store.value, configService, destination, telemetryService)
@@ -34,7 +36,7 @@ internal class UserSessionPropertiesServiceImpl(
             return false
         }
 
-        val sanitizedValue = if (configService.sensitiveKeysBehavior.isSensitiveKey(sanitizedKey)) {
+        val sanitizedValue = if (sensitiveKeysBehavior.isSensitiveKey(sanitizedKey)) {
             REDACTED_LABEL
         } else {
             val truncatedValue = PropertyUtils.truncate(originalValue, SESSION_PROPERTY_VALUE_LIMIT)

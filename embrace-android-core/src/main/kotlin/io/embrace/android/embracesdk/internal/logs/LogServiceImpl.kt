@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.otel.payload.toPayloadString
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
@@ -27,6 +28,7 @@ class LogServiceImpl(
 
     private val cfg = configService.config.log
     private val bypassLimitsValidation = configService.isOnlyUsingOtelExporters()
+    private val sensitiveKeysBehavior = SensitiveKeysBehavior(configService.config.sensitiveKeys)
 
     override fun log(
         message: String,
@@ -79,7 +81,7 @@ class LogServiceImpl(
             bypassPropertyLimit = bypassLimitsValidation,
         ).mapValues { (key, value) ->
             when {
-                configService.sensitiveKeysBehavior.isSensitiveKey(key) -> REDACTED_LABEL
+                sensitiveKeysBehavior.isSensitiveKey(key) -> REDACTED_LABEL
                 else -> value
             }
         }

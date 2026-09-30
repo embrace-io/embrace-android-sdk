@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.config
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehavior
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
@@ -40,11 +39,6 @@ interface ConfigService {
      * How the network span forwarding feature should behave
      */
     val networkSpanForwardingBehavior: NetworkSpanForwardingBehavior
-
-    /**
-     * Provides behavior for keys that might be sensitive and should be redacted when they are sent to the server
-     */
-    val sensitiveKeysBehavior: SensitiveKeysBehavior
 
     /**
      * Provides behavior for OpenTelemetry configuration

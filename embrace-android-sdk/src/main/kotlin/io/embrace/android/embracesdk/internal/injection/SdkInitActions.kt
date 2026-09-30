@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
@@ -38,7 +39,7 @@ internal fun ModuleGraph.postInit() = EmbTrace.trace(sectionName = "post-init", 
     // note: otelBehavior is not applied here - it decides which OTel SDK is built, so it is set
     // right after the persisted config is read in ModuleInitBootstrapper.init.
     openTelemetryModule.applyConfiguration(
-        sensitiveKeysBehavior = configService.sensitiveKeysBehavior,
+        sensitiveKeysBehavior = SensitiveKeysBehavior(configService.config.sensitiveKeys),
         bypassValidation = configService.isOnlyUsingOtelExporters(),
         otelBehavior = configService.otelBehavior,
         breadcrumbConfig = configService.config.breadcrumb,

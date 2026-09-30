@@ -13,9 +13,10 @@ import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.resolved.resolveBreadcrumb
+import io.embrace.android.embracesdk.internal.config.resolved.resolveSensitiveKeys
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.DeliveryModule
@@ -173,7 +174,7 @@ internal class SdkIntegrationTestRule(
             // persist config here before the SDK starts up: the SDK reads it during start()
             persistConfig(persistedConfig)
             bootstrapper.openTelemetryModule.applyConfiguration(
-                sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(localConfig),
+                sensitiveKeysBehavior = SensitiveKeysBehavior(resolveSensitiveKeys(localConfig)),
                 bypassValidation = false,
                 otelBehavior = OtelBehaviorImpl(BehaviorThresholdCheck { "123456" }, localConfig, persistedConfig),
                 breadcrumbConfig = resolveBreadcrumb(localConfig, persistedConfig)

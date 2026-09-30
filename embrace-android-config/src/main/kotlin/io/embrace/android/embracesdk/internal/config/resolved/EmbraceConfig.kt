@@ -15,6 +15,7 @@ class EmbraceConfig(
     backgroundActivity: () -> BackgroundActivityConfig = { BackgroundActivityConfig() },
     autoDataCapture: () -> AutoDataCaptureConfig = { AutoDataCaptureConfig() },
     dataCaptureEvent: () -> DataCaptureEventConfig = { DataCaptureEventConfig() },
+    sensitiveKeys: () -> SensitiveKeysConfig = { SensitiveKeysConfig() },
 ) {
     val breadcrumb: BreadcrumbConfig = breadcrumb()
     val persistence: PersistenceConfig = persistence()
@@ -27,4 +28,5 @@ class EmbraceConfig(
     val backgroundActivity: BackgroundActivityConfig = backgroundActivity()
     val autoDataCapture: AutoDataCaptureConfig = autoDataCapture()
     val dataCaptureEvent: DataCaptureEventConfig = dataCaptureEvent()
+    val sensitiveKeys: SensitiveKeysConfig = sensitiveKeys()
 }

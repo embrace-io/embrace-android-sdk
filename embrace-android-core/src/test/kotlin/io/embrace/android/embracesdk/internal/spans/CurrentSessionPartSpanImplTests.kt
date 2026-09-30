@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.createOtelBehavior
-import io.embrace.android.embracesdk.fakes.createSensitiveKeysBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
@@ -25,10 +24,12 @@ import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_MAX_INTERN
 import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_MAX_NETWORK_SPANS_PER_SESSION_PART
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior.Companion.DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
 import io.embrace.android.embracesdk.internal.config.remote.DataRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.resolved.BreadcrumbConfig
+import io.embrace.android.embracesdk.internal.config.resolved.SensitiveKeysConfig
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
@@ -351,7 +352,7 @@ internal class CurrentSessionPartSpanImplTests {
      */
     private fun OpenTelemetryModule.applyRemoteConfig(dataConfig: DataRemoteConfig) {
         applyConfiguration(
-            sensitiveKeysBehavior = createSensitiveKeysBehavior(),
+            sensitiveKeysBehavior = SensitiveKeysBehavior(SensitiveKeysConfig()),
             bypassValidation = false,
             otelBehavior = createOtelBehavior(remoteCfg = RemoteConfig(dataConfig = dataConfig)),
             breadcrumbConfig = BreadcrumbConfig(),

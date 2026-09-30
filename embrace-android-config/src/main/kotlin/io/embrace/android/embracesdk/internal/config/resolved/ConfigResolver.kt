@@ -15,6 +15,7 @@ fun resolveConfig(local: InstrumentedConfig, remote: RemoteConfig?, bucket: Lazy
     backgroundActivity = { resolveBackgroundActivity(local, remote, bucket) },
     autoDataCapture = { resolveAutoDataCapture(local, remote, bucket) },
     dataCaptureEvent = { resolveDataCaptureEvent(remote) },
+    sensitiveKeys = { resolveSensitiveKeys(local) },
 )
 
 fun resolveBreadcrumb(local: InstrumentedConfig, remote: RemoteConfig?): BreadcrumbConfig {
@@ -153,4 +154,8 @@ fun resolveAutoDataCapture(
 fun resolveDataCaptureEvent(remote: RemoteConfig?): DataCaptureEventConfig = DataCaptureEventConfig(
     internalExceptionCaptureEnabled = { remote?.internalExceptionCaptureEnabled },
     disabledEventAndLogPatterns = { remote?.disabledEventAndLogPatterns },
+)
+
+fun resolveSensitiveKeys(local: InstrumentedConfig): SensitiveKeysConfig = SensitiveKeysConfig(
+    denylist = local.redaction::getSensitiveKeysDenylist,
 )

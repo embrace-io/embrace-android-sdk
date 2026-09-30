@@ -51,6 +51,10 @@ class OtelSpanStartArgs(
             parentContext = parentContext,
             spanKind = spanKind ?: SpanKind.INTERNAL,
             startTimestamp = startTimeMs.millisToNanos(),
-        )
+        ) {
+            if (PrivateSpan in embraceAttributes) {
+                setStringAttribute(PrivateSpan.key, PrivateSpan.value)
+            }
+        }
     }
 }

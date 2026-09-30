@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
-import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.export.ExternalExportDispatcher
 import io.embrace.android.embracesdk.internal.otel.export.InlineExporter
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
@@ -26,8 +25,7 @@ internal class DefaultLogRecordExporter(
         val result = logSink.storeLogs(telemetry.map(LogRecordData::toEmbracePayload))
 
         if (result == StoreDataResult.SUCCESS && externalExporters.isNotEmpty()) {
-            val exportable = telemetry.filterNot { it.attributes.containsKey(PrivateSpan.key) }
-            externalExportDispatcher.dispatch(externalExporters) { it.export(exportable) }
+            externalExportDispatcher.dispatch(externalExporters) { it.export(telemetry) }
         }
 
         return when (result) {

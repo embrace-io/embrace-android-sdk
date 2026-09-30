@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.otel.spans
 import io.embrace.android.embracesdk.fakes.FakeReadWriteSpan
 import io.embrace.android.embracesdk.fakes.FakeSpan
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
-import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.export.ExternalExportDispatcher
 import io.embrace.android.embracesdk.internal.otel.export.immediateExportDispatcher
 import io.opentelemetry.kotlin.export.OperationResultCode
@@ -17,8 +16,7 @@ import org.junit.Test
 
 internal class DefaultSpanExporterTest {
 
-    private fun span(name: String, vararg attrs: Pair<String, String>): SpanData =
-        FakeReadWriteSpan(FakeSpan(name = name).apply { this.attrs.putAll(attrs) })
+    private fun span(name: String): SpanData = FakeReadWriteSpan(FakeSpan(name = name))
 
     private fun exporter(
         spanRepository: SpanRepository,
@@ -57,21 +55,6 @@ internal class DefaultSpanExporterTest {
         runBlocking { exporter(spanRepository).export(listOf(span("public-span"))) }
 
         assertFalse(spanRepository.completedOtelSpans().isEmpty())
-    }
-
-    @Test
-    fun `private spans should be filtered out from external exporters but still stored internally`() {
-        val spanRepository = SpanRepository()
-        val externalExporter = FakeSpanExporter()
-
-        val publicSpan = span("public-span")
-        val privateSpan = span("private-span", PrivateSpan.key to PrivateSpan.value)
-
-        exporter(spanRepository, listOf(externalExporter)).exportInline(listOf(publicSpan, privateSpan))
-
-        assertEquals(2, spanRepository.completedOtelSpans().size)
-        assertEquals(1, externalExporter.exportedSpans.size)
-        assertEquals("public-span", externalExporter.exportedSpans.first().name)
     }
 
     @Test

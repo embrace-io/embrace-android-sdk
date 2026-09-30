@@ -1,9 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
-import io.embrace.android.embracesdk.fakes.FakeAttributesMutator
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeReadWriteLogRecord
-import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.export.ExternalExportDispatcher
 import io.embrace.android.embracesdk.internal.otel.export.immediateExportDispatcher
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
@@ -38,29 +36,6 @@ internal class DefaultLogRecordExporterTest {
 
         assertFalse(logSink.logsForNextBatch().isEmpty())
         assertEquals(data.toEmbracePayload(), logSink.logsForNextBatch()[0])
-    }
-
-    @Test
-    fun `private logs should be filtered out from external exporters`() {
-        val logSink: LogSink = LogSinkImpl()
-        val externalExporter = FakeLogRecordExporter()
-        val logKey = "test_log"
-        val data = FakeReadWriteLogRecord(body = logKey)
-
-        val privateData = FakeReadWriteLogRecord(
-            attributeContainer = FakeAttributesMutator().apply {
-                setStringAttribute(PrivateSpan.key, PrivateSpan.value)
-            },
-        )
-
-        exporter(logSink, listOf(externalExporter)).exportInline(listOf(data, privateData))
-
-        assertEquals(2, logSink.logsForNextBatch().size)
-        assertEquals(data.toEmbracePayload(), logSink.logsForNextBatch()[0])
-        assertEquals(privateData.toEmbracePayload(), logSink.logsForNextBatch()[1])
-
-        assertEquals(1, externalExporter.exportedLogs.size)
-        assertEquals(data.body, externalExporter.exportedLogs.first().body)
     }
 
     @Test

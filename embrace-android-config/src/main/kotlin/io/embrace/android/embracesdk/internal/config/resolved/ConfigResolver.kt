@@ -10,6 +10,7 @@ fun resolveConfig(local: InstrumentedConfig, remote: RemoteConfig?, bucket: Lazy
     aei = { resolveAei(local, remote, bucket) },
     log = { resolveLog(remote) },
     experiment = { resolveExperiment(remote) },
+    vitals = { resolveVitals(remote, bucket) },
 )
 
 fun resolveBreadcrumb(local: InstrumentedConfig, remote: RemoteConfig?): BreadcrumbConfig {
@@ -75,3 +76,17 @@ fun resolveExperiment(remote: RemoteConfig?): ExperimentConfig = ExperimentConfi
     maxIdLength = { remote?.experimentIdMaxLength },
     maxVariantLength = { remote?.experimentVariantMaxLength },
 )
+
+fun resolveVitals(remote: RemoteConfig?, bucket: Lazy<Float>): VitalsConfig {
+    val cfg = remote?.vitalsRemoteConfig
+    return VitalsConfig(
+        smoothnessIdleThresholdMs = { cfg?.smoothnessIdleThresholdMs },
+        smoothnessHeldIdleThresholdMs = { cfg?.smoothnessHeldIdleThresholdMs },
+        jankHeuristicMultiplier = { cfg?.jankHeuristicMultiplier },
+        screenLoadIdleThresholdMs = { cfg?.screenLoadIdleThresholdMs },
+        screenLoadTimeoutMs = { cfg?.screenLoadTimeoutMs },
+        screenLoadNavTimeoutMs = { cfg?.screenLoadNavTimeoutMs },
+        smoothnessFrameTraceEnabled = { rolloutEnabled(cfg?.smoothnessFrameTracePctEnabled, bucket) },
+        spanLimit = { cfg?.spanLimit },
+    )
+}

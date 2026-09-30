@@ -30,14 +30,14 @@ internal class VitalsDataSource(
     args = args,
     // Vitals emits a span per gesture and per navigation, so it needs a ceiling: an unlimited source would
     // exhaust the session's shared internal-span budget and starve other instrumentation. Reset per session part.
-    limitStrategy = UpToLimitStrategy(args.configService.vitalsBehavior::getSpanLimit),
+    limitStrategy = UpToLimitStrategy(args.configService.config.vitals::spanLimit),
     instrumentationName = "vitals_data_source",
 ) {
 
     // Extracts per-frame jank; below API 31 the budget tracks the display's refresh interval.
     private val frameMetricsStrategy: FrameMetricsStrategy = FrameMetricsStrategy.create(
         refreshIntervalNanos = displayRefreshIntervalNanos(),
-        jankHeuristicMultiplier = args.configService.vitalsBehavior.getJankHeuristicMultiplier(),
+        jankHeuristicMultiplier = args.configService.config.vitals.jankHeuristicMultiplier,
     )
 
     private val displayListener = object : DisplayManager.DisplayListener {
@@ -73,27 +73,27 @@ internal class VitalsDataSource(
                 ?.registerDisplayListener(displayListener, handler)
         }
 
-        val vitalsBehavior = args.configService.vitalsBehavior
+        val cfg = args.configService.config.vitals
         val tracker = FocalMomentTracker(
             scheduler = vitalsScheduler,
             reporter = SmoothnessReporter(
                 emit = ::emitSmoothnessResult,
-                idleThresholdMs = vitalsBehavior.getSmoothnessIdleThresholdMs(),
-                heldIdleThresholdMs = vitalsBehavior.getSmoothnessHeldIdleThresholdMs(),
-                jankHeuristicMultiplier = vitalsBehavior.getJankHeuristicMultiplier(),
+                idleThresholdMs = cfg.smoothnessIdleThresholdMs,
+                heldIdleThresholdMs = cfg.smoothnessHeldIdleThresholdMs,
+                jankHeuristicMultiplier = cfg.jankHeuristicMultiplier,
             ),
             clock = clock,
             screenLoadTracker = ScreenLoadTracker(
                 scheduler = vitalsScheduler,
                 clock = clock,
                 emit = ::emitScreenLoadResult,
-                idleThresholdMs = vitalsBehavior.getScreenLoadIdleThresholdMs(),
-                timeoutMs = vitalsBehavior.getScreenLoadTimeoutMs(),
-                navigationTimeoutMs = vitalsBehavior.getScreenLoadNavTimeoutMs(),
+                idleThresholdMs = cfg.screenLoadIdleThresholdMs,
+                timeoutMs = cfg.screenLoadTimeoutMs,
+                navigationTimeoutMs = cfg.screenLoadNavTimeoutMs,
             ),
-            idleThresholdMs = vitalsBehavior.getSmoothnessIdleThresholdMs(),
-            heldIdleThresholdMs = vitalsBehavior.getSmoothnessHeldIdleThresholdMs(),
-            frameTraceRecorder = if (vitalsBehavior.isSmoothnessFrameTraceEnabled()) FrameTraceRecorder() else null,
+            idleThresholdMs = cfg.smoothnessIdleThresholdMs,
+            heldIdleThresholdMs = cfg.smoothnessHeldIdleThresholdMs,
+            frameTraceRecorder = if (cfg.smoothnessFrameTraceEnabled) FrameTraceRecorder() else null,
         )
         focalTracker = tracker
 

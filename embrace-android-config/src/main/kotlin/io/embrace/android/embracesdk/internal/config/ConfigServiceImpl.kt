@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImp
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.behavior.VitalsBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
@@ -104,7 +103,6 @@ class ConfigServiceImpl(
     override val autoDataCaptureBehavior =
         AutoDataCaptureBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
     override val sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(instrumentedConfig)
-    override val vitalsBehavior = VitalsBehaviorImpl(thresholdCheck, remoteConfig)
     override val sessionBehavior = UserSessionBehaviorImpl(remoteConfig)
     override val networkBehavior = NetworkBehaviorImpl(instrumentedConfig, remoteConfig)
     override val dataCaptureEventBehavior = DataCaptureEventBehaviorImpl(remoteConfig)

@@ -10,6 +10,7 @@ class EmbraceConfig(
     aei: () -> AeiConfig = { AeiConfig() },
     log: () -> LogConfig = { LogConfig() },
     experiment: () -> ExperimentConfig = { ExperimentConfig() },
+    vitals: () -> VitalsConfig = { VitalsConfig() },
 ) {
     val breadcrumb: BreadcrumbConfig = breadcrumb()
     val persistence: PersistenceConfig = persistence()
@@ -17,4 +18,5 @@ class EmbraceConfig(
     val aei: AeiConfig = aei()
     val log: LogConfig = log()
     val experiment: ExperimentConfig = experiment()
+    val vitals: VitalsConfig = vitals()
 }

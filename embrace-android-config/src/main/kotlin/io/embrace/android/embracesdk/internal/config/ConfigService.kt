@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.VitalsBehavior
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 
@@ -35,11 +34,6 @@ interface ConfigService {
      * How automatic data capture functionality should behave.
      */
     val autoDataCaptureBehavior: AutoDataCaptureBehavior
-
-    /**
-     * How the vitals (smoothness / screen-load) feature's thresholds should behave.
-     */
-    val vitalsBehavior: VitalsBehavior
 
     /**
      * How sessions should behave.

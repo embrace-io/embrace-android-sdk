@@ -12,6 +12,7 @@ class EmbraceConfig(
     experiment: () -> ExperimentConfig = { ExperimentConfig() },
     vitals: () -> VitalsConfig = { VitalsConfig() },
     sdkMode: () -> SdkModeConfig = { SdkModeConfig() },
+    backgroundActivity: () -> BackgroundActivityConfig = { BackgroundActivityConfig() },
 ) {
     val breadcrumb: BreadcrumbConfig = breadcrumb()
     val persistence: PersistenceConfig = persistence()
@@ -21,4 +22,5 @@ class EmbraceConfig(
     val experiment: ExperimentConfig = experiment()
     val vitals: VitalsConfig = vitals()
     val sdkMode: SdkModeConfig = sdkMode()
+    val backgroundActivity: BackgroundActivityConfig = backgroundActivity()
 }

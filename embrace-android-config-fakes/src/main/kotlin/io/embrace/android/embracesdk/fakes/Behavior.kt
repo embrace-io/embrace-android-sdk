@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.behavior.BackgroundActivityBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.BackgroundActivityBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
 import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehaviorImpl
@@ -40,14 +38,6 @@ fun createNetworkBehavior(
     remoteCfg: RemoteConfig? = null,
     disabledUrlPatterns: List<String>? = null,
 ): NetworkBehavior = NetworkBehaviorImpl(InstrumentedConfigImpl, remoteCfg, disabledUrlPatterns)
-
-/**
- * A [BackgroundActivityBehaviorImpl] that returns default values.
- */
-fun createBackgroundActivityBehavior(
-    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: RemoteConfig? = null,
-): BackgroundActivityBehavior = BackgroundActivityBehaviorImpl(thresholdCheck, InstrumentedConfigImpl, remoteCfg)
 
 /**
  * A [AutoDataCaptureBehaviorImpl] that returns default values.

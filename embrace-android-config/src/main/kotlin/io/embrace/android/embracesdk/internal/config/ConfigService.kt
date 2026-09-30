@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.config
 
-import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
@@ -31,11 +30,6 @@ interface ConfigService {
      * How network call capture should behave.
      */
     val networkBehavior: NetworkBehavior
-
-    /**
-     * How the SDK should handle events where data can be captured. This could be a moment, etc...
-     */
-    val dataCaptureEventBehavior: DataCaptureEventBehavior
 
     /**
      * How the traceparent injection feature should behave

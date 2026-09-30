@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.internal.config.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
@@ -25,7 +24,6 @@ class FakeConfigService(
     var onlyUsingOtelExporters: Boolean = false,
     override var sessionBehavior: UserSessionBehavior = createSessionBehavior(),
     override var networkBehavior: NetworkBehavior = FakeNetworkBehavior(),
-    override var dataCaptureEventBehavior: DataCaptureEventBehavior = createDataCaptureEventBehavior(),
     override var traceparentInjectionBehavior: TraceparentInjectionBehavior = createTraceparentInjectionBehavior(),
     override var networkSpanForwardingBehavior: NetworkSpanForwardingBehavior =
         createNetworkSpanForwardingBehavior(traceparentInjectionBehavior),

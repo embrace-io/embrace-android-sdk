@@ -23,7 +23,7 @@ class FeatureModuleImpl(
 
     override val internalErrorDataSource: InternalErrorDataSource? by lazy {
         instrumentationModule.instrumentationRegistry.add {
-            if (configService.dataCaptureEventBehavior.isInternalExceptionCaptureEnabled()) {
+            if (configService.config.dataCaptureEvent.internalExceptionCaptureEnabled) {
                 InternalErrorDataSourceImpl(instrumentationModule.instrumentationArgs)
             } else {
                 null

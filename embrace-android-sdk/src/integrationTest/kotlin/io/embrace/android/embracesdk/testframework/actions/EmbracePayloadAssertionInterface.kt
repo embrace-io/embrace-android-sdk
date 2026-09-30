@@ -24,6 +24,7 @@ import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.assertions.JsonComparator.compare
+import io.embrace.android.embracesdk.testframework.assertions.JsonComparator.sortAttributesByKey
 import io.embrace.android.embracesdk.testframework.assertions.Placeholder
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import io.embrace.android.embracesdk.testframework.server.FormPart
@@ -330,7 +331,10 @@ internal class EmbracePayloadAssertionInterface(
             ) { json, (placeholder, value) ->
                 json.replace(placeholder.token, value)
             }
-            val result = compare(JSONObject(expectedJson), JSONObject(observedJson))
+            val result = compare(
+                sortAttributesByKey(JSONObject(expectedJson)),
+                sortAttributesByKey(JSONObject(observedJson)),
+            )
             if (result.isNotEmpty()) {
                 val msg by lazy {
                     "Request payload differed from expected JSON '$goldenFileName' due to following " +

@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk.testcases
 
 import android.app.ApplicationExitInfo
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.TestAeiData
 import io.embrace.android.embracesdk.fakes.setupFakeAeiData
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertLogPayloadMatchesGoldenFile
@@ -15,6 +15,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
 /**
  * Verifies that AEI logs carry the session IDs of the exit they describe in aei_*_id, and leave the emb.*_id
@@ -24,12 +25,14 @@ import org.junit.runner.RunWith
  * The log does still carry the current state of the SDK in the emb.state* attributes, as that is the only
  * state available by the time the AEI can be reported.
  */
-@RunWith(AndroidJUnit4::class)
-internal class UserSessionAeiGoldenFileTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class UserSessionAeiGoldenFileTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
         EmbraceSetupInterface(workersToFake = listOf(Worker.Background.NonIoRegWorker))
     }
 
@@ -89,7 +92,11 @@ internal class UserSessionAeiGoldenFileTest {
         }
     }
 
-    private companion object {
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
+
         val anr = TestAeiData(
             ApplicationExitInfo.REASON_ANR,
             0,

@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.testcases
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.SessionPartDiff
@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.testframework.assertions.assertPayloadsMatc
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
 /**
  * Verifies the golden-file output for the inactivity-timeout session-end scenario.
@@ -22,12 +23,14 @@ import org.junit.runner.RunWith
  * scheduled timer can be fired explicitly via runCurrentlyBlocked() inside the test
  * action.
  */
-@RunWith(AndroidJUnit4::class)
-internal class UserSessionInactivityTimeoutGoldenFileTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class UserSessionInactivityTimeoutGoldenFileTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
         EmbraceSetupInterface(
             workersToFake = listOf(Worker.Background.NonIoRegWorker),
         ).also {
@@ -83,5 +86,11 @@ internal class UserSessionInactivityTimeoutGoldenFileTest {
                 )
             }
         )
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

@@ -47,7 +47,8 @@ fun assertEmbraceSpanData(
         expectedCustomAttributes.forEach { entry ->
             assertEquals(entry.value, attributes?.findAttributeValue(entry.key))
         }
-        assertEquals(expectedEvents, events)
+        // attribute order differs by OTel implementation and carries no meaning
+        assertEquals(expectedEvents.map { it.withSortedAttributes() }, events?.map { it.withSortedAttributes() })
 
         if (expectedUserSessionId != null) {
             assertEquals(expectedUserSessionId, attributes?.findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID))
@@ -60,3 +61,14 @@ fun assertEmbraceSpanData(
         }
     }
 }
+
+/**
+ * Returns a copy of the span with its attributes, and those of its events, sorted by key. Attribute order carries
+ * no meaning and differs by OTel implementation, so use this to compare spans for equality.
+ */
+fun Span.withSortedAttributes(): Span = copy(
+    attributes = attributes?.sortedBy { it.key },
+    events = events?.map { it.withSortedAttributes() },
+)
+
+private fun SpanEvent.withSortedAttributes(): SpanEvent = copy(attributes = attributes?.sortedBy { it.key })

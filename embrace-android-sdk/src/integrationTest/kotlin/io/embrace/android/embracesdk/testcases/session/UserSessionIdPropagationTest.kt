@@ -6,7 +6,6 @@ import android.app.ApplicationExitInfo
 import android.content.Context
 import android.os.Build
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.assertions.SessionIds
 import io.embrace.android.embracesdk.assertions.assertSessionIds
@@ -37,6 +36,7 @@ import io.embrace.android.embracesdk.semconv.EmbAeiAttributes.AEI_SESSION_PART_I
 import io.embrace.android.embracesdk.semconv.EmbAeiAttributes.AEI_USER_SESSION_ID
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_SESSION_PART_ID
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_ID
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule.Companion.DEFAULT_DEAD_SESSION_PART_ID
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule.Companion.DEFAULT_EXPIRED_USER_SESSION_ID
@@ -51,6 +51,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowActivityManager
@@ -62,14 +63,16 @@ import java.util.concurrent.TimeUnit
  *
  * Test cases should assert both on the HTTP request sent to Embrace's servers and the OTLP request.
  */
-@RunWith(AndroidJUnit4::class)
-internal class UserSessionIdPropagationTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class UserSessionIdPropagationTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     private lateinit var payloadStorageService: FakePayloadStorageService
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
         EmbraceSetupInterface(
             fakeStorageLayer = true,
             workersToFake = listOf(Worker.Background.NonIoRegWorker),
@@ -513,5 +516,11 @@ internal class UserSessionIdPropagationTest {
     private fun EmbraceActionInterface.flushLogBatch() {
         clock.tick(2000L)
         testRule.setup.getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).runCurrentlyBlocked()
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

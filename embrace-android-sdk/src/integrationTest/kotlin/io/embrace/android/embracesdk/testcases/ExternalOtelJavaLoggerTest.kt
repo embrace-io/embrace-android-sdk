@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.testcases
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.assertions.getSessionPartId
@@ -12,13 +11,12 @@ import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.toStringMap
 import io.embrace.android.embracesdk.otel.java.addJavaLogRecordExporter
 import io.embrace.android.embracesdk.otel.java.getJavaOpenTelemetry
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInterface
@@ -38,14 +36,17 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 import java.util.concurrent.TimeUnit
 
-@RunWith(AndroidJUnit4::class)
-internal class ExternalOtelJavaLoggerTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class ExternalOtelJavaLoggerTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     private val instrumentedConfig = FakeInstrumentedConfig(
         enabledFeatures = FakeEnabledFeatureConfig(
@@ -61,10 +62,6 @@ internal class ExternalOtelJavaLoggerTest {
     private lateinit var embOpenTelemetry: OtelJavaOpenTelemetry
     private lateinit var otelLogger: OtelJavaLogger
 
-    private val remoteConfig = RemoteConfig(
-        otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = 0.0f)
-    )
-
     @Before
     fun setup() {
         logExporter = FakeOtelJavaLogRecordExporter()
@@ -77,7 +74,6 @@ internal class ExternalOtelJavaLoggerTest {
         var exportedOTelLog: OtelJavaLogRecordData?
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
-            persistedRemoteConfig = remoteConfig,
             preSdkStartAction = {
                 setupExporter()
                 embrace.setResourceAttribute("my-resource-attr", "foo")
@@ -141,7 +137,6 @@ internal class ExternalOtelJavaLoggerTest {
         var exportedOTelLog: OtelJavaLogRecordData?
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
-            persistedRemoteConfig = remoteConfig,
             preSdkStartAction = {
                 setupExporter()
                 embrace.setResourceAttribute("my-resource-attr", "foo")
@@ -254,7 +249,9 @@ internal class ExternalOtelJavaLoggerTest {
         // randomly-generated trace IDs, but log records don't always propagate all flag bits.
         assertEquals(expectedSpanContext.traceId, spanContext.traceId)
         assertEquals(expectedSpanContext.spanId, spanContext.spanId)
-        assertEquals(expectedSpanContext.isSampled, spanContext.isSampled)
+        if (expectedSpanContext.isValid || otelSdkMode == OtelSdkMode.COMPAT) {
+            assertEquals(expectedSpanContext.isSampled, spanContext.isSampled)
+        }
         assertEquals(expectedSeverity.severityNumber, severity?.severityNumber)
         assertEquals(expectedSeverityText, severityText)
         with(checkNotNull(attributes.toStringMap())) {
@@ -287,5 +284,11 @@ internal class ExternalOtelJavaLoggerTest {
         checkNotNull(attributes).forEach { attr ->
             assertEquals(expectedAttributes[attr.key], attr.data)
         }
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

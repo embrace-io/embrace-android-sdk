@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.testcases.features
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
@@ -40,6 +39,7 @@ import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule.Companion.DEFAULT_SDK_START_TIME_MS
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
@@ -55,17 +55,20 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 import java.io.File
 import java.util.zip.GZIPInputStream
 
-@RunWith(AndroidJUnit4::class)
-internal class JvmCrashFeatureTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class JvmCrashFeatureTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     private lateinit var payloadStorageService: FakePayloadStorageService
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
         EmbraceSetupInterface(
             fakeStorageLayer = true,
             workersToFake = listOf(
@@ -441,5 +444,11 @@ internal class JvmCrashFeatureTest {
         return SpanCollection.ADAPTER.decode(bytes).spans.lastOrNull { span ->
             span.attributes.any { it.key == "emb.type" && it.value_ == "ux.session" }
         }
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

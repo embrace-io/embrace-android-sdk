@@ -7,14 +7,12 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeExperimentTrackingService
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
-import io.embrace.android.embracesdk.fakes.createExperimentBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentApiCall
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentKind
 import io.embrace.android.embracesdk.internal.capture.experiment.TrackedData
-import io.embrace.android.embracesdk.internal.config.behavior.ExperimentBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.resolved.ExperimentConfig
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -45,7 +43,7 @@ internal class ExperimentApiDelegateTest {
         initModule = FakeInitModule(logger = initLogger)
         clock = checkNotNull(initModule.getFakeClock())
         sdkCallChecker = SdkCallChecker(checkerLogger, telemetryService)
-        delegate = createDelegate(RemoteConfig())
+        delegate = createDelegate()
     }
 
     @Test
@@ -322,12 +320,10 @@ internal class ExperimentApiDelegateTest {
         assertTrue(fakeExperimentTrackingService.untrackCalls.all { it.ids.isEmpty() })
     }
 
-    private fun createDelegate(remoteConfig: RemoteConfig): ExperimentApiDelegate {
+    private fun createDelegate(): ExperimentApiDelegate {
         val moduleInitBootstrapper = ModuleInitBootstrapper(
             initModule,
-            configServiceSupplier = { _, _, _, _, _ ->
-                FakeConfigService(experimentBehavior = createExperimentBehavior(remoteConfig))
-            },
+            configServiceSupplier = { _, _, _, _, _ -> FakeConfigService() },
             essentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
                 FakeEssentialServiceModule(experimentTrackingService = fakeExperimentTrackingService)
             },
@@ -337,6 +333,6 @@ internal class ExperimentApiDelegateTest {
     }
 
     private companion object {
-        private const val PENDING_ENTRY_LIMIT = ExperimentBehaviorImpl.MAX_EXPERIMENT_COUNT_LIMIT
+        private const val PENDING_ENTRY_LIMIT = ExperimentConfig.MAX_COUNT_LIMIT
     }
 }

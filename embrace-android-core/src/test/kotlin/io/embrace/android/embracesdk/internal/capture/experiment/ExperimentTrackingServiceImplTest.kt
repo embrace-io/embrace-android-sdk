@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.internal.capture.experiment
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
-import io.embrace.android.embracesdk.fakes.createExperimentBehavior
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
+import io.embrace.android.embracesdk.internal.config.resolved.ExperimentConfig
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
@@ -172,7 +172,7 @@ internal class ExperimentTrackingServiceImplTest {
 
     @Test
     fun `ids and variants are stripped of ascii whitespace before validation, identity, and serialization`() {
-        val service = serviceWithRemoteConfig(RemoteConfig(experimentIdMaxLength = 3))
+        val service = serviceWithConfig(ExperimentConfig(maxIdLength = { 3 }))
         service.track(
             listOf(TrackedData.experiment(id = " \t\na:b \r", variant = "\u000B v1 \u000C", startTimeMs = 100L)),
         )
@@ -217,7 +217,7 @@ internal class ExperimentTrackingServiceImplTest {
 
     @Test
     fun `an id longer than the max length is dropped silently`() {
-        val service = serviceWithRemoteConfig(RemoteConfig(experimentIdMaxLength = 5))
+        val service = serviceWithConfig(ExperimentConfig(maxIdLength = { 5 }))
         service.track(
             listOf(TrackedData.experiment(id = "123456", variant = null, startTimeMs = 100L)),
         )
@@ -226,7 +226,7 @@ internal class ExperimentTrackingServiceImplTest {
 
     @Test
     fun `a variant longer than the max length is dropped silently`() {
-        val service = serviceWithRemoteConfig(RemoteConfig(experimentVariantMaxLength = 5))
+        val service = serviceWithConfig(ExperimentConfig(maxVariantLength = { 5 }))
         service.track(
             listOf(
                 TrackedData.experiment(id = "id1", variant = "123456", startTimeMs = 100L),
@@ -238,7 +238,7 @@ internal class ExperimentTrackingServiceImplTest {
 
     @Test
     fun `tracking a new id is dropped once the record cap is reached`() {
-        val service = serviceWithRemoteConfig(RemoteConfig(experimentMaxCount = 2))
+        val service = serviceWithConfig(ExperimentConfig(maxCount = { 2 }))
         service.track(
             listOf(
                 TrackedData.experiment(id = "id1", variant = null, startTimeMs = 100L),
@@ -254,7 +254,7 @@ internal class ExperimentTrackingServiceImplTest {
 
     @Test
     fun `untracking does not free a slot because ended records count against the cap`() {
-        val service = serviceWithRemoteConfig(RemoteConfig(experimentMaxCount = 2))
+        val service = serviceWithConfig(ExperimentConfig(maxCount = { 2 }))
         service.track(
             listOf(
                 TrackedData.experiment(id = "id1", variant = null, startTimeMs = 100L),
@@ -271,7 +271,7 @@ internal class ExperimentTrackingServiceImplTest {
 
     @Test
     fun `re-tracking a known id and untracking are never blocked by being at the cap`() {
-        val service = serviceWithRemoteConfig(RemoteConfig(experimentMaxCount = 2))
+        val service = serviceWithConfig(ExperimentConfig(maxCount = { 2 }))
         service.track(
             listOf(
                 TrackedData.experiment(id = "id1", variant = "v1", startTimeMs = 100L),
@@ -318,7 +318,7 @@ internal class ExperimentTrackingServiceImplTest {
 
     @Test
     fun `bulk calls dedupes and invokes methods in the expected order`() {
-        val replayed = serviceWithRemoteConfig(RemoteConfig())
+        val replayed = serviceWithConfig(ExperimentConfig())
         val events = listOf(
             // untracking before tracking is dropped, as it would be live
             ExperimentApiCall.Untrack(ExperimentKind.EXPERIMENT, listOf("id1"), 50L),
@@ -346,7 +346,7 @@ internal class ExperimentTrackingServiceImplTest {
 
     @Test
     fun `bulk calls validates and enforces limits`() {
-        val service = serviceWithRemoteConfig(RemoteConfig(experimentMaxCount = 2))
+        val service = serviceWithConfig(ExperimentConfig(maxCount = { 2 }))
         service.bulkModify(
             listOf(
                 ExperimentApiCall.Track(
@@ -392,9 +392,9 @@ internal class ExperimentTrackingServiceImplTest {
         service.assertRecordState("e:id1::100;f:id2::200;e:id3::300")
     }
 
-    private fun serviceWithRemoteConfig(remoteConfig: RemoteConfig): ExperimentTrackingService =
+    private fun serviceWithConfig(cfg: ExperimentConfig): ExperimentTrackingService =
         ExperimentTrackingServiceImpl(
-            configService = FakeConfigService(experimentBehavior = createExperimentBehavior(remoteConfig)),
+            configService = FakeConfigService(config = EmbraceConfig(experiment = { cfg })),
             telemetryService = telemetryService,
             telemetryDestination = destination,
         )

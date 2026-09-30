@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.api.ExperimentApi
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentApiCall
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentKind
 import io.embrace.android.embracesdk.internal.capture.experiment.TrackedData
-import io.embrace.android.embracesdk.internal.config.behavior.ExperimentBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.resolved.ExperimentConfig
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.utils.drain
@@ -141,6 +141,6 @@ internal class ExperimentApiDelegate(
     private companion object {
         // The buffer stores entries up to the record cap's maximum settable value because it can't resolve the configured cap
         // until the SDK starts.
-        private const val PENDING_ENTRY_LIMIT = ExperimentBehaviorImpl.MAX_EXPERIMENT_COUNT_LIMIT
+        private const val PENDING_ENTRY_LIMIT = ExperimentConfig.MAX_COUNT_LIMIT
     }
 }

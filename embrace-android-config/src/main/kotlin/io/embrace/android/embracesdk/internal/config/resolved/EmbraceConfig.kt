@@ -9,10 +9,12 @@ class EmbraceConfig(
     threadBlockage: () -> ThreadBlockageConfig = { ThreadBlockageConfig() },
     aei: () -> AeiConfig = { AeiConfig() },
     log: () -> LogConfig = { LogConfig() },
+    experiment: () -> ExperimentConfig = { ExperimentConfig() },
 ) {
     val breadcrumb: BreadcrumbConfig = breadcrumb()
     val persistence: PersistenceConfig = persistence()
     val threadBlockage: ThreadBlockageConfig = threadBlockage()
     val aei: AeiConfig = aei()
     val log: LogConfig = log()
+    val experiment: ExperimentConfig = experiment()
 }

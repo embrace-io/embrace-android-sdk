@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 class NetworkStateInstrumentationProvider :
     StateInstrumentationProvider<NetworkStateDataSource, SchemaType.NetworkState.Status>(
         configGate = {
-            configService.autoDataCaptureBehavior.isNetworkConnectivityCaptureEnabled()
+            configService.config.autoDataCapture.networkConnectivityCaptureEnabled
         },
     ) {
     override fun factoryProvider(args: InstrumentationArgs): () -> NetworkStateDataSource {

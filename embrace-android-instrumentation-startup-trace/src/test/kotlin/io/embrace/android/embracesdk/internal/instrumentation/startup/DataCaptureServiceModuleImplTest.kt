@@ -4,8 +4,9 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
-import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
+import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -38,7 +39,7 @@ internal class DataCaptureServiceModuleImplTest {
             logger = FakeInternalLogger(),
             destination = FakeTelemetryDestination(),
             configService = FakeConfigService(
-                autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uiLoadTracingEnabled = false),
+                config = EmbraceConfig(autoDataCapture = { AutoDataCaptureConfig(uiLoadTracingEnabled = { false }) }),
             ),
             appVersionStartupCounterProvider = { 1 },
             startupClassifier = StartupClassifierImpl(),
@@ -55,7 +56,7 @@ internal class DataCaptureServiceModuleImplTest {
             logger = FakeInternalLogger(),
             destination = FakeTelemetryDestination(),
             configService = FakeConfigService(
-                autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uiLoadTracingTraceAll = false),
+                config = EmbraceConfig(autoDataCapture = { AutoDataCaptureConfig(uiLoadTracingTraceAll = { false }) }),
             ),
             appVersionStartupCounterProvider = { 1 },
             startupClassifier = StartupClassifierImpl(),

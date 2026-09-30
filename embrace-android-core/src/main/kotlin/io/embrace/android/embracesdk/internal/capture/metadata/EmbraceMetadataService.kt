@@ -57,7 +57,7 @@ internal class EmbraceMetadataService(
                 osVersion = res.osVersion
             }
             val free = statFs.freeBytes
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && configService.autoDataCaptureBehavior.isDiskUsageCaptureEnabled()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && configService.config.autoDataCapture.diskUsageCaptureEnabled) {
                 val deviceDiskAppUsage = getDeviceDiskAppUsage(
                     context.getSystemServiceSafe(Context.STORAGE_STATS_SERVICE),
                 )

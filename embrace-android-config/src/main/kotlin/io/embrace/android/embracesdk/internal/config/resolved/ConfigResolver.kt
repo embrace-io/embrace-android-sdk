@@ -13,6 +13,7 @@ fun resolveConfig(local: InstrumentedConfig, remote: RemoteConfig?, bucket: Lazy
     vitals = { resolveVitals(remote, bucket) },
     sdkMode = { resolveSdkMode(remote, bucket) },
     backgroundActivity = { resolveBackgroundActivity(local, remote, bucket) },
+    autoDataCapture = { resolveAutoDataCapture(local, remote, bucket) },
 )
 
 fun resolveBreadcrumb(local: InstrumentedConfig, remote: RemoteConfig?): BreadcrumbConfig {
@@ -107,3 +108,43 @@ fun resolveBackgroundActivity(
             ?: local.enabledFeatures.isBackgroundActivityCaptureEnabled()
     },
 )
+
+fun resolveAutoDataCapture(
+    local: InstrumentedConfig,
+    remote: RemoteConfig?,
+    bucket: Lazy<Float>,
+): AutoDataCaptureConfig {
+    val features = local.enabledFeatures
+    val killSwitch = remote?.killSwitchConfig
+    val uiLoadEnabledRemotely = remote?.uiLoadInstrumentationEnabled ?: true
+    return AutoDataCaptureConfig(
+        thermalStatusCaptureEnabled = { rolloutEnabled(remote?.dataConfig?.pctThermalStatusEnabled, bucket) },
+        powerSaveModeCaptureEnabled = features::isPowerSaveModeCaptureEnabled,
+        networkConnectivityCaptureEnabled = features::isNetworkConnectivityCaptureEnabled,
+        threadBlockageCaptureEnabled = features::isThreadBlockageCaptureEnabled,
+        jvmCrashCaptureEnabled = features::isJvmCrashCaptureEnabled,
+        composeClickCaptureEnabled = { killSwitch?.jetpackCompose ?: features.isComposeClickCaptureEnabled() },
+        thirdPartySigHandlerDetectionEnabled = {
+            killSwitch?.sigHandlerDetection ?: features.is3rdPartySigHandlerDetectionEnabled()
+        },
+        nativeCrashCaptureEnabled = features::isNativeCrashCaptureEnabled,
+        diskUsageCaptureEnabled = features::isDiskUsageCaptureEnabled,
+        uiLoadTracingEnabled = { features.isUiLoadTracingEnabled() && uiLoadEnabledRemotely },
+        uiLoadTracingTraceAll = { features.isUiLoadTracingTraceAll() && uiLoadEnabledRemotely },
+        endStartupWithAppReadyEnabled = features::isEndStartupWithAppReadyEnabled,
+        stateCaptureEnabled = { rolloutEnabled(remote?.pctStateCaptureEnabledV2, bucket) },
+        networkCallbackConnectivityServiceEnabled = {
+            rolloutEnabled(remote?.pctNetworkCallbackConnectivityServiceEnabled, bucket)
+        },
+        navigationStateCaptureEnabled = { rolloutEnabled(remote?.pctNavigationStateCaptureEnabled, bucket) },
+        smoothnessCaptureEnabled = { rolloutEnabled(remote?.pctSmoothnessEnabled, bucket) },
+        screenLoadCaptureEnabled = { rolloutEnabled(remote?.pctScreenLoadEnabled, bucket) },
+        activityProcessLifecycleTrackerEnabled = {
+            rolloutEnabled(remote?.pctActivityProcessLifecycleTrackerEnabled, bucket)
+                ?: features.isActivityProcessLifecycleTrackerEnabled()
+        },
+        activityLeakDetectionEnabled = { rolloutEnabled(remote?.pctActivityLeakDetectionEnabled, bucket) },
+        fragmentLeakDetectionEnabled = { rolloutEnabled(remote?.pctFragmentLeakDetectionEnabled, bucket) },
+        webViewLeakDetectionEnabled = { rolloutEnabled(remote?.pctWebViewLeakDetectionEnabled, bucket) },
+    )
+}

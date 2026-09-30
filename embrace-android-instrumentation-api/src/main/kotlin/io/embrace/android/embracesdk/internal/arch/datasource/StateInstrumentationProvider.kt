@@ -17,7 +17,7 @@ abstract class StateInstrumentationProvider<T : StateDataSource<S>, S : Any>(
     override fun register(args: InstrumentationArgs): DataSourceFactory<DataSource>? {
         val factory = factoryProvider(args)
         return {
-            if (args.configGate() && args.configService.autoDataCaptureBehavior.isStateCaptureEnabled()) {
+            if (args.configGate() && args.configService.config.autoDataCapture.stateCaptureEnabled) {
                 factory()
             } else {
                 null

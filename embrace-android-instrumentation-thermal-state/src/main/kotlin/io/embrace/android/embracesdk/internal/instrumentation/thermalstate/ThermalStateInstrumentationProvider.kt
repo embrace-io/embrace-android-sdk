@@ -15,7 +15,7 @@ class ThermalStateInstrumentationProvider : InstrumentationProvider {
             return null
         }
         return {
-            if (args.configService.autoDataCaptureBehavior.isThermalStatusCaptureEnabled()) {
+            if (args.configService.config.autoDataCapture.thermalStatusCaptureEnabled) {
                 ThermalStateDataSource(args = args)
             } else {
                 null

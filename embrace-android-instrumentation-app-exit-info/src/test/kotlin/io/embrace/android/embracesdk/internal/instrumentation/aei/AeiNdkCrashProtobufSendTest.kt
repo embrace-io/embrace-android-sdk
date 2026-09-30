@@ -9,8 +9,9 @@ import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
-import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
+import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.mockk.every
 import io.mockk.mockk
@@ -135,7 +136,9 @@ internal class AeiNdkCrashProtobufSendTest {
         )
         val args = FakeInstrumentationArgs(
             mockk(),
-            configService = FakeConfigService(autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(ndkEnabled = true)),
+            configService = FakeConfigService(
+                config = EmbraceConfig(autoDataCapture = { AutoDataCaptureConfig(nativeCrashCaptureEnabled = { true }) }),
+            ),
         )
         AeiDataSourceImpl(
             args,

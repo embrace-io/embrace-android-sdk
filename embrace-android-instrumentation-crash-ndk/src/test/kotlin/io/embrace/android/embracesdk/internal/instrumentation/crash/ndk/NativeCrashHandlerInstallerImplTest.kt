@@ -9,7 +9,8 @@ import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.FakeMainThreadHandler
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
-import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
@@ -38,9 +39,7 @@ class NativeCrashHandlerInstallerImplTest {
     fun setUp() {
         val fakeConfigService =
             FakeConfigService(
-                autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(
-                    sigHandlerDetectionEnabled = true,
-                ),
+                config = EmbraceConfig(autoDataCapture = { AutoDataCaptureConfig(thirdPartySigHandlerDetectionEnabled = { true }) }),
             )
         fakeSharedObjectLoader = FakeSharedObjectLoader()
         fakeDelegate = FakeJniDelegate()
@@ -134,8 +133,9 @@ class NativeCrashHandlerInstallerImplTest {
 
     @Test
     fun `signal handlers are not reinstalled when the 3rd party signal handler detection is disabled`() {
-        args.configService.autoDataCaptureBehavior =
-            FakeAutoDataCaptureBehavior(sigHandlerDetectionEnabled = false)
+        args.configService.config = EmbraceConfig(
+            autoDataCapture = { AutoDataCaptureConfig(thirdPartySigHandlerDetectionEnabled = { false }) },
+        )
 
         nativeCrashHandlerInstaller.install()
 

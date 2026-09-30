@@ -9,8 +9,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBe
 import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.ExperimentBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.ExperimentBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
@@ -79,13 +77,6 @@ fun createAutoDataCaptureBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     remoteCfg: RemoteConfig? = null,
 ): AutoDataCaptureBehavior = AutoDataCaptureBehaviorImpl(thresholdCheck, InstrumentedConfigImpl, remoteCfg)
-
-/**
- * A [LogMessageBehaviorImpl] that returns default values.
- */
-fun createLogMessageBehavior(
-    remoteCfg: RemoteConfig? = null,
-): LogMessageBehavior = LogMessageBehaviorImpl(remoteCfg)
 
 /**
  * A [DataCaptureEventBehaviorImpl] that returns default values.

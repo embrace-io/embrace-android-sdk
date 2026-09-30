@@ -8,6 +8,7 @@ fun resolveConfig(local: InstrumentedConfig, remote: RemoteConfig?, bucket: Lazy
     persistence = { resolvePersistence(local, remote, bucket) },
     threadBlockage = { resolveThreadBlockage(remote, bucket) },
     aei = { resolveAei(local, remote, bucket) },
+    log = { resolveLog(remote) },
 )
 
 fun resolveBreadcrumb(local: InstrumentedConfig, remote: RemoteConfig?): BreadcrumbConfig {
@@ -55,5 +56,15 @@ fun resolveAei(local: InstrumentedConfig, remote: RemoteConfig?, bucket: Lazy<Fl
         },
         traceMaxLimit = { cfg?.appExitInfoTracesLimit },
         maxNum = { cfg?.aeiMaxNum },
+    )
+}
+
+fun resolveLog(remote: RemoteConfig?): LogConfig {
+    val cfg = remote?.logConfig
+    return LogConfig(
+        maxMessageLength = { cfg?.logMessageMaximumAllowedLength },
+        infoLimit = { cfg?.logInfoLimit },
+        warnLimit = { cfg?.logWarnLimit },
+        errorLimit = { cfg?.logErrorLimit },
     )
 }

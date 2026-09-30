@@ -25,7 +25,7 @@ class LogServiceImpl(
     private val telemetryService: TelemetryService,
 ) : LogService {
 
-    private val behavior = configService.logMessageBehavior
+    private val cfg = configService.config.log
     private val bypassLimitsValidation = configService.isOnlyUsingOtelExporters()
 
     override fun log(
@@ -55,7 +55,7 @@ class LogServiceImpl(
         val maxLength = if (configService.appFramework == AppFramework.UNITY) {
             LOG_MESSAGE_UNITY_MAXIMUM_ALLOWED_LENGTH
         } else {
-            behavior.getLogMessageMaximumAllowedLength()
+            cfg.maxMessageLength
         }
 
         if (message.length > maxLength) {

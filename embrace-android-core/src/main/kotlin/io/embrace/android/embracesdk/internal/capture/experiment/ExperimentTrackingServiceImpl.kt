@@ -15,9 +15,9 @@ internal class ExperimentTrackingServiceImpl(
     private val telemetryDestination: TelemetryDestination,
 ) : ExperimentTrackingService {
 
-    private val maxRecordCount = configService.experimentBehavior.getMaxExperimentCount()
-    private val maxIdLength = configService.experimentBehavior.getMaxIdLength()
-    private val maxVariantLength = configService.experimentBehavior.getMaxVariantLength()
+    private val maxRecordCount = configService.config.experiment.maxCount
+    private val maxIdLength = configService.config.experiment.maxIdLength
+    private val maxVariantLength = configService.config.experiment.maxVariantLength
 
     private val lock = Any()
 

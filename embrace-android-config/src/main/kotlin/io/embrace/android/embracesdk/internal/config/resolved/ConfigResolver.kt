@@ -9,6 +9,7 @@ fun resolveConfig(local: InstrumentedConfig, remote: RemoteConfig?, bucket: Lazy
     threadBlockage = { resolveThreadBlockage(remote, bucket) },
     aei = { resolveAei(local, remote, bucket) },
     log = { resolveLog(remote) },
+    experiment = { resolveExperiment(remote) },
 )
 
 fun resolveBreadcrumb(local: InstrumentedConfig, remote: RemoteConfig?): BreadcrumbConfig {
@@ -68,3 +69,9 @@ fun resolveLog(remote: RemoteConfig?): LogConfig {
         errorLimit = { cfg?.logErrorLimit },
     )
 }
+
+fun resolveExperiment(remote: RemoteConfig?): ExperimentConfig = ExperimentConfig(
+    maxCount = { remote?.experimentMaxCount },
+    maxIdLength = { remote?.experimentIdMaxLength },
+    maxVariantLength = { remote?.experimentVariantMaxLength },
+)

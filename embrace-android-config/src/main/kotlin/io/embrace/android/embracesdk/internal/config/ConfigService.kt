@@ -94,6 +94,11 @@ interface ConfigService {
     val otelBehavior: OtelBehavior
 
     /**
+     * Codes of pct flags that are mid-rollout and enabled for this device.
+     */
+    val enabledPctRollouts: List<String>
+
+    /**
      * The app framework that is currently in use.
      */
     val appFramework: AppFramework

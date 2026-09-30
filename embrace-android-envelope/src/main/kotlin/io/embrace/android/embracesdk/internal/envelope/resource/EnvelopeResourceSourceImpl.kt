@@ -22,6 +22,10 @@ class EnvelopeResourceSourceImpl(
     private var lastEmitted: EnvelopeResource? = null
     private val lock = Any()
 
+    private val pctRollouts: String? by lazy {
+        configService.enabledPctRollouts.takeIf { it.isNotEmpty() }?.sorted()?.joinToString(";")
+    }
+
     override fun getEnvelopeResource(): EnvelopeResource {
         val buildInfo = configService.buildInfo
 
@@ -54,7 +58,10 @@ class EnvelopeResourceSourceImpl(
             numCores = device.numberOfCores,
             usesEmmcStorage = device.usesEmmcStorage,
             deviceSocModel = device.socModel,
-            extras = extras.toMap(),
+            extras = buildMap {
+                putAll(extras)
+                pctRollouts?.let { put(KEY_PCT_ROLLOUTS, it) }
+            },
         )
     }
 
@@ -97,5 +104,9 @@ class EnvelopeResourceSourceImpl(
             listener(resource)
         } catch (ignored: Throwable) {
         }
+    }
+
+    companion object {
+        const val KEY_PCT_ROLLOUTS: String = "pct_rollouts"
     }
 }

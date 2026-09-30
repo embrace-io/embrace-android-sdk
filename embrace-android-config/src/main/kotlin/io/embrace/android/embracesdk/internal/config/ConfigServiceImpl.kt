@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.config.instrumented.schema.Instrum
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.resolveConfig
+import io.embrace.android.embracesdk.internal.config.rollout.PCT_ROLLOUT_FLAGS
 import io.embrace.android.embracesdk.internal.config.source.CombinedRemoteConfigSource
 import io.embrace.android.embracesdk.internal.config.source.ConfigEndpoint
 import io.embrace.android.embracesdk.internal.config.source.OkHttpRemoteConfigSource
@@ -117,6 +118,13 @@ class ConfigServiceImpl(
     override val networkSpanForwardingBehavior =
         NetworkSpanForwardingBehaviorImpl(traceparentInjectionBehavior, thresholdCheck, instrumentedConfig, remoteConfig)
     override val otelBehavior = persistedConfig.otelBehavior
+
+    override val enabledPctRollouts: List<String> by lazy {
+        val cfg = remoteConfig ?: return@lazy emptyList()
+        PCT_ROLLOUT_FLAGS.mapNotNull { (code, selector) ->
+            code.takeIf { selector(cfg)?.let { it > 0 && it < 100 && thresholdCheck.isBehaviorEnabled(it) } == true }
+        }
+    }
 
     override val appId: String? = run {
         val id = instrumentedConfig.project.getAppId()

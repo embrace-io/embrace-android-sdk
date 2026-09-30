@@ -12,6 +12,7 @@ fun resolveConfig(local: InstrumentedConfig, remote: RemoteConfig?, bucket: Lazy
     experiment = { resolveExperiment(remote) },
     vitals = { resolveVitals(remote, bucket) },
     sdkMode = { resolveSdkMode(remote, bucket) },
+    backgroundActivity = { resolveBackgroundActivity(local, remote, bucket) },
 )
 
 fun resolveBreadcrumb(local: InstrumentedConfig, remote: RemoteConfig?): BreadcrumbConfig {
@@ -94,4 +95,15 @@ fun resolveVitals(remote: RemoteConfig?, bucket: Lazy<Float>): VitalsConfig {
 
 fun resolveSdkMode(remote: RemoteConfig?, bucket: Lazy<Float>): SdkModeConfig = SdkModeConfig(
     sdkDisabled = { rolloutEnabled(remote?.threshold?.toFloat(), bucket)?.not() },
+)
+
+fun resolveBackgroundActivity(
+    local: InstrumentedConfig,
+    remote: RemoteConfig?,
+    bucket: Lazy<Float>,
+): BackgroundActivityConfig = BackgroundActivityConfig(
+    captureEnabled = {
+        rolloutEnabled(remote?.backgroundActivityConfig?.threshold, bucket)
+            ?: local.enabledFeatures.isBackgroundActivityCaptureEnabled()
+    },
 )

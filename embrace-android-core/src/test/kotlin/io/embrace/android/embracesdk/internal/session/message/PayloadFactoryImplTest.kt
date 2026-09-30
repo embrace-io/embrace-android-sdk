@@ -3,14 +3,12 @@ package io.embrace.android.embracesdk.internal.session.message
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeSessionPartPayloadSource
-import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState.BACKGROUND
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState.FOREGROUND
-import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.resolved.BackgroundActivityConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
 import org.junit.Assert.assertEquals
@@ -55,9 +53,7 @@ internal class PayloadFactoryImplTest {
 
     @Test
     fun `verify expected payloads with ba enabled`() {
-        configService.backgroundActivityBehavior = createBackgroundActivityBehavior(
-            remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f)),
-        )
+        configService.config = EmbraceConfig(backgroundActivity = { BackgroundActivityConfig(captureEnabled = { true }) })
         verifyPayloadWithState(state = FOREGROUND, zygoteCreated = true, startNewSession = true)
         verifyPayloadWithState(state = BACKGROUND, zygoteCreated = true, startNewSession = true)
         verifyPayloadWithManual()
@@ -65,9 +61,7 @@ internal class PayloadFactoryImplTest {
 
     @Test
     fun `verify expected payloads with ba disabled`() {
-        configService.backgroundActivityBehavior = createBackgroundActivityBehavior(
-            remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 0f)),
-        )
+        configService.config = EmbraceConfig(backgroundActivity = { BackgroundActivityConfig(captureEnabled = { false }) })
         verifyPayloadWithState(state = FOREGROUND, zygoteCreated = true, startNewSession = false)
         verifyPayloadWithState(state = BACKGROUND, zygoteCreated = false, startNewSession = false)
         verifyPayloadWithManual()

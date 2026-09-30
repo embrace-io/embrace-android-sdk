@@ -22,7 +22,6 @@ import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.behavior.FakeUserSessionBehavior
-import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
@@ -31,8 +30,8 @@ import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.capture.session.PropertyScope
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
-import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.resolved.BackgroundActivityConfig
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingServiceImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -87,8 +86,8 @@ internal class SessionOrchestratorListenerTest {
         logger = FakeInternalLogger(throwOnInternalError = false)
         startupClassifier = StartupClassifierImpl()
         configService = FakeConfigService(
-            backgroundActivityBehavior = createBackgroundActivityBehavior(
-                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f)),
+            config = EmbraceConfig(
+                backgroundActivity = { BackgroundActivityConfig(captureEnabled = { true }) },
             ),
         )
     }
@@ -316,9 +315,7 @@ internal class SessionOrchestratorListenerTest {
     }
 
     private fun sessionBehaviorConfig() = FakeConfigService(
-        backgroundActivityBehavior = createBackgroundActivityBehavior(
-            remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f)),
-        ),
+        config = EmbraceConfig(backgroundActivity = { BackgroundActivityConfig(captureEnabled = { true }) }),
         sessionBehavior = FakeUserSessionBehavior(
             maxSessionDurationMs = maxDurationMs,
             sessionInactivityTimeoutMs = inactivityMs,

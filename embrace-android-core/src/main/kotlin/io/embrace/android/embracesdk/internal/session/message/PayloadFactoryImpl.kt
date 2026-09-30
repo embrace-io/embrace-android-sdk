@@ -252,5 +252,5 @@ internal class PayloadFactoryImpl(
 
     private fun envelopeRequired(): Boolean = !configService.config.persistence.multiFileEnabled
 
-    private fun isBackgroundActivityEnabled(): Boolean = configService.backgroundActivityBehavior.isBackgroundActivityCaptureEnabled()
+    private fun isBackgroundActivityEnabled(): Boolean = configService.config.backgroundActivity.captureEnabled
 }

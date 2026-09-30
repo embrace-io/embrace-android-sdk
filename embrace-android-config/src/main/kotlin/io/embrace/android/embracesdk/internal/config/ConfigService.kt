@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.config
 
 import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.BackgroundActivityBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
@@ -23,11 +22,6 @@ interface ConfigService {
      * The resolved config.
      */
     val config: EmbraceConfig
-
-    /**
-     * How background activity functionality should behave.
-     */
-    val backgroundActivityBehavior: BackgroundActivityBehavior
 
     /**
      * How automatic data capture functionality should behave.

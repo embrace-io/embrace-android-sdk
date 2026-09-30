@@ -7,11 +7,11 @@ import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
-import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.resolved.AeiConfig
+import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
@@ -393,8 +393,10 @@ internal class AeiDataSourceImplTest {
         every { mockAppExitInfo.reason } returns ApplicationExitInfo.REASON_CRASH_NATIVE
 
         configService = FakeConfigService(
-            config = EmbraceConfig(aei = { AeiConfig(traceMaxLimit = { 100 }) }),
-            autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(ndkEnabled = true),
+            config = EmbraceConfig(
+                aei = { AeiConfig(traceMaxLimit = { 100 }) },
+                autoDataCapture = { AutoDataCaptureConfig(nativeCrashCaptureEnabled = { true }) },
+            ),
         )
         every {
             mockActivityManager.getHistoricalProcessExitReasons(

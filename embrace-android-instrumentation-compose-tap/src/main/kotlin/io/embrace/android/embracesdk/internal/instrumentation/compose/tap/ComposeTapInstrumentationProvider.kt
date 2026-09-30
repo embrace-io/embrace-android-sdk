@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.view.taps.tapDataS
 class ComposeTapInstrumentationProvider : InstrumentationProvider {
     override fun register(args: InstrumentationArgs): DataSourceFactory<DataSource>? {
         return {
-            if (args.configService.autoDataCaptureBehavior.isComposeClickCaptureEnabled()) {
+            if (args.configService.config.autoDataCapture.composeClickCaptureEnabled) {
                 ComposeTapDataSource(
                     args = args,
                     tapDataSourceProvider = { tapDataSource },

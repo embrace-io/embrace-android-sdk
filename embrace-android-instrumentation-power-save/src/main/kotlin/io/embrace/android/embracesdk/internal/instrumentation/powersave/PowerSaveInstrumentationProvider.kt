@@ -13,7 +13,7 @@ class PowerSaveInstrumentationProvider : InstrumentationProvider {
 
     override fun register(args: InstrumentationArgs): DataSourceFactory<DataSource>? {
         return {
-            if (args.configService.autoDataCaptureBehavior.isPowerSaveModeCaptureEnabled()) {
+            if (args.configService.config.autoDataCapture.powerSaveModeCaptureEnabled) {
                 LowPowerDataSource( // FIXME: supply via args
                     args = args,
                     backgroundWorker = args.backgroundWorker(Worker.Background.NonIoRegWorker),

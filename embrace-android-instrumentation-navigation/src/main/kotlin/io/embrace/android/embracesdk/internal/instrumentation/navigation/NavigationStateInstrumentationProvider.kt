@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NavigationS
 class NavigationStateInstrumentationProvider :
     StateInstrumentationProvider<NavigationStateDataSource, Screen>(
         configGate = {
-            configService.autoDataCaptureBehavior.isNavigationStateCaptureEnabled()
+            configService.config.autoDataCapture.navigationStateCaptureEnabled
         },
     ) {
 

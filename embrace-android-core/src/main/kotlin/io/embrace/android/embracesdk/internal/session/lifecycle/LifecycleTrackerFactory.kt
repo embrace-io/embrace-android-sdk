@@ -20,7 +20,7 @@ internal fun createLifecycleTracker(
     startupContext: Context?,
 ): LifecycleTracker {
     return when {
-        configService.autoDataCaptureBehavior.isActivityProcessLifecycleTrackerEnabled() -> {
+        configService.config.autoDataCapture.activityProcessLifecycleTrackerEnabled -> {
             ActivityProcessLifecycleTracker(application, startupContext)
         }
         else -> {

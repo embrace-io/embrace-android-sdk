@@ -68,7 +68,7 @@ internal class AeiDataSourceImpl(
                 return@forEach
             }
             captureTelemetry {
-                val capture = configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled() || !obj.hasNativeTombstone()
+                val capture = configService.config.autoDataCapture.nativeCrashCaptureEnabled || !obj.hasNativeTombstone()
                 if (capture) {
                     val schemaType = AeiLog(
                         sessionPartId = obj.sessionPartId,

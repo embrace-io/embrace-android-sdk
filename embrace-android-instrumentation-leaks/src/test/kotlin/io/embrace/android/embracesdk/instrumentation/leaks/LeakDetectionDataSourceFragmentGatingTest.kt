@@ -3,7 +3,8 @@ package io.embrace.android.embracesdk.instrumentation.leaks
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
-import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import org.junit.After
 import org.junit.Assert.assertNotNull
@@ -16,7 +17,7 @@ import org.robolectric.RuntimeEnvironment
 
 /**
  * Covers whether [LeakDetectionDataSource] wires up fragment leak detection depending on
- * [io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehavior.isFragmentLeakDetectionEnabled]. Kept
+ * [io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig.fragmentLeakDetectionEnabled]. Kept
  * separate from [LeakDetectionDataSourceTest] since each test here needs its own [LeakDetectionDataSource], built with
  * different behavior, rather than sharing the one constructed in a common `@Before`.
  */
@@ -48,7 +49,9 @@ internal class LeakDetectionDataSourceFragmentGatingTest {
     @Test
     fun `fragment leak detection is wired when enabled`() {
         val args = FakeInstrumentationArgs(RuntimeEnvironment.getApplication())
-        args.configService.autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(fragmentLeakDetectionEnabled = true)
+        args.configService.config = EmbraceConfig(autoDataCapture = {
+            AutoDataCaptureConfig(fragmentLeakDetectionEnabled = { true })
+        })
         dataSource = LeakDetectionDataSource(args)
         dataSource.onDataCaptureEnabled()
 

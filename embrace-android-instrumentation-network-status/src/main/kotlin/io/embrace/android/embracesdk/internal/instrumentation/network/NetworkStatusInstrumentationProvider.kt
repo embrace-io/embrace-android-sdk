@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceFactory
 class NetworkStatusInstrumentationProvider : InstrumentationProvider {
     override fun register(args: InstrumentationArgs): DataSourceFactory<DataSource>? {
         return {
-            if (args.configService.autoDataCaptureBehavior.isNetworkConnectivityCaptureEnabled()) {
+            if (args.configService.config.autoDataCapture.networkConnectivityCaptureEnabled) {
                 NetworkStatusDataSource(args)
             } else {
                 null

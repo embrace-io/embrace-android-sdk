@@ -60,7 +60,7 @@ class EssentialServiceModuleImpl(
         networkConnectivityServiceProvider() ?: EmbTrace.trace("network-connectivity-service-init") {
             val worker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
-                configService.autoDataCaptureBehavior.isNetworkCallbackConnectivityServiceEnabled()
+                configService.config.autoDataCapture.networkCallbackConnectivityServiceEnabled
             ) {
                 NetworkCallbackConnectivityService(
                     worker,

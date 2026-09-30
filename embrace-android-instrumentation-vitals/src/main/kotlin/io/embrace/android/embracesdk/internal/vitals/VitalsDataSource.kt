@@ -129,7 +129,7 @@ internal class VitalsDataSource(
     }
 
     private fun emitScreenLoadResult(result: ScreenLoadResult) {
-        if (!args.configService.autoDataCaptureBehavior.isScreenLoadCaptureEnabled()) {
+        if (!args.configService.config.autoDataCapture.screenLoadCaptureEnabled) {
             return
         }
 

@@ -55,7 +55,7 @@ class JvmCrashDataSourceImpl(
      */
     override fun logUnhandledJvmThrowable(exception: Throwable) {
         if (!mainCrashHandled.getAndSet(true)) {
-            captureTelemetry(inputValidation = configService.autoDataCaptureBehavior::isJvmCrashCaptureEnabled) {
+            captureTelemetry(inputValidation = configService.config.autoDataCapture::jvmCrashCaptureEnabled) {
                 val crashId = args.uuidSource.createUuid()
                 val attrs = TelemetryAttributes().apply {
                     val crashException = LegacyExceptionInfo.ofThrowable(exception)

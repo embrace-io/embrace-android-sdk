@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.config
 
-import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
 import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehaviorImpl
@@ -96,8 +95,6 @@ class ConfigServiceImpl(
 
     override val config: EmbraceConfig =
         resolveConfig(instrumentedConfig, remoteConfig, lazy(thresholdCheck::getNormalizedDeviceId))
-    override val autoDataCaptureBehavior =
-        AutoDataCaptureBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
     override val sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(instrumentedConfig)
     override val sessionBehavior = UserSessionBehaviorImpl(remoteConfig)
     override val networkBehavior = NetworkBehaviorImpl(instrumentedConfig, remoteConfig)

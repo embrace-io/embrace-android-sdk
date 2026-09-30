@@ -16,7 +16,7 @@ class VitalsInstrumentationProvider : InstrumentationProvider {
             return null
         }
         return {
-            if (args.configService.autoDataCaptureBehavior.isSmoothnessCaptureEnabled()) {
+            if (args.configService.config.autoDataCapture.smoothnessCaptureEnabled) {
                 VitalsDataSource(args)
             } else {
                 null

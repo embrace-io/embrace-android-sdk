@@ -4,7 +4,8 @@ import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityProcessLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.AndroidxProcessLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.createLifecycleTracker
@@ -35,8 +36,10 @@ internal class LifecycleTrackerFactoryTest {
 
     private fun createTracker(activityTrackerEnabled: Boolean) = createLifecycleTracker(
         configService = FakeConfigService(
-            autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(
-                activityProcessLifecycleTrackerEnabled = activityTrackerEnabled,
+            config = EmbraceConfig(
+                autoDataCapture = {
+                    AutoDataCaptureConfig(activityProcessLifecycleTrackerEnabled = { activityTrackerEnabled })
+                },
             ),
         ),
         application = application,

@@ -53,12 +53,12 @@ class DataCaptureServiceModuleImpl(
         versionChecker = versionChecker,
         logger = logger,
         startupClassifier = startupClassifier,
-        manualEnd = configService.autoDataCaptureBehavior.isEndStartupWithAppReadyEnabled(),
+        manualEnd = configService.config.autoDataCapture.endStartupWithAppReadyEnabled,
         processInfo = processInfo,
     )
 
     override val uiLoadDataListener: UiLoadDataListener? =
-        if (configService.autoDataCaptureBehavior.isUiLoadTracingEnabled()) {
+        if (configService.config.autoDataCapture.uiLoadTracingEnabled) {
             UiLoadTraceEmitter(
                 destination = destination,
                 versionChecker = versionChecker,
@@ -72,7 +72,7 @@ class DataCaptureServiceModuleImpl(
             createActivityLoadEventEmitter(
                 uiLoadEventListener = uiLoadEventListener,
                 firstDrawDetector = createDrawEventEmitter(versionChecker, logger),
-                autoTraceEnabled = configService.autoDataCaptureBehavior.isUiLoadTracingTraceAll(),
+                autoTraceEnabled = configService.config.autoDataCapture.uiLoadTracingTraceAll,
                 clock = clock,
                 versionChecker = versionChecker,
             )

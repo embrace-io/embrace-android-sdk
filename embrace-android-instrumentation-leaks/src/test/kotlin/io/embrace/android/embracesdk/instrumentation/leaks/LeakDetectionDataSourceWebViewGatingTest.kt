@@ -3,7 +3,8 @@ package io.embrace.android.embracesdk.instrumentation.leaks
 import android.webkit.WebView
 import android.widget.FrameLayout
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
-import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import org.junit.After
 import org.junit.Assert.assertNotNull
@@ -16,7 +17,7 @@ import org.robolectric.RuntimeEnvironment
 
 /**
  * Covers whether [LeakDetectionDataSource] wires up WebView leak detection depending on
- * [io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehavior.isWebViewLeakDetectionEnabled].
+ * [io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig.webViewLeakDetectionEnabled].
  * Kept separate from [LeakDetectionDataSourceTest] for the same reason as
  * [LeakDetectionDataSourceFragmentGatingTest] - each test here needs its own [LeakDetectionDataSource], built
  * with different behavior.
@@ -47,7 +48,9 @@ internal class LeakDetectionDataSourceWebViewGatingTest {
     @Test
     fun `webview leak detection is wired when enabled`() {
         val args = FakeInstrumentationArgs(RuntimeEnvironment.getApplication())
-        args.configService.autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(webViewLeakDetectionEnabled = true)
+        args.configService.config = EmbraceConfig(autoDataCapture = {
+            AutoDataCaptureConfig(webViewLeakDetectionEnabled = { true })
+        })
         dataSource = LeakDetectionDataSource(args)
         dataSource.onDataCaptureEnabled()
 

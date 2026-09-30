@@ -11,7 +11,7 @@ typealias ThreadBlockageServiceSupplier = (args: InstrumentationArgs) -> ThreadB
 
 fun createThreadBlockageService(args: InstrumentationArgs): ThreadBlockageService? {
     val configService = args.configService
-    if (!configService.autoDataCaptureBehavior.isThreadBlockageCaptureEnabled() ||
+    if (!configService.config.autoDataCapture.threadBlockageCaptureEnabled ||
         !configService.config.threadBlockage.captureEnabled
     ) {
         return null

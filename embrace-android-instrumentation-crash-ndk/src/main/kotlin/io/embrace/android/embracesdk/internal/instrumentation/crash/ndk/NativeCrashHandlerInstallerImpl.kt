@@ -80,7 +80,7 @@ internal class NativeCrashHandlerInstallerImpl(
         }
 
     private fun checkSignalHandlersOverwritten() {
-        if (configService.autoDataCaptureBehavior.is3rdPartySigHandlerDetectionEnabled()) {
+        if (configService.config.autoDataCapture.thirdPartySigHandlerDetectionEnabled) {
             val culprit = delegate.checkForOverwrittenHandlers()
             if (culprit != null) {
                 if (shouldIgnoreOverriddenHandler(culprit)) {

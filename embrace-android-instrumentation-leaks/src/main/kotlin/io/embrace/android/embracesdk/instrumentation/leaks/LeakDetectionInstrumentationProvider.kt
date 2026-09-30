@@ -12,7 +12,7 @@ class LeakDetectionInstrumentationProvider : InstrumentationProvider {
             return null
         }
         return {
-            if (args.configService.autoDataCaptureBehavior.isActivityLeakDetectionEnabled()) {
+            if (args.configService.config.autoDataCapture.activityLeakDetectionEnabled) {
                 LeakDetectionDataSource(args)
             } else {
                 null

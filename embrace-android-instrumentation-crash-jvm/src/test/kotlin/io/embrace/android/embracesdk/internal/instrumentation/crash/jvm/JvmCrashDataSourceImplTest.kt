@@ -6,9 +6,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
-import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
+import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
@@ -39,9 +40,7 @@ internal class JvmCrashDataSourceImplTest {
         args = FakeInstrumentationArgs(
             ctx,
             configService = FakeConfigService(
-                autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(
-                    uncaughtExceptionHandlerEnabled = crashHandlerEnabled,
-                ),
+                config = EmbraceConfig(autoDataCapture = { AutoDataCaptureConfig(jvmCrashCaptureEnabled = { crashHandlerEnabled }) }),
             ),
         )
         crashDataSource = JvmCrashDataSourceImpl(args).apply {

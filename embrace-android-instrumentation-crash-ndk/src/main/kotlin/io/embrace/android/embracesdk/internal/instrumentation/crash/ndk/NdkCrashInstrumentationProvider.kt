@@ -17,7 +17,7 @@ var sharedObjectLoaderTestOverride: SharedObjectLoader? = null
 class NdkCrashInstrumentationProvider : InstrumentationProvider {
 
     override fun register(args: InstrumentationArgs): DataSourceFactory<DataSource>? {
-        if (!args.configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()) {
+        if (!args.configService.config.autoDataCapture.nativeCrashCaptureEnabled) {
             return null
         }
         return {

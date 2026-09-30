@@ -11,6 +11,7 @@ class EmbraceConfig(
     log: () -> LogConfig = { LogConfig() },
     experiment: () -> ExperimentConfig = { ExperimentConfig() },
     vitals: () -> VitalsConfig = { VitalsConfig() },
+    sdkMode: () -> SdkModeConfig = { SdkModeConfig() },
 ) {
     val breadcrumb: BreadcrumbConfig = breadcrumb()
     val persistence: PersistenceConfig = persistence()
@@ -19,4 +20,5 @@ class EmbraceConfig(
     val log: LogConfig = log()
     val experiment: ExperimentConfig = experiment()
     val vitals: VitalsConfig = vitals()
+    val sdkMode: SdkModeConfig = sdkMode()
 }

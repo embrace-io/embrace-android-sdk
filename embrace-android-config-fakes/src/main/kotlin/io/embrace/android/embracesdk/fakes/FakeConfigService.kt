@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBe
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehavior
@@ -31,7 +30,6 @@ class FakeConfigService(
     override var sessionBehavior: UserSessionBehavior = createSessionBehavior(),
     override var networkBehavior: NetworkBehavior = FakeNetworkBehavior(),
     override var dataCaptureEventBehavior: DataCaptureEventBehavior = createDataCaptureEventBehavior(),
-    override var sdkModeBehavior: SdkModeBehavior = createSdkModeBehavior(),
     override var traceparentInjectionBehavior: TraceparentInjectionBehavior = createTraceparentInjectionBehavior(),
     override var networkSpanForwardingBehavior: NetworkSpanForwardingBehavior =
         createNetworkSpanForwardingBehavior(traceparentInjectionBehavior),

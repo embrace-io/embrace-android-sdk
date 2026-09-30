@@ -1,11 +1,9 @@
 package io.embrace.android.embracesdk.testcases
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.toStringMap
 import io.embrace.android.embracesdk.otel.java.getJavaOpenTelemetry
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.opentelemetry.kotlin.aliases.OtelJavaAttributes
@@ -13,51 +11,38 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
 /**
  * Sanity checks that each API surface exports spans and logs on both the Java and Kotlin SDK implementations.
  *
- * A span and log are created using the Embrace, opentelemetry-java, and opentelemetry-kotlin APIs. An additional
- * dimension is supplied via `useKotlinSdk`, which controls whether the 'compat' or 'regular' mode of
- * opentelemetry-kotlin is used.
+ * A span and log are created using the Embrace, opentelemetry-java, and opentelemetry-kotlin APIs. Each test
+ * runs once per [OtelSdkMode], which controls whether the 'compat' or 'regular' mode of opentelemetry-kotlin is used.
  *
  * Assertions verify the exported OTLP is the same, barring minor differences.
  */
-@RunWith(AndroidJUnit4::class)
-internal class OtelApiInteropTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class OtelApiInteropTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     @Test
-    fun `java api with java sdk`() {
-        assertTelemetryExported(useKotlinSdk = false) { recordJavaApiTelemetry() }
+    fun `java api`() {
+        assertTelemetryExported { recordJavaApiTelemetry() }
     }
 
     @Test
-    fun `java api with kotlin sdk`() {
-        assertTelemetryExported(useKotlinSdk = true) { recordJavaApiTelemetry() }
+    fun `kotlin api`() {
+        assertTelemetryExported { recordKotlinApiTelemetry() }
     }
 
     @Test
-    fun `kotlin api with java sdk`() {
-        assertTelemetryExported(useKotlinSdk = false) { recordKotlinApiTelemetry() }
-    }
-
-    @Test
-    fun `kotlin api with kotlin sdk`() {
-        assertTelemetryExported(useKotlinSdk = true) { recordKotlinApiTelemetry() }
-    }
-
-    @Test
-    fun `embrace api with java sdk`() {
-        assertTelemetryExported(useKotlinSdk = false) { recordEmbraceApiTelemetry() }
-    }
-
-    @Test
-    fun `embrace api with kotlin sdk`() {
-        assertTelemetryExported(useKotlinSdk = true) { recordEmbraceApiTelemetry() }
+    fun `embrace api`() {
+        assertTelemetryExported { recordEmbraceApiTelemetry() }
     }
 
     private fun EmbraceActionInterface.recordJavaApiTelemetry() {
@@ -100,11 +85,8 @@ internal class OtelApiInteropTest {
         span.stop()
     }
 
-    private fun assertTelemetryExported(useKotlinSdk: Boolean, action: EmbraceActionInterface.() -> Unit) {
+    private fun assertTelemetryExported(action: EmbraceActionInterface.() -> Unit) {
         testRule.runTest(
-            persistedRemoteConfig = RemoteConfig(
-                otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = if (useKotlinSdk) 100.0f else 0.0f),
-            ),
             testCaseAction = {
                 recordSession { action() }
             },
@@ -120,7 +102,11 @@ internal class OtelApiInteropTest {
         )
     }
 
-    private companion object {
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
+
         private const val TRACER_NAME = "interop-tracer"
         private const val LOGGER_NAME = "interop-logger"
         private const val SPAN = "span"

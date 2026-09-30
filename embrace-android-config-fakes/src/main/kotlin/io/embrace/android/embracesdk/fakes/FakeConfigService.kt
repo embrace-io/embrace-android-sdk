@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.VitalsBehavior
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 
@@ -29,7 +28,6 @@ class FakeConfigService(
     var onlyUsingOtelExporters: Boolean = false,
     override var backgroundActivityBehavior: BackgroundActivityBehavior = createBackgroundActivityBehavior(),
     override var autoDataCaptureBehavior: AutoDataCaptureBehavior = createAutoDataCaptureBehavior(),
-    override var vitalsBehavior: VitalsBehavior = createVitalsBehavior(),
     override var sessionBehavior: UserSessionBehavior = createSessionBehavior(),
     override var networkBehavior: NetworkBehavior = FakeNetworkBehavior(),
     override var dataCaptureEventBehavior: DataCaptureEventBehavior = createDataCaptureEventBehavior(),

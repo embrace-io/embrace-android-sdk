@@ -6,7 +6,7 @@ import androidx.annotation.WorkerThread
 /**
  * Records a per-frame duration trace over a focal moment, as a diagnostic aid while smoothness thresholds
  * are being tuned. Only constructed for a sampled fraction of devices (see
- * [io.embrace.android.embracesdk.internal.config.behavior.VitalsBehavior.isSmoothnessFrameTraceEnabled]),
+ * [io.embrace.android.embracesdk.internal.config.resolved.VitalsConfig.smoothnessFrameTraceEnabled]),
  * so the buffer is pre-allocated once per instance rather than per focal moment.
  *
  * Each frame's total duration (whole milliseconds) is packed as an unsigned LEB128 varint into a

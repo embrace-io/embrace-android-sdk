@@ -27,7 +27,7 @@ internal class FocalMomentTracker(
     private val screenLoadTracker: ScreenLoadTracker,
     private val idleThresholdMs: Long = DEFAULT_IDLE_THRESHOLD_MS,
     private val heldIdleThresholdMs: Long = DEFAULT_HELD_IDLE_THRESHOLD_MS,
-    // Only non-null for a sampled fraction of devices; see VitalsBehavior.isSmoothnessFrameTraceEnabled.
+    // Only non-null for a sampled fraction of devices; see VitalsConfig.smoothnessFrameTraceEnabled.
     private val frameTraceRecorder: FrameTraceRecorder? = null,
 ) : FocalInteractionCallbacks {
 

@@ -19,8 +19,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjecti
 import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.behavior.VitalsBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.VitalsBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 
@@ -29,14 +27,6 @@ const val FAKE_DEVICE_ID = "D586C4E25C064764BF53A808A38B92FE"
 private val behaviorThresholdCheck = BehaviorThresholdCheck {
     FAKE_DEVICE_ID
 }
-
-/**
- * A [VitalsBehaviorImpl] that returns default values.
- */
-fun createVitalsBehavior(
-    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: RemoteConfig? = null,
-): VitalsBehavior = VitalsBehaviorImpl(thresholdCheck, remoteCfg)
 
 /**
  * A [UserSessionBehaviorImpl] that returns default values.

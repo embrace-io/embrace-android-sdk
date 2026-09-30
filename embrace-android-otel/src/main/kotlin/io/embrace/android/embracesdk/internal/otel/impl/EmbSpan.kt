@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.otel.payload.toPayloadString
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
@@ -22,43 +21,43 @@ class EmbSpan(
 ) : Span, SpanCreationAction {
 
     override fun setStringAttribute(key: String, value: String) {
-        impl.addAttribute(key, value)
+        impl.addCustomAttribute(key, value)
     }
 
     override fun setStringListAttribute(key: String, value: List<String>) {
-        setStringAttribute(key, value.toString())
+        impl.addCustomAttribute(key, value)
     }
 
     override fun setLongListAttribute(key: String, value: List<Long>) {
-        setStringAttribute(key, value.toString())
+        impl.addCustomAttribute(key, value)
     }
 
     override fun setLongAttribute(key: String, value: Long) {
-        setStringAttribute(key, value.toString())
+        impl.addCustomAttribute(key, value)
     }
 
     override fun setDoubleListAttribute(key: String, value: List<Double>) {
-        setStringAttribute(key, value.toString())
+        impl.addCustomAttribute(key, value)
     }
 
     override fun setDoubleAttribute(key: String, value: Double) {
-        setStringAttribute(key, value.toString())
+        impl.addCustomAttribute(key, value)
     }
 
     override fun setBooleanListAttribute(key: String, value: List<Boolean>) {
-        setStringAttribute(key, value.toString())
+        impl.addCustomAttribute(key, value)
     }
 
     override fun setBooleanAttribute(key: String, value: Boolean) {
-        setStringAttribute(key, value.toString())
+        impl.addCustomAttribute(key, value)
     }
 
     override fun setByteArrayAttribute(key: String, value: ByteArray) {
-        setStringAttribute(key, value.contentToString())
+        impl.addCustomAttribute(key, value)
     }
 
     override fun setAnyValueAttribute(key: String, value: AnyValue) {
-        setStringAttribute(key, value.toPayloadString().orEmpty())
+        impl.addCustomAttribute(key, value)
     }
 
     override fun end(): Unit = end(timestamp = clock.now())
@@ -77,13 +76,13 @@ class EmbSpan(
     override fun addEvent(name: String, timestamp: Long?, attributes: (AttributesMutator.() -> Unit)?) {
         val container = EmbAttributesMutator()
         attributes?.invoke(container)
-        impl.addEvent(name, timestamp, container.attributes.mapValues { it.value.toPayloadString().orEmpty() })
+        impl.addCustomEvent(name, timestamp, container.attributes)
     }
 
     override fun addLink(spanContext: SpanContext, attributes: (AttributesMutator.() -> Unit)?) {
         val container = EmbAttributesMutator()
         attributes?.invoke(container)
-        impl.addLink(spanContext, container.attributes.mapValues { it.value.toPayloadString().orEmpty() })
+        impl.addCustomLink(spanContext, container.attributes)
     }
 
     val attributes: Map<String, Any>

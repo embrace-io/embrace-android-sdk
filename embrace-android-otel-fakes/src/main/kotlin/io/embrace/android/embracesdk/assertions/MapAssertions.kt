@@ -14,7 +14,7 @@ fun Map<String, String>.findAttributeValue(key: String): String? {
  * Validate that the system value [value] is recorded under [valueKey] along with its value type under [valueTypeKey]. Fails if
  * [value] is not actually a system value.
  */
-fun Map<String, String>.assertSystemStateValue(
+fun Map<String, Any>.assertSystemStateValue(
     value: Any,
     valueKey: String,
     valueTypeKey: String = EMB_STATE_VALUE_TYPE,
@@ -27,7 +27,7 @@ fun Map<String, String>.assertSystemStateValue(
  * Validate that the non-system value [value] is recorded under [valueKey] with no value type under [valueTypeKey]. Fails if
  * [value] is actually a system value.
  */
-fun Map<String, String>.assertNonSystemStateValue(
+fun Map<String, Any>.assertNonSystemStateValue(
     value: Any,
     valueKey: String,
     valueTypeKey: String = EMB_STATE_VALUE_TYPE,

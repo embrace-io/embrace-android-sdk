@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEventImpl
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
@@ -24,7 +25,6 @@ import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.context.Context
@@ -55,8 +55,8 @@ class FakeEmbraceSdkSpan(
     var spanEndTimeMs: Long? = null
     override var status: StatusData = StatusData.Unset
     var errorCode: ErrorCodeAttribute? = null
-    val attributes: MutableMap<String, String> = mutableMapOf(type.asPair())
-    val events: ConcurrentLinkedQueue<EmbraceSpanEvent> = ConcurrentLinkedQueue()
+    val attributes: MutableMap<String, Any> = mutableMapOf(type.asPair())
+    val events: ConcurrentLinkedQueue<SpanEventImpl> = ConcurrentLinkedQueue()
     val links: ConcurrentLinkedQueue<EmbraceLinkData> = ConcurrentLinkedQueue()
 
     override val parent: EmbraceSpan?
@@ -124,12 +124,15 @@ class FakeEmbraceSdkSpan(
         return true
     }
 
-    override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>): Boolean {
+    override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>): Boolean =
+        addCustomEvent(name, timestampMs, attributes)
+
+    override fun addCustomEvent(name: String, timestampMs: Long?, attributes: Map<String, Any>): Boolean {
         events.add(
-            EmbraceSpanEvent.create(
+            SpanEventImpl(
                 name = name,
-                timestampMs = timestampMs?.normalizeTimestampAsMillis() ?: fakeClock.now(),
-                attributes = attributes
+                timestampNanos = (timestampMs?.normalizeTimestampAsMillis() ?: fakeClock.now()).millisToNanos(),
+                attributes = attributes,
             )
         )
         return true
@@ -138,12 +141,14 @@ class FakeEmbraceSdkSpan(
     override fun recordException(exception: Throwable, attributes: Map<String, String>): Boolean =
         addEvent(InstrumentedConfigImpl.otelLimits.getExceptionEventName(), null, attributes)
 
-    override fun addSystemEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
-        addEvent(name, timestampMs, attributes ?: emptyMap())
+    override fun addSystemEvent(name: String, timestampMs: Long?, attributes: Map<String, Any>?): Boolean =
+        addCustomEvent(name, timestampMs, attributes ?: emptyMap())
 
     override fun getStartTimeMs(): Long? = spanStartTimeMs
 
-    override fun addAttribute(key: String, value: String): Boolean {
+    override fun addAttribute(key: String, value: String): Boolean = addCustomAttribute(key, value)
+
+    override fun addCustomAttribute(key: String, value: Any): Boolean {
         attributes[key] = value
         return true
     }
@@ -153,13 +158,16 @@ class FakeEmbraceSdkSpan(
         return true
     }
 
-    override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>): Boolean {
+    override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>): Boolean =
+        addCustomLink(linkedSpanContext, attributes)
+
+    override fun addCustomLink(linkedSpanContext: SpanContext, attributes: Map<String, Any>): Boolean {
         links.add(EmbraceLinkData(linkedSpanContext, attributes))
         return true
     }
 
-    override fun addSystemLink(linkedSpanContext: SpanContext, type: LinkType, attributes: Map<String, String>): Boolean {
-        links.add(EmbraceLinkData(linkedSpanContext, mutableMapOf(type.asPair()).apply { putAll(attributes) }))
+    override fun addSystemLink(linkedSpanContext: SpanContext, type: LinkType, attributes: Map<String, Any>): Boolean {
+        links.add(EmbraceLinkData(linkedSpanContext, mutableMapOf<String, Any>(type.asPair()).apply { putAll(attributes) }))
         return true
     }
 
@@ -182,7 +190,7 @@ class FakeEmbraceSdkSpan(
                 startTimeNanos = spanStartTimeMs?.millisToNanos(),
                 endTimeNanos = spanEndTimeMs?.millisToNanos(),
                 status = status.toEmbracePayload(),
-                events = events.map(EmbraceSpanEvent::toEmbracePayload),
+                events = events.map { it.toEmbracePayload() },
                 attributes = attributes.toEmbracePayload(),
                 links = links.toList().map { it.toEmbracePayload() }
             )
@@ -194,13 +202,13 @@ class FakeEmbraceSdkSpan(
     override fun hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
         attributes.hasEmbraceAttribute(embraceAttribute)
 
-    override fun getSystemAttribute(key: String): String? = attributes[key]
+    override fun getSystemAttribute(key: String): Any? = attributes[key]
 
-    override fun setSystemAttribute(key: String, value: String) {
+    override fun setSystemAttribute(key: String, value: Any) {
         addSystemAttribute(key, value)
     }
 
-    override fun addSystemAttribute(key: String, value: String) {
+    override fun addSystemAttribute(key: String, value: Any) {
         attributes[key] = value
     }
 

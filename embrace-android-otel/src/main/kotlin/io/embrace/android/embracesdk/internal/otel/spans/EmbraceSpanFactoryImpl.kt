@@ -3,19 +3,21 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEventImpl
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
+import io.embrace.android.embracesdk.internal.otel.payload.toPayloadString
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Link
-import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
@@ -23,10 +25,9 @@ import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.Clock
-import io.opentelemetry.kotlin.attributes.setAttributes
+import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.tracing.Span
@@ -157,18 +158,18 @@ private class EmbraceSpanImpl(
     // the span stops. Plain ArrayList rather than ConcurrentLinkedQueue: a queue node costs 16 bytes per
     // element against ~4 for an array slot, and every read and write is already serialised by
     // collectionLock.
-    private var systemEvents: MutableList<EmbraceSpanEvent>? = null
+    private var systemEvents: MutableList<SpanEvent>? = null
 
-    private var customEvents: MutableList<EmbraceSpanEvent>? = null
+    private var customEvents: MutableList<SpanEvent>? = null
 
     private var systemLinks: MutableList<EmbraceLinkData>? = null
 
     private var customLinks: MutableList<EmbraceLinkData>? = null
 
-    private val systemAttributes = ConcurrentHashMap<String, String>(otelSpanStartArgs.embraceAttributes.size).apply {
+    private val systemAttributes = ConcurrentHashMap<String, Any>(otelSpanStartArgs.embraceAttributes.size).apply {
         otelSpanStartArgs.embraceAttributes.forEach { put(it.key, it.value) }
     }
-    private val customAttributes = ConcurrentHashMap<String, String>()
+    private val customAttributes = ConcurrentHashMap<String, Any>()
 
     // Counted separately rather than read from the lists so the "already at the limit" fast path can skip
     // the lock. Plain volatile Ints rather than AtomicIntegers saves four objects per span: every write
@@ -302,6 +303,9 @@ private class EmbraceSpanImpl(
     }
 
     override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>): Boolean =
+        addCustomEvent(name, timestampMs, attributes)
+
+    override fun addCustomEvent(name: String, timestampMs: Long?, attributes: Map<String, Any>): Boolean =
         recordEvent(
             system = false,
             max = deps.dataValidator.otelLimitsConfig.getMaxCustomEventCount(),
@@ -319,7 +323,7 @@ private class EmbraceSpanImpl(
             system = false,
             max = deps.dataValidator.otelLimitsConfig.getMaxCustomEventCount(),
         ) {
-            val eventAttributes = mutableMapOf<String, String>()
+            val eventAttributes = mutableMapOf<String, Any>()
             eventAttributes.putAll(attributes)
 
             exception.javaClass.canonicalName?.let { type ->
@@ -340,7 +344,7 @@ private class EmbraceSpanImpl(
             )
         }
 
-    override fun addSystemEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
+    override fun addSystemEvent(name: String, timestampMs: Long?, attributes: Map<String, Any>?): Boolean =
         recordEvent(
             system = true,
             max = deps.dataValidator.otelLimitsConfig.getMaxSystemEventCount(),
@@ -355,7 +359,9 @@ private class EmbraceSpanImpl(
 
     override fun getStartTimeMs(): Long? = spanStartTimeMs.takeIf { it > UNSET_TIME }
 
-    override fun addAttribute(key: String, value: String): Boolean {
+    override fun addAttribute(key: String, value: String): Boolean = addCustomAttribute(key, value)
+
+    override fun addCustomAttribute(key: String, value: Any): Boolean {
         // Reserved attribute that can't be set by customers.
         // In the future, this should be expanded to more reserved attributes.
         if (key == EmbCommonAttributes.EMB_EXPERIMENTS) {
@@ -410,7 +416,7 @@ private class EmbraceSpanImpl(
         return false
     }
 
-    override fun addSystemLink(linkedSpanContext: SpanContext, type: LinkType, attributes: Map<String, String>): Boolean =
+    override fun addSystemLink(linkedSpanContext: SpanContext, type: LinkType, attributes: Map<String, Any>): Boolean =
         recordLink(system = true, max = deps.dataValidator.otelLimitsConfig.getMaxSystemLinkCount()) {
             // built in place to avoid the vararg array and Pair that mutableMapOf(type.key to type.value) allocates
             val attrs = buildMap(attributes.size + 1) {
@@ -421,6 +427,9 @@ private class EmbraceSpanImpl(
         }
 
     override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>): Boolean =
+        addCustomLink(linkedSpanContext, attributes)
+
+    override fun addCustomLink(linkedSpanContext: SpanContext, attributes: Map<String, Any>): Boolean =
         recordLink(system = false, max = deps.dataValidator.otelLimitsConfig.getMaxCustomLinkCount()) {
             EmbraceLinkData(linkedSpanContext, attributes)
         }
@@ -453,13 +462,13 @@ private class EmbraceSpanImpl(
     override fun hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
         systemAttributes[embraceAttribute.key] == embraceAttribute.value
 
-    override fun getSystemAttribute(key: String): String? = systemAttributes[key]
+    override fun getSystemAttribute(key: String): Any? = systemAttributes[key]
 
-    override fun setSystemAttribute(key: String, value: String) {
+    override fun setSystemAttribute(key: String, value: Any) {
         addSystemAttribute(key, value)
     }
 
-    override fun addSystemAttribute(key: String, value: String) {
+    override fun addSystemAttribute(key: String, value: Any) {
         val max = deps.dataValidator.otelLimitsConfig.getMaxSystemAttributeCount()
         if (systemAttributes.containsKey(key) || systemAttributes.size < max) {
             var written = false
@@ -492,11 +501,7 @@ private class EmbraceSpanImpl(
         }
     }
 
-    override fun attributes(): Map<String, Any> {
-        val raw = getAttributesPayload()
-        val attrs = raw.filter { it.key != null && it.data != null }
-        return attrs.associate { Pair(checkNotNull(it.key), checkNotNull(it.data)) }
-    }
+    override fun attributes(): Map<String, Any> = systemAttributes + customAttributes.redactIfSensitive()
 
     override fun name(): String = synchronized(startedSpan) {
         spanName
@@ -504,8 +509,8 @@ private class EmbraceSpanImpl(
 
     override val spanKind: SpanKind = otelSpanStartArgs.spanKind ?: SpanKind.INTERNAL
 
-    override fun events(): List<SpanEvent> = withEventCopies { system, custom ->
-        (system + redactCustomEvents(custom)).map(EmbraceSpanEvent::toEmbracePayload)
+    override fun events(): List<io.embrace.android.embracesdk.internal.payload.SpanEvent> = withEventCopies { system, custom ->
+        (system + redactCustomEvents(custom)).map(SpanEvent::toEmbracePayload)
     }
 
     override fun links(): List<Link> = withLinkCopies { system, custom ->
@@ -518,10 +523,10 @@ private class EmbraceSpanImpl(
      * Taking both at once also means a concurrent stop() cannot release one collection between the reads.
      */
     private inline fun <R> withEventCopies(
-        block: (system: List<EmbraceSpanEvent>, custom: List<EmbraceSpanEvent>) -> R,
+        block: (system: List<SpanEvent>, custom: List<SpanEvent>) -> R,
     ): R {
-        val system: List<EmbraceSpanEvent>
-        val custom: List<EmbraceSpanEvent>
+        val system: List<SpanEvent>
+        val custom: List<SpanEvent>
         synchronized(collectionLock) {
             system = systemEvents?.toList().orEmpty()
             custom = customEvents?.toList().orEmpty()
@@ -544,11 +549,11 @@ private class EmbraceSpanImpl(
         return block(system, custom)
     }
 
-    private fun redactCustomEvents(customEvents: List<EmbraceSpanEvent>): List<EmbraceSpanEvent> =
-        customEvents.mapNotNull {
-            EmbraceSpanEvent.create(
+    private fun redactCustomEvents(customEvents: List<SpanEvent>): List<SpanEvent> =
+        customEvents.map {
+            SpanEventImpl(
                 name = it.name,
-                timestampMs = it.timestampNanos.nanosToMillis(),
+                timestampNanos = it.timestampNanos,
                 attributes = it.attributes.redactIfSensitive(),
             )
         }
@@ -557,7 +562,7 @@ private class EmbraceSpanImpl(
         customLinks.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
 
     private fun getAttributesPayload(): List<Attribute> =
-        systemAttributes.map { Attribute(it.key, it.value) } + customAttributes.redactIfSensitive().toEmbracePayload()
+        systemAttributes.toEmbracePayload() + customAttributes.redactIfSensitive().toEmbracePayload()
 
     private fun canSnapshot(): Boolean = spanId != null && spanStartTimeMs > UNSET_TIME
 
@@ -565,7 +570,7 @@ private class EmbraceSpanImpl(
      * Adds the event from [eventSupplier] to the system or custom event collection, unless the span is not
      * recording or that collection has reached [max]. Inlined so no closure is allocated on this hot path.
      */
-    private inline fun recordEvent(system: Boolean, max: Int, eventSupplier: () -> EmbraceSpanEvent?): Boolean {
+    private inline fun recordEvent(system: Boolean, max: Int, eventSupplier: () -> SpanEvent?): Boolean {
         var added = false
         if (isRecording && eventCount(system) < max) {
             synchronized(collectionLock) {
@@ -628,11 +633,11 @@ private class EmbraceSpanImpl(
     private fun linkCount(system: Boolean): Int = if (system) systemLinkCount else customLinkCount
 
     // the get-or-create accessors below must only be called while holding collectionLock
-    private fun systemEvents(): MutableList<EmbraceSpanEvent> =
-        systemEvents ?: ArrayList<EmbraceSpanEvent>(INITIAL_COLLECTION_CAPACITY).also { systemEvents = it }
+    private fun systemEvents(): MutableList<SpanEvent> =
+        systemEvents ?: ArrayList<SpanEvent>(INITIAL_COLLECTION_CAPACITY).also { systemEvents = it }
 
-    private fun customEvents(): MutableList<EmbraceSpanEvent> =
-        customEvents ?: ArrayList<EmbraceSpanEvent>(INITIAL_COLLECTION_CAPACITY).also { customEvents = it }
+    private fun customEvents(): MutableList<SpanEvent> =
+        customEvents ?: ArrayList<SpanEvent>(INITIAL_COLLECTION_CAPACITY).also { customEvents = it }
 
     private fun systemLinks(): MutableList<EmbraceLinkData> =
         systemLinks ?: ArrayList<EmbraceLinkData>(INITIAL_COLLECTION_CAPACITY).also { systemLinks = it }
@@ -656,19 +661,28 @@ private class EmbraceSpanImpl(
         deps.spanRepository.notifySpanChanged(this)
     }
 
-    private fun Map<String, String>.redactIfSensitive(): Map<String, String> {
-        return mapValues {
-            deps.redactionFunction?.invoke(it.key, it.value) ?: it.value
-        }
+    private fun Map<String, Any>.redactIfSensitive(): Map<String, Any> {
+        return mapValues { redactIfSensitive(it.key, it.value) }
+    }
+
+    private fun redactIfSensitive(key: String, value: Any): Any {
+        val redactionFunction = deps.redactionFunction ?: return value
+        val payloadValue = value.toPayloadString() ?: return value
+        val redacted = redactionFunction(key, payloadValue)
+        return if (redacted == payloadValue) value else redacted
+    }
+
+    /**
+     * Writes attributes to the OTel span as their payload string, so OTLP exporters receive
+     * string values rather than the type they are stored as.
+     */
+    private fun AttributesMutator.setPayloadStringAttributes(attributes: Map<String, Any>) {
+        attributes.forEach { (key, value) -> setStringAttribute(key, value.toPayloadString().orEmpty()) }
     }
 
     private fun populateAttributes(spanToStop: Span) {
-        systemAttributes.forEach { systemAttribute ->
-            spanToStop.setStringAttribute(systemAttribute.key, systemAttribute.value)
-        }
-        customAttributes.redactIfSensitive().forEach { attribute ->
-            spanToStop.setStringAttribute(attribute.key, attribute.value)
-        }
+        spanToStop.setPayloadStringAttributes(systemAttributes)
+        spanToStop.setPayloadStringAttributes(customAttributes.redactIfSensitive())
     }
 
     private fun populateEvents(spanToStop: Span) {
@@ -680,7 +694,7 @@ private class EmbraceSpanImpl(
                     name = event.name,
                     timestamp = event.timestampNanos,
                 ) {
-                    setAttributes(eventAttributes)
+                    setPayloadStringAttributes(eventAttributes)
                 }
             }
         }
@@ -691,7 +705,7 @@ private class EmbraceSpanImpl(
             (system + redactCustomLinks(custom)).forEach {
                 val linkAttributes = deps.dataValidator.truncateAttributes(it.attributes, false)
                 spanToStop.addLink(it.spanContext) {
-                    setAttributes(linkAttributes)
+                    setPayloadStringAttributes(linkAttributes)
                 }
             }
         }

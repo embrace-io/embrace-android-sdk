@@ -84,6 +84,16 @@ internal class DataValidatorTest {
     }
 
     @Test
+    fun `non-string values are truncated by their payload string`() {
+        val max = dataValidator.otelLimitsConfig.getMaxCustomAttributeValueLength()
+        val bytes = ByteArray(max)
+        assertEquals(
+            "key" to bytes.contentToString().take(max - 3) + "...",
+            dataValidator.truncateAttribute("key", bytes, internal = false),
+        )
+    }
+
+    @Test
     fun `truncated attributes are not affected by later mutation of the input map`() {
         val input = createAttributes(3).toMutableMap()
         val expected = input.toMap()

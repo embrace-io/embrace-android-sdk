@@ -6,5 +6,5 @@ package io.embrace.android.embracesdk.internal.arch.datasource
 interface SpanEvent {
     val name: String
     val timestampNanos: Long
-    val attributes: Map<String, String>
+    val attributes: Map<String, Any>
 }

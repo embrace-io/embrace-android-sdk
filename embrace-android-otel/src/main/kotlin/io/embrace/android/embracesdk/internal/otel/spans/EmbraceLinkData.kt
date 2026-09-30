@@ -4,5 +4,5 @@ import io.opentelemetry.kotlin.tracing.SpanContext
 
 data class EmbraceLinkData(
     val spanContext: SpanContext,
-    val attributes: Map<String, String>,
+    val attributes: Map<String, Any>,
 )

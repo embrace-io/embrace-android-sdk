@@ -1,12 +1,14 @@
 package io.embrace.android.embracesdk.internal.otel.sdk
 
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEventImpl
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.instrumented.OtelLimitsConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
 import io.embrace.android.embracesdk.internal.limits.SPAN_EVENT_TELEMETRY_TYPE
 import io.embrace.android.embracesdk.internal.limits.SpanLimits
 import io.embrace.android.embracesdk.internal.limits.TelemetryLimitEnforcer
+import io.embrace.android.embracesdk.internal.otel.payload.toPayloadString
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 
 /**
  * Used to validate limits and restrictions at instrumentation time imposed by Embrace before telemetry is recorded
@@ -20,6 +22,7 @@ class DataValidator(
         otelLimits = otelLimitsConfig,
         telemetryService = telemetryService,
         exemptFromValueTruncation = String::isValidLongValueAttribute,
+        valueToString = { it.toPayloadString().orEmpty() },
     )
 
     fun truncateName(name: String, internal: Boolean): String =
@@ -31,7 +34,7 @@ class DataValidator(
         events
     }
 
-    fun truncateAttributes(attributes: Map<String, String>, internal: Boolean, countOverride: Int? = null): Map<String, String> {
+    fun truncateAttributes(attributes: Map<String, Any>, internal: Boolean, countOverride: Int? = null): Map<String, Any> {
         if (!internal && bypassValidation()) {
             // return a copy so future mutations doesn't affect what is returned
             return attributes.toMap()
@@ -45,7 +48,7 @@ class DataValidator(
         )
     }
 
-    fun truncateAttribute(key: String, value: String, internal: Boolean): Pair<String, String> {
+    fun truncateAttribute(key: String, value: Any, internal: Boolean): Pair<String, Any> {
         val limits = SpanLimits.of(internal)
         return enforcer.truncateAttribute(
             key = key,
@@ -59,11 +62,11 @@ class DataValidator(
         name: String,
         timestampMs: Long,
         internal: Boolean,
-        attributes: Map<String, String>,
-    ): EmbraceSpanEvent? {
-        return EmbraceSpanEvent.create(
+        attributes: Map<String, Any>,
+    ): SpanEventImpl {
+        return SpanEventImpl(
             name = truncateName(name, internal),
-            timestampMs = timestampMs,
+            timestampNanos = timestampMs.millisToNanos(),
             attributes = truncateAttributes(
                 attributes = attributes,
                 internal = internal,

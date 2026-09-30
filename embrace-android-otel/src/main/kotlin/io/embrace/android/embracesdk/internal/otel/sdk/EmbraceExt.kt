@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.sdk
 
 import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.payload.toPayloadString
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -28,7 +29,7 @@ fun List<Attribute>.hasEmbraceAttributeKey(key: String): Boolean = any {
 }
 
 fun List<Attribute>.hasEmbraceAttributeValue(key: String, value: Any): Boolean = any {
-    it.key == key && it.data == value.toString()
+    it.key == key && it.data == value.toPayloadString()
 }
 
 fun List<Attribute>.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean = any {
@@ -52,7 +53,7 @@ fun List<Attribute>.findAttributeValues(keys: Set<String>): Map<String, String> 
     return values
 }
 
-fun Map<String, String>.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
+fun Map<String, Any>.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
     this[embraceAttribute.key] == embraceAttribute.value
 
 fun MutableMap<String, String>.setEmbraceAttribute(embraceAttribute: EmbraceAttribute): Map<String, String> {

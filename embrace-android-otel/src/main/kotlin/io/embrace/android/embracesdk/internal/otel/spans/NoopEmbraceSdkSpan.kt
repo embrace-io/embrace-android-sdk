@@ -58,12 +58,12 @@ object NoopEmbraceSdkSpan : EmbraceSdkSpan {
 
     override fun hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean = false
 
-    override fun getSystemAttribute(key: String): String? = null
+    override fun getSystemAttribute(key: String): Any? = null
 
-    override fun setSystemAttribute(key: String, value: String) {
+    override fun setSystemAttribute(key: String, value: Any) {
     }
 
-    override fun addSystemAttribute(key: String, value: String) {
+    override fun addSystemAttribute(key: String, value: Any) {
     }
 
     override fun removeSystemAttribute(key: String) {
@@ -72,15 +72,21 @@ object NoopEmbraceSdkSpan : EmbraceSdkSpan {
     override fun addSystemEvent(
         name: String,
         timestampMs: Long?,
-        attributes: Map<String, String>?,
+        attributes: Map<String, Any>?,
     ): Boolean = false
+
+    override fun addCustomAttribute(key: String, value: Any): Boolean = false
+
+    override fun addCustomEvent(name: String, timestampMs: Long?, attributes: Map<String, Any>): Boolean = false
+
+    override fun addCustomLink(linkedSpanContext: SpanContext, attributes: Map<String, Any>): Boolean = false
 
     override fun getStartTimeMs(): Long? = null
 
     override fun addSystemLink(
         linkedSpanContext: SpanContext,
         type: LinkType,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
     ): Boolean = false
 
     override fun attributes(): Map<String, Any> = emptyMap()

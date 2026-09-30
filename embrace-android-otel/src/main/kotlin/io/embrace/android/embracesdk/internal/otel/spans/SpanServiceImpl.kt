@@ -154,7 +154,7 @@ class SpanServiceImpl(
         type: EmbType,
         internal: Boolean,
         private: Boolean,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<SpanEvent>,
         terminationMode: SpanTerminationMode,
         code: () -> T,
@@ -171,10 +171,10 @@ class SpanServiceImpl(
         try {
             if (span.start()) {
                 attributes.forEach { attribute ->
-                    span.addAttribute(attribute.key, attribute.value)
+                    span.addCustomAttribute(attribute.key, attribute.value)
                 }
                 events.forEach { event ->
-                    span.addEvent(
+                    span.addCustomEvent(
                         event.name,
                         event.timestampNanos.nanosToMillis(),
                         event.attributes,
@@ -199,7 +199,7 @@ class SpanServiceImpl(
         type: EmbType,
         internal: Boolean,
         private: Boolean,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<SpanEvent>,
         errorCode: ErrorCodeAttribute?,
     ): Boolean {
@@ -247,7 +247,7 @@ class SpanServiceImpl(
         type: EmbType,
         internal: Boolean,
         private: Boolean,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<SpanEvent>,
         errorCode: ErrorCodeAttribute?,
     ): Boolean {
@@ -292,7 +292,7 @@ class SpanServiceImpl(
         type: EmbType,
         internal: Boolean,
         private: Boolean,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<SpanEvent>,
         errorCode: ErrorCodeAttribute?,
     ): Boolean {
@@ -322,10 +322,10 @@ class SpanServiceImpl(
             )
             if (newSpan.start(validStartTimeMs)) {
                 validAttributes.forEach {
-                    newSpan.addAttribute(it.key, it.value)
+                    newSpan.addCustomAttribute(it.key, it.value)
                 }
                 validEvents.forEach {
-                    newSpan.addEvent(it.name, it.timestampNanos.nanosToMillis(), it.attributes)
+                    newSpan.addCustomEvent(it.name, it.timestampNanos.nanosToMillis(), it.attributes)
                 }
                 return newSpan.stopWithErrorCode(errorCode, endTimeMs)
             }
@@ -354,7 +354,7 @@ class SpanServiceImpl(
         val type: EmbType,
         val internal: Boolean,
         val private: Boolean,
-        val attributes: Map<String, String>,
+        val attributes: Map<String, Any>,
         val events: List<SpanEvent>,
         val errorCode: ErrorCodeAttribute?,
     )

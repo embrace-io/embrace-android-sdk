@@ -11,10 +11,10 @@ import io.opentelemetry.kotlin.aliases.OtelJavaLinkData
 import io.opentelemetry.kotlin.aliases.OtelJavaSpanData
 import io.opentelemetry.kotlin.aliases.OtelJavaStatusCode
 
-fun Map<String, String>.toOtelJava(): OtelJavaAttributes {
+fun Map<String, Any>.toOtelJava(): OtelJavaAttributes {
     val builder = OtelJavaAttributes.builder()
     this.forEach { (key, value) ->
-        builder.put(key, value)
+        builder.put(key, value.toString())
     }
     return builder.build()
 }

@@ -38,6 +38,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
+import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
@@ -708,6 +709,33 @@ internal class EmbraceSpanImplTest {
     }
 
     @Test
+    fun `typed attribute values are snapshotted and exported as their string form`() {
+        embraceSpan = embraceSpanFactory.create(createWrapperForInternalSpan())
+        embraceSpan.start()
+        embraceSpan.addSystemAttribute("system-long", 5L)
+        embraceSpan.addCustomAttribute("custom-list", listOf(true, false))
+        embraceSpan.addCustomAttribute("password", 123456L)
+        embraceSpan.addCustomEvent("event", null, mapOf("event-double" to 1.0, "password" to 654321L))
+        embraceSpan.addCustomLink(checkNotNull(FakeEmbraceSdkSpan.started().spanContext), mapOf("link-bool" to true))
+        assertEquals(5L, embraceSpan.attributes()["system-long"])
+        assertEquals(REDACTED_LABEL, embraceSpan.attributes()["password"])
+
+        val expectedAttributes =
+            mapOf("system-long" to "5", "custom-list" to "[true, false]", "password" to REDACTED_LABEL)
+        val expectedEventAttributes = mapOf("event-double" to "1.0", "password" to REDACTED_LABEL)
+        val snapshot = checkNotNull(embraceSpan.snapshot())
+        assertEquals(expectedAttributes, snapshot.attributes?.toEmbracePayload()?.filterKeys(expectedAttributes::containsKey))
+        assertEquals(expectedEventAttributes, snapshot.events?.single()?.attributes?.toEmbracePayload())
+        assertEquals(mapOf("link-bool" to "true"), snapshot.links?.single()?.attributes?.toEmbracePayload())
+
+        assertTrue(embraceSpan.stop())
+        val exported = spanExporter.exportedSpans.single()
+        assertEquals(expectedAttributes, exported.attributes.filterKeys(expectedAttributes::containsKey))
+        assertEquals(expectedEventAttributes, exported.events.single().attributes)
+        assertEquals(mapOf("link-bool" to "true"), exported.links.single().attributes)
+    }
+
+    @Test
     fun `event attributes are redacted if their key is sensitive when getting a span snapshot`() {
         // given a span event with a sensitive key
         embraceSpan = createInternalEmbraceSdkSpan()
@@ -977,7 +1005,7 @@ internal class EmbraceSpanImplTest {
                         assertTrue(checkNotNull(it.data).matches(OWNED_VALUE_PATTERN))
                     }
                     embraceSpan.getSystemAttribute(keptKey(0))?.let {
-                        assertTrue(it.matches(OWNED_VALUE_PATTERN))
+                        assertTrue(it.toString().matches(OWNED_VALUE_PATTERN))
                     }
                 }
             }

@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.otel.payload.toPayloadString
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Attribute
@@ -15,7 +16,7 @@ fun Span.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean {
 }
 
 fun Span.hasEmbraceAttributeValue(key: String, value: Any): Boolean {
-    return attributes?.singleOrNull { it.key == key }?.data == value.toString()
+    return attributes?.singleOrNull { it.key == key }?.data == value.toPayloadString()
 }
 
 fun Span.toFailedSpan(endTimeMs: Long): Span {

@@ -13,8 +13,14 @@ fun EmbraceSpanEvent.toEmbracePayload(): SpanEvent = SpanEvent(
     attributes = attributes.toEmbracePayload(),
 )
 
-fun Map<String, String>.toEmbracePayload(): List<Attribute> =
-    map { (key, value) -> Attribute(key, value) }
+fun io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent.toEmbracePayload(): SpanEvent = SpanEvent(
+    name = name,
+    timestampNanos = timestampNanos,
+    attributes = attributes.toEmbracePayload(),
+)
+
+fun Map<String, Any>.toEmbracePayload(): List<Attribute> =
+    map { (key, value) -> Attribute(key, value.toPayloadString()) }
 
 fun List<Attribute>.toEmbracePayload(): Map<String, String> =
     associate { Pair(it.key ?: "", it.data ?: "") }.filterKeys { it.isNotBlank() }

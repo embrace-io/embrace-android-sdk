@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.testcases.features
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.assertions.getLogOfType
+import io.embrace.android.embracesdk.assertions.getLogsOfType
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
@@ -14,12 +14,15 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
-@RunWith(AndroidJUnit4::class)
-internal class HucInstrumentationEnabledTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class HucInstrumentationEnabledTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     @Test
     fun `sdk starts successfully but internal error logged when HUC instrumentation enabled`() {
@@ -37,12 +40,12 @@ internal class HucInstrumentationEnabledTest {
                 recordSession()
             },
             assertAction = {
-                with(getSingleLogEnvelope().getLogOfType(EmbType.System.InternalError)) {
-                    assertEquals(
-                        "java.lang.reflect.InaccessibleObjectException",
-                        checkNotNull(attributes).findAttributeValue(ExceptionAttributes.EXCEPTION_TYPE)
-                    )
+                // URL's stream handler factory is JVM-global, so whichever mode runs second also logs
+                // 'factory already defined' from the fallback registration.
+                val errorTypes = getSingleLogEnvelope().getLogsOfType(EmbType.System.InternalError).map {
+                    checkNotNull(it.attributes).findAttributeValue(ExceptionAttributes.EXCEPTION_TYPE)
                 }
+                assertEquals("java.lang.reflect.InaccessibleObjectException", errorTypes.first())
                 assertNotNull(getSingleSessionEnvelope())
             },
         )
@@ -64,5 +67,11 @@ internal class HucInstrumentationEnabledTest {
                 assertNotNull(getSingleSessionEnvelope())
             },
         )
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

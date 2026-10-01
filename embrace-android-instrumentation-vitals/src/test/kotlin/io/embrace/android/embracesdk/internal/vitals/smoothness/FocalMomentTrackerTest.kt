@@ -133,7 +133,7 @@ internal class FocalMomentTrackerTest {
 
         val result = emitted.single()
         assertEquals(FocalOutcome.INTERRUPTED, result.outcome)
-        assertEquals(40L, result.durationMs)
+        assertEquals("ends at the last frame, not the interrupt", 16L, result.durationMs)
         assertFalse("startup opens nothing", scheduler.scheduled)
     }
 
@@ -160,7 +160,7 @@ internal class FocalMomentTrackerTest {
 
         val result = emitted.single()
         assertEquals(FocalOutcome.INTERRUPTED, result.outcome)
-        assertEquals(30L, result.durationMs)
+        assertEquals("ends at the last frame, not the interrupt", 16L, result.durationMs)
         assertFalse(scheduler.scheduled)
     }
 

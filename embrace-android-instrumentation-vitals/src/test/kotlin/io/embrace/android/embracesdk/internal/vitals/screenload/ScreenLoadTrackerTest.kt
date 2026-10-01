@@ -100,7 +100,7 @@ internal class ScreenLoadTrackerTest {
     }
 
     @Test
-    fun `a tap while settling ends the load as user-interrupted at that tap`() {
+    fun `a tap while settling ends the load as user-interrupted back-dated to the last activity`() {
         tracker.onTap()
         tracker.onNavigationStart("home")
         tracker.onNavigationEnd("home") // settling
@@ -110,7 +110,7 @@ internal class ScreenLoadTrackerTest {
 
         val result = emitted.single()
         assertEquals(ScreenLoadOutcome.USER_INTERRUPTED, result.outcome)
-        assertEquals(50L, result.durationMs)
+        assertEquals("ends at the last activity (navigation end), not the tap", 0L, result.durationMs)
         assertEquals(0L, result.navStartDelayMs)
         assertEquals("navigation ended at t=0, before the interrupting tap", 0L, result.navDurationMs)
         assertEquals("no frame arrived before the interrupting tap", 0L, result.firstFrameDurationMs)

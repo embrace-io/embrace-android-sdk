@@ -55,7 +55,7 @@ internal class ScreenLoadTracker(
     @WorkerThread
     fun onTap(eventTime: Long = uptimeMillis()) {
         if (state == State.SETTLING) {
-            complete(endMs = eventTime, outcome = ScreenLoadOutcome.USER_INTERRUPTED)
+            complete(endMs = settle.lastActivityMs, outcome = ScreenLoadOutcome.USER_INTERRUPTED)
         } else {
             // Drop a load that is still navigating - the user is no longer waiting on it - and with it its
             // pending timeout, which would otherwise outlive it and fire against this new candidate.

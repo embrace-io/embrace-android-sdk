@@ -140,7 +140,8 @@ internal class FocalMomentTracker(
         if (held) {
             flushHeld()
         } else if (capturing) {
-            completeFocalMoment(FocalOutcome.INTERRUPTED, endNanos = nowNanos())
+            // end at the last activity, not now, so the idle gap before the interruption isn't counted
+            completeFocalMoment(FocalOutcome.INTERRUPTED, endNanos = settle.lastActivityMs.millisToNanos())
         }
     }
 
@@ -220,8 +221,6 @@ internal class FocalMomentTracker(
     }
 
     private fun nowMs(): Long = SystemClock.uptimeMillis()
-
-    private fun nowNanos(): Long = nowMs().millisToNanos()
 
     companion object {
         const val DEFAULT_IDLE_THRESHOLD_MS = 100L

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertError
 import io.embrace.android.embracesdk.assertions.assertIsPrivateSpan
 import io.embrace.android.embracesdk.assertions.assertIsType
@@ -11,7 +10,6 @@ import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
-import io.embrace.android.embracesdk.fakes.TestConstants.TESTS_DEFAULT_USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_INTERNAL_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_SPAN_NAME
@@ -33,6 +31,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.SpanEventImpl
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.otel.OtelSdkMode
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
@@ -54,11 +53,14 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-@RunWith(AndroidJUnit4::class)
-internal class SpanServiceImplTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class SpanServiceImplTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
     private lateinit var spanRepository: SpanRepository
     private lateinit var dataValidator: DataValidator
     private lateinit var spansService: SpanServiceImpl
@@ -855,7 +857,7 @@ internal class SpanServiceImplTest {
             otelClock = otelClock,
             configuration = otelSdkConfig,
             spanService = FakeSpanService(),
-            useKotlinSdk = TESTS_DEFAULT_USE_KOTLIN_SDK,
+            useKotlinSdk = otelSdkMode.useKotlinSdk,
         )
         val embraceSpanFactory = EmbraceSpanFactoryImpl(
             openTelemetryClock = otelClock,
@@ -914,7 +916,11 @@ internal class SpanServiceImplTest {
         }
     }
 
-    private companion object {
+    companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
+
         /**
          * Mirrors the private cap in [SpanServiceImpl] on the number of pre-initialization calls that will be buffered.
          */

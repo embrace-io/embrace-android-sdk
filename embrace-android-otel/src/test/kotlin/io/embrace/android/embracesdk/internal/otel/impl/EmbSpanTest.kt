@@ -4,12 +4,12 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
-import io.embrace.android.embracesdk.fakes.TestConstants.TESTS_DEFAULT_USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
+import io.embrace.android.embracesdk.internal.otel.OtelSdkMode
 import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
@@ -28,8 +28,19 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
-internal class EmbSpanTest {
+@RunWith(Parameterized::class)
+internal class EmbSpanTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
+
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
+    }
     private lateinit var fakeClock: FakeClock
     private lateinit var openTelemetryClock: Clock
     private lateinit var fakeEmbraceSpan: FakeEmbraceSdkSpan
@@ -43,7 +54,7 @@ internal class EmbSpanTest {
         embSpan = EmbSpan(
             impl = fakeEmbraceSpan,
             clock = openTelemetryClock,
-            openTelemetry = fakeOpenTelemetry(),
+            openTelemetry = fakeOpenTelemetry(otelSdkMode.useKotlinSdk),
         )
     }
 
@@ -151,7 +162,7 @@ internal class EmbSpanTest {
     @Test
     fun `event attributes over the limit are truncated to the max event attribute count`() {
         val dataValidator = DataValidator(telemetryService = FakeTelemetryService())
-        val tracer = createSdkOtelInstance(useKotlinSdk = TESTS_DEFAULT_USE_KOTLIN_SDK, clock = openTelemetryClock)
+        val tracer = createSdkOtelInstance(useKotlinSdk = otelSdkMode.useKotlinSdk, clock = openTelemetryClock)
             .getTracer("test-tracer")
         val realSpan = EmbraceSpanFactoryImpl(
             openTelemetryClock = openTelemetryClock,
@@ -165,14 +176,14 @@ internal class EmbSpanTest {
                 internal = false,
                 private = false,
                 tracer = tracer,
-                openTelemetry = fakeOpenTelemetry(),
+                openTelemetry = fakeOpenTelemetry(otelSdkMode.useKotlinSdk),
             ),
         )
         assertTrue(realSpan.start())
         val realEmbSpan = EmbSpan(
             impl = realSpan,
             clock = openTelemetryClock,
-            openTelemetry = fakeOpenTelemetry(),
+            openTelemetry = fakeOpenTelemetry(otelSdkMode.useKotlinSdk),
         )
         val max = dataValidator.otelLimitsConfig.getMaxEventAttributeCount()
 

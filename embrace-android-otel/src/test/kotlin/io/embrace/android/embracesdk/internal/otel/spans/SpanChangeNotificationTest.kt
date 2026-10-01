@@ -3,10 +3,10 @@ package io.embrace.android.embracesdk.internal.otel.spans
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
-import io.embrace.android.embracesdk.fakes.TestConstants.TESTS_DEFAULT_USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
+import io.embrace.android.embracesdk.internal.otel.OtelSdkMode
 import io.embrace.android.embracesdk.internal.otel.apiMethodNames
 import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
@@ -19,6 +19,8 @@ import io.opentelemetry.kotlin.tracing.Tracer
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
 /**
  * Asserts that every mutating member of the span API fires exactly one span-change
@@ -27,7 +29,10 @@ import org.junit.Test
  * The no-op and late-mutation cases (rewriting an existing value, mutating before start or after
  * stop, exceeding a limit) are covered in `EmbraceSpanImplTest`.
  */
-internal class SpanChangeNotificationTest {
+@RunWith(Parameterized::class)
+internal class SpanChangeNotificationTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     private lateinit var fakeClock: FakeClock
     private lateinit var otelClock: FakeOtelKotlinClock
@@ -85,7 +90,7 @@ internal class SpanChangeNotificationTest {
     fun setup() {
         fakeClock = FakeClock()
         otelClock = FakeOtelKotlinClock(fakeClock)
-        otelInstance = createSdkOtelInstance(clock = otelClock, useKotlinSdk = TESTS_DEFAULT_USE_KOTLIN_SDK)
+        otelInstance = createSdkOtelInstance(clock = otelClock, useKotlinSdk = otelSdkMode.useKotlinSdk)
         tracer = otelInstance.getTracer("test-tracer")
         telemetryService = FakeTelemetryService()
         spanRepository = SpanRepository().apply { addSpanChangeListener(observed::add) }
@@ -156,7 +161,11 @@ internal class SpanChangeNotificationTest {
         ),
     )
 
-    private companion object {
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
+
         const val PRESET_KEY = "preset-system-key"
     }
 }

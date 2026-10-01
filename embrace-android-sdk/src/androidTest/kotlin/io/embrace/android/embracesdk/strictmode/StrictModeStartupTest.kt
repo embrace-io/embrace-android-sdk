@@ -4,22 +4,25 @@ import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import io.embrace.android.embracesdk.EmbraceImpl
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.config.FakeBaseUrlConfig
+import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.worker.Worker
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import java.io.File
 import java.util.concurrent.TimeUnit.MILLISECONDS
 
@@ -38,10 +41,12 @@ private val BACKGROUND_WORKERS = listOf(
  * persisted by a previous run, and fails if the SDK performs any main thread I/O that is not
  * explicitly recorded in [KNOWN_VIOLATIONS].
  */
-@RunWith(AndroidJUnit4::class)
+@RunWith(Parameterized::class)
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.P)
 @RequiresApi(Build.VERSION_CODES.P)
-internal class StrictModeStartupTest {
+internal class StrictModeStartupTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = ApplicationProvider.getApplicationContext<Context>()
@@ -66,7 +71,7 @@ internal class StrictModeStartupTest {
         instrumentation.runOnMainSync {
             recorder.install()
 
-            bootstrapper = ModuleInitBootstrapper(TestInitModule(InitModuleImpl()))
+            bootstrapper = ModuleInitBootstrapper(TestInitModule(InitModuleImpl(), otelSdkMode))
             EmbraceImpl(bootstrapper).let {
                 embrace = it
                 it.start(context)
@@ -75,6 +80,7 @@ internal class StrictModeStartupTest {
 
         drainInitWork()
         assertTrue("SDK did not start.", embrace.isStarted)
+        assertEquals(otelSdkMode.useKotlinSdk, bootstrapper.openTelemetryModule.otelSdkWrapper.useKotlinSdk)
         assertNoUnexpectedViolations(recorder.violations())
     }
 
@@ -113,10 +119,20 @@ internal class StrictModeStartupTest {
     private fun File.deleteContents() {
         listFiles()?.forEach { it.deleteRecursively() }
     }
+
+    internal companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
+    }
 }
 
-private class TestInitModule(base: InitModule) : InitModule by base {
+private class TestInitModule(
+    base: InitModule,
+    otelSdkMode: OtelSdkMode,
+) : InitModule by base {
     override val instrumentedConfig = FakeInstrumentedConfig(
+        enabledFeatures = FakeEnabledFeatureConfig(otelKotlinSdkEnabled = otelSdkMode.useKotlinSdk),
         baseUrls = FakeBaseUrlConfig(
             configImpl = "http://localhost:1",
             dataImpl = "http://localhost:1",

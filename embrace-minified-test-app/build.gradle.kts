@@ -29,6 +29,24 @@ android {
     }
     testBuildType = "minified"
 
+    // each opentelemetry-kotlin mode (compat/implementation) needs its own APK.
+    flavorDimensions += "otelSdk"
+    productFlavors {
+        create("compat") {
+            dimension = "otelSdk"
+            buildConfigField("boolean", "USE_KOTLIN_SDK", "false")
+        }
+        create("regular") {
+            dimension = "otelSdk"
+            buildConfigField("boolean", "USE_KOTLIN_SDK", "true")
+            proguardFile("regular-proguard-rules.pro")
+        }
+    }
+
+    buildFeatures {
+        buildConfig = true
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -136,8 +154,10 @@ val generateExpectedNames = tasks.register<GenerateExpectedNamesTask>("generateE
 
 // If the app crashes before the runner starts (e.g. R8 removed a class the runner needs), AGP
 // reports zero tests and still passes. Treat that as a failure.
-tasks.matching { it.name == "connectedMinifiedAndroidTest" }.configureEach {
-    val resultsDir = layout.buildDirectory.dir("outputs/androidTest-results/connected/minified")
+val connectedTestTask = Regex("connected(\\w+)MinifiedAndroidTest")
+tasks.matching { connectedTestTask.matches(it.name) }.configureEach {
+    val flavor = checkNotNull(connectedTestTask.matchEntire(name)).groupValues[1].replaceFirstChar(Char::lowercaseChar)
+    val resultsDir = layout.buildDirectory.dir("outputs/androidTest-results/connected/minified/flavors/$flavor")
     doLast {
         val testCount = resultsDir.get().asFile.walk()
             .filter { it.name.startsWith("TEST-") && it.extension == "xml" }

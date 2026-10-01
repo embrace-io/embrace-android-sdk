@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.minified
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -15,14 +17,23 @@ internal class MinifiedSdkStartTest {
     fun sdkStartsAndExportsSpans() {
         assertTrue(Embrace.isStarted)
 
-        val name = MinifiedTestApplication.STARTUP_SPAN_NAME
+        val span = awaitStartupSpan()
+        assertNotNull("Span was not exported. Exported: ${RecordingSpanExporter.exportedSpans}", span)
+        assertEquals(
+            "Span was not exported by the expected opentelemetry-kotlin implementation.",
+            if (BuildConfig.USE_KOTLIN_SDK) "kotlin" else null,
+            span?.sdkLanguage,
+        )
+    }
+
+    private fun awaitStartupSpan(): ExportedSpan? {
         val deadline = System.currentTimeMillis() + TIMEOUT_MS
-        while (!RecordingSpanExporter.exportedSpanNames.contains(name) && System.currentTimeMillis() < deadline) {
+        while (System.currentTimeMillis() < deadline) {
+            RecordingSpanExporter.exportedSpans.find { it.name == MinifiedTestApplication.STARTUP_SPAN_NAME }?.let {
+                return it
+            }
             Thread.sleep(50)
         }
-        assertTrue(
-            "Span was not exported. Exported: ${RecordingSpanExporter.exportedSpanNames}",
-            RecordingSpanExporter.exportedSpanNames.contains(name),
-        )
+        return null
     }
 }

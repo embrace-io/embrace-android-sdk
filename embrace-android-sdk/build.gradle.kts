@@ -96,6 +96,7 @@ dependencies {
     // directly has to be declared again here.
     androidTestImplementation(project(":embrace-android-core"))
     androidTestImplementation(project(":embrace-android-config-fakes"))
+    androidTestImplementation(project(":embrace-android-otel-fakes"))
     // required because embrace-android-conventions sets execution = ANDROIDX_TEST_ORCHESTRATOR
     androidTestUtil(libs.androidx.test.orchestrator)
 

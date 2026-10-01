@@ -3,13 +3,13 @@ package io.embrace.android.embracesdk.internal.otel.spans
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanProcessor
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_INTERNAL_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_SPAN_NAME
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.otel.OtelSdkMode
 import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
 import io.opentelemetry.kotlin.Clock
 import io.opentelemetry.kotlin.getTracer

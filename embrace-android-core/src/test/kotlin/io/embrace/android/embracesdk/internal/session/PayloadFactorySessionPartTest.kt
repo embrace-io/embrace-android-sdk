@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeSessionPartTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
@@ -29,9 +30,14 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import java.util.concurrent.ExecutorService
 
-internal class PayloadFactorySessionPartTest {
+@RunWith(Parameterized::class)
+internal class PayloadFactorySessionPartTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     private lateinit var service: PayloadFactory
     private lateinit var configService: FakeConfigService
@@ -46,6 +52,9 @@ internal class PayloadFactorySessionPartTest {
     private lateinit var blockingExecutorService: BlockingScheduledExecutorService
 
     companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
 
         private val appStateTracker = FakeProcessStateTracker()
 
@@ -71,7 +80,7 @@ internal class PayloadFactorySessionPartTest {
         sessionTracker = FakeSessionPartTracker()
         activityService = FakeProcessStateTracker(ProcessState.BACKGROUND)
         userService = FakeUserService()
-        val initModule = FakeInitModule(clock = clock)
+        val initModule = FakeInitModule(clock = clock, otelSdkMode = otelSdkMode)
         spanRepository = initModule.openTelemetryModule.spanRepository
         currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan
         spanService = initModule.openTelemetryModule.spanService

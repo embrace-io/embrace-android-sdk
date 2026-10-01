@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.assertions.assertIsTypePerformance
 import io.embrace.android.embracesdk.assertions.assertNotPrivateSpan
 import io.embrace.android.embracesdk.assertions.assertSuccessful
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_SPAN_NAME
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -25,8 +26,19 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
-internal class TracingApiDelegateTest {
+@RunWith(Parameterized::class)
+internal class TracingApiDelegateTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
+
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
+    }
     private lateinit var spanRepository: SpanRepository
     private lateinit var spanService: SpanService
     private lateinit var tracer: TracingApi
@@ -34,7 +46,7 @@ internal class TracingApiDelegateTest {
 
     @Before
     fun setup() {
-        val initModule = FakeInitModule(clock = clock)
+        val initModule = FakeInitModule(clock = clock, otelSdkMode = otelSdkMode)
         spanRepository = initModule.openTelemetryModule.spanRepository
         spanService = initModule.openTelemetryModule.spanService
         spanService.initializeService(clock.now())

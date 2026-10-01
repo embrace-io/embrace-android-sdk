@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeSessionPartTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionPartToken
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -42,10 +43,19 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
-internal class UserSessionHandlerTest {
+@RunWith(Parameterized::class)
+internal class UserSessionHandlerTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
+
         private val clock = FakeClock()
         private const val NOW = 123L
     }
@@ -77,7 +87,7 @@ internal class UserSessionHandlerTest {
         configService = FakeConfigService(
             sessionBehavior = createSessionBehavior(),
         )
-        val initModule = FakeInitModule(clock = clock)
+        val initModule = FakeInitModule(clock = clock, otelSdkMode = otelSdkMode)
         spanService = initModule.openTelemetryModule.spanService
         spanRepository = initModule.openTelemetryModule.spanRepository
         currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan

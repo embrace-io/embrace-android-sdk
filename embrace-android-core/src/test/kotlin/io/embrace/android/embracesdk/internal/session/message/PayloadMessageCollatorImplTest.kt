@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.session.message
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeSessionPartPayloadSource
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPartEnvelopeSourceImpl
@@ -22,10 +22,19 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 
-@RunWith(AndroidJUnit4::class)
-internal class PayloadMessageCollatorImplTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class PayloadMessageCollatorImplTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
+
+    companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
+    }
 
     private lateinit var initModule: FakeInitModule
     private lateinit var coreModule: CoreModule
@@ -35,7 +44,7 @@ internal class PayloadMessageCollatorImplTest {
 
     @Before
     fun setUp() {
-        initModule = FakeInitModule()
+        initModule = FakeInitModule(otelSdkMode = otelSdkMode)
         coreModule = CoreModuleImpl(RuntimeEnvironment.getApplication(), initModule)
         partPayloadSource = FakeSessionPartPayloadSource()
         val sessionPartEnvelopeSource = SessionPartEnvelopeSourceImpl(

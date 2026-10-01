@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.benchmark
 import io.embrace.android.embracesdk.benchmark.SessionPayloadSizeTest.PersistenceMethod.MULTI_FILE
 import io.embrace.android.embracesdk.benchmark.SessionPayloadSizeTest.PersistenceMethod.SINGLE_FILE
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpansWriter
@@ -29,6 +30,7 @@ import kotlin.math.abs
 internal class SessionPayloadSizeTest(
     private val size: SessionSize,
     private val persistenceMethod: PersistenceMethod,
+    private val otelSdkMode: OtelSdkMode,
 ) {
 
     enum class SessionSize(val completedSpanCount: Int) {
@@ -42,7 +44,9 @@ internal class SessionPayloadSizeTest(
     @get:Rule
     val tempFolder: TemporaryFolder = TemporaryFolder()
 
-    private val fixture by lazy { SimpleSessionFixture(size.completedSpanCount) }
+    private val fixture by lazy {
+        SimpleSessionFixture(size.completedSpanCount, useKotlinSdk = otelSdkMode.useKotlinSdk)
+    }
 
     @Test
     fun `the session is the expected size on disk`() {
@@ -55,7 +59,7 @@ internal class SessionPayloadSizeTest(
         if (changed.isNotEmpty()) {
             fail(
                 changed.entries.joinToString(
-                    prefix = "$size $persistenceMethod payload size changed:\n",
+                    prefix = "$size $persistenceMethod $otelSdkMode payload size changed:\n",
                     separator = "\n",
                 ) { (name, bytes) -> "  $name was $bytes, expected ${expected(name)}" } +
                     measured.entries.joinToString(
@@ -122,9 +126,11 @@ internal class SessionPayloadSizeTest(
     companion object {
 
         @JvmStatic
-        @Parameterized.Parameters(name = "{0} session, {1}")
+        @Parameterized.Parameters(name = "{0} session, {1}, {2}")
         fun parameters(): List<Array<Any>> = SessionSize.entries.flatMap { size ->
-            PersistenceMethod.entries.map { format -> arrayOf(size, format) }
+            PersistenceMethod.entries.flatMap { format ->
+                OtelSdkMode.entries.map { mode -> arrayOf(size, format, mode) }
+            }
         }
 
         private const val BLOCK_BYTES = 4096L

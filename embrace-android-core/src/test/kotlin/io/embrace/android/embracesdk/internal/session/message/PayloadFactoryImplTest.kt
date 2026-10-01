@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.session.message
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeSessionPartPayloadSource
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
@@ -17,8 +18,19 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
-internal class PayloadFactoryImplTest {
+@RunWith(Parameterized::class)
+internal class PayloadFactoryImplTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
+
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
+    }
 
     private lateinit var configService: FakeConfigService
     private lateinit var partPayloadSource: FakeSessionPartPayloadSource
@@ -26,7 +38,7 @@ internal class PayloadFactoryImplTest {
 
     @Before
     fun setUp() {
-        val initModule = FakeInitModule()
+        val initModule = FakeInitModule(otelSdkMode = otelSdkMode)
         configService = FakeConfigService()
         partPayloadSource = FakeSessionPartPayloadSource()
         val payloadSourceModule = FakePayloadSourceModule(

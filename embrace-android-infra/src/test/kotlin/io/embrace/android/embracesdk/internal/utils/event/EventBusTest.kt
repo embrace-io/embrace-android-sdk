@@ -38,6 +38,12 @@ internal class EventBusTest {
 
     private val connectionKey = StateKey<ConnectionState>()
 
+    /**
+     * Creates keys until one has an id beyond any capacity an array could have been sized to while holding [key].
+     */
+    private fun <K : BusKey> keyBeyondCapacityFor(key: BusKey, create: () -> K): K =
+        generateSequence(create).first { it.id >= INITIAL_CAPACITY && it.id > key.id * 2 }
+
     @Test
     fun `handler receives events emitted against its key`() {
         val received = mutableListOf<AppEvent>()
@@ -82,6 +88,17 @@ internal class EventBusTest {
         bus.emit(otherAppKey, ForegroundEvent())
 
         assertEquals(0, received.get())
+    }
+
+    @Test
+    fun `handlers survive the table growing to hold later keys`() {
+        val received = AtomicInteger()
+        bus.addHandler(appKey) { received.incrementAndGet() }
+        bus.addHandler(keyBeyondCapacityFor(appKey) { EventKey<AppEvent>() }) { }
+
+        bus.emit(appKey, ForegroundEvent())
+
+        assertEquals("handler lost when the table grew", 1, received.get())
     }
 
     @Test
@@ -274,6 +291,17 @@ internal class EventBusTest {
         bus.addStateHandler(connectionKey) { received.add(it.javaClass.simpleName) }
 
         assertEquals(listOf("Disconnected"), received)
+    }
+
+    @Test
+    fun `a retained value survives the values growing to hold later keys`() {
+        bus.emitState(screenKey, ScreenState("home"))
+        bus.emitState(keyBeyondCapacityFor(screenKey) { StateKey<ScreenState>() }, ScreenState("details"))
+
+        val received = mutableListOf<String>()
+        bus.addStateHandler(screenKey) { received.add(it.name) }
+
+        assertEquals(listOf("home"), received)
     }
 
     @Test

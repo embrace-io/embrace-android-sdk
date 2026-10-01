@@ -4,7 +4,12 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import java.util.Collections
 import java.util.IdentityHashMap
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicReferenceArray
+
+/**
+ * The number of keys an [EventBus] holds before its first growth, covering every key the SDK declares so that growth is only a safety net.
+ */
+internal const val INITIAL_CAPACITY = 16
 
 /**
  * A keyed event bus where an event emitted against an [EventKey] reaches only the handlers registered against that key, on the
@@ -16,22 +21,32 @@ import java.util.concurrent.ConcurrentHashMap
 class EventBus(private val internalErrorHandler: InternalErrorHandler) {
 
     /**
-     * Handlers registered against a given [EventKey].
+     * Guards every change to [handlers], and every replacement of [retainedStateValues].
      */
-    private val eventHandlers = ConcurrentHashMap<EventKey<*>, HandlerSet>()
+    private val lock = Any()
 
     /**
-     * Handlers registered against a given [StateKey].
+     * The handlers registered against each key, indexed by [BusKey.id], written and replaced only under [lock].
      */
-    private val stateHandlers = ConcurrentHashMap<StateKey<*>, HandlerSet>()
+    @Volatile
+    private var handlers = AtomicReferenceArray<Array<EventHandler<*>>?>(INITIAL_CAPACITY)
 
     /**
-     * The most recently emitted value for each [StateKey], so that a newer value supersedes the older.
+     * The value most recently emitted against each [StateKey], indexed by [BusKey.id], replaced only by [retainStateUnderLock].
      *
      * Nothing is ever evicted, so a retained value must not reference anything shorter lived than the process - an `Activity` or
      * `View` reachable from one leaks for the rest of it.
      */
-    private val states = ConcurrentHashMap<StateKey<*>, Any>()
+    @Volatile
+    private var retainedStateValues = AtomicReferenceArray<Any?>(INITIAL_CAPACITY)
+
+    /**
+     * Set while [retainStateUnderLock] copies [retainedStateValues], so that a value written outside [lock] during the copy is written
+     * again under it. We use this marker to avoid [emitState] needing to hold [lock] every time it writes an emitted value to
+     * [retainedStateValues].
+     */
+    @Volatile
+    private var currentlyGrowingRetainedStates = false
 
     /**
      * Handlers already reported as having thrown, so that each is reported once. Identity keyed, as registration is.
@@ -42,7 +57,7 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
      * Registers [handler] against [key]. Registering a handler already registered against [key] does nothing.
      */
     fun <E : Any> addHandler(key: EventKey<E>, handler: EventHandler<E>) {
-        handlersFor(eventHandlers, key).add(handler)
+        addTo(key, handler)
     }
 
     /**
@@ -50,7 +65,7 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
      * registered against [key] does nothing.
      */
     fun <E : Any> addStateHandler(key: StateKey<E>, handler: EventHandler<E>) {
-        if (handlersFor(stateHandlers, key).add(handler)) {
+        if (addTo(key, handler)) {
             replayState(key, handler)
         }
     }
@@ -59,7 +74,7 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
      * Unregisters [handler] from [key], forgetting any failure reported for it so that registering it again, reports again.
      */
     fun <E : Any> removeHandler(key: EventKey<E>, handler: EventHandler<E>) {
-        if (eventHandlers[key]?.remove(handler) == true) {
+        if (removeFrom(key, handler)) {
             loggedFailures.remove(handler)
         }
     }
@@ -68,7 +83,7 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
      * Unregisters [handler] from [key], forgetting any failure reported for it so that registering it again, reports again.
      */
     fun <E : Any> removeStateHandler(key: StateKey<E>, handler: EventHandler<E>) {
-        if (stateHandlers[key]?.remove(handler) == true) {
+        if (removeFrom(key, handler)) {
             loggedFailures.remove(handler)
         }
     }
@@ -77,7 +92,8 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
      * Emits [event] to every handler registered against [key], on the calling thread, retaining nothing.
      */
     fun <E : Any> emit(key: EventKey<E>, event: E) {
-        eventHandlers[key]?.let { deliverTo(it.handlers, event) }
+        val registered = handlersFor(key.id) ?: return
+        deliverTo(registered, event)
     }
 
     /**
@@ -88,15 +104,28 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
      */
     fun <E : Any> emitState(key: StateKey<E>, value: E) {
         // retained before delivery, so a handler registering concurrently sees the value twice rather than not at all
-        states[key] = value
-        stateHandlers[key]?.let { deliverTo(it.handlers, value) }
+        val current = retainedStateValues
+        if (key.id < current.length()) {
+            current.set(key.id, value)
+
+            // a copy in progress, or completed since current was read, may not have carried the value across
+            if (currentlyGrowingRetainedStates || retainedStateValues !== current) {
+                retainStateUnderLock(key.id, value)
+            }
+        } else {
+            retainStateUnderLock(key.id, value)
+        }
+
+        val registered = handlersFor(key.id) ?: return
+        deliverTo(registered, value)
     }
 
     /**
      * Replays the value retained against [key], if there is one, to a newly registered [handler].
      */
     private fun <E : Any> replayState(key: StateKey<E>, handler: EventHandler<E>) {
-        val retained = states[key] ?: return
+        val current = retainedStateValues
+        val retained = (if (key.id < current.length()) current.get(key.id) else null) ?: return
 
         @Suppress("UNCHECKED_CAST") // emitState is the only writer, and it pairs a key with a value of that key's own type
         val value = retained as E
@@ -107,8 +136,8 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
         }
     }
 
-    private fun <E : Any> deliverTo(handlers: Array<EventHandler<*>>, event: E) {
-        for (handler in handlers) {
+    private fun <E : Any> deliverTo(registered: Array<EventHandler<*>>, event: E) {
+        for (handler in registered) {
             @Suppress("UNCHECKED_CAST") // addHandler and addStateHandler pair a key with handlers of that key's own type
             val typed = handler as EventHandler<E>
             try {
@@ -125,38 +154,72 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
         }
     }
 
-    private fun <K : Any> handlersFor(registry: ConcurrentHashMap<K, HandlerSet>, key: K): HandlerSet {
-        registry[key]?.let { return it }
-
-        val created = HandlerSet()
-        return registry.putIfAbsent(key, created) ?: created
+    private fun handlersFor(id: Int): Array<EventHandler<*>>? {
+        val current = handlers
+        return if (id < current.length()) current.get(id) else null
     }
 
     /**
-     * A copy-on-write set of the handlers registered against one [EventKey] or [StateKey].
+     * Adds [handler] to those registered against [key], replacing the array rather than changing it so that an emit already holding
+     * it is undisturbed, and reports whether it was not already registered.
      */
-    private class HandlerSet {
-        @Volatile
-        var handlers: Array<EventHandler<*>> = emptyArray()
-            private set
-
-        @Synchronized
-        fun add(handler: EventHandler<*>): Boolean {
-            if (handlers.none { it === handler }) {
-                handlers += handler
-                return true
+    private fun addTo(key: BusKey, handler: EventHandler<*>): Boolean {
+        synchronized(lock) {
+            var current = handlers
+            if (key.id >= current.length()) {
+                current = grownToHold(current, key.id)
+                handlers = current
             }
-            return false
-        }
 
-        @Synchronized
-        fun remove(handler: EventHandler<*>): Boolean {
-            val existingHandlers = handlers
-            if (existingHandlers.none { it === handler }) {
+            val existing = current.get(key.id) ?: emptyArray()
+            if (existing.any { it === handler }) {
                 return false
             }
-            handlers = existingHandlers.filterNot { it === handler }.toTypedArray()
+            current.set(key.id, existing + handler)
             return true
         }
+    }
+
+    /**
+     * Removes [handler] from those registered against [key], replacing the array rather than changing it so that an emit already
+     * holding it is undisturbed, and reports whether it was registered.
+     */
+    private fun removeFrom(key: BusKey, handler: EventHandler<*>): Boolean {
+        synchronized(lock) {
+            val existing = handlersFor(key.id) ?: return false
+            if (existing.none { it === handler }) {
+                return false
+            }
+            val remaining = existing.filterNot { it === handler }
+            handlers.set(key.id, if (remaining.isEmpty()) null else remaining.toTypedArray())
+            return true
+        }
+    }
+
+    /**
+     * Writes [value] against [id] under [lock], first growing [retainedStateValues] to hold [id] if it can't.
+     */
+    private fun retainStateUnderLock(id: Int, value: Any) {
+        synchronized(lock) {
+            var current = retainedStateValues
+            if (id >= current.length()) {
+                currentlyGrowingRetainedStates = true
+                current = grownToHold(current, id)
+                retainedStateValues = current
+                currentlyGrowingRetainedStates = false
+            }
+            current.set(id, value)
+        }
+    }
+
+    /**
+     * Copies [source] into a new array large enough to hold [id].
+     */
+    private fun <T> grownToHold(source: AtomicReferenceArray<T>, id: Int): AtomicReferenceArray<T> {
+        val grown = AtomicReferenceArray<T>(id.takeHighestOneBit() shl 1)
+        for (i in 0 until source.length()) {
+            grown.lazySet(i, source.get(i))
+        }
+        return grown
     }
 }

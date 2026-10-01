@@ -30,7 +30,7 @@ class NavigationStateInstrumentationProvider :
      * signal is emitted with nothing to handle it.
      */
     private fun startPublishing(args: InstrumentationArgs) {
-        args.eventBus.addHandler<NavigationSignal>(NavigationEventBroker(args.eventBus))
+        args.eventBus.addHandler(NavigationSignal.KEY, NavigationEventBroker(args.eventBus))
 
         val activityTracker = ActivityNavigationTracker(
             clock = args.clock,

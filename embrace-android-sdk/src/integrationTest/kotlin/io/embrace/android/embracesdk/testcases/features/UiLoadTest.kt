@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.testcases.features
 
 import android.app.Activity
 import android.os.Build
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.annotation.CustomLoadTracedActivity
 import io.embrace.android.embracesdk.annotation.LoadTracedActivity
 import io.embrace.android.embracesdk.annotation.NotTracedActivity
@@ -17,6 +16,7 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.ACTIVITY_GAP
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.LIFECYCLE_EVENT_GAP
@@ -28,15 +28,18 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.Robolectric
 import org.robolectric.annotation.Config
 
-@RunWith(AndroidJUnit4::class)
-internal class UiLoadTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class UiLoadTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     @Rule
     @JvmField
-    val testRule = SdkIntegrationTestRule()
+    val testRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
@@ -389,7 +392,11 @@ internal class UiLoadTest {
         )
     }
 
-    private companion object {
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
+
         @LoadTracedActivity
         class Activity1 : Activity()
 
@@ -402,9 +409,9 @@ internal class UiLoadTest {
         @CustomLoadTracedActivity
         class ManualStopActivity : Activity()
 
-        val ACTIVITY1_NAME = Robolectric.buildActivity(Activity1::class.java).get().localClassName
-        val ACTIVITY2_NAME = Robolectric.buildActivity(Activity2::class.java).get().localClassName
-        val MANUAL_STOP_ACTIVITY_NAME = Robolectric.buildActivity(ManualStopActivity::class.java).get().localClassName
+        val ACTIVITY1_NAME by lazy { Robolectric.buildActivity(Activity1::class.java).get().localClassName }
+        val ACTIVITY2_NAME by lazy { Robolectric.buildActivity(Activity2::class.java).get().localClassName }
+        val MANUAL_STOP_ACTIVITY_NAME by lazy { Robolectric.buildActivity(ManualStopActivity::class.java).get().localClassName }
 
         fun calculateTotalTime(
             lifecycleStages: Int = 0,

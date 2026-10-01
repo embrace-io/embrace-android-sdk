@@ -35,6 +35,7 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSpanAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.testcases.features.createNativeSymbolsForCurrentArch
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
@@ -54,12 +55,13 @@ import java.io.File
  * Verifies that a session payload reaches the server, and looks the same, whether it was persisted
  * by the legacy single-file layer or by the multi-file layer.
  *
- * Every case runs under both layers. Only one of them may deliver a given session part - see
+ * Every case runs under both layers, and under each [OtelSdkMode]. Only one of them may deliver a given session part - see
  * [deliveredParts].
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 internal class MultiFilePersistenceParityTest(
     private val persistenceMode: PersistenceMode,
+    private val otelSdkMode: OtelSdkMode,
 ) {
 
     internal enum class PersistenceMode { LEGACY, MULTI_FILE }
@@ -81,7 +83,7 @@ internal class MultiFilePersistenceParityTest(
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
         EmbraceSetupInterface(
             workersToFake = listOf(
                 Worker.Background.SessionPersistenceWorker,
@@ -707,7 +709,9 @@ internal class MultiFilePersistenceParityTest(
         private const val GOLDEN_FILE = "multi_file_parity_session_part_span.json"
 
         @JvmStatic
-        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
-        fun modes(): List<Array<Any>> = PersistenceMode.entries.map { arrayOf<Any>(it) }
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}-{1}")
+        fun modes(): List<Array<Any>> = PersistenceMode.entries.flatMap { persistenceMode ->
+            OtelSdkMode.entries.map { otelSdkMode -> arrayOf(persistenceMode, otelSdkMode) }
+        }
     }
 }

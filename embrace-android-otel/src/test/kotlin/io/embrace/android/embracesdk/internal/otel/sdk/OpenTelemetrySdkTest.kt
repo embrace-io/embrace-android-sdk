@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.otel.OtelSdkMode
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
 import io.embrace.android.embracesdk.internal.otel.export.immediateExportDispatcher
@@ -18,10 +19,21 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-internal class OpenTelemetrySdkTest {
+@RunWith(Parameterized::class)
+internal class OpenTelemetrySdkTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
+
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
+    }
 
     private lateinit var spanRepository: SpanRepository
     private lateinit var logSink: LogSink
@@ -117,22 +129,16 @@ internal class OpenTelemetrySdkTest {
     }
 
     @Test
-    fun `verify that the default StorageContext is used if Java SDK is used`() {
+    fun `verify that the default StorageContext is used`() {
         System.clearProperty("io.opentelemetry.context.contextStorageProvider")
-        sdk = createSdkWrapper(useKotlinSdk = false)
+        sdk = createSdkWrapper()
         assertEquals("default", System.getProperty("io.opentelemetry.context.contextStorageProvider"))
     }
 
     @Test
-    fun `verify that the default StorageContext is used if Kotlin SDK is used`() {
-        System.clearProperty("io.opentelemetry.context.contextStorageProvider")
-        sdk = createSdkWrapper(useKotlinSdk = true)
-        assertEquals("default", System.getProperty("io.opentelemetry.context.contextStorageProvider"))
-    }
-
-    @Test
-    fun `implicit context is confined to the thread that attached it if Kotlin SDK is used`() {
-        val otel = createSdkOtelInstance(useKotlinSdk = true, clock = FakeOtelKotlinClock(FakeClock()))
+    fun `implicit context is confined to the thread that attached it`() {
+        val otel =
+            createSdkOtelInstance(useKotlinSdk = otelSdkMode.useKotlinSdk, clock = FakeOtelKotlinClock(FakeClock()))
         val key = otel.context.createKey<String>("test-key")
         val root = otel.context.root()
         val attached = root.set(key, "value")
@@ -175,13 +181,13 @@ internal class OpenTelemetrySdkTest {
         return configuration
     }
 
-    private fun createSdkWrapper(useKotlinSdk: Boolean = false): OtelSdkWrapper {
+    private fun createSdkWrapper(): OtelSdkWrapper {
         configuration = createOtelSdkConfig()
         return OtelSdkWrapper(
             otelClock = FakeOtelKotlinClock(FakeClock()),
             configuration = configuration,
             spanService = FakeSpanService(),
-            useKotlinSdk = useKotlinSdk,
+            useKotlinSdk = otelSdkMode.useKotlinSdk,
         )
     }
 }

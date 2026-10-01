@@ -5,8 +5,8 @@ import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
-import io.embrace.android.embracesdk.fakes.TestConstants.TESTS_DEFAULT_USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.OtelSdkMode
 import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
@@ -24,11 +24,16 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
 /**
  * Asserts the current behavior that [SpanProcessor] does not invoke span change listeners.
  */
-internal class SpanProcessorNotificationTest {
+@RunWith(Parameterized::class)
+internal class SpanProcessorNotificationTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     private lateinit var fakeClock: FakeClock
     private lateinit var otelClock: FakeOtelKotlinClock
@@ -46,7 +51,7 @@ internal class SpanProcessorNotificationTest {
         spanExporter = FakeSpanExporter()
         otelInstance = createSdkOtelInstance(
             clock = otelClock,
-            useKotlinSdk = TESTS_DEFAULT_USE_KOTLIN_SDK,
+            useKotlinSdk = otelSdkMode.useKotlinSdk,
             tracerProvider = {
                 export {
                     compositeSpanProcessor(
@@ -143,7 +148,11 @@ internal class SpanProcessorNotificationTest {
         override suspend fun shutdown(): OperationResultCode = OperationResultCode.Success
     }
 
-    private companion object {
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
+
         const val SPAN_NAME = "test-span"
         const val HOST_PROCESSOR_KEY = "host.processor.attribute"
         const val HOST_PROCESSOR_VALUE = "written-by-processor"

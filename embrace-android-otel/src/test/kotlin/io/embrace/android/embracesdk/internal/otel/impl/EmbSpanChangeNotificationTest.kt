@@ -3,9 +3,9 @@ package io.embrace.android.embracesdk.internal.otel.impl
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
-import io.embrace.android.embracesdk.fakes.TestConstants.TESTS_DEFAULT_USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.otel.OtelSdkMode
 import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
 import io.embrace.android.embracesdk.internal.otel.inheritedApiMethodNames
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
@@ -27,12 +27,23 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
 /**
  * Asserts that every mutating member of EmbSpan fires exactly one span-change
  * notification carrying the span that changed.
  */
-internal class EmbSpanChangeNotificationTest {
+@RunWith(Parameterized::class)
+internal class EmbSpanChangeNotificationTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
+
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
+    }
 
     private lateinit var fakeClock: FakeClock
     private lateinit var otelClock: FakeOtelKotlinClock
@@ -68,7 +79,7 @@ internal class EmbSpanChangeNotificationTest {
     fun setup() {
         fakeClock = FakeClock()
         otelClock = FakeOtelKotlinClock(fakeClock)
-        otelInstance = createSdkOtelInstance(clock = otelClock, useKotlinSdk = TESTS_DEFAULT_USE_KOTLIN_SDK)
+        otelInstance = createSdkOtelInstance(clock = otelClock, useKotlinSdk = otelSdkMode.useKotlinSdk)
         tracer = otelInstance.getTracer("test-tracer")
         val telemetryService = FakeTelemetryService()
         dataValidator = DataValidator(telemetryService = telemetryService)

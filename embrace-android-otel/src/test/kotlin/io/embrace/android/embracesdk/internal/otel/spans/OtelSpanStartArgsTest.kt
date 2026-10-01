@@ -2,12 +2,14 @@ package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
+import io.embrace.android.embracesdk.fakes.FakeSpanProcessor
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_INTERNAL_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_SPAN_NAME
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.otel.OtelSdkMode
 import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
 import io.opentelemetry.kotlin.Clock
 import io.opentelemetry.kotlin.getTracer
@@ -20,18 +22,36 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
-internal class OtelSpanStartArgsTest {
+@RunWith(Parameterized::class)
+internal class OtelSpanStartArgsTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
+
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
+    }
 
     private lateinit var clock: FakeClock
     private lateinit var otelClock: Clock
     private lateinit var tracer: Tracer
+    private val endedSpans = mutableListOf<ReadableSpan>()
 
     @Before
     fun setup() {
         clock = FakeClock()
         otelClock = FakeOtelKotlinClock(clock)
-        tracer = createSdkOtelInstance(clock = otelClock, useKotlinSdk = true).getTracer("test-tracer")
+        tracer = createSdkOtelInstance(
+            clock = otelClock,
+            useKotlinSdk = otelSdkMode.useKotlinSdk,
+            tracerProvider = {
+                export { FakeSpanProcessor(onEndAction = endedSpans::add) }
+            },
+        ).getTracer("test-tracer")
     }
 
     @Test
@@ -44,7 +64,7 @@ internal class OtelSpanStartArgsTest {
             private = true,
             tracer = tracer,
             startTimeMs = originalStartTime,
-            openTelemetry = fakeOpenTelemetry(),
+            openTelemetry = fakeOpenTelemetry(otelSdkMode.useKotlinSdk),
         )
         val startTime = clock.tick()
         with(args.embraceAttributes.toSet()) {
@@ -66,7 +86,7 @@ internal class OtelSpanStartArgsTest {
     @Test
     fun `add parent after initial creation`() {
         val parent = tracer.startSpan("parent")
-        val otel = fakeOpenTelemetry(true)
+        val otel = fakeOpenTelemetry(otelSdkMode.useKotlinSdk)
         val ctx = otel.context.root().storeSpan(parent)
         val args = OtelSpanStartArgs(
             name = "test",
@@ -96,7 +116,7 @@ internal class OtelSpanStartArgsTest {
             private = false,
             tracer = tracer,
             spanKind = SpanKind.CLIENT,
-            openTelemetry = fakeOpenTelemetry(),
+            openTelemetry = fakeOpenTelemetry(otelSdkMode.useKotlinSdk),
         )
         val startTime = otelClock.now()
         args.startSpan(startTime).assertSpan(
@@ -116,7 +136,7 @@ internal class OtelSpanStartArgsTest {
             internal = false,
             private = false,
             tracer = tracer,
-            openTelemetry = fakeOpenTelemetry(),
+            openTelemetry = fakeOpenTelemetry(otelSdkMode.useKotlinSdk),
         )
 
         creator.startSpan(startTime).assertSpan(
@@ -130,7 +150,7 @@ internal class OtelSpanStartArgsTest {
             internal = true,
             private = false,
             tracer = tracer,
-            openTelemetry = fakeOpenTelemetry(),
+            openTelemetry = fakeOpenTelemetry(otelSdkMode.useKotlinSdk),
         )
 
         internalSpanCreator.startSpan(startTime).assertSpan(
@@ -145,7 +165,8 @@ internal class OtelSpanStartArgsTest {
         expectedStartTimeMs: Long,
         expectedPrivate: Boolean = false,
     ) {
-        val data = (this as ReadableSpan).toSpanData()
+        end()
+        val data = endedSpans.last().toSpanData()
         assertEquals(expectedPrivate, data.attributes.containsKey(PrivateSpan.key))
         assertEquals(expectedName, data.name)
         assertEquals(expectedSpanKind, data.spanKind)

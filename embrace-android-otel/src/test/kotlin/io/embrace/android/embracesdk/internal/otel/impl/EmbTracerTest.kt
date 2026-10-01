@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.otel.OtelSdkMode
 import io.embrace.android.embracesdk.internal.otel.spans.createContext
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.tracing.SpanKind
@@ -16,13 +17,24 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-internal class EmbTracerTest {
+@RunWith(Parameterized::class)
+internal class EmbTracerTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
+
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
+    }
     private val clock = FakeClock()
     private val openTelemetryClock = FakeOtelKotlinClock(clock)
-    private val openTelemetry = fakeOpenTelemetry()
+    private val openTelemetry = fakeOpenTelemetry(otelSdkMode.useKotlinSdk)
 
     private lateinit var spanService: FakeSpanService
     private lateinit var sdkTracer: FakeTracer

@@ -2,23 +2,30 @@ package io.embrace.android.embracesdk.testcases.features
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 import java.io.File
 
-@RunWith(AndroidJUnit4::class)
-internal class DisableSdkFeatureTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class DisableSdkFeatureTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
-    private companion object {
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
+
         private const val TEST_PREFIX = "emb_test_"
         private const val SPAN_1 = "${TEST_PREFIX}1"
         private const val SPAN_2 = "${TEST_PREFIX}2"
@@ -41,7 +48,7 @@ internal class DisableSdkFeatureTest {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     private lateinit var embraceDirs: Map<StorageLocation, File>
 

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.testcases.features
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertStateTransition
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -12,6 +11,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkSta
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.internal.session.getStateSpan
 import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.LIFECYCLE_EVENT_GAP
 import org.junit.Assert.assertEquals
@@ -20,18 +20,21 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
 /**
  * Integration tests for [NetworkStateDataSource] covering the full [ConnectivityStatus]
  * space, including unvalidated networks, captive portals, and the realistic
  * transition sequences of [ConnectivityStatus].
  */
-@RunWith(AndroidJUnit4::class)
-internal class NetworkStateFeatureTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class NetworkStateFeatureTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     private val networkStateEnabledConfig = FakeInstrumentedConfig(
         enabledFeatures = FakeEnabledFeatureConfig(
@@ -279,5 +282,11 @@ internal class NetworkStateFeatureTest {
                 assertEquals(transitions.size, events.size)
             }
         )
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

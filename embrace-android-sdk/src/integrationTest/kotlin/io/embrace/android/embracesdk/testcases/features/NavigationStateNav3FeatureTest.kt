@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.testcases.features
 
 import android.app.Activity
 import androidx.compose.runtime.snapshots.Snapshot.Companion.sendApplyNotifications
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertNavigationStateSpan
 import io.embrace.android.embracesdk.assertions.getNavigationStateSpan
 import io.embrace.android.embracesdk.fakes.HasBackStack
@@ -12,6 +11,7 @@ import io.embrace.android.embracesdk.fakes.Nav3UnobservedActivity
 import io.embrace.android.embracesdk.fakes.TypedBackStackNav3Activity
 import io.embrace.android.embracesdk.fakes.WrappedContextNav3ComposeActivity
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.AppExecutionTimestamps
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
@@ -20,15 +20,18 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.Robolectric
 import org.robolectric.android.controller.ActivityController
 
-@RunWith(AndroidJUnit4::class)
-internal class NavigationStateNav3FeatureTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class NavigationStateNav3FeatureTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     private val enabledRemoteConfig = RemoteConfig(pctNavigationStateCaptureEnabled = 100.0f)
 
@@ -216,5 +219,11 @@ internal class NavigationStateNav3FeatureTest {
                 }
             },
         )
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

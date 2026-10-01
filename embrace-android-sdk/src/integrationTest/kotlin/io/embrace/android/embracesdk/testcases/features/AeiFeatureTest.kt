@@ -6,7 +6,6 @@ import android.app.ApplicationExitInfo
 import android.os.Build
 import android.preference.PreferenceManager
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.assertions.getLogOfType
@@ -22,22 +21,26 @@ import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.semconv.EmbAeiAttributes
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowActivityManager
 
 @Config(sdk = [Build.VERSION_CODES.R], shadows = [ShadowActivityManager::class])
-@RunWith(AndroidJUnit4::class)
-internal class AeiFeatureTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class AeiFeatureTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     private val jvmCrash = TestAeiData(
         ApplicationExitInfo.REASON_CRASH,
@@ -333,4 +336,10 @@ internal class AeiFeatureTest {
     }
 
     private fun TestAeiData.generateAeiId() = "${timestamp}_${pid}"
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
+    }
 }

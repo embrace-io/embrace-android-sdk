@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import android.app.Activity
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertNavigationStateSpan
 import io.embrace.android.embracesdk.assertions.assertSystemStateValue
 import io.embrace.android.embracesdk.assertions.assertNonSystemStateValue
@@ -14,6 +13,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NavigationS
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.AppExecutionTimestamps
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.LIFECYCLE_EVENT_GAP
@@ -24,14 +24,17 @@ import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.Robolectric
 
-@RunWith(AndroidJUnit4::class)
-internal class NavigationStateFeatureTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class NavigationStateFeatureTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
         EmbraceSetupInterface(
             workersToFake = listOf(Worker.Background.NonIoRegWorker),
         ).apply {
@@ -201,7 +204,11 @@ internal class NavigationStateFeatureTest {
     class SettingsActivity : Activity()
     class ProfileActivity : Activity()
 
-    private companion object {
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
+
         const val NAVIGATION_STATE_KEY = "emb.state.screen-automatic"
     }
 }

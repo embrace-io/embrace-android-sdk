@@ -2,12 +2,12 @@ package io.embrace.android.embracesdk.testcases.features
 
 import android.os.Build
 import android.os.PowerManager
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSpanSnapshotOfType
 import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.internal.instrumentation.thermalstate.ThermalStateDataSource
@@ -16,16 +16,19 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowActivityManager
 
 @Config(sdk = [Build.VERSION_CODES.Q], shadows = [ShadowActivityManager::class])
-@RunWith(AndroidJUnit4::class)
-internal class ThermalStateFeatureTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class ThermalStateFeatureTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     @Test
     fun `single thermal state change generates a snapshot`() {
@@ -104,5 +107,11 @@ internal class ThermalStateFeatureTest {
                 assertEquals(startTimeMs + tickTimeMs * 2, snapshot.startTimeNanos?.nanosToMillis())
             }
         )
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

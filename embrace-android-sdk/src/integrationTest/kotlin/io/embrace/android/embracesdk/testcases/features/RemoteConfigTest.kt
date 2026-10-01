@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.testcases.features
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
 import org.junit.Assert.assertEquals
@@ -11,20 +11,23 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
 /**
  * Tests how the SDK behaves when controlling by 'remote config'. This is a HTTP response from the
  * Embrace server that can enable or disable individual features or the entire SDK.
  */
-@RunWith(AndroidJUnit4::class)
-internal class RemoteConfigTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class RemoteConfigTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     private val sdkDisabledConfig = RemoteConfig(0)
     private val sdkEnabledConfig = RemoteConfig(100)
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     @Test
     fun `SDK can start`() {
@@ -94,5 +97,11 @@ internal class RemoteConfigTest {
                 }.getOrNull()
             }
         )
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

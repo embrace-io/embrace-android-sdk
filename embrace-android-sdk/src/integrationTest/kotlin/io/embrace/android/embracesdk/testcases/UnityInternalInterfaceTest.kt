@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.testcases
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -12,6 +11,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SendMode
 import io.embrace.android.embracesdk.internal.logs.LogExceptionType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.opentelemetry.kotlin.logging.SeverityNumber
 import org.junit.Assert.assertEquals
@@ -19,12 +19,15 @@ import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
 /**
  * Validation of the internal API
  */
-@RunWith(AndroidJUnit4::class)
-internal class UnityInternalInterfaceTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class UnityInternalInterfaceTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     private val instrumentedConfig = FakeInstrumentedConfig(
         project = FakeProjectConfig(
@@ -35,7 +38,7 @@ internal class UnityInternalInterfaceTest {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     @Test
     fun `unity without values should return defaults`() {
@@ -210,5 +213,11 @@ internal class UnityInternalInterfaceTest {
                 assertEquals(SendMode.IMMEDIATE, SendMode.fromString(sendMode))
             }
         )
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.testcases.session
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findEventsOfType
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
@@ -18,6 +17,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.assertions.assertSessionIds
 import org.junit.Assert.assertEquals
@@ -27,18 +27,21 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
  * Asserts the SDK's behavior with background activity capture enabled and disabled: background parts are
  * recorded (with distinct ids) when enabled, and telemetry is handled correctly when disabled.
  */
-@RunWith(AndroidJUnit4::class)
-internal class BackgroundActivityCaptureTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class BackgroundActivityCaptureTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     @Test
     fun `bg activity messages are recorded`() {
@@ -249,5 +252,11 @@ internal class BackgroundActivityCaptureTest {
             assertFalse(findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER).isNullOrBlank())
             assertFalse(findAttributeValue(EmbSessionAttributes.EMB_USER_SESSION_ID).isNullOrBlank())
         }
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

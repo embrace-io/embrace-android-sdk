@@ -7,10 +7,15 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 object RecordingSpanExporter : SpanExporter {
 
-    val exportedSpanNames: MutableList<String> = CopyOnWriteArrayList()
+    val exportedSpans: MutableList<ExportedSpan> = CopyOnWriteArrayList()
 
     override suspend fun export(telemetry: List<SpanData>): OperationResultCode {
-        telemetry.forEach { exportedSpanNames += it.name }
+        telemetry.forEach {
+            exportedSpans += ExportedSpan(
+                name = it.name,
+                sdkLanguage = it.resource.attributes["telemetry.sdk.language"] as? String,
+            )
+        }
         return OperationResultCode.Success
     }
 

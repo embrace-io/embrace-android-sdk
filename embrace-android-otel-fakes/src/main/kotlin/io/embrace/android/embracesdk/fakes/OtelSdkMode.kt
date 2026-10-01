@@ -1,9 +1,9 @@
-package io.embrace.android.embracesdk.internal.otel
+package io.embrace.android.embracesdk.fakes
 
 /**
  * The opentelemetry-kotlin implementation a unit test runs against.
  */
-internal enum class OtelSdkMode(val useKotlinSdk: Boolean) {
+enum class OtelSdkMode(val useKotlinSdk: Boolean) {
 
     /**
      * opentelemetry-kotlin's 'compat' implementation, which wraps opentelemetry-java.

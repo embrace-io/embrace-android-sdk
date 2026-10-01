@@ -45,6 +45,7 @@ dependencies {
     implementation(libs.okhttp)
     implementation(project(":embrace-android-sdk"))
     implementation(project(":embrace-android-core"))
+    implementation(project(":embrace-android-config"))
     implementation(project(":embrace-android-otel"))
     implementation(project(":embrace-android-infra"))
     implementation(project(":embrace-android-utils"))
@@ -59,4 +60,5 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(project(":embrace-test-common"))
+    testImplementation(project(":embrace-android-otel-fakes"))
 }

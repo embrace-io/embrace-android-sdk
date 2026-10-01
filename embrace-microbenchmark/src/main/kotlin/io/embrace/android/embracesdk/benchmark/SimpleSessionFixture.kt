@@ -16,10 +16,12 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDir
  *
  * [completedSpanCount] sets how much work the session did, which is the main thing that decides
  * how big it is once persisted. [attributesPerSpan] sets how much each of those spans carries.
+ * [useKotlinSdk] selects the opentelemetry-kotlin implementation that records the spans.
  */
 internal class SimpleSessionFixture(
     private val completedSpanCount: Int = COMPLETED_SPAN_COUNT,
     private val attributesPerSpan: Int = ATTRIBUTES_PER_SPAN,
+    private val useKotlinSdk: Boolean = false,
 ) {
     val completedSpans: List<Span>
     val sessionSpan: Span
@@ -71,7 +73,7 @@ internal class SimpleSessionFixture(
     val envelope: Envelope<SessionPartPayload>
 
     init {
-        val harness = TelemetryDestinationHarness()
+        val harness = TelemetryDestinationHarness(useKotlinSdk)
         val spanService = harness.createUncappedSpanService()
 
         repeat(completedSpanCount) { index ->

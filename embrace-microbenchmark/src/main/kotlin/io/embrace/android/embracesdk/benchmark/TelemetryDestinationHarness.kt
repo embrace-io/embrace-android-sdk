@@ -6,8 +6,12 @@ import io.embrace.android.embracesdk.internal.arch.destination.TelemetryDestinat
 import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifier
 import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
+import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
+import io.embrace.android.embracesdk.internal.config.behavior.OtelBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
+import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
@@ -27,10 +31,22 @@ import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
 import okhttp3.OkHttpClient
 
-internal class TelemetryDestinationHarness {
+/**
+ * [useKotlinSdk] selects the opentelemetry-kotlin implementation that backs the OTel module.
+ */
+internal class TelemetryDestinationHarness(useKotlinSdk: Boolean = false) {
 
     private val initModule = TestInitModule()
     private val otelModule = OpenTelemetryModuleImpl(initModule).apply {
+        setOtelBehavior(
+            OtelBehaviorImpl(
+                thresholdCheck = BehaviorThresholdCheck { initModule.uuidSource.createUuid() },
+                local = InstrumentedConfigImpl,
+                remote = RemoteConfig(
+                    otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = if (useKotlinSdk) 100f else 0f),
+                ),
+            ),
+        )
         this.spanService.initializeService(0)
     }
 

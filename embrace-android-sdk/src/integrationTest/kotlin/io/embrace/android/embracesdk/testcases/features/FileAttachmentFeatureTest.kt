@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.testcases.features
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.assertions.getLogOfType
@@ -8,10 +7,12 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.semconv.EmbAttachmentAttributes
 import io.embrace.android.embracesdk.internal.payload.Log
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.server.FormPart
 import io.opentelemetry.kotlin.logging.SeverityNumber
+import org.robolectric.ParameterizedRobolectricTestRunner
 import java.util.LinkedList
 import java.util.Queue
 import java.util.UUID
@@ -23,15 +24,17 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
-internal class FileAttachmentFeatureTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class FileAttachmentFeatureTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     private val attachmentId = UUID.randomUUID()
     private lateinit var logTimestamps: Queue<Long>
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     @Before
     fun before() {
@@ -295,5 +298,11 @@ internal class FileAttachmentFeatureTest {
             properties = mapOf("key" to "value"),
             attachment = byteArray
         )
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

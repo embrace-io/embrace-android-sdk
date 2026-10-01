@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.testcases
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -12,12 +12,15 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
 /**
  * Validation of the internal API
  */
-@RunWith(AndroidJUnit4::class)
-internal class FlutterInternalInterfaceTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class FlutterInternalInterfaceTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     private val instrumentedConfig = FakeInstrumentedConfig(
         project = FakeProjectConfig(
@@ -30,7 +33,7 @@ internal class FlutterInternalInterfaceTest {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     @Before
     fun before() {
@@ -143,5 +146,11 @@ internal class FlutterInternalInterfaceTest {
                 assertEquals("1.2.4", res.hostedSdkVersion)
             }
         )
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.testcases.session
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.assertions.findSpanSnapshotOfType
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
@@ -13,6 +12,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.internal.session.getSessionProperty
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.assertions.assertMatches
@@ -21,19 +21,22 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 import java.util.zip.GZIPInputStream
 
 /**
  * Asserts that the session is periodically cached.
  */
-@RunWith(AndroidJUnit4::class)
-internal class PeriodicPartCacheTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class PeriodicPartCacheTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     private lateinit var cacheStorageService: FakePayloadStorageService
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
         EmbraceSetupInterface(fakeStorageLayer = true).also {
             cacheStorageService = checkNotNull(it.fakeCacheStorageService)
         }
@@ -95,4 +98,10 @@ internal class PeriodicPartCacheTest {
                     )
                 }
             }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
+    }
 }

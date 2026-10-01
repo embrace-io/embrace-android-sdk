@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.testcases.features
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -8,6 +7,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Log
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
@@ -16,12 +16,15 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
-@RunWith(AndroidJUnit4::class)
-internal class HucLiteInstrumentationEnabledTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class HucLiteInstrumentationEnabledTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     @Test
     fun `sdk starts successfully but internal error logged when HUC Lite instrumentation enabled`() {
@@ -97,5 +100,11 @@ internal class HucLiteInstrumentationEnabledTest {
             attempted,
             attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_STACKTRACE)?.contains(HucLiteDataSource::class.java.name)
         )
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

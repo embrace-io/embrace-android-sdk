@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.testcases.session
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertDistinctUserSessions
@@ -12,16 +12,19 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
 /**
  * Asserts that clock anomalies can terminate the current user session and immediately start a new one.
  */
-@RunWith(AndroidJUnit4::class)
-internal class UserSessionClockAnomalyTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class UserSessionClockAnomalyTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
         EmbraceSetupInterface().apply { getEmbLogger().throwOnInternalError = false }
     }
 
@@ -72,5 +75,11 @@ internal class UserSessionClockAnomalyTest {
                 })
             }
         )
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

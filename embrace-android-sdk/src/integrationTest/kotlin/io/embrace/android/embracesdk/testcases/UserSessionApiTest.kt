@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.testcases
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.toMap
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -9,6 +8,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbTelemetryAttributes
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -16,13 +16,16 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
-@RunWith(AndroidJUnit4::class)
-internal class UserSessionApiTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class UserSessionApiTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     /**
      * Verifies that a session end message is sent.
@@ -94,7 +97,11 @@ internal class UserSessionApiTest {
         )
     }
 
-    private companion object {
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
+
         // Attributes we want to know exist, but whose value we don't need to validate
         val validateExistenceOnly = setOf(
             EmbTelemetryAttributes.EMB_KOTLIN_ON_CLASSPATH,

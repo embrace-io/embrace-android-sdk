@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.testcases.persistence
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.fakeIncompleteSessionEnvelope
@@ -10,25 +9,29 @@ import io.embrace.android.embracesdk.fixtures.fakeCachedSessionStoredTelemetryMe
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
 /**
  * A session part persisted by the multi file layer must reach the intake service before payload
  * resurrection starts.
  */
-@RunWith(AndroidJUnit4::class)
-internal class MultiFilePersistenceResurrectionOrderTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class MultiFilePersistenceResurrectionOrderTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     private lateinit var cacheStorageService: FakePayloadStorageService
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
         EmbraceSetupInterface(
             workersToFake = listOf(
                 Worker.Background.SessionPersistenceWorker,
@@ -71,5 +74,11 @@ internal class MultiFilePersistenceResurrectionOrderTest {
                 )
             },
         )
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

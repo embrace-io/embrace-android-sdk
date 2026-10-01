@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.testcases.session
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.assertions.getUserSessionId
@@ -27,6 +26,7 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSession
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues.INACTIVITY
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues.MANUAL
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule.Companion.DEFAULT_SDK_START_TIME_MS
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
@@ -44,19 +44,22 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 import kotlin.time.Duration.Companion.seconds
 
 /**
  * Asserts that the user session obeys rules about its lifecycle
  */
-@RunWith(AndroidJUnit4::class)
-internal class UserSessionLifecycleTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class UserSessionLifecycleTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     private val backgroundActivityEnabledConfig = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(100f))
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
         EmbraceSetupInterface(
             workersToFake = listOf(Worker.Background.NonIoRegWorker),
         ).apply {
@@ -661,5 +664,11 @@ internal class UserSessionLifecycleTest {
 
     private fun unblockTimerThread() {
         testRule.setup.getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).runCurrentlyBlocked()
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

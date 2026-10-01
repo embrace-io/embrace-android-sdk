@@ -1,27 +1,30 @@
 package io.embrace.android.embracesdk.testcases.features
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata2
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectionType
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
-@RunWith(AndroidJUnit4::class)
-internal class DeliveryConnectivityFeatureTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class DeliveryConnectivityFeatureTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     private lateinit var payloadStorageService: FakePayloadStorageService
     
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
         EmbraceSetupInterface(fakeStorageLayer = true).also { 
             payloadStorageService = checkNotNull(it.fakePayloadStorageService)
         }
@@ -101,5 +104,11 @@ internal class DeliveryConnectivityFeatureTest {
                 assertEquals(2, getSessionEnvelopes(2).size)
             }
         )
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

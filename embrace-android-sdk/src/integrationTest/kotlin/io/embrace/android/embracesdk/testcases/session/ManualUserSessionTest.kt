@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.testcases.session
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues.MANUAL
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.assertions.assertDistinctUserSessions
 import io.embrace.android.embracesdk.testframework.assertions.assertFinalPart
@@ -14,16 +14,19 @@ import io.embrace.android.embracesdk.testframework.assertions.assertUserSessionN
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
 /**
  * Asserts that a manual session can be recorded.
  */
-@RunWith(AndroidJUnit4::class)
-internal class ManualUserSessionTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class ManualUserSessionTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     @Test
     fun `calling endUserSession ends stateful session`() {
@@ -171,5 +174,11 @@ internal class ManualUserSessionTest {
                 sessions[2].assertNotFinalPart()
             }
         )
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

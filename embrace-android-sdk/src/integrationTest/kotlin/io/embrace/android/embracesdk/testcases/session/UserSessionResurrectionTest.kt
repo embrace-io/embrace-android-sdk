@@ -2,7 +2,6 @@
 
 package io.embrace.android.embracesdk.testcases.session
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.assertions.getStartTime
@@ -26,6 +25,7 @@ import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testcases.features.createNativeSymbolsForCurrentArch
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule.Companion.DEFAULT_DEAD_SESSION_PART_ID
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule.Companion.DEFAULT_EXPIRED_USER_SESSION_ID
@@ -43,15 +43,18 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
-@RunWith(AndroidJUnit4::class)
-internal class UserSessionResurrectionTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class UserSessionResurrectionTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     private val serializer = TestPlatformSerializer()
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
         EmbraceSetupInterface(fakeStorageLayer = true)
     }
 
@@ -279,5 +282,11 @@ internal class UserSessionResurrectionTest {
             serializer = serializer,
             crashData = crashData
         )
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

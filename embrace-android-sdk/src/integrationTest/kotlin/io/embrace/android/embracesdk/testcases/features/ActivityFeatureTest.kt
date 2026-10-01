@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.testcases.features
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSpanOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.SessionPartTimestamps
 import io.embrace.android.embracesdk.assertions.assertMatches
@@ -15,13 +15,16 @@ import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
-@RunWith(AndroidJUnit4::class)
-internal class ActivityFeatureTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class ActivityFeatureTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     @Rule
     @JvmField
-    val testRule = SdkIntegrationTestRule()
+    val testRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     @Test
     fun `automatically capture activities`() {
@@ -52,5 +55,11 @@ internal class ActivityFeatureTest {
                 assertSpansMatchGoldenFile(spans, "ux-view-export.json")
             }
         )
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

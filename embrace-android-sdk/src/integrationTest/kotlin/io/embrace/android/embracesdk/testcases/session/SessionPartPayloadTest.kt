@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.testcases.session
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.assertNoPreviousSessionPart
@@ -27,7 +26,9 @@ import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import org.robolectric.ParameterizedRobolectricTestRunner
 import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -42,11 +43,13 @@ import org.junit.runner.RunWith
  * Asserts the shape and structure of session part payloads: device/app envelope attributes, session-scoped
  * data clearing at part boundaries, span links, session validity, life-event types, and part sequencing.
  */
-@RunWith(AndroidJUnit4::class)
-internal class SessionPartPayloadTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class SessionPartPayloadTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     @Test
     fun `device and app attributes are present in session envelope`() {
@@ -325,5 +328,11 @@ internal class SessionPartPayloadTest {
             }
         }
         return sessionPartSpan
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

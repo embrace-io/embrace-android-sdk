@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.testcases.session
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.assertions.assertSessionIds
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
@@ -22,6 +21,7 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSI
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_START_TS
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -30,6 +30,7 @@ import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
 private const val SESSION_COUNT = 200
 
@@ -39,12 +40,14 @@ private const val SESSION_COUNT = 200
  *
  * Test cases should assert both on the HTTP request sent to Embrace's servers and the OTLP request.
  */
-@RunWith(AndroidJUnit4::class)
-internal class SessionPartIdentityTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class SessionPartIdentityTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     @Test
     fun `session part span and envelope contains various user session attributes`() {
@@ -240,5 +243,11 @@ internal class SessionPartIdentityTest {
                 assertEquals(SESSION_COUNT, baIds.size)
             }
         )
+    }
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 }

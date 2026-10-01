@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.testcases.features
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -10,12 +9,14 @@ import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbAnrAttributes
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
 private const val INTERVAL_MS = 100L
 private const val THREAD_BLOCKAGE_THRESHOLD_MS = 1000L
@@ -23,15 +24,17 @@ private const val MAX_SAMPLE_COUNT = 80
 private const val MAX_INTERVAL_COUNT = 5
 private const val SPAN_NAME = "emb-thread-blockage"
 
-@RunWith(AndroidJUnit4::class)
-internal class ThreadBlockageFeatureTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class ThreadBlockageFeatureTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
     private lateinit var watchdogExecutor: BlockingScheduledExecutorService
     private var startTimeMs: Long = 0L
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
         EmbraceSetupInterface(
             workersToFake = listOf(Worker.Background.ThreadBlockageWatchdogWorker),
             threadBlockageWatchdogThread = Thread.currentThread()
@@ -231,4 +234,10 @@ internal class ThreadBlockageFeatureTest {
     }
 
     private fun Envelope<SessionPartPayload>.findThreadBlockageSpans() = checkNotNull(data.spans?.filter { it.name == SPAN_NAME })
+
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
+    }
 }

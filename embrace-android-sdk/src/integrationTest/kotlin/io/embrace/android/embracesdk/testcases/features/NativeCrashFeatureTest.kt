@@ -2,7 +2,6 @@
 
 package io.embrace.android.embracesdk.testcases.features
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
@@ -29,6 +28,7 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
@@ -40,6 +40,7 @@ import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
 
 /**
  * Test cases that confirm the JVM layer of native crash reporting behaves as expected. The test cases work
@@ -49,10 +50,16 @@ import org.junit.runner.RunWith
  * The C/C++ layer is covered by an instrumentation test that checks a struct can be written to disk then deserialized into JSON.
  * embrace-android-sdk/src/androidTest/java/io/embrace/android/embracesdk/ndk/serializer/FileWriterTestSuite.kt
  */
-@RunWith(AndroidJUnit4::class)
-internal class NativeCrashFeatureTest {
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class NativeCrashFeatureTest(
+    private val otelSdkMode: OtelSdkMode,
+) {
 
-    private companion object {
+    internal companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
+
         private const val BASE_TIME_MS = 169000000000L
     }
 
@@ -121,7 +128,7 @@ internal class NativeCrashFeatureTest {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
         EmbraceSetupInterface(
             fakeStorageLayer = true,
             workersToFake = listOf(Worker.Background.IoRegWorker),

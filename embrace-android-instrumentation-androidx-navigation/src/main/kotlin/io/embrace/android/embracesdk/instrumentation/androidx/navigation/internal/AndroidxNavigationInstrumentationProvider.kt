@@ -4,6 +4,7 @@ import android.app.Activity
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ScreenChanged
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ScreenSourceAttached
 import io.embrace.android.embracesdk.internal.arch.navigation.getId
@@ -21,10 +22,10 @@ public class AndroidxNavigationInstrumentationProvider : InstrumentationProvider
 
         with(args) {
             attachBackStack = fun(activity: Activity) {
-                eventBus.emit(ScreenSourceAttached(activity.getId(), clock.now()))
+                eventBus.emit(NavigationSignal.KEY, ScreenSourceAttached(activity.getId(), clock.now()))
             }
             onBackStackDestinationChange = fun(activity: Activity, newDestination: String) {
-                eventBus.emit(ScreenChanged(activity.getId(), newDestination, clock.now()))
+                eventBus.emit(NavigationSignal.KEY, ScreenChanged(activity.getId(), newDestination, clock.now()))
             }
         }
         return null

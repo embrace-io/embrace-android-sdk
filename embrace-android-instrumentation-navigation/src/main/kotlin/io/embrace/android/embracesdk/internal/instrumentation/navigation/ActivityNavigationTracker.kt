@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Application
 import android.os.Build
 import android.os.Bundle
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityPaused
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityResumed
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityStarted
@@ -65,7 +66,7 @@ internal class ActivityNavigationTracker(
     }
 
     override fun onBackground() {
-        eventBus.emit(Backgrounded(clock.now()))
+        eventBus.emit(NavigationSignal.KEY, Backgrounded(clock.now()))
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
@@ -75,17 +76,17 @@ internal class ActivityNavigationTracker(
     override fun onForeground() {}
 
     private fun handleActivityStarted(activity: Activity) {
-        eventBus.emit(ActivityStarted(activity.getId(), clock.now()))
+        eventBus.emit(NavigationSignal.KEY, ActivityStarted(activity.getId(), clock.now()))
     }
 
     private fun handleActivityResumed(activity: Activity) {
-        eventBus.emit(ActivityResumed(activity.getId(), activity.localClassName, clock.now()))
+        eventBus.emit(NavigationSignal.KEY, ActivityResumed(activity.getId(), activity.localClassName, clock.now()))
 
         // Add screen source tracking after the resume signal is emitted to mimic how the rememberNavController Composable will do it.
         navigationTrackingService.trackNavigation(activity)
     }
 
     private fun handleActivityPaused(activity: Activity) {
-        eventBus.emit(ActivityPaused(activity.getId(), clock.now()))
+        eventBus.emit(NavigationSignal.KEY, ActivityPaused(activity.getId(), clock.now()))
     }
 }

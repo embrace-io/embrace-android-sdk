@@ -37,7 +37,7 @@ internal class ActivityNavigationTrackerTest {
         clock = FakeClock()
         signals = mutableListOf()
         eventBus = EventBus(FakeInternalLogger())
-        eventBus.addHandler<NavigationSignal> { signals.add(it) }
+        eventBus.addHandler(NavigationSignal.KEY) { signals.add(it) }
         navigationTrackingService = FakeNavigationTrackingService()
         activityController = Robolectric.buildActivity(DopeActivity::class.java).create()
         anotherController = Robolectric.buildActivity(CoolActivity::class.java).create()

@@ -49,7 +49,7 @@ internal class NavControllerTrackerTest {
         logger = FakeInternalLogger()
         signals = mutableListOf()
         eventBus = EventBus(logger)
-        eventBus.addHandler<NavigationSignal> { signals.add(it) }
+        eventBus.addHandler(NavigationSignal.KEY) { signals.add(it) }
         tracker = NavControllerTracker(eventBus, clock, logger)
         activity = createActivity()
     }

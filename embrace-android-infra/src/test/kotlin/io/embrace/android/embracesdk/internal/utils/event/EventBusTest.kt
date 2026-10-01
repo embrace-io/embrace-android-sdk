@@ -10,24 +10,9 @@ internal class EventBusTest {
 
     private sealed interface AppEvent
 
-    private interface Loggable
+    private class ForegroundEvent : AppEvent
 
-    private open class BaseEvent : AppEvent
-
-    private class ForegroundEvent : BaseEvent(), Loggable
-
-    private class UnrelatedEvent
-
-    // reached by two paths
-    private interface Root
-
-    private interface Left : Root
-
-    private interface Right : Root
-
-    private class DiamondEvent : Left, Right
-
-    private class RightEvent : Right
+    private class BackgroundEvent : AppEvent
 
     private class ScreenState(val name: String)
 
@@ -41,6 +26,12 @@ internal class EventBusTest {
     private val logger = FakeInternalLogger(throwOnInternalError = false)
     private val bus = EventBus(logger)
 
+    private val appKey = EventKey<AppEvent>()
+
+    private val otherAppKey = EventKey<AppEvent>()
+
+    private val screenEventKey = EventKey<ScreenState>()
+
     private val screenKey = StateKey<ScreenState>()
 
     private val otherScreenKey = StateKey<ScreenState>()
@@ -48,148 +39,66 @@ internal class EventBusTest {
     private val connectionKey = StateKey<ConnectionState>()
 
     @Test
-    fun `handler receives events of its own type`() {
-        val received = mutableListOf<ForegroundEvent>()
-        bus.addHandler<ForegroundEvent> { received.add(it) }
-
-        val event = ForegroundEvent()
-        bus.emit(event)
-
-        assertEquals(listOf(event), received)
-    }
-
-    @Test
-    fun `handler receives events of a subtype`() {
-        val received = mutableListOf<BaseEvent>()
-        bus.addHandler<BaseEvent> { received.add(it) }
-
-        val event = ForegroundEvent()
-        bus.emit(event)
-
-        assertEquals(listOf<BaseEvent>(event), received)
-    }
-
-    @Test
-    fun `handler registered against a sealed interface receives events of an implementing type`() {
+    fun `handler receives events emitted against its key`() {
         val received = mutableListOf<AppEvent>()
-        bus.addHandler<AppEvent> { received.add(it) }
+        bus.addHandler(appKey) { received.add(it) }
 
         val event = ForegroundEvent()
-        bus.emit(event)
+        bus.emit(appKey, event)
 
         assertEquals(listOf<AppEvent>(event), received)
     }
 
     @Test
-    fun `handler registered against an interface implemented directly receives events`() {
-        val received = mutableListOf<Loggable>()
-        bus.addHandler<Loggable> { received.add(it) }
+    fun `handler receives every subtype emitted against its key`() {
+        val received = mutableListOf<AppEvent>()
+        bus.addHandler(appKey) { received.add(it) }
 
-        val event = ForegroundEvent()
-        bus.emit(event)
+        val foreground = ForegroundEvent()
+        val background = BackgroundEvent()
+        bus.emit(appKey, foreground)
+        bus.emit(appKey, background)
 
-        assertEquals(listOf<Loggable>(event), received)
+        assertEquals(listOf(foreground, background), received)
     }
 
     @Test
-    fun `handlers are invoked most specific type first`() {
+    fun `handlers are invoked in registration order`() {
         val order = mutableListOf<String>()
-        bus.addHandler<AppEvent> { order.add("interface") }
-        bus.addHandler<BaseEvent> { order.add("superclass") }
-        bus.addHandler<ForegroundEvent> { order.add("concrete") }
+        bus.addHandler(appKey) { order.add("first") }
+        bus.addHandler(appKey) { order.add("second") }
+        bus.addHandler(appKey) { order.add("third") }
 
-        bus.emit(ForegroundEvent())
+        bus.emit(appKey, ForegroundEvent())
 
-        assertEquals(listOf("concrete", "superclass", "interface"), order)
+        assertEquals(listOf("first", "second", "third"), order)
     }
 
     @Test
-    fun `handler registered against a type reachable by multiple paths is invoked once`() {
-        // ForegroundEvent implements Loggable directly, and reaches AppEvent via BaseEvent.
-        val appEventCount = AtomicInteger()
-        bus.addHandler<AppEvent> { appEventCount.incrementAndGet() }
-        // Register the same type again via BaseEvent's hierarchy to ensure the walk dedupes types, not just handlers.
-        bus.addHandler<BaseEvent> { }
-
-        bus.emit(ForegroundEvent())
-
-        assertEquals(1, appEventCount.get())
-    }
-
-    @Test
-    fun `interfaces declared on a type are invoked before its superclass`() {
-        val order = mutableListOf<String>()
-        bus.addHandler<AppEvent> { order.add("AppEvent") }
-        bus.addHandler<BaseEvent> { order.add("BaseEvent") }
-        bus.addHandler<Loggable> { order.add("Loggable") }
-        bus.addHandler<ForegroundEvent> { order.add("ForegroundEvent") }
-
-        bus.emit(ForegroundEvent())
-
-        assertEquals(listOf("ForegroundEvent", "Loggable", "BaseEvent", "AppEvent"), order)
-    }
-
-    @Test
-    fun `a type reachable by two paths is invoked at its first position, not its last`() {
-        val order = mutableListOf<String>()
-        bus.addHandler<Root> { order.add("Root") }
-        bus.addHandler<Left> { order.add("Left") }
-        bus.addHandler<Right> { order.add("Right") }
-
-        bus.emit(DiamondEvent())
-
-        assertEquals(listOf("Left", "Root", "Right"), order)
-    }
-
-    @Test
-    fun `resolving a subtype leaves a supertype's own hierarchy complete`() {
-        val received = mutableListOf<String>()
-        bus.addHandler<Root> { received.add("Root") }
-
-        // DiamondEvent reaches Root through Left, so Right must not be left without it
-        bus.emit(DiamondEvent())
-        received.clear()
-        bus.emit(RightEvent())
-
-        assertEquals("Right lost the Root reached by a subtype's walk", listOf("Root"), received)
-    }
-
-    @Test
-    fun `handler registered against Any never receives events`() {
+    fun `handler does not receive events emitted against another key of the same type`() {
         val received = AtomicInteger()
-        bus.addHandler<Any> { received.incrementAndGet() }
+        bus.addHandler(appKey) { received.incrementAndGet() }
 
-        bus.emit(ForegroundEvent())
-        bus.emit(UnrelatedEvent())
+        bus.emit(otherAppKey, ForegroundEvent())
 
         assertEquals(0, received.get())
     }
 
     @Test
-    fun `handler does not receive events of unrelated types`() {
-        val received = AtomicInteger()
-        bus.addHandler<ForegroundEvent> { received.incrementAndGet() }
+    fun `emitting against a key with no handlers does nothing`() {
+        bus.addHandler(otherAppKey) { }
 
-        bus.emit(UnrelatedEvent())
-
-        assertEquals(0, received.get())
-    }
-
-    @Test
-    fun `emitting an event with no handlers does nothing`() {
-        bus.addHandler<UnrelatedEvent> { }
-
-        bus.emit(ForegroundEvent())
+        bus.emit(appKey, ForegroundEvent())
     }
 
     @Test
     fun `adding the same handler twice only registers it once`() {
         val received = AtomicInteger()
-        val handler = EventHandler<ForegroundEvent> { received.incrementAndGet() }
+        val handler = EventHandler<AppEvent> { received.incrementAndGet() }
 
-        bus.addHandler(ForegroundEvent::class.java, handler)
-        bus.addHandler(ForegroundEvent::class.java, handler)
-        bus.emit(ForegroundEvent())
+        bus.addHandler(appKey, handler)
+        bus.addHandler(appKey, handler)
+        bus.emit(appKey, ForegroundEvent())
 
         assertEquals(1, received.get())
     }
@@ -197,12 +106,12 @@ internal class EventBusTest {
     @Test
     fun `removed handler stops receiving events`() {
         val received = AtomicInteger()
-        val handler = EventHandler<BaseEvent> { received.incrementAndGet() }
-        bus.addHandler(BaseEvent::class.java, handler)
+        val handler = EventHandler<AppEvent> { received.incrementAndGet() }
+        bus.addHandler(appKey, handler)
 
-        bus.emit(ForegroundEvent())
-        bus.removeHandler(BaseEvent::class.java, handler)
-        bus.emit(ForegroundEvent())
+        bus.emit(appKey, ForegroundEvent())
+        bus.removeHandler(appKey, handler)
+        bus.emit(appKey, ForegroundEvent())
 
         assertEquals("handler invoked after removal", 1, received.get())
     }
@@ -210,25 +119,24 @@ internal class EventBusTest {
     @Test
     fun `removing an unregistered handler is a no-op`() {
         val received = AtomicInteger()
-        bus.addHandler<ForegroundEvent> { received.incrementAndGet() }
+        bus.addHandler(appKey) { received.incrementAndGet() }
 
-        bus.removeHandler(ForegroundEvent::class.java, EventHandler { })
-        bus.removeHandler(UnrelatedEvent::class.java, EventHandler { })
-        bus.emit(ForegroundEvent())
+        bus.removeHandler(appKey, EventHandler { })
+        bus.removeHandler(otherAppKey, EventHandler { })
+        bus.emit(appKey, ForegroundEvent())
 
         assertEquals(1, received.get())
     }
 
     @Test
-    fun `handler added after an event type has been dispatched receives subsequent events`() {
+    fun `handler added after a key has been emitted against receives subsequent events`() {
         val first = AtomicInteger()
         val second = AtomicInteger()
-        bus.addHandler<ForegroundEvent> { first.incrementAndGet() }
+        bus.addHandler(appKey) { first.incrementAndGet() }
 
-        // Dispatch once so the type hierarchy is resolved and cached, then invalidate it by registering against a supertype.
-        bus.emit(ForegroundEvent())
-        bus.addHandler<AppEvent> { second.incrementAndGet() }
-        bus.emit(ForegroundEvent())
+        bus.emit(appKey, ForegroundEvent())
+        bus.addHandler(appKey) { second.incrementAndGet() }
+        bus.emit(appKey, ForegroundEvent())
 
         assertEquals(2, first.get())
         assertEquals("handler added after the first dispatch was not picked up", 1, second.get())
@@ -237,10 +145,10 @@ internal class EventBusTest {
     @Test
     fun `a handler that throws during dispatch does not stop the handlers after it`() {
         val received = AtomicInteger()
-        bus.addHandler<ForegroundEvent> { error("boom") }
-        bus.addHandler<ForegroundEvent> { received.incrementAndGet() }
+        bus.addHandler(appKey) { error("boom") }
+        bus.addHandler(appKey) { received.incrementAndGet() }
 
-        bus.emit(ForegroundEvent())
+        bus.emit(appKey, ForegroundEvent())
 
         assertEquals("the handler after the throwing one was not invoked", 1, received.get())
         assertEquals(listOf(InternalErrorType.EventBusHandlerFail.toString()), logger.internalErrorMessages.map { it.msg })
@@ -248,22 +156,22 @@ internal class EventBusTest {
 
     @Test
     fun `a handler that throws on every event is reported once`() {
-        bus.addHandler<ForegroundEvent> { error("boom") }
+        bus.addHandler(appKey) { error("boom") }
 
-        repeat(3) { bus.emit(ForegroundEvent()) }
+        repeat(3) { bus.emit(appKey, ForegroundEvent()) }
 
         assertEquals(1, logger.internalErrorMessages.size)
     }
 
     @Test
     fun `a handler that threw is reported again once removed and re-registered`() {
-        val handler = EventHandler<ForegroundEvent> { error("boom") }
+        val handler = EventHandler<AppEvent> { error("boom") }
 
-        bus.addHandler(ForegroundEvent::class.java, handler)
-        bus.emit(ForegroundEvent())
-        bus.removeHandler(ForegroundEvent::class.java, handler)
-        bus.addHandler(ForegroundEvent::class.java, handler)
-        bus.emit(ForegroundEvent())
+        bus.addHandler(appKey, handler)
+        bus.emit(appKey, ForegroundEvent())
+        bus.removeHandler(appKey, handler)
+        bus.addHandler(appKey, handler)
+        bus.emit(appKey, ForegroundEvent())
 
         assertEquals(2, logger.internalErrorMessages.size)
     }
@@ -271,14 +179,14 @@ internal class EventBusTest {
     @Test
     fun `handler registered during an emit does not disturb the in-flight dispatch`() {
         val added = AtomicInteger()
-        bus.addHandler<ForegroundEvent> {
-            bus.addHandler<ForegroundEvent> { added.incrementAndGet() }
+        bus.addHandler(appKey) {
+            bus.addHandler(appKey) { added.incrementAndGet() }
         }
 
-        bus.emit(ForegroundEvent())
+        bus.emit(appKey, ForegroundEvent())
         assertEquals("handler registered mid-emit was invoked for the in-flight event", 0, added.get())
 
-        bus.emit(ForegroundEvent())
+        bus.emit(appKey, ForegroundEvent())
         assertEquals(1, added.get())
     }
 
@@ -378,31 +286,31 @@ internal class EventBusTest {
     }
 
     @Test
-    fun `a value emitted against a key does not reach a handler registered against its type`() {
+    fun `a value emitted against a state key does not reach a handler registered against an event key`() {
         val received = AtomicInteger()
-        bus.addHandler<ScreenState> { received.incrementAndGet() }
+        bus.addHandler(screenEventKey) { received.incrementAndGet() }
 
         bus.emitState(screenKey, ScreenState("home"))
 
-        assertEquals("a state value leaked into type dispatch", 0, received.get())
+        assertEquals("a state value leaked into event dispatch", 0, received.get())
     }
 
     @Test
-    fun `an event emitted by type does not reach a handler registered against a key`() {
+    fun `an event emitted against an event key does not reach a handler registered against a state key`() {
         val received = AtomicInteger()
         bus.addStateHandler(screenKey) { received.incrementAndGet() }
 
-        bus.emit(ScreenState("home"))
+        bus.emit(screenEventKey, ScreenState("home"))
 
         assertEquals(0, received.get())
     }
 
     @Test
-    fun `an event emitted by type is not replayed to a handler registered afterwards`() {
-        bus.emit(UnrelatedEvent())
+    fun `an event is not replayed to a handler registered afterwards`() {
+        bus.emit(appKey, ForegroundEvent())
 
         val received = AtomicInteger()
-        bus.addHandler<UnrelatedEvent> { received.incrementAndGet() }
+        bus.addHandler(appKey) { received.incrementAndGet() }
 
         assertEquals(0, received.get())
     }

@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.arch.navigation
 
+import io.embrace.android.embracesdk.internal.utils.event.EventKey
+
 /**
  * The raw signals published by navigation sources, named without reference to any UI framework so that a new kind of
  * source adds no shared vocabulary.
@@ -51,4 +53,11 @@ sealed interface NavigationSignal {
      * No Activity is visible.
      */
     data class Backgrounded(override val timestampMs: Long) : NavigationSignal
+
+    companion object {
+        /**
+         * The channel every navigation signal is emitted on, shared by every source and consumer of them.
+         */
+        val KEY = EventKey<NavigationSignal>()
+    }
 }

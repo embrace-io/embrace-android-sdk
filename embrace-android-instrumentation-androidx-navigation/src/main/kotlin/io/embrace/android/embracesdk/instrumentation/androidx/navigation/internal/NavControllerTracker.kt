@@ -5,6 +5,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.fragment.NavHostFragment
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ScreenChanged
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ScreenSourceAttached
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingInitListener
@@ -46,9 +47,9 @@ internal class NavControllerTracker(
 
     private fun NavController.trackForActivity(activity: Activity) {
         val activityId = activity.getId()
-        eventBus.emit(ScreenSourceAttached(activityId, clock.now()))
+        eventBus.emit(NavigationSignal.KEY, ScreenSourceAttached(activityId, clock.now()))
         addOnDestinationChangedListener { _, destination, _ ->
-            eventBus.emit(ScreenChanged(activityId, extractScreenName(destination), clock.now()))
+            eventBus.emit(NavigationSignal.KEY, ScreenChanged(activityId, extractScreenName(destination), clock.now()))
         }
         trackAttemptStatus[activityId] = true
     }

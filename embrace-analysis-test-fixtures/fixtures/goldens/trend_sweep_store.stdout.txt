@@ -1,0 +1,27 @@
+
+==============================================================================
+entry-a  sdk=8.3.0  [build=benchmark compile=profile instrument=composed]
+  conditions={"compile": "profile"}
+  runs=1
+  only one run in this series - no trend yet; repeat the same recipe to start a baseline
+
+==============================================================================
+flagship-a  sdk=?  [build=? compile=? instrument=composed]
+  conditions={}
+  runs=1
+  only one run in this series - no trend yet; repeat the same recipe to start a baseline
+
+==============================================================================
+mid-a  sdk=?  [build=? compile=? instrument=composed]
+  conditions={}
+  runs=1
+  only one run in this series - no trend yet; repeat the same recipe to start a baseline
+
+==============================================================================
+mid-b  sdk=?  [build=? compile=? instrument=composed]
+  conditions={}
+  runs=1
+  only one run in this series - no trend yet; repeat the same recipe to start a baseline
+
+Reminders: baselines are fixed, not rolling (a rolling baseline hides slow drift); one run is a candidate, two make a regression; never compare across device keys or recipes.
+wrote <repo>/claude-output/2026-08-26-kotlin-port/goldens/trend_sweep_store.json

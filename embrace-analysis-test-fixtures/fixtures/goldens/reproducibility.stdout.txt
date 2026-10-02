@@ -1,0 +1,35 @@
+
+==============================================================================
+Galaxy A14  sdk=9.2.0
+  build=samsung/a14xxx/a14:15/UP1A.231005.007/A145FXXU5CXK1:user/release-keys
+  recipe=benchmark/profile/emb-sdk-start conditions={"compile": "profile"}
+  submissions=2 contributors=2 units=2
+  tolerance from own within-run spread: +-26%
+  median  spread  22.2%  -> agree
+  p90     spread  30.8%  -> TAILS DIFFER
+  shape   ['two-state', 'unimodal']  -> SHAPE DIFFERS
+  NOT REPRODUCED - do not pool, do not average. Candidate dimensions, most common cause first:
+    - installed_app_count: ['<50', '>150']
+    - device_settings: ['{"animation_scale": "0.5", "background_process_limit": "null', '{"animation_scale": "1.0", "background_process_limit": "null']
+    - security_patch: ['2026-05-01', '2026-07-01']
+
+==============================================================================
+Pixel 3  sdk=9.2.0
+  build=google/blueline/blueline:12/SP1A.210812.016.C1/8618562:user/release-keys
+  recipe=benchmark/profile/emb-sdk-start conditions={"compile": "profile"}
+  submissions=1 contributors=1 units=1
+  insufficient data: needs a second contributor or unit before reproducibility can be tested at all
+
+==============================================================================
+Pixel 7 Pro  sdk=9.2.0
+  build=google/cheetah/cheetah:15/AP4A.250905.001/13579:user/release-keys
+  recipe=benchmark/profile/emb-sdk-start conditions={"compile": "profile"}
+  submissions=2 contributors=2 units=2
+  tolerance from own within-run spread: +-5%
+  median  spread   2.5%  -> agree
+  p90     spread   2.6%  -> agree
+  shape   ['unimodal']  -> agree
+  REPRODUCED - pooled n=80 across 2 contributors/2 units: median 12.8 p90 13.2 p95 13.3 (n<500: no p99)
+
+Reminders: pool only inside a reproduced cell; never pool across models to make a fleet number (composition artefact); never widen tolerance to force agreement - that disables the only mechanism that finds unaccounted dimensions.
+wrote <repo>/claude-output/2026-08-26-kotlin-port/goldens/reproducibility.json

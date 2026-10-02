@@ -51,6 +51,16 @@ handles the other Studio pitfall: `MacrobenchmarkRule` skips every test unless
 `androidx.benchmark.enabledRules` names Macrobenchmark, and Studio builds its own `am instrument`
 command rather than passing the module's `testInstrumentationRunnerArguments`.
 
+## Generating the baseline profile
+
+```bash
+scripts/generate-baseline-profile.sh
+```
+
+That runs `BaselineProfileGenerator` against the app's `baselineProfile` variant and overwrites
+`embrace-android-sdk/src/main/baseline-prof.txt`. Needs one connected device
+on API 33+ or rooted.
+
 ## Traces
 
 The benchmark records only the app's own [atrace sections](https://perfetto.dev/docs/data-sources/atrace) and counters.

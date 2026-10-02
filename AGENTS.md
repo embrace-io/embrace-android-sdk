@@ -199,6 +199,14 @@ A variant of (1): two payloads stored at the **same fake-clock instant** tie on 
 
 ---
 
+## Baseline Profile
+
+`embrace-android-sdk/src/main/baseline-prof.txt` ships in the AAR and is merged into every consumer app's profile.
+If a dependency has been added or removed, review the baseline profile generation to see whether the generation
+rules need updating to account for the new dependency.
+
+---
+
 ## PR Guidelines
 
 From `CONTRIBUTING.md`:

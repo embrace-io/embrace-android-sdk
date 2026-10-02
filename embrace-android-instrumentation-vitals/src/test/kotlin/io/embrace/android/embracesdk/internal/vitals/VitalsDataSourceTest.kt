@@ -118,4 +118,54 @@ internal class VitalsDataSourceTest {
         assertEquals("0", args.destination.attributes[EmbFrameCountsAttributes.SMOOTHNESS_DROPPED_FRAMES])
         assertEquals("1", args.destination.attributes[EmbFrameCountsAttributes.SMOOTHNESS_EXPECTED_FRAMES])
     }
+
+    @Test
+    fun `the screen being left is given the frame counts since the previous screen was left`() {
+        val args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
+        val dataSource = VitalsDataSource(args)
+        dataSource.onDataCaptureEnabled()
+        dataSource.countFrames(dropped = true, expectedFrames = 5)
+
+        assertEquals(screenFrameAttributes(dropped = 4, expected = 5), args.collectScreenAttributes())
+        assertEquals(screenFrameAttributes(dropped = 0, expected = 0), args.collectScreenAttributes())
+    }
+
+    @Test
+    fun `screen and session part counts overlap without interfering`() {
+        val args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
+        val dataSource = VitalsDataSource(args)
+        dataSource.onDataCaptureEnabled()
+
+        dataSource.countFrames(dropped = true, expectedFrames = 3)
+        assertEquals(screenFrameAttributes(dropped = 2, expected = 3), args.collectScreenAttributes())
+        dataSource.countFrames(dropped = false, expectedFrames = 1)
+        assertEquals(screenFrameAttributes(dropped = 0, expected = 1), args.collectScreenAttributes())
+        dataSource.countFrames(dropped = false, expectedFrames = 1)
+        dataSource.onPreSessionEnd()
+
+        // the session part spans all three screens' frames, however often the screen counts were read
+        assertEquals("2", args.destination.attributes[EmbFrameCountsAttributes.SMOOTHNESS_DROPPED_FRAMES])
+        assertEquals("5", args.destination.attributes[EmbFrameCountsAttributes.SMOOTHNESS_EXPECTED_FRAMES])
+    }
+
+    @Test
+    fun `enabling data capture registers one screen attributes source`() {
+        val args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
+        assertEquals(0, args.navigationTrackingService.screenAttributesSources.size)
+
+        VitalsDataSource(args).onDataCaptureEnabled()
+
+        assertEquals(1, args.navigationTrackingService.screenAttributesSources.size)
+    }
+
+    private fun FakeInstrumentationArgs.collectScreenAttributes(): Map<String, String> {
+        val attributes = mutableMapOf<String, String>()
+        navigationTrackingService.collectScreenAttributes(attributes::set)
+        return attributes
+    }
+
+    private fun screenFrameAttributes(dropped: Int, expected: Int) = mapOf(
+        EmbFrameCountsAttributes.SMOOTHNESS_DROPPED_FRAMES to dropped.toString(),
+        EmbFrameCountsAttributes.SMOOTHNESS_EXPECTED_FRAMES to expected.toString(),
+    )
 }

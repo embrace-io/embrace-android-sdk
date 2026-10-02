@@ -57,9 +57,10 @@ command rather than passing the module's `testInstrumentationRunnerArguments`.
 scripts/generate-baseline-profile.sh
 ```
 
-That runs `BaselineProfileGenerator` against the app's `baselineProfile` variant and overwrites
-`embrace-android-sdk/src/main/baseline-prof.txt`. Needs one connected device
-on API 33+ or rooted.
+That runs `BaselineProfileGenerator` against the app's `baselineProfile` variant, once with each
+opentelemetry-kotlin implementation (compat and regular), and overwrites
+`embrace-android-sdk/src/main/baseline-prof.txt` with the union of both profiles. Needs one
+connected device on API 33+ or rooted.
 
 ## Traces
 
@@ -76,15 +77,20 @@ will not, such as the perfetto UI:
 unzip -p <bundle>.perfetto-trace Trace_output.pb > trace.perfetto
 ```
 
-## Selecting the persistence layer
+## Selecting the persistence layer and OTel implementation
 
-Without rebuilding the APK, via a global setting the app reads before starting the SDK:
+Without rebuilding the APK, via global settings the app reads before starting the SDK:
 
 ```bash
 adb shell settings put global embrace_pct_multi_file_persistence 100   # multi-file layer
 adb shell settings put global embrace_pct_multi_file_persistence 0     # legacy layer
 adb shell settings delete global embrace_pct_multi_file_persistence    # SDK default (legacy)
+
+adb shell settings put global embrace_pct_otel_kotlin_sdk 100          # regular opentelemetry-kotlin
+adb shell settings put global embrace_pct_otel_kotlin_sdk 0            # compat opentelemetry-kotlin
+adb shell settings delete global embrace_pct_otel_kotlin_sdk           # SDK default (compat)
 ```
 
-The app turns that into a remote config on disk, which the SDK reads at startup. It only works
-because the benchmark's `pm clear` drops the binary config cache that would otherwise take priority.
+The app turns those into a remote config on disk, which the SDK reads at startup, and deletes the
+binary config cache that would otherwise take priority. `BaselineProfileGenerator` sets and clears
+`embrace_pct_otel_kotlin_sdk` itself.

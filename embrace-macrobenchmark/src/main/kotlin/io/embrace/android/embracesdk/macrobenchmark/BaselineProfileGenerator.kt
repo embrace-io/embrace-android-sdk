@@ -21,14 +21,30 @@ internal class BaselineProfileGenerator {
     @Test
     fun startup() = baselineProfileRule.collect(
         packageName = "io.embrace.android.embracesdk.macrobenchmark.app",
-        filterPredicate = {
-            it.startsWith("HSPLio/embrace/android/embracesdk") ||
-                it.startsWith("HSPLio/embrace/opentelemetry") ||
-                it.startsWith("HSPLio/opentelemetry")
-        },
+        filterPredicate = ::isShippedRule,
         profileBlock = {
             startActivityAndWait()
             device.waitForIdle()
         }
     )
 }
+
+/**
+ * Keeps every rule for Embrace SDK and OpenTelemetry classes, whatever its flags. Class rules and
+ * `H`/`S` methods all speed up a consumer app's startup, and `P`-only rules are harmless, so keeping
+ * only `HSP` rules would discard useful ones; how many methods get `H` also varies by device image.
+ * Benchmark classes share the SDK's package prefix but are not part of it, so they are excluded.
+ *
+ * Flags: https://developer.android.com/topic/performance/baselineprofiles/manually-create-measure#define-rules-manually
+ */
+private fun isShippedRule(rule: String): Boolean {
+    val descriptor = rule.trimStart('H', 'S', 'P')
+    return SHIPPED_PACKAGES.any(descriptor::startsWith) && BENCHMARK_PACKAGES.none(descriptor::startsWith)
+}
+
+private val SHIPPED_PACKAGES = listOf("Lio/embrace/", "Lio/opentelemetry/")
+
+private val BENCHMARK_PACKAGES = listOf(
+    "Lio/embrace/android/embracesdk/macrobenchmark/",
+    "Lio/embrace/android/embracesdk/benchmark/",
+)

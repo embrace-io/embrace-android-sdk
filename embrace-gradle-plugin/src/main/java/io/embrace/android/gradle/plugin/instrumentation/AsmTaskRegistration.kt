@@ -28,9 +28,12 @@ class AsmTaskRegistration : EmbraceTaskRegistration {
                 EmbraceClassVisitorFactory::class.java,
                 InstrumentationScope.ALL,
             ) { params: BytecodeInstrumentationParams ->
+                val variantName = variant.name
                 params.config.set(
                     variantConfigurationsListProperty.map { variantConfigs ->
-                        variantConfigs.first { it.variantName == variant.name }
+                        variantConfigs.first { it.variantName == variantName }
+                    }.zip(buildIdProvider) { variantConfig, buildId ->
+                        variantConfig.copy(buildId = buildId)
                     },
                 )
                 params.disabled.set(

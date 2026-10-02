@@ -47,6 +47,7 @@ abstract class BuildTelemetryService :
         fun register(
             project: Project,
             variantConfigurations: ListProperty<VariantConfig>,
+            buildIds: Provider<Map<String, String>>,
             behavior: PluginBehavior,
             agpWrapper: AgpWrapper,
         ): Provider<BuildTelemetryService> {
@@ -62,6 +63,7 @@ abstract class BuildTelemetryService :
                                 behavior,
                                 project.providers,
                                 variantConfigurations,
+                                buildIds,
                                 agpWrapper,
                             )
                             params.request.set(telemetryProvider)

@@ -5,5 +5,5 @@ description: Embrace Android SDK semantic conventions.
 dependencies:
   - schema_url: https://opentelemetry.io/schemas/1.44.0
     registry_path: https://github.com/open-telemetry/semantic-conventions@v1.44.0[model]
-  - schema_url: https://embrace.io/schemas/embrace/0.2.0
-    registry_path: https://github.com/embrace-io/embrace-semconv@v0.2.0[model]
+  - schema_url: https://embrace.io/schemas/embrace/0.3.0
+    registry_path: https://github.com/embrace-io/embrace-semconv@v0.3.0[model]

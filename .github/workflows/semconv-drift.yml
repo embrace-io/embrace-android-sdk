@@ -79,7 +79,7 @@ jobs:
 
       - name: Check committed generated source code is in sync
         # Pinned to the SHA of the embrace-semconv v0.2.0 release.
-        uses: embrace-io/embrace-semconv/.github/actions/assert-no-drift@8bbae8869bba8fb883aeea73c7a2936720af7875
+        uses: embrace-io/embrace-semconv/.github/actions/assert-no-drift@faf9330453bc74b46ab0278ce56664be86cb8640
         with:
           path: embrace-android-semconv/src/main/kotlin/io/embrace/android/embracesdk/semconv
           label: generated semantic-convention sources

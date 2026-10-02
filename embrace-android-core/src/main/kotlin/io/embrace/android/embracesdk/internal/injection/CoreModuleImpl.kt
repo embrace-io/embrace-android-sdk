@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStoreImpl
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 
 class CoreModuleImpl(
     ctx: Context,
@@ -24,6 +25,7 @@ class CoreModuleImpl(
     override val store: KeyValueStore by (keyValueStore ?: lazy { createKeyValueStore(context, initModule.jsonSerializer) })
 
     override val ordinalStore: OrdinalStore by lazy { OrdinalStoreImpl(store) }
+    override val eventBus: EventBus by lazy { EventBus(initModule.logger) }
 
     override val appVersionStartupCounter: Int by lazy {
         ordinalStore.incrementAndGet(

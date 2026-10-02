@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.config
 
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
@@ -81,6 +82,7 @@ class NativeSymbolTest {
                 instrumentedConfig = cfg,
                 keyValueStore = lazyOf(FakeKeyValueStore()),
                 uuidSource = TestUuidSource(),
+                clock = FakeClock(),
             ),
             worker = fakeBackgroundWorker(),
             serializer = serializer,

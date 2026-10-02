@@ -94,7 +94,8 @@ class ConfigServiceImpl(
     override val config: EmbraceConfig =
         resolveConfig(instrumentedConfig, remoteConfig, lazy(thresholdCheck::getNormalizedDeviceId))
     override val sessionBehavior = UserSessionBehaviorImpl(remoteConfig)
-    override val networkBehavior = NetworkBehaviorImpl(instrumentedConfig, remoteConfig)
+    override val networkBehavior =
+        NetworkBehaviorImpl(instrumentedConfig, remoteConfig, persistedConfig.configDeliveredAt)
     override val traceparentInjectionBehavior =
         TraceparentInjectionBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
     override val networkSpanForwardingBehavior =

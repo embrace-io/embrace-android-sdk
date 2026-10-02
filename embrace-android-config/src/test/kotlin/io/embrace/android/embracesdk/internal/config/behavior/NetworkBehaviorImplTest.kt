@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.createNetworkBehavior
@@ -97,6 +98,7 @@ internal class NetworkBehaviorImplTest {
                 ),
             ),
             remote = null,
+            configDeliveredAt = FakeClock.DEFAULT_FAKE_CURRENT_TIME,
             disabledUrlPatterns = null,
         )
         assertTrue(networkBehavior.isHttpUrlConnectionCaptureEnabled())

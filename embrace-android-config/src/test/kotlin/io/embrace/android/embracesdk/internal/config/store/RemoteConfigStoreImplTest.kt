@@ -90,7 +90,7 @@ internal class RemoteConfigStoreImplTest {
     }
 
     @Test
-    fun `fast path returns device id from binary cache`() {
+    fun `fast path returns device id and delivered at from binary cache`() {
         val config = RemoteConfig(50)
         store.saveResponse(ConfigHttpResponse(config, "etag"))
 
@@ -98,7 +98,20 @@ internal class RemoteConfigStoreImplTest {
         assertEquals(config, loaded.cfg)
         assertEquals("etag", loaded.etag)
         assertEquals("device-id", loaded.deviceId)
+        assertEquals(0L, loaded.deliveredAt)
         assertTrue(cachedConfigFile().exists())
+    }
+
+    @Test
+    fun `json fallback has no delivered at`() {
+        val config = RemoteConfig(50)
+        store.saveResponse(ConfigHttpResponse(config, "etag"))
+
+        // force the slow path: a missing binary cache is a clean miss that falls back to json.
+        cachedConfigFile().delete()
+
+        val loaded = checkNotNull(store.loadResponse())
+        assertNull(loaded.deliveredAt)
     }
 
     @Test

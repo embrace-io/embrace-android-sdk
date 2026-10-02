@@ -22,15 +22,30 @@ object {{ class_name }} {
     {%- if attribute.type is mapping and attribute.type.members is defined %}
 
     object {{ attribute.name | replace(".", "_") | pascal_case }}Values {
+        {#- A member's brief is optional. Its value is a string (the member's id when omitted), an
+            integer, a double or a boolean; anything else is generated as a string, with a
+            warning, rather than as a guessed type. #}
         {%- for member in attribute.type.members %}
 
         /**
-         * {{ member.brief | trim }}
+         * {{ (member.brief or member.id) | trim }}
          */
         {%- if ctx.stability == "development" %}
         @ExperimentalSemconv
         {%- endif %}
-        const val {{ member.id | screaming_snake_case }}: String = "{{ member.value }}"
+        {%- set name = member.id | screaming_snake_case %}
+        {%- if member.value is string %}
+        const val {{ name }}: String = "{{ member.value | replace("\\", "\\\\") | replace("\"", "\\\"") | replace("$", "\\$") }}"
+        {%- elif member.value is boolean %}
+        const val {{ name }}: Boolean = {{ member.value }}
+        {%- elif member.value is integer %}
+        const val {{ name }}: Long = {{ member.value }}L
+        {%- elif member.value is float %}
+        const val {{ name }}: Double = {{ member.value }}
+        {%- else %}
+        // WARNING: enum member value of an unexpected type, generated as a String.
+        const val {{ name }}: String = "{{ member.value }}"
+        {%- endif %}
         {%- endfor %}
     }
     {%- endif %}

@@ -1,0 +1,72 @@
+{
+  "_comment": [
+    "EXAMPLE plan - copy, then fill in YOUR devices. Nothing here is a recommended device;",
+    "the device_set below is what makes the run interpretable, so choose profiles deliberately",
+    "(see references/design.md > Choosing your device set). Get serials from `adb devices -l`.",
+    "Each device entry records the PROFILE so results stay comparable across runs and machines."
+  ],
+  "run_id": "vfm-<yyyy-mm-dd>",
+  "primary_device": "mid",
+  "devices": {
+    "mid": {
+      "serial": "<serial from adb devices -l>",
+      "api_level": 34,
+      "tier": "mid",
+      "vendor": "<oem>",
+      "soc_family": "<from device_probe.py>",
+      "ram_class": "4-6GB",
+      "cool_gate_c": 32.0
+    },
+    "entry": {
+      "serial": "<serial>",
+      "api_level": 29,
+      "tier": "entry",
+      "vendor": "<oem>",
+      "soc_family": "<from device_probe.py>",
+      "ram_class": "<=2GB",
+      "cool_gate_c": 30.0
+    },
+    "flagship": {
+      "serial": "<serial>",
+      "api_level": 35,
+      "tier": "flagship",
+      "vendor": "<oem, ideally different from the mid device>",
+      "soc_family": "<from device_probe.py>",
+      "ram_class": ">=8GB",
+      "cool_gate_c": 32.0
+    }
+  },
+  "passes": 4,
+  "iterations": 50,
+  "night_budget_hours": 8,
+  "build_type": "benchmark",
+  "reference": {
+    "compile": "profile",
+    "install": "settled",
+    "app": "light",
+    "contention": "quiet",
+    "thermal": "cool",
+    "memory": "normal"
+  },
+  "versions": ["<oldest supported release>", "<mid release>", "<previous release>", "local"],
+  "anchors": ["<oldest supported release>", "<previous release>", "local"],
+  "factor_levels": {
+    "compile": ["none"],
+    "install": ["fresh"],
+    "contention": ["queueing"]
+  },
+  "combos": [
+    {
+      "id": "worst-realistic",
+      "version": "local",
+      "levels": {"compile": "none", "install": "fresh"},
+      "device": "entry"
+    },
+    {
+      "id": "bad-day",
+      "version": "local",
+      "levels": {"thermal": "hot", "contention": "queueing"},
+      "device": "flagship"
+    }
+  ]
+}

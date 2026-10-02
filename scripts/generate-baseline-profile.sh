@@ -3,8 +3,9 @@
 #
 # Usage: scripts/generate-baseline-profile.sh [--serial SERIAL] [--no-publish] [--dry-run]
 #
-# Runs BaselineProfileGenerator against :embrace-macrobenchmark-app's baselineProfile variant, then
-# overwrites embrace-android-sdk/src/main/baseline-prof.txt. The device must be API 33+ or rooted.
+# Runs BaselineProfileGenerator against :embrace-macrobenchmark-app's baselineProfile variant, once per
+# opentelemetry-kotlin implementation, then overwrites embrace-android-sdk/src/main/baseline-prof.txt
+# with the union of both profiles. The device must be API 33+ or rooted.
 # Exit codes: 2 preflight, 3 publish, 4 generation.
 
 set -eu
@@ -20,7 +21,7 @@ while [ $# -gt 0 ]; do
         --serial) serial=${2:?--serial needs a value}; shift 2 ;;
         --no-publish) publish=false; shift ;;
         --dry-run) dry_run=true; shift ;;
-        -h|--help) sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) die 1 "unknown option: $1" ;;
     esac
 done
@@ -37,7 +38,7 @@ set -- :embrace-macrobenchmark:connectedBaselineProfileAndroidTest \
 if [ "$dry_run" = true ]; then
     [ "$publish" = false ] || printf './gradlew %s -Psigning.skip\n' "$pub"
     printf './gradlew %s\n' "$*"
-    printf 'cp <output>/BaselineProfileGenerator_startup-baseline-prof.txt %s\n' "${dest#"$root"/}"
+    printf 'merge <output>/BaselineProfileGenerator_{compat,regular}-baseline-prof.txt > %s\n' "${dest#"$root"/}"
     exit 0
 fi
 
@@ -98,21 +99,47 @@ if [ "$status" -ne 0 ]; then
 fi
 
 # Gradle exits 0 even when the install or the test runner fails, so require a fresh profile.
-profile=""
-for f in "$outputs"/*/BaselineProfileGenerator_startup-baseline-prof.txt; do
-    if [ -s "$f" ] && [ "$f" -nt "$marker" ]; then profile=$f; fi
-done
+fresh_profile() {
+    found=""
+    for f in "$outputs"/*/"BaselineProfileGenerator_$1-baseline-prof.txt"; do
+        if [ -s "$f" ] && [ "$f" -nt "$marker" ]; then found=$f; fi
+    done
+    [ -n "$found" ] || die 4 "gradle reported success but produced no $1 profile under $outputs"
+    printf '%s' "$found"
+}
+compat=$(fresh_profile compat)
+regular=$(fresh_profile regular)
 rm -f "$marker"
 
-[ -n "$profile" ] || die 4 "gradle reported success but produced no profile under $outputs"
+# Sanity check each APK definitely used the correct SDK mode
+grep -q 'Lio/opentelemetry/kotlin/CompatOpenTelemetryImpl;' "$compat" ||
+    die 4 "the compat profile never loaded the compat implementation. Output: $compat"
+grep -q 'Lio/opentelemetry/kotlin/OpenTelemetryImpl;' "$regular" ||
+    die 4 "the regular profile never loaded the regular implementation. Output: $regular"
+
+# unite both profiles
+merged=$(mktemp)
+awk '{
+    rule = $0
+    sub(/^[HSP]+/, "", rule)
+    flags[rule] = flags[rule] substr($0, 1, length($0) - length(rule))
+} END {
+    for (rule in flags) {
+        f = flags[rule]
+        printf "%s\t%s%s%s\n", rule, (f ~ /H/ ? "H" : ""), (f ~ /S/ ? "S" : ""), (f ~ /P/ ? "P" : "")
+    }
+}' "$compat" "$regular" | LC_ALL=C sort | awk -F '\t' '{ print $2 $1 }' > "$merged"
 
 # The generator keeps only HSP rules, and how many methods ART marks hot varies by image: an API 35
 # Play image yields a handful where the API 34 aosp image CI uses yields thousands.
-new=$(wc -l < "$profile" | tr -d ' ')
+new=$(wc -l < "$merged" | tr -d ' ')
 old=$(wc -l < "$dest" | tr -d ' ')
 if [ "$((new * 2))" -lt "$old" ]; then
-    die 4 "the run worked but kept only $new rules ($old are shipped), so baseline-prof.txt is unchanged.\nThe generator keeps only rules ART marks hot (HSP), and this device's image marks few: use an\naosp emulator image, as CI does (API 34). Output: $profile"
+    rm -f "$merged"
+    die 4 "the run worked but kept only $new rules ($old are shipped), so baseline-prof.txt is unchanged.\nThe generator keeps only rules ART marks hot (HSP), and this device's image marks few: use an\naosp emulator image, as CI does (API 34). Outputs: $compat $regular"
 fi
 
-cp "$profile" "$dest"
-printf '%d rules written to %s\n' "$(wc -l < "$dest" | tr -d ' ')" "${dest#"$root"/}"
+cp "$merged" "$dest"
+rm -f "$merged"
+printf '%d rules written to %s (%d compat, %d regular)\n' "$new" "${dest#"$root"/}" \
+    "$(wc -l < "$compat" | tr -d ' ')" "$(wc -l < "$regular" | tr -d ' ')"

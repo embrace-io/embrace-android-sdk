@@ -17,19 +17,29 @@ class BenchmarkApplication : Application() {
     }
 
     /**
-     * Selects the persistence layer without rebuilding the APK, from a global setting that survives
-     * the `pm clear` the benchmark runs between iterations:
+     * Selects the persistence layer and the opentelemetry-kotlin implementation without rebuilding
+     * the APK, from global settings that survive the `pm clear` the benchmark runs between iterations:
      *
      * ```
      * adb shell settings put global embrace_pct_multi_file_persistence 100
+     * adb shell settings put global embrace_pct_otel_kotlin_sdk 100
      * ```
      *
-     * This is required as the APK is non-debuggable in typical conditions, and only works as
-     * pm clear is executed each run.
+     * This is required as the APK is non-debuggable in typical conditions. The binary config cache
+     * takes priority over the JSON response, so it is deleted for the seeded config to be read.
      */
     private fun seedRemoteConfig() {
-        val pct = Settings.Global.getString(contentResolver, "embrace_pct_multi_file_persistence") ?: return
+        val fields = listOfNotNull(
+            globalSetting("embrace_pct_multi_file_persistence")?.let { "\"pct_multi_file_persistence_enabled\":$it" },
+            globalSetting("embrace_pct_otel_kotlin_sdk")?.let { "\"otel_kotlin_sdk\":{\"pct_enabled\":$it}" },
+        )
+        if (fields.isEmpty()) {
+            return
+        }
         val dir = File(filesDir, "embrace_remote_config").apply { mkdirs() }
-        File(dir, "most_recent_response").writeText("""{"pct_multi_file_persistence_enabled":$pct}""")
+        File(dir, "cached_config").delete()
+        File(dir, "most_recent_response").writeText(fields.joinToString(",", "{", "}"))
     }
+
+    private fun globalSetting(name: String): String? = Settings.Global.getString(contentResolver, name)
 }

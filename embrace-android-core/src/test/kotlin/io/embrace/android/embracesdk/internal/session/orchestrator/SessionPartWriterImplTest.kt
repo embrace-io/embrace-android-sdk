@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeSectionRecorder
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -23,7 +24,9 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDir
 import io.embrace.android.embracesdk.internal.session.persistence.SpanCollection
 import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
+import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -60,6 +63,7 @@ internal class SessionPartWriterImplTest {
     private lateinit var executor: BlockingScheduledExecutorService
     private lateinit var logger: FakeInternalLogger
     private lateinit var telemetryService: FakeTelemetryService
+    private lateinit var recorder: FakeSectionRecorder
 
     private var writeCount = 0
     private var completedSpanCount = 0
@@ -95,6 +99,8 @@ internal class SessionPartWriterImplTest {
         executor = BlockingScheduledExecutorService(clock, true)
         logger = FakeInternalLogger(throwOnInternalError = false)
         telemetryService = FakeTelemetryService()
+        recorder = FakeSectionRecorder()
+        SystemTrace.recorder = recorder
         writeCount = 0
         completedSpanCount = 0
         resourceCount = 0
@@ -104,6 +110,11 @@ internal class SessionPartWriterImplTest {
         onSpanSnapshotsRead = {}
         sessionSpan = FakeEmbraceSdkSpan(name = "span0", type = EmbType.Ux.Session).apply { start(clock.now()) }
         currentSessionPartSpan = FakeCurrentSessionPartSpan(clock).apply { sessionPartSpan = sessionSpan }
+    }
+
+    @After
+    fun tearDown() {
+        SystemTrace.recorder = null
     }
 
     @Test
@@ -1490,10 +1501,15 @@ internal class SessionPartWriterImplTest {
         assertEquals(listOf("span0"), completedSpanNamesOnDisk(SESSION_PART_ID))
 
         clock.tick(10000)
+        recorder.sections.clear()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
 
         assertEquals(listOf("carried-over"), completedSpanNamesIn(OTHER_SESSION_PART_ID))
         assertEquals(listOf("span0"), completedSpanNamesOnDisk(SESSION_PART_ID))
+        assertEquals(
+            listOf("mf-write-metadata", "mf-write-completed-spans"),
+            recorder.sections.filter { it == "mf-write-metadata" || it == "mf-write-completed-spans" },
+        )
         assertNoInternalErrors()
     }
 

@@ -57,6 +57,7 @@ include(
     ":embrace-macrobenchmark-app",
     ":embrace-minified-test-app",
     ":embrace-analysis-common",
+    ":embrace-analysis-stats",
     ":embrace-analysis-test-fixtures",
 )
 

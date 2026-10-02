@@ -361,12 +361,28 @@ internal class SessionMetadataWriterTest {
     }
 
     @Test
-    fun `oversized metadata is written`() {
+    fun `oversized metadata is not written and is reported, leaving the previous metadata intact`() {
+        assertTrue(write())
+        val currentMetadata = readMetadata()
         val extras = mapOf("custom.key" to "x".repeat(MAX_PART_FILE_BYTES.toInt() + 1))
         resourceProvider = { fullyPopulatedResource.copy(extras = extras) }
 
+        // Fail metadata writes that result in the file becoming too big to read.
+        // The previous metadata should remain intact and an error should be reported.
+        assertFalse(writer.write())
+        assertEquals(currentMetadata, readMetadata())
+        assertWriteFailureTracked()
+        assertEquals(OVERSIZED_PART_FILE_MSG, logger.internalErrorMessages.single().throwable?.message)
+    }
+
+    @Test
+    fun `metadata just under the part file limit is written`() {
+        val extras = mapOf("custom.key" to "x".repeat(MAX_PART_FILE_BYTES.toInt() - 4096))
+        resourceProvider = { fullyPopulatedResource.copy(extras = extras) }
+
         assertTrue(writer.write())
-        assertTrue(metadataFile().length() > MAX_PART_FILE_BYTES)
+        assertTrue(metadataFile().length() <= MAX_PART_FILE_BYTES)
+        assertTrue(metadataFile().length() > MAX_PART_FILE_BYTES - 8192)
         assertEquals(extras, readMetadata().resource?.extras)
         assertNoInternalErrors()
     }

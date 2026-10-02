@@ -60,6 +60,7 @@ include(
     ":embrace-analysis-stats",
     ":embrace-analysis-perfetto",
     ":embrace-analysis-device",
+    ":embrace-analysis-local-refs",
     ":embrace-analysis-test-fixtures",
 )
 

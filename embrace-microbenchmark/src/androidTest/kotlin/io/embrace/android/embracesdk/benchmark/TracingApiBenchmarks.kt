@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.benchmark
 
 import androidx.benchmark.junit4.BenchmarkRule
 import androidx.benchmark.junit4.measureRepeated
-import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -12,9 +12,10 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
-@RunWith(AndroidJUnit4::class)
-class TracingApiBenchmarks {
+@RunWith(Parameterized::class)
+class TracingApiBenchmarks(private val otelSdkMode: OtelSdkMode) {
 
     @get:Rule
     val benchmarkRule = BenchmarkRule()
@@ -29,7 +30,7 @@ class TracingApiBenchmarks {
 
     @Before
     fun setup() {
-        harness = TelemetryDestinationHarness()
+        harness = TelemetryDestinationHarness(otelSdkMode.useKotlinSdk)
         spanRepository = harness.spanRepository
         spanService = harness.spanService
     }
@@ -305,6 +306,10 @@ class TracingApiBenchmarks {
     }
 
     companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun parameters(): List<Array<Any>> = OtelSdkMode.parameters()
+
         private const val TOTAL_SPAN_COUNT = 10
         private const val ATTRIBUTES_PER_SPAN = 20
         private const val EVENTS_PER_SPAN = 10

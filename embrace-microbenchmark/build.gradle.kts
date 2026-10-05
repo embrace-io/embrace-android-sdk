@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "io.embrace.android.embracesdk.benchmark"
-    compileSdk = 36
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
         minSdk = 26
@@ -57,6 +57,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.junit)
     androidTestImplementation(libs.androidx.benchmark.junit4)
+    androidTestImplementation(project(":embrace-android-otel-fakes"))
 
     testImplementation(libs.junit)
     testImplementation(project(":embrace-test-common"))

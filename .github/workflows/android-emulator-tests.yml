@@ -72,7 +72,10 @@ jobs:
           working-directory: ${{ matrix.working-directory }}
           api-level: ${{ matrix.api-level }}
           # Grab the failures from the device so we can include them in results. Exit with non-zero so GH checks still fail.
-          script: ./gradlew connectedCheck -x :app:benchmark:connectedBenchmarkAndroidTest
+          # Run once against opentelemetry-kotlin's compat implementation (the default) and once against its regular implementation.
+          script: |
+            ./gradlew connectedCheck -x :app:benchmark:connectedBenchmarkAndroidTest
+            ./gradlew connectedCheck -x :app:benchmark:connectedBenchmarkAndroidTest -PtestBuildType=otelRegular
 
       - name: Run tests on android emulator
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0

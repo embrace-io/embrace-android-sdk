@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.benchmark
 
 import android.os.Bundle
 import android.util.Log
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
 /**
  * Measures the number of bytes the Embrace API retains on the heap of the
@@ -29,8 +30,8 @@ import org.junit.runner.RunWith
  * than empty-vs-populated) cancels out fixed harness/framework overhead, and the forced GC
  * before each snapshot removes uncollected garbage so only live objects only are measured.
  */
-@RunWith(AndroidJUnit4::class)
-class HeapAllocationBenchmark {
+@RunWith(Parameterized::class)
+class HeapAllocationBenchmark(private val otelSdkMode: OtelSdkMode) {
 
     private lateinit var harness: TelemetryDestinationHarness
     private lateinit var spanService: SpanService
@@ -40,7 +41,7 @@ class HeapAllocationBenchmark {
 
     @Before
     fun setup() {
-        harness = TelemetryDestinationHarness()
+        harness = TelemetryDestinationHarness(otelSdkMode.useKotlinSdk)
         // avoid hitting span per session limit & skewing measurement
         spanService = harness.createUncappedSpanService()
         destination = harness.destination
@@ -182,14 +183,19 @@ class HeapAllocationBenchmark {
     }
 
     private fun report(label: String, bytesPerItem: Long) {
-        Log.i(TAG, "$label retained $bytesPerItem bytes on the heap")
+        val key = "${otelSdkMode.name.lowercase()}_$label"
+        Log.i(TAG, "$key retained $bytesPerItem bytes on the heap")
         InstrumentationRegistry.getInstrumentation().sendStatus(
             0,
-            Bundle().apply { putLong("${label}_$RESULT_KEY", bytesPerItem) },
+            Bundle().apply { putLong("${key}_$RESULT_KEY", bytesPerItem) },
         )
     }
 
     companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun parameters(): List<Array<Any>> = OtelSdkMode.parameters()
+
         private const val TAG = "HeapAllocationBenchmark"
         private const val RESULT_KEY = "bytes_retained"
         private const val KNOWN_SIZE = 500

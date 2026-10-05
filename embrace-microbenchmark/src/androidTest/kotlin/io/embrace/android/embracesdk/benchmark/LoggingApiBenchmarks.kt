@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.benchmark
 
 import androidx.benchmark.junit4.BenchmarkRule
 import androidx.benchmark.junit4.measureRepeated
-import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
@@ -13,9 +13,10 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
-@RunWith(AndroidJUnit4::class)
-class LoggingApiBenchmarks {
+@RunWith(Parameterized::class)
+class LoggingApiBenchmarks(private val otelSdkMode: OtelSdkMode) {
 
     @get:Rule
     val benchmarkRule = BenchmarkRule()
@@ -28,7 +29,7 @@ class LoggingApiBenchmarks {
 
     @Before
     fun setup() {
-        val harness = TelemetryDestinationHarness()
+        val harness = TelemetryDestinationHarness(otelSdkMode.useKotlinSdk)
         telemetryDestination = harness.destination
         logSink = harness.logSink
     }
@@ -80,6 +81,10 @@ class LoggingApiBenchmarks {
     }
 
     companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun parameters(): List<Array<Any>> = OtelSdkMode.parameters()
+
         private const val TOTAL_LOG_COUNT = 10
         private const val ATTRIBUTES_PER_LOG = 20
     }

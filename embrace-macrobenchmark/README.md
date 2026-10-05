@@ -23,6 +23,15 @@ scripts/macrobenchmark.sh --out perf/macrobenchmark/scenarios \
     --test io.embrace.android.embracesdk.macrobenchmark.PersistenceScenarioBenchmark
 ```
 
+`OtelInitBenchmark` cold-starts the app with each opentelemetry-kotlin implementation and reports
+the `emb-otel-sdk-wrapper-init`, `emb-otel-tracer-init` and `emb-otel-logger-init` sections, to
+compare what assembling the OTel SDK costs in each:
+
+```bash
+scripts/macrobenchmark.sh --out perf/macrobenchmark/otel-init \
+    --test io.embrace.android.embracesdk.macrobenchmark.OtelInitBenchmark
+```
+
 The two halves are usable separately: `scripts/run-macrobenchmark.sh --help` and
 `scripts/grab-macrobenchmark-output.sh [dest]`.
 
@@ -92,5 +101,5 @@ adb shell settings delete global embrace_pct_otel_kotlin_sdk           # SDK def
 ```
 
 The app turns those into a remote config on disk, which the SDK reads at startup, and deletes the
-binary config cache that would otherwise take priority. `BaselineProfileGenerator` sets and clears
-`embrace_pct_otel_kotlin_sdk` itself.
+binary config cache that would otherwise take priority. `BaselineProfileGenerator` and `OtelInitBenchmark`
+set and clear `embrace_pct_otel_kotlin_sdk` themselves.

@@ -29,6 +29,19 @@ android {
         }
     }
 
+    testOptions {
+        managedDevices {
+            localDevices {
+                // do not alter image without reading BaselineProfileGenerator docs
+                create("pixel6Api34") {
+                    device = "Pixel 6"
+                    apiLevel = 34
+                    systemImageSource = "aosp"
+                }
+            }
+        }
+    }
+
     targetProjectPath = ":embrace-macrobenchmark-app"
     experimentalProperties["android.experimental.self-instrumenting"] = true
 
@@ -59,7 +72,9 @@ androidComponents {
 }
 
 tasks.matching {
-    it.name == "connectedBenchmarkAndroidTest" || it.name == "connectedBaselineProfileAndroidTest"
+    it.name == "connectedBenchmarkAndroidTest" ||
+        it.name == "connectedBaselineProfileAndroidTest" ||
+        it.name == "pixel6Api34BaselineProfileAndroidTest"
 }.configureEach {
     dependsOn(":embrace-gradle-plugin:publishToMavenLocal")
 }

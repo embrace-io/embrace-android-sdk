@@ -66,10 +66,11 @@ command rather than passing the module's `testInstrumentationRunnerArguments`.
 scripts/generate-baseline-profile.sh
 ```
 
-That runs `BaselineProfileGenerator` against the app's `baselineProfile` variant, once with each
-opentelemetry-kotlin implementation (compat and regular), and overwrites
-`embrace-android-sdk/src/main/baseline-prof.txt` with the union of both profiles. Needs one
-connected device on API 33+ or rooted.
+That runs `BaselineProfileGenerator` against the app's `baselineProfile` variant on the
+`pixel6Api34` Gradle managed device (API 34 AOSP), once with each opentelemetry-kotlin
+implementation (compat and regular), and overwrites `embrace-android-sdk/src/main/baseline-prof.txt`
+with the union of both profiles. Gradle downloads and boots the emulator itself. The
+`Generate Baseline Profile` workflow runs the same script on CI and opens a PR with the result.
 
 ## Traces
 

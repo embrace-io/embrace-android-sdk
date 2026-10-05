@@ -27,6 +27,8 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    testBuildType = providers.gradleProperty("testBuildType").getOrElse("debug")
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -48,6 +50,10 @@ android {
             signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += listOf("release")
             isDebuggable = true
+        }
+        create("otelRegular") {
+            initWith(buildTypes.getByName("debug"))
+            matchingFallbacks += listOf("debug")
         }
     }
     compileOptions {

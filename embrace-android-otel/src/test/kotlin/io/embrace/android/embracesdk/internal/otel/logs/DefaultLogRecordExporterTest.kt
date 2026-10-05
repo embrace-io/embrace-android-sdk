@@ -8,11 +8,13 @@ import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.opentelemetry.kotlin.export.OperationResultCode
 import io.opentelemetry.kotlin.logging.data.LogRecordData
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.concurrent.Executor
 
 internal class DefaultLogRecordExporterTest {
 
@@ -66,6 +68,25 @@ internal class DefaultLogRecordExporterTest {
         runBlocking { exporter.forceFlush() }
 
         assertTrue(exportThreads.single().startsWith("emb-otel-export"))
+    }
+
+    @Test
+    fun `external exporters receive the record as it was when exported`() {
+        val pendingExports = ArrayDeque<Runnable>()
+        val dispatcher = ExternalExportDispatcher { Executor(pendingExports::add).asCoroutineDispatcher() }
+        val externalExporter = FakeLogRecordExporter()
+        val log = FakeReadWriteLogRecord(body = "original")
+
+        exporter(LogSinkImpl(), listOf(externalExporter), dispatcher).exportInline(listOf(log))
+        log.body = "mutated"
+        log.setStringAttribute("late", "value")
+        while (pendingExports.isNotEmpty()) {
+            pendingExports.removeFirst().run()
+        }
+
+        val exported = externalExporter.exportedLogs.single()
+        assertEquals("original", exported.body)
+        assertFalse(exported.attributes.containsKey("late"))
     }
 
     @Test

@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestinati
 import io.embrace.android.embracesdk.internal.arch.destination.TelemetryDestinationImpl
 import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifier
 import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehaviorImpl
@@ -33,10 +34,14 @@ import okhttp3.OkHttpClient
 
 /**
  * [useKotlinSdk] selects the opentelemetry-kotlin implementation that backs the OTel module.
+ * [clock] supplies every timestamp the recorded telemetry carries.
  */
-internal class TelemetryDestinationHarness(useKotlinSdk: Boolean = false) {
+internal class TelemetryDestinationHarness(
+    useKotlinSdk: Boolean = false,
+    clock: Clock = NormalizedIntervalClock(),
+) {
 
-    private val initModule = TestInitModule()
+    private val initModule = TestInitModule(clock)
     private val otelModule = OpenTelemetryModuleImpl(initModule).apply {
         setOtelBehavior(
             OtelBehaviorImpl(
@@ -85,8 +90,7 @@ internal class TelemetryDestinationHarness(useKotlinSdk: Boolean = false) {
         ).apply { initializeService(0) }
     }
 
-    private class TestInitModule : InitModule {
-        override val clock: io.embrace.android.embracesdk.internal.clock.Clock = NormalizedIntervalClock()
+    private class TestInitModule(override val clock: Clock) : InitModule {
         override val telemetryService: TelemetryService = NoopTelemetryService
         override val logger: InternalLogger = InternalLoggerImpl()
         override val systemInfo: SystemInfo = SystemInfo()

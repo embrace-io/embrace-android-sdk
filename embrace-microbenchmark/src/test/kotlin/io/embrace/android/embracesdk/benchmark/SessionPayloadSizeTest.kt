@@ -148,23 +148,23 @@ internal class SessionPayloadSizeTest(
         private val EXPECTED = mapOf(
             "SMALL metadata.pb" to 396L,
             "SMALL span_snapshots.pb" to 798L,
-            "SMALL completed_spans.pb" to 4695L,
+            "SMALL completed_spans.pb" to 4741L,
             "SMALL multi-file blocks" to 16384L,
-            "SMALL session.json.gz" to 1570L,
+            "SMALL session.json.gz" to 1566L,
             "SMALL single-file blocks" to 4096L,
 
             "MEDIUM metadata.pb" to 396L,
             "MEDIUM span_snapshots.pb" to 798L,
-            "MEDIUM completed_spans.pb" to 46005L,
+            "MEDIUM completed_spans.pb" to 46051L,
             "MEDIUM multi-file blocks" to 57344L,
-            "MEDIUM session.json.gz" to 6989L,
+            "MEDIUM session.json.gz" to 6960L,
             "MEDIUM single-file blocks" to 8192L,
 
             "LARGE metadata.pb" to 396L,
             "LARGE span_snapshots.pb" to 798L,
-            "LARGE completed_spans.pb" to 466305L,
+            "LARGE completed_spans.pb" to 466351L,
             "LARGE multi-file blocks" to 475136L,
-            "LARGE session.json.gz" to 59507L,
+            "LARGE session.json.gz" to 59525L,
             "LARGE single-file blocks" to 61440L,
         )
     }

@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeExperimentTrackingService
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentApiCall
@@ -40,7 +41,7 @@ internal class ExperimentApiDelegateTest {
         initLogger = FakeInternalLogger()
         checkerLogger = FakeInternalLogger(throwOnInternalError = false)
 
-        initModule = FakeInitModule(logger = initLogger)
+        initModule = FakeInitModule(logger = initLogger, otelSdkMode = OtelSdkMode.COMPAT)
         clock = checkNotNull(initModule.getFakeClock())
         sdkCallChecker = SdkCallChecker(checkerLogger, telemetryService)
         delegate = createDelegate()

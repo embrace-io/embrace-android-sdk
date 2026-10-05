@@ -25,7 +25,7 @@ internal enum class OtelSdkMode(val useKotlinSdk: Boolean) {
      */
     fun applyTo(config: RemoteConfig): RemoteConfig {
         check(config.otelKotlinSdkConfig == null) {
-            "RemoteConfig must not set otelKotlinSdkConfig when an OtelSdkMode is supplied to the test rule."
+            "RemoteConfig must not set otelKotlinSdkConfig because SdkIntegrationTestRule sets it from OtelSdkMode."
         }
         return config.copy(
             otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = if (useKotlinSdk) 100.0f else 0.0f),

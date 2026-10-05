@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.fakeIncompleteSessionEnvelope
@@ -116,6 +117,8 @@ internal class EmbraceSetupInterface(
         clock = fakeClock,
         logger = FakeInternalLogger(ignoredErrors = ignoredInternalErrors),
         uuidSource = uuidSource,
+        // SdkIntegrationTestRule replaces this with its own OtelSdkMode via applyConfiguration() before start()
+        otelSdkMode = OtelSdkMode.COMPAT,
     )
 
     private val workerThreadModule: WorkerThreadModule = initWorkerThreadModule(

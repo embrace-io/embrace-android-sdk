@@ -34,7 +34,7 @@ internal class EmbTracerTest(
     }
     private val clock = FakeClock()
     private val openTelemetryClock = FakeOtelKotlinClock(clock)
-    private val openTelemetry = fakeOpenTelemetry(otelSdkMode.useKotlinSdk)
+    private val openTelemetry = fakeOpenTelemetry(otelSdkMode)
 
     private lateinit var spanService: FakeSpanService
     private lateinit var sdkTracer: FakeTracer

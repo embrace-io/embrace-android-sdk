@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.random.Random
 
 class FakeEmbraceSdkSpan(
-    private val openTelemetry: OpenTelemetry = fakeOpenTelemetry(),
+    private val openTelemetry: OpenTelemetry = fakeOpenTelemetry(OtelSdkMode.REGULAR),
     var name: String = "fake-span",
     var parentContext: Context = openTelemetry.context.root(),
     val type: EmbType = EmbType.Performance.Default,
@@ -240,7 +240,7 @@ class FakeEmbraceSdkSpan(
 
         fun started(
             parent: EmbraceSdkSpan? = null,
-            parentContext: Context = parent?.run { parent.asNewContext() } ?: fakeOpenTelemetry().context.root(),
+            parentContext: Context = parent?.run { parent.asNewContext() } ?: fakeOpenTelemetry(OtelSdkMode.REGULAR).context.root(),
             clock: FakeClock = FakeClock(),
         ): FakeEmbraceSdkSpan =
             FakeEmbraceSdkSpan(

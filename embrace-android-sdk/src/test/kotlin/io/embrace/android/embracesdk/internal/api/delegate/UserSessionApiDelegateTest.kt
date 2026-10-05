@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeUserSessionOrchestrationModule
@@ -33,7 +34,7 @@ internal class UserSessionApiDelegateTest {
     fun setUp() {
         fakeModule = FakeUserSessionOrchestrationModule()
         val moduleInitBootstrapper = ModuleInitBootstrapper(
-            FakeInitModule(),
+            FakeInitModule(otelSdkMode = OtelSdkMode.COMPAT),
             essentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
                 FakeEssentialServiceModule()
             },

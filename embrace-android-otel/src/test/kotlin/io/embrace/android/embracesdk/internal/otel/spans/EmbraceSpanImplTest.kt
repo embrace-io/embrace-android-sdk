@@ -128,7 +128,7 @@ internal class EmbraceSpanImplTest(
                 internal = false,
                 private = false,
                 tracer = tracer,
-                openTelemetry = fakeOpenTelemetry(otelSdkMode.useKotlinSdk),
+                openTelemetry = fakeOpenTelemetry(otelSdkMode),
             ),
         )
         fakeClock.tick(100)
@@ -680,7 +680,7 @@ internal class EmbraceSpanImplTest(
 
     @Test
     fun `validate context objects are propagated from the parent to the child span`() {
-        val newParentContext = fakeOpenTelemetry(otelSdkMode.useKotlinSdk).context.root().set(fakeContextKey, "fake-value")
+        val newParentContext = fakeOpenTelemetry(otelSdkMode).context.root().set(fakeContextKey, "fake-value")
         val wrapper = createWrapperForInternalSpan(parentContext = newParentContext)
         embraceSpan = embraceSpanFactory.create(wrapper)
 
@@ -1099,7 +1099,7 @@ internal class EmbraceSpanImplTest(
         tracer = tracer,
         parentCtx = parentContext,
         startTimeMs = startTimeMs,
-        openTelemetry = fakeOpenTelemetry(otelSdkMode.useKotlinSdk),
+        openTelemetry = fakeOpenTelemetry(otelSdkMode),
     )
 
     private fun EmbraceSdkSpan.assertSnapshot(

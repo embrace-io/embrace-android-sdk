@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeReadWriteLogRecord
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -152,7 +153,7 @@ internal class ModuleInitBootstrapperTest {
     fun `otel sdk is not built until the config service has been created`() {
         var initializedWhenConfigServiceBuilt: Boolean? = null
         val bootstrapper = ModuleInitBootstrapper(
-            initModule = FakeInitModule(clock = clock, logger = logger),
+            initModule = FakeInitModule(clock = clock, logger = logger, otelSdkMode = OtelSdkMode.COMPAT),
             configServiceSupplier = { _, _, openTelemetryModule, _, _ ->
                 initializedWhenConfigServiceBuilt = openTelemetryModule.spanService.initialized()
                 FakeConfigService()
@@ -169,7 +170,7 @@ internal class ModuleInitBootstrapperTest {
     @Test
     fun `otel sdk is not built when the sdk is remotely disabled`() {
         val bootstrapper = ModuleInitBootstrapper(
-            initModule = FakeInitModule(clock = clock, logger = logger),
+            initModule = FakeInitModule(clock = clock, logger = logger, otelSdkMode = OtelSdkMode.COMPAT),
             configServiceSupplier = { _, _, _, _, _ ->
                 FakeConfigService(
                     config = EmbraceConfig(sdkMode = { SdkModeConfig(sdkDisabled = { true }) }),
@@ -186,7 +187,7 @@ internal class ModuleInitBootstrapperTest {
             TestPlatformSerializer().toJson(cfg, RemoteConfig.serializer(), stream)
         }
         return ModuleInitBootstrapper(
-            initModule = FakeInitModule(clock = clock, logger = logger),
+            initModule = FakeInitModule(clock = clock, logger = logger, otelSdkMode = OtelSdkMode.COMPAT),
             configServiceSupplier = { _, _, _, _, _ -> FakeConfigService() },
             instrumentationModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
                 FakeInstrumentationModule(RuntimeEnvironment.getApplication(), logger = logger)

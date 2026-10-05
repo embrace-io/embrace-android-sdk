@@ -5,6 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
@@ -22,11 +23,11 @@ class DeliveryModuleImplTest {
     @Before
     fun setUp() {
         configService = FakeConfigService()
-        val initModule = FakeInitModule()
+        val initModule = FakeInitModule(otelSdkMode = OtelSdkMode.COMPAT)
         module = DeliveryModuleImpl(
             configService,
             initModule,
-            FakeOpenTelemetryModule(),
+            FakeOpenTelemetryModule(otelSdkMode = OtelSdkMode.REGULAR),
             FakeWorkerThreadModule(),
             CoreModuleImpl(ApplicationProvider.getApplicationContext(), initModule),
             FakeEssentialServiceModule(),

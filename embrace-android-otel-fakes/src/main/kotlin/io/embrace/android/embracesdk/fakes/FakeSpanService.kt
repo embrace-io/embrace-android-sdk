@@ -32,7 +32,8 @@ class FakeSpanService : SpanService {
         terminationMode: SpanTerminationMode,
     ): EmbraceSdkSpan = FakeEmbraceSdkSpan(
         name = name,
-        parentContext = (parent as? EmbraceSdkSpan)?.createContext(fakeOpenTelemetry()) ?: fakeOpenTelemetry().context.root(),
+        parentContext = (parent as? EmbraceSdkSpan)?.createContext(fakeOpenTelemetry(OtelSdkMode.REGULAR))
+            ?: fakeOpenTelemetry(OtelSdkMode.REGULAR).context.root(),
         type = type,
         internal = internal,
         private = private,
@@ -109,7 +110,7 @@ class FakeSpanService : SpanService {
         createdSpans.add(
             FakeEmbraceSdkSpan(
                 name = name,
-                parentContext = fakeOpenTelemetry().context.root(),
+                parentContext = fakeOpenTelemetry(OtelSdkMode.REGULAR).context.root(),
                 type = type,
                 internal = internal,
                 private = private,

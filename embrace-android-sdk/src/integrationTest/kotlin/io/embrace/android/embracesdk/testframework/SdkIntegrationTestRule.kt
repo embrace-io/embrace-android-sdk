@@ -88,10 +88,9 @@ import org.junit.rules.ExternalResource
 internal class SdkIntegrationTestRule(
 
     /**
-     * The opentelemetry-kotlin implementation to run against. When null, the test controls it via [RemoteConfig],
-     * which selects the compat implementation by default.
+     * The opentelemetry-kotlin implementation to run against.
      */
-    val otelSdkMode: OtelSdkMode? = null,
+    val otelSdkMode: OtelSdkMode,
     private val embraceSetupInterfaceSupplier: Provider<EmbraceSetupInterface> = { EmbraceSetupInterface() },
 ) : ExternalResource() {
 
@@ -137,9 +136,9 @@ internal class SdkIntegrationTestRule(
         assertAction: EmbracePayloadAssertionInterface.() -> Unit = {},
         otelExportAssertion: EmbraceOtelExportAssertionInterface.() -> Unit = {},
     ) {
-        val localConfig = otelSdkMode?.applyTo(instrumentedConfig) ?: instrumentedConfig
-        val persistedConfig = otelSdkMode?.applyTo(persistedRemoteConfig) ?: persistedRemoteConfig
-        val serverConfig = otelSdkMode?.applyTo(serverResponseConfig) ?: serverResponseConfig
+        val localConfig = otelSdkMode.applyTo(instrumentedConfig)
+        val persistedConfig = otelSdkMode.applyTo(persistedRemoteConfig)
+        val serverConfig = otelSdkMode.applyTo(serverResponseConfig)
         setup = embraceSetupInterfaceSupplier()
         val deliveryTracer = DeliveryTracer()
         val apiServer = FakeApiServer(serverConfig, deliveryTracer, serverResponseConfigJson)
@@ -187,10 +186,10 @@ internal class SdkIntegrationTestRule(
                     expectSdkToStart,
                     embraceImpl.isStarted
                 )
-                otelSdkMode?.takeIf { embraceImpl.isStarted }?.let { mode ->
+                if (embraceImpl.isStarted) {
                     assertEquals(
-                        "SDK did not select the $mode opentelemetry-kotlin implementation.",
-                        mode.useKotlinSdk,
+                        "SDK did not select the $otelSdkMode opentelemetry-kotlin implementation.",
+                        otelSdkMode.useKotlinSdk,
                         bootstrapper.openTelemetryModule.otelSdkWrapper.useKotlinSdk,
                     )
                 }

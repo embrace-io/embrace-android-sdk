@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeSpanData
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
@@ -145,7 +146,7 @@ internal class SpanRepositoryTest {
 
     @Test
     fun `autoTerminate stops ON_BACKGROUND roots and all descendants with the same end time`() {
-        val openTelemetry = fakeOpenTelemetry()
+        val openTelemetry = fakeOpenTelemetry(OtelSdkMode.REGULAR)
         val autoRoot = FakeEmbraceSdkSpan(
             openTelemetry = openTelemetry,
             terminationMode = SpanTerminationMode.OnBackground,

@@ -1,7 +1,10 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
 /**
- * Metadata about a session part that stores telemetry in a directory
+ * Metadata about a session part that stores telemetry in a directory.
+ *
+ * The directory name is tokenized by splitting on `_`, which relies on every token never containing an underscore,
+ * with the `none` token standing in for an empty user session or session part ID.
  */
 data class SessionPartDirectory(
     val timestamp: Long,

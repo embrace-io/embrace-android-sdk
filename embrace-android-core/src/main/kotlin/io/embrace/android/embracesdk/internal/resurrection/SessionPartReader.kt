@@ -53,7 +53,7 @@ class SessionPartReader(
         EmbTrace.trace("mf-read-session-parts") {
             runCatching {
                 val directories = directoryStore.storedDirectories()
-                    .filterNot { writeTracker.isWriting(it.sessionPartId) }
+                    .filterNot(writeTracker::isWriting)
                     .sortedWith(SessionPartDirectory.comparator)
 
                 for (directory in directories) {

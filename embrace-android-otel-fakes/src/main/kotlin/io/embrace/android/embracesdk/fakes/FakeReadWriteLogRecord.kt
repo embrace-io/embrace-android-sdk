@@ -23,5 +23,17 @@ class FakeReadWriteLogRecord(
     override val droppedAttributesCount: Int = 0,
 ) : ReadWriteLogRecord, AttributesMutator by attributeContainer {
 
-    override fun toLogRecordData(): LogRecordData = this
+    override fun toLogRecordData(): LogRecordData = FakeReadWriteLogRecord(
+        body = body,
+        eventName = eventName,
+        instrumentationScopeInfo = instrumentationScopeInfo,
+        observedTimestamp = observedTimestamp,
+        resource = resource,
+        severityNumber = severityNumber,
+        severityText = severityText,
+        timestamp = timestamp,
+        spanContext = spanContext,
+        attributes = attributes.toMap(),
+        droppedAttributesCount = droppedAttributesCount,
+    )
 }

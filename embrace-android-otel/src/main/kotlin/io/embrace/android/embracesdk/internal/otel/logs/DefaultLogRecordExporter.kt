@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 import io.opentelemetry.kotlin.export.OperationResultCode
 import io.opentelemetry.kotlin.logging.data.LogRecordData
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
+import io.opentelemetry.kotlin.logging.model.ReadableLogRecord
 
 /**
  * Exports the given log record to a [LogSink]
@@ -25,7 +26,8 @@ internal class DefaultLogRecordExporter(
         val result = logSink.storeLogs(telemetry.map(LogRecordData::toEmbracePayload))
 
         if (result == StoreDataResult.SUCCESS && externalExporters.isNotEmpty()) {
-            externalExportDispatcher.dispatch(externalExporters) { it.export(telemetry) }
+            val snapshot = telemetry.map { (it as? ReadableLogRecord)?.toLogRecordData() ?: it }
+            externalExportDispatcher.dispatch(externalExporters) { it.export(snapshot) }
         }
 
         return when (result) {

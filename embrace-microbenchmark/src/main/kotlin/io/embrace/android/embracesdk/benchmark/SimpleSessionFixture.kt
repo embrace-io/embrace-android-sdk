@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.benchmark
 
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
@@ -17,6 +18,9 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDir
  * [completedSpanCount] sets how much work the session did, which is the main thing that decides
  * how big it is once persisted. [attributesPerSpan] sets how much each of those spans carries.
  * [useKotlinSdk] selects the opentelemetry-kotlin implementation that records the spans.
+ *
+ * Time is frozen so the fixture is identical on every run: wall-clock timestamps would make the
+ * compressed size depend on how fast the machine recorded the spans.
  */
 internal class SimpleSessionFixture(
     private val completedSpanCount: Int = COMPLETED_SPAN_COUNT,
@@ -62,7 +66,7 @@ internal class SimpleSessionFixture(
     )
 
     val directory: SessionPartDirectory = SessionPartDirectory(
-        timestamp = 1_726_739_283_136L,
+        timestamp = FIXTURE_TIME_MS,
         uuid = "9d1e7c22-0f5b-4a63-8c2e-6b7d4f1a0e35",
         userSessionId = "4f3c9a7d0b8e5f2a4c116c9b1f2ec1d3",
         sessionPartId = "6c9b1f2ec1d34f3c9a7d0b8e5f2a4c11",
@@ -73,7 +77,7 @@ internal class SimpleSessionFixture(
     val envelope: Envelope<SessionPartPayload>
 
     init {
-        val harness = TelemetryDestinationHarness(useKotlinSdk)
+        val harness = TelemetryDestinationHarness(useKotlinSdk, Clock { FIXTURE_TIME_MS })
         val spanService = harness.createUncappedSpanService()
 
         repeat(completedSpanCount) { index ->
@@ -141,5 +145,6 @@ internal class SimpleSessionFixture(
         const val COMPLETED_SPAN_COUNT = 10
         const val IN_FLIGHT_SPAN_COUNT = 2
         const val ATTRIBUTES_PER_SPAN = 5
+        const val FIXTURE_TIME_MS = 1_726_739_283_136L
     }
 }

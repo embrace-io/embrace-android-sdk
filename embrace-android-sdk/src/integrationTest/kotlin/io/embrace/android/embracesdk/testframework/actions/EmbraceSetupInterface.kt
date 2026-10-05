@@ -30,6 +30,8 @@ import io.embrace.android.embracesdk.internal.config.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.ConfigServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
+import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
+import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.CoreModuleImpl
 import io.embrace.android.embracesdk.internal.injection.DeliveryModuleImpl
@@ -43,8 +45,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jniDeleg
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.sharedObjectLoaderTestOverride
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
-import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
-import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.payload.Attribute
@@ -75,6 +75,7 @@ import org.robolectric.shadows.ShadowLooper
 import java.io.File
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.random.Random
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
 
@@ -87,8 +88,13 @@ internal class EmbraceSetupInterface(
     fakeStorageLayer: Boolean = false,
     ignoredInternalErrors: List<InternalErrorType> = listOf(),
     val fakeClock: FakeClock = FakeClock(currentTime = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS),
+    uuidSeed: Int? = null,
 ) {
-    private val uuidSource: UuidSource = TestUuidSource()
+    /**
+     * Randomize the seed used to generate UUIDs for each instance by default. This can be pinned to a value to gain predictability
+     * in the sequence of UUIDs generated if required.
+     */
+    private val uuidSource: UuidSource = TestUuidSource(uuidSeed ?: Random.nextInt())
     private val processIdentifier: String = uuidSource.createUuid()
 
     val fakeNetworkConnectivityService = FakeNetworkConnectivityService()

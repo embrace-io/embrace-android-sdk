@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeStorageService
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -24,7 +25,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 internal class UserSessionOrchestrationModuleImplTest {
 
-    private val openTelemetryModule = FakeOpenTelemetryModule()
+    private val openTelemetryModule = FakeOpenTelemetryModule(otelSdkMode = OtelSdkMode.REGULAR)
 
     @Test
     fun `session parts are written when they can be read back`() {
@@ -47,7 +48,7 @@ internal class UserSessionOrchestrationModuleImplTest {
     }
 
     private fun createModule(deliveryModule: DeliveryModule?): UserSessionOrchestrationModuleImpl {
-        val initModule = FakeInitModule()
+        val initModule = FakeInitModule(otelSdkMode = OtelSdkMode.COMPAT)
         val workerThreadModule = FakeWorkerThreadModule(fakeInitModule = initModule)
         val configService = FakeConfigService(
             config = EmbraceConfig(persistence = { PersistenceConfig(multiFileEnabled = { true }) }),

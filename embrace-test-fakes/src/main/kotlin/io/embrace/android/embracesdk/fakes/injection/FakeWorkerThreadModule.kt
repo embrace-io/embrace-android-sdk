@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.fakes.injection
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -10,7 +11,7 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.concurrent.atomic.AtomicReference
 
 class FakeWorkerThreadModule(
-    fakeInitModule: FakeInitModule = FakeInitModule(),
+    fakeInitModule: FakeInitModule = FakeInitModule(otelSdkMode = OtelSdkMode.COMPAT),
     threadBlockageMonitoringThread: Thread? = null,
     testWorkers: List<Worker.Background> = emptyList(),
     private val testPriorityWorker: Worker.Priority? = null,

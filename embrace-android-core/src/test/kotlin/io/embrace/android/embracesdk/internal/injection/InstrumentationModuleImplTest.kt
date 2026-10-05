@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeStorageService
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -17,10 +18,10 @@ internal class InstrumentationModuleImplTest {
 
     @Test
     fun `test default behavior`() {
-        val fakeInitModule = FakeInitModule()
+        val fakeInitModule = FakeInitModule(otelSdkMode = OtelSdkMode.COMPAT)
         val module = InstrumentationModuleImpl(
             initModule = fakeInitModule,
-            openTelemetryModule = FakeOpenTelemetryModule(),
+            openTelemetryModule = FakeOpenTelemetryModule(otelSdkMode = OtelSdkMode.REGULAR),
             workerThreadModule = FakeWorkerThreadModule(
                 fakeInitModule = fakeInitModule,
                 testWorkers = listOf(Worker.Background.NonIoRegWorker),

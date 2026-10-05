@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
@@ -31,7 +32,7 @@ internal class LogsApiDelegateTest {
     fun setUp() {
         logService = FakeLogService()
         telemetryService = FakeTelemetryService()
-        val fakeInitModule = FakeInitModule(fakeTelemetryService = telemetryService)
+        val fakeInitModule = FakeInitModule(fakeTelemetryService = telemetryService, otelSdkMode = OtelSdkMode.COMPAT)
         moduleInitBootstrapper = ModuleInitBootstrapper(
             fakeInitModule,
             logModuleSupplier = { _, _, _, _, _, _, _ ->

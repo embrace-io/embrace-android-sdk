@@ -64,7 +64,7 @@ internal class OtelSpanStartArgsTest(
             private = true,
             tracer = tracer,
             startTimeMs = originalStartTime,
-            openTelemetry = fakeOpenTelemetry(otelSdkMode.useKotlinSdk),
+            openTelemetry = fakeOpenTelemetry(otelSdkMode),
         )
         val startTime = clock.tick()
         with(args.embraceAttributes.toSet()) {
@@ -86,7 +86,7 @@ internal class OtelSpanStartArgsTest(
     @Test
     fun `add parent after initial creation`() {
         val parent = tracer.startSpan("parent")
-        val otel = fakeOpenTelemetry(otelSdkMode.useKotlinSdk)
+        val otel = fakeOpenTelemetry(otelSdkMode)
         val ctx = otel.context.root().storeSpan(parent)
         val args = OtelSpanStartArgs(
             name = "test",
@@ -116,7 +116,7 @@ internal class OtelSpanStartArgsTest(
             private = false,
             tracer = tracer,
             spanKind = SpanKind.CLIENT,
-            openTelemetry = fakeOpenTelemetry(otelSdkMode.useKotlinSdk),
+            openTelemetry = fakeOpenTelemetry(otelSdkMode),
         )
         val startTime = otelClock.now()
         args.startSpan(startTime).assertSpan(
@@ -136,7 +136,7 @@ internal class OtelSpanStartArgsTest(
             internal = false,
             private = false,
             tracer = tracer,
-            openTelemetry = fakeOpenTelemetry(otelSdkMode.useKotlinSdk),
+            openTelemetry = fakeOpenTelemetry(otelSdkMode),
         )
 
         creator.startSpan(startTime).assertSpan(
@@ -150,7 +150,7 @@ internal class OtelSpanStartArgsTest(
             internal = true,
             private = false,
             tracer = tracer,
-            openTelemetry = fakeOpenTelemetry(otelSdkMode.useKotlinSdk),
+            openTelemetry = fakeOpenTelemetry(otelSdkMode),
         )
 
         internalSpanCreator.startSpan(startTime).assertSpan(

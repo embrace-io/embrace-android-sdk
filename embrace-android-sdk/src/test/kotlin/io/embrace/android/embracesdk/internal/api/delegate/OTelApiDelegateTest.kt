@@ -43,8 +43,8 @@ internal class OTelApiDelegateTest(
     @Before
     fun setUp() {
         bootstrapper = ModuleInitBootstrapper(
-            FakeInitModule(),
-            FakeOpenTelemetryModule(useKotlinSdk = otelSdkMode.useKotlinSdk),
+            FakeInitModule(otelSdkMode = OtelSdkMode.COMPAT),
+            FakeOpenTelemetryModule(otelSdkMode = otelSdkMode),
         )
         bootstrapper.init(ApplicationProvider.getApplicationContext())
         cfg = bootstrapper.openTelemetryModule.otelSdkConfig

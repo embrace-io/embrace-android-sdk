@@ -19,7 +19,7 @@ class FakeOpenTelemetryModule(
     override val currentSessionPartSpan: CurrentSessionPartSpan = FakeCurrentSessionPartSpan(),
     override val logSink: LogSink = LogSinkImpl(),
     override val spanRepository: SpanRepository = SpanRepository(),
-    useKotlinSdk: Boolean = true,
+    otelSdkMode: OtelSdkMode,
 ) : OpenTelemetryModule {
     private val sdkName = "sdk"
     private val sdkVersion = "1.0"
@@ -44,7 +44,7 @@ class FakeOpenTelemetryModule(
             otelClock = FakeOtelKotlinClock(),
             configuration = otelSdkConfig,
             spanService = spanService,
-            useKotlinSdk = useKotlinSdk,
+            useKotlinSdk = otelSdkMode.useKotlinSdk,
         )
 
     override val tracingApi: TracingApi

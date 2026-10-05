@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -47,7 +48,7 @@ internal class ReactNativeInternalInterfaceImplTest {
         logger = FakeInternalLogger(false)
         context = ApplicationProvider.getApplicationContext()
         bootstrapper = ModuleInitBootstrapper(
-            FakeInitModule(),
+            FakeInitModule(otelSdkMode = OtelSdkMode.COMPAT),
             instrumentationModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
                 FakeInstrumentationModule(ApplicationProvider.getApplicationContext())
             },

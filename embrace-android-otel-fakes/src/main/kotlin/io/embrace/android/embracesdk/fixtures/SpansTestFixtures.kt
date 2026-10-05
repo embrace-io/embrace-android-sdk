@@ -1,6 +1,7 @@
 
 package io.embrace.android.embracesdk.fixtures
 
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
@@ -44,7 +45,7 @@ val testSpan: Span = Span(
     links = emptyList(),
 )
 
-val fakeContextKey: ContextKey<String> = fakeOpenTelemetry().context.createKey("fake-context-key")
+val fakeContextKey: ContextKey<String> = fakeOpenTelemetry(OtelSdkMode.REGULAR).context.createKey("fake-context-key")
 
 private fun createMapOfSize(size: Int): Map<String, String> {
     val mutableMap = mutableMapOf<String, String>()

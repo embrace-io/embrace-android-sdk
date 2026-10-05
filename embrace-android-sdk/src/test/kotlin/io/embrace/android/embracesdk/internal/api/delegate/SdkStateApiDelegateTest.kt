@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -36,7 +37,7 @@ internal class SdkStateApiDelegateTest {
         configService = FakeConfigService(deviceId = TestUuidSource().createUuid())
         sessionIdsProvider = FakeSessionIdsProvider()
         val moduleInitBootstrapper = ModuleInitBootstrapper(
-            FakeInitModule(),
+            FakeInitModule(otelSdkMode = OtelSdkMode.COMPAT),
             configServiceSupplier = { _, _, _, _, _ ->
                 configService
             },

@@ -8,7 +8,7 @@ import io.opentelemetry.kotlin.createOpenTelemetry
 /**
  * Creates a instance of [OpenTelemetry] that can be used in tests
  */
-fun fakeOpenTelemetry(useKotlinSdk: Boolean = true): OpenTelemetry = if (useKotlinSdk) {
+fun fakeOpenTelemetry(otelSdkMode: OtelSdkMode): OpenTelemetry = if (otelSdkMode.useKotlinSdk) {
     createOpenTelemetry {
         context { storageMode = ImplicitContextStorageMode.THREAD_LOCAL }
     }

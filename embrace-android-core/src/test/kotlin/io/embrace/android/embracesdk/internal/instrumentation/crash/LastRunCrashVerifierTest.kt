@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash
 
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -25,7 +26,10 @@ internal class LastRunCrashVerifierTest {
         mockCrashFileMarker = mockk()
         lastRunCrashVerifier = LastRunCrashVerifier(mockCrashFileMarker)
         fakeWorkerThreadModule =
-            FakeWorkerThreadModule(fakeInitModule = FakeInitModule(), testWorkers = listOf(Worker.Background.NonIoRegWorker))
+            FakeWorkerThreadModule(
+                fakeInitModule = FakeInitModule(otelSdkMode = OtelSdkMode.COMPAT),
+                testWorkers = listOf(Worker.Background.NonIoRegWorker),
+            )
         worker = fakeWorkerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker)
     }
 

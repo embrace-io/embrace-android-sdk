@@ -36,26 +36,24 @@ class FakeInitModule(
         uuidSource = uuidSource,
     ),
     override var instrumentedConfig: InstrumentedConfig = FakeInstrumentedConfig(),
-    private val otelSdkMode: OtelSdkMode? = null,
+    private val otelSdkMode: OtelSdkMode,
 ) : InitModule by initModule {
 
     override val telemetryService: TelemetryService
         get() = fakeTelemetryService ?: initModule.telemetryService
 
     /**
-     * Selects the OTel SDK implementation before SDK init, when [otelSdkMode] is supplied.
+     * Selects the OTel SDK implementation from [otelSdkMode] before SDK init.
      */
     val openTelemetryModule: OpenTelemetryModule by lazy {
         OpenTelemetryModuleImpl(initModule = this).apply {
-            otelSdkMode?.let { mode ->
-                setOtelBehavior(
-                    createOtelBehavior(
-                        remoteCfg = RemoteConfig(
-                            otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = if (mode.useKotlinSdk) 100f else 0f),
-                        ),
+            setOtelBehavior(
+                createOtelBehavior(
+                    remoteCfg = RemoteConfig(
+                        otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = if (otelSdkMode.useKotlinSdk) 100f else 0f),
                     ),
-                )
-            }
+                ),
+            )
         }
     }
 

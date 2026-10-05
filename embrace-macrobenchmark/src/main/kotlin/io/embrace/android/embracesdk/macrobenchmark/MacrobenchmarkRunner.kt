@@ -6,7 +6,13 @@ import androidx.test.runner.AndroidJUnitRunner
 class MacrobenchmarkRunner : AndroidJUnitRunner() {
 
     override fun onCreate(arguments: Bundle) {
-        arguments.putString("androidx.benchmark.enabledRules", "Macrobenchmark")
+        if (arguments.getString(ENABLED_RULES) == null) {
+            arguments.putString(ENABLED_RULES, "Macrobenchmark")
+        }
         super.onCreate(arguments)
+    }
+
+    private companion object {
+        const val ENABLED_RULES = "androidx.benchmark.enabledRules"
     }
 }

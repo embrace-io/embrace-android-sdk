@@ -21,6 +21,12 @@ android {
             signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += listOf("release")
         }
+        create("baselineProfile") {
+            isDebuggable = false
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+        }
     }
 
     targetProjectPath = ":embrace-macrobenchmark-app"
@@ -48,10 +54,12 @@ dependencies {
 
 androidComponents {
     beforeVariants(selector().all()) {
-        it.enable = it.buildType == "benchmark"
+        it.enable = it.buildType == "benchmark" || it.buildType == "baselineProfile"
     }
 }
 
-tasks.matching { it.name == "connectedBenchmarkAndroidTest" }.configureEach {
+tasks.matching {
+    it.name == "connectedBenchmarkAndroidTest" || it.name == "connectedBaselineProfileAndroidTest"
+}.configureEach {
     dependsOn(":embrace-gradle-plugin:publishToMavenLocal")
 }

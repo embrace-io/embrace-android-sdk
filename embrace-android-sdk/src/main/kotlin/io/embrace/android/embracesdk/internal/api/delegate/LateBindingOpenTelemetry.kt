@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.api.delegate
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.context.Context
+import io.opentelemetry.kotlin.context.ContextKey
 import io.opentelemetry.kotlin.factory.BaggageFactory
 import io.opentelemetry.kotlin.factory.ContextFactory
 import io.opentelemetry.kotlin.factory.SpanContextFactory
@@ -13,7 +14,9 @@ import io.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.kotlin.logging.LoggerProvider
 import io.opentelemetry.kotlin.logging.SeverityNumber
 import io.opentelemetry.kotlin.metrics.MeterProvider
+import io.opentelemetry.kotlin.propagation.TextMapGetter
 import io.opentelemetry.kotlin.propagation.TextMapPropagator
+import io.opentelemetry.kotlin.propagation.TextMapSetter
 import io.opentelemetry.kotlin.tracing.Span
 import io.opentelemetry.kotlin.tracing.SpanCreationAction
 import io.opentelemetry.kotlin.tracing.SpanKind
@@ -49,10 +52,24 @@ internal class LateBindingOpenTelemetry(
     override val spanContext: SpanContextFactory get() = resolve().spanContext
     override val traceFlags: TraceFlagsFactory get() = resolve().traceFlags
     override val traceState: TraceStateFactory get() = resolve().traceState
-    override val context: ContextFactory get() = resolve().context
+    override val context: ContextFactory = LateBindingContextFactory { resolve().context }
     override val span: SpanFactory get() = resolve().span
     override val baggage: BaggageFactory get() = resolve().baggage
-    override val propagator: TextMapPropagator get() = resolve().propagator
+    override val propagator: TextMapPropagator = LateBindingTextMapPropagator { resolve().propagator }
+}
+
+private class LateBindingContextFactory(private val resolve: () -> ContextFactory) : ContextFactory {
+    override fun root(): Context = resolve().root()
+    override fun implicit(): Context = resolve().implicit()
+    override fun <T> createKey(name: String): ContextKey<T> = resolve().createKey(name)
+}
+
+private class LateBindingTextMapPropagator(private val resolve: () -> TextMapPropagator) : TextMapPropagator {
+    override fun fields(): Collection<String> = resolve().fields()
+    override fun <T> inject(context: Context, carrier: T?, setter: TextMapSetter<T>) =
+        resolve().inject(context, carrier, setter)
+    override fun <T> extract(context: Context, carrier: T?, getter: TextMapGetter<T>): Context =
+        resolve().extract(context, carrier, getter)
 }
 
 private class LateBindingTracer(private val resolve: () -> Tracer) : Tracer {

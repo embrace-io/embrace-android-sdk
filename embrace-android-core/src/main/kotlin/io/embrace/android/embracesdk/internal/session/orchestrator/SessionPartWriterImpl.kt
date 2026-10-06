@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartWriterImpl.Companion.MAX_CARRIED_OVER_SPANS
 import io.embrace.android.embracesdk.internal.session.orchestrator.TelemetryWriteScheduler.WriteStrategy
 import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpansWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadataWriter
@@ -102,14 +103,15 @@ class SessionPartWriterImpl(
                     reportMissedEnd("Session part started before the previous one ended")
                     finish(orphan, crashing = false)
                 }
+                // Change what `current` is and queue the metadata write for the new session part, then the spans to be carried over
+                current = writers
+                queueMetadataWrite(writers, WriteStrategy.IMMEDIATE)
                 if (carriedOverSpans.isNotEmpty()) {
                     writers.completedSpanWrites.write(WriteStrategy.IMMEDIATE, carriedOverSpans.toList())
                     carriedOverSpans.clear()
                 }
-                current = writers
             }
 
-            queueMetadataWrite(writers, WriteStrategy.IMMEDIATE)
             queueSpanSnapshotsSeed(writers)
             registerResourceChangeListener()
         }

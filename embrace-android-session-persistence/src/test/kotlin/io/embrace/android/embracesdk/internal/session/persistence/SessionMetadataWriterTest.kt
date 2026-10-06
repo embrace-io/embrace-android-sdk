@@ -322,8 +322,13 @@ internal class SessionMetadataWriterTest {
     }
 
     @Test
-    fun `the metadata is synced to disk as part of its atomic write`() {
+    fun `only the first metadata write of a session part is synced to disk immediately`() {
         assertTrue(write())
+        assertEquals(1, recorder.sections.count { it == FILE_SYNC_SECTION })
+
+        metadataProvider = { fullyPopulatedMetadata.copy(userId = "newUserId") }
+        assertTrue(writer.write())
+        assertEquals("newUserId", readMetadata().user_id)
         assertEquals(1, recorder.sections.count { it == FILE_SYNC_SECTION })
         assertNoInternalErrors()
     }

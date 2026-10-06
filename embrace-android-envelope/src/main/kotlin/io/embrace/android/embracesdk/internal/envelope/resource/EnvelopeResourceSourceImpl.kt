@@ -15,6 +15,7 @@ class EnvelopeResourceSourceImpl(
     private val versionName: String,
     private val versionCode: Int?,
     private val rnBundleIdProvider: () -> String?,
+    private val useKotlinSdkProvider: () -> Boolean,
 ) : EnvelopeResourceSource {
 
     private val extras = ConcurrentHashMap<String, String>()
@@ -24,6 +25,10 @@ class EnvelopeResourceSourceImpl(
 
     private val pctRollouts: String? by lazy {
         configService.enabledPctRollouts.takeIf { it.isNotEmpty() }?.sorted()?.joinToString(";")
+    }
+
+    private val otelSdkMode: String by lazy {
+        if (useKotlinSdkProvider()) OTEL_SDK_MODE_REGULAR else OTEL_SDK_MODE_COMPAT
     }
 
     override fun getEnvelopeResource(): EnvelopeResource {
@@ -61,6 +66,7 @@ class EnvelopeResourceSourceImpl(
             extras = buildMap {
                 putAll(extras)
                 pctRollouts?.let { put(KEY_PCT_ROLLOUTS, it) }
+                put(KEY_OTEL_SDK_MODE, otelSdkMode)
             },
         )
     }
@@ -108,5 +114,8 @@ class EnvelopeResourceSourceImpl(
 
     companion object {
         const val KEY_PCT_ROLLOUTS: String = "pct_rollouts"
+        const val KEY_OTEL_SDK_MODE: String = "otel_sdk_mode"
+        const val OTEL_SDK_MODE_REGULAR: String = "regular"
+        const val OTEL_SDK_MODE_COMPAT: String = "compat"
     }
 }

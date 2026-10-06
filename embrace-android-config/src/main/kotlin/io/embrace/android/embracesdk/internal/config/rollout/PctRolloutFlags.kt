@@ -7,4 +7,5 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
  */
 internal val PCT_ROLLOUT_FLAGS: List<Pair<String, (RemoteConfig) -> Float?>> = listOf(
     "mfp" to { it.pctMultiFilePersistenceEnabled }, // pct_multi_file_persistence_enabled
+    "okt" to { it.otelKotlinSdkConfig?.pctEnabled }, // otel_kotlin_sdk.pct_enabled
 )

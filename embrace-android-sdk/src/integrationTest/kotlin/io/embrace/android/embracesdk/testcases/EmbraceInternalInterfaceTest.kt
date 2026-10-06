@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.testcases
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSourceImpl
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
@@ -61,7 +62,13 @@ internal class EmbraceInternalInterfaceTest(
                 }
             },
             assertAction = {
-                val expected = mapOf("foo" to "bar")
+                val expected = mapOf(
+                    "foo" to "bar",
+                    EnvelopeResourceSourceImpl.KEY_OTEL_SDK_MODE to when {
+                        otelSdkMode.useKotlinSdk -> EnvelopeResourceSourceImpl.OTEL_SDK_MODE_REGULAR
+                        else -> EnvelopeResourceSourceImpl.OTEL_SDK_MODE_COMPAT
+                    },
+                )
                 val sessionResource = checkNotNull(getSingleSessionEnvelope().resource)
                 assertEquals(expected, sessionResource.extras)
 

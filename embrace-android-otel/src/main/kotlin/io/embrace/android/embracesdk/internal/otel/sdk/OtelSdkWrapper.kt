@@ -58,8 +58,25 @@ class OtelSdkWrapper(
         }
     }
 
-    @Suppress("DEPRECATION", "SpreadOperator")
     private val kotlinApi: OpenTelemetry by lazy {
+        try {
+            createOtelInstance(otelClock, configuration, limits)
+        } catch (exc: NoClassDefFoundError) {
+            throw LinkageError(
+                "Please enable library desugaring in your project to use the Embrace SDK. " +
+                    "This is required if you target API levels below 24. For instructions, please see " +
+                    "https://developer.android.com/studio/write/java8-support#library-desugaring",
+                exc,
+            )
+        }
+    }
+
+    @Suppress("DEPRECATION", "SpreadOperator")
+    private fun createOtelInstance(
+        otelClock: Clock,
+        configuration: OtelSdkConfig,
+        limits: OtelLimitsConfig,
+    ): OpenTelemetry =
         createSdkOtelInstance(
             useKotlinSdk = useKotlinSdk,
             tracerProvider = {
@@ -88,7 +105,6 @@ class OtelSdkWrapper(
             },
             clock = otelClock,
         )
-    }
 
     val openTelemetryKotlin: OpenTelemetry by lazy {
         EmbOpenTelemetry(

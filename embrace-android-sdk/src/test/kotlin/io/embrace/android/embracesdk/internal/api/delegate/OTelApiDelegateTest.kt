@@ -109,6 +109,22 @@ internal class OTelApiDelegateTest(
     }
 
     @Test
+    fun `context captured before start binds late`() {
+        sdkCallChecker.started.set(false)
+        val otel = delegate.getOpenTelemetryKotlin()
+        val context = otel.context
+
+        sdkCallChecker.started.set(true)
+        val span = otel.tracerProvider.getTracer("test").startSpan("span")
+        val scope = context.root().storeSpan(span).attach()
+        try {
+            assertEquals(span.spanContext.traceId, context.implicit().extractSpan().spanContext.traceId)
+        } finally {
+            scope.detach()
+        }
+    }
+
+    @Test
     fun `set resource attribute before sdk starts`() {
         sdkCallChecker.started.set(false)
         delegate.setResourceAttribute("test", "foo")

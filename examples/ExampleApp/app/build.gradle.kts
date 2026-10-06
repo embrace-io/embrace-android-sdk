@@ -45,6 +45,9 @@ android {
             matchingFallbacks += listOf("release")
             isDebuggable = false
         }
+        create("benchmarkOtelRegular") {
+            initWith(buildTypes.getByName("benchmark"))
+        }
         create("obfuscated") {
             initWith(buildTypes.getByName("release"))
             signingConfig = signingConfigs.getByName("debug")

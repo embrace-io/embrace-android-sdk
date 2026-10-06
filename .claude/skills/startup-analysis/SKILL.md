@@ -89,18 +89,26 @@ always set it explicitly for the run, note the value you replaced, and restore i
 2. Compile-check first (`:app:assembleBenchmark`) — the ExampleApp uses current public API, so
    very old versions may not compile; that bounds how far back this option reaches.
 
+## Choosing the opentelemetry-kotlin implementation
+
+The `benchmark` build type runs the SDK default (`compat`, which wraps opentelemetry-java). The
+`benchmarkOtelRegular` build type is identical except that its `embrace-config.json` enables the
+pure-Kotlin `regular` implementation. Measure both unless the user asks for one, and report them
+separately. `<Variant>` below is `Benchmark` or `BenchmarkOtelRegular`, and `<variant>` is
+`benchmark` or `benchmarkOtelRegular`.
+
 ## Procedure
 
 1. Set the SDK version (above), then run:
    ```
-   examples/ExampleApp/gradlew -p examples/ExampleApp :app:benchmark:connectedBenchmarkAndroidTest \
+   examples/ExampleApp/gradlew -p examples/ExampleApp :app:benchmark:connected<Variant>AndroidTest \
      -Pandroid.testInstrumentationRunnerArguments.class=io.embrace.android.benchmark.StartupBenchmarks \
      -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.dryRunMode.enable=false
    ```
    The dry-run override is mandatory — the module defaults it to true, and dry runs produce NO
    traces (there would be nothing to analyze).
 2. **Collect**: the per-iteration traces land in
-   `examples/ExampleApp/app/benchmark/build/outputs/connected_android_test_additional_output/benchmark/connected/<device>/`
+   `examples/ExampleApp/app/benchmark/build/outputs/connected_android_test_additional_output/<variant>/connected/<device>/`
    as `StartupBenchmarks_coldStartup_iterNNN_<timestamp>.perfetto-trace`. Each rerun WIPES this
    directory — copy any traces you need to keep (e.g. per-pass comparisons) before rerunning.
 3. **Analyze**: fetch the trace_processor launcher once per machine (it is a python3 script that

@@ -17,19 +17,25 @@ internal const val INITIAL_CAPACITY = 16
  *
  * State travels separately, against a [StateKey]: a value emitted against one is retained and replayed to handlers registered
  * against that key afterwards.
+ *
+ * A [BusPoll] travels the other way, against a [PollKey]: it is sent to every [PollHandler] registered against its key, and their
+ * results are gathered back to the caller.
  */
 class EventBus(private val internalErrorHandler: InternalErrorHandler) {
 
     /**
-     * Guards every change to [handlers], and every replacement of [retainedStateValues].
+     * Guards every change to [registrations], and every replacement of [retainedStateValues].
      */
     private val lock = Any()
 
     /**
      * The handlers registered against each key, indexed by [BusKey.id], written and replaced only under [lock].
+     *
+     * This `AtomicReferenceArray` is heterogeneous and each slot's array is created with the element type of what it holds
+     * (`Array<EventHandler>`, `Array<PollHandler>`), so that it can be cast whole by [registeredFor].
      */
     @Volatile
-    private var handlers = AtomicReferenceArray<Array<EventHandler<*>>?>(INITIAL_CAPACITY)
+    private var registrations = AtomicReferenceArray<Array<*>?>(INITIAL_CAPACITY)
 
     /**
      * The value most recently emitted against each [StateKey], indexed by [BusKey.id], replaced only by [retainStateUnderLock].
@@ -51,13 +57,13 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
     /**
      * Handlers already reported as having thrown, so that each is reported once. Identity keyed, as registration is.
      */
-    private val loggedFailures = Collections.synchronizedSet(Collections.newSetFromMap(IdentityHashMap<EventHandler<*>, Boolean>()))
+    private val loggedFailures = Collections.synchronizedSet(Collections.newSetFromMap(IdentityHashMap<Any, Boolean>()))
 
     /**
      * Registers [handler] against [key]. Registering a handler already registered against [key] does nothing.
      */
     fun <E : Any> addHandler(key: EventKey<E>, handler: EventHandler<E>) {
-        addTo(key, handler)
+        addTo<EventHandler<*>>(key, handler)
     }
 
     /**
@@ -65,16 +71,23 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
      * registered against [key] does nothing.
      */
     fun <E : Any> addStateHandler(key: StateKey<E>, handler: EventHandler<E>) {
-        if (addTo(key, handler)) {
+        if (addTo<EventHandler<*>>(key, handler)) {
             replayState(key, handler)
         }
+    }
+
+    /**
+     * Registers [handler] against [key]. Registering a handler already registered against [key] does nothing.
+     */
+    fun <V : Any> addPollHandler(key: PollKey<V>, handler: PollHandler<V>) {
+        addTo<PollHandler<*>>(key, handler)
     }
 
     /**
      * Unregisters [handler] from [key], forgetting any failure reported for it so that registering it again, reports again.
      */
     fun <E : Any> removeHandler(key: EventKey<E>, handler: EventHandler<E>) {
-        if (removeFrom(key, handler)) {
+        if (removeFrom<EventHandler<*>>(key, handler)) {
             loggedFailures.remove(handler)
         }
     }
@@ -83,7 +96,16 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
      * Unregisters [handler] from [key], forgetting any failure reported for it so that registering it again, reports again.
      */
     fun <E : Any> removeStateHandler(key: StateKey<E>, handler: EventHandler<E>) {
-        if (removeFrom(key, handler)) {
+        if (removeFrom<EventHandler<*>>(key, handler)) {
+            loggedFailures.remove(handler)
+        }
+    }
+
+    /**
+     * Unregisters [handler] from [key], forgetting any failure reported for it so that registering it again, reports again.
+     */
+    fun <V : Any> removePollHandler(key: PollKey<V>, handler: PollHandler<V>) {
+        if (removeFrom<PollHandler<*>>(key, handler)) {
             loggedFailures.remove(handler)
         }
     }
@@ -92,7 +114,7 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
      * Emits [event] to every handler registered against [key], on the calling thread, retaining nothing.
      */
     fun <E : Any> emit(key: EventKey<E>, event: E) {
-        val registered = handlersFor(key.id) ?: return
+        val registered = registeredFor<EventHandler<*>>(key.id) ?: return
         deliverTo(registered, event)
     }
 
@@ -116,8 +138,27 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
             retainStateUnderLock(key.id, value)
         }
 
-        val registered = handlersFor(key.id) ?: return
+        val registered = registeredFor<EventHandler<*>>(key.id) ?: return
         deliverTo(registered, value)
+    }
+
+    /**
+     * Sends [poll] to every handler registered against its key, on the calling thread, and returns their results. A handler that
+     * throws contributes no result.
+     */
+    fun <V : Any> poll(poll: BusPoll<V>): List<PollResult<V>> {
+        val registered = registeredFor<PollHandler<*>>(poll.key.id) ?: return emptyList()
+        val results = ArrayList<PollResult<V>>(registered.size)
+        for (handler in registered) {
+            @Suppress("UNCHECKED_CAST") // addPollHandler pairs a key with handlers of that key's own type
+            val typed = handler as PollHandler<V>
+            try {
+                results.add(typed.onPoll(poll))
+            } catch (failure: Exception) {
+                reportFailure(handler, failure)
+            }
+        }
+        return results
     }
 
     /**
@@ -148,50 +189,62 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
         }
     }
 
-    private fun reportFailure(handler: EventHandler<*>, failure: Exception) {
-        if (loggedFailures.add(handler)) {
+    private fun reportFailure(registrant: Any, failure: Exception) {
+        if (loggedFailures.add(registrant)) {
             internalErrorHandler.trackInternalError(InternalErrorType.EventBusHandlerFail, failure)
         }
     }
 
-    private fun handlersFor(id: Int): Array<EventHandler<*>>? {
-        val current = handlers
-        return if (id < current.length()) current.get(id) else null
+    /**
+     * The array registered against [id], cast whole to the element type it was created with.
+     */
+    @Suppress("UNCHECKED_CAST") // checked against the array's element class, which addTo and removeFrom create as T
+    private inline fun <reified T : Any> registeredFor(id: Int): Array<T>? {
+        val current = registrations
+        return (if (id < current.length()) current.get(id) else null) as Array<T>?
     }
 
     /**
-     * Adds [handler] to those registered against [key], replacing the array rather than changing it so that an emit already holding
-     * it is undisturbed, and reports whether it was not already registered.
+     * Adds [registrant] to those registered against [key], replacing the array rather than changing it so that a dispatch already
+     * holding it is undisturbed, and reports whether it was not already registered.
+     *
+     * Callers pin [T] to the registered interface, as the slot's array is created with that element type and a narrower one would
+     * reject the next registrant.
      */
-    private fun addTo(key: BusKey, handler: EventHandler<*>): Boolean {
+    private inline fun <reified T : Any> addTo(key: BusKey, registrant: T): Boolean {
         synchronized(lock) {
-            var current = handlers
+            var current = registrations
             if (key.id >= current.length()) {
                 current = grownToHold(current, key.id)
-                handlers = current
+                registrations = current
             }
 
-            val existing = current.get(key.id) ?: emptyArray()
-            if (existing.any { it === handler }) {
+            @Suppress("UNCHECKED_CAST") // checked against the array's element class, which this and removeFrom create as T
+            val existing = current.get(key.id) as Array<T>?
+            if (existing == null) {
+                current.set(key.id, arrayOf(registrant))
+                return true
+            }
+            if (existing.any { it === registrant }) {
                 return false
             }
-            current.set(key.id, existing + handler)
+            current.set(key.id, existing + registrant)
             return true
         }
     }
 
     /**
-     * Removes [handler] from those registered against [key], replacing the array rather than changing it so that an emit already
-     * holding it is undisturbed, and reports whether it was registered.
+     * Removes [registrant] from those registered against [key], replacing the array rather than changing it so that a dispatch
+     * already holding it is undisturbed, and reports whether it was registered.
      */
-    private fun removeFrom(key: BusKey, handler: EventHandler<*>): Boolean {
+    private inline fun <reified T : Any> removeFrom(key: BusKey, registrant: T): Boolean {
         synchronized(lock) {
-            val existing = handlersFor(key.id) ?: return false
-            if (existing.none { it === handler }) {
+            val existing = registeredFor<T>(key.id) ?: return false
+            if (existing.none { it === registrant }) {
                 return false
             }
-            val remaining = existing.filterNot { it === handler }
-            handlers.set(key.id, if (remaining.isEmpty()) null else remaining.toTypedArray())
+            val remaining = existing.filterNot { it === registrant }
+            registrations.set(key.id, if (remaining.isEmpty()) null else remaining.toTypedArray())
             return true
         }
     }

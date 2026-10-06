@@ -81,6 +81,9 @@ import kotlin.time.Duration.Companion.seconds
 
 /**
  * Test harness for which an instance is generated each test run and provided to the test by the Rule
+ *
+ * Defaults to a [TestUuidSource] that randomizes the UUIDs it generates. A custom [UuidSource] can be
+ * used instead for, say, tests that require predictable UUID sequences to be generated.
  */
 internal class EmbraceSetupInterface(
     private val workersToFake: List<Worker.Background> = emptyList(),
@@ -88,13 +91,8 @@ internal class EmbraceSetupInterface(
     fakeStorageLayer: Boolean = false,
     ignoredInternalErrors: List<InternalErrorType> = listOf(),
     val fakeClock: FakeClock = FakeClock(currentTime = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS),
-    uuidSeed: Int? = null,
+    private val uuidSource: UuidSource = TestUuidSource(Random.nextInt()),
 ) {
-    /**
-     * Randomize the seed used to generate UUIDs for each instance by default. This can be pinned to a value to gain predictability
-     * in the sequence of UUIDs generated if required.
-     */
-    private val uuidSource: UuidSource = TestUuidSource(uuidSeed ?: Random.nextInt())
     private val processIdentifier: String = uuidSource.createUuid()
 
     val fakeNetworkConnectivityService = FakeNetworkConnectivityService()

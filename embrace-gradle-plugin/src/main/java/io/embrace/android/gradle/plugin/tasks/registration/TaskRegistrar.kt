@@ -9,6 +9,7 @@ import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.config.variant.EmbraceVariantConfigurationBuilder
 import io.embrace.android.gradle.plugin.dependency.installDependenciesForVariant
 import io.embrace.android.gradle.plugin.instrumentation.AsmTaskRegistration
+import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.tasks.buildinfo.ExportBuildInfoTaskRegistration
@@ -17,8 +18,10 @@ import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTasksRegistration
 import io.embrace.android.gradle.plugin.tasks.r8.JvmMappingUploadTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.reactnative.GenerateRnSourcemapTaskRegistration
 import io.embrace.android.gradle.plugin.util.BuildIdValueSource
+import io.embrace.android.gradle.plugin.util.buildIdProvider
 import org.gradle.api.Project
 import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Provider
 
 /**
@@ -33,6 +36,9 @@ class TaskRegistrar(
 ) {
 
     private val logger = EmbraceLogger(TaskRegistrar::class.java)
+
+    private val buildIdsProperty: MapProperty<String, String> =
+        project.objects.mapProperty(String::class.java, String::class.java)
 
     /**
      * It is in charge of looping through each variant and configure each task.
@@ -57,13 +63,21 @@ class TaskRegistrar(
     }
 
     private fun onVariant(variant: AndroidCompactedVariantData, ref: Variant) {
-        val buildIdProvider: Provider<String> = project.providers.of(BuildIdValueSource::class.java) {
-            it.parameters.getVariantName().set(variant.name)
-        }
+        val embraceVariantConfiguration = embraceVariantConfigurationBuilder.buildVariantConfiguration(variant)
+
+        // only generate a unique build ID when it is uploaded or exported, as a fresh ID resolved at
+        // configuration time invalidates the configuration cache.
+        val uploadsMappingFiles = !behavior.isUploadMappingFilesDisabled &&
+            hasUploadCredentials(embraceVariantConfiguration.orNull)
+        val requiresUniqueBuildId = !variant.isBuildTypeDebuggable &&
+            !behavior.isPluginDisabledForVariant(variant.name) &&
+            (behavior.isExportBuildInfoEnabled || uploadsMappingFiles)
+        val buildIdProvider = project.providers.buildIdProvider(variant.name, requiresUniqueBuildId)
+        buildIdsProperty.put(variant.name, buildIdProvider)
 
         project.installDependenciesForVariant(variant.name, behavior)
 
-        setupVariantConfigurationListProperty(variant, variantConfigurationsListProperty, buildIdProvider)
+        setupVariantConfigurationListProperty(variant, embraceVariantConfiguration, variantConfigurationsListProperty)
 
         val params = createRegistrationParams(variant, ref, buildIdProvider)
 
@@ -131,6 +145,7 @@ class TaskRegistrar(
         BuildTelemetryService.register(
             project,
             variantConfigurationsListProperty,
+            buildIdsProperty,
             behavior,
             agpWrapper,
         )
@@ -140,33 +155,24 @@ class TaskRegistrar(
         variant: AndroidCompactedVariantData,
         variantConfigurationsListProperty: ListProperty<VariantConfig>,
     ): Boolean {
-        return if (behavior.isUploadMappingFilesDisabled) {
-            false
-        } else {
-            val embraceConfig = variantConfigurationsListProperty.get().first { it.variantName == variant.name }.embraceConfig
-            if (embraceConfig?.apiToken.isNullOrEmpty()) {
-                false
-            } else if (embraceConfig?.appId.isNullOrEmpty()) {
-                false
-            } else {
-                true
-            }
-        }
+        return !behavior.isUploadMappingFilesDisabled &&
+            hasUploadCredentials(variantConfigurationsListProperty.get().first { it.variantName == variant.name }.embraceConfig)
+    }
+
+    private fun hasUploadCredentials(embraceConfig: EmbraceVariantConfig?): Boolean {
+        return !embraceConfig?.apiToken.isNullOrEmpty() &&
+            !embraceConfig?.appId.isNullOrEmpty()
     }
 
     private fun setupVariantConfigurationListProperty(
         androidCompactedVariantData: AndroidCompactedVariantData,
+        embraceVariantConfiguration: Provider<EmbraceVariantConfig>,
         variantConfigurationsListProperty: ListProperty<VariantConfig>,
-        buildIdProvider: Provider<String>,
     ) {
-        val embraceVariantConfiguration = embraceVariantConfigurationBuilder.buildVariantConfiguration(androidCompactedVariantData)
-        // buildIdProvider is ValueSource-backed: Gradle re-evaluates it on every build even when
-        // the configuration cache is active, ensuring a fresh build ID is used each time.
-        val fullVariantConfiguration = buildIdProvider.flatMap { buildId ->
-            embraceVariantConfiguration
-                .map { VariantConfig.from(it, androidCompactedVariantData, buildId) }
-                .orElse(VariantConfig.from(null, androidCompactedVariantData, buildId))
-        }
+        // the build ID is deliberately omitted as this would invalidate configuration cache
+        val fullVariantConfiguration = embraceVariantConfiguration
+            .map { VariantConfig.from(it, androidCompactedVariantData) }
+            .orElse(VariantConfig.from(null, androidCompactedVariantData))
 
         // let's add configuration for current variant to our property
         variantConfigurationsListProperty.add(fullVariantConfiguration)

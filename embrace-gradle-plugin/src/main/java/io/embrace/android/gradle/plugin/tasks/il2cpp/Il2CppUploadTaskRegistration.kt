@@ -135,18 +135,25 @@ class Il2CppUploadTaskRegistration : EmbraceTaskRegistration {
             MultipartUploadTask::class.java,
             variant,
         ) { task ->
-            // buildIdProvider is ValueSource-backed: Gradle re-evaluates it on every build even
-            // when the configuration cache is active, ensuring a fresh build ID each time.
+            val appId = variantInfo.embraceConfig?.appId.orEmpty()
+            val apiToken = variantInfo.embraceConfig?.apiToken.orEmpty()
+            val endpoint = info.endpoint
+            val fileName = info.filename
+            val failBuildOnUploadErrors = behavior.failBuildOnUploadErrors.get()
+            val baseUrl = behavior.baseUrl
+
+            // buildIdProvider is resolved at execution time, so the configuration cache
+            // serializes this lambda.
             task.requestParams.set(
                 buildIdProvider.map { buildId ->
                     RequestParams(
-                        appId = variantInfo.embraceConfig?.appId.orEmpty(),
-                        apiToken = variantInfo.embraceConfig?.apiToken.orEmpty(),
-                        endpoint = info.endpoint,
-                        fileName = info.filename,
+                        appId = appId,
+                        apiToken = apiToken,
+                        endpoint = endpoint,
+                        fileName = fileName,
                         buildId = buildId,
-                        failBuildOnUploadErrors = behavior.failBuildOnUploadErrors.get(),
-                        baseUrl = behavior.baseUrl,
+                        failBuildOnUploadErrors = failBuildOnUploadErrors,
+                        baseUrl = baseUrl,
                     )
                 },
             )

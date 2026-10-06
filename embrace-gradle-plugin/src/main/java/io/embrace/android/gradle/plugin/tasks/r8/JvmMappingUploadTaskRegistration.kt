@@ -51,18 +51,23 @@ class JvmMappingUploadTaskRegistration : MappingTaskRegistration() {
             params.data,
         ) { task ->
             val variantConfig = params.variantConfigurationsListProperty.get().first { it.variantName == params.data.name }
-            // buildIdProvider is ValueSource-backed: Gradle re-evaluates it on every build even
-            // when the configuration cache is active, ensuring a fresh build ID each time.
+            val appId = variantConfig.embraceConfig?.appId.orEmpty()
+            val apiToken = variantConfig.embraceConfig?.apiToken.orEmpty()
+            val baseUrl = params.behavior.baseUrl
+            val failBuildOnUploadErrors = params.behavior.failBuildOnUploadErrors.get()
+
+            // buildIdProvider is resolved at execution time, so the configuration cache
+            // serializes this lambda.
             task.requestParams.set(
                 params.buildIdProvider.map { buildId ->
                     RequestParams(
-                        appId = variantConfig.embraceConfig?.appId.orEmpty(),
-                        apiToken = variantConfig.embraceConfig?.apiToken.orEmpty(),
+                        appId = appId,
+                        apiToken = apiToken,
                         endpoint = EmbraceEndpoint.PROGUARD,
                         fileName = FILE_NAME_MAPPING_TXT,
                         buildId = buildId,
-                        baseUrl = params.behavior.baseUrl,
-                        failBuildOnUploadErrors = params.behavior.failBuildOnUploadErrors.get(),
+                        baseUrl = baseUrl,
+                        failBuildOnUploadErrors = failBuildOnUploadErrors,
                     )
                 },
             )

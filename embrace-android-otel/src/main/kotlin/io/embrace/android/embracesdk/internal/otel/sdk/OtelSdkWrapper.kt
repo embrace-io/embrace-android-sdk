@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.otel.sdk
 
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
+import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalAttributeCount
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalEventCount
@@ -29,6 +30,7 @@ class OtelSdkWrapper(
     otelClock: Clock,
     configuration: OtelSdkConfig,
     spanService: SpanService,
+    errorHandler: InternalErrorHandler,
     limits: OtelLimitsConfig = InstrumentedConfigImpl.otelLimits,
     val useKotlinSdk: Boolean,
 ) {
@@ -87,6 +89,7 @@ class OtelSdkWrapper(
                 }
             },
             clock = otelClock,
+            errorHandler = OtelSdkErrorHandler(errorHandler),
         )
     }
 

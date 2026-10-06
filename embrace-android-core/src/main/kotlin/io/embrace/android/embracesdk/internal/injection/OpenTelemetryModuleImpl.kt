@@ -71,6 +71,7 @@ class OpenTelemetryModuleImpl(
                     otelClock = openTelemetryClock,
                     configuration = otelSdkConfig,
                     spanService = spanService,
+                    errorHandler = initModule.logger,
                     // adding guard in case this is accessed before we fetch the config
                     useKotlinSdk = otelBehavior?.shouldUseKotlinSdk() ?: false,
                 )

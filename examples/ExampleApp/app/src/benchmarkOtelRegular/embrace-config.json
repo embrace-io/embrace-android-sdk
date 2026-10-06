@@ -1,0 +1,10 @@
+{
+  "sdk_config": {
+    "networking": {
+      "traceparent_only_allow_domains": ["httpbin.org"]
+    },
+    "otel": {
+      "enable_otel_kotlin_sdk": true
+    }
+  }
+}

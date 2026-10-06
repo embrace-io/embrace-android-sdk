@@ -29,10 +29,16 @@ import org.junit.runners.Parameterized
  * cost of persisting a realistically shaped session can be compared between storage layers.
  */
 @RunWith(Parameterized::class)
-internal class PersistenceScenarioBenchmark(private val scenarioId: String) {
+internal class PersistenceScenarioBenchmark(
+    private val scenarioId: String,
+    otelSdkMode: OtelSdkMode,
+) {
 
     @get:Rule
     val benchmarkRule = MacrobenchmarkRule()
+
+    @get:Rule
+    val otelSdkModeRule = OtelSdkModeRule(otelSdkMode)
 
     @OptIn(ExperimentalBenchmarkConfigApi::class, ExperimentalPerfettoCaptureApi::class, ExperimentalMetricApi::class)
     @Test
@@ -94,8 +100,10 @@ internal class PersistenceScenarioBenchmark(private val scenarioId: String) {
     companion object {
 
         @JvmStatic
-        @Parameterized.Parameters(name = "{0}")
-        fun scenarios(): List<String> = PersistenceScenarios.all.map(ScenarioSpec::id)
+        @Parameterized.Parameters(name = "{0}-{1}")
+        fun parameters(): List<Array<Any>> = PersistenceScenarios.all.map(ScenarioSpec::id).flatMap { id ->
+            OtelSdkMode.entries.map { mode -> arrayOf(id, mode) }
+        }
 
         private const val PACKAGE_NAME = "io.embrace.android.embracesdk.macrobenchmark.app"
         private const val ITERATIONS = 10

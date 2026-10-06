@@ -22,6 +22,9 @@ android {
             matchingFallbacks += listOf("release")
             proguardFiles("proguard-rules.pro")
         }
+        create("benchmarkOtelRegular") {
+            initWith(getByName("benchmark"))
+        }
     }
 
     targetProjectPath = ":app"
@@ -48,6 +51,6 @@ dependencies {
 
 androidComponents {
     beforeVariants(selector().all()) {
-        it.enable = it.buildType == "benchmark"
+        it.enable = it.buildType == "benchmark" || it.buildType == "benchmarkOtelRegular"
     }
 }

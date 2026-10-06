@@ -49,16 +49,16 @@ internal class BaselineProfileGenerator {
      * opentelemetry-kotlin's 'compat' implementation, which wraps opentelemetry-java.
      */
     @Test
-    fun compat() = collect(otelKotlinSdkPct = 0)
+    fun compat() = collect(OtelSdkMode.COMPAT)
 
     /**
      * opentelemetry-kotlin's 'regular' implementation, written in pure Kotlin.
      */
     @Test
-    fun regular() = collect(otelKotlinSdkPct = 100)
+    fun regular() = collect(OtelSdkMode.REGULAR)
 
-    private fun collect(otelKotlinSdkPct: Int) {
-        device.executeShellCommand("settings put global $OTEL_KOTLIN_SDK_SETTING $otelKotlinSdkPct")
+    private fun collect(otelSdkMode: OtelSdkMode) {
+        otelSdkMode.select(device)
         try {
             baselineProfileRule.collect(
                 packageName = PACKAGE_NAME,
@@ -73,14 +73,13 @@ internal class BaselineProfileGenerator {
                 }
             )
         } finally {
-            device.executeShellCommand("settings delete global $OTEL_KOTLIN_SDK_SETTING")
+            OtelSdkMode.clear(device)
         }
     }
 
     private companion object {
         const val PACKAGE_NAME = "io.embrace.android.embracesdk.macrobenchmark.app"
         const val STATUS_TIMEOUT_MS = 30_000L
-        const val OTEL_KOTLIN_SDK_SETTING = "embrace_pct_otel_kotlin_sdk"
     }
 }
 

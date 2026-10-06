@@ -8,21 +8,24 @@ import androidx.benchmark.macro.TraceSectionMetric
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
 import androidx.benchmark.perfetto.ExperimentalPerfettoCaptureApi
 import androidx.benchmark.perfetto.PerfettoConfig
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Until
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
 /**
  * Captures a perfetto trace per iteration of ending a session and starting the next one.
  */
-@RunWith(AndroidJUnit4::class)
-internal class SessionBenchmark {
+@RunWith(Parameterized::class)
+internal class SessionBenchmark(otelSdkMode: OtelSdkMode) {
 
     @get:Rule
     val benchmarkRule = MacrobenchmarkRule()
+
+    @get:Rule
+    val otelSdkModeRule = OtelSdkModeRule(otelSdkMode)
 
     @OptIn(ExperimentalBenchmarkConfigApi::class, ExperimentalPerfettoCaptureApi::class, ExperimentalMetricApi::class)
     @Test
@@ -57,4 +60,11 @@ internal class SessionBenchmark {
     private fun traceConfig(): String =
         checkNotNull(javaClass.getResourceAsStream("/perfetto-config.pbtx"))
             .use { it.reader().readText() }
+
+    companion object {
+
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun modes(): List<OtelSdkMode> = OtelSdkMode.entries
+    }
 }

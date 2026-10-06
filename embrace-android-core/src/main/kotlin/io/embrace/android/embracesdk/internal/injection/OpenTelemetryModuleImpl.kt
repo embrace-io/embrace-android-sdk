@@ -66,23 +66,14 @@ class OpenTelemetryModuleImpl(
 
     override val otelSdkWrapper: OtelSdkWrapper by lazy {
         EmbTrace.trace("otel-sdk-wrapper-init") {
-            try {
-                OtelSdkWrapper(
-                    otelClock = openTelemetryClock,
-                    configuration = otelSdkConfig,
-                    spanService = spanService,
-                    errorHandler = initModule.logger,
-                    // adding guard in case this is accessed before we fetch the config
-                    useKotlinSdk = otelBehavior?.shouldUseKotlinSdk() ?: false,
-                )
-            } catch (exc: NoClassDefFoundError) {
-                throw LinkageError(
-                    "Please enable library desugaring in your project to use the Embrace SDK. " +
-                        "This is required if you target API levels below 24. For instructions, please see " +
-                        "https://developer.android.com/studio/write/java8-support#library-desugaring",
-                    exc,
-                )
-            }
+            OtelSdkWrapper(
+                otelClock = openTelemetryClock,
+                configuration = otelSdkConfig,
+                spanService = spanService,
+                errorHandler = initModule.logger,
+                // adding guard in case this is accessed before we fetch the config
+                useKotlinSdk = otelBehavior?.shouldUseKotlinSdk() ?: false,
+            )
         }
     }
 

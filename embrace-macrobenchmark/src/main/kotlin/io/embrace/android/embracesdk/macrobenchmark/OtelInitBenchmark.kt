@@ -8,37 +8,21 @@ import androidx.benchmark.macro.TraceSectionMetric
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
 import androidx.benchmark.perfetto.ExperimentalPerfettoCaptureApi
 import androidx.benchmark.perfetto.PerfettoConfig
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
-import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
-import org.junit.After
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
 @RunWith(Parameterized::class)
-internal class OtelInitBenchmark(
-    @Suppress("unused") private val mode: String,
-    private val otelKotlinSdkPct: Int,
-) {
+internal class OtelInitBenchmark(otelSdkMode: OtelSdkMode) {
 
     @get:Rule
     val benchmarkRule = MacrobenchmarkRule()
 
-    private val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-
-    @Before
-    fun selectMode() {
-        device.executeShellCommand("settings put global $OTEL_KOTLIN_SDK_SETTING $otelKotlinSdkPct")
-    }
-
-    @After
-    fun clearMode() {
-        device.executeShellCommand("settings delete global $OTEL_KOTLIN_SDK_SETTING")
-    }
+    @get:Rule
+    val otelSdkModeRule = OtelSdkModeRule(otelSdkMode)
 
     @OptIn(ExperimentalBenchmarkConfigApi::class, ExperimentalPerfettoCaptureApi::class, ExperimentalMetricApi::class)
     @Test
@@ -75,16 +59,11 @@ internal class OtelInitBenchmark(
 
     companion object {
 
-        /**
-         * opentelemetry-kotlin's 'compat' implementation wraps opentelemetry-java, whereas its
-         * 'regular' implementation is written in pure Kotlin.
-         */
         @JvmStatic
         @Parameterized.Parameters(name = "{0}")
-        fun modes(): List<Array<Any>> = listOf(arrayOf("compat", 0), arrayOf("regular", 100))
+        fun modes(): List<OtelSdkMode> = OtelSdkMode.entries
 
         private const val PACKAGE_NAME = "io.embrace.android.embracesdk.macrobenchmark.app"
-        private const val OTEL_KOTLIN_SDK_SETTING = "embrace_pct_otel_kotlin_sdk"
         private const val ITERATIONS = 10
         private const val STATUS_TIMEOUT_MS = 10_000L
     }

@@ -5,6 +5,9 @@ starting the next one on each. Each iteration fills the session with telemetry (
 calls `Embrace.endUserSession()` (`session-end`), then waits ~2s for the SDK's queued persistence
 writes so they land in the trace.
 
+Every benchmark runs once per opentelemetry-kotlin implementation (`compat` and `regular`), which
+appear as a suffix on the test name, e.g. `sessionEnd[compat]`.
+
 It wipes app data per iteration because the SDK restores a persisted user session in a new process
 and declines a manual end for an iteration that inherits one. The app depends on
 `:embrace-android-sdk` as a project dependency, so benchmarks measure the working tree.
@@ -102,5 +105,5 @@ adb shell settings delete global embrace_pct_otel_kotlin_sdk           # SDK def
 ```
 
 The app turns those into a remote config on disk, which the SDK reads at startup, and deletes the
-binary config cache that would otherwise take priority. `BaselineProfileGenerator` and `OtelInitBenchmark`
-set and clear `embrace_pct_otel_kotlin_sdk` themselves.
+binary config cache that would otherwise take priority. Every benchmark and `BaselineProfileGenerator`
+set and clear `embrace_pct_otel_kotlin_sdk` themselves, so setting it by hand has no effect on them.

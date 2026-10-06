@@ -63,7 +63,14 @@ class SessionMetadataWriter(
             return true
         }
 
-        writeAtomically(partDir, METADATA_FILE_NAME, Long.MAX_VALUE, target.counters) { stream ->
+        val firstMetadataWrite = lastWritten == null
+        writeAtomically(
+            partDir = partDir,
+            fileName = METADATA_FILE_NAME,
+            maxBytes = Long.MAX_VALUE,
+            counters = target.counters,
+            syncImmediately = firstMetadataWrite,
+        ) { stream ->
             SessionMetadata.ADAPTER.encode(stream, metadata)
         }
         lastWritten = metadata

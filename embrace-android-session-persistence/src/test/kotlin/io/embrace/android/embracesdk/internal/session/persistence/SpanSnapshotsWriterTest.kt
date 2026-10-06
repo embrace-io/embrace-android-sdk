@@ -1,10 +1,13 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeSectionRecorder
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import okio.buffer
 import okio.source
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -46,6 +49,7 @@ internal class SpanSnapshotsWriterTest {
 
     private lateinit var sessionsDir: File
     private lateinit var logger: FakeInternalLogger
+    private lateinit var recorder: FakeSectionRecorder
     private lateinit var writer: SpanSnapshotsWriter
 
     @Volatile
@@ -55,9 +59,16 @@ internal class SpanSnapshotsWriterTest {
     fun setUp() {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
         logger = FakeInternalLogger(throwOnInternalError = false)
+        recorder = FakeSectionRecorder()
+        SystemTrace.recorder = recorder
         activePart = partDirectory
         writer = SpanSnapshotsWriter(target { activePart }, logger)
         createPartDir(partDirectory)
+    }
+
+    @After
+    fun tearDown() {
+        SystemTrace.recorder = null
     }
 
     @Test
@@ -185,6 +196,15 @@ internal class SpanSnapshotsWriterTest {
         assertTrue(write())
         assertEquals(fullyPopulatedSpanSnapshotsProto, readSnapshots())
         assertEquals(listOf(SPAN_SNAPSHOTS_FILE_NAME), partDir().list()?.toList())
+        assertNoInternalErrors()
+    }
+
+    @Test
+    fun `a rollup is not synced to disk immediately`() {
+        writer = writerWith(maxRecords = 2)
+        assertTrue(write(span = listOf(first, second)))
+        assertTrue(append(listOf(third), live = listOf(first, second, third)))
+        assertFalse(recorder.sections.contains(FILE_SYNC_SECTION))
         assertNoInternalErrors()
     }
 

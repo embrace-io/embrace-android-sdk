@@ -1,8 +1,11 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeSectionRecorder
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
+import io.embrace.android.embracesdk.internal.utils.SystemTrace
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -51,6 +54,8 @@ internal class SessionMetadataWriterTest {
     @Volatile
     private var activePart: SessionPartDirectory? = partDirectory
 
+    private lateinit var recorder: FakeSectionRecorder
+
     @Before
     fun setUp() {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
@@ -59,8 +64,15 @@ internal class SessionMetadataWriterTest {
         resourceProvider = { fullyPopulatedResource }
         symbolProvider = { null }
         activePart = partDirectory
+        recorder = FakeSectionRecorder()
+        SystemTrace.recorder = recorder
         writer = createWriter { activePart }
         createPartDir(partDirectory)
+    }
+
+    @After
+    fun tearDown() {
+        SystemTrace.recorder = null
     }
 
     @Test
@@ -310,6 +322,18 @@ internal class SessionMetadataWriterTest {
     }
 
     @Test
+    fun `only the first metadata write of a session part is synced to disk immediately`() {
+        assertTrue(write())
+        assertEquals(1, recorder.sections.count { it == FILE_SYNC_SECTION })
+
+        metadataProvider = { fullyPopulatedMetadata.copy(userId = "newUserId") }
+        assertTrue(writer.write())
+        assertEquals("newUserId", readMetadata().user_id)
+        assertEquals(1, recorder.sections.count { it == FILE_SYNC_SECTION })
+        assertNoInternalErrors()
+    }
+
+    @Test
     fun `missing session part directory is reported and does not throw`() {
         val absent = SessionPartDirectory(timestamp = TIMESTAMP + 2, uuid = UUID)
         assertFalse(write(absent))
@@ -386,9 +410,12 @@ internal class SessionMetadataWriterTest {
 
     @Test
     fun `metadata that has not changed is not written again`() {
+        assertEquals(0, recorder.sections.count { it == FILE_SYNC_SECTION })
         assertTrue(write())
+        assertEquals(1, recorder.sections.count { it == FILE_SYNC_SECTION })
         assertTrue(metadataFile().delete())
         assertTrue(write())
+        assertEquals(1, recorder.sections.count { it == FILE_SYNC_SECTION })
 
         assertFalse(metadataFile().isFile)
         assertNoInternalErrors()

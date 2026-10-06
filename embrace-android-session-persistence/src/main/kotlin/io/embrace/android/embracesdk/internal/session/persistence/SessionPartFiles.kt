@@ -24,6 +24,11 @@ internal const val SPAN_COLLECTION_VERSION_TAG = 1
 internal const val SPAN_COLLECTION_RECORD_TAG = 2
 
 /**
+ * Trace section around an immediate sync to disk after an atomic write.
+ * */
+internal const val FILE_SYNC_SECTION = "mf-file-sync"
+
+/**
  * Writes [fileName] into [partDir] by encoding to a temporary file and then renaming it, so a
  * partially written file is never observed. Any file already at that path is replaced.
  *
@@ -34,6 +39,9 @@ internal const val SPAN_COLLECTION_RECORD_TAG = 2
  * Its name is derived from [fileName], so one orphaned by a process that died mid-write is
  * reclaimed by the next write of that file rather than adding to what is held on disk.
  *
+ * Optionally, allow the write to be synced down to the file system immediately. It's more costly to do,
+ * but worth it in cases that happen infrequently and where a write failure is more consequential.
+ *
  * Throws [IOException] if the file could not be written; callers are responsible for reporting that
  * as an internal error of the appropriate type.
  */
@@ -42,13 +50,23 @@ internal fun writeAtomically(
     fileName: String,
     maxBytes: Long,
     counters: FileWriteCounters,
+    syncImmediately: Boolean = false,
     encode: (OutputStream) -> Unit,
 ) {
     SystemTrace.trace("mf-file-write-atomic") {
         val tmpFile = File(partDir, "$fileName.tmp")
         try {
-            val stream = LimitedOutputStream(tmpFile.outputStream().buffered(), maxBytes)
-            stream.use(encode)
+            val fileStream = tmpFile.outputStream()
+            val stream = LimitedOutputStream(fileStream.buffered(), maxBytes)
+            stream.use {
+                encode(it)
+                if (syncImmediately) {
+                    it.flush()
+                    SystemTrace.trace(FILE_SYNC_SECTION) {
+                        fileStream.fd.sync()
+                    }
+                }
+            }
             if (!tmpFile.renameTo(File(partDir, fileName))) {
                 throw IOException("Failed to rename $fileName")
             }

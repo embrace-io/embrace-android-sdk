@@ -92,7 +92,7 @@ class SessionPartWriterImpl(
                 ),
             )
 
-            writeTracker.markWriting(sessionPartId)
+            writeTracker.markWriting(writers.directory)
             directoryStore.create(writers.directory)
 
             synchronized(bufferLock) {
@@ -143,7 +143,7 @@ class SessionPartWriterImpl(
         }
         worker.submit {
             writers.seal()
-            writeTracker.markComplete(writers.directory.sessionPartId)
+            writeTracker.markComplete(writers.directory)
 
             if (!crashing && !processTerminating) {
                 notifyWritesComplete()

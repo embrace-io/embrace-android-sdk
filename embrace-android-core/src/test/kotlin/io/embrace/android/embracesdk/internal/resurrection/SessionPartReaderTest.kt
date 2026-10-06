@@ -153,7 +153,7 @@ internal class SessionPartReaderTest {
     @Test
     fun `a session part that is still being written to is left alone`() {
         persist(partDirectory)
-        writeTracker.markWriting(partDirectory.sessionPartId)
+        writeTracker.markWriting(partDirectory)
 
         createReader().readPersistedSessionParts()
 

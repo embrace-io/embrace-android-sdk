@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
+import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTracker
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertFalse
@@ -34,6 +35,7 @@ internal class SessionPartWriterTrackerTest {
     @get:Rule
     val tempFolder: TemporaryFolder = TemporaryFolder()
 
+    private lateinit var sessionsDir: File
     private lateinit var clock: FakeClock
     private lateinit var executor: BlockingScheduledExecutorService
     private lateinit var writeTracker: SessionPartWriteTracker
@@ -48,7 +50,7 @@ internal class SessionPartWriterTrackerTest {
 
     @Before
     fun setUp() {
-        val sessionsDir: File = tempFolder.newFolder("embrace_sessions_split")
+        sessionsDir = tempFolder.newFolder("embrace_sessions_split")
         clock = FakeClock()
         executor = BlockingScheduledExecutorService(clock, true)
         writeTracker = SessionPartWriteTracker()
@@ -76,20 +78,24 @@ internal class SessionPartWriterTrackerTest {
     @Test
     fun `a session part is marked as written to as soon as it starts`() {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
-        assertTrue(writeTracker.isWriting(SESSION_PART_ID))
+        executor.runCurrentlyBlocked()
+
+        // the directory marked is the one the part is written into
+        assertTrue(writeTracker.isWriting(directoryOnDisk(SESSION_PART_ID)))
     }
 
     @Test
     fun `an ended session part is still marked until its queued writes have run`() {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         executor.runCurrentlyBlocked()
+        val directory = directoryOnDisk(SESSION_PART_ID)
 
         currentSessionPartSpan.endSession(startNewSession = false)
         writer.onSessionPartEnded(SESSION_PART_ID)
-        assertTrue(writeTracker.isWriting(SESSION_PART_ID))
+        assertTrue(writeTracker.isWriting(directory))
 
         executor.runCurrentlyBlocked()
-        assertFalse(writeTracker.isWriting(SESSION_PART_ID))
+        assertFalse(writeTracker.isWriting(directory))
     }
 
     @Test
@@ -102,14 +108,21 @@ internal class SessionPartWriterTrackerTest {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
         executor.runCurrentlyBlocked()
 
-        assertFalse(writeTracker.isWriting(SESSION_PART_ID))
-        assertTrue(writeTracker.isWriting(OTHER_SESSION_PART_ID))
+        assertFalse(writeTracker.isWriting(directoryOnDisk(SESSION_PART_ID)))
+        assertTrue(writeTracker.isWriting(directoryOnDisk(OTHER_SESSION_PART_ID)))
     }
 
     @Test
     fun `a session part that never ends stays marked`() {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        executor.runCurrentlyBlocked()
         writer.onCrash()
-        assertTrue(writeTracker.isWriting(SESSION_PART_ID))
+        assertTrue(writeTracker.isWriting(directoryOnDisk(SESSION_PART_ID)))
     }
+
+    private fun directoryOnDisk(sessionPartId: String): SessionPartDirectory =
+        sessionsDir.list()
+            .orEmpty()
+            .mapNotNull(SessionPartDirectory::fromDirName)
+            .single { it.sessionPartId == sessionPartId }
 }

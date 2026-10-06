@@ -100,6 +100,7 @@ class PayloadSourceModuleImpl(
             configService = configService,
             device = device,
             rnBundleIdProvider = { rnBundleIdTracker.getReactNativeBundleId() },
+            useKotlinSdkProvider = { otelModule.otelSdkWrapper.useKotlinSdk },
             versionName = BuildConfig.VERSION_NAME,
             versionCode = BuildConfig.VERSION_CODE.toIntOrNull(),
         ).apply {

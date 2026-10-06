@@ -50,6 +50,7 @@ internal class EnvelopeResourceSourceImplTest {
             "",
             53,
             { "fakeReactNativeBundleId" },
+            { false },
         )
         val envelope = source.getEnvelopeResource()
 
@@ -126,7 +127,7 @@ internal class EnvelopeResourceSourceImplTest {
 
         source.add("key", "value")
         assertEquals(2, observed.size)
-        assertEquals(mapOf("key" to "value"), observed.last().extras)
+        assertEquals("value", observed.last().extras["key"])
 
         // re-adding the same value leaves the resource untouched
         source.add("key", "value")
@@ -134,7 +135,7 @@ internal class EnvelopeResourceSourceImplTest {
 
         source.add("key", "other")
         assertEquals(3, observed.size)
-        assertEquals(mapOf("key" to "other"), observed.last().extras)
+        assertEquals("other", observed.last().extras["key"])
     }
 
     @Test
@@ -193,14 +194,29 @@ internal class EnvelopeResourceSourceImplTest {
                 "key" to "value",
                 EnvelopeResourceSourceImpl.KEY_PCT_ROLLOUTS to
                     "aei;mfp",
+                EnvelopeResourceSourceImpl.KEY_OTEL_SDK_MODE to EnvelopeResourceSourceImpl.OTEL_SDK_MODE_COMPAT,
             ),
             source.getEnvelopeResource().extras,
+        )
+    }
+
+    @Test
+    fun `otel sdk mode is always present`() {
+        assertEquals(
+            EnvelopeResourceSourceImpl.OTEL_SDK_MODE_COMPAT,
+            createSource(FakeDevice()).getEnvelopeResource().extras[EnvelopeResourceSourceImpl.KEY_OTEL_SDK_MODE],
+        )
+        assertEquals(
+            EnvelopeResourceSourceImpl.OTEL_SDK_MODE_REGULAR,
+            createSource(FakeDevice(), useKotlinSdk = true)
+                .getEnvelopeResource().extras[EnvelopeResourceSourceImpl.KEY_OTEL_SDK_MODE],
         )
     }
 
     private fun createSource(
         device: Device,
         configService: FakeConfigService = FakeConfigService(),
+        useKotlinSdk: Boolean = false,
     ) = EnvelopeResourceSourceImpl(
         configService,
         UnitySdkVersionInfo(FakeKeyValueStore()),
@@ -209,5 +225,6 @@ internal class EnvelopeResourceSourceImplTest {
         "",
         53,
         { "fakeReactNativeBundleId" },
+        { useKotlinSdk },
     )
 }

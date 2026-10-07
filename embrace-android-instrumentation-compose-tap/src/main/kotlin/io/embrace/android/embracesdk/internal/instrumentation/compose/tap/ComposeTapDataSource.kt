@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.ui.TapSignal
-import kotlin.concurrent.Volatile
 
 /**
  * Captures custom breadcrumbs for compose taps.

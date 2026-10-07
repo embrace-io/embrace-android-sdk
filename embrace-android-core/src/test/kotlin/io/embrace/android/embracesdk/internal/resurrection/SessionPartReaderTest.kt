@@ -1,10 +1,12 @@
 package io.embrace.android.embracesdk.internal.resurrection
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.fakes.FakeCachedLogEnvelopeStore
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeIntakeService
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeNativeCrashService
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
@@ -14,12 +16,15 @@ import io.embrace.android.embracesdk.internal.delivery.intake.IntakeResult
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.envelope.session.SESSION_ENVELOPE_TYPE
 import io.embrace.android.embracesdk.internal.envelope.session.SESSION_ENVELOPE_VERSION
+import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
+import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.session.UserSessionRestoreDecision
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpansWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadataWriter
@@ -28,10 +33,12 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDir
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTarget
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTracker
 import io.embrace.android.embracesdk.internal.session.persistence.SessionReconstructionService
+import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshotsWriter
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -49,6 +56,7 @@ internal class SessionPartReaderTest {
         private const val PROCESS_ID = "cccccccccccccccccccccccccccccccc"
         private const val PERSISTED_PROCESS_ID = "dddddddddddddddddddddddddddddddd"
         private const val METADATA_FILE_NAME = "metadata.pb"
+        private const val TERMINATION_REASON = "inactivity"
 
         private val partDirectory = SessionPartDirectory(
             timestamp = FakeClock.DEFAULT_FAKE_CURRENT_TIME,
@@ -64,7 +72,10 @@ internal class SessionPartReaderTest {
             sessionPartId = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
         )
 
-        private fun sessionSpan(processIdentifier: String? = PERSISTED_PROCESS_ID) = Span(
+        private fun sessionSpan(
+            processIdentifier: String? = PERSISTED_PROCESS_ID,
+            sessionPartId: String? = null,
+        ) = Span(
             traceId = "6c9b1f2ec1d34f3c9a7d0b8e5f2a4c11",
             spanId = "aaaaaaaaaaaaaaa1",
             name = "emb-session",
@@ -75,6 +86,7 @@ internal class SessionPartReaderTest {
             attributes = listOfNotNull(
                 Attribute(key = "emb.type", data = "ux.session"),
                 processIdentifier?.let { Attribute(key = EmbSessionAttributes.EMB_PROCESS_IDENTIFIER, data = it) },
+                sessionPartId?.let { Attribute(key = EmbSessionAttributes.EMB_SESSION_PART_ID, data = it) },
             ),
             links = emptyList(),
         )
@@ -94,6 +106,8 @@ internal class SessionPartReaderTest {
     private lateinit var intakeService: FakeIntakeService
     private lateinit var slowIntake: SlowIntakeService
     private lateinit var writeTracker: SessionPartWriteTracker
+    private lateinit var nativeCrashService: FakeNativeCrashService
+    private var restoreDecision: UserSessionRestoreDecision? = null
 
     @Before
     fun setUp() {
@@ -105,6 +119,8 @@ internal class SessionPartReaderTest {
         intakeService = FakeIntakeService()
         slowIntake = SlowIntakeService()
         writeTracker = SessionPartWriteTracker()
+        nativeCrashService = FakeNativeCrashService()
+        restoreDecision = null
     }
 
     @Test
@@ -131,13 +147,155 @@ internal class SessionPartReaderTest {
     }
 
     @Test
-    fun `a resurrected session part is taken in as incomplete`() {
+    fun `a dead session part is resurrected and taken in complete`() {
+        terminateUserSession()
         persist(partDirectory)
         createReader().readPersistedSessionParts(performingResurrection = true)
 
-        assertEquals(emptyList<Any>(), intakeService.intakeList)
-        assertFalse(intakeService.cacheList.single().metadata.complete)
+        val intake = intakeService.intakeList.single()
+        assertTrue(intake.metadata.complete)
+        assertEquals(emptyList<Any>(), intakeService.cacheList)
+        assertEquals("1", intake.envelope.sessionPartAttribute(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART))
+        assertEquals(TERMINATION_REASON, intake.envelope.sessionPartAttribute(EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON))
         assertDeleted(partDirectory)
+    }
+
+    @Test
+    fun `a dead session part that a later pass reaches is still resurrected`() {
+        terminateUserSession()
+        persistTwoParts()
+        val reader = createReader(slowIntake)
+
+        // the launch pass stops on the first part, so it doesn't reach the last part of the user session
+        reader.readPersistedSessionParts(performingResurrection = true)
+        assertEquals(ids(partDirectory), slowIntake.takenPartIds)
+
+        // a later pass, which isn't the launch pass, reaches it and resurrects it all the same
+        slowIntake.takes.single().store()
+        slowIntake.stall = false
+        reader.readPersistedSessionParts()
+
+        val (first, last) = slowIntake.takes
+        assertNull(first.envelope.sessionPartAttribute(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART))
+        assertEquals("1", last.envelope.sessionPartAttribute(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART))
+        assertDeleted(partDirectory, laterPartDirectory)
+    }
+
+    @Test
+    fun `a session part this process persisted is not resurrected`() {
+        terminateUserSession()
+        persist(partDirectory, span = sessionSpan(processIdentifier = PROCESS_ID))
+        createReader().readPersistedSessionParts()
+
+        assertEquals(
+            sessionSpan(processIdentifier = PROCESS_ID),
+            intakeService.getIntakes<SessionPartPayload>().single().envelope.getSessionPartSpan(),
+        )
+    }
+
+    @Test
+    fun `a session part that records no process is only treated as dead by the launch pass`() {
+        restoreDecision = UserSessionRestoreDecision.Restored(userSessionId = partDirectory.userSessionId, backgroundOnly = true)
+        persist(partDirectory, span = sessionSpan(processIdentifier = null))
+        persist(laterPartDirectory, span = sessionSpan(processIdentifier = null))
+        writeTracker.markWriting(laterPartDirectory)
+        val reader = createReader()
+
+        reader.readPersistedSessionParts(performingResurrection = true)
+        writeTracker.markComplete(laterPartDirectory)
+        reader.readPersistedSessionParts()
+
+        val (atLaunch, later) = intakeService.intakeList
+        assertEquals("1", atLaunch.envelope.sessionPartAttribute(EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART))
+        assertNull(later.envelope.sessionPartAttribute(EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART))
+    }
+
+    @Test
+    fun `a dead session part's native crash is attached and only that crash is deleted`() {
+        val crash = nativeCrash(partDirectory.sessionPartId)
+        val otherCrash = nativeCrash("ffffffffffffffffffffffffffffffff")
+        nativeCrashService.addNativeCrashData(crash)
+        nativeCrashService.addNativeCrashData(otherCrash)
+        persist(partDirectory, span = sessionSpan(sessionPartId = partDirectory.sessionPartId))
+        createReader().readPersistedSessionParts()
+
+        val envelope = intakeService.intakeList.single().envelope
+        assertEquals(crash.nativeCrashId, envelope.sessionPartAttribute(EmbSessionAttributes.EMB_CRASH_ID))
+        assertEquals(listOf(crash), nativeCrashService.nativeCrashesSent.map { it.first })
+        assertEquals(listOf(otherCrash), nativeCrashService.getNativeCrashes())
+    }
+
+    @Test
+    fun `each dead part a pass resurrects gets its own native crash`() {
+        nativeCrashService.addNativeCrashData(nativeCrash(partDirectory.sessionPartId))
+        nativeCrashService.addNativeCrashData(nativeCrash(laterPartDirectory.sessionPartId))
+        persist(partDirectory, span = sessionSpan(sessionPartId = partDirectory.sessionPartId))
+        persist(laterPartDirectory, span = sessionSpan(sessionPartId = laterPartDirectory.sessionPartId))
+
+        createReader().readPersistedSessionParts()
+
+        assertEquals(2, intakeService.intakeList.size)
+        intakeService.intakeList.forEach { intake ->
+            assertEquals(
+                "crash-${intake.metadata.sessionPartId}",
+                intake.envelope.sessionPartAttribute(EmbSessionAttributes.EMB_CRASH_ID),
+            )
+        }
+    }
+
+    @Test
+    fun `a dead session part's native crash is only sent and deleted once the part is stored`() {
+        val crash = nativeCrash(partDirectory.sessionPartId)
+        nativeCrashService.addNativeCrashData(crash)
+        persist(partDirectory, span = sessionSpan(sessionPartId = partDirectory.sessionPartId))
+        intakeService.pendingResults.add(IntakeResult.RETRYABLE_FAILURE)
+        val reader = createReader()
+
+        // the part isn't stored, so its crash is neither sent nor deleted
+        reader.readPersistedSessionParts()
+        assertEquals(emptyList<NativeCrashData>(), nativeCrashService.nativeCrashesSent.map { it.first })
+        assertEquals(listOf(crash), nativeCrashService.getNativeCrashes())
+
+        // the retry finds the crash again, so the part still carries its id, and once it's stored the crash is sent
+        reader.readPersistedSessionParts()
+        val retried = intakeService.intakeList.last().envelope
+        assertEquals(crash.nativeCrashId, retried.sessionPartAttribute(EmbSessionAttributes.EMB_CRASH_ID))
+        assertEquals(listOf(crash), nativeCrashService.nativeCrashesSent.map { it.first })
+        assertEquals(emptyList<NativeCrashData>(), nativeCrashService.getNativeCrashes())
+    }
+
+    @Test
+    fun `a dead session part's native crash is left on disk when the part can never be stored`() {
+        val crash = nativeCrash(partDirectory.sessionPartId)
+        nativeCrashService.addNativeCrashData(crash)
+        persist(partDirectory, span = sessionSpan(sessionPartId = partDirectory.sessionPartId))
+        intakeService.pendingResults.add(IntakeResult.PERMANENT_FAILURE)
+        createReader().readPersistedSessionParts()
+
+        // the part is gone, and its crash is left for the next launch's resurrection to send on its own
+        assertDeleted(partDirectory)
+        assertEquals(emptyList<NativeCrashData>(), nativeCrashService.nativeCrashesSent.map { it.first })
+        assertEquals(listOf(crash), nativeCrashService.getNativeCrashes())
+    }
+
+    @Test
+    fun `a dead session part that cannot be resurrected is deleted and the pass moves on`() {
+        persist(laterPartDirectory)
+        // a second session span left as a snapshot makes the part hold two session spans once resurrected
+        persist(partDirectory, snapshots = listOf(sessionSpan().copy(spanId = "aaaaaaaaaaaaaaa2", endTimeNanos = null)))
+        createReader().readPersistedSessionParts()
+
+        assertEquals(ids(laterPartDirectory), intakesAttempted())
+        assertDeleted(partDirectory, laterPartDirectory)
+        assertTrue(logger.internalErrorMessages.single().throwable is IllegalStateException)
+    }
+
+    @Test
+    fun `the ids of every session part on disk are reported, delivered or not`() {
+        persistTwoParts()
+        writeTracker.markWriting(laterPartDirectory)
+
+        assertEquals(setOf(partDirectory.sessionPartId, laterPartDirectory.sessionPartId), createReader().storedSessionPartIds())
     }
 
     @Test
@@ -411,7 +569,7 @@ internal class SessionPartReaderTest {
             staleEntry: StoredTelemetryMetadata?,
             onStored: (() -> Unit)?,
         ): Future<IntakeResult> {
-            val take = SlowTake(metadata.sessionPartId, events, onStored)
+            val take = SlowTake(metadata.sessionPartId, intake, events, onStored)
             takes.add(take)
             events.add("take:${take.partId}")
             take.onNextWait = firstWait
@@ -424,6 +582,7 @@ internal class SessionPartReaderTest {
 
     private class SlowTake(
         val partId: String,
+        val envelope: Envelope<*>,
         private val events: MutableList<String>,
         private val onStored: (() -> Unit)?,
     ) : Future<IntakeResult> {
@@ -468,6 +627,11 @@ internal class SessionPartReaderTest {
         reconstructionService = SessionReconstructionService(lazy { sessionsDir }, logger),
         intakeService = intakeService,
         writeTracker = writeTracker,
+        deadPartResurrector = MultiFileDeadPartResurrector(
+            resurrector = SessionPartResurrector(FakeCachedLogEnvelopeStore()),
+            nativeCrashServiceProvider = { nativeCrashService },
+            restoreDecisionProvider = { restoreDecision },
+        ),
         processIdProvider = { PROCESS_ID },
         configService = FakeConfigService(
             config = EmbraceConfig(persistence = { PersistenceConfig(multiFileEnabled = { enabled }) }),
@@ -484,7 +648,11 @@ internal class SessionPartReaderTest {
         persist(partDirectory)
     }
 
-    private fun persist(directory: SessionPartDirectory, span: Span = sessionSpan()) {
+    private fun persist(
+        directory: SessionPartDirectory,
+        span: Span = sessionSpan(),
+        snapshots: List<Span> = emptyList(),
+    ) {
         create(directory)
 
         val target = SessionPartWriteTarget(lazy { sessionsDir }) { directory }
@@ -498,6 +666,9 @@ internal class SessionPartReaderTest {
             logger = logger,
         ).write()
         CompletedSpansWriter(target, logger).write(listOf(span))
+        if (snapshots.isNotEmpty()) {
+            SpanSnapshotsWriter(target, logger).write(snapshots)
+        }
     }
 
     /**
@@ -537,4 +708,28 @@ internal class SessionPartReaderTest {
         assertRetained(*retained.toTypedArray())
         assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
     }
+
+    /**
+     * Makes the user session the test parts belong to one this launch terminated.
+     */
+    private fun terminateUserSession() {
+        restoreDecision = UserSessionRestoreDecision.Terminated(
+            userSessionId = partDirectory.userSessionId,
+            backgroundOnly = false,
+            reason = TERMINATION_REASON,
+        )
+    }
+
+    private fun nativeCrash(sessionPartId: String) = NativeCrashData(
+        nativeCrashId = "crash-$sessionPartId",
+        sessionPartId = sessionPartId,
+        userSessionId = partDirectory.userSessionId,
+        timestamp = FakeClock.DEFAULT_FAKE_CURRENT_TIME,
+        crash = "crash",
+        symbols = null,
+    )
+
+    @Suppress("UNCHECKED_CAST")
+    private fun Envelope<*>.sessionPartAttribute(key: String): String? =
+        (this as Envelope<SessionPartPayload>).getSessionPartSpan()?.attributes?.findAttributeValue(key)
 }

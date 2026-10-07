@@ -27,6 +27,9 @@ import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 
 /**
  * Turns a session part persisted by a process that died into the envelope that should be delivered for it.
+ *
+ * Used by [PayloadResurrectionServiceImpl] for session payloads cached in single-file mode, and by
+ * [MultiFileDeadPartResurrector] for dead parts the multi-file session part reader finds on disk.
  */
 class SessionPartResurrector(
     private val cachedLogEnvelopeStore: CachedLogEnvelopeStore,
@@ -35,6 +38,10 @@ class SessionPartResurrector(
     /**
      * Returns the envelope [deadPart] should be delivered as, or null if it does not contain exactly one
      * session part span. [processIdentifier] is the process that persisted it.
+     *
+     * The native crash recorded for [deadPart], if any, is attached to the envelope, then sent and reported to
+     * [onNativeCrashProcessed] by the work handed to [sendNativeCrash]. That work runs at once unless the caller
+     * holds it back, such as until the envelope has been stored.
      */
     fun resurrect(
         deadPart: Envelope<SessionPartPayload>,
@@ -44,39 +51,42 @@ class SessionPartResurrector(
         onNativeCrashProcessed: (NativeCrashData) -> Unit,
         userSessionTerminationReason: String?,
         isBackgroundOnly: Boolean,
+        sendNativeCrash: (send: () -> Unit) -> Unit = { send -> send() },
     ): Envelope<SessionPartPayload>? {
         val deadSessionPartSpan = deadPart.getSessionPartSpan()
         val sessionPartId = deadSessionPartSpan?.resolveSessionPartIdForCrashMatch()
 
         val nativeCrash = if (nativeCrashService != null && sessionPartId != null) {
-            nativeCrashProvider(sessionPartId)?.apply {
-                val nativeCrashEnvelopeMetadata = createNativeCrashEnvelopeMetadata(
-                    sessionPartId = sessionPartId,
-                    processIdentifier = processIdentifier,
-                    userSessionId = userSessionId,
-                )
+            nativeCrashProvider(sessionPartId)?.also { crash ->
+                sendNativeCrash {
+                    val nativeCrashEnvelopeMetadata = createNativeCrashEnvelopeMetadata(
+                        sessionPartId = sessionPartId,
+                        processIdentifier = processIdentifier,
+                        userSessionId = crash.userSessionId,
+                    )
 
-                cachedLogEnvelopeStore.create(
-                    storedTelemetryMetadata = nativeCrashEnvelopeMetadata,
-                    resource = deadPart.resource ?: EnvelopeResource(),
-                    metadata = deadPart.metadata ?: EnvelopeMetadata(),
-                )
+                    cachedLogEnvelopeStore.create(
+                        storedTelemetryMetadata = nativeCrashEnvelopeMetadata,
+                        resource = deadPart.resource ?: EnvelopeResource(),
+                        metadata = deadPart.metadata ?: EnvelopeMetadata(),
+                    )
 
-                nativeCrashService.sendNativeCrash(
-                    nativeCrash = this,
-                    userSessionProperties = deadPart.getUserSessionProperties(),
-                    metadata = buildMap {
-                        put(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER, processIdentifier)
-                        deadSessionPartSpan.attributes?.findAttributeValues(
-                            setOf(
-                                EmbSessionAttributes.EMB_STATE,
-                                EmbCommonAttributes.EMB_EXPERIMENTS,
-                            ),
-                        )?.let(::putAll)
-                    },
-                )
+                    nativeCrashService.sendNativeCrash(
+                        nativeCrash = crash,
+                        userSessionProperties = deadPart.getUserSessionProperties(),
+                        metadata = buildMap {
+                            put(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER, processIdentifier)
+                            deadSessionPartSpan.attributes?.findAttributeValues(
+                                setOf(
+                                    EmbSessionAttributes.EMB_STATE,
+                                    EmbCommonAttributes.EMB_EXPERIMENTS,
+                                ),
+                            )?.let(::putAll)
+                        },
+                    )
 
-                onNativeCrashProcessed(this)
+                    onNativeCrashProcessed(crash)
+                }
             }
         } else {
             null

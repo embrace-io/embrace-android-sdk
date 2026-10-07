@@ -41,6 +41,12 @@ import java.util.concurrent.TimeoutException
  *
  * An intake that times out is treated the same way: the pass stops, the next pass waits on that
  * same intake once more, and if it still hasn't finished, the part is deleted.
+ *
+ * A part left by a process that has since died is resurrected by [deadPartResurrector] before it is
+ * sent to the intake service. A resurrected part is complete and can be intaken by any intake pass.
+ * This means that if the initial intake pass at SDK start is aborted, the only intake pass that
+ * will look for incomplete, dead session parts to be resurrected, a resurrected part can be picked
+ * up by any subsquent pass because it is just a regular, completed session part to be delivered.
  */
 class SessionPartReader(
     private val sessionsDir: Lazy<File>,
@@ -48,6 +54,7 @@ class SessionPartReader(
     private val reconstructionService: SessionReconstructionService,
     private val intakeService: IntakeService,
     private val writeTracker: SessionPartWriteTracker,
+    private val deadPartResurrector: MultiFileDeadPartResurrector,
     private val processIdProvider: () -> String,
     private val configService: ConfigService,
     private val logger: InternalLogger,
@@ -71,6 +78,9 @@ class SessionPartReader(
      *
      * This performs disk I/O and waits on intake, so the caller is responsible for already being on
      * a background thread, and for not calling it from a thread that intake itself runs on.
+     *
+     * [performingResurrection] is set by the pass at launch, before this process has persisted any
+     * part of its own. Only then is a part that does not record its process treated as dead.
      */
     fun readPersistedSessionParts(performingResurrection: Boolean = false) {
         if (!configService.config.persistence.multiFileEnabled) {
@@ -91,9 +101,20 @@ class SessionPartReader(
                     .filterNot(writeTracker::isWriting)
                     .sortedWith(SessionPartDirectory.comparator)
 
+                // the last part of each user session on disk, which is the one a terminated user
+                // session's final-part attributes go on
+                val lastPartsOfUserSessions = stored
+                    .groupBy(SessionPartDirectory::userSessionId)
+                    .values
+                    .mapNotNullTo(HashSet()) { parts -> parts.maxWithOrNull(SessionPartDirectory.comparator) }
+
                 for (directory in directories) {
                     val proceed = runCatching {
-                        deliver(directory, performingResurrection)
+                        deliver(
+                            directory = directory,
+                            isLastPartOfUserSession = directory in lastPartsOfUserSessions,
+                            performingResurrection = performingResurrection,
+                        )
                     }.onFailure {
                         logger.trackInternalError(InternalErrorType.SessionPartReadFail, it)
                     }.getOrDefault(true)
@@ -107,6 +128,15 @@ class SessionPartReader(
             }
         }
     }
+
+    /**
+     * The session part ids of every part on disk, which includes the dead parts no pass has
+     * delivered yet.
+     */
+    fun storedSessionPartIds(): Set<String> =
+        runCatching {
+            directoryStore.storedDirectories().mapTo(HashSet(), SessionPartDirectory::sessionPartId)
+        }.getOrDefault(emptySet())
 
     private fun deletePersistedSessionParts() {
         EmbTrace.trace("mf-delete-session-parts") {
@@ -129,8 +159,14 @@ class SessionPartReader(
      * - Intake cancelled: data kept, intake pass stopped
      * - First recoverable failure or timeout: data kept, intake pass stopped, retried on next intake
      * - Unrecoverable failure or second failure/timeout: data deleted
+     *
+     * A dead part that cannot be resurrected is deleted, as is one that cannot be reconstructed.
      */
-    private fun deliver(directory: SessionPartDirectory, performingResurrection: Boolean): Boolean {
+    private fun deliver(
+        directory: SessionPartDirectory,
+        isLastPartOfUserSession: Boolean,
+        performingResurrection: Boolean,
+    ): Boolean {
         val intake = incomplete.remove(directory) ?: run {
             val envelope = reconstructionService.reconstruct(directory)
             if (envelope == null) {
@@ -138,12 +174,14 @@ class SessionPartReader(
                 directoryStore.delete(directory)
                 return true
             }
+            val deliverable = deliverable(envelope, directory, isLastPartOfUserSession, performingResurrection)
+                ?: return true
             val task = intakeService.take(
-                intake = envelope,
-                metadata = directory.createMetadata(envelope, performingResurrection),
+                intake = deliverable.envelope,
+                metadata = directory.createMetadata(deliverable.processIdentifier),
                 onStored = { directoryStore.delete(directory) },
             )
-            PendingIntake(task)
+            PendingIntake(task, deliverable.afterStored)
         }
 
         val result = try {
@@ -159,6 +197,7 @@ class SessionPartReader(
                 // deleted if it times out the next time.
                 incomplete[directory] = PendingIntake(
                     task = intake.task,
+                    afterStored = intake.afterStored,
                     timedOut = true,
                 )
                 false
@@ -172,6 +211,8 @@ class SessionPartReader(
             // A cancelled intake should stop the intake pass
             return false
         }
+
+        runAfterStored(intake, result)
 
         return when (result) {
             // No failures mean the intake was successful or not attempted.
@@ -198,6 +239,17 @@ class SessionPartReader(
         }
     }
 
+    /**
+     * If [intake] stored its part, does what waited on that, such as sending the part's native crash.
+     */
+    private fun runAfterStored(intake: PendingIntake, result: IntakeResult) {
+        if (result == IntakeResult.STORED) {
+            runCatching(intake.afterStored).onFailure {
+                logger.trackInternalError(InternalErrorType.PayloadResurrectionPayloadFail, it)
+            }
+        }
+    }
+
     private fun deleteSessionPartData(directory: SessionPartDirectory, reason: String) {
         failed.remove(directory)
         directoryStore.delete(directory)
@@ -207,15 +259,59 @@ class SessionPartReader(
         )
     }
 
-    private fun SessionPartDirectory.createMetadata(
+    /**
+     * What to hand over for the part [envelope] was reconstructed from: the envelope itself for a part
+     * this process persisted, or the resurrected envelope for a dead part. Returns null if a dead part
+     * could not be resurrected, in which case it has been deleted.
+     */
+    private fun deliverable(
         envelope: Envelope<SessionPartPayload>,
+        directory: SessionPartDirectory,
+        isLastPartOfUserSession: Boolean,
         performingResurrection: Boolean,
-    ): StoredTelemetryMetadata = StoredTelemetryMetadata(
+    ): Deliverable? {
+        val recordedProcessIdentifier = envelope.findProcessIdentifier()
+        val processIdentifier = recordedProcessIdentifier ?: processIdProvider()
+        val isDead = if (recordedProcessIdentifier == null) {
+            performingResurrection
+        } else {
+            recordedProcessIdentifier != processIdProvider()
+        }
+        return if (isDead) {
+            resurrect(envelope, directory, processIdentifier, isLastPartOfUserSession)?.let {
+                Deliverable(it.envelope, processIdentifier, it.afterStored)
+            }
+        } else {
+            Deliverable(envelope, processIdentifier)
+        }
+    }
+
+    /**
+     * Resurrects [deadPart], or deletes it and returns null if it cannot be resurrected.
+     */
+    private fun resurrect(
+        deadPart: Envelope<SessionPartPayload>,
+        directory: SessionPartDirectory,
+        processIdentifier: String,
+        isLastPartOfUserSession: Boolean,
+    ): MultiFileDeadPartResurrector.ResurrectedPart? {
+        val resurrected = runCatching {
+            deadPartResurrector.resurrect(deadPart, directory, processIdentifier, isLastPartOfUserSession)
+        }.onFailure {
+            logger.trackInternalError(InternalErrorType.PayloadResurrectionPayloadFail, it)
+        }.getOrNull()
+        if (resurrected == null) {
+            deleteSessionPartData(directory, "dead session part could not be resurrected")
+        }
+        return resurrected
+    }
+
+    private fun SessionPartDirectory.createMetadata(processIdentifier: String): StoredTelemetryMetadata = StoredTelemetryMetadata(
         timestamp = timestamp,
         uuid = uuid,
-        processIdentifier = envelope.findProcessIdentifier() ?: processIdProvider(),
+        processIdentifier = processIdentifier,
         envelopeType = SupportedEnvelopeType.SESSION,
-        complete = !performingResurrection,
+        complete = true,
         payloadType = PayloadType.SESSION,
         userSessionId = userSessionId,
         sessionPartId = sessionPartId,
@@ -225,11 +321,23 @@ class SessionPartReader(
         getSessionPartSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER)
 
     /**
-     * An intake of a session part, and whether the reader has already timed out waiting on it.
+     * An intake of a session part, the work for the reader to do once it has stored the part, and
+     * whether the reader has already timed out waiting on it.
      */
     private class PendingIntake(
         val task: Future<IntakeResult>,
+        val afterStored: () -> Unit,
         val timedOut: Boolean = false,
+    )
+
+    /**
+     * The envelope to hand over for a session part, the process that persisted the part, and the work
+     * for the reader to do once the part has been stored.
+     */
+    private class Deliverable(
+        val envelope: Envelope<SessionPartPayload>,
+        val processIdentifier: String,
+        val afterStored: () -> Unit = {},
     )
 
     private companion object {

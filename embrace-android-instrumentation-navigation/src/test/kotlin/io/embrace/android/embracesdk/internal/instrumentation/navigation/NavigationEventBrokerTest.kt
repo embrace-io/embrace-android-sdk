@@ -1,152 +1,127 @@
 package io.embrace.android.embracesdk.internal.instrumentation.navigation
 
-import android.app.Activity
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.internal.arch.navigation.CurrentScreen
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityPaused
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityResumed
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityStarted
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.Backgrounded
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ScreenChanged
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ScreenSourceAttached
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NavigationState.Screen
-import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.ActivityPaused
-import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.ActivityResumed
-import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.ActivityStarted
-import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.Backgrounded
-import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.NavControllerAttached
-import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.NavControllerDestinationChanged
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.Robolectric
 
-@RunWith(AndroidJUnit4::class)
+/**
+ * The signals are driven here with no UI framework behind them, which is the claim the vocabulary rests on: a screen
+ * source that is not androidx-navigation drives the broker identically.
+ */
 internal class NavigationEventBrokerTest {
     private lateinit var clock: FakeClock
     private lateinit var loadTimes: MutableList<Long>
-    private lateinit var states: MutableList<Pair<Long, Screen>>
-    private lateinit var homeActivity: Activity
-    private lateinit var settingsActivity: Activity
-    private lateinit var profileActivity: Activity
+    private lateinit var screens: MutableList<CurrentScreen>
     private lateinit var broker: NavigationEventBroker
 
     @Before
     fun setUp() {
         clock = FakeClock()
         loadTimes = mutableListOf()
-        states = mutableListOf()
-        broker = NavigationEventBroker { loadTimeMs, newScreen ->
-            states.add(Pair(loadTimeMs, newScreen))
-        }
-        homeActivity = Robolectric.buildActivity(HomeActivity::class.java).get()
-        settingsActivity = Robolectric.buildActivity(SettingsActivity::class.java).get()
-        profileActivity = Robolectric.buildActivity(ProfileActivity::class.java).get()
+        screens = mutableListOf()
+        val eventBus = EventBus(FakeInternalLogger())
+        eventBus.addStateHandler(CurrentScreen.KEY) { screens.add(it) }
+        broker = NavigationEventBroker(eventBus)
     }
 
     @Test
     fun `start time of activity used instead of resume time when notifying screen load`() {
-        loadTimes.add(broker.submitAndTick(ActivityStarted(homeActivity, clock.now())))
-        broker.submitAndTick(ActivityResumed(homeActivity, clock.now()))
-        broker.submitAndTick(ActivityPaused(homeActivity, clock.now()))
-        loadTimes.add(broker.submitAndTick(ActivityStarted(settingsActivity, clock.now())))
-        broker.submitAndTick(ActivityResumed(settingsActivity, clock.now()))
-        broker.submitAndTick(ActivityPaused(settingsActivity, clock.now()))
+        loadTimes.add(broker.submitAndTick(ActivityStarted(HOME_ID, clock.now())))
+        broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now()))
+        broker.submitAndTick(ActivityPaused(HOME_ID, clock.now()))
+        loadTimes.add(broker.submitAndTick(ActivityStarted(SETTINGS_ID, clock.now())))
+        broker.submitAndTick(ActivityResumed(SETTINGS_ID, SETTINGS, clock.now()))
+        broker.submitAndTick(ActivityPaused(SETTINGS_ID, clock.now()))
         loadTimes.add(broker.submitAndTick(Backgrounded(clock.now())))
-        loadTimes.add(broker.submitAndTick(ActivityStarted(profileActivity, clock.now())))
-        broker.submitAndTick(ActivityResumed(profileActivity, clock.now()))
-        assertStateTransitions(
-            listOf(
-                homeActivity.screen(),
-                settingsActivity.screen(),
-                Screen.Backgrounded,
-                profileActivity.screen(),
-            ),
-        )
+        loadTimes.add(broker.submitAndTick(ActivityStarted(PROFILE_ID, clock.now())))
+        broker.submitAndTick(ActivityResumed(PROFILE_ID, PROFILE, clock.now()))
+        assertStateTransitions(listOf(Screen.Named(HOME), Screen.Named(SETTINGS), Screen.Backgrounded, Screen.Named(PROFILE)))
     }
 
     @Test
     fun `duplicate events are dropped`() {
-        broker.submitAndTick(ActivityStarted(homeActivity, clock.now()))
-        loadTimes.add(broker.submitAndTick(ActivityStarted(homeActivity, clock.now())))
-        broker.submitAndTick(ActivityResumed(homeActivity, clock.now()))
-        broker.submitAndTick(ActivityResumed(homeActivity, clock.now()))
-        broker.submitAndTick(ActivityPaused(homeActivity, clock.now()))
-        broker.submitAndTick(ActivityPaused(homeActivity, clock.now()))
+        broker.submitAndTick(ActivityStarted(HOME_ID, clock.now()))
+        loadTimes.add(broker.submitAndTick(ActivityStarted(HOME_ID, clock.now())))
+        broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now()))
+        broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now()))
+        broker.submitAndTick(ActivityPaused(HOME_ID, clock.now()))
+        broker.submitAndTick(ActivityPaused(HOME_ID, clock.now()))
         loadTimes.add(broker.submitAndTick(Backgrounded(clock.now())))
         broker.submitAndTick(Backgrounded(clock.now()))
-        assertStateTransitions(
-            listOf(
-                homeActivity.screen(),
-                Screen.Backgrounded,
-            ),
-        )
+        assertStateTransitions(listOf(Screen.Named(HOME), Screen.Backgrounded))
     }
 
     @Test
     fun `no screen load recorded for activities that do not hit resume`() {
-        broker.submitAndTick(ActivityStarted(homeActivity, clock.now()))
-        loadTimes.add(broker.submitAndTick(ActivityStarted(settingsActivity, clock.now())))
-        broker.submitAndTick(ActivityResumed(settingsActivity, clock.now()))
-        assertStateTransitions(listOf(settingsActivity.screen()))
+        broker.submitAndTick(ActivityStarted(HOME_ID, clock.now()))
+        loadTimes.add(broker.submitAndTick(ActivityStarted(SETTINGS_ID, clock.now())))
+        broker.submitAndTick(ActivityResumed(SETTINGS_ID, SETTINGS, clock.now()))
+        assertStateTransitions(listOf(Screen.Named(SETTINGS)))
     }
 
     @Test
     fun `multiple visible activities results in last activity to open being used as state`() {
-        loadTimes.add(broker.submitAndTick(ActivityStarted(homeActivity, clock.now())))
-        broker.submitAndTick(ActivityResumed(homeActivity, clock.now()))
-        broker.submitAndTick(ActivityStarted(settingsActivity, clock.now()))
-        loadTimes.add(broker.submitAndTick(ActivityResumed(settingsActivity, clock.now())))
-        assertStateTransitions(listOf(homeActivity.screen(), settingsActivity.screen()))
+        loadTimes.add(broker.submitAndTick(ActivityStarted(HOME_ID, clock.now())))
+        broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now()))
+        broker.submitAndTick(ActivityStarted(SETTINGS_ID, clock.now()))
+        loadTimes.add(broker.submitAndTick(ActivityResumed(SETTINGS_ID, SETTINGS, clock.now())))
+        assertStateTransitions(listOf(Screen.Named(HOME), Screen.Named(SETTINGS)))
     }
 
     @Test
     fun `multiple activities with interleaved callbacks results each resume causing a state value change`() {
-        broker.submitAndTick(ActivityStarted(homeActivity, clock.now()))
-        loadTimes.add(broker.submitAndTick(ActivityStarted(settingsActivity, clock.now())))
-        broker.submitAndTick(ActivityResumed(settingsActivity, clock.now()))
-        loadTimes.add(broker.submitAndTick(ActivityResumed(homeActivity, clock.now())))
-        assertStateTransitions(
-            listOf(settingsActivity.screen(), homeActivity.screen()),
-        )
+        broker.submitAndTick(ActivityStarted(HOME_ID, clock.now()))
+        loadTimes.add(broker.submitAndTick(ActivityStarted(SETTINGS_ID, clock.now())))
+        broker.submitAndTick(ActivityResumed(SETTINGS_ID, SETTINGS, clock.now()))
+        loadTimes.add(broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now())))
+        assertStateTransitions(listOf(Screen.Named(SETTINGS), Screen.Named(HOME)))
     }
 
     @Test
-    fun `activity resume does not emit state update for NavController activity on first start`() {
-        loadTimes.add(broker.simulateActivityStartWithNavController(homeActivity, "home"))
-        broker.submitAndTick(ActivityResumed(homeActivity, clock.now()))
+    fun `activity resume does not emit state update for an activity with a screen source on first start`() {
+        loadTimes.add(broker.simulateActivityStartWithScreenSource(HOME_ID, "home"))
+        broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now()))
         assertStateTransitions(listOf(Screen.Named("home")))
     }
 
     @Test
-    fun `NavController destination ignored if that activity is not visible when another activity becomes visible`() {
-        loadTimes.add(broker.simulateActivityStartWithNavController(homeActivity, "home"))
-        broker.submitAndTick(ActivityResumed(homeActivity, clock.now()))
-        broker.submitAndTick(ActivityPaused(homeActivity, clock.now()))
-        loadTimes.add(broker.submitAndTick(ActivityStarted(settingsActivity, clock.now())))
-        broker.submitAndTick(ActivityResumed(settingsActivity, clock.now()))
+    fun `screen change ignored if that activity is not visible when another activity becomes visible`() {
+        loadTimes.add(broker.simulateActivityStartWithScreenSource(HOME_ID, "home"))
+        broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now()))
+        broker.submitAndTick(ActivityPaused(HOME_ID, clock.now()))
+        loadTimes.add(broker.submitAndTick(ActivityStarted(SETTINGS_ID, clock.now())))
+        broker.submitAndTick(ActivityResumed(SETTINGS_ID, SETTINGS, clock.now()))
         loadTimes.add(broker.submitAndTick(Backgrounded(clock.now())))
-        assertStateTransitions(listOf(Screen.Named("home"), settingsActivity.screen(), Screen.Backgrounded))
+        assertStateTransitions(listOf(Screen.Named("home"), Screen.Named(SETTINGS), Screen.Backgrounded))
     }
 
     @Test
-    fun `NavController destination change updates state with destination name`() {
-        loadTimes.add(broker.simulateActivityStartWithNavController(homeActivity, "home"))
-        broker.submitAndTick(ActivityResumed(homeActivity, clock.now()))
-        loadTimes.add(broker.submitAndTick(NavControllerDestinationChanged(homeActivity, "about", clock.now())))
+    fun `screen change updates state with the new screen name`() {
+        loadTimes.add(broker.simulateActivityStartWithScreenSource(HOME_ID, "home"))
+        broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now()))
+        loadTimes.add(broker.submitAndTick(ScreenChanged(HOME_ID, "about", clock.now())))
         loadTimes.add(broker.submitAndTick(Backgrounded(clock.now())))
         assertStateTransitions(listOf(Screen.Named("home"), Screen.Named("about"), Screen.Backgrounded))
     }
 
     @Test
-    fun `NavController destination named like a system value is still considered an app screen`() {
-        loadTimes.add(broker.simulateActivityStartWithNavController(homeActivity, "home"))
+    fun `screen named like a system value is still considered an app screen`() {
+        loadTimes.add(broker.simulateActivityStartWithScreenSource(HOME_ID, "home"))
         loadTimes.add(broker.submitAndTick(Backgrounded(clock.now())))
-        broker.submitAndTick(ActivityResumed(homeActivity, clock.now()))
-        loadTimes.add(
-            broker.submitAndTick(
-                NavControllerDestinationChanged(
-                    activity = homeActivity,
-                    screenName = Screen.Backgrounded.toString(),
-                    timestampMs = clock.now(),
-                ),
-            ),
-        )
+        broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now()))
+        loadTimes.add(broker.submitAndTick(ScreenChanged(HOME_ID, Screen.Backgrounded.toString(), clock.now())))
         loadTimes.add(broker.submitAndTick(Backgrounded(clock.now())))
         assertStateTransitions(
             listOf(
@@ -159,25 +134,19 @@ internal class NavigationEventBrokerTest {
     }
 
     @Test
-    fun `NavController transitions properly to a destination named like the nav controller initializing system value`() {
-        broker.submitAndTick(NavControllerAttached(homeActivity, clock.now()))
-        loadTimes.add(broker.submitAndTick(ActivityStarted(homeActivity, clock.now())))
-        broker.submitAndTick(ActivityResumed(homeActivity, clock.now()))
-        broker.submitAndTick(ActivityPaused(homeActivity, clock.now()))
+    fun `screen source transitions properly to a screen named like the screen source initializing system value`() {
+        broker.submitAndTick(ScreenSourceAttached(HOME_ID, clock.now()))
+        loadTimes.add(broker.submitAndTick(ActivityStarted(HOME_ID, clock.now())))
+        broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now()))
+        broker.submitAndTick(ActivityPaused(HOME_ID, clock.now()))
         loadTimes.add(
-            broker.submitAndTick(
-                NavControllerDestinationChanged(
-                    activity = homeActivity,
-                    screenName = Screen.NavControllerInitializing.toString(),
-                    timestampMs = clock.now(),
-                ),
-            ),
+            broker.submitAndTick(ScreenChanged(HOME_ID, Screen.NavControllerInitializing.toString(), clock.now())),
         )
-        broker.submitAndTick(ActivityPaused(homeActivity, clock.now()))
-        broker.submitAndTick(NavControllerAttached(settingsActivity, clock.now()))
-        loadTimes.add(broker.submitAndTick(ActivityStarted(settingsActivity, clock.now())))
-        broker.submitAndTick(ActivityResumed(settingsActivity, clock.now()))
-        broker.submitAndTick(ActivityPaused(settingsActivity, clock.now()))
+        broker.submitAndTick(ActivityPaused(HOME_ID, clock.now()))
+        broker.submitAndTick(ScreenSourceAttached(SETTINGS_ID, clock.now()))
+        loadTimes.add(broker.submitAndTick(ActivityStarted(SETTINGS_ID, clock.now())))
+        broker.submitAndTick(ActivityResumed(SETTINGS_ID, SETTINGS, clock.now()))
+        broker.submitAndTick(ActivityPaused(SETTINGS_ID, clock.now()))
         assertStateTransitions(
             listOf(
                 Screen.NavControllerInitializing,
@@ -188,30 +157,30 @@ internal class NavigationEventBrokerTest {
     }
 
     @Test
-    fun `interleaved activity and NavController events from different activities results in compound state value`() {
-        loadTimes.add(broker.simulateActivityStartWithNavController(homeActivity, "home"))
-        broker.submitAndTick(ActivityResumed(homeActivity, clock.now()))
-        broker.submitAndTick(ActivityStarted(settingsActivity, clock.now()))
-        loadTimes.add(broker.submitAndTick(ActivityResumed(settingsActivity, clock.now())))
-        loadTimes.add(broker.submitAndTick(NavControllerDestinationChanged(homeActivity, "about", clock.now())))
-        assertStateTransitions(listOf(Screen.Named("home"), settingsActivity.screen(), Screen.Named("about")))
+    fun `interleaved activity and screen source signals from different activities results in compound state value`() {
+        loadTimes.add(broker.simulateActivityStartWithScreenSource(HOME_ID, "home"))
+        broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now()))
+        broker.submitAndTick(ActivityStarted(SETTINGS_ID, clock.now()))
+        loadTimes.add(broker.submitAndTick(ActivityResumed(SETTINGS_ID, SETTINGS, clock.now())))
+        loadTimes.add(broker.submitAndTick(ScreenChanged(HOME_ID, "about", clock.now())))
+        assertStateTransitions(listOf(Screen.Named("home"), Screen.Named(SETTINGS), Screen.Named("about")))
     }
 
     @Test
-    fun `NavController activity returning from background re-emits last loaded destination`() {
-        loadTimes.add(broker.simulateActivityStartWithNavController(homeActivity, "home"))
-        broker.submitAndTick(ActivityResumed(homeActivity, clock.now()))
-        broker.submitAndTick(ActivityPaused(homeActivity, clock.now()))
+    fun `activity with a screen source returning from background re-emits its last screen`() {
+        loadTimes.add(broker.simulateActivityStartWithScreenSource(HOME_ID, "home"))
+        broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now()))
+        broker.submitAndTick(ActivityPaused(HOME_ID, clock.now()))
         loadTimes.add(broker.submitAndTick(Backgrounded(clock.now())))
 
-        loadTimes.add(broker.submitAndTick(ActivityStarted(homeActivity, clock.now())))
-        broker.submitAndTick(ActivityResumed(homeActivity, clock.now()))
-        loadTimes.add(broker.submitAndTick(NavControllerDestinationChanged(homeActivity, "settings", clock.now())))
-        broker.submitAndTick(ActivityPaused(homeActivity, clock.now()))
+        loadTimes.add(broker.submitAndTick(ActivityStarted(HOME_ID, clock.now())))
+        broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now()))
+        loadTimes.add(broker.submitAndTick(ScreenChanged(HOME_ID, "settings", clock.now())))
+        broker.submitAndTick(ActivityPaused(HOME_ID, clock.now()))
         loadTimes.add(broker.submitAndTick(Backgrounded(clock.now())))
 
-        loadTimes.add(broker.submitAndTick(ActivityStarted(homeActivity, clock.now())))
-        broker.submitAndTick(ActivityResumed(homeActivity, clock.now()))
+        loadTimes.add(broker.submitAndTick(ActivityStarted(HOME_ID, clock.now())))
+        broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now()))
 
         assertStateTransitions(
             listOf(
@@ -226,44 +195,47 @@ internal class NavigationEventBrokerTest {
     }
 
     /**
-     * Simulates the event sequence produced by [ActivityNavigationTracker.handleActivityStarted]
-     * for an Activity with a NavController: Attached → DestinationChanged → ActivityStarted.
-     * Returns the timestamp of the DestinationChanged event (the screen load time).
+     * Drives the fixture's ordering for an Activity whose screens are named by a source: attached, screen change, then
+     * started. Returns the timestamp of the screen change, which is the screen load time.
+     *
+     * The real tracker attaches a source when the Activity resumes, i.e. after ActivityResumed has been emitted, so this
+     * ordering is the fixture's own; whether the real order is a bug is a separate question.
      */
-    private fun NavigationEventBroker.simulateActivityStartWithNavController(
-        activity: Activity,
-        destination: String,
+    private fun NavigationEventBroker.simulateActivityStartWithScreenSource(
+        instanceId: Int,
+        screenName: String,
     ): Long {
-        submitAndTick(NavControllerAttached(activity, clock.now()))
-        val destinationChangeTime =
-            submitAndTick(NavControllerDestinationChanged(activity, destination, clock.now()))
-        submitAndTick(ActivityStarted(activity, clock.now()))
-        return destinationChangeTime
+        submitAndTick(ScreenSourceAttached(instanceId, clock.now()))
+        val screenChangeTime = submitAndTick(ScreenChanged(instanceId, screenName, clock.now()))
+        submitAndTick(ActivityStarted(instanceId, clock.now()))
+        return screenChangeTime
     }
 
     /**
-     * Submits an event to the broker and advances the clock.
-     * Returns the event's timestamp (the time before the tick).
+     * Submits a signal to the broker and advances the clock.
+     * Returns the signal's timestamp (the time before the tick).
      */
-    private fun NavigationEventBroker.submitAndTick(event: NavigationEvent): Long {
-        val eventTime = event.timestampMs
-        onEvent(event)
+    private fun NavigationEventBroker.submitAndTick(signal: NavigationSignal): Long {
+        val signalTime = signal.timestampMs
+        onEvent(signal)
         clock.tick()
-        return eventTime
+        return signalTime
     }
 
-    private fun Activity.screen(): Screen = Screen.Named(localClassName)
-
-    private fun assertStateTransitions(expectedStates: List<Screen>) {
-        val expectedTransitions = expectedStates.size
-        assertEquals(expectedTransitions, states.size)
-        (0..<expectedTransitions).forEach { i ->
-            assertEquals(loadTimes[i], states[i].first)
-            assertEquals(expectedStates[i], states[i].second)
+    private fun assertStateTransitions(expectedScreens: List<Screen>) {
+        assertEquals(expectedScreens.size, screens.size)
+        expectedScreens.forEachIndexed { index, expected ->
+            assertEquals(loadTimes[index], screens[index].sinceMs)
+            assertEquals(expected, screens[index].screen)
         }
     }
 
-    private class HomeActivity : Activity()
-    private class SettingsActivity : Activity()
-    private class ProfileActivity : Activity()
+    private companion object {
+        const val HOME_ID = 1
+        const val SETTINGS_ID = 2
+        const val PROFILE_ID = 3
+        const val HOME = "HomeActivity"
+        const val SETTINGS = "SettingsActivity"
+        const val PROFILE = "ProfileActivity"
+    }
 }

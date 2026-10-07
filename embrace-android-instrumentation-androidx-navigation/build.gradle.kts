@@ -16,7 +16,6 @@ android {
 
 dependencies {
     implementation(project(":embrace-android-instrumentation-api"))
-    implementation(project(":embrace-android-instrumentation-navigation"))
     implementation(libs.androidx.navigation.fragment)
     compileOnly(libs.androidx.navigation.compose)
 

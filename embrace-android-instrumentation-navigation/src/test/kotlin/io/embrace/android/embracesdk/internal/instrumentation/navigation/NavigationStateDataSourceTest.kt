@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.navigation
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.navigation.CurrentScreen
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NavigationState.Screen
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -21,15 +22,15 @@ internal class NavigationStateDataSourceTest {
             application = ApplicationProvider.getApplicationContext(),
             sessionPartIdSupplier = { "session-part-id" },
         )
-        dataSource = NavigationStateDataSource(args)
+        dataSource = NavigationStateDataSource(args).apply { onDataCaptureEnabled() }
     }
 
     @Test
-    fun `state updated when notified of new screen load`() {
+    fun `state updated when the current screen changes`() {
         assertEquals(Screen.Initializing, dataSource.getCurrentStateValue())
-        dataSource.onScreenLoad(args.clock.tick(), Screen.Named("home"))
+        args.eventBus.emitState(CurrentScreen.KEY, CurrentScreen(Screen.Named("home"), args.clock.tick()))
         assertEquals(Screen.Named("home"), dataSource.getCurrentStateValue())
-        dataSource.onScreenLoad(args.clock.tick(), Screen.Named("settings"))
+        args.eventBus.emitState(CurrentScreen.KEY, CurrentScreen(Screen.Named("settings"), args.clock.tick()))
         assertEquals(Screen.Named("settings"), dataSource.getCurrentStateValue())
     }
 
@@ -39,18 +40,17 @@ internal class NavigationStateDataSourceTest {
         val dupeNamedScreen = Screen.Named("Backgrounded")
         assertEquals(Screen.Backgrounded.toString(), dupeNamedScreen.toString())
 
-        dataSource.onDataCaptureEnabled()
         val token = args.destination.createdStateTokens.single()
         val appScreenTime = args.clock.tick()
-        dataSource.onScreenLoad(appScreenTime, dupeNamedScreen)
+        args.eventBus.emitState(CurrentScreen.KEY, CurrentScreen(dupeNamedScreen, appScreenTime))
         assertNotEquals(Screen.Backgrounded, dataSource.getCurrentStateValue())
 
         val backgroundTime = args.clock.tick()
-        dataSource.onScreenLoad(backgroundTime, Screen.Backgrounded)
+        args.eventBus.emitState(CurrentScreen.KEY, CurrentScreen(Screen.Backgrounded, backgroundTime))
         assertEquals(Screen.Backgrounded, dataSource.getCurrentStateValue())
 
         val foregroundTime = args.clock.tick()
-        dataSource.onScreenLoad(foregroundTime, dupeNamedScreen)
+        args.eventBus.emitState(CurrentScreen.KEY, CurrentScreen(dupeNamedScreen, foregroundTime))
         assertNotEquals(Screen.Backgrounded, dataSource.getCurrentStateValue())
 
         assertEquals(
@@ -61,5 +61,14 @@ internal class NavigationStateDataSourceTest {
             ),
             token.transitions,
         )
+    }
+
+    @Test
+    fun `a data source enabled after a screen change is replayed the current screen`() {
+        args.eventBus.emitState(CurrentScreen.KEY, CurrentScreen(Screen.Named("home"), args.clock.tick()))
+
+        val lateDataSource = NavigationStateDataSource(args).apply { onDataCaptureEnabled() }
+
+        assertEquals(Screen.Named("home"), lateDataSource.getCurrentStateValue())
     }
 }

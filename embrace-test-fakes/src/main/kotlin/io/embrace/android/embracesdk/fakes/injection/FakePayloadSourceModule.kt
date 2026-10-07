@@ -61,6 +61,7 @@ private class FakePayloadResurrectionService : PayloadResurrectionService {
     override fun resurrectOldPayloads(
         nativeCrashServiceProvider: Provider<NativeCrashService?>,
         userSessionRestoreDecisionProvider: Provider<UserSessionRestoreDecision?>,
+        pendingSessionPartIdsProvider: Provider<Set<String>>,
     ) {
         resurrectCount++
         completionListeners.forEach { it() }

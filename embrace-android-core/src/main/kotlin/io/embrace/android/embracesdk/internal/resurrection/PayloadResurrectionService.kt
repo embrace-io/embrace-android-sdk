@@ -24,9 +24,12 @@ interface PayloadResurrectionService {
      *
      * [userSessionRestoreDecisionProvider] provides this SDK instance's decision about whether to continue the persisted user session
      * at startup or terminate it implicitly. The provider returning null implies that there was no persisted user session at startup.
+     *
+     * [pendingSessionPartIdsProvider] provides the IDs of session parts still on disk for the session part reader to resurrect.
      */
     fun resurrectOldPayloads(
         nativeCrashServiceProvider: Provider<NativeCrashService?>,
         userSessionRestoreDecisionProvider: Provider<UserSessionRestoreDecision?> = { null },
+        pendingSessionPartIdsProvider: Provider<Set<String>> = { emptySet() },
     )
 }

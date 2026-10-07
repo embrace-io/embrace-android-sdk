@@ -6,7 +6,6 @@ import android.view.Window
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
-import io.embrace.android.embracesdk.internal.instrumentation.view.taps.TapDataSource
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -24,9 +23,7 @@ internal class ComposeActivityListenerTest {
     fun setUp() {
         val application: Application = ApplicationProvider.getApplicationContext()
         args = FakeInstrumentationArgs(application)
-        val tapDataSource = TapDataSource(args)
-        val composeTapDataSource = ComposeTapDataSource(args) { tapDataSource }
-        listener = ComposeActivityListener(args.logger, composeTapDataSource)
+        listener = ComposeActivityListener(args.logger, ComposeTapDataSource(args))
     }
 
     @Test

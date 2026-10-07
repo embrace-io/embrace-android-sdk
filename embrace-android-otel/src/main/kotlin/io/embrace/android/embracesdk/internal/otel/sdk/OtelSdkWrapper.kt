@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.otel.sdk
 
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
+import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalAttributeCount
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalEventCount
@@ -29,6 +30,7 @@ class OtelSdkWrapper(
     otelClock: Clock,
     configuration: OtelSdkConfig,
     spanService: SpanService,
+    errorHandler: InternalErrorHandler,
     limits: OtelLimitsConfig = InstrumentedConfigImpl.otelLimits,
     val useKotlinSdk: Boolean,
 ) {
@@ -60,7 +62,7 @@ class OtelSdkWrapper(
 
     private val kotlinApi: OpenTelemetry by lazy {
         try {
-            createOtelInstance(otelClock, configuration, limits)
+            createOtelInstance(otelClock, configuration, limits, errorHandler)
         } catch (exc: NoClassDefFoundError) {
             throw LinkageError(
                 "Please enable library desugaring in your project to use the Embrace SDK. " +
@@ -76,6 +78,7 @@ class OtelSdkWrapper(
         otelClock: Clock,
         configuration: OtelSdkConfig,
         limits: OtelLimitsConfig,
+        errorHandler: InternalErrorHandler,
     ): OpenTelemetry =
         createSdkOtelInstance(
             useKotlinSdk = useKotlinSdk,
@@ -104,6 +107,7 @@ class OtelSdkWrapper(
                 }
             },
             clock = otelClock,
+            errorHandler = OtelSdkErrorHandler(errorHandler),
         )
 
     val openTelemetryKotlin: OpenTelemetry by lazy {

@@ -8,6 +8,8 @@ import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.context.ImplicitContextStorageMode
 import io.opentelemetry.kotlin.createCompatOpenTelemetry
 import io.opentelemetry.kotlin.createOpenTelemetry
+import io.opentelemetry.kotlin.error.NoopSdkErrorHandler
+import io.opentelemetry.kotlin.error.SdkErrorHandler
 import io.opentelemetry.kotlin.init.LoggerProviderConfigDsl
 import io.opentelemetry.kotlin.init.TracerProviderConfigDsl
 
@@ -16,17 +18,20 @@ internal fun createSdkOtelInstance(
     tracerProvider: TracerProviderConfigDsl.() -> Unit = {},
     loggerProvider: LoggerProviderConfigDsl.() -> Unit = {},
     clock: Clock,
+    errorHandler: SdkErrorHandler = NoopSdkErrorHandler,
 ): OpenTelemetry {
     return if (useKotlinSdk) {
         createOpenTelemetry(clock) {
             // opentelemetry-kotlin stores implicit context in a process-wide slot, whereas we want
             // to match opentelemetry-java's default behavior
             context { storageMode = ImplicitContextStorageMode.THREAD_LOCAL }
+            errorHandler(errorHandler)
             tracerProvider { tracerProvider() }
             loggerProvider { loggerProvider() }
         }
     } else {
         createCompatOpenTelemetry(clock) {
+            errorHandler(errorHandler)
             tracerProvider { tracerProvider() }
             loggerProvider { loggerProvider() }
         }

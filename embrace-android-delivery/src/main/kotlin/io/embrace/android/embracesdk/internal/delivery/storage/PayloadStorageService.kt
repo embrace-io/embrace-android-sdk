@@ -17,9 +17,9 @@ import java.io.InputStream
 interface PayloadStorageService {
 
     /**
-     * Stores a payload
+     * Attempts to store a payload and reports the [StorageOutcome].
      */
-    fun store(metadata: StoredTelemetryMetadata, action: SerializationAction)
+    fun store(metadata: StoredTelemetryMetadata, action: SerializationAction): StorageOutcome
 
     /**
      * Deletes a payload

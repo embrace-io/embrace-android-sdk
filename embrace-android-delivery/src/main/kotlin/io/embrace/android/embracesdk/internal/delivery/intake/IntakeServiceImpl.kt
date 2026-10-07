@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.SES
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
+import io.embrace.android.embracesdk.internal.delivery.storage.StorageOutcome
 import io.embrace.android.embracesdk.internal.delivery.storage.storeAttachment
 import io.embrace.android.embracesdk.internal.delivery.traceSection
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -65,6 +66,7 @@ class IntakeServiceImpl(
         metadata: StoredTelemetryMetadata,
         staleEntry: StoredTelemetryMetadata?,
         onStored: (() -> Unit)?,
+        onFailure: ((IntakeFailure) -> Unit)?,
     ): Future<*> {
         deliveryTracer?.onTake(metadata)
 
@@ -75,7 +77,7 @@ class IntakeServiceImpl(
                 // non-blocking shutdown: reject subsequent submissions but defer the drain to
                 // payloadStore.handleCrash's later intakeService.shutdown() call
                 worker.shutdownAndWait(0)
-                processIntake(intake, metadata, staleEntry, onStored)
+                processIntake(intake, metadata, staleEntry, onStored, onFailure)
                 return immediateFuture()
             }
             return immediateFuture()
@@ -84,7 +86,7 @@ class IntakeServiceImpl(
         // The worker is shut down once a crash is detected, so anything arriving before the service is sealed must be persisted
         // synchronously (like resurrected session parts) or be unrecoverably loss.
         if (state.get() == State.CRASH_RECEIVED) {
-            processIntake(intake, metadata, staleEntry, onStored)
+            processIntake(intake, metadata, staleEntry, onStored, onFailure)
             // Only seal the service if the payload is the crashing session's last session part, after which we take in no more
             // telemetry and let the process die.
             if (metadata.isCrashingPartForCurrentProcess()) {
@@ -103,6 +105,7 @@ class IntakeServiceImpl(
                 metadata = metadata,
                 staleEntry = staleEntry,
                 onStored = onStored,
+                onFailure = onFailure,
             )
         }
 
@@ -123,13 +126,14 @@ class IntakeServiceImpl(
         metadata: StoredTelemetryMetadata,
         staleEntry: StoredTelemetryMetadata?,
         onStored: (() -> Unit)?,
+        onFailure: ((IntakeFailure) -> Unit)?,
     ) {
         try {
             val service = when {
                 metadata.complete -> payloadStorageService
                 else -> cacheStorageService
             }
-            SystemTrace.trace(metadata.traceSection("intake-process")) {
+            val outcome = SystemTrace.trace(metadata.traceSection("intake-process")) {
                 service.store(metadata) { stream ->
                     val counted = CountingOutputStream(stream)
                     val envelopeSerializer = metadata.envelopeType.envelopeSerializer
@@ -142,6 +146,19 @@ class IntakeServiceImpl(
                         storeAttachment(counted, pair.second, pair.first)
                     }
                     serializedBytes.add(counted.written)
+                }
+            }
+
+            // Report the outcome of the intake operation based on the storage operation's outcome
+            when (outcome) {
+                StorageOutcome.STORED -> Unit
+                StorageOutcome.REJECTED -> {
+                    onFailure?.invoke(IntakeFailure.RECOVERABLE)
+                    return
+                }
+                StorageOutcome.FAILED -> {
+                    onFailure?.invoke(IntakeFailure.UNRECOVERABLE)
+                    return
                 }
             }
 

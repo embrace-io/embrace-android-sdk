@@ -25,11 +25,17 @@ interface IntakeService : Shutdownable {
      * [onStored] is invoked once [intake] has been written to disk, which typically happens on a worker thread. It is not invoked
      * if the payload was dropped or could not be stored, so a caller that holds the only other copy of the telemetry can use it to
      * find out when discarding that copy is safe.
+     *
+     * [onFailure] is invoked if [intake] failed to be written to disk, with whether trying again might succeed.
+     *
+     * If neither [onStored] or [onFailure] was invoked the task is complete, it means this service did not attempt to
+     * store [intake].
      */
     fun take(
         intake: Envelope<*>,
         metadata: StoredTelemetryMetadata,
         staleEntry: StoredTelemetryMetadata? = null,
         onStored: (() -> Unit)? = null,
+        onFailure: ((IntakeFailure) -> Unit)? = null,
     ): Future<*>
 }

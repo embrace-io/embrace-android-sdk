@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.IOException
 import java.io.InputStream
 import java.util.concurrent.RejectedExecutionException
 
@@ -39,20 +40,27 @@ class FileStorageServiceImpl(
         maxAgeMs = maxAgeMs,
     )
 
-    override fun store(metadata: StoredTelemetryMetadata, action: SerializationAction) {
-        try {
+    override fun store(metadata: StoredTelemetryMetadata, action: SerializationAction): StorageOutcome {
+        return try {
             storeImpl(metadata, action)
-        } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.PayloadStorageFail, exc)
+        } catch (e: PayloadConstructionException) {
+            // Constructing the payload failed, so it would fail the same way on another attempt.
+            logger.trackInternalError(InternalErrorType.PayloadStorageFail, e.cause ?: e)
+            StorageOutcome.FAILED
+        } catch (t: Throwable) {
+            // Something else unrelated to payload construction failed, so treat it as a transient error to retry
+            logger.trackInternalError(InternalErrorType.PayloadStorageFail, t)
+            StorageOutcome.REJECTED
         }
     }
 
     private fun storeImpl(
         metadata: StoredTelemetryMetadata,
         action: SerializationAction,
-    ) = SystemTrace.trace(metadata.traceSection("payload-file-write")) {
+    ): StorageOutcome = SystemTrace.trace(metadata.traceSection("payload-file-write")) {
+        // A pruned entry may not be pruned in the next attempt if the service gets additional capacity
         if (index.prune(newEntry = metadata)) {
-            return@trace
+            return@trace StorageOutcome.REJECTED
         }
 
         // write to a temporary file then rename it, to avoid sending incomplete files
@@ -63,7 +71,17 @@ class FileStorageServiceImpl(
         val tmpFile = File(index.rootDir, "${metadata.filename}.tmp")
         try {
             val stream = CountingOutputStream(tmpFile.outputStream().buffered())
-            stream.use { action(it) }
+            stream.use { out ->
+                try {
+                    action(out)
+                } catch (e: IOException) {
+                    // The underlying stream failed, which isn't related to the payload construction
+                    throw e
+                } catch (e: Exception) {
+                    // The payload's construction failed, which we consider an unrecoverable error
+                    throw PayloadConstructionException(e)
+                }
+            }
 
             // move the complete file to its final location.
             val dst = index.fileFor(metadata)
@@ -71,6 +89,11 @@ class FileStorageServiceImpl(
             if (tmpFile.renameTo(dst)) {
                 index.add(metadata)
                 counters.recordWrite(stream.written)
+                StorageOutcome.STORED
+            } else {
+                // A rename that fails could succeed next time, so treat it as the storage layer
+                // rejecting the payload due to transient conditions.
+                StorageOutcome.REJECTED
             }
         } finally {
             // clean up the temp file on any failure
@@ -85,7 +108,7 @@ class FileStorageServiceImpl(
         }
         try {
             worker.submit(metadata, action)
-        } catch (exc: RejectedExecutionException) { // handle JVM crash case where worker is shutdown
+        } catch (_: RejectedExecutionException) { // handle JVM crash case where worker is shutdown
             action()
         }
     }
@@ -132,3 +155,8 @@ internal object StoredTelemetryMetadataLayout : StoredEntryLayout<StoredTelemetr
         compareByDescending(StoredTelemetryMetadata::envelopeType)
             .thenBy(StoredTelemetryMetadata::timestamp)
 }
+
+/**
+ * Wrapper exception when payload construction throws
+ */
+private class PayloadConstructionException(cause: Exception) : Exception(cause)

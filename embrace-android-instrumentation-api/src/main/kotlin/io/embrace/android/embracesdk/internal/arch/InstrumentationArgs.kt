@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.UuidSource
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -92,6 +93,11 @@ interface InstrumentationArgs {
      * and crash number.
      */
     val ordinalStore: OrdinalStore
+
+    /**
+     * Used to distribute events between instrumentation without tight coupling between the instrumentation modules.
+     */
+    val eventBus: EventBus
 
     /**
      * Retrieves a background worker matching the given name.

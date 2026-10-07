@@ -38,7 +38,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.util.concurrent.CancellationException
 import java.util.concurrent.Future
+import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
@@ -366,10 +368,48 @@ internal class SessionPartReaderTest {
         assertDeleted(partDirectory, laterPartDirectory)
     }
 
+    @Test
+    fun `a cancelled intake stops the intake pass and will be picked up in the next intake pass`() {
+        persistTwoParts()
+        slowIntake.firstWait = { throw CancellationException() }
+        val reader = createReader(slowIntake)
+
+        // the later part is not taken ahead of the cancelled one
+        reader.readPersistedSessionParts()
+        assertEquals(ids(partDirectory), slowIntake.takenPartIds)
+        assertRetained(partDirectory, laterPartDirectory)
+
+        slowIntake.firstWait = null
+        slowIntake.stall = false
+        reader.readPersistedSessionParts()
+        assertEquals(ids(partDirectory, partDirectory, laterPartDirectory), slowIntake.takenPartIds)
+        assertDeleted(partDirectory, laterPartDirectory)
+        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+    }
+
+    @Test
+    fun `a rejected intake stops the entire intake pass`() {
+        persistTwoParts()
+        slowIntake.reject = true
+        val reader = createReader(slowIntake)
+
+        reader.readPersistedSessionParts()
+        assertEquals(1, slowIntake.rejectedTakes)
+        assertRetained(partDirectory, laterPartDirectory)
+
+        slowIntake.reject = false
+        slowIntake.stall = false
+        reader.readPersistedSessionParts()
+        assertEquals(ids(partDirectory, laterPartDirectory), slowIntake.takenPartIds)
+        assertDeleted(partDirectory, laterPartDirectory)
+        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+    }
+
     /**
      * An intake service that can be configured to behave in nonstandard ways:
      *
      * - Set [stall] to true to ensure an intake never completes. Setting it to false completes the intakes right away.
+     * - Set [reject] to true to mimic the behavior of when the worker is shut down, each subsequent take counted in [rejectedTakes].
      * - Set [firstWait] to run some code on the first wait of each new take.
      *
      * Every take and wait is recorded in [events].
@@ -379,6 +419,8 @@ internal class SessionPartReaderTest {
         val events: MutableList<String> = mutableListOf()
         var stall: Boolean = true
         var firstWait: (() -> Unit)? = null
+        var reject: Boolean = false
+        var rejectedTakes: Int = 0
 
         val takenPartIds: List<String>
             get() = takes.map(SlowTake::partId)
@@ -391,6 +433,10 @@ internal class SessionPartReaderTest {
             staleEntry: StoredTelemetryMetadata?,
             onStored: (() -> Unit)?,
         ): Future<IntakeResult> {
+            if (reject) {
+                rejectedTakes++
+                throw RejectedExecutionException("shut down")
+            }
             val take = SlowTake(metadata.sessionPartId, events, onStored)
             takes.add(take)
             events.add("take:${take.partId}")

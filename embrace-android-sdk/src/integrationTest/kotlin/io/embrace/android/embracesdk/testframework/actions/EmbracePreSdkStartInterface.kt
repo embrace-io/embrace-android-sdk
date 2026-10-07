@@ -3,12 +3,12 @@ package io.embrace.android.embracesdk.testframework.actions
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.internal.api.SdkApi
+import io.embrace.android.embracesdk.EmbraceSdk
 import java.io.File
 
 internal class EmbracePreSdkStartInterface(
     private val setup: EmbraceSetupInterface,
-    private val embraceSupplier: () -> SdkApi,
+    private val embraceSupplier: () -> EmbraceSdk,
 ) {
     val embrace by lazy { embraceSupplier() }
 

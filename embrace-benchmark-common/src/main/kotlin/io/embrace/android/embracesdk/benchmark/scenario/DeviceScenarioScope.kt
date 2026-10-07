@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk.benchmark.scenario
 
-import io.embrace.android.embracesdk.internal.api.SdkApi
+import io.embrace.android.embracesdk.EmbraceSdk
 
 /**
  * Runs a scenario against a real SDK in real time: the clock is the device's, and a scenario that
  * asks to wait waits.
  */
 class DeviceScenarioScope(
-    override val embrace: SdkApi,
+    override val embrace: EmbraceSdk,
     private val cycler: ForegroundCycler,
 ) : ScenarioScope {
 

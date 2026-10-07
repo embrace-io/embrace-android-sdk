@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.HasBackStack
 import io.embrace.android.embracesdk.fakes.HasNavController
 import io.embrace.android.embracesdk.fakes.TestNavHostFragmentActivity
-import io.embrace.android.embracesdk.internal.api.SdkApi
+import io.embrace.android.embracesdk.EmbraceSdk
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectionType
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
@@ -23,13 +23,13 @@ import org.robolectric.android.controller.ActivityController
 internal class EmbraceActionInterface(
     private val setup: EmbraceSetupInterface,
     private val bootstrapper: ModuleInitBootstrapper,
-    private val embraceSupplier: () -> SdkApi,
+    private val embraceSupplier: () -> EmbraceSdk,
 ) {
 
     /**
      * The [Embrace] instance that can be used for testing
      */
-    val embrace: SdkApi by lazy { embraceSupplier() }
+    val embrace: EmbraceSdk by lazy { embraceSupplier() }
 
     val clock: FakeClock
         get() = setup.getClock()

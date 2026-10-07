@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.internal.api.InstrumentationApi
 import io.embrace.android.embracesdk.internal.api.LogsApi
 import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
 import io.embrace.android.embracesdk.internal.api.OTelApi
-import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.api.SdkStateApi
 import io.embrace.android.embracesdk.internal.api.UserApi
 import io.embrace.android.embracesdk.internal.api.UserSessionApi
@@ -43,6 +42,7 @@ import io.embrace.android.embracesdk.internal.injection.postInit
 import io.embrace.android.embracesdk.internal.injection.postLoadInstrumentation
 import io.embrace.android.embracesdk.internal.injection.registerListeners
 import io.embrace.android.embracesdk.internal.injection.triggerPayloadSend
+import io.embrace.android.embracesdk.internal.instance.StartableEmbrace
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.spans.TracingApi
 import java.util.concurrent.Executors
@@ -76,7 +76,7 @@ internal class EmbraceImpl(
     private val instrumentationApiDelegate: InstrumentationApiDelegate =
         InstrumentationApiDelegate(bootstrapper, sdkCallChecker),
     private val experimentApiDelegate: ExperimentApiDelegate = ExperimentApiDelegate(bootstrapper, sdkCallChecker),
-) : SdkApi,
+) : StartableEmbrace,
     LogsApi by logsApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
     UserSessionApi by sessionApiDelegate,
@@ -103,7 +103,7 @@ internal class EmbraceImpl(
 
     private var internalInterfaceModule: InternalInterfaceModule? = null
 
-    override fun start(context: Context) {
+    override fun start(context: Context, onStarted: () -> Unit) {
         EmbTrace.trace("sdk-start") {
             synchronized(startStopLock) {
                 try {
@@ -124,6 +124,7 @@ internal class EmbraceImpl(
                         // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
                         // so we allow external calls.
                         sdkCallChecker.started.set(true)
+                        onStarted()
                         bootstrapper.applyCustomMetadata(experimentApiDelegate::flushPendingCalls)
                         bootstrapper.registerListeners()
                         bootstrapper.loadInstrumentation()
@@ -201,9 +202,16 @@ internal class EmbraceImpl(
             return checkNotNull(internalInterfaceModule?.flutterInternalInterface)
         }
 
-    override fun applicationInitStart() {
+    /**
+     * Starts the SDK without exposing it through [Embrace]. Used by tests that drive this instance directly.
+     */
+    fun start(context: Context) = start(context) {}
+
+    override fun applicationInitStart() = applicationInitStart(clock.now())
+
+    override fun applicationInitStart(timeMs: Long) {
         if (applicationInitStartMs == null) {
-            applicationInitStartMs = clock.now()
+            applicationInitStartMs = timeMs
         }
     }
 

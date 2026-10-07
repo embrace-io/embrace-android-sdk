@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.benchmark.scenario
 
-import io.embrace.android.embracesdk.internal.api.SdkApi
+import io.embrace.android.embracesdk.EmbraceSdk
 
 /**
  * A named block of telemetry-producing work, written against the public Embrace API.
@@ -20,7 +20,7 @@ interface ScenarioScope {
     /**
      * The SDK under test.
      */
-    val embrace: SdkApi
+    val embrace: EmbraceSdk
 
     /**
      * The current scenario time.

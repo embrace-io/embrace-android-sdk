@@ -1,3 +1,15 @@
+public abstract interface class io/embrace/android/embracesdk/EmbraceSdk : io/embrace/android/embracesdk/internal/api/BreadcrumbApi, io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi, io/embrace/android/embracesdk/internal/api/ExperimentApi, io/embrace/android/embracesdk/internal/api/InstrumentationApi, io/embrace/android/embracesdk/internal/api/LogsApi, io/embrace/android/embracesdk/internal/api/NetworkRequestApi, io/embrace/android/embracesdk/internal/api/OTelApi, io/embrace/android/embracesdk/internal/api/SdkStateApi, io/embrace/android/embracesdk/internal/api/UserApi, io/embrace/android/embracesdk/internal/api/UserSessionApi, io/embrace/android/embracesdk/spans/TracingApi {
+}
+
+public final class io/embrace/android/embracesdk/EmbraceSdk$DefaultImpls {
+	public static fun addLoadTraceChildSpan (Lio/embrace/android/embracesdk/EmbraceSdk;Landroid/app/Activity;Ljava/lang/String;JJ)V
+	public static fun addStartupTraceChildSpan (Lio/embrace/android/embracesdk/EmbraceSdk;Ljava/lang/String;JJ)V
+	public static fun trackExperiment (Lio/embrace/android/embracesdk/EmbraceSdk;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)V
+	public static fun trackFeatureFlag (Lio/embrace/android/embracesdk/EmbraceSdk;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)V
+	public static fun untrackExperiment (Lio/embrace/android/embracesdk/EmbraceSdk;Ljava/lang/String;Ljava/lang/Long;)V
+	public static fun untrackFeatureFlag (Lio/embrace/android/embracesdk/EmbraceSdk;Ljava/lang/String;Ljava/lang/Long;)V
+}
+
 public final class io/embrace/android/embracesdk/LastRunEndState : java/lang/Enum {
 	public static final field CLEAN_EXIT Lio/embrace/android/embracesdk/LastRunEndState;
 	public static final field CRASH Lio/embrace/android/embracesdk/LastRunEndState;
@@ -79,7 +91,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Embra
 	public abstract fun applicationInitStart ()V
 	public abstract fun disable ()V
 	public abstract fun endView (Ljava/lang/String;)Z
-	public abstract fun start (Landroid/content/Context;)V
 	public abstract fun startView (Ljava/lang/String;)Z
 }
 
@@ -163,18 +174,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/OTelA
 	public abstract fun addSpanProcessor (Lio/opentelemetry/kotlin/tracing/export/SpanProcessor;)V
 	public abstract fun getOpenTelemetryKotlin ()Lio/opentelemetry/kotlin/OpenTelemetry;
 	public abstract fun setResourceAttribute (Ljava/lang/String;Ljava/lang/String;)V
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/api/SdkApi : io/embrace/android/embracesdk/internal/api/BreadcrumbApi, io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi, io/embrace/android/embracesdk/internal/api/ExperimentApi, io/embrace/android/embracesdk/internal/api/InstrumentationApi, io/embrace/android/embracesdk/internal/api/LogsApi, io/embrace/android/embracesdk/internal/api/NetworkRequestApi, io/embrace/android/embracesdk/internal/api/OTelApi, io/embrace/android/embracesdk/internal/api/SdkStateApi, io/embrace/android/embracesdk/internal/api/UserApi, io/embrace/android/embracesdk/internal/api/UserSessionApi, io/embrace/android/embracesdk/spans/TracingApi {
-}
-
-public final class io/embrace/android/embracesdk/internal/api/SdkApi$DefaultImpls {
-	public static fun addLoadTraceChildSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Landroid/app/Activity;Ljava/lang/String;JJ)V
-	public static fun addStartupTraceChildSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;JJ)V
-	public static fun trackExperiment (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)V
-	public static fun trackFeatureFlag (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)V
-	public static fun untrackExperiment (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Ljava/lang/Long;)V
-	public static fun untrackFeatureFlag (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Ljava/lang/Long;)V
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/SdkStateApi {

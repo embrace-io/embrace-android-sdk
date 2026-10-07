@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.benchmark.scenario
 
-import io.embrace.android.embracesdk.internal.api.SdkApi
+import io.embrace.android.embracesdk.EmbraceSdk
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
@@ -10,7 +10,7 @@ import org.junit.Test
 internal class DeviceScenarioScopeTest {
 
     private val cycles = mutableListOf<Long>()
-    private val sdk = mockk<SdkApi>(relaxed = true)
+    private val sdk = mockk<EmbraceSdk>(relaxed = true)
     private val scope = DeviceScenarioScope(sdk, cycles::add)
 
     @Test

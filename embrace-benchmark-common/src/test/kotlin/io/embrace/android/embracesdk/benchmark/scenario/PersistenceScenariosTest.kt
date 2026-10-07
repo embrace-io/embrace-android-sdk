@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.benchmark.scenario
 
-import io.embrace.android.embracesdk.internal.api.SdkApi
+import io.embrace.android.embracesdk.EmbraceSdk
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -95,9 +95,9 @@ internal class PersistenceScenariosTest {
         assertThrows(IllegalStateException::class.java) { PersistenceScenarios.byId("not_a_scenario") }
     }
 
-    private fun scope() = RecordingScope(mockk<SdkApi>(relaxed = true))
+    private fun scope() = RecordingScope(mockk<EmbraceSdk>(relaxed = true))
 
-    private class RecordingScope(delegate: SdkApi) : ScenarioScope {
+    private class RecordingScope(delegate: EmbraceSdk) : ScenarioScope {
 
         var elapsedMs: Long = 0
             private set
@@ -108,7 +108,7 @@ internal class PersistenceScenariosTest {
         var apiCalls: Int = 0
             private set
 
-        override val embrace: SdkApi = CountingSdkApi(delegate) { apiCalls++ }
+        override val embrace: EmbraceSdk = CountingSdkApi(delegate) { apiCalls++ }
 
         override val nowMs: Long
             get() = START_TIME_MS + elapsedMs
@@ -124,9 +124,9 @@ internal class PersistenceScenariosTest {
     }
 
     private class CountingSdkApi(
-        private val delegate: SdkApi,
+        private val delegate: EmbraceSdk,
         private val onCall: () -> Unit,
-    ) : SdkApi by delegate {
+    ) : EmbraceSdk by delegate {
 
         override fun <T> recordSpan(
             name: String,

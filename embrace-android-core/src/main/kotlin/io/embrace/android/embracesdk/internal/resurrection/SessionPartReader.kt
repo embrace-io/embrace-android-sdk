@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import java.io.File
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
@@ -36,6 +37,9 @@ import java.util.concurrent.TimeoutException
  * won't be processed until this failed one has a chance to retry. A second failure is treated
  * like it were unrecoverable, biasing to unblocking the delivery queue for new session parts
  * over trying to reprocess a part that may never succeed.
+ *
+ * An intake that times out is treated the same way: the pass stops, the next pass waits on that
+ * same intake once more, and if it still hasn't finished, the part is deleted.
  */
 class SessionPartReader(
     private val sessionsDir: Lazy<File>,
@@ -51,6 +55,13 @@ class SessionPartReader(
      * The session parts whose intake attempt has failed at least once.
      */
     private val failed: MutableSet<SessionPartDirectory> = Collections.newSetFromMap(ConcurrentHashMap())
+
+    /**
+     * The session parts whose intake started but didn't finish, either because of timeout or thread interruption.
+     * These should not be counted as failures. A part whose intake times out is waited on once more,
+     * and an interrupted wait doesn't count towards that.
+     */
+    private val incomplete: MutableMap<SessionPartDirectory, PendingIntake> = ConcurrentHashMap()
 
     /**
      * Reads every completed session part on disk, returning only once each one has been handed to
@@ -69,9 +80,11 @@ class SessionPartReader(
             runCatching {
                 val stored = directoryStore.storedDirectories()
 
-                // Forget failed parts that have since left the disk some other way, so the set only holds parts that
-                // can still be retried
-                failed.retainAll(stored.toSet())
+                // Forget failed and incomplete parts that have since left the disk some other way, so these only hold
+                // parts that can still be retried
+                val storedSet = stored.toSet()
+                failed.retainAll(storedSet)
+                incomplete.keys.retainAll(storedSet)
 
                 val directories = stored
                     .filterNot(writeTracker::isWriting)
@@ -111,31 +124,47 @@ class SessionPartReader(
      * In the case the storage layer fails to store the session part, the specific outcome from the
      * intake attempt determines what we do with the session part data:
      *
-     * - Storage not attempted: data kept
-     * - Intake timed out or thread interrupted: data kept, intake pass stopped
-     * - First recoverable failure: data kept, intake pass stopped, retried on next intake
-     * - Unrecoverable failure or second failure: data deleted
+     * - Storage not attempted or intake thread interrupted: data kept
+     * - First recoverable failure or timeout: data kept, intake pass stopped, retried on next intake
+     * - Unrecoverable failure or second failure/timeout: data deleted
      */
     private fun deliver(directory: SessionPartDirectory, performingResurrection: Boolean): Boolean {
-        val envelope = reconstructionService.reconstruct(directory)
-        if (envelope == null) {
-            // No need to log as the failed construction is recorded elsewhere
-            directoryStore.delete(directory)
-            return true
+        val intake = incomplete.remove(directory) ?: run {
+            val envelope = reconstructionService.reconstruct(directory)
+            if (envelope == null) {
+                // No need to log as the failed construction is recorded elsewhere
+                directoryStore.delete(directory)
+                return true
+            }
+            val task = intakeService.take(
+                intake = envelope,
+                metadata = directory.createMetadata(envelope, performingResurrection),
+                onStored = { directoryStore.delete(directory) },
+            )
+            PendingIntake(task)
         }
-        val task = intakeService.take(
-            intake = envelope,
-            metadata = directory.createMetadata(envelope, performingResurrection),
-            onStored = { directoryStore.delete(directory) },
-        )
 
         val result = try {
-            task.get(INTAKE_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+            intake.task.get(INTAKE_TIMEOUT_MS, TimeUnit.MILLISECONDS)
         } catch (exc: TimeoutException) {
             logger.trackInternalError(InternalErrorType.IntakeFail, exc)
-            return false
+            return if (intake.timedOut) {
+                // The intake has already timed out once, so stop blocking newer parts on it
+                deleteSessionPartData(directory, "intake timed out on retry")
+                true
+            } else {
+                // Update the pending intake to note that it has timed out, and so should be
+                // deleted if it times out the next time.
+                incomplete[directory] = PendingIntake(
+                    task = intake.task,
+                    timedOut = true,
+                )
+                false
+            }
         } catch (_: InterruptedException) {
+            // An interrupt says nothing about the intake, so keep it as it was without counting it
             Thread.currentThread().interrupt()
+            incomplete[directory] = intake
             return false
         }
 
@@ -189,6 +218,14 @@ class SessionPartReader(
 
     private fun Envelope<SessionPartPayload>.findProcessIdentifier(): String? =
         getSessionPartSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER)
+
+    /**
+     * An intake of a session part, and whether the reader has already timed out waiting on it.
+     */
+    private class PendingIntake(
+        val task: Future<IntakeResult>,
+        val timedOut: Boolean = false,
+    )
 
     private companion object {
         private const val INTAKE_TIMEOUT_MS = 5_000L

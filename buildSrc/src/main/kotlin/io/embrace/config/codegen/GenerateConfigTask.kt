@@ -29,15 +29,22 @@ abstract class GenerateConfigTask : DefaultTask() {
     @get:OutputDirectory
     abstract val sliceDir: DirectoryProperty
 
+    @get:OutputDirectory
+    abstract val testDir: DirectoryProperty
+
     @TaskAction
     fun generate() {
         val file = yamlFile.get().asFile
-        val slices = try {
-            ConfigSlice.fromYaml(file.readText())
+        val pkg = packageName.get()
+        val (slices, tests) = try {
+            val slices = ConfigSlice.fromYaml(file.readText())
+            slices.map { configSliceFile(it, pkg, file.name) } to slices.map { configTestFile(it, pkg, file.name) }
         } catch (exc: IllegalArgumentException) {
             throw GradleException("${file.name}: ${exc.message}", exc)
         }
-        val root = sliceDir.get().asFile.apply { deleteRecursively() }
-        slices.forEach { configSliceFile(it, packageName.get(), file.name).writeTo(root) }
+        val sliceRoot = sliceDir.get().asFile.apply { deleteRecursively() }
+        val testRoot = testDir.get().asFile.apply { deleteRecursively() }
+        slices.forEach { it.writeTo(sliceRoot) }
+        tests.forEach { it.writeTo(testRoot) }
     }
 }

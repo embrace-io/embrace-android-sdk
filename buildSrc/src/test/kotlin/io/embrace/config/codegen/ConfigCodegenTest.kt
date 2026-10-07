@@ -23,6 +23,22 @@ class ConfigCodegenTest {
     }
 
     @Test
+    fun `generates each config test`() {
+        val bar = configTestFile(parse(yaml)[1], "com.example", "foo.yaml").toString()
+        assertTrue(bar, "internal class BarConfigGeneratedTest" in bar)
+        assertTrue(bar, "fun `limit local used when remote absent`()" in bar)
+        assertTrue(bar, "assertEquals(1, resolveBar(local = overrideLocal(\"foo.getLimit()\", 1)).limit)" in bar)
+        val foo = configTestFile(parse(yaml.replace("sdk: fooConfig?.limit", "sdk: fooLimit"))[0], "com.example", "foo.yaml").toString()
+        assertTrue(foo, "RemoteConfig(pctFooEnabled = 0f), bucket = unreadBucket).enabled)" in foo)
+        assertTrue(foo, "bucket = lazy { 49f }).enabled)" in foo)
+        assertTrue(foo, "assertEquals(\"b\", resolveFoo(local = InstrumentedConfigImpl, remote = RemoteConfig(fooName = \"b\")" in foo)
+        assertEquals(
+            "FooConfig.limit: generated tests only support top-level RemoteConfig properties",
+            assertThrows(IllegalArgumentException::class.java) { configTestFile(parse(yaml)[0], "com.example", "foo.yaml") }.message,
+        )
+    }
+
+    @Test
     fun `rejects invalid configs`() {
         mapOf(
             yaml + "\nextra: 1" to "extra: expected a map",

@@ -30,6 +30,8 @@ class ConfigSlice(
 
     val resolver: String = "resolve" + name.removeSuffix("Config")
 
+    val property: String = name.removeSuffix("Config").replaceFirstChar(Char::lowercaseChar)
+
     val doc: String =
         "Resolved " + name.removeSuffix("Config").split(Regex("(?=[A-Z])")).joinToString(" ") { it.lowercase() }.trim() + " config."
 

@@ -77,6 +77,9 @@ internal class SessionPartReaderTest {
             ),
             links = emptyList(),
         )
+
+        private fun ids(vararg directories: SessionPartDirectory): List<String> =
+            directories.map(SessionPartDirectory::sessionPartId)
     }
 
     @get:Rule
@@ -88,6 +91,7 @@ internal class SessionPartReaderTest {
     private lateinit var logger: FakeInternalLogger
     private lateinit var directoryStore: SessionPartDirectoryStore
     private lateinit var intakeService: FakeIntakeService
+    private lateinit var slowIntake: SlowIntakeService
     private lateinit var writeTracker: SessionPartWriteTracker
 
     @Before
@@ -98,6 +102,7 @@ internal class SessionPartReaderTest {
         logger = FakeInternalLogger(throwOnInternalError = false)
         directoryStore = SessionPartDirectoryStore(lazy { sessionsDir }, BackgroundWorker(executor), clock, logger)
         intakeService = FakeIntakeService()
+        slowIntake = SlowIntakeService()
         writeTracker = SessionPartWriteTracker()
     }
 
@@ -125,6 +130,16 @@ internal class SessionPartReaderTest {
     }
 
     @Test
+    fun `a resurrected session part is taken in as incomplete`() {
+        persist(partDirectory)
+        createReader().readPersistedSessionParts(performingResurrection = true)
+
+        assertEquals(emptyList<Any>(), intakeService.intakeList)
+        assertFalse(intakeService.cacheList.single().metadata.complete)
+        assertDeleted(partDirectory)
+    }
+
+    @Test
     fun `the process that recorded the session part is preserved`() {
         persist(partDirectory)
         createReader().readPersistedSessionParts()
@@ -139,14 +154,19 @@ internal class SessionPartReaderTest {
     }
 
     @Test
-    fun `session parts are delivered in the order they must be sent in`() {
-        persist(laterPartDirectory)
-        persist(partDirectory)
-        createReader().readPersistedSessionParts()
+    fun `session parts are taken in serially in time order`() {
+        persistTwoParts()
+        slowIntake.stall = false
+        createReader(slowIntake).readPersistedSessionParts()
 
         assertEquals(
-            listOf(partDirectory.sessionPartId, laterPartDirectory.sessionPartId),
-            intakeService.intakeList.map { it.metadata.sessionPartId },
+            listOf(
+                "take:${partDirectory.sessionPartId}",
+                "wait:${partDirectory.sessionPartId}",
+                "take:${laterPartDirectory.sessionPartId}",
+                "wait:${laterPartDirectory.sessionPartId}",
+            ),
+            slowIntake.events,
         )
         assertDeleted(partDirectory, laterPartDirectory)
     }
@@ -162,27 +182,26 @@ internal class SessionPartReaderTest {
     }
 
     @Test
-    fun `a session part that cannot be reconstructed is deleted without being delivered`() {
-        persist(partDirectory)
+    fun `a session part that cannot be reconstructed is deleted without being delivered or stopping the pass`() {
+        persistTwoParts()
         assertTrue(File(File(sessionsDir, partDirectory.dirName), METADATA_FILE_NAME).delete())
-
         createReader().readPersistedSessionParts()
 
-        assertEquals(emptyList<Any>(), intakeService.intakeList)
-        assertDeleted(partDirectory)
+        assertEquals(ids(laterPartDirectory), intakesAttempted())
+        assertDeleted(partDirectory, laterPartDirectory)
     }
 
     @Test
-    fun `a session part that intake does not store is left on disk`() {
-        persist(partDirectory)
-        intakeService.pendingResults.add(IntakeResult.RETRYABLE_FAILURE)
+    fun `a session part that intake does not store is left on disk and the intake pass continues`() {
+        persistTwoParts()
+        intakeService.pendingResults.addAll(listOf(IntakeResult.RETRYABLE_FAILURE, IntakeResult.PERMANENT_FAILURE))
 
         createReader().readPersistedSessionParts()
 
-        // the part reached intake but wasn't stored, so the only copy of the telemetry is retained
-        assertEquals(partDirectory.sessionPartId, intakeService.intakeList.single().metadata.sessionPartId)
-        assertEquals(setOf(partDirectory), directoryStore.storedDirectories().toSet())
-        assertEquals(setOf(partDirectory.dirName), sessionsDir.list()?.toSet() ?: emptySet<String>())
+        // neither part was stored, so the only copy of each one's telemetry is retained
+        assertEquals(ids(partDirectory, laterPartDirectory), intakesAttempted())
+        assertRetained(partDirectory, laterPartDirectory)
+        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
     }
 
     @Test
@@ -194,8 +213,7 @@ internal class SessionPartReaderTest {
 
     @Test
     fun `everything on disk is deleted when multi file persistence is disabled`() {
-        persist(partDirectory)
-        persist(laterPartDirectory)
+        persistTwoParts()
         assertTrue(File(sessionsDir, "unparseable.tmp").createNewFile())
         createReader(enabled = false).readPersistedSessionParts()
 
@@ -206,86 +224,41 @@ internal class SessionPartReaderTest {
     }
 
     @Test
-    fun `each session part is handed over to intake before the next one is delivered`() {
-        persist(laterPartDirectory)
-        persist(partDirectory)
+    fun `a session part whose intake times out is kept and stops the intake pass`() {
+        persistTwoParts()
+        createReader(slowIntake).readPersistedSessionParts()
 
-        val recording = RecordingIntakeService()
-        createReader(intakeService = recording).readPersistedSessionParts()
-        assertEquals(
-            listOf(
-                "take:${partDirectory.sessionPartId}",
-                "wait:${partDirectory.sessionPartId}",
-                "take:${laterPartDirectory.sessionPartId}",
-                "wait:${laterPartDirectory.sessionPartId}",
-            ),
-            recording.events,
-        )
+        assertEquals(ids(partDirectory), slowIntake.takenPartIds)
+        assertRetained(partDirectory, laterPartDirectory)
+        assertTrue(logger.internalErrorMessages.single().throwable is TimeoutException)
+    }
+
+    @Test
+    fun `a session part left by a timed out pass is retried when there is a new reader instance`() {
+        persistTwoParts()
+        createReader(slowIntake).readPersistedSessionParts()
+        slowIntake.stall = false
+        createReader(slowIntake).readPersistedSessionParts()
+
+        assertEquals(ids(partDirectory, partDirectory, laterPartDirectory), slowIntake.takenPartIds)
+        assertEquals(1, slowIntake.takes.first().waits)
         assertDeleted(partDirectory, laterPartDirectory)
     }
 
-    @Test
-    fun `the pass is abandoned when intake does not store a part in time`() {
-        persist(laterPartDirectory)
-        persist(partDirectory)
-
-        val stalled = StalledIntakeService()
-        createReader(intakeService = stalled).readPersistedSessionParts()
-
-        assertEquals(listOf(partDirectory.sessionPartId), stalled.takenPartIds)
-        assertEquals(setOf(partDirectory, laterPartDirectory), directoryStore.storedDirectories().toSet())
-        assertEquals(
-            setOf(partDirectory.dirName, laterPartDirectory.dirName),
-            sessionsDir.list()?.toSet() ?: emptySet<String>(),
-        )
-        assertTrue(logger.internalErrorMessages.any { it.throwable is TimeoutException })
-    }
-
-    @Test
-    fun `parts left behind by an abandoned pass are delivered by the next pass`() {
-        persist(laterPartDirectory)
-        persist(partDirectory)
-        createReader(intakeService = StalledIntakeService()).readPersistedSessionParts()
-        createReader().readPersistedSessionParts()
-
-        assertEquals(
-            listOf(partDirectory.sessionPartId, laterPartDirectory.sessionPartId),
-            intakeService.intakeList.map { it.metadata.sessionPartId },
-        )
-        assertDeleted(partDirectory, laterPartDirectory)
-    }
-
-    @Test
-    fun `a session part that intake drops without stalling does not abandon the pass`() {
-        persist(laterPartDirectory)
-        persist(partDirectory)
-        intakeService.pendingResults.addAll(listOf(IntakeResult.RETRYABLE_FAILURE, IntakeResult.RETRYABLE_FAILURE))
-        createReader().readPersistedSessionParts()
-
-        assertEquals(
-            listOf(partDirectory.sessionPartId, laterPartDirectory.sessionPartId),
-            intakeService.intakeList.map { it.metadata.sessionPartId },
-        )
-        assertEquals(setOf(partDirectory, laterPartDirectory), directoryStore.storedDirectories().toSet())
-        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
-    }
-
-    @Test
-    fun `a session part that cannot be reconstructed does not abandon the pass`() {
-        persist(laterPartDirectory)
-        persist(partDirectory)
-        assertTrue(File(File(sessionsDir, partDirectory.dirName), METADATA_FILE_NAME).delete())
-        createReader().readPersistedSessionParts()
-
-        assertEquals(
-            listOf(laterPartDirectory.sessionPartId),
-            intakeService.intakeList.map { it.metadata.sessionPartId },
-        )
-        assertDeleted(partDirectory, laterPartDirectory)
-    }
-
-    private class RecordingIntakeService : IntakeService {
+    /**
+     * An intake service that can be configured to behave in nonstandard ways:
+     *
+     * - Set [stall] to true to ensure an intake never completes. Setting it to false completes the intakes right away.
+     *
+     * Every take and wait is recorded in [events].
+     */
+    private class SlowIntakeService : IntakeService {
+        val takes: MutableList<SlowTake> = mutableListOf()
         val events: MutableList<String> = mutableListOf()
+        var stall: Boolean = true
+
+        val takenPartIds: List<String>
+            get() = takes.map(SlowTake::partId)
 
         override fun shutdown() {}
 
@@ -295,47 +268,46 @@ internal class SessionPartReaderTest {
             staleEntry: StoredTelemetryMetadata?,
             onStored: (() -> Unit)?,
         ): Future<IntakeResult> {
-            val partId = metadata.sessionPartId
-            events.add("take:$partId")
-            onStored?.invoke()
-            return object : Future<IntakeResult> {
-                override fun cancel(mayInterruptIfRunning: Boolean) = false
-                override fun isCancelled() = false
-                override fun isDone() = true
-                override fun get() = error("the reader must always wait with a timeout")
-                override fun get(timeout: Long, unit: TimeUnit): IntakeResult {
-                    events.add("wait:$partId")
-                    return IntakeResult.STORED
-                }
+            val take = SlowTake(metadata.sessionPartId, events, onStored)
+            takes.add(take)
+            events.add("take:${take.partId}")
+            if (!stall) {
+                take.store()
             }
+            return take
         }
     }
 
-    private class StalledIntakeService : IntakeService {
-        val takenPartIds: MutableList<String> = mutableListOf()
+    private class SlowTake(
+        val partId: String,
+        private val events: MutableList<String>,
+        private val onStored: (() -> Unit)?,
+    ) : Future<IntakeResult> {
+        var waits: Int = 0
+        private var done = false
 
-        override fun shutdown() {}
+        fun store() {
+            onStored?.invoke()
+            done = true
+        }
 
-        override fun take(
-            intake: Envelope<*>,
-            metadata: StoredTelemetryMetadata,
-            staleEntry: StoredTelemetryMetadata?,
-            onStored: (() -> Unit)?,
-        ): Future<IntakeResult> {
-            takenPartIds.add(metadata.sessionPartId)
-            return object : Future<IntakeResult> {
-                override fun cancel(mayInterruptIfRunning: Boolean) = false
-                override fun isCancelled() = false
-                override fun isDone() = false
-                override fun get() = error("the reader must always wait with a timeout")
-                override fun get(timeout: Long, unit: TimeUnit): IntakeResult = throw TimeoutException("stalled")
+        override fun cancel(mayInterruptIfRunning: Boolean) = false
+        override fun isCancelled() = false
+        override fun isDone() = done
+        override fun get() = error("the reader must always wait with a timeout")
+        override fun get(timeout: Long, unit: TimeUnit): IntakeResult {
+            waits++
+            events.add("wait:$partId")
+            if (!done) {
+                throw TimeoutException("stalled")
             }
+            return IntakeResult.STORED
         }
     }
 
     private fun createReader(
-        enabled: Boolean = true,
         intakeService: IntakeService = this.intakeService,
+        enabled: Boolean = true,
     ) = SessionPartReader(
         sessionsDir = lazy { sessionsDir },
         directoryStore = directoryStore,
@@ -348,6 +320,15 @@ internal class SessionPartReaderTest {
         ),
         logger = logger,
     )
+
+    /**
+     * Persists [partDirectory] and [laterPartDirectory], the later one first so that the reader has to
+     * order them.
+     */
+    private fun persistTwoParts() {
+        persist(laterPartDirectory)
+        persist(partDirectory)
+    }
 
     private fun persist(directory: SessionPartDirectory, span: Span = sessionSpan()) {
         create(directory)
@@ -373,6 +354,16 @@ internal class SessionPartReaderTest {
         executor.runCurrentlyBlocked()
     }
 
+    private fun intakesAttempted(): List<String> = intakeService.intakeList.map { it.metadata.sessionPartId }
+
+    /**
+     * Exactly [directories] are still stored, both in the store's index and on disk.
+     */
+    private fun assertRetained(vararg directories: SessionPartDirectory) {
+        assertEquals(directories.toSet(), directoryStore.storedDirectories().toSet())
+        assertEquals(directories.map(SessionPartDirectory::dirName).toSet(), sessionsDir.list()?.toSet() ?: emptySet<String>())
+    }
+
     private fun assertDeleted(vararg directories: SessionPartDirectory) {
         val stored = directoryStore.storedDirectories().toSet()
         val onDisk = sessionsDir.list()?.toSet() ?: emptySet<String>()
@@ -389,8 +380,7 @@ internal class SessionPartReaderTest {
     private fun assertNothingDelivered(retained: List<SessionPartDirectory>) {
         assertEquals(emptyList<Any>(), intakeService.intakeList)
         assertEquals(emptyList<Any>(), intakeService.cacheList)
-        assertEquals(retained.toSet(), directoryStore.storedDirectories().toSet())
-        assertEquals(retained.map(SessionPartDirectory::dirName).toSet(), sessionsDir.list()?.toSet() ?: emptySet<String>())
+        assertRetained(*retained.toTypedArray())
         assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
     }
 }

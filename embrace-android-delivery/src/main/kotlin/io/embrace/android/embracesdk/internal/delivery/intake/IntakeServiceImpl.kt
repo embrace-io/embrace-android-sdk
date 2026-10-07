@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.SES
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
+import io.embrace.android.embracesdk.internal.delivery.storage.StorageOutcome
 import io.embrace.android.embracesdk.internal.delivery.storage.storeAttachment
 import io.embrace.android.embracesdk.internal.delivery.traceSection
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -18,6 +19,7 @@ import io.embrace.android.embracesdk.internal.utils.CountingOutputStream
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import io.embrace.android.embracesdk.internal.utils.TraceCounter
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
+import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
 import java.util.concurrent.FutureTask
@@ -65,7 +67,7 @@ class IntakeServiceImpl(
         metadata: StoredTelemetryMetadata,
         staleEntry: StoredTelemetryMetadata?,
         onStored: (() -> Unit)?,
-    ): Future<*> {
+    ): Future<Boolean?> {
         deliveryTracer?.onTake(metadata)
 
         if (metadata.isCrashTerminatingProcess() && metadata.complete) {
@@ -75,36 +77,38 @@ class IntakeServiceImpl(
                 // non-blocking shutdown: reject subsequent submissions but defer the drain to
                 // payloadStore.handleCrash's later intakeService.shutdown() call
                 worker.shutdownAndWait(0)
-                processIntake(intake, metadata, staleEntry, onStored)
-                return immediateFuture()
+                return immediateFuture(processIntake(intake, metadata, staleEntry, onStored))
             }
-            return immediateFuture()
+            return immediateFuture(null)
         }
 
         // The worker is shut down once a crash is detected, so anything arriving before the service is sealed must be persisted
         // synchronously (like resurrected session parts) or be unrecoverably loss.
         if (state.get() == State.CRASH_RECEIVED) {
-            processIntake(intake, metadata, staleEntry, onStored)
+            val recoverable = processIntake(intake, metadata, staleEntry, onStored)
             // Only seal the service if the payload is the crashing session's last session part, after which we take in no more
             // telemetry and let the process die.
             if (metadata.isCrashingPartForCurrentProcess()) {
                 state.set(State.SEALED)
             }
-            return immediateFuture()
+            return immediateFuture(recoverable)
         }
 
         if (state.get() != State.ACTIVE) {
-            return immediateFuture()
+            return immediateFuture(null)
         }
 
-        val future = worker.submit(metadata) {
-            processIntake(
-                intake = intake,
-                metadata = metadata,
-                staleEntry = staleEntry,
-                onStored = onStored,
-            )
-        }
+        val future = worker.submit(
+            priorityInfo = metadata,
+            callable = Callable {
+                processIntake(
+                    intake = intake,
+                    metadata = metadata,
+                    staleEntry = staleEntry,
+                    onStored = onStored,
+                )
+            },
+        )
 
         // cancel any cache attempts that are already pending to avoid unnecessary I/O, and evict
         // from the queue so superseded envelopes aren't retained until the worker drains the runnable
@@ -117,19 +121,23 @@ class IntakeServiceImpl(
         return future
     }
 
+    /**
+     * Returns null if the payload was stored or no attempt to store it completed, otherwise whether another attempt could
+     * succeed.
+     */
     @Suppress("UNCHECKED_CAST")
     private fun processIntake(
         intake: Envelope<*>,
         metadata: StoredTelemetryMetadata,
         staleEntry: StoredTelemetryMetadata?,
         onStored: (() -> Unit)?,
-    ) {
+    ): Boolean? {
         try {
             val service = when {
                 metadata.complete -> payloadStorageService
                 else -> cacheStorageService
             }
-            SystemTrace.trace(metadata.traceSection("intake-process")) {
+            val outcome = SystemTrace.trace(metadata.traceSection("intake-process")) {
                 service.store(metadata) { stream ->
                     val counted = CountingOutputStream(stream)
                     val envelopeSerializer = metadata.envelopeType.envelopeSerializer
@@ -143,6 +151,18 @@ class IntakeServiceImpl(
                     }
                     serializedBytes.add(counted.written)
                 }
+            }
+
+            // Return non-successful outcomes early.
+            // A payload storage rejected may succeed in a later attempt, but one that failed won't.
+            when (outcome) {
+                StorageOutcome.REJECTED -> {
+                    return true
+                }
+                StorageOutcome.FAILED -> {
+                    return false
+                }
+                StorageOutcome.STORED -> { }
             }
 
             // the payload is now on disk, so any other copy the caller holds is safe to discard
@@ -182,9 +202,10 @@ class IntakeServiceImpl(
         } catch (exc: Throwable) {
             logger.trackInternalError(InternalErrorType.IntakeFail, exc)
         }
+        return null
     }
 
-    private fun immediateFuture(): Future<*> = FutureTask { }.apply { run() }
+    private fun immediateFuture(value: Boolean?): Future<Boolean?> = FutureTask { value }.apply { run() }
 
     private fun StoredTelemetryMetadata.isCrashTerminatingProcess(): Boolean =
         payloadType == PayloadType.JVM_CRASH || payloadType == PayloadType.REACT_NATIVE_CRASH

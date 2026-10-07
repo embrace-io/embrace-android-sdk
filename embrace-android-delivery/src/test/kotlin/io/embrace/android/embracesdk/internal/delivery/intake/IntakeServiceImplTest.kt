@@ -28,6 +28,7 @@ import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -118,8 +119,8 @@ class IntakeServiceImplTest {
             shutdown()
             try {
                 take(sessionEnvelope, sessionMetadata)
-            } catch (ignored: RejectedExecutionException) {
-                // this is an artefact of testing - WorkerThreadModule typically passes in an
+            } catch (_: RejectedExecutionException) {
+                // this is an artifact of testing - WorkerThreadModule typically passes in an
                 // executor that has a custom rejection handler
             }
         }
@@ -280,7 +281,7 @@ class IntakeServiceImplTest {
         assertEquals(10, payloadStorageService.storedPayloadCount())
         assertEquals(10, payloadStorageService.storeCount.get())
 
-        // assert payloads were prioritised in the expected order
+        // assert payloads were prioritized in the expected order
         val observedTypes = payloadStorageService.storedFilenames().map {
             val metadata = StoredTelemetryMetadata.fromFilename(it).getOrThrow()
             metadata.envelopeType
@@ -494,6 +495,7 @@ class IntakeServiceImplTest {
         assertEquals(0, payloadStorageService.storedPayloadCount())
         executorService.runCurrentlyBlocked()
         assertTrue(future.isDone)
+        assertNull(future.get())
         assertEquals(1, payloadStorageService.storedPayloadCount())
         assertEquals(1, schedulingService.payloadIntakeCount)
     }
@@ -821,6 +823,106 @@ class IntakeServiceImplTest {
     }
 
     @Test
+    fun `onStored is not invoked when storage service rejects a storage call`() {
+        payloadStorageService.rejectStorage = true
+        var storedCount = 0
+        val future = intakeService.take(
+            intake = sessionEnvelope,
+            metadata = sessionMetadata,
+            onStored = { storedCount++ },
+        )
+        executorService.runCurrentlyBlocked()
+
+        assertEquals(0, payloadStorageService.storedPayloadCount())
+        assertEquals(0, storedCount)
+        assertEquals(true, future.get())
+        assertEquals(0, schedulingService.payloadIntakeCount)
+        assertTrue(logger.internalErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `onStored is not invoked when the storage call fails`() {
+        var storedCount = 0
+        payloadStorageService.reportFailure = true
+        val future = intakeService.take(
+            intake = sessionEnvelope,
+            metadata = sessionMetadata,
+            onStored = { storedCount++ },
+        )
+        executorService.runCurrentlyBlocked()
+        assertEquals(0, storedCount)
+        assertEquals(false, future.get())
+        assertEquals(0, schedulingService.payloadIntakeCount)
+        assertTrue(logger.internalErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `a failed or rejected payload storage call does not delete the stale entry it was meant to replace`() {
+        executorService.blockingMode = false
+        val stale = StoredTelemetryMetadata(
+            timestamp = clock.now(),
+            uuid = "stale-uuid",
+            processIdentifier = "old-pid",
+            envelopeType = SESSION,
+            complete = false,
+        ).apply {
+            cacheStorageService.store(this) { it.write("stale".toByteArray()) }
+        }
+        payloadStorageService.rejectStorage = true
+
+        intakeService.take(
+            intake = sessionEnvelope,
+            metadata = sessionMetadata,
+            staleEntry = stale,
+        )
+
+        assertTrue(cacheStorageService.storedFilenames().contains(stale.filename))
+        assertEquals(0, payloadStorageService.storedPayloadCount())
+    }
+
+    @Test
+    fun `onStored is not invoked when the storage layer prunes the new payload`() {
+        val outputDir = Files.createTempDirectory("intake").toFile().apply { deleteRecursively() }
+        val fileStorageService = PayloadStorageServiceImpl(
+            outputDir = lazy { outputDir },
+            worker = PriorityWorker(BlockableExecutorService(blockingMode = false)),
+            processIdProvider = { PROCESS_ID },
+            logger = logger,
+            clock = clock,
+            storageLimit = 1,
+        )
+        intakeService = IntakeServiceImpl(
+            schedulingService,
+            fileStorageService,
+            cacheStorageService,
+            logger,
+            serializer,
+            PriorityWorker(executorService),
+        )
+        var storedCount = 0
+        intakeService.take(
+            intake = sessionEnvelope,
+            metadata = sessionMetadata,
+            onStored = { storedCount++ },
+        )
+        executorService.runCurrentlyBlocked()
+        assertEquals(1, storedCount)
+
+        val future = intakeService.take(
+            intake = logEnvelope,
+            metadata = networkMetadata2,
+            onStored = { storedCount++ },
+        )
+        executorService.runCurrentlyBlocked()
+
+        assertEquals(true, future.get())
+        assertEquals(1, storedCount)
+        assertEquals(listOf(sessionMetadata), fileStorageService.getPayloadsByPriority())
+        assertEquals(1, schedulingService.payloadIntakeCount)
+        assertTrue(logger.internalErrorMessages.isEmpty())
+    }
+
+    @Test
     fun `onStored is not invoked when the payload is dropped after sealing`() {
         // a crash in the current process seals the intake service once its session part arrives
         val jvmCrashMetadata = StoredTelemetryMetadata(
@@ -874,7 +976,7 @@ class IntakeServiceImplTest {
         val file = outputDir.listFiles()?.single() ?: error("File not found")
         assertEquals(sessionMetadata.filename, file.name)
         val observed = serializer.fromJson(GZIPInputStream(file.inputStream()), Envelope.sessionEnvelopeSerializer)
-        assertEquals("replacement-session-span", observed.data?.spans?.single()?.name)
+        assertEquals("replacement-session-span", observed.data.spans?.single()?.name)
 
         assertEquals(2, storedCount)
         assertEquals(listOf(sessionMetadata), fileStorageService.getPayloadsByPriority())
@@ -890,7 +992,7 @@ class IntakeServiceImplTest {
         service.clearStorage()
         try {
             intakeService.take(envelope, metadata)
-        } catch (ignored: RejectedExecutionException) {
+        } catch (_: RejectedExecutionException) {
             // expected: worker is shut down (the production rejection handler would log and drop)
         }
         assertEquals(0, service.storedPayloadCount())

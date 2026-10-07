@@ -174,7 +174,7 @@ internal class SessionPartReaderTest {
     @Test
     fun `a session part that intake does not store is left on disk`() {
         persist(partDirectory)
-        intakeService.storeSucceeds = false
+        intakeService.pendingFailures.add(true)
 
         createReader().readPersistedSessionParts()
 
@@ -258,7 +258,7 @@ internal class SessionPartReaderTest {
     fun `a session part that intake drops without stalling does not abandon the pass`() {
         persist(laterPartDirectory)
         persist(partDirectory)
-        intakeService.storeSucceeds = false
+        intakeService.pendingFailures.addAll(listOf(true, true))
         createReader().readPersistedSessionParts()
 
         assertEquals(
@@ -293,17 +293,18 @@ internal class SessionPartReaderTest {
             metadata: StoredTelemetryMetadata,
             staleEntry: StoredTelemetryMetadata?,
             onStored: (() -> Unit)?,
-        ): Future<*> {
+        ): Future<Boolean?> {
             val partId = metadata.sessionPartId
             events.add("take:$partId")
             onStored?.invoke()
-            return object : Future<Unit> {
+            return object : Future<Boolean?> {
                 override fun cancel(mayInterruptIfRunning: Boolean) = false
                 override fun isCancelled() = false
                 override fun isDone() = true
                 override fun get() = error("the reader must always wait with a timeout")
-                override fun get(timeout: Long, unit: TimeUnit) {
+                override fun get(timeout: Long, unit: TimeUnit): Boolean? {
                     events.add("wait:$partId")
+                    return null
                 }
             }
         }
@@ -319,14 +320,14 @@ internal class SessionPartReaderTest {
             metadata: StoredTelemetryMetadata,
             staleEntry: StoredTelemetryMetadata?,
             onStored: (() -> Unit)?,
-        ): Future<*> {
+        ): Future<Boolean?> {
             takenPartIds.add(metadata.sessionPartId)
-            return object : Future<Unit> {
+            return object : Future<Boolean?> {
                 override fun cancel(mayInterruptIfRunning: Boolean) = false
                 override fun isCancelled() = false
                 override fun isDone() = false
                 override fun get() = error("the reader must always wait with a timeout")
-                override fun get(timeout: Long, unit: TimeUnit): Unit = throw TimeoutException("stalled")
+                override fun get(timeout: Long, unit: TimeUnit): Boolean? = throw TimeoutException("stalled")
             }
         }
     }

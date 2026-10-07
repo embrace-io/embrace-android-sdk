@@ -40,4 +40,5 @@ kover {
 dependencies {
     dokka(project(":embrace-android-api"))
     dokka(project(":embrace-android-sdk"))
+    dokka(project(":embrace-android-otel-java"))
 }

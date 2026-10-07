@@ -17,14 +17,14 @@ import io.opentelemetry.kotlin.tracing.export.toOtelKotlinSpanProcessor
 /**
  * Adds an [OtelJavaSpanExporter] that OTel Spans will be exported to after completion.
  */
-fun SdkApi.addJavaSpanExporter(spanExporter: OtelJavaSpanExporter) {
+public fun SdkApi.addJavaSpanExporter(spanExporter: OtelJavaSpanExporter) {
     this.addSpanExporter(spanExporter.toOtelKotlinSpanExporter())
 }
 
 /**
  * Adds an [OtelJavaLogRecordExporter] that OTel LogRecords will be exported to after completion.
  */
-fun SdkApi.addJavaLogRecordExporter(logRecordExporter: OtelJavaLogRecordExporter) {
+public fun SdkApi.addJavaLogRecordExporter(logRecordExporter: OtelJavaLogRecordExporter) {
     this.addLogRecordExporter(logRecordExporter.toOtelKotlinLogRecordExporter())
 }
 
@@ -32,7 +32,7 @@ fun SdkApi.addJavaLogRecordExporter(logRecordExporter: OtelJavaLogRecordExporter
  * Adds a [OtelJavaSpanProcessor] that will process OTel Spans after Embrace's internal processor.
  * Processors must be added before the SDK has started or they will be ignored.
  */
-fun SdkApi.addJavaSpanProcessor(spanProcessor: OtelJavaSpanProcessor) {
+public fun SdkApi.addJavaSpanProcessor(spanProcessor: OtelJavaSpanProcessor) {
     this.addSpanProcessor(spanProcessor.toOtelKotlinSpanProcessor())
 }
 
@@ -40,17 +40,17 @@ fun SdkApi.addJavaSpanProcessor(spanProcessor: OtelJavaSpanProcessor) {
  * Adds a [OtelJavaLogRecordProcessor] that will process OTel Logs after Embrace's internal processor.
  * Processors must be added before the SDK has started or they will be ignored.
  */
-fun SdkApi.addJavaLogRecordProcessor(logRecordProcessor: OtelJavaLogRecordProcessor) {
+public fun SdkApi.addJavaLogRecordProcessor(logRecordProcessor: OtelJavaLogRecordProcessor) {
     this.addLogRecordProcessor(logRecordProcessor.toOtelKotlinLogRecordProcessor())
 }
 
 /**
- * Returns an [OtelJavaOpenTelemetry] that provides working [Tracer] implementations that will record spans that fit into the Embrace data
- * model.
+ * Returns an [OtelJavaOpenTelemetry] that provides working [Tracer][io.opentelemetry.api.trace.Tracer] implementations that will
+ * record spans that fit into the Embrace data model.
  *
  * Note: `sdk_config.otel.enable_otel_kotlin_sdk` must be set to `false` in your embrace-config.json file when using this method.
  * If it is set to `true`, the OtelJavaOpenTelemetry instance may behave inconsistently.
  */
-fun SdkApi.getJavaOpenTelemetry(): OtelJavaOpenTelemetry {
+public fun SdkApi.getJavaOpenTelemetry(): OtelJavaOpenTelemetry {
     return this.getOpenTelemetryKotlin().toOtelJavaApi()
 }

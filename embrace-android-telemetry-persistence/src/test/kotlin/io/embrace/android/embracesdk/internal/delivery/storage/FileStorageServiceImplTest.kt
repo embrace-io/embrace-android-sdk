@@ -171,19 +171,79 @@ class FileStorageServiceImplTest {
         executor.queueCompletionTask()
 
         // verify that the payload is gone and the callback is fired even if the actual file delete didn't happen
-        assertEquals(0, service.getStoredPayloads().size)
+        assertNoStoredPayloads()
         assertTrue(callbackFired)
     }
 
     @Test
-    fun `temp file is cleaned up when write fails`() {
-        service.store(fakeSessionStoredTelemetryMetadata) {
+    fun `temp file is cleaned up and the write reported as failed when the file system fails`() {
+        val outcome = service.store(fakeSessionStoredTelemetryMetadata) {
             throw IOException("disk full")
         }
 
-        // no orphaned temp file remains and nothing was indexed
-        assertTrue(outputDir.listFiles()?.none { it.name.endsWith(".tmp") } ?: true)
-        assertEquals(0, service.getStoredPayloads().size)
+        assertEquals(StorageOutcome.FAILED, outcome)
+        assertNoTempFile()
+        assertNoStoredPayloads()
+    }
+
+    @Test
+    fun `a write that throws while serializing the payload is reported as having failed`() {
+        val outcome = service.store(fakeSessionStoredTelemetryMetadata) {
+            throw IllegalStateException("unserializable span")
+        }
+
+        assertEquals(StorageOutcome.FAILED, outcome)
+        assertNoTempFile()
+        assertNoStoredPayloads()
+    }
+
+    @Test
+    fun `an error thrown while serializing the payload is reported as having failed`() {
+        val outcome = service.store(fakeSessionStoredTelemetryMetadata) {
+            throw OutOfMemoryError("memory pressure")
+        }
+
+        assertEquals(StorageOutcome.FAILED, outcome)
+        assertNoStoredPayloads()
+    }
+
+    @Test
+    fun `a failure outside serializing the payload is reported as having failed`() {
+        val failing = FileStorageServiceImpl(
+            lazy { error("payload directory unavailable") },
+            PriorityWorker(executor),
+            logger,
+            clock,
+        )
+
+        val outcome = failing.store(fakeSessionStoredTelemetryMetadata) { it.write(DUMMY_CONTENT.toByteArray()) }
+
+        assertEquals(StorageOutcome.FAILED, outcome)
+        assertTrue(logger.internalErrorMessages.single().throwable is IllegalStateException)
+    }
+
+    @Test
+    fun `a payload that cannot be renamed into place is reported as having failed`() {
+        assertNoStoredPayloads()
+        File(outputDir, fakeSessionStoredTelemetryMetadata.filename).apply {
+            mkdirs()
+            File(this, "occupant").writeText("in the way")
+        }
+
+        val outcome = service.store(fakeSessionStoredTelemetryMetadata) { it.write(DUMMY_CONTENT.toByteArray()) }
+
+        assertEquals(StorageOutcome.FAILED, outcome)
+        assertNoTempFile()
+        assertNoStoredPayloads()
+    }
+
+    @Test
+    fun `a success storage operation results in the a payload with the expected name in the output directory`() {
+        assertEquals(
+            StorageOutcome.STORED,
+            service.store(fakeSessionStoredTelemetryMetadata) { it.write(DUMMY_CONTENT.toByteArray()) },
+        )
+        assertEquals(listOf(fakeSessionStoredTelemetryMetadata.filename), outputDir.list()?.toList())
     }
 
     @Test
@@ -304,8 +364,10 @@ class FileStorageServiceImplTest {
         val blob = metadata("aaaaaaaa-0000-0000-0000-000000000003", SupportedEnvelopeType.BLOB)
         storeDummyFile(crash, limited)
         storeDummyFile(session, limited)
-        storeDummyFile(blob, limited)
+        val outcome = limited.store(blob) { it.write(DUMMY_CONTENT.toByteArray()) }
 
+        // the pruned payload was never written, and the caller is told so rather than left to assume it was kept
+        assertEquals(StorageOutcome.REJECTED, outcome)
         assertEquals(setOf(crash.uuid, session.uuid), limited.getStoredPayloads().map { it.uuid }.toSet())
         assertNull(limited.loadPayloadAsStream(blob))
     }
@@ -338,6 +400,14 @@ class FileStorageServiceImplTest {
         service.store(metadata) {
             it.write(DUMMY_CONTENT.toByteArray())
         }
+    }
+
+    private fun assertNoStoredPayloads() {
+        assertEquals(0, service.getStoredPayloads().size)
+    }
+
+    private fun assertNoTempFile() {
+        assertTrue(outputDir.listFiles()?.none { it.name.endsWith(".tmp") } ?: true)
     }
 
     val fakeSessionStoredTelemetryMetadata = StoredTelemetryMetadata(

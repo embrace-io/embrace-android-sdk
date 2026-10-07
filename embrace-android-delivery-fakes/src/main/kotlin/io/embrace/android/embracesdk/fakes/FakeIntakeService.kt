@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.FutureTask
 
 class FakeIntakeService : IntakeService {
 
@@ -13,10 +13,10 @@ class FakeIntakeService : IntakeService {
     var cacheList: MutableList<FakePayloadIntake<*>> = mutableListOf()
 
     /**
-     * Whether an intake is treated as stored. Set to false to simulate a payload that the intake
-     * service dropped or failed to persist, in which case the onStored callback is not invoked.
+     * Each intake will take the first item off this list and fail with it, the value being whether the failure is
+     * recoverable. An empty list means intakes don't fail.
      */
-    var storeSucceeds: Boolean = true
+    val pendingFailures: ArrayDeque<Boolean> = ArrayDeque()
 
     @Suppress("UNCHECKED_CAST")
     inline fun <reified T : Any> getIntakes(complete: Boolean = true): List<FakePayloadIntake<T>> {
@@ -36,27 +36,16 @@ class FakeIntakeService : IntakeService {
         metadata: StoredTelemetryMetadata,
         staleEntry: StoredTelemetryMetadata?,
         onStored: (() -> Unit)?,
-    ): Future<*> {
+    ): Future<Boolean?> {
         val dst = when (metadata.complete) {
             true -> intakeList
             false -> cacheList
         }
         dst.add(FakePayloadIntake(intake, metadata))
-        if (storeSucceeds) {
+        val recoverable = pendingFailures.removeFirstOrNull()
+        if (recoverable == null) {
             onStored?.invoke()
         }
-        return fakeFuture
-    }
-
-    val fakeFuture = object : Future<Boolean> {
-        override fun cancel(p0: Boolean): Boolean = false
-
-        override fun isCancelled(): Boolean = false
-
-        override fun isDone(): Boolean = true
-
-        override fun get() = true
-
-        override fun get(p0: Long, p1: TimeUnit) = true
+        return FutureTask { recoverable }.apply { run() }
     }
 }

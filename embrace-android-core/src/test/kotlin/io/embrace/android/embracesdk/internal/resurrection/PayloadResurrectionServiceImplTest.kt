@@ -836,8 +836,8 @@ class PayloadResurrectionServiceImplTest {
                 metadata: StoredTelemetryMetadata,
                 staleEntry: StoredTelemetryMetadata?,
                 onStored: (() -> Unit)?,
-            ): Future<*> {
-                return object : Future<Unit> {
+            ): Future<Boolean?> {
+                return object : Future<Boolean?> {
                     override fun cancel(mayInterruptIfRunning: Boolean) = false
                     override fun isCancelled() = false
                     override fun isDone() = false

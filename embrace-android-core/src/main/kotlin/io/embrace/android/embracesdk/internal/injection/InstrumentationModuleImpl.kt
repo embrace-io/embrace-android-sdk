@@ -45,5 +45,6 @@ class InstrumentationModuleImpl(
         processStateTracker = essentialServiceModule.processStateTracker,
         navigationTrackingService = essentialServiceModule.navigationTrackingService,
         telemetryService = initModule.telemetryService,
+        eventBus = coreModule.eventBus,
     )
 }

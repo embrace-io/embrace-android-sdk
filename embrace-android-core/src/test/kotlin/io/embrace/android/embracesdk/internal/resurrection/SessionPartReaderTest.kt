@@ -192,16 +192,49 @@ internal class SessionPartReaderTest {
     }
 
     @Test
-    fun `a session part that intake does not store is left on disk and the intake pass continues`() {
+    fun `a session part intake that fails in a recoverable way stops the intake pass but its data is retained and intake is retried`() {
         persistTwoParts()
-        intakeService.pendingResults.addAll(listOf(IntakeResult.RETRYABLE_FAILURE, IntakeResult.PERMANENT_FAILURE))
+        intakeService.pendingResults.add(IntakeResult.RETRYABLE_FAILURE)
+        val reader = createReader()
+
+        // the part is kept and the pass stops, so the later part is not delivered ahead of it
+        reader.readPersistedSessionParts()
+        assertEquals(ids(partDirectory), intakesAttempted())
+        assertRetained(partDirectory, laterPartDirectory)
+
+        // the next pass is the retry, and it stores the part before the later one, so order is kept
+        reader.readPersistedSessionParts()
+        assertEquals(ids(partDirectory, partDirectory, laterPartDirectory), intakesAttempted())
+        assertDeleted(partDirectory, laterPartDirectory)
+        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+    }
+
+    @Test
+    fun `a session part that fails its retry is deleted and the intake pass continues`() {
+        persistTwoParts()
+        intakeService.pendingResults.addAll(listOf(IntakeResult.RETRYABLE_FAILURE, IntakeResult.RETRYABLE_FAILURE))
+        val reader = createReader()
+        reader.readPersistedSessionParts()
+
+        // one retry only, so a part that keeps failing cannot hold the parts behind it
+        reader.readPersistedSessionParts()
+        assertEquals(ids(partDirectory, partDirectory, laterPartDirectory), intakesAttempted())
+        assertDeleted(partDirectory, laterPartDirectory)
+        assertTrue(logger.internalErrorMessages.single().throwable is IllegalStateException)
+    }
+
+    @Test
+    fun `a session part that fails storage in an unrecoverable way is deleted without a retry`() {
+        persistTwoParts()
+        intakeService.pendingResults.add(IntakeResult.PERMANENT_FAILURE)
 
         createReader().readPersistedSessionParts()
 
-        // neither part was stored, so the only copy of each one's telemetry is retained
+        // a failure that belongs to the payload would repeat on a retry, so the part's data is deleted, the failure
+        // reported, and the later part is attempted in the same pass
         assertEquals(ids(partDirectory, laterPartDirectory), intakesAttempted())
-        assertRetained(partDirectory, laterPartDirectory)
-        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+        assertDeleted(partDirectory, laterPartDirectory)
+        assertTrue(logger.internalErrorMessages.single().throwable is IllegalStateException)
     }
 
     @Test

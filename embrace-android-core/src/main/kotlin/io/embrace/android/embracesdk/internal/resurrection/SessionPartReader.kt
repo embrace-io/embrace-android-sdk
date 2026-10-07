@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
+import io.embrace.android.embracesdk.internal.delivery.intake.IntakeResult
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
@@ -18,6 +19,8 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionReconst
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import java.io.File
+import java.util.Collections
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
@@ -25,6 +28,14 @@ import java.util.concurrent.TimeoutException
  * Reads any session parts that were persisted on disk by the multi-file persistence layer,
  * reconstructs each one into an envelope, and hands it to the [IntakeService] for delivery. A
  * session part is deleted once intake has stored it.
+ *
+ * Parts are delivered in order, and a part that can't be stored in the storage layer will block
+ * subsequent parts from being processed. Therefore, we delete any part for which intake failure
+ * is unrecoverable, and for those that may succeed on a retry, we keep it and stop the pass so
+ * the next intake pass tries it again (but just once). The pass stops so newer session parts
+ * won't be processed until this failed one has a chance to retry. A second failure is treated
+ * like it were unrecoverable, biasing to unblocking the delivery queue for new session parts
+ * over trying to reprocess a part that may never succeed.
  */
 class SessionPartReader(
     private val sessionsDir: Lazy<File>,
@@ -36,6 +47,10 @@ class SessionPartReader(
     private val configService: ConfigService,
     private val logger: InternalLogger,
 ) {
+    /**
+     * The session parts whose intake attempt has failed at least once.
+     */
+    private val failed: MutableSet<SessionPartDirectory> = Collections.newSetFromMap(ConcurrentHashMap())
 
     /**
      * Reads every completed session part on disk, returning only once each one has been handed to
@@ -52,7 +67,13 @@ class SessionPartReader(
         }
         EmbTrace.trace("mf-read-session-parts") {
             runCatching {
-                val directories = directoryStore.storedDirectories()
+                val stored = directoryStore.storedDirectories()
+
+                // Forget failed parts that have since left the disk some other way, so the set only holds parts that
+                // can still be retried
+                failed.retainAll(stored.toSet())
+
+                val directories = stored
                     .filterNot(writeTracker::isWriting)
                     .sortedWith(SessionPartDirectory.comparator)
 
@@ -85,13 +106,20 @@ class SessionPartReader(
 
     /**
      * Hands the session part's telemetry to the intake service, and removes it from disk once intake
-     * has stored it. A part that intake drops or fails to store is left alone so that the next launch
-     * can retry it, as this is the only copy of the telemetry. Session parts that cannot be
-     * reconstructed are deleted rather than retried.
+     * has stored it. Returns whether the pass may move on to the next part.
+     *
+     * In the case the storage layer fails to store the session part, the specific outcome from the
+     * intake attempt determines what we do with the session part data:
+     *
+     * - Storage not attempted: data kept
+     * - Intake timed out or thread interrupted: data kept, intake pass stopped
+     * - First recoverable failure: data kept, intake pass stopped, retried on next intake
+     * - Unrecoverable failure or second failure: data deleted
      */
     private fun deliver(directory: SessionPartDirectory, performingResurrection: Boolean): Boolean {
         val envelope = reconstructionService.reconstruct(directory)
         if (envelope == null) {
+            // No need to log as the failed construction is recorded elsewhere
             directoryStore.delete(directory)
             return true
         }
@@ -100,16 +128,49 @@ class SessionPartReader(
             metadata = directory.createMetadata(envelope, performingResurrection),
             onStored = { directoryStore.delete(directory) },
         )
-        return try {
+
+        val result = try {
             task.get(INTAKE_TIMEOUT_MS, TimeUnit.MILLISECONDS)
-            true
         } catch (exc: TimeoutException) {
             logger.trackInternalError(InternalErrorType.IntakeFail, exc)
-            false
-        } catch (exc: InterruptedException) {
+            return false
+        } catch (_: InterruptedException) {
             Thread.currentThread().interrupt()
-            false
+            return false
         }
+
+        return when (result) {
+            // No failures mean the intake was successful or not attempted.
+            // Either way, we clean up and move onto the next part.
+            IntakeResult.STORED, IntakeResult.NOT_ATTEMPTED -> {
+                failed.remove(directory)
+                true
+            }
+            IntakeResult.PERMANENT_FAILURE -> {
+                deleteSessionPartData(directory, "intake failure unrecoverable")
+                true
+            }
+            IntakeResult.RETRYABLE_FAILURE -> {
+                if (failed.add(directory)) {
+                    // If a session part has a recoverable failure that hasn't been retried, abort the
+                    // pass so it can be retried later
+                    false
+                } else {
+                    // If a session part intake has already been retried, delete it and move on.
+                    deleteSessionPartData(directory, "failed intake retry failed again")
+                    true
+                }
+            }
+        }
+    }
+
+    private fun deleteSessionPartData(directory: SessionPartDirectory, reason: String) {
+        failed.remove(directory)
+        directoryStore.delete(directory)
+        logger.trackInternalError(
+            InternalErrorType.SessionPartReadFail,
+            IllegalStateException("Session part data deleted: $reason"),
+        )
     }
 
     private fun SessionPartDirectory.createMetadata(

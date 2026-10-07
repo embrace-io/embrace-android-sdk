@@ -35,14 +35,6 @@ fun resolveBreadcrumb(local: InstrumentedConfig, remote: RemoteConfig?): Breadcr
     )
 }
 
-fun resolvePersistence(local: InstrumentedConfig, remote: RemoteConfig?, bucket: Lazy<Float>): PersistenceConfig =
-    PersistenceConfig(
-        multiFileEnabled = {
-            rolloutEnabled(remote?.pctMultiFilePersistenceEnabled, bucket)
-                ?: local.enabledFeatures.isMultiFilePersistenceEnabled()
-        },
-    )
-
 fun resolveThreadBlockage(remote: RemoteConfig?, bucket: Lazy<Float>): ThreadBlockageConfig {
     val cfg = remote?.threadBlockageRemoteConfig
     return ThreadBlockageConfig(

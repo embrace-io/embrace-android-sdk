@@ -1,0 +1,32 @@
+FooConfig:
+  foo_enabled:
+    property: enabled
+    default: false
+    local:
+      type: Boolean
+      sdk: enabledFeatures.isFooEnabled()
+    remote:
+      type: Pct
+      sdk: pctFooEnabled
+  foo_limit:
+    property: limit
+    default: 10
+    local:
+      type: Int
+      sdk: foo.getLimit()
+    remote:
+      type: Int
+      sdk: fooConfig?.limit
+  foo_name:
+    property: name
+    default: "a \"b\" $c"
+    remote:
+      type: String
+      sdk: fooName
+BarConfig:
+  bar_limit:
+    property: limit
+    default: 10
+    local:
+      type: Int
+      sdk: foo.getLimit()

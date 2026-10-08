@@ -16,7 +16,6 @@ import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.builtins.serializer
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
@@ -37,13 +36,6 @@ internal class NativeCrashDataSourceImplTest {
             nativeCrashProcessor = crashProcessor,
             args = args,
         )
-    }
-
-    @Test
-    fun `native crash sent when there is one to be found`() {
-        crashProcessor.addNativeCrashData(testNativeCrashData)
-        assertNotNull(nativeCrashDataSource.getAndSendNativeCrash())
-        assertEquals(1, args.destination.logEvents.size)
     }
 
     @Test

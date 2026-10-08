@@ -8,12 +8,6 @@ class FakeNativeCrashService : NativeCrashService {
 
     val nativeCrashesSent = ConcurrentLinkedQueue<Pair<NativeCrashData, Map<String, String>>>()
     private val nativeCrashDataBlobs = mutableListOf<Pair<NativeCrashData, Map<String, String>>>()
-    var checkAndSendNativeCrashInvocation: Int = 0
-
-    override fun getAndSendNativeCrash(): NativeCrashData? {
-        checkAndSendNativeCrashInvocation++
-        return nativeCrashDataBlobs.lastOrNull()?.first
-    }
 
     override fun getNativeCrashes(): List<NativeCrashData> = nativeCrashDataBlobs.map { it.first }
 

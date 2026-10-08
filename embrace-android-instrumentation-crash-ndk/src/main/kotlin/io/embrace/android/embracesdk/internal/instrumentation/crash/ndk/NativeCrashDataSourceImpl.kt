@@ -22,12 +22,6 @@ internal class NativeCrashDataSourceImpl(
     limitStrategy = NoopLimitStrategy,
     instrumentationName = "native_crash_data_source",
 ) {
-    override fun getAndSendNativeCrash(): NativeCrashData? {
-        return nativeCrashProcessor.getLatestNativeCrash()?.apply {
-            sendNativeCrash(nativeCrash = this, userSessionProperties = emptyMap(), metadata = emptyMap())
-        }
-    }
-
     override fun getNativeCrashes(): List<NativeCrashData> = nativeCrashProcessor.getNativeCrashes()
 
     override fun sendNativeCrash(

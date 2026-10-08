@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifi
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
-import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
@@ -31,7 +31,7 @@ class FakeInstrumentationArgs(
     override val ordinalStore: OrdinalStore = FakeOrdinalStore(),
     override val processIdentifier: String = "fake-process-id",
     override val processStateTracker: ProcessStateTracker = FakeProcessStateTracker(),
-    override val telemetryService: TelemetryService = FakeTelemetryService(),
+    override val telemetryService: InternalTelemetryService = FakeInternalTelemetryService(),
     override val packageInfo: PackageInfo? = null,
     val backgroundWorkerSupplier: (worker: Worker.Background) -> BackgroundWorker = { fakeBackgroundWorker() },
     val priorityWorkerSupplier: (worker: Worker.Priority) -> PriorityWorker<*> = { fakePriorityWorker<Any>() },

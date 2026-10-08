@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.limits.SPAN_EVENT_TELEMETRY_TYPE
 import io.embrace.android.embracesdk.internal.limits.SpanLimits
 import io.embrace.android.embracesdk.internal.limits.TelemetryLimitEnforcer
 import io.embrace.android.embracesdk.internal.otel.payload.toPayloadString
-import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 
 /**
  * Used to validate limits and restrictions at instrumentation time imposed by Embrace before telemetry is recorded
@@ -16,7 +16,7 @@ import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 class DataValidator(
     val otelLimitsConfig: OtelLimitsConfig = OtelLimitsConfigImpl,
     private val bypassValidation: (() -> Boolean) = { false },
-    telemetryService: TelemetryService,
+    telemetryService: InternalTelemetryService,
 ) {
     private val enforcer = TelemetryLimitEnforcer(
         otelLimits = otelLimitsConfig,

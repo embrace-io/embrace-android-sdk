@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import okhttp3.OkHttpClient
 
@@ -23,7 +23,7 @@ interface InitModule {
     /**
      * Service to track usage of public APIs and other internal metrics
      */
-    val telemetryService: TelemetryService
+    val telemetryService: InternalTelemetryService
 
     /**
      * Logger used by the SDK

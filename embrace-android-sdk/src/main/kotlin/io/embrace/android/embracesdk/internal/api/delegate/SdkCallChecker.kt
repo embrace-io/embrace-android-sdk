@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
-import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal class SdkCallChecker(
     private val logger: InternalLogger,
-    private val telemetryService: TelemetryService?,
+    private val telemetryService: InternalTelemetryService?,
 ) {
 
     /**

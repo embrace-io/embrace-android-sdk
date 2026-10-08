@@ -5,9 +5,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.LastRunEndState
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
@@ -53,7 +53,7 @@ internal class SdkStateApiDelegateTest {
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
         logger = FakeInternalLogger()
-        sdkCallChecker = SdkCallChecker(logger, FakeTelemetryService())
+        sdkCallChecker = SdkCallChecker(logger, FakeInternalTelemetryService())
         sdkCallChecker.started.set(true)
         delegate = SdkStateApiDelegate(moduleInitBootstrapper, sdkCallChecker)
     }

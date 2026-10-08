@@ -6,8 +6,8 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeURLStreamHandlerFactory
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.instrumentation.huclite.DelegatingInstrumentedURLStreamHandlerFactory
@@ -34,7 +34,7 @@ import javax.net.ssl.HttpsURLConnection
 class HucLiteDataSourceTest {
     private lateinit var factoryFieldRef: Field
     private lateinit var fakeTelemetryDestination: FakeTelemetryDestination
-    private lateinit var fakeTelemetryService: FakeTelemetryService
+    private lateinit var fakeTelemetryService: FakeInternalTelemetryService
     private lateinit var fakeClock: FakeClock
     private lateinit var fakeEmbLogger: FakeInternalLogger
     private lateinit var domainCountLimiter: EmbraceDomainCountLimiter
@@ -55,7 +55,7 @@ class HucLiteDataSourceTest {
             },
         )
         fakeTelemetryDestination = FakeTelemetryDestination()
-        fakeTelemetryService = FakeTelemetryService()
+        fakeTelemetryService = FakeInternalTelemetryService()
         fakeClock = FakeClock(FAKE_TIME_MS)
         fakeEmbLogger = FakeInternalLogger(throwOnInternalError = false)
         mockedConnection =

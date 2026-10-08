@@ -27,7 +27,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanServiceImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
-import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
 import okhttp3.OkHttpClient
@@ -72,12 +72,12 @@ internal class TelemetryDestinationHarness(
      * but where no per-session span limit is applied
      */
     fun createUncappedSpanService(): SpanService {
-        val validator = DataValidator(telemetryService = NoopTelemetryService)
+        val validator = DataValidator(telemetryService = NoopInternalTelemetryService)
         val factory = EmbraceSpanFactoryImpl(
             openTelemetryClock = EmbClock(initModule.clock),
             spanRepository = otelModule.spanRepository,
             dataValidator = validator,
-            telemetryService = NoopTelemetryService,
+            telemetryService = NoopInternalTelemetryService,
         )
         return SpanServiceImpl(
             spanRepository = otelModule.spanRepository,
@@ -91,7 +91,7 @@ internal class TelemetryDestinationHarness(
     }
 
     private class TestInitModule(override val clock: Clock) : InitModule {
-        override val telemetryService: TelemetryService = NoopTelemetryService
+        override val telemetryService: InternalTelemetryService = NoopInternalTelemetryService
         override val logger: InternalLogger = InternalLoggerImpl()
         override val systemInfo: SystemInfo = SystemInfo()
         override val uuidSource: UuidSource = UuidSourceImpl()
@@ -101,7 +101,7 @@ internal class TelemetryDestinationHarness(
         override val okHttpClient: Lazy<OkHttpClient> = lazyOf(OkHttpClient())
     }
 
-    private object NoopTelemetryService : TelemetryService {
+    private object NoopInternalTelemetryService : InternalTelemetryService {
         override fun onPublicApiCalled(name: String) {
         }
 

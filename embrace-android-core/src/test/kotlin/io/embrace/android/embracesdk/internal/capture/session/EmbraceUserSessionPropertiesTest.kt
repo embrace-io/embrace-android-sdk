@@ -4,9 +4,9 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.behavior.FakeUserSessionBehavior
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import org.junit.Assert
@@ -36,7 +36,7 @@ internal class EmbraceUserSessionPropertiesTest {
     private lateinit var context: Context
     private lateinit var configService: FakeConfigService
     private lateinit var destination: FakeTelemetryDestination
-    private lateinit var telemetryService: FakeTelemetryService
+    private lateinit var telemetryService: FakeInternalTelemetryService
 
     @Before
     fun setUp() {
@@ -47,7 +47,7 @@ internal class EmbraceUserSessionPropertiesTest {
             sessionBehavior = FakeUserSessionBehavior(MAX_SESSION_PROPERTIES_DEFAULT),
         )
         destination = FakeTelemetryDestination()
-        telemetryService = FakeTelemetryService()
+        telemetryService = FakeInternalTelemetryService()
         props = EmbraceUserSessionProperties(
             store,
             configService,
@@ -69,7 +69,8 @@ internal class EmbraceUserSessionPropertiesTest {
         assertEquals(VALUE_VALID, props.get()[KEY_VALID])
 
         // user session property should not have been persisted
-        val sessionProperties2 = EmbraceUserSessionProperties(store, configService, destination, FakeTelemetryService())
+        val sessionProperties2 =
+            EmbraceUserSessionProperties(store, configService, destination, FakeInternalTelemetryService())
         assertTrue(sessionProperties2.get().isEmpty())
     }
 
@@ -85,7 +86,8 @@ internal class EmbraceUserSessionPropertiesTest {
         assertEquals(VALUE_VALID, props.get()[KEY_VALID])
 
         // permanent property should have been persisted
-        val sessionProperties2 = EmbraceUserSessionProperties(store, configService, destination, FakeTelemetryService())
+        val sessionProperties2 =
+            EmbraceUserSessionProperties(store, configService, destination, FakeInternalTelemetryService())
         assertEquals(1, sessionProperties2.get().size.toLong())
         assertEquals(VALUE_VALID, sessionProperties2.get()[KEY_VALID])
 
@@ -93,7 +95,8 @@ internal class EmbraceUserSessionPropertiesTest {
         assertTrue(props.add(KEY_VALID, VALUE_VALID, PropertyScope.USER_SESSION))
 
         // permanent property should no longer have been persisted
-        val sessionProperties3 = EmbraceUserSessionProperties(store, configService, destination, FakeTelemetryService())
+        val sessionProperties3 =
+            EmbraceUserSessionProperties(store, configService, destination, FakeInternalTelemetryService())
         assertTrue(sessionProperties3.get().isEmpty())
     }
 
@@ -114,7 +117,7 @@ internal class EmbraceUserSessionPropertiesTest {
         assertEquals(1, props.get().size.toLong())
 
         // fresh instance with same store — process prop must be absent
-        val props2 = EmbraceUserSessionProperties(store, configService, destination, FakeTelemetryService())
+        val props2 = EmbraceUserSessionProperties(store, configService, destination, FakeInternalTelemetryService())
         assertTrue(props2.get().isEmpty())
     }
 
@@ -175,14 +178,14 @@ internal class EmbraceUserSessionPropertiesTest {
         props.add(KEY_VALID, VALUE_VALID, PropertyScope.PERMANENT)
 
         // verify persisted
-        val props2 = EmbraceUserSessionProperties(store, configService, destination, FakeTelemetryService())
+        val props2 = EmbraceUserSessionProperties(store, configService, destination, FakeInternalTelemetryService())
         assertEquals(1, props2.get().size.toLong())
 
         // move to process scope
         props.add(KEY_VALID, VALUE_VALID, PropertyScope.PROCESS)
 
         // disk store should no longer have the key
-        val props3 = EmbraceUserSessionProperties(store, configService, destination, FakeTelemetryService())
+        val props3 = EmbraceUserSessionProperties(store, configService, destination, FakeInternalTelemetryService())
         assertTrue(props3.get().isEmpty())
     }
 
@@ -320,13 +323,15 @@ internal class EmbraceUserSessionPropertiesTest {
         assertTrue(props.add(KEY_VALID, VALUE_VALID, PropertyScope.PERMANENT))
 
         // permanent property should have been persisted
-        val sessionProperties2 = EmbraceUserSessionProperties(store, configService, destination, FakeTelemetryService())
+        val sessionProperties2 =
+            EmbraceUserSessionProperties(store, configService, destination, FakeInternalTelemetryService())
         assertEquals(1, sessionProperties2.get().size.toLong())
         assertTrue(props.remove(KEY_VALID))
         assertTrue(props.get().isEmpty())
 
         // permanent property should have been removed
-        val sessionProperties3 = EmbraceUserSessionProperties(store, configService, destination, FakeTelemetryService())
+        val sessionProperties3 =
+            EmbraceUserSessionProperties(store, configService, destination, FakeInternalTelemetryService())
         assertTrue(sessionProperties3.get().isEmpty())
     }
 

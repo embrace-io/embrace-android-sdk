@@ -4,8 +4,8 @@ import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDomainCountLimiter
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeSpanToken
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -14,7 +14,7 @@ import org.junit.Assert.assertEquals
 
 internal class NetworkRequestDataSourceTestHarness {
     val domainCountLimiter: FakeDomainCountLimiter = FakeDomainCountLimiter()
-    val telemetryService: FakeTelemetryService = FakeTelemetryService()
+    val telemetryService: FakeInternalTelemetryService = FakeInternalTelemetryService()
     val networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior()
     val args: FakeInstrumentationArgs = FakeInstrumentationArgs(
         application = ApplicationProvider.getApplicationContext(),

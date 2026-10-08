@@ -3,16 +3,16 @@ package io.embrace.android.embracesdk.internal.limits
 import io.embrace.android.embracesdk.internal.config.instrumented.OtelLimitsConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
-import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils
 
 /**
  * Applies the upper bounds of captured telemetry, reporting every limit that
- * had to be applied via [TelemetryService.trackAppliedLimit].
+ * had to be applied via [InternalTelemetryService.trackAppliedLimit].
  */
 class TelemetryLimitEnforcer(
     val otelLimits: OtelLimitsConfig = OtelLimitsConfigImpl,
-    private val telemetryService: TelemetryService,
+    private val telemetryService: InternalTelemetryService,
     private val exemptFromValueTruncation: (String) -> Boolean = { false },
     private val valueToString: (Any) -> String = Any::toString,
 ) {

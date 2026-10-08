@@ -30,7 +30,7 @@ class FakeSpanData(
     private var parentSpanContext: OtelJavaSpanContext = OtelJavaSpanContext.getInvalid(),
     private var startEpochNanos: Long = DEFAULT_START_TIME_MS.millisToNanos(),
     private var attributes: OtelJavaAttributes = DataValidator(
-        telemetryService = FakeTelemetryService()
+        telemetryService = FakeInternalTelemetryService()
     ).truncateAttributes(
         mapOf(
             type.asPair(),

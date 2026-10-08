@@ -5,13 +5,13 @@ import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestinati
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
-import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 
 internal class EmbraceUserSessionProperties(
     private val store: KeyValueStore,
     configService: ConfigService,
     private val destination: TelemetryDestination,
-    private val telemetryService: TelemetryService,
+    private val telemetryService: InternalTelemetryService,
 ) {
     private data class PropertyEntry(val value: String, val scope: PropertyScope)
 

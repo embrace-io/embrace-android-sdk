@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.capture.session
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.SensitiveKeysConfig
@@ -18,7 +18,7 @@ internal class UserSessionPropertiesServiceImplTest {
 
     private lateinit var service: UserSessionPropertiesService
     private lateinit var destination: FakeTelemetryDestination
-    private lateinit var telemetryService: FakeTelemetryService
+    private lateinit var telemetryService: FakeInternalTelemetryService
     private lateinit var propState: Map<String, String>
 
     @Before
@@ -30,7 +30,7 @@ internal class UserSessionPropertiesServiceImplTest {
                 ),
             )
         destination = FakeTelemetryDestination()
-        telemetryService = FakeTelemetryService()
+        telemetryService = FakeInternalTelemetryService()
         service = UserSessionPropertiesServiceImpl(
             lazyOf(FakeKeyValueStore()),
             fakeConfigService,

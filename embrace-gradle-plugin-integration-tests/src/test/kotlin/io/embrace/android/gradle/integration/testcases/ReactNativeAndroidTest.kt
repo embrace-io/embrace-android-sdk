@@ -17,13 +17,13 @@ class ReactNativeAndroidTest {
     val rule: PluginIntegrationTestRule = PluginIntegrationTestRule()
 
     private val defaultExpectedVariants = listOf("release")
-    private val variantsSentInBuildTelemetry = listOf("debug", "release")
+    private val variantsSentInBuildTelemetry = listOf("debug", "debugOptimized", "release")
     private val defaultExpectedLibs = listOf(
         "libappmodules.so",
         "libc++_shared.so",
         "libembrace-native.so",
         "libfbjni.so",
-        "libhermes.so",
+        "libhermesvm.so",
         "libhermestooling.so",
         "libimagepipeline.so",
         "libjsi.so",
@@ -38,7 +38,7 @@ class ReactNativeAndroidTest {
     fun `react native ndk upload test`() {
         val handshakeLibs = listOf(
             "libfbjni.so",
-            "libhermes.so",
+            "libhermesvm.so",
             "libhermestooling.so",
         )
         val handshakeArchs = listOf("arm64-v8a", "armeabi-v7a")
@@ -71,7 +71,7 @@ class ReactNativeAndroidTest {
                 installNodeModules(projectDir)
             },
             assertions = { projectDir ->
-                verifyAsmInjection(File(projectDir, "app"), "27D4D89A18B0426A47151D4888D4E40A")
+                verifyAsmInjection(File(projectDir, "app"), "ADE0E26EA90702B9C80F03C3812C372E")
             },
         )
     }
@@ -97,7 +97,7 @@ class ReactNativeAndroidTest {
     fun `debug builds should not upload symbols`() {
         val handshakeLibs = listOf(
             "libfbjni.so",
-            "libhermes.so",
+            "libhermesvm.so",
             "libhermestooling.so",
         )
         val handshakeArchs = listOf("arm64-v8a", "armeabi-v7a")

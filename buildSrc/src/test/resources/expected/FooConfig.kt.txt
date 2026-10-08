@@ -1,0 +1,38 @@
+// Generated from foo.yaml. Do not edit.
+package com.example
+
+import io.embrace.android.embracesdk.`internal`.config.instrumented.schema.InstrumentedConfig
+import io.embrace.android.embracesdk.`internal`.config.remote.RemoteConfig
+
+/**
+ * Resolved foo config.
+ */
+public interface FooConfig {
+    public val enabled: Boolean
+
+    public val limit: Int
+
+    public val name: String
+}
+
+public inline fun FooConfig(
+    crossinline enabled: () -> Boolean = { false },
+    crossinline limit: () -> Int = { 10 },
+    crossinline name: () -> String = { "a \"b\" ${'$'}c" },
+): FooConfig = object : FooConfig {
+    override val enabled: Boolean = enabled()
+
+    override val limit: Int = limit()
+
+    override val name: String = name()
+}
+
+public fun resolveFoo(
+    local: InstrumentedConfig,
+    remote: RemoteConfig?,
+    bucket: Lazy<Float>,
+): FooConfig = FooConfig(
+    enabled = { rolloutEnabled(remote?.pctFooEnabled, bucket) ?: local.enabledFeatures.isFooEnabled() },
+    limit = { remote?.fooLimit ?: local.foo.getLimit() },
+    name = { remote?.fooName ?: "a \"b\" ${'$'}c" },
+)

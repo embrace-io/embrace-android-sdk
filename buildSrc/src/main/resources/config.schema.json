@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Input to GenerateConfigTask. Keep in sync with ConfigSlice.fromYaml().",
+  "type": "object",
+  "additionalProperties": {
+    "type": "object",
+    "additionalProperties": { "$ref": "#/definitions/feature" }
+  },
+  "definitions": {
+    "feature": {
+      "type": "object",
+      "required": ["property", "default"],
+      "anyOf": [{ "required": ["local"] }, { "required": ["remote"] }],
+      "not": { "required": ["min", "max_length"] },
+      "dependencies": { "min": ["max"], "max": ["min"] },
+      "additionalProperties": false,
+      "properties": {
+        "property": { "type": "string" },
+        "default": { "type": ["boolean", "integer", "number", "string"] },
+        "min": { "type": "integer", "description": "Int or Long only." },
+        "max": { "type": "integer", "description": "Int or Long only." },
+        "max_length": { "type": "integer", "minimum": 1, "description": "String only." },
+        "local": {
+          "type": "object",
+          "required": ["type", "sdk"],
+          "additionalProperties": false,
+          "properties": { "type": { "enum": ["Boolean", "Int", "Long", "String"] }, "sdk": { "type": "string" } }
+        },
+        "remote": {
+          "type": "object",
+          "required": ["type", "sdk"],
+          "additionalProperties": false,
+          "properties": { "type": { "enum": ["Boolean", "Int", "Long", "String", "Pct"] }, "sdk": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

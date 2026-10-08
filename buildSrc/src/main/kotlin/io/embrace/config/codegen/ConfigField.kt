@@ -6,4 +6,5 @@ class ConfigField(
     val default: String,
     val local: ConfigProperty?,
     val remote: ConfigProperty?,
+    val range: ConfigRange? = null,
 )

@@ -1,0 +1,7 @@
+FooConfig:
+  foo_limit:
+    property: limit
+    default: 10
+    remote:
+      type: Int
+      sdk: fooConfig?.limit

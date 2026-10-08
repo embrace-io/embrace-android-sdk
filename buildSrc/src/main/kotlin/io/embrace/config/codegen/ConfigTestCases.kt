@@ -28,6 +28,7 @@ internal class ConfigTestCases(
         fallback(),
         field.remote?.let { remoteOverrides(it) },
         field.remote?.takeIf { it.type == ConfigType.PCT }?.let { partialRollout(it) },
+        field.range?.let { outOfRange(it) },
     )
 
     private fun defaults(): FunSpec = test("default") {
@@ -85,6 +86,21 @@ internal class ConfigTestCases(
         }
     }
 
+    private fun outOfRange(range: ConfigRange): FunSpec = test("ignores out of range values") {
+        val valid = type.samples[0]
+        val invalid = range.bounds?.let { listOf("${it.first - 1}", "${it.last + 1}") }
+            ?: listOf("a".repeat(checkNotNull(range.maxLength) + 1))
+        invalid.forEach { value ->
+            field.remote?.let { remote ->
+                val expected = if (field.local != null) valid else field.default
+                assertEquals(type.literal(expected), resolve(local = localWith(valid), remote = remoteWith(remote, type.literal(value))))
+            }
+            if (field.local != null) {
+                assertEquals(type.literal(field.default), resolve(local = localWith(value), remote = CodeBlock.of("null")))
+            }
+        }
+    }
+
     private fun localWith(value: String): CodeBlock? = field.local?.let {
         CodeBlock.of("%M(%S, %L)", MemberName(packageName, "overrideLocal"), it.sdk, it.type.literal(value))
     }
@@ -115,7 +131,10 @@ internal class ConfigTestCases(
     private val ConfigType.samples: List<String>
         get() = when (this) {
             ConfigType.BOOLEAN -> listOf("true", "false")
-            ConfigType.INT, ConfigType.LONG -> listOf("1", "2")
+            ConfigType.INT, ConfigType.LONG -> {
+                val first = field.range?.bounds?.first ?: 1
+                listOf("$first", "${first + 1}")
+            }
             ConfigType.STRING -> listOf("a", "b")
             ConfigType.PCT -> listOf("100", "0")
         }

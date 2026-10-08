@@ -31,6 +31,7 @@ robolectric = "4.15.1"
 mockk = "1.14.9"
 kotlinpoet = "2.4.0"
 snakeyaml = "2.6"
+jsonSchemaValidator = "1.5.9"
 androidxTest = "1.7.0"
 androidxOrchestrator = "1.6.1"
 androidxRunner = "1.7.0"
@@ -93,6 +94,7 @@ robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectr
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
 snakeyaml = { module = "org.yaml:snakeyaml", version.ref = "snakeyaml" }
+json-schema-validator = { module = "com.networknt:json-schema-validator", version.ref = "jsonSchemaValidator" }
 androidx-test-core = { module = "androidx.test:core", version.ref = "androidxTest" }
 androidx-test-junit = { module = "androidx.test.ext:junit", version.ref = "androidxJunit" }
 androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidxRunner" }

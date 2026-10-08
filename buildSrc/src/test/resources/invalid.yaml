@@ -1,0 +1,66 @@
+# error: extra: expected a map
+# schema: invalid
+extra: 1
+---
+# error: FooConfig.foo: local: missing 'sdk'
+# schema: invalid
+FooConfig:
+  foo: { property: foo, default: 1, local: { type: Int } }
+---
+# error: FooConfig.foo: missing 'property'
+# schema: invalid
+FooConfig:
+  foo: { default: 1, local: { type: Int, sdk: foo } }
+---
+# error: FooConfig.foo: local: unknown type 'Bool'
+# schema: invalid
+FooConfig:
+  foo: { property: foo, default: true, local: { type: Bool, sdk: foo } }
+---
+# error: FooConfig.foo: Pct is only valid for remote
+# schema: invalid
+FooConfig:
+  foo: { property: foo, default: true, local: { type: Pct, sdk: foo } }
+---
+# error: FooConfig.foo: needs a local or remote section
+# schema: invalid
+FooConfig:
+  foo: { property: foo, default: 1 }
+---
+# error: FooConfig.foo: 'maybe' is not a valid Boolean
+FooConfig:
+  foo: { property: foo, default: maybe, local: { type: Boolean, sdk: foo } }
+---
+# error: FooConfig.foo: remote type does not match local
+FooConfig:
+  foo: { property: foo, default: 1, local: { type: Int, sdk: foo }, remote: { type: Pct, sdk: foo } }
+---
+# error: FooConfig.foo: 'max_length' must be a positive Int
+# schema: invalid
+FooConfig:
+  foo: { property: foo, default: a, max_length: 0, local: { type: String, sdk: foo } }
+---
+# error: FooConfig.foo: min and max are only valid for Int or Long
+FooConfig:
+  foo: { property: foo, default: true, min: 1, max: 2, local: { type: Boolean, sdk: foo } }
+---
+# error: FooConfig.foo: max_length is only valid for String
+FooConfig:
+  foo: { property: foo, default: 1, max_length: 5, local: { type: Int, sdk: foo } }
+---
+# error: FooConfig.foo: min must be less than max
+FooConfig:
+  foo: { property: foo, default: 10, min: 10, max: 10, local: { type: Int, sdk: foo } }
+---
+# error: FooConfig.foo: default '10' is out of range
+FooConfig:
+  foo: { property: foo, default: 10, min: 11, max: 20, local: { type: Int, sdk: foo } }
+---
+# error: FooConfig.foo: 'max' is not a valid Int
+FooConfig:
+  foo: { property: foo, default: 1, min: 0, max: 2147483648, local: { type: Int, sdk: foo } }
+---
+# error: FooConfig.foo: missing 'max'
+# schema: invalid
+FooConfig:
+  foo: { property: foo, default: 1, min: 0, local: { type: Int, sdk: foo } }

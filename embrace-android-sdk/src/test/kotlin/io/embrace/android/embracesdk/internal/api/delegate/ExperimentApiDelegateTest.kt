@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentKind
 import io.embrace.android.embracesdk.internal.capture.experiment.TrackedData
 import io.embrace.android.embracesdk.internal.config.resolved.ExperimentConfig
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.instance.BufferingSdkInstance
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -31,6 +32,8 @@ internal class ExperimentApiDelegateTest {
     private lateinit var sdkCallChecker: SdkCallChecker
     private lateinit var clock: FakeClock
     private lateinit var initModule: FakeInitModule
+    private lateinit var bufferLogger: FakeInternalLogger
+    private lateinit var buffer: BufferingSdkInstance
 
     @Before
     fun setUp() {
@@ -42,71 +45,72 @@ internal class ExperimentApiDelegateTest {
         clock = checkNotNull(initModule.getFakeClock())
         sdkCallChecker = SdkCallChecker(checkerLogger)
         delegate = createDelegate()
+        bufferLogger = FakeInternalLogger()
+        buffer = BufferingSdkInstance(clock, bufferLogger)
     }
 
     @Test
     fun `trackExperiment before start buffers without logging an error`() {
-        delegate.trackExperiment("exp1", startedAt = 1L)
+        buffer.trackExperiment("exp1", startedAt = 1L)
 
         assertTrue(fakeExperimentTrackingService.trackedData.isEmpty())
-        assertTrue(checkerLogger.sdkNotInitializedMessages.isEmpty())
+        assertNoErrorsLogged()
     }
 
     @Test
     fun `untrackExperiment before start buffers without logging an error`() {
-        delegate.untrackExperiment("exp1", endedAt = 1L)
+        buffer.untrackExperiment("exp1", endedAt = 1L)
 
         assertTrue(fakeExperimentTrackingService.untrackCalls.isEmpty())
-        assertTrue(checkerLogger.sdkNotInitializedMessages.isEmpty())
+        assertNoErrorsLogged()
     }
 
     @Test
     fun `trackFeatureFlag before start buffers without logging an error`() {
-        delegate.trackFeatureFlag("flag1", startedAt = 1L)
+        buffer.trackFeatureFlag("flag1", startedAt = 1L)
 
         assertTrue(fakeExperimentTrackingService.trackedData.isEmpty())
-        assertTrue(checkerLogger.sdkNotInitializedMessages.isEmpty())
+        assertNoErrorsLogged()
     }
 
     @Test
     fun `untrackFeatureFlag before start buffers without logging an error`() {
-        delegate.untrackFeatureFlag("flag1", endedAt = 1L)
+        buffer.untrackFeatureFlag("flag1", endedAt = 1L)
 
         assertTrue(fakeExperimentTrackingService.untrackCalls.isEmpty())
-        assertTrue(checkerLogger.sdkNotInitializedMessages.isEmpty())
+        assertNoErrorsLogged()
     }
 
     @Test
-    fun `buffered calls are replayed in one service call when flushed`() {
-        delegate.trackExperiments(
+    fun `buffered calls are replayed in one service call when drained`() {
+        buffer.trackExperiments(
             listOf(
                 TrackedExperimentImpl("exp1", "v1", 123456789L),
                 TrackedExperimentImpl("exp2", "v1", 123456789L),
             ),
         )
-        delegate.trackExperiments(
+        buffer.trackExperiments(
             listOf(
                 TrackedExperimentImpl("exp2", "v2", 123456789L),
                 TrackedExperimentImpl("exp3", "v1", 123456789L),
             ),
         )
-        delegate.trackExperiment("exp4", "v2", 123456789L)
-        delegate.trackFeatureFlags(
+        buffer.trackExperiment("exp4", "v2", 123456789L)
+        buffer.trackFeatureFlags(
             listOf(
                 TrackedFeatureFlagImpl("flag1", "on", 987654321L),
                 TrackedFeatureFlagImpl("flag2", null, 987654321L),
             ),
         )
-        delegate.trackFeatureFlag("flag3", variant = "v3", startedAt = 987654321L)
-        delegate.untrackExperiments(listOf("exp1", "exp2"), 555555555L)
-        delegate.untrackExperiment("exp3", 555555555L)
-        delegate.untrackExperiment("exp4", 555555566L)
-        delegate.untrackFeatureFlags(listOf("flag1", "flag3"), 555555555L)
-        delegate.untrackFeatureFlag("flag1", endedAt = 666666666L)
-        delegate.untrackFeatureFlag("flag2", endedAt = 666666666L)
+        buffer.trackFeatureFlag("flag3", variant = "v3", startedAt = 987654321L)
+        buffer.untrackExperiments(listOf("exp1", "exp2"), 555555555L)
+        buffer.untrackExperiment("exp3", 555555555L)
+        buffer.untrackExperiment("exp4", 555555566L)
+        buffer.untrackFeatureFlags(listOf("flag1", "flag3"), 555555555L)
+        buffer.untrackFeatureFlag("flag1", endedAt = 666666666L)
+        buffer.untrackFeatureFlag("flag2", endedAt = 666666666L)
 
-        sdkCallChecker.started.set(true)
-        delegate.flushPendingCalls()
+        startAndDrain()
 
         assertEquals(1, fakeExperimentTrackingService.serviceInvocations)
         assertEquals(
@@ -140,44 +144,37 @@ internal class ExperimentApiDelegateTest {
             ),
             fakeExperimentTrackingService.bulkApiCalls,
         )
+        assertNoErrorsLogged()
     }
 
     @Test
-    fun `buffered calls with omitted timestamps capture the call time from the system clock at the time of the API call`() {
-        val beforeMs = System.currentTimeMillis()
-        delegate.trackExperiment("exp1")
-        delegate.untrackFeatureFlag("flag1")
-        val afterMs = System.currentTimeMillis()
+    fun `buffered calls with omitted timestamps capture the clock time at the time of the API call`() {
+        val callTimeMs = clock.now()
+        buffer.trackExperiment("exp1")
+        buffer.untrackFeatureFlag("flag1")
         clock.tick()
 
-        sdkCallChecker.started.set(true)
-        val flushTime = clock.now()
-        delegate.flushPendingCalls()
+        startAndDrain()
 
-        val experiment = fakeExperimentTrackingService.trackedData.single()
-        assertTrue(experiment.startTimeMs in beforeMs..afterMs)
-        assertTrue(experiment.startTimeMs != flushTime)
-        val untrackCall = fakeExperimentTrackingService.untrackCalls.single()
-        assertTrue(untrackCall.endTimeMs in beforeMs..afterMs)
-        assertTrue(untrackCall.endTimeMs != flushTime)
+        assertEquals(callTimeMs, fakeExperimentTrackingService.trackedData.single().startTimeMs)
+        assertEquals(callTimeMs, fakeExperimentTrackingService.untrackCalls.single().endTimeMs)
     }
 
     @Test
     fun `buffer admits entries up to the absolute record limit, keeping the earliest`() {
         repeat(PENDING_ENTRY_LIMIT - 1) { i ->
-            delegate.trackExperiment("exp-$i", startedAt = i.toLong())
+            buffer.trackExperiment("exp-$i", startedAt = i.toLong())
         }
         // a bulk call straddling the limit keeps its earlier entries and drops the rest
-        delegate.trackExperiments(
+        buffer.trackExperiments(
             listOf(
-                delegate.createExperiment("exp-kept", startedAt = 1L),
-                delegate.createExperiment("exp-dropped", startedAt = 2L),
+                buffer.createExperiment("exp-kept", startedAt = 1L),
+                buffer.createExperiment("exp-dropped", startedAt = 2L),
             ),
         )
-        delegate.trackExperiment("exp-after-full", startedAt = 3L)
+        buffer.trackExperiment("exp-after-full", startedAt = 3L)
 
-        sdkCallChecker.started.set(true)
-        delegate.flushPendingCalls()
+        startAndDrain()
 
         val flushedIds = fakeExperimentTrackingService.trackedData.map { it.id }
         assertEquals(PENDING_ENTRY_LIMIT, flushedIds.size)
@@ -185,6 +182,33 @@ internal class ExperimentApiDelegateTest {
         assertTrue(flushedIds.contains("exp-kept"))
         assertFalse(flushedIds.contains("exp-dropped"))
         assertFalse(flushedIds.contains("exp-after-full"))
+    }
+
+    @Test
+    fun `buffered empty bulk calls do not call the service when drained`() {
+        buffer.trackExperiments(emptyList())
+        buffer.untrackExperiments(emptyList(), endedAt = 0L)
+        buffer.trackFeatureFlags(emptyList())
+        buffer.untrackFeatureFlags(emptyList(), endedAt = 0L)
+        startAndDrain()
+        assertEquals(0, fakeExperimentTrackingService.serviceInvocations)
+    }
+
+    @Test
+    fun `calls after draining go straight to the service`() {
+        startAndDrain()
+        buffer.trackExperiment("exp1", variant = "v1", startedAt = 111L)
+        buffer.untrackFeatureFlag("flag1", endedAt = 222L)
+
+        assertEquals(
+            listOf(TrackedData.experiment(id = "exp1", startTimeMs = 111L, variant = "v1")),
+            fakeExperimentTrackingService.trackedData,
+        )
+        assertEquals(
+            listOf(FakeExperimentTrackingService.UntrackCall(ExperimentKind.FEATURE_FLAG, listOf("flag1"), 222L)),
+            fakeExperimentTrackingService.untrackCalls,
+        )
+        assertTrue(fakeExperimentTrackingService.bulkApiCalls.isEmpty())
     }
 
     @Test
@@ -275,15 +299,37 @@ internal class ExperimentApiDelegateTest {
     }
 
     @Test
-    fun `empty bulk calls do not throw and leave nothing tracked`() {
-        delegate.trackExperiments(emptyList())
-        delegate.untrackExperiments(emptyList(), endedAt = 0L)
-        delegate.trackFeatureFlags(emptyList())
-        delegate.untrackFeatureFlags(emptyList(), endedAt = 0L)
-
-        sdkCallChecker.started.set(true)
-        delegate.flushPendingCalls()
+    fun `calls before start are dropped with an error`() {
+        delegate.trackExperiment("exp1", startedAt = 1L)
+        delegate.untrackFeatureFlag("flag1", endedAt = 1L)
+        delegate.replay(listOf(ExperimentApiCall.Track(listOf(TrackedData.experiment("exp2", 1L, null)))))
         assertEquals(0, fakeExperimentTrackingService.serviceInvocations)
+        assertEquals(2, checkerLogger.sdkNotInitializedMessages.size)
+    }
+
+    @Test
+    fun `replayed calls are committed in one service call`() {
+        val calls = listOf(
+            ExperimentApiCall.Track(listOf(TrackedData.experiment("exp1", 111L, "v1"))),
+            ExperimentApiCall.Untrack(ExperimentKind.FEATURE_FLAG, listOf("flag1"), 222L),
+        )
+        sdkCallChecker.started.set(true)
+        delegate.replay(calls)
+
+        assertEquals(1, fakeExperimentTrackingService.serviceInvocations)
+        assertEquals(calls, fakeExperimentTrackingService.bulkApiCalls)
+    }
+
+    @Test
+    fun `replaying no calls does not call the service`() {
+        sdkCallChecker.started.set(true)
+        delegate.replay(emptyList())
+        assertEquals(0, fakeExperimentTrackingService.serviceInvocations)
+    }
+
+    @Test
+    fun `empty bulk calls do not throw and leave nothing tracked`() {
+        sdkCallChecker.started.set(true)
 
         delegate.trackExperiments(emptyList())
         delegate.untrackExperiments(emptyList(), endedAt = 0L)
@@ -304,6 +350,16 @@ internal class ExperimentApiDelegateTest {
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
         return ExperimentApiDelegate(moduleInitBootstrapper, sdkCallChecker)
+    }
+
+    private fun startAndDrain() {
+        sdkCallChecker.started.set(true)
+        buffer.drainExperimentCalls(delegate, delegate::replay)
+    }
+
+    private fun assertNoErrorsLogged() {
+        assertTrue(checkerLogger.sdkNotInitializedMessages.isEmpty())
+        assertTrue(bufferLogger.infoMessages.isEmpty())
     }
 
     private companion object {

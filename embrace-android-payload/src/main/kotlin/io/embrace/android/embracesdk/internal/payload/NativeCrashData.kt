@@ -10,5 +10,5 @@ data class NativeCrashData(
     @SerialName("usid") val userSessionId: String = "",
     @SerialName("ts") val timestamp: Long,
     @SerialName("crash") val crash: String?,
-    @SerialName("symbols") var symbols: Map<String, String>?,
+    @SerialName("symbols") val symbols: Map<String, String>?,
 )

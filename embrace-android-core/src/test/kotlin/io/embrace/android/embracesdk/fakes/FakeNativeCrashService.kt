@@ -29,6 +29,10 @@ class FakeNativeCrashService : NativeCrashService {
         nativeCrashDataBlobs.clear()
     }
 
+    override fun deleteNativeCrash(nativeCrash: NativeCrashData) {
+        nativeCrashDataBlobs.removeAll { it.first == nativeCrash }
+    }
+
     fun addNativeCrashData(nativeCrashData: NativeCrashData, metadata: Map<String, String> = emptyMap()) {
         nativeCrashDataBlobs.add(Pair(nativeCrashData, metadata))
     }

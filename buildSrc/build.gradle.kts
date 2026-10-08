@@ -18,6 +18,10 @@ dependencies {
     implementation(libs.binary.compatibility.validator)
     implementation(libs.vanniktech.maven.publish)
     implementation(libs.kover)
+    implementation(libs.kotlinpoet)
+    implementation(libs.snakeyaml)
+
+    testImplementation(libs.junit)
 }
 
 // ensure the Kotlin + Java compilers both use the same language level.

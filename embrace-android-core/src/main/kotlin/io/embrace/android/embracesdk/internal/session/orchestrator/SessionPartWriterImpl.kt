@@ -23,7 +23,7 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWri
 import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshotsWriter
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
-import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -45,7 +45,7 @@ class SessionPartWriterImpl(
     private val metadataSource: EnvelopeMetadataSource,
     private val currentSessionPartSpan: CurrentSessionPartSpan,
     private val inFlightSpanSource: () -> List<EmbraceSdkSpan>,
-    private val telemetryService: TelemetryService,
+    private val telemetryService: InternalTelemetryService,
     private val directoryStore: SessionPartDirectoryStore =
         SessionPartDirectoryStore(sessionsDir, worker, clock, logger),
     private val writeTracker: SessionPartWriteTracker = SessionPartWriteTracker(),

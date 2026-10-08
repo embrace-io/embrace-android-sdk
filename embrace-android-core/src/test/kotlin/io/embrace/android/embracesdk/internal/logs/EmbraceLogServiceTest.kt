@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.logs
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Log
@@ -27,7 +27,7 @@ internal class EmbraceLogServiceTest {
     private lateinit var fakeConfigService: FakeConfigService
     private lateinit var logLimitingService: LogLimitingService
     private lateinit var payloadStore: FakePayloadStore
-    private lateinit var fakeTelemetryService: FakeTelemetryService
+    private lateinit var fakeTelemetryService: FakeInternalTelemetryService
 
     @Before
     fun setUp() {
@@ -39,7 +39,7 @@ internal class EmbraceLogServiceTest {
         fakeUserSessionPropertiesService = FakeUserSessionPropertiesService()
         destination = FakeTelemetryDestination()
         payloadStore = FakePayloadStore()
-        fakeTelemetryService = FakeTelemetryService()
+        fakeTelemetryService = FakeInternalTelemetryService()
         logLimitingService = LogLimitingServiceImpl(fakeConfigService)
         logService = createEmbraceLogService()
     }

@@ -7,10 +7,10 @@ import io.embrace.android.embracesdk.assertions.assertIsTypePerformance
 import io.embrace.android.embracesdk.assertions.assertNotPrivateSpan
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeSpanService
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_INTERNAL_SPAN_NAME
@@ -75,7 +75,7 @@ internal class SpanServiceImplTest(
     @Before
     fun setup() {
         spanRepository = SpanRepository()
-        dataValidator = DataValidator(telemetryService = FakeTelemetryService())
+        dataValidator = DataValidator(telemetryService = FakeInternalTelemetryService())
         spansService = createSpanService(dataValidator)
     }
 
@@ -612,7 +612,12 @@ internal class SpanServiceImplTest(
 
     @Test
     fun `bypass validation for non-internal spans`() {
-        spansService = createSpanService(DataValidator(bypassValidation = { true }, telemetryService = FakeTelemetryService()))
+        spansService = createSpanService(
+            DataValidator(
+                bypassValidation = { true },
+                telemetryService = FakeInternalTelemetryService(),
+            ),
+        )
 
         assertNotNull(spansService.createSpan(name = TOO_LONG_SPAN_NAME, internal = false))
         assertTrue(
@@ -645,7 +650,12 @@ internal class SpanServiceImplTest(
 
     @Test
     fun `validation for internal spans still enforced even when non-internal limits bypassed`() {
-        spansService = createSpanService(DataValidator(bypassValidation = { true }, telemetryService = FakeTelemetryService()))
+        spansService = createSpanService(
+            DataValidator(
+                bypassValidation = { true },
+                telemetryService = FakeInternalTelemetryService(),
+            ),
+        )
 
         assertNotNull(spansService.createSpan(name = TOO_LONG_INTERNAL_SPAN_NAME, internal = true))
         assertTrue(
@@ -865,7 +875,7 @@ internal class SpanServiceImplTest(
             openTelemetryClock = otelClock,
             spanRepository = spanRepository,
             dataValidator = dataValidator,
-            telemetryService = FakeTelemetryService(),
+            telemetryService = FakeInternalTelemetryService(),
         )
 
         return SpanServiceImpl(

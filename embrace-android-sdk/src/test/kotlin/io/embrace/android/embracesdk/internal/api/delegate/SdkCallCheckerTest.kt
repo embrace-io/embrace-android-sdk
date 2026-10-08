@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -12,13 +12,13 @@ internal class SdkCallCheckerTest {
 
     private val action = "foo"
     private lateinit var logger: FakeInternalLogger
-    private lateinit var telemetryService: FakeTelemetryService
+    private lateinit var telemetryService: FakeInternalTelemetryService
     private lateinit var checker: SdkCallChecker
 
     @Before
     fun setUp() {
         logger = FakeInternalLogger()
-        telemetryService = FakeTelemetryService()
+        telemetryService = FakeInternalTelemetryService()
         checker = SdkCallChecker(logger, telemetryService)
     }
 

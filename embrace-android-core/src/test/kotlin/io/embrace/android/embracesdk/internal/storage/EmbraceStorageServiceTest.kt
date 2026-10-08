@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.storage
 
 import android.content.Context
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.semconv.EmbTelemetryAttributes
 import io.mockk.every
 import io.mockk.mockk
@@ -20,7 +20,7 @@ internal class EmbraceStorageServiceTest {
     private lateinit var cacheDir: File
     private lateinit var filesDir: File
     private lateinit var embraceFilesDir: String
-    private lateinit var fakeTelemetryService: FakeTelemetryService
+    private lateinit var fakeTelemetryService: FakeInternalTelemetryService
     private lateinit var fakeStorageAvailabilityChecker: FakeStorageAvailabilityChecker
 
     @Before
@@ -34,7 +34,7 @@ internal class EmbraceStorageServiceTest {
         val ctx = mockk<Context>()
         every { ctx.cacheDir } returns cacheDir
         every { ctx.filesDir } returns filesDir
-        fakeTelemetryService = FakeTelemetryService()
+        fakeTelemetryService = FakeInternalTelemetryService()
         fakeStorageAvailabilityChecker = FakeStorageAvailabilityChecker()
 
         storageManager = EmbraceStorageService(ctx, fakeTelemetryService, fakeStorageAvailabilityChecker)

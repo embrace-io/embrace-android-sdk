@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.capture.experiment
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.ExperimentConfig
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
@@ -18,13 +18,13 @@ import org.junit.Test
 @OptIn(ExperimentalSemconv::class)
 internal class ExperimentTrackingServiceImplTest {
 
-    private lateinit var telemetryService: FakeTelemetryService
+    private lateinit var telemetryService: FakeInternalTelemetryService
     private lateinit var destination: FakeTelemetryDestination
     private lateinit var service: ExperimentTrackingService
 
     @Before
     fun setUp() {
-        telemetryService = FakeTelemetryService()
+        telemetryService = FakeInternalTelemetryService()
         destination = FakeTelemetryDestination()
         service = ExperimentTrackingServiceImpl(
             configService = FakeConfigService(),

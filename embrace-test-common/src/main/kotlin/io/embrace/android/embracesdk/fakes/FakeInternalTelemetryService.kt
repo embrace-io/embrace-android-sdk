@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
-import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 
-class FakeTelemetryService : TelemetryService {
+class FakeInternalTelemetryService : InternalTelemetryService {
 
     val storageTelemetryMap: MutableMap<String, String> = mutableMapOf()
     val apiCalls: MutableList<String> = mutableListOf()

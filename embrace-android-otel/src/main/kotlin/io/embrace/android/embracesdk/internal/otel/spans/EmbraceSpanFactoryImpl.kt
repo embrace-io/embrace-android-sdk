@@ -19,7 +19,7 @@ import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
-import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
@@ -43,7 +43,7 @@ class EmbraceSpanFactoryImpl(
     dataValidator: DataValidator,
     stopCallback: ((spanId: String) -> Unit)? = null,
     redactionFunction: ((key: String, value: String) -> String)? = null,
-    telemetryService: TelemetryService,
+    telemetryService: InternalTelemetryService,
 ) : EmbraceSpanFactory {
 
     private val deps = SpanDependencies(
@@ -71,7 +71,7 @@ private class SpanDependencies(
     val dataValidator: DataValidator,
     val stopCallback: ((spanId: String) -> Unit)?,
     val redactionFunction: ((key: String, value: String) -> String)?,
-    val telemetryService: TelemetryService,
+    val telemetryService: InternalTelemetryService,
 )
 
 private const val SPAN_LINK_TELEMETRY_TYPE = "span_link"

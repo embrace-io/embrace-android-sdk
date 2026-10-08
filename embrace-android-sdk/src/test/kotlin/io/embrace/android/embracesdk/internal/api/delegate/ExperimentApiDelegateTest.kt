@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeExperimentTrackingService
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -27,7 +27,7 @@ internal class ExperimentApiDelegateTest {
 
     private lateinit var delegate: ExperimentApiDelegate
     private lateinit var fakeExperimentTrackingService: FakeExperimentTrackingService
-    private lateinit var telemetryService: FakeTelemetryService
+    private lateinit var telemetryService: FakeInternalTelemetryService
     private lateinit var initLogger: FakeInternalLogger
     private lateinit var checkerLogger: FakeInternalLogger
     private lateinit var sdkCallChecker: SdkCallChecker
@@ -37,7 +37,7 @@ internal class ExperimentApiDelegateTest {
     @Before
     fun setUp() {
         fakeExperimentTrackingService = FakeExperimentTrackingService()
-        telemetryService = FakeTelemetryService()
+        telemetryService = FakeInternalTelemetryService()
         initLogger = FakeInternalLogger()
         checkerLogger = FakeInternalLogger(throwOnInternalError = false)
 

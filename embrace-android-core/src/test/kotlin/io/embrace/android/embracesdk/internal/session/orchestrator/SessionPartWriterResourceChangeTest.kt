@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
@@ -231,7 +231,7 @@ internal class SessionPartWriterResourceChangeTest {
         { EnvelopeMetadata(userId = "my-user-id") },
         currentSessionPartSpan,
         { emptyList() },
-        FakeTelemetryService(),
+        FakeInternalTelemetryService(),
     )
 
     private fun startPart(writer: SessionPartWriter, sessionPartId: String) {

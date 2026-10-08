@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.storage
 
 import android.content.Context
-import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.semconv.EmbTelemetryAttributes
 import java.io.File
 import java.io.FilenameFilter
@@ -14,7 +14,7 @@ import java.io.FilenameFilter
  */
 class EmbraceStorageService(
     private val context: Context,
-    private val telemetryService: TelemetryService,
+    private val telemetryService: InternalTelemetryService,
     private val storageAvailabilityChecker: StorageAvailabilityChecker,
 ) : StorageService {
 

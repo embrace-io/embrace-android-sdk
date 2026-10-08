@@ -9,8 +9,8 @@ import io.embrace.android.embracesdk.assertions.validateSystemLink
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSpanFactory
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.TestUuidSource
@@ -72,7 +72,7 @@ internal class CurrentSessionPartSpanImplTests(
 
     private lateinit var spanRepository: SpanRepository
     private lateinit var otelLimitsConfig: OtelLimitsConfig
-    private lateinit var telemetryService: FakeTelemetryService
+    private lateinit var telemetryService: FakeInternalTelemetryService
     private lateinit var currentSessionPartSpan: CurrentSessionPartSpanImpl
     private lateinit var spanService: SpanService
     private lateinit var otelModule: OpenTelemetryModule
@@ -82,7 +82,7 @@ internal class CurrentSessionPartSpanImplTests(
 
     @Before
     fun setup() {
-        telemetryService = FakeTelemetryService()
+        telemetryService = FakeInternalTelemetryService()
         val initModule =
             FakeInitModule(clock = clock, fakeTelemetryService = telemetryService, otelSdkMode = otelSdkMode)
         otelModule = initModule.openTelemetryModule
@@ -270,7 +270,7 @@ internal class CurrentSessionPartSpanImplTests(
 
     @Test
     fun `dropped network spans are tracked separately from other dropped spans`() {
-        val fakeTelemetryService = FakeTelemetryService()
+        val fakeTelemetryService = FakeInternalTelemetryService()
         val initModule =
             FakeInitModule(clock = clock, fakeTelemetryService = fakeTelemetryService, otelSdkMode = otelSdkMode)
         spanService = initModule.openTelemetryModule.spanService
@@ -334,7 +334,7 @@ internal class CurrentSessionPartSpanImplTests(
 
     @Test
     fun `a remote span limit of zero drops every span of that type and is tracked`() {
-        val fakeTelemetryService = FakeTelemetryService()
+        val fakeTelemetryService = FakeInternalTelemetryService()
         val initModule =
             FakeInitModule(clock = clock, fakeTelemetryService = fakeTelemetryService, otelSdkMode = otelSdkMode)
         spanService = initModule.openTelemetryModule.spanService

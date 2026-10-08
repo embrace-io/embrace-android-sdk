@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.sdk
 
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -8,12 +8,12 @@ import org.junit.Before
 import org.junit.Test
 
 internal class DataValidatorTest {
-    private lateinit var telemetryService: FakeTelemetryService
+    private lateinit var telemetryService: FakeInternalTelemetryService
     private lateinit var dataValidator: DataValidator
 
     @Before
     fun setup() {
-        telemetryService = FakeTelemetryService()
+        telemetryService = FakeInternalTelemetryService()
         dataValidator = DataValidator(telemetryService = telemetryService)
     }
 

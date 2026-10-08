@@ -6,9 +6,9 @@ import io.embrace.android.embracesdk.concurrency.runActionsConcurrently
 import io.embrace.android.embracesdk.concurrency.runConcurrently
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
@@ -46,7 +46,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
-import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -82,7 +82,7 @@ internal class EmbraceSpanImplTest(
     private lateinit var serializer: PlatformSerializer
     private lateinit var dataValidator: DataValidator
     private lateinit var tracer: Tracer
-    private lateinit var telemetryService: FakeTelemetryService
+    private lateinit var telemetryService: FakeInternalTelemetryService
     private lateinit var spanExporter: FakeSpanExporter
     private lateinit var embraceSpanFactory: EmbraceSpanFactory
     private val notifications = AtomicInteger(0)
@@ -111,7 +111,7 @@ internal class EmbraceSpanImplTest(
         ).getTracer("test-tracer")
         spanRepository = SpanRepository().apply { addSpanChangeListener { notifications.incrementAndGet() } }
         serializer = TestPlatformSerializer()
-        telemetryService = FakeTelemetryService()
+        telemetryService = FakeInternalTelemetryService()
         dataValidator = DataValidator(telemetryService = telemetryService)
         embraceSpanFactory = EmbraceSpanFactoryImpl(
             openTelemetryClock = otelClock,
@@ -1075,7 +1075,7 @@ internal class EmbraceSpanImplTest(
      * The fakes back their state with non-thread-safe collections, which the thousands of concurrent
      * dropped adds in the test above would corrupt.
      */
-    private class ConcurrentTelemetryService : TelemetryService {
+    private class ConcurrentInternalTelemetryService : InternalTelemetryService {
         val appliedLimits: Queue<Pair<String, AppliedLimitType>> = ConcurrentLinkedQueue()
 
         override fun onPublicApiCalled(name: String) {}
@@ -1141,11 +1141,11 @@ internal class EmbraceSpanImplTest(
     }
 
     /**
-     * Rebuilds [embraceSpanFactory] around a [ConcurrentTelemetryService] so drops recorded from many threads
+     * Rebuilds [embraceSpanFactory] around a [ConcurrentInternalTelemetryService] so drops recorded from many threads
      * can be counted exactly.
      */
-    private fun useConcurrentTelemetryService(): ConcurrentTelemetryService {
-        val concurrentTelemetryService = ConcurrentTelemetryService()
+    private fun useConcurrentTelemetryService(): ConcurrentInternalTelemetryService {
+        val concurrentTelemetryService = ConcurrentInternalTelemetryService()
         embraceSpanFactory = EmbraceSpanFactoryImpl(
             openTelemetryClock = FakeOtelKotlinClock(fakeClock),
             spanRepository = spanRepository,

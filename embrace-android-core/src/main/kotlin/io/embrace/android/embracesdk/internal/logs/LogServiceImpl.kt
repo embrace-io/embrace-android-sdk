@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehav
 import io.embrace.android.embracesdk.internal.otel.payload.toPayloadString
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
-import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils.truncate
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import java.io.Serializable
@@ -23,7 +23,7 @@ class LogServiceImpl(
     private val destination: TelemetryDestination,
     private val configService: ConfigService,
     private val logLimitingService: LogLimitingService,
-    private val telemetryService: TelemetryService,
+    private val telemetryService: InternalTelemetryService,
 ) : LogService {
 
     private val cfg = configService.config.log

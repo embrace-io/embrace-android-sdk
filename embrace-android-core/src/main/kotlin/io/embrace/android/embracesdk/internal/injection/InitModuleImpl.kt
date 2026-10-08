@@ -11,8 +11,8 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.telemetry.EmbraceTelemetryService
-import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryServiceImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
@@ -28,7 +28,7 @@ class InitModuleImpl(
     override val startupClassifier: StartupClassifier = StartupClassifierImpl(),
 ) : InitModule {
 
-    override val telemetryService: TelemetryService = EmbraceTelemetryService(
+    override val telemetryService: InternalTelemetryService = InternalTelemetryServiceImpl(
         systemInfo = systemInfo,
     )
 

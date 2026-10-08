@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
@@ -39,7 +39,7 @@ internal class SpanChangeNotificationTest(
     private lateinit var otelInstance: OpenTelemetry
     private lateinit var tracer: Tracer
     private lateinit var spanRepository: SpanRepository
-    private lateinit var telemetryService: FakeTelemetryService
+    private lateinit var telemetryService: FakeInternalTelemetryService
     private lateinit var spanFactory: EmbraceSpanFactory
     private lateinit var linkTarget: SpanContext
     private val observed = mutableListOf<EmbraceSdkSpan>()
@@ -92,7 +92,7 @@ internal class SpanChangeNotificationTest(
         otelClock = FakeOtelKotlinClock(fakeClock)
         otelInstance = createSdkOtelInstance(clock = otelClock, useKotlinSdk = otelSdkMode.useKotlinSdk)
         tracer = otelInstance.getTracer("test-tracer")
-        telemetryService = FakeTelemetryService()
+        telemetryService = FakeInternalTelemetryService()
         spanRepository = SpanRepository().apply { addSpanChangeListener(observed::add) }
         spanFactory = EmbraceSpanFactoryImpl(
             openTelemetryClock = otelClock,

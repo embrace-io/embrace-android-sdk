@@ -24,6 +24,7 @@ import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.instance.SdkApiDispatcher
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
@@ -114,6 +115,7 @@ internal class SdkIntegrationTestRule(
     private lateinit var spanExporter: FilteredSpanExporter
     private lateinit var logExporter: FilteredLogExporter
     private lateinit var embraceImpl: EmbraceImpl
+    private lateinit var sdkApi: SdkApiDispatcher
     private lateinit var baseUrl: String
 
     lateinit var bootstrapper: ModuleInitBootstrapper
@@ -149,14 +151,14 @@ internal class SdkIntegrationTestRule(
         }
         baseUrl = server.url("api").toString()
 
-        preSdkStart = EmbracePreSdkStartInterface(setup) { embraceImpl }
+        preSdkStart = EmbracePreSdkStartInterface(setup) { sdkApi }
         bootstrapper = setup.createBootstrapper(
             localConfig.copy(
                 baseUrls = FakeBaseUrlConfig(configImpl = baseUrl, dataImpl = baseUrl)
             ),
             deliveryTracer
         )
-        action = EmbraceActionInterface(setup, bootstrapper) { embraceImpl }
+        action = EmbraceActionInterface(setup, bootstrapper) { sdkApi }
         payloadAssertion = EmbracePayloadAssertionInterface(bootstrapper, apiServer)
         spanExporter = FilteredSpanExporter()
         logExporter = FilteredLogExporter()
@@ -165,6 +167,7 @@ internal class SdkIntegrationTestRule(
         setupAction(setup)
         with(setup) {
             embraceImpl = EmbraceImpl(bootstrapper = bootstrapper)
+            sdkApi = SdkApiDispatcher(embraceImpl, embraceImpl.telemetryService)
             preSdkStartAction(preSdkStart)
             //TODO: Filtered span and log exporters should be migrated to Kotlin.
             embraceImpl.addSpanExporter(spanExporter.toOtelKotlinSpanExporter())

@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeExperimentTrackingService
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
-import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -27,7 +26,6 @@ internal class ExperimentApiDelegateTest {
 
     private lateinit var delegate: ExperimentApiDelegate
     private lateinit var fakeExperimentTrackingService: FakeExperimentTrackingService
-    private lateinit var telemetryService: FakeInternalTelemetryService
     private lateinit var initLogger: FakeInternalLogger
     private lateinit var checkerLogger: FakeInternalLogger
     private lateinit var sdkCallChecker: SdkCallChecker
@@ -37,54 +35,49 @@ internal class ExperimentApiDelegateTest {
     @Before
     fun setUp() {
         fakeExperimentTrackingService = FakeExperimentTrackingService()
-        telemetryService = FakeInternalTelemetryService()
         initLogger = FakeInternalLogger()
         checkerLogger = FakeInternalLogger(throwOnInternalError = false)
 
         initModule = FakeInitModule(logger = initLogger, otelSdkMode = OtelSdkMode.COMPAT)
         clock = checkNotNull(initModule.getFakeClock())
-        sdkCallChecker = SdkCallChecker(checkerLogger, telemetryService)
+        sdkCallChecker = SdkCallChecker(checkerLogger)
         delegate = createDelegate()
     }
 
     @Test
-    fun `trackExperiment before start buffers without recording usage or error`() {
+    fun `trackExperiment before start buffers without logging an error`() {
         delegate.trackExperiment("exp1", startedAt = 1L)
 
         assertTrue(fakeExperimentTrackingService.trackedData.isEmpty())
-        assertTrue(telemetryService.apiCalls.isEmpty())
         assertTrue(checkerLogger.sdkNotInitializedMessages.isEmpty())
     }
 
     @Test
-    fun `untrackExperiment before start buffers without recording usage or error`() {
+    fun `untrackExperiment before start buffers without logging an error`() {
         delegate.untrackExperiment("exp1", endedAt = 1L)
 
         assertTrue(fakeExperimentTrackingService.untrackCalls.isEmpty())
-        assertTrue(telemetryService.apiCalls.isEmpty())
         assertTrue(checkerLogger.sdkNotInitializedMessages.isEmpty())
     }
 
     @Test
-    fun `trackFeatureFlag before start buffers without recording usage or error`() {
+    fun `trackFeatureFlag before start buffers without logging an error`() {
         delegate.trackFeatureFlag("flag1", startedAt = 1L)
 
         assertTrue(fakeExperimentTrackingService.trackedData.isEmpty())
-        assertTrue(telemetryService.apiCalls.isEmpty())
         assertTrue(checkerLogger.sdkNotInitializedMessages.isEmpty())
     }
 
     @Test
-    fun `untrackFeatureFlag before start buffers without recording usage or error`() {
+    fun `untrackFeatureFlag before start buffers without logging an error`() {
         delegate.untrackFeatureFlag("flag1", endedAt = 1L)
 
         assertTrue(fakeExperimentTrackingService.untrackCalls.isEmpty())
-        assertTrue(telemetryService.apiCalls.isEmpty())
         assertTrue(checkerLogger.sdkNotInitializedMessages.isEmpty())
     }
 
     @Test
-    fun `buffered calls are replayed in one service call with api usage recorded when flushed`() {
+    fun `buffered calls are replayed in one service call when flushed`() {
         delegate.trackExperiments(
             listOf(
                 TrackedExperimentImpl("exp1", "v1", 123456789L),
@@ -115,22 +108,6 @@ internal class ExperimentApiDelegateTest {
         sdkCallChecker.started.set(true)
         delegate.flushPendingCalls()
 
-        assertEquals(
-            listOf(
-                "track_experiment",
-                "track_experiment",
-                "track_experiment",
-                "track_feature_flag",
-                "track_feature_flag",
-                "untrack_experiment",
-                "untrack_experiment",
-                "untrack_experiment",
-                "untrack_feature_flag",
-                "untrack_feature_flag",
-                "untrack_feature_flag",
-            ),
-            telemetryService.apiCalls,
-        )
         assertEquals(1, fakeExperimentTrackingService.serviceInvocations)
         assertEquals(
             listOf(
@@ -220,7 +197,6 @@ internal class ExperimentApiDelegateTest {
             listOf(TrackedData.experiment(id = "exp1", startTimeMs = 111L, variant = "v1")),
             fakeExperimentTrackingService.trackedData,
         )
-        assertEquals(listOf("track_experiment"), telemetryService.apiCalls)
     }
 
     @Test
@@ -233,7 +209,6 @@ internal class ExperimentApiDelegateTest {
             listOf(FakeExperimentTrackingService.UntrackCall(ExperimentKind.EXPERIMENT, listOf("exp1", "exp2"), 222L)),
             fakeExperimentTrackingService.untrackCalls,
         )
-        assertEquals(listOf("untrack_experiment"), telemetryService.apiCalls)
     }
 
     @Test
@@ -246,7 +221,6 @@ internal class ExperimentApiDelegateTest {
             listOf(TrackedData.featureFlag(id = "flag1", startTimeMs = 333L, variant = "on")),
             fakeExperimentTrackingService.trackedData,
         )
-        assertEquals(listOf("track_feature_flag"), telemetryService.apiCalls)
     }
 
     @Test
@@ -259,7 +233,6 @@ internal class ExperimentApiDelegateTest {
             listOf(FakeExperimentTrackingService.UntrackCall(ExperimentKind.FEATURE_FLAG, listOf("flag1"), 444L)),
             fakeExperimentTrackingService.untrackCalls,
         )
-        assertEquals(listOf("untrack_feature_flag"), telemetryService.apiCalls)
     }
 
     @Test

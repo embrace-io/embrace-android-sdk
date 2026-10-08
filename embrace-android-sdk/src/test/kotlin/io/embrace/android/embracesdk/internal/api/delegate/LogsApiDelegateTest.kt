@@ -41,7 +41,7 @@ internal class LogsApiDelegateTest {
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
 
-        val sdkCallChecker = SdkCallChecker(FakeInternalLogger(), telemetryService)
+        val sdkCallChecker = SdkCallChecker(FakeInternalLogger())
         sdkCallChecker.started.set(true)
         delegate = LogsApiDelegate(moduleInitBootstrapper, sdkCallChecker)
     }

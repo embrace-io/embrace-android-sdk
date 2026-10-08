@@ -20,9 +20,7 @@ internal class InternalTelemetryServiceImpl(
     private val appAttributes: Map<String, String> by lazy { computeAppAttributes() }
 
     override fun onPublicApiCalled(name: String) {
-        synchronized(usageCountMap) {
-            usageCountMap[name] = (usageCountMap[name] ?: 0) + 1
-        }
+        usageCountMap.increment(name)
     }
 
     override fun logStorageTelemetry(storageTelemetry: Map<String, String>) {
@@ -31,16 +29,7 @@ internal class InternalTelemetryServiceImpl(
 
     override fun trackAppliedLimit(telemetryType: String, limitType: AppliedLimitType) {
         val id = "applied_limit.$telemetryType.${limitType.attributeName}"
-        val key = "emb.private.$id"
-
-        do {
-            val current = appliedLimitCountMap[key]
-            val updated = if (current == null) {
-                appliedLimitCountMap.putIfAbsent(key, 1) == null
-            } else {
-                appliedLimitCountMap.replace(key, current, current + 1)
-            }
-        } while (!updated)
+        appliedLimitCountMap.increment("emb.private.$id")
     }
 
     override fun getAndClearTelemetryAttributes(): Map<String, String> {
@@ -50,15 +39,8 @@ internal class InternalTelemetryServiceImpl(
             .plus(appAttributes)
     }
 
-    private fun getAndClearUsageCountTelemetry(): Map<String, String> {
-        synchronized(usageCountMap) {
-            val usageCountTelemetryMap = usageCountMap.entries.associate {
-                it.key.toEmbraceUsageAttributeName() to it.value.toString()
-            }
-            usageCountMap.clear()
-            return usageCountTelemetryMap
-        }
-    }
+    private fun getAndClearUsageCountTelemetry(): Map<String, String> =
+        usageCountMap.drain({ it.toEmbraceUsageAttributeName() }) { it.toString() }
 
     private fun getAndClearStorageTelemetry(): Map<String, String> = storageTelemetryMap.drain { it }
 
@@ -87,14 +69,32 @@ internal class InternalTelemetryServiceImpl(
     }
 
     /**
-     * Removes every entry, returning them with values mapped by [transform]. Each key is removed atomically rather than the
-     * map being copied then cleared, so an entry written mid-drain is either returned now or left for the next drain.
+     * Increments the count for [key] without locking via CAS. An increment racing a drain
+     * lands in either the drained count or the next one, which is acceptable for our purposes.
      */
-    private inline fun <V : Any> ConcurrentHashMap<String, V>.drain(transform: (V) -> String): Map<String, String> {
+    private fun ConcurrentHashMap<String, Int>.increment(key: String) {
+        do {
+            val current = this[key]
+            val updated = if (current == null) {
+                putIfAbsent(key, 1) == null
+            } else {
+                replace(key, current, current + 1)
+            }
+        } while (!updated)
+    }
+
+    /**
+     * Removes every entry, returning them with keys mapped by [keyTransform] and values mapped by [transform]. Each key
+     * is removed atomically so an entry written mid-drain is either returned now or left for the next drain.
+     */
+    private inline fun <V : Any> ConcurrentHashMap<String, V>.drain(
+        keyTransform: (String) -> String = { it },
+        transform: (V) -> String,
+    ): Map<String, String> {
         val result = mutableMapOf<String, String>()
         keys.forEach { key ->
             remove(key)?.let { value ->
-                result[key] = transform(value)
+                result[keyTransform(key)] = transform(value)
             }
         }
         return result

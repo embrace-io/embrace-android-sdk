@@ -43,6 +43,7 @@ import io.embrace.android.embracesdk.internal.injection.postInit
 import io.embrace.android.embracesdk.internal.injection.postLoadInstrumentation
 import io.embrace.android.embracesdk.internal.injection.registerListeners
 import io.embrace.android.embracesdk.internal.injection.triggerPayloadSend
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.spans.TracingApi
 import java.util.concurrent.Executors
@@ -62,7 +63,7 @@ internal class EmbraceImpl(
         code = ::ModuleInitBootstrapper,
     ),
     private val sdkCallChecker: SdkCallChecker =
-        SdkCallChecker(bootstrapper.initModule.logger, bootstrapper.initModule.telemetryService),
+        SdkCallChecker(bootstrapper.initModule.logger),
     private val userApiDelegate: UserApiDelegate = UserApiDelegate(bootstrapper, sdkCallChecker),
     private val sessionApiDelegate: UserSessionApiDelegate = UserSessionApiDelegate(bootstrapper, sdkCallChecker),
     private val networkRequestApiDelegate: NetworkRequestApiDelegate =
@@ -96,6 +97,8 @@ internal class EmbraceImpl(
     }
 
     private val clock get() = bootstrapper.initModule.clock
+
+    val telemetryService: InternalTelemetryService get() = bootstrapper.initModule.telemetryService
     private val startStopLock = Any()
 
     @Volatile

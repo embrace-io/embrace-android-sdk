@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
-import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -12,14 +11,12 @@ internal class SdkCallCheckerTest {
 
     private val action = "foo"
     private lateinit var logger: FakeInternalLogger
-    private lateinit var telemetryService: FakeInternalTelemetryService
     private lateinit var checker: SdkCallChecker
 
     @Before
     fun setUp() {
         logger = FakeInternalLogger()
-        telemetryService = FakeInternalTelemetryService()
-        checker = SdkCallChecker(logger, telemetryService)
+        checker = SdkCallChecker(logger)
     }
 
     @Test
@@ -28,7 +25,6 @@ internal class SdkCallCheckerTest {
         assertFalse(checker.started.get())
         assertFalse(checker.check(action))
         assertEquals(action, logger.sdkNotInitializedMessages.single().msg)
-        assertEquals(action, telemetryService.apiCalls.single())
     }
 
     @Test
@@ -37,7 +33,6 @@ internal class SdkCallCheckerTest {
         assertFalse(checker.started.get())
         assertFalse(checker.check(action, false))
         assertTrue(logger.sdkNotInitializedMessages.isEmpty())
-        assertEquals(action, telemetryService.apiCalls.single())
     }
 
     @Test
@@ -45,14 +40,5 @@ internal class SdkCallCheckerTest {
         checker.started.set(true)
         assertTrue(checker.check(action))
         assertTrue(logger.sdkNotInitializedMessages.isEmpty())
-        assertEquals(action, telemetryService.apiCalls.single())
-    }
-
-    @Test
-    fun `api call recorded regardless if SDK has started`() {
-        assertFalse(checker.started.get())
-        checker.recordApiCall(action)
-        assertTrue(logger.sdkNotInitializedMessages.isEmpty())
-        assertEquals(action, telemetryService.apiCalls.single())
     }
 }

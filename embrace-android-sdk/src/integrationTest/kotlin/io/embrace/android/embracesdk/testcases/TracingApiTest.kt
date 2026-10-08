@@ -370,6 +370,33 @@ internal class TracingApiTest(
     }
 
     @Test
+    fun `completed spans recorded before start are delivered in the first session`() {
+        var startTimeMs = 0L
+        testRule.runTest(
+            preSdkStartAction = {
+                startTimeMs = clock.now()
+                assertTrue(
+                    embrace.recordCompletedSpan(
+                        name = "pre-start-span",
+                        startTimeMs = startTimeMs,
+                        endTimeMs = startTimeMs + 50L,
+                        attributes = mapOf("key" to "value"),
+                    )
+                )
+            },
+            testCaseAction = {
+                recordSession()
+            },
+            assertAction = {
+                val span = getSingleSessionEnvelope().findSpanByName(name = "pre-start-span")
+                assertEquals(startTimeMs.millisToNanos(), span.startTimeNanos)
+                assertEquals((startTimeMs + 50L).millisToNanos(), span.endTimeNanos)
+                assertEquals("value", span.attributes?.findAttributeValue("key"))
+            }
+        )
+    }
+
+    @Test
     fun `span links`() {
         val fakeSpan = FakeEmbraceSdkSpan.started()
         val remoteSpanContext = checkNotNull(fakeSpan.spanContext)

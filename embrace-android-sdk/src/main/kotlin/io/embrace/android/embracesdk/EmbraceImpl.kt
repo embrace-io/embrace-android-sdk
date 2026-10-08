@@ -43,9 +43,17 @@ import io.embrace.android.embracesdk.internal.injection.postInit
 import io.embrace.android.embracesdk.internal.injection.postLoadInstrumentation
 import io.embrace.android.embracesdk.internal.injection.registerListeners
 import io.embrace.android.embracesdk.internal.injection.triggerPayloadSend
+import io.embrace.android.embracesdk.internal.instance.BufferingSdkInstance
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
+import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.TracingApi
+import io.opentelemetry.kotlin.logging.export.LogRecordExporter
+import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
+import io.opentelemetry.kotlin.tracing.export.SpanExporter
+import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 import java.util.concurrent.Executors
 
 /**
@@ -77,6 +85,10 @@ internal class EmbraceImpl(
     private val instrumentationApiDelegate: InstrumentationApiDelegate =
         InstrumentationApiDelegate(bootstrapper, sdkCallChecker),
     private val experimentApiDelegate: ExperimentApiDelegate = ExperimentApiDelegate(bootstrapper, sdkCallChecker),
+    private val preStartBuffer: BufferingSdkInstance = BufferingSdkInstance(
+        clock = { bootstrapper.initModule.clock.now() },
+        logger = bootstrapper.initModule.logger,
+    ),
 ) : SdkApi,
     LogsApi by logsApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
@@ -88,7 +100,7 @@ internal class EmbraceImpl(
     ViewTrackingApi by viewTrackingApiDelegate,
     BreadcrumbApi by breadcrumbApiDelegate,
     InstrumentationApi by instrumentationApiDelegate,
-    ExperimentApi by experimentApiDelegate,
+    ExperimentApi by preStartBuffer,
     InternalInterfaceApi {
 
     init {
@@ -110,9 +122,13 @@ internal class EmbraceImpl(
         EmbTrace.trace("sdk-start") {
             synchronized(startStopLock) {
                 try {
+                    // drain before building OTel SDK
+                    preStartBuffer.drainOTelConfig(otelApiDelegate)
                     if (!bootstrapper.init(context)) {
                         return
                     }
+                    // replay spans before the first session part starts
+                    preStartBuffer.drainCompletedSpans(bootstrapper.openTelemetryModule.tracingApi)
                     bootstrapper.postInit()
 
                     EmbTrace.trace(sectionName = "post-services-setup", recordDuration = true) {
@@ -127,7 +143,9 @@ internal class EmbraceImpl(
                         // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
                         // so we allow external calls.
                         sdkCallChecker.started.set(true)
-                        bootstrapper.applyCustomMetadata(experimentApiDelegate::flushPendingCalls)
+                        bootstrapper.applyCustomMetadata {
+                            preStartBuffer.drainExperimentCalls(experimentApiDelegate, experimentApiDelegate::replay)
+                        }
                         bootstrapper.registerListeners()
                         bootstrapper.loadInstrumentation()
                         bootstrapper.postLoadInstrumentation()
@@ -203,6 +221,28 @@ internal class EmbraceImpl(
         get() {
             return checkNotNull(internalInterfaceModule?.flutterInternalInterface)
         }
+
+    override fun addSpanExporter(spanExporter: SpanExporter) = preStartBuffer.addSpanExporter(spanExporter)
+
+    override fun addSpanProcessor(spanProcessor: SpanProcessor) = preStartBuffer.addSpanProcessor(spanProcessor)
+
+    override fun addLogRecordExporter(logRecordExporter: LogRecordExporter) =
+        preStartBuffer.addLogRecordExporter(logRecordExporter)
+
+    override fun addLogRecordProcessor(logRecordProcessor: LogRecordProcessor) =
+        preStartBuffer.addLogRecordProcessor(logRecordProcessor)
+
+    override fun setResourceAttribute(key: String, value: String) = preStartBuffer.setResourceAttribute(key, value)
+
+    override fun recordCompletedSpan(
+        name: String,
+        startTimeMs: Long,
+        endTimeMs: Long,
+        errorCode: ErrorCode?,
+        parent: EmbraceSpan?,
+        attributes: Map<String, String>,
+        events: List<EmbraceSpanEvent>,
+    ): Boolean = preStartBuffer.recordCompletedSpan(name, startTimeMs, endTimeMs, errorCode, parent, attributes, events)
 
     override fun applicationInitStart() {
         if (applicationInitStartMs == null) {

@@ -61,4 +61,5 @@ sealed class InternalErrorType(private val severity: Severity) {
     object SdkInitPhaseFail : InternalErrorType(ERROR)
     object SdkInitAttributeCaptureFail : InternalErrorType(ERROR)
     object OtelSdkCodeError : InternalErrorType(ERROR)
+    object BufferedApiCallFail : InternalErrorType(ERROR)
 }

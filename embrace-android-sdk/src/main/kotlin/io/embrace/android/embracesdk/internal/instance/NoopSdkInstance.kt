@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.experiments.TrackedFeatureFlag
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.api.delegate.TrackedExperimentImpl
 import io.embrace.android.embracesdk.internal.api.delegate.TrackedFeatureFlagImpl
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
@@ -28,15 +29,39 @@ import io.opentelemetry.kotlin.tracing.export.SpanExporter
 import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 
 /**
- * A no-op implementation of [SdkApi].
+ * A no-op implementation of [SdkApi]. The first API call that gets dropped logs [message] along
+ * with the name of the action that could not be performed.
  */
-internal object NoopSdkInstance : SdkApi {
+internal class NoopSdkInstance(
+    private val logger: InternalLogger,
+    private val message: String,
+) : SdkApi {
+
+    companion object {
+        const val SDK_NOT_INITIALIZED: String = "Embrace SDK is not initialized yet"
+        const val SDK_DISABLED: String = "Embrace SDK is disabled"
+    }
+
+    @Volatile
+    private var logged: Boolean = false
+
+    private fun logDropped(action: String) {
+        if (!logged) {
+            logged = true
+            val msg = "$message, cannot $action."
+            logger.logInfo(msg, Throwable(msg))
+        }
+    }
 
     override fun start(context: Context) {}
 
-    override fun logMessage(message: String, severity: Severity, properties: Map<String, Any>) {}
+    override fun logMessage(message: String, severity: Severity, properties: Map<String, Any>) {
+        logDropped("log_message")
+    }
 
-    override fun logMessage(message: String, severity: Severity, properties: Map<String, Any>, attachment: ByteArray) {}
+    override fun logMessage(message: String, severity: Severity, properties: Map<String, Any>, attachment: ByteArray) {
+        logDropped("log_message")
+    }
 
     override fun logMessage(
         message: String,
@@ -45,15 +70,24 @@ internal object NoopSdkInstance : SdkApi {
         attachmentId: String,
         attachmentUrl: String,
     ) {
+        logDropped("log_message")
     }
 
-    override fun logInfo(message: String) {}
+    override fun logInfo(message: String) {
+        logDropped("log_message")
+    }
 
-    override fun logWarning(message: String) {}
+    override fun logWarning(message: String) {
+        logDropped("log_message")
+    }
 
-    override fun logError(message: String) {}
+    override fun logError(message: String) {
+        logDropped("log_message")
+    }
 
-    override fun logException(throwable: Throwable, severity: Severity, properties: Map<String, Any>, message: String?) {}
+    override fun logException(throwable: Throwable, severity: Severity, properties: Map<String, Any>, message: String?) {
+        logDropped("log_exception")
+    }
 
     override fun logCustomStacktrace(
         stacktraceElements: Array<StackTraceElement>,
@@ -61,6 +95,7 @@ internal object NoopSdkInstance : SdkApi {
         properties: Map<String, Any>,
         message: String?,
     ) {
+        logDropped("log_custom_stacktrace")
     }
 
     @Deprecated("This API is deprecated and will be removed in a future release.Use logMessage() instead.")
@@ -74,58 +109,100 @@ internal object NoopSdkInstance : SdkApi {
         isNotification: Boolean?,
         hasData: Boolean?,
     ) {
+        logDropped("log_push_notification")
     }
 
-    override fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest) {}
+    override fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest) {
+        logDropped("record_network_request")
+    }
 
-    override fun addHttpRequestInfoModifier(modifier: HttpRequestInfoModifier) {}
+    override fun addHttpRequestInfoModifier(modifier: HttpRequestInfoModifier) {
+        logDropped("add_http_request_info_modifier")
+    }
 
-    override fun removeHttpRequestInfoModifier(modifier: HttpRequestInfoModifier) {}
+    override fun removeHttpRequestInfoModifier(modifier: HttpRequestInfoModifier) {
+        logDropped("remove_http_request_info_modifier")
+    }
 
     @Deprecated("This is no longer supported")
     override fun generateW3cTraceparent(): String? = null
 
-    override fun addUserSessionProperty(key: String, value: String, scope: PropertyScope): Boolean = false
+    override fun addUserSessionProperty(key: String, value: String, scope: PropertyScope): Boolean {
+        logDropped("add_user_session_property")
+        return false
+    }
 
-    override fun removeUserSessionProperty(key: String): Boolean = false
+    override fun removeUserSessionProperty(key: String): Boolean {
+        logDropped("remove_user_session_property")
+        return false
+    }
 
-    override fun endUserSession() {}
+    override fun endUserSession() {
+        logDropped("end_user_session")
+    }
 
-    override fun addUserSessionListener(listener: UserSessionListener) {}
+    override fun addUserSessionListener(listener: UserSessionListener) {
+        logDropped("add_user_session_listener")
+    }
 
-    override fun removeUserSessionListener(listener: UserSessionListener) {}
+    override fun removeUserSessionListener(listener: UserSessionListener) {
+        logDropped("remove_user_session_listener")
+    }
 
-    override fun setUserIdentifier(userId: String?) {}
+    override fun setUserIdentifier(userId: String?) {
+        logDropped("set_user_identifier")
+    }
 
-    override fun clearUserIdentifier() {}
+    override fun clearUserIdentifier() {
+        logDropped("clear_user_identifier")
+    }
 
     @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
-    override fun setUserEmail(email: String?) {}
+    override fun setUserEmail(email: String?) {
+        logDropped("set_user_email")
+    }
 
     @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
-    override fun clearUserEmail() {}
+    override fun clearUserEmail() {
+        logDropped("clear_user_email")
+    }
 
-    override fun addUserPersona(persona: String) {}
+    override fun addUserPersona(persona: String) {
+        logDropped("add_user_persona")
+    }
 
-    override fun clearUserPersona(persona: String) {}
+    override fun clearUserPersona(persona: String) {
+        logDropped("clear_user_persona")
+    }
 
-    override fun clearAllUserPersonas() {}
+    override fun clearAllUserPersonas() {
+        logDropped("clear_all_user_personas")
+    }
 
     @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
-    override fun setUsername(username: String?) {}
+    override fun setUsername(username: String?) {
+        logDropped("set_username")
+    }
 
     @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
-    override fun clearUsername() {}
+    override fun clearUsername() {
+        logDropped("clear_username")
+    }
 
-    override fun createSpan(name: String, parent: EmbraceSpan?, autoTerminationMode: AutoTerminationMode): EmbraceSpan =
-        NoopEmbraceSdkSpan
+    override fun createSpan(name: String, parent: EmbraceSpan?, autoTerminationMode: AutoTerminationMode): EmbraceSpan {
+        logDropped("create_span")
+        return NoopEmbraceSdkSpan
+    }
 
     override fun startSpan(
         name: String,
         parent: EmbraceSpan?,
         startTimeMs: Long?,
         autoTerminationMode: AutoTerminationMode,
-    ): EmbraceSpan = NoopEmbraceSdkSpan
+    ): EmbraceSpan {
+        logDropped("start_span")
+        return NoopEmbraceSdkSpan
+    }
 
     override fun <T> recordSpan(
         name: String,
@@ -134,7 +211,10 @@ internal object NoopSdkInstance : SdkApi {
         events: List<EmbraceSpanEvent>,
         autoTerminationMode: AutoTerminationMode,
         code: () -> T,
-    ): T = code()
+    ): T {
+        logDropped("record_span")
+        return code()
+    }
 
     override fun recordCompletedSpan(
         name: String,
@@ -144,13 +224,25 @@ internal object NoopSdkInstance : SdkApi {
         parent: EmbraceSpan?,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
-    ): Boolean = false
+    ): Boolean {
+        logDropped("record_completed_span")
+        return false
+    }
 
-    override fun getSpan(spanId: String): EmbraceSpan? = null
+    override fun getSpan(spanId: String): EmbraceSpan? {
+        logDropped("get_span")
+        return null
+    }
 
-    override fun startView(name: String): Boolean = false
+    override fun startView(name: String): Boolean {
+        logDropped("start_view")
+        return false
+    }
 
-    override fun endView(name: String): Boolean = false
+    override fun endView(name: String): Boolean {
+        logDropped("end_view")
+        return false
+    }
 
     override fun disable() {}
 
@@ -166,27 +258,48 @@ internal object NoopSdkInstance : SdkApi {
 
     override val lastRunEndState: LastRunEndState = LastRunEndState.INVALID
 
-    override fun addLogRecordExporter(logRecordExporter: LogRecordExporter) {}
+    override fun addLogRecordExporter(logRecordExporter: LogRecordExporter) {
+        logDropped("add_log_record_exporter")
+    }
 
-    override fun addSpanExporter(spanExporter: SpanExporter) {}
+    override fun addSpanExporter(spanExporter: SpanExporter) {
+        logDropped("add_span_exporter")
+    }
 
-    override fun addSpanProcessor(spanProcessor: SpanProcessor) {}
+    override fun addSpanProcessor(spanProcessor: SpanProcessor) {
+        logDropped("add_span_processor")
+    }
 
-    override fun addLogRecordProcessor(logRecordProcessor: LogRecordProcessor) {}
+    override fun addLogRecordProcessor(logRecordProcessor: LogRecordProcessor) {
+        logDropped("add_log_record_processor")
+    }
 
-    override fun getOpenTelemetryKotlin(): OpenTelemetry = NoopOpenTelemetry
+    override fun getOpenTelemetryKotlin(): OpenTelemetry {
+        logDropped("get_opentelemetry_kotlin")
+        return NoopOpenTelemetry
+    }
 
-    override fun setResourceAttribute(key: String, value: String) {}
+    override fun setResourceAttribute(key: String, value: String) {
+        logDropped("set_resource_attribute")
+    }
 
-    override fun addBreadcrumb(message: String) {}
+    override fun addBreadcrumb(message: String) {
+        logDropped("add_breadcrumb")
+    }
 
-    override fun appReady() {}
+    override fun appReady() {
+        logDropped("app_ready")
+    }
 
-    override fun activityLoaded(activity: Activity) {}
+    override fun activityLoaded(activity: Activity) {
+        logDropped("activity_fully_loaded")
+    }
 
     override fun getSdkCurrentTimeMs(): Long = System.currentTimeMillis()
 
-    override fun addLoadTraceAttribute(activity: Activity, key: String, value: String) {}
+    override fun addLoadTraceAttribute(activity: Activity, key: String, value: String) {
+        logDropped("add_load_trace_attribute")
+    }
 
     override fun addLoadTraceChildSpan(
         activity: Activity,
@@ -197,9 +310,12 @@ internal object NoopSdkInstance : SdkApi {
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ) {
+        logDropped("add_load_trace_child_span")
     }
 
-    override fun addStartupTraceAttribute(key: String, value: String) {}
+    override fun addStartupTraceAttribute(key: String, value: String) {
+        logDropped("add_startup_trace_attribute")
+    }
 
     override fun addStartupTraceChildSpan(
         name: String,
@@ -209,21 +325,32 @@ internal object NoopSdkInstance : SdkApi {
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ) {
+        logDropped("add_startup_trace_child_span")
     }
 
-    override fun observeNavigation(activity: Activity, navigationController: Any) {}
+    override fun observeNavigation(activity: Activity, navigationController: Any) {
+        logDropped("observe_navigation")
+    }
 
     override fun createExperiment(id: String, variant: String?, startedAt: Long?): TrackedExperiment =
         TrackedExperimentImpl(id, variant, startedAt)
 
-    override fun trackExperiments(experiments: List<TrackedExperiment>) {}
+    override fun trackExperiments(experiments: List<TrackedExperiment>) {
+        logDropped("track_experiments")
+    }
 
-    override fun untrackExperiments(ids: List<String>, endedAt: Long?) {}
+    override fun untrackExperiments(ids: List<String>, endedAt: Long?) {
+        logDropped("untrack_experiments")
+    }
 
     override fun createFeatureFlag(id: String, variant: String?, startedAt: Long?): TrackedFeatureFlag =
         TrackedFeatureFlagImpl(id, variant, startedAt)
 
-    override fun trackFeatureFlags(flags: List<TrackedFeatureFlag>) {}
+    override fun trackFeatureFlags(flags: List<TrackedFeatureFlag>) {
+        logDropped("track_feature_flags")
+    }
 
-    override fun untrackFeatureFlags(ids: List<String>, endedAt: Long?) {}
+    override fun untrackFeatureFlags(ids: List<String>, endedAt: Long?) {
+        logDropped("untrack_feature_flags")
+    }
 }

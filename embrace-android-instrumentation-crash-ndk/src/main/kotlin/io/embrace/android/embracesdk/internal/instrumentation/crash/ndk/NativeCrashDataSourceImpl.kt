@@ -91,4 +91,8 @@ internal class NativeCrashDataSourceImpl(
     override fun deleteAllNativeCrashes() {
         nativeCrashProcessor.deleteAllNativeCrashes()
     }
+
+    override fun deleteNativeCrash(nativeCrash: NativeCrashData) {
+        nativeCrashProcessor.deleteNativeCrash(nativeCrash)
+    }
 }

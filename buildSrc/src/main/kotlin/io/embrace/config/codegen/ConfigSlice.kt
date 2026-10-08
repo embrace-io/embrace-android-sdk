@@ -1,5 +1,6 @@
 package io.embrace.config.codegen
 
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.ParameterSpec
 import org.yaml.snakeyaml.LoaderOptions
 import org.yaml.snakeyaml.Yaml
@@ -32,14 +33,16 @@ class ConfigSlice(
 ) {
 
     val resolver: String = "resolve" + name.removeSuffix("Config")
-
     val property: String = name.removeSuffix("Config").replaceFirstChar(Char::lowercaseChar)
+    val localConfig: ClassName = ConfigClassNames.INSTRUMENTED_CONFIG.peerClass(name.removeSuffix("Config") + "LocalConfig")
+    val localConfigImpl: ClassName = ConfigClassNames.INSTRUMENTED_CONFIG_IMPL.peerClass(localConfig.simpleName + "Impl")
+    val localFields: List<ConfigField> = fields.filter { it.local != null }
 
     val doc: String =
         "Resolved " + name.removeSuffix("Config").split(Regex("(?=[A-Z])")).joinToString(" ") { it.lowercase() }.trim() + " config."
 
     val resolverParams: List<ParameterSpec> = listOfNotNull(
-        ParameterSpec("local", ConfigClassNames.INSTRUMENTED_CONFIG).takeIf { fields.any { it.local != null } },
+        ParameterSpec("local", ConfigClassNames.INSTRUMENTED_CONFIG).takeIf { localFields.isNotEmpty() },
         ParameterSpec("remote", ConfigClassNames.REMOTE_CONFIG.copy(nullable = true)).takeIf { fields.any { it.remote != null } },
         ParameterSpec("bucket", ConfigClassNames.LAZY_FLOAT).takeIf { fields.any { it.remote?.type == ConfigType.PCT } },
     )

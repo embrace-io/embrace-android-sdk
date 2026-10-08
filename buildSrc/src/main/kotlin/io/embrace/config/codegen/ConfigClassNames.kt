@@ -11,6 +11,7 @@ internal object ConfigClassNames {
 
     val INSTRUMENTED_CONFIG = ClassName("$CONFIG.instrumented.schema", "InstrumentedConfig")
     val INSTRUMENTED_CONFIG_IMPL = ClassName("$CONFIG.instrumented", "InstrumentedConfigImpl")
+    val LOCAL_CONFIG_INSTRUMENTED = ClassName("$CONFIG.instrumented", "LocalConfigInstrumented")
     val REMOTE_CONFIG = ClassName("$CONFIG.remote", "RemoteConfig")
     val LAZY_FLOAT = Lazy::class.asClassName().parameterizedBy(FLOAT)
     val TEST = ClassName("org.junit", "Test")

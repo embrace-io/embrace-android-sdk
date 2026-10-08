@@ -4,13 +4,26 @@ import io.embrace.android.embracesdk.experiments.TrackedExperiment
 import io.embrace.android.embracesdk.experiments.TrackedFeatureFlag
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
+import io.embrace.android.embracesdk.fakes.FakeLogRecordProcessor
+import io.embrace.android.embracesdk.fakes.FakeSpanExporter
+import io.embrace.android.embracesdk.fakes.FakeSpanProcessor
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentApiCall
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentKind
 import io.embrace.android.embracesdk.internal.capture.experiment.TrackedData
 import io.embrace.android.embracesdk.internal.config.resolved.ExperimentConfig
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
+import io.embrace.android.embracesdk.spans.ErrorCode
+import io.opentelemetry.kotlin.logging.export.LogRecordExporter
+import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
+import io.opentelemetry.kotlin.tracing.export.SpanExporter
+import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -33,6 +46,59 @@ internal class BufferingSdkInstanceTest {
         target = RecordingSdkApi()
         replayed = mutableListOf()
         instance = BufferingSdkInstance(clock, logger)
+    }
+
+    @Test
+    fun `otel config calls are replayed in order when drained`() {
+        val spanExporter = FakeSpanExporter()
+        val spanProcessor = FakeSpanProcessor()
+        val logExporter = FakeLogRecordExporter()
+        val logProcessor = FakeLogRecordProcessor()
+        instance.addSpanExporter(spanExporter)
+        instance.setResourceAttribute("key", "value")
+        instance.addSpanProcessor(spanProcessor)
+        instance.addLogRecordExporter(logExporter)
+        instance.addLogRecordProcessor(logProcessor)
+        assertTrue(target.calls.isEmpty())
+
+        instance.drainOTelConfig(target)
+        assertEquals(
+            listOf(spanExporter, "key=value", spanProcessor, logExporter, logProcessor),
+            target.calls,
+        )
+    }
+
+    @Test
+    fun `otel config calls after draining are forwarded`() {
+        instance.drainOTelConfig(target)
+        instance.setResourceAttribute("key", "value")
+        assertEquals(listOf("key=value"), target.calls)
+    }
+
+    @Test
+    fun `completed spans are buffered and replayed when drained`() {
+        assertTrue(instance.recordCompletedSpan("span", 1, 2))
+        assertTrue(target.calls.isEmpty())
+        instance.drainCompletedSpans(target)
+        assertEquals(listOf("span:1-2"), target.calls)
+    }
+
+    @Test
+    fun `completed spans after draining are forwarded with the target result`() {
+        instance.drainCompletedSpans(target)
+        target.recordResult = false
+        assertFalse(instance.recordCompletedSpan("span", 1, 2))
+        assertEquals(listOf("span:1-2"), target.calls)
+    }
+
+    @Test
+    fun `completed span buffer is bounded`() {
+        repeat(MAX_BUFFERED_SPAN_CALLS) {
+            assertTrue(instance.recordCompletedSpan("span-$it", 1, 2))
+        }
+        assertFalse(instance.recordCompletedSpan("dropped", 1, 2))
+        instance.drainCompletedSpans(target)
+        assertEquals(MAX_BUFFERED_SPAN_CALLS, target.calls.size)
     }
 
     @Test
@@ -129,6 +195,17 @@ internal class BufferingSdkInstanceTest {
     }
 
     @Test
+    fun `groups drain independently`() {
+        instance.setResourceAttribute("key", "value")
+        instance.recordCompletedSpan("span", 1, 2)
+        instance.trackExperiment("exp1", startedAt = 1L)
+        instance.drainOTelConfig(target)
+
+        assertEquals(listOf("key=value"), target.calls)
+        assertTrue(replayed.isEmpty())
+    }
+
+    @Test
     fun `calls made during a replay are replayed in a later round, in order`() {
         instance.trackExperiment("exp1", startedAt = 1L)
 
@@ -182,6 +259,42 @@ internal class BufferingSdkInstanceTest {
     }
 
     @Test
+    fun `span cap is a running total across drain rounds`() {
+        repeat(MAX_BUFFERED_SPAN_CALLS) {
+            instance.recordCompletedSpan("span-$it", 1, 2)
+        }
+        var lateResult: Boolean? = null
+        target.onRecordCompletedSpan = {
+            if (lateResult == null) {
+                lateResult = instance.recordCompletedSpan("late", 1, 2)
+            }
+        }
+        instance.drainCompletedSpans(target)
+
+        assertEquals(false, lateResult)
+        assertEquals(MAX_BUFFERED_SPAN_CALLS, target.calls.size)
+    }
+
+    @Test
+    fun `buffered spans are not affected by later changes to the caller's data`() {
+        val attributes = mutableMapOf("key" to "value")
+        val eventAttributes = mutableMapOf("eventKey" to "eventValue")
+        val events = mutableListOf(checkNotNull(EmbraceSpanEvent.create("event", 5L, eventAttributes)))
+        instance.recordCompletedSpan("span", 1, 2, attributes = attributes, events = events)
+
+        attributes["key"] = "changed"
+        eventAttributes["eventKey"] = "changed"
+        events.clear()
+        instance.drainCompletedSpans(target)
+
+        assertEquals(listOf(mapOf("key" to "value")), target.spanAttributes)
+        assertEquals(
+            listOf(listOf(Triple("event", TimeUnit.MILLISECONDS.toNanos(5L), mapOf("eventKey" to "eventValue")))),
+            target.spanEvents,
+        )
+    }
+
+    @Test
     fun `buffered experiment calls are not affected by later changes to the caller's data`() {
         val experiments = mutableListOf(instance.createExperiment("exp1", "v1", 1L))
         val ids = mutableListOf("exp1")
@@ -202,11 +315,78 @@ internal class BufferingSdkInstanceTest {
     }
 
     @Test
+    fun `a throw while buffering a span does not use up the cap`() {
+        val throwingAttributes = object : AbstractMap<String, String>() {
+            override val entries: Set<Map.Entry<String, String>> get() = error("bad map")
+        }
+        assertThrows(IllegalStateException::class.java) {
+            instance.recordCompletedSpan("bad", 1, 2, attributes = throwingAttributes)
+        }
+        repeat(MAX_BUFFERED_SPAN_CALLS) {
+            assertTrue(instance.recordCompletedSpan("span-$it", 1, 2))
+        }
+        instance.drainCompletedSpans(target)
+        assertEquals(MAX_BUFFERED_SPAN_CALLS, target.calls.size)
+    }
+
+    @Test
+    fun `a throw while buffering an experiment does not stop later calls buffering`() {
+        val throwingExperiment = object : TrackedExperiment {
+            override val id: String get() = error("bad id")
+            override val variant: String? = null
+            override val startedAt: Long? = null
+        }
+        assertThrows(IllegalStateException::class.java) {
+            instance.trackExperiments(listOf(throwingExperiment))
+        }
+        instance.trackExperiment("exp1", startedAt = 1L)
+        drainExperiments()
+
+        assertEquals(
+            listOf(ExperimentApiCall.Track(listOf(TrackedData.experiment("exp1", 1L, null)))),
+            replayed.single(),
+        )
+    }
+
+    @Test
+    fun `a replayed call that throws does not stop the others replaying`() {
+        instance.recordCompletedSpan("first", 1, 2)
+        instance.recordCompletedSpan("second", 3, 4)
+        var throwNext = true
+        target.onRecordCompletedSpan = {
+            if (throwNext) {
+                throwNext = false
+                error("target failed")
+            }
+        }
+        instance.drainCompletedSpans(target)
+
+        assertEquals(listOf("first:1-2", "second:3-4"), target.calls)
+        assertInternalErrorReported()
+    }
+
+    @Test
+    fun `a replayed experiment batch that throws is reported`() {
+        instance.trackExperiment("exp1", startedAt = 1L)
+        instance.drainExperimentCalls(target) { error("replay failed") }
+        instance.trackExperiment("exp2", startedAt = 2L)
+        assertEquals(listOf("track_experiments:exp2"), target.calls)
+        assertInternalErrorReported()
+    }
+
+    @Test
     fun `calls that cannot be buffered are dropped with a log`() {
         instance.addBreadcrumb("crumb")
         instance.logInfo("msg")
         assertEquals(1, logger.infoMessages.size)
         assertTrue(target.calls.isEmpty())
+    }
+
+    private fun assertInternalErrorReported() {
+        assertEquals(
+            listOf(InternalErrorType.PublicApiFail.toString()),
+            logger.internalErrorMessages.map { it.msg },
+        )
     }
 
     private fun drainExperiments() {
@@ -215,6 +395,46 @@ internal class BufferingSdkInstanceTest {
 
     private class RecordingSdkApi : SdkApi by NoopSdkInstance(FakeInternalLogger(), "") {
         val calls = mutableListOf<Any>()
+        var recordResult = true
+        var onRecordCompletedSpan: () -> Unit = {}
+        val spanAttributes = mutableListOf<Map<String, String>>()
+        val spanEvents = mutableListOf<List<Triple<String, Long, Map<String, String>>>>()
+
+        override fun addSpanExporter(spanExporter: SpanExporter) {
+            calls.add(spanExporter)
+        }
+
+        override fun addSpanProcessor(spanProcessor: SpanProcessor) {
+            calls.add(spanProcessor)
+        }
+
+        override fun addLogRecordExporter(logRecordExporter: LogRecordExporter) {
+            calls.add(logRecordExporter)
+        }
+
+        override fun addLogRecordProcessor(logRecordProcessor: LogRecordProcessor) {
+            calls.add(logRecordProcessor)
+        }
+
+        override fun setResourceAttribute(key: String, value: String) {
+            calls.add("$key=$value")
+        }
+
+        override fun recordCompletedSpan(
+            name: String,
+            startTimeMs: Long,
+            endTimeMs: Long,
+            errorCode: ErrorCode?,
+            parent: EmbraceSpan?,
+            attributes: Map<String, String>,
+            events: List<EmbraceSpanEvent>,
+        ): Boolean {
+            calls.add("$name:$startTimeMs-$endTimeMs")
+            spanAttributes.add(attributes.toMap())
+            spanEvents.add(events.map { Triple(it.name, it.timestampNanos, it.attributes.toMap()) })
+            onRecordCompletedSpan()
+            return recordResult
+        }
 
         override fun trackExperiments(experiments: List<TrackedExperiment>) {
             calls.add("track_experiments:${experiments.joinToString { it.id }}")
@@ -234,6 +454,7 @@ internal class BufferingSdkInstanceTest {
     }
 
     private companion object {
+        private const val MAX_BUFFERED_SPAN_CALLS = 1000
         private const val MAX_BUFFERED_EXPERIMENT_ENTRIES = ExperimentConfig.MAX_COUNT_LIMIT
     }
 }

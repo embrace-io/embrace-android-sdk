@@ -1,0 +1,25 @@
+// Generated from foo.yaml. Do not edit.
+package com.example
+
+import io.embrace.android.embracesdk.`internal`.config.instrumented.schema.InstrumentedConfig
+import io.embrace.android.embracesdk.`internal`.config.remote.RemoteConfig
+
+/**
+ * Resolved range config.
+ */
+public interface RangeConfig {
+    public val bounded: Int
+
+    public val name: String
+}
+
+public inline fun RangeConfig(crossinline bounded: () -> Int = { 10 }, crossinline name: () -> String = { "abc" }): RangeConfig = object : RangeConfig {
+    override val bounded: Int = bounded()
+
+    override val name: String = name()
+}
+
+public fun resolveRange(local: InstrumentedConfig, remote: RemoteConfig?): RangeConfig = RangeConfig(
+    bounded = { remote?.rangeBounded?.takeIf { it in 1..100 } ?: local.range.getBounded().takeIf { it in 1..100 } ?: 10 },
+    name = { remote?.rangeName?.takeIf { it.length <= 5 } ?: "abc" },
+)

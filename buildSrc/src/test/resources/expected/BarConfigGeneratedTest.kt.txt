@@ -1,0 +1,20 @@
+// Generated from foo.yaml. Do not edit.
+package com.example
+
+import io.embrace.android.embracesdk.`internal`.config.instrumented.InstrumentedConfigImpl
+import org.junit.Assert.assertEquals
+import org.junit.Test
+
+internal class BarConfigGeneratedTest {
+    @Test
+    public fun `limit default`() {
+        assertEquals(10, EmbraceConfig().bar.limit)
+        assertEquals(10, resolveConfig(InstrumentedConfigImpl, null, unreadBucket).bar.limit)
+    }
+
+    @Test
+    public fun `limit local used when remote absent`() {
+        assertEquals(1, resolveBar(local = overrideLocal("foo.getLimit()", 1)).limit)
+        assertEquals(2, resolveBar(local = overrideLocal("foo.getLimit()", 2)).limit)
+    }
+}

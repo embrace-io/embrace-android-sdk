@@ -16,7 +16,7 @@ FooConfig:
       sdk: foo.getLimit()
     remote:
       type: Int
-      sdk: fooConfig?.limit
+      sdk: fooLimit
   foo_name:
     property: name
     default: "a \"b\" $c"
@@ -30,3 +30,22 @@ BarConfig:
     local:
       type: Int
       sdk: foo.getLimit()
+RangeConfig:
+  bounded:
+    property: bounded
+    default: 10
+    min: 1
+    max: 100
+    local:
+      type: Int
+      sdk: range.getBounded()
+    remote:
+      type: Int
+      sdk: rangeBounded
+  name:
+    property: name
+    default: abc
+    max_length: 5
+    remote:
+      type: String
+      sdk: rangeName

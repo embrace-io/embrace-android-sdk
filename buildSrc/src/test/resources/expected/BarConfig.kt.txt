@@ -1,0 +1,19 @@
+// Generated from foo.yaml. Do not edit.
+package com.example
+
+import io.embrace.android.embracesdk.`internal`.config.instrumented.schema.InstrumentedConfig
+
+/**
+ * Resolved bar config.
+ */
+public interface BarConfig {
+    public val limit: Int
+}
+
+public inline fun BarConfig(crossinline limit: () -> Int = { 10 }): BarConfig = object : BarConfig {
+    override val limit: Int = limit()
+}
+
+public fun resolveBar(local: InstrumentedConfig): BarConfig = BarConfig(
+    limit = { local.foo.getLimit() },
+)

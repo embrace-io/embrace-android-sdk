@@ -1,0 +1,60 @@
+// Generated from foo.yaml. Do not edit.
+package com.example
+
+import io.embrace.android.embracesdk.`internal`.config.instrumented.InstrumentedConfigImpl
+import io.embrace.android.embracesdk.`internal`.config.remote.RemoteConfig
+import org.junit.Assert.assertEquals
+import org.junit.Test
+
+internal class RangeConfigGeneratedTest {
+    @Test
+    public fun `bounded default`() {
+        assertEquals(10, EmbraceConfig().range.bounded)
+        assertEquals(10, resolveConfig(InstrumentedConfigImpl, null, unreadBucket).range.bounded)
+    }
+
+    @Test
+    public fun `bounded local used when remote absent`() {
+        assertEquals(1, resolveRange(local = overrideLocal("range.getBounded()", 1), remote = null).bounded)
+        assertEquals(1, resolveRange(local = overrideLocal("range.getBounded()", 1), remote = RemoteConfig()).bounded)
+        assertEquals(2, resolveRange(local = overrideLocal("range.getBounded()", 2), remote = null).bounded)
+        assertEquals(2, resolveRange(local = overrideLocal("range.getBounded()", 2), remote = RemoteConfig()).bounded)
+    }
+
+    @Test
+    public fun `bounded remote overrides local`() {
+        assertEquals(1, resolveRange(local = overrideLocal("range.getBounded()", 2), remote = RemoteConfig(rangeBounded = 1)).bounded)
+        assertEquals(2, resolveRange(local = overrideLocal("range.getBounded()", 1), remote = RemoteConfig(rangeBounded = 2)).bounded)
+    }
+
+    @Test
+    public fun `bounded ignores out of range values`() {
+        assertEquals(1, resolveRange(local = overrideLocal("range.getBounded()", 1), remote = RemoteConfig(rangeBounded = 0)).bounded)
+        assertEquals(10, resolveRange(local = overrideLocal("range.getBounded()", 0), remote = null).bounded)
+        assertEquals(1, resolveRange(local = overrideLocal("range.getBounded()", 1), remote = RemoteConfig(rangeBounded = 101)).bounded)
+        assertEquals(10, resolveRange(local = overrideLocal("range.getBounded()", 101), remote = null).bounded)
+    }
+
+    @Test
+    public fun `name default`() {
+        assertEquals("abc", EmbraceConfig().range.name)
+        assertEquals("abc", resolveConfig(InstrumentedConfigImpl, null, unreadBucket).range.name)
+    }
+
+    @Test
+    public fun `name default used when remote absent`() {
+        assertEquals("abc", resolveRange(local = InstrumentedConfigImpl, remote = null).name)
+        assertEquals("abc", resolveRange(local = InstrumentedConfigImpl, remote = RemoteConfig()).name)
+    }
+
+    @Test
+    public fun `name remote overrides default`() {
+        assertEquals("a", resolveRange(local = InstrumentedConfigImpl, remote = RemoteConfig(rangeName = "a")).name)
+        assertEquals("b", resolveRange(local = InstrumentedConfigImpl, remote = RemoteConfig(rangeName = "b")).name)
+    }
+
+    @Test
+    public fun `name ignores out of range values`() {
+        assertEquals("abc", resolveRange(local = InstrumentedConfigImpl, remote = RemoteConfig(rangeName = "aaaaaa")).name)
+    }
+}

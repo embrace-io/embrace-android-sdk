@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../../buildSrc/src/main/resources/config.schema.json
 PersistenceConfig:
   multi_file_persistence_enabled:
     property: multiFileEnabled

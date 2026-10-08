@@ -22,6 +22,7 @@ dependencies {
     implementation(libs.snakeyaml)
 
     testImplementation(libs.junit)
+    testImplementation(libs.json.schema.validator)
 }
 
 // ensure the Kotlin + Java compilers both use the same language level.

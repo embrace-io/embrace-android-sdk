@@ -9,9 +9,9 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * Service for tracking usage of public APIs, and different internal metrics about the app.
  */
-internal class EmbraceTelemetryService(
+internal class InternalTelemetryServiceImpl(
     private val systemInfo: SystemInfo,
-) : TelemetryService {
+) : InternalTelemetryService {
 
     private val okHttpReflectionFacade: OkHttpReflectionFacade = OkHttpReflectionFacade()
     private val usageCountMap = ConcurrentHashMap<String, Int>()

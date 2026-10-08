@@ -6,8 +6,8 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeSectionRecorder
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -62,7 +62,7 @@ internal class SessionPartWriterImplTest {
     private lateinit var clock: FakeClock
     private lateinit var executor: BlockingScheduledExecutorService
     private lateinit var logger: FakeInternalLogger
-    private lateinit var telemetryService: FakeTelemetryService
+    private lateinit var telemetryService: FakeInternalTelemetryService
     private lateinit var recorder: FakeSectionRecorder
 
     private var writeCount = 0
@@ -98,7 +98,7 @@ internal class SessionPartWriterImplTest {
         clock = FakeClock()
         executor = BlockingScheduledExecutorService(clock, true)
         logger = FakeInternalLogger(throwOnInternalError = false)
-        telemetryService = FakeTelemetryService()
+        telemetryService = FakeInternalTelemetryService()
         recorder = FakeSectionRecorder()
         SystemTrace.recorder = recorder
         writeCount = 0

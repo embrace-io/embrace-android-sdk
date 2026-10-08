@@ -17,7 +17,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
-import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 internal class CurrentSessionPartSpanImpl(
     private val openTelemetryClock: Clock,
-    private val telemetryService: TelemetryService,
+    private val telemetryService: InternalTelemetryService,
     private val spanRepository: SpanRepository,
     private val tracerSupplier: Provider<Tracer>,
     private val openTelemetrySupplier: Provider<OpenTelemetry>,

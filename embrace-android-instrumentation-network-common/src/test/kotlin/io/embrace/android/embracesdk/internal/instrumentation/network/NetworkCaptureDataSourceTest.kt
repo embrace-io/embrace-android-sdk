@@ -5,8 +5,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.createNetworkBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
@@ -332,7 +332,7 @@ internal class NetworkCaptureDataSourceTest {
     @Test
     fun `test telemetry tracked when network body is truncated`() {
         cfg = RemoteConfig(networkCaptureRules = setOf(getDefaultRule(maxSize = 2)))
-        val telemetryService = FakeTelemetryService()
+        val telemetryService = FakeInternalTelemetryService()
         configService = FakeConfigService(networkBehavior = createNetworkBehavior(remoteCfg = cfg))
         args = FakeInstrumentationArgs(
             application = ApplicationProvider.getApplicationContext(),

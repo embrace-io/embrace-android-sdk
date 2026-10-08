@@ -16,7 +16,7 @@ import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
-import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 
 class FakeInitModule(
@@ -27,7 +27,7 @@ class FakeInitModule(
         deviceManufacturer = "Fake Manufacturer",
         deviceModel = "Phake Phone Phive"
     ),
-    private val fakeTelemetryService: TelemetryService? = null,
+    private val fakeTelemetryService: InternalTelemetryService? = null,
     override val uuidSource: UuidSource = TestUuidSource(),
     private val initModule: InitModule = InitModuleImpl(
         logger = logger,
@@ -39,7 +39,7 @@ class FakeInitModule(
     private val otelSdkMode: OtelSdkMode,
 ) : InitModule by initModule {
 
-    override val telemetryService: TelemetryService
+    override val telemetryService: InternalTelemetryService
         get() = fakeTelemetryService ?: initModule.telemetryService
 
     /**

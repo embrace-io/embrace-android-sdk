@@ -5,13 +5,13 @@ package io.embrace.android.embracesdk.internal.capture.experiment
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
-import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 
 internal class ExperimentTrackingServiceImpl(
     configService: ConfigService,
-    private val telemetryService: TelemetryService,
+    private val telemetryService: InternalTelemetryService,
     private val telemetryDestination: TelemetryDestination,
 ) : ExperimentTrackingService {
 

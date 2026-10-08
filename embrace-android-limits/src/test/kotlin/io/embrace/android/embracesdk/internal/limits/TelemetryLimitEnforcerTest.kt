@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.limits
 
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.internal.config.instrumented.OtelLimitsConfigImpl
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import org.junit.Assert.assertEquals
@@ -9,7 +9,7 @@ import org.junit.Test
 
 internal class TelemetryLimitEnforcerTest {
 
-    private val telemetryService = FakeTelemetryService()
+    private val telemetryService = FakeInternalTelemetryService()
 
     private fun enforcer(exemptFromValueTruncation: (String) -> Boolean = { false }) =
         TelemetryLimitEnforcer(

@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.injection
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.internal.telemetry.EmbraceTelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryServiceImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
@@ -18,7 +18,7 @@ internal class InitModuleImplTest {
     fun testInitModuleImplDefaults() {
         val initModule = InitModuleImpl()
         assertNotNull(initModule.clock)
-        assertTrue(initModule.telemetryService is EmbraceTelemetryService)
+        assertTrue(initModule.telemetryService is InternalTelemetryServiceImpl)
         assertEquals(initModule.systemInfo, SystemInfo())
         assertNotNull(initModule.jsonSerializer)
     }

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.telemetry
 
-interface TelemetryService {
+interface InternalTelemetryService {
 
     /**
      * Tracks the usage of a public API by name. We only track public APIs that are called when the SDK is initialized.

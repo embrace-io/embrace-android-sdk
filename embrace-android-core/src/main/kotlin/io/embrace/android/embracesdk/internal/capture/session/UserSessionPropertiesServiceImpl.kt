@@ -6,14 +6,14 @@ import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
-import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils
 
 internal class UserSessionPropertiesServiceImpl(
     private val store: Lazy<KeyValueStore>,
     private val configService: ConfigService,
     destination: TelemetryDestination,
-    private val telemetryService: TelemetryService,
+    private val telemetryService: InternalTelemetryService,
 ) : UserSessionPropertiesService {
 
     private var listener: ((Map<String, String>) -> Unit)? = null

@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.VitalsConfig
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
@@ -15,7 +15,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 internal class VitalsDataSourceTest {
 
-    private val telemetryService = FakeTelemetryService()
+    private val telemetryService = FakeInternalTelemetryService()
 
     private fun createDataSource(spanLimit: Int): Pair<VitalsDataSource, FakeInstrumentationArgs> {
         val application: Application = ApplicationProvider.getApplicationContext()

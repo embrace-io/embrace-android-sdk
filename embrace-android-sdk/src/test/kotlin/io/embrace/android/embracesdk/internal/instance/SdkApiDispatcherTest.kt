@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.instance
 import android.app.Activity
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.PropertyScope
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -15,11 +16,13 @@ import java.lang.reflect.Proxy
 internal class SdkApiDispatcherTest {
 
     private val calls = mutableListOf<String>()
+    private lateinit var telemetryService: FakeInternalTelemetryService
     private lateinit var sdk: SdkApiDispatcher
 
     @Before
     fun setUp() {
-        sdk = SdkApiDispatcher(recordingSdkApi(calls))
+        telemetryService = FakeInternalTelemetryService()
+        sdk = SdkApiDispatcher(recordingSdkApi(calls), telemetryService)
     }
 
     @Test
@@ -59,6 +62,44 @@ internal class SdkApiDispatcherTest {
             ),
             calls,
         )
+    }
+
+    @Test
+    fun `public api usage is recorded`() {
+        sdk.logInfo("message")
+        sdk.logException(RuntimeException())
+        sdk.setUserIdentifier("user")
+        sdk.endUserSession()
+        sdk.trackExperiment("exp")
+        sdk.trackExperiments(emptyList())
+        sdk.untrackFeatureFlags(emptyList())
+        sdk.deviceId
+        sdk.applicationInitEnd()
+        assertEquals(
+            listOf(
+                "log_message",
+                "log_message",
+                "set_user_identifier",
+                "end_session",
+                "track_experiment",
+                "track_experiment",
+                "untrack_feature_flag",
+                "get_device_id",
+                "application_init_end",
+            ),
+            telemetryService.apiCalls,
+        )
+    }
+
+    @Test
+    fun `untracked apis do not record usage`() {
+        sdk.isStarted
+        sdk.createSpan("span")
+        sdk.getSpan("id")
+        sdk.createExperiment("exp")
+        sdk.applicationInitStart()
+        sdk.disable()
+        assertEquals(emptyList<String>(), telemetryService.apiCalls)
     }
 }
 

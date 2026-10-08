@@ -1,12 +1,10 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
-import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal class SdkCallChecker(
     private val logger: InternalLogger,
-    private val telemetryService: InternalTelemetryService?,
 ) {
 
     /**
@@ -15,24 +13,13 @@ internal class SdkCallChecker(
     val started = AtomicBoolean(false)
 
     /**
-     * Checks if the SDK is started and logs the public API usage.
-     *
-     * Every public API usage should go through this method, except the ones that are called too often and may cause a performance hit.
-     * For instance, get_current_session_id go directly through checkSdkStarted.
+     * Checks if the SDK is started, logging an error if it is not.
      */
     fun check(action: String, outputErrorMessage: Boolean = true): Boolean {
         val isStarted = started.get()
         if (!isStarted && outputErrorMessage) {
             logger.logSdkNotInitialized(action)
         }
-        recordApiCall(action)
         return isStarted
-    }
-
-    /**
-     * Record a public API call
-     */
-    fun recordApiCall(action: String) {
-        telemetryService?.onPublicApiCalled(action)
     }
 }

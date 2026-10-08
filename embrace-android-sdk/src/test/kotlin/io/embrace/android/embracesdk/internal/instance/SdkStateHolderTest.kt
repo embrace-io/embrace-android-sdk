@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.instance
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
@@ -18,7 +19,7 @@ internal class SdkStateHolderTest {
     @Test
     fun `initial state`() {
         val instance = FakeInstance(calls)
-        val holder = SdkStateHolder(instance)
+        val holder = SdkStateHolder(instance, FakeInternalTelemetryService())
         assertEquals(SdkState.NOT_STARTED, holder.state)
         assertSame(instance, holder.dispatcher.target)
     }
@@ -26,7 +27,7 @@ internal class SdkStateHolderTest {
     @Test
     fun `successful start`() {
         val instance = FakeInstance(calls)
-        val holder = SdkStateHolder(instance)
+        val holder = SdkStateHolder(instance, FakeInternalTelemetryService())
         holder.start(context)
         holder.dispatcher.logInfo("message")
         assertEquals(SdkState.STARTED, holder.state)
@@ -36,7 +37,7 @@ internal class SdkStateHolderTest {
 
     @Test
     fun `repeated start is ignored`() {
-        val holder = SdkStateHolder(FakeInstance(calls))
+        val holder = SdkStateHolder(FakeInstance(calls), FakeInternalTelemetryService())
         holder.start(context)
         holder.start(context)
         assertEquals(SdkState.STARTED, holder.state)
@@ -46,7 +47,7 @@ internal class SdkStateHolderTest {
     @Test
     fun `unsuccessful start can be retried`() {
         val instance = FakeInstance(calls, startSucceeds = false)
-        val holder = SdkStateHolder(instance)
+        val holder = SdkStateHolder(instance, FakeInternalTelemetryService())
         holder.start(context)
         assertEquals(SdkState.NOT_STARTED, holder.state)
         holder.start(context)
@@ -58,7 +59,7 @@ internal class SdkStateHolderTest {
     @Test
     fun `start that throws can be retried`() {
         val instance = FakeInstance(calls, startThrows = true)
-        val holder = SdkStateHolder(instance)
+        val holder = SdkStateHolder(instance, FakeInternalTelemetryService())
         holder.start(context)
         assertEquals(SdkState.NOT_STARTED, holder.state)
         assertSame(instance, holder.dispatcher.target)
@@ -67,7 +68,7 @@ internal class SdkStateHolderTest {
     @Test
     fun `disable after start`() {
         val instance = FakeInstance(calls)
-        val holder = SdkStateHolder(instance)
+        val holder = SdkStateHolder(instance, FakeInternalTelemetryService())
         holder.start(context)
         holder.disable()
         holder.dispatcher.logInfo("message")
@@ -78,7 +79,7 @@ internal class SdkStateHolderTest {
 
     @Test
     fun `repeated disable is ignored`() {
-        val holder = SdkStateHolder(FakeInstance(calls))
+        val holder = SdkStateHolder(FakeInstance(calls), FakeInternalTelemetryService())
         holder.start(context)
         holder.disable()
         holder.disable()
@@ -88,7 +89,7 @@ internal class SdkStateHolderTest {
 
     @Test
     fun `start after disable is allowed`() {
-        val holder = SdkStateHolder(FakeInstance(calls))
+        val holder = SdkStateHolder(FakeInstance(calls), FakeInternalTelemetryService())
         holder.start(context)
         holder.disable()
         holder.start(context)
@@ -98,7 +99,7 @@ internal class SdkStateHolderTest {
 
     @Test
     fun `disable before start is ignored`() {
-        val holder = SdkStateHolder(FakeInstance(calls))
+        val holder = SdkStateHolder(FakeInstance(calls), FakeInternalTelemetryService())
         holder.disable()
         assertEquals(SdkState.NOT_STARTED, holder.state)
         holder.start(context)
@@ -109,7 +110,7 @@ internal class SdkStateHolderTest {
     @Test
     fun `failed disable can be retried`() {
         val instance = FakeInstance(calls, disableThrows = true)
-        val holder = SdkStateHolder(instance)
+        val holder = SdkStateHolder(instance, FakeInternalTelemetryService())
         holder.start(context)
         runCatching { holder.disable() }
         assertEquals(SdkState.STARTED, holder.state)

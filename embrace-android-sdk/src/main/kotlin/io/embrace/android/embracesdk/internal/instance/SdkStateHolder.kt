@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.instance
 import android.content.Context
 import android.util.Log
 import io.embrace.android.embracesdk.internal.api.SdkApi
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 
 /**
  * Holds the [SdkApi] instance that backs the public `Embrace` object, and the lifecycle state of the SDK.
@@ -16,11 +17,11 @@ import io.embrace.android.embracesdk.internal.api.SdkApi
  * A start that does not succeed leaves the SDK in [SdkState.NOT_STARTED] so that it can be retried. [SdkState.DISABLED]
  * is terminal: the SDK cannot be restarted once it has been disabled.
  */
-internal class SdkStateHolder(instance: SdkApi) {
+internal class SdkStateHolder(instance: SdkApi, telemetryService: InternalTelemetryService) {
 
     private val lock = Any()
 
-    val dispatcher: SdkApiDispatcher = SdkApiDispatcher(instance)
+    val dispatcher: SdkApiDispatcher = SdkApiDispatcher(instance, telemetryService)
 
     @Volatile
     var state: SdkState = SdkState.NOT_STARTED

@@ -44,6 +44,7 @@ import io.embrace.android.embracesdk.internal.injection.postLoadInstrumentation
 import io.embrace.android.embracesdk.internal.injection.registerListeners
 import io.embrace.android.embracesdk.internal.injection.triggerPayloadSend
 import io.embrace.android.embracesdk.internal.instance.BufferingSdkInstance
+import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.spans.TracingApi
@@ -104,6 +105,7 @@ internal class EmbraceImpl(
     private val clock get() = bootstrapper.initModule.clock
 
     val telemetryService: InternalTelemetryService get() = bootstrapper.initModule.telemetryService
+    val internalErrorHandler: InternalErrorHandler get() = bootstrapper.initModule.logger
     private val startStopLock = Any()
 
     @Volatile

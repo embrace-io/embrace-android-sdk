@@ -30,7 +30,7 @@ internal class ExperimentApiDelegate(
     /**
      * List of track and untrack calls to this API made prior to SDK init
      */
-    private val pendingCalls = ConcurrentLinkedQueue<PendingCall>()
+    private val pendingCalls = ConcurrentLinkedQueue<ExperimentApiCall>()
 
     /**
      * Ceiling of the count of experiment records that could be created from the buffered calls.
@@ -62,22 +62,19 @@ internal class ExperimentApiDelegate(
     }
 
     /**
-     * Flush the buffered calls and commit them in one go in the service, then record the API calls.
+     * Flush the buffered calls and commit them in one go in the service.
      */
     fun flushPendingCalls() {
         val calls = pendingCalls.drain()
         if (calls.isNotEmpty()) {
-            experimentTrackingService?.bulkModify(calls.map { it.event })
-            calls.forEach {
-                sdkCallChecker.recordApiCall(it.action)
-            }
+            experimentTrackingService?.bulkModify(calls)
         }
     }
 
     private fun track(action: String, data: List<TrackedData>) {
         if (!sdkCallChecker.started.get()) {
             val admitted = admitEntries(data) ?: return
-            pendingCalls.add(PendingCall(action, ExperimentApiCall.Track(admitted)))
+            pendingCalls.add(ExperimentApiCall.Track(admitted))
         } else {
             trackNow(action, data)
         }
@@ -86,7 +83,7 @@ internal class ExperimentApiDelegate(
     private fun untrack(action: String, kind: ExperimentKind, ids: List<String>, endTimeMs: Long) {
         if (!sdkCallChecker.started.get()) {
             val admitted = admitEntries(ids) ?: return
-            pendingCalls.add(PendingCall(action, ExperimentApiCall.Untrack(kind, admitted, endTimeMs)))
+            pendingCalls.add(ExperimentApiCall.Untrack(kind, admitted, endTimeMs))
         } else {
             untrackNow(action, kind, ids, endTimeMs)
         }
@@ -132,11 +129,6 @@ internal class ExperimentApiDelegate(
                 variant = entry.variant,
             )
         }
-
-    /**
-     * A buffered API call made prior to SDK init completion.
-     */
-    private class PendingCall(val action: String, val event: ExperimentApiCall)
 
     private companion object {
         // The buffer stores entries up to the record cap's maximum settable value because it can't resolve the configured cap

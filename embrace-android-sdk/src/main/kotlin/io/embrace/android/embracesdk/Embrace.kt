@@ -6,9 +6,9 @@ import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 
-private val sdkStateHolder = SdkStateHolder(
-    EmbTrace.trace(sectionName = "embrace-impl-init", recordDuration = true) { EmbraceImpl() },
-)
+private val sdkStateHolder = EmbTrace.trace(sectionName = "embrace-impl-init", recordDuration = true) {
+    EmbraceImpl()
+}.let { SdkStateHolder(it, it.telemetryService) }
 
 /**
  * Entry point for the SDK. This class is part of the Embrace Public API.

@@ -165,7 +165,7 @@ internal class NavigationStateDataSourceTest {
         val token = args.destination.createdStateTokens.single()
 
         repeat(1001) { i ->
-            dataSource.onScreenLoad(args.clock.tick(), Screen.Named(if (i % 2 == 0) "about" else "contacts"))
+            showScreen(Screen.Named(if (i % 2 == 0) "about" else "contacts"))
         }
 
         assertEquals(1000, token.transitions.size)

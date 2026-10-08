@@ -1,0 +1,8 @@
+public final class io/embrace/android/embracesdk/otel/java/EmbraceOtelJavaExtensionsKt {
+	public static final fun addJavaLogRecordExporter (Lio/embrace/android/embracesdk/internal/api/SdkApi;Lio/opentelemetry/sdk/logs/export/LogRecordExporter;)V
+	public static final fun addJavaLogRecordProcessor (Lio/embrace/android/embracesdk/internal/api/SdkApi;Lio/opentelemetry/sdk/logs/LogRecordProcessor;)V
+	public static final fun addJavaSpanExporter (Lio/embrace/android/embracesdk/internal/api/SdkApi;Lio/opentelemetry/sdk/trace/export/SpanExporter;)V
+	public static final fun addJavaSpanProcessor (Lio/embrace/android/embracesdk/internal/api/SdkApi;Lio/opentelemetry/sdk/trace/SpanProcessor;)V
+	public static final fun getJavaOpenTelemetry (Lio/embrace/android/embracesdk/internal/api/SdkApi;)Lio/opentelemetry/api/OpenTelemetry;
+}
+

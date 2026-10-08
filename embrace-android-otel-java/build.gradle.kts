@@ -1,5 +1,5 @@
 plugins {
-    id("embrace-prod-android-conventions")
+    id("embrace-public-api-conventions")
 }
 
 description = "Embrace Android SDK: OpenTelemetry Java API"

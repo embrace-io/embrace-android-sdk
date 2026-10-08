@@ -137,7 +137,7 @@ class CompressSharedObjectFilesTaskTest {
                 // create a file instead of a directory
                 projectDir.file("testArchitecturesDir").writeText("not a directory")
             },
-            expectedExceptionMessage = "Expected an input to be a directory but it was a file.",
+            expectedExceptionMessage = "Expected an input to be a directory but it was a file",
             assertions = {
                 verifyNoUploads()
             },

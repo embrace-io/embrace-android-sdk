@@ -33,6 +33,8 @@ jobs:
         # Commonly enabled options, see https://github.com/actions/dependency-review-action#configuration-options for all available options.
         with:
           comment-summary-in-pr: always
+          # no patched release available yet and low-risk as only used in test fixture
+          allow-ghsas: GHSA-vfj7-8cjw-p6xm
         #   fail-on-severity: moderate
         #   deny-licenses: GPL-1.0-or-later, LGPL-2.0-or-later
         #   retry-on-snapshot-warnings: true

@@ -30,21 +30,21 @@ sealed class TestMatrix(
     /**
      * Older than middle of the pack, but not as bad as our minimum.
      */
-    object OlderVersion : TestMatrix("8.5.2", "8.7", "2.1.21", JdkEnv.JAVA_17, "35")
+    object OlderVersion : TestMatrix("8.9.3", "8.11.1", "2.1.21", JdkEnv.JAVA_17, "35")
 
     /**
      * Middle of the pack.
      */
-    object MiddleVersion : TestMatrix("8.9.0", "8.11.1", "2.2.21", JdkEnv.JAVA_21, "36")
+    object MiddleVersion : TestMatrix("8.13.2", "8.14.5", "2.2.21", JdkEnv.JAVA_21, "36")
 
     /**
      * Not the latest, but newer than the middle of the pack.
      */
-    object NewerVersion : TestMatrix("8.13.0", "9.2.0", "2.3.0", JdkEnv.JAVA_21, "36")
+    object NewerVersion : TestMatrix("9.2.1", "9.4.1", "2.3.21", JdkEnv.JAVA_21, "36")
 
     /**
      * The maximum version we currently run tests against. Newer versions may work, but are not
      * explicitly tested.
      */
-    object MaxVersion : TestMatrix("9.1.0", "9.4.0", "2.3.10", JdkEnv.JAVA_21, "36")
+    object MaxVersion : TestMatrix("9.4.1", "9.8.1", "2.4.21", JdkEnv.JAVA_21, "36")
 }

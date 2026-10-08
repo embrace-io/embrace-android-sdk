@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
+import io.embrace.android.embracesdk.internal.logging.BufferedInternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -27,6 +28,10 @@ class InitModuleImpl(
     override val uuidSource: UuidSource = UuidSourceImpl(),
     override val startupClassifier: StartupClassifier = StartupClassifierImpl(),
 ) : InitModule {
+
+    override val internalErrorHandler: BufferedInternalErrorHandler = BufferedInternalErrorHandler(clock).also {
+        logger.errorHandlerProvider = { it }
+    }
 
     override val telemetryService: InternalTelemetryService = InternalTelemetryServiceImpl(
         systemInfo = systemInfo,

@@ -56,7 +56,6 @@ typealias EssentialServiceModuleSupplier = (
 
 typealias FeatureModuleSupplier = (
     instrumentationModule: InstrumentationModule,
-    configService: ConfigService,
     storageService: StorageService,
 ) -> FeatureModule
 

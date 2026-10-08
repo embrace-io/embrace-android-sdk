@@ -28,7 +28,6 @@ import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -495,7 +494,7 @@ class IntakeServiceImplTest {
         assertEquals(0, payloadStorageService.storedPayloadCount())
         executorService.runCurrentlyBlocked()
         assertTrue(future.isDone)
-        assertNull(future.get())
+        assertEquals(IntakeResult.STORED, future.get())
         assertEquals(1, payloadStorageService.storedPayloadCount())
         assertEquals(1, schedulingService.payloadIntakeCount)
     }
@@ -835,7 +834,7 @@ class IntakeServiceImplTest {
 
         assertEquals(0, payloadStorageService.storedPayloadCount())
         assertEquals(0, storedCount)
-        assertEquals(true, future.get())
+        assertEquals(IntakeResult.RETRYABLE_FAILURE, future.get())
         assertEquals(0, schedulingService.payloadIntakeCount)
         assertTrue(logger.internalErrorMessages.isEmpty())
     }
@@ -851,7 +850,7 @@ class IntakeServiceImplTest {
         )
         executorService.runCurrentlyBlocked()
         assertEquals(0, storedCount)
-        assertEquals(false, future.get())
+        assertEquals(IntakeResult.PERMANENT_FAILURE, future.get())
         assertEquals(0, schedulingService.payloadIntakeCount)
         assertTrue(logger.internalErrorMessages.isEmpty())
     }
@@ -915,7 +914,7 @@ class IntakeServiceImplTest {
         )
         executorService.runCurrentlyBlocked()
 
-        assertEquals(true, future.get())
+        assertEquals(IntakeResult.RETRYABLE_FAILURE, future.get())
         assertEquals(1, storedCount)
         assertEquals(listOf(sessionMetadata), fileStorageService.getPayloadsByPriority())
         assertEquals(1, schedulingService.payloadIntakeCount)
@@ -938,13 +937,14 @@ class IntakeServiceImplTest {
         assertEquals(2, payloadStorageService.storedPayloadCount())
 
         var storedCount = 0
-        intakeService.take(
+        val future = intakeService.take(
             intake = sessionEnvelope,
             metadata = sessionMetadata2,
             onStored = { storedCount++ },
         )
 
         // the payload was dropped, so the caller is not told to discard its own copy
+        assertEquals(IntakeResult.NOT_ATTEMPTED, future.get())
         assertEquals(2, payloadStorageService.storedPayloadCount())
         assertEquals(0, storedCount)
     }

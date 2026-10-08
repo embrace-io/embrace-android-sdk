@@ -26,13 +26,13 @@ interface IntakeService : Shutdownable {
      * if the payload was dropped or could not be stored, so a caller that holds the only other copy of the telemetry can use it to
      * find out when discarding that copy is safe.
      *
-     * The returned future resolves to null if [intake] was stored or this service did not attempt to store it. If storing
-     * [intake] did not succeed, it resolves to whether trying to intake it again could succeed in the future.
+     * The returned future resolves to the [IntakeResult]: whether [intake] was stored, not attempted, or failed in a way
+     * that trying again could succeed in the future.
      */
     fun take(
         intake: Envelope<*>,
         metadata: StoredTelemetryMetadata,
         staleEntry: StoredTelemetryMetadata? = null,
         onStored: (() -> Unit)? = null,
-    ): Future<Boolean?>
+    ): Future<IntakeResult>
 }

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
+import io.embrace.android.embracesdk.internal.delivery.intake.IntakeResult
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import java.util.concurrent.Future
@@ -13,10 +14,9 @@ class FakeIntakeService : IntakeService {
     var cacheList: MutableList<FakePayloadIntake<*>> = mutableListOf()
 
     /**
-     * Each intake will take the first item off this list and fail with it, the value being whether the failure is
-     * recoverable. An empty list means intakes don't fail.
+     * Each intake takes the first item off this list as its result. An empty list means intakes are stored.
      */
-    val pendingFailures: ArrayDeque<Boolean> = ArrayDeque()
+    val pendingResults: ArrayDeque<IntakeResult> = ArrayDeque()
 
     @Suppress("UNCHECKED_CAST")
     inline fun <reified T : Any> getIntakes(complete: Boolean = true): List<FakePayloadIntake<T>> {
@@ -36,16 +36,16 @@ class FakeIntakeService : IntakeService {
         metadata: StoredTelemetryMetadata,
         staleEntry: StoredTelemetryMetadata?,
         onStored: (() -> Unit)?,
-    ): Future<Boolean?> {
+    ): Future<IntakeResult> {
         val dst = when (metadata.complete) {
             true -> intakeList
             false -> cacheList
         }
         dst.add(FakePayloadIntake(intake, metadata))
-        val recoverable = pendingFailures.removeFirstOrNull()
-        if (recoverable == null) {
+        val result = pendingResults.removeFirstOrNull() ?: IntakeResult.STORED
+        if (result == IntakeResult.STORED) {
             onStored?.invoke()
         }
-        return FutureTask { recoverable }.apply { run() }
+        return FutureTask { result }.apply { run() }
     }
 }

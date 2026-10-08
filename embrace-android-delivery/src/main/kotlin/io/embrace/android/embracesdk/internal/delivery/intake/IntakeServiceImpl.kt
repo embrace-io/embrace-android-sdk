@@ -67,7 +67,7 @@ class IntakeServiceImpl(
         metadata: StoredTelemetryMetadata,
         staleEntry: StoredTelemetryMetadata?,
         onStored: (() -> Unit)?,
-    ): Future<Boolean?> {
+    ): Future<IntakeResult> {
         deliveryTracer?.onTake(metadata)
 
         if (metadata.isCrashTerminatingProcess() && metadata.complete) {
@@ -79,23 +79,23 @@ class IntakeServiceImpl(
                 worker.shutdownAndWait(0)
                 return immediateFuture(processIntake(intake, metadata, staleEntry, onStored))
             }
-            return immediateFuture(null)
+            return immediateFuture(IntakeResult.NOT_ATTEMPTED)
         }
 
         // The worker is shut down once a crash is detected, so anything arriving before the service is sealed must be persisted
         // synchronously (like resurrected session parts) or be unrecoverably loss.
         if (state.get() == State.CRASH_RECEIVED) {
-            val recoverable = processIntake(intake, metadata, staleEntry, onStored)
+            val result = processIntake(intake, metadata, staleEntry, onStored)
             // Only seal the service if the payload is the crashing session's last session part, after which we take in no more
             // telemetry and let the process die.
             if (metadata.isCrashingPartForCurrentProcess()) {
                 state.set(State.SEALED)
             }
-            return immediateFuture(recoverable)
+            return immediateFuture(result)
         }
 
         if (state.get() != State.ACTIVE) {
-            return immediateFuture(null)
+            return immediateFuture(IntakeResult.NOT_ATTEMPTED)
         }
 
         val future = worker.submit(
@@ -122,8 +122,8 @@ class IntakeServiceImpl(
     }
 
     /**
-     * Returns null if the payload was stored or no attempt to store it completed, otherwise whether another attempt could
-     * succeed.
+     * Stores the payload and returns the [IntakeResult]. An attempt that throws before storage reports an outcome is
+     * [IntakeResult.NOT_ATTEMPTED], while one that throws after the payload is on disk is still [IntakeResult.STORED].
      */
     @Suppress("UNCHECKED_CAST")
     private fun processIntake(
@@ -131,7 +131,8 @@ class IntakeServiceImpl(
         metadata: StoredTelemetryMetadata,
         staleEntry: StoredTelemetryMetadata?,
         onStored: (() -> Unit)?,
-    ): Boolean? {
+    ): IntakeResult {
+        var result = IntakeResult.NOT_ATTEMPTED
         try {
             val service = when {
                 metadata.complete -> payloadStorageService
@@ -157,12 +158,14 @@ class IntakeServiceImpl(
             // A payload storage rejected may succeed in a later attempt, but one that failed won't.
             when (outcome) {
                 StorageOutcome.REJECTED -> {
-                    return true
+                    return IntakeResult.RETRYABLE_FAILURE
                 }
                 StorageOutcome.FAILED -> {
-                    return false
+                    return IntakeResult.PERMANENT_FAILURE
                 }
-                StorageOutcome.STORED -> { }
+                StorageOutcome.STORED -> {
+                    result = IntakeResult.STORED
+                }
             }
 
             // the payload is now on disk, so any other copy the caller holds is safe to discard
@@ -202,10 +205,10 @@ class IntakeServiceImpl(
         } catch (exc: Throwable) {
             logger.trackInternalError(InternalErrorType.IntakeFail, exc)
         }
-        return null
+        return result
     }
 
-    private fun immediateFuture(value: Boolean?): Future<Boolean?> = FutureTask { value }.apply { run() }
+    private fun immediateFuture(value: IntakeResult): Future<IntakeResult> = FutureTask { value }.apply { run() }
 
     private fun StoredTelemetryMetadata.isCrashTerminatingProcess(): Boolean =
         payloadType == PayloadType.JVM_CRASH || payloadType == PayloadType.REACT_NATIVE_CRASH

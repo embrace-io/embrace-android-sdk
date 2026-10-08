@@ -167,7 +167,7 @@ internal class SdkIntegrationTestRule(
         setupAction(setup)
         with(setup) {
             embraceImpl = EmbraceImpl(bootstrapper = bootstrapper)
-            sdkApi = SdkApiDispatcher(embraceImpl, embraceImpl.telemetryService)
+            sdkApi = SdkApiDispatcher(embraceImpl, embraceImpl.telemetryService, embraceImpl.internalErrorHandler)
             preSdkStartAction(preSdkStart)
             //TODO: Filtered span and log exporters should be migrated to Kotlin.
             embraceImpl.addSpanExporter(spanExporter.toOtelKotlinSpanExporter())

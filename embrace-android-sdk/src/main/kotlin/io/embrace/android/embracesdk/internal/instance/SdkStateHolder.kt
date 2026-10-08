@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.internal.instance
 import android.content.Context
 import android.util.Log
 import io.embrace.android.embracesdk.internal.api.SdkApi
+import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 
 /**
@@ -15,13 +17,18 @@ import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
  * ```
  *
  * A start that does not succeed leaves the SDK in [SdkState.NOT_STARTED] so that it can be retried. [SdkState.DISABLED]
- * is terminal: the SDK cannot be restarted once it has been disabled.
+ * is terminal: the SDK cannot be restarted once it has been disabled. Exceptions are reported to [errorHandler] rather
+ * than thrown.
  */
-internal class SdkStateHolder(instance: SdkApi, telemetryService: InternalTelemetryService) {
+internal class SdkStateHolder(
+    instance: SdkApi,
+    telemetryService: InternalTelemetryService,
+    val errorHandler: InternalErrorHandler,
+) {
 
     private val lock = Any()
 
-    val dispatcher: SdkApiDispatcher = SdkApiDispatcher(instance, telemetryService)
+    val dispatcher: SdkApiDispatcher = SdkApiDispatcher(instance, telemetryService, errorHandler)
 
     @Volatile
     var state: SdkState = SdkState.NOT_STARTED
@@ -39,8 +46,9 @@ internal class SdkStateHolder(instance: SdkApi, telemetryService: InternalTeleme
             val started = try {
                 instance.start(context)
                 instance.isStarted
-            } catch (ignored: Throwable) {
-                Log.w("Embrace", "Failed to start the Embrace SDK", ignored)
+            } catch (exc: Throwable) {
+                Log.w("Embrace", "Failed to start the Embrace SDK", exc)
+                errorHandler.trackInternalError(InternalErrorType.PublicApiFail, exc)
                 false
             }
             if (started) {
@@ -58,8 +66,12 @@ internal class SdkStateHolder(instance: SdkApi, telemetryService: InternalTeleme
                 return
             }
             // TODO: future: dispatcher.target will be changed here and at other state transitions.
-            dispatcher.target.disable()
-            state = SdkState.DISABLED
+            try {
+                dispatcher.target.disable()
+                state = SdkState.DISABLED
+            } catch (exc: Throwable) {
+                errorHandler.trackInternalError(InternalErrorType.PublicApiFail, exc)
+            }
         }
     }
 }

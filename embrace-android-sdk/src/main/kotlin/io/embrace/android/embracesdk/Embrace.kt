@@ -1,10 +1,14 @@
 package io.embrace.android.embracesdk
 
 import android.annotation.SuppressLint
+import android.content.Context
 import io.embrace.android.embracesdk.internal.api.SdkApi
+import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 
-private val delegate = EmbTrace.trace(sectionName = "embrace-impl-init", recordDuration = true) { EmbraceImpl() }
+private val sdkStateHolder = SdkStateHolder(
+    EmbTrace.trace(sectionName = "embrace-impl-init", recordDuration = true) { EmbraceImpl() },
+)
 
 /**
  * Entry point for the SDK. This class is part of the Embrace Public API.
@@ -12,7 +16,15 @@ private val delegate = EmbTrace.trace(sectionName = "embrace-impl-init", recordD
  * Contains a singleton instance of itself, and is used for initializing the SDK.
  */
 @SuppressLint("EmbracePublicApiPackageRule")
-public object Embrace : SdkApi by delegate {
+public object Embrace : SdkApi by sdkStateHolder.dispatcher {
+
+    override fun start(context: Context) {
+        sdkStateHolder.start(context)
+    }
+
+    override fun disable() {
+        sdkStateHolder.disable()
+    }
 
     /**
      * Gets the singleton instance of the Embrace SDK.

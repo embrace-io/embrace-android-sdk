@@ -38,3 +38,11 @@ class EventKey<E : Any> : BusKey()
  * A key is identified by the instance, so one is expected to be declared once and shared by everything reading or writing that state.
  */
 class StateKey<E : Any> : BusKey()
+
+/**
+ * Identifies one channel for polling between modules. [BusPoll]s are channel typed requests for data that have results.
+ *
+ * A key is identified by the instance, so each one is expected to be declared once and shared by everything that needs to share a poll
+ * channel.
+ */
+class PollKey<V : Any> : BusKey()

@@ -1,5 +1,6 @@
 package io.embrace.config.codegen
 
+import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
@@ -27,6 +28,9 @@ fun localConfigFiles(slice: ConfigSlice, sourceName: String): List<FileSpec> {
         .addFunctions(
             slice.localFields.map {
                 FunSpec.builder(it.localGetter)
+                    .addAnnotation(
+                        AnnotationSpec.builder(ConfigClassNames.LOCAL_CONFIG_KEY).addMember("%S", checkNotNull(it.local).json).build(),
+                    )
                     .addModifiers(KModifier.OVERRIDE)
                     .returns(it.type.typeName)
                     .addStatement("return %L", it.type.literal(it.default))

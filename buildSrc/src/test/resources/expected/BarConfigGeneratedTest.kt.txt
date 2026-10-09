@@ -1,7 +1,9 @@
 // Generated from foo.yaml. Do not edit.
 package com.example
 
+import io.embrace.android.embracesdk.`internal`.config.instrumented.BarLocalConfigImpl
 import io.embrace.android.embracesdk.`internal`.config.instrumented.InstrumentedConfigImpl
+import io.embrace.android.embracesdk.`internal`.config.instrumented.schema.BarLocalConfig
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -14,7 +16,7 @@ internal class BarConfigGeneratedTest {
 
     @Test
     public fun `limit local used when remote absent`() {
-        assertEquals(1, resolveBar(local = overrideLocal("foo.getLimit()", 1)).limit)
-        assertEquals(2, resolveBar(local = overrideLocal("foo.getLimit()", 2)).limit)
+        assertEquals(1, resolveBar(local = object : BarLocalConfig by BarLocalConfigImpl { override fun getLimit(): Int = 1 }).limit)
+        assertEquals(2, resolveBar(local = object : BarLocalConfig by BarLocalConfigImpl { override fun getLimit(): Int = 2 }).limit)
     }
 }

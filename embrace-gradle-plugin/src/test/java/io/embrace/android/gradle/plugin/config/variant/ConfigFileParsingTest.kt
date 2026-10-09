@@ -54,13 +54,13 @@ class ConfigFileParsingTest {
 
     @Test
     fun `empty object gives all null fields`() {
-        assertEquals(EmbraceVariantConfig(null, null, null, null, null), parse("{}"))
+        assertEquals(EmbraceVariantConfig(null, null, null, null, null, json = "{}"), parse("{}"))
     }
 
     @Test
     fun `explicit nulls are accepted`() {
         val json = """{"app_id": null, "api_token": null, "ndk_enabled": null, "sdk_config": null, "unity": null}"""
-        assertEquals(EmbraceVariantConfig(null, null, null, null, null), parse(json))
+        assertEquals(EmbraceVariantConfig(null, null, null, null, null, json = json.minify()), parse(json))
     }
 
     @Test

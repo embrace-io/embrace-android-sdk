@@ -1,7 +1,7 @@
 // Generated from foo.yaml. Do not edit.
 package com.example
 
-import io.embrace.android.embracesdk.`internal`.config.instrumented.schema.InstrumentedConfig
+import io.embrace.android.embracesdk.`internal`.config.instrumented.schema.RangeLocalConfig
 import io.embrace.android.embracesdk.`internal`.config.remote.RemoteConfig
 
 /**
@@ -19,7 +19,7 @@ public inline fun RangeConfig(crossinline bounded: () -> Int = { 10 }, crossinli
     override val name: String = name()
 }
 
-public fun resolveRange(local: InstrumentedConfig, remote: RemoteConfig?): RangeConfig = RangeConfig(
-    bounded = { remote?.rangeBounded?.takeIf { it in 1..100 } ?: local.range.getBounded().takeIf { it in 1..100 } ?: 10 },
+public fun resolveRange(local: RangeLocalConfig, remote: RemoteConfig?): RangeConfig = RangeConfig(
+    bounded = { remote?.rangeBounded?.takeIf { it in 1..100 } ?: local.getBounded().takeIf { it in 1..100 } ?: 10 },
     name = { remote?.rangeName?.takeIf { it.length <= 5 } ?: "abc" },
 )

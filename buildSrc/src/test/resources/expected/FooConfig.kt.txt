@@ -1,7 +1,7 @@
 // Generated from foo.yaml. Do not edit.
 package com.example
 
-import io.embrace.android.embracesdk.`internal`.config.instrumented.schema.InstrumentedConfig
+import io.embrace.android.embracesdk.`internal`.config.instrumented.schema.FooLocalConfig
 import io.embrace.android.embracesdk.`internal`.config.remote.RemoteConfig
 
 /**
@@ -28,11 +28,11 @@ public inline fun FooConfig(
 }
 
 public fun resolveFoo(
-    local: InstrumentedConfig,
+    local: FooLocalConfig,
     remote: RemoteConfig?,
     bucket: Lazy<Float>,
 ): FooConfig = FooConfig(
-    enabled = { rolloutEnabled(remote?.pctFooEnabled, bucket) ?: local.enabledFeatures.isFooEnabled() },
-    limit = { remote?.fooLimit ?: local.foo.getLimit() },
+    enabled = { rolloutEnabled(remote?.pctFooEnabled, bucket) ?: local.isEnabled() },
+    limit = { remote?.fooLimit ?: local.getLimit() },
     name = { remote?.fooName ?: "a \"b\" ${'$'}c" },
 )

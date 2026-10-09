@@ -8,7 +8,9 @@ import io.embrace.android.embracesdk.`internal`.config.instrumented.schema.FooLo
  */
 @LocalConfigInstrumented
 public object FooLocalConfigImpl : FooLocalConfig {
+    @LocalConfigKey("sdk_config.foo_enabled")
     override fun isEnabled(): Boolean = false
 
+    @LocalConfigKey("sdk_config.foo.limit")
     override fun getLimit(): Int = 10
 }

@@ -6,6 +6,7 @@ import io.embrace.android.gradle.plugin.instrumentation.config.arch.sdk.createNe
 import io.embrace.android.gradle.plugin.instrumentation.config.arch.sdk.createProjectConfigInstrumentation
 import io.embrace.android.gradle.plugin.instrumentation.config.arch.sdk.createRedactionConfigInstrumentation
 import io.embrace.android.gradle.plugin.instrumentation.config.arch.sdk.createSharedObjectFilesMapInstrumentation
+import io.embrace.android.gradle.plugin.instrumentation.config.local.LocalConfigClassVisitor
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.visitor.ConfigInstrumentationClassVisitor
 import io.embrace.android.gradle.plugin.model.VariantOutputInfo
@@ -58,5 +59,10 @@ object ConfigClassVisitorFactory {
     ): ClassVisitor? {
         val type = ConfigClassType.entries.singleOrNull { it.className == className }
         return type?.createClassVisitor(cfg, encodedSharedObjectFilesMap, reactNativeBundleId, variantOutputInfo, api, cv)
+            ?: if (className.startsWith("io.embrace.android.embracesdk.internal.config.instrumented.")) {
+                LocalConfigClassVisitor(cfg.embraceConfig?.json, api, cv)
+            } else {
+                null
+            }
     }
 }

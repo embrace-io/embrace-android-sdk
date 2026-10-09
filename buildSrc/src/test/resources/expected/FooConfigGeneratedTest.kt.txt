@@ -1,7 +1,9 @@
 // Generated from foo.yaml. Do not edit.
 package com.example
 
+import io.embrace.android.embracesdk.`internal`.config.instrumented.FooLocalConfigImpl
 import io.embrace.android.embracesdk.`internal`.config.instrumented.InstrumentedConfigImpl
+import io.embrace.android.embracesdk.`internal`.config.instrumented.schema.FooLocalConfig
 import io.embrace.android.embracesdk.`internal`.config.remote.RemoteConfig
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -15,22 +17,22 @@ internal class FooConfigGeneratedTest {
 
     @Test
     public fun `enabled local used when remote absent`() {
-        assertEquals(true, resolveFoo(local = overrideLocal("enabledFeatures.isFooEnabled()", true), remote = null, bucket = unreadBucket).enabled)
-        assertEquals(true, resolveFoo(local = overrideLocal("enabledFeatures.isFooEnabled()", true), remote = RemoteConfig(), bucket = unreadBucket).enabled)
-        assertEquals(false, resolveFoo(local = overrideLocal("enabledFeatures.isFooEnabled()", false), remote = null, bucket = unreadBucket).enabled)
-        assertEquals(false, resolveFoo(local = overrideLocal("enabledFeatures.isFooEnabled()", false), remote = RemoteConfig(), bucket = unreadBucket).enabled)
+        assertEquals(true, resolveFoo(local = object : FooLocalConfig by FooLocalConfigImpl { override fun isEnabled(): Boolean = true }, remote = null, bucket = unreadBucket).enabled)
+        assertEquals(true, resolveFoo(local = object : FooLocalConfig by FooLocalConfigImpl { override fun isEnabled(): Boolean = true }, remote = RemoteConfig(), bucket = unreadBucket).enabled)
+        assertEquals(false, resolveFoo(local = object : FooLocalConfig by FooLocalConfigImpl { override fun isEnabled(): Boolean = false }, remote = null, bucket = unreadBucket).enabled)
+        assertEquals(false, resolveFoo(local = object : FooLocalConfig by FooLocalConfigImpl { override fun isEnabled(): Boolean = false }, remote = RemoteConfig(), bucket = unreadBucket).enabled)
     }
 
     @Test
     public fun `enabled remote overrides local`() {
-        assertEquals(true, resolveFoo(local = overrideLocal("enabledFeatures.isFooEnabled()", false), remote = RemoteConfig(pctFooEnabled = 100f), bucket = unreadBucket).enabled)
-        assertEquals(false, resolveFoo(local = overrideLocal("enabledFeatures.isFooEnabled()", true), remote = RemoteConfig(pctFooEnabled = 0f), bucket = unreadBucket).enabled)
+        assertEquals(true, resolveFoo(local = object : FooLocalConfig by FooLocalConfigImpl { override fun isEnabled(): Boolean = false }, remote = RemoteConfig(pctFooEnabled = 100f), bucket = unreadBucket).enabled)
+        assertEquals(false, resolveFoo(local = object : FooLocalConfig by FooLocalConfigImpl { override fun isEnabled(): Boolean = true }, remote = RemoteConfig(pctFooEnabled = 0f), bucket = unreadBucket).enabled)
     }
 
     @Test
     public fun `enabled partial rollout reads bucket`() {
-        assertEquals(true, resolveFoo(local = overrideLocal("enabledFeatures.isFooEnabled()", false), remote = RemoteConfig(pctFooEnabled = 50f), bucket = lazy { 49f }).enabled)
-        assertEquals(false, resolveFoo(local = overrideLocal("enabledFeatures.isFooEnabled()", true), remote = RemoteConfig(pctFooEnabled = 50f), bucket = lazy { 51f }).enabled)
+        assertEquals(true, resolveFoo(local = object : FooLocalConfig by FooLocalConfigImpl { override fun isEnabled(): Boolean = false }, remote = RemoteConfig(pctFooEnabled = 50f), bucket = lazy { 49f }).enabled)
+        assertEquals(false, resolveFoo(local = object : FooLocalConfig by FooLocalConfigImpl { override fun isEnabled(): Boolean = true }, remote = RemoteConfig(pctFooEnabled = 50f), bucket = lazy { 51f }).enabled)
     }
 
     @Test
@@ -41,16 +43,16 @@ internal class FooConfigGeneratedTest {
 
     @Test
     public fun `limit local used when remote absent`() {
-        assertEquals(1, resolveFoo(local = overrideLocal("foo.getLimit()", 1), remote = null, bucket = unreadBucket).limit)
-        assertEquals(1, resolveFoo(local = overrideLocal("foo.getLimit()", 1), remote = RemoteConfig(), bucket = unreadBucket).limit)
-        assertEquals(2, resolveFoo(local = overrideLocal("foo.getLimit()", 2), remote = null, bucket = unreadBucket).limit)
-        assertEquals(2, resolveFoo(local = overrideLocal("foo.getLimit()", 2), remote = RemoteConfig(), bucket = unreadBucket).limit)
+        assertEquals(1, resolveFoo(local = object : FooLocalConfig by FooLocalConfigImpl { override fun getLimit(): Int = 1 }, remote = null, bucket = unreadBucket).limit)
+        assertEquals(1, resolveFoo(local = object : FooLocalConfig by FooLocalConfigImpl { override fun getLimit(): Int = 1 }, remote = RemoteConfig(), bucket = unreadBucket).limit)
+        assertEquals(2, resolveFoo(local = object : FooLocalConfig by FooLocalConfigImpl { override fun getLimit(): Int = 2 }, remote = null, bucket = unreadBucket).limit)
+        assertEquals(2, resolveFoo(local = object : FooLocalConfig by FooLocalConfigImpl { override fun getLimit(): Int = 2 }, remote = RemoteConfig(), bucket = unreadBucket).limit)
     }
 
     @Test
     public fun `limit remote overrides local`() {
-        assertEquals(1, resolveFoo(local = overrideLocal("foo.getLimit()", 2), remote = RemoteConfig(fooLimit = 1), bucket = unreadBucket).limit)
-        assertEquals(2, resolveFoo(local = overrideLocal("foo.getLimit()", 1), remote = RemoteConfig(fooLimit = 2), bucket = unreadBucket).limit)
+        assertEquals(1, resolveFoo(local = object : FooLocalConfig by FooLocalConfigImpl { override fun getLimit(): Int = 2 }, remote = RemoteConfig(fooLimit = 1), bucket = unreadBucket).limit)
+        assertEquals(2, resolveFoo(local = object : FooLocalConfig by FooLocalConfigImpl { override fun getLimit(): Int = 1 }, remote = RemoteConfig(fooLimit = 2), bucket = unreadBucket).limit)
     }
 
     @Test
@@ -61,13 +63,13 @@ internal class FooConfigGeneratedTest {
 
     @Test
     public fun `name default used when remote absent`() {
-        assertEquals("a \"b\" ${'$'}c", resolveFoo(local = InstrumentedConfigImpl, remote = null, bucket = unreadBucket).name)
-        assertEquals("a \"b\" ${'$'}c", resolveFoo(local = InstrumentedConfigImpl, remote = RemoteConfig(), bucket = unreadBucket).name)
+        assertEquals("a \"b\" ${'$'}c", resolveFoo(local = FooLocalConfigImpl, remote = null, bucket = unreadBucket).name)
+        assertEquals("a \"b\" ${'$'}c", resolveFoo(local = FooLocalConfigImpl, remote = RemoteConfig(), bucket = unreadBucket).name)
     }
 
     @Test
     public fun `name remote overrides default`() {
-        assertEquals("a", resolveFoo(local = InstrumentedConfigImpl, remote = RemoteConfig(fooName = "a"), bucket = unreadBucket).name)
-        assertEquals("b", resolveFoo(local = InstrumentedConfigImpl, remote = RemoteConfig(fooName = "b"), bucket = unreadBucket).name)
+        assertEquals("a", resolveFoo(local = FooLocalConfigImpl, remote = RemoteConfig(fooName = "a"), bucket = unreadBucket).name)
+        assertEquals("b", resolveFoo(local = FooLocalConfigImpl, remote = RemoteConfig(fooName = "b"), bucket = unreadBucket).name)
     }
 }

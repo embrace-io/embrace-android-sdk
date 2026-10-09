@@ -40,7 +40,8 @@ import java.util.concurrent.TimeoutException
  * over trying to reprocess a part that may never succeed.
  *
  * An intake that times out is treated the same way: the pass stops, the next pass waits on that
- * same intake once more, and if it still hasn't finished, the part is deleted.
+ * same intake once more, and if it still hasn't finished, the intake is cancelled and the part is
+ * deleted.
  *
  * A part left by a process that has since died is resurrected by [deadPartResurrector] before it is
  * sent to the intake service. A resurrected part is complete and can be intaken by any intake pass.
@@ -189,7 +190,11 @@ class SessionPartReader(
         } catch (exc: TimeoutException) {
             logger.trackInternalError(InternalErrorType.IntakeFail, exc)
             return if (intake.timedOut) {
-                // The intake has already timed out once, so stop blocking newer parts on it
+                // The intake has already timed out once, so stop blocking newer parts on it. Cancel it
+                // first, so that one still queued can't store the part after newer parts. One already
+                // running isn't interrupted, which could cut a write off halfway: it finishes, and the
+                // part it stores is only delivered late.
+                intake.task.cancel(false)
                 deleteSessionPartData(directory, "intake timed out on retry")
                 true
             } else {

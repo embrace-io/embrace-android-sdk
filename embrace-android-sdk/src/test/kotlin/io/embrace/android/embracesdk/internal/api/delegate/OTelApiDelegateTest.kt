@@ -60,7 +60,7 @@ internal class OTelApiDelegateTest(
                 NoopOpenTelemetry
             }
         }
-        delegate = OTelApiDelegate(bootstrapper, sdkCallChecker, openTelemetryKotlin)
+        delegate = OTelApiDelegate(lazyOf(bootstrapper), sdkCallChecker, openTelemetryKotlin)
     }
 
     @Test

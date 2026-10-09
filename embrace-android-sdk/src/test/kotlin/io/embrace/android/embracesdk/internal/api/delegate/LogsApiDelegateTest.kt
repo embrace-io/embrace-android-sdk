@@ -43,7 +43,7 @@ internal class LogsApiDelegateTest {
 
         val sdkCallChecker = SdkCallChecker(FakeInternalLogger())
         sdkCallChecker.started.set(true)
-        delegate = LogsApiDelegate(moduleInitBootstrapper, sdkCallChecker)
+        delegate = LogsApiDelegate(lazyOf(moduleInitBootstrapper), sdkCallChecker)
     }
 
     @Test

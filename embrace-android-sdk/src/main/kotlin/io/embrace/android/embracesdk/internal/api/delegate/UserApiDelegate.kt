@@ -5,9 +5,11 @@ import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 
 internal class UserApiDelegate(
-    bootstrapper: ModuleInitBootstrapper,
+    lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
     private val sdkCallChecker: SdkCallChecker,
 ) : UserApi {
+
+    private val bootstrapper by lazyBootstrapper
 
     private val userService by embraceImplInject(sdkCallChecker) { bootstrapper.essentialServiceModule.userService }
 

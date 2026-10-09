@@ -30,6 +30,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.SdkStateApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserSessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModule
@@ -43,10 +44,10 @@ import io.embrace.android.embracesdk.internal.injection.postLoadInstrumentation
 import io.embrace.android.embracesdk.internal.injection.registerListeners
 import io.embrace.android.embracesdk.internal.injection.triggerPayloadSend
 import io.embrace.android.embracesdk.internal.instance.BufferingSdkInstance
-import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
-import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -67,26 +68,29 @@ import java.util.concurrent.Executors
  */
 @SuppressLint("EmbracePublicApiPackageRule")
 internal class EmbraceImpl(
-    private val bootstrapper: ModuleInitBootstrapper,
+    lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
     private val hostedSdkApiProvider: Provider<SdkApi>,
     private val sdkCallChecker: SdkCallChecker,
     openTelemetryKotlin: OpenTelemetry,
-    private val userApiDelegate: UserApiDelegate = UserApiDelegate(bootstrapper, sdkCallChecker),
-    private val sessionApiDelegate: UserSessionApiDelegate = UserSessionApiDelegate(bootstrapper, sdkCallChecker),
+    clock: Clock,
+    logger: InternalLogger,
+    private val userApiDelegate: UserApiDelegate = UserApiDelegate(lazyBootstrapper, sdkCallChecker),
+    private val sessionApiDelegate: UserSessionApiDelegate = UserSessionApiDelegate(lazyBootstrapper, sdkCallChecker),
     private val networkRequestApiDelegate: NetworkRequestApiDelegate =
-        NetworkRequestApiDelegate(bootstrapper, sdkCallChecker),
-    private val logsApiDelegate: LogsApiDelegate = LogsApiDelegate(bootstrapper, sdkCallChecker),
+        NetworkRequestApiDelegate(lazyBootstrapper, sdkCallChecker),
+    private val logsApiDelegate: LogsApiDelegate = LogsApiDelegate(lazyBootstrapper, sdkCallChecker),
     private val viewTrackingApiDelegate: ViewTrackingApiDelegate =
-        ViewTrackingApiDelegate(bootstrapper, sdkCallChecker),
-    private val sdkStateApiDelegate: SdkStateApiDelegate = SdkStateApiDelegate(bootstrapper, sdkCallChecker),
-    private val otelApiDelegate: OTelApiDelegate = OTelApiDelegate(bootstrapper, sdkCallChecker, openTelemetryKotlin),
-    private val breadcrumbApiDelegate: BreadcrumbApiDelegate = BreadcrumbApiDelegate(bootstrapper, sdkCallChecker),
+        ViewTrackingApiDelegate(lazyBootstrapper, sdkCallChecker),
+    private val sdkStateApiDelegate: SdkStateApiDelegate = SdkStateApiDelegate(lazyBootstrapper, sdkCallChecker),
+    private val otelApiDelegate: OTelApiDelegate =
+        OTelApiDelegate(lazyBootstrapper, sdkCallChecker, openTelemetryKotlin),
+    private val breadcrumbApiDelegate: BreadcrumbApiDelegate = BreadcrumbApiDelegate(lazyBootstrapper, sdkCallChecker),
     private val instrumentationApiDelegate: InstrumentationApiDelegate =
-        InstrumentationApiDelegate(bootstrapper, sdkCallChecker),
-    private val experimentApiDelegate: ExperimentApiDelegate = ExperimentApiDelegate(bootstrapper, sdkCallChecker),
+        InstrumentationApiDelegate(lazyBootstrapper, sdkCallChecker),
+    private val experimentApiDelegate: ExperimentApiDelegate = ExperimentApiDelegate(lazyBootstrapper, sdkCallChecker),
     private val preStartBuffer: BufferingSdkInstance = BufferingSdkInstance(
-        clock = { bootstrapper.initModule.clock.now() },
-        logger = bootstrapper.initModule.logger,
+        clock = clock::now,
+        logger = logger,
         openTelemetryKotlin = openTelemetryKotlin,
     ),
 ) : SdkApi,
@@ -94,7 +98,6 @@ internal class EmbraceImpl(
     NetworkRequestApi by networkRequestApiDelegate,
     UserSessionApi by sessionApiDelegate,
     UserApi by userApiDelegate,
-    TracingApi by bootstrapper.openTelemetryModule.tracingApi,
     SdkStateApi by sdkStateApiDelegate,
     OTelApi by otelApiDelegate,
     ViewTrackingApi by viewTrackingApiDelegate,
@@ -103,8 +106,8 @@ internal class EmbraceImpl(
     ExperimentApi by preStartBuffer,
     InternalInterfaceApi {
 
-    val telemetryService: InternalTelemetryService get() = bootstrapper.initModule.telemetryService
-    val internalErrorHandler: InternalErrorHandler get() = bootstrapper.initModule.logger
+    private val bootstrapper by lazyBootstrapper
+    private val tracingApi: TracingApi get() = bootstrapper.openTelemetryModule.tracingApi
     private val startStopLock = Any()
 
     private var internalInterfaceModule: InternalInterfaceModule? = null
@@ -119,7 +122,7 @@ internal class EmbraceImpl(
                         return
                     }
                     // replay spans before the first session part starts
-                    preStartBuffer.drainCompletedSpans(bootstrapper.openTelemetryModule.tracingApi)
+                    preStartBuffer.drainCompletedSpans(tracingApi)
                     bootstrapper.postInit()
 
                     EmbTrace.trace(sectionName = "post-services-setup", recordDuration = true) {
@@ -224,6 +227,30 @@ internal class EmbraceImpl(
         preStartBuffer.addLogRecordProcessor(logRecordProcessor)
 
     override fun setResourceAttribute(key: String, value: String) = preStartBuffer.setResourceAttribute(key, value)
+
+    override fun createSpan(
+        name: String,
+        parent: EmbraceSpan?,
+        autoTerminationMode: AutoTerminationMode,
+    ): EmbraceSpan = tracingApi.createSpan(name, parent, autoTerminationMode)
+
+    override fun startSpan(
+        name: String,
+        parent: EmbraceSpan?,
+        startTimeMs: Long?,
+        autoTerminationMode: AutoTerminationMode,
+    ): EmbraceSpan = tracingApi.startSpan(name, parent, startTimeMs, autoTerminationMode)
+
+    override fun <T> recordSpan(
+        name: String,
+        parent: EmbraceSpan?,
+        attributes: Map<String, String>,
+        events: List<EmbraceSpanEvent>,
+        autoTerminationMode: AutoTerminationMode,
+        code: () -> T,
+    ): T = tracingApi.recordSpan(name, parent, attributes, events, autoTerminationMode, code)
+
+    override fun getSpan(spanId: String): EmbraceSpan? = tracingApi.getSpan(spanId)
 
     override fun recordCompletedSpan(
         name: String,

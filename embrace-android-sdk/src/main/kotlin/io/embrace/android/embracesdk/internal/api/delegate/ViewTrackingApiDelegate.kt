@@ -5,9 +5,11 @@ import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.instrumentation.view.ViewDataSource
 
 internal class ViewTrackingApiDelegate(
-    private val bootstrapper: ModuleInitBootstrapper,
+    lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
     private val sdkCallChecker: SdkCallChecker,
 ) : ViewTrackingApi {
+
+    private val bootstrapper by lazyBootstrapper
 
     override fun startView(name: String): Boolean {
         if (sdkCallChecker.check("start_view")) {

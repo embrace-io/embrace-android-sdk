@@ -27,15 +27,13 @@ class InitModuleImpl(
     override val systemInfo: SystemInfo = SystemInfo(),
     override val uuidSource: UuidSource = UuidSourceImpl(),
     override val startupClassifier: StartupClassifier = StartupClassifierImpl(),
+    override val telemetryService: InternalTelemetryService = InternalTelemetryServiceImpl(systemInfo = systemInfo),
+    override val internalErrorHandler: BufferedInternalErrorHandler = BufferedInternalErrorHandler(clock),
 ) : InitModule {
 
-    override val internalErrorHandler: BufferedInternalErrorHandler = BufferedInternalErrorHandler(clock).also {
-        logger.errorHandlerProvider = { it }
+    init {
+        logger.errorHandlerProvider = { internalErrorHandler }
     }
-
-    override val telemetryService: InternalTelemetryService = InternalTelemetryServiceImpl(
-        systemInfo = systemInfo,
-    )
 
     override val jsonSerializer: PlatformSerializer by lazy {
         EmbraceSerializer()

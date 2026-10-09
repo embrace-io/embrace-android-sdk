@@ -51,6 +51,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.TracingApi
+import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
 import io.opentelemetry.kotlin.tracing.export.SpanExporter
@@ -68,8 +69,8 @@ import java.util.concurrent.Executors
 internal class EmbraceImpl(
     private val bootstrapper: ModuleInitBootstrapper,
     private val hostedSdkApiProvider: Provider<SdkApi>,
-    private val sdkCallChecker: SdkCallChecker =
-        SdkCallChecker(bootstrapper.initModule.logger),
+    private val sdkCallChecker: SdkCallChecker,
+    openTelemetryKotlin: OpenTelemetry,
     private val userApiDelegate: UserApiDelegate = UserApiDelegate(bootstrapper, sdkCallChecker),
     private val sessionApiDelegate: UserSessionApiDelegate = UserSessionApiDelegate(bootstrapper, sdkCallChecker),
     private val networkRequestApiDelegate: NetworkRequestApiDelegate =
@@ -78,7 +79,7 @@ internal class EmbraceImpl(
     private val viewTrackingApiDelegate: ViewTrackingApiDelegate =
         ViewTrackingApiDelegate(bootstrapper, sdkCallChecker),
     private val sdkStateApiDelegate: SdkStateApiDelegate = SdkStateApiDelegate(bootstrapper, sdkCallChecker),
-    private val otelApiDelegate: OTelApiDelegate = OTelApiDelegate(bootstrapper, sdkCallChecker),
+    private val otelApiDelegate: OTelApiDelegate = OTelApiDelegate(bootstrapper, sdkCallChecker, openTelemetryKotlin),
     private val breadcrumbApiDelegate: BreadcrumbApiDelegate = BreadcrumbApiDelegate(bootstrapper, sdkCallChecker),
     private val instrumentationApiDelegate: InstrumentationApiDelegate =
         InstrumentationApiDelegate(bootstrapper, sdkCallChecker),
@@ -86,6 +87,7 @@ internal class EmbraceImpl(
     private val preStartBuffer: BufferingSdkInstance = BufferingSdkInstance(
         clock = { bootstrapper.initModule.clock.now() },
         logger = bootstrapper.initModule.logger,
+        openTelemetryKotlin = openTelemetryKotlin,
     ),
 ) : SdkApi,
     LogsApi by logsApiDelegate,

@@ -12,6 +12,8 @@ import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
+import io.opentelemetry.kotlin.NoopOpenTelemetry
+import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -38,6 +40,7 @@ internal class OTelApiDelegateTest(
     private lateinit var delegate: OTelApiDelegate
     private lateinit var cfg: OtelSdkConfig
     private lateinit var sdkCallChecker: SdkCallChecker
+    private lateinit var openTelemetryKotlin: OpenTelemetry
 
     @Before
     fun setUp() {
@@ -50,7 +53,14 @@ internal class OTelApiDelegateTest(
 
         sdkCallChecker = SdkCallChecker(FakeInternalLogger())
         sdkCallChecker.started.set(true)
-        delegate = OTelApiDelegate(bootstrapper, sdkCallChecker)
+        openTelemetryKotlin = LateBindingOpenTelemetry {
+            if (sdkCallChecker.started.get()) {
+                bootstrapper.openTelemetryModule.otelSdkWrapper.openTelemetryKotlin
+            } else {
+                NoopOpenTelemetry
+            }
+        }
+        delegate = OTelApiDelegate(bootstrapper, sdkCallChecker, openTelemetryKotlin)
     }
 
     @Test
@@ -99,11 +109,11 @@ internal class OTelApiDelegateTest(
     fun `get opentelemetry kotlin binds late`() {
         sdkCallChecker.started.set(false)
         val otel = delegate.getOpenTelemetryKotlin()
+        assertSame(openTelemetryKotlin, otel)
         val tracer = otel.tracerProvider.getTracer("test")
         assertFalse(tracer.startSpan("before").isRecording())
 
         sdkCallChecker.started.set(true)
-        assertSame(otel, delegate.getOpenTelemetryKotlin())
         assertTrue(tracer.startSpan("after").isRecording())
     }
 

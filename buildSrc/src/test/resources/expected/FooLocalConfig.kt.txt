@@ -1,0 +1,11 @@
+// Generated from foo.yaml. Do not edit.
+package io.embrace.android.embracesdk.`internal`.config.instrumented.schema
+
+/**
+ * Local foo config, read from embrace-config.json.
+ */
+public interface FooLocalConfig {
+    public fun isEnabled(): Boolean
+
+    public fun getLimit(): Int
+}

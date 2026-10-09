@@ -1,0 +1,14 @@
+// Generated from foo.yaml. Do not edit.
+package io.embrace.android.embracesdk.`internal`.config.instrumented
+
+import io.embrace.android.embracesdk.`internal`.config.instrumented.schema.FooLocalConfig
+
+/**
+ * Instrumented by the Embrace Gradle plugin to return the values set in embrace-config.json.
+ */
+@LocalConfigInstrumented
+public object FooLocalConfigImpl : FooLocalConfig {
+    override fun isEnabled(): Boolean = false
+
+    override fun getLimit(): Int = 10
+}

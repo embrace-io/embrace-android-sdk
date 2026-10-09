@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import java.io.File
 import java.util.Collections
+import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -125,6 +126,7 @@ class SessionPartReader(
      * intake attempt determines what we do with the session part data:
      *
      * - Storage not attempted or intake thread interrupted: data kept
+     * - Intake cancelled: data kept, intake pass stopped
      * - First recoverable failure or timeout: data kept, intake pass stopped, retried on next intake
      * - Unrecoverable failure or second failure/timeout: data deleted
      */
@@ -165,6 +167,9 @@ class SessionPartReader(
             // An interrupt says nothing about the intake, so keep it as it was without counting it
             Thread.currentThread().interrupt()
             incomplete[directory] = intake
+            return false
+        } catch (_: CancellationException) {
+            // A cancelled intake should stop the intake pass
             return false
         }
 

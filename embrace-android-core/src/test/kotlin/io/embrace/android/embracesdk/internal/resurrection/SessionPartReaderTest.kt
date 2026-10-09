@@ -38,6 +38,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.util.concurrent.CancellationException
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -364,6 +365,25 @@ internal class SessionPartReaderTest {
         assertEquals(ids(partDirectory, laterPartDirectory), slowIntake.takenPartIds)
         assertEquals(3, slowIntake.takes.first().waits)
         assertDeleted(partDirectory, laterPartDirectory)
+    }
+
+    @Test
+    fun `a cancelled intake stops the intake pass and will be picked up in the next intake pass`() {
+        persistTwoParts()
+        slowIntake.firstWait = { throw CancellationException() }
+        val reader = createReader(slowIntake)
+
+        // the later part is not taken ahead of the cancelled one
+        reader.readPersistedSessionParts()
+        assertEquals(ids(partDirectory), slowIntake.takenPartIds)
+        assertRetained(partDirectory, laterPartDirectory)
+
+        slowIntake.firstWait = null
+        slowIntake.stall = false
+        reader.readPersistedSessionParts()
+        assertEquals(ids(partDirectory, partDirectory, laterPartDirectory), slowIntake.takenPartIds)
+        assertDeleted(partDirectory, laterPartDirectory)
+        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
     }
 
     /**

@@ -19,7 +19,7 @@ import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
 
 /**
- * A session part persisted by the multi file layer must reach the intake service before payload
+ * A session part persisted in multi-file mode must reach the intake service before payload
  * resurrection starts.
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)

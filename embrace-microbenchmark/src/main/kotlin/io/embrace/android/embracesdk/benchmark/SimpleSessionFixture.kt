@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 
 /**
- * One session's worth of telemetry, in the form each persistence layer needs to serialize it.
+ * One session's worth of telemetry, in the form each persistence mode needs to serialize it.
  *
  * [completedSpanCount] sets how much work the session did, which is the main thing that decides
  * how big it is once persisted. [attributesPerSpan] sets how much each of those spans carries.

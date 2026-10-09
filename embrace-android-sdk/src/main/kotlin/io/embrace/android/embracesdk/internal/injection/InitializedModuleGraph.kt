@@ -174,11 +174,9 @@ internal class InitializedModuleGraph(
     override val featureModule: FeatureModule = init("feature") {
         featureModuleSupplier?.invoke(
             instrumentationModule,
-            configService,
             storageService,
         ) ?: FeatureModuleImpl(
             instrumentationModule = instrumentationModule,
-            configService = configService,
             storageService = storageService,
         )
     }

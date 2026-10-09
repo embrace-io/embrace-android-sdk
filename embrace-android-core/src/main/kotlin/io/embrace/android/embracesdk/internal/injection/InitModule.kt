@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifier
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
+import io.embrace.android.embracesdk.internal.logging.BufferedInternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
@@ -29,6 +30,11 @@ interface InitModule {
      * Logger used by the SDK
      */
     val logger: InternalLogger
+
+    /**
+     * Buffers internal errors until the SDK can send them
+     */
+    val internalErrorHandler: BufferedInternalErrorHandler
 
     /**
      * Info about the system available at startup time without expensive disk or API calls

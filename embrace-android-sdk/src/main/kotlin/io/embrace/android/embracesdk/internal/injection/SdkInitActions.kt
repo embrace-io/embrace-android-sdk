@@ -45,7 +45,6 @@ internal fun ModuleGraph.postInit() = EmbTrace.trace(sectionName = "post-init", 
         breadcrumbConfig = configService.config.breadcrumb,
     )
 
-    initModule.logger.errorHandlerProvider = { featureModule.internalErrorDataSource }
     deliveryModule?.payloadCachingService?.run {
         openTelemetryModule.spanRepository.addSpanChangeListener { reportBackgroundActivityStateChange() }
     }
@@ -56,6 +55,10 @@ internal fun ModuleGraph.postInit() = EmbTrace.trace(sectionName = "post-init", 
     openTelemetryModule.logSink.registerLogStoredCallback {
         logModule.logOrchestrator.onLogsAdded()
     }
+    initModule.internalErrorHandler.drainTo(
+        essentialServiceModule.telemetryDestination,
+        configService.config.dataCaptureEvent.internalExceptionCaptureEnabled,
+    )
 
     essentialServiceModule.telemetryDestination.sessionUpdateAction =
         userSessionOrchestrationModule.sessionOrchestrator::onSessionDataUpdate
@@ -120,6 +123,7 @@ internal fun ModuleGraph.registerListeners() = safeInit {
 
         sessionPartTracker.addSessionPartChangeListener(logModule.attachmentService)
         sessionPartTracker.addSessionPartChangeListener(logModule.logLimitingService)
+        sessionPartTracker.addSessionPartChangeListener(initModule.internalErrorHandler::resetLimit)
     }
 }
 

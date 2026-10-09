@@ -61,6 +61,23 @@ internal class InternalErrorLogTest(
         )
     }
 
+    @Test
+    fun `internal error tracked before sdk start delivered`() {
+        testRule.runTest(
+            setupAction = {
+                getEmbLogger().throwOnInternalError = false
+                getEmbLogger().trackInternalError(InternalErrorType.InternalInterfaceFail, RuntimeException("Early error"))
+            },
+            testCaseAction = {
+                recordSession()
+            },
+            assertAction = {
+                val log = getSingleLogEnvelope().getLogWithAttributeValue(ExceptionAttributes.EXCEPTION_MESSAGE, "Early error")
+                assertEquals("sys.internal", checkNotNull(log.attributes).findAttributeValue("emb.type"))
+            }
+        )
+    }
+
     internal companion object {
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")

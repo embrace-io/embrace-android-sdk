@@ -1,7 +1,7 @@
 // Generated from foo.yaml. Do not edit.
 package com.example
 
-import io.embrace.android.embracesdk.`internal`.config.instrumented.schema.InstrumentedConfig
+import io.embrace.android.embracesdk.`internal`.config.instrumented.schema.BarLocalConfig
 
 /**
  * Resolved bar config.
@@ -14,6 +14,6 @@ public inline fun BarConfig(crossinline limit: () -> Int = { 10 }): BarConfig = 
     override val limit: Int = limit()
 }
 
-public fun resolveBar(local: InstrumentedConfig): BarConfig = BarConfig(
-    limit = { local.foo.getLimit() },
+public fun resolveBar(local: BarLocalConfig): BarConfig = BarConfig(
+    limit = { local.getLimit() },
 )

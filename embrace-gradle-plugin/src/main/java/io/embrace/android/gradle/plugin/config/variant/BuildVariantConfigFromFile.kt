@@ -107,5 +107,8 @@ private fun getAppIdFromEnv(config: EmbraceVariantConfig, systemWrapper: SystemW
     return null
 }
 
-private fun readConfigurationFromFile(configFile: File): EmbraceVariantConfig? =
-    configFileJson.decodeFromString(EmbraceVariantConfig.serializer().nullable, configFile.readText())
+private fun readConfigurationFromFile(configFile: File): EmbraceVariantConfig? {
+    val text = configFile.readText()
+    return configFileJson.decodeFromString(EmbraceVariantConfig.serializer().nullable, text)
+        ?.copy(json = configFileJson.parseToJsonElement(text).toString())
+}

@@ -8,5 +8,6 @@ import io.embrace.android.embracesdk.`internal`.config.instrumented.schema.Range
  */
 @LocalConfigInstrumented
 public object RangeLocalConfigImpl : RangeLocalConfig {
+    @LocalConfigKey("sdk_config.range.bounded")
     override fun getBounded(): Int = 10
 }

@@ -5,7 +5,7 @@ PersistenceConfig:
     default: false
     local:
       type: Boolean
-      sdk: enabledFeatures.isMultiFilePersistenceEnabled()
+      json: sdk_config.multi_file_persistence_enabled
     remote:
       type: Pct
       sdk: pctMultiFilePersistenceEnabled

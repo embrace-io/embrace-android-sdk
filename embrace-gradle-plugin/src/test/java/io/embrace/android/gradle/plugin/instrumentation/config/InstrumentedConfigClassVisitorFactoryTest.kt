@@ -1,6 +1,7 @@
 package io.embrace.android.gradle.plugin.instrumentation.config
 
 import io.embrace.android.gradle.plugin.instrumentation.ASM_API_VERSION
+import io.embrace.android.gradle.plugin.instrumentation.config.local.LocalConfigClassVisitor
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.visitor.ConfigInstrumentationClassVisitor
 import io.embrace.android.gradle.plugin.model.VariantOutputInfo
@@ -59,6 +60,12 @@ class InstrumentedConfigClassVisitorFactoryTest {
     fun `should create visitor for Base64SharedObjectFilesMap`() {
         val visitor = createVisitor("$embracePackage.Base64SharedObjectFilesMapImpl")
         assertTrue(visitor is ConfigInstrumentationClassVisitor)
+    }
+
+    @Test
+    fun `should create local config visitor for other classes in the config package`() {
+        val visitor = createVisitor("$embracePackage.PersistenceLocalConfigImpl")
+        assertTrue(visitor is LocalConfigClassVisitor)
     }
 
     @Test

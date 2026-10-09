@@ -105,14 +105,9 @@ internal class EmbraceImpl(
         EmbraceInternalApi.isStarted = sdkCallChecker.started::get
     }
 
-    private val clock get() = bootstrapper.initModule.clock
-
     val telemetryService: InternalTelemetryService get() = bootstrapper.initModule.telemetryService
     val internalErrorHandler: InternalErrorHandler get() = bootstrapper.initModule.logger
     private val startStopLock = Any()
-
-    @Volatile
-    private var applicationInitStartMs: Long? = null
 
     private var internalInterfaceModule: InternalInterfaceModule? = null
 
@@ -242,18 +237,12 @@ internal class EmbraceImpl(
         events: List<EmbraceSpanEvent>,
     ): Boolean = preStartBuffer.recordCompletedSpan(name, startTimeMs, endTimeMs, errorCode, parent, attributes, events)
 
-    override fun applicationInitStart() {
-        if (applicationInitStartMs == null) {
-            applicationInitStartMs = clock.now()
-        }
-    }
+    override fun applicationInitStart() = preStartBuffer.applicationInitStart()
 
     override fun applicationInitEnd() {
         if (sdkCallChecker.check("application_init_end", false)) {
             bootstrapper.dataCaptureServiceModule.appStartupDataCollector.run {
-                if (applicationInitStartMs != null) {
-                    applicationInitStart(applicationInitStartMs)
-                }
+                preStartBuffer.applicationInitStartMs?.let { applicationInitStart(it) }
                 applicationInitEnd()
             }
         }

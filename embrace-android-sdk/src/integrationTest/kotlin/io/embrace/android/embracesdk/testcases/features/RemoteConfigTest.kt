@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.testcases.features
 
-import io.embrace.android.embracesdk.assertions.returnIfConditionMet
+import io.embrace.android.embracesdk.assertions.waitUntilConditionMet
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -86,8 +86,7 @@ internal class RemoteConfigTest(
         expectedThreshold: Int,
     ) {
         assertConfigRequested(1)
-        returnIfConditionMet(
-            desiredValueSupplier = {},
+        waitUntilConditionMet(
             condition = { response ->
                 response != null && expectedThreshold == response.cfg?.threshold && "server_etag_value" == response.etag
             },
